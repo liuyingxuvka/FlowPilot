@@ -43,7 +43,7 @@
     "stop_before_heartbeat": true,
     "stopped_before_heartbeat": false,
     "terminal_lifecycle_frontier_written": false,
-    "terminal_shutdown_order": "stop or delete watchdog automation first, write local lifecycle state, then stop or delete heartbeat automation"
+    "terminal_shutdown_order": "write terminal state and unregister project global registration first; stop/delete project watchdog; then stop/delete heartbeat; delete user-level global supervisor last only after the registry has no active registrations"
   },
   "heartbeat": {
     "heartbeat_id": "<heartbeat-id>",
@@ -128,6 +128,10 @@
     "latest_path": "<global-record-dir>/projects/<project-key>/latest.json",
     "registry_path": "<global-record-dir>/registry.json",
     "event_path": "<global-record-dir>/events/<timestamp>-<project-key>.json-or-null",
-    "events_jsonl": "<global-record-dir>/events/events.jsonl-or-null"
+    "events_jsonl": "<global-record-dir>/events/events.jsonl-or-null",
+    "global_supervisor_cadence_minutes": 30,
+    "registration_lease_minutes": 90,
+    "registration_active": false,
+    "lease_expires_at": "<iso-8601-timestamp-or-null>"
   }
 }

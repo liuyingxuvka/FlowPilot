@@ -43,7 +43,7 @@ records that evidence, and only then stops or deletes the heartbeat
 automation.
 
 That pairing is stable lifecycle state. Checkpoint writes, node transitions,
-route-map refreshes, and visible plan syncs must preserve the recorded watchdog
+user-flow-diagram refreshes, and visible plan syncs must preserve the recorded watchdog
 policy and automation pairing. They may inspect watchdog evidence, but they
 must not recreate, re-register, start, restart, or re-enable the paired
 watchdog automation.
@@ -54,17 +54,20 @@ which uses `pythonw.exe` when available or a hidden noninteractive PowerShell
 wrapper. A direct interactive `python.exe` scheduled-task action can flash a
 console window and is treated as a configuration failure risk.
 
-The global supervisor is a Codex-side controller, not a Windows scheduled task.
-It must be singleton per user environment. Use
+The global supervisor is a Codex app cron automation, not a Windows scheduled
+task. It must be singleton per user environment. Use
 `templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md` as the
 prompt source when creating or repairing it through the Codex automation
-interface. The default is conversation-quiet: reuse or create one thread-bound
-Codex `heartbeat` supervisor, or record setup/on-demand evidence when no quiet
-singleton exists. Do not auto-create a high-frequency Codex `cron`, because
-cron runs create standalone Codex jobs and can flood the conversation list.
-Legacy cron is only an explicit opt-in fallback. Windows Task Scheduler is only
-valid for per-project external watchdogs that observe heartbeat freshness; it
-is not the official global reset actor.
+interface. Verify it in the same setup step that creates or repairs heartbeat
+and watchdog. With the current Codex automation interface, use `kind: cron`,
+`rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as one workspace string path,
+`executionEnvironment: local`, `reasoningEffort: medium`, and `status:
+ACTIVE`. The cadence is fixed at 30 minutes. Project heartbeats refresh their
+own global registration lease, and terminal/pause cleanup unregisters the
+project before deleting the user-level global supervisor last when no active,
+unexpired registrations remain. Windows Task Scheduler is only valid for
+per-project external watchdogs that observe heartbeat freshness; it is not the
+official global reset actor.
 
 ## Checks
 

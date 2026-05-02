@@ -106,19 +106,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_windows_wat
 ```
 
 Verify the user-level singleton global supervisor through the Codex app
-automation interface. It should reuse a quiet thread-bound `heartbeat`
-singleton when one exists, use the prompt in
-`templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md`, and avoid
-creating new conversations on every check. Do not create a Windows global
-scheduled task for this role.
+automation interface. It should be a `cron` automation, use the prompt in
+`templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md`, and run
+at the fixed 30-minute cadence. Do not create a Windows global scheduled task
+for this role.
 
-With the current Codex app `automation_update` interface, prefer
-`kind: heartbeat` with `destination: thread`. Inspect existing Codex
-automations before creation. Reuse one active quiet singleton. If an active
-legacy `cron` singleton exists, pause or replace it when conversation hygiene
-matters. If no quiet singleton exists, record setup-required or on-demand
-evidence. Use `kind: cron` only after explicit user opt-in that accepts
-new-conversation noise.
+With the current Codex app `automation_update` interface, use `kind: cron`,
+`rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as a single workspace string path,
+`executionEnvironment: local`, `reasoningEffort: medium`, and `status:
+ACTIVE`. Inspect existing Codex cron automations before creation. Reuse one
+active singleton, update one paused singleton when global protection is
+required, and create only when no singleton exists and at least one active
+project registration exists. Verify every heartbeat refreshes its global
+registration lease. On pause, stop, or completion, unregister the project first
+and delete the global supervisor last only after confirming that no active,
+unexpired registrations remain.
 
 Expected:
 

@@ -1,0 +1,43 @@
+{
+  "schema_version": "flowpilot.flowguard_modeling_report.v1",
+  "report_id": "<report-id>",
+  "request_id": "<request-id>",
+  "route_id": "<route-id>",
+  "node_id": "<node-id-or-null>",
+  "written_at": "<iso-8601-timestamp>",
+  "officer_role_key": "<process_flowguard_officer|product_flowguard_officer>",
+  "modelability": {
+    "result": "<modelable|needs_evidence|needs_split|blocked>",
+    "reason": "<why this result was chosen>",
+    "missing_evidence": [
+      "<evidence needed before a reliable answer exists>"
+    ],
+    "split_suggestions": [
+      "<smaller modelable request>"
+    ]
+  },
+  "model_summary": {
+    "covered": [
+      "<state, function, behavior, path, object, or product area covered>"
+    ],
+    "not_covered": [
+      "<known blindspot or deferred area>"
+    ],
+    "failure_paths": [
+      "<path that can fail or stall>"
+    ]
+  },
+  "recommendation": {
+    "decision": "<recommended PM decision>",
+    "confidence": "<low|medium|high>",
+    "reason": "<short evidence-backed rationale>",
+    "next_smallest_executable_action": "<exact next node/action>"
+  },
+  "route_mutation_candidate": {
+    "needed": false,
+    "kind": "<none|add_evidence_node|split_node|replace_node|add_parallel_node|reroute>",
+    "target_node": "<node-id-or-null>",
+    "summary": "<mutation summary or null>"
+  },
+  "pm_decision_required": true
+}

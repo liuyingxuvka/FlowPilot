@@ -16,15 +16,15 @@ The FlowGuard models for FlowPilot found or guard against:
   lightweight self-check that is too shallow for a phase, group, module, leaf
   node, or child-skill boundary;
 - lightweight self-checks treated as formal grill-me evidence;
-- route progress hidden in `.flowpilot/` with no visible chat route map while
+- route progress hidden in `.flowpilot/` with no visible user flow diagram while
   the Cockpit UI is unavailable;
-- route maps that invent a new execution path, or mix superseded routes into
-  the primary current-route view instead of treating them as history;
-- route map display after route mutation uses an old Mermaid/diagram artifact
+- user flow diagrams that invent a new execution path, or mix superseded routes
+  into the primary current view instead of treating them as history;
+- user flow diagram display after route mutation uses an old Mermaid artifact
   instead of refreshing from the rechecked route and execution frontier;
 - formal chunks that begin before the current node roadmap is visible in chat;
-- heartbeat records written without real continuation or heartbeat health
-  checks;
+- continuation records written without automated heartbeat health when
+  supported or manual-resume readiness checks when unsupported;
 - FlowPilot assumes every host supports real wakeups and blocks or creates
   fake heartbeat evidence in hosts such as generic CLI or VS Code agents that
   expose no automation interface;
@@ -51,9 +51,9 @@ The FlowGuard models for FlowPilot found or guard against:
 - the visible plan is updated as a one-step current-gate list instead of a
   downstream runway toward completion, causing sleep/wake cycles after every
   tiny gate;
-- heartbeat resumes after interruption and jumps to `next_node` while
+- continuation resumes after interruption and jumps to `next_node` while
   `active_node` is still unfinished;
-- heartbeat resumes an unfinished node, writes a future-facing "continue to
+- continuation resumes an unfinished node, writes a future-facing "continue to
   next gate" decision, and stops without executing the persisted `next_gate` or
   recording a concrete blocker;
 - host automation marked active while heartbeat evidence stops advancing and no
@@ -219,17 +219,18 @@ Keep these failure modes in the model and tests.
   boundaries. It must record the scope id, local ambiguity, child-skill gates,
   validation needs, unchanged cross-layer impacts, and parent impact-bubbling
   decisions.
-- Lightweight self-check runs at heartbeat micro-steps with 5-10 targeted
+- Lightweight self-check runs at continuation micro-steps with 5-10 targeted
   questions and cannot satisfy a full or focused grill-me gate.
-- Until the Cockpit UI is available, chat is the temporary cockpit: emit route
-  maps, simulated next jumps, checks, fallback exits, heartbeat state, and
-  acceptance delta at startup, route updates, and node transitions.
-- Treat route maps as projections of canonical `.flowpilot` state: current
-  route first, current node and next checks second, superseded route history
-  third.
-- When FlowGuard or the route model can emit Mermaid, refresh
-  `.flowpilot/diagrams/current-route-map.mmd` from the checked route/frontier
-  before showing chat or UI progress, especially after route mutation.
+- Until the Cockpit UI is available, chat is the temporary cockpit: emit user
+  flow diagrams, simulated next jumps, checks, fallback exits, continuation
+  state, and acceptance delta at startup, route updates, and node transitions.
+- Treat the user flow diagram as a projection of canonical `.flowpilot` state:
+  current route first, current node and next checks second, superseded route
+  history third.
+- Refresh `.flowpilot/diagrams/user-flow-diagram.mmd` from the checked
+  route/frontier before showing chat or UI progress, especially after route
+  mutation. Raw FlowGuard Mermaid exports stay off by default and are generated
+  only on explicit request.
 - FlowPilot must probe host continuation capability before route execution. If
   real wakeups are supported, create the automated continuation bundle as one
   lifecycle setup: stable heartbeat, paired watchdog, singleton global
@@ -264,18 +265,30 @@ Keep these failure modes in the model and tests.
 - Watchdog reset decisions trust only `state.json`, latest heartbeat evidence,
   and `busy_lease.json`. Frontier, lifecycle, automation, and global records
   are diagnostic drift signals; live subagent busy state is not inspected.
-- The user-level global supervisor must be singleton Codex-side automation or
-  an on-demand controller turn. Default to conversation-quiet operation: reuse
-  one active thread-bound `heartbeat` supervisor, create that heartbeat only
-  when the user wants it, and otherwise record setup/on-demand evidence. Do not
-  auto-create a high-frequency Codex `cron`; active legacy cron supervisors
-  should be paused or replaced when conversation hygiene matters. Legacy cron
-  is valid only after explicit user opt-in that accepts new-conversation noise.
+- PM-initiated FlowGuard modeling must not be vague delegation. If PM asks a
+  FlowGuard officer to model an uncertain route, product, object, file format,
+  protocol, or repair decision, the request names the decision, uncertainty,
+  evidence, candidate options or option-generation need, assigned officer, and
+  required answer shape. The officer checks modelability first; missing
+  evidence creates evidence work, over-broad requests split, and only an
+  actionable report can feed PM route decision.
+- The user-level global supervisor must be singleton Codex app cron automation.
+  Verify it in the same setup step that creates or repairs heartbeat and
+  watchdog. Reuse one active automation, update one paused singleton to
+  `ACTIVE` when global protection is required, and reject or exit duplicate
+  startup attempts unless a human explicitly forces replacement. The fixed
+  creation shape uses `kind: cron`, `rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds`
+  as one workspace string path, `executionEnvironment: local`,
+  `reasoningEffort: medium`, and `status: ACTIVE`. Each heartbeat refreshes
+  this project's global registration lease. Pause, stop, and completion
+  unregister only the current project; the user-level global supervisor is
+  deleted last only after a locked registry reread confirms no active,
+  unexpired registrations remain.
 - The global supervisor must reread project-local state and watchdog evidence,
   expire terminal/manual-stop records, supersede old route generations, and
   dedupe repeated stale events before recording a reset requirement.
 - The watchdog policy is lifecycle state, not node-local state. Checkpoints,
-  node transitions, route-map refreshes, and visible plan syncs must not
+  node transitions, user-flow-diagram refreshes, and visible plan syncs must not
   recreate, re-register, start, restart, or re-enable the paired watchdog
   automation. Visible command windows during normal node advance indicate a
   lifecycle reset or task configuration bug.
@@ -326,10 +339,12 @@ Keep these failure modes in the model and tests.
 - Before terminal completion, the project manager must rebuild the final
   route-wide gate ledger from the current route, not from the initial route.
   It must account for effective nodes, superseded nodes, child-skill gates,
-  human-review gates, product/process model gates, stale evidence, waivers,
-  blockers, and unresolved items. Completion is blocked until unresolved count
-  is zero, the human-like reviewer has replayed the ledger backward from the
-  final product, and the PM has approved the clean ledger.
+  human-review gates, product/process model gates, generated-resource lineage,
+  stale evidence, waivers, blockers, and unresolved items. Completion is
+  blocked until unresolved count is zero, every generated resource has a
+  consumed/final-output/evidence/superseded/quarantined/discarded disposition,
+  the human-like reviewer has replayed the ledger backward from the final
+  product, and the PM has approved the clean ledger.
 - Child-node sidecar scan is the only formal subagent opportunity gate. Parent
   or module review may not directly spawn subagents or transfer node ownership.
 - Sidecar scope checking must be separate from reuse-or-spawn assignment.

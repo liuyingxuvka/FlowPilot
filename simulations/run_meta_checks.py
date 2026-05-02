@@ -32,6 +32,7 @@ REQUIRED_LABELS = (
     "worker_b_spawned_or_restored",
     "crew_ledger_written",
     "role_identity_protocol_recorded",
+    "pm_flowguard_delegation_policy_recorded",
     "crew_memory_packets_written",
     "startup_self_interrogation_pm_ratified",
     "material_sources_scanned",
@@ -79,9 +80,9 @@ REQUIRED_LABELS = (
     "markdown_summary_synced",
     "execution_frontier_written",
     "codex_plan_synced",
-    "route_mermaid_diagram_refreshed",
-    "visible_route_map_emitted",
-    "heartbeat_health_checked",
+    "user_flow_diagram_refreshed",
+    "visible_user_flow_diagram_emitted",
+    "continuation_resume_ready_checked",
     "heartbeat_loaded_state",
     "heartbeat_loaded_execution_frontier",
     "heartbeat_loaded_crew_memory",
@@ -128,7 +129,7 @@ REQUIRED_LABELS = (
     "composite_backward_review_passed",
     "role_memory_packets_refreshed_after_work",
     "checkpoint_written",
-    "completion_visible_route_map_emitted",
+    "completion_visible_user_flow_diagram_emitted",
     "final_feature_matrix_reviewed",
     "final_acceptance_matrix_reviewed",
     "final_quality_candidate_reviewed",
@@ -145,6 +146,7 @@ REQUIRED_LABELS = (
     "final_route_wide_gate_ledger_child_skill_gates_collected",
     "final_route_wide_gate_ledger_human_review_gates_collected",
     "final_route_wide_gate_ledger_product_process_gates_collected",
+    "final_route_wide_gate_ledger_resource_lineage_resolved",
     "final_route_wide_gate_ledger_stale_evidence_checked",
     "final_route_wide_gate_ledger_superseded_nodes_explained",
     "final_route_wide_gate_ledger_unresolved_count_zero",
@@ -213,7 +215,7 @@ def _state_id(state: model.State) -> str:
         f"{state.product_function_acceptance_matrix_written},"
         f"{state.product_function_architecture_product_officer_approved},"
         f"{state.product_function_architecture_reviewer_challenged}|"
-        f"route_map={state.visible_route_map_emitted}|"
+        f"user_flow={state.visible_user_flow_diagram_emitted}|"
         f"crew={state.crew_policy_written},{state.crew_count},"
         f"{state.project_manager_ready},{state.reviewer_ready},"
         f"{state.process_flowguard_officer_ready},"
@@ -250,7 +252,7 @@ def _state_id(state: model.State) -> str:
         f"{state.visible_plan_has_runway_depth},"
         f"{state.pm_node_decision_recorded}|"
         f"stable_heartbeat={state.stable_heartbeat_launcher_recorded}|"
-        f"heartbeat_check={state.heartbeat_health_checked}|"
+        f"continuation_ready={state.heartbeat_health_checked}|"
         f"external_watchdog={state.external_watchdog_policy_recorded},"
         f"{state.external_watchdog_busy_lease_policy_recorded},"
         f"{state.external_watchdog_automation_created},"
@@ -259,7 +261,6 @@ def _state_id(state: model.State) -> str:
         f"global_supervisor={state.global_watchdog_supervisor_checked},"
         f"{state.global_watchdog_supervisor_singleton_ready},"
         f"{state.global_watchdog_supervisor_cadence_minutes},"
-        f"{state.global_watchdog_supervisor_conversation_quiet},"
         f"{state.lifecycle_reconciliation_done},"
         f"{state.external_watchdog_stopped_before_heartbeat},"
         f"{state.terminal_lifecycle_frontier_written}|"
@@ -336,12 +337,15 @@ def _state_id(state: model.State) -> str:
         f"{state.final_route_wide_gate_ledger_child_skill_gates_collected},"
         f"{state.final_route_wide_gate_ledger_human_review_gates_collected},"
         f"{state.final_route_wide_gate_ledger_product_process_gates_collected},"
+        f"{state.final_route_wide_gate_ledger_resource_lineage_resolved},"
         f"{state.final_route_wide_gate_ledger_stale_evidence_checked},"
         f"{state.final_route_wide_gate_ledger_superseded_nodes_explained},"
         f"{state.final_route_wide_gate_ledger_unresolved_count_zero},"
         f"{state.final_route_wide_gate_ledger_pm_built},"
         f"{state.final_route_wide_gate_ledger_reviewer_backward_checked},"
         f"{state.final_route_wide_gate_ledger_pm_completion_approved}|"
+        f"stop_notice={state.controlled_stop_notice_recorded},"
+        f"{state.terminal_completion_notice_recorded}|"
         f"complete_self_q={state.completion_self_interrogation_done},"
         f"{state.completion_self_interrogation_questions},"
         f"{state.completion_self_interrogation_layer_count},"

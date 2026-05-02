@@ -19,7 +19,7 @@ import json
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +49,8 @@ SOURCE_TIME_FIELDS = (
     "current_time_iso",
 )
 GLOBAL_SCHEMA_VERSION = "flowpilot-global-watchdog/v1"
+GLOBAL_SUPERVISOR_CADENCE_MINUTES = 30
+REGISTRATION_LEASE_MINUTES = GLOBAL_SUPERVISOR_CADENCE_MINUTES * 3
 
 
 @dataclass(frozen=True)
@@ -809,6 +811,15 @@ def write_global_records(
             / f"{_compact_checked_time(str(payload.get('checked_at') or 'unknown'))}-{project_key}.json"
         )
 
+    checked_at = parse_time(payload.get("checked_at")) or utc_now()
+    status = str(payload.get("state", {}).get("status") or "").lower()
+    manual_stop = bool(payload.get("state", {}).get("manual_stop"))
+    registration_active = status in RUNNING_STATUSES and not manual_stop
+    lease_expires_at = (
+        checked_at + timedelta(minutes=REGISTRATION_LEASE_MINUTES)
+        if registration_active
+        else checked_at
+    )
     result: dict[str, Any] = {
         "enabled": True,
         "written": False,
@@ -818,6 +829,10 @@ def write_global_records(
         "registry_path": str(registry_path),
         "event_path": str(event_path) if event_path else None,
         "events_jsonl": str(events_jsonl) if event_needed else None,
+        "global_supervisor_cadence_minutes": GLOBAL_SUPERVISOR_CADENCE_MINUTES,
+        "registration_lease_minutes": REGISTRATION_LEASE_MINUTES,
+        "registration_active": registration_active,
+        "lease_expires_at": isoformat_z(lease_expires_at),
     }
     if dry_run:
         return result
@@ -832,14 +847,24 @@ def write_global_records(
         "status": payload.get("state", {}).get("status"),
         "active_route": payload.get("state", {}).get("active_route"),
         "active_node": payload.get("state", {}).get("active_node"),
+        "route_version": payload.get("state", {}).get("route_version"),
+        "frontier_version": payload.get("state", {}).get("frontier_version"),
+        "last_heartbeat": payload.get("state", {}).get("last_heartbeat"),
         "latest_local_watchdog": local_record.get("latest_path"),
         "latest_global_watchdog": str(latest_path),
         "last_decision": payload.get("decision"),
         "last_checked_at": payload.get("checked_at"),
         "heartbeat_automation_id": payload.get("automation", {}).get("official_reset", {}).get("automation_id"),
-        "manual_stop": payload.get("state", {}).get("manual_stop"),
-        "registration_active": payload.get("state", {}).get("status") in RUNNING_STATUSES,
+        "manual_stop": manual_stop,
+        "registration_active": registration_active,
+        "registration_refreshed_at": payload.get("checked_at"),
+        "lease_minutes": REGISTRATION_LEASE_MINUTES,
+        "lease_expires_at": isoformat_z(lease_expires_at),
+        "global_supervisor_required": registration_active,
     }
+    if not registration_active:
+        registry["projects"][project_key]["unregistered_at"] = payload.get("checked_at")
+        registry["projects"][project_key]["unregister_reason"] = payload.get("decision")
     event["global_record"] = result
     write_json_atomic(latest_path, event)
     write_json_atomic(registry_path, registry)
@@ -1102,7 +1127,7 @@ def build_payload(args: argparse.Namespace) -> tuple[dict[str, Any], bool, bool]
             "hidden_noninteractive": bool(args.watchdog_hidden_noninteractive),
             "visible_window_risk": bool(args.watchdog_visible_window_risk),
             "stop_before_heartbeat": True,
-            "terminal_shutdown_order": "stop or delete watchdog automation first, then stop or delete heartbeat automation",
+            "terminal_shutdown_order": "write terminal state and unregister project global registration first; stop/delete project watchdog; then stop/delete heartbeat; delete user-level global supervisor last only after the registry has no active registrations",
         },
         "heartbeat": {
             "heartbeat_id": heartbeat.heartbeat_id,

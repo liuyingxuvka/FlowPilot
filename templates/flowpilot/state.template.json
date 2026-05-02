@@ -15,6 +15,15 @@
     "evidence_path": "<path-or-null>",
     "unattended_recovery_claim_allowed": false
   },
+  "controlled_stop_notice": {
+    "required_when_nonterminal": true,
+    "route_complete": false,
+    "checkpoint_saved": false,
+    "can_wait_for_heartbeat": false,
+    "manual_resume_prompt": "continue FlowPilot",
+    "notice_text": "<complete-message-or-nonterminal-resume-message>",
+    "last_written_at": "<iso-8601-timestamp-or-null>"
+  },
   "mode": "full-auto",
   "crew_ledger": ".flowpilot/crew_ledger.json",
   "crew_memory_root": ".flowpilot/crew_memory",

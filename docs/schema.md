@@ -133,6 +133,11 @@ The frontier records:
 - current mainline node list;
 - next node and fallback node;
 - current chunk and next chunk;
+- user flow diagram metadata: enabled display mode, render policy, highlighted
+  current stage, source route/frontier paths, generated Mermaid path, rendered
+  route/frontier versions, and staleness after route mutation;
+- debug FlowGuard Mermaid metadata, which defaults to disabled and on-request
+  only;
 - host continuation decision: automated, manual-resume, blocked, or unknown;
 - latest PM completion runway, including current gate, downstream steps,
   hard-stop conditions, checkpoint cadence, plan replacement status, and any
@@ -149,7 +154,7 @@ The frontier records:
   count, reviewer backward check path, PM ledger approval path, and whether
   completion is allowed;
 - whether the current node is unfinished;
-- the concrete `current_subnode` or `next_gate` that the next heartbeat must
+- the concrete `current_subnode` or `next_gate` that the next continuation turn must
   execute while the node is unfinished;
 - current-node completion status, required evidence, evidence paths, and
   `advance_allowed`;
@@ -162,6 +167,10 @@ The frontier records:
 - stable heartbeat launcher metadata when automated continuation is supported;
 - paired watchdog lifecycle metadata when automated continuation is supported,
   or manual-resume no-automation evidence when unsupported;
+- controlled-stop and completion notice metadata: whether the current route is
+  complete, whether a resume notice must be shown on controlled nonterminal
+  stop, whether heartbeat wakeup can be waited for, and the exact manual resume
+  prompt;
 - update timestamp.
 
 If the route structure changes, FlowPilot writes a new route version, reruns
@@ -174,12 +183,19 @@ unless the host continuation itself needs repair.
 
 `next_node` is not executable while `unfinished_current_node` is true or
 `current_node_completion.advance_allowed` is false. In that state, the next
-heartbeat or manual-resume turn resumes `active_node`, obtains a PM completion
-runway, replaces the visible plan projection from that runway, selects the persisted
-`current_subnode` or `next_gate`, and must execute at least that gate when it
-is executable before continuing along the runway. A continuation record that
-only says "continue to next gate" without an executed gate or blocker is
-invalid no-progress evidence.
+continuation turn, whether automated heartbeat or manual resume, resumes
+`active_node`, obtains a PM completion runway, replaces the visible plan
+projection from that runway, selects the persisted `current_subnode` or
+`next_gate`, and must execute at least that gate when it is executable before
+continuing along the runway. A continuation record that only says "continue to
+next gate" without an executed gate or blocker is invalid no-progress evidence.
+
+On any controlled stop before terminal completion, the frontier or heartbeat
+record stores a `controlled_stop_notice` packet. Automated mode may set
+`can_wait_for_heartbeat` true and include both heartbeat and manual resume
+instructions. `manual-resume` mode sets `can_wait_for_heartbeat` false and
+instructs the user to type `continue FlowPilot`. Terminal completion stores a
+completion notice instead of a resume prompt.
 
 The execution frontier stores the native plan sync status separately from the
 PM runway evidence. `synced_to_visible_plan` requires either native plan tool
@@ -210,9 +226,12 @@ The ledger records:
 - current-route scan and effective-node resolution status;
 - child-skill, human-review, product-model, process-model, verification,
   lifecycle, and completion gate entries;
+- generated-resource lineage for concept images, visual assets, screenshots,
+  route diagrams, model reports, and other generated artifacts;
 - required approver, approval status, evidence paths, waiver reasons, blocked
   reasons, superseded-by links, and unresolved reasons for each entry;
-- stale evidence count and unresolved count;
+- stale evidence count, generated-resource count, unresolved-resource count,
+  and unresolved count;
 - human-like reviewer backward-check evidence path;
 - PM ledger approval evidence path;
 - `completion_allowed`.

@@ -32,6 +32,7 @@ REQUIRED_LABELS = (
     "worker_b_spawned_or_restored",
     "crew_ledger_written",
     "role_identity_protocol_recorded",
+    "pm_flowguard_delegation_policy_recorded",
     "crew_memory_packets_written",
     "self_interrogation_pm_ratified",
     "material_sources_scanned",
@@ -89,8 +90,8 @@ REQUIRED_LABELS = (
     "capability_evidence_synced",
     "execution_frontier_written",
     "codex_plan_synced",
-    "capability_route_mermaid_diagram_refreshed",
-    "capability_route_map_emitted",
+    "capability_user_flow_diagram_refreshed",
+    "capability_user_flow_diagram_emitted",
     "heartbeat_loaded_state",
     "heartbeat_loaded_execution_frontier",
     "heartbeat_loaded_crew_memory",
@@ -99,7 +100,7 @@ REQUIRED_LABELS = (
     "heartbeat_asked_project_manager",
     "pm_resume_completion_runway_recorded",
     "pm_runway_synced_to_visible_plan",
-    "heartbeat_health_checked",
+    "continuation_resume_ready_checked",
     "pm_capability_work_decision_recorded",
     "child_skill_node_gate_manifest_refined",
     "child_skill_gate_authority_records_written",
@@ -161,7 +162,7 @@ REQUIRED_LABELS = (
     "capability_route_updated_to_rebuild_child_subtree",
     "capability_backward_review_passed",
     "child_skill_completion_verified",
-    "completion_visible_route_map_emitted",
+    "completion_visible_user_flow_diagram_emitted",
     "final_feature_matrix_reviewed",
     "final_acceptance_matrix_reviewed",
     "final_quality_candidate_reviewed",
@@ -178,6 +179,7 @@ REQUIRED_LABELS = (
     "final_route_wide_gate_ledger_child_skill_gates_collected",
     "final_route_wide_gate_ledger_human_review_gates_collected",
     "final_route_wide_gate_ledger_product_process_gates_collected",
+    "final_route_wide_gate_ledger_resource_lineage_resolved",
     "final_route_wide_gate_ledger_stale_evidence_checked",
     "final_route_wide_gate_ledger_superseded_nodes_explained",
     "final_route_wide_gate_ledger_unresolved_count_zero",
@@ -283,7 +285,7 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_runway_synced_to_plan},"
         f"{state.plan_sync_method_recorded},"
         f"{state.visible_plan_has_runway_depth},"
-        f"{state.heartbeat_health_checked},"
+        f"continuation_ready={state.heartbeat_health_checked},"
         f"{state.pm_capability_work_decision_recorded}|"
         f"external_watchdog={state.external_watchdog_policy_recorded},"
         f"{state.external_watchdog_busy_lease_policy_recorded},"
@@ -293,7 +295,6 @@ def _state_id(state: model.State) -> str:
         f"global_supervisor={state.global_watchdog_supervisor_checked},"
         f"{state.global_watchdog_supervisor_singleton_ready},"
         f"{state.global_watchdog_supervisor_cadence_minutes},"
-        f"{state.global_watchdog_supervisor_conversation_quiet},"
         f"{state.lifecycle_reconciliation_done},"
         f"{state.external_watchdog_stopped_before_heartbeat},"
         f"{state.terminal_lifecycle_frontier_written}|"
@@ -307,7 +308,7 @@ def _state_id(state: model.State) -> str:
         f"evidence={state.capability_evidence_synced}|"
         f"frontier={state.execution_frontier_written}:{state.frontier_version}|"
         f"plan={state.codex_plan_synced}:{state.plan_version}|"
-        f"route_map={state.capability_route_map_emitted}|"
+        f"user_flow={state.capability_user_flow_diagram_emitted}|"
         f"sidecar={state.child_node_sidecar_scan_done},"
         f"{state.sidecar_need},{state.subagent_pool_exists},"
         f"{state.subagent_idle_available},{state.subagent_scope_checked}|"
@@ -351,7 +352,7 @@ def _state_id(state: model.State) -> str:
         f"{state.ui_divergence_review_done},"
         f"{state.ui_visual_iteration_loop_closed},{state.ui_visual_iterations}|"
         f"nonui={state.non_ui_implemented}|final={state.final_verification_done}|"
-        f"complete_map={state.completion_visible_route_map_emitted}|"
+        f"complete_user_flow={state.completion_visible_user_flow_diagram_emitted}|"
         f"final_reviews={state.final_feature_matrix_review_done},"
         f"{state.final_acceptance_matrix_review_done},"
         f"{state.final_quality_candidate_review_done},"
@@ -368,12 +369,15 @@ def _state_id(state: model.State) -> str:
         f"{state.final_route_wide_gate_ledger_child_skill_gates_collected},"
         f"{state.final_route_wide_gate_ledger_human_review_gates_collected},"
         f"{state.final_route_wide_gate_ledger_product_process_gates_collected},"
+        f"{state.final_route_wide_gate_ledger_resource_lineage_resolved},"
         f"{state.final_route_wide_gate_ledger_stale_evidence_checked},"
         f"{state.final_route_wide_gate_ledger_superseded_nodes_explained},"
         f"{state.final_route_wide_gate_ledger_unresolved_count_zero},"
         f"{state.final_route_wide_gate_ledger_pm_built},"
         f"{state.final_route_wide_gate_ledger_reviewer_backward_checked},"
         f"{state.final_route_wide_gate_ledger_pm_completion_approved}|"
+        f"stop_notice={state.controlled_stop_notice_recorded},"
+        f"{state.terminal_completion_notice_recorded}|"
         f"complete_self={state.completion_self_interrogation_done},"
         f"{state.completion_self_interrogation_questions},"
         f"{state.completion_self_interrogation_layer_count},"

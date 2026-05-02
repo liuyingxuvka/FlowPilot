@@ -105,6 +105,7 @@ class State:
     worker_b_ready: bool = False
     crew_ledger_written: bool = False
     role_identity_protocol_recorded: bool = False
+    pm_flowguard_delegation_policy_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
     pm_initial_capability_decision_recorded: bool = False
@@ -174,10 +175,11 @@ class State:
     global_watchdog_supervisor_checked: bool = False
     global_watchdog_supervisor_singleton_ready: bool = False
     global_watchdog_supervisor_cadence_minutes: int = 0
-    global_watchdog_supervisor_conversation_quiet: bool = False
     external_watchdog_stopped_before_heartbeat: bool = False
     terminal_lifecycle_frontier_written: bool = False
     lifecycle_reconciliation_done: bool = False
+    controlled_stop_notice_recorded: bool = False
+    terminal_completion_notice_recorded: bool = False
     flowguard_process_design_done: bool = False
     meta_route_checked: bool = False
     meta_route_process_officer_approved: bool = False
@@ -236,7 +238,7 @@ class State:
     completion_self_interrogation_layer_count: int = 0
     completion_self_interrogation_questions_per_layer: int = 0
     completion_self_interrogation_layers: int = 0
-    completion_visible_route_map_emitted: bool = False
+    completion_visible_user_flow_diagram_emitted: bool = False
     final_feature_matrix_review_done: bool = False
     final_acceptance_matrix_review_done: bool = False
     final_quality_candidate_review_done: bool = False
@@ -252,6 +254,7 @@ class State:
     final_route_wide_gate_ledger_child_skill_gates_collected: bool = False
     final_route_wide_gate_ledger_human_review_gates_collected: bool = False
     final_route_wide_gate_ledger_product_process_gates_collected: bool = False
+    final_route_wide_gate_ledger_resource_lineage_resolved: bool = False
     final_route_wide_gate_ledger_stale_evidence_checked: bool = False
     final_route_wide_gate_ledger_superseded_nodes_explained: bool = False
     final_route_wide_gate_ledger_unresolved_count_zero: bool = False
@@ -277,8 +280,8 @@ class State:
     codex_plan_synced: bool = False
     frontier_version: int = 0
     plan_version: int = 0
-    capability_route_mermaid_diagram_refreshed: bool = False
-    capability_route_map_emitted: bool = False
+    capability_user_flow_diagram_refreshed: bool = False
+    capability_user_flow_diagram_emitted: bool = False
 
 
 def _step(state: State, *, label: str, action: str, **changes) -> FunctionResult:
@@ -334,6 +337,7 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_child_skill_gates_collected": False,
         "final_route_wide_gate_ledger_human_review_gates_collected": False,
         "final_route_wide_gate_ledger_product_process_gates_collected": False,
+        "final_route_wide_gate_ledger_resource_lineage_resolved": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
@@ -388,8 +392,8 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "codex_plan_synced": False,
         "frontier_version": 0,
         "plan_version": 0,
-        "capability_route_mermaid_diagram_refreshed": False,
-        "capability_route_map_emitted": False,
+        "capability_user_flow_diagram_refreshed": False,
+        "capability_user_flow_diagram_emitted": False,
         "heartbeat_health_checked": False,
         "final_verification_done": False,
         "child_skill_route_design_discovery_started": False,
@@ -515,6 +519,7 @@ def _crew_ready(state: State) -> bool:
         and state.worker_b_ready
         and state.crew_ledger_written
         and state.role_identity_protocol_recorded
+        and state.pm_flowguard_delegation_policy_recorded
         and state.crew_memory_policy_written
         and state.crew_memory_packets_written == CREW_SIZE
     )
@@ -535,8 +540,7 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.external_watchdog_hidden_noninteractive_configured
         and state.global_watchdog_supervisor_checked
         and state.global_watchdog_supervisor_singleton_ready
-        and state.global_watchdog_supervisor_cadence_minutes == 10
-        and state.global_watchdog_supervisor_conversation_quiet
+        and state.global_watchdog_supervisor_cadence_minutes == 30
     )
 
 
@@ -565,7 +569,6 @@ def _manual_resume_ready(state: State) -> bool:
         and not state.global_watchdog_supervisor_checked
         and not state.global_watchdog_supervisor_singleton_ready
         and state.global_watchdog_supervisor_cadence_minutes == 0
-        and not state.global_watchdog_supervisor_conversation_quiet
     )
 
 
@@ -609,6 +612,7 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
+        and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
@@ -677,8 +681,8 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.codex_plan_synced
         and state.frontier_version == state.capability_route_version
         and state.plan_version == state.frontier_version
-        and state.capability_route_mermaid_diagram_refreshed
-        and state.capability_route_map_emitted
+        and state.capability_user_flow_diagram_refreshed
+        and state.capability_user_flow_diagram_emitted
     )
 
 
@@ -734,8 +738,8 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.codex_plan_synced
         and state.frontier_version == state.capability_route_version
         and state.plan_version == state.frontier_version
-        and state.capability_route_mermaid_diagram_refreshed
-        and state.capability_route_map_emitted
+        and state.capability_user_flow_diagram_refreshed
+        and state.capability_user_flow_diagram_emitted
     )
 
 
@@ -791,8 +795,8 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.codex_plan_synced
         and state.frontier_version == state.capability_route_version
         and state.plan_version == state.frontier_version
-        and state.capability_route_mermaid_diagram_refreshed
-        and state.capability_route_map_emitted
+        and state.capability_user_flow_diagram_refreshed
+        and state.capability_user_flow_diagram_emitted
     )
 
 
@@ -923,6 +927,14 @@ def _final_route_wide_gate_ledger_steps(
             final_route_wide_gate_ledger_product_process_gates_collected=True,
         )
         return
+    if not state.final_route_wide_gate_ledger_resource_lineage_resolved:
+        yield _step(
+            state,
+            label="final_route_wide_gate_ledger_resource_lineage_resolved",
+            action=f"PM resolves generated-resource lineage for {domain}: consumed, final-output, evidence, superseded, quarantined, or intentionally discarded",
+            final_route_wide_gate_ledger_resource_lineage_resolved=True,
+        )
+        return
     if not state.final_route_wide_gate_ledger_stale_evidence_checked:
         yield _step(
             state,
@@ -1020,6 +1032,7 @@ class CapabilityRouterStep:
         "worker_b_ready",
         "crew_ledger_written",
         "role_identity_protocol_recorded",
+        "pm_flowguard_delegation_policy_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
         "pm_initial_capability_decision_recorded",
@@ -1086,10 +1099,11 @@ class CapabilityRouterStep:
         "global_watchdog_supervisor_checked",
         "global_watchdog_supervisor_singleton_ready",
         "global_watchdog_supervisor_cadence_minutes",
-        "global_watchdog_supervisor_conversation_quiet",
         "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
+        "controlled_stop_notice_recorded",
+        "terminal_completion_notice_recorded",
         "flowguard_process_design_done",
         "meta_route_checked",
         "capability_route_checked",
@@ -1102,8 +1116,8 @@ class CapabilityRouterStep:
         "codex_plan_synced",
         "frontier_version",
         "plan_version",
-        "capability_route_mermaid_diagram_refreshed",
-        "capability_route_map_emitted",
+        "capability_user_flow_diagram_refreshed",
+        "capability_user_flow_diagram_emitted",
         "ui_concept_done",
         "ui_concept_target_ready",
         "ui_concept_target_visible",
@@ -1146,7 +1160,7 @@ class CapabilityRouterStep:
         "completion_self_interrogation_layer_count",
         "completion_self_interrogation_questions_per_layer",
         "completion_self_interrogation_layers",
-        "completion_visible_route_map_emitted",
+        "completion_visible_user_flow_diagram_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
         "final_quality_candidate_review_done",
@@ -1162,6 +1176,7 @@ class CapabilityRouterStep:
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
+        "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
@@ -1222,6 +1237,7 @@ class CapabilityRouterStep:
         "worker_b_ready",
         "crew_ledger_written",
         "role_identity_protocol_recorded",
+        "pm_flowguard_delegation_policy_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
         "pm_initial_capability_decision_recorded",
@@ -1285,10 +1301,11 @@ class CapabilityRouterStep:
         "global_watchdog_supervisor_checked",
         "global_watchdog_supervisor_singleton_ready",
         "global_watchdog_supervisor_cadence_minutes",
-        "global_watchdog_supervisor_conversation_quiet",
         "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
+        "controlled_stop_notice_recorded",
+        "terminal_completion_notice_recorded",
         "flowguard_process_design_done",
         "meta_route_checked",
         "meta_route_process_officer_approved",
@@ -1344,7 +1361,7 @@ class CapabilityRouterStep:
         "completion_self_interrogation_layer_count",
         "completion_self_interrogation_questions_per_layer",
         "completion_self_interrogation_layers",
-        "completion_visible_route_map_emitted",
+        "completion_visible_user_flow_diagram_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
         "final_quality_candidate_review_done",
@@ -1360,6 +1377,7 @@ class CapabilityRouterStep:
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
+        "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
@@ -1369,6 +1387,8 @@ class CapabilityRouterStep:
         "high_value_work_review",
         "standard_expansions",
         "pm_completion_decision_recorded",
+        "controlled_stop_notice_recorded",
+        "terminal_completion_notice_recorded",
         "child_node_sidecar_scan_done",
         "sidecar_need",
         "subagent_pool_exists",
@@ -1382,8 +1402,8 @@ class CapabilityRouterStep:
         "codex_plan_synced",
         "frontier_version",
         "plan_version",
-        "capability_route_mermaid_diagram_refreshed",
-        "capability_route_map_emitted",
+        "capability_user_flow_diagram_refreshed",
+        "capability_user_flow_diagram_emitted",
     )
     accepted_input_type = Tick
     input_description = "one autopilot capability-routing decision"
@@ -1546,6 +1566,15 @@ class CapabilityRouterStep:
                 label="role_identity_protocol_recorded",
                 action="record distinct role_key, display_name, and diagnostic-only agent_id fields before capability work",
                 role_identity_protocol_recorded=True,
+            )
+            return
+
+        if not state.pm_flowguard_delegation_policy_recorded:
+            yield _step(
+                state,
+                label="pm_flowguard_delegation_policy_recorded",
+                action="record that the project manager may create structured FlowGuard modeling requests for uncertain capability, process, product, or object decisions and assign them to the process or product FlowGuard officer",
+                pm_flowguard_delegation_policy_recorded=True,
             )
             return
 
@@ -2007,11 +2036,10 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="global_watchdog_supervisor_verified",
-                action="look up the singleton Codex global watchdog supervisor; reuse or create a quiet thread-bound heartbeat supervisor by default, and do not create a high-frequency cron unless the user explicitly accepts new conversation noise",
+                action="look up the singleton Codex global watchdog supervisor; if none is active and at least one project registration lease is active, create or reactivate exactly one fixed 30-minute cron automation using the canonical automation_update parameter shape",
                 global_watchdog_supervisor_checked=True,
                 global_watchdog_supervisor_singleton_ready=True,
-                global_watchdog_supervisor_cadence_minutes=10,
-                global_watchdog_supervisor_conversation_quiet=True,
+                global_watchdog_supervisor_cadence_minutes=30,
             )
             return
 
@@ -2104,12 +2132,12 @@ class CapabilityRouterStep:
             )
             return
 
-        if not state.capability_route_mermaid_diagram_refreshed:
+        if not state.capability_user_flow_diagram_refreshed:
             yield _step(
                 state,
-                label="capability_route_mermaid_diagram_refreshed",
-                action="refresh canonical Mermaid route map from checked capability route and execution frontier before chat or UI display",
-                capability_route_mermaid_diagram_refreshed=True,
+                label="capability_user_flow_diagram_refreshed",
+                action="refresh single user flow diagram from checked capability route and execution frontier before chat or UI display",
+                capability_user_flow_diagram_refreshed=True,
             )
             return
 
@@ -2121,14 +2149,14 @@ class CapabilityRouterStep:
             and state.codex_plan_synced
             and state.frontier_version == state.capability_route_version
             and state.plan_version == state.frontier_version
-            and state.capability_route_mermaid_diagram_refreshed
-            and not state.capability_route_map_emitted
+            and state.capability_user_flow_diagram_refreshed
+            and not state.capability_user_flow_diagram_emitted
         ):
             yield _step(
                 state,
-                label="capability_route_map_emitted",
-                action="emit visible capability route map with next gates, checks, and fallback branches",
-                capability_route_map_emitted=True,
+                label="capability_user_flow_diagram_emitted",
+                action="emit visible capability user flow diagram with next gates, checks, and fallback branches",
+                capability_user_flow_diagram_emitted=True,
             )
             return
 
@@ -2190,7 +2218,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_loaded_state",
-                action="heartbeat loads local state, active route, capability evidence, watchdog evidence, lifecycle evidence, and crew ledger",
+                action="continuation turn loads local state, active route, capability evidence, latest heartbeat or manual-resume evidence, watchdog evidence when present, lifecycle evidence, and crew ledger",
                 heartbeat_loaded_state=True,
             )
             return
@@ -2199,7 +2227,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_loaded_execution_frontier",
-                action="heartbeat loads execution_frontier.json before selecting capability work",
+                action="continuation turn loads execution_frontier.json before selecting capability work",
                 heartbeat_loaded_frontier=True,
             )
             return
@@ -2208,7 +2236,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_loaded_crew_memory",
-                action="heartbeat loads all six compact role memory packets before restoring or replacing crew roles",
+                action="continuation turn loads all six compact role memory packets before restoring or replacing crew roles",
                 heartbeat_loaded_crew_memory=True,
             )
             return
@@ -2217,7 +2245,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_restored_six_agent_crew",
-                action="heartbeat restores live crew roles when available and prepares memory-seeded replacements otherwise",
+                action="continuation turn restores live crew roles when available and prepares memory-seeded replacements otherwise",
                 heartbeat_restored_crew=True,
                 replacement_roles_seeded_from_memory=True,
             )
@@ -2236,7 +2264,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_asked_project_manager",
-                action="heartbeat asks the project manager what capability gate to run next",
+                action="continuation turn asks the project manager what capability gate to run next",
                 heartbeat_pm_decision_requested=True,
             )
             return
@@ -2267,8 +2295,8 @@ class CapabilityRouterStep:
         if _route_scaffold_ready(state) and not state.heartbeat_health_checked:
             yield _step(
                 state,
-                label="heartbeat_health_checked",
-                action="verify continuation heartbeat before capability work",
+                label="continuation_resume_ready_checked",
+                action="check automated heartbeat health when supported, or check manual-resume state/frontier/crew-memory readiness when no real wakeup exists",
                 heartbeat_health_checked=True,
             )
             return
@@ -2398,8 +2426,9 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="blocked_unready_capability_state",
-                action="block because capability state is not ready for implementation",
+                action="block because capability state is not ready for implementation and emit a nonterminal resume notice",
                 status="blocked",
+                controlled_stop_notice_recorded=True,
             )
             return
 
@@ -2441,8 +2470,8 @@ class CapabilityRouterStep:
                     codex_plan_synced=False,
                     frontier_version=0,
                     plan_version=0,
-                    capability_route_mermaid_diagram_refreshed=False,
-                    capability_route_map_emitted=False,
+                    capability_user_flow_diagram_refreshed=False,
+                    capability_user_flow_diagram_emitted=False,
                     child_skill_route_design_discovery_started=False,
                     child_skill_initial_gate_manifest_extracted=False,
                     child_skill_gate_approvers_assigned=False,
@@ -2616,12 +2645,12 @@ class CapabilityRouterStep:
                     child_skill_completion_verified=True,
                 )
                 return
-            if not state.completion_visible_route_map_emitted:
+            if not state.completion_visible_user_flow_diagram_emitted:
                 yield _step(
                     state,
-                    label="completion_visible_route_map_emitted",
-                    action="emit visible completion route map before backend route close",
-                    completion_visible_route_map_emitted=True,
+                    label="completion_visible_user_flow_diagram_emitted",
+                    action="emit visible completion user flow diagram before backend route close",
+                    completion_visible_user_flow_diagram_emitted=True,
                 )
                 return
             if not state.final_feature_matrix_review_done:
@@ -2721,8 +2750,8 @@ class CapabilityRouterStep:
                         codex_plan_synced=False,
                         frontier_version=0,
                         plan_version=0,
-                        capability_route_mermaid_diagram_refreshed=False,
-                        capability_route_map_emitted=False,
+                        capability_user_flow_diagram_refreshed=False,
+                        capability_user_flow_diagram_emitted=False,
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
                         child_skill_gate_approvers_assigned=False,
@@ -2762,7 +2791,7 @@ class CapabilityRouterStep:
                         completion_self_interrogation_layer_count=0,
                         completion_self_interrogation_questions_per_layer=0,
                         completion_self_interrogation_layers=0,
-                        completion_visible_route_map_emitted=False,
+                        completion_visible_user_flow_diagram_emitted=False,
                         final_feature_matrix_review_done=False,
                         final_acceptance_matrix_review_done=False,
                         final_quality_candidate_review_done=False,
@@ -2838,8 +2867,9 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="completed",
-                action="complete backend project route",
+                action="complete backend project route and emit terminal completion notice",
                 status="complete",
+                terminal_completion_notice_recorded=True,
             )
             return
 
@@ -3170,12 +3200,12 @@ class CapabilityRouterStep:
                     child_skill_completion_verified=True,
                 )
                 return
-            if not state.completion_visible_route_map_emitted:
+            if not state.completion_visible_user_flow_diagram_emitted:
                 yield _step(
                     state,
-                    label="completion_visible_route_map_emitted",
-                    action="emit visible completion route map before UI route close",
-                    completion_visible_route_map_emitted=True,
+                    label="completion_visible_user_flow_diagram_emitted",
+                    action="emit visible completion user flow diagram before UI route close",
+                    completion_visible_user_flow_diagram_emitted=True,
                 )
                 return
             if not state.final_feature_matrix_review_done:
@@ -3275,8 +3305,8 @@ class CapabilityRouterStep:
                         codex_plan_synced=False,
                         frontier_version=0,
                         plan_version=0,
-                        capability_route_mermaid_diagram_refreshed=False,
-                        capability_route_map_emitted=False,
+                        capability_user_flow_diagram_refreshed=False,
+                        capability_user_flow_diagram_emitted=False,
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
                         child_skill_gate_approvers_assigned=False,
@@ -3331,7 +3361,7 @@ class CapabilityRouterStep:
                         completion_self_interrogation_layer_count=0,
                         completion_self_interrogation_questions_per_layer=0,
                         completion_self_interrogation_layers=0,
-                        completion_visible_route_map_emitted=False,
+                        completion_visible_user_flow_diagram_emitted=False,
                         final_feature_matrix_review_done=False,
                         final_acceptance_matrix_review_done=False,
                         final_quality_candidate_review_done=False,
@@ -3407,16 +3437,18 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="completed",
-                action="complete UI project route",
+                action="complete UI project route and emit terminal completion notice",
                 status="complete",
+                terminal_completion_notice_recorded=True,
             )
             return
 
         yield _step(
             state,
             label="blocked_unknown_task_kind",
-            action="block because task kind is unknown",
+            action="block because task kind is unknown and emit a nonterminal resume notice",
             status="blocked",
+            controlled_stop_notice_recorded=True,
         )
 
 
@@ -3485,7 +3517,7 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             and state.child_skill_gate_authority_records_written
         ):
             return InvariantResult.fail(
-                "implementation started before heartbeat loaded role memory, rehydrated the crew, synced the PM completion runway into a sufficiently deep visible plan, and wrote node-level child-skill gate authority records"
+                "implementation started before continuation loaded role memory, rehydrated the crew, synced the PM completion runway into a sufficiently deep visible plan, and wrote node-level child-skill gate authority records"
             )
         if not (
             state.quality_package_done
@@ -3499,6 +3531,23 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
     return InvariantResult.pass_()
 
 
+def controlled_stop_notice_required(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status == "blocked" and not state.controlled_stop_notice_recorded:
+        return InvariantResult.fail(
+            "controlled nonterminal capability stop reached blocked state without a resume notice"
+        )
+    if state.status == "complete" and not state.terminal_completion_notice_recorded:
+        return InvariantResult.fail(
+            "terminal capability completion reached complete state without a completion notice"
+        )
+    if state.controlled_stop_notice_recorded and state.status == "complete":
+        return InvariantResult.fail(
+            "nonterminal resume notice was recorded on a completed capability route"
+        )
+    return InvariantResult.pass_()
+
+
 def dependency_plan_before_route_or_implementation(
     state: State, trace
 ) -> InvariantResult:
@@ -3509,12 +3558,12 @@ def dependency_plan_before_route_or_implementation(
         or state.capability_evidence_synced
         or state.execution_frontier_written
         or state.codex_plan_synced
-        or state.capability_route_map_emitted
+        or state.capability_user_flow_diagram_emitted
         or state.quality_package_done
         or state.non_ui_implemented
         or state.ui_implemented
         or state.final_verification_done
-        or state.completion_visible_route_map_emitted
+        or state.completion_visible_user_flow_diagram_emitted
         or state.final_feature_matrix_review_done
         or state.final_acceptance_matrix_review_done
         or state.final_quality_candidate_review_done
@@ -3548,12 +3597,12 @@ def child_skill_fidelity_before_capability_work(
         or state.capability_evidence_synced
         or state.execution_frontier_written
         or state.codex_plan_synced
-        or state.capability_route_map_emitted
+        or state.capability_user_flow_diagram_emitted
         or state.quality_package_done
         or state.non_ui_implemented
         or state.ui_implemented
         or state.final_verification_done
-        or state.completion_visible_route_map_emitted
+        or state.completion_visible_user_flow_diagram_emitted
         or state.completion_self_interrogation_done
         or state.high_value_work_review == "exhausted"
         or state.status == "complete"
@@ -3591,7 +3640,7 @@ def child_skill_fidelity_before_capability_work(
         or state.ui_implemented
         or state.child_skill_execution_evidence_audited
         or state.final_verification_done
-        or state.completion_visible_route_map_emitted
+        or state.completion_visible_user_flow_diagram_emitted
         or state.status == "complete"
     )
     if node_child_skill_work_started and not (
@@ -3602,7 +3651,7 @@ def child_skill_fidelity_before_capability_work(
             "node child-skill work started before PM node-level gate-manifest refinement and execution-frontier authority records"
         )
     completion_closure_started = (
-        state.completion_visible_route_map_emitted
+        state.completion_visible_user_flow_diagram_emitted
         or state.completion_self_interrogation_done
         or state.high_value_work_review == "exhausted"
         or state.status == "complete"
@@ -3777,9 +3826,9 @@ def capability_route_updates_force_recheck_and_resync(
     state: State, trace
 ) -> InvariantResult:
     del trace
-    if state.capability_route_map_emitted and not state.capability_route_mermaid_diagram_refreshed:
+    if state.capability_user_flow_diagram_emitted and not state.capability_user_flow_diagram_refreshed:
         return InvariantResult.fail(
-            "capability route map emitted before refreshing the canonical Mermaid route diagram"
+            "capability user flow diagram emitted before refreshing the current user flow diagram"
         )
     if state.capability_structural_route_repairs > state.pm_repair_decision_interrogations:
         return InvariantResult.fail(
@@ -3793,8 +3842,8 @@ def capability_route_updates_force_recheck_and_resync(
             and state.codex_plan_synced
             and state.frontier_version == state.capability_route_version
             and state.plan_version == state.frontier_version
-            and state.capability_route_mermaid_diagram_refreshed
-            and state.capability_route_map_emitted
+            and state.capability_user_flow_diagram_refreshed
+            and state.capability_user_flow_diagram_emitted
         ):
             return InvariantResult.fail(
                 "capability route update was not checked, product-modeled, evidence-synced, frontier-synced, plan-synced, and visibly mapped before work"
@@ -3840,7 +3889,6 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
         or state.global_watchdog_supervisor_checked
         or state.global_watchdog_supervisor_singleton_ready
         or state.global_watchdog_supervisor_cadence_minutes != 0
-        or state.global_watchdog_supervisor_conversation_quiet
     )
     if state.manual_resume_mode_recorded and automation_bits:
         return InvariantResult.fail(
@@ -3913,12 +3961,11 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
         and not (
             state.global_watchdog_supervisor_checked
             and state.global_watchdog_supervisor_singleton_ready
-            and state.global_watchdog_supervisor_cadence_minutes == 10
-            and state.global_watchdog_supervisor_conversation_quiet
+            and state.global_watchdog_supervisor_cadence_minutes == 30
         )
     ):
         return InvariantResult.fail(
-            "active external watchdog automation lacks a verified quiet singleton Codex global supervisor during capability routing"
+            "active external watchdog automation lacks verified singleton Codex global supervisor at fixed 30-minute cadence during capability routing"
         )
     return InvariantResult.pass_()
 
@@ -4064,8 +4111,8 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
         and state.high_value_work_review == "exhausted"
     ):
         return InvariantResult.fail("completed before completion grill-me exhausted obvious high-value work")
-    if not state.completion_visible_route_map_emitted:
-        return InvariantResult.fail("completed before visible completion route map")
+    if not state.completion_visible_user_flow_diagram_emitted:
+        return InvariantResult.fail("completed before visible completion user flow diagram")
     if not _full_interrogation_ready(
         total_questions=state.completion_self_interrogation_questions,
         layer_count=state.completion_self_interrogation_layer_count,
@@ -4316,12 +4363,13 @@ def actor_authority_gates_require_correct_role(
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
+        and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "PM built final route-wide capability gate ledger before current route scan, gate collection, stale-evidence check, superseded explanations, and zero unresolved count"
+            "PM built final route-wide capability gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, and zero unresolved count"
         )
     if state.final_route_wide_gate_ledger_reviewer_backward_checked and not (
         state.final_route_wide_gate_ledger_pm_built
@@ -4395,13 +4443,18 @@ INVARIANTS = (
     ),
     Invariant(
         name="implementation_requires_flowguard_gates",
-        description="Formal implementation requires FlowGuard dependency, heartbeat, meta-route, and capability-route checks.",
+        description="Formal implementation requires FlowGuard dependency, continuation readiness, meta-route, and capability-route checks.",
         predicate=implementation_requires_flowguard_gates,
     ),
     Invariant(
         name="dependency_plan_before_route_or_implementation",
-        description="Capability route checks and implementation require demand-driven dependency planning, heartbeat, and FlowGuard design first.",
+        description="Capability route checks and implementation require demand-driven dependency planning, continuation readiness, and FlowGuard design first.",
         predicate=dependency_plan_before_route_or_implementation,
+    ),
+    Invariant(
+        name="controlled_stop_notice_required",
+        description="Controlled nonterminal capability stops emit a manual/heartbeat resume notice, and terminal completion emits a completion notice.",
+        predicate=controlled_stop_notice_required,
     ),
     Invariant(
         name="child_skill_fidelity_before_capability_work",

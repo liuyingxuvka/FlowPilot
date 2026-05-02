@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 96411,
+    "edge_count": 96732,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -31,7 +31,7 @@
       "chunk_verified",
       "codex_plan_synced",
       "completion_self_interrogation_completed",
-      "completion_visible_route_map_emitted",
+      "completion_visible_user_flow_diagram_emitted",
       "composite_backward_context_loaded",
       "composite_backward_issue_grilled",
       "composite_backward_neutral_observation_written",
@@ -41,6 +41,7 @@
       "composite_backward_review_passed",
       "composite_child_evidence_replayed",
       "composite_structure_decision_recorded",
+      "continuation_resume_ready_checked",
       "contract_frozen",
       "crew_archived_at_terminal",
       "crew_ledger_written",
@@ -71,6 +72,7 @@
       "final_route_wide_gate_ledger_pm_built",
       "final_route_wide_gate_ledger_pm_completion_approved",
       "final_route_wide_gate_ledger_product_process_gates_collected",
+      "final_route_wide_gate_ledger_resource_lineage_resolved",
       "final_route_wide_gate_ledger_reviewer_backward_checked",
       "final_route_wide_gate_ledger_stale_evidence_checked",
       "final_route_wide_gate_ledger_superseded_nodes_explained",
@@ -78,7 +80,6 @@
       "flowguard_process_designed",
       "global_watchdog_supervisor_verified",
       "heartbeat_asked_project_manager",
-      "heartbeat_health_checked",
       "heartbeat_loaded_crew_memory",
       "heartbeat_loaded_execution_frontier",
       "heartbeat_loaded_state",
@@ -120,6 +121,7 @@
       "parent_product_function_model_checked",
       "parent_subtree_review_checked",
       "pm_completion_decision_recorded",
+      "pm_flowguard_delegation_policy_recorded",
       "pm_initial_route_decision_recorded",
       "pm_material_complexity_classified",
       "pm_material_discovery_decision_recorded",
@@ -149,7 +151,6 @@
       "root_product_function_model_checked",
       "root_route_model_checked",
       "route_created",
-      "route_mermaid_diagram_refreshed",
       "route_model_checked",
       "route_updated_after_human_inspection_failure",
       "route_updated_after_model_gap",
@@ -166,38 +167,39 @@
       "subagent_spawned_on_demand",
       "terminal_lifecycle_frontier_written",
       "unfinished_current_node_recovery_checked",
+      "user_flow_diagram_refreshed",
       "verification_found_impl_failure",
       "verification_found_model_gap",
-      "visible_route_map_emitted",
       "visible_self_interrogation_completed",
+      "visible_user_flow_diagram_emitted",
       "worker_a_spawned_or_restored",
       "worker_b_spawned_or_restored"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 91871,
+    "state_count": 92192,
     "terminal_counts": {
       "blocked": 3436,
       "complete": 160
     }
   },
   "loop": {
-    "edge_count": 96411,
+    "edge_count": 96732,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 91871,
+    "state_count": 92192,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 96411,
+    "edge_count": 96732,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 91871,
+    "state_count": 92192,
     "status": "OK",
     "success_state_count": 160
   }

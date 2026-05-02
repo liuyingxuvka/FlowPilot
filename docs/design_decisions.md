@@ -65,9 +65,10 @@ Chat context can help, but cross-thread recovery must use `.flowpilot/`.
 Canonical files are machine-readable. Markdown is an English review view.
 
 Until the desktop Cockpit is available, chat is also the temporary visible
-cockpit. Route maps, node jumps, simulated next paths, checks, fallback exits,
-heartbeat state, and acceptance deltas must be shown in the conversation rather
-than hidden only in `.flowpilot/`.
+cockpit. The same user flow diagram used by the UI, node jumps, simulated next
+paths, checks, fallback exits, continuation state, and acceptance deltas must be
+shown in the conversation rather than hidden only in `.flowpilot/`. Raw
+FlowGuard Mermaid graphs remain diagnostic exports and are off by default.
 
 ## Capability Router
 
@@ -139,7 +140,7 @@ Required early gate:
 - layered full-round coverage across acceptance, functional capability,
   data/state, implementation strategy, UI/UX when relevant, validation,
   recovery/heartbeat, and delivery/showcase quality;
-- visible route map before route execution and visible node roadmap before
+- user flow diagram before route execution and visible node roadmap before
   formal chunks;
 - host continuation probe, then real heartbeat/watchdog/global-supervisor
   automation when supported or manual-resume evidence when unsupported;
@@ -164,7 +165,9 @@ Conditional UI gates:
   pre-implementation concept evidence.
 
 The first local Cockpit remains a showcase example and progress-view artifact,
-not a global design specification for all FlowPilot-driven UIs.
+not a global design specification for all FlowPilot-driven UIs. Its default
+progress surface is the same user flow diagram shown in chat, refreshed at
+startup, key node changes, route mutation, completion review, or user request.
 
 ## Persistent Crew And Workers
 

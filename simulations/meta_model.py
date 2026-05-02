@@ -96,8 +96,8 @@ class State:
     product_function_acceptance_matrix_written: bool = False
     product_function_architecture_product_officer_approved: bool = False
     product_function_architecture_reviewer_challenged: bool = False
-    visible_route_map_emitted: bool = False
-    route_mermaid_diagram_refreshed: bool = False
+    visible_user_flow_diagram_emitted: bool = False
+    user_flow_diagram_refreshed: bool = False
     dependency_plan_recorded: bool = False
     future_installs_deferred: bool = False
     contract_frozen: bool = False
@@ -112,6 +112,7 @@ class State:
     worker_b_ready: bool = False
     crew_ledger_written: bool = False
     role_identity_protocol_recorded: bool = False
+    pm_flowguard_delegation_policy_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
     pm_initial_route_decision_recorded: bool = False
@@ -156,10 +157,11 @@ class State:
     global_watchdog_supervisor_checked: bool = False
     global_watchdog_supervisor_singleton_ready: bool = False
     global_watchdog_supervisor_cadence_minutes: int = 0
-    global_watchdog_supervisor_conversation_quiet: bool = False
     external_watchdog_stopped_before_heartbeat: bool = False
     terminal_lifecycle_frontier_written: bool = False
     lifecycle_reconciliation_done: bool = False
+    controlled_stop_notice_recorded: bool = False
+    terminal_completion_notice_recorded: bool = False
 
     route_version: int = 0
     route_checked: bool = False
@@ -262,6 +264,7 @@ class State:
     final_route_wide_gate_ledger_child_skill_gates_collected: bool = False
     final_route_wide_gate_ledger_human_review_gates_collected: bool = False
     final_route_wide_gate_ledger_product_process_gates_collected: bool = False
+    final_route_wide_gate_ledger_resource_lineage_resolved: bool = False
     final_route_wide_gate_ledger_stale_evidence_checked: bool = False
     final_route_wide_gate_ledger_superseded_nodes_explained: bool = False
     final_route_wide_gate_ledger_unresolved_count_zero: bool = False
@@ -353,6 +356,7 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_child_skill_gates_collected": False,
         "final_route_wide_gate_ledger_human_review_gates_collected": False,
         "final_route_wide_gate_ledger_product_process_gates_collected": False,
+        "final_route_wide_gate_ledger_resource_lineage_resolved": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
@@ -442,6 +446,7 @@ def _crew_ready(state: State) -> bool:
         and state.worker_b_ready
         and state.crew_ledger_written
         and state.role_identity_protocol_recorded
+        and state.pm_flowguard_delegation_policy_recorded
         and state.crew_memory_policy_written
         and state.crew_memory_packets_written == CREW_SIZE
     )
@@ -462,8 +467,7 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.external_watchdog_hidden_noninteractive_configured
         and state.global_watchdog_supervisor_checked
         and state.global_watchdog_supervisor_singleton_ready
-        and state.global_watchdog_supervisor_cadence_minutes == 10
-        and state.global_watchdog_supervisor_conversation_quiet
+        and state.global_watchdog_supervisor_cadence_minutes == 30
     )
 
 
@@ -492,7 +496,6 @@ def _manual_resume_ready(state: State) -> bool:
         and not state.global_watchdog_supervisor_checked
         and not state.global_watchdog_supervisor_singleton_ready
         and state.global_watchdog_supervisor_cadence_minutes == 0
-        and not state.global_watchdog_supervisor_conversation_quiet
     )
 
 
@@ -536,6 +539,7 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
+        and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
@@ -581,8 +585,8 @@ def _route_ready(state: State) -> bool:
         and state.codex_plan_synced
         and state.frontier_version == state.route_version
         and state.plan_version == state.frontier_version
-        and state.route_mermaid_diagram_refreshed
-        and state.visible_route_map_emitted
+        and state.user_flow_diagram_refreshed
+        and state.visible_user_flow_diagram_emitted
         and state.issue == "none"
         and state.high_risk_gate != "pending"
         and state.chunk_state == "none"
@@ -625,8 +629,8 @@ class AutopilotStep:
         "product_function_acceptance_matrix_written",
         "product_function_architecture_product_officer_approved",
         "product_function_architecture_reviewer_challenged",
-        "visible_route_map_emitted",
-        "route_mermaid_diagram_refreshed",
+        "visible_user_flow_diagram_emitted",
+        "user_flow_diagram_refreshed",
         "dependency_plan_recorded",
         "future_installs_deferred",
         "contract_frozen",
@@ -640,6 +644,7 @@ class AutopilotStep:
         "worker_b_ready",
         "crew_ledger_written",
         "role_identity_protocol_recorded",
+        "pm_flowguard_delegation_policy_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
         "pm_initial_route_decision_recorded",
@@ -681,10 +686,11 @@ class AutopilotStep:
         "global_watchdog_supervisor_checked",
         "global_watchdog_supervisor_singleton_ready",
         "global_watchdog_supervisor_cadence_minutes",
-        "global_watchdog_supervisor_conversation_quiet",
         "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
+        "controlled_stop_notice_recorded",
+        "terminal_completion_notice_recorded",
         "flowguard_process_design_done",
         "candidate_route_tree_generated",
         "root_route_model_checked",
@@ -770,6 +776,7 @@ class AutopilotStep:
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
+        "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
@@ -812,8 +819,8 @@ class AutopilotStep:
         "product_function_acceptance_matrix_written",
         "product_function_architecture_product_officer_approved",
         "product_function_architecture_reviewer_challenged",
-        "visible_route_map_emitted",
-        "route_mermaid_diagram_refreshed",
+        "visible_user_flow_diagram_emitted",
+        "user_flow_diagram_refreshed",
         "dependency_plan_recorded",
         "future_installs_deferred",
         "contract_frozen",
@@ -827,6 +834,7 @@ class AutopilotStep:
         "worker_b_ready",
         "crew_ledger_written",
         "role_identity_protocol_recorded",
+        "pm_flowguard_delegation_policy_recorded",
         "pm_initial_route_decision_recorded",
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
@@ -860,10 +868,11 @@ class AutopilotStep:
         "global_watchdog_supervisor_checked",
         "global_watchdog_supervisor_singleton_ready",
         "global_watchdog_supervisor_cadence_minutes",
-        "global_watchdog_supervisor_conversation_quiet",
         "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
+        "controlled_stop_notice_recorded",
+        "terminal_completion_notice_recorded",
         "route_version",
         "route_checked",
         "markdown_synced",
@@ -960,6 +969,7 @@ class AutopilotStep:
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
+        "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
@@ -970,10 +980,12 @@ class AutopilotStep:
         "standard_expansions",
         "final_report_emitted",
         "pm_completion_decision_recorded",
+        "controlled_stop_notice_recorded",
+        "terminal_completion_notice_recorded",
         "heartbeat_records",
     )
     accepted_input_type = Tick
-    input_description = "one heartbeat/autopilot control decision"
+    input_description = "one continuation/autopilot control decision"
     output_description = "next allowed control action"
     idempotency = (
         "Repeated heartbeat decisions do not lower the frozen contract, do not "
@@ -990,7 +1002,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="autopilot_started",
-                action="start autopilot and activate heartbeat",
+                action="start the FlowPilot control loop",
                 status="running",
                 flowpilot_enabled=True,
                 heartbeat_active=True,
@@ -1156,6 +1168,16 @@ class AutopilotStep:
                 label="role_identity_protocol_recorded",
                 action="record distinct role_key, display_name, and diagnostic-only agent_id fields before crew memory is authoritative",
                 role_identity_protocol_recorded=True,
+                active_node="record_pm_flowguard_delegation_policy",
+            )
+            return
+
+        if not state.pm_flowguard_delegation_policy_recorded:
+            yield _step(
+                state,
+                label="pm_flowguard_delegation_policy_recorded",
+                action="record that the project manager may create structured FlowGuard modeling requests for uncertain process or product decisions and assign them to the process or product FlowGuard officer",
+                pm_flowguard_delegation_policy_recorded=True,
                 active_node="write_crew_memory_packets",
             )
             return
@@ -1458,11 +1480,10 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="global_watchdog_supervisor_verified",
-                action="look up the singleton Codex global watchdog supervisor; reuse or create a quiet thread-bound heartbeat supervisor by default, and do not create a high-frequency cron unless the user explicitly accepts new conversation noise",
+                action="look up the singleton Codex global watchdog supervisor; if none is active and at least one project registration lease is active, create or reactivate exactly one fixed 30-minute cron automation using the canonical automation_update parameter shape",
                 global_watchdog_supervisor_checked=True,
                 global_watchdog_supervisor_singleton_ready=True,
-                global_watchdog_supervisor_cadence_minutes=10,
-                global_watchdog_supervisor_conversation_quiet=True,
+                global_watchdog_supervisor_cadence_minutes=30,
                 active_node="create_external_watchdog_automation",
             )
             return
@@ -1632,9 +1653,10 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="blocked_after_repeated_route_failures",
-                    action="block because route model cannot be stabilized",
+                    action="block because route model cannot be stabilized and emit a nonterminal resume notice",
                     status="blocked",
                     heartbeat_active=False,
+                    controlled_stop_notice_recorded=True,
                     active_node="blocked",
                 )
                 return
@@ -1675,17 +1697,17 @@ class AutopilotStep:
                 action="sync current visible Codex plan from execution frontier without changing heartbeat automation prompt",
                 codex_plan_synced=True,
                 plan_version=state.frontier_version,
-                active_node="refresh_mermaid_route_map",
+                active_node="refresh_user_flow_diagram",
             )
             return
 
-        if not state.route_mermaid_diagram_refreshed:
+        if not state.user_flow_diagram_refreshed:
             yield _step(
                 state,
-                label="route_mermaid_diagram_refreshed",
-                action="refresh canonical Mermaid route map from checked flow.json and execution_frontier.json before chat or UI display",
-                route_mermaid_diagram_refreshed=True,
-                active_node="emit_visible_route_map",
+                label="user_flow_diagram_refreshed",
+                action="refresh single user flow diagram from checked flow.json and execution_frontier.json before chat or UI display",
+                user_flow_diagram_refreshed=True,
+                active_node="emit_user_flow_diagram",
             )
             return
 
@@ -1695,14 +1717,14 @@ class AutopilotStep:
             and state.markdown_synced
             and state.execution_frontier_written
             and state.codex_plan_synced
-            and not state.visible_route_map_emitted
+            and not state.visible_user_flow_diagram_emitted
             and state.issue == "none"
         ):
             yield _step(
                 state,
-                label="visible_route_map_emitted",
-                action="emit visible chat route map with current node, next jumps, checks, fallback branches, and simulated path",
-                visible_route_map_emitted=True,
+                label="visible_user_flow_diagram_emitted",
+                action="emit visible user flow diagram with current node, next jumps, checks, fallback branches, and simulated path",
+                visible_user_flow_diagram_emitted=True,
                 active_node="ready_for_chunk",
             )
             return
@@ -1718,9 +1740,10 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="blocked_by_high_risk_denial",
-                action="block because high-risk gate was denied",
+                action="block because high-risk gate was denied and emit a nonterminal resume notice",
                 status="blocked",
                 heartbeat_active=False,
+                controlled_stop_notice_recorded=True,
                 high_risk_gate="denied",
                 active_node="blocked",
             )
@@ -1731,9 +1754,10 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="blocked_after_model_gap_budget",
-                    action="block after exhausting model update budget",
+                    action="block after exhausting model update budget and emit a nonterminal resume notice",
                     status="blocked",
                     heartbeat_active=False,
+                    controlled_stop_notice_recorded=True,
                     active_node="blocked",
                 )
                 return
@@ -1748,8 +1772,8 @@ class AutopilotStep:
                 codex_plan_synced=False,
                 frontier_version=0,
                 plan_version=0,
-                visible_route_map_emitted=False,
-                route_mermaid_diagram_refreshed=False,
+                visible_user_flow_diagram_emitted=False,
+                user_flow_diagram_refreshed=False,
                 flowguard_process_design_done=False,
                 child_skill_route_design_discovery_started=False,
                 child_skill_initial_gate_manifest_extracted=False,
@@ -1800,9 +1824,10 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="blocked_after_composite_backward_repair_budget",
-                    action="block after exhausting composite backward structural repair route budget",
+                    action="block after exhausting composite backward structural repair route budget and emit a nonterminal resume notice",
                     status="blocked",
                     heartbeat_active=False,
+                    controlled_stop_notice_recorded=True,
                     active_node="blocked",
                 )
                 return
@@ -1830,7 +1855,7 @@ class AutopilotStep:
                 "codex_plan_synced": False,
                 "frontier_version": 0,
                 "plan_version": 0,
-                "visible_route_map_emitted": False,
+                "visible_user_flow_diagram_emitted": False,
                 "candidate_route_tree_generated": False,
                 "root_route_model_checked": False,
                 "root_route_model_process_officer_approved": False,
@@ -1922,9 +1947,10 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="blocked_after_inspection_repair_budget",
-                    action="block after exhausting inspection-driven repair route budget",
+                    action="block after exhausting inspection-driven repair route budget and emit a nonterminal resume notice",
                     status="blocked",
                     heartbeat_active=False,
+                    controlled_stop_notice_recorded=True,
                     active_node="blocked",
                 )
                 return
@@ -1954,8 +1980,8 @@ class AutopilotStep:
                 codex_plan_synced=False,
                 frontier_version=0,
                 plan_version=0,
-                visible_route_map_emitted=False,
-                route_mermaid_diagram_refreshed=False,
+                visible_user_flow_diagram_emitted=False,
+                user_flow_diagram_refreshed=False,
                 flowguard_process_design_done=False,
                 child_skill_route_design_discovery_started=False,
                 child_skill_initial_gate_manifest_extracted=False,
@@ -2027,8 +2053,8 @@ class AutopilotStep:
                     codex_plan_synced=False,
                     frontier_version=0,
                     plan_version=0,
-                    visible_route_map_emitted=False,
-                    route_mermaid_diagram_refreshed=False,
+                    visible_user_flow_diagram_emitted=False,
+                    user_flow_diagram_refreshed=False,
                     flowguard_process_design_done=False,
                     child_skill_route_design_discovery_started=False,
                     child_skill_initial_gate_manifest_extracted=False,
@@ -2065,9 +2091,10 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="blocked_after_experiment_budget",
-                action="block after bounded experiments fail to find a path",
+                action="block after bounded experiments fail to find a path and emit a nonterminal resume notice",
                 status="blocked",
                 heartbeat_active=False,
+                controlled_stop_notice_recorded=True,
                 active_node="blocked",
             )
             return
@@ -2199,8 +2226,8 @@ class AutopilotStep:
             if not state.completion_visible_roadmap_emitted:
                 yield _step(
                     state,
-                    label="completion_visible_route_map_emitted",
-                    action="emit visible completion route map before deciding whether any high-value work remains",
+                    label="completion_visible_user_flow_diagram_emitted",
+                    action="emit visible completion user flow diagram before deciding whether any high-value work remains",
                     completion_visible_roadmap_emitted=True,
                     active_node="final_feature_matrix_review",
                 )
@@ -2308,8 +2335,8 @@ class AutopilotStep:
                         codex_plan_synced=False,
                         frontier_version=0,
                         plan_version=0,
-                        visible_route_map_emitted=False,
-                        route_mermaid_diagram_refreshed=False,
+                        visible_user_flow_diagram_emitted=False,
+                        user_flow_diagram_refreshed=False,
                         flowguard_process_design_done=False,
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
@@ -2418,6 +2445,15 @@ class AutopilotStep:
                     label="final_route_wide_gate_ledger_product_process_gates_collected",
                     action="PM collects product-function and development-process model gates into the final ledger",
                     final_route_wide_gate_ledger_product_process_gates_collected=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
+            if not state.final_route_wide_gate_ledger_resource_lineage_resolved:
+                yield _step(
+                    state,
+                    label="final_route_wide_gate_ledger_resource_lineage_resolved",
+                    action="PM resolves generated-resource lineage into consumed, final-output, evidence, superseded, quarantined, or intentionally discarded entries",
+                    final_route_wide_gate_ledger_resource_lineage_resolved=True,
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
@@ -2533,10 +2569,11 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="final_report_emitted",
-                action="emit final report and stop heartbeat after watchdog is stopped",
+                action="emit final report, emit terminal completion notice, and reconcile continuation lifecycle",
                 status="complete",
                 heartbeat_active=False,
                 final_report_emitted=True,
+                terminal_completion_notice_recorded=True,
                 active_node="complete",
             )
             return
@@ -2546,7 +2583,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_loaded_state",
-                    action="heartbeat loads local state, active route, latest heartbeat, watchdog evidence, lifecycle evidence, and crew ledger",
+                    action="continuation turn loads local state, active route, latest heartbeat or manual-resume evidence, watchdog evidence when present, lifecycle evidence, and crew ledger",
                     heartbeat_loaded_state=True,
                     active_node="heartbeat_load_frontier",
                 )
@@ -2555,7 +2592,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_loaded_execution_frontier",
-                    action="heartbeat loads execution_frontier.json before selecting work",
+                    action="continuation turn loads execution_frontier.json before selecting work",
                     heartbeat_loaded_frontier=True,
                     active_node="heartbeat_load_crew_memory",
                 )
@@ -2564,7 +2601,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_loaded_crew_memory",
-                    action="heartbeat loads structured role memory packets before restoring or replacing roles",
+                    action="continuation turn loads structured role memory packets before restoring or replacing roles",
                     heartbeat_loaded_crew_memory=True,
                     active_node="heartbeat_rehydrate_crew",
                 )
@@ -2573,7 +2610,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_restored_six_agent_crew",
-                    action="heartbeat resumes available role agents or prepares replacements from role memory",
+                    action="continuation turn resumes available role agents or prepares replacements from role memory",
                     heartbeat_restored_crew=True,
                     replacement_roles_seeded_from_memory=True,
                     active_node="heartbeat_rehydrate_crew",
@@ -2583,7 +2620,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_rehydrated_six_agent_crew",
-                    action="heartbeat records full six-role rehydration status before asking the PM",
+                    action="continuation turn records full six-role rehydration status before asking the PM",
                     heartbeat_rehydrated_crew=True,
                     active_node="heartbeat_ask_project_manager",
                 )
@@ -2592,7 +2629,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_asked_project_manager",
-                    action="heartbeat asks the project manager what the main executor should do next",
+                    action="continuation turn asks the project manager what the main executor should do next",
                     heartbeat_pm_decision_requested=True,
                     active_node="await_pm_resume_decision",
                 )
@@ -2617,14 +2654,14 @@ class AutopilotStep:
                     pm_runway_synced_to_plan=True,
                     plan_sync_method_recorded=True,
                     visible_plan_has_runway_depth=True,
-                    active_node="check_heartbeat_health",
+                    active_node="check_continuation_resume_ready",
                 )
                 return
             if not state.heartbeat_health_checked:
                 yield _step(
                     state,
-                    label="heartbeat_health_checked",
-                    action="verify continuation heartbeat is still active before the next node",
+                    label="continuation_resume_ready_checked",
+                    action="check automated heartbeat health when supported, or check manual-resume state/frontier/crew-memory readiness when no real wakeup exists",
                     heartbeat_health_checked=True,
                     active_node="check_unfinished_current_node",
                 )
@@ -2754,8 +2791,8 @@ class AutopilotStep:
                         codex_plan_synced=False,
                         frontier_version=0,
                         plan_version=0,
-                        visible_route_map_emitted=False,
-                        route_mermaid_diagram_refreshed=False,
+                        visible_user_flow_diagram_emitted=False,
+                        user_flow_diagram_refreshed=False,
                         flowguard_process_design_done=False,
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
@@ -3039,9 +3076,10 @@ class AutopilotStep:
         yield _step(
             state,
             label="blocked_unhandled_state",
-            action="block because no valid transition exists",
+            action="block because no valid transition exists and emit a nonterminal resume notice",
             status="blocked",
             heartbeat_active=False,
+            controlled_stop_notice_recorded=True,
             active_node="blocked",
         )
 
@@ -3132,15 +3170,15 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         and state.plan_version == state.frontier_version
     ):
         return InvariantResult.fail("final report emitted before execution frontier and Codex plan sync")
-    if not state.visible_route_map_emitted:
-        return InvariantResult.fail("final report emitted before visible route map")
+    if not state.visible_user_flow_diagram_emitted:
+        return InvariantResult.fail("final report emitted before visible user flow diagram")
     if not (
         state.completion_self_interrogation_done
         and state.high_value_work_review == "exhausted"
     ):
         return InvariantResult.fail("final report emitted before completion grill-me exhausted obvious high-value work")
     if not state.completion_visible_roadmap_emitted:
-        return InvariantResult.fail("final report emitted before visible completion route map")
+        return InvariantResult.fail("final report emitted before visible completion user flow diagram")
     if not (
         state.final_feature_matrix_review_done
         and state.final_acceptance_matrix_review_done
@@ -3215,7 +3253,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         or state.markdown_synced
         or state.execution_frontier_written
         or state.codex_plan_synced
-        or state.visible_route_map_emitted
+        or state.visible_user_flow_diagram_emitted
         or state.chunk_state in {"ready", "executed", "verified", "checkpoint_pending"}
         or state.final_report_emitted
     )
@@ -3245,14 +3283,31 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     return InvariantResult.pass_()
 
 
-def heartbeat_active_until_terminal(state: State, trace) -> InvariantResult:
+def continuation_control_loop_until_terminal(state: State, trace) -> InvariantResult:
     del trace
     if state.chunk_state in {"ready", "executed", "verified", "checkpoint_pending"} and not state.heartbeat_health_checked:
-        return InvariantResult.fail("formal chunk started before heartbeat health check")
+        return InvariantResult.fail("formal chunk started before continuation readiness check")
     if state.status == "running" and not state.heartbeat_active:
-        return InvariantResult.fail("heartbeat inactive while task is running")
+        return InvariantResult.fail("FlowPilot control loop inactive while task is running")
     if state.status in {"blocked", "complete"} and state.heartbeat_active:
-        return InvariantResult.fail("heartbeat still active after terminal state")
+        return InvariantResult.fail("FlowPilot control loop still active after terminal state")
+    return InvariantResult.pass_()
+
+
+def controlled_stop_notice_required(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status == "blocked" and not state.controlled_stop_notice_recorded:
+        return InvariantResult.fail(
+            "controlled nonterminal stop reached blocked state without a resume notice"
+        )
+    if state.status == "complete" and not state.terminal_completion_notice_recorded:
+        return InvariantResult.fail(
+            "terminal completion reached complete state without a completion notice"
+        )
+    if state.controlled_stop_notice_recorded and state.status == "complete":
+        return InvariantResult.fail(
+            "nonterminal resume notice was recorded on a completed route"
+        )
     return InvariantResult.pass_()
 
 
@@ -3274,8 +3329,8 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             and state.plan_version == state.frontier_version
         ):
             return InvariantResult.fail("chunk started before execution frontier and Codex plan were synced")
-        if not state.visible_route_map_emitted:
-            return InvariantResult.fail("chunk started before visible route map was emitted")
+        if not state.visible_user_flow_diagram_emitted:
+            return InvariantResult.fail("chunk started before visible user flow diagram was emitted")
         if not _continuation_ready(state):
             return InvariantResult.fail("chunk started before host continuation capability was probed and recorded")
         if not (
@@ -3399,9 +3454,9 @@ def subagent_must_merge_before_completion(state: State, trace) -> InvariantResul
 
 def route_updates_force_recheck_and_resync(state: State, trace) -> InvariantResult:
     del trace
-    if state.visible_route_map_emitted and not state.route_mermaid_diagram_refreshed:
+    if state.visible_user_flow_diagram_emitted and not state.user_flow_diagram_refreshed:
         return InvariantResult.fail(
-            "visible route map emitted before refreshing the canonical Mermaid route diagram"
+            "visible user flow diagram emitted before refreshing the current user flow diagram"
         )
     if (
         state.human_inspection_repairs + state.composite_structural_route_repairs
@@ -3418,8 +3473,8 @@ def route_updates_force_recheck_and_resync(state: State, trace) -> InvariantResu
             and state.codex_plan_synced
             and state.frontier_version == state.route_version
             and state.plan_version == state.frontier_version
-            and state.route_mermaid_diagram_refreshed
-            and state.visible_route_map_emitted
+            and state.user_flow_diagram_refreshed
+            and state.visible_user_flow_diagram_emitted
         ):
             return InvariantResult.fail("route update was not checked, summarized, frontier-synced, plan-synced, and visibly mapped before work")
     return InvariantResult.pass_()
@@ -3455,7 +3510,6 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
         or state.global_watchdog_supervisor_checked
         or state.global_watchdog_supervisor_singleton_ready
         or state.global_watchdog_supervisor_cadence_minutes != 0
-        or state.global_watchdog_supervisor_conversation_quiet
     )
     if state.manual_resume_mode_recorded and automation_bits:
         return InvariantResult.fail(
@@ -3527,12 +3581,11 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
         and not (
             state.global_watchdog_supervisor_checked
             and state.global_watchdog_supervisor_singleton_ready
-            and state.global_watchdog_supervisor_cadence_minutes == 10
-            and state.global_watchdog_supervisor_conversation_quiet
+            and state.global_watchdog_supervisor_cadence_minutes == 30
         )
     ):
         return InvariantResult.fail(
-            "active external watchdog automation lacks a verified quiet singleton Codex global supervisor"
+            "active external watchdog automation lacks verified singleton Codex global supervisor at fixed 30-minute cadence"
         )
     return InvariantResult.pass_()
 
@@ -3723,12 +3776,13 @@ def actor_authority_gates_require_correct_role(
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
+        and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "PM built final route-wide gate ledger before current route scan, gate collection, stale-evidence check, superseded explanations, and zero unresolved count"
+            "PM built final route-wide gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, and zero unresolved count"
         )
     if state.final_route_wide_gate_ledger_reviewer_backward_checked and not (
         state.final_route_wide_gate_ledger_pm_built
@@ -3808,9 +3862,14 @@ INVARIANTS = (
         predicate=dependency_plan_before_route_or_work,
     ),
     Invariant(
-        name="heartbeat_active_until_terminal",
-        description="Heartbeat remains active while running and stops only at blocked or complete.",
-        predicate=heartbeat_active_until_terminal,
+        name="continuation_control_loop_until_terminal",
+        description="FlowPilot keeps a control loop active while running; real heartbeat health is required only when automated continuation is supported.",
+        predicate=continuation_control_loop_until_terminal,
+    ),
+    Invariant(
+        name="controlled_stop_notice_required",
+        description="Controlled nonterminal stops emit a manual/heartbeat resume notice, and terminal completion emits a completion notice.",
+        predicate=controlled_stop_notice_required,
     ),
     Invariant(
         name="formal_chunk_requires_checked_route_and_verification",

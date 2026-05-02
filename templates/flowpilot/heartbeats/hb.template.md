@@ -18,6 +18,16 @@ Host supports real wakeups: `<true|false|unknown>`
 
 Unattended recovery claim allowed: `<true-or-false>`
 
+Continuation readiness: `<automated-heartbeat-health|manual-resume-packet|blocked|unknown>`
+
+Controlled stop notice required: `<true-or-false>`
+
+Can wait for heartbeat: `<true-or-false>`
+
+Manual resume prompt: `continue FlowPilot`
+
+Notice text: `<complete-message-or-nonterminal-resume-message>`
+
 Next chunk: `<next-bounded-chunk>`
 
 PM completion runway: `<current-position-to-project-completion>`

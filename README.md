@@ -22,17 +22,14 @@ evidence supports completion.
 
 ```mermaid
 flowchart LR
-  A["User goal and materials"] --> B["FlowPilot project state"]
-  B --> C["Process FlowGuard model"]
-  B --> D["Product / function FlowGuard model"]
-  C --> E["Checked route and execution frontier"]
-  D --> E
-  E --> F["Bounded chunks and child skills"]
-  F --> G["Verification and checkpoints"]
-  G --> H{"Route still valid?"}
-  H -- "yes" --> I["Completion ledger and final review"]
-  H -- "no" --> J["Route mutation and stale-evidence reset"]
-  J --> C
+  A["Goal and materials"] --> B["Product understanding"]
+  B --> C["FlowGuard modeling"]
+  C --> D["Route and current node"]
+  D --> E["Execution and child skills"]
+  E --> F["Verification"]
+  F --> G["Final review"]
+  F -- "needs change" --> H["Repair / route change"]
+  H --> C
 ```
 
 ## Quick Start
@@ -79,6 +76,11 @@ FlowPilot applies FlowGuard twice.
 
 The first layer controls how the AI works.
 The second layer checks what the AI is building.
+
+The project manager can also invoke FlowGuard proactively when a route,
+repair, feature, product-object, file-format, protocol, or validation decision
+is uncertain. Those requests use structured modeling request/report evidence,
+then feed a PM route decision instead of becoming vague delegation.
 
 This is the main reason FlowPilot is heavier than a normal prompt or task
 planner. The extra structure is intentional: it trades setup cost for
@@ -184,12 +186,20 @@ FlowPilot first probes the host environment.
 
 If the host supports real wakeups or automations, FlowPilot can use a stable
 heartbeat launcher, a paired watchdog, and a singleton global supervisor. The
-watchdog can detect stale heartbeat evidence, but recovery is not claimed
-until a later heartbeat proves the route resumed.
+global supervisor uses a fixed 30-minute cadence and watches active project
+registration leases refreshed by the project heartbeat. When a route pauses,
+stops, or completes, FlowPilot unregisters that project and deletes the global
+supervisor last only if no other active registrations remain. The watchdog can
+detect stale heartbeat evidence, but recovery is not claimed until a later
+heartbeat proves the route resumed.
 
 If the host does not support real wakeups, FlowPilot records `manual-resume`
 mode and continues from persisted `.flowpilot/` files without pretending that
 unattended automation exists.
+
+Every controlled nonterminal stop tells the user whether to wait for heartbeat
+or type `continue FlowPilot`; terminal completion emits a completion notice
+instead of a resume prompt.
 
 ## Installation Shape
 

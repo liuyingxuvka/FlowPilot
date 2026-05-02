@@ -32,6 +32,21 @@ def isoformat_z(value: datetime) -> str:
     return value.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def parse_time(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip()
+    if text.endswith("Z"):
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
 def read_json_if_exists(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"_loaded": False, "_path": str(path)}
@@ -87,6 +102,11 @@ def _automation_matches(record: dict[str, Any], known_ids: set[str]) -> bool:
     return "flowpilot" in text or "global watchdog supervisor" in text
 
 
+def _is_global_supervisor_record(record: dict[str, Any]) -> bool:
+    text = " ".join(str(record.get(key) or "") for key in ("id", "name", "prompt", "path")).lower()
+    return "global watchdog supervisor" in text or "flowpilot_global_supervisor.py" in text
+
+
 def inspect_codex_automations(codex_home: Path, known_ids: set[str]) -> dict[str, Any]:
     automations_dir = codex_home / "automations"
     result: dict[str, Any] = {
@@ -130,6 +150,8 @@ def inspect_global_records(global_dir: Path, project_root: Path) -> dict[str, An
     projects = registry.get("projects") if isinstance(registry.get("projects"), dict) else {}
     normalized_root = str(project_root.resolve()).replace("\\", "/").lower()
     matches = []
+    active_projects = []
+    now = utc_now()
     if isinstance(projects, dict):
         for key, value in projects.items():
             if not isinstance(value, dict):
@@ -137,11 +159,23 @@ def inspect_global_records(global_dir: Path, project_root: Path) -> dict[str, An
             root = str(value.get("project_root") or "").replace("\\", "/").lower()
             if root == normalized_root:
                 matches.append({"project_key": key, **value})
+            status = str(value.get("status") or "").lower()
+            lease_expires_at = parse_time(value.get("lease_expires_at"))
+            lease_expired = lease_expires_at is not None and lease_expires_at <= now
+            if (
+                value.get("registration_active")
+                and status in RUNNING_STATUSES
+                and not value.get("manual_stop")
+                and not lease_expired
+            ):
+                active_projects.append({"project_key": key, **value})
     return {
         "authority": "global_watchdog_records",
         "path": str(global_dir),
         "registry_loaded": bool(registry.get("_loaded")),
         "matching_projects": matches,
+        "active_project_count": len(active_projects),
+        "active_project_keys": [item.get("project_key") for item in active_projects],
         "registry_error": registry.get("_error"),
     }
 
@@ -252,6 +286,17 @@ def classify_required_actions(
 
     if desired_inactive:
         for record in codex.get("active", []):
+            if _is_global_supervisor_record(record):
+                if int(global_records.get("active_project_count") or 0) == 0:
+                    actions.append(
+                        {
+                            "kind": "codex_automation_update",
+                            "target": record.get("id") or record.get("path"),
+                            "action": "delete_global_supervisor_last",
+                            "reason": "no active FlowPilot project registrations remain after lifecycle reconciliation",
+                        }
+                    )
+                continue
             actions.append(
                 {
                     "kind": "codex_automation_update",

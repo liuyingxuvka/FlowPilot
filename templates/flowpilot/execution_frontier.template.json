@@ -6,17 +6,28 @@
   "active_node": "node-001-start",
   "current_subnode": "<subnode-id-or-null>",
   "next_gate": "<gate-id-or-null>",
-  "route_diagram": {
-    "flowguard_mermaid_enabled": true,
-    "display_mode": "<chat_mermaid|cockpit_ui|both>",
+  "user_flow_diagram": {
+    "enabled": true,
+    "display_mode": "<chat|cockpit_ui|both>",
+    "render_policy": "startup_key_node_change_route_mutation_completion_or_user_request",
+    "same_graph_for_chat_and_ui": true,
+    "stage_count_target": "6-8",
+    "highlight_current_stage": true,
+    "current_stage": "<intake|product|modeling|route|execution|verification|completion|repair>",
     "source_route_path": ".flowpilot/routes/route-001/flow.json",
     "source_frontier_path": ".flowpilot/execution_frontier.json",
-    "mermaid_path": ".flowpilot/diagrams/current-route-map.mmd",
-    "markdown_preview_path": ".flowpilot/diagrams/current-route-map.md",
+    "mermaid_path": ".flowpilot/diagrams/user-flow-diagram.mmd",
+    "markdown_preview_path": ".flowpilot/diagrams/user-flow-diagram.md",
     "last_rendered_at": "<iso-8601-timestamp-or-null>",
     "route_version_rendered": 1,
     "frontier_version_rendered": 1,
     "stale_after_route_mutation": false
+  },
+  "debug_flowguard_mermaid": {
+    "enabled": false,
+    "render_policy": "on_request_only",
+    "write_by_default": false,
+    "reason": "Raw FlowGuard state graphs are engineering diagnostics, not the default user progress view."
   },
   "current_mainline": [
     "node-001-start"
@@ -34,7 +45,21 @@
     "automated_bundle_ready": false,
     "manual_resume_recorded": false,
     "unsupported_reason": "<reason-or-null>",
-    "unattended_recovery_claim_allowed": false
+    "unattended_recovery_claim_allowed": false,
+    "continuation_readiness_checked": false,
+    "continuation_readiness_kind": "<automated-heartbeat-health|manual-resume-packet|blocked|unknown>"
+  },
+  "controlled_stop_notice": {
+    "required_when_nonterminal": true,
+    "route_complete": false,
+    "checkpoint_saved": false,
+    "can_wait_for_heartbeat": false,
+    "resume_instruction": "<wait-for-heartbeat-or-type-continue-flowpilot>",
+    "manual_resume_prompt": "continue FlowPilot",
+    "blocker_summary": "<blocker-or-hard-gate-or-null>",
+    "notice_text": "<complete-message-or-nonterminal-resume-message>",
+    "evidence_path": "<notice-evidence-path-or-null>",
+    "last_written_at": "<iso-8601-timestamp-or-null>"
   },
   "pm_completion_runway": {
     "latest_path": "<pm-runway-decision-evidence-path-or-null>",
@@ -137,6 +162,7 @@
     "child_skill_gates_collected": false,
     "human_review_gates_collected": false,
     "product_process_gates_collected": false,
+    "resource_lineage_resolved": false,
     "stale_evidence_checked": false,
     "superseded_nodes_explained": false,
     "unresolved_count": null,
@@ -276,6 +302,7 @@
     "project_manager_decision_recorded",
     "product_function_architecture_approved_before_contract_freeze",
     "continuation_mode_checked",
+    "continuation_resume_ready_checked",
     "unfinished_current_node_checked",
     "route_model_checked",
     "chunk_verification_defined",

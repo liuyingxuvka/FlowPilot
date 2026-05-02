@@ -42,6 +42,7 @@
     "included_in_final_ledger": false,
     "ledger_path": ".flowpilot/final_route_wide_gate_ledger.json",
     "gate_entries": [],
+    "generated_resource_entries": [],
     "stale_after_route_version": null,
     "superseded_by": "<node-or-gate-id-or-null>",
     "unresolved_reason": "<reason-or-null>"

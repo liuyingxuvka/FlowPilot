@@ -49,5 +49,6 @@ when they are needed for checks or implementation and the action is recorded.
 - FlowGuard capability-routing model template.
 - Installation/self-check protocol.
 - Smoke scripts.
-- Visual Cockpit example particle for `.flowpilot/` progress.
+- Visual Cockpit example particle for `.flowpilot/` progress, using the same
+  user flow diagram as chat.
 - Public-ready README and documentation.

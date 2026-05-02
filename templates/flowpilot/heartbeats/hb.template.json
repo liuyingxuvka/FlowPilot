@@ -24,7 +24,29 @@
     "automated_bundle_ready": false,
     "manual_resume_recorded": false,
     "unattended_recovery_claim_allowed": false,
-    "evidence_path": "<host-continuation-probe-or-manual-resume-evidence-path>"
+    "evidence_path": "<host-continuation-probe-or-manual-resume-evidence-path>",
+    "continuation_readiness_checked": false,
+    "continuation_readiness_kind": "<automated-heartbeat-health|manual-resume-packet|blocked|unknown>"
+  },
+  "controlled_stop_notice": {
+    "required_when_nonterminal": true,
+    "route_complete": false,
+    "checkpoint_saved": false,
+    "can_wait_for_heartbeat": false,
+    "resume_instruction": "<wait-for-heartbeat-or-type-continue-flowpilot>",
+    "manual_resume_prompt": "continue FlowPilot",
+    "blocker_summary": "<blocker-or-hard-gate-or-null>",
+    "notice_text": "<complete-message-or-nonterminal-resume-message>",
+    "evidence_path": "<notice-evidence-path-or-null>",
+    "last_written_at": "<iso-8601-timestamp-or-null>"
+  },
+  "global_supervisor_registration": {
+    "refreshed_this_heartbeat": false,
+    "refresh_command": "python scripts/flowpilot_global_supervisor.py --refresh-registration --root . --heartbeat-automation-id <heartbeat-automation-id> --json",
+    "unregister_command": "python scripts/flowpilot_global_supervisor.py --unregister-project --root . --unregister-reason <pause|stop|complete> --json",
+    "global_supervisor_cadence_minutes": 30,
+    "registration_lease_minutes": 90,
+    "delete_global_supervisor_only_after_empty_registry": true
   },
   "project_manager_decision_path": "<pm-decision-evidence-path-or-null>",
   "project_manager_decision": "<execute_completion_runway|pm_stop|block|mutate_route|complete|null>",

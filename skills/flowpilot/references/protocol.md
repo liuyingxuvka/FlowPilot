@@ -72,52 +72,55 @@ long-form public explanation lives in `docs/protocol.md`.
 23. Probe host continuation capability before creating heartbeat, watchdog, or
     global-supervisor automation. Record whether real wakeups are supported,
     unsupported, or blocked.
-24. If the host supports real wakeups, create the automated continuation
-    bundle: stable heartbeat launcher, paired external watchdog, and
-    singleton global watchdog supervisor evidence. Prefer a quiet thread-bound
-    global supervisor or on-demand scan; do not auto-create high-frequency
-    Codex cron. The launcher loads persisted route/frontier state rather than
-    carrying route-specific next-jump instructions in its prompt. On wakeup it
-    loads role memory, resumes or replaces each role from that memory, then
-    asks the project manager for a completion-oriented runway from the current
-    position to project completion.
+24. If the host supports real wakeups, create the all-or-none automated
+    continuation bundle: stable heartbeat launcher, paired external watchdog,
+    and singleton global watchdog supervisor. The launcher loads persisted
+    route/frontier state rather than carrying route-specific next-jump
+    instructions in its prompt. On wakeup it loads role memory, resumes or
+    replaces each role from that memory, then asks the project manager for a
+    completion-oriented runway from the current position to project
+    completion.
 25. If the host does not support real wakeups, record `manual-resume` mode and
     do not create heartbeat, watchdog, or global-supervisor automation.
-26. Ask the project manager for the initial route-design decision.
-27. Ask the process FlowGuard officer to use FlowGuard as process designer for
+26. Record the controlled-stop notice policy: completed routes emit a
+    completion notice; controlled nonterminal stops emit a resume notice that
+    says whether to wait for heartbeat or type `continue FlowPilot`.
+27. Ask the project manager for the initial route-design decision.
+28. Ask the process FlowGuard officer to use FlowGuard as process designer for
     the active route.
-28. Generate a candidate route tree from the approved product-function
+29. Generate a candidate route tree from the approved product-function
     architecture, contract, and PM-approved child-skill gate manifest.
-29. The process FlowGuard officer authors, runs, interprets, and approves or
+30. The process FlowGuard officer authors, runs, interprets, and approves or
     blocks the root development-process model against the candidate tree.
-30. The product FlowGuard officer authors, runs, interprets, and approves or
+31. The product FlowGuard officer authors, runs, interprets, and approves or
     blocks the root product-function model for the target product or workflow
     behavior, using the approved product-function architecture as a source
     artifact.
-31. The matching officers inspect failures for both model scopes and write
+32. The matching officers inspect failures for both model scopes and write
     approve/block reports.
-32. Freeze the checked candidate as the active route JSON and write derived
+33. Freeze the checked candidate as the active route JSON and write derived
     Markdown summary.
-33. Write `.flowpilot/execution_frontier.json` from the checked route, active
+34. Write `.flowpilot/execution_frontier.json` from the checked route, active
     node, next node, current mainline, fallback, checks before advance, and the
     current-node completion guard. Include actor authority for the current
     gate: draft owner, execution owner, required approver, forbidden
     approvers, approval status, and approval evidence path. Also record the
     latest PM completion runway, including downstream steps, hard-stop
     conditions, checkpoint cadence, and any PM stop signal.
-34. Sync the visible Codex plan list from the latest PM completion runway,
+35. Sync the visible Codex plan list from the latest PM completion runway,
     replacing the current plan projection while preserving old decisions and
     checkpoints as history. If the host exposes a native visible plan/task
     list tool, such as Codex `update_plan`, call that tool immediately with
     the PM runway before executing work. Persisted `.flowpilot` evidence alone
     is not enough when the native tool exists.
-35. Emit the visible route map in chat: active route, active node, simulated
-    path, next jumps, checks, fallback branches, heartbeat state, and
-    acceptance delta.
-36. Start only the first chunk whose continuation mode is known. Automated
+36. Emit the user flow diagram in chat when this is startup, a key node change,
+    route mutation, completion review, or user request. Include active route,
+    active node, next jumps, checks, fallback branches, continuation state, and
+    acceptance delta as nearby text.
+37. Start only the first chunk whose continuation mode is known. Automated
     routes use heartbeat restore; manual-resume routes load the same
-    state/frontier/crew-memory inputs in the active turn. In both modes the project
-    manager issues a completion-oriented runway, the main executor syncs that
+    state/frontier/crew-memory inputs in the active turn. In both modes the
+    project manager issues a completion-oriented runway, the main executor syncs that
     runway into the visible plan, and focused parent grill-me, parent-subtree
     review, unfinished-current-node recovery check, focused node grill-me,
     lightweight self-check, quality package, child-skill gates when needed,
@@ -211,7 +214,7 @@ Repeat until complete or blocked:
 10. Run focused node-level grill-me for the active leaf node.
 11. Build or refresh the active leaf product-function model and derive tests or
    manual experiments from it.
-12. Run a lightweight self-check for the current heartbeat micro-step.
+12. Run a lightweight self-check for the current continuation micro-step.
 13. Run the quality package: feature thinness, improvement classification,
     child-skill mini-route visibility, validation strength, and rough-finish
     risk.
@@ -249,25 +252,26 @@ direction, and feeds the PM product-function architecture, instead of
 separate post-freeze interviews for those same topics. Focused grill-me is for phase,
 group, module, leaf-node, and child-skill entry and uses 20-40 questions by
 default, up to 50 for complex boundaries. Lightweight self-check is for
-heartbeat micro-steps and tiny reversible choices and uses 5-10 questions.
+continuation micro-steps and tiny reversible choices and uses 5-10 questions.
 Every round records its tier, scope id, question count, and evidence. Until
-the Cockpit UI is available, chat is the temporary cockpit and must show route
-maps, next jumps, checks, fallback exits, heartbeat state, and acceptance
-delta.
+the Cockpit UI is available, chat is the temporary cockpit and must show user
+flow diagrams, next jumps, checks, fallback exits, continuation state, and
+acceptance delta.
 Formal startup, route mutation, and completion self-interrogation evidence is
 only draft evidence until the project manager ratifies the scope, layer
 coverage, count, and decision set. The project manager's ratification path is
 stored in the frontier authority record.
 
-Route maps are display views over canonical `.flowpilot` state, not alternate
-execution paths. Show the current active route and node first; keep superseded
-or paused routes in history with replacement reasons and checkpoint/failure
+The user flow diagram is the single display view over canonical `.flowpilot`
+state, not an alternate execution path. Chat and Cockpit UI render the same
+6-8 stage graph from `.flowpilot/diagrams/user-flow-diagram.mmd`, with the
+current stage highlighted and active route/node named nearby. Superseded or
+paused routes stay in history with replacement reasons and checkpoint/failure
 evidence.
 
-When FlowGuard or the current route model can emit Mermaid, FlowPilot opts into
-that optional route-map output. `.flowpilot/diagrams/current-route-map.mmd` is
-the canonical chat fallback and future UI source. Route mutation invalidates
-the old diagram; recheck the route and refresh the Mermaid artifact before
+Raw FlowGuard Mermaid exports are diagnostic only. They are disabled by
+default and generated only on explicit request. Route mutation invalidates the
+old user flow diagram; recheck the route and refresh the artifact before
 showing it as current progress.
 
 Each full round must also cover the full layer matrix: goal/acceptance,
@@ -298,6 +302,19 @@ product-model coverage. The main executor may provide context and receive the
 report, but it must not author or run FlowGuard model files for the officers.
 Passing command output without the matching officer's ownership and approval
 is a draft, not a completed gate.
+
+PM-initiated FlowGuard modeling is a decision-support move, not a vague
+handoff. When the project manager cannot confidently choose a route, repair,
+feature, target-object hypothesis, file/protocol structure, or validation path
+from existing evidence, the PM may write a structured modeling request and
+assign it to the process FlowGuard officer, the product FlowGuard officer, or
+both. The request names the decision, uncertainty, evidence, candidate options
+or option-generation need, assigned officer scope, and required answer shape.
+The officer first checks modelability. Missing evidence becomes an
+evidence-collection node; an over-broad question becomes split modeling
+requests. A valid report includes coverage, blindspots, failure paths,
+recommendation, confidence, next smallest executable action, and route mutation
+candidate. The PM synthesizes the report and records the route decision.
 
 Human-like inspection is a route mechanism, not a comment. Inspectors load the
 contract, route, product model, child-skill evidence, screenshots/logs/output,
@@ -420,21 +437,23 @@ watchdog record includes `source_status` with trusted sources, diagnostic
 sources, source timestamps, drift warnings, and
 `live_subagent_state_used: false`.
 
-Heartbeat, watchdog, and global supervisor evidence are managed as one
-lifecycle bundle when the host supports real continuation. Creating or
-repairing a real heartbeat continuation for a formal long-running route also
-creates or verifies the external watchdog automation and verifies a quiet
-singleton global-supervisor path. If no quiet singleton exists, FlowPilot
-records setup-required or on-demand supervisor evidence instead of silently
-creating cron. Legacy cron requires explicit user opt-in. On
-terminal closure for automated routes, disable or delete the watchdog
-automation first, write that evidence, write the inactive lifecycle snapshot
-back to `state.json`, `.flowpilot/execution_frontier.json`, and watchdog
-evidence, and only then disable or delete the heartbeat automation. For
-manual-resume routes, record that no heartbeat/watchdog/global-supervisor
-automation exists to stop.
+Heartbeat, watchdog, and global supervisor are an all-or-none lifecycle bundle
+when the host supports real continuation. Creating or repairing a real
+heartbeat continuation for a formal long-running route also creates or verifies
+the external watchdog automation, verifies the singleton global supervisor,
+and records the pairing. If any piece cannot be created, roll back to
+`manual-resume` before route execution or record a concrete blocker. On
+terminal closure for automated routes, first write terminal/inactive route
+state and unregister this project's global supervisor registration lease. Then
+disable or delete the project watchdog automation, write that evidence, write
+the inactive lifecycle snapshot back to `state.json`,
+`.flowpilot/execution_frontier.json`, and watchdog evidence, and only then
+disable or delete the heartbeat automation. Delete the user-level global
+supervisor last only after a locked registry reread confirms no active,
+unexpired registrations remain. For manual-resume routes, record that no
+heartbeat/watchdog/global-supervisor automation exists to stop.
 This lifecycle policy is not node-local. Ordinary checkpoints, node
-transitions, route-map refreshes, and Codex plan syncs must preserve the
+transitions, user-flow-diagram refreshes, and Codex plan syncs must preserve the
 recorded watchdog policy and automation pairing; they may read watchdog
 evidence but must not recreate, re-register, start, restart, or re-enable the
 paired watchdog automation.
@@ -444,21 +463,27 @@ hidden/noninteractive execution evidence. Use the bundled
 that avoids direct visible `python.exe` console actions, and record
 `hidden_noninteractive: true` plus `visible_window_risk: false`.
 
-The user-level global supervisor is singleton Codex-side infrastructure, not a
-Windows scheduled task, and exists only for hosts that support Codex automation.
-Create or verify it through the Codex app automation interface using
+The user-level global supervisor is singleton Codex automation infrastructure,
+not a Windows scheduled task, and exists only for hosts that support Codex
+automation. Create or verify it through the Codex app automation interface using
 `templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md` as the
-prompt source. Default to a quiet thread-bound `heartbeat` singleton so repeated
-checks stay in one thread. Startup first inspects existing Codex automations by
-id, kind, name, and prompt. Reuse one active quiet singleton; if an active
-legacy `cron` singleton exists, pause or replace it when conversation hygiene
-matters. If no quiet singleton exists, record setup-required/on-demand
-evidence. Create or reactivate a legacy cron only after explicit user opt-in
-that accepts new-conversation noise. A local route or chat may unregister its
-own project record, but must not disable or delete a quiet user-level
-supervisor. The supervisor must reread local state and watchdog evidence,
-expire terminal/manual-stop routes, supersede old route generations, and dedupe
-repeated stale events before it records or performs any reset.
+prompt source and a fixed 30-minute cadence. This verification happens in
+the same lifecycle setup that creates or repairs the heartbeat and paired
+watchdog. Each heartbeat refreshes the current project's global registration
+lease. Startup first inspects existing Codex cron automations by id, name, and
+prompt. Reuse one active singleton at the fixed cadence; update one paused
+singleton to `ACTIVE` when global protection is required; create only when no
+singleton exists and at least one project registration is active. The validated
+creation shape is `kind: cron`, `rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as
+one workspace string path, `executionEnvironment: local`, `reasoningEffort:
+medium`, and `status: ACTIVE`. A local route or chat unregisters only its own
+project record. On pause, stop, or completion, unregister the project first,
+stop the project heartbeat/watchdog, then reread the registry under the
+singleton lock; delete the user-level global supervisor last only when no
+active, unexpired registrations remain. The supervisor must reread local state
+and watchdog evidence, expire terminal/manual-stop routes, supersede old route
+generations, and dedupe repeated stale events before it records or performs
+any reset.
 
 Busy leases are bounded active-work evidence only. They are not completion
 proof and must not be open-ended. Recently cleared matching leases suppress
@@ -481,10 +506,11 @@ Required:
   feature decisions, display rationale, missing-feature review, negative
   scope, product officer modelability approval, and reviewer usefulness
   challenge;
-- visible route map before route execution and visible node roadmap before
+- user flow diagram before route execution and visible node roadmap before
   formal chunks;
-- real heartbeat schedule and heartbeat health check before behavior-bearing
-  work;
+- continuation readiness before behavior-bearing work: real heartbeat schedule
+  and heartbeat health when supported, or manual-resume packet freshness when
+  unsupported;
 - execution frontier and visible Codex plan sync before behavior-bearing work;
 - FlowGuard dependency, process design, and model checks before
   behavior-bearing work;
@@ -511,9 +537,9 @@ Required:
 - PM-owned final route-wide gate ledger before terminal completion. The PM
   rebuilds it from the current route and execution frontier, resolves effective
   and superseded nodes, collects child-skill, human-review, product-model, and
-  process-model gates, checks stale evidence, records zero unresolved current
-  obligations, obtains human-like backward replay, and then records PM ledger
-  approval;
+  process-model gates, resolves generated-resource lineage, checks stale
+  evidence, records zero unresolved current obligations, obtains human-like
+  backward replay, and then records PM ledger approval;
 - strict obligation classification before any reviewer pass: current-gate
   obligations clear, future obligations named, and nonblocking notes separated
   from blockers;
@@ -591,8 +617,8 @@ Conditional:
 review passed, feature/acceptance/quality-candidate reviews are complete,
 product-function model replay and final human-like inspection passed,
 PM-owned final route-wide gate ledger has been rebuilt from the current route,
-its unresolved count is zero, the human-like reviewer has replayed it backward,
-and the PM has approved the clean ledger,
+its generated-resource lineage is resolved, its unresolved count is zero, the
+human-like reviewer has replayed it backward, and the PM has approved the clean ledger,
 completion self-interrogation finds no obvious high-value work remaining, and
 final report evidence exists. Open inspection issues, unrechecked repairs, or
 missing same-inspector recheck evidence block completion. For routes with paired

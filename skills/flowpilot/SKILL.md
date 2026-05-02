@@ -185,10 +185,9 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     supported, unsupported, attempted setup, evidence path, and fallback mode.
 25. If the host supports real wakeups or automations, create the continuation
     bundle as one lifecycle setup: stable heartbeat launcher, paired external
-    watchdog, and singleton global watchdog supervisor evidence. Prefer a
-    quiet thread-bound global supervisor or on-demand scan; do not auto-create
-    high-frequency Codex cron. The heartbeat prompt should load persisted
-    state, the execution frontier, crew ledger, and role memory packets,
+    watchdog, and singleton global watchdog supervisor. The heartbeat prompt
+    should load persisted state, the execution frontier, crew ledger, and role
+    memory packets,
     restore or replace the crew from that memory, and ask the project manager
     for a completion-oriented runway plan from the current position to project
     completion; it should not be rewritten for ordinary route or plan changes.
@@ -238,9 +237,10 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     alone does not satisfy this gate when the native tool exists. Do not
     change the heartbeat automation prompt just because the route or next jump
     changed.
-38. Emit the visible route map in chat: active route, active node, simulated
-    path, next jumps, checks, fallback branches, heartbeat state, and current
-    acceptance delta.
+38. Emit the user flow diagram in chat when this is startup, a key node change,
+    route mutation, completion review, or user request. Include active route,
+    active node, next jumps, checks, fallback branches, continuation state, and
+    current acceptance delta as nearby text.
 39. Execute the first bounded chunk only after the continuation mode is known.
     In automated mode, the heartbeat rehydrates the crew from persisted role
     memory, asks the project manager for a completion-oriented runway, and the
@@ -369,7 +369,7 @@ Each crew record must separate identity into three fields:
 
 - `role_key`: the stable programmatic role id used for authority checks,
   routing, memory filenames, and recovery;
-- `display_name`: the short human-facing label shown in chat, route maps, and
+- `display_name`: the short human-facing label shown in chat, user flow diagrams, and
   Cockpit UI;
 - `agent_id`: the host/runtime handle used only for best-effort resume and
   diagnostic evidence.
@@ -573,7 +573,7 @@ source-of-truth/state contracts. Focused rounds do not claim the full
 100-per-layer formal gate; they identify local ambiguity, child-skill
 requirements, validation needs, and route adjustments for the current scope.
 
-Lightweight self-check is for heartbeat micro-steps and tiny reversible
+Lightweight self-check is for continuation micro-steps and tiny reversible
 decisions. It asks 5-10 targeted questions. It is a continuity guard, not a
 formal grill-me gate.
 
@@ -623,49 +623,43 @@ Improvement candidates are handled as typed route data:
 The only formal raise-standard trigger points are startup full grill-me,
 parent/module review, node checkpoint review, and final completion review.
 
-## Visible Route Map / Temporary Chat Cockpit
+## User Flow Diagram / Temporary Chat Cockpit
 
 Until the desktop Cockpit can reliably show live progress, the chat is the
-temporary cockpit. FlowPilot must show visible route state in chat at startup,
-after every route update, and at every node or heartbeat transition that begins
-new work.
+temporary cockpit. FlowPilot has one user-facing flow diagram for both chat and
+the Cockpit UI. Show it at startup, key node changes, route mutation,
+completion review, or explicit user request. Do not refresh or repost it on
+every heartbeat.
 
-A visible route map is a user-facing projection of the existing canonical route
+The user flow diagram is a projection of existing canonical route/frontier
 state; it is not a separate execution path and it must not invent a new route.
-The main view should prioritize the current `active_route` and `active_node`.
-Superseded or paused routes remain available as history, with their replacement
-reason and checkpoint/failure evidence, but they should not be mixed into the
-primary current-route map.
+The graph should stay at 6-8 major FlowPilot stages and highlight where the
+current `active_route` and `active_node` sit. Chat and UI use the same generated
+Mermaid source at `.flowpilot/diagrams/user-flow-diagram.mmd`.
 
-When FlowGuard or the current route model can emit Mermaid, FlowPilot must opt
-into that optional capability for route-map display. The canonical generated
-diagram lives under `.flowpilot/diagrams/` and is refreshed from the active
-`flow.json` plus `.flowpilot/execution_frontier.json`. If the Cockpit UI is not
-available, show the Mermaid diagram in chat. If the Cockpit UI is available,
-the UI should render the same canonical route/frontier state or an equivalent
-interactive graph. Route mutation invalidates the previous diagram; do not show
-the old map as current progress until the route is rechecked and the Mermaid
-artifact is refreshed.
+Raw FlowGuard Mermaid exports are diagnostic state graphs. They are disabled by
+default, generated only on explicit request, and must not replace the user flow
+diagram in chat or UI.
 
-Each visible route map must include:
+Each user flow diagram display must include:
 
 - active route id, active node, status, and selected mode;
-- the simulated path FlowGuard expects from this point;
-- the current PM completion runway, with the next one to three jumps
-  highlighted;
+- the highlighted current stage in the 6-8 stage FlowPilot process;
+- the current PM completion runway, with the next one to three jumps named in
+  nearby text;
 - checks that must pass before the next jump;
-- fallback or blocked exits;
+- fallback or blocked exits when they matter now;
 - heartbeat or automation state;
 - current acceptance delta: what is still missing relative to the frozen floor
   and any later raised standards.
 
 Do not treat `.flowpilot/` files alone as sufficient user-facing progress
-evidence. If the UI is not yet available, route maps, node jumps, planned
-checks, and verification results must be visible in the conversation.
+evidence. If the UI is not yet available, the user flow diagram, node jumps,
+planned checks, and verification results must be visible in the conversation.
 
-When the Cockpit UI is available, use the same hierarchy: current route first,
-current node details and next checks second, archived/superseded route history
-third.
+When the Cockpit UI is available, keep the same hierarchy: user flow diagram
+first, current node details and next checks second, archived/superseded route
+history third.
 
 ## FlowGuard Role
 
@@ -715,6 +709,41 @@ officer report follows the same repair route as inspection failure: issue
 grill, PM repair-strategy interrogation, PM route decision, stale-evidence
 invalidation, frontier rewrite, repair model, repair evidence, and same-class
 recheck.
+
+## PM-Initiated FlowGuard Modeling
+
+FlowGuard is also a PM-invoked modeling laboratory. When the project manager
+must choose a route, repair strategy, feature direction, product behavior, file
+format hypothesis, external protocol interpretation, or unknown object model
+and cannot choose confidently from existing evidence, the PM may create a
+structured FlowGuard modeling request instead of guessing.
+
+The PM may assign the request to:
+
+- the process FlowGuard officer, for "how should FlowPilot do this?" questions:
+  route alternatives, node splits, rollback paths, stuck paths, verification
+  order, or whether a current node is too large;
+- the product FlowGuard officer, for "what is the target itself?" questions:
+  product functions, target software behavior, file or protocol structures,
+  UI/user states, data/state transitions, missing features, or experiments
+  needed to learn the object;
+- both officers, when a route decision depends on target-object uncertainty.
+
+A PM modeling request is valid only when it names the decision to be made, the
+uncertainty, known evidence sources, candidate options or an explicit request
+to generate candidates, assigned officer scope, and the answer shape needed for
+PM action. Use `flowguard_modeling_request.template.json` for persistent
+evidence. The assigned officer first performs a modelability check. If the
+request lacks evidence, the route gains an evidence-collection node. If the
+request is too broad, the route gains split modeling requests. Only a modelable
+request may produce a decision report.
+
+The officer report must include coverage, blindspots, failure paths,
+recommendation, confidence, next smallest executable action, and any route
+mutation candidate. Use `flowguard_modeling_report.template.json`. The PM then
+synthesizes the report and records one of: continue current route, mutate the
+route, add evidence work, split the request, or block with a concrete reason.
+An officer report is advisory; PM synthesis is the route decision.
 
 FlowGuard does not judge aesthetics directly. It enforces the route
 consequences of inspection results: if the AI/human-like inspector reports a
@@ -834,7 +863,7 @@ freezing the checked candidate as `route v1`.
 The execution unit is hierarchical:
 
 ```text
-route -> phase -> group -> leaf node -> heartbeat micro-step
+route -> phase -> group -> leaf node -> continuation micro-step
 ```
 
 Before entering a parent node's children, FlowPilot must reload the current
@@ -892,8 +921,9 @@ next automated heartbeat or manual resume resumes that same node. It may not
 advance to the next node until validation and evidence for the current node
 are written.
 Concretely, `unfinished_current_node: true` or
-`current_node_completion.advance_allowed: false` means the heartbeat must keep
-working on `active_node` and must ignore `next_node` as an execution target.
+`current_node_completion.advance_allowed: false` means the continuation turn
+must keep working on `active_node` and must ignore `next_node` as an execution
+target.
 `next_node` is only a planned jump after the completion guard is satisfied.
 The PM runway must include the persisted `current_subnode` or `next_gate` for
 that unfinished node, but it must not stop at that single gate. The automated
@@ -904,6 +934,46 @@ decision such as "continue to icon generation" or "next do X" while the gate is
 still executable. Continuation evidence must name the PM runway, the selected
 gate, actions attempted, results, checkpoint writes, and the updated
 completion guard.
+
+## Controlled Nonterminal Stop Notice
+
+Every controlled stop must classify the route as complete or not complete.
+This applies in automated heartbeat mode and in `manual-resume` mode.
+
+If the route is complete, FlowPilot emits a terminal completion notice and does
+not ask the user to continue:
+
+```text
+FlowPilot task complete.
+```
+
+If the route is not complete and the agent still has a chance to respond, it
+must write a resume notice into `.flowpilot/` state/frontier evidence and show
+a concise chat notice. Automated continuation may mention the heartbeat;
+manual-resume mode must not imply that unattended recovery exists.
+
+Automated continuation notice:
+
+```text
+FlowPilot is not complete yet, and the checkpoint has been saved. You can wait
+for the configured heartbeat to wake this thread, or type "continue FlowPilot"
+to resume manually.
+```
+
+Manual-resume notice:
+
+```text
+FlowPilot is not complete yet, and the checkpoint has been saved. This host
+does not support heartbeat or scheduled wakeups; type "continue FlowPilot" in
+this thread to resume manually.
+```
+
+If the stop is caused by a blocker or hard gate, the notice must name the
+blocking condition and the next required user or environment action before the
+resume sentence. An abrupt host kill, process crash, or forced stop that gives
+the agent no final response opportunity cannot guarantee this chat notice, so
+FlowPilot should keep the persisted resume packet current at each checkpoint
+and before risky/long operations.
 
 The visible plan projection is a host-facing execution control, not just a
 JSON note. When a native plan tool exists, the main executor must call it after
@@ -958,16 +1028,15 @@ watchdog record must include a `source_status` block naming trusted sources,
 diagnostic sources, source timestamps, drift warnings, and
 `live_subagent_state_used: false`.
 
-Heartbeat, watchdog, and global supervisor evidence are managed as one
-lifecycle bundle. Whenever FlowPilot creates or updates a real heartbeat
-continuation for a formal long-running route, it must create or verify the
-paired external watchdog and verify a quiet singleton global-supervisor path in
-the same setup phase. If no quiet singleton exists, record setup-required or
-on-demand supervisor evidence instead of silently creating cron. Legacy cron
-requires explicit user opt-in because it creates standalone Codex jobs. Do not
-leave a half-created heartbeat without watchdog/global-supervisor evidence, and
-do not create watchdog/global-supervisor automation when the host probe found
-no wakeup support.
+Heartbeat, watchdog, and global supervisor lifecycle is all-or-none. Whenever
+FlowPilot creates or updates a real heartbeat continuation for a formal
+long-running route, it must create or verify the paired external watchdog and
+verify the singleton global supervisor in the same setup phase. If any piece
+cannot be created, roll back to `manual-resume` before route execution or
+record a concrete blocker. Do not leave a half-created heartbeat without
+watchdog/global-supervisor evidence, and do not create
+watchdog/global-supervisor automation when the host probe found no wakeup
+support.
 
 Pause, restart, and terminal closure use one unified lifecycle reconciliation
 gate. Before claiming any of those states, FlowPilot scans Codex app
@@ -979,14 +1048,20 @@ with a reason. Use `scripts/flowpilot_lifecycle.py` as the read-only inventory
 helper and then perform required Codex automation changes through the official
 Codex app automation interface.
 
-At terminal closure, stop or delete the watchdog automation first, record
-`stopped_before_heartbeat`, then write the stopped/inactive lifecycle state
-back to `state.json`, `.flowpilot/execution_frontier.json`, lifecycle evidence,
-and watchdog evidence before stopping or deleting the heartbeat automation.
+At terminal closure, first write terminal/inactive route state and unregister
+this project's global supervisor registration lease. Then stop or delete the
+project watchdog automation and record `stopped_before_heartbeat`, write the
+stopped/inactive lifecycle state back to `state.json`,
+`.flowpilot/execution_frontier.json`, lifecycle evidence, and watchdog
+evidence, and only then stop or delete the heartbeat automation. The
+user-level global supervisor is handled after this project cleanup and is
+deleted only if a locked registry reread shows no active, unexpired
+registrations remain.
 This is a final writeback gate, not a requirement to repeatedly poll the
 watchdog during ordinary route progress.
-Ordinary route progress, checkpoint writes, node changes, plan syncs, and route
-map refreshes must only read existing watchdog evidence or heartbeat health.
+Ordinary route progress, checkpoint writes, node changes, plan syncs, and user
+flow diagram refreshes must only read existing watchdog evidence or
+continuation readiness evidence.
 They must not recreate, re-register, start, restart, or re-enable the paired
 watchdog automation. On Windows, a visible console flash during ordinary node
 advance is treated as a watchdog lifecycle bug or task configuration bug; the
@@ -998,22 +1073,28 @@ hidden `powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden` wrapper,
 and record `hidden_noninteractive: true` in watchdog evidence.
 
 The user-level global supervisor is not owned by any one chat or project, and
-it is not a Windows scheduled task. It must be singleton Codex-side
-infrastructure created or verified through the Codex automation interface,
-using `templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md` as
-the prompt source. Default to a quiet thread-bound `heartbeat` singleton so
-repeated checks continue in one thread instead of creating a new conversation
-per run. FlowPilot verifies this supervisor in the same lifecycle setup that
-creates or repairs the heartbeat and paired watchdog. It first inspects
-existing Codex automations by id, kind, name, and prompt. If one active quiet
-singleton exists, reuse it. If an active legacy `cron` singleton exists, pause
-or replace it when conversation hygiene matters. If no quiet singleton exists,
-record setup-required or on-demand evidence. Create or reactivate a legacy
-cron only after explicit user opt-in that accepts new-conversation noise. The
-supervisor expires terminal or manually stopped project records, supersedes old
-route generations, deduplicates repeated stale events, and writes both global
-and local supervisor evidence. A local project may unregister or age out its
-own record, but it must not disable or delete a quiet user-level supervisor.
+it is not a Windows scheduled task. It must be a singleton Codex app cron
+automation created or verified through the Codex automation interface, using
+`templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md` as the
+prompt source and a fixed 30-minute cadence. FlowPilot verifies this
+supervisor in the same lifecycle setup that creates or repairs the heartbeat
+and paired watchdog. Each heartbeat refreshes this project's global
+registration lease before work continues. It first inspects existing Codex cron
+automations by id, name, and prompt. If one active singleton exists at the
+fixed cadence, reuse it. If exactly one paused singleton exists and the
+current route needs global protection, update that existing automation to
+`ACTIVE` with the fixed cadence. Create a new automation only when no singleton
+exists and at least one project registration is active. With the current Codex
+app `automation_update` interface, the creation/update shape is `kind: cron`,
+`rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as a single workspace string path,
+`executionEnvironment: local`, `reasoningEffort: medium`, and `status:
+ACTIVE`. The supervisor expires terminal or manually stopped project records,
+supersedes old route generations, deduplicates repeated stale events, and
+writes both global and local supervisor evidence. A local project unregisters
+or ages out only its own record. On pause, stop, or completion, unregister the
+project first, stop the project heartbeat/watchdog, then reread the global
+registry under the singleton lock; delete the user-level global supervisor
+last only when no active, unexpired project registrations remain.
 
 Busy leases are node-scoped work markers, not heartbeats and not completion
 evidence. Use them only around bounded operations that may naturally outlive
@@ -1277,7 +1358,7 @@ Required early gate:
   feature decisions, display rationale, missing-feature review, negative
   scope, product officer modelability approval, and reviewer usefulness
   challenge;
-- visible route map before route execution and at each major node;
+- user flow diagram before route execution and at each major node;
 - host continuation capability probe before route execution;
 - if the host supports real wakeups, the all-or-none automated continuation
   bundle before route execution: stable heartbeat schedule, paired external
@@ -1425,6 +1506,10 @@ The PM-owned ledger records:
 - human-like node, parent, final, strict-obligation, and same-inspector recheck
   gates;
 - product-function and development-process model gates;
+- generated-resource lineage for concept images, product-facing visual assets,
+  screenshots, route diagrams, model reports, and other generated artifacts,
+  with each item marked consumed, included in final output, used as evidence,
+  superseded, quarantined, or intentionally discarded with reason;
 - stale, invalidated, missing, waived, blocked, and unresolved evidence;
 - `unresolved_count`.
 
@@ -1451,8 +1536,9 @@ No formal chunk starts without:
   one-step projection;
 - current-node completion guard loaded and showing that advance is allowed, or
   else the heartbeat must resume the unfinished active node;
-- continuation heartbeat health checked;
-- visible route map or node roadmap emitted in chat;
+- continuation readiness checked: automated heartbeat health when supported, or
+  manual-resume state/frontier/crew-memory readiness when no real wakeup exists;
+- user flow diagram or node roadmap emitted in chat;
 - focused parent-scope grill-me completed for the active parent boundary;
 - current parent subtree reviewed through FlowGuard;
 - current parent product-function model checked;
@@ -1520,8 +1606,8 @@ Use heartbeats, node reports, and checkpoints for that.
 When a route structure changes, do not encode the new next jump in the
 heartbeat automation prompt. Create or update the route version, rerun the
 affected FlowGuard checks, rewrite `.flowpilot/execution_frontier.json`, sync
-the visible Codex plan list from that frontier, and then emit the visible route
-map.
+the visible Codex plan list from that frontier, and then refresh the user flow
+diagram.
 
 Changing how the route is displayed in chat or Cockpit is not, by itself, a
 route-structure change. The display should read from `state.json`, active
@@ -1596,8 +1682,9 @@ Complete only when:
   approved the clean ledger;
 - final report is written;
 - host continuation mode has been reconciled: automated routes stop or delete
-  the paired watchdog before heartbeat state stops; manual-resume routes record
-  that no heartbeat/watchdog/global-supervisor automation was created;
+  the paired watchdog before automated heartbeat state stops; manual-resume
+  routes record that no heartbeat/watchdog/global-supervisor automation was
+  created;
 - lifecycle reconciliation has scanned Codex automations, global supervisor
   records, Windows scheduled tasks, local state, execution frontier, and
   watchdog evidence;
@@ -1609,7 +1696,10 @@ Complete only when:
 
 The final response should cite the current route, checkpoints, verification
 commands, skipped checks with reasons, and any residual risks. Do not claim a
-skipped check passed.
+skipped check passed. If the route is complete, the final response states that
+the FlowPilot task is complete. If the route is not complete and this is a
+controlled stop, the final response includes the appropriate automated or
+manual-resume notice.
 
 ## References
 

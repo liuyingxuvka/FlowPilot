@@ -73,6 +73,11 @@ model-backed autopilot:
   node exists, the heartbeat must load the persisted frontier, execute the
   current subnode/gate or record a concrete blocker, and cannot stop after only
   writing "continue to the next gate."
+- Heartbeat is optional host capability. Unsupported hosts run in
+  `manual-resume` mode from the same `.flowpilot/` state/frontier/crew-memory
+  evidence and must not require heartbeat/watchdog/global-supervisor automation.
+  Any controlled nonterminal stop records and displays a resume notice; terminal
+  completion records a completion notice instead of a resume prompt.
 - Human-like inspection now begins with a neutral observation pass before
   judgement. The inspector first records what the artifact, screenshot, output,
   or exercised feature actually appears to be, then compares that observation
@@ -110,18 +115,26 @@ model-backed autopilot:
 - Terminal completion now requires a PM-owned dynamic route-wide gate ledger
   rebuilt from the current route, not the initial route. The ledger resolves
   effective and superseded nodes, child-skill gates, human-review gates,
-  product/process model gates, stale evidence, waivers, blockers, and
-  unresolved items. Completion is blocked until unresolved count is zero, the
-  human-like reviewer replays the final product backward through that ledger,
-  and the PM records ledger-specific completion approval.
+  product/process model gates, generated-resource lineage, stale evidence,
+  waivers, blockers, and unresolved items. Completion is blocked until
+  unresolved count is zero, every generated resource is consumed, included in
+  final output, used as evidence, superseded, quarantined, or discarded with
+  reason, the human-like reviewer replays the final product backward through
+  that ledger, and the PM records ledger-specific completion approval.
 - Watchdog decisions now trust only local `state.json`, latest heartbeat
   evidence, and `.flowpilot/busy_lease.json`. Frontier, lifecycle, automation,
   and global records are drift diagnostics; live subagent busy state is not a
   supported watchdog source.
-- Route progress maps now have a Mermaid-backed display contract. If the
-  Cockpit UI is unavailable, chat displays the Mermaid route map; if route
-  structure changes, the previous diagram is stale until refreshed from the
-  rechecked route and execution frontier.
+- The project manager may proactively use FlowGuard as a modeling laboratory
+  for uncertain route, repair, feature, product-object, file-format, protocol,
+  or validation decisions. The PM writes a structured modeling request, assigns
+  the process FlowGuard officer, product FlowGuard officer, or both, receives
+  a modelability-aware report, and then records the route decision.
+- FlowPilot now has one user-facing flow diagram for both chat and Cockpit UI:
+  a 6-8 stage FlowPilot process view with the current stage highlighted. Raw
+  FlowGuard Mermaid graphs are diagnostic exports only and are disabled by
+  default. Route or key-node changes make the previous user flow diagram stale
+  until it is refreshed from the rechecked route and execution frontier.
 - Crew records now separate `role_key`, `display_name`, and diagnostic-only
   `agent_id` so UI and authority checks do not drift when host agent names or
   handles change.
@@ -152,9 +165,9 @@ FlowGuard caught and fixed these design issues:
    contaminated or reused screenshot-like asset, so concept authenticity must
    be inspected independently and failures must route back to clean concept
    regeneration.
-10. A heartbeat that only records a future next-step decision is a no-progress
-    failure. The current unfinished gate must be executed or blocked in the
-    heartbeat turn.
+10. A continuation turn that only records a future next-step decision is a
+    no-progress failure. The current unfinished gate must be executed or blocked
+    in the continuation turn.
 11. Review failure cannot be treated as "evidence exists but pass is soft."
     It is a route mutation that invalidates stale child evidence and redirects
     the frontier to a reset or newly inserted repair child.
@@ -187,6 +200,11 @@ FlowGuard caught and fixed these design issues:
     terminal completion must rescan the current route, collect all effective
     child-skill and review gates, check stale evidence, explain superseded
     nodes, and rerun human-like backward replay before PM completion approval.
+19. Generated-resource existence is not useful output by itself. Concept
+    images, visual assets, screenshots, route diagrams, model reports, and
+    similar generated artifacts must be consumed by implementation/QA/final
+    output or explicitly superseded, quarantined, or discarded with reason in
+    the final ledger before completion can claim zero unresolved work.
 
 ## Current Implementation State
 

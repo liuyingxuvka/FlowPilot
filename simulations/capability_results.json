@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 90451,
+    "edge_count": 91544,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -19,12 +19,12 @@
       "capability_evidence_synced",
       "capability_product_function_model_checked",
       "capability_route_checked",
-      "capability_route_map_emitted",
-      "capability_route_mermaid_diagram_refreshed",
       "capability_route_updated_to_add_sibling_child_node",
       "capability_route_updated_to_rebuild_child_subtree",
       "capability_route_updated_to_rework_child_node",
       "capability_structure_decision_recorded",
+      "capability_user_flow_diagram_emitted",
+      "capability_user_flow_diagram_refreshed",
       "child_node_sidecar_scan_need_found_existing_idle",
       "child_node_sidecar_scan_need_found_no_pool",
       "child_node_sidecar_scan_no_need",
@@ -56,7 +56,8 @@
       "codex_plan_synced",
       "completed",
       "completion_self_interrogation_completed",
-      "completion_visible_route_map_emitted",
+      "completion_visible_user_flow_diagram_emitted",
+      "continuation_resume_ready_checked",
       "contract_frozen",
       "crew_archived_at_terminal",
       "crew_ledger_written",
@@ -85,6 +86,7 @@
       "final_route_wide_gate_ledger_pm_built",
       "final_route_wide_gate_ledger_pm_completion_approved",
       "final_route_wide_gate_ledger_product_process_gates_collected",
+      "final_route_wide_gate_ledger_resource_lineage_resolved",
       "final_route_wide_gate_ledger_reviewer_backward_checked",
       "final_route_wide_gate_ledger_stale_evidence_checked",
       "final_route_wide_gate_ledger_superseded_nodes_explained",
@@ -95,7 +97,6 @@
       "flowpilot_invocation_policy_mapped",
       "global_watchdog_supervisor_verified",
       "heartbeat_asked_project_manager",
-      "heartbeat_health_checked",
       "heartbeat_loaded_crew_memory",
       "heartbeat_loaded_execution_frontier",
       "heartbeat_loaded_state",
@@ -126,6 +127,7 @@
       "non_ui_implemented",
       "pm_capability_work_decision_recorded",
       "pm_completion_decision_recorded",
+      "pm_flowguard_delegation_policy_recorded",
       "pm_initial_capability_decision_recorded",
       "pm_material_complexity_classified",
       "pm_material_discovery_decision_recorded",
@@ -184,29 +186,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 85209,
+    "state_count": 86302,
     "terminal_counts": {
       "blocked": 546,
       "complete": 546
     }
   },
   "loop": {
-    "edge_count": 90451,
+    "edge_count": 91544,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 85209,
+    "state_count": 86302,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 90451,
+    "edge_count": 91544,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 85209,
+    "state_count": 86302,
     "status": "OK",
     "success_state_count": 546
   }

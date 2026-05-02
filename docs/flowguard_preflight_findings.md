@@ -265,15 +265,16 @@ target evidence is reset.
 Date: 2026-05-01
 
 The user required FlowPilot to verify or create the singleton Codex global
-watchdog supervisor when heartbeat/watchdog continuity is established. The
-global supervisor must still be singleton: reuse one active automation, update
-one paused singleton to `ACTIVE` when global protection is required, and create
-only when no singleton exists.
+watchdog supervisor when heartbeat/watchdog continuity is established. As of
+2026-05-02, the global supervisor uses a fixed 30-minute cadence and is tied to
+active project registration leases: reuse one active automation, update one
+paused singleton to `ACTIVE` when global protection is required, and create
+only when no singleton exists and at least one active registration exists.
 
 The validated Codex automation creation shape is:
 
 - `kind`: `cron`
-- `rrule`: `FREQ=MINUTELY;INTERVAL=10`
+- `rrule`: `FREQ=MINUTELY;INTERVAL=30`
 - `cwds`: one workspace string path in the `automation_update` call
 - `executionEnvironment`: `local`
 - `reasoningEffort`: `medium`
@@ -299,10 +300,12 @@ python scripts/smoke_autopilot.py
 
 Runtime action:
 
-- Created Codex automation `flowpilot-global-watchdog-supervisor`.
-- Verified status `ACTIVE` and `rrule` `FREQ=MINUTELY;INTERVAL=10`.
-- `python scripts/flowpilot_global_supervisor.py --status --json` reports
-  `active_count: 1` and `recommended_action: reuse_active`.
+- Earlier runs created Codex automation `flowpilot-global-watchdog-supervisor`
+  at a 10-minute cadence; the 2026-05-02 lifecycle update supersedes that
+  cadence with `FREQ=MINUTELY;INTERVAL=30`.
+- `python scripts/flowpilot_global_supervisor.py --status --json` reports the
+  registry active-registration count and recommends create, update, reuse, or
+  delete based on that count.
 
 Results:
 
@@ -1146,6 +1149,69 @@ Results after integration:
 - missing required labels: 0;
 - stuck states: 0.
 
+## Resource Output Lineage
+
+Date: 2026-05-02
+
+The user asked to rerun FlowPilot through FlowGuard with a specific waste
+question: which steps do real work but never reach final output, for example
+image generation that is not later used.
+
+The existing models already covered concept authenticity, stale visual
+evidence, rendered screenshot QA, and final route-wide gate ledgers. The gap
+was narrower: generated resources were not first-class ledger entries. A
+route could prove that a concept/source/aesthetic gate happened without proving
+where the generated artifact went afterward.
+
+The repaired flow is:
+
+- before expensive/user-facing generation, record the output contract and
+  resource budget;
+- generated concept images, visual assets, screenshots, route diagrams, model
+  reports, and similar artifacts each receive a disposition;
+- allowed dispositions are consumed by implementation/QA, included in final
+  output, used as route/model evidence, superseded, quarantined, or discarded
+  with reason;
+- route mutation or regeneration must invalidate stale generated resources;
+- final route-wide gate ledgers must resolve generated-resource lineage before
+  claiming zero unresolved items.
+
+A targeted model in `.flowpilot/task-models/resource-output-lineage/`
+reproduced eight unsafe variants:
+
+- concept image generated but never consumed by implementation, divergence
+  review, final output, or quarantine;
+- visual asset generated without exported final-output path or quarantine;
+- screenshot generated without QA/final-review consumption;
+- route diagram generated without visible route-map consumption;
+- model report generated without being attached to a FlowGuard gate;
+- backend-only route generates UI visual resources;
+- ledger claims zero unresolved resources before dispositions are recorded;
+- route mutation quarantines a resource without stale-resource invalidation.
+
+Commands:
+
+```powershell
+python .flowpilot\task-models\resource-output-lineage\run_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+```
+
+Results after integration:
+
+- targeted model states: 29;
+- targeted model edges: 28;
+- all eight resource-waste hazards reproduced;
+- meta model states: 92192;
+- meta model edges: 96732;
+- capability model states: 86302;
+- capability model edges: 91544;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0.
+
 ## Final Route-Wide Gate Ledger
 
 Date: 2026-05-02
@@ -1195,6 +1261,46 @@ Results after integration:
 - meta model edges: 95416;
 - capability model states: 84804;
 - capability model edges: 90046;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0.
+
+## Optional Heartbeat Manual Resume Notices
+
+Date: 2026-05-02
+
+The user clarified that real heartbeat or scheduled wakeup support is optional.
+On hosts without that support, FlowPilot must continue from manual user
+resume using `.flowpilot/` state, execution frontier, crew memory, and PM
+runway evidence. It must not treat missing heartbeat/watchdog/global-supervisor
+automation as a blocker in `manual-resume` mode.
+
+The repaired flow is:
+
+- automated hosts check real heartbeat health and may tell the user to wait for
+  heartbeat wakeup or type `continue FlowPilot`;
+- unsupported hosts check manual-resume state/frontier/crew-memory readiness
+  and tell the user to type `continue FlowPilot`;
+- controlled nonterminal blocked exits record a resume notice;
+- terminal completed exits record a completion notice instead of a resume
+  prompt.
+
+Commands:
+
+```powershell
+python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+```
+
+Results after integration:
+
+- meta model states: 92192;
+- meta model edges: 96732;
+- capability model states: 86302;
+- capability model edges: 91544;
 - invariant failures: 0;
 - missing required labels: 0;
 - stuck states: 0.
