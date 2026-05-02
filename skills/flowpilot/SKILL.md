@@ -378,7 +378,11 @@ all three in one compact sentence.
     the external Windows watchdog task, the singleton global supervisor at
     thirty minutes, global registry registration, route/state/frontier
     consistency, residual or shadow route state, latest watchdog evidence, and
-    any user-requested clean-start or old-asset cleanup. The reviewer does not
+    any user-requested clean-start or old-asset cleanup. If the user allowed
+    background agents, the reviewer verifies six live role-bearing subagents
+    started or resumed after that user decision. If the user chose single-agent
+    continuity, the reviewer verifies explicit fallback authorization and does
+    not claim live subagents. The reviewer does not
     output approval and cannot open startup.
     The project manager reads the report. If it has blocking findings, the PM
     sends concrete remediation items back to the workers/main executor and

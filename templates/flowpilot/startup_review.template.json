@@ -13,7 +13,7 @@
     "route_state_frontier_consistency",
     "old_route_and_asset_reuse_boundary",
     "heartbeat_watchdog_supervisor_evidence",
-    "background_agent_role_evidence",
+    "background_agent_user_decision_and_role_evidence",
     "shadow_route_and_residual_state",
     "real_codex_automation_records",
     "windows_scheduled_tasks",
@@ -26,6 +26,7 @@
     "route_flow_json": ".flowpilot/routes/<route-id>/flow.json",
     "crew_ledger_json": ".flowpilot/crew_ledger.json",
     "role_memory_root": ".flowpilot/crew_memory/<route-id>",
+    "live_subagent_startup_state": ".flowpilot/state.json#/startup_activation/live_subagent_startup",
     "codex_automation_records": "$CODEX_HOME/automations",
     "windows_scheduled_tasks": "Get-ScheduledTask filtered to FlowPilot watchdog tasks",
     "global_watchdog_registry": "$CODEX_HOME/flowpilot/watchdog/registry.json",
@@ -36,7 +37,9 @@
     "route_heartbeat_interval_minutes": 1,
     "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
     "watchdog_kind": "windows_task_scheduler",
-    "global_supervisor_cadence_minutes": 30
+    "global_supervisor_cadence_minutes": 30,
+    "live_subagents_required_when_user_allows_background_agents": 6,
+    "single_agent_role_continuity_requires_explicit_user_authorization": true
   },
   "checks": [],
   "errors": []

@@ -76,6 +76,8 @@
       "checked_old_route_and_asset_reuse_boundary": false,
       "checked_heartbeat_watchdog_supervisor_evidence": false,
       "checked_background_agent_role_evidence": false,
+      "checked_background_agent_user_decision_matches_actual_state": false,
+      "checked_live_subagent_count_or_single_agent_authorization": false,
       "checked_shadow_route_and_residual_state": false,
       "checked_real_codex_automation_records": false,
       "checked_windows_scheduled_tasks": false,

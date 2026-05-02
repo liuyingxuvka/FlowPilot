@@ -1655,3 +1655,25 @@ Final results:
 - smoke autopilot passed;
 - public release check remains blocked by existing missing GitHub dependency
   sources for companion skills.
+
+### 2026-05-02 Follow-Up - User-Decision-Bound Subagent Fact Review
+
+The startup reviewer fact report now explicitly binds the background-agent user
+answer to actual subagent state:
+
+- if the user allowed background agents, the reviewer must verify six live
+  role-bearing subagents started or resumed after that user decision;
+- if the user chose single-agent continuity, the reviewer must verify explicit
+  fallback authorization and must not claim live subagents.
+
+The startup PM-review model now tracks `live_agents_active` and detects
+`reviewer_clean_accepts_underfilled_live_subagents`. Validation reran with:
+
+```powershell
+python -m py_compile simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py
+python simulations\run_startup_pm_review_checks.py
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+```
+
+Results: startup PM-review, install check, and smoke autopilot passed.

@@ -124,10 +124,17 @@ runtime startup-check script writes it. It must include:
 - scope flags for user authorization, route consistency, cleanup boundary,
   continuation evidence, real Codex automation records, Windows scheduled
   tasks, global watchdog registry, watchdog latest evidence, background-agent
-  roles, and shadow/residual state;
+  roles, user background-agent decision versus actual subagent state, live
+  subagent count or explicit single-agent authorization, and shadow/residual
+  state;
 - required facts for route heartbeat interval 1 minute, route heartbeat RRULE
   `FREQ=MINUTELY;INTERVAL=1`, watchdog kind `windows_task_scheduler`, and
-  global supervisor cadence 30 minutes.
+  global supervisor cadence 30 minutes;
+- if `answers.background_agents.answer` is `allow`, six live role-bearing
+  subagents must be active or resumed after the user decision;
+- if `answers.background_agents.answer` is `single-agent`, explicit
+  single-agent role-continuity authorization must exist and the route must not
+  claim six live subagents.
 
 `startup_activation.pm_start_gate` is written by the project manager after
 reading the reviewer report. It must include:

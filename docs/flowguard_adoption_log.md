@@ -393,3 +393,27 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - Did not run full forced installer overwrite because it would replace the entire installed skill directory. Only the checked skill entrypoints were synchronized.
+
+
+## flowpilot-subagent-user-decision-review-20260502 - Startup reviewer binds subagent facts to user answer
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that reviewer facts must be bound to user decisions, including subagent authorization.
+- Status: completed
+- Skill decision: use_flowguard
+- Models updated: `simulations/startup_pm_review_model.py`.
+
+### Findings
+- Startup review templates now distinguish background-agent role evidence from the stronger requirement: user background-agent decision must match actual subagent state.
+- If background agents are allowed, reviewer must verify six live role-bearing subagents started or resumed after the user decision.
+- If single-agent continuity is selected, reviewer must verify explicit fallback authorization and must not claim live subagents.
+- FlowGuard startup PM-review model now detects underfilled live-subagent startup.
+
+### Commands
+- `python -m py_compile simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py`
+- `python simulations\run_startup_pm_review_checks.py`
+- `python scripts\check_install.py`
+- `python scripts\smoke_autopilot.py`
+
+### Results
+- Startup PM-review, install check, and smoke autopilot passed.

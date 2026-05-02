@@ -148,7 +148,11 @@ long-form public explanation lives in `docs/protocol.md`.
     route heartbeat automation at one minute, the external Windows watchdog
     task, the singleton global supervisor at thirty minutes, global registry
     registration, latest watchdog evidence, residual route state, and
-    shadow-route evidence. The reviewer writes a report only; the reviewer
+    shadow-route evidence. It must bind the background-agent answer to actual
+    subagent state: if the user allowed background agents, verify six live
+    role-bearing subagents started or resumed after that user decision; if the
+    user chose single-agent continuity, verify the explicit fallback
+    authorization and do not claim live subagents. The reviewer writes a report only; the reviewer
     does not approve startup and does not open the gate. The project manager
     reads the report. If it contains blockers, PM sends remediation items back
     to workers/main executor and requires a new factual reviewer report. If it

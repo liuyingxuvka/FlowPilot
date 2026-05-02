@@ -13,8 +13,10 @@ review or can be satisfied by reading worker/PM summaries.
    That path is removed. Startup now has only a human-like reviewer factual
    report and a PM-owned startup opening decision. The reviewer must check real
    state/frontier/route, crew, role memory, automation records, Windows
-   scheduled task evidence, watchdog evidence, global supervisor evidence, and
-   cleanup boundary. PM may open only from a clean factual report.
+   scheduled task evidence, watchdog evidence, global supervisor evidence,
+   background-agent user decision versus actual subagent state, live subagent
+   count or explicit single-agent fallback authorization, and cleanup boundary.
+   PM may open only from a clean factual report.
 2. Human-like implementation inspection already requires context loading,
    neutral observation, real product/output inspection, and same-inspector
    recheck after repair. This is factual review, not report-only review.

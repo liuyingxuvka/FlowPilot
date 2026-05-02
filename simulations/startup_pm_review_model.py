@@ -35,6 +35,7 @@ class State:
     crew_ledger_current: bool = False
     role_memory_packets_current: int = 0
     live_subagents_started: bool = False
+    live_agents_active: int = 0
     single_agent_role_continuity_authorized: bool = False
     automated_continuation_ready: bool = False
     manual_resume_ready: bool = False
@@ -93,9 +94,17 @@ def startup_answers_complete(state: State) -> bool:
 
 def subagent_decision_matches_answer(state: State) -> bool:
     if state.background_agents_answer == "allow":
-        return state.live_subagents_started and not state.single_agent_role_continuity_authorized
+        return (
+            state.live_subagents_started
+            and state.live_agents_active >= REQUIRED_ROLE_MEMORY_PACKETS
+            and not state.single_agent_role_continuity_authorized
+        )
     if state.background_agents_answer == "single-agent":
-        return state.single_agent_role_continuity_authorized and not state.live_subagents_started
+        return (
+            state.single_agent_role_continuity_authorized
+            and not state.live_subagents_started
+            and state.live_agents_active == 0
+        )
     return False
 
 
@@ -220,7 +229,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition("role_memory_packets_current", replace(state, role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS))
         return
     if state.background_agents_answer == "allow" and not state.live_subagents_started:
-        yield Transition("live_subagents_started", replace(state, live_subagents_started=True))
+        yield Transition(
+            "live_subagents_started",
+            replace(state, live_subagents_started=True, live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS),
+        )
         return
     if state.background_agents_answer == "single-agent" and not state.single_agent_role_continuity_authorized:
         yield Transition("single_agent_role_continuity_authorized", replace(state, single_agent_role_continuity_authorized=True))
@@ -330,6 +342,7 @@ def invariant_failures(state: State) -> list[str]:
             or state.banner_emitted
             or state.route_file_written
             or state.live_subagents_started
+            or state.live_agents_active
             or state.single_agent_role_continuity_authorized
             or state.automated_continuation_ready
             or state.manual_resume_ready
@@ -362,6 +375,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("single-agent role continuity was authorized without the user's single-agent answer")
     if state.live_subagents_started and state.background_agents_answer != "allow":
         failures.append("live subagents were started without the user's live-agent answer")
+    if state.live_agents_active and state.background_agents_answer != "allow":
+        failures.append("active live subagents exist without the user's live-agent answer")
+    if (
+        state.startup_review_status == "clean"
+        and state.background_agents_answer == "allow"
+        and state.live_agents_active < REQUIRED_ROLE_MEMORY_PACKETS
+    ):
+        failures.append("reviewer accepted live-agent startup without six active subagents")
     if state.manual_resume_ready and state.scheduled_continuation_answer != "manual":
         failures.append("manual resume was recorded without the user's manual-resume answer")
     if state.automated_continuation_ready and state.scheduled_continuation_answer != "allow":
@@ -390,6 +411,7 @@ def _ready_base(**changes: object) -> State:
         crew_ledger_current=True,
         role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
         live_subagents_started=True,
+        live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS,
         automated_continuation_ready=True,
         route_heartbeat_interval_minutes=1,
         actual_heartbeat_automation_checked=True,
@@ -430,6 +452,7 @@ def hazard_states() -> dict[str, State]:
             reviewer_checked_real_watchdog=False,
             reviewer_checked_global_supervisor=False,
         ),
+        "reviewer_clean_accepts_underfilled_live_subagents": _ready_base(live_agents_active=3),
         "reviewer_clean_accepts_30_min_route_heartbeat": _ready_base(
             route_heartbeat_interval_minutes=30,
             actual_heartbeat_interval_minutes=30,
