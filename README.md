@@ -8,9 +8,15 @@
 <p align="center">
   <strong>FlowGuard-based project control for AI coding agents.</strong>
 </p>
+
+<p align="center">
+  Current release: <a href="https://github.com/liuyingxuvka/FlowPilot/releases/tag/v0.1.0"><strong>v0.1.0</strong></a> · MIT License · Source release
+</p>
 <!-- README HERO END -->
 
 English comes first. The second half is a full Chinese mirror.
+
+Current release: **v0.1.0**.
 
 FlowPilot is a model-backed project-control system for large AI-agent-led
 software and engineering projects. Its core foundation is **FlowGuard**: a
@@ -301,6 +307,8 @@ This repository is released under the MIT License.
 # FlowPilot 中文说明
 
 FlowPilot 是一个面向大型 AI Agent 软件和工程项目的模型化项目控制系统。它最核心的基础是 **FlowGuard**：一个有限状态的状态转移模拟器和检查器，用来建模、探索和验证项目控制行为，然后 Agent 才能把某条路线视为安全。
+
+当前发布版本：**v0.1.0**。
 
 FlowPilot 不是“有限状态控制 + FlowGuard”两个并列概念。FlowPilot 是一个基于 FlowGuard 的工程项目：
 
