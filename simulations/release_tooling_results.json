@@ -1,0 +1,234 @@
+{
+  "hazard_checks": {
+    "hazards": {
+      "companion_skill_packaged": {
+        "detected": true,
+        "failures": [
+          "release tooling attempted to write, package, or publish a companion skill"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": true,
+          "companion_skill_published": false,
+          "dependency_sources_checked": false,
+          "dependency_sources_ready": false,
+          "dependency_sources_reported_missing": false,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": false,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": false,
+          "release_checker_written": true,
+          "tracked_private_state_found": false,
+          "validation_done": false,
+          "validation_passed": false
+        }
+      },
+      "companion_skill_published": {
+        "detected": true,
+        "failures": [
+          "release tooling attempted to write, package, or publish a companion skill"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": true,
+          "dependency_sources_checked": false,
+          "dependency_sources_ready": false,
+          "dependency_sources_reported_missing": false,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": false,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": false,
+          "release_checker_written": true,
+          "tracked_private_state_found": false,
+          "validation_done": false,
+          "validation_passed": false
+        }
+      },
+      "hardcoded_image_provider": {
+        "detected": true,
+        "failures": [
+          "release tooling hard-coded a host-specific provider as universal"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": false,
+          "dependency_sources_ready": false,
+          "dependency_sources_reported_missing": false,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": false,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": true,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": false,
+          "release_checker_written": true,
+          "tracked_private_state_found": false,
+          "validation_done": false,
+          "validation_passed": false
+        }
+      },
+      "overwrite_without_force": {
+        "detected": true,
+        "failures": [
+          "installer overwrote an existing skill without explicit force"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": true,
+          "dependency_sources_ready": false,
+          "dependency_sources_reported_missing": false,
+          "existing_skill_overwritten": true,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": false,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": false,
+          "release_checker_written": false,
+          "tracked_private_state_found": false,
+          "validation_done": false,
+          "validation_passed": false
+        }
+      },
+      "publish_with_missing_dependency_source": {
+        "detected": true,
+        "failures": [
+          "FlowPilot release was prepared before dependency, privacy, and validation gates passed",
+          "FlowPilot publish was allowed while dependency sources were missing"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": true,
+          "dependency_sources_ready": false,
+          "dependency_sources_reported_missing": true,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": true,
+          "flowpilot_release_prepared": true,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": false,
+          "release_checker_written": true,
+          "tracked_private_state_found": false,
+          "validation_done": false,
+          "validation_passed": false
+        }
+      },
+      "release_before_privacy_scan": {
+        "detected": true,
+        "failures": [
+          "FlowPilot release was prepared before dependency, privacy, and validation gates passed"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": true,
+          "dependency_sources_ready": true,
+          "dependency_sources_reported_missing": false,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": true,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": false,
+          "release_checker_written": true,
+          "tracked_private_state_found": false,
+          "validation_done": true,
+          "validation_passed": true
+        }
+      },
+      "release_with_private_state": {
+        "detected": true,
+        "failures": [
+          "FlowPilot release was prepared before dependency, privacy, and validation gates passed",
+          "FlowPilot release was prepared with tracked private state present"
+        ],
+        "state": {
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": true,
+          "dependency_sources_ready": true,
+          "dependency_sources_reported_missing": false,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": false,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": true,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": true,
+          "release_checker_written": true,
+          "tracked_private_state_found": true,
+          "validation_done": true,
+          "validation_passed": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "safe_graph": {
+    "edge_count": 12,
+    "invariant_failures": [],
+    "labels": [
+      "dependency_manifest_written",
+      "dependency_sources_checked_missing_reported",
+      "dependency_sources_checked_ready",
+      "flowpilot_install_checked",
+      "flowpilot_only_release_checker_written",
+      "flowpilot_publish_allowed",
+      "flowpilot_release_prepared",
+      "host_capability_mapping_declared",
+      "installer_written",
+      "missing_dependencies_installed_without_overwrite",
+      "privacy_scan_passed",
+      "validation_passed"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 13
+  }
+}

@@ -6,6 +6,7 @@ Run:
 
 ```powershell
 python simulations/run_startup_guard_checks.py
+python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
 python scripts/check_install.py
@@ -19,6 +20,7 @@ Expected:
 - zero progress findings;
 - zero stuck states;
 - reachable success.
+- FlowPilot release tooling cannot publish or package companion skills.
 - execution frontier and visible Codex plan sync labels are present before
   behavior-bearing work.
 - startup guard checks reject shadow routes and require the guard pass before
@@ -34,12 +36,14 @@ private development `.flowpilot/` state.
 Run:
 
 ```powershell
+python scripts/install_flowpilot.py --check
 python scripts/check_install.py
 ```
 
 Expected:
 
 - real FlowGuard import works;
+- `flowpilot.dependencies.json` parses;
 - required project files exist;
 - `skills/flowpilot/SKILL.md` exists and declares `name: flowpilot`;
 - reusable FlowPilot templates exist;
@@ -47,6 +51,30 @@ Expected:
 - template JSON files parse.
 - `templates/flowpilot/execution_frontier.template.json` parses.
 - If local `.flowpilot/` runtime state exists, its main JSON files parse.
+
+## Public Release Check
+
+Run before publishing this repository:
+
+```powershell
+python scripts/check_public_release.py
+```
+
+Expected:
+
+- tracked files do not include `.flowpilot/`, `.flowguard/`, `kb/`, local
+  environment files, caches, or secret-shaped content;
+- the dependency manifest parses and has explicit sources for GitHub-backed
+  dependencies;
+- external dependency `SKILL.md` links are reachable when URL checking is not
+  skipped;
+- release tooling reports FlowPilot repository scope only and no companion
+  publishing authority;
+- validation commands pass.
+
+If companion skill GitHub URLs are intentionally not filled in yet, the public
+release check should block and report those missing sources. The user decides
+whether and when to publish or update those companion skill repositories.
 
 ## Smoke Checks
 
@@ -58,6 +86,7 @@ python scripts/smoke_autopilot.py
 
 Expected:
 
+- release tooling simulation passes;
 - meta simulation passes;
 - capability simulation passes.
 - startup guard simulation passes.

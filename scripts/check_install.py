@@ -22,6 +22,7 @@ REQUIRED_FILES = [
     "docs/protocol.md",
     "docs/schema.md",
     "docs/verification.md",
+    "flowpilot.dependencies.json",
     "skills/flowpilot/SKILL.md",
     "skills/flowpilot/references/protocol.md",
     "skills/flowpilot/references/installation_contract.md",
@@ -60,6 +61,11 @@ REQUIRED_FILES = [
     "simulations/run_capability_checks.py",
     "simulations/startup_guard_model.py",
     "simulations/run_startup_guard_checks.py",
+    "simulations/release_tooling_model.py",
+    "simulations/run_release_tooling_checks.py",
+    "simulations/release_tooling_results.json",
+    "scripts/install_flowpilot.py",
+    "scripts/check_public_release.py",
     "scripts/flowpilot_startup_guard.py",
     "scripts/flowpilot_watchdog.py",
     "scripts/flowpilot_global_supervisor.py",
@@ -68,9 +74,12 @@ REQUIRED_FILES = [
     "scripts/flowpilot_run_with_busy_lease.py",
     "scripts/flowpilot_user_flow_diagram.py",
     "scripts/register_windows_watchdog_task.ps1",
+    "scripts/smoke_autopilot.py",
 ]
 
 JSON_FILES = [
+    "flowpilot.dependencies.json",
+    "simulations/release_tooling_results.json",
     "templates/flowpilot/capabilities.template.json",
     "templates/flowpilot/mode.template.json",
     "templates/flowpilot/state.template.json",

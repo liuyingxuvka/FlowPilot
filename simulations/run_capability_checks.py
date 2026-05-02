@@ -17,9 +17,13 @@ CHECK_STATE_LIMIT = 120_000
 REQUIRED_LABELS = (
     "classified_backend_task",
     "classified_ui_task",
+    "startup_three_questions_asked",
+    "startup_dialog_stopped_for_user_answers",
     "mode_choice_offered",
     "mode_selected_by_user",
     "default_mode_recorded",
+    "startup_background_agents_answered",
+    "startup_scheduled_continuation_answered",
     "showcase_floor_committed",
     "visible_self_interrogation_completed",
     "contract_frozen",

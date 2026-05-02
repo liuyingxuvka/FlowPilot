@@ -25,6 +25,8 @@ The original completion floor may not silently change.
 
 - Real `flowguard` Python package.
 - `model-first-function-flow` skill.
+- `flowpilot.dependencies.json` in the source repository for installer-readable
+  dependency checks.
 - Persistent project directory with `.flowpilot/`.
 
 Before model-backed work:
@@ -36,6 +38,22 @@ python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
 If this fails, connect the real FlowGuard toolchain or mark setup blocked. Do
 not create a fake substitute.
 
+For repository installation, prefer:
+
+```powershell
+python scripts/install_flowpilot.py --install-missing
+python scripts/check_install.py
+```
+
+Before public release, use `python scripts/check_public_release.py`. That
+preflight is scoped to the FlowPilot repository only and must not publish,
+package, push, tag, or upload companion skills.
+
+Host-specific tools are capability-mapped. In Codex, visual routes may satisfy
+`raster_image_generation` through the built-in `imagegen` skill. Other hosts
+may use a differently named image-generation provider, but FlowPilot must
+record the provider identity and check evidence before running the visual gate.
+
 ## Default Activation
 
 When FlowPilot is explicitly invoked, or when a project already contains a
@@ -45,28 +63,44 @@ first ask whether FlowPilot should exist.
 Preferred user-facing invocation when a formal route is intended:
 
 ```text
-Use FlowPilot full protocol, including permission to start the standard six
-background subagents where the host and current tool policy permit them,
-heartbeat or manual-resume continuation, and the startup hard gate.
+Use FlowPilot. Ask the startup questions first.
 ```
 
-This wording matters. FlowPilot itself requires the six-role crew and role
-memory. Live background subagents are the default formal startup target. If
-they are not already authorized or cannot be started, FlowPilot must pause and
-ask the user whether to start the six live background agents. If the user
-authorizes them, start or resume all six and record the evidence. If the user
-declines, or if the host/tool still cannot provide live subagents after an
-authorized attempt, ask whether to continue with single-agent six-role
-continuity. Only after that explicit fallback decision may FlowPilot record
-memory-seeded replacement/recovery status and continue. It blocks if no live
-subagent or explicit single-agent continuity decision exists, if a required
-role cannot be recovered from ledger and memory, or if any hard gate cannot be
-satisfied. Do not claim live subagents were started when the host/tool policy
-did not allow that.
+This wording matters. FlowPilot invocation is only permission to enter the
+startup questionnaire. It is not permission to choose a default mode, start
+background subagents, skip background subagents, create heartbeat/automation
+jobs, or fall back to manual resume.
 
-As soon as FlowPilot is enabled, emit the startup banner in a fenced `text`
-block before mode selection, self-interrogation, route modeling, or other heavy
-startup work:
+## Three-Question Startup Gate
+
+Before the banner, route creation, child skills, image generation,
+implementation, or model-backed work, FlowPilot must ask exactly these startup
+questions and stop until all three have explicit answers:
+
+1. Run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`.
+2. Background agents: allow the standard six live background subagents, or use
+   single-agent six-role continuity for this run.
+3. Scheduled continuation: allow heartbeat/automation jobs, or use manual
+   resume only for this run.
+
+The user may answer in one compact sentence, such as
+`FlowPilot: full-auto, allow background agents, allow heartbeat`. That counts
+as all three answers only if the answers are explicit. If any answer is
+missing, ambiguous, or says to pause, FlowPilot must remain in
+`startup_pending_user_answers` and ask for the missing answer. Do not infer an
+answer from "use FlowPilot", from the task's importance, from current tool
+availability, or from previous routes.
+
+After asking the three questions, the assistant's response must end immediately
+and control must return to the user. Do not keep planning, inspecting files,
+starting tools, creating route state, launching subagents, probing heartbeat, or
+showing the banner in the same response that asks the questions. Record this as
+`startup_activation.startup_questions.dialog_stopped_for_user_answers: true`
+before accepting a later user reply as startup-question evidence.
+
+Only after the three startup answers are recorded from the later user reply may
+FlowPilot emit the startup banner in a fenced `text` block. The banner means the
+startup-question gate is open and formal FlowPilot startup has begun:
 
 ```text
 ███████╗██╗      ██████╗ ██╗    ██╗██████╗ ██╗██╗      ██████╗ ████████╗
@@ -110,11 +144,16 @@ python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --r
 ```
 
 `startup_activation.work_beyond_startup_allowed` must be true in state and
-frontier before work beyond startup. `startup_activation.live_subagent_startup`
-must show either six live background agents started/resumed after a recorded
-user decision, or explicit user authorization for single-agent six-role
-continuity. If neither is recorded, stop at startup and ask; do not silently
-fall back. If only a route-local file,
+frontier before work beyond startup. `startup_activation.startup_questions`
+must show that the three-question prompt was asked before the banner, that the
+assistant stopped to wait for the user's reply, and that explicit answers for
+run mode, background agents, and scheduled continuation were later recorded
+before the banner is considered valid. `startup_activation` must then agree
+with those answers: live background agents only when the user allowed them,
+single-agent six-role continuity only when the user selected it, and
+heartbeat/automation only when the user allowed scheduled continuation. If any
+answer, wait-state evidence, or matching evidence is missing, stop at startup
+and ask; do not silently fall back. If only a route-local file,
 generated concept, screenshot, or implementation artifact exists without
 matching canonical state/frontier/crew/continuation evidence, treat it as a
 shadow route, quarantine or supersede it, and rerun startup instead of
@@ -143,22 +182,27 @@ FlowPilot mode still uses the same showcase-grade completion floor.
 - `strict-gated`: every formal chunk waits for explicit human approval after
   verification is defined.
 
-At startup, offer these modes left-to-right from loosest to strictest:
-`full-auto`, `autonomous`, `guided`, `strict-gated`. Mark `full-auto` as the
-default formal mode unless the user explicitly chooses otherwise. If the user
-has already chosen a mode, reuse it. If the host cannot pause for interaction
-or the user says to continue without choosing, record `full-auto` as the
-fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
+At startup, ask for these modes left-to-right from loosest to strictest:
+`full-auto`, `autonomous`, `guided`, `strict-gated`. Do not record a default
+mode for a formal route unless the user explicitly answers the mode question.
+The simplified `Use FlowPilot` / `使用开始` trigger never carries implied startup
+answers. It asks the three questions and stops; the next user reply may answer
+all three in one compact sentence.
 
 ## Startup Workflow
 
-1. Enable FlowPilot by default.
-2. Create or load `.flowpilot/`.
-3. Emit the fenced startup banner in chat so the user can clearly see the
-   formal FlowPilot controller has started.
-4. Offer run mode, from loosest to strictest: `full-auto`, `autonomous`,
-   `guided`, `strict-gated`.
-5. Record the selected mode or the `full-auto` fallback reason.
+1. On FlowPilot invocation, enter `startup_pending_user_answers`.
+2. Ask the three startup questions: run mode, background-agent permission, and
+   scheduled-continuation permission. End the assistant response immediately
+   after the questions and wait for the user's reply. No plan continuation, tool
+   call, route write, child-skill loading, imagegen, subagent startup, heartbeat
+   probe, or banner is allowed in that question-asking response.
+3. Record the explicit answer set in state/frontier startup activation
+   evidence. Do not infer fallback authorization.
+4. Emit the fenced startup banner in chat so the user can clearly see the
+   startup-question gate has opened and the formal FlowPilot controller has
+   started.
+5. Enable FlowPilot, create or load `.flowpilot/`, and record the selected mode.
 6. Commit the showcase-grade long-horizon floor.
 7. Run visible full grill-me using FlowPilot's formal invocation policy. In
    the same startup round, draft the intended acceptance floor, seed the
@@ -234,10 +278,12 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     current route/model checks.
 23. Defer future route, chunk, or native-build dependencies until the node or
     check that actually needs them.
-24. Probe the host continuation capability before creating any heartbeat,
-    watchdog, or global supervisor. Record the result in `.flowpilot/`:
-    supported, unsupported, attempted setup, evidence path, and fallback mode.
-25. If the host supports real wakeups or automations, create the continuation
+24. Probe the host continuation capability only after the user has answered
+    the scheduled-continuation startup question. If the user allowed scheduled
+    continuation and setup fails or is unsupported, stop and ask for a new
+    decision; do not silently switch to manual resume.
+25. If the user allowed scheduled continuation and the host supports real
+    wakeups or automations, create the continuation
     bundle as one lifecycle setup: stable heartbeat launcher, paired external
     watchdog, and singleton global watchdog supervisor. The heartbeat prompt
     should load persisted state, the execution frontier, crew ledger, and role
@@ -251,10 +297,10 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     user-level global record path, singleton global-supervisor status, and no
     false claim that a reset is proof of recovery before a new heartbeat
     appears.
-26. If the host does not support real wakeups or automations, do not create any
-    heartbeat, paired watchdog, or global supervisor. Record `manual-resume`
-    continuation mode, keep `.flowpilot/` state/checkpoints authoritative, and
-    continue the formal route without claiming unattended recovery.
+26. If the user selected manual resume, do not create any heartbeat, paired
+    watchdog, or global supervisor. Record `manual-resume` continuation mode,
+    keep `.flowpilot/` state/checkpoints authoritative, and continue the formal
+    route without claiming unattended recovery.
 27. Ask the project manager for the initial route-design decision.
 28. Ask the process FlowGuard officer to use FlowGuard as process designer for
     the control route.
@@ -295,9 +341,11 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     route mutation, completion review, or user request. Include active route,
     active node, next jumps, checks, fallback branches, continuation state, and
     current acceptance delta as nearby text.
-39. Set `startup_activation` in state/frontier from the current route,
-    execution frontier, crew ledger, role memory, live-subagent startup
-    decision, continuation, and visible plan evidence, then run:
+39. Set `startup_activation` in state/frontier from the three-question prompt,
+    the recorded stop-and-wait state, the three explicit startup answers,
+    banner evidence, current route, execution frontier, crew ledger, role
+    memory, live-subagent startup decision, continuation, and visible plan
+    evidence, then run:
 
     ```powershell
     python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
@@ -305,11 +353,14 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
 
     Do not run child skills, imagegen, implementation, formal route chunks, or
     completion work until the guard records
-    `work_beyond_startup_allowed: true`. If six live background agents are not
-    active/resumed and no explicit single-agent role-continuity fallback is
-    recorded, stop and ask the user for that decision. A route-local file
-    without matching canonical state/frontier/crew/continuation evidence is a
-    shadow route and must be quarantined or superseded before continuing.
+    `work_beyond_startup_allowed: true`. If the three startup answers are not
+    complete, if the prompt did not stop for the user's reply, if the banner was
+    emitted before the answers, if live-agent evidence conflicts with the
+    background-agent answer, or if continuation evidence conflicts with the
+    scheduled-continuation answer, stop and ask the user for the missing or
+    corrected decision. A route-local file without matching
+    canonical state/frontier/crew/continuation evidence is a shadow route and
+    must be quarantined or superseded before continuing.
 40. Execute the first bounded chunk only after the continuation mode is known.
     In automated mode, the heartbeat rehydrates the crew from persisted role
     memory, asks the project manager for a completion-oriented runway, and the

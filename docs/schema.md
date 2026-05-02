@@ -56,6 +56,10 @@ cannot enter child-skill execution, image generation, implementation, or route
 chunks until this block and the matching frontier block show:
 
 - `hard_gate_required: true`;
+- `startup_questions` records explicit user answers for run mode,
+  background-agent permission, and scheduled-continuation permission;
+- `startup_questions.dialog_stopped_for_user_answers: true`;
+- `startup_questions.banner_emitted_after_answers: true`;
 - canonical route files, `state.json`, and `execution_frontier.json` are
   written for the same active nonterminal route;
 - `crew_ledger_current: true`;
@@ -69,6 +73,34 @@ chunks until this block and the matching frontier block show:
 - `startup_guard_evidence_path` points to `startup_guard/latest.json`;
 - `work_beyond_startup_allowed: true`;
 - `shadow_route_detected: false`.
+
+`startup_activation.startup_questions` is the pre-banner gate:
+
+- `required: true`;
+- `status`: `pending`, `answered`, or `blocked`;
+- `asked_before_banner: true`;
+- `dialog_stopped_for_user_answers: true` records that the assistant response
+  ended immediately after asking the three questions and no startup work ran
+  until the user's later reply;
+- `explicit_user_answer_recorded: true` before startup guard pass;
+- `answer_source`: `user_reply` or `user_reply_after_prompt`; values such as
+  `agent_inferred`, `default`, `prior_route`, or `single_message_invocation`
+  are invalid;
+- `answers.run_mode.answer`: `full-auto`, `autonomous`, `guided`, or
+  `strict-gated`;
+- `answers.background_agents.answer`: `allow` for six live background agents
+  or `single-agent` for single-agent six-role continuity;
+- `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or
+  `manual` for manual resume;
+- `answer_evidence_path`, `answered_at`, and
+  `banner_emitted_after_answers: true`.
+
+If any answer is absent, ambiguous, or `pause`, startup remains
+`startup_pending_user_answers` and no banner, route work, child skill,
+imagegen, implementation, fallback execution, subagent startup, heartbeat probe,
+heartbeat job, or manual-resume claim may proceed. If the questions were asked
+but the assistant did not stop and wait for the user's reply, the answer
+evidence is invalid and the startup guard must fail.
 
 A route-local file, generated concept, screenshot, or implementation artifact
 without matching canonical state/frontier/crew/continuation evidence is a

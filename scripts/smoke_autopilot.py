@@ -17,6 +17,7 @@ def run(command: list[str]) -> bool:
 
 def main() -> int:
     checks = [
+        [sys.executable, "simulations/run_release_tooling_checks.py"],
         [sys.executable, "simulations/run_startup_guard_checks.py"],
         [sys.executable, "simulations/run_meta_checks.py"],
         [sys.executable, "simulations/run_capability_checks.py"],

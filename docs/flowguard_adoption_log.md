@@ -221,3 +221,60 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   - `python simulations\run_startup_guard_checks.py`
   - `python simulations\run_meta_checks.py`
   - `python simulations\run_capability_checks.py`
+
+## 2026-05-02 - FlowPilot Installer And Public Release Tooling
+
+- Trigger: the user approved a FlowPilot-only installer, dependency manifest,
+  and public release preflight while explicitly rejecting automatic publishing
+  of companion skills.
+- Decision: `use_flowguard`.
+- Modeled workflow: dependency manifest, installer, FlowPilot-only release
+  preflight, host capability mapping, dependency source checks, privacy scan,
+  validation, and release preparation.
+- Main findings:
+  - Release tooling must never write, package, tag, push, upload, or publish
+    companion skill repositories.
+  - Existing skills are skipped by default; overwrites require explicit force
+    and system skills are refused.
+  - Host-specific tools such as image generation are capability mappings, not
+    universal skill names. Codex maps `raster_image_generation` to `imagegen`;
+    other hosts can record a different provider.
+  - Public release remains blocked until GitHub sources are filled for
+    GitHub-backed companion skills.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  - `python -m py_compile scripts\install_flowpilot.py scripts\check_public_release.py scripts\check_install.py scripts\smoke_autopilot.py simulations\release_tooling_model.py simulations\run_release_tooling_checks.py`
+  - `python simulations\run_release_tooling_checks.py`
+  - `python scripts\install_flowpilot.py --check --json`
+  - `python scripts\check_install.py`
+  - `python scripts\smoke_autopilot.py`
+  - `python scripts\check_public_release.py --skip-url-check --json`
+
+## 2026-05-02 - Three-Question Stop-And-Wait Startup Gate
+
+- Trigger: the user simplified formal startup: `Use FlowPilot` / `使用开始`
+  asks three questions first, then the assistant must stop and wait for the
+  user's reply before the banner or any background work.
+- Decision: `use_flowguard`.
+- Models updated: `simulations/startup_guard_model.py`,
+  `simulations/meta_model.py`, and `simulations/capability_model.py`.
+- Main findings:
+  - Startup invocation now opens only `startup_pending_user_answers`.
+  - `startup_activation.startup_questions.dialog_stopped_for_user_answers`
+    records the hard pause after the prompt.
+  - The startup guard rejects answers recorded without that stop-and-wait
+    evidence, rejects inferred/default/prior-route answers, and rejects
+    `single_message_invocation` as a startup answer source.
+  - The banner, route files, child skills, subagents, heartbeat probes, imagegen,
+    implementation, and route chunks remain blocked until the later user reply
+    supplies all three answers and the startup guard passes.
+- Validation:
+  - `python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\run_startup_guard_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py`
+  - JSON parse check for `templates/flowpilot/state.template.json`,
+    `templates/flowpilot/execution_frontier.template.json`, and
+    `templates/flowpilot/mode.template.json`
+  - `python simulations\run_startup_guard_checks.py`
+  - `python simulations\run_meta_checks.py`
+  - `python simulations\run_capability_checks.py`
+  - `python scripts\check_install.py`
+  - `python scripts\smoke_autopilot.py`

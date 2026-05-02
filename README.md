@@ -38,6 +38,8 @@ Give this repository URL to a Codex-compatible agent and say:
 
 ```text
 Install or use the `flowpilot` skill from this repository.
+Run `python scripts/install_flowpilot.py --install-missing` first, then
+verify with `python scripts/check_install.py`.
 Use it to run this project with persistent `.flowpilot/` state,
 dual-layer FlowGuard checks, visible route planning, child-skill gates,
 bounded verification, checkpoints, and final completion evidence.
@@ -46,6 +48,17 @@ bounded verification, checkpoints, and final completion evidence.
 Codex is the first supported host. Other AI coding agents can adapt the
 protocol if they can read skills, write project files, run Python checks, and
 preserve evidence across sessions.
+
+The installer reads `flowpilot.dependencies.json`. It installs FlowPilot from
+this repository, checks required Python and skill dependencies, and installs
+missing auto-installable skills only when their manifest source is explicit.
+Existing local skills are not overwritten by default.
+
+Host-specific tools are represented as capabilities rather than hard-coded
+skill names. For example, Codex maps FlowPilot's `raster_image_generation`
+capability to the built-in `imagegen` skill, while another AI host may map the
+same capability to a differently named image tool and record that provider in
+route evidence.
 
 ## Why This Is Different
 
@@ -109,35 +122,35 @@ formal FlowPilot route is designed for substantial work.
 Recommended formal invocation:
 
 ```text
-Use FlowPilot full protocol, including permission to start the standard six
-background subagents where the host and current tool policy permit them,
-heartbeat or manual-resume continuation, and the startup hard gate.
+Use FlowPilot. Ask the startup questions first.
 ```
 
-The six-role crew is mandatory for formal FlowPilot. Live background subagents
-are the default formal startup target. If they are not already authorized or
-cannot be started, FlowPilot pauses and asks for a user decision. If the user
-authorizes them, FlowPilot starts or resumes all six and records evidence. If
-the user declines, or if the host/tool still cannot provide live subagents
-after an authorized attempt, FlowPilot asks whether to continue with
-single-agent six-role continuity. Only that explicit fallback decision permits
-memory-seeded role recovery or replacement. Without either live agents or
-explicit fallback authorization, the startup hard gate blocks.
+FlowPilot invocation opens a three-question startup gate. The agent asks for
+the run mode, whether it may use six background subagents, and whether it may
+create heartbeat/automation jobs. The assistant response must stop immediately
+after those questions and wait for the user's reply. The banner is shown only
+after all three answers are explicit. Without the answers and the recorded
+stop-and-wait step, no route, child skill, image generation, implementation,
+fallback execution, subagent startup, heartbeat probe, or scheduled job may
+start.
 
-1. Enable FlowPilot and create or load `.flowpilot/`.
-2. Select a run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`.
-3. Run visible self-interrogation before freezing the contract.
-4. Inventory materials and have the reviewer approve material sufficiency.
-5. Have the project manager write the product/function architecture.
-6. Freeze the acceptance contract as a floor, not a ceiling.
-7. Discover required child skills and extract their gate manifests.
-8. Build and check the process route with FlowGuard.
-9. Build and check product/function models where behavior needs modeling.
-10. Pass the startup activation guard so state, frontier, route, crew, role
+1. Ask the three startup questions.
+2. Stop the assistant response after asking and wait for the user's reply.
+3. Record the later user reply as the three explicit startup answers.
+4. Show the FlowPilot banner only after the startup-question gate opens.
+5. Enable FlowPilot and create or load `.flowpilot/`.
+6. Run visible self-interrogation before freezing the contract.
+7. Inventory materials and have the reviewer approve material sufficiency.
+8. Have the project manager write the product/function architecture.
+9. Freeze the acceptance contract as a floor, not a ceiling.
+10. Discover required child skills and extract their gate manifests.
+11. Build and check the process route with FlowGuard.
+12. Build and check product/function models where behavior needs modeling.
+13. Pass the startup activation guard so state, frontier, route, crew, role
     memory, and continuation evidence agree before child work starts.
-11. Execute bounded chunks with verification before checkpoint.
-12. Mutate the route when new facts invalidate the current path.
-13. Complete only after the final route-wide gate ledger has zero unresolved
+14. Execute bounded chunks with verification before checkpoint.
+15. Mutate the route when new facts invalidate the current path.
+16. Complete only after the final route-wide gate ledger has zero unresolved
     obligations and the required review/PM approvals are recorded.
 
 ## Child Skills And Companion Capabilities
@@ -153,7 +166,8 @@ Depending on the route, FlowPilot may call or coordinate with:
 - `concept-led-ui-redesign` for substantial UI redesign direction;
 - `frontend-design` for polished frontend implementation;
 - `imagegen` for concept images and visual assets when generated raster assets
-  are appropriate;
+  are appropriate in Codex; other hosts may satisfy the same
+  `raster_image_generation` capability with a differently named provider;
 - other domain-specific skills required by the active project.
 
 When FlowPilot invokes a child skill, it must load the child skill's own
@@ -228,7 +242,14 @@ instead of a resume prompt.
 
 ## Installation Shape
 
-For Codex, copy or install:
+For Codex, run:
+
+```powershell
+python scripts/install_flowpilot.py --install-missing
+python scripts/check_install.py
+```
+
+The installer copies or checks:
 
 ```text
 skills/flowpilot/
@@ -250,12 +271,23 @@ python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
 python scripts/check_install.py
 ```
 
+Before a public release, run the FlowPilot-only release preflight:
+
+```powershell
+python scripts/check_public_release.py
+```
+
+That preflight checks this repository's public boundary, dependency manifest,
+external dependency links, and validation commands. It has no authority to
+commit, tag, push, package, upload, or release companion skill repositories.
+
 ## Verification
 
 Run the public package checks:
 
 ```powershell
 python simulations/run_startup_guard_checks.py
+python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
 python scripts/check_install.py
@@ -305,6 +337,8 @@ checks, recovery, and evidence are worth the overhead.
   and capability routing.
 - `scripts/` - install, smoke, startup-guard, lifecycle, busy-lease,
   heartbeat, and watchdog helpers.
+- `flowpilot.dependencies.json` - FlowPilot's installer-readable dependency
+  manifest.
 - `docs/` - project brief, protocol, design decisions, schema, verification,
   and model findings.
 - `examples/minimal/` - a compact adoption example.

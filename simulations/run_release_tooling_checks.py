@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot startup hard-gate model."""
+"""Run checks for the FlowPilot release tooling model."""
 
 from __future__ import annotations
 
@@ -6,35 +6,25 @@ import json
 from collections import deque
 from pathlib import Path
 
-import startup_guard_model as model
+import release_tooling_model as model
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "startup_guard_results.json"
+RESULTS_PATH = ROOT / "release_tooling_results.json"
+
 REQUIRED_LABELS = (
-    "startup_three_questions_asked",
-    "startup_dialog_stopped_for_user_answers",
-    "run_mode_answer_recorded",
-    "background_agents_allowed",
-    "background_agents_declined_single_agent",
-    "scheduled_continuation_allowed",
-    "scheduled_continuation_declined_manual",
-    "explicit_startup_answers_recorded",
-    "startup_banner_emitted_after_answers",
-    "route_file_written",
-    "canonical_state_written",
-    "execution_frontier_written",
-    "crew_ledger_current",
-    "role_memory_packets_current",
-    "live_subagents_started",
-    "single_agent_role_continuity_authorized",
-    "automated_continuation_ready",
-    "manual_resume_ready",
-    "startup_activation_guard_passed",
-    "route_execution_started",
-    "child_skill_started",
-    "imagegen_started",
-    "implementation_started",
+    "dependency_manifest_written",
+    "installer_written",
+    "flowpilot_only_release_checker_written",
+    "host_capability_mapping_declared",
+    "dependency_sources_checked_ready",
+    "dependency_sources_checked_missing_reported",
+    "flowpilot_install_checked",
+    "missing_dependencies_installed_without_overwrite",
+    "privacy_scan_passed",
+    "validation_passed",
+    "flowpilot_release_prepared",
+    "flowpilot_publish_allowed",
 )
 
 
@@ -70,8 +60,8 @@ def explore_safe_graph() -> dict[str, object]:
 
 
 def check_hazards() -> dict[str, object]:
-    results: dict[str, object] = {}
     ok = True
+    results: dict[str, object] = {}
     for name, state in model.hazard_states().items():
         failures = model.invariant_failures(state)
         detected = bool(failures)
@@ -92,7 +82,10 @@ def main() -> int:
         "safe_graph": safe,
         "hazard_checks": hazards,
     }
-    RESULTS_PATH.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    RESULTS_PATH.write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["ok"] else 1
 

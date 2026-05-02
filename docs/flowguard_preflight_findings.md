@@ -1408,3 +1408,118 @@ Results after integration:
 - invariant failures: 0;
 - missing required labels: 0;
 - stuck states: 0.
+
+## 2026-05-02 - FlowPilot Installer And Release Tooling
+
+Trigger: FlowPilot needs a GitHub-friendly installation and public release
+preflight path that installs/checks FlowPilot and dependencies without uploading
+private runtime state or publishing companion skills.
+
+Decision: `use_flowguard`.
+
+Modeled risks:
+
+- installer overwrites an existing local skill without explicit force;
+- release preparation skips dependency source checks, privacy scan, or
+  validation;
+- release is allowed while companion skill GitHub sources are missing;
+- tracked private runtime state is included in the public repository;
+- release tooling packages or publishes companion skill repositories;
+- image generation is hard-coded as a universal `imagegen` skill instead of a
+  host-specific capability mapping.
+
+Model and tooling changes:
+
+- added `flowpilot.dependencies.json`;
+- added `scripts/install_flowpilot.py`;
+- added `scripts/check_public_release.py`;
+- added `simulations/release_tooling_model.py` and
+  `simulations/run_release_tooling_checks.py`;
+- updated install checks, smoke checks, README, dependency docs, verification
+  docs, and installation contract.
+
+Validation:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python -m py_compile scripts\install_flowpilot.py scripts\check_public_release.py scripts\check_install.py scripts\smoke_autopilot.py simulations\release_tooling_model.py simulations\run_release_tooling_checks.py
+python simulations\run_release_tooling_checks.py
+python scripts\install_flowpilot.py --check --json
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+python scripts\check_public_release.py --skip-url-check --json
+```
+
+Results:
+
+- release tooling safe path: 13 states, 12 edges, 0 invariant failures;
+- hazard probes caught overwrite-without-force, release-before-privacy-scan,
+  release-with-private-state, publish-with-missing-dependency-source,
+  companion-skill packaging, companion-skill publishing, and hardcoded image
+  provider;
+- install check passed and found Codex's `raster_image_generation` provider at
+  `.system/imagegen`;
+- smoke checks passed;
+- public release check ran validations successfully but correctly blocked on
+  missing GitHub sources for `model-first-function-flow`, `grill-me`,
+  `concept-led-ui-redesign`, and `frontend-design`.
+
+## 2026-05-02 - Three-Question Stop-And-Wait Startup Gate
+
+Trigger: the user simplified FlowPilot startup to a hard pre-banner gate:
+`Use FlowPilot` / `使用开始` must ask three questions first, and after asking,
+the assistant must stop and wait for the user's reply before any banner,
+route, subagent, heartbeat, imagegen, or implementation work can begin.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- startup banner emitted in the same response as the questions;
+- startup answers recorded without the assistant stopping for a later user
+  reply;
+- background-agent fallback or manual resume inferred by the agent;
+- heartbeat/manual continuation or live/single-agent execution contradicting
+  the user's startup answers;
+- route, child-skill, imagegen, implementation, or chunk work starting before
+  the startup guard pass.
+
+Model and protocol changes:
+
+- added `startup_activation.startup_questions.dialog_stopped_for_user_answers`;
+- changed the public invocation to open only the three-question prompt;
+- made `single_message_invocation` an invalid answer source for startup gate
+  evidence;
+- updated state/frontier templates, protocol docs, README, and handoff notes;
+- updated `scripts/flowpilot_startup_guard.py` to require stop-and-wait
+  evidence;
+- updated startup, meta, and capability simulations with
+  `startup_dialog_stopped_for_user_answers`.
+
+Validation:
+
+```powershell
+python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\run_startup_guard_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py
+python -m json.tool templates\flowpilot\state.template.json
+python -m json.tool templates\flowpilot\execution_frontier.template.json
+python -m json.tool templates\flowpilot\mode.template.json
+python simulations\run_startup_guard_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+```
+
+Results after integration:
+
+- startup guard safe path: 66 states, 65 edges, 0 invariant failures;
+- all ten startup-bypass hazard states detected, including
+  `answers_recorded_without_dialog_stop`;
+- meta model states: 92202;
+- meta model edges: 96742;
+- capability model states: 86318;
+- capability model edges: 91560;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0;
+- installation and smoke checks passed.

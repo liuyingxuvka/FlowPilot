@@ -1,96 +1,224 @@
 {
   "hazard_checks": {
     "hazards": {
-      "guard_before_continuation": {
+      "agent_self_records_single_agent": {
         "detected": true,
         "failures": [
+          "agent self-recorded startup authorization without explicit user answer",
+          "single-agent role continuity was authorized without the user's single-agent answer"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": true,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "unknown",
+          "banner_emitted": false,
+          "canonical_state_written": false,
+          "child_skill_started": false,
+          "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": false,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": false,
+          "manual_resume_ready": false,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": false,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "manual",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": true,
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
+        }
+      },
+      "answers_recorded_without_dialog_stop": {
+        "detected": true,
+        "failures": [
+          "startup proceeded after asking questions without stopping for the user's reply"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "allow",
+          "banner_emitted": false,
+          "canonical_state_written": false,
+          "child_skill_started": false,
+          "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": false,
+          "execution_frontier_written": false,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": false,
+          "manual_resume_ready": false,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": false,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
+        }
+      },
+      "banner_before_three_answers": {
+        "detected": true,
+        "failures": [
+          "startup banner emitted before all three explicit startup answers",
+          "startup proceeded after asking questions without stopping for the user's reply"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "unknown",
+          "banner_emitted": true,
+          "canonical_state_written": false,
+          "child_skill_started": false,
+          "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": false,
+          "execution_frontier_written": false,
+          "explicit_user_answer_recorded": false,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": false,
+          "manual_resume_ready": false,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": false,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "unknown",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
+        }
+      },
+      "guard_before_questions": {
+        "detected": true,
+        "failures": [
+          "startup proceeded after asking questions without stopping for the user's reply",
           "startup guard passed before canonical startup activation was complete"
         ],
         "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "unknown",
+          "banner_emitted": false,
           "canonical_state_written": true,
           "child_skill_started": false,
-          "continuation_ready": false,
           "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": false,
           "execution_frontier_written": true,
+          "explicit_user_answer_recorded": false,
           "imagegen_started": false,
           "implementation_started": false,
-          "live_subagent_decision_recorded": false,
           "live_subagents_started": false,
+          "manual_resume_ready": false,
           "role_memory_packets_current": 6,
           "route_execution_started": false,
           "route_file_written": true,
+          "run_mode_answered": false,
+          "scheduled_continuation_answer": "unknown",
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
-          "startup_guard_passed": true
+          "startup_guard_passed": true,
+          "startup_questions_asked": false
         }
       },
-      "guard_before_live_subagent_decision": {
-        "detected": true,
-        "failures": [
-          "startup guard passed before canonical startup activation was complete"
-        ],
-        "state": {
-          "canonical_state_written": true,
-          "child_skill_started": false,
-          "continuation_ready": true,
-          "crew_ledger_current": true,
-          "execution_frontier_written": true,
-          "imagegen_started": false,
-          "implementation_started": false,
-          "live_subagent_decision_recorded": false,
-          "live_subagents_started": false,
-          "role_memory_packets_current": 6,
-          "route_execution_started": false,
-          "route_file_written": true,
-          "shadow_route_detected": false,
-          "single_agent_role_continuity_authorized": false,
-          "startup_guard_passed": true
-        }
-      },
-      "imagegen_before_frontier": {
+      "imagegen_before_guard": {
         "detected": true,
         "failures": [
           "work beyond startup started before the startup guard passed"
         ],
         "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
           "canonical_state_written": true,
           "child_skill_started": false,
-          "continuation_ready": false,
           "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": false,
+          "explicit_user_answer_recorded": true,
           "imagegen_started": true,
           "implementation_started": false,
-          "live_subagent_decision_recorded": false,
           "live_subagents_started": false,
+          "manual_resume_ready": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
-          "startup_guard_passed": false
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
         }
       },
-      "implementation_before_crew": {
+      "manual_resume_despite_heartbeat_answer": {
         "detected": true,
         "failures": [
-          "work beyond startup started before the startup guard passed"
+          "manual resume was recorded without the user's manual-resume answer"
         ],
         "state": {
-          "canonical_state_written": true,
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "single-agent",
+          "banner_emitted": false,
+          "canonical_state_written": false,
           "child_skill_started": false,
-          "continuation_ready": false,
           "crew_ledger_current": false,
-          "execution_frontier_written": true,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": false,
+          "explicit_user_answer_recorded": true,
           "imagegen_started": false,
-          "implementation_started": true,
-          "live_subagent_decision_recorded": false,
+          "implementation_started": false,
           "live_subagents_started": false,
+          "manual_resume_ready": true,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
-          "route_file_written": true,
+          "route_file_written": false,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
-          "startup_guard_passed": false
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
+        }
+      },
+      "manual_resume_without_user_answer": {
+        "detected": true,
+        "failures": [
+          "manual resume was recorded without the user's manual-resume answer"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "single-agent",
+          "banner_emitted": false,
+          "canonical_state_written": false,
+          "child_skill_started": false,
+          "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": false,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": false,
+          "manual_resume_ready": true,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": false,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "unknown",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
         }
       },
       "route_execution_before_guard": {
@@ -99,67 +227,92 @@
           "work beyond startup started before the startup guard passed"
         ],
         "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": true,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
           "canonical_state_written": true,
           "child_skill_started": false,
-          "continuation_ready": true,
           "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": true,
+          "explicit_user_answer_recorded": true,
           "imagegen_started": false,
           "implementation_started": false,
-          "live_subagent_decision_recorded": true,
           "live_subagents_started": true,
+          "manual_resume_ready": false,
           "role_memory_packets_current": 6,
           "route_execution_started": true,
           "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
-          "startup_guard_passed": false
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
         }
       },
       "shadow_route_child_skill": {
         "detected": true,
         "failures": [
+          "startup proceeded after asking questions without stopping for the user's reply",
           "work beyond startup started before the startup guard passed"
         ],
         "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "unknown",
+          "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": true,
-          "continuation_ready": false,
           "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": false,
           "execution_frontier_written": false,
+          "explicit_user_answer_recorded": false,
           "imagegen_started": false,
           "implementation_started": false,
-          "live_subagent_decision_recorded": false,
           "live_subagents_started": false,
+          "manual_resume_ready": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
+          "run_mode_answered": false,
+          "scheduled_continuation_answer": "unknown",
           "shadow_route_detected": true,
           "single_agent_role_continuity_authorized": false,
-          "startup_guard_passed": false
+          "startup_guard_passed": false,
+          "startup_questions_asked": false
         }
       },
-      "single_agent_without_user_decision": {
+      "single_agent_despite_live_agent_answer": {
         "detected": true,
         "failures": [
-          "single-agent role continuity was authorized without a recorded user decision"
+          "single-agent role continuity was authorized without the user's single-agent answer"
         ],
         "state": {
-          "canonical_state_written": true,
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": false,
+          "background_agents_answer": "allow",
+          "banner_emitted": false,
+          "canonical_state_written": false,
           "child_skill_started": false,
-          "continuation_ready": true,
-          "crew_ledger_current": true,
-          "execution_frontier_written": true,
+          "crew_ledger_current": false,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": false,
+          "explicit_user_answer_recorded": true,
           "imagegen_started": false,
           "implementation_started": false,
-          "live_subagent_decision_recorded": false,
           "live_subagents_started": false,
-          "role_memory_packets_current": 6,
+          "manual_resume_ready": false,
+          "role_memory_packets_current": 0,
           "route_execution_started": false,
-          "route_file_written": true,
+          "route_file_written": false,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "manual",
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": true,
-          "startup_guard_passed": false
+          "startup_guard_passed": false,
+          "startup_questions_asked": true
         }
       }
     },
@@ -167,26 +320,35 @@
   },
   "ok": true,
   "safe_graph": {
-    "edge_count": 20,
+    "edge_count": 65,
     "invariant_failures": [],
     "labels": [
+      "automated_continuation_ready",
+      "background_agents_allowed",
+      "background_agents_declined_single_agent",
       "canonical_state_written",
       "child_skill_started",
-      "continuation_ready",
       "crew_ledger_current",
       "execution_frontier_written",
+      "explicit_startup_answers_recorded",
       "imagegen_started",
       "implementation_started",
-      "live_subagent_decision_recorded",
       "live_subagents_started",
+      "manual_resume_ready",
       "role_memory_packets_current",
       "route_execution_started",
       "route_file_written",
+      "run_mode_answer_recorded",
+      "scheduled_continuation_allowed",
+      "scheduled_continuation_declined_manual",
       "single_agent_role_continuity_authorized",
-      "startup_activation_guard_passed"
+      "startup_activation_guard_passed",
+      "startup_banner_emitted_after_answers",
+      "startup_dialog_stopped_for_user_answers",
+      "startup_three_questions_asked"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 21
+    "state_count": 66
   }
 }

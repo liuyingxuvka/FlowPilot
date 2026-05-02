@@ -62,8 +62,12 @@ class State:
     status: str = "new"  # new | running | blocked | complete
     task_kind: str = "unknown"  # unknown | backend | ui
     flowpilot_enabled: bool = False
+    startup_questions_asked: bool = False
+    startup_dialog_stopped_for_answers: bool = False
     mode_choice_offered: bool = False
     mode_selected: bool = False
+    startup_background_agents_answered: bool = False
+    startup_scheduled_continuation_answered: bool = False
     showcase_floor_committed: bool = False
     self_interrogation_done: bool = False
     self_interrogation_evidence: bool = False
@@ -587,6 +591,17 @@ def _live_subagent_startup_resolved(state: State) -> bool:
             state.live_subagents_started
             or state.single_agent_role_continuity_authorized
         )
+    )
+
+
+def _startup_questions_complete(state: State) -> bool:
+    return (
+        state.startup_questions_asked
+        and state.startup_dialog_stopped_for_answers
+        and state.mode_choice_offered
+        and state.mode_selected
+        and state.startup_background_agents_answered
+        and state.startup_scheduled_continuation_answered
     )
 
 
@@ -1457,6 +1472,24 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.startup_questions_asked:
+            yield _step(
+                state,
+                label="startup_three_questions_asked",
+                action="ask run mode, background-agent permission, and scheduled-continuation permission before capability startup",
+                startup_questions_asked=True,
+            )
+            return
+
+        if not state.startup_dialog_stopped_for_answers:
+            yield _step(
+                state,
+                label="startup_dialog_stopped_for_user_answers",
+                action="end the assistant response after asking startup questions and wait for the user's reply",
+                startup_dialog_stopped_for_answers=True,
+            )
+            return
+
         if not state.mode_choice_offered:
             yield _step(
                 state,
@@ -1476,8 +1509,26 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="default_mode_recorded",
-                action="record full-auto mode because user asked to continue or host cannot pause",
+                action="record explicit user answer selecting the default full-auto mode",
                 mode_selected=True,
+            )
+            return
+
+        if not state.startup_background_agents_answered:
+            yield _step(
+                state,
+                label="startup_background_agents_answered",
+                action="record explicit user answer for live background agents versus single-agent continuity",
+                startup_background_agents_answered=True,
+            )
+            return
+
+        if not state.startup_scheduled_continuation_answered:
+            yield _step(
+                state,
+                label="startup_scheduled_continuation_answered",
+                action="record explicit user answer for heartbeat/automation versus manual resume",
+                startup_scheduled_continuation_answered=True,
             )
             return
 
@@ -3573,13 +3624,21 @@ def self_interrogation_before_contract(state: State, trace) -> InvariantResult:
 def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> InvariantResult:
     del trace
     if (
+        not state.startup_dialog_stopped_for_answers
+        and (
+            state.mode_choice_offered
+            or state.mode_selected
+            or state.startup_background_agents_answered
+            or state.startup_scheduled_continuation_answered
+        )
+    ):
+        return InvariantResult.fail("capability startup continued after asking questions without stopping for the user's reply")
+    if (
         state.showcase_floor_committed
         or state.self_interrogation_done
         or state.visible_self_interrogation_done
-    ) and not (
-        state.flowpilot_enabled and state.mode_choice_offered and state.mode_selected
-    ):
-        return InvariantResult.fail("showcase/self-interrogation ran before FlowPilot mode selection gate")
+    ) and not (state.flowpilot_enabled and _startup_questions_complete(state)):
+        return InvariantResult.fail("showcase/self-interrogation ran before the three-question startup gate")
     return InvariantResult.pass_()
 
 
@@ -3684,6 +3743,10 @@ def dependency_plan_before_route_or_implementation(
     if work_beyond_startup_started and not state.startup_activation_guard_passed:
         return InvariantResult.fail(
             "capability work beyond startup started before the startup activation hard gate passed"
+        )
+    if state.startup_activation_guard_passed and not _startup_questions_complete(state):
+        return InvariantResult.fail(
+            "startup activation hard gate passed before the three startup answers were recorded"
         )
     if state.startup_activation_guard_passed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(

@@ -62,6 +62,60 @@ SINGLE_AGENT_CONTINUITY_DECISIONS = {
     "single_agent_role_continuity_approved",
 }
 
+VALID_RUN_MODES = {
+    "full-auto",
+    "autonomous",
+    "guided",
+    "strict-gated",
+}
+
+BACKGROUND_AGENT_ALLOW = {
+    "allow",
+    "allow_live_agents",
+    "live_agents",
+    "six_live_agents",
+    "yes",
+}
+
+BACKGROUND_AGENT_SINGLE = {
+    "single-agent",
+    "single_agent",
+    "single_agent_only",
+    "manual",
+    "deny",
+    "no",
+}
+
+SCHEDULED_CONTINUATION_ALLOW = {
+    "allow",
+    "allow_heartbeat",
+    "allow_scheduled",
+    "automated",
+    "heartbeat",
+    "yes",
+}
+
+SCHEDULED_CONTINUATION_MANUAL = {
+    "manual",
+    "manual-resume",
+    "manual_resume",
+    "deny",
+    "no",
+}
+
+VALID_ANSWER_SOURCES = {
+    "user_reply",
+    "user_reply_after_prompt",
+}
+
+INVALID_ANSWER_SOURCES = {
+    "agent_inferred",
+    "default",
+    "prior_route",
+    "single_message_invocation",
+    "main_executor_inferred",
+}
+
 
 @dataclass
 class Check:
@@ -382,6 +436,7 @@ class StartupGuard:
                     count=packet_count,
                     required=len(REQUIRED_ROLES),
                 )
+            self.check_startup_questions(source, activation)
             self.check_live_subagent_startup(source, activation)
             if activation.get("work_beyond_startup_allowed") is True and activation.get("startup_guard_passed") is not True:
                 self.fail(
@@ -400,6 +455,96 @@ class StartupGuard:
                         guard_route_id=activation.get("guard_route_id"),
                         route_id=self.route_id,
                     )
+
+    def startup_answer(self, activation: dict[str, Any] | None, key: str) -> str:
+        if not isinstance(activation, dict):
+            return ""
+        questions = activation.get("startup_questions")
+        if not isinstance(questions, dict):
+            return ""
+        answers = questions.get("answers")
+        if not isinstance(answers, dict):
+            return ""
+        record = answers.get(key)
+        if not isinstance(record, dict):
+            return ""
+        return str(record.get("answer", "")).strip().lower()
+
+    def check_startup_questions(self, source: str, activation: dict[str, Any]) -> None:
+        questions = activation.get("startup_questions")
+        if not isinstance(questions, dict):
+            self.fail(
+                f"{source}_startup_questions_present",
+                f"{source} startup_questions block is missing",
+            )
+            return
+
+        if questions.get("required") is True:
+            self.pass_(f"{source}_startup_questions_required", f"{source} requires the three-question startup gate")
+        else:
+            self.fail(f"{source}_startup_questions_required", f"{source} does not require the three-question startup gate")
+
+        if questions.get("asked_before_banner") is True:
+            self.pass_(f"{source}_startup_questions_asked_before_banner", f"{source} records questions before banner")
+        else:
+            self.fail(f"{source}_startup_questions_asked_before_banner", f"{source} does not record questions before banner")
+
+        if questions.get("dialog_stopped_for_user_answers") is True:
+            self.pass_(
+                f"{source}_startup_questions_dialog_stopped",
+                f"{source} records that the assistant stopped after asking startup questions",
+            )
+        else:
+            self.fail(
+                f"{source}_startup_questions_dialog_stopped",
+                f"{source} does not record a stop-and-wait state after asking startup questions",
+            )
+
+        source_name = str(questions.get("answer_source", "")).lower()
+        if source_name in VALID_ANSWER_SOURCES:
+            self.pass_(f"{source}_startup_question_answer_source", f"{source} has an explicit user answer source", answer_source=source_name)
+        elif source_name in INVALID_ANSWER_SOURCES:
+            self.fail(f"{source}_startup_question_answer_source", f"{source} used an invalid inferred answer source", answer_source=source_name)
+        else:
+            self.fail(f"{source}_startup_question_answer_source", f"{source} lacks a valid explicit user answer source", answer_source=source_name)
+
+        if questions.get("explicit_user_answer_recorded") is True:
+            self.pass_(f"{source}_startup_questions_user_answer_recorded", f"{source} records explicit user answers")
+        else:
+            self.fail(f"{source}_startup_questions_user_answer_recorded", f"{source} lacks explicit user answers")
+
+        if questions.get("answer_evidence_path"):
+            self.pass_(f"{source}_startup_question_answer_evidence", f"{source} records answer evidence")
+        else:
+            self.fail(f"{source}_startup_question_answer_evidence", f"{source} lacks answer evidence")
+
+        if questions.get("status") == "answered":
+            self.pass_(f"{source}_startup_questions_answered_status", f"{source} marks the startup questions answered")
+        else:
+            self.fail(f"{source}_startup_questions_answered_status", f"{source} does not mark the startup questions answered", status=questions.get("status"))
+
+        if questions.get("banner_emitted_after_answers") is True:
+            self.pass_(f"{source}_startup_banner_after_answers", f"{source} records banner emitted after answers")
+        else:
+            self.fail(f"{source}_startup_banner_after_answers", f"{source} does not record banner after answers")
+
+        run_mode = self.startup_answer(activation, "run_mode")
+        if run_mode in VALID_RUN_MODES:
+            self.pass_(f"{source}_startup_run_mode_answer", f"{source} has a valid run-mode answer", answer=run_mode)
+        else:
+            self.fail(f"{source}_startup_run_mode_answer", f"{source} lacks a valid run-mode answer", answer=run_mode)
+
+        background_agents = self.startup_answer(activation, "background_agents")
+        if background_agents in BACKGROUND_AGENT_ALLOW | BACKGROUND_AGENT_SINGLE:
+            self.pass_(f"{source}_startup_background_agents_answer", f"{source} has a valid background-agent answer", answer=background_agents)
+        else:
+            self.fail(f"{source}_startup_background_agents_answer", f"{source} lacks a valid background-agent answer", answer=background_agents)
+
+        scheduled = self.startup_answer(activation, "scheduled_continuation")
+        if scheduled in SCHEDULED_CONTINUATION_ALLOW | SCHEDULED_CONTINUATION_MANUAL:
+            self.pass_(f"{source}_startup_scheduled_continuation_answer", f"{source} has a valid scheduled-continuation answer", answer=scheduled)
+        else:
+            self.fail(f"{source}_startup_scheduled_continuation_answer", f"{source} lacks a valid scheduled-continuation answer", answer=scheduled)
 
     def check_live_subagent_startup(self, source: str, activation: dict[str, Any]) -> None:
         startup = activation.get("live_subagent_startup")
@@ -425,6 +570,9 @@ class StartupGuard:
         user_decision_recorded = startup.get("user_decision_recorded") is True
         live_agents_active = startup.get("live_agents_active")
         live_count = live_agents_active if isinstance(live_agents_active, int) else 0
+        background_answer = self.startup_answer(activation, "background_agents")
+        allow_live_agents = background_answer in BACKGROUND_AGENT_ALLOW
+        use_single_agent = background_answer in BACKGROUND_AGENT_SINGLE
 
         live_ready = (
             decision in LIVE_SUBAGENT_READY_DECISIONS
@@ -432,11 +580,13 @@ class StartupGuard:
             and startup.get("user_authorized_live_start") is True
             and startup.get("live_start_attempted") is True
             and live_count >= len(REQUIRED_ROLES)
+            and allow_live_agents
         )
         fallback_authorized = (
             decision in SINGLE_AGENT_CONTINUITY_DECISIONS
             and user_decision_recorded
             and startup.get("single_agent_role_continuity_authorized") is True
+            and use_single_agent
         )
 
         if live_ready:
@@ -445,6 +595,7 @@ class StartupGuard:
                 f"{source} records six live background agents as started or resumed",
                 decision=decision,
                 live_agents_active=live_count,
+                startup_answer=background_answer,
             )
             return
         if fallback_authorized:
@@ -452,6 +603,7 @@ class StartupGuard:
                 f"{source}_live_subagent_startup_resolved",
                 f"{source} records explicit user authorization for single-agent role continuity",
                 decision=decision,
+                startup_answer=background_answer,
             )
             return
         self.fail(
@@ -463,6 +615,7 @@ class StartupGuard:
             live_start_attempted=startup.get("live_start_attempted"),
             live_agents_active=live_agents_active,
             single_agent_role_continuity_authorized=startup.get("single_agent_role_continuity_authorized"),
+            startup_background_agents_answer=background_answer,
             blocker=startup.get("blocker"),
         )
 
@@ -481,7 +634,20 @@ class StartupGuard:
         else:
             self.fail("continuation_mode_matches", "state and frontier continuation modes differ", state_mode=state_mode, frontier_mode=frontier_mode)
 
+        scheduled_answer = self.startup_answer(
+            self.state.get("startup_activation") if isinstance(self.state.get("startup_activation"), dict) else None,
+            "scheduled_continuation",
+        )
+        scheduled_allows_automation = scheduled_answer in SCHEDULED_CONTINUATION_ALLOW
+        scheduled_manual = scheduled_answer in SCHEDULED_CONTINUATION_MANUAL
+
         if frontier_mode == "automated":
+            if not scheduled_allows_automation:
+                self.fail(
+                    "continuation_matches_startup_answer",
+                    "automated continuation conflicts with the startup scheduled-continuation answer",
+                    scheduled_answer=scheduled_answer,
+                )
             launcher = self.frontier.get("heartbeat_launcher") if isinstance(self.frontier.get("heartbeat_launcher"), dict) else {}
             watchdog = self.frontier.get("watchdog") if isinstance(self.frontier.get("watchdog"), dict) else {}
             ok = (
@@ -509,6 +675,12 @@ class StartupGuard:
                 )
             return
         if frontier_mode == "manual-resume":
+            if not scheduled_manual:
+                self.fail(
+                    "continuation_matches_startup_answer",
+                    "manual-resume continuation conflicts with the startup scheduled-continuation answer",
+                    scheduled_answer=scheduled_answer,
+                )
             no_automation = (
                 continuation.get("host_probe_done") is True
                 and continuation.get("host_supports_real_wakeups") is False

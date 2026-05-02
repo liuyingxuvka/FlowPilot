@@ -17,6 +17,34 @@
   },
   "startup_activation": {
     "hard_gate_required": true,
+    "startup_questions": {
+      "required": true,
+      "status": "pending",
+      "asked_before_banner": false,
+      "dialog_stopped_for_user_answers": false,
+      "explicit_user_answer_recorded": false,
+      "answer_source": null,
+      "answer_evidence_path": null,
+      "answered_at": null,
+      "banner_emitted_after_answers": false,
+      "answers": {
+        "run_mode": {
+          "question": "Choose run mode: full-auto, autonomous, guided, or strict-gated.",
+          "answer": null,
+          "answered": false
+        },
+        "background_agents": {
+          "question": "May FlowPilot use the standard six background subagents?",
+          "answer": null,
+          "answered": false
+        },
+        "scheduled_continuation": {
+          "question": "May FlowPilot create heartbeat or scheduled continuation jobs?",
+          "answer": null,
+          "answered": false
+        }
+      }
+    },
     "route_files_written": false,
     "canonical_state_written": false,
     "execution_frontier_written": false,

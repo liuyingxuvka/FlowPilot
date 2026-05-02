@@ -156,6 +156,14 @@ model-backed autopilot:
   `scripts/flowpilot_startup_guard.py --record-pass` writes
   `.flowpilot/startup_guard/latest.json`; route-local artifacts without that
   canonical match are shadow routes to quarantine or supersede.
+- Formal startup now begins with a three-question pre-banner gate. On
+  `Use FlowPilot` / `使用开始`, the assistant asks for run mode, background-agent
+  permission, and scheduled-continuation permission, then the assistant response
+  must stop immediately and wait for the user's reply. The startup banner,
+  route writes, child skills, subagents, heartbeat probes, imagegen, and
+  implementation are blocked until a later user reply explicitly answers all
+  three questions and `startup_activation.startup_questions` records both the
+  stop-and-wait evidence and banner-after-answers evidence.
 - Long operations now have an explicit busy-lease wrapper helper:
   `scripts/flowpilot_run_with_busy_lease.py`.
 
@@ -218,6 +226,10 @@ FlowGuard caught and fixed these design issues:
     terminal completion must rescan the current route, collect all effective
     child-skill and review gates, check stale evidence, explain superseded
     nodes, and rerun human-like backward replay before PM completion approval.
+19. Asking the three startup questions is not a soft prompt. It is a hard
+    pause boundary: if FlowPilot keeps working in the same response after the
+    questions, any later startup evidence is invalid and the startup guard must
+    fail.
 19. Generated-resource existence is not useful output by itself. Concept
     images, visual assets, screenshots, route diagrams, model reports, and
     similar generated artifacts must be consumed by implementation/QA/final

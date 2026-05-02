@@ -5,13 +5,24 @@ long-form public explanation lives in `docs/protocol.md`.
 
 ## Startup
 
-1. Enable FlowPilot by default when invoked or when `.flowpilot/` exists.
-2. Create or load `.flowpilot/`.
-3. Emit the fenced `FlowPilot` ASCII startup banner in chat before mode
-   selection or other heavy startup work.
-4. Offer run mode left-to-right from loosest to strictest: `full-auto`,
-   `autonomous`, `guided`, `strict-gated`.
-5. Record the selected mode, or record why `full-auto` was used as fallback.
+1. On FlowPilot invocation, enter `startup_pending_user_answers`.
+2. Ask the three startup questions:
+   - run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`;
+   - background agents: allow six live background subagents, or use
+     single-agent six-role continuity for this run;
+   - scheduled continuation: allow heartbeat/automation jobs, or use manual
+     resume only for this run.
+   End the assistant response immediately after these questions. Do not inspect
+   files, start tools, create route state, launch subagents, probe heartbeat, or
+   show the banner in the same response. FlowPilot remains in
+   `startup_pending_user_answers` until the user's later reply supplies all
+   three answers.
+3. Record the explicit answer set in state/frontier startup activation
+   evidence. A compact later user reply may satisfy all three only when the
+   choices are explicit.
+4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
+   the startup-question gate is open.
+5. Create or load `.flowpilot/`.
 6. Commit the showcase-grade long-horizon floor.
 7. Run visible full grill-me before freezing the contract. In the same round,
    draft the intended floor, seed the improvement candidate pool, seed the
@@ -69,10 +80,12 @@ long-form public explanation lives in `docs/protocol.md`.
     current route/model checks.
 22. Defer future route, chunk, or native-build dependencies until the node or
     check that actually needs them.
-23. Probe host continuation capability before creating heartbeat, watchdog, or
-    global-supervisor automation. Record whether real wakeups are supported,
-    unsupported, or blocked.
-24. If the host supports real wakeups, create the all-or-none automated
+23. Probe host continuation capability only after the scheduled-continuation
+    startup answer is recorded. If the user allowed scheduled continuation and
+    setup fails, stop and ask for a new decision instead of silently switching
+    to manual resume.
+24. If the user allowed scheduled continuation and the host supports real
+    wakeups, create the all-or-none automated
     continuation bundle: stable heartbeat launcher, paired external watchdog,
     and singleton global watchdog supervisor. The launcher loads persisted
     route/frontier state rather than carrying route-specific next-jump
@@ -80,8 +93,8 @@ long-form public explanation lives in `docs/protocol.md`.
     replaces each role from that memory, then asks the project manager for a
     completion-oriented runway from the current position to project
     completion.
-25. If the host does not support real wakeups, record `manual-resume` mode and
-    do not create heartbeat, watchdog, or global-supervisor automation.
+25. If the user selected manual resume, record `manual-resume` mode and do not
+    create heartbeat, watchdog, or global-supervisor automation.
 26. Record the controlled-stop notice policy: completed routes emit a
     completion notice; controlled nonterminal stops emit a resume notice that
     says whether to wait for heartbeat or type `continue FlowPilot`.
@@ -125,13 +138,16 @@ long-form public explanation lives in `docs/protocol.md`.
     ```
 
     The guard must verify matching active route, canonical state,
-    execution frontier, current six-role crew ledger, current role memory,
+    execution frontier, current six-role crew ledger, current role memory, the
+    three explicit startup answers, stop-and-wait evidence,
+    banner-after-answers evidence,
     live-subagent startup resolution, continuation readiness, and
     `startup_activation` records in state and frontier. Work beyond startup is
     illegal until the guard records `work_beyond_startup_allowed: true`. If
-    six live background agents are not active/resumed and no explicit
-    single-agent role-continuity fallback is recorded, stop and ask the user
-    for that decision. A route-local file without matching canonical
+    the three answers are incomplete, the prompt did not stop for the user's
+    reply, or answers are inconsistent with subagent/continuation evidence,
+    stop and ask the user for that decision. A route-local file
+    without matching canonical
     state/frontier/crew/continuation evidence is a shadow route and must be
     quarantined or superseded before continuing.
 38. Start only the first chunk whose continuation mode is known. Automated
@@ -148,20 +164,14 @@ Recommended explicit invocation for public docs, README examples, and GitHub
 usage:
 
 ```text
-Use FlowPilot full protocol, including permission to start the standard six
-background subagents where the host and current tool policy permit them,
-heartbeat or manual-resume continuation, and the startup hard gate.
+Use FlowPilot. Ask the startup questions first.
 ```
 
-This is an explicit request to use live subagents when permitted, not a promise
-that every host can create them. If authorization is missing or live startup
-fails, FlowPilot must ask before continuing. If the user authorizes live
-agents, FlowPilot starts or resumes all six and records evidence. If the user
-declines, or if the host/tool still cannot provide live agents after an
-authorized attempt, FlowPilot asks whether to continue with single-agent
-six-role continuity and records that explicit fallback. It blocks when neither
-live agents nor a user-authorized fallback are recorded, when a required role
-cannot be recovered, or when any hard gate cannot be satisfied.
+FlowPilot invocation only opens the three-question startup prompt. It is not
+authorization for a default mode, background agents, fallback execution,
+scheduled jobs, or manual resume. The assistant must stop immediately after
+asking those questions, and the banner is emitted only after the later user
+answer set is complete.
 
 ## Material Intake And PM Handoff
 

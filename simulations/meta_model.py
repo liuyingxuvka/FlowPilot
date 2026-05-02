@@ -65,9 +65,13 @@ class Action:
 class State:
     status: str = "new"  # new | running | blocked | complete
     flowpilot_enabled: bool = False
+    startup_questions_asked: bool = False
+    startup_dialog_stopped_for_answers: bool = False
     startup_banner_emitted: bool = False
     mode_choice_offered: bool = False
     mode_selected: bool = False
+    startup_background_agents_answered: bool = False
+    startup_scheduled_continuation_answered: bool = False
     showcase_floor_committed: bool = False
     visible_self_interrogation_done: bool = False
     startup_self_interrogation_questions: int = 0
@@ -404,6 +408,17 @@ def _lightweight_self_check_ready(*, total_questions: int, scope_id: str) -> boo
         and MIN_LIGHTWEIGHT_SELF_CHECK_QUESTIONS
         <= total_questions
         <= MAX_LIGHTWEIGHT_SELF_CHECK_QUESTIONS
+    )
+
+
+def _startup_questions_complete(state: State) -> bool:
+    return (
+        state.startup_questions_asked
+        and state.startup_dialog_stopped_for_answers
+        and state.mode_choice_offered
+        and state.mode_selected
+        and state.startup_background_agents_answered
+        and state.startup_scheduled_continuation_answered
     )
 
 
@@ -1030,17 +1045,27 @@ class AutopilotStep:
                 status="running",
                 flowpilot_enabled=True,
                 heartbeat_active=True,
-                active_node="emit_startup_banner",
+                active_node="ask_startup_questions",
             )
             return
 
-        if not state.startup_banner_emitted:
+        if not state.startup_questions_asked:
             yield _step(
                 state,
-                label="startup_banner_emitted",
-                action="emit a large ASCII FlowPilot startup banner in chat before mode selection",
-                startup_banner_emitted=True,
-                active_node="select_mode",
+                label="startup_three_questions_asked",
+                action="ask run mode, background-agent permission, and scheduled-continuation permission before banner",
+                startup_questions_asked=True,
+                active_node="stop_for_startup_answers",
+            )
+            return
+
+        if not state.startup_dialog_stopped_for_answers:
+            yield _step(
+                state,
+                label="startup_dialog_stopped_for_user_answers",
+                action="end the assistant response after asking startup questions and wait for the user's reply",
+                startup_dialog_stopped_for_answers=True,
+                active_node="await_startup_mode_answer",
             )
             return
 
@@ -1050,7 +1075,7 @@ class AutopilotStep:
                 label="mode_choice_offered",
                 action="offer full-auto, autonomous, guided, and strict-gated modes from loosest to strictest",
                 mode_choice_offered=True,
-                active_node="await_mode_choice",
+                active_node="await_mode_answer",
             )
             return
 
@@ -1060,13 +1085,43 @@ class AutopilotStep:
                 label="mode_selected_by_user",
                 action="record user-selected run mode",
                 mode_selected=True,
-                active_node="freeze_contract",
+                active_node="await_background_agent_answer",
             )
             yield _step(
                 state,
                 label="default_mode_recorded",
-                action="record full-auto mode because user asked to continue or host cannot pause",
+                action="record explicit user answer selecting the default full-auto mode",
                 mode_selected=True,
+                active_node="await_background_agent_answer",
+            )
+            return
+
+        if not state.startup_background_agents_answered:
+            yield _step(
+                state,
+                label="startup_background_agents_answered",
+                action="record explicit user answer for six background subagents versus single-agent continuity",
+                startup_background_agents_answered=True,
+                active_node="await_scheduled_continuation_answer",
+            )
+            return
+
+        if not state.startup_scheduled_continuation_answered:
+            yield _step(
+                state,
+                label="startup_scheduled_continuation_answered",
+                action="record explicit user answer for heartbeat/automation versus manual resume",
+                startup_scheduled_continuation_answered=True,
+                active_node="emit_startup_banner",
+            )
+            return
+
+        if not state.startup_banner_emitted:
+            yield _step(
+                state,
+                label="startup_banner_emitted",
+                action="emit a large ASCII FlowPilot startup banner only after the three startup answers",
+                startup_banner_emitted=True,
                 active_node="freeze_contract",
             )
             return
@@ -3182,6 +3237,8 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         return InvariantResult.pass_()
     if not state.flowpilot_enabled:
         return InvariantResult.fail("final report emitted before FlowPilot was enabled")
+    if not _startup_questions_complete(state):
+        return InvariantResult.fail("final report emitted before the three startup questions were answered")
     if not state.startup_banner_emitted:
         return InvariantResult.fail("final report emitted before FlowPilot startup banner was visible")
     if not (state.mode_choice_offered and state.mode_selected):
@@ -3307,7 +3364,7 @@ def frozen_contract_never_changes(state: State, trace) -> InvariantResult:
 def mode_choice_before_contract(state: State, trace) -> InvariantResult:
     del trace
     if state.contract_frozen and not (
-        state.flowpilot_enabled and state.startup_banner_emitted
+        state.flowpilot_enabled and _startup_questions_complete(state) and state.startup_banner_emitted
         and state.mode_choice_offered and state.mode_selected
         and state.showcase_floor_committed and state.visible_self_interrogation_done
         and _full_interrogation_ready(
@@ -3321,16 +3378,27 @@ def mode_choice_before_contract(state: State, trace) -> InvariantResult:
         and _crew_ready(state)
         and _product_function_architecture_ready(state)
     ):
-        return InvariantResult.fail("contract frozen before FlowPilot startup banner, mode, showcase floor, dynamic per-layer visible self-interrogation, crew recovery, PM product-function architecture, candidate pool, and validation-direction gates")
+        return InvariantResult.fail("contract frozen before startup questions, FlowPilot startup banner, mode, showcase floor, dynamic per-layer visible self-interrogation, crew recovery, PM product-function architecture, candidate pool, and validation-direction gates")
     return InvariantResult.pass_()
 
 
 def startup_banner_before_mode_choice(state: State, trace) -> InvariantResult:
     del trace
-    if state.mode_choice_offered and not (
-        state.flowpilot_enabled and state.startup_banner_emitted
+    if state.mode_choice_offered and not state.startup_questions_asked:
+        return InvariantResult.fail("mode question offered before the three-question startup gate was opened")
+    if (
+        not state.startup_dialog_stopped_for_answers
+        and (
+            state.mode_choice_offered
+            or state.mode_selected
+            or state.startup_background_agents_answered
+            or state.startup_scheduled_continuation_answered
+            or state.startup_banner_emitted
+        )
     ):
-        return InvariantResult.fail("mode choice offered before visible FlowPilot startup banner")
+        return InvariantResult.fail("startup continued after asking questions without stopping for the user's reply")
+    if state.startup_banner_emitted and not _startup_questions_complete(state):
+        return InvariantResult.fail("startup banner emitted before all three startup answers were recorded")
     return InvariantResult.pass_()
 
 
@@ -3376,6 +3444,10 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     if formal_execution_started and not state.startup_activation_guard_passed:
         return InvariantResult.fail(
             "formal execution started before the startup activation hard gate passed"
+        )
+    if state.startup_activation_guard_passed and not _startup_questions_complete(state):
+        return InvariantResult.fail(
+            "startup activation hard gate passed before the three startup answers were recorded"
         )
     if state.startup_activation_guard_passed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(
