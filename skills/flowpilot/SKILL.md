@@ -42,6 +42,28 @@ When FlowPilot is explicitly invoked, or when a project already contains a
 `.flowpilot/` directory, the controller state is enabled by default. Do not
 first ask whether FlowPilot should exist.
 
+Preferred user-facing invocation when a formal route is intended:
+
+```text
+Use FlowPilot full protocol, including permission to start the standard six
+background subagents where the host and current tool policy permit them,
+heartbeat or manual-resume continuation, and the startup hard gate.
+```
+
+This wording matters. FlowPilot itself requires the six-role crew and role
+memory. Live background subagents are the default formal startup target. If
+they are not already authorized or cannot be started, FlowPilot must pause and
+ask the user whether to start the six live background agents. If the user
+authorizes them, start or resume all six and record the evidence. If the user
+declines, or if the host/tool still cannot provide live subagents after an
+authorized attempt, ask whether to continue with single-agent six-role
+continuity. Only after that explicit fallback decision may FlowPilot record
+memory-seeded replacement/recovery status and continue. It blocks if no live
+subagent or explicit single-agent continuity decision exists, if a required
+role cannot be recovered from ledger and memory, or if any hard gate cannot be
+satisfied. Do not claim live subagents were started when the host/tool policy
+did not allow that.
+
 As soon as FlowPilot is enabled, emit the startup banner in a fenced `text`
 block before mode selection, self-interrogation, route modeling, or other heavy
 startup work:
@@ -88,9 +110,11 @@ python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --r
 ```
 
 `startup_activation.work_beyond_startup_allowed` must be true in state and
-frontier before work beyond startup. If the host or current tool policy cannot
-create live subagents, record recovered/replaced role evidence and role memory;
-do not claim live subagents were started. If only a route-local file,
+frontier before work beyond startup. `startup_activation.live_subagent_startup`
+must show either six live background agents started/resumed after a recorded
+user decision, or explicit user authorization for single-agent six-role
+continuity. If neither is recorded, stop at startup and ask; do not silently
+fall back. If only a route-local file,
 generated concept, screenshot, or implementation artifact exists without
 matching canonical state/frontier/crew/continuation evidence, treat it as a
 shadow route, quarantine or supersede it, and rerun startup instead of
@@ -272,8 +296,8 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     active node, next jumps, checks, fallback branches, continuation state, and
     current acceptance delta as nearby text.
 39. Set `startup_activation` in state/frontier from the current route,
-    execution frontier, crew ledger, role memory, continuation, and visible
-    plan evidence, then run:
+    execution frontier, crew ledger, role memory, live-subagent startup
+    decision, continuation, and visible plan evidence, then run:
 
     ```powershell
     python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
@@ -281,9 +305,11 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
 
     Do not run child skills, imagegen, implementation, formal route chunks, or
     completion work until the guard records
-    `work_beyond_startup_allowed: true`. A route-local file without matching
-    canonical state/frontier/crew/continuation evidence is a shadow route and
-    must be quarantined or superseded before continuing.
+    `work_beyond_startup_allowed: true`. If six live background agents are not
+    active/resumed and no explicit single-agent role-continuity fallback is
+    recorded, stop and ask the user for that decision. A route-local file
+    without matching canonical state/frontier/crew/continuation evidence is a
+    shadow route and must be quarantined or superseded before continuing.
 40. Execute the first bounded chunk only after the continuation mode is known.
     In automated mode, the heartbeat rehydrates the crew from persisted role
     memory, asks the project manager for a completion-oriented runway, and the
@@ -421,11 +447,21 @@ Do not use raw `agent_id` as the primary UI label or as the authority key.
 Nickname changes, regenerated subagent display names, or replacement agents do
 not change the `role_key`.
 
-Live subagent continuity is best effort. Role continuity is mandatory. A
-heartbeat or manual resume may try to resume a stored `agent_id` when the host
-supports that operation, but it must not assume that a live subagent still has
-private chat context. If the old agent cannot be resumed, FlowPilot replaces
-that role with the same role charter plus the latest role memory packet. A
+Live subagent continuity is a startup target with an explicit fallback gate.
+Role continuity is mandatory. If the current user request explicitly authorizes
+background agents and the host/tool policy permits them, FlowPilot spawns or
+resumes live subagents for the fixed roles and may use bounded sidecar work. If
+live subagents are unavailable, not authorized, or not supported by the host,
+FlowPilot pauses and asks for the missing decision instead of silently
+downgrading. A recorded user choice to continue without live subagents lets
+FlowPilot mark affected roles as `replaced_from_memory`, `memory_recovered`,
+or an equivalent memory-seeded status, load the latest role memory packets,
+and continue under the same authority boundaries. A heartbeat or manual resume
+may try to resume a stored `agent_id` when the host supports that operation,
+but it must not assume that a live subagent still has private chat context. If
+the old agent cannot be resumed, FlowPilot either starts a replacement live
+agent after authorization or, after explicit fallback approval, replaces that
+role with the same role charter plus the latest role memory packet. A
 replacement role that starts from a generic prompt without its memory packet is
 not recovered and cannot approve gates.
 
@@ -950,11 +986,13 @@ not claim unattended recovery.
 Every automated heartbeat must load `state.json`, the active `flow.json`,
 `.flowpilot/execution_frontier.json`, `.flowpilot/crew_ledger.json`, and
 `.flowpilot/crew_memory/`. It then rehydrates the fixed six-agent crew:
-resume known agent ids when possible, replace unavailable roles from their
-memory packets when needed, record the rehydration status, and only then ask
-the project manager for a completion-oriented runway from the current route
-position to project completion. Manual-resume turns load the same files and ask
-for the same PM runway before continuing. The runway must include the current gate, downstream
+resume known agent ids when possible, and if live agents are unavailable,
+record the block and ask before replacing roles from memory packets. Only
+after live startup or explicit fallback authorization is recorded may it record
+the rehydration status and ask the project manager for a completion-oriented
+runway from the current route position to project completion. Manual-resume
+turns load the same files and ask for the same PM runway before continuing. The
+runway must include the current gate, downstream
 steps, role approvals, hard-stop conditions, checkpoint cadence, and any PM
 stop signal. The main executor immediately replaces the current visible Codex
 plan projection with that runway and continues along it until the PM stop

@@ -126,11 +126,14 @@ long-form public explanation lives in `docs/protocol.md`.
 
     The guard must verify matching active route, canonical state,
     execution frontier, current six-role crew ledger, current role memory,
-    continuation readiness, and `startup_activation` records in state and
-    frontier. Work beyond startup is illegal until the guard records
-    `work_beyond_startup_allowed: true`. A route-local file without matching
-    canonical state/frontier/crew/continuation evidence is a shadow route and
-    must be quarantined or superseded before continuing.
+    live-subagent startup resolution, continuation readiness, and
+    `startup_activation` records in state and frontier. Work beyond startup is
+    illegal until the guard records `work_beyond_startup_allowed: true`. If
+    six live background agents are not active/resumed and no explicit
+    single-agent role-continuity fallback is recorded, stop and ask the user
+    for that decision. A route-local file without matching canonical
+    state/frontier/crew/continuation evidence is a shadow route and must be
+    quarantined or superseded before continuing.
 38. Start only the first chunk whose continuation mode is known. Automated
     routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
@@ -140,6 +143,25 @@ long-form public explanation lives in `docs/protocol.md`.
     lightweight self-check, quality package, child-skill gates when needed,
     dual-layer product/process gates, human-like inspection gates, and
     verification have been defined.
+
+Recommended explicit invocation for public docs, README examples, and GitHub
+usage:
+
+```text
+Use FlowPilot full protocol, including permission to start the standard six
+background subagents where the host and current tool policy permit them,
+heartbeat or manual-resume continuation, and the startup hard gate.
+```
+
+This is an explicit request to use live subagents when permitted, not a promise
+that every host can create them. If authorization is missing or live startup
+fails, FlowPilot must ask before continuing. If the user authorizes live
+agents, FlowPilot starts or resumes all six and records evidence. If the user
+declines, or if the host/tool still cannot provide live agents after an
+authorized attempt, FlowPilot asks whether to continue with single-agent
+six-role continuity and records that explicit fallback. It blocks when neither
+live agents nor a user-authorized fallback are recorded, when a required role
+cannot be recovered, or when any hard gate cannot be satisfied.
 
 ## Material Intake And PM Handoff
 
@@ -192,10 +214,11 @@ Repeat until complete or blocked:
    active node, continuation mode, last heartbeat or manual-resume record,
    watchdog evidence when present, lifecycle evidence, and last checkpoint.
 2. Rehydrate the six-agent crew before PM runway work. Try to resume stored
-   agent ids when the host supports it; otherwise replace unavailable roles
-   from the latest role memory packet. Record resumed, replaced, seeded,
-   blocked, and unavailable roles. Live subagent continuity is best effort;
-   role continuity through persisted memory is mandatory.
+   agent ids when the host supports it. If live agents are unavailable, ask for
+   the missing startup/fallback decision before replacing roles from memory.
+   Record resumed, replaced, seeded, blocked, and unavailable roles. Live
+   background agents are the default startup target; role continuity through
+   persisted memory is allowed only after explicit fallback approval.
 3. Ask the rehydrated project manager for a completion-oriented runway from
    the current position to project completion. The runway names the current
    gate, downstream steps, hard-stop conditions, checkpoint cadence, and any PM

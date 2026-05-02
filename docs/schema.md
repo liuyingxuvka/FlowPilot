@@ -60,6 +60,9 @@ chunks until this block and the matching frontier block show:
   written for the same active nonterminal route;
 - `crew_ledger_current: true`;
 - `role_memory_packets_current` is at least 6;
+- `live_subagent_startup` records either six live background agents
+  started/resumed after a user decision or explicit user authorization for
+  single-agent six-role continuity;
 - `continuation_ready: true`, either as an automated heartbeat/watchdog/global
   bundle or explicit `manual-resume` no-automation evidence;
 - `startup_guard_passed: true`;
@@ -71,6 +74,18 @@ A route-local file, generated concept, screenshot, or implementation artifact
 without matching canonical state/frontier/crew/continuation evidence is a
 shadow route. Shadow routes are invalid startup evidence and must be
 quarantined or superseded before work continues.
+
+`startup_activation.live_subagent_startup` records this decision:
+
+- `required_by_default: true`;
+- `decision`: `live_agents_started`, `live_agents_resumed`,
+  `single_agent_role_continuity_authorized`, or `blocked`;
+- `user_decision_recorded: true` before the startup guard can pass;
+- `user_authorized_live_start: true`, `live_start_attempted: true`, and
+  `live_agents_active >= 6` for the live-agent path;
+- `single_agent_role_continuity_authorized: true` for the fallback path;
+- `blocker` and `evidence_path` for the prompt, failed attempt, or fallback
+  decision evidence.
 
 ## Crew Ledger
 
@@ -104,14 +119,25 @@ state for the crew. Each packet records:
 - latest rehydration result;
 - update timestamp.
 
-Live subagent context is not the source of truth. Heartbeat or manual resume
-may try to resume a stored agent id, but must replace unavailable roles from
-the latest role memory packet. Raw transcripts are optional evidence only; a
+Live subagent context is not the source of truth, but six live background
+agents are the default startup target. Heartbeat or manual resume may try to
+resume a stored agent id. If live agents are unavailable, FlowPilot records the
+block and asks for a user decision before falling back to replacement from the
+latest role memory packet. Raw transcripts are optional evidence only; a
 compact structured memory packet is required before a replacement role can
 approve gates. Heartbeat recovery loads the ledger and memory packets, records
-which roles were resumed or replaced, and only then asks the project manager
-for a completion-oriented runway from the current route position to project
-completion.
+which roles were resumed, replaced, or blocked, and only then asks the project
+manager for a completion-oriented runway from the current route position to
+project completion.
+
+Valid current role statuses may represent live or memory-seeded continuity,
+including `active`, `idle`, `ready`, `running`, `restored`, `recovered`,
+`replaced_from_memory`, `memory_recovered`, `memory_seeded`, or
+`live_unavailable_memory_seeded`. `archived`, `paused`, `blocked`, and other
+terminal statuses cannot satisfy startup activation. FlowPilot must distinguish
+between "the role is recovered and authorized" and "a live subagent process is
+currently running"; when the latter is unavailable, the fallback is valid only
+after explicit user authorization for single-agent role continuity.
 
 ## Product Function Architecture
 

@@ -5,8 +5,9 @@
   "memory_root": ".flowpilot/crew_memory",
   "memory_policy": {
     "role_memory_required": true,
-    "live_agent_continuity": "best_effort",
+    "live_agent_continuity": "default_with_user_fallback",
     "role_continuity": "mandatory",
+    "live_subagent_policy": "Six live background subagents are the default formal startup target. If authorization is missing or startup fails, pause and ask. Continue with memory-seeded single-agent six-role continuity only after an explicit user fallback decision, and block if a required role cannot be recovered.",
     "raw_transcript_is_authoritative": false,
     "refresh_after_meaningful_role_work": true,
     "rehydrate_before_pm_runway": true

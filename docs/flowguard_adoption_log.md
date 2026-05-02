@@ -199,3 +199,25 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   - `python simulations\run_meta_checks.py`
   - `python simulations\run_capability_checks.py`
   - `python scripts\flowpilot_startup_guard.py --root . --route-id route-021 --json`
+
+## 2026-05-02 - Live Subagent Startup Decision Gate
+
+- Trigger: the user clarified that missing six live background agents should
+  pause for an explicit user decision instead of silently falling back to
+  memory-seeded role continuity.
+- Decision: `use_flowguard`.
+- Models updated: `simulations/startup_guard_model.py`,
+  `simulations/meta_model.py`, and `simulations/capability_model.py`.
+- Main findings:
+  - Formal FlowPilot startup now targets six live background agents by default.
+  - `startup_activation.live_subagent_startup` must record either six live
+    agents started/resumed or explicit single-agent role-continuity fallback.
+  - Startup guard rejects fallback without a recorded user decision.
+  - Meta and capability models require live-subagent startup resolution before
+    `startup_activation_guard_passed`.
+- Validation:
+  - `python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\run_startup_guard_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py`
+  - `python scripts\check_install.py`
+  - `python simulations\run_startup_guard_checks.py`
+  - `python simulations\run_meta_checks.py`
+  - `python simulations\run_capability_checks.py`

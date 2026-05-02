@@ -79,6 +79,9 @@ Expected:
   are present and current;
 - continuation is either a complete automated bundle or explicit
   `manual-resume` evidence with no automation claim;
+- `startup_activation.live_subagent_startup` records either six live
+  background agents started/resumed after a user decision or explicit
+  user-authorized single-agent six-role continuity;
 - `startup_activation` in state and frontier records the hard gate;
 - the command writes `.flowpilot/startup_guard/latest.json` and sets
   `work_beyond_startup_allowed: true`.

@@ -1357,3 +1357,54 @@ Results after integration:
 - current ignored route-021 runtime correctly fails the startup guard because it
   is terminal, archived, lacks `startup_activation`, and has deleted
   continuation automation.
+
+## 2026-05-02 - Live Subagent Startup Decision Gate
+
+Trigger: the user clarified that FlowPilot must not silently fall back to a
+single main executor when six real background agents are unavailable. It should
+pause, ask whether to start the six live background agents, and use
+memory-seeded single-agent six-role continuity only after explicit fallback
+approval.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- startup guard passed without a live-subagent startup decision;
+- single-agent role continuity authorized without a recorded user decision;
+- startup hard gate treated role memory as an automatic substitute for live
+  background agents;
+- meta/capability execution advanced before live startup resolution.
+
+Model and protocol changes:
+
+- added `startup_activation.live_subagent_startup` to state and frontier
+  templates;
+- updated `scripts/flowpilot_startup_guard.py` to require either six live
+  background agents or explicit single-agent fallback authorization;
+- updated startup guard, meta, and capability simulations with live-subagent
+  decision labels before startup guard pass;
+- updated public invocation, protocol, schema, README, templates, and handoff
+  language to state that fallback requires an explicit user decision.
+
+Validation:
+
+```powershell
+python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\run_startup_guard_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py
+python scripts\check_install.py
+python simulations\run_startup_guard_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+```
+
+Results after integration:
+
+- startup guard safe path: 21 states, 20 edges, 0 invariant failures;
+- all seven startup-bypass hazard states detected;
+- meta model states: 92198;
+- meta model edges: 96738;
+- capability model states: 86314;
+- capability model edges: 91556;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0.

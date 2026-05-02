@@ -14,10 +14,36 @@
           "execution_frontier_written": true,
           "imagegen_started": false,
           "implementation_started": false,
+          "live_subagent_decision_recorded": false,
+          "live_subagents_started": false,
           "role_memory_packets_current": 6,
           "route_execution_started": false,
           "route_file_written": true,
           "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": true
+        }
+      },
+      "guard_before_live_subagent_decision": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete"
+        ],
+        "state": {
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "continuation_ready": true,
+          "crew_ledger_current": true,
+          "execution_frontier_written": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagent_decision_recorded": false,
+          "live_subagents_started": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": true
         }
       },
@@ -34,10 +60,13 @@
           "execution_frontier_written": false,
           "imagegen_started": true,
           "implementation_started": false,
+          "live_subagent_decision_recorded": false,
+          "live_subagents_started": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
           "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false
         }
       },
@@ -54,10 +83,13 @@
           "execution_frontier_written": true,
           "imagegen_started": false,
           "implementation_started": true,
+          "live_subagent_decision_recorded": false,
+          "live_subagents_started": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
           "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false
         }
       },
@@ -74,10 +106,13 @@
           "execution_frontier_written": true,
           "imagegen_started": false,
           "implementation_started": false,
+          "live_subagent_decision_recorded": true,
+          "live_subagents_started": true,
           "role_memory_packets_current": 6,
           "route_execution_started": true,
           "route_file_written": true,
           "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false
         }
       },
@@ -94,10 +129,36 @@
           "execution_frontier_written": false,
           "imagegen_started": false,
           "implementation_started": false,
+          "live_subagent_decision_recorded": false,
+          "live_subagents_started": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
           "shadow_route_detected": true,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": false
+        }
+      },
+      "single_agent_without_user_decision": {
+        "detected": true,
+        "failures": [
+          "single-agent role continuity was authorized without a recorded user decision"
+        ],
+        "state": {
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "continuation_ready": true,
+          "crew_ledger_current": true,
+          "execution_frontier_written": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagent_decision_recorded": false,
+          "live_subagents_started": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": true,
           "startup_guard_passed": false
         }
       }
@@ -106,7 +167,7 @@
   },
   "ok": true,
   "safe_graph": {
-    "edge_count": 11,
+    "edge_count": 20,
     "invariant_failures": [],
     "labels": [
       "canonical_state_written",
@@ -116,13 +177,16 @@
       "execution_frontier_written",
       "imagegen_started",
       "implementation_started",
+      "live_subagent_decision_recorded",
+      "live_subagents_started",
       "role_memory_packets_current",
       "route_execution_started",
       "route_file_written",
+      "single_agent_role_continuity_authorized",
       "startup_activation_guard_passed"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 12
+    "state_count": 21
   }
 }

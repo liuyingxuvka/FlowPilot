@@ -106,6 +106,24 @@ formal FlowPilot route is designed for substantial work.
 
 ## Core Workflow
 
+Recommended formal invocation:
+
+```text
+Use FlowPilot full protocol, including permission to start the standard six
+background subagents where the host and current tool policy permit them,
+heartbeat or manual-resume continuation, and the startup hard gate.
+```
+
+The six-role crew is mandatory for formal FlowPilot. Live background subagents
+are the default formal startup target. If they are not already authorized or
+cannot be started, FlowPilot pauses and asks for a user decision. If the user
+authorizes them, FlowPilot starts or resumes all six and records evidence. If
+the user declines, or if the host/tool still cannot provide live subagents
+after an authorized attempt, FlowPilot asks whether to continue with
+single-agent six-role continuity. Only that explicit fallback decision permits
+memory-seeded role recovery or replacement. Without either live agents or
+explicit fallback authorization, the startup hard gate blocks.
+
 1. Enable FlowPilot and create or load `.flowpilot/`.
 2. Select a run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`.
 3. Run visible self-interrogation before freezing the contract.
@@ -159,6 +177,11 @@ Formal FlowPilot routes use a persistent role structure:
 Workers do not own route advancement or completion. The main executor may
 draft evidence, run tools, edit files, and integrate results, but it cannot
 self-approve model, review, repair, route, or completion gates.
+
+Live subagents are the preferred execution capacity, not the source of truth.
+The source of truth is the crew ledger plus role memory. When live subagents are
+not available, FlowPilot must say so and ask before falling back to
+memory-seeded role continuity within the same authority model.
 
 ## Persistent Project State
 

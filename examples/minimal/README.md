@@ -21,6 +21,10 @@ its side effect is recorded.
    `.flowpilot/product_function_architecture.json` before contract freeze:
    user tasks, product capabilities, feature decisions, display rationale,
    missing-feature review, negative scope, and functional acceptance matrix.
+   Six live background subagents are the default startup target where the host
+   permits them. If authorization is missing or startup fails, pause and ask;
+   use memory-seeded single-agent role continuity only after explicit fallback
+   approval.
 5. Have the product FlowGuard officer approve modelability and the human-like
    reviewer challenge usefulness.
 6. Freeze the contract in `.flowpilot/contract.md` from the approved

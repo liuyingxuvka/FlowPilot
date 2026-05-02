@@ -22,6 +22,9 @@ class State:
     execution_frontier_written: bool = False
     crew_ledger_current: bool = False
     role_memory_packets_current: int = 0
+    live_subagent_decision_recorded: bool = False
+    live_subagents_started: bool = False
+    single_agent_role_continuity_authorized: bool = False
     continuation_ready: bool = False
     startup_guard_passed: bool = False
     child_skill_started: bool = False
@@ -47,6 +50,11 @@ def startup_ready_for_guard(state: State) -> bool:
         and state.execution_frontier_written
         and state.crew_ledger_current
         and state.role_memory_packets_current == REQUIRED_ROLE_MEMORY_PACKETS
+        and state.live_subagent_decision_recorded
+        and (
+            state.live_subagents_started
+            or state.single_agent_role_continuity_authorized
+        )
         and state.continuation_ready
         and not state.shadow_route_detected
     )
@@ -83,6 +91,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
+    if not state.live_subagent_decision_recorded:
+        yield Transition("live_subagent_decision_recorded", replace(state, live_subagent_decision_recorded=True))
+        return
+    if not state.live_subagents_started and not state.single_agent_role_continuity_authorized:
+        yield Transition("live_subagents_started", replace(state, live_subagents_started=True))
+        yield Transition(
+            "single_agent_role_continuity_authorized",
+            replace(state, single_agent_role_continuity_authorized=True),
+        )
+        return
     if not state.continuation_ready:
         yield Transition("continuation_ready", replace(state, continuation_ready=True))
         return
@@ -106,6 +124,8 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.startup_guard_passed and not startup_ready_for_guard(state):
         failures.append("startup guard passed before canonical startup activation was complete")
+    if state.single_agent_role_continuity_authorized and not state.live_subagent_decision_recorded:
+        failures.append("single-agent role continuity was authorized without a recorded user decision")
     if work_started(state) and not state.startup_guard_passed:
         failures.append("work beyond startup started before the startup guard passed")
     if state.shadow_route_detected and state.startup_guard_passed:
@@ -139,12 +159,32 @@ def hazard_states() -> dict[str, State]:
             role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
             startup_guard_passed=True,
         ),
+        "guard_before_live_subagent_decision": State(
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            continuation_ready=True,
+            startup_guard_passed=True,
+        ),
+        "single_agent_without_user_decision": State(
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            single_agent_role_continuity_authorized=True,
+            continuation_ready=True,
+        ),
         "route_execution_before_guard": State(
             route_file_written=True,
             canonical_state_written=True,
             execution_frontier_written=True,
             crew_ledger_current=True,
             role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            live_subagent_decision_recorded=True,
+            live_subagents_started=True,
             continuation_ready=True,
             route_execution_started=True,
         ),

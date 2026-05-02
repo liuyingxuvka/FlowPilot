@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 91548,
+    "edge_count": 91556,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -113,6 +113,7 @@
       "implementation_human_neutral_observation_written",
       "implementation_human_review_context_loaded",
       "lifecycle_reconciliation_completed",
+      "live_subagent_start_authorized",
       "main_agent_merged_sidecar_report",
       "material_intake_packet_written",
       "material_reviewer_sufficiency_approved",
@@ -158,6 +159,7 @@
       "sidecar_report_returned",
       "sidecar_scope_checked",
       "six_agent_crew_policy_written",
+      "six_live_subagents_started",
       "startup_activation_guard_passed",
       "strict_gate_obligation_review_model_checked",
       "subagent_spawned_on_demand",
@@ -187,29 +189,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 86306,
+    "state_count": 86314,
     "terminal_counts": {
       "blocked": 546,
       "complete": 546
     }
   },
   "loop": {
-    "edge_count": 91548,
+    "edge_count": 91556,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 86306,
+    "state_count": 86314,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 91548,
+    "edge_count": 91556,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 86306,
+    "state_count": 86314,
     "status": "OK",
     "success_state_count": 546
   }

@@ -188,14 +188,14 @@ decisions. The reviewer inspects; the FlowGuard officers own their models end
 to end by authoring, running, interpreting, and approving or blocking them.
 They do not implement product code.
 
-The crew is persistent as six roles, not as guaranteed live subagent
-processes. Heartbeat, sleep, manual resume, or host boundaries may make stored
-subagent ids unavailable. FlowPilot therefore stores compact role memory
-packets under `.flowpilot/crew_memory/` and treats them as the authoritative
-recovery state. A resume may reuse a live agent when the host supports it, but
-an unavailable role must be replaced from its latest memory packet before it
-can approve or produce gate evidence. Raw chat transcripts are not the memory
-source of truth.
+The crew is persistent as six roles, and the default formal startup target is
+six live background subagents where the host/tool policy permits them.
+Heartbeat, sleep, manual resume, or host boundaries may make stored subagent
+ids unavailable. FlowPilot therefore stores compact role memory packets under
+`.flowpilot/crew_memory/` and treats them as the authoritative recovery state.
+A resume may reuse a live agent when the host supports it, but an unavailable
+role may be replaced from its latest memory packet only after explicit user
+fallback approval. Raw chat transcripts are not the memory source of truth.
 
 Every PM resume or route-position decision must produce a completion-oriented
 runway, not only a next gate. The main executor replaces the current visible

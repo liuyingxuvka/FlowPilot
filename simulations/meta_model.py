@@ -147,6 +147,9 @@ class State:
     heartbeat_schedule_created: bool = False
     stable_heartbeat_launcher_recorded: bool = False
     heartbeat_health_checked: bool = False
+    live_subagent_decision_recorded: bool = False
+    live_subagents_started: bool = False
+    single_agent_role_continuity_authorized: bool = False
     startup_activation_guard_passed: bool = False
     external_watchdog_policy_recorded: bool = False
     external_watchdog_busy_lease_policy_recorded: bool = False
@@ -504,6 +507,16 @@ def _continuation_ready(state: State) -> bool:
     return _automated_continuation_ready(state) or _manual_resume_ready(state)
 
 
+def _live_subagent_startup_resolved(state: State) -> bool:
+    return (
+        state.live_subagent_decision_recorded
+        and (
+            state.live_subagents_started
+            or state.single_agent_role_continuity_authorized
+        )
+    )
+
+
 def _continuation_lifecycle_valid(state: State) -> bool:
     return (
         _continuation_ready(state)
@@ -588,6 +601,7 @@ def _route_ready(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.user_flow_diagram_refreshed
         and state.visible_user_flow_diagram_emitted
+        and _live_subagent_startup_resolved(state)
         and state.startup_activation_guard_passed
         and state.issue == "none"
         and state.high_risk_gate != "pending"
@@ -678,6 +692,9 @@ class AutopilotStep:
         "heartbeat_schedule_created",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
+        "live_subagent_decision_recorded",
+        "live_subagents_started",
+        "single_agent_role_continuity_authorized",
         "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
@@ -861,6 +878,9 @@ class AutopilotStep:
         "heartbeat_schedule_created",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
+        "live_subagent_decision_recorded",
+        "live_subagents_started",
+        "single_agent_role_continuity_authorized",
         "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
@@ -1729,6 +1749,48 @@ class AutopilotStep:
                 label="visible_user_flow_diagram_emitted",
                 action="emit visible user flow diagram with current node, next jumps, checks, fallback branches, and simulated path",
                 visible_user_flow_diagram_emitted=True,
+                active_node="resolve_live_subagent_startup",
+            )
+            return
+
+        if (
+            state.route_version > 0
+            and state.route_checked
+            and state.markdown_synced
+            and state.execution_frontier_written
+            and state.codex_plan_synced
+            and state.user_flow_diagram_refreshed
+            and state.visible_user_flow_diagram_emitted
+            and not state.live_subagent_decision_recorded
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="live_subagent_start_authorized",
+                action="ask for and record user authorization to start the six live FlowPilot background agents",
+                live_subagent_decision_recorded=True,
+                active_node="start_live_subagents",
+            )
+            return
+
+        if (
+            state.route_version > 0
+            and state.route_checked
+            and state.markdown_synced
+            and state.execution_frontier_written
+            and state.codex_plan_synced
+            and state.user_flow_diagram_refreshed
+            and state.visible_user_flow_diagram_emitted
+            and state.live_subagent_decision_recorded
+            and not state.live_subagents_started
+            and not state.single_agent_role_continuity_authorized
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="six_live_subagents_started",
+                action="start or resume all six live FlowPilot background agents and record startup evidence",
+                live_subagents_started=True,
                 active_node="run_startup_activation_guard",
             )
             return
@@ -1741,13 +1803,14 @@ class AutopilotStep:
             and state.codex_plan_synced
             and state.user_flow_diagram_refreshed
             and state.visible_user_flow_diagram_emitted
+            and _live_subagent_startup_resolved(state)
             and not state.startup_activation_guard_passed
             and state.issue == "none"
         ):
             yield _step(
                 state,
                 label="startup_activation_guard_passed",
-                action="run startup hard gate against state, frontier, active route, crew ledger, role memory, and continuation evidence before child work",
+                action="run startup hard gate against state, frontier, active route, crew ledger, role memory, live-subagent startup resolution, and continuation evidence before child work",
                 startup_activation_guard_passed=True,
                 active_node="ready_for_chunk",
             )
@@ -3313,6 +3376,10 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     if formal_execution_started and not state.startup_activation_guard_passed:
         return InvariantResult.fail(
             "formal execution started before the startup activation hard gate passed"
+        )
+    if state.startup_activation_guard_passed and not _live_subagent_startup_resolved(state):
+        return InvariantResult.fail(
+            "startup activation hard gate passed before live subagents or explicit single-agent fallback were resolved"
         )
     return InvariantResult.pass_()
 

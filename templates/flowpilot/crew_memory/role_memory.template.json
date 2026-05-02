@@ -12,7 +12,7 @@
     "agent_id_is_diagnostic_only": true,
     "rule": "Resume by agent_id when possible, but route authority and UI labels must use role_key and display_name."
   },
-  "status": "<active|idle|closed|replaced|archived|unavailable>",
+  "status": "<active|idle|running|restored|recovered|memory_recovered|memory_seeded|replaced_from_memory|closed|archived|unavailable>",
   "authority_boundary": "<what-this-role-may-do>",
   "forbidden_approvals": [],
   "role_charter_summary": "<short stable role prompt summary>",

@@ -22,6 +22,17 @@
     "execution_frontier_written": false,
     "crew_ledger_current": false,
     "role_memory_packets_current": 0,
+    "live_subagent_startup": {
+      "required_by_default": true,
+      "decision": "unknown",
+      "user_decision_recorded": false,
+      "user_authorized_live_start": false,
+      "live_start_attempted": false,
+      "live_agents_active": 0,
+      "single_agent_role_continuity_authorized": false,
+      "blocker": "no_user_decision",
+      "evidence_path": null
+    },
     "continuation_ready": false,
     "startup_guard_command": "python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json",
     "startup_guard_passed": false,

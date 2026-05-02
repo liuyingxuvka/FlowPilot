@@ -14,7 +14,11 @@ for review.
 4. Offer run-mode selection and record the selected mode or fallback reason.
 5. Run Grill-me style self-interrogation.
 6. Create or restore the fixed six-agent crew, write `crew_ledger.json`, and
-   write a compact role memory packet for every required crew role.
+   write a compact role memory packet for every required crew role. The
+   default startup target is six live background subagents where the host and
+   current tool policy permit them. If authorization is missing or startup
+   fails, pause and ask. Continue with memory-seeded single-agent six-role
+   continuity only after an explicit user fallback decision.
 7. Main executor writes `material_intake_packet.json`, then the human-like
    reviewer approves material sufficiency before PM planning uses it.
 8. Project manager writes `pm_material_understanding.json`, classifies material
@@ -53,8 +57,8 @@ for review.
    show the runway in chat.
 20. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
-   current route, crew, role memory, continuation, and visible-plan evidence,
-   then run:
+   current route, crew, role memory, live-subagent startup decision,
+   continuation, and visible-plan evidence, then run:
 
    ```powershell
    python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json
@@ -62,8 +66,9 @@ for review.
 
    Work beyond startup is blocked until the guard passes and records
    `work_beyond_startup_allowed: true`. A route-local file without matching
-   canonical state/frontier/crew/continuation evidence is a shadow route and
-   must be quarantined or superseded before continuing.
+   canonical state/frontier/crew/continuation evidence, or a startup record
+   with neither live agents nor explicit fallback authorization, is blocked and
+   must be repaired before continuing.
 21. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
    collect all effective node gates and child-skill gates, resolve generated

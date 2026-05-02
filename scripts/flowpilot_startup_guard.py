@@ -37,7 +37,30 @@ TERMINAL_STATUSES = {
     "terminal",
 }
 
-ACTIVE_CREW_STATUSES = {"active", "idle", "ready", "running", "restored", "recovered"}
+ACTIVE_CREW_STATUSES = {
+    "active",
+    "idle",
+    "ready",
+    "running",
+    "restored",
+    "recovered",
+    "replaced",
+    "replaced_from_memory",
+    "memory_recovered",
+    "memory_seeded",
+    "live_unavailable_memory_seeded",
+}
+
+LIVE_SUBAGENT_READY_DECISIONS = {
+    "live_agents_started",
+    "live_agents_resumed",
+    "live_agents_active",
+}
+
+SINGLE_AGENT_CONTINUITY_DECISIONS = {
+    "single_agent_role_continuity_authorized",
+    "single_agent_role_continuity_approved",
+}
 
 
 @dataclass
@@ -359,6 +382,7 @@ class StartupGuard:
                     count=packet_count,
                     required=len(REQUIRED_ROLES),
                 )
+            self.check_live_subagent_startup(source, activation)
             if activation.get("work_beyond_startup_allowed") is True and activation.get("startup_guard_passed") is not True:
                 self.fail(
                     f"{source}_work_allowed_requires_recorded_pass",
@@ -376,6 +400,71 @@ class StartupGuard:
                         guard_route_id=activation.get("guard_route_id"),
                         route_id=self.route_id,
                     )
+
+    def check_live_subagent_startup(self, source: str, activation: dict[str, Any]) -> None:
+        startup = activation.get("live_subagent_startup")
+        if not isinstance(startup, dict):
+            self.fail(
+                f"{source}_live_subagent_startup_present",
+                f"{source} live_subagent_startup block is missing",
+            )
+            return
+
+        if startup.get("required_by_default") is True:
+            self.pass_(
+                f"{source}_live_subagent_startup_required",
+                f"{source} records live subagents as the default startup target",
+            )
+        else:
+            self.fail(
+                f"{source}_live_subagent_startup_required",
+                f"{source} does not record live subagents as the default startup target",
+            )
+
+        decision = str(startup.get("decision", "")).lower()
+        user_decision_recorded = startup.get("user_decision_recorded") is True
+        live_agents_active = startup.get("live_agents_active")
+        live_count = live_agents_active if isinstance(live_agents_active, int) else 0
+
+        live_ready = (
+            decision in LIVE_SUBAGENT_READY_DECISIONS
+            and user_decision_recorded
+            and startup.get("user_authorized_live_start") is True
+            and startup.get("live_start_attempted") is True
+            and live_count >= len(REQUIRED_ROLES)
+        )
+        fallback_authorized = (
+            decision in SINGLE_AGENT_CONTINUITY_DECISIONS
+            and user_decision_recorded
+            and startup.get("single_agent_role_continuity_authorized") is True
+        )
+
+        if live_ready:
+            self.pass_(
+                f"{source}_live_subagent_startup_resolved",
+                f"{source} records six live background agents as started or resumed",
+                decision=decision,
+                live_agents_active=live_count,
+            )
+            return
+        if fallback_authorized:
+            self.pass_(
+                f"{source}_live_subagent_startup_resolved",
+                f"{source} records explicit user authorization for single-agent role continuity",
+                decision=decision,
+            )
+            return
+        self.fail(
+            f"{source}_live_subagent_startup_resolved",
+            f"{source} has neither six live background agents nor explicit user-authorized single-agent role continuity",
+            decision=decision,
+            user_decision_recorded=user_decision_recorded,
+            user_authorized_live_start=startup.get("user_authorized_live_start"),
+            live_start_attempted=startup.get("live_start_attempted"),
+            live_agents_active=live_agents_active,
+            single_agent_role_continuity_authorized=startup.get("single_agent_role_continuity_authorized"),
+            blocker=startup.get("blocker"),
+        )
 
     def check_continuation(self) -> None:
         if not self.state or not self.frontier:

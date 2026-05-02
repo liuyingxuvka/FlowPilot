@@ -22,6 +22,12 @@ branches, heartbeat behavior, and any task-local behavior models.
    `.flowpilot/crew_ledger.json` plus one compact role memory packet under
    `.flowpilot/crew_memory/` for project manager, human-like reviewer, process
    FlowGuard officer, product FlowGuard officer, worker A, and worker B.
+   Resolve the live-subagent startup gate at the same time. The default target
+   is six live background agents. If authorization is missing or startup
+   fails, pause and ask the user whether to start them. If the user declines,
+   or if the host/tool cannot provide live subagents after an authorized
+   attempt, ask whether to continue with single-agent six-role continuity and
+   record that explicit fallback decision before proceeding.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
@@ -129,11 +135,12 @@ branches, heartbeat behavior, and any task-local behavior models.
 
     The guard must verify matching active route, canonical state,
     execution frontier, current six-role crew ledger, current role memory,
-    continuation readiness, and `startup_activation` records in state and
-    frontier. Work beyond startup is illegal until the guard records
-    `work_beyond_startup_allowed: true`. A route-local file without matching
-    canonical state/frontier/crew/continuation evidence is a shadow route and
-    must be quarantined or superseded before continuing.
+    live-subagent startup resolution, continuation readiness, and
+    `startup_activation` records in state and frontier. Work beyond startup is
+    illegal until the guard records `work_beyond_startup_allowed: true`. A
+    route-local file without matching canonical state/frontier/crew/continuation
+    evidence is a shadow route and must be quarantined or superseded before
+    continuing.
 38. Start the first bounded chunk only after continuation mode is known.
     Automated routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
@@ -152,6 +159,25 @@ not be reported as a full formal FlowPilot route unless the showcase gates ran.
 The startup banner is a user-visible launch marker, not route evidence; it
 exists so the user can immediately see when the heavy FlowPilot controller has
 started.
+
+Recommended explicit invocation for public docs, README examples, and GitHub
+usage:
+
+```text
+Use FlowPilot full protocol, including permission to start the standard six
+background subagents where the host and current tool policy permit them,
+heartbeat or manual-resume continuation, and the startup hard gate.
+```
+
+This is not a promise that every host can create live subagents. It is an
+explicit request to use them when permitted. If authorization is missing or
+live startup fails, FlowPilot must ask before continuing. If the user authorizes
+live agents, FlowPilot starts or resumes all six and records evidence. If the
+user declines, or if the host/tool still cannot provide live agents after an
+authorized attempt, FlowPilot asks whether to continue with single-agent
+six-role continuity and records that explicit fallback. It blocks when neither
+live agents nor a user-authorized fallback are recorded, when a required role
+cannot be recovered, or when any hard gate cannot be satisfied.
 
 ## Material Intake And PM Handoff
 
@@ -247,16 +273,20 @@ heartbeat resume, FlowPilot restores or replaces that role before work
 continues; if it cannot, the gate blocks rather than falling back to
 main-executor self-approval.
 
-The six agents are persistent roles, not guaranteed live processes. Live
-subagent continuity is best effort; role continuity is mandatory. The
-authoritative recovery state is `.flowpilot/crew_ledger.json` plus compact
+The six agents are persistent roles, and the default startup target is six
+live background agents. Live subagent continuity still depends on host and tool
+support, so FlowPilot must not treat missing live agents as an invisible
+downgrade. It pauses for a user decision, records either live startup evidence
+or explicit single-agent role-continuity authorization, and only then proceeds.
+The authoritative recovery state is `.flowpilot/crew_ledger.json` plus compact
 role memory packets under `.flowpilot/crew_memory/`. Each role memory packet
 stores the role charter, authority boundary, frozen contract pointer, current
 route position, latest decisions, open obligations, blockers, evidence paths,
 and "do not redo" notes. On heartbeat or manual resume, FlowPilot may try to
-resume a stored agent id, but if that fails it must replace the role from the
-latest memory packet. A replacement role started only from a generic prompt is
-not recovered and cannot approve gates.
+resume a stored agent id, but if that fails it must either start a replacement
+live agent after authorization or replace the role from the latest memory
+packet after explicit fallback approval. A replacement role started only from a
+generic prompt is not recovered and cannot approve gates.
 
 Crew identity uses three separate fields. `role_key` is the stable authority
 and routing id. `display_name` is the user-facing chat/UI label. `agent_id` is
@@ -376,9 +406,11 @@ The real continuation, when available, should be a stable launcher. It tells
 FlowPilot to load `state.json`, the active `flow.json`,
 `.flowpilot/execution_frontier.json`, `.flowpilot/crew_ledger.json`,
 `.flowpilot/crew_memory/`, watchdog evidence, and latest heartbeat. It then
-rehydrates the fixed crew by resuming stored agent ids when possible or
-replacing unavailable roles from their memory packets, records the rehydration
-status, and asks the project manager for the next completion-oriented runway.
+rehydrates the fixed crew by resuming stored agent ids when possible. If live
+agents are unavailable, it records the block and asks before replacing roles
+from memory packets. After live startup or explicit fallback authorization is
+recorded, it records the rehydration status and asks the project manager for
+the next completion-oriented runway.
 Route mutations, next-node changes, PM runway changes, and current-mainline
 plan updates are persisted in files and then reflected in chat/plan output;
 ordinary route changes should not rewrite the heartbeat automation prompt.

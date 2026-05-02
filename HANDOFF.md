@@ -97,12 +97,23 @@ model-backed autopilot:
   position to project completion. The main executor no longer decides route
   advancement directly from the frontier, and it must replace the visible plan
   projection from each PM runway instead of working from a one-step gate.
-- The six-agent crew is now persistent as roles, not as guaranteed live
-  subagent processes. FlowPilot writes compact per-role memory packets under
+- The six-agent crew is persistent as roles, and six live background subagents
+  are the default formal startup target where the host/tool policy permits
+  them. FlowPilot writes compact per-role memory packets under
   `.flowpilot/crew_memory/`; heartbeat and manual resume load those packets,
-  try to resume stored agent ids when possible, replace unavailable roles from
-  memory when needed, and ask the project manager for a runway only after crew
-  memory rehydration is recorded.
+  try to resume stored agent ids when possible, and replace unavailable roles
+  from memory only after explicit user fallback approval. The project manager
+  is asked for a runway only after crew memory rehydration and the
+  live-subagent/fallback startup decision are recorded.
+- Public invocation text should explicitly say: use FlowPilot full protocol,
+  including permission to start the standard six background subagents where the
+  host and current tool policy permit them, heartbeat/manual-resume
+  continuation, and the startup hard gate. If live subagents are unavailable or
+  not yet authorized, FlowPilot pauses and asks. It continues with
+  single-agent six-role continuity only after explicit fallback approval; it
+  blocks when neither live agents nor user-authorized fallback are recorded,
+  when a required role cannot be recovered, or when a hard gate cannot be
+  satisfied.
 - Role authority is now an explicit protocol gate. Startup self-interrogation,
   product-function architecture synthesis, route advancement, heartbeat
   resume, repair strategy, route mutation, and completion require
