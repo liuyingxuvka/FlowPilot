@@ -1,0 +1,29 @@
+.DS_Store
+Thumbs.db
+
+# Local/private runtime state, if the implementation is added later.
+.flowpilot/
+.flowguard/
+kb/
+
+# Caches and generated output.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
+build/
+target/
+coverage/
+
+# Local environments and secrets.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.*
