@@ -1,0 +1,11 @@
+{
+  "conclusion": null,
+  "evidence": [],
+  "experiment_id": "experiment-001",
+  "method": "<bounded-method>",
+  "question": "<one-question-this-experiment-answers>",
+  "result": "pending",
+  "route_change_required": null,
+  "started_at": "<iso-8601-timestamp>",
+  "stop_condition": "<when-to-stop>"
+}

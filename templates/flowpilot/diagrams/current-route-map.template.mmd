@@ -1,0 +1,20 @@
+flowchart TD
+  route["<active-route-id>"]
+  node["<active-node-id>"]
+  gate["<current-gate-or-subnode>"]
+  next["<next-jump>"]
+  checks["<checks-before-next-jump>"]
+  fallback["<fallback-or-blocked-exit>"]
+
+  route --> node
+  node --> gate
+  gate --> checks
+  checks --> next
+  gate -. blocked .-> fallback
+
+  classDef active fill:#e6fbff,stroke:#00bcd4,stroke-width:2px,color:#0f172a;
+  classDef pending fill:#f8fafc,stroke:#cbd5e1,color:#334155;
+  classDef blocked fill:#fff1f2,stroke:#fb7185,color:#881337;
+  class node,gate active;
+  class next,checks pending;
+  class fallback blocked;

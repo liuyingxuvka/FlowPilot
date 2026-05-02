@@ -1,0 +1,133 @@
+{
+  "schema_version": "flowpilot-watchdog/v1",
+  "checked_at": "<iso-8601-timestamp>",
+  "root": "<project-root>",
+  "threshold_minutes": 10,
+  "ok": false,
+  "decision": "<healthy|busy_not_stale|post_busy_grace|stale_official_reset_required|stale_official_reset_invoked|stale_official_reset_failed|inactive_terminal_route|config_error|not_created_unsupported_host>",
+  "boundary": "The watchdog exists only when the host supports real continuation. In automated mode it can detect stale FlowPilot heartbeat evidence and require an official Codex app automation reset. It does not edit automation files directly, reset is not proof of recovery until a new heartbeat appears, and terminal shutdown is not closed until inactive lifecycle state is written back to local FlowPilot evidence. Reset decisions trust state.json, latest heartbeat evidence, and busy_lease.json only; execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported watchdog source. In manual-resume mode no watchdog/global-supervisor automation is created.",
+  "host_continuation": {
+    "probe_done": false,
+    "mode": "<automated|manual-resume|blocked|unknown>",
+    "host_supports_real_wakeups": null,
+    "manual_resume_recorded": false,
+    "automated_bundle_ready": false
+  },
+  "state": {
+    "path": ".flowpilot/state.json",
+    "status": "<running|paused|complete|blocked>",
+    "active_route": "<route-id>",
+    "active_node": "<node-id>",
+    "last_heartbeat": "<heartbeat-id>",
+    "next_action": "<next action>",
+    "route_version": 1,
+    "frontier_version": 1,
+    "plan_version": 1,
+    "manual_stop": false
+  },
+  "route": {
+    "path": ".flowpilot/routes/<route-id>/flow.json",
+    "loaded": false,
+    "heartbeat_automation_id": "<automation-id-or-null>"
+  },
+  "lifecycle": {
+    "paired_with_heartbeat": true,
+    "heartbeat_automation_id": "<heartbeat-automation-id-or-null>",
+    "watchdog_automation_id": "<watchdog-automation-id-or-task-name>",
+    "watchdog_automation_kind": "<windows_task_scheduler|codex_cron|other>",
+    "created_with_heartbeat": false,
+    "active": false,
+    "hidden_noninteractive": false,
+    "visible_window_risk": false,
+    "status": "<not_created|active|deleted_before_heartbeat_pause|paused_before_heartbeat_pause|unavailable>",
+    "stop_before_heartbeat": true,
+    "stopped_before_heartbeat": false,
+    "terminal_lifecycle_frontier_written": false,
+    "terminal_shutdown_order": "stop or delete watchdog automation first, write local lifecycle state, then stop or delete heartbeat automation"
+  },
+  "heartbeat": {
+    "heartbeat_id": "<heartbeat-id>",
+    "path": ".flowpilot/heartbeats/<heartbeat-id>.json",
+    "timestamp": "<iso-8601-timestamp-or-null>",
+    "timestamp_source": "<created_at|timestamp|current_time_iso|file_mtime|missing>",
+    "age_seconds": null,
+    "age_minutes": null,
+    "stale": false
+  },
+  "busy_lease": {
+    "path": ".flowpilot/busy_lease.json",
+    "loaded": false,
+    "active": false,
+    "valid": false,
+    "expired": false,
+    "recently_cleared": false,
+    "grace_active": false,
+    "route_matches": false,
+    "node_matches": false,
+    "reason": "<missing|active_valid|expired|route_mismatch|node_mismatch|recently_cleared_grace|post_busy_grace_expired|inactive_status>",
+    "lease_id": "<lease-id-or-null>",
+    "operation": "<operation-or-null>",
+    "route_id": "<route-id-or-null>",
+    "node_id": "<node-id-or-null>",
+    "cleared_at": "<iso-8601-timestamp-or-null>",
+    "expires_at": "<iso-8601-timestamp-or-null>",
+    "post_busy_grace_seconds": 600,
+    "post_busy_grace_remaining_seconds": null,
+    "remaining_seconds": null,
+    "source_of_truth": true
+  },
+  "source_status": {
+    "schema_version": "flowpilot-watchdog-source-status/v1",
+    "policy": "Watchdog reset decisions trust only project-local state.json, latest heartbeat evidence, and busy_lease.json. execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported source.",
+    "trusted_for_decision": [
+      "state_json",
+      "latest_heartbeat",
+      "busy_lease_json"
+    ],
+    "diagnostic_sources": [
+      "execution_frontier_json",
+      "lifecycle_latest_json",
+      "automation_metadata",
+      "global_record"
+    ],
+    "live_subagent_state_used": false,
+    "sources": {},
+    "drift_warnings": [],
+    "drift_warning_count": 0
+  },
+  "automation": {
+    "metadata": {
+      "automation_id": "<automation-id-or-null>",
+      "path": "<codex-home>/automations/<automation-id>/automation.toml",
+      "loaded": false,
+      "status": "<ACTIVE|PAUSED|missing>",
+      "rrule": "<rrule-or-null>",
+      "updated_at": null
+    },
+    "official_reset": {
+      "required": false,
+      "attempted": false,
+      "ok": null,
+      "method": "codex_app.automation_update status=PAUSED then status=ACTIVE",
+      "performed_by": "FlowPilot controller",
+      "automation_id": "<automation-id-or-null>",
+      "automation_record_path": "<automation.toml-or-null>",
+      "proof_required": "next_new_heartbeat"
+    }
+  },
+  "recovery": {
+    "kind": "official_automation_reset",
+    "required_action": "Use the Codex app automation interface to set the active heartbeat automation to PAUSED, then ACTIVE.",
+    "proof_required": "next_new_heartbeat"
+  },
+  "global_record": {
+    "enabled": true,
+    "written": false,
+    "global_record_dir": "<codex-home>/flowpilot/watchdog",
+    "project_key": "<stable-project-key>",
+    "latest_path": "<global-record-dir>/projects/<project-key>/latest.json",
+    "registry_path": "<global-record-dir>/registry.json",
+    "event_path": "<global-record-dir>/events/<timestamp>-<project-key>.json-or-null",
+    "events_jsonl": "<global-record-dir>/events/events.jsonl-or-null"
+  }
+}

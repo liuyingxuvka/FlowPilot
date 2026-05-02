@@ -1,0 +1,19 @@
+{
+  "artifacts": [
+    "<artifact-path>"
+  ],
+  "checkpoint_id": "checkpoint-0001",
+  "node": "node-001-start",
+  "rollback_allowed": true,
+  "route": "route-001",
+  "timestamp": "<iso-8601-timestamp>",
+  "final_route_wide_gate_ledger": {
+    "required_for_terminal_checkpoint": true,
+    "path": ".flowpilot/final_route_wide_gate_ledger.json",
+    "status": "<not_required_for_node|pending|passed|blocked>"
+  },
+  "verification_commands": [
+    "<verification-command>"
+  ],
+  "verified": false
+}

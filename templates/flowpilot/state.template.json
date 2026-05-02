@@ -1,0 +1,29 @@
+{
+  "active_route": "route-001",
+  "active_node": "node-001-start",
+  "created_at": "<iso-8601-timestamp>",
+  "route_version": 1,
+  "frontier_version": 1,
+  "plan_version": 1,
+  "execution_frontier": ".flowpilot/execution_frontier.json",
+  "last_checkpoint": null,
+  "last_heartbeat": null,
+  "continuation_mode": "<unknown|automated|manual-resume|blocked>",
+  "host_continuation_probe": {
+    "done": false,
+    "host_supports_real_wakeups": null,
+    "evidence_path": "<path-or-null>",
+    "unattended_recovery_claim_allowed": false
+  },
+  "mode": "full-auto",
+  "crew_ledger": ".flowpilot/crew_ledger.json",
+  "crew_memory_root": ".flowpilot/crew_memory",
+  "material_intake_packet": ".flowpilot/material_intake_packet.json",
+  "pm_material_understanding": ".flowpilot/pm_material_understanding.json",
+  "product_function_architecture": ".flowpilot/product_function_architecture.json",
+  "final_route_wide_gate_ledger": ".flowpilot/final_route_wide_gate_ledger.json",
+  "next_node": "<node-id-or-null>",
+  "next_action": "run self-interrogation, complete material intake handoff, complete PM product-function architecture, freeze contract, and verify route",
+  "project": "<project-name>",
+  "status": "initialized"
+}

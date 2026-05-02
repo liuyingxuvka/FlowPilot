@@ -1,0 +1,25 @@
+{
+  "allowed_modes": [
+    "full-auto",
+    "autonomous",
+    "guided",
+    "strict-gated"
+  ],
+  "fallback_mode": "full-auto",
+  "hard_gates": [
+    "acceptance_contract_change",
+    "release_publish_deploy",
+    "destructive_or_irreversible_action",
+    "major_technology_stack_change",
+    "heavy_or_global_dependency_install",
+    "secrets_or_private_account_data",
+    "lowering_completion_standards"
+  ],
+  "mode": "full-auto",
+  "mode_order": "loose_to_strict",
+  "mode_selection_policy": "Offer mode selection at startup from loosest to strictest: full-auto, autonomous, guided, strict-gated. If the host cannot pause or the user asks to continue without choosing, record full-auto as the fallback.",
+  "safe_automatic_install_policy": "Project-local, reversible, non-secret tools and libraries may be installed automatically when needed for the active node, current chunk, or declared checks. Startup records a dependency plan and installs only minimal controller/check tooling; future dependencies are deferred until needed.",
+  "selected_at": "<iso-8601-timestamp>",
+  "selected_by": "<agent-or-user>",
+  "selection_reason": "<why-this-mode-fits>"
+}

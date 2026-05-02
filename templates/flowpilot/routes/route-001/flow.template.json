@@ -1,0 +1,103 @@
+{
+  "canonical": true,
+  "nodes": [
+    {
+      "allowed_next": [
+        "node-002-parent-subtree-review",
+        "update_route",
+        "blocked"
+      ],
+      "id": "node-001-start",
+      "required_gates": [
+        "self_interrogation",
+        "material_intake_packet_written",
+        "material_reviewer_sufficiency_approved",
+        "pm_material_understanding_memo_written",
+        "pm_material_discovery_decision_recorded",
+        "product_function_architecture_pm_synthesized",
+        "product_function_architecture_product_officer_approved",
+        "product_function_architecture_reviewer_challenged",
+        "flowguard_modeling",
+        "child_skill_gate_manifest_extracted",
+        "child_skill_gate_approvers_assigned",
+        "child_skill_gate_manifest_pm_approved",
+        "candidate_route_tree_generated",
+        "root_route_model_checked",
+        "capability_evidence_synced"
+      ],
+      "status": "pending",
+      "summary": "Run startup interrogation, complete material intake handoff, complete PM-owned product-function architecture, freeze the contract, generate a candidate route tree, and freeze the checked root model as the first route version."
+    },
+    {
+      "allowed_next": [
+        "node-003-child-skill-conformance",
+        "node-004-implement",
+        "update_route",
+        "blocked"
+      ],
+      "id": "node-002-parent-subtree-review",
+      "required_gates": [
+        "parent_subtree_loaded",
+        "parent_subtree_map_emitted",
+        "parent_subtree_flowguard_model_checked",
+        "unfinished_current_node_recovery_checked"
+      ],
+      "status": "pending",
+      "summary": "Review the current parent node's child subtree before entering child work."
+    },
+    {
+      "allowed_next": [
+        "node-004-implement",
+        "update_route",
+        "blocked"
+      ],
+      "id": "node-003-child-skill-conformance",
+      "required_gates": [
+        "child_skill_gate_manifest_refined_for_node",
+        "child_skill_contract_loaded",
+        "child_skill_workflow_mapped",
+        "child_skill_gate_authority_records_written",
+        "child_skill_conformance_model_checked",
+        "child_skill_evidence_audited",
+        "child_skill_domain_quality_checked",
+        "child_skill_current_gates_role_approved",
+        "child_skill_iteration_loop_closed"
+      ],
+      "status": "conditional",
+      "summary": "Verify invoked child skills followed their own workflow and quality standard before the parent node resumes."
+    },
+    {
+      "allowed_next": [
+        "node-005-verify",
+        "update_route",
+        "blocked"
+      ],
+      "id": "node-004-implement",
+      "required_gates": [
+        "chunk_verification_defined"
+      ],
+      "status": "pending",
+      "summary": "Execute bounded implementation chunks with declared verification."
+    },
+    {
+      "allowed_next": [
+        "complete",
+        "update_route",
+        "blocked"
+      ],
+      "id": "node-005-verify",
+      "required_gates": [
+        "final_verification",
+        "final_route_wide_gate_ledger",
+        "final_route_wide_gate_ledger_reviewer_backward_check",
+        "final_route_wide_gate_ledger_pm_completion_approval",
+        "completion_report"
+      ],
+      "status": "pending",
+      "summary": "Run final verification, rebuild the PM-owned dynamic route-wide gate ledger from the current route, replay it backward with the human-like reviewer, then emit completion evidence only when unresolved count is zero."
+    }
+  ],
+  "route_id": "route-001",
+  "status": "active",
+  "supersedes": null
+}

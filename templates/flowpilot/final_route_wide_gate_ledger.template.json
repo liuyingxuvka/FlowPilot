@@ -1,0 +1,65 @@
+{
+  "schema_version": "flowpilot.final_route_wide_gate_ledger.v1",
+  "pm_owned": true,
+  "status": "not_started",
+  "built_from_route": "<route-id>",
+  "built_from_route_version": 0,
+  "built_at": "<iso-8601-timestamp-or-null>",
+  "source_paths": {
+    "state": ".flowpilot/state.json",
+    "execution_frontier": ".flowpilot/execution_frontier.json",
+    "active_flow": ".flowpilot/routes/<route-id>/flow.json",
+    "capabilities": ".flowpilot/capabilities.json"
+  },
+  "current_route_scanned": false,
+  "effective_nodes_resolved": false,
+  "gate_families": {
+    "child_skill_gates_collected": false,
+    "human_review_gates_collected": false,
+    "product_process_gates_collected": false,
+    "final_completion_gates_collected": false
+  },
+  "evidence_integrity": {
+    "stale_evidence_checked": false,
+    "superseded_nodes_explained": false,
+    "waivers_have_required_role": false,
+    "blocked_items_have_pm_repair_or_stop_decision": false
+  },
+  "counts": {
+    "effective_node_count": 0,
+    "gate_count": 0,
+    "approved_count": 0,
+    "waived_count": 0,
+    "superseded_count": 0,
+    "stale_count": 0,
+    "unresolved_count": null
+  },
+  "entries": [
+    {
+      "entry_id": "<route-node-or-gate-id>",
+      "route_version": 0,
+      "node_id": "<node-id>",
+      "gate_id": "<gate-id>",
+      "gate_family": "<child_skill|human_review|product_model|process_model|verification|lifecycle|completion>",
+      "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+      "status": "<approved|waived|blocked|superseded|stale|unresolved>",
+      "evidence_paths": [],
+      "superseded_by": "<node-or-gate-id-or-null>",
+      "superseded_reason": "<reason-or-null>",
+      "waiver_reason": "<reason-or-null>",
+      "unresolved_reason": "<reason-or-null>"
+    }
+  ],
+  "reviewer_backward_check": {
+    "required": true,
+    "status": "not_started",
+    "reviewer_role": "human_like_reviewer",
+    "evidence_path": "<path-or-null>"
+  },
+  "pm_completion_approval": {
+    "status": "not_started",
+    "requires_unresolved_count_zero": true,
+    "approval_evidence_path": "<path-or-null>"
+  },
+  "completion_allowed": false
+}

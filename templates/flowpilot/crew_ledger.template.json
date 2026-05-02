@@ -1,0 +1,184 @@
+{
+  "schema_version": "flowpilot.crew_ledger.v2",
+  "route_id": "route-001",
+  "crew_status": "active",
+  "memory_root": ".flowpilot/crew_memory",
+  "memory_policy": {
+    "role_memory_required": true,
+    "live_agent_continuity": "best_effort",
+    "role_continuity": "mandatory",
+    "raw_transcript_is_authoritative": false,
+    "refresh_after_meaningful_role_work": true,
+    "rehydrate_before_pm_runway": true
+  },
+  "identity_policy": {
+    "role_key_required": true,
+    "display_name_required": true,
+    "agent_id_required_when_available": true,
+    "primary_user_facing_label": "display_name",
+    "agent_id_visibility": "diagnostic_only",
+    "rule": "Use role_key for stable programmatic routing, display_name for UI/chat labels, and agent_id only for recovery/debug evidence."
+  },
+  "rehydration_status_path": ".flowpilot/crew_memory/rehydration-latest.json",
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "roles": [
+    {
+      "role_key": "project_manager",
+      "display_name": "Project Manager",
+      "role": "project_manager",
+      "agent_id": "<agent-id-or-recovery-placeholder>",
+      "status": "active",
+      "authority": "product-function architecture synthesis plus route, heartbeat-resume, repair, and completion decisions",
+      "may_approve": [
+        "startup_self_interrogation",
+        "product_function_architecture_synthesis",
+        "route_advance",
+        "heartbeat_resume_gate",
+        "repair_strategy",
+        "route_mutation",
+        "completion"
+      ],
+      "must_not_approve": [
+        "process_model_coverage",
+        "product_model_coverage",
+        "human_like_review"
+      ],
+      "memory_path": ".flowpilot/crew_memory/project_manager.json",
+      "memory_status": "<current|stale|missing>",
+      "last_memory_update": "<iso-8601-timestamp-or-null>",
+      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "latest_report_path": "<path-or-null>",
+      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before asking for the PM runway"
+    },
+    {
+      "role_key": "human_like_reviewer",
+      "display_name": "Human-Like Reviewer",
+      "role": "human_like_reviewer",
+      "agent_id": "<agent-id-or-recovery-placeholder>",
+      "status": "active",
+      "authority": "product usefulness challenge, neutral observation, pass/block inspection, and same-class recheck",
+      "may_approve": [
+        "product_function_usefulness_challenge",
+        "human_like_review",
+        "neutral_observation",
+        "same_class_recheck",
+        "parent_backward_review"
+      ],
+      "must_not_approve": [
+        "route_mutation",
+        "completion",
+        "process_model_coverage",
+        "product_model_coverage"
+      ],
+      "memory_path": ".flowpilot/crew_memory/human_like_reviewer.json",
+      "memory_status": "<current|stale|missing>",
+      "last_memory_update": "<iso-8601-timestamp-or-null>",
+      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "latest_report_path": "<path-or-null>",
+      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before reviewer gate"
+    },
+    {
+      "role_key": "process_flowguard_officer",
+      "display_name": "Process FlowGuard Officer",
+      "role": "process_flowguard_officer",
+      "agent_id": "<agent-id-or-recovery-placeholder>",
+      "status": "active",
+      "authority": "development-process FlowGuard models and checks",
+      "may_approve": [
+        "process_model_coverage"
+      ],
+      "must_not_approve": [
+        "product_model_coverage",
+        "route_mutation",
+        "completion",
+        "human_like_review"
+      ],
+      "memory_path": ".flowpilot/crew_memory/process_flowguard_officer.json",
+      "memory_status": "<current|stale|missing>",
+      "last_memory_update": "<iso-8601-timestamp-or-null>",
+      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "latest_report_path": "<path-or-null>",
+      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before process model gate"
+    },
+    {
+      "role_key": "product_flowguard_officer",
+      "display_name": "Product FlowGuard Officer",
+      "role": "product_flowguard_officer",
+      "agent_id": "<agent-id-or-recovery-placeholder>",
+      "status": "active",
+      "authority": "product-function architecture modelability plus FlowGuard models and checks",
+      "may_approve": [
+        "product_function_architecture_modelability",
+        "product_model_coverage"
+      ],
+      "must_not_approve": [
+        "process_model_coverage",
+        "route_mutation",
+        "completion",
+        "human_like_review"
+      ],
+      "memory_path": ".flowpilot/crew_memory/product_flowguard_officer.json",
+      "memory_status": "<current|stale|missing>",
+      "last_memory_update": "<iso-8601-timestamp-or-null>",
+      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "latest_report_path": "<path-or-null>",
+      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before product model gate"
+    },
+    {
+      "role_key": "worker_a",
+      "display_name": "Worker A",
+      "role": "worker_a",
+      "agent_id": "<agent-id-or-recovery-placeholder>",
+      "status": "idle",
+      "authority": "bounded sidecar work only",
+      "may_approve": [],
+      "must_not_approve": [
+        "startup_self_interrogation",
+        "process_model_coverage",
+        "product_model_coverage",
+        "human_like_review",
+        "route_mutation",
+        "route_advance",
+        "checkpoint",
+        "completion"
+      ],
+      "memory_path": ".flowpilot/crew_memory/worker_a.json",
+      "memory_status": "<current|stale|missing>",
+      "last_memory_update": "<iso-8601-timestamp-or-null>",
+      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "latest_report_path": "<path-or-null>",
+      "recovery_rule": "reuse when idle and recoverable; otherwise replace from role memory only for a bounded sidecar task"
+    },
+    {
+      "role_key": "worker_b",
+      "display_name": "Worker B",
+      "role": "worker_b",
+      "agent_id": "<agent-id-or-recovery-placeholder>",
+      "status": "idle",
+      "authority": "bounded sidecar work only",
+      "may_approve": [],
+      "must_not_approve": [
+        "startup_self_interrogation",
+        "process_model_coverage",
+        "product_model_coverage",
+        "human_like_review",
+        "route_mutation",
+        "route_advance",
+        "checkpoint",
+        "completion"
+      ],
+      "memory_path": ".flowpilot/crew_memory/worker_b.json",
+      "memory_status": "<current|stale|missing>",
+      "last_memory_update": "<iso-8601-timestamp-or-null>",
+      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "latest_report_path": "<path-or-null>",
+      "recovery_rule": "reuse when idle and recoverable; otherwise replace from role memory only for a bounded sidecar task"
+    }
+  ],
+  "terminal_archive": {
+    "archived": false,
+    "archived_at": null,
+    "archive_reason": null
+  }
+}

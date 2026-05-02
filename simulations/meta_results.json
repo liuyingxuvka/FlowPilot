@@ -1,0 +1,58 @@
+{
+  "graph": {
+    "edge_count": 916,
+    "invariant_failures": [],
+    "labels": [
+      "autopilot_started",
+      "blocked_after_experiment_budget",
+      "blocked_after_model_gap_budget",
+      "blocked_after_repeated_route_failures",
+      "blocked_by_high_risk_denial",
+      "blocked_unhandled_state",
+      "checkpoint_written",
+      "chunk_executed",
+      "chunk_verification_defined",
+      "chunk_verified",
+      "contract_frozen",
+      "experiment_found_new_path",
+      "final_report_emitted",
+      "high_risk_gate_approved",
+      "high_risk_gate_requested",
+      "implementation_failure_to_experiment",
+      "implementation_fixed_for_retry",
+      "markdown_summary_synced",
+      "mode_selected",
+      "route_created",
+      "route_model_checked",
+      "route_updated_after_model_gap",
+      "subagent_merged",
+      "subagent_returned",
+      "subagent_spawned",
+      "verification_found_impl_failure",
+      "verification_found_model_gap"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 792,
+    "terminal_counts": {
+      "blocked": 108,
+      "complete": 32
+    }
+  },
+  "loop": {
+    "edge_count": null,
+    "nonterminating_component_count": 0,
+    "ok": true,
+    "state_count": null,
+    "status": "",
+    "stuck_state_count": 0,
+    "unreachable_success": false
+  },
+  "progress": {
+    "edge_count": null,
+    "finding_count": 0,
+    "ok": true,
+    "state_count": null,
+    "status": ""
+  }
+}

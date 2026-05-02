@@ -1,0 +1,42 @@
+{
+  "allowed_exits": [
+    "node-002-parent-subtree-review",
+    "update_route",
+    "blocked"
+  ],
+  "expected_artifacts": [
+    ".flowpilot/material_intake_packet.json",
+    ".flowpilot/pm_material_understanding.json",
+    ".flowpilot/product_function_architecture.json",
+    ".flowpilot/contract.md",
+    ".flowpilot/capabilities.json",
+    ".flowpilot/routes/route-001/flow.json",
+    ".flowpilot/routes/route-001/flow.md",
+    ".flowpilot/task-models/<route-model>/results.json"
+  ],
+  "id": "node-001-start",
+  "intent": "Start FlowPilot, complete material intake handoff and PM-owned product-function architecture, freeze the acceptance contract from them, generate a candidate route tree, and freeze the checked root model before implementation.",
+  "owned_paths": [
+    ".flowpilot/"
+  ],
+  "recovery": "If the route fails model checks, update or replace the route before formal implementation.",
+  "required_gates": [
+    "self_interrogation",
+    "material_intake_packet_written",
+    "material_reviewer_sufficiency_approved",
+    "pm_material_understanding_memo_written",
+    "pm_material_discovery_decision_recorded",
+    "product_function_architecture_pm_synthesized",
+    "product_function_architecture_product_officer_approved",
+    "product_function_architecture_reviewer_challenged",
+    "flowguard_modeling",
+    "candidate_route_tree_generated",
+    "root_route_model_checked",
+    "capability_evidence_synced"
+  ],
+  "status": "pending",
+  "verification": [
+    "python -c \"import flowguard; print(flowguard.SCHEMA_VERSION)\"",
+    "<route-check-command>"
+  ]
+}

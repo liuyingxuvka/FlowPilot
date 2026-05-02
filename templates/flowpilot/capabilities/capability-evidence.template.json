@@ -1,0 +1,53 @@
+{
+  "capability_id": "<capability-id>",
+  "dependent_nodes": [
+    "<node-id>"
+  ],
+  "evidence_id": "<capability-id>-0001",
+  "inputs": [
+    "<input-summary>"
+  ],
+  "invoked_at": "<iso-8601-timestamp>",
+  "outputs": [
+    "<output-summary>"
+  ],
+  "reason": "<why-this-capability-was-required>",
+  "source_skill": "<skill-name>",
+  "child_skill_conformance": {
+    "skill_file_loaded": false,
+    "references_loaded_or_skipped_with_reason": [],
+    "pm_owned_gate_manifest": {
+      "initial_manifest_path": "<path-or-null>",
+      "route_design_extracted_before_modeling": false,
+      "current_node_refined_before_execution": false,
+      "required_approvers_assigned": false,
+      "reviewer_review_path": "<path-or-null>",
+      "process_officer_approval_path": "<path-or-null>",
+      "product_officer_approval_path": "<path-or-null>",
+      "pm_route_inclusion_approval_path": "<path-or-null>",
+      "main_executor_self_approval_allowed": false,
+      "all_current_gates_assigned_role_approved": false
+    },
+    "workflow_steps_mapped": [],
+    "hard_gates_mapped": [],
+    "completion_standard": "<mapped-completion-standard>",
+    "conformance_model_checked": false,
+    "step_evidence": [],
+    "evidence_matches_outputs": false,
+    "domain_quality_review": "pending",
+    "iteration_loop_closed": false,
+    "completion_standard_met": false
+  },
+  "final_route_wide_gate_ledger_contribution": {
+    "included_in_final_ledger": false,
+    "ledger_path": ".flowpilot/final_route_wide_gate_ledger.json",
+    "gate_entries": [],
+    "stale_after_route_version": null,
+    "superseded_by": "<node-or-gate-id-or-null>",
+    "unresolved_reason": "<reason-or-null>"
+  },
+  "verification": {
+    "command": "<verification-command-or-manual-check>",
+    "result": "pending"
+  }
+}
