@@ -1,22 +1,18 @@
-.DS_Store
-Thumbs.db
-
-# Local/private runtime state, if the implementation is added later.
+# Local FlowPilot/FlowGuard runtime state from this development workspace.
 .flowpilot/
 .flowguard/
+.flowpilot_global_supervisor_last.json
+
+# Private/local knowledge records.
 kb/
 
-# Caches and generated output.
+# Python caches and test caches.
 __pycache__/
 *.py[cod]
+*$py.class
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-node_modules/
-dist/
-build/
-target/
-coverage/
 
 # Local environments and secrets.
 .env
@@ -27,3 +23,17 @@ coverage/
 *.p12
 *.pfx
 secrets.*
+
+# Common build/dependency output.
+node_modules/
+dist/
+build/
+target/
+coverage/
+*.log
+
+# OS/editor noise.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

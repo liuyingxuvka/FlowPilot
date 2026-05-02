@@ -1,0 +1,49 @@
+{
+  "artifact_type": "flowpilot_pm_material_understanding",
+  "schema_version": 1,
+  "created_at": "<iso-8601-timestamp>",
+  "draft_owner": "project_manager",
+  "execution_owner": "project_manager",
+  "required_approver": "project_manager",
+  "approval_status": "draft",
+  "source_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
+  "user_intent_interpretation": "<PM interpretation of the task after reviewed materials>",
+  "source_claim_matrix": [
+    {
+      "claim": "<route-relevant assumption or fact>",
+      "supporting_material_ids": [
+        "<material-id>"
+      ],
+      "confidence": "<high|medium|low|unknown>",
+      "risk_if_wrong": "<route, product, or verification risk>"
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "<unknown>",
+      "route_impact": "<blocking|changes-route|can-defer|nonblocking>",
+      "proposed_resolution": "<research|ask-user|inspect-source|model|defer>"
+    }
+  ],
+  "material_complexity": "<simple|normal|messy/raw>",
+  "route_consequence": "<direct-route|formal-discovery-subtree|required-user-clarification|blocked>",
+  "discovery_subtree": {
+    "required": false,
+    "reason": "<why discovery is or is not required>",
+    "candidate_nodes": [
+      {
+        "id": "<node-id>",
+        "purpose": "<cleanup-analysis-modeling-research-validation-or-reconciliation>",
+        "required_evidence": [
+          "<evidence-path-or-check>"
+        ]
+      }
+    ]
+  },
+  "handoff_to_product_architecture": {
+    "ready": false,
+    "conditions": [
+      "<condition-or-blocker>"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "allowed_modes": [
+    "full-auto",
+    "autonomous",
+    "guided",
+    "strict-gated"
+  ],
+  "fallback_mode": null,
+  "hard_gates": [
+    "acceptance_contract_change",
+    "release_publish_deploy",
+    "destructive_or_irreversible_action",
+    "major_technology_stack_change",
+    "heavy_or_global_dependency_install",
+    "secrets_or_private_account_data",
+    "lowering_completion_standards"
+  ],
+  "mode": "full-auto",
+  "mode_order": "loose_to_strict",
+  "mode_selection_policy": "Ask the run-mode startup question from loosest to strictest: full-auto, autonomous, guided, strict-gated. Do not record a formal mode until the user explicitly answers, unless all three startup answers are supplied in one explicit invocation sentence.",
+  "safe_automatic_install_policy": "Project-local, reversible, non-secret tools and libraries may be installed automatically when needed for the active node, current chunk, or declared checks. Startup records a dependency plan and installs only minimal controller/check tooling; future dependencies are deferred until needed.",
+  "selected_at": "<iso-8601-timestamp>",
+  "selected_by": "user",
+  "selection_reason": "<why-this-mode-fits>"
+}

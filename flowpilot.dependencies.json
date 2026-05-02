@@ -1,0 +1,198 @@
+{
+  "schema_version": "flowpilot.dependencies.v1",
+  "package": {
+    "name": "flowpilot",
+    "repo_root_skill_path": "skills/flowpilot",
+    "default_install_name": "flowpilot",
+    "public_release_scope": "FlowPilot release tooling may write only this repository and the local Codex skills install directory. It must never commit, tag, push, package, upload, or release companion skills."
+  },
+  "install_policy": {
+    "codex_home_env": "CODEX_HOME",
+    "skills_subdir": "skills",
+    "overwrite_existing_by_default": false,
+    "install_missing_skills_by_default": false,
+    "companion_skill_publication": "manual_user_action_only"
+  },
+  "dependencies": [
+    {
+      "name": "flowpilot",
+      "type": "codex_skill",
+      "required": true,
+      "install_name": "flowpilot",
+      "repo_path": "skills/flowpilot",
+      "source": {
+        "kind": "copy_from_this_repository"
+      },
+      "install": {
+        "mode": "copy_from_repo",
+        "auto_install_missing": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: flowpilot"
+        }
+      ]
+    },
+    {
+      "name": "flowguard",
+      "type": "python_package",
+      "required": true,
+      "import_name": "flowguard",
+      "source": {
+        "kind": "python_environment"
+      },
+      "install": {
+        "mode": "manual_or_environment",
+        "auto_install_missing": false,
+        "notes": "FlowPilot requires the real FlowGuard package. Do not install a fake local substitute."
+      },
+      "checks": [
+        {
+          "kind": "python_import",
+          "module": "flowguard",
+          "attribute": "SCHEMA_VERSION"
+        }
+      ]
+    },
+    {
+      "name": "model-first-function-flow",
+      "type": "codex_skill",
+      "required": true,
+      "install_name": "model-first-function-flow",
+      "source": {
+        "kind": "github",
+        "repo": "liuyingxuvka/FlowGuard",
+        "ref": "main",
+        "path": ".agents/skills/model-first-function-flow",
+        "url": "https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow"
+      },
+      "install": {
+        "mode": "github_skill",
+        "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: model-first-function-flow"
+        }
+      ]
+    },
+    {
+      "name": "grill-me",
+      "type": "codex_skill",
+      "required": false,
+      "companion": true,
+      "install_name": "grill-me",
+      "source": {
+        "kind": "github",
+        "repo": "mattpocock/skills",
+        "ref": "main",
+        "path": "skills/productivity/grill-me",
+        "url": "https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me"
+      },
+      "install": {
+        "mode": "github_skill",
+        "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: grill-me"
+        }
+      ]
+    },
+    {
+      "name": "concept-led-ui-redesign",
+      "type": "codex_skill",
+      "required": false,
+      "companion": true,
+      "install_name": "concept-led-ui-redesign",
+      "source": {
+        "kind": "github",
+        "repo": "liuyingxuvka/concept-led-ui-redesign-skill",
+        "ref": "main",
+        "path": "concept-led-ui-redesign",
+        "url": "https://github.com/liuyingxuvka/concept-led-ui-redesign-skill/tree/main/concept-led-ui-redesign"
+      },
+      "install": {
+        "mode": "github_skill",
+        "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: concept-led-ui-redesign"
+        }
+      ]
+    },
+    {
+      "name": "frontend-design",
+      "type": "codex_skill",
+      "required": false,
+      "companion": true,
+      "install_name": "frontend-design",
+      "source": {
+        "kind": "github",
+        "repo": "anthropics/skills",
+        "ref": "main",
+        "path": "skills/frontend-design",
+        "url": "https://github.com/anthropics/skills/tree/main/skills/frontend-design"
+      },
+      "install": {
+        "mode": "github_skill",
+        "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: frontend-design"
+        }
+      ]
+    }
+  ],
+  "host_capabilities": [
+    {
+      "id": "raster_image_generation",
+      "description": "Generate or edit raster images for UI concepts, visual assets, icons, and screenshots when a FlowPilot route invokes visual gates.",
+      "required_when": "A route invokes concept image generation, image editing, icon generation, or visual asset generation.",
+      "codex_default_provider": {
+        "kind": "codex_skill",
+        "install_name": "imagegen",
+        "skill_path_candidates": [
+          ".system/imagegen",
+          "imagegen"
+        ],
+        "accepted_markers": [
+          "name: \"imagegen\"",
+          "name: imagegen"
+        ]
+      },
+      "other_host_contract": {
+        "provider_name_is_host_specific": true,
+        "requirement": "The installing agent may map this capability to any equivalent host-native image generation or image editing tool. If no provider exists, FlowPilot must record the visual gate as blocked or require an explicit waiver.",
+        "evidence": "Record the provider name, command/tool identity, and a short check result in the route capability evidence before using the visual gate."
+      },
+      "release_check": {
+        "missing_codex_provider_is_warning": true
+      }
+    }
+  ]
+}

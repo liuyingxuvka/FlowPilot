@@ -1,0 +1,70 @@
+{
+  "artifact_type": "flowpilot_material_intake_packet",
+  "schema_version": 1,
+  "created_at": "<iso-8601-timestamp>",
+  "draft_owner": "main_executor",
+  "execution_owner": "main_executor",
+  "required_approver": "human_like_reviewer",
+  "approval_status": "draft",
+  "approval_evidence_path": "<path-or-null>",
+  "user_intent": "<user request and decision this packet must support>",
+  "material_inventory": [
+    {
+      "id": "<material-id>",
+      "source": "<path-url-or-user-provided-reference>",
+      "format": "<filetype-or-medium>",
+      "scope": "<size-range-or-coverage>",
+      "status": "<unread|sampled|read|generated|stale|missing>",
+      "why_it_matters": "<one sentence>"
+    }
+  ],
+  "source_summaries": [
+    {
+      "material_id": "<material-id>",
+      "appears_to_contain": "<specific summary>",
+      "used_for": "<what route or product decision it can support>",
+      "does_not_prove": "<limits and non-claims>"
+    }
+  ],
+  "source_quality": [
+    {
+      "material_id": "<material-id>",
+      "authority": "<primary|secondary|context|lead|unknown>",
+      "freshness": "<current|possibly_stale|historical|unknown>",
+      "completeness": "<complete|partial|sampled|unknown>",
+      "contradiction_risk": "<none|low|medium|high>",
+      "privacy_or_safety_notes": "<notes-or-none>"
+    }
+  ],
+  "coverage_map": [
+    {
+      "intent_area": "<goal-or-question>",
+      "supporting_material_ids": [
+        "<material-id>"
+      ],
+      "coverage": "<supported|unsupported|ambiguous|conflicting>",
+      "notes": "<brief evidence note>"
+    }
+  ],
+  "unread_or_deferred_materials": [
+    {
+      "source": "<path-url-or-reference>",
+      "reason": "<why not fully inspected>",
+      "risk_if_skipped": "<risk>"
+    }
+  ],
+  "reviewer_sufficiency_check": {
+    "reviewer_fact_check_required": true,
+    "direct_material_sources_checked": [],
+    "direct_material_samples_checked": [],
+    "packet_matches_checked_sources": "<yes|no|partial>",
+    "worker_report_only": false,
+    "obvious_sources_missing": "<yes|no|unknown>",
+    "large_sources_scoped_honestly": "<yes|no|not_applicable>",
+    "summaries_specific": "<yes|no>",
+    "contradictions_visible": "<yes|no|not_applicable>",
+    "uncertainty_visible": "<yes|no>",
+    "pm_ready": false,
+    "blockers": []
+  }
+}

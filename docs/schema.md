@@ -1,0 +1,533 @@
+# `.flowpilot/` Schema Notes
+
+## Canonical Files
+
+Machine-readable files are the source of truth. Each formal FlowPilot
+invocation creates a current run under `.flowpilot/runs/<run-id>/`. Top-level
+`.flowpilot/current.json` and `.flowpilot/index.json` are pointer/catalog files
+only; the following files live inside the current run unless explicitly marked
+user-level:
+
+- `.flowpilot/current.json`
+- `.flowpilot/index.json`
+- `runs/<run-id>/run.json`
+- `runs/<run-id>/state.json`
+- `runs/<run-id>/execution_frontier.json`
+- `mode.json`
+- `crew_ledger.json`
+- `crew_memory/*.json`
+- `product_function_architecture.json`
+- `final_route_wide_gate_ledger.json`
+- `contract.md`
+- `capabilities.json`
+- `routes/*/flow.json`
+- `routes/*/nodes/*/node.json`
+- `heartbeats/*.json`
+- `watchdog/latest.json`
+- `watchdog/events/*.json`
+- `watchdog/events.jsonl`
+- `lifecycle/latest.json`
+- `lifecycle/events.jsonl`
+- `startup_review/latest.json`
+- `startup_pm_gate/latest.json`
+- user-level `$CODEX_HOME/flowpilot/watchdog/registry.json`
+- user-level `$CODEX_HOME/flowpilot/watchdog/projects/*/latest.json`
+- user-level `$CODEX_HOME/flowpilot/watchdog/supervisor/latest.json`
+- `checkpoints/*.json`
+- `experiments/*/experiment.json`
+
+Markdown files are English summaries for review.
+
+## State
+
+`runs/<run-id>/state.json` records the current run pointer:
+
+- active route;
+- active node;
+- active route version;
+- execution frontier path and version;
+- visible Codex plan projection version;
+- run mode;
+- product-function architecture path;
+- final route-wide gate ledger path;
+- status;
+- last heartbeat;
+- last checkpoint;
+- next node;
+- next action;
+- startup activation hard-gate status.
+
+It should not store the whole history.
+
+`startup_activation` is the route-start transaction record. A formal route
+cannot enter child-skill execution, image generation, implementation, or route
+chunks until this block and the matching frontier block show:
+
+- `hard_gate_required: true`;
+- `startup_questions` records explicit user answers for run mode,
+  background-agent permission, and scheduled-continuation permission;
+- `startup_questions.dialog_stopped_for_user_answers: true`;
+- `startup_questions.banner_emitted_after_answers: true`;
+- `.flowpilot/current.json` points at the same run and `.flowpilot/index.json`
+  catalogs it;
+- canonical route files, current-run `state.json`, and
+  `execution_frontier.json` are
+  written for the same active nonterminal route;
+- legacy top-level control state is absent, legacy-only, or quarantined and is
+  not used as the current run state;
+- continuing prior work has a current-run prior-work import packet;
+- `crew_ledger_current: true`;
+- `role_memory_packets_current` is at least 6;
+- `live_subagent_startup` records either six live background agents
+  started/resumed after a user decision or explicit user authorization for
+  single-agent six-role continuity;
+- `continuation_ready: true`, either as an automated heartbeat/watchdog/global
+  bundle or explicit `manual-resume` no-automation evidence;
+- `startup_preflight_review` records the human-like reviewer's factual startup
+  audit, including user authorization versus actual state, route/state/frontier
+  consistency, old-route or old-asset cleanup when requested, real Codex
+  automation records, Windows scheduled tasks, global watchdog registry,
+  latest watchdog evidence, heartbeat/watchdog/global-supervisor evidence,
+  background-agent role evidence, and shadow or residual route state;
+- `pm_start_gate` records the project manager's decision from the current
+  reviewer report. The reviewer cannot open this gate. If the report has
+  blockers, PM sends remediation back to workers and requires a recheck;
+- `work_beyond_startup_allowed: true`;
+- `shadow_route_detected: false`.
+
+`startup_activation.startup_questions` is the pre-banner gate:
+
+- `required: true`;
+- `status`: `pending`, `answered`, or `blocked`;
+- `asked_before_banner: true`;
+- `dialog_stopped_for_user_answers: true` records that the assistant response
+  ended immediately after asking the three questions and no startup work ran
+  until the user's later reply;
+- `explicit_user_answer_recorded: true` before the PM can open startup;
+- `answer_source`: `user_reply` or `user_reply_after_prompt`; values such as
+  `agent_inferred`, `default`, `prior_route`, or `single_message_invocation`
+  are invalid;
+- `answers.run_mode.answer`: `full-auto`, `autonomous`, `guided`, or
+  `strict-gated`;
+- `answers.background_agents.answer`: `allow` for six live background agents
+  or `single-agent` for single-agent six-role continuity;
+- `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or
+  `manual` for manual resume;
+- `answer_evidence_path`, `answered_at`, and
+  `banner_emitted_after_answers: true`.
+
+If any answer is absent, ambiguous, or `pause`, startup remains
+`startup_pending_user_answers` and no banner, route work, child skill,
+imagegen, implementation, fallback execution, subagent startup, heartbeat probe,
+heartbeat job, or manual-resume claim may proceed. If the questions were asked
+but the assistant did not stop and wait for the user's reply, the answer
+evidence is invalid and the PM must not open startup.
+
+`startup_activation.startup_preflight_review` is written by the human-like
+reviewer after direct factual checks. It is not an approval object and no
+runtime startup-check script writes it. It must include:
+
+- `required: true`;
+- `reviewer_role: human_like_reviewer`;
+- `reviewer_decision_authority: report_only_no_start_approval`;
+- `report_path`;
+- `report_status`: `pending`, `ready_for_pm`, or
+  `requires_worker_remediation`;
+- `blocking_findings`;
+- scope flags for user authorization, route consistency, cleanup boundary,
+  continuation evidence, real Codex automation records, Windows scheduled
+  tasks, global watchdog registry, watchdog latest evidence, background-agent
+  roles, user background-agent decision versus actual subagent state, live
+  subagent count or explicit single-agent authorization, and shadow/residual
+  state;
+- required facts for route heartbeat interval 1 minute, route heartbeat RRULE
+  `FREQ=MINUTELY;INTERVAL=1`, watchdog kind `windows_task_scheduler`, and
+  global supervisor cadence 30 minutes;
+- if `answers.background_agents.answer` is `allow`, six live role-bearing
+  subagents must be active or resumed after the user decision;
+- if `answers.background_agents.answer` is `single-agent`, explicit
+  single-agent role-continuity authorization must exist and the route must not
+  claim six live subagents.
+
+`startup_activation.pm_start_gate` is written by the project manager after
+reading the reviewer report. It must include:
+
+- `required: true`;
+- `decision_owner: project_manager`;
+- `decision`: `pending`, `open`, `return_to_worker`, or `blocked`;
+- `based_on_review_report_path`;
+- `decision_path`;
+- `worker_remediation_required`;
+- `opened_at` only when the current clean reviewer report supports opening.
+
+`work_beyond_startup_allowed` can become true only after a clean reviewer
+report and a PM-owned open decision. Worker remediation invalidates the prior
+review report and must be rechecked before PM opens the gate.
+
+A route-local file, generated concept, screenshot, or implementation artifact
+without matching canonical state/frontier/crew/continuation evidence is a
+shadow route. Shadow routes are invalid startup evidence and must be
+quarantined or superseded before work continues.
+
+`startup_activation.live_subagent_startup` records this decision:
+
+- `required_by_default: true`;
+- `decision`: `live_agents_started`, `live_agents_resumed`,
+  `single_agent_role_continuity_authorized`, or `blocked`;
+- `user_decision_recorded: true` before the PM can open startup;
+- `user_authorized_live_start: true`, `live_start_attempted: true`, and
+  `live_agents_active >= 6` for the live-agent path;
+- `single_agent_role_continuity_authorized: true` for the fallback path;
+- `blocker` and `evidence_path` for the prompt, failed attempt, or fallback
+  decision evidence.
+
+## Crew Ledger
+
+`crew_ledger.json` records the persistent six-agent crew for a formal
+FlowPilot route:
+
+- project manager;
+- human-like reviewer;
+- process FlowGuard officer;
+- product FlowGuard officer;
+- worker A;
+- worker B.
+
+For each role, the ledger records the role name, agent id when available,
+status, authority boundary, latest report path, role memory path, memory
+freshness, recovery or replacement rule, and terminal archive state. It is
+loaded before formal route work and before heartbeat recovery.
+
+Role memory packets under `crew_memory/*.json` are the durable continuity
+state for the crew. Each packet records:
+
+- role and nickname;
+- agent id when available;
+- authority boundary and forbidden approvals;
+- compact role charter summary;
+- frozen contract and current route position;
+- latest report path;
+- latest decisions, open obligations, open questions, blockers, and
+  do-not-redo notes;
+- relevant evidence paths;
+- latest rehydration result;
+- update timestamp.
+
+Live subagent context is not the source of truth, but six live background
+agents are the default startup target. Heartbeat or manual resume may try to
+resume a stored agent id. If live agents are unavailable, FlowPilot records the
+block and asks for a user decision before falling back to replacement from the
+latest role memory packet. Raw transcripts are optional evidence only; a
+compact structured memory packet is required before a replacement role can
+approve gates. Heartbeat recovery loads the ledger and memory packets, records
+which roles were resumed, replaced, or blocked, and only then asks the project
+manager for a completion-oriented runway from the current route position to
+project completion.
+
+Valid current role statuses may represent live or memory-seeded continuity,
+including `active`, `idle`, `ready`, `running`, `restored`, `recovered`,
+`replaced_from_memory`, `memory_recovered`, `memory_seeded`, or
+`live_unavailable_memory_seeded`. `archived`, `paused`, `blocked`, and other
+terminal statuses cannot satisfy startup activation. FlowPilot must distinguish
+between "the role is recovered and authorized" and "a live subagent process is
+currently running"; when the latter is unavailable, the fallback is valid only
+after explicit user authorization for single-agent role continuity.
+
+## Material Intake Packet
+
+`material_intake_packet.json` is the main-executor material inventory and
+source-quality packet. The reviewer sufficiency block must show direct source
+inspection, not report-only acceptance:
+
+- `reviewer_fact_check_required: true`;
+- `direct_material_sources_checked` and `direct_material_samples_checked`;
+- `packet_matches_checked_sources`: `yes`, `no`, or `partial`;
+- `worker_report_only: false`.
+
+Reviewer approval is invalid when the packet only summarizes worker claims
+without direct material-source checks.
+
+## Product Function Architecture
+
+`product_function_architecture.json` is the PM-owned pre-contract product
+design package. It is written after startup self-interrogation and six-agent
+crew recovery, and before acceptance contract freeze, route generation,
+capability routing, or implementation.
+
+It records:
+
+- source inputs from startup self-interrogation and known product context;
+- user-task map;
+- product capability map;
+- feature decisions marked `must`, `should`, `optional`, or `reject`;
+- display rationale for every visible label, control, status, card, alert,
+  empty state, and persistent text;
+- missing high-value feature review;
+- negative scope and rejected displays;
+- functional acceptance matrix with inputs, outputs, states, permissions,
+  failure cases, checks, and evidence paths;
+- project-manager synthesis evidence;
+- product FlowGuard officer modelability approval or block;
+- human-like reviewer usefulness challenge result, including direct checks
+  against the user request, inspected material sources, and expected workflow
+  reality. `human_like_reviewer_worker_report_only` must be false.
+
+The acceptance contract freezes from this artifact. Later product-function
+models check and refine coverage, but they do not substitute for the
+pre-contract PM architecture gate.
+
+## Execution Frontier
+
+`execution_frontier.json` is the source of truth for the next jump and current
+mainline plan projection. Heartbeat automations load it instead of embedding
+route-specific next steps in the automation prompt.
+
+The frontier records:
+
+- schema version;
+- active route and route version;
+- frontier version, which must match the active route version before work;
+- active node;
+- current subnode or current gate when the active node is unfinished;
+- current mainline node list;
+- next node and fallback node;
+- current chunk and next chunk;
+- user flow diagram metadata: enabled display mode, render policy, highlighted
+  current stage, source route/frontier paths, generated Mermaid path, rendered
+  route/frontier versions, and staleness after route mutation;
+- debug FlowGuard Mermaid metadata, which defaults to disabled and on-request
+  only;
+- host continuation decision: automated, manual-resume, blocked, or unknown;
+- latest PM completion runway, including current gate, downstream steps,
+  hard-stop conditions, checkpoint cadence, plan replacement status, and any
+  PM stop signal;
+- PM-owned child-skill gate manifest status: route-design discovery,
+  loaded child-skill files, initial manifest path, current-node refined
+  manifest path, required approver assignments, reviewer/officer/PM approval
+  evidence, and whether all current child-skill gates have assigned-role
+  approval;
+- PM-owned final route-wide gate ledger status: ledger path, built route
+  version, current-route scan, effective-node resolution, child-skill gate
+  collection, human-review gate collection, product/process model gate
+  collection, stale-evidence check, superseded-node explanation, unresolved
+  count, reviewer backward check path, PM ledger approval path, and whether
+  completion is allowed;
+- whether the current node is unfinished;
+- the concrete `current_subnode` or `next_gate` that the next continuation turn must
+  execute while the node is unfinished;
+- current-node completion status, required evidence, evidence paths, and
+  `advance_allowed`;
+- checks required before the next jump;
+- visible Codex plan projection for the current mainline;
+- crew ledger path, role memory root, rehydration status, restored/replaced
+  role lists, and latest project-manager decision, including the PM repair
+  strategy interrogation evidence path when a review failure mutates the route;
+- route mutation status;
+- stable heartbeat launcher metadata when automated continuation is supported;
+- paired watchdog lifecycle metadata when automated continuation is supported,
+  or manual-resume no-automation evidence when unsupported;
+- controlled-stop and completion notice metadata: whether the current route is
+  complete, whether a resume notice must be shown on controlled nonterminal
+  stop, whether heartbeat wakeup can be waited for, and the exact manual resume
+  prompt;
+- startup activation guard metadata matching `state.json`;
+- update timestamp.
+
+If the route structure changes, FlowPilot writes a new route version, reruns
+FlowGuard checks, rewrites the execution frontier, and syncs the visible Codex
+plan from the latest PM completion runway. When the host has a native visible
+plan/task-list tool, such as Codex `update_plan`, the sync must call that tool
+and record the method, timestamp, route version, PM runway id, item count, and
+completion-tail coverage. It does not rewrite the heartbeat automation prompt
+unless the host continuation itself needs repair.
+
+`next_node` is not executable while `unfinished_current_node` is true or
+`current_node_completion.advance_allowed` is false. In that state, the next
+continuation turn, whether automated heartbeat or manual resume, resumes
+`active_node`, obtains a PM completion runway, replaces the visible plan
+projection from that runway, selects the persisted `current_subnode` or
+`next_gate`, and must execute at least that gate when it is executable before
+continuing along the runway. A continuation record that only says "continue to
+next gate" without an executed gate or blocker is invalid no-progress evidence.
+
+On any controlled stop before terminal completion, the frontier or heartbeat
+record stores a `controlled_stop_notice` packet. Automated mode may set
+`can_wait_for_heartbeat` true and include both heartbeat and manual resume
+instructions. `manual-resume` mode sets `can_wait_for_heartbeat` false and
+instructs the user to type `continue FlowPilot`. Terminal completion stores a
+completion notice instead of a resume prompt.
+
+The execution frontier stores the native plan sync status separately from the
+PM runway evidence. `synced_to_visible_plan` requires either native plan tool
+evidence when available or an explicit no-native-tool fallback. It also records
+whether the projection includes downstream runway depth; a current-gate-only
+projection is invalid for formal continuation.
+
+Child-skill gate manifests live in the frontier because they determine the
+next legal gate. The initial manifest is PM-owned route-design evidence; the
+current-node manifest is a contextual refinement. Each gate record names its
+source skill, source step, gate type, evidence required, `draft_owner`,
+`execution_owner`, `required_approver`, `forbidden_approvers`,
+`approval_status`, and `approval_evidence_path`. Parent resume is invalid
+until every current child-skill gate is approved by its assigned role or
+blocked/waived with evidence from the responsible role.
+
+Before any child-skill, imagegen, implementation, or formal route chunk starts,
+the human-like reviewer personally checks `.flowpilot/current.json`,
+`.flowpilot/index.json`, current-run `state.json`, `execution_frontier.json`,
+`routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory packets,
+continuation evidence, Codex automation records, Windows scheduled tasks,
+global watchdog registry, latest watchdog evidence, requested cleanup evidence,
+and prior-work import boundary when continuing. The reviewer then writes
+`startup_review/latest.json` inside the current run as a factual report.
+
+The PM reads the current factual report. If it has blockers, PM returns the
+work to workers and requires a new review after remediation. If it is clean,
+PM writes `startup_pm_gate/latest.json` inside the current run and updates state plus frontier so
+downstream work can check `work_beyond_startup_allowed`.
+
+## Final Route-Wide Gate Ledger
+
+`final_route_wide_gate_ledger.json` is the PM-owned terminal closeout ledger.
+It is rebuilt from current `.flowpilot/` state before final completion, after
+route mutations, repairs, standard raises, and child-skill loop closures have
+settled. It is not a static checklist copied from the initial route.
+
+The ledger records:
+
+- active route id and route version;
+- source paths used to build the ledger;
+- current-route scan and effective-node resolution status;
+- child-skill, human-review, product-model, process-model, verification,
+  lifecycle, and completion gate entries;
+- generated-resource lineage for concept images, visual assets, screenshots,
+  route diagrams, model reports, and other generated artifacts;
+- required approver, approval status, evidence paths, waiver reasons, blocked
+  reasons, superseded-by links, and unresolved reasons for each entry;
+- stale evidence count, generated-resource count, unresolved-resource count,
+  and unresolved count;
+- human-like reviewer backward-check evidence path;
+- PM ledger approval evidence path;
+- `completion_allowed`.
+
+Terminal completion requires `unresolved_count` to be zero, reviewer backward
+check to pass, and PM ledger approval to be recorded. If route mutation occurs
+after the ledger is built, the ledger is stale and must be rebuilt.
+
+## Inspection Evidence
+
+Human-like inspection evidence includes a neutral observation before the
+pass/fail decision. The observation records what the artifact, screenshot,
+output, or exercised feature actually appears to be, including visible content,
+window or desktop artifacts, responses to operations, and any required behavior
+that was not observable.
+
+For generated UI concept targets, the observation also records whether the
+candidate appears to be an independent concept, an existing screenshot, an
+existing-image variant, a desktop/window capture, old route UI evidence, or
+prior failed evidence with cosmetic changes. The later authenticity decision
+must cite this observation.
+
+## Watchdog
+
+`watchdog/latest.json` records the latest external stale-heartbeat check. Event
+records under `watchdog/events/` and `watchdog/events.jsonl` preserve notable
+stale checks and official automation reset results.
+
+The watchdog schema records:
+
+- checked time;
+- stale threshold;
+- active route, node, and last heartbeat;
+- lifecycle pairing: heartbeat automation id, watchdog automation id or task
+  name, watchdog automation kind, whether it was created with the heartbeat,
+  active state, hidden/noninteractive execution state, visible window risk,
+  stopped-before-heartbeat state, terminal frontier writeback state, and the
+  required terminal shutdown order;
+- heartbeat timestamp, source, and age;
+- host automation metadata when available;
+- whether the official Codex app reset was required, attempted, accepted, or
+  failed;
+- the decision, such as `healthy`, `stale_official_reset_required`,
+  `stale_official_reset_invoked`, `stale_official_reset_failed`,
+  `inactive_terminal_route`, or `config_error`.
+
+`stale_official_reset_invoked` is not a successful recovery by itself. It means
+the watchdog detected the gap and FlowPilot invoked the official automation
+reset. The proof is a later heartbeat with a newer timestamp.
+
+The local watchdog record also contains `global_record`, unless global
+recording is explicitly disabled for a test. Global records are stored under
+`$FLOWPILOT_GLOBAL_RECORD_DIR` when set, otherwise under
+`$CODEX_HOME/flowpilot/watchdog`. The global schema contains:
+
+- `registry.json`: project key, project root, latest local watchdog path,
+  latest global watchdog path, route/node, last decision, heartbeat automation
+  id, manual-stop flag, and registration-active flag;
+- `projects/<project-key>/latest.json`: compact copy of the latest local
+  watchdog decision and project metadata;
+- `events/events.jsonl` and event JSON files: notable global watchdog poll
+  events;
+- `supervisor/latest.json`: singleton supervisor processing result, reset
+  requirements, and local writeback status.
+
+The global registry is an index, not the authority. Before recording or
+performing a reset requirement, the singleton Codex global automation must
+reread project-local `.flowpilot/current.json`,
+`.flowpilot/runs/<run-id>/state.json`, and
+`.flowpilot/runs/<run-id>/watchdog/latest.json`. Repository scripts may scan and summarize
+the records, but the official reset-capable supervisor must run inside Codex so
+it can use the Codex app automation interface.
+
+For routes with real continuation, terminal closure must update lifecycle
+evidence so the watchdog is stopped or deleted before the heartbeat automation
+is stopped, and so the inactive lifecycle snapshot is written back to
+current-run `state.json`, `execution_frontier.json`, and watchdog evidence.
+
+## Lifecycle
+
+`lifecycle/latest.json` is the unified inventory snapshot for pause, restart,
+and terminal cleanup. It records the status seen across:
+
+- Codex app automation records for FlowPilot heartbeat and global supervisor
+  automations;
+- user-level global watchdog registry and supervisor records;
+- Windows scheduled tasks whose names or actions identify FlowPilot;
+- `.flowpilot/current.json`;
+- `.flowpilot/runs/<run-id>/state.json`;
+- `.flowpilot/runs/<run-id>/execution_frontier.json`;
+- `.flowpilot/runs/<run-id>/watchdog/latest.json`.
+
+Lifecycle closure is valid only when the snapshot records either no required
+actions or explicit waived actions with reasons. Disabled Windows scheduled
+tasks still count as residual lifecycle objects until unregistered or waived.
+For restart, stale disabled tasks must be unregistered/recreated or explicitly
+adopted into the current route before the route is considered protected.
+
+The lifecycle helper does not call Codex automation APIs. It records required
+actions so the controller can use the official Codex app automation interface.
+
+## Route
+
+`flow.json` records:
+
+- route id;
+- status;
+- superseded route if any;
+- nodes;
+- allowed transitions;
+- required gates;
+- rollback targets;
+- invariants.
+
+## Capability Evidence
+
+Capability evidence should name:
+
+- capability id;
+- source skill;
+- reason it was invoked;
+- inputs;
+- outputs;
+- verification status;
+- dependent route nodes.

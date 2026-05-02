@@ -1,0 +1,223 @@
+{
+  "canonical": true,
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
+  "capabilities": [
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/self_interrogation-0001.json",
+      "id": "self_interrogation",
+      "required": true,
+      "source_skill": "grill-me",
+      "evidence_required": true,
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/flowguard_modeling-0001.json",
+      "id": "flowguard_modeling",
+      "required": true,
+      "source_skill": "model-first-function-flow",
+      "evidence_required": true,
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/material_intake_packet.json",
+      "id": "material_intake_handoff",
+      "required": "before PM product-function architecture, contract freeze, route generation, or capability routing",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "material_inventory",
+        "source_summaries",
+        "source_quality_classification",
+        "coverage_map",
+        "unread_or_deferred_materials",
+        "human_like_reviewer_sufficiency_approval",
+        "pm_material_understanding_path",
+        "source_claim_matrix",
+        "material_complexity_classification",
+        "discovery_cleanup_modeling_validation_decision"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/product_function_architecture.json",
+      "id": "product_function_architecture",
+      "required": "before contract freeze for every formal FlowPilot route",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "pm_owned_synthesis",
+        "user_task_map",
+        "product_capability_map",
+        "feature_decisions_must_should_optional_reject",
+        "display_rationale_for_all_visible_elements",
+        "missing_high_value_feature_review",
+        "negative_scope_and_rejected_displays",
+        "functional_acceptance_matrix",
+        "product_flowguard_officer_modelability_approval",
+        "human_like_reviewer_usefulness_challenge"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/six-agent-crew-when-formal.json",
+      "id": "six_agent_crew",
+      "required": "for every formal FlowPilot route",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "crew_policy_written",
+        "crew_ledger_path",
+        "role_memory_root",
+        "role_memory_packets_for_all_six_roles",
+        "project_manager_agent",
+        "human_like_reviewer_agent",
+        "process_flowguard_officer_agent",
+        "product_flowguard_officer_agent",
+        "worker_a_agent",
+        "worker_b_agent",
+        "current_task_fresh_agent_ids_when_live_background_agents_authorized",
+        "historical_agent_ids_compared_and_excluded",
+        "project_manager_decision_evidence",
+        "heartbeat_recovery_loaded_role_memory",
+        "heartbeat_recovery_resumed_or_replaced_each_role",
+        "replacement_roles_seeded_from_memory",
+        "role_memory_refreshed_after_meaningful_role_work",
+        "terminal_crew_and_memory_archive"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/pm-completion-runway-when-formal.json",
+      "id": "pm_completion_runway",
+      "required": "for every formal heartbeat resume or PM route-position decision",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "pm_runway_decision_path",
+        "current_gate",
+        "downstream_steps_to_completion",
+        "hard_stop_conditions",
+        "checkpoint_cadence",
+        "visible_plan_replaced_from_runway",
+        "native_plan_tool_called_when_available",
+        "plan_projection_contains_downstream_runway",
+        "pm_stop_signal_when_applicable"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/final_route_wide_gate_ledger.json",
+      "id": "final_route_wide_gate_ledger",
+      "required": "before any formal FlowPilot route can emit a final report or PM completion decision",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "pm_owned_dynamic_rebuild_from_current_route",
+        "current_route_version_scanned",
+        "effective_nodes_resolved_after_mutations",
+        "child_skill_gates_collected",
+        "human_review_gates_collected",
+        "product_and_process_model_gates_collected",
+        "stale_evidence_checked",
+        "superseded_nodes_explained",
+        "unresolved_count_zero",
+        "human_like_reviewer_backward_check",
+        "pm_completion_approval_after_clean_ledger"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/host-continuation-capability-when-formal.json",
+      "id": "host_continuation_capability",
+      "required": "for every formal FlowPilot route before route execution",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "host_capability_probe_result",
+        "automated_or_manual_resume_mode",
+        "if_automated_then_heartbeat_watchdog_and_global_supervisor_ready",
+        "if_manual_resume_then_no_heartbeat_watchdog_or_global_supervisor_created",
+        "unattended_recovery_claim_allowed_flag",
+        "fallback_or_blocker_reason_when_setup_fails"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/child_skill_fidelity-when-needed.json",
+      "id": "child_skill_fidelity",
+      "required": "when any source_skill beyond FlowPilot core is invoked",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "source_skill_name",
+        "skill_file_read",
+        "referenced_files_read_or_skipped_with_reason",
+        "pm_owned_gate_manifest_path",
+        "initial_gate_manifest_extracted_before_route_modeling",
+        "current_node_gate_manifest_refined_before_execution",
+        "required_approvers_assigned_per_gate",
+        "reviewer_or_officer_or_pm_approval_per_current_gate",
+        "main_executor_self_approval_forbidden",
+        "workflow_steps_mapped_to_route_gates",
+        "completion_standard_mapped",
+        "child_skill_conformance_model_checked_when_material",
+        "skipped_steps_with_reason",
+        "step_evidence_audited",
+        "evidence_matches_outputs",
+        "domain_quality_review",
+        "iteration_loop_closure",
+        "evidence_paths",
+        "capability_completion_decision"
+      ],
+      "status": "conditional"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/ui_concept_loop-when-needed.json",
+      "id": "ui_concept_loop",
+      "required": "when task_requires_ui",
+      "source_skill": "concept-led-ui-redesign",
+      "evidence_required": [
+        "child_skill_fidelity_record",
+        "source_skill_pre_implementation_evidence",
+        "rendered_qa_evidence",
+        "concept_vs_rendered_divergence_review",
+        "source_skill_divergence_or_loop_closure_decision",
+        "domain_quality_review",
+        "source_skill_completion_decision"
+      ],
+      "status": "conditional"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/ui_concept_target-when-needed.json",
+      "id": "ui_concept_target",
+      "required": "when required by concept-led-ui-redesign before UI implementation",
+      "source_skill": "concept-led-ui-redesign",
+      "evidence_required": [
+        "child_skill_fidelity_record",
+        "source_skill_concept_target_or_reference_decision",
+        "visible_target_or_reference_evidence_or_waiver",
+        "rendered_qa_separation_note",
+        "evidence_output_match_review",
+        "source_skill_completion_decision"
+      ],
+      "status": "conditional"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/ui_polish-when-needed.json",
+      "id": "ui_polish",
+      "required": "when task_requires_ui",
+      "source_skill": "frontend-design",
+      "evidence_required": true,
+      "status": "conditional"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/child_node_sidecar_subagents-when-used.json",
+      "id": "child_node_sidecar_subagents",
+      "required": "when sidecar_subagents_are_used",
+      "source_skill": "FlowPilot coordination protocol",
+      "evidence_required": [
+        "child_node_sidecar_scan_decision",
+        "bounded_disjoint_scope_check",
+        "idle_reuse_or_spawn_reason",
+        "sidecar_report_path",
+        "main_agent_merge_and_verification",
+        "node_route_checkpoint_completion_ownership_remained_with_main_agent"
+      ],
+      "status": "conditional"
+    }
+  ]
+}
