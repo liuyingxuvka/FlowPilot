@@ -149,11 +149,17 @@ class State:
     manual_resume_mode_recorded: bool = False
     heartbeat_active: bool = False
     heartbeat_schedule_created: bool = False
+    route_heartbeat_interval_minutes: int = 0
     stable_heartbeat_launcher_recorded: bool = False
     heartbeat_health_checked: bool = False
     live_subagent_decision_recorded: bool = False
     live_subagents_started: bool = False
     single_agent_role_continuity_authorized: bool = False
+    startup_preflight_review_report_written: bool = False
+    startup_preflight_review_blocking_findings: bool = False
+    pm_returned_startup_blockers: bool = False
+    startup_worker_remediation_completed: bool = False
+    pm_start_gate_opened: bool = False
     startup_activation_guard_passed: bool = False
     external_watchdog_policy_recorded: bool = False
     external_watchdog_busy_lease_policy_recorded: bool = False
@@ -477,6 +483,7 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.host_continuation_supported
         and not state.manual_resume_mode_recorded
         and state.heartbeat_schedule_created
+        and state.route_heartbeat_interval_minutes == 1
         and state.stable_heartbeat_launcher_recorded
         and state.external_watchdog_policy_recorded
         and state.external_watchdog_busy_lease_policy_recorded
@@ -504,6 +511,7 @@ def _manual_resume_ready(state: State) -> bool:
         and not state.host_continuation_supported
         and state.manual_resume_mode_recorded
         and not state.heartbeat_schedule_created
+        and state.route_heartbeat_interval_minutes == 0
         and not state.stable_heartbeat_launcher_recorded
         and not state.external_watchdog_policy_recorded
         and not state.external_watchdog_busy_lease_policy_recorded
@@ -541,6 +549,14 @@ def _continuation_lifecycle_valid(state: State) -> bool:
             and state.external_watchdog_stopped_before_heartbeat
             and not state.external_watchdog_active
         )
+    )
+
+
+def _startup_pm_gate_ready(state: State) -> bool:
+    return (
+        state.startup_preflight_review_report_written
+        and not state.startup_preflight_review_blocking_findings
+        and state.pm_start_gate_opened
     )
 
 
@@ -617,6 +633,7 @@ def _route_ready(state: State) -> bool:
         and state.user_flow_diagram_refreshed
         and state.visible_user_flow_diagram_emitted
         and _live_subagent_startup_resolved(state)
+        and _startup_pm_gate_ready(state)
         and state.startup_activation_guard_passed
         and state.issue == "none"
         and state.high_risk_gate != "pending"
@@ -705,11 +722,17 @@ class AutopilotStep:
         "host_continuation_supported",
         "manual_resume_mode_recorded",
         "heartbeat_schedule_created",
+        "route_heartbeat_interval_minutes",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
         "live_subagent_decision_recorded",
         "live_subagents_started",
         "single_agent_role_continuity_authorized",
+        "startup_preflight_review_report_written",
+        "startup_preflight_review_blocking_findings",
+        "pm_returned_startup_blockers",
+        "startup_worker_remediation_completed",
+        "pm_start_gate_opened",
         "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
@@ -891,11 +914,17 @@ class AutopilotStep:
         "crew_archived",
         "heartbeat_active",
         "heartbeat_schedule_created",
+        "route_heartbeat_interval_minutes",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
         "live_subagent_decision_recorded",
         "live_subagents_started",
         "single_agent_role_continuity_authorized",
+        "startup_preflight_review_report_written",
+        "startup_preflight_review_blocking_findings",
+        "pm_returned_startup_blockers",
+        "startup_worker_remediation_completed",
+        "pm_start_gate_opened",
         "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
@@ -1517,8 +1546,9 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="heartbeat_schedule_created",
-                action="create real continuation heartbeat as a stable launcher that reads state and execution frontier",
+                action="create one-minute route heartbeat as a stable launcher that reads state and execution frontier",
                 heartbeat_schedule_created=True,
+                route_heartbeat_interval_minutes=1,
                 stable_heartbeat_launcher_recorded=True,
                 active_node="record_external_watchdog_policy",
             )
@@ -1846,6 +1876,104 @@ class AutopilotStep:
                 label="six_live_subagents_started",
                 action="start or resume all six live FlowPilot background agents and record startup evidence",
                 live_subagents_started=True,
+                active_node="startup_preflight_review",
+            )
+            return
+
+        if (
+            state.route_version > 0
+            and state.route_checked
+            and state.markdown_synced
+            and state.execution_frontier_written
+            and state.codex_plan_synced
+            and state.user_flow_diagram_refreshed
+            and state.visible_user_flow_diagram_emitted
+            and _live_subagent_startup_resolved(state)
+            and not state.startup_preflight_review_report_written
+            and not state.startup_worker_remediation_completed
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="startup_preflight_reviewer_report_blocked",
+                action="human-like reviewer reports startup blockers to PM without opening the start gate",
+                startup_preflight_review_report_written=True,
+                startup_preflight_review_blocking_findings=True,
+                active_node="pm_interprets_startup_review",
+            )
+            return
+
+        if (
+            state.startup_preflight_review_report_written
+            and state.startup_preflight_review_blocking_findings
+            and not state.pm_returned_startup_blockers
+            and not state.startup_worker_remediation_completed
+            and not state.pm_start_gate_opened
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="pm_returns_startup_blockers_to_worker",
+                action="project manager reads reviewer startup report and returns concrete blockers to workers for remediation",
+                pm_returned_startup_blockers=True,
+                active_node="startup_worker_remediation",
+            )
+            return
+
+        if (
+            state.startup_preflight_review_report_written
+            and state.startup_preflight_review_blocking_findings
+            and state.pm_returned_startup_blockers
+            and not state.startup_worker_remediation_completed
+            and not state.pm_start_gate_opened
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="startup_worker_remediation_completed",
+                action="workers remediate startup blockers and invalidate the old reviewer report for recheck",
+                startup_worker_remediation_completed=True,
+                pm_returned_startup_blockers=False,
+                startup_preflight_review_report_written=False,
+                startup_preflight_review_blocking_findings=False,
+                active_node="startup_preflight_review",
+            )
+            return
+
+        if (
+            state.route_version > 0
+            and state.route_checked
+            and state.markdown_synced
+            and state.execution_frontier_written
+            and state.codex_plan_synced
+            and state.user_flow_diagram_refreshed
+            and state.visible_user_flow_diagram_emitted
+            and _live_subagent_startup_resolved(state)
+            and not state.startup_preflight_review_report_written
+            and state.startup_worker_remediation_completed
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="startup_preflight_reviewer_report_clean",
+                action="human-like reviewer rechecks remediated startup evidence and writes a clean report for PM",
+                startup_preflight_review_report_written=True,
+                startup_preflight_review_blocking_findings=False,
+                active_node="pm_interprets_startup_review",
+            )
+            return
+
+        if (
+            state.startup_preflight_review_report_written
+            and not state.startup_preflight_review_blocking_findings
+            and not state.pm_start_gate_opened
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="pm_start_gate_opened_from_review_report",
+                action="project manager opens the startup gate from the current clean reviewer report",
+                pm_start_gate_opened=True,
                 active_node="run_startup_activation_guard",
             )
             return
@@ -1859,13 +1987,14 @@ class AutopilotStep:
             and state.user_flow_diagram_refreshed
             and state.visible_user_flow_diagram_emitted
             and _live_subagent_startup_resolved(state)
+            and _startup_pm_gate_ready(state)
             and not state.startup_activation_guard_passed
             and state.issue == "none"
         ):
             yield _step(
                 state,
                 label="startup_activation_guard_passed",
-                action="run startup hard gate against state, frontier, active route, crew ledger, role memory, live-subagent startup resolution, and continuation evidence before child work",
+                action="run startup hard gate only after reviewer report and PM-owned start-gate opening",
                 startup_activation_guard_passed=True,
                 active_node="ready_for_chunk",
             )
@@ -3445,6 +3574,28 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         return InvariantResult.fail(
             "formal execution started before the startup activation hard gate passed"
         )
+    if state.pm_start_gate_opened and not (
+        state.startup_preflight_review_report_written
+        and not state.startup_preflight_review_blocking_findings
+    ):
+        return InvariantResult.fail(
+            "PM start gate opened before a clean reviewer startup report"
+        )
+    if state.pm_start_gate_opened and state.pm_returned_startup_blockers:
+        return InvariantResult.fail(
+            "PM start gate opened while startup blockers were still assigned for worker remediation"
+        )
+    if (
+        state.startup_worker_remediation_completed
+        and state.pm_start_gate_opened
+        and not (
+            state.startup_preflight_review_report_written
+            and not state.startup_preflight_review_blocking_findings
+        )
+    ):
+        return InvariantResult.fail(
+            "startup worker remediation was not rechecked by reviewer before PM gate opening"
+        )
     if state.startup_activation_guard_passed and not _startup_questions_complete(state):
         return InvariantResult.fail(
             "startup activation hard gate passed before the three startup answers were recorded"
@@ -3452,6 +3603,10 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     if state.startup_activation_guard_passed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(
             "startup activation hard gate passed before live subagents or explicit single-agent fallback were resolved"
+        )
+    if state.startup_activation_guard_passed and not _startup_pm_gate_ready(state):
+        return InvariantResult.fail(
+            "startup activation hard gate passed before reviewer report and PM-owned start-gate opening"
         )
     return InvariantResult.pass_()
 
@@ -3674,6 +3829,7 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
     del trace
     automation_bits = (
         state.heartbeat_schedule_created
+        or state.route_heartbeat_interval_minutes != 0
         or state.stable_heartbeat_launcher_recorded
         or state.external_watchdog_policy_recorded
         or state.external_watchdog_busy_lease_policy_recorded
@@ -3695,6 +3851,7 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
     )
     if formal_started and state.host_continuation_supported and (
         state.heartbeat_schedule_created
+        or state.route_heartbeat_interval_minutes != 0
         or state.external_watchdog_policy_recorded
         or state.external_watchdog_automation_created
         or state.global_watchdog_supervisor_checked
@@ -4021,7 +4178,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="mode_choice_before_contract",
-        description="FlowPilot is enabled by default and offers a run-mode choice before contract freeze.",
+        description="After explicit FlowPilot invocation, run-mode choice is offered before contract freeze.",
         predicate=mode_choice_before_contract,
     ),
     Invariant(

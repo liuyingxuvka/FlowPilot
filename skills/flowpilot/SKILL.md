@@ -1,6 +1,6 @@
 ---
 name: flowpilot
-description: Use when Codex is asked to drive a substantial software project, workflow, or development effort from start to finish at showcase-grade scope with FlowGuard process design and checking, persistent .flowpilot state, host-probed heartbeat continuation when supported, visible grill-me style self-interrogation, adaptive route updates, chunk-level verification, conditional child-skill routing, and optional child-node sidecar subagent coordination with idle-agent reuse while preserving the original acceptance floor.
+description: Opt-in only. Use this skill only when the user explicitly asks to use FlowPilot or the flowpilot skill, for example "Use FlowPilot" or "使用 FlowPilot"; do not activate implicitly for large tasks, existing .flowpilot directories, UI redesigns, heartbeat requests, or repository work.
 ---
 
 # FlowPilot
@@ -54,11 +54,21 @@ Host-specific tools are capability-mapped. In Codex, visual routes may satisfy
 may use a differently named image-generation provider, but FlowPilot must
 record the provider identity and check evidence before running the visual gate.
 
-## Default Activation
+## Explicit Activation Only
 
-When FlowPilot is explicitly invoked, or when a project already contains a
-`.flowpilot/` directory, the controller state is enabled by default. Do not
-first ask whether FlowPilot should exist.
+FlowPilot is opt-in only. Enable the controller only when the user explicitly
+asks to use FlowPilot or the `flowpilot` skill in the current thread. Do not
+infer activation from task size, long-running scope, repository type, UI work,
+heartbeat/watchdog language, or the presence of `.flowpilot/`.
+
+If a project already contains `.flowpilot/`, treat it only as resume or
+continuity state after explicit invocation. The directory is not a trigger by
+itself.
+
+If the user is editing, auditing, discussing, or repairing the FlowPilot skill
+itself without explicitly asking to use FlowPilot, treat that as ordinary
+repository work. Do not start a FlowPilot route, heartbeat, subagent crew,
+startup banner, or startup questionnaire for that maintenance task.
 
 Preferred user-facing invocation when a formal route is intended:
 
@@ -137,27 +147,46 @@ prove that the same active nonterminal route is current in:
 - continuation evidence, either automated heartbeat/watchdog/global supervisor
   readiness or explicit `manual-resume` no-automation evidence.
 
-Run the hard gate and record its pass:
+First write the human-like reviewer's startup preflight report:
+
+```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
+```
+
+The reviewer report is factual evidence only. The reviewer checks the startup
+state and reports findings to the project manager; the reviewer does not
+approve startup and does not open the start gate. The project manager reads
+that report, either sends concrete remediation items back to the workers/main
+executor or writes a PM start-gate decision that opens startup from the current
+review report. Only after PM opens the gate may the controller run:
 
 ```powershell
 python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
 ```
 
 `startup_activation.work_beyond_startup_allowed` must be true in state and
-frontier before work beyond startup. `startup_activation.startup_questions`
+frontier before work beyond startup, and that flag may be written only after a
+clean reviewer report plus a PM-owned open decision. `startup_activation`
+must include `startup_preflight_review` and `pm_start_gate` blocks.
+`startup_activation.startup_questions`
 must show that the three-question prompt was asked before the banner, that the
 assistant stopped to wait for the user's reply, and that explicit answers for
 run mode, background agents, and scheduled continuation were later recorded
-before the banner is considered valid. `startup_activation` must then agree
-with those answers: live background agents only when the user allowed them,
-single-agent six-role continuity only when the user selected it, and
-heartbeat/automation only when the user allowed scheduled continuation. If any
-answer, wait-state evidence, or matching evidence is missing, stop at startup
-and ask; do not silently fall back. If only a route-local file,
-generated concept, screenshot, or implementation artifact exists without
-matching canonical state/frontier/crew/continuation evidence, treat it as a
-shadow route, quarantine or supersede it, and rerun startup instead of
-continuing from that partial state.
+before the banner is considered valid. The reviewer report must compare user
+authorization against actual state: live/single-agent role evidence,
+heartbeat/watchdog/global-supervisor evidence, route/state/frontier
+consistency, stale or residual route state, and any required old-route or old
+asset cleanup. `startup_activation` must then agree with those answers: live
+background agents only when the user allowed them, single-agent six-role
+continuity only when the user selected it, and heartbeat/automation only when
+the user allowed scheduled continuation. If any answer, wait-state evidence,
+matching evidence, reviewer report, PM open decision, or cleanup evidence is
+missing, stop at startup and route remediation back through PM and workers; do
+not silently fall back. If only a route-local file, generated concept,
+screenshot, or implementation artifact exists without matching canonical
+state/frontier/crew/continuation evidence, treat it as a shadow route,
+quarantine or supersede it, and rerun startup instead of continuing from that
+partial state.
 
 FlowPilot is especially useful when the task involves:
 
@@ -345,7 +374,28 @@ all three in one compact sentence.
     the recorded stop-and-wait state, the three explicit startup answers,
     banner evidence, current route, execution frontier, crew ledger, role
     memory, live-subagent startup decision, continuation, and visible plan
-    evidence, then run:
+    evidence. The human-like reviewer then writes the startup preflight report:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
+    ```
+
+    The report checks user authorization against actual state, including
+    background-agent count and role identity, heartbeat/watchdog/global
+    supervisor cadence and type, route/state/frontier consistency, residual or
+    shadow route state, and any user-requested clean-start or old-asset
+    cleanup. The reviewer does not output approval and cannot open startup.
+    The project manager reads the report. If it has blocking findings, the PM
+    sends concrete remediation items back to the workers/main executor and
+    requires another reviewer report after repair. If the report has no
+    blockers, the PM writes `pm_start_gate` evidence opening startup from that
+    exact report:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
+    ```
+
+    Only then run:
 
     ```powershell
     python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
@@ -357,10 +407,11 @@ all three in one compact sentence.
     complete, if the prompt did not stop for the user's reply, if the banner was
     emitted before the answers, if live-agent evidence conflicts with the
     background-agent answer, or if continuation evidence conflicts with the
-    scheduled-continuation answer, stop and ask the user for the missing or
-    corrected decision. A route-local file without matching
-    canonical state/frontier/crew/continuation evidence is a shadow route and
-    must be quarantined or superseded before continuing.
+    scheduled-continuation answer, or if old-route cleanup evidence is missing
+    after a clean-start user request, the PM sends the issue back for worker
+    remediation. A route-local file without matching canonical
+    state/frontier/crew/continuation evidence is a shadow route and must be
+    quarantined or superseded before continuing.
 40. Execute the first bounded chunk only after the continuation mode is known.
     In automated mode, the heartbeat rehydrates the crew from persisted role
     memory, asks the project manager for a completion-oriented runway, and the
@@ -465,9 +516,10 @@ Formal FlowPilot routes use a fixed crew for the life of the project:
   synthesis, heartbeat resume, node work, review failures, route mutation, and
   completion closure;
 - human-like reviewer: neutral observation, manual/product-style inspection,
-  material sufficiency review, pre-contract product usefulness challenge,
-  pass/block reports, and same-class recheck. The reviewer does not mutate the
-  route directly;
+  startup preflight reports, material sufficiency review, pre-contract product
+  usefulness challenge, pass/block reports for ordinary review gates, and
+  same-class recheck. For the startup gate, the reviewer is report-only and
+  never opens the gate; the reviewer does not mutate the route directly;
 - process FlowGuard officer: owns, authors, runs, interprets, and approves or
   blocks development-process models for startup, parent, leaf, repair,
   heartbeat, route mutation, and closure;
@@ -1160,15 +1212,20 @@ watchdog record must include a `source_status` block naming trusted sources,
 diagnostic sources, source timestamps, drift warnings, and
 `live_subagent_state_used: false`.
 
-Heartbeat, watchdog, and global supervisor lifecycle is all-or-none. Whenever
-FlowPilot creates or updates a real heartbeat continuation for a formal
-long-running route, it must create or verify the paired external watchdog and
-verify the singleton global supervisor in the same setup phase. If any piece
-cannot be created, roll back to `manual-resume` before route execution or
-record a concrete blocker. Do not leave a half-created heartbeat without
-watchdog/global-supervisor evidence, and do not create
-watchdog/global-supervisor automation when the host probe found no wakeup
-support.
+Heartbeat, watchdog, and global supervisor lifecycle is all-or-none. The
+project/route heartbeat cadence is fixed at one minute: create route
+heartbeats with `rrule: FREQ=MINUTELY;INTERVAL=1` and record
+`route_heartbeat_interval_minutes: 1` plus the rrule in route/frontier
+evidence. This one-minute route heartbeat is separate from the user-level
+global supervisor cadence and must not reuse the global supervisor's
+30-minute rrule. Whenever FlowPilot creates or updates a real heartbeat
+continuation for a formal long-running route, it must create or verify the
+paired external watchdog and verify the singleton global supervisor in the
+same setup phase. If any piece cannot be created, roll back to
+`manual-resume` before route execution or record a concrete blocker. Do not
+leave a half-created heartbeat without watchdog/global-supervisor evidence,
+and do not create watchdog/global-supervisor automation when the host probe
+found no wakeup support.
 
 Pause, restart, and terminal closure use one unified lifecycle reconciliation
 gate. Before claiming any of those states, FlowPilot scans Codex app
@@ -1495,9 +1552,11 @@ Required early gate:
 - user flow diagram before route execution and at each major node;
 - host continuation capability probe before route execution;
 - if the host supports real wakeups, the all-or-none automated continuation
-  bundle before route execution: stable heartbeat schedule, paired external
-  watchdog, singleton global watchdog supervisor, and hidden/noninteractive
-  watchdog execution evidence when a Windows task or external task is used;
+  bundle before route execution: stable one-minute route heartbeat schedule
+  (`FREQ=MINUTELY;INTERVAL=1`), paired external watchdog, singleton global
+  watchdog supervisor at the fixed 30-minute cadence, and
+  hidden/noninteractive watchdog execution evidence when a Windows task or
+  external task is used;
 - if the host does not support real wakeups, `manual-resume` evidence before
   route execution and no heartbeat/watchdog/global-supervisor automation
   created;

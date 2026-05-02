@@ -14,6 +14,7 @@
           "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": false,
@@ -22,6 +23,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": false,
@@ -30,7 +34,9 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": true,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "answers_recorded_without_dialog_stop": {
@@ -45,6 +51,7 @@
           "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": false,
           "execution_frontier_written": false,
@@ -53,6 +60,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": false,
@@ -61,7 +71,9 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "banner_before_three_answers": {
@@ -77,6 +89,7 @@
           "banner_emitted": true,
           "canonical_state_written": false,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": false,
           "execution_frontier_written": false,
@@ -85,6 +98,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": false,
@@ -93,7 +109,47 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
+        }
+      },
+      "clean_start_without_cleanup": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete",
+          "PM opened startup before old-route cleanup matched the user request"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": true,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "clean_start_requirement": "required",
+          "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": true,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": true,
+          "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "open",
+          "reviewer_opened_start_gate": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": true,
+          "startup_questions_asked": true,
+          "startup_review_status": "clean",
+          "worker_remediation_done": false
         }
       },
       "guard_before_questions": {
@@ -109,6 +165,7 @@
           "banner_emitted": false,
           "canonical_state_written": true,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": true,
           "dialog_stopped_for_user_answers": false,
           "execution_frontier_written": true,
@@ -117,6 +174,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 6,
           "route_execution_started": false,
           "route_file_written": true,
@@ -125,7 +185,9 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": true,
-          "startup_questions_asked": false
+          "startup_questions_asked": false,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "imagegen_before_guard": {
@@ -140,6 +202,7 @@
           "banner_emitted": true,
           "canonical_state_written": true,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": false,
@@ -148,6 +211,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
@@ -156,7 +222,9 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "manual_resume_despite_heartbeat_answer": {
@@ -171,6 +239,7 @@
           "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": false,
@@ -179,6 +248,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": true,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": false,
@@ -187,7 +259,9 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "manual_resume_without_user_answer": {
@@ -202,6 +276,7 @@
           "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": false,
@@ -210,6 +285,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": true,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": false,
@@ -218,7 +296,124 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
+        }
+      },
+      "pm_opens_blocked_report": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete",
+          "PM opened startup without a clean reviewer report",
+          "startup guard passed despite blocking reviewer findings"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": true,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "clean_start_requirement": "not_required",
+          "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": true,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": true,
+          "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "open",
+          "reviewer_opened_start_gate": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": true,
+          "startup_questions_asked": true,
+          "startup_review_status": "blocked",
+          "worker_remediation_done": false
+        }
+      },
+      "pm_opens_without_reviewer_report": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete",
+          "PM opened startup without a clean reviewer report"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": true,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "clean_start_requirement": "not_required",
+          "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": true,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": true,
+          "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "open",
+          "reviewer_opened_start_gate": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": true,
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
+        }
+      },
+      "reviewer_directly_opens_start_gate": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete",
+          "reviewer attempted to open the PM-owned startup gate"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": true,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "clean_start_requirement": "not_required",
+          "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": true,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": true,
+          "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": true,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": true,
+          "startup_questions_asked": true,
+          "startup_review_status": "clean",
+          "worker_remediation_done": false
         }
       },
       "route_execution_before_guard": {
@@ -233,6 +428,7 @@
           "banner_emitted": true,
           "canonical_state_written": true,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": true,
           "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": true,
@@ -241,6 +437,9 @@
           "implementation_started": false,
           "live_subagents_started": true,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 6,
           "route_execution_started": true,
           "route_file_written": true,
@@ -249,7 +448,9 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "shadow_route_child_skill": {
@@ -265,6 +466,7 @@
           "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": true,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": false,
           "execution_frontier_written": false,
@@ -273,6 +475,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": true,
@@ -281,7 +486,9 @@
           "shadow_route_detected": true,
           "single_agent_role_continuity_authorized": false,
           "startup_guard_passed": false,
-          "startup_questions_asked": false
+          "startup_questions_asked": false,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
         }
       },
       "single_agent_despite_live_agent_answer": {
@@ -296,6 +503,7 @@
           "banner_emitted": false,
           "canonical_state_written": false,
           "child_skill_started": false,
+          "clean_start_requirement": "unknown",
           "crew_ledger_current": false,
           "dialog_stopped_for_user_answers": true,
           "execution_frontier_written": false,
@@ -304,6 +512,9 @@
           "implementation_started": false,
           "live_subagents_started": false,
           "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "pending",
+          "reviewer_opened_start_gate": false,
           "role_memory_packets_current": 0,
           "route_execution_started": false,
           "route_file_written": false,
@@ -312,7 +523,48 @@
           "shadow_route_detected": false,
           "single_agent_role_continuity_authorized": true,
           "startup_guard_passed": false,
-          "startup_questions_asked": true
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": false
+        }
+      },
+      "worker_fix_without_reviewer_recheck": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete",
+          "PM opened startup without a clean reviewer report",
+          "worker remediation was not rechecked by the reviewer before PM start"
+        ],
+        "state": {
+          "agent_self_recorded_authorization": false,
+          "automated_continuation_ready": true,
+          "background_agents_answer": "allow",
+          "banner_emitted": true,
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "clean_start_requirement": "not_required",
+          "crew_ledger_current": true,
+          "dialog_stopped_for_user_answers": true,
+          "execution_frontier_written": true,
+          "explicit_user_answer_recorded": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "live_subagents_started": true,
+          "manual_resume_ready": false,
+          "old_route_cleanup_done": false,
+          "pm_start_gate_decision": "open",
+          "reviewer_opened_start_gate": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "run_mode_answered": true,
+          "scheduled_continuation_answer": "allow",
+          "shadow_route_detected": false,
+          "single_agent_role_continuity_authorized": false,
+          "startup_guard_passed": true,
+          "startup_questions_asked": true,
+          "startup_review_status": "pending",
+          "worker_remediation_done": true
         }
       }
     },
@@ -320,7 +572,7 @@
   },
   "ok": true,
   "safe_graph": {
-    "edge_count": 65,
+    "edge_count": 193,
     "invariant_failures": [],
     "labels": [
       "automated_continuation_ready",
@@ -328,6 +580,8 @@
       "background_agents_declined_single_agent",
       "canonical_state_written",
       "child_skill_started",
+      "clean_start_not_required",
+      "clean_start_required_by_user",
       "crew_ledger_current",
       "execution_frontier_written",
       "explicit_startup_answers_recorded",
@@ -335,6 +589,9 @@
       "implementation_started",
       "live_subagents_started",
       "manual_resume_ready",
+      "old_route_cleanup_verified",
+      "pm_returns_startup_blockers_to_worker",
+      "pm_start_gate_opened_from_review_report",
       "role_memory_packets_current",
       "route_execution_started",
       "route_file_written",
@@ -345,10 +602,13 @@
       "startup_activation_guard_passed",
       "startup_banner_emitted_after_answers",
       "startup_dialog_stopped_for_user_answers",
-      "startup_three_questions_asked"
+      "startup_preflight_reviewer_report_blocked",
+      "startup_preflight_reviewer_report_clean",
+      "startup_three_questions_asked",
+      "startup_worker_remediation_completed"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 66
+    "state_count": 194
   }
 }

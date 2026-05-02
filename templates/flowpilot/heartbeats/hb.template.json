@@ -21,6 +21,8 @@
     "host_probe_done": false,
     "mode": "<automated|manual-resume|blocked|unknown>",
     "host_supports_real_wakeups": null,
+    "route_heartbeat_interval_minutes": 1,
+    "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
     "automated_bundle_ready": false,
     "manual_resume_recorded": false,
     "unattended_recovery_claim_allowed": false,

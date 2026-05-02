@@ -607,7 +607,9 @@ The first capability-routing model exposed two implementation-shaping issues:
 
 Additional capability-routing rules:
 
-- FlowPilot is enabled by default when invoked or when `.flowpilot/` exists.
+- FlowPilot is opt-in only. It is enabled only after the user explicitly invokes
+  FlowPilot or the `flowpilot` skill; an existing `.flowpilot/` directory is
+  continuity state after invocation, not a trigger by itself.
 - Run-mode choice must be offered before self-interrogation. Show options from
   loose to strict: `full-auto`, `autonomous`, `guided`, `strict-gated`. If the
   host cannot pause or the user asks to continue, `autonomous` may be recorded
@@ -1523,3 +1525,62 @@ Results after integration:
 - missing required labels: 0;
 - stuck states: 0;
 - installation and smoke checks passed.
+
+## 2026-05-02 - PM-Owned Startup Gate And Reviewer Report
+
+Trigger: the user clarified that startup review should not be an approval
+object. The human-like reviewer audits facts and writes a report to PM. PM
+decides whether to open startup or return blockers to workers. Workers repair,
+then the reviewer rechecks before PM can open the gate.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- reviewer report treated as startup approval;
+- PM opens startup without a clean reviewer report;
+- PM opens while reviewer blockers are still assigned for worker remediation;
+- worker remediation is accepted without reviewer recheck;
+- clean-start or no-reuse requests proceed without evidence that old routes,
+  old screenshots, old icons, old concept images, or old UI assets were not
+  reused.
+
+Model and protocol changes:
+
+- added report-only startup preflight review evidence;
+- added PM-owned `pm_start_gate` evidence;
+- added `.flowpilot/startup_review/latest.json` and
+  `.flowpilot/startup_pm_gate/latest.json` templates;
+- changed `scripts/flowpilot_startup_guard.py --record-pass` so it requires
+  the PM gate to be opened from the current clean reviewer report;
+- added `--write-review-report` and `--record-pm-start-gate` startup guard
+  modes;
+- updated startup, meta, and capability simulations with the reviewer -> PM ->
+  worker remediation -> reviewer recheck -> PM open loop.
+
+Validation:
+
+```powershell
+python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\meta_model.py simulations\capability_model.py simulations\run_startup_guard_checks.py simulations\run_meta_checks.py simulations\run_capability_checks.py
+python simulations\run_startup_guard_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\check_install.py
+python scripts\flowpilot_startup_guard.py --help
+```
+
+Results after integration:
+
+- startup guard safe path: 194 states, 193 edges, 0 invariant failures;
+- startup guard hazard probes detected reviewer direct open, PM open without
+  report, PM open on blocked report, worker fix without recheck, and clean
+  start without cleanup;
+- meta model states: 92212;
+- meta model edges: 96752;
+- capability model states: 86338;
+- capability model edges: 91580;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0;
+- nonterminating components: 0;
+- installation check passed.

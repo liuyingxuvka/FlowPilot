@@ -69,6 +69,14 @@ chunks until this block and the matching frontier block show:
   single-agent six-role continuity;
 - `continuation_ready: true`, either as an automated heartbeat/watchdog/global
   bundle or explicit `manual-resume` no-automation evidence;
+- `startup_preflight_review` records the human-like reviewer's report-only
+  startup audit, including user authorization versus actual state,
+  route/state/frontier consistency, old-route or old-asset cleanup when
+  requested, heartbeat/watchdog/global-supervisor evidence, background-agent
+  role evidence, and shadow or residual route state;
+- `pm_start_gate` records the project manager's decision from the current
+  reviewer report. The reviewer cannot open this gate. If the report has
+  blockers, PM sends remediation back to workers and requires a recheck;
 - `startup_guard_passed: true`;
 - `startup_guard_evidence_path` points to `startup_guard/latest.json`;
 - `work_beyond_startup_allowed: true`;
@@ -101,6 +109,35 @@ imagegen, implementation, fallback execution, subagent startup, heartbeat probe,
 heartbeat job, or manual-resume claim may proceed. If the questions were asked
 but the assistant did not stop and wait for the user's reply, the answer
 evidence is invalid and the startup guard must fail.
+
+`startup_activation.startup_preflight_review` is written by the human-like
+reviewer through the startup guard's review-report mode. It is not an approval
+object. It must include:
+
+- `required: true`;
+- `reviewer_role: human_like_reviewer`;
+- `reviewer_decision_authority: report_only_no_start_approval`;
+- `report_path`;
+- `report_status`: `pending`, `ready_for_pm`, or
+  `requires_worker_remediation`;
+- `blocking_findings`;
+- scope flags for user authorization, route consistency, cleanup boundary,
+  continuation evidence, background-agent roles, and shadow/residual state.
+
+`startup_activation.pm_start_gate` is written by the project manager after
+reading the reviewer report. It must include:
+
+- `required: true`;
+- `decision_owner: project_manager`;
+- `decision`: `pending`, `open`, `return_to_worker`, or `blocked`;
+- `based_on_review_report_path`;
+- `decision_path`;
+- `worker_remediation_required`;
+- `opened_at` only when the current clean reviewer report supports opening.
+
+`work_beyond_startup_allowed` can become true only after a clean reviewer
+report and a PM-owned open decision. Worker remediation invalidates the prior
+review report and must be rechecked before PM opens the gate.
 
 A route-local file, generated concept, screenshot, or implementation artifact
 without matching canonical state/frontier/crew/continuation evidence is a
@@ -295,17 +332,21 @@ until every current child-skill gate is approved by its assigned role or
 blocked/waived with evidence from the responsible role.
 
 Before any child-skill, imagegen, implementation, or formal route chunk starts,
-run:
+write the reviewer report, record the PM start-gate decision from that report,
+then record the final guard pass:
 
 ```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
 python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
 ```
 
-The command passes only when `state.json`, `execution_frontier.json`,
+The final command passes only when `state.json`, `execution_frontier.json`,
 `routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory
-packets, and continuation evidence agree on the same active route. With
-`--record-pass`, it writes `startup_guard/latest.json` and updates state plus
-frontier so downstream work can check `work_beyond_startup_allowed`.
+packets, continuation evidence, a clean reviewer report, and a PM-owned open
+decision agree on the same active route. With `--record-pass`, it writes
+`startup_guard/latest.json` and updates state plus frontier so downstream work
+can check `work_beyond_startup_allowed`.
 
 ## Final Route-Wide Gate Ledger
 

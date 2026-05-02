@@ -94,7 +94,28 @@ Expected:
 ## Startup Guard Check
 
 For an active target project after route, state, frontier, crew, role memory,
-continuation, and visible-plan evidence have been written, run:
+continuation, and visible-plan evidence have been written, first write the
+human-like reviewer report:
+
+```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
+```
+
+The reviewer report is not approval. It must check user authorization versus
+actual state, route/state/frontier consistency, requested old-route or old-asset
+cleanup, heartbeat/watchdog/global-supervisor evidence, background-agent role
+evidence, and shadow or residual route state. If the report has blockers, the
+PM sends remediation back to workers/main executor and requires another
+reviewer report.
+
+After the project manager opens `pm_start_gate` from the current clean reviewer
+report:
+
+```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
+```
+
+Then run:
 
 ```powershell
 python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
@@ -111,6 +132,10 @@ Expected:
 - `startup_activation.live_subagent_startup` records either six live
   background agents started/resumed after a user decision or explicit
   user-authorized single-agent six-role continuity;
+- `startup_activation.startup_preflight_review` records a clean report-only
+  reviewer audit;
+- `startup_activation.pm_start_gate` records the project manager's open
+  decision based on that report;
 - `startup_activation` in state and frontier records the hard gate;
 - the command writes `.flowpilot/startup_guard/latest.json` and sets
   `work_beyond_startup_allowed: true`.
@@ -172,6 +197,11 @@ automation interface. It should be a `cron` automation, use the prompt in
 `templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md`, and run
 at the fixed 30-minute cadence. Do not create a Windows global scheduled task
 for this role.
+
+Do not use this 30-minute cadence for project routes. Route heartbeat
+automations are separate and must use `rrule: FREQ=MINUTELY;INTERVAL=1`; route
+and execution-frontier evidence should record
+`route_heartbeat_interval_minutes: 1` and the heartbeat rrule.
 
 With the current Codex app `automation_update` interface, use `kind: cron`,
 `rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as a single workspace string path,

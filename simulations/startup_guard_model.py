@@ -4,7 +4,8 @@ This model isolates the simplified startup contract: FlowPilot invocation first
 asks three questions, stops the assistant response to wait for the user, then
 records explicit answers, emits the banner, and may assemble the route, crew,
 continuation evidence, and startup guard. The safe path requires the stop-and-
-wait state plus explicit answers before the banner and before any child-skill,
+wait state plus explicit answers before the banner, a human-like reviewer
+startup report, and a PM-owned start-gate decision before any child-skill,
 imagegen, implementation, or route-execution work can start.
 """
 
@@ -36,6 +37,12 @@ class State:
     single_agent_role_continuity_authorized: bool = False
     automated_continuation_ready: bool = False
     manual_resume_ready: bool = False
+    clean_start_requirement: str = "unknown"  # unknown | required | not_required
+    old_route_cleanup_done: bool = False
+    startup_review_status: str = "pending"  # pending | blocked | clean
+    worker_remediation_done: bool = False
+    pm_start_gate_decision: str = "pending"  # pending | return_to_worker | open
+    reviewer_opened_start_gate: bool = False
     startup_guard_passed: bool = False
     child_skill_started: bool = False
     imagegen_started: bool = False
@@ -92,8 +99,18 @@ def startup_ready_for_guard(state: State) -> bool:
         and state.role_memory_packets_current == REQUIRED_ROLE_MEMORY_PACKETS
         and subagent_decision_matches_answer(state)
         and continuation_matches_answer(state)
+        and cleanup_matches_request(state)
+        and state.startup_review_status == "clean"
+        and state.pm_start_gate_decision == "open"
+        and not state.reviewer_opened_start_gate
         and not state.shadow_route_detected
     )
+
+
+def cleanup_matches_request(state: State) -> bool:
+    if state.clean_start_requirement == "required":
+        return state.old_route_cleanup_done
+    return state.clean_start_requirement == "not_required"
 
 
 def work_started(state: State) -> bool:
@@ -165,6 +182,35 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.scheduled_continuation_answer == "manual" and not state.manual_resume_ready:
         yield Transition("manual_resume_ready", replace(state, manual_resume_ready=True))
         return
+    if state.clean_start_requirement == "unknown":
+        yield Transition("clean_start_required_by_user", replace(state, clean_start_requirement="required"))
+        yield Transition("clean_start_not_required", replace(state, clean_start_requirement="not_required"))
+        return
+    if state.clean_start_requirement == "required" and not state.old_route_cleanup_done:
+        yield Transition("old_route_cleanup_verified", replace(state, old_route_cleanup_done=True))
+        return
+    if state.startup_review_status == "pending":
+        if not state.worker_remediation_done:
+            yield Transition("startup_preflight_reviewer_report_blocked", replace(state, startup_review_status="blocked"))
+        yield Transition("startup_preflight_reviewer_report_clean", replace(state, startup_review_status="clean"))
+        return
+    if state.startup_review_status == "blocked" and state.pm_start_gate_decision == "pending":
+        yield Transition("pm_returns_startup_blockers_to_worker", replace(state, pm_start_gate_decision="return_to_worker"))
+        return
+    if state.pm_start_gate_decision == "return_to_worker" and not state.worker_remediation_done:
+        yield Transition(
+            "startup_worker_remediation_completed",
+            replace(
+                state,
+                worker_remediation_done=True,
+                startup_review_status="pending",
+                pm_start_gate_decision="pending",
+            ),
+        )
+        return
+    if state.startup_review_status == "clean" and state.pm_start_gate_decision == "pending":
+        yield Transition("pm_start_gate_opened_from_review_report", replace(state, pm_start_gate_decision="open"))
+        return
     if not state.startup_guard_passed:
         yield Transition("startup_activation_guard_passed", replace(state, startup_guard_passed=True))
         return
@@ -205,6 +251,16 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("startup proceeded after asking questions without stopping for the user's reply")
     if state.startup_guard_passed and not startup_ready_for_guard(state):
         failures.append("startup guard passed before canonical startup activation was complete")
+    if state.reviewer_opened_start_gate:
+        failures.append("reviewer attempted to open the PM-owned startup gate")
+    if state.pm_start_gate_decision == "open" and state.startup_review_status != "clean":
+        failures.append("PM opened startup without a clean reviewer report")
+    if state.pm_start_gate_decision == "open" and not cleanup_matches_request(state):
+        failures.append("PM opened startup before old-route cleanup matched the user request")
+    if state.startup_review_status == "blocked" and state.startup_guard_passed:
+        failures.append("startup guard passed despite blocking reviewer findings")
+    if state.worker_remediation_done and state.pm_start_gate_decision == "open" and state.startup_review_status != "clean":
+        failures.append("worker remediation was not rechecked by the reviewer before PM start")
     if state.agent_self_recorded_authorization and (
         state.explicit_user_answer_recorded
         or state.single_agent_role_continuity_authorized
@@ -317,5 +373,105 @@ def hazard_states() -> dict[str, State]:
             live_subagents_started=True,
             automated_continuation_ready=True,
             route_execution_started=True,
+        ),
+        "reviewer_directly_opens_start_gate": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            run_mode_answered=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="allow",
+            explicit_user_answer_recorded=True,
+            banner_emitted=True,
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            live_subagents_started=True,
+            automated_continuation_ready=True,
+            clean_start_requirement="not_required",
+            startup_review_status="clean",
+            reviewer_opened_start_gate=True,
+            startup_guard_passed=True,
+        ),
+        "pm_opens_without_reviewer_report": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            run_mode_answered=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="allow",
+            explicit_user_answer_recorded=True,
+            banner_emitted=True,
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            live_subagents_started=True,
+            automated_continuation_ready=True,
+            clean_start_requirement="not_required",
+            pm_start_gate_decision="open",
+            startup_guard_passed=True,
+        ),
+        "pm_opens_blocked_report": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            run_mode_answered=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="allow",
+            explicit_user_answer_recorded=True,
+            banner_emitted=True,
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            live_subagents_started=True,
+            automated_continuation_ready=True,
+            clean_start_requirement="not_required",
+            startup_review_status="blocked",
+            pm_start_gate_decision="open",
+            startup_guard_passed=True,
+        ),
+        "clean_start_without_cleanup": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            run_mode_answered=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="allow",
+            explicit_user_answer_recorded=True,
+            banner_emitted=True,
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            live_subagents_started=True,
+            automated_continuation_ready=True,
+            clean_start_requirement="required",
+            startup_review_status="clean",
+            pm_start_gate_decision="open",
+            startup_guard_passed=True,
+        ),
+        "worker_fix_without_reviewer_recheck": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            run_mode_answered=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="allow",
+            explicit_user_answer_recorded=True,
+            banner_emitted=True,
+            route_file_written=True,
+            canonical_state_written=True,
+            execution_frontier_written=True,
+            crew_ledger_current=True,
+            role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
+            live_subagents_started=True,
+            automated_continuation_ready=True,
+            clean_start_requirement="not_required",
+            startup_review_status="pending",
+            worker_remediation_done=True,
+            pm_start_gate_decision="open",
+            startup_guard_passed=True,
         ),
     }

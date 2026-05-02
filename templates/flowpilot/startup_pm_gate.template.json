@@ -1,0 +1,12 @@
+{
+  "decision_type": "startup_pm_start_gate",
+  "route_id": "<route-id>",
+  "decided_at": "<iso-8601-timestamp>",
+  "decision_owner": "project_manager",
+  "decision": "<open|return_to_worker|blocked>",
+  "based_on_review_report_path": ".flowpilot/startup_review/latest.json",
+  "worker_remediation_required": false,
+  "remediation_items": [],
+  "opened_at": "<iso-8601-timestamp-or-null>",
+  "notes": "<pm-interpretation-of-review-report>"
+}

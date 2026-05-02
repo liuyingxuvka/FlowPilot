@@ -116,6 +116,24 @@ INVALID_ANSWER_SOURCES = {
     "main_executor_inferred",
 }
 
+REVIEWER_REPORT_ONLY_AUTHORITY = "report_only_no_start_approval"
+
+PM_START_GATE_OPEN_DECISIONS = {
+    "open",
+    "opened",
+    "start_gate_open",
+    "work_beyond_startup_allowed",
+}
+
+STARTUP_REVIEW_SCOPE = (
+    "user_authorization_vs_state",
+    "route_state_frontier_consistency",
+    "old_route_and_asset_reuse_boundary",
+    "heartbeat_watchdog_supervisor_evidence",
+    "background_agent_role_evidence",
+    "shadow_route_and_residual_state",
+)
+
 
 @dataclass
 class Check:
@@ -143,12 +161,14 @@ class StartupGuard:
         route_id: str | None,
         require_recorded_pass: bool,
         record_pass: bool,
+        write_review_report: bool,
     ) -> None:
         self.root = root.resolve()
         self.flowpilot_root = self.root / ".flowpilot"
         self.route_id = route_id
         self.require_recorded_pass = require_recorded_pass
         self.record_pass = record_pass
+        self.write_review_report_requested = write_review_report
         self.checks: list[Check] = []
         self.state: dict[str, Any] | None = None
         self.frontier: dict[str, Any] | None = None
@@ -211,8 +231,13 @@ class StartupGuard:
         self.check_crew()
         self.check_startup_activation()
         self.check_continuation()
+        if self.record_pass or self.require_recorded_pass:
+            self.check_reviewer_report_and_pm_start_gate()
 
         result = self.result()
+        if self.write_review_report_requested:
+            report_path = self.write_review_report(result)
+            result["startup_review_report_path"] = report_path
         if self.record_pass and result["ok"]:
             evidence_path = self.write_pass_evidence(result)
             result["startup_guard_evidence_path"] = evidence_path
@@ -240,6 +265,115 @@ class StartupGuard:
             self.pass_("state_frontier_pointer_exists", "state execution_frontier pointer exists", path=str(frontier_path))
         else:
             self.fail("state_frontier_pointer_exists", "state execution_frontier pointer is missing", path=str(frontier_path))
+
+    def record_pm_start_gate(self, *, decision: str, review_report_path: str | None) -> dict[str, Any]:
+        self.state = self.load_json(self.flowpilot_root / "state.json", "state_json_present")
+        if not self.state:
+            return self.result()
+        active_route = self.state.get("active_route")
+        if self.route_id is None:
+            self.route_id = active_route if isinstance(active_route, str) else None
+        if not self.route_id:
+            self.fail("route_id_resolved", "active route could not be resolved from state or --route-id")
+            return self.result()
+        frontier_path = self.resolve_project_path(
+            self.state.get("execution_frontier"),
+            self.flowpilot_root / "execution_frontier.json",
+        )
+        self.frontier = self.load_json(frontier_path, "execution_frontier_present")
+        if not self.frontier:
+            return self.result()
+
+        rel_report = review_report_path or ".flowpilot/startup_review/latest.json"
+        report_path = self.resolve_project_path(rel_report, self.flowpilot_root / "startup_review" / "latest.json")
+        report = self.load_json(report_path, "startup_review_report_file")
+        if not report:
+            return self.result()
+
+        clean_report = (
+            report.get("ok") is True
+            and report.get("route_id") == self.route_id
+            and report.get("reviewer_decision_authority") == REVIEWER_REPORT_ONLY_AUTHORITY
+            and int(report.get("blocking_findings", -1)) == 0
+        )
+        decision = decision.lower()
+        if decision in PM_START_GATE_OPEN_DECISIONS and clean_report:
+            self.pass_("pm_can_open_start_gate", "PM may open the startup gate from the clean reviewer report")
+        elif decision in PM_START_GATE_OPEN_DECISIONS:
+            self.fail(
+                "pm_can_open_start_gate",
+                "PM cannot open startup from a blocked, stale, or wrong-authority reviewer report",
+                report_ok=report.get("ok"),
+                report_route_id=report.get("route_id"),
+                blocking_findings=report.get("blocking_findings"),
+                reviewer_decision_authority=report.get("reviewer_decision_authority"),
+            )
+            return self.result()
+        elif decision in {"return_to_worker", "blocked"}:
+            self.pass_("pm_records_non_open_decision", "PM recorded a non-open startup decision")
+        else:
+            self.fail("pm_start_gate_decision_valid", "PM start-gate decision is not recognized", decision=decision)
+            return self.result()
+
+        checked_at = now_utc()
+        decision_dir = self.flowpilot_root / "startup_pm_gate"
+        decision_dir.mkdir(parents=True, exist_ok=True)
+        latest_path = decision_dir / "latest.json"
+        rel_decision = ".flowpilot/startup_pm_gate/latest.json"
+        opened = decision in PM_START_GATE_OPEN_DECISIONS
+        gate_record = {
+            "decision_type": "startup_pm_start_gate",
+            "route_id": self.route_id,
+            "decided_at": checked_at,
+            "decision_owner": "project_manager",
+            "decision": "open" if opened else decision,
+            "based_on_review_report_path": rel_report,
+            "worker_remediation_required": not opened,
+            "remediation_items": report.get("errors", []) if not opened else [],
+            "opened_at": checked_at if opened else None,
+            "notes": "PM interpreted the human-like reviewer startup report.",
+        }
+        write_json(latest_path, gate_record)
+
+        report_status = "ready_for_pm" if clean_report else "requires_worker_remediation"
+        blocking_findings = int(report.get("blocking_findings", 0))
+        for target in (self.state, self.frontier):
+            activation = target.setdefault("startup_activation", {})
+            activation["startup_preflight_review"] = {
+                "required": True,
+                "reviewer_role": "human_like_reviewer",
+                "reviewer_decision_authority": REVIEWER_REPORT_ONLY_AUTHORITY,
+                "report_path": rel_report,
+                "report_status": report_status,
+                "blocking_findings": blocking_findings,
+                "checked_at": report.get("checked_at"),
+                "review_iteration": activation.get("startup_preflight_review", {}).get("review_iteration", 1)
+                if isinstance(activation.get("startup_preflight_review"), dict)
+                else 1,
+                "checked_user_authorization_vs_state": True,
+                "checked_route_state_frontier_consistency": True,
+                "checked_old_route_and_asset_reuse_boundary": True,
+                "checked_heartbeat_watchdog_supervisor_evidence": True,
+                "checked_background_agent_role_evidence": True,
+                "checked_shadow_route_and_residual_state": True,
+            }
+            activation["pm_start_gate"] = {
+                "required": True,
+                "decision_owner": "project_manager",
+                "decision": "open" if opened else decision,
+                "decision_path": rel_decision,
+                "based_on_review_report_path": rel_report,
+                "worker_remediation_required": not opened,
+                "review_iteration": activation["startup_preflight_review"]["review_iteration"],
+                "opened_at": checked_at if opened else None,
+            }
+            target["updated_at"] = checked_at
+
+        write_json(self.flowpilot_root / "state.json", self.state)
+        write_json(frontier_path, self.frontier)
+        result = self.result()
+        result["pm_start_gate_decision_path"] = rel_decision
+        return result
 
     def check_frontier(self) -> None:
         assert self.state is not None
@@ -455,6 +589,155 @@ class StartupGuard:
                         guard_route_id=activation.get("guard_route_id"),
                         route_id=self.route_id,
                     )
+
+    def check_reviewer_report_and_pm_start_gate(self) -> None:
+        for source, activation in (
+            ("state", self.state.get("startup_activation") if self.state else None),
+            ("frontier", self.frontier.get("startup_activation") if self.frontier else None),
+        ):
+            if not isinstance(activation, dict):
+                self.fail(
+                    f"{source}_startup_review_activation_present",
+                    f"{source} startup_activation block is missing before PM start gate check",
+                )
+                continue
+
+            review = activation.get("startup_preflight_review")
+            if not isinstance(review, dict):
+                self.fail(
+                    f"{source}_startup_review_present",
+                    f"{source} startup_preflight_review block is missing",
+                )
+                continue
+
+            if review.get("required") is True:
+                self.pass_(f"{source}_startup_review_required", f"{source} requires startup preflight review")
+            else:
+                self.fail(f"{source}_startup_review_required", f"{source} does not require startup preflight review")
+
+            if review.get("reviewer_role") == "human_like_reviewer":
+                self.pass_(f"{source}_startup_review_role", f"{source} assigns review to the human-like reviewer")
+            else:
+                self.fail(
+                    f"{source}_startup_review_role",
+                    f"{source} startup review is not assigned to the human-like reviewer",
+                    reviewer_role=review.get("reviewer_role"),
+                )
+
+            if review.get("reviewer_decision_authority") == REVIEWER_REPORT_ONLY_AUTHORITY:
+                self.pass_(
+                    f"{source}_startup_review_report_only",
+                    f"{source} records reviewer as report-only, not start-gate approver",
+                )
+            else:
+                self.fail(
+                    f"{source}_startup_review_report_only",
+                    f"{source} does not forbid reviewer start-gate approval",
+                    authority=review.get("reviewer_decision_authority"),
+                )
+
+            report_path_value = review.get("report_path")
+            report_path = self.resolve_project_path(
+                report_path_value if isinstance(report_path_value, str) else None,
+                self.flowpilot_root / "startup_review" / "latest.json",
+            )
+            report = self.load_json(report_path, f"{source}_startup_review_report_file")
+            report_ok = False
+            if report:
+                report_ok = (
+                    report.get("ok") is True
+                    and report.get("route_id") == self.route_id
+                    and report.get("reviewer_decision_authority") == REVIEWER_REPORT_ONLY_AUTHORITY
+                    and int(report.get("blocking_findings", -1)) == 0
+                )
+                if report_ok:
+                    self.pass_(f"{source}_startup_review_report_clean", f"{source} reviewer report has no startup blockers")
+                else:
+                    self.fail(
+                        f"{source}_startup_review_report_clean",
+                        f"{source} reviewer report still has startup blockers or wrong authority",
+                        report_ok=report.get("ok"),
+                        report_route_id=report.get("route_id"),
+                        blocking_findings=report.get("blocking_findings"),
+                        reviewer_decision_authority=report.get("reviewer_decision_authority"),
+                    )
+
+            checked_flags = (
+                "checked_user_authorization_vs_state",
+                "checked_route_state_frontier_consistency",
+                "checked_old_route_and_asset_reuse_boundary",
+                "checked_heartbeat_watchdog_supervisor_evidence",
+                "checked_background_agent_role_evidence",
+                "checked_shadow_route_and_residual_state",
+            )
+            missing_flags = [flag for flag in checked_flags if review.get(flag) is not True]
+            if not missing_flags:
+                self.pass_(f"{source}_startup_review_scope_checked", f"{source} reviewer scope flags are complete")
+            else:
+                self.fail(
+                    f"{source}_startup_review_scope_checked",
+                    f"{source} reviewer scope flags are incomplete",
+                    missing_flags=missing_flags,
+                )
+
+            if review.get("report_status") == "ready_for_pm" and review.get("blocking_findings") == 0 and report_ok:
+                self.pass_(f"{source}_startup_review_ready_for_pm", f"{source} reviewer report is ready for PM interpretation")
+            else:
+                self.fail(
+                    f"{source}_startup_review_ready_for_pm",
+                    f"{source} reviewer report is not ready for PM start-gate decision",
+                    report_status=review.get("report_status"),
+                    blocking_findings=review.get("blocking_findings"),
+                )
+
+            pm_gate = activation.get("pm_start_gate")
+            if not isinstance(pm_gate, dict):
+                self.fail(f"{source}_pm_start_gate_present", f"{source} pm_start_gate block is missing")
+                continue
+            if pm_gate.get("required") is True and pm_gate.get("decision_owner") == "project_manager":
+                self.pass_(f"{source}_pm_start_gate_owner", f"{source} PM owns the startup gate")
+            else:
+                self.fail(
+                    f"{source}_pm_start_gate_owner",
+                    f"{source} startup gate is not owned by the project manager",
+                    required=pm_gate.get("required"),
+                    decision_owner=pm_gate.get("decision_owner"),
+                )
+
+            decision = str(pm_gate.get("decision", "")).lower()
+            based_on = pm_gate.get("based_on_review_report_path")
+            if decision in PM_START_GATE_OPEN_DECISIONS and based_on == report_path_value:
+                self.pass_(
+                    f"{source}_pm_start_gate_opened_from_report",
+                    f"{source} PM opened the startup gate from the reviewer report",
+                    decision=decision,
+                )
+            else:
+                self.fail(
+                    f"{source}_pm_start_gate_opened_from_report",
+                    f"{source} PM has not opened the startup gate from the current reviewer report",
+                    decision=decision,
+                    based_on_review_report_path=based_on,
+                    expected_report_path=report_path_value,
+                )
+
+            decision_path_value = pm_gate.get("decision_path")
+            decision_path = self.resolve_project_path(
+                decision_path_value if isinstance(decision_path_value, str) else None,
+                self.flowpilot_root / "startup_pm_gate" / "latest.json",
+            )
+            if decision_path.exists():
+                self.pass_(f"{source}_pm_start_gate_decision_file", f"{source} PM start-gate decision evidence exists", path=str(decision_path))
+            else:
+                self.fail(f"{source}_pm_start_gate_decision_file", f"{source} PM start-gate decision evidence is missing", path=str(decision_path))
+
+            if pm_gate.get("worker_remediation_required") is False:
+                self.pass_(f"{source}_pm_start_gate_no_open_remediation", f"{source} PM did not open the gate while remediation was required")
+            else:
+                self.fail(
+                    f"{source}_pm_start_gate_no_open_remediation",
+                    f"{source} PM start gate still records required worker remediation",
+                )
 
     def startup_answer(self, activation: dict[str, Any] | None, key: str) -> str:
         if not isinstance(activation, dict):
@@ -711,6 +994,71 @@ class StartupGuard:
             "errors": [check.to_json() for check in self.checks if not check.ok],
         }
 
+    def write_review_report(self, result: dict[str, Any]) -> str:
+        assert self.state is not None
+        assert self.frontier is not None
+        evidence_dir = self.flowpilot_root / "startup_review"
+        evidence_dir.mkdir(parents=True, exist_ok=True)
+        latest_path = evidence_dir / "latest.json"
+        rel_report = ".flowpilot/startup_review/latest.json"
+        blocking_findings = len(result["errors"])
+        report = dict(result)
+        report.update(
+            {
+                "report_type": "startup_preflight_review",
+                "reviewer_role": "human_like_reviewer",
+                "reviewer_decision_authority": REVIEWER_REPORT_ONLY_AUTHORITY,
+                "scope": list(STARTUP_REVIEW_SCOPE),
+                "blocking_findings": blocking_findings,
+                "report_status": "ready_for_pm" if blocking_findings == 0 else "requires_worker_remediation",
+                "pm_decision_authority": "project_manager",
+            }
+        )
+        write_json(latest_path, report)
+
+        now = report["checked_at"]
+        for target in (self.state, self.frontier):
+            activation = target.setdefault("startup_activation", {})
+            previous_review = activation.get("startup_preflight_review")
+            previous_iteration = 0
+            if isinstance(previous_review, dict) and isinstance(previous_review.get("review_iteration"), int):
+                previous_iteration = previous_review["review_iteration"]
+            activation["startup_preflight_review"] = {
+                "required": True,
+                "reviewer_role": "human_like_reviewer",
+                "reviewer_decision_authority": REVIEWER_REPORT_ONLY_AUTHORITY,
+                "report_path": rel_report,
+                "report_status": report["report_status"],
+                "blocking_findings": blocking_findings,
+                "checked_at": now,
+                "review_iteration": previous_iteration + 1,
+                "checked_user_authorization_vs_state": True,
+                "checked_route_state_frontier_consistency": True,
+                "checked_old_route_and_asset_reuse_boundary": True,
+                "checked_heartbeat_watchdog_supervisor_evidence": True,
+                "checked_background_agent_role_evidence": True,
+                "checked_shadow_route_and_residual_state": True,
+            }
+            activation["pm_start_gate"] = {
+                "required": True,
+                "decision_owner": "project_manager",
+                "decision": "pending",
+                "decision_path": None,
+                "based_on_review_report_path": None,
+                "worker_remediation_required": blocking_findings != 0,
+                "review_iteration": previous_iteration + 1,
+                "opened_at": None,
+            }
+            target["updated_at"] = now
+
+        write_json(self.flowpilot_root / "state.json", self.state)
+        frontier_path = self.resolve_project_path(
+            self.state.get("execution_frontier"),
+            self.flowpilot_root / "execution_frontier.json",
+        )
+        write_json(frontier_path, self.frontier)
+        return rel_report
+
     def write_pass_evidence(self, result: dict[str, Any]) -> str:
         assert self.state is not None
         assert self.frontier is not None
@@ -769,7 +1117,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--record-pass",
         action="store_true",
-        help="When checks pass, write .flowpilot/startup_guard/latest.json and update state/frontier pass fields",
+        help="When checks and the PM start gate pass, write .flowpilot/startup_guard/latest.json and update state/frontier pass fields",
+    )
+    parser.add_argument(
+        "--write-review-report",
+        action="store_true",
+        help="Write .flowpilot/startup_review/latest.json as the human-like reviewer startup report without opening the PM start gate",
+    )
+    parser.add_argument(
+        "--record-pm-start-gate",
+        choices=["open", "return_to_worker", "blocked"],
+        default=None,
+        help="Record the project manager startup-gate decision from a reviewer report",
+    )
+    parser.add_argument(
+        "--review-report-path",
+        default=None,
+        help="Reviewer report path for --record-pm-start-gate; defaults to .flowpilot/startup_review/latest.json",
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     return parser.parse_args()
@@ -782,8 +1146,15 @@ def main() -> int:
         route_id=args.route_id,
         require_recorded_pass=args.require_recorded_pass,
         record_pass=args.record_pass,
+        write_review_report=args.write_review_report,
     )
-    result = guard.run()
+    if args.record_pm_start_gate:
+        result = guard.record_pm_start_gate(
+            decision=args.record_pm_start_gate,
+            review_report_path=args.review_report_path,
+        )
+    else:
+        result = guard.run()
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:

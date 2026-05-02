@@ -134,25 +134,46 @@ branches, heartbeat behavior, and any task-local behavior models.
     route mutation, completion review, or user request. Include active route,
     active node, next jumps, checks, fallback branches, continuation state, and
     acceptance delta as nearby text.
-37. Run the startup activation guard before any child-skill execution, image
+37. Run the startup activation review before any child-skill execution, image
     generation, implementation, formal route chunk, or completion work:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
+    ```
+
+    The human-like reviewer report must verify matching active route, canonical state,
+    execution frontier, current six-role crew ledger, current role memory, the
+    three explicit startup answers, stop-and-wait evidence,
+    banner-after-answers evidence,
+    live-subagent startup resolution, continuation readiness, and
+    `startup_activation` records in state and frontier. It must also check
+    user authorization against actual state, old-route and old-asset cleanup
+    when a clean start was requested, heartbeat/watchdog/global supervisor
+    cadence and type, residual route state, and shadow-route evidence.
+    The reviewer writes a report only; the reviewer does not approve startup
+    and does not open the gate. The project manager reads the report. If it
+    contains blockers, PM sends remediation items back to workers/main
+    executor and requires a new reviewer report. If it is clean, PM writes
+    `pm_start_gate` evidence opening startup from that exact report:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
+    ```
+
+    Then the controller runs:
 
     ```powershell
     python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
     ```
 
-    The guard must verify matching active route, canonical state,
-    execution frontier, current six-role crew ledger, current role memory, the
-    three explicit startup answers, stop-and-wait evidence,
-    banner-after-answers evidence,
-    live-subagent startup resolution, continuation readiness, and
-    `startup_activation` records in state and frontier. Work beyond startup is
-    illegal until the guard records `work_beyond_startup_allowed: true`. If the
-    three answers are incomplete, if the prompt did not stop for the user's
-    reply, or if answer evidence conflicts with subagent/continuation evidence,
-    stop and ask the user for the missing or corrected decision. A route-local
-    file without matching canonical state/frontier/crew/continuation evidence is
-    a shadow route and must be quarantined or superseded before continuing.
+    Work beyond startup is illegal until the guard records
+    `work_beyond_startup_allowed: true` after the PM-owned open decision. If the
+    three answers are incomplete, the prompt did not stop for the user's reply,
+    answers are inconsistent with subagent/continuation evidence, or required
+    cleanup evidence is missing, route the issue back through PM and workers. A
+    route-local file without matching canonical state/frontier/crew/continuation
+    evidence is a shadow route and must be quarantined or superseded before
+    continuing.
 38. Start the first bounded chunk only after continuation mode is known.
     Automated routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
@@ -497,14 +518,18 @@ sources, source timestamps, drift warnings, and
 `live_subagent_state_used: false`.
 
 Heartbeat, watchdog, and global supervisor are managed as an all-or-none
-bundle. Whenever FlowPilot creates or repairs a real heartbeat continuation, it
-also creates or verifies the watchdog automation and singleton global
-supervisor, then writes lifecycle evidence with the heartbeat id, watchdog
-id/task name, active state, and stop order. If any piece cannot be created,
-roll back to `manual-resume` before route execution or record a concrete
-blocker. When an automated route reaches `complete` or terminal shutdown,
-FlowPilot first writes terminal/inactive route state and unregisters this
-project's global supervisor registration lease. It then stops or deletes the
+bundle. The route heartbeat cadence is fixed at one minute. Route heartbeat
+automations use `rrule: FREQ=MINUTELY;INTERVAL=1`, and route/frontier evidence
+records `route_heartbeat_interval_minutes: 1`; this must not be confused with
+the user-level global supervisor's fixed 30-minute cadence. Whenever FlowPilot
+creates or repairs a real heartbeat continuation, it also creates or verifies
+the watchdog automation and singleton global supervisor, then writes lifecycle
+evidence with the heartbeat id, watchdog id/task name, active state, and stop
+order. If any piece cannot be created, roll back to `manual-resume` before
+route execution or record a concrete blocker. When an automated route reaches
+`complete` or terminal shutdown, FlowPilot first writes terminal/inactive route
+state and unregisters this project's global supervisor registration lease. It
+then stops or deletes the
 project watchdog, records `stopped_before_heartbeat`, writes the inactive
 lifecycle snapshot back to `state.json`, `.flowpilot/execution_frontier.json`,
 lifecycle evidence, and watchdog evidence, then stops the heartbeat

@@ -24,6 +24,8 @@
         "candidate_route_tree_generated",
         "root_route_model_checked",
         "capability_evidence_synced",
+        "startup_preflight_reviewer_report_written",
+        "pm_start_gate_opened",
         "startup_activation_guard_passed"
       ],
       "status": "pending",

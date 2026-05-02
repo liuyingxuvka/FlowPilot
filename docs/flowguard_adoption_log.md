@@ -278,3 +278,77 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   - `python simulations\run_capability_checks.py`
   - `python scripts\check_install.py`
   - `python scripts\smoke_autopilot.py`
+
+
+## flowpilot-explicit-opt-in-trigger-20260502 - Make FlowPilot skill activation explicit opt-in only
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested that FlowPilot only be used when they explicitly say to use the skill, and not because a task is substantial or a .flowpilot directory exists.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-02T17:48:17+00:00
+- Ended: 2026-05-02T17:48:17+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/capability_model.py
+- simulations/meta_model.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python -m py_compile simulations/meta_model.py simulations/run_meta_checks.py simulations/capability_model.py simulations/run_capability_checks.py`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- FlowPilot skill metadata and default activation now say opt-in only; .flowpilot is continuity state after explicit invocation, not an implicit trigger.
+- Installed global FlowPilot skill and repository source skill were updated consistently; the duplicate global backup copy was also adjusted so it no longer advertises broad automatic activation.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- No new targeted FlowGuard model was added; existing meta and capability route models were rerun because this was a narrow trigger-policy documentation and skill-metadata change.
+
+### Next Actions
+- Future installs should preserve the opt-in-only FlowPilot description unless the user explicitly asks to restore implicit activation.
+
+
+## flowpilot-startup-review-pm-gate-20260502 - PM-owned startup gate with reviewer report
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that the human-like reviewer should audit startup evidence and report to PM, while PM owns the startup gate and sends blockers back to workers until rechecked.
+- Status: completed
+- Skill decision: use_flowguard
+- Models updated: `simulations/startup_guard_model.py`, `simulations/meta_model.py`, `simulations/capability_model.py`.
+
+### Modeled Risks
+- Reviewer directly opens the startup gate.
+- PM opens the gate without a clean reviewer report.
+- PM opens while reviewer blockers are still assigned for worker remediation.
+- Worker remediation is accepted without reviewer recheck.
+- A clean-start request proceeds while old route or old asset cleanup evidence is missing.
+
+### Commands
+- `python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\meta_model.py simulations\capability_model.py simulations\run_startup_guard_checks.py simulations\run_meta_checks.py simulations\run_capability_checks.py`
+- `python simulations\run_startup_guard_checks.py`
+- `python simulations\run_meta_checks.py`
+- `python simulations\run_capability_checks.py`
+- `python scripts\check_install.py`
+- `python scripts\flowpilot_startup_guard.py --help`
+
+### Findings
+- Startup now has three separate records: reviewer report, PM start-gate decision, and final startup guard pass.
+- `--write-review-report` writes `.flowpilot/startup_review/latest.json` without opening the gate.
+- `--record-pm-start-gate open` records PM ownership from the current clean report.
+- `--record-pass` requires the PM-owned open decision before writing `work_beyond_startup_allowed: true`.
+- The startup guard model detects the new bypass hazards; meta and capability models pass with no invariant failures, missing labels, stuck states, or nonterminating components.
+
+### Skipped Steps
+- Did not sync the installed Codex skill copy because another agent owns the FlowPilot trigger-condition changes in the same installed skill surface.

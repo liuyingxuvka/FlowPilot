@@ -10,7 +10,7 @@ its side effect is recorded.
 
 ## FlowPilot Startup
 
-1. Enable FlowPilot by default.
+1. Enable FlowPilot only after explicit user invocation.
 2. Offer run-mode selection and record the selected mode or fallback reason.
 3. Run self-interrogation:
    - What must be true before completion?

@@ -44,10 +44,11 @@ for review.
    parent node resumes.
 17. Run child-skill conformance checks when a node invokes another skill.
 18. Probe host continuation capability. If real wakeups are supported, create
-   the all-or-none automated bundle: heartbeat, paired watchdog, and singleton
-   global supervisor at the fixed 30-minute cadence. Each heartbeat refreshes
-   the project registration lease. If unsupported, record `manual-resume` and
-   do not create any of those automations.
+   the all-or-none automated bundle: a one-minute route heartbeat
+   (`FREQ=MINUTELY;INTERVAL=1`), paired watchdog, and singleton global
+   supervisor at the fixed 30-minute cadence. Each heartbeat refreshes the
+   project registration lease. If unsupported, record `manual-resume` and do
+   not create any of those automations.
 19. Write `.flowpilot/execution_frontier.json` from the checked route before
    syncing the visible Codex plan or advancing work. Each PM resume decision
    records a completion-oriented runway and the main executor replaces the
@@ -58,17 +59,33 @@ for review.
 20. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
    current route, crew, role memory, live-subagent startup decision,
-   continuation, and visible-plan evidence, then run:
+   continuation, and visible-plan evidence, then write the reviewer startup
+   report:
+
+   ```powershell
+   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --write-review-report --json
+   ```
+
+   The reviewer reports facts and blockers only. PM reads the report, returns
+   blockers to workers when needed, and opens `pm_start_gate` only from the
+   current clean report:
+
+   ```powershell
+   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pm-start-gate open --json
+   ```
+
+   Then run:
 
    ```powershell
    python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json
    ```
 
-   Work beyond startup is blocked until the guard passes and records
-   `work_beyond_startup_allowed: true`. A route-local file without matching
-   canonical state/frontier/crew/continuation evidence, or a startup record
-   with neither live agents nor explicit fallback authorization, is blocked and
-   must be repaired before continuing.
+   Work beyond startup is blocked until the PM-owned gate is open and the
+   guard records `work_beyond_startup_allowed: true`. A route-local file
+   without matching canonical state/frontier/crew/continuation evidence, a
+   startup record with neither live agents nor explicit fallback
+   authorization, or missing requested old-route cleanup is blocked and must be
+   repaired before continuing.
 21. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
    collect all effective node gates and child-skill gates, resolve generated

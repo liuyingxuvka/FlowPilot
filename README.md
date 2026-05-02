@@ -146,11 +146,14 @@ start.
 10. Discover required child skills and extract their gate manifests.
 11. Build and check the process route with FlowGuard.
 12. Build and check product/function models where behavior needs modeling.
-13. Pass the startup activation guard so state, frontier, route, crew, role
-    memory, and continuation evidence agree before child work starts.
-14. Execute bounded chunks with verification before checkpoint.
-15. Mutate the route when new facts invalidate the current path.
-16. Complete only after the final route-wide gate ledger has zero unresolved
+13. Have the human-like reviewer write the startup preflight report, then have
+    the project manager open or return the startup gate from that report.
+14. Pass the startup activation guard so state, frontier, route, crew, role
+    memory, continuation evidence, reviewer report, and PM start-gate decision
+    agree before child work starts.
+15. Execute bounded chunks with verification before checkpoint.
+16. Mutate the route when new facts invalidate the current path.
+17. Complete only after the final route-wide gate ledger has zero unresolved
     obligations and the required review/PM approvals are recorded.
 
 ## Child Skills And Companion Capabilities

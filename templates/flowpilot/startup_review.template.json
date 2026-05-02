@@ -1,0 +1,20 @@
+{
+  "report_type": "startup_preflight_review",
+  "route_id": "<route-id>",
+  "checked_at": "<iso-8601-timestamp>",
+  "reviewer_role": "human_like_reviewer",
+  "reviewer_decision_authority": "report_only_no_start_approval",
+  "pm_decision_authority": "project_manager",
+  "report_status": "<ready_for_pm|requires_worker_remediation>",
+  "blocking_findings": 0,
+  "scope": [
+    "user_authorization_vs_state",
+    "route_state_frontier_consistency",
+    "old_route_and_asset_reuse_boundary",
+    "heartbeat_watchdog_supervisor_evidence",
+    "background_agent_role_evidence",
+    "shadow_route_and_residual_state"
+  ],
+  "checks": [],
+  "errors": []
+}

@@ -130,24 +130,44 @@ long-form public explanation lives in `docs/protocol.md`.
     route mutation, completion review, or user request. Include active route,
     active node, next jumps, checks, fallback branches, continuation state, and
     acceptance delta as nearby text.
-37. Run the startup activation guard before any child-skill execution, image
+37. Run the startup activation review before any child-skill execution, image
     generation, implementation, formal route chunk, or completion work:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
+    ```
+
+    The human-like reviewer report must verify matching active route, canonical state,
+    execution frontier, current six-role crew ledger, current role memory, the
+    three explicit startup answers, stop-and-wait evidence,
+    banner-after-answers evidence,
+    live-subagent startup resolution, continuation readiness, and
+    `startup_activation` records in state and frontier. It must also check
+    user authorization against actual state, old-route and old-asset cleanup
+    when a clean start was requested, heartbeat/watchdog/global supervisor
+    cadence and type, residual route state, and shadow-route evidence.
+    The reviewer writes a report only; the reviewer does not approve startup
+    and does not open the gate. The project manager reads the report. If it
+    contains blockers, PM sends remediation items back to workers/main
+    executor and requires a new reviewer report. If it is clean, PM writes
+    `pm_start_gate` evidence opening startup from that exact report:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
+    ```
+
+    Then the controller runs:
 
     ```powershell
     python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
     ```
 
-    The guard must verify matching active route, canonical state,
-    execution frontier, current six-role crew ledger, current role memory, the
-    three explicit startup answers, stop-and-wait evidence,
-    banner-after-answers evidence,
-    live-subagent startup resolution, continuation readiness, and
-    `startup_activation` records in state and frontier. Work beyond startup is
-    illegal until the guard records `work_beyond_startup_allowed: true`. If
+    Work beyond startup is illegal until the guard records
+    `work_beyond_startup_allowed: true` after the PM-owned open decision. If
     the three answers are incomplete, the prompt did not stop for the user's
-    reply, or answers are inconsistent with subagent/continuation evidence,
-    stop and ask the user for that decision. A route-local file
-    without matching canonical
+    reply, answers are inconsistent with subagent/continuation evidence, or
+    required cleanup evidence is missing, route the issue back through PM and
+    workers. A route-local file without matching canonical
     state/frontier/crew/continuation evidence is a shadow route and must be
     quarantined or superseded before continuing.
 38. Start only the first chunk whose continuation mode is known. Automated
@@ -485,7 +505,11 @@ sources, source timestamps, drift warnings, and
 `live_subagent_state_used: false`.
 
 Heartbeat, watchdog, and global supervisor are an all-or-none lifecycle bundle
-when the host supports real continuation. Creating or repairing a real
+when the host supports real continuation. The route heartbeat cadence is fixed
+at one minute: route heartbeat automations use
+`rrule: FREQ=MINUTELY;INTERVAL=1`, and route/frontier evidence records
+`route_heartbeat_interval_minutes: 1`. This is distinct from the user-level
+global supervisor's fixed 30-minute cadence. Creating or repairing a real
 heartbeat continuation for a formal long-running route also creates or verifies
 the external watchdog automation, verifies the singleton global supervisor,
 and records the pairing. If any piece cannot be created, roll back to
@@ -555,9 +579,9 @@ Required:
   challenge;
 - user flow diagram before route execution and visible node roadmap before
   formal chunks;
-- continuation readiness before behavior-bearing work: real heartbeat schedule
-  and heartbeat health when supported, or manual-resume packet freshness when
-  unsupported;
+- continuation readiness before behavior-bearing work: real one-minute route
+  heartbeat schedule and heartbeat health when supported, or manual-resume
+  packet freshness when unsupported;
 - execution frontier and visible Codex plan sync before behavior-bearing work;
 - FlowGuard dependency, process design, and model checks before
   behavior-bearing work;

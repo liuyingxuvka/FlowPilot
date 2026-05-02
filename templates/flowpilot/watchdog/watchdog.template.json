@@ -3,6 +3,8 @@
   "checked_at": "<iso-8601-timestamp>",
   "root": "<project-root>",
   "threshold_minutes": 10,
+  "route_heartbeat_interval_minutes": 1,
+  "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
   "ok": false,
   "decision": "<healthy|busy_not_stale|post_busy_grace|stale_official_reset_required|stale_official_reset_invoked|stale_official_reset_failed|inactive_terminal_route|config_error|not_created_unsupported_host>",
   "boundary": "The watchdog exists only when the host supports real continuation. In automated mode it can detect stale FlowPilot heartbeat evidence and require an official Codex app automation reset. It does not edit automation files directly, reset is not proof of recovery until a new heartbeat appears, and terminal shutdown is not closed until inactive lifecycle state is written back to local FlowPilot evidence. Reset decisions trust state.json, latest heartbeat evidence, and busy_lease.json only; execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported watchdog source. In manual-resume mode no watchdog/global-supervisor automation is created.",
@@ -33,6 +35,7 @@
   "lifecycle": {
     "paired_with_heartbeat": true,
     "heartbeat_automation_id": "<heartbeat-automation-id-or-null>",
+    "heartbeat_interval_minutes": 1,
     "watchdog_automation_id": "<watchdog-automation-id-or-task-name>",
     "watchdog_automation_kind": "<windows_task_scheduler|codex_cron|other>",
     "created_with_heartbeat": false,
