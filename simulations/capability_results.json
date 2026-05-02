@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 91580,
+    "edge_count": 91576,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -137,7 +137,7 @@
       "pm_resume_completion_runway_recorded",
       "pm_returns_startup_blockers_to_worker",
       "pm_runway_synced_to_visible_plan",
-      "pm_start_gate_opened_from_review_report",
+      "pm_start_gate_opened_from_fact_report",
       "process_flowguard_officer_spawned_or_restored",
       "product_flowguard_officer_spawned_or_restored",
       "product_function_acceptance_matrix_written",
@@ -162,11 +162,10 @@
       "sidecar_scope_checked",
       "six_agent_crew_policy_written",
       "six_live_subagents_started",
-      "startup_activation_guard_passed",
       "startup_background_agents_answered",
       "startup_dialog_stopped_for_user_answers",
-      "startup_preflight_reviewer_report_blocked",
-      "startup_preflight_reviewer_report_clean",
+      "startup_preflight_reviewer_fact_report_blocked",
+      "startup_preflight_reviewer_fact_report_clean",
       "startup_scheduled_continuation_answered",
       "startup_three_questions_asked",
       "startup_worker_remediation_completed",
@@ -198,29 +197,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 86338,
+    "state_count": 86334,
     "terminal_counts": {
       "blocked": 546,
       "complete": 546
     }
   },
   "loop": {
-    "edge_count": 91580,
+    "edge_count": 91576,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 86338,
+    "state_count": 86334,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 91580,
+    "edge_count": 91576,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 86338,
+    "state_count": 86334,
     "status": "OK",
     "success_state_count": 546
   }

@@ -21,7 +21,8 @@ Machine-readable files are the source of truth:
 - `watchdog/events.jsonl`
 - `lifecycle/latest.json`
 - `lifecycle/events.jsonl`
-- `startup_guard/latest.json`
+- `startup_review/latest.json`
+- `startup_pm_gate/latest.json`
 - user-level `$CODEX_HOME/flowpilot/watchdog/registry.json`
 - user-level `$CODEX_HOME/flowpilot/watchdog/projects/*/latest.json`
 - user-level `$CODEX_HOME/flowpilot/watchdog/supervisor/latest.json`
@@ -69,16 +70,15 @@ chunks until this block and the matching frontier block show:
   single-agent six-role continuity;
 - `continuation_ready: true`, either as an automated heartbeat/watchdog/global
   bundle or explicit `manual-resume` no-automation evidence;
-- `startup_preflight_review` records the human-like reviewer's report-only
-  startup audit, including user authorization versus actual state,
-  route/state/frontier consistency, old-route or old-asset cleanup when
-  requested, heartbeat/watchdog/global-supervisor evidence, background-agent
-  role evidence, and shadow or residual route state;
+- `startup_preflight_review` records the human-like reviewer's factual startup
+  audit, including user authorization versus actual state, route/state/frontier
+  consistency, old-route or old-asset cleanup when requested, real Codex
+  automation records, Windows scheduled tasks, global watchdog registry,
+  latest watchdog evidence, heartbeat/watchdog/global-supervisor evidence,
+  background-agent role evidence, and shadow or residual route state;
 - `pm_start_gate` records the project manager's decision from the current
   reviewer report. The reviewer cannot open this gate. If the report has
   blockers, PM sends remediation back to workers and requires a recheck;
-- `startup_guard_passed: true`;
-- `startup_guard_evidence_path` points to `startup_guard/latest.json`;
 - `work_beyond_startup_allowed: true`;
 - `shadow_route_detected: false`.
 
@@ -90,7 +90,7 @@ chunks until this block and the matching frontier block show:
 - `dialog_stopped_for_user_answers: true` records that the assistant response
   ended immediately after asking the three questions and no startup work ran
   until the user's later reply;
-- `explicit_user_answer_recorded: true` before startup guard pass;
+- `explicit_user_answer_recorded: true` before the PM can open startup;
 - `answer_source`: `user_reply` or `user_reply_after_prompt`; values such as
   `agent_inferred`, `default`, `prior_route`, or `single_message_invocation`
   are invalid;
@@ -108,11 +108,11 @@ If any answer is absent, ambiguous, or `pause`, startup remains
 imagegen, implementation, fallback execution, subagent startup, heartbeat probe,
 heartbeat job, or manual-resume claim may proceed. If the questions were asked
 but the assistant did not stop and wait for the user's reply, the answer
-evidence is invalid and the startup guard must fail.
+evidence is invalid and the PM must not open startup.
 
 `startup_activation.startup_preflight_review` is written by the human-like
-reviewer through the startup guard's review-report mode. It is not an approval
-object. It must include:
+reviewer after direct factual checks. It is not an approval object and no
+runtime startup-check script writes it. It must include:
 
 - `required: true`;
 - `reviewer_role: human_like_reviewer`;
@@ -122,7 +122,12 @@ object. It must include:
   `requires_worker_remediation`;
 - `blocking_findings`;
 - scope flags for user authorization, route consistency, cleanup boundary,
-  continuation evidence, background-agent roles, and shadow/residual state.
+  continuation evidence, real Codex automation records, Windows scheduled
+  tasks, global watchdog registry, watchdog latest evidence, background-agent
+  roles, and shadow/residual state;
+- required facts for route heartbeat interval 1 minute, route heartbeat RRULE
+  `FREQ=MINUTELY;INTERVAL=1`, watchdog kind `windows_task_scheduler`, and
+  global supervisor cadence 30 minutes.
 
 `startup_activation.pm_start_gate` is written by the project manager after
 reading the reviewer report. It must include:
@@ -149,7 +154,7 @@ quarantined or superseded before work continues.
 - `required_by_default: true`;
 - `decision`: `live_agents_started`, `live_agents_resumed`,
   `single_agent_role_continuity_authorized`, or `blocked`;
-- `user_decision_recorded: true` before the startup guard can pass;
+- `user_decision_recorded: true` before the PM can open startup;
 - `user_authorized_live_start: true`, `live_start_attempted: true`, and
   `live_agents_active >= 6` for the live-agent path;
 - `single_agent_role_continuity_authorized: true` for the fallback path;
@@ -208,6 +213,20 @@ between "the role is recovered and authorized" and "a live subagent process is
 currently running"; when the latter is unavailable, the fallback is valid only
 after explicit user authorization for single-agent role continuity.
 
+## Material Intake Packet
+
+`material_intake_packet.json` is the main-executor material inventory and
+source-quality packet. The reviewer sufficiency block must show direct source
+inspection, not report-only acceptance:
+
+- `reviewer_fact_check_required: true`;
+- `direct_material_sources_checked` and `direct_material_samples_checked`;
+- `packet_matches_checked_sources`: `yes`, `no`, or `partial`;
+- `worker_report_only: false`.
+
+Reviewer approval is invalid when the packet only summarizes worker claims
+without direct material-source checks.
+
 ## Product Function Architecture
 
 `product_function_architecture.json` is the PM-owned pre-contract product
@@ -229,7 +248,9 @@ It records:
   failure cases, checks, and evidence paths;
 - project-manager synthesis evidence;
 - product FlowGuard officer modelability approval or block;
-- human-like reviewer usefulness challenge result.
+- human-like reviewer usefulness challenge result, including direct checks
+  against the user request, inspected material sources, and expected workflow
+  reality. `human_like_reviewer_worker_report_only` must be false.
 
 The acceptance contract freezes from this artifact. Later product-function
 models check and refine coverage, but they do not substitute for the
@@ -332,21 +353,17 @@ until every current child-skill gate is approved by its assigned role or
 blocked/waived with evidence from the responsible role.
 
 Before any child-skill, imagegen, implementation, or formal route chunk starts,
-write the reviewer report, record the PM start-gate decision from that report,
-then record the final guard pass:
+the human-like reviewer personally checks `state.json`,
+`execution_frontier.json`, `routes/<active-route>/flow.json`,
+`crew_ledger.json`, all role memory packets, continuation evidence, Codex
+automation records, Windows scheduled tasks, global watchdog registry, latest
+watchdog evidence, and requested cleanup evidence. The reviewer then writes
+`startup_review/latest.json` as a factual report.
 
-```powershell
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
-```
-
-The final command passes only when `state.json`, `execution_frontier.json`,
-`routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory
-packets, continuation evidence, a clean reviewer report, and a PM-owned open
-decision agree on the same active route. With `--record-pass`, it writes
-`startup_guard/latest.json` and updates state plus frontier so downstream work
-can check `work_beyond_startup_allowed`.
+The PM reads the current factual report. If it has blockers, PM returns the
+work to workers and requires a new review after remediation. If it is clean,
+PM writes `startup_pm_gate/latest.json` and updates state plus frontier so
+downstream work can check `work_beyond_startup_allowed`.
 
 ## Final Route-Wide Gate Ledger
 

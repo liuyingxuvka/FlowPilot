@@ -113,7 +113,12 @@
       "checked_old_route_and_asset_reuse_boundary": false,
       "checked_heartbeat_watchdog_supervisor_evidence": false,
       "checked_background_agent_role_evidence": false,
-      "checked_shadow_route_and_residual_state": false
+      "checked_shadow_route_and_residual_state": false,
+      "checked_real_codex_automation_records": false,
+      "checked_windows_scheduled_tasks": false,
+      "checked_global_watchdog_registry": false,
+      "checked_watchdog_latest_evidence": false,
+      "factual_evidence_checked": false
     },
     "pm_start_gate": {
       "required": true,
@@ -125,12 +130,7 @@
       "review_iteration": 0,
       "opened_at": null
     },
-    "startup_review_command": "python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --write-review-report --json",
-    "startup_guard_command": "python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json",
-    "startup_guard_passed": false,
-    "startup_guard_checked_at": null,
-    "startup_guard_evidence_path": null,
-    "guard_route_id": null,
+    "startup_review_workflow": "human-like reviewer independently checks real facts and writes .flowpilot/startup_review/latest.json; no third startup opener or runtime startup-check script exists",
     "shadow_route_detected": false,
     "work_beyond_startup_allowed": false
   },
@@ -388,9 +388,9 @@
     "product_function_architecture_approved_before_contract_freeze",
     "continuation_mode_checked",
     "continuation_resume_ready_checked",
-    "startup_preflight_reviewer_report_written",
+    "startup_preflight_reviewer_fact_report_written",
     "pm_start_gate_opened",
-    "startup_activation_guard_passed",
+    "work_beyond_startup_allowed_by_pm",
     "startup_questions_answered_before_banner",
     "startup_question_prompt_stopped_for_user_reply",
     "unfinished_current_node_checked",

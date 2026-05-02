@@ -157,10 +157,11 @@ class State:
     single_agent_role_continuity_authorized: bool = False
     startup_preflight_review_report_written: bool = False
     startup_preflight_review_blocking_findings: bool = False
+    startup_reviewer_fact_evidence_checked: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
     pm_start_gate_opened: bool = False
-    startup_activation_guard_passed: bool = False
+    work_beyond_startup_allowed: bool = False
     external_watchdog_policy_recorded: bool = False
     external_watchdog_busy_lease_policy_recorded: bool = False
     external_watchdog_busy_lease_autowrap_policy_recorded: bool = False
@@ -556,6 +557,7 @@ def _startup_pm_gate_ready(state: State) -> bool:
     return (
         state.startup_preflight_review_report_written
         and not state.startup_preflight_review_blocking_findings
+        and state.startup_reviewer_fact_evidence_checked
         and state.pm_start_gate_opened
     )
 
@@ -634,7 +636,7 @@ def _route_ready(state: State) -> bool:
         and state.visible_user_flow_diagram_emitted
         and _live_subagent_startup_resolved(state)
         and _startup_pm_gate_ready(state)
-        and state.startup_activation_guard_passed
+        and state.work_beyond_startup_allowed
         and state.issue == "none"
         and state.high_risk_gate != "pending"
         and state.chunk_state == "none"
@@ -730,10 +732,11 @@ class AutopilotStep:
         "single_agent_role_continuity_authorized",
         "startup_preflight_review_report_written",
         "startup_preflight_review_blocking_findings",
+        "startup_reviewer_fact_evidence_checked",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
         "pm_start_gate_opened",
-        "startup_activation_guard_passed",
+        "work_beyond_startup_allowed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
         "external_watchdog_busy_lease_autowrap_policy_recorded",
@@ -922,10 +925,11 @@ class AutopilotStep:
         "single_agent_role_continuity_authorized",
         "startup_preflight_review_report_written",
         "startup_preflight_review_blocking_findings",
+        "startup_reviewer_fact_evidence_checked",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
         "pm_start_gate_opened",
-        "startup_activation_guard_passed",
+        "work_beyond_startup_allowed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
         "external_watchdog_busy_lease_autowrap_policy_recorded",
@@ -1895,10 +1899,11 @@ class AutopilotStep:
         ):
             yield _step(
                 state,
-                label="startup_preflight_reviewer_report_blocked",
-                action="human-like reviewer reports startup blockers to PM without opening the start gate",
+                label="startup_preflight_reviewer_fact_report_blocked",
+                action="human-like reviewer independently checks startup facts and reports blockers to PM without opening the start gate",
                 startup_preflight_review_report_written=True,
                 startup_preflight_review_blocking_findings=True,
+                startup_reviewer_fact_evidence_checked=True,
                 active_node="pm_interprets_startup_review",
             )
             return
@@ -1936,6 +1941,7 @@ class AutopilotStep:
                 pm_returned_startup_blockers=False,
                 startup_preflight_review_report_written=False,
                 startup_preflight_review_blocking_findings=False,
+                startup_reviewer_fact_evidence_checked=False,
                 active_node="startup_preflight_review",
             )
             return
@@ -1955,10 +1961,11 @@ class AutopilotStep:
         ):
             yield _step(
                 state,
-                label="startup_preflight_reviewer_report_clean",
-                action="human-like reviewer rechecks remediated startup evidence and writes a clean report for PM",
+                label="startup_preflight_reviewer_fact_report_clean",
+                action="human-like reviewer independently checks user answers, real route state, real heartbeat cadence, Windows watchdog task, global supervisor, cleanup boundary, crew evidence, and writes a clean fact report for PM",
                 startup_preflight_review_report_written=True,
                 startup_preflight_review_blocking_findings=False,
+                startup_reviewer_fact_evidence_checked=True,
                 active_node="pm_interprets_startup_review",
             )
             return
@@ -1971,31 +1978,10 @@ class AutopilotStep:
         ):
             yield _step(
                 state,
-                label="pm_start_gate_opened_from_review_report",
-                action="project manager opens the startup gate from the current clean reviewer report",
+                label="pm_start_gate_opened_from_fact_report",
+                action="project manager opens startup and allows work beyond startup from the current clean factual reviewer report",
                 pm_start_gate_opened=True,
-                active_node="run_startup_activation_guard",
-            )
-            return
-
-        if (
-            state.route_version > 0
-            and state.route_checked
-            and state.markdown_synced
-            and state.execution_frontier_written
-            and state.codex_plan_synced
-            and state.user_flow_diagram_refreshed
-            and state.visible_user_flow_diagram_emitted
-            and _live_subagent_startup_resolved(state)
-            and _startup_pm_gate_ready(state)
-            and not state.startup_activation_guard_passed
-            and state.issue == "none"
-        ):
-            yield _step(
-                state,
-                label="startup_activation_guard_passed",
-                action="run startup hard gate only after reviewer report and PM-owned start-gate opening",
-                startup_activation_guard_passed=True,
+                work_beyond_startup_allowed=True,
                 active_node="ready_for_chunk",
             )
             return
@@ -3445,8 +3431,8 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         return InvariantResult.fail("final report emitted before execution frontier and Codex plan sync")
     if not state.visible_user_flow_diagram_emitted:
         return InvariantResult.fail("final report emitted before visible user flow diagram")
-    if not state.startup_activation_guard_passed:
-        return InvariantResult.fail("final report emitted before startup activation guard pass")
+    if not state.work_beyond_startup_allowed:
+        return InvariantResult.fail("final report emitted before PM opened work beyond startup from a factual reviewer report")
     if not (
         state.completion_self_interrogation_done
         and state.high_value_work_review == "exhausted"
@@ -3570,16 +3556,21 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         return InvariantResult.fail(
             "formal route or work started before candidate tree plus root process/product/strict-review model checks"
         )
-    if formal_execution_started and not state.startup_activation_guard_passed:
+    if formal_execution_started and not state.work_beyond_startup_allowed:
         return InvariantResult.fail(
-            "formal execution started before the startup activation hard gate passed"
+            "formal execution started before PM allowed work beyond startup from a factual reviewer report"
+        )
+    if state.startup_preflight_review_report_written and not state.startup_reviewer_fact_evidence_checked:
+        return InvariantResult.fail(
+            "startup reviewer report was written without independent fact evidence checks"
         )
     if state.pm_start_gate_opened and not (
         state.startup_preflight_review_report_written
         and not state.startup_preflight_review_blocking_findings
+        and state.startup_reviewer_fact_evidence_checked
     ):
         return InvariantResult.fail(
-            "PM start gate opened before a clean reviewer startup report"
+            "PM start gate opened before a clean factual reviewer startup report"
         )
     if state.pm_start_gate_opened and state.pm_returned_startup_blockers:
         return InvariantResult.fail(
@@ -3591,22 +3582,23 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         and not (
             state.startup_preflight_review_report_written
             and not state.startup_preflight_review_blocking_findings
+            and state.startup_reviewer_fact_evidence_checked
         )
     ):
         return InvariantResult.fail(
             "startup worker remediation was not rechecked by reviewer before PM gate opening"
         )
-    if state.startup_activation_guard_passed and not _startup_questions_complete(state):
+    if state.work_beyond_startup_allowed and not _startup_questions_complete(state):
         return InvariantResult.fail(
-            "startup activation hard gate passed before the three startup answers were recorded"
+            "PM allowed work beyond startup before the three startup answers were recorded"
         )
-    if state.startup_activation_guard_passed and not _live_subagent_startup_resolved(state):
+    if state.work_beyond_startup_allowed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(
-            "startup activation hard gate passed before live subagents or explicit single-agent fallback were resolved"
+            "PM allowed work beyond startup before live subagents or explicit single-agent fallback were resolved"
         )
-    if state.startup_activation_guard_passed and not _startup_pm_gate_ready(state):
+    if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
         return InvariantResult.fail(
-            "startup activation hard gate passed before reviewer report and PM-owned start-gate opening"
+            "work beyond startup was allowed before reviewer fact report and PM-owned start-gate opening"
         )
     return InvariantResult.pass_()
 

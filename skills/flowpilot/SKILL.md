@@ -147,27 +147,24 @@ prove that the same active nonterminal route is current in:
 - continuation evidence, either automated heartbeat/watchdog/global supervisor
   readiness or explicit `manual-resume` no-automation evidence.
 
-First write the human-like reviewer's startup preflight report:
+The human-like reviewer must personally check facts and write
+`.flowpilot/startup_review/latest.json`. This is not approval and it is not a
+copy of worker claims. The report must include the actual evidence sources
+checked: user answers, current state/frontier/route, crew and role memory,
+old-route/old-asset cleanup boundary, real Codex automation records, Windows
+scheduled watchdog tasks when on Windows, global watchdog registry/supervisor
+records, and latest watchdog evidence.
 
-```powershell
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
-```
-
-The reviewer report is factual evidence only. The reviewer checks the startup
-state and reports findings to the project manager; the reviewer does not
-approve startup and does not open the start gate. The project manager reads
-that report, either sends concrete remediation items back to the workers/main
-executor or writes a PM start-gate decision that opens startup from the current
-review report. Only after PM opens the gate may the controller run:
-
-```powershell
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
-```
+The project manager reads that factual report, either sends concrete
+remediation items back to the workers/main executor or writes
+`.flowpilot/startup_pm_gate/latest.json` opening startup from the current clean
+reviewer report.
 
 `startup_activation.work_beyond_startup_allowed` must be true in state and
-frontier before work beyond startup, and that flag may be written only after a
-clean reviewer report plus a PM-owned open decision. `startup_activation`
-must include `startup_preflight_review` and `pm_start_gate` blocks.
+frontier before work beyond startup, and that flag may be written only by the
+PM start-gate decision after a clean factual reviewer report.
+`startup_activation` must include `startup_preflight_review` and
+`pm_start_gate` blocks.
 `startup_activation.startup_questions`
 must show that the three-question prompt was asked before the banner, that the
 assistant stopped to wait for the user's reply, and that explicit answers for
@@ -374,35 +371,23 @@ all three in one compact sentence.
     the recorded stop-and-wait state, the three explicit startup answers,
     banner evidence, current route, execution frontier, crew ledger, role
     memory, live-subagent startup decision, continuation, and visible plan
-    evidence. The human-like reviewer then writes the startup preflight report:
-
-    ```powershell
-    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
-    ```
-
-    The report checks user authorization against actual state, including
-    background-agent count and role identity, heartbeat/watchdog/global
-    supervisor cadence and type, route/state/frontier consistency, residual or
-    shadow route state, and any user-requested clean-start or old-asset
-    cleanup. The reviewer does not output approval and cannot open startup.
+    evidence. The human-like reviewer then writes
+    `.flowpilot/startup_review/latest.json` from direct fact checks. The report
+    checks user authorization against actual state, including background-agent
+    count and role identity, the real route heartbeat automation at one minute,
+    the external Windows watchdog task, the singleton global supervisor at
+    thirty minutes, global registry registration, route/state/frontier
+    consistency, residual or shadow route state, latest watchdog evidence, and
+    any user-requested clean-start or old-asset cleanup. The reviewer does not
+    output approval and cannot open startup.
     The project manager reads the report. If it has blocking findings, the PM
     sends concrete remediation items back to the workers/main executor and
     requires another reviewer report after repair. If the report has no
     blockers, the PM writes `pm_start_gate` evidence opening startup from that
-    exact report:
-
-    ```powershell
-    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
-    ```
-
-    Only then run:
-
-    ```powershell
-    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
-    ```
+    exact factual report and sets `work_beyond_startup_allowed: true`.
 
     Do not run child skills, imagegen, implementation, formal route chunks, or
-    completion work until the guard records
+    completion work until the PM records
     `work_beyond_startup_allowed: true`. If the three startup answers are not
     complete, if the prompt did not stop for the user's reply, if the banner was
     emitted before the answers, if live-agent evidence conflicts with the
@@ -450,12 +435,13 @@ The main executor owns the descriptive intake and writes
   reason and the risk of proceeding without them.
 
 The human-like reviewer must review this packet before the project manager uses
-it. The reviewer asks whether the packet is PM-ready: obvious sources are not
-missing, large tables or documents were sampled or scoped honestly, summaries
-are specific rather than decorative, contradictions and uncertainty are visible,
-and the packet would not mislead route design. A reviewer block returns the
-route to material intake; PM approval cannot override a current material
-sufficiency gap.
+it. The reviewer must open or sample the actual materials behind the packet,
+not only read the worker's packet. The reviewer asks whether the packet is
+PM-ready: obvious sources are not missing, large tables or documents were
+sampled or scoped honestly, summaries are specific rather than decorative,
+contradictions and uncertainty are visible, and the packet would not mislead
+route design. A reviewer block returns the route to material intake; PM
+approval cannot override a current material sufficiency gap.
 
 After reviewer approval, the project manager writes
 `.flowpilot/pm_material_understanding.json`. It records the PM's interpretation
@@ -498,9 +484,11 @@ contain:
 The product FlowGuard officer approves or blocks modelability and coverage:
 whether the architecture can be represented as product-function models and
 checked without hand-waving. The human-like reviewer separately challenges
-usefulness and completeness: unnecessary features, missing high-value
-workflow support, confusing display choices, weak default states, failure
-states, and gaps between what users need and what the product exposes.
+usefulness and completeness by comparing the PM architecture against the user
+request, inspected materials, and expected workflow reality: unnecessary
+features, missing high-value workflow support, confusing display choices, weak
+default states, failure states, and gaps between what users need and what the
+product exposes.
 
 The acceptance contract freezes only after this package exists and both
 review slices are resolved. Later product-function models refine and verify
@@ -580,6 +568,33 @@ role memory packet before checkpoint or route advancement. Store compact
 structured memory, not raw full chat transcripts. Full transcripts may be kept
 only as optional evidence when useful; they are not the authoritative recovery
 state.
+
+## Reviewer Fact-Check Baseline
+
+The human-like reviewer is a factual reviewer, not a report reader. For every
+reviewer-owned gate, the reviewer may use worker reports as pointers, but must
+also inspect the underlying facts appropriate to that gate before writing a
+pass, block, challenge, or sufficiency decision.
+
+Reviewer fact checks must name what was directly checked:
+
+- source artifacts or material samples for material sufficiency;
+- user request, inspected materials, and expected workflow reality for
+  product-function architecture usefulness;
+- live startup state, route, frontier, role memory, automation records, Windows
+  scheduled task evidence, global supervisor, watchdog evidence, and cleanup
+  boundary for startup;
+- loaded child-skill source instructions, mapped gates, evidence plan, actual
+  child-skill outputs, and output/evidence match for child-skill gates;
+- actual product behavior, rendered output, logs, screenshots, interactions, or
+  backend effects for implementation inspections;
+- current route/frontier/ledger/evidence files and delivered product for final
+  backward replay.
+
+A reviewer decision that cites only a worker/PM summary without direct
+fact-check evidence is invalid. PM decisions may rely on reviewer reports only
+after those reports identify the factual sources checked and contain no current
+gate blockers.
 
 The main executor is not the project manager. It performs local edits, tool
 calls, integrations, non-model verification, and hard-gate enforcement. It may
@@ -1353,8 +1368,11 @@ Canonical state is machine-readable:
   checks before advance, and visible Codex plan projection. For terminal
   states it also records the final heartbeat/watchdog lifecycle snapshot so
   stale `active: true` values cannot survive after closure.
-- `startup_guard/latest.json`: recorded pass/fail evidence for the formal
-  startup activation hard gate.
+- `startup_review/latest.json`: the human-like reviewer's factual startup
+  report. It must cite direct fact checks rather than worker assertions.
+- `startup_pm_gate/latest.json`: the project manager's startup decision. This
+  is the only startup opening record that may set
+  `work_beyond_startup_allowed: true`.
 - `mode.json`: selected run mode and hard-gate policy.
 - `contract.md`: frozen acceptance contract and explicit later approvals.
 - `capabilities.json`: required and conditional capability gates.
@@ -1560,8 +1578,8 @@ Required early gate:
 - if the host does not support real wakeups, `manual-resume` evidence before
   route execution and no heartbeat/watchdog/global-supervisor automation
   created;
-- startup activation guard pass before child skills, imagegen, implementation,
-  formal route chunks, or completion work;
+- PM-owned startup opening from a clean factual reviewer report before child
+  skills, imagegen, implementation, formal route chunks, or completion work;
 - FlowGuard process design before route execution.
 - candidate route-tree generation and root FlowGuard freeze before `route v1`;
 - strict gate-obligation review model before reviewer-closable gates advance;
@@ -1720,7 +1738,8 @@ or mutation, the ledger is rebuilt from scratch and replayed again.
 
 No formal chunk starts without:
 
-- startup activation guard pass recorded in state and execution frontier;
+- PM-owned startup activation recorded in state and execution frontier from a
+  current clean factual reviewer report;
 - current route checked by FlowGuard;
 - English summary synced from canonical machine-readable state;
 - execution frontier written for the active route version;

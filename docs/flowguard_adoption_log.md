@@ -352,3 +352,44 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - Did not sync the installed Codex skill copy because another agent owns the FlowPilot trigger-condition changes in the same installed skill surface.
+
+
+## flowpilot-remove-startup-guard-20260502 - Reviewer facts plus PM-only startup opening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User rejected a replacement startup review script and required deletion of the separate startup guard concept. Reviewer must check facts and report; PM is the only startup opener.
+- Status: completed
+- Skill decision: use_flowguard
+- Models updated: `simulations/startup_pm_review_model.py`, `simulations/meta_model.py`, `simulations/capability_model.py`.
+
+### Modeled Risks
+- Reviewer accepts a 30-minute route heartbeat where route heartbeat must be one minute.
+- Reviewer accepts Codex cron as the external watchdog instead of a Windows scheduled task.
+- Reviewer accepts missing Windows watchdog task, missing global supervisor evidence, or missing global registry evidence.
+- Reviewer writes a clean report without direct fact checks.
+- Reviewer opens startup directly.
+- PM opens without a clean factual report, opens a blocked report, or accepts worker remediation without reviewer recheck.
+- Image generation, child-skill work, implementation, or route execution starts before PM opens startup.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- `python -m py_compile simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\capability_model.py simulations\run_meta_checks.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py`
+- `python simulations\run_startup_pm_review_checks.py`
+- `python simulations\run_meta_checks.py`
+- `python simulations\run_capability_checks.py`
+- `python scripts\check_install.py`
+- `python scripts\smoke_autopilot.py`
+- `python scripts\check_public_release.py --skip-url-check`
+
+### Findings
+- The old runtime startup guard script and old startup guard simulation were removed rather than replaced with another runtime script.
+- FlowGuard validation now lives in `startup_pm_review_model`; it is not a startup reviewer.
+- Startup artifacts are now reviewer factual report plus PM startup gate.
+- Meta and capability models now gate formal work on `work_beyond_startup_allowed` from the PM gate, with factual reviewer evidence required first.
+- A repo-wide reviewer audit found material sufficiency and product architecture wording that could be read as packet-only review; both now require direct factual checks.
+- Startup PM-review, release tooling, meta, capability, install, and smoke checks passed.
+- Installed FlowPilot `SKILL.md` and `references/protocol.md` were synchronized so the next explicit FlowPilot invocation no longer sees the removed startup guard command.
+- Public release preflight remained blocked only by existing missing dependency GitHub sources.
+
+### Skipped Steps
+- Did not run full forced installer overwrite because it would replace the entire installed skill directory. Only the checked skill entrypoints were synchronized.

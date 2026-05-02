@@ -35,14 +35,18 @@ the loosest option.
 
 Run modes change autonomy and hard-gate behavior, not the quality floor.
 
-Startup includes a hard activation transaction before child skills, imagegen,
-implementation, route chunks, or completion work. The transaction is valid only
-when state, execution frontier, active route, current six-role crew ledger,
-role memory packets, and continuation evidence all describe the same active
-nonterminal route. `scripts/flowpilot_startup_guard.py` records the pass in
-`.flowpilot/startup_guard/latest.json` and sets
-`work_beyond_startup_allowed: true`; otherwise route-local files are treated as
-shadow routes that must be quarantined or superseded.
+Startup includes a PM-owned activation transaction before child skills,
+imagegen, implementation, route chunks, or completion work. The transaction is
+valid only when the human-like reviewer has personally checked real
+state/frontier/route, current six-role crew ledger, role memory packets,
+continuation, heartbeat, Windows watchdog, global supervisor, and cleanup
+evidence for the same active nonterminal route. The reviewer writes a factual
+`.flowpilot/startup_review/latest.json` report and cannot open startup. The PM
+is the only startup opener, writing `.flowpilot/startup_pm_gate/latest.json` and
+setting `work_beyond_startup_allowed: true` only from the current clean factual
+report; otherwise route-local files are treated as shadow routes that must be
+quarantined or superseded. There is no third startup opener or runtime
+startup-check script.
 
 ## FlowGuard Binding
 

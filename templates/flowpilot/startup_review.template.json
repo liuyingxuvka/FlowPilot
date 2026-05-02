@@ -7,14 +7,37 @@
   "pm_decision_authority": "project_manager",
   "report_status": "<ready_for_pm|requires_worker_remediation>",
   "blocking_findings": 0,
+  "factual_evidence_checked": true,
   "scope": [
     "user_authorization_vs_state",
     "route_state_frontier_consistency",
     "old_route_and_asset_reuse_boundary",
     "heartbeat_watchdog_supervisor_evidence",
     "background_agent_role_evidence",
-    "shadow_route_and_residual_state"
+    "shadow_route_and_residual_state",
+    "real_codex_automation_records",
+    "windows_scheduled_tasks",
+    "global_watchdog_registry",
+    "watchdog_latest_evidence"
   ],
+  "fact_sources": {
+    "state_json": ".flowpilot/state.json",
+    "execution_frontier_json": ".flowpilot/execution_frontier.json",
+    "route_flow_json": ".flowpilot/routes/<route-id>/flow.json",
+    "crew_ledger_json": ".flowpilot/crew_ledger.json",
+    "role_memory_root": ".flowpilot/crew_memory/<route-id>",
+    "codex_automation_records": "$CODEX_HOME/automations",
+    "windows_scheduled_tasks": "Get-ScheduledTask filtered to FlowPilot watchdog tasks",
+    "global_watchdog_registry": "$CODEX_HOME/flowpilot/watchdog/registry.json",
+    "watchdog_latest_evidence": ".flowpilot/watchdog/latest.json",
+    "clean_start_boundary": ".flowpilot/routes/<route-id>/evidence/clean_start_nonreuse_boundary.json"
+  },
+  "required_facts": {
+    "route_heartbeat_interval_minutes": 1,
+    "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "watchdog_kind": "windows_task_scheduler",
+    "global_supervisor_cadence_minutes": 30
+  },
   "checks": [],
   "errors": []
 }

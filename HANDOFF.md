@@ -149,13 +149,16 @@ model-backed autopilot:
 - Crew records now separate `role_key`, `display_name`, and diagnostic-only
   `agent_id` so UI and authority checks do not drift when host agent names or
   handles change.
-- Formal startup now has a startup activation hard gate. Before any child
-  skill, imagegen, implementation, route chunk, or completion work, state,
-  execution frontier, active route, six-role crew ledger, role memory packets,
-  and continuation evidence must agree on the same active nonterminal route.
-  `scripts/flowpilot_startup_guard.py --record-pass` writes
-  `.flowpilot/startup_guard/latest.json`; route-local artifacts without that
-  canonical match are shadow routes to quarantine or supersede.
+- Formal startup now has a PM-owned startup activation gate. Before any child
+  skill, imagegen, implementation, route chunk, or completion work, the
+  human-like reviewer must personally check real state/frontier/route,
+  six-role crew ledger, role memory packets, continuation, heartbeat,
+  watchdog, global supervisor, and cleanup evidence, then write
+  `.flowpilot/startup_review/latest.json` as a factual report. The PM is the
+  only role that may open `.flowpilot/startup_pm_gate/latest.json` and set
+  `work_beyond_startup_allowed: true`; there is no third startup opener or
+  runtime startup-check script. Route-local artifacts without that canonical match
+  are shadow routes to quarantine or supersede.
 - Formal startup now begins with a three-question pre-banner gate. On
   `Use FlowPilot` / `使用开始`, the assistant asks for run mode, background-agent
   permission, and scheduled-continuation permission, then the assistant response
@@ -228,8 +231,8 @@ FlowGuard caught and fixed these design issues:
     nodes, and rerun human-like backward replay before PM completion approval.
 19. Asking the three startup questions is not a soft prompt. It is a hard
     pause boundary: if FlowPilot keeps working in the same response after the
-    questions, any later startup evidence is invalid and the startup guard must
-    fail.
+    questions, any later startup evidence is invalid and the PM must not open
+    `work_beyond_startup_allowed`.
 19. Generated-resource existence is not useful output by itself. Concept
     images, visual assets, screenshots, route diagrams, model reports, and
     similar generated artifacts must be consumed by implementation/QA/final

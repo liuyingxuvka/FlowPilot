@@ -88,12 +88,11 @@ REQUIRED_LABELS = (
     "visible_user_flow_diagram_emitted",
     "live_subagent_start_authorized",
     "six_live_subagents_started",
-    "startup_preflight_reviewer_report_blocked",
+    "startup_preflight_reviewer_fact_report_blocked",
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
-    "startup_preflight_reviewer_report_clean",
-    "pm_start_gate_opened_from_review_report",
-    "startup_activation_guard_passed",
+    "startup_preflight_reviewer_fact_report_clean",
+    "pm_start_gate_opened_from_fact_report",
     "continuation_resume_ready_checked",
     "heartbeat_loaded_state",
     "heartbeat_loaded_execution_frontier",
@@ -289,7 +288,7 @@ def _state_id(state: model.State) -> str:
         f"live_subagents={state.live_subagent_decision_recorded},"
         f"{state.live_subagents_started},"
         f"{state.single_agent_role_continuity_authorized}|"
-        f"startup_guard={state.startup_activation_guard_passed}|"
+        f"work_beyond_startup={state.work_beyond_startup_allowed}|"
         f"unfinished_recovery={state.unfinished_current_node_recovery_checked}|"
         f"parent_subtree={state.parent_subtree_review_checked},"
         f"{state.parent_product_function_model_checked},"

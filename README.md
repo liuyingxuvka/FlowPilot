@@ -289,7 +289,7 @@ commit, tag, push, package, upload, or release companion skill repositories.
 Run the public package checks:
 
 ```powershell
-python simulations/run_startup_guard_checks.py
+python simulations/run_startup_pm_review_checks.py
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py

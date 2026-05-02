@@ -59,33 +59,22 @@ for review.
 20. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
    current route, crew, role memory, live-subagent startup decision,
-   continuation, and visible-plan evidence, then write the reviewer startup
-   report:
-
-   ```powershell
-   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --write-review-report --json
-   ```
+   continuation, and visible-plan evidence. The human-like reviewer then
+   personally checks the real route, state, frontier, crew, role memory,
+   heartbeat, watchdog, global supervisor, Windows scheduled task, automation,
+   and cleanup evidence, then writes `.flowpilot/startup_review/latest.json`.
 
    The reviewer reports facts and blockers only. PM reads the report, returns
    blockers to workers when needed, and opens `pm_start_gate` only from the
-   current clean report:
-
-   ```powershell
-   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pm-start-gate open --json
-   ```
-
-   Then run:
-
-   ```powershell
-   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json
-   ```
+   current clean report by writing `.flowpilot/startup_pm_gate/latest.json` and
+   setting `work_beyond_startup_allowed: true` in state and frontier.
 
    Work beyond startup is blocked until the PM-owned gate is open and the
-   guard records `work_beyond_startup_allowed: true`. A route-local file
-   without matching canonical state/frontier/crew/continuation evidence, a
-   startup record with neither live agents nor explicit fallback
-   authorization, or missing requested old-route cleanup is blocked and must be
-   repaired before continuing.
+   PM records `work_beyond_startup_allowed: true`. A route-local file without
+   matching canonical state/frontier/crew/continuation evidence, a startup
+   record with neither live agents nor explicit fallback authorization, or
+   missing requested old-route cleanup is blocked and must be repaired before
+   continuing.
 21. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
    collect all effective node gates and child-skill gates, resolve generated
@@ -107,7 +96,7 @@ for review.
   jump, current mainline, host continuation decision, PM completion runway,
   PM-owned child-skill gate manifest, checks before advance,
   native/fallback visible plan sync method, visible plan projection depth, and
-  the single user-facing flow diagram settings plus startup guard and resume
+  the single user-facing flow diagram settings plus startup PM gate and resume
   notice metadata.
 - `mode.template.json`: run mode and hard-gate policy.
 - `crew_ledger.template.json`: persistent six-agent crew roles, ids, status,

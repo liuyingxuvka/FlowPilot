@@ -87,6 +87,11 @@
     "product_flowguard_officer_report_path": "<path-or-null>",
     "human_like_reviewer_usefulness_challenge": "<pending|passed|blocked>",
     "human_like_reviewer_report_path": "<path-or-null>",
+    "human_like_reviewer_fact_check_required": true,
+    "human_like_reviewer_checked_user_request": false,
+    "human_like_reviewer_checked_material_sources": [],
+    "human_like_reviewer_checked_workflow_reality": [],
+    "human_like_reviewer_worker_report_only": false,
     "blocked_reason": "<reason-or-null>"
   }
 }

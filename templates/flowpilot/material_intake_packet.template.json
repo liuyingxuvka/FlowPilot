@@ -54,6 +54,11 @@
     }
   ],
   "reviewer_sufficiency_check": {
+    "reviewer_fact_check_required": true,
+    "direct_material_sources_checked": [],
+    "direct_material_samples_checked": [],
+    "packet_matches_checked_sources": "<yes|no|partial>",
+    "worker_report_only": false,
     "obvious_sources_missing": "<yes|no|unknown>",
     "large_sources_scoped_honestly": "<yes|no|not_applicable>",
     "summaries_specific": "<yes|no>",

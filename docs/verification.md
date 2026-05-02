@@ -5,7 +5,7 @@
 Run:
 
 ```powershell
-python simulations/run_startup_guard_checks.py
+python simulations/run_startup_pm_review_checks.py
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
@@ -23,8 +23,9 @@ Expected:
 - FlowPilot release tooling cannot publish or package companion skills.
 - execution frontier and visible Codex plan sync labels are present before
   behavior-bearing work.
-- startup guard checks reject shadow routes and require the guard pass before
-  child-skill, imagegen, implementation, or route-execution work.
+- startup PM-review checks reject shadow routes, report-only reviewer bypasses,
+  wrong heartbeat cadence, non-Windows watchdog claims, and any work before PM
+  startup opening.
 
 Route-local models under `.flowpilot/task-models/` belong to an adopted target
 project's runtime evidence. They should be checked when present in that target
@@ -89,17 +90,14 @@ Expected:
 - release tooling simulation passes;
 - meta simulation passes;
 - capability simulation passes.
-- startup guard simulation passes.
+- startup PM-review simulation passes.
 
-## Startup Guard Check
+## Startup PM Review Check
 
 For an active target project after route, state, frontier, crew, role memory,
-continuation, and visible-plan evidence have been written, first write the
-human-like reviewer report:
-
-```powershell
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --write-review-report --json
-```
+continuation, and visible-plan evidence have been written, the human-like
+reviewer must personally check the real startup facts and write
+`.flowpilot/startup_review/latest.json`.
 
 The reviewer report is not approval. It must check user authorization versus
 actual state, route/state/frontier consistency, requested old-route or old-asset
@@ -109,17 +107,8 @@ PM sends remediation back to workers/main executor and requires another
 reviewer report.
 
 After the project manager opens `pm_start_gate` from the current clean reviewer
-report:
-
-```powershell
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pm-start-gate open --json
-```
-
-Then run:
-
-```powershell
-python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
-```
+report, PM writes `.flowpilot/startup_pm_gate/latest.json` and updates state
+plus frontier with `work_beyond_startup_allowed: true`.
 
 Expected:
 
@@ -136,14 +125,14 @@ Expected:
   reviewer audit;
 - `startup_activation.pm_start_gate` records the project manager's open
   decision based on that report;
-- `startup_activation` in state and frontier records the hard gate;
-- the command writes `.flowpilot/startup_guard/latest.json` and sets
+- `startup_activation` in state and frontier records the hard gate and sets
   `work_beyond_startup_allowed: true`.
 
-If this command fails, FlowPilot must not run child skills, image generation,
-implementation, route chunks, or completion work. A route-local file without
-matching canonical state/frontier/crew/continuation evidence is a shadow route,
-not a recoverable partial pass.
+If the reviewer report is blocked or PM has not opened startup, FlowPilot must
+not run child skills, image generation, implementation, route chunks, or
+completion work. A route-local file without matching canonical
+state/frontier/crew/continuation evidence is a shadow route, not a recoverable
+partial pass.
 
 ## External Watchdog Check
 

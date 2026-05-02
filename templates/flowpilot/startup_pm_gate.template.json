@@ -5,8 +5,10 @@
   "decision_owner": "project_manager",
   "decision": "<open|return_to_worker|blocked>",
   "based_on_review_report_path": ".flowpilot/startup_review/latest.json",
+  "requires_factual_reviewer_report": true,
   "worker_remediation_required": false,
   "remediation_items": [],
+  "work_beyond_startup_allowed": false,
   "opened_at": "<iso-8601-timestamp-or-null>",
   "notes": "<pm-interpretation-of-review-report>"
 }

@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot startup hard-gate model."""
+"""Run checks for the FlowPilot startup PM/reviewer model."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import json
 from collections import deque
 from pathlib import Path
 
-import startup_guard_model as model
+import startup_pm_review_model as model
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "startup_guard_results.json"
+RESULTS_PATH = ROOT / "startup_pm_review_results.json"
 REQUIRED_LABELS = (
     "startup_three_questions_asked",
     "startup_dialog_stopped_for_user_answers",
@@ -28,17 +28,17 @@ REQUIRED_LABELS = (
     "role_memory_packets_current",
     "live_subagents_started",
     "single_agent_role_continuity_authorized",
-    "automated_continuation_ready",
+    "automated_continuation_bundle_factually_verified",
     "manual_resume_ready",
     "clean_start_required_by_user",
     "clean_start_not_required",
     "old_route_cleanup_verified",
-    "startup_preflight_reviewer_report_blocked",
+    "reviewer_independently_checked_startup_facts",
+    "startup_preflight_reviewer_fact_report_blocked",
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
-    "startup_preflight_reviewer_report_clean",
-    "pm_start_gate_opened_from_review_report",
-    "startup_activation_guard_passed",
+    "startup_preflight_reviewer_fact_report_clean",
+    "pm_start_gate_opened_from_fact_report",
     "route_execution_started",
     "child_skill_started",
     "imagegen_started",

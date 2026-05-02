@@ -24,9 +24,9 @@
         "candidate_route_tree_generated",
         "root_route_model_checked",
         "capability_evidence_synced",
-        "startup_preflight_reviewer_report_written",
+        "startup_preflight_reviewer_fact_report_written",
         "pm_start_gate_opened",
-        "startup_activation_guard_passed"
+        "work_beyond_startup_allowed_by_pm"
       ],
       "status": "pending",
       "summary": "Run startup interrogation, complete material intake handoff, complete PM-owned product-function architecture, freeze the contract, generate a candidate route tree, and freeze the checked root model as the first route version."

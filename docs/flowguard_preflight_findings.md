@@ -1584,3 +1584,74 @@ Results after integration:
 - stuck states: 0;
 - nonterminating components: 0;
 - installation check passed.
+
+## 2026-05-02 - Remove Separate Startup Guard; Reviewer Facts Plus PM Gate
+
+Trigger: the user rejected replacing the old startup guard with another runtime
+review script. The correct startup design is not "script as reviewer"; it is
+two human roles: reviewer checks facts and reports, PM opens or returns
+blockers. There is no third startup opener.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- route heartbeat accepted at 30 minutes instead of 1 minute;
+- Codex cron/heartbeat mislabeled as the external Windows watchdog;
+- missing Windows scheduled task accepted as watchdog evidence;
+- missing 30-minute singleton global supervisor evidence accepted;
+- reviewer writes a clean startup report without direct fact checks;
+- reviewer opens the startup gate directly;
+- PM opens without a clean factual reviewer report;
+- worker remediation accepted without reviewer recheck;
+- child skill, imagegen, implementation, or route execution starts before PM
+  opens startup;
+- clean-start request proceeds without old-route or old-asset cleanup evidence.
+
+Model and protocol changes:
+
+- deleted the runtime startup guard script and the old startup guard model;
+- added `simulations/startup_pm_review_model.py` and
+  `simulations/run_startup_pm_review_checks.py` as FlowGuard-only validation
+  artifacts;
+- replaced `startup_activation_guard_passed` with
+  `work_beyond_startup_allowed`;
+- changed startup labels to `fact_report` and
+  `pm_start_gate_opened_from_fact_report`;
+- updated templates and protocol so `.flowpilot/startup_review/latest.json` is
+  the reviewer factual report and `.flowpilot/startup_pm_gate/latest.json` is
+  the only PM startup-opening record;
+- added `docs/reviewer_fact_audit.md` and a reviewer fact-check baseline for
+  startup, material sufficiency, product architecture, child skills,
+  inspections, and final backward replay.
+
+Validation:
+
+```powershell
+python -m py_compile simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\capability_model.py simulations\run_meta_checks.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py
+python simulations\run_startup_pm_review_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+```
+
+Final results:
+
+- startup PM-review safe path: 194 states, 193 edges, 0 invariant failures;
+- all startup hazard probes detected, including the 30-minute route heartbeat,
+  Codex watchdog, missing Windows task, missing global supervisor, and
+  reviewer-no-fact-check hazards;
+- meta model states: 92210;
+- meta model edges: 96750;
+- capability model states: 86334;
+- capability model edges: 91576;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0;
+- nonterminating components: 0;
+- installation check passed;
+- installed FlowPilot skill `SKILL.md` and `references/protocol.md` were
+  synchronized after checking that they still contained the removed startup
+  guard command;
+- smoke autopilot passed;
+- public release check remains blocked by existing missing GitHub dependency
+  sources for companion skills.
