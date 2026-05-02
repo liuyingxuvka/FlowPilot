@@ -27,8 +27,10 @@ Expected result:
 - `flowpilot.dependencies.json` parses;
 - `skills/flowpilot/SKILL.md` exists and declares `name: flowpilot`;
 - template and simulation files exist;
-- project-control files under `.flowpilot/` exist.
-- the watchdog can read `.flowpilot/state.json`, the active route, and the
+- project-control files under `.flowpilot/current.json`,
+  `.flowpilot/index.json`, and `.flowpilot/runs/<run-id>/` exist.
+- the watchdog can resolve `.flowpilot/current.json` and read the active-run
+  state, the active route, and the
   latest heartbeat, then plan or perform an automation reset without claiming
   recovery before a later heartbeat proves it.
 

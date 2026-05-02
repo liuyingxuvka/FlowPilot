@@ -29,6 +29,14 @@ class State:
     explicit_user_answer_recorded: bool = False
     agent_self_recorded_authorization: bool = False
     banner_emitted: bool = False
+    run_directory_created: bool = False
+    current_pointer_written: bool = False
+    run_index_updated: bool = False
+    prior_work_mode: str = "unknown"  # unknown | new | continue
+    prior_work_import_packet_written: bool = False
+    control_state_written_under_run_root: bool = False
+    top_level_control_state_absent_or_quarantined: bool = False
+    old_control_state_reused_as_current: bool = False
     route_file_written: bool = False
     canonical_state_written: bool = False
     execution_frontier_written: bool = False
@@ -36,6 +44,11 @@ class State:
     role_memory_packets_current: int = 0
     live_subagents_started: bool = False
     live_agents_active: int = 0
+    live_subagents_current_task_fresh: bool = False
+    fresh_agents_spawned_after_startup_answers: bool = False
+    fresh_agents_spawned_after_route_allocation: bool = False
+    historical_agent_ids_compared: bool = False
+    reused_historical_agent_ids: bool = False
     single_agent_role_continuity_authorized: bool = False
     automated_continuation_ready: bool = False
     manual_resume_ready: bool = False
@@ -53,8 +66,12 @@ class State:
     old_route_cleanup_done: bool = False
     reviewer_checked_user_authorization: bool = False
     reviewer_checked_route_state_frontier: bool = False
+    reviewer_checked_run_isolation: bool = False
+    reviewer_checked_prior_work_boundary: bool = False
     reviewer_checked_old_route_assets: bool = False
     reviewer_checked_background_agents: bool = False
+    reviewer_checked_live_agent_freshness: bool = False
+    reviewer_checked_no_historical_agent_reuse: bool = False
     reviewer_checked_shadow_route: bool = False
     reviewer_checked_real_heartbeat: bool = False
     reviewer_checked_real_watchdog: bool = False
@@ -97,6 +114,11 @@ def subagent_decision_matches_answer(state: State) -> bool:
         return (
             state.live_subagents_started
             and state.live_agents_active >= REQUIRED_ROLE_MEMORY_PACKETS
+            and state.live_subagents_current_task_fresh
+            and state.fresh_agents_spawned_after_startup_answers
+            and state.fresh_agents_spawned_after_route_allocation
+            and state.historical_agent_ids_compared
+            and not state.reused_historical_agent_ids
             and not state.single_agent_role_continuity_authorized
         )
     if state.background_agents_answer == "single-agent":
@@ -139,7 +161,30 @@ def cleanup_matches_request(state: State) -> bool:
     return state.clean_start_requirement == "not_required"
 
 
+def run_isolation_ready(state: State) -> bool:
+    prior_work_resolved = state.prior_work_mode == "new" or (
+        state.prior_work_mode == "continue"
+        and state.prior_work_import_packet_written
+    )
+    return (
+        state.run_directory_created
+        and state.current_pointer_written
+        and state.run_index_updated
+        and prior_work_resolved
+        and state.control_state_written_under_run_root
+        and state.top_level_control_state_absent_or_quarantined
+        and not state.old_control_state_reused_as_current
+    )
+
+
 def reviewer_fact_scope_complete(state: State) -> bool:
+    background_agent_scope = state.reviewer_checked_background_agents
+    if state.background_agents_answer == "allow":
+        background_agent_scope = (
+            background_agent_scope
+            and state.reviewer_checked_live_agent_freshness
+            and state.reviewer_checked_no_historical_agent_reuse
+        )
     continuation_scope = (
         state.reviewer_checked_real_heartbeat
         and state.reviewer_checked_real_watchdog
@@ -154,8 +199,10 @@ def reviewer_fact_scope_complete(state: State) -> bool:
     return (
         state.reviewer_checked_user_authorization
         and state.reviewer_checked_route_state_frontier
+        and state.reviewer_checked_run_isolation
+        and state.reviewer_checked_prior_work_boundary
         and state.reviewer_checked_old_route_assets
-        and state.reviewer_checked_background_agents
+        and background_agent_scope
         and state.reviewer_checked_shadow_route
         and continuation_scope
     )
@@ -165,6 +212,7 @@ def startup_ready_for_pm_open(state: State) -> bool:
     return (
         startup_answers_complete(state)
         and state.banner_emitted
+        and run_isolation_ready(state)
         and state.route_file_written
         and state.canonical_state_written
         and state.execution_frontier_written
@@ -213,6 +261,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.banner_emitted:
         yield Transition("startup_banner_emitted_after_answers", replace(state, banner_emitted=True))
         return
+    if not state.run_directory_created:
+        yield Transition("run_directory_created", replace(state, run_directory_created=True))
+        return
+    if not state.current_pointer_written:
+        yield Transition("current_pointer_written", replace(state, current_pointer_written=True))
+        return
+    if not state.run_index_updated:
+        yield Transition("run_index_updated", replace(state, run_index_updated=True))
+        return
+    if state.prior_work_mode == "unknown":
+        yield Transition("new_task_no_prior_import", replace(state, prior_work_mode="new"))
+        yield Transition("continue_previous_work_selected", replace(state, prior_work_mode="continue"))
+        return
+    if state.prior_work_mode == "continue" and not state.prior_work_import_packet_written:
+        yield Transition("prior_work_import_packet_written", replace(state, prior_work_import_packet_written=True))
+        return
+    if not state.control_state_written_under_run_root:
+        yield Transition("control_state_written_under_run_root", replace(state, control_state_written_under_run_root=True))
+        return
+    if not state.top_level_control_state_absent_or_quarantined:
+        yield Transition("top_level_control_state_absent_or_quarantined", replace(state, top_level_control_state_absent_or_quarantined=True))
+        return
     if not state.route_file_written:
         yield Transition("route_file_written", replace(state, route_file_written=True))
         return
@@ -230,8 +300,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if state.background_agents_answer == "allow" and not state.live_subagents_started:
         yield Transition(
-            "live_subagents_started",
-            replace(state, live_subagents_started=True, live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS),
+            "fresh_live_subagents_started",
+            replace(
+                state,
+                live_subagents_started=True,
+                live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS,
+                live_subagents_current_task_fresh=True,
+                fresh_agents_spawned_after_startup_answers=True,
+                fresh_agents_spawned_after_route_allocation=True,
+                historical_agent_ids_compared=True,
+                reused_historical_agent_ids=False,
+            ),
         )
         return
     if state.background_agents_answer == "single-agent" and not state.single_agent_role_continuity_authorized:
@@ -273,8 +352,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 reviewer_checked_user_authorization=True,
                 reviewer_checked_route_state_frontier=True,
+                reviewer_checked_run_isolation=True,
+                reviewer_checked_prior_work_boundary=True,
                 reviewer_checked_old_route_assets=True,
                 reviewer_checked_background_agents=True,
+                reviewer_checked_live_agent_freshness=True,
+                reviewer_checked_no_historical_agent_reuse=True,
                 reviewer_checked_shadow_route=True,
                 reviewer_checked_real_heartbeat=True,
                 reviewer_checked_real_watchdog=True,
@@ -300,8 +383,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 pm_start_gate_decision="pending",
                 reviewer_checked_user_authorization=False,
                 reviewer_checked_route_state_frontier=False,
+                reviewer_checked_run_isolation=False,
+                reviewer_checked_prior_work_boundary=False,
                 reviewer_checked_old_route_assets=False,
                 reviewer_checked_background_agents=False,
+                reviewer_checked_live_agent_freshness=False,
+                reviewer_checked_no_historical_agent_reuse=False,
                 reviewer_checked_shadow_route=False,
                 reviewer_checked_real_heartbeat=False,
                 reviewer_checked_real_watchdog=False,
@@ -340,9 +427,15 @@ def invariant_failures(state: State) -> list[str]:
             or state.scheduled_continuation_answer != "unknown"
             or state.explicit_user_answer_recorded
             or state.banner_emitted
+            or state.run_directory_created
+            or state.current_pointer_written
+            or state.run_index_updated
+            or state.control_state_written_under_run_root
             or state.route_file_written
             or state.live_subagents_started
             or state.live_agents_active
+            or state.live_subagents_current_task_fresh
+            or state.reused_historical_agent_ids
             or state.single_agent_role_continuity_authorized
             or state.automated_continuation_ready
             or state.manual_resume_ready
@@ -353,6 +446,16 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("startup proceeded after asking questions without stopping for the user's reply")
     if state.reviewer_opened_start_gate:
         failures.append("reviewer attempted to open the PM-owned startup gate")
+    if state.old_control_state_reused_as_current:
+        failures.append("old control state was reused as current run state")
+    if (
+        state.startup_review_status == "clean"
+        and not (
+            state.reviewer_checked_run_isolation
+            and state.reviewer_checked_prior_work_boundary
+        )
+    ):
+        failures.append("reviewer wrote a clean startup report without checking run isolation and prior-work boundary")
     if state.startup_review_status == "clean" and not reviewer_fact_scope_complete(state):
         failures.append("reviewer wrote a clean startup report without independently checking required facts")
     if state.pm_start_gate_decision == "open" and not startup_ready_for_pm_open(state):
@@ -361,6 +464,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM opened startup without a clean reviewer report")
     if state.pm_start_gate_decision == "open" and not cleanup_matches_request(state):
         failures.append("PM opened startup before old-route cleanup matched the user request")
+    if state.pm_start_gate_decision == "open" and not run_isolation_ready(state):
+        failures.append("PM opened startup before active run isolation was complete")
     if state.startup_review_status == "blocked" and state.work_beyond_startup_allowed:
         failures.append("work beyond startup was allowed despite blocking reviewer findings")
     if state.worker_remediation_done and state.pm_start_gate_decision == "open" and state.startup_review_status != "clean":
@@ -383,6 +488,29 @@ def invariant_failures(state: State) -> list[str]:
         and state.live_agents_active < REQUIRED_ROLE_MEMORY_PACKETS
     ):
         failures.append("reviewer accepted live-agent startup without six active subagents")
+    if (
+        state.startup_review_status == "clean"
+        and state.background_agents_answer == "allow"
+        and not (
+            state.live_subagents_current_task_fresh
+            and state.fresh_agents_spawned_after_startup_answers
+            and state.fresh_agents_spawned_after_route_allocation
+            and state.historical_agent_ids_compared
+            and not state.reused_historical_agent_ids
+        )
+    ):
+        failures.append("reviewer accepted live-agent startup without current-task fresh agent ids")
+    if (
+        state.startup_review_status == "clean"
+        and state.background_agents_answer == "allow"
+        and not (
+            state.reviewer_checked_live_agent_freshness
+            and state.reviewer_checked_no_historical_agent_reuse
+        )
+    ):
+        failures.append("reviewer wrote a clean startup report without checking live-agent freshness and historical id reuse")
+    if state.pm_start_gate_decision == "open" and state.reused_historical_agent_ids:
+        failures.append("PM opened startup while current live-agent evidence reused historical agent ids")
     if state.manual_resume_ready and state.scheduled_continuation_answer != "manual":
         failures.append("manual resume was recorded without the user's manual-resume answer")
     if state.automated_continuation_ready and state.scheduled_continuation_answer != "allow":
@@ -405,6 +533,12 @@ def _ready_base(**changes: object) -> State:
         scheduled_continuation_answer="allow",
         explicit_user_answer_recorded=True,
         banner_emitted=True,
+        run_directory_created=True,
+        current_pointer_written=True,
+        run_index_updated=True,
+        prior_work_mode="new",
+        control_state_written_under_run_root=True,
+        top_level_control_state_absent_or_quarantined=True,
         route_file_written=True,
         canonical_state_written=True,
         execution_frontier_written=True,
@@ -412,6 +546,11 @@ def _ready_base(**changes: object) -> State:
         role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
         live_subagents_started=True,
         live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS,
+        live_subagents_current_task_fresh=True,
+        fresh_agents_spawned_after_startup_answers=True,
+        fresh_agents_spawned_after_route_allocation=True,
+        historical_agent_ids_compared=True,
+        reused_historical_agent_ids=False,
         automated_continuation_ready=True,
         route_heartbeat_interval_minutes=1,
         actual_heartbeat_automation_checked=True,
@@ -426,8 +565,12 @@ def _ready_base(**changes: object) -> State:
         clean_start_requirement="not_required",
         reviewer_checked_user_authorization=True,
         reviewer_checked_route_state_frontier=True,
+        reviewer_checked_run_isolation=True,
+        reviewer_checked_prior_work_boundary=True,
         reviewer_checked_old_route_assets=True,
         reviewer_checked_background_agents=True,
+        reviewer_checked_live_agent_freshness=True,
+        reviewer_checked_no_historical_agent_reuse=True,
         reviewer_checked_shadow_route=True,
         reviewer_checked_real_heartbeat=True,
         reviewer_checked_real_watchdog=True,
@@ -452,7 +595,30 @@ def hazard_states() -> dict[str, State]:
             reviewer_checked_real_watchdog=False,
             reviewer_checked_global_supervisor=False,
         ),
+        "reviewer_clean_without_run_isolation_check": _ready_base(
+            reviewer_checked_run_isolation=False,
+            reviewer_checked_prior_work_boundary=False,
+        ),
+        "pm_opens_with_top_level_control_state_reuse": _ready_base(
+            old_control_state_reused_as_current=True,
+            pm_start_gate_decision="open",
+            work_beyond_startup_allowed=True,
+        ),
+        "continue_previous_work_without_import_packet": _ready_base(
+            prior_work_mode="continue",
+            prior_work_import_packet_written=False,
+            pm_start_gate_decision="open",
+            work_beyond_startup_allowed=True,
+        ),
         "reviewer_clean_accepts_underfilled_live_subagents": _ready_base(live_agents_active=3),
+        "reviewer_clean_accepts_reused_historical_agent_ids": _ready_base(
+            live_subagents_current_task_fresh=False,
+            reused_historical_agent_ids=True,
+        ),
+        "reviewer_clean_without_agent_freshness_check": _ready_base(
+            reviewer_checked_live_agent_freshness=False,
+            reviewer_checked_no_historical_agent_reuse=False,
+        ),
         "reviewer_clean_accepts_30_min_route_heartbeat": _ready_base(
             route_heartbeat_interval_minutes=30,
             actual_heartbeat_interval_minutes=30,

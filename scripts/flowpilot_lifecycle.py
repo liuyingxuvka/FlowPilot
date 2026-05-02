@@ -18,6 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_paths import resolve_flowpilot_paths
+
 
 RUNNING_STATUSES = {"running", "in_progress", "active"}
 TERMINAL_STATUSES = {"complete", "completed", "blocked", "cancelled", "stopped", "paused"}
@@ -379,10 +381,10 @@ def classify_required_actions(
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     root = Path(args.root).resolve()
     codex_home = Path(args.codex_home or os.environ.get("CODEX_HOME") or (Path.home() / ".codex")).resolve()
-    flowpilot_root = root / ".flowpilot"
-    state = read_json_if_exists(flowpilot_root / "state.json")
-    frontier = read_json_if_exists(flowpilot_root / "execution_frontier.json")
-    watchdog = read_json_if_exists(flowpilot_root / "watchdog" / "latest.json")
+    paths = resolve_flowpilot_paths(root)
+    state = read_json_if_exists(Path(paths["state_path"]))
+    frontier = read_json_if_exists(Path(paths["frontier_path"]))
+    watchdog = read_json_if_exists(Path(paths["watchdog_dir"]) / "latest.json")
     known_ids = collect_known_automation_ids(state, frontier, watchdog)
     global_dir = Path(args.global_record_dir).expanduser().resolve() if args.global_record_dir else default_global_record_dir(codex_home)
     codex = inspect_codex_automations(codex_home, known_ids)
@@ -399,6 +401,9 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "checked_at": isoformat_z(utc_now()),
         "mode": args.mode,
         "root": str(root),
+        "layout": paths["layout"],
+        "run_id": paths["run_id"],
+        "run_root": str(paths["run_root"]),
         "ok": not actions,
         "decision": "reconciled" if not actions else "actions_required",
         "boundary": (
@@ -439,7 +444,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def write_lifecycle_record(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
-    record_dir = root / ".flowpilot" / "lifecycle"
+    record_dir = Path(resolve_flowpilot_paths(root)["lifecycle_dir"])
     latest_path = record_dir / "latest.json"
     events_jsonl = record_dir / "events.jsonl"
     write_json_atomic(latest_path, payload)
@@ -460,7 +465,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--codex-home", default="", help="Override CODEX_HOME; defaults to ~/.codex")
     parser.add_argument("--global-record-dir", default="", help="Override user-level FlowPilot watchdog record directory")
     parser.add_argument("--include-windows-tasks", action="store_true", help="Scan Windows Task Scheduler for FlowPilot tasks")
-    parser.add_argument("--write-record", action="store_true", help="Write .flowpilot/lifecycle/latest.json and events.jsonl")
+    parser.add_argument("--write-record", action="store_true", help="Write active-run lifecycle/latest.json and events.jsonl")
     parser.add_argument("--fail-on-actions", action="store_true", help="Return non-zero when reconciliation actions are required")
     parser.add_argument("--json", action="store_true", help="Print full JSON")
     return parser.parse_args(argv)

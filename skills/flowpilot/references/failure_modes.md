@@ -80,7 +80,7 @@ The FlowGuard models for FlowPilot found or guard against:
 - heartbeat recovery assumes stored subagent ids still have live private
   context and asks the project manager before loading role memory packets;
 - an unavailable role is replaced from a generic prompt instead of the latest
-  `.flowpilot/crew_memory/` packet;
+  `.flowpilot/runs/<run-id>/crew_memory/` packet;
 - meaningful role work updates only a report path or raw transcript but does
   not refresh the compact role memory packet before checkpoint;
 - a raw chat transcript is treated as the authoritative role memory instead of
@@ -227,7 +227,7 @@ Keep these failure modes in the model and tests.
 - Treat the user flow diagram as a projection of canonical `.flowpilot` state:
   current route first, current node and next checks second, superseded route
   history third.
-- Refresh `.flowpilot/diagrams/user-flow-diagram.mmd` from the checked
+- Refresh `.flowpilot/runs/<run-id>/diagrams/user-flow-diagram.mmd` from the checked
   route/frontier before showing chat or UI progress, especially after route
   mutation. Raw FlowGuard Mermaid exports stay off by default and are generated
   only on explicit request.
@@ -242,7 +242,7 @@ Keep these failure modes in the model and tests.
   freshness evidence instead of claiming unattended recovery.
 - Heartbeat automation should stay a stable launcher. Route version, active
   node, next node, current mainline, fallback, checks-before-advance, and
-  visible plan projection live in `.flowpilot/execution_frontier.json`.
+  visible plan projection live in `.flowpilot/runs/<run-id>/execution_frontier.json`.
 - Route mutations must recheck the affected model, rewrite the execution
   frontier, sync the visible Codex plan from that frontier, and only then
   resume behavior-bearing work.
@@ -255,14 +255,14 @@ Keep these failure modes in the model and tests.
 - Multi-hour routes on hosts with real wakeups should record an external
   watchdog policy. A watchdog may detect stale heartbeats, require an official
   Codex app automation reset (`PAUSED -> ACTIVE`), and write
-  `.flowpilot/watchdog/` evidence. It must not mutate `automation.toml`
+  `.flowpilot/runs/<run-id>/watchdog/` evidence. It must not mutate `automation.toml`
   directly, and a reset is not proof of recovery until a later heartbeat
   appears. Unsupported hosts record `manual-resume` and skip watchdog/global
   supervisor setup entirely.
 - External watchdogs should also write compact user-level global records under
   `$FLOWPILOT_GLOBAL_RECORD_DIR` or `$CODEX_HOME/flowpilot/watchdog`. The global
   registry is an index; project-local watchdog evidence remains authoritative.
-- Watchdog reset decisions trust only `state.json`, latest heartbeat evidence,
+- Watchdog reset decisions trust only active-run `state.json`, latest heartbeat evidence,
   and `busy_lease.json`. Frontier, lifecycle, automation, and global records
   are diagnostic drift signals; live subagent busy state is not inspected.
 - PM-initiated FlowGuard modeling must not be vague delegation. If PM asks a

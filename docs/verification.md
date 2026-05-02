@@ -97,7 +97,7 @@ Expected:
 For an active target project after route, state, frontier, crew, role memory,
 continuation, and visible-plan evidence have been written, the human-like
 reviewer must personally check the real startup facts and write
-`.flowpilot/startup_review/latest.json`.
+`.flowpilot/runs/<run-id>/startup_review/latest.json`.
 
 The reviewer report is not approval. It must check user authorization versus
 actual state, route/state/frontier consistency, requested old-route or old-asset
@@ -107,13 +107,19 @@ PM sends remediation back to workers/main executor and requires another
 reviewer report.
 
 After the project manager opens `pm_start_gate` from the current clean reviewer
-report, PM writes `.flowpilot/startup_pm_gate/latest.json` and updates state
+report, PM writes `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and updates state
 plus frontier with `work_beyond_startup_allowed: true`.
 
 Expected:
 
-- `state.json`, `execution_frontier.json`, and `routes/<active-route>/flow.json`
+- `.flowpilot/current.json` resolves to the active run and
+  `.flowpilot/index.json` records that run;
+- current-run `state.json`, `execution_frontier.json`, and
+  `routes/<active-route>/flow.json`
   agree on the same active nonterminal route;
+- old top-level control state is absent, legacy-only, or quarantined and is
+  not used as current state;
+- continuing prior work has a current-run prior-work import packet;
 - `crew_ledger.json` is current for that route and all six role memory packets
   are present and current;
 - continuation is either a complete automated bundle or explicit
@@ -251,7 +257,7 @@ python scripts/flowpilot_lifecycle.py --root . --mode terminal --include-windows
 ```
 
 Use the mode that matches the lifecycle operation. The command is read-only
-except for writing `.flowpilot/lifecycle/latest.json` and events. It does not
+except for writing `.flowpilot/runs/<run-id>/lifecycle/latest.json` and events. It does not
 change Codex automations or Windows tasks. If it reports required actions,
 complete them through the official Codex app automation interface or the
 Windows task helper, then rerun the inventory before claiming pause, restart,
@@ -265,4 +271,4 @@ Expected:
   unless explicitly waived;
 - local state/frontier/watchdog lifecycle fields agree with the intended
   operation;
-- `.flowpilot/lifecycle/latest.json` exists for the latest lifecycle operation.
+- `.flowpilot/runs/<run-id>/lifecycle/latest.json` exists for the latest lifecycle operation.

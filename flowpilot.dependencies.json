@@ -63,10 +63,10 @@
       "install_name": "model-first-function-flow",
       "source": {
         "kind": "github",
-        "repo": "",
-        "ref": "",
-        "path": "",
-        "url": ""
+        "repo": "liuyingxuvka/FlowGuard",
+        "ref": "main",
+        "path": ".agents/skills/model-first-function-flow",
+        "url": "https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow"
       },
       "install": {
         "mode": "github_skill",
@@ -91,10 +91,10 @@
       "install_name": "grill-me",
       "source": {
         "kind": "github",
-        "repo": "",
-        "ref": "",
-        "path": "",
-        "url": ""
+        "repo": "mattpocock/skills",
+        "ref": "main",
+        "path": "skills/productivity/grill-me",
+        "url": "https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me"
       },
       "install": {
         "mode": "github_skill",
@@ -119,10 +119,10 @@
       "install_name": "concept-led-ui-redesign",
       "source": {
         "kind": "github",
-        "repo": "",
-        "ref": "",
-        "path": "",
-        "url": ""
+        "repo": "liuyingxuvka/concept-led-ui-redesign-skill",
+        "ref": "main",
+        "path": "concept-led-ui-redesign",
+        "url": "https://github.com/liuyingxuvka/concept-led-ui-redesign-skill/tree/main/concept-led-ui-redesign"
       },
       "install": {
         "mode": "github_skill",
@@ -147,10 +147,10 @@
       "install_name": "frontend-design",
       "source": {
         "kind": "github",
-        "repo": "",
-        "ref": "",
-        "path": "",
-        "url": ""
+        "repo": "anthropics/skills",
+        "ref": "main",
+        "path": "skills/frontend-design",
+        "url": "https://github.com/anthropics/skills/tree/main/skills/frontend-design"
       },
       "install": {
         "mode": "github_skill",

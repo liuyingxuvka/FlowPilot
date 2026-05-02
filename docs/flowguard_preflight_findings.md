@@ -1662,7 +1662,8 @@ The startup reviewer fact report now explicitly binds the background-agent user
 answer to actual subagent state:
 
 - if the user allowed background agents, the reviewer must verify six live
-  role-bearing subagents started or resumed after that user decision;
+  role-bearing subagents were freshly spawned for the current FlowPilot task
+  after that user decision and after current route allocation;
 - if the user chose single-agent continuity, the reviewer must verify explicit
   fallback authorization and must not claim live subagents.
 
@@ -1677,3 +1678,42 @@ python scripts\smoke_autopilot.py
 ```
 
 Results: startup PM-review, install check, and smoke autopilot passed.
+
+### 2026-05-02 Follow-Up - Per-Invocation Run Directory Isolation
+
+FlowPilot startup now models and documents a fresh target-project run directory
+for every formal invocation:
+
+- create `.flowpilot/runs/<run-id>/`;
+- write `.flowpilot/current.json` as the active-run pointer;
+- update `.flowpilot/index.json` as the run catalog for audit and Cockpit tabs;
+- write mutable control state only under the active run root;
+- when continuing previous work, write a prior-work import packet and treat old
+  state, routes, agent IDs, screenshots, icons, and generated assets as
+  read-only input evidence only.
+
+The startup reviewer must now check current-run isolation and prior-work import
+boundary before a clean report can open the PM startup gate. Meta, capability,
+and startup PM-review models reject PM startup opening or work-beyond-startup
+when the run directory, current pointer, run index, run-scoped control state,
+top-level legacy quarantine, or prior-work import packet is missing.
+
+Validation reran with:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python -m py_compile scripts\flowpilot_paths.py scripts\flowpilot_user_flow_diagram.py scripts\flowpilot_busy_lease.py scripts\flowpilot_run_with_busy_lease.py scripts\flowpilot_lifecycle.py scripts\flowpilot_global_supervisor.py scripts\flowpilot_watchdog.py simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py
+python simulations\run_startup_pm_review_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+python scripts\flowpilot_user_flow_diagram.py --root . --json
+python scripts\flowpilot_busy_lease.py status --root . --json
+python scripts\flowpilot_lifecycle.py --root . --mode pause --json
+git diff --check
+```
+
+Results: startup PM-review, meta, capability, install, smoke, legacy-layout
+path resolution, busy-lease status, lifecycle inventory, template JSON parse,
+FlowGuard import, and whitespace checks passed.

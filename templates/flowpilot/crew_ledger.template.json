@@ -1,13 +1,17 @@
 {
-  "schema_version": "flowpilot.crew_ledger.v2",
+  "schema_version": "flowpilot.crew_ledger.v3",
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
   "route_id": "route-001",
   "crew_status": "active",
-  "memory_root": ".flowpilot/crew_memory",
+  "memory_root": ".flowpilot/runs/run-001/crew_memory",
   "memory_policy": {
     "role_memory_required": true,
-    "live_agent_continuity": "default_with_user_fallback",
+    "live_agent_continuity": "fresh_per_new_task_with_user_fallback",
     "role_continuity": "mandatory",
-    "live_subagent_policy": "Six live background subagents are the default formal startup target. If authorization is missing or startup fails, pause and ask. Continue with memory-seeded single-agent six-role continuity only after an explicit user fallback decision, and block if a required role cannot be recovered.",
+    "live_subagent_policy": "Six live background subagents are the default formal startup target. For every new formal FlowPilot task, authorized live background agents must be freshly spawned for the current task after startup answers and current route allocation. Prior-route or earlier-task agent_id values are audit history only and must not be resumed or counted as current live-agent evidence. Continue with memory-seeded single-agent six-role continuity only after an explicit user fallback decision, and block if a required role cannot be created or same-task continuation cannot be recovered.",
+    "fresh_live_agent_ids_required_per_new_task": true,
+    "same_task_agent_id_resume_only": true,
     "raw_transcript_is_authoritative": false,
     "refresh_after_meaningful_role_work": true,
     "rehydrate_before_pm_runway": true
@@ -18,9 +22,19 @@
     "agent_id_required_when_available": true,
     "primary_user_facing_label": "display_name",
     "agent_id_visibility": "diagnostic_only",
-    "rule": "Use role_key for stable programmatic routing, display_name for UI/chat labels, and agent_id only for recovery/debug evidence."
+    "rule": "Use role_key for stable programmatic routing, display_name for UI/chat labels, and agent_id only for same-task continuation/debug evidence. At new formal startup, agent_id must be fresh for the current task and must not come from prior-route crew ledgers or older role-memory packets."
   },
-  "rehydration_status_path": ".flowpilot/crew_memory/rehydration-latest.json",
+  "agent_id_freshness_evidence": {
+    "required_when_live_background_agents": true,
+    "current_task_agent_cohort_id": "<flowpilot-task-cohort-id>",
+    "current_task_route_id": "route-001",
+    "current_task_started_at": "<iso-8601-timestamp>",
+    "spawn_evidence_path": ".flowpilot/runs/run-001/evidence/live_subagents_fresh_for_current_task.json",
+    "excluded_historical_agent_ids_path": ".flowpilot/runs/run-001/evidence/excluded_historical_agent_ids.json",
+    "reused_historical_agent_ids": [],
+    "reviewer_must_compare_against_prior_ledgers": true
+  },
+  "rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/rehydration-latest.json",
   "created_at": "<iso-8601-timestamp>",
   "updated_at": "<iso-8601-timestamp>",
   "roles": [
@@ -45,12 +59,12 @@
         "product_model_coverage",
         "human_like_review"
       ],
-      "memory_path": ".flowpilot/crew_memory/project_manager.json",
+      "memory_path": ".flowpilot/runs/run-001/crew_memory/project_manager.json",
       "memory_status": "<current|stale|missing>",
       "last_memory_update": "<iso-8601-timestamp-or-null>",
-      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "last_rehydration_result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
       "latest_report_path": "<path-or-null>",
-      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before asking for the PM runway"
+      "recovery_rule": "spawn a fresh project manager for every new formal FlowPilot task; resume an agent_id only for same-task continuation; otherwise replace from role memory before asking for the PM runway"
     },
     {
       "role_key": "human_like_reviewer",
@@ -72,12 +86,12 @@
         "process_model_coverage",
         "product_model_coverage"
       ],
-      "memory_path": ".flowpilot/crew_memory/human_like_reviewer.json",
+      "memory_path": ".flowpilot/runs/run-001/crew_memory/human_like_reviewer.json",
       "memory_status": "<current|stale|missing>",
       "last_memory_update": "<iso-8601-timestamp-or-null>",
-      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "last_rehydration_result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
       "latest_report_path": "<path-or-null>",
-      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before reviewer gate"
+      "recovery_rule": "spawn a fresh reviewer for every new formal FlowPilot task; resume an agent_id only for same-task continuation; otherwise replace from role memory before reviewer gate"
     },
     {
       "role_key": "process_flowguard_officer",
@@ -95,12 +109,12 @@
         "completion",
         "human_like_review"
       ],
-      "memory_path": ".flowpilot/crew_memory/process_flowguard_officer.json",
+      "memory_path": ".flowpilot/runs/run-001/crew_memory/process_flowguard_officer.json",
       "memory_status": "<current|stale|missing>",
       "last_memory_update": "<iso-8601-timestamp-or-null>",
-      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "last_rehydration_result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
       "latest_report_path": "<path-or-null>",
-      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before process model gate"
+      "recovery_rule": "spawn a fresh process FlowGuard officer for every new formal FlowPilot task; resume an agent_id only for same-task continuation; otherwise replace from role memory before process model gate"
     },
     {
       "role_key": "product_flowguard_officer",
@@ -119,12 +133,12 @@
         "completion",
         "human_like_review"
       ],
-      "memory_path": ".flowpilot/crew_memory/product_flowguard_officer.json",
+      "memory_path": ".flowpilot/runs/run-001/crew_memory/product_flowguard_officer.json",
       "memory_status": "<current|stale|missing>",
       "last_memory_update": "<iso-8601-timestamp-or-null>",
-      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "last_rehydration_result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
       "latest_report_path": "<path-or-null>",
-      "recovery_rule": "try to resume when host support exists; otherwise replace from role memory before product model gate"
+      "recovery_rule": "spawn a fresh product FlowGuard officer for every new formal FlowPilot task; resume an agent_id only for same-task continuation; otherwise replace from role memory before product model gate"
     },
     {
       "role_key": "worker_a",
@@ -144,12 +158,12 @@
         "checkpoint",
         "completion"
       ],
-      "memory_path": ".flowpilot/crew_memory/worker_a.json",
+      "memory_path": ".flowpilot/runs/run-001/crew_memory/worker_a.json",
       "memory_status": "<current|stale|missing>",
       "last_memory_update": "<iso-8601-timestamp-or-null>",
-      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "last_rehydration_result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
       "latest_report_path": "<path-or-null>",
-      "recovery_rule": "reuse when idle and recoverable; otherwise replace from role memory only for a bounded sidecar task"
+      "recovery_rule": "spawn a fresh worker A for every new formal FlowPilot task; reuse only as same-task idle sidecar; otherwise replace from role memory only for a bounded sidecar task"
     },
     {
       "role_key": "worker_b",
@@ -169,12 +183,12 @@
         "checkpoint",
         "completion"
       ],
-      "memory_path": ".flowpilot/crew_memory/worker_b.json",
+      "memory_path": ".flowpilot/runs/run-001/crew_memory/worker_b.json",
       "memory_status": "<current|stale|missing>",
       "last_memory_update": "<iso-8601-timestamp-or-null>",
-      "last_rehydration_result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+      "last_rehydration_result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
       "latest_report_path": "<path-or-null>",
-      "recovery_rule": "reuse when idle and recoverable; otherwise replace from role memory only for a bounded sidecar task"
+      "recovery_rule": "spawn a fresh worker B for every new formal FlowPilot task; reuse only as same-task idle sidecar; otherwise replace from role memory only for a bounded sidecar task"
     }
   ],
   "terminal_archive": {

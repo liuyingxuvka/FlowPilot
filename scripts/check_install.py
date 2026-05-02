@@ -29,6 +29,9 @@ REQUIRED_FILES = [
     "skills/flowpilot/references/installation_contract.md",
     "skills/flowpilot/references/failure_modes.md",
     "templates/flowpilot/README.md",
+    "templates/flowpilot/current.template.json",
+    "templates/flowpilot/index.template.json",
+    "templates/flowpilot/runs/run-001/run.template.json",
     "templates/flowpilot/state.template.json",
     "templates/flowpilot/crew_ledger.template.json",
     "templates/flowpilot/crew_memory/role_memory.template.json",
@@ -71,6 +74,7 @@ REQUIRED_FILES = [
     "scripts/install_flowpilot.py",
     "scripts/check_public_release.py",
     "scripts/flowpilot_watchdog.py",
+    "scripts/flowpilot_paths.py",
     "scripts/flowpilot_global_supervisor.py",
     "scripts/flowpilot_lifecycle.py",
     "scripts/flowpilot_busy_lease.py",
@@ -83,6 +87,9 @@ REQUIRED_FILES = [
 JSON_FILES = [
     "flowpilot.dependencies.json",
     "simulations/release_tooling_results.json",
+    "templates/flowpilot/current.template.json",
+    "templates/flowpilot/index.template.json",
+    "templates/flowpilot/runs/run-001/run.template.json",
     "templates/flowpilot/capabilities.template.json",
     "templates/flowpilot/mode.template.json",
     "templates/flowpilot/state.template.json",
@@ -107,6 +114,12 @@ JSON_FILES = [
 ]
 
 OPTIONAL_RUNTIME_JSON_FILES = [
+    ".flowpilot/current.json",
+    ".flowpilot/index.json",
+    ".flowpilot/runs/run-001/capabilities.json",
+    ".flowpilot/runs/run-001/state.json",
+    ".flowpilot/runs/run-001/execution_frontier.json",
+    ".flowpilot/runs/run-001/routes/route-001/flow.json",
     ".flowpilot/capabilities.json",
     ".flowpilot/state.json",
     ".flowpilot/execution_frontier.json",

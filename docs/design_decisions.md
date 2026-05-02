@@ -41,12 +41,18 @@ valid only when the human-like reviewer has personally checked real
 state/frontier/route, current six-role crew ledger, role memory packets,
 continuation, heartbeat, Windows watchdog, global supervisor, and cleanup
 evidence for the same active nonterminal route. The reviewer writes a factual
-`.flowpilot/startup_review/latest.json` report and cannot open startup. The PM
-is the only startup opener, writing `.flowpilot/startup_pm_gate/latest.json` and
+`.flowpilot/runs/<run-id>/startup_review/latest.json` report and cannot open startup. The PM
+is the only startup opener, writing `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and
 setting `work_beyond_startup_allowed: true` only from the current clean factual
 report; otherwise route-local files are treated as shadow routes that must be
 quarantined or superseded. There is no third startup opener or runtime
 startup-check script.
+
+Each formal FlowPilot invocation creates a fresh target-project run directory
+under `.flowpilot/runs/<run-id>/`. Top-level `.flowpilot/current.json` and
+`.flowpilot/index.json` are pointer/catalog files only. Continuing prior work
+imports old outputs as read-only evidence into a new run; old control state is
+not resumed as current state.
 
 ## FlowGuard Binding
 
@@ -196,7 +202,7 @@ The crew is persistent as six roles, and the default formal startup target is
 six live background subagents where the host/tool policy permits them.
 Heartbeat, sleep, manual resume, or host boundaries may make stored subagent
 ids unavailable. FlowPilot therefore stores compact role memory packets under
-`.flowpilot/crew_memory/` and treats them as the authoritative recovery state.
+`.flowpilot/runs/<run-id>/crew_memory/` and treats them as the authoritative recovery state.
 A resume may reuse a live agent when the host supports it, but an unavailable
 role may be replaced from its latest memory packet only after explicit user
 fallback approval. Raw chat transcripts are not the memory source of truth.

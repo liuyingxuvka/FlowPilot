@@ -72,6 +72,14 @@ class State:
     mode_selected: bool = False
     startup_background_agents_answered: bool = False
     startup_scheduled_continuation_answered: bool = False
+    run_directory_created: bool = False
+    current_pointer_written: bool = False
+    run_index_updated: bool = False
+    prior_work_mode: str = "unknown"  # unknown | new | continue
+    prior_work_import_packet_written: bool = False
+    control_state_written_under_run_root: bool = False
+    top_level_control_state_absent_or_quarantined: bool = False
+    old_control_state_reused_as_current: bool = False
     showcase_floor_committed: bool = False
     visible_self_interrogation_done: bool = False
     startup_self_interrogation_questions: int = 0
@@ -154,10 +162,19 @@ class State:
     heartbeat_health_checked: bool = False
     live_subagent_decision_recorded: bool = False
     live_subagents_started: bool = False
+    live_subagents_current_task_fresh: bool = False
+    fresh_agents_spawned_after_startup_answers: bool = False
+    fresh_agents_spawned_after_route_allocation: bool = False
+    historical_agent_ids_compared: bool = False
+    reused_historical_agent_ids: bool = False
     single_agent_role_continuity_authorized: bool = False
     startup_preflight_review_report_written: bool = False
     startup_preflight_review_blocking_findings: bool = False
     startup_reviewer_fact_evidence_checked: bool = False
+    startup_reviewer_checked_run_isolation: bool = False
+    startup_reviewer_checked_prior_work_boundary: bool = False
+    startup_reviewer_checked_live_agent_freshness: bool = False
+    startup_reviewer_checked_no_historical_agent_reuse: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
     pm_start_gate_opened: bool = False
@@ -531,11 +548,34 @@ def _continuation_ready(state: State) -> bool:
     return _automated_continuation_ready(state) or _manual_resume_ready(state)
 
 
+def _run_isolation_ready(state: State) -> bool:
+    prior_work_resolved = state.prior_work_mode == "new" or (
+        state.prior_work_mode == "continue"
+        and state.prior_work_import_packet_written
+    )
+    return (
+        state.run_directory_created
+        and state.current_pointer_written
+        and state.run_index_updated
+        and prior_work_resolved
+        and state.control_state_written_under_run_root
+        and state.top_level_control_state_absent_or_quarantined
+        and not state.old_control_state_reused_as_current
+    )
+
+
 def _live_subagent_startup_resolved(state: State) -> bool:
     return (
         state.live_subagent_decision_recorded
         and (
-            state.live_subagents_started
+            (
+                state.live_subagents_started
+                and state.live_subagents_current_task_fresh
+                and state.fresh_agents_spawned_after_startup_answers
+                and state.fresh_agents_spawned_after_route_allocation
+                and state.historical_agent_ids_compared
+                and not state.reused_historical_agent_ids
+            )
             or state.single_agent_role_continuity_authorized
         )
     )
@@ -558,6 +598,16 @@ def _startup_pm_gate_ready(state: State) -> bool:
         state.startup_preflight_review_report_written
         and not state.startup_preflight_review_blocking_findings
         and state.startup_reviewer_fact_evidence_checked
+        and _run_isolation_ready(state)
+        and state.startup_reviewer_checked_run_isolation
+        and state.startup_reviewer_checked_prior_work_boundary
+        and (
+            state.single_agent_role_continuity_authorized
+            or (
+                state.startup_reviewer_checked_live_agent_freshness
+                and state.startup_reviewer_checked_no_historical_agent_reuse
+            )
+        )
         and state.pm_start_gate_opened
     )
 
@@ -648,9 +698,21 @@ class AutopilotStep:
     reads = (
         "status",
         "flowpilot_enabled",
+        "startup_questions_asked",
+        "startup_dialog_stopped_for_answers",
         "startup_banner_emitted",
         "mode_choice_offered",
         "mode_selected",
+        "startup_background_agents_answered",
+        "startup_scheduled_continuation_answered",
+        "run_directory_created",
+        "current_pointer_written",
+        "run_index_updated",
+        "prior_work_mode",
+        "prior_work_import_packet_written",
+        "control_state_written_under_run_root",
+        "top_level_control_state_absent_or_quarantined",
+        "old_control_state_reused_as_current",
         "showcase_floor_committed",
         "visible_self_interrogation_done",
         "startup_self_interrogation_questions",
@@ -729,10 +791,19 @@ class AutopilotStep:
         "heartbeat_health_checked",
         "live_subagent_decision_recorded",
         "live_subagents_started",
+        "live_subagents_current_task_fresh",
+        "fresh_agents_spawned_after_startup_answers",
+        "fresh_agents_spawned_after_route_allocation",
+        "historical_agent_ids_compared",
+        "reused_historical_agent_ids",
         "single_agent_role_continuity_authorized",
         "startup_preflight_review_report_written",
         "startup_preflight_review_blocking_findings",
         "startup_reviewer_fact_evidence_checked",
+        "startup_reviewer_checked_run_isolation",
+        "startup_reviewer_checked_prior_work_boundary",
+        "startup_reviewer_checked_live_agent_freshness",
+        "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
         "pm_start_gate_opened",
@@ -849,9 +920,21 @@ class AutopilotStep:
     writes = (
         "status",
         "flowpilot_enabled",
+        "startup_questions_asked",
+        "startup_dialog_stopped_for_answers",
         "startup_banner_emitted",
         "mode_choice_offered",
         "mode_selected",
+        "startup_background_agents_answered",
+        "startup_scheduled_continuation_answered",
+        "run_directory_created",
+        "current_pointer_written",
+        "run_index_updated",
+        "prior_work_mode",
+        "prior_work_import_packet_written",
+        "control_state_written_under_run_root",
+        "top_level_control_state_absent_or_quarantined",
+        "old_control_state_reused_as_current",
         "showcase_floor_committed",
         "visible_self_interrogation_done",
         "startup_self_interrogation_questions",
@@ -922,10 +1005,19 @@ class AutopilotStep:
         "heartbeat_health_checked",
         "live_subagent_decision_recorded",
         "live_subagents_started",
+        "live_subagents_current_task_fresh",
+        "fresh_agents_spawned_after_startup_answers",
+        "fresh_agents_spawned_after_route_allocation",
+        "historical_agent_ids_compared",
+        "reused_historical_agent_ids",
         "single_agent_role_continuity_authorized",
         "startup_preflight_review_report_written",
         "startup_preflight_review_blocking_findings",
         "startup_reviewer_fact_evidence_checked",
+        "startup_reviewer_checked_run_isolation",
+        "startup_reviewer_checked_prior_work_boundary",
+        "startup_reviewer_checked_live_agent_freshness",
+        "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
         "pm_start_gate_opened",
@@ -1155,6 +1247,83 @@ class AutopilotStep:
                 label="startup_banner_emitted",
                 action="emit a large ASCII FlowPilot startup banner only after the three startup answers",
                 startup_banner_emitted=True,
+                active_node="create_run_directory",
+            )
+            return
+
+        if not state.run_directory_created:
+            yield _step(
+                state,
+                label="run_directory_created",
+                action="create a fresh .flowpilot/runs/<run-id>/ directory for this formal FlowPilot invocation",
+                run_directory_created=True,
+                active_node="write_current_pointer",
+            )
+            return
+
+        if not state.current_pointer_written:
+            yield _step(
+                state,
+                label="current_pointer_written",
+                action="write .flowpilot/current.json to point at the current run directory",
+                current_pointer_written=True,
+                active_node="update_run_index",
+            )
+            return
+
+        if not state.run_index_updated:
+            yield _step(
+                state,
+                label="run_index_updated",
+                action="update .flowpilot/index.json with the new run identity and creation metadata",
+                run_index_updated=True,
+                active_node="resolve_prior_work_boundary",
+            )
+            return
+
+        if state.prior_work_mode == "unknown":
+            yield _step(
+                state,
+                label="new_task_no_prior_import",
+                action="record that this run starts without importing prior FlowPilot control state",
+                prior_work_mode="new",
+                active_node="write_run_scoped_control_state",
+            )
+            yield _step(
+                state,
+                label="continue_previous_work_selected",
+                action="record that this run continues prior work but must import prior outputs as read-only evidence",
+                prior_work_mode="continue",
+                active_node="write_prior_work_import_packet",
+            )
+            return
+
+        if state.prior_work_mode == "continue" and not state.prior_work_import_packet_written:
+            yield _step(
+                state,
+                label="prior_work_import_packet_written",
+                action="write a prior-work import packet under the new run without making old state current",
+                prior_work_import_packet_written=True,
+                active_node="write_run_scoped_control_state",
+            )
+            return
+
+        if not state.control_state_written_under_run_root:
+            yield _step(
+                state,
+                label="control_state_written_under_run_root",
+                action="write state, frontier, route, crew, and review control artifacts only under the current run directory",
+                control_state_written_under_run_root=True,
+                active_node="quarantine_legacy_top_level_control_state",
+            )
+            return
+
+        if not state.top_level_control_state_absent_or_quarantined:
+            yield _step(
+                state,
+                label="top_level_control_state_absent_or_quarantined",
+                action="verify legacy top-level control state is absent, legacy-only, or quarantined before current work continues",
+                top_level_control_state_absent_or_quarantined=True,
                 active_node="freeze_contract",
             )
             return
@@ -1201,8 +1370,8 @@ class AutopilotStep:
         if state.crew_count == 0:
             yield _step(
                 state,
-                label="project_manager_spawned_or_restored",
-                action="spawn or restore the persistent project manager before route work",
+                label="project_manager_spawned_fresh_for_task",
+                action="spawn a fresh project manager for the new formal FlowPilot task before route work",
                 crew_count=1,
                 project_manager_ready=True,
                 active_node="spawn_reviewer",
@@ -1212,8 +1381,8 @@ class AutopilotStep:
         if state.crew_count == 1:
             yield _step(
                 state,
-                label="human_like_reviewer_spawned_or_restored",
-                action="spawn or restore the persistent human-like reviewer before route work",
+                label="human_like_reviewer_spawned_fresh_for_task",
+                action="spawn a fresh human-like reviewer for the new formal FlowPilot task before route work",
                 crew_count=2,
                 reviewer_ready=True,
                 active_node="spawn_process_flowguard_officer",
@@ -1223,8 +1392,8 @@ class AutopilotStep:
         if state.crew_count == 2:
             yield _step(
                 state,
-                label="process_flowguard_officer_spawned_or_restored",
-                action="spawn or restore the process FlowGuard officer before route work",
+                label="process_flowguard_officer_spawned_fresh_for_task",
+                action="spawn a fresh process FlowGuard officer for the new formal FlowPilot task before route work",
                 crew_count=3,
                 process_flowguard_officer_ready=True,
                 active_node="spawn_product_flowguard_officer",
@@ -1234,8 +1403,8 @@ class AutopilotStep:
         if state.crew_count == 3:
             yield _step(
                 state,
-                label="product_flowguard_officer_spawned_or_restored",
-                action="spawn or restore the product FlowGuard officer before route work",
+                label="product_flowguard_officer_spawned_fresh_for_task",
+                action="spawn a fresh product FlowGuard officer for the new formal FlowPilot task before route work",
                 crew_count=4,
                 product_flowguard_officer_ready=True,
                 active_node="spawn_worker_a",
@@ -1245,8 +1414,8 @@ class AutopilotStep:
         if state.crew_count == 4:
             yield _step(
                 state,
-                label="worker_a_spawned_or_restored",
-                action="spawn or restore worker A for bounded sidecar work",
+                label="worker_a_spawned_fresh_for_task",
+                action="spawn a fresh worker A for bounded sidecar work in the new formal FlowPilot task",
                 crew_count=5,
                 worker_a_ready=True,
                 active_node="spawn_worker_b",
@@ -1256,8 +1425,8 @@ class AutopilotStep:
         if state.crew_count == 5:
             yield _step(
                 state,
-                label="worker_b_spawned_or_restored",
-                action="spawn or restore worker B for bounded sidecar work",
+                label="worker_b_spawned_fresh_for_task",
+                action="spawn a fresh worker B for bounded sidecar work in the new formal FlowPilot task",
                 crew_count=CREW_SIZE,
                 worker_b_ready=True,
                 active_node="write_crew_ledger",
@@ -1877,9 +2046,14 @@ class AutopilotStep:
         ):
             yield _step(
                 state,
-                label="six_live_subagents_started",
-                action="start or resume all six live FlowPilot background agents and record startup evidence",
+                label="fresh_six_live_subagents_started",
+                action="start all six live FlowPilot background agents as fresh current-task subagents and record nonreuse evidence",
                 live_subagents_started=True,
+                live_subagents_current_task_fresh=True,
+                fresh_agents_spawned_after_startup_answers=True,
+                fresh_agents_spawned_after_route_allocation=True,
+                historical_agent_ids_compared=True,
+                reused_historical_agent_ids=False,
                 active_node="startup_preflight_review",
             )
             return
@@ -1900,10 +2074,14 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="startup_preflight_reviewer_fact_report_blocked",
-                action="human-like reviewer independently checks startup facts and reports blockers to PM without opening the start gate",
+                action="human-like reviewer independently checks startup facts including run isolation, prior-work boundary, and current-task live-agent freshness, then reports blockers to PM without opening the start gate",
                 startup_preflight_review_report_written=True,
                 startup_preflight_review_blocking_findings=True,
                 startup_reviewer_fact_evidence_checked=True,
+                startup_reviewer_checked_run_isolation=True,
+                startup_reviewer_checked_prior_work_boundary=True,
+                startup_reviewer_checked_live_agent_freshness=True,
+                startup_reviewer_checked_no_historical_agent_reuse=True,
                 active_node="pm_interprets_startup_review",
             )
             return
@@ -1942,6 +2120,10 @@ class AutopilotStep:
                 startup_preflight_review_report_written=False,
                 startup_preflight_review_blocking_findings=False,
                 startup_reviewer_fact_evidence_checked=False,
+                startup_reviewer_checked_run_isolation=False,
+                startup_reviewer_checked_prior_work_boundary=False,
+                startup_reviewer_checked_live_agent_freshness=False,
+                startup_reviewer_checked_no_historical_agent_reuse=False,
                 active_node="startup_preflight_review",
             )
             return
@@ -1962,10 +2144,14 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="startup_preflight_reviewer_fact_report_clean",
-                action="human-like reviewer independently checks user answers, real route state, real heartbeat cadence, Windows watchdog task, global supervisor, cleanup boundary, crew evidence, and writes a clean fact report for PM",
+                action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh crew evidence, and writes a clean fact report for PM",
                 startup_preflight_review_report_written=True,
                 startup_preflight_review_blocking_findings=False,
                 startup_reviewer_fact_evidence_checked=True,
+                startup_reviewer_checked_run_isolation=True,
+                startup_reviewer_checked_prior_work_boundary=True,
+                startup_reviewer_checked_live_agent_freshness=True,
+                startup_reviewer_checked_no_historical_agent_reuse=True,
                 active_node="pm_interprets_startup_review",
             )
             return
@@ -3480,6 +3666,7 @@ def mode_choice_before_contract(state: State, trace) -> InvariantResult:
     del trace
     if state.contract_frozen and not (
         state.flowpilot_enabled and _startup_questions_complete(state) and state.startup_banner_emitted
+        and _run_isolation_ready(state)
         and state.mode_choice_offered and state.mode_selected
         and state.showcase_floor_committed and state.visible_self_interrogation_done
         and _full_interrogation_ready(
@@ -3493,7 +3680,7 @@ def mode_choice_before_contract(state: State, trace) -> InvariantResult:
         and _crew_ready(state)
         and _product_function_architecture_ready(state)
     ):
-        return InvariantResult.fail("contract frozen before startup questions, FlowPilot startup banner, mode, showcase floor, dynamic per-layer visible self-interrogation, crew recovery, PM product-function architecture, candidate pool, and validation-direction gates")
+        return InvariantResult.fail("contract frozen before startup questions, FlowPilot startup banner, run isolation, mode, showcase floor, dynamic per-layer visible self-interrogation, crew recovery, PM product-function architecture, candidate pool, and validation-direction gates")
     return InvariantResult.pass_()
 
 
@@ -3514,6 +3701,10 @@ def startup_banner_before_mode_choice(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("startup continued after asking questions without stopping for the user's reply")
     if state.startup_banner_emitted and not _startup_questions_complete(state):
         return InvariantResult.fail("startup banner emitted before all three startup answers were recorded")
+    if state.old_control_state_reused_as_current:
+        return InvariantResult.fail("old FlowPilot control state was reused as the current run state")
+    if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not _run_isolation_ready(state):
+        return InvariantResult.fail("FlowPilot advanced before a fresh current run directory and control-state boundary were established")
     return InvariantResult.pass_()
 
 
@@ -3535,6 +3726,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     )
     if route_version_exists and not (
         _crew_ready(state)
+        and _run_isolation_ready(state)
         and state.pm_initial_route_decision_recorded
         and _product_function_architecture_ready(state)
         and state.contract_frozen
@@ -3543,7 +3735,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         and _continuation_lifecycle_valid(state)
     ):
         return InvariantResult.fail(
-            "route version created before six-agent crew, PM route decision, product-function architecture, frozen contract, dependency plan, and host continuation decision"
+            "route version created before six-agent crew, fresh run isolation, PM route decision, product-function architecture, frozen contract, dependency plan, and host continuation decision"
         )
     if formal_route_or_work_started and not (
         state.flowguard_process_design_done
@@ -3564,10 +3756,38 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         return InvariantResult.fail(
             "startup reviewer report was written without independent fact evidence checks"
         )
+    if state.startup_preflight_review_report_written and not (
+        state.startup_reviewer_checked_run_isolation
+        and state.startup_reviewer_checked_prior_work_boundary
+    ):
+        return InvariantResult.fail(
+            "startup reviewer report was written without checking current run isolation and prior-work import boundary"
+        )
+    if (
+        state.startup_preflight_review_report_written
+        and state.live_subagents_started
+        and not (
+            state.startup_reviewer_checked_live_agent_freshness
+            and state.startup_reviewer_checked_no_historical_agent_reuse
+        )
+    ):
+        return InvariantResult.fail(
+            "startup reviewer report counted live subagents without checking current-task freshness and historical id reuse"
+        )
     if state.pm_start_gate_opened and not (
         state.startup_preflight_review_report_written
         and not state.startup_preflight_review_blocking_findings
         and state.startup_reviewer_fact_evidence_checked
+        and _run_isolation_ready(state)
+        and state.startup_reviewer_checked_run_isolation
+        and state.startup_reviewer_checked_prior_work_boundary
+        and (
+            state.single_agent_role_continuity_authorized
+            or (
+                state.startup_reviewer_checked_live_agent_freshness
+                and state.startup_reviewer_checked_no_historical_agent_reuse
+            )
+        )
     ):
         return InvariantResult.fail(
             "PM start gate opened before a clean factual reviewer startup report"
@@ -3592,9 +3812,17 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         return InvariantResult.fail(
             "PM allowed work beyond startup before the three startup answers were recorded"
         )
+    if state.work_beyond_startup_allowed and not _run_isolation_ready(state):
+        return InvariantResult.fail(
+            "PM allowed work beyond startup before fresh run isolation and prior-work boundary were resolved"
+        )
     if state.work_beyond_startup_allowed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(
-            "PM allowed work beyond startup before live subagents or explicit single-agent fallback were resolved"
+            "PM allowed work beyond startup before fresh current-task live subagents or explicit single-agent fallback were resolved"
+        )
+    if state.work_beyond_startup_allowed and state.reused_historical_agent_ids:
+        return InvariantResult.fail(
+            "PM allowed work beyond startup while live-agent evidence reused historical agent ids"
         )
     if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
         return InvariantResult.fail(

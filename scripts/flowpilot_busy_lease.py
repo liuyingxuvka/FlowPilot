@@ -15,6 +15,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_paths import DEFAULT_BUSY_LEASE_REL, resolve_flowpilot_paths, resolve_project_relative_path
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -33,12 +35,11 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def load_state(root: Path) -> dict[str, Any]:
-    return read_json(root / ".flowpilot" / "state.json")
+    return read_json(Path(resolve_flowpilot_paths(root)["state_path"]))
 
 
 def lease_path(root: Path, raw: str) -> Path:
-    path = Path(raw)
-    return path if path.is_absolute() else root / path
+    return resolve_project_relative_path(root, raw, default_key="busy_lease_path")
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -101,11 +102,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Manage FlowPilot busy lease evidence.")
     parser.add_argument("command", choices=("start", "clear", "status"))
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
-    parser.add_argument("--path", default=".flowpilot/busy_lease.json", help="Lease path relative to root")
+    parser.add_argument("--path", default=DEFAULT_BUSY_LEASE_REL, help="Lease path relative to root; default resolves to the active FlowPilot run")
     parser.add_argument("--lease-id", default="", help="Optional stable lease id")
     parser.add_argument("--operation", default="bounded FlowPilot work chunk", help="Current long operation")
-    parser.add_argument("--route", default="", help="Route id; defaults to .flowpilot/state.json active_route")
-    parser.add_argument("--node", default="", help="Node id; defaults to .flowpilot/state.json active_node")
+    parser.add_argument("--route", default="", help="Route id; defaults to active run state.json active_route")
+    parser.add_argument("--node", default="", help="Node id; defaults to active run state.json active_node")
     parser.add_argument("--max-minutes", type=float, default=30.0, help="Lease expiry window")
     parser.add_argument("--owner", default="flowpilot-controller")
     parser.add_argument("--reason", default="")

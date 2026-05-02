@@ -16,7 +16,7 @@ model-backed autopilot:
 7. execute bounded chunks;
 8. verify each chunk before moving on;
 9. update the model and route when new facts invalidate the current route;
-10. create or restore a persistent six-agent crew for formal routes, with a
+10. create a fresh six-agent crew for each new formal FlowPilot task, with a
   project manager as route-decision and completion-runway authority and worker
   agents limited to bounded sidecar tasks;
 11. finish only after evidence proves the frozen contract is met.
@@ -97,13 +97,16 @@ model-backed autopilot:
   position to project completion. The main executor no longer decides route
   advancement directly from the frontier, and it must replace the visible plan
   projection from each PM runway instead of working from a one-step gate.
-- The six-agent crew is persistent as roles, and six live background subagents
-  are the default formal startup target where the host/tool policy permits
-  them. FlowPilot writes compact per-role memory packets under
-  `.flowpilot/crew_memory/`; heartbeat and manual resume load those packets,
-  try to resume stored agent ids when possible, and replace unavailable roles
-  from memory only after explicit user fallback approval. The project manager
-  is asked for a runway only after crew memory rehydration and the
+- The six-agent crew is persistent as roles, but each new formal FlowPilot task
+  must receive a fresh live background-agent cohort when the user authorizes
+  background agents. FlowPilot writes compact per-role memory packets under
+  `.flowpilot/runs/<run-id>/crew_memory/`; heartbeat and manual resume may load
+  and resume stored agent ids only when they belong to the same active
+  task-born cohort.
+  Prior-route or earlier-task `agent_id` values are audit history only, not
+  startup evidence. Replacement from memory is allowed only inside same-task
+  continuation or after explicit user fallback approval. The project manager is
+  asked for a runway only after crew memory rehydration and the
   live-subagent/fallback startup decision are recorded.
 - Public invocation text should explicitly say: use FlowPilot full protocol,
   including permission to start the standard six background subagents where the
@@ -132,10 +135,16 @@ model-backed autopilot:
   final output, used as evidence, superseded, quarantined, or discarded with
   reason, the human-like reviewer replays the final product backward through
   that ledger, and the PM records ledger-specific completion approval.
-- Watchdog decisions now trust only local `state.json`, latest heartbeat
-  evidence, and `.flowpilot/busy_lease.json`. Frontier, lifecycle, automation,
-  and global records are drift diagnostics; live subagent busy state is not a
-  supported watchdog source.
+- Each formal FlowPilot invocation now creates a fresh
+  `.flowpilot/runs/<run-id>/` directory in the target project. Top-level
+  `.flowpilot/current.json` and `.flowpilot/index.json` are pointer/catalog
+  files only. Continuing old work creates a new run and imports old outputs as
+  read-only evidence; old control state, agent IDs, screenshots, icons, or
+  route files must not become current state.
+- Watchdog decisions now trust only current-run `state.json`, latest heartbeat
+  evidence, and `.flowpilot/runs/<run-id>/busy_lease.json`. Frontier,
+  lifecycle, automation, and global records are drift diagnostics; live
+  subagent busy state is not a supported watchdog source.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns
@@ -152,10 +161,13 @@ model-backed autopilot:
 - Formal startup now has a PM-owned startup activation gate. Before any child
   skill, imagegen, implementation, route chunk, or completion work, the
   human-like reviewer must personally check real state/frontier/route,
-  six-role crew ledger, role memory packets, continuation, heartbeat,
-  watchdog, global supervisor, and cleanup evidence, then write
-  `.flowpilot/startup_review/latest.json` as a factual report. The PM is the
-  only role that may open `.flowpilot/startup_pm_gate/latest.json` and set
+  six-role crew ledger, role memory packets, live-agent freshness for the
+  current task, continuation, heartbeat, watchdog, global supervisor, and
+  cleanup evidence, current run pointer/index evidence, and prior-work import
+  boundary when continuing, then write
+  `.flowpilot/runs/<run-id>/startup_review/latest.json` as a factual report.
+  The PM is the only role that may open
+  `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and set
   `work_beyond_startup_allowed: true`; there is no third startup opener or
   runtime startup-check script. Route-local artifacts without that canonical match
   are shadow routes to quarantine or supersede.
@@ -238,6 +250,17 @@ FlowGuard caught and fixed these design issues:
     similar generated artifacts must be consumed by implementation/QA/final
     output or explicitly superseded, quarantined, or discarded with reason in
     the final ledger before completion can claim zero unresolved work.
+20. A new formal FlowPilot task cannot treat historical role `agent_id` values
+    as the current six live background agents. The reviewer must check that the
+    six live role-bearing subagents, when authorized, were freshly spawned
+    after the current startup answers and current route allocation. Counting
+    six role records is insufficient if any ID was resumed from a prior route
+    or older task.
+21. A new formal FlowPilot invocation must create a new target-project run
+    directory under `.flowpilot/runs/<run-id>/`. Top-level `.flowpilot`
+    control files are forbidden except `current.json` and `index.json`.
+    Continuing prior work imports old evidence into the new run; it never
+    resumes old control state as current state.
 
 ## Current Implementation State
 
@@ -246,9 +269,10 @@ FlowGuard caught and fixed these design issues:
 - FlowGuard regression models live at `simulations/`.
 - Self-check and smoke scripts live at `scripts/`.
 - `scripts/flowpilot_lifecycle.py` scans lifecycle authorities before pause,
-  restart, or terminal cleanup and writes `.flowpilot/lifecycle/` evidence when
+  restart, or terminal cleanup and writes `.flowpilot/runs/<run-id>/lifecycle/` evidence when
   requested.
-- Current project progress is tracked in `.flowpilot/`.
+- Current project progress is tracked in `.flowpilot/current.json` plus the
+  active `.flowpilot/runs/<run-id>/` directory.
 
 ## Remaining Work
 

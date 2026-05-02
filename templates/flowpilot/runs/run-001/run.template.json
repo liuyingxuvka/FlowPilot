@@ -1,0 +1,41 @@
+{
+  "schema_version": "flowpilot.run.v1",
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
+  "created_at": "<iso-8601-timestamp>",
+  "status": "<startup_pending|running|paused|blocked|complete>",
+  "task_summary": "<task-summary>",
+  "run_kind": "<new_task|continuation_import|migration>",
+  "continues_from_run_id": null,
+  "continues_from_run_root": null,
+  "current_task_fresh_start": true,
+  "control_state_scope": "run_root_only",
+  "top_level_flowpilot_policy": {
+    "current_json_is_pointer_only": true,
+    "index_json_is_catalog_only": true,
+    "top_level_control_state_files_forbidden": true
+  },
+  "paths": {
+    "state": ".flowpilot/runs/run-001/state.json",
+    "execution_frontier": ".flowpilot/runs/run-001/execution_frontier.json",
+    "routes_root": ".flowpilot/runs/run-001/routes",
+    "crew_ledger": ".flowpilot/runs/run-001/crew_ledger.json",
+    "crew_memory_root": ".flowpilot/runs/run-001/crew_memory",
+    "startup_review": ".flowpilot/runs/run-001/startup_review/latest.json",
+    "startup_pm_gate": ".flowpilot/runs/run-001/startup_pm_gate/latest.json",
+    "evidence_root": ".flowpilot/runs/run-001/evidence",
+    "checkpoints_root": ".flowpilot/runs/run-001/checkpoints",
+    "diagrams_root": ".flowpilot/runs/run-001/diagrams",
+    "watchdog_root": ".flowpilot/runs/run-001/watchdog",
+    "lifecycle_root": ".flowpilot/runs/run-001/lifecycle",
+    "busy_lease": ".flowpilot/runs/run-001/busy_lease.json"
+  },
+  "prior_work_import": {
+    "enabled": false,
+    "source_run_ids": [],
+    "source_project_paths": [],
+    "import_packet_path": ".flowpilot/runs/run-001/prior_work_import_packet.json",
+    "old_control_state_reuse_allowed": false,
+    "old_agent_id_reuse_allowed": false
+  }
+}

@@ -40,7 +40,7 @@
   },
   "final_route_wide_gate_ledger_contribution": {
     "included_in_final_ledger": false,
-    "ledger_path": ".flowpilot/final_route_wide_gate_ledger.json",
+    "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",
     "gate_entries": [],
     "generated_resource_entries": [],
     "stale_after_route_version": null,

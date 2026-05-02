@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_paths import resolve_flowpilot_paths
+
 
 STAGES = (
     ("intake", "Goal & materials"),
@@ -139,18 +141,18 @@ def build_markdown(source: str, *, generated_at: str, current_stage: str) -> str
 
 
 def generate(root: Path, *, write: bool) -> dict[str, Any]:
-    flowpilot = root / ".flowpilot"
-    frontier_path = flowpilot / "execution_frontier.json"
+    paths = resolve_flowpilot_paths(root)
+    frontier_path = Path(paths["frontier_path"])
     frontier = _load_json(frontier_path)
-    active_route = frontier.get("active_route") or _load_json(flowpilot / "state.json").get("active_route")
-    route_path = flowpilot / "routes" / str(active_route or "route-001") / "flow.json"
+    active_route = frontier.get("active_route") or _load_json(Path(paths["state_path"])).get("active_route")
+    route_path = Path(paths["routes_root"]) / str(active_route or "route-001") / "flow.json"
     route = _load_json(route_path)
     current_stage = classify_current_stage(frontier, route)
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     source = build_mermaid(frontier=frontier, route=route, current_stage=current_stage)
     markdown = build_markdown(source, generated_at=generated_at, current_stage=current_stage)
 
-    diagram_dir = flowpilot / "diagrams"
+    diagram_dir = Path(paths["diagrams_dir"])
     mmd_path = diagram_dir / "user-flow-diagram.mmd"
     md_path = diagram_dir / "user-flow-diagram.md"
     if write:
@@ -162,6 +164,9 @@ def generate(root: Path, *, write: bool) -> dict[str, Any]:
         "ok": True,
         "write": write,
         "current_stage": current_stage,
+        "layout": paths["layout"],
+        "run_id": paths["run_id"],
+        "run_root": str(paths["run_root"]),
         "active_route": active_route,
         "active_node": frontier.get("active_node") or route.get("active_node"),
         "source_route_path": str(route_path),
@@ -175,7 +180,7 @@ def generate(root: Path, *, write: bool) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
-    parser.add_argument("--write", action="store_true", help="Write .flowpilot/diagrams/user-flow-diagram.*")
+    parser.add_argument("--write", action="store_true", help="Write active-run diagrams/user-flow-diagram.*")
     parser.add_argument("--json", action="store_true", help="Print JSON metadata instead of Mermaid source")
     args = parser.parse_args()
 

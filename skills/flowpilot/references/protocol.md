@@ -22,36 +22,49 @@ long-form public explanation lives in `docs/protocol.md`.
    choices are explicit.
 4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
    the startup-question gate is open.
-5. Create or load `.flowpilot/`.
+5. Create or load `.flowpilot/`, allocate a fresh `run_id`, create
+   `.flowpilot/runs/<run-id>/`, write `.flowpilot/current.json`, and update
+   `.flowpilot/index.json`. These top-level files are only pointers/catalogs.
+   Current control state must live under the run directory. Continuing prior
+   work still creates a new run and writes a
+   `.flowpilot/runs/<run-id>/prior_work_import_packet.json`; old state,
+   routes, agent IDs, screenshots, icons, or evidence may be referenced as
+   read-only input only and must not become current control state.
 6. Commit the showcase-grade long-horizon floor.
 7. Run visible full grill-me before freezing the contract. In the same round,
    draft the intended floor, seed the improvement candidate pool, seed the
    initial validation direction, and surface product-function questions. Do
    not freeze the contract yet.
-8. Create or restore the fixed six-agent crew and write
-   `.flowpilot/crew_ledger.json` plus one compact role memory packet under
-   `.flowpilot/crew_memory/` for project manager, human-like reviewer, process
+8. Create the fixed six-agent crew for the new formal FlowPilot task and write
+   `.flowpilot/runs/<run-id>/crew_ledger.json` plus one compact role memory
+   packet under `.flowpilot/runs/<run-id>/crew_memory/` for project manager,
+   human-like reviewer, process
    FlowGuard officer, product FlowGuard officer, worker A, and worker B. Each
    role record separates `role_key` for authority/routing, `display_name` for
-   chat/UI labels, and diagnostic-only `agent_id` for best-effort resume.
+   chat/UI labels, and diagnostic-only `agent_id` for same-task continuation
+   diagnostics. At formal startup, all live background subagent IDs must be
+   freshly spawned for this FlowPilot task after the startup answers and
+   current route allocation. IDs from prior routes, old crew ledgers, or older
+   role-memory packets are audit history only and must not be resumed,
+   relabeled, or counted as current live-agent evidence.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
 10. Before PM product-function synthesis or route decisions, require the main
-    executor to write `.flowpilot/material_intake_packet.json`: inventory,
+    executor to write `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,
     coverage map, and unread or deferred materials.
 11. The human-like reviewer approves or blocks material sufficiency. The packet
     is PM-ready only when obvious sources are not missing, large materials are
     sampled or scoped honestly, summaries are specific, contradictions and
     uncertainty are visible, and PM route design would not be misled.
-12. The project manager writes `.flowpilot/pm_material_understanding.json` from
+12. The project manager writes `.flowpilot/runs/<run-id>/pm_material_understanding.json` from
     the reviewed packet and user intent. It records source-claim matrix, open
     questions, material complexity (`simple`, `normal`, or `messy/raw`), and
     whether materials require a formal discovery, cleanup, modeling,
     validation, or research subtree before implementation.
 13. Require the project manager to write
-    `.flowpilot/product_function_architecture.json` before contract freeze:
+    `.flowpilot/runs/<run-id>/product_function_architecture.json` before contract freeze:
     user-task map, product capability map, feature necessity decisions,
     display rationale, missing high-value feature review, negative scope, and
     functional acceptance matrix.
@@ -60,7 +73,8 @@ long-form public explanation lives in `docs/protocol.md`.
     usefulness, unnecessary display, missing workflow support, bad defaults,
     and failure-state gaps. If either blocks, the project manager revises the
     architecture before the route continues.
-15. Freeze the acceptance contract as a floor in `.flowpilot/contract.md` from
+15. Freeze the acceptance contract as a floor in
+    `.flowpilot/runs/<run-id>/contract.md` from
     the approved product-function architecture and startup interrogation.
 16. Write the capabilities manifest, including material handoff and
     product-function architecture evidence.
@@ -113,7 +127,7 @@ long-form public explanation lives in `docs/protocol.md`.
     approve/block reports.
 33. Freeze the checked candidate as the active route JSON and write derived
     Markdown summary.
-34. Write `.flowpilot/execution_frontier.json` from the checked route, active
+34. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route, active
     node, next node, current mainline, fallback, checks before advance, and the
     current-node completion guard. Include actor authority for the current
     gate: draft owner, execution owner, required approver, forbidden
@@ -134,25 +148,31 @@ long-form public explanation lives in `docs/protocol.md`.
     generation, implementation, formal route chunk, or completion work. There
     is no third startup opener or runtime startup-check script. The human-like
     reviewer personally checks facts and writes
-    `.flowpilot/startup_review/latest.json`; the project manager is the only
-    role that may write `.flowpilot/startup_pm_gate/latest.json` and set
+    `.flowpilot/runs/<run-id>/startup_review/latest.json`; the project manager is the only
+    role that may write `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and set
     `work_beyond_startup_allowed: true`.
 
     The human-like reviewer report must verify matching active route,
-    canonical state, execution frontier, current six-role crew ledger, current
-    role memory, the three explicit startup answers, stop-and-wait evidence,
-    banner-after-answers evidence, live-subagent startup resolution,
+    canonical current-run state, execution frontier, current six-role crew
+    ledger, current role memory, `.flowpilot/current.json`,
+    `.flowpilot/index.json`, the run manifest, prior-work import packet when
+    continuing, the three explicit startup answers, stop-and-wait evidence,
+    banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
-    frontier. It must also check user authorization against actual state,
+    frontier. It must also verify old top-level control state is absent,
+    legacy-only, or quarantined and is not being used as current state. It
+    must also check user authorization against actual state,
     old-route and old-asset cleanup when a clean start was requested, the real
     route heartbeat automation at one minute, the external Windows watchdog
     task, the singleton global supervisor at thirty minutes, global registry
     registration, latest watchdog evidence, residual route state, and
     shadow-route evidence. It must bind the background-agent answer to actual
     subagent state: if the user allowed background agents, verify six live
-    role-bearing subagents started or resumed after that user decision; if the
-    user chose single-agent continuity, verify the explicit fallback
-    authorization and do not claim live subagents. The reviewer writes a report only; the reviewer
+    role-bearing subagents were freshly spawned for this FlowPilot task after
+    that user decision and after current route allocation, and verify none of
+    their `agent_id` values comes from prior route ledgers or older role-memory
+    packets. If the user chose single-agent continuity, verify the explicit
+    fallback authorization and do not claim live subagents. The reviewer writes a report only; the reviewer
     does not approve startup and does not open the gate. The project manager
     reads the report. If it contains blockers, PM sends remediation items back
     to workers/main executor and requires a new factual reviewer report. If it
@@ -194,7 +214,7 @@ answer set is complete.
 
 Before PM product-function architecture, contract freeze, route generation, or
 capability routing, the main executor writes
-`.flowpilot/material_intake_packet.json`. It inventories user-provided and
+`.flowpilot/runs/<run-id>/material_intake_packet.json`. It inventories user-provided and
 repository-local materials, summarizes what each source appears to contain,
 classifies authority, freshness, completeness, contradictions, privacy/safety
 notes, maps coverage to user intent, and names unread or deferred materials.
@@ -216,7 +236,7 @@ route decision directly without that discovery decision.
 ## Product Function Architecture Gate
 
 After the material handoff and before contract freeze, the project manager
-writes `.flowpilot/product_function_architecture.json`. Required contents:
+writes `.flowpilot/runs/<run-id>/product_function_architecture.json`. Required contents:
 
 - user-task map;
 - product capability map;
@@ -267,13 +287,18 @@ gate blockers.
 
 Repeat until complete or blocked:
 
-1. Load `state.json`, `.flowpilot/execution_frontier.json`,
-   `.flowpilot/crew_ledger.json`, `.flowpilot/crew_memory/`, active route,
+1. Resolve `.flowpilot/current.json`, then load
+   `.flowpilot/runs/<run-id>/state.json`,
+   `.flowpilot/runs/<run-id>/execution_frontier.json`,
+   `.flowpilot/runs/<run-id>/crew_ledger.json`,
+   `.flowpilot/runs/<run-id>/crew_memory/`, active route,
    active node, continuation mode, last heartbeat or manual-resume record,
    watchdog evidence when present, lifecycle evidence, and last checkpoint.
-2. Rehydrate the six-agent crew before PM runway work. Try to resume stored
-   agent ids when the host supports it. If live agents are unavailable, ask for
-   the missing startup/fallback decision before replacing roles from memory.
+2. Rehydrate the six-agent crew before PM runway work. Stored agent ids may be
+   resumed only when they belong to the same active FlowPilot task-born cohort.
+   A new formal FlowPilot task must create fresh live subagents instead of
+   resuming prior-route IDs. If live agents are unavailable, ask for the
+   missing startup/fallback decision before replacing roles from memory.
    Record resumed, replaced, seeded, blocked, and unavailable roles. Live
    background agents are the default startup target; role continuity through
    persisted memory is allowed only after explicit fallback approval.
@@ -359,7 +384,7 @@ stored in the frontier authority record.
 
 The user flow diagram is the single display view over canonical `.flowpilot`
 state, not an alternate execution path. Chat and Cockpit UI render the same
-6-8 stage graph from `.flowpilot/diagrams/user-flow-diagram.mmd`, with the
+6-8 stage graph from `.flowpilot/runs/<run-id>/diagrams/user-flow-diagram.mmd`, with the
 current stage highlighted and active route/node named nearby. Superseded or
 paused routes stay in history with replacement reasons and checkpoint/failure
 evidence.
@@ -477,7 +502,8 @@ the changed child/subtree passes and the same parent backward review reruns.
 Pause, restart, and terminal closure use a unified lifecycle reconciliation
 gate. Before claiming any of those states, FlowPilot scans Codex app
 automations, the user-level global supervisor/registry, Windows scheduled
-tasks, `.flowpilot/state.json`, `.flowpilot/execution_frontier.json`, and
+tasks, `.flowpilot/runs/<run-id>/state.json`,
+`.flowpilot/runs/<run-id>/execution_frontier.json`, and
 latest watchdog evidence. Disabled Windows FlowPilot scheduled tasks are still
 residual lifecycle objects unless they are unregistered or explicitly waived.
 `scripts/flowpilot_lifecycle.py` provides a read-only inventory and required
@@ -499,8 +525,9 @@ guard. A heartbeat that only writes "next I will..." is a no-progress failure.
 
 When host automation appears active but heartbeat evidence stops advancing,
 FlowPilot may use `scripts/flowpilot_watchdog.py` or an equivalent external
-watchdog. The watchdog checks `.flowpilot/state.json`, the active route
-heartbeat id, `.flowpilot/busy_lease.json`, and host automation metadata.
+watchdog. The watchdog resolves `.flowpilot/current.json` and checks
+`.flowpilot/runs/<run-id>/state.json`, the active route heartbeat id,
+`.flowpilot/runs/<run-id>/busy_lease.json`, and host automation metadata.
 Because host heartbeats do not interrupt an already-running Codex turn,
 bounded long operations must create a route/node-matched busy lease before
 starting and clear or refresh it afterward. If the latest heartbeat is older
@@ -511,7 +538,7 @@ waits a bounded grace window before requesting reset, because the next
 heartbeat can only arrive after the active turn yields back to the host
 scheduler. Default the grace window to 10x the heartbeat interval unless route
 evidence records a different value. Default the stale threshold to 10 minutes.
-If no valid lease or post-busy grace exists, it writes `.flowpilot/watchdog/`
+If no valid lease or post-busy grace exists, it writes `.flowpilot/runs/<run-id>/watchdog/`
 evidence requiring FlowPilot to call the official Codex app automation
 interface and set the active heartbeat automation to `PAUSED`, then back to
 `ACTIVE`. The watchdog does not mutate `automation.toml` directly. A later
@@ -524,8 +551,8 @@ authoritative. The global registry is an index that a singleton supervisor
 uses to find projects whose local evidence must be reread before any reset is
 requested.
 
-Watchdog reset decisions trust only `.flowpilot/state.json`, latest heartbeat
-evidence, and `.flowpilot/busy_lease.json`. `execution_frontier.json`,
+Watchdog reset decisions trust only `.flowpilot/runs/<run-id>/state.json`, latest heartbeat
+evidence, and `.flowpilot/runs/<run-id>/busy_lease.json`. `execution_frontier.json`,
 `lifecycle/latest.json`, host automation metadata, and global records are
 diagnostic drift signals only. Live subagent busy state is not inspected. Each
 watchdog record includes `source_status` with trusted sources, diagnostic
@@ -545,8 +572,8 @@ and records the pairing. If any piece cannot be created, roll back to
 terminal closure for automated routes, first write terminal/inactive route
 state and unregister this project's global supervisor registration lease. Then
 disable or delete the project watchdog automation, write that evidence, write
-the inactive lifecycle snapshot back to `state.json`,
-`.flowpilot/execution_frontier.json`, and watchdog evidence, and only then
+the inactive lifecycle snapshot back to `.flowpilot/runs/<run-id>/state.json`,
+`.flowpilot/runs/<run-id>/execution_frontier.json`, and watchdog evidence, and only then
 disable or delete the heartbeat automation. Delete the user-level global
 supervisor last only after a locked registry reread confirms no active,
 unexpired registrations remain. For manual-resume routes, record that no

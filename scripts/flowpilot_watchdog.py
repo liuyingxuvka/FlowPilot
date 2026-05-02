@@ -23,6 +23,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_paths import DEFAULT_BUSY_LEASE_REL, DEFAULT_WATCHDOG_REL, resolve_flowpilot_paths, resolve_project_relative_path
+
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback
@@ -137,17 +139,30 @@ def read_toml(path: Path) -> dict[str, Any]:
 
 
 def resolve_heartbeat_file(root: Path, heartbeat_id: str | None) -> Path | None:
-    heartbeat_dir = root / ".flowpilot" / "heartbeats"
+    paths = resolve_flowpilot_paths(root)
+    heartbeat_dirs = [
+        Path(paths["run_root"]) / "heartbeats",
+        root / ".flowpilot" / "heartbeats",
+    ]
     if heartbeat_id:
-        candidates = [
-            heartbeat_dir / heartbeat_id,
-            heartbeat_dir / f"{heartbeat_id}.json",
-            heartbeat_dir / f"{heartbeat_id}.md",
-        ]
-        for path in candidates:
-            if path.exists() and path.suffix.lower() == ".json":
-                return path
-    json_files = sorted(heartbeat_dir.glob("*.json"), key=lambda item: item.stat().st_mtime, reverse=True)
+        for heartbeat_dir in heartbeat_dirs:
+            candidates = [
+                heartbeat_dir / heartbeat_id,
+                heartbeat_dir / f"{heartbeat_id}.json",
+                heartbeat_dir / f"{heartbeat_id}.md",
+            ]
+            for path in candidates:
+                if path.exists() and path.suffix.lower() == ".json":
+                    return path
+    json_files = sorted(
+        {
+            path
+            for heartbeat_dir in heartbeat_dirs
+            for path in heartbeat_dir.glob("*.json")
+        },
+        key=lambda item: item.stat().st_mtime,
+        reverse=True,
+    )
     return json_files[0] if json_files else None
 
 
@@ -291,8 +306,9 @@ def build_source_status(
     busy_lease: BusyLeaseEvidence,
     stale_seconds: float,
 ) -> dict[str, Any]:
-    frontier_path = root / ".flowpilot" / "execution_frontier.json"
-    lifecycle_path = root / ".flowpilot" / "lifecycle" / "latest.json"
+    paths = resolve_flowpilot_paths(root)
+    frontier_path = Path(paths["frontier_path"])
+    lifecycle_path = Path(paths["lifecycle_dir"]) / "latest.json"
     frontier_loaded, frontier_payload, frontier_error = read_optional_json(frontier_path)
     lifecycle_loaded, lifecycle_payload, lifecycle_error = read_optional_json(lifecycle_path)
 
@@ -938,23 +954,26 @@ def write_records(
 def build_payload(args: argparse.Namespace) -> tuple[dict[str, Any], bool, bool]:
     root = Path(args.root).resolve()
     now = utc_now()
-    flowpilot_root = root / ".flowpilot"
-    state_path = flowpilot_root / "state.json"
+    paths = resolve_flowpilot_paths(root)
+    state_path = Path(paths["state_path"])
     if not state_path.exists():
         payload = {
             "schema_version": "flowpilot-watchdog/v1",
             "checked_at": isoformat_z(now),
             "root": str(root),
+            "layout": paths["layout"],
+            "run_id": paths["run_id"],
+            "run_root": str(paths["run_root"]),
             "ok": False,
             "decision": "config_error",
-            "error": ".flowpilot/state.json not found",
+            "error": "active FlowPilot run state.json not found",
         }
         return payload, False, True
 
     state = read_json(state_path)
     active_route = state.get("active_route")
     state_status = str(state.get("status") or "unknown")
-    route_path = flowpilot_root / "routes" / str(active_route) / "flow.json" if active_route else None
+    route_path = Path(paths["routes_root"]) / str(active_route) / "flow.json" if active_route else None
     route = read_json(route_path) if route_path and route_path.exists() else {}
     automation_id = args.automation_id or route.get("heartbeat_automation_id") or route.get("heartbeat_automation_name")
     codex_home = Path(args.codex_home or os.environ.get("CODEX_HOME") or (Path.home() / ".codex")).resolve()
@@ -979,7 +998,7 @@ def build_payload(args: argparse.Namespace) -> tuple[dict[str, Any], bool, bool]
     )
     busy_lease = load_busy_lease(
         root,
-        args.busy_lease_path,
+        str(resolve_project_relative_path(root, args.busy_lease_path, default_key="busy_lease_path")),
         now=now,
         active_route=active_route,
         active_node=state.get("active_node"),
@@ -1086,6 +1105,9 @@ def build_payload(args: argparse.Namespace) -> tuple[dict[str, Any], bool, bool]
         "schema_version": "flowpilot-watchdog/v1",
         "checked_at": isoformat_z(now),
         "root": str(root),
+        "layout": paths["layout"],
+        "run_id": paths["run_id"],
+        "run_root": str(paths["run_root"]),
         "threshold_minutes": args.stale_minutes,
         "ok": ok,
         "decision": decision,
@@ -1187,7 +1209,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
     parser.add_argument("--stale-minutes", type=float, default=float(os.environ.get("FLOWPILOT_WATCHDOG_STALE_MINUTES", "10")))
     parser.add_argument("--automation-id", default="", help="Override heartbeat automation id")
-    parser.add_argument("--busy-lease-path", default=".flowpilot/busy_lease.json", help="Busy lease path relative to the project root")
+    parser.add_argument("--busy-lease-path", default=DEFAULT_BUSY_LEASE_REL, help="Busy lease path relative to the project root; default resolves to the active FlowPilot run")
     parser.add_argument("--heartbeat-interval-minutes", type=float, default=float(os.environ.get("FLOWPILOT_HEARTBEAT_INTERVAL_MINUTES", "1")), help="Expected heartbeat interval used for post-busy grace")
     parser.add_argument("--post-busy-grace-multiplier", type=float, default=float(os.environ.get("FLOWPILOT_POST_BUSY_GRACE_MULTIPLIER", "10")), help="Post-busy grace as a multiple of heartbeat interval")
     parser.add_argument("--watchdog-automation-id", default=os.environ.get("FLOWPILOT_WATCHDOG_AUTOMATION_ID", ""), help="External watchdog automation id or scheduled task name")
@@ -1197,7 +1219,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--watchdog-hidden-noninteractive", action="store_true", help="Record that the watchdog task/action is hidden and does not open an interactive console")
     parser.add_argument("--watchdog-visible-window-risk", action="store_true", help="Record that the watchdog task/action may open a visible console window")
     parser.add_argument("--codex-home", default="", help="Override CODEX_HOME; defaults to ~/.codex")
-    parser.add_argument("--record-dir", default=".flowpilot/watchdog", help="Directory for watchdog latest.json and event records")
+    parser.add_argument("--record-dir", default=DEFAULT_WATCHDOG_REL, help="Directory for watchdog latest.json and event records; default resolves to the active FlowPilot run")
     parser.add_argument("--global-record-dir", default="", help="User-level FlowPilot watchdog record directory; defaults to CODEX_HOME/flowpilot/watchdog")
     parser.add_argument("--no-global-record", action="store_true", help="Do not write user-level global watchdog records")
     parser.add_argument("--min-event-gap-seconds", type=int, default=300, help="Minimum seconds between event JSONL records")
@@ -1216,7 +1238,7 @@ def main(argv: list[str] | None = None) -> int:
     payload, stale, event_needed = build_payload(args)
 
     root = Path(args.root).resolve()
-    record_dir = root / args.record_dir
+    record_dir = resolve_project_relative_path(root, args.record_dir, default_key="watchdog_dir")
     events_jsonl = record_dir / "events.jsonl"
     force_event = payload.get("decision") == "config_error"
     event_allowed = event_needed and should_write_event(

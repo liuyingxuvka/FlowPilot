@@ -5,15 +5,15 @@
     "blocked"
   ],
   "expected_artifacts": [
-    ".flowpilot/material_intake_packet.json",
+    ".flowpilot/runs/<run-id>/material_intake_packet.json",
     ".flowpilot/pm_material_understanding.json",
-    ".flowpilot/product_function_architecture.json",
+    ".flowpilot/runs/<run-id>/product_function_architecture.json",
     ".flowpilot/contract.md",
-    ".flowpilot/capabilities.json",
-    ".flowpilot/routes/route-001/flow.json",
-    ".flowpilot/routes/route-001/flow.md",
-    ".flowpilot/startup_review/latest.json",
-    ".flowpilot/startup_pm_gate/latest.json",
+    ".flowpilot/runs/<run-id>/capabilities.json",
+    ".flowpilot/runs/<run-id>/routes/route-001/flow.json",
+    ".flowpilot/runs/<run-id>/routes/route-001/flow.md",
+    ".flowpilot/runs/<run-id>/startup_review/latest.json",
+    ".flowpilot/runs/<run-id>/startup_pm_gate/latest.json",
     ".flowpilot/task-models/<route-model>/results.json"
   ],
   "id": "node-001-start",

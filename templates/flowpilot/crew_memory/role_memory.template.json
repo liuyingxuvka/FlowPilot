@@ -1,5 +1,7 @@
 {
   "schema_version": "flowpilot.role_memory.v1",
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
   "route_id": "route-001",
   "role_key": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
   "display_name": "<human-facing-role-name>",
@@ -10,7 +12,7 @@
     "role_key_is_stable": true,
     "display_name_is_user_facing": true,
     "agent_id_is_diagnostic_only": true,
-    "rule": "Resume by agent_id when possible, but route authority and UI labels must use role_key and display_name."
+    "rule": "At new formal FlowPilot startup, do not resume this agent_id from prior routes or older tasks. Resume by agent_id only for same-task continuation; route authority and UI labels must use role_key and display_name."
   },
   "status": "<active|idle|running|restored|recovered|memory_recovered|memory_seeded|replaced_from_memory|closed|archived|unavailable>",
   "authority_boundary": "<what-this-role-may-do>",
@@ -20,9 +22,9 @@
     "active_route": "route-001",
     "active_node": "node-001-start",
     "current_gate": "<gate-id-or-null>",
-    "frontier_path": ".flowpilot/execution_frontier.json"
+    "frontier_path": ".flowpilot/runs/run-001/execution_frontier.json"
   },
-  "frozen_contract_path": ".flowpilot/contract.md",
+  "frozen_contract_path": ".flowpilot/runs/run-001/contract.md",
   "latest_report_path": "<path-or-null>",
   "latest_decisions": [],
   "open_obligations": [],
@@ -32,8 +34,10 @@
   "evidence_paths": [],
   "last_rehydration": {
     "attempted_at": "<iso-8601-timestamp-or-null>",
-    "result": "<not_attempted|resumed_existing_agent|replaced_from_memory|blocked>",
+    "result": "<not_attempted|spawned_fresh_for_task|resumed_same_task_agent|replaced_from_memory|blocked>",
     "new_agent_id": "<agent-id-or-null>",
+    "same_task_agent_id": "<true|false>",
+    "historical_agent_id_reused": false,
     "seeded_from_memory": false,
     "evidence_path": "<path-or-null>"
   },

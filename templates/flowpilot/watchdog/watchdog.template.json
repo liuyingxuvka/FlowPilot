@@ -1,5 +1,7 @@
 {
   "schema_version": "flowpilot-watchdog/v1",
+  "run_id": "<run-id>",
+  "run_root": ".flowpilot/runs/<run-id>",
   "checked_at": "<iso-8601-timestamp>",
   "root": "<project-root>",
   "threshold_minutes": 10,
@@ -7,7 +9,7 @@
   "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
   "ok": false,
   "decision": "<healthy|busy_not_stale|post_busy_grace|stale_official_reset_required|stale_official_reset_invoked|stale_official_reset_failed|inactive_terminal_route|config_error|not_created_unsupported_host>",
-  "boundary": "The watchdog exists only when the host supports real continuation. In automated mode it can detect stale FlowPilot heartbeat evidence and require an official Codex app automation reset. It does not edit automation files directly, reset is not proof of recovery until a new heartbeat appears, and terminal shutdown is not closed until inactive lifecycle state is written back to local FlowPilot evidence. Reset decisions trust state.json, latest heartbeat evidence, and busy_lease.json only; execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported watchdog source. In manual-resume mode no watchdog/global-supervisor automation is created.",
+  "boundary": "The watchdog exists only when the host supports real continuation. In automated mode it can detect stale FlowPilot heartbeat evidence and require an official Codex app automation reset. It does not edit automation files directly, reset is not proof of recovery until a new heartbeat appears, and terminal shutdown is not closed until inactive lifecycle state is written back to local FlowPilot run evidence. Reset decisions trust run-scoped state.json, latest heartbeat evidence, and busy_lease.json only; execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported watchdog source. In manual-resume mode no watchdog/global-supervisor automation is created.",
   "host_continuation": {
     "probe_done": false,
     "mode": "<automated|manual-resume|blocked|unknown>",
@@ -16,7 +18,7 @@
     "automated_bundle_ready": false
   },
   "state": {
-    "path": ".flowpilot/state.json",
+    "path": ".flowpilot/runs/<run-id>/state.json",
     "status": "<running|paused|complete|blocked>",
     "active_route": "<route-id>",
     "active_node": "<node-id>",
@@ -28,7 +30,7 @@
     "manual_stop": false
   },
   "route": {
-    "path": ".flowpilot/routes/<route-id>/flow.json",
+    "path": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
     "loaded": false,
     "heartbeat_automation_id": "<automation-id-or-null>"
   },
@@ -50,7 +52,7 @@
   },
   "heartbeat": {
     "heartbeat_id": "<heartbeat-id>",
-    "path": ".flowpilot/heartbeats/<heartbeat-id>.json",
+    "path": ".flowpilot/runs/<run-id>/heartbeats/<heartbeat-id>.json",
     "timestamp": "<iso-8601-timestamp-or-null>",
     "timestamp_source": "<created_at|timestamp|current_time_iso|file_mtime|missing>",
     "age_seconds": null,
@@ -58,7 +60,7 @@
     "stale": false
   },
   "busy_lease": {
-    "path": ".flowpilot/busy_lease.json",
+    "path": ".flowpilot/runs/<run-id>/busy_lease.json",
     "loaded": false,
     "active": false,
     "valid": false,
@@ -81,7 +83,7 @@
   },
   "source_status": {
     "schema_version": "flowpilot-watchdog-source-status/v1",
-    "policy": "Watchdog reset decisions trust only project-local state.json, latest heartbeat evidence, and busy_lease.json. execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported source.",
+    "policy": "Watchdog reset decisions trust only active-run state.json, latest heartbeat evidence, and busy_lease.json. execution_frontier.json, lifecycle/latest.json, automation metadata, and global records are diagnostic drift signals. Live subagent busy state is not a supported source.",
     "trusted_for_decision": [
       "state_json",
       "latest_heartbeat",

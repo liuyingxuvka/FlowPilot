@@ -6,7 +6,7 @@
   "execution_owner": "project_manager",
   "required_approver": "project_manager",
   "approval_status": "draft",
-  "source_packet": ".flowpilot/material_intake_packet.json",
+  "source_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
   "user_intent_interpretation": "<PM interpretation of the task after reviewed materials>",
   "source_claim_matrix": [
     {

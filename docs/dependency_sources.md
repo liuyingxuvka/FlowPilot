@@ -7,6 +7,19 @@
 - Codex skill: `flowpilot`
 - Dependency manifest: `flowpilot.dependencies.json`
 
+## Declared Public Skill Sources
+
+FlowPilot publishes explicit source locations for required and companion
+skills so installation and public-release checks do not rely on hidden local
+state.
+
+| Dependency | Source |
+| --- | --- |
+| `model-first-function-flow` | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
+| `grill-me` | `https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me` |
+| `concept-led-ui-redesign` | `https://github.com/liuyingxuvka/concept-led-ui-redesign-skill/tree/main/concept-led-ui-redesign` |
+| `frontend-design` | `https://github.com/anthropics/skills/tree/main/skills/frontend-design` |
+
 ## FlowGuard Source
 
 FlowPilot requires the real `flowguard` package in the active Python

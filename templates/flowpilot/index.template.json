@@ -1,0 +1,28 @@
+{
+  "schema_version": "flowpilot.index.v1",
+  "project_root": "<absolute-project-root>",
+  "current_run_id": "run-001",
+  "updated_at": "<iso-8601-timestamp>",
+  "runs_root": ".flowpilot/runs",
+  "runs": [
+    {
+      "run_id": "run-001",
+      "run_root": ".flowpilot/runs/run-001",
+      "created_at": "<iso-8601-timestamp>",
+      "status": "<startup_pending|running|paused|blocked|complete>",
+      "task_summary": "<task-summary>",
+      "run_kind": "<new_task|continuation_import|migration>",
+      "continues_from_run_id": null,
+      "state_path": ".flowpilot/runs/run-001/state.json",
+      "execution_frontier_path": ".flowpilot/runs/run-001/execution_frontier.json",
+      "startup_review_path": ".flowpilot/runs/run-001/startup_review/latest.json",
+      "pm_start_gate_path": ".flowpilot/runs/run-001/startup_pm_gate/latest.json"
+    }
+  ],
+  "policy": {
+    "new_formal_flowpilot_invocation_creates_new_run": true,
+    "continue_previous_work_creates_new_run_with_imports": true,
+    "historical_runs_are_read_only_inputs_unless_explicitly_selected": true,
+    "cockpit_tabs_source": ".flowpilot/index.json#/runs"
+  }
+}

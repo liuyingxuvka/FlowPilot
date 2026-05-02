@@ -2,10 +2,17 @@
 
 ## Canonical Files
 
-Machine-readable files are the source of truth:
+Machine-readable files are the source of truth. Each formal FlowPilot
+invocation creates a current run under `.flowpilot/runs/<run-id>/`. Top-level
+`.flowpilot/current.json` and `.flowpilot/index.json` are pointer/catalog files
+only; the following files live inside the current run unless explicitly marked
+user-level:
 
-- `state.json`
-- `execution_frontier.json`
+- `.flowpilot/current.json`
+- `.flowpilot/index.json`
+- `runs/<run-id>/run.json`
+- `runs/<run-id>/state.json`
+- `runs/<run-id>/execution_frontier.json`
 - `mode.json`
 - `crew_ledger.json`
 - `crew_memory/*.json`
@@ -33,7 +40,7 @@ Markdown files are English summaries for review.
 
 ## State
 
-`state.json` records the current pointer:
+`runs/<run-id>/state.json` records the current run pointer:
 
 - active route;
 - active node;
@@ -61,8 +68,14 @@ chunks until this block and the matching frontier block show:
   background-agent permission, and scheduled-continuation permission;
 - `startup_questions.dialog_stopped_for_user_answers: true`;
 - `startup_questions.banner_emitted_after_answers: true`;
-- canonical route files, `state.json`, and `execution_frontier.json` are
+- `.flowpilot/current.json` points at the same run and `.flowpilot/index.json`
+  catalogs it;
+- canonical route files, current-run `state.json`, and
+  `execution_frontier.json` are
   written for the same active nonterminal route;
+- legacy top-level control state is absent, legacy-only, or quarantined and is
+  not used as the current run state;
+- continuing prior work has a current-run prior-work import packet;
 - `crew_ledger_current: true`;
 - `role_memory_packets_current` is at least 6;
 - `live_subagent_startup` records either six live background agents
@@ -360,16 +373,17 @@ until every current child-skill gate is approved by its assigned role or
 blocked/waived with evidence from the responsible role.
 
 Before any child-skill, imagegen, implementation, or formal route chunk starts,
-the human-like reviewer personally checks `state.json`,
-`execution_frontier.json`, `routes/<active-route>/flow.json`,
-`crew_ledger.json`, all role memory packets, continuation evidence, Codex
-automation records, Windows scheduled tasks, global watchdog registry, latest
-watchdog evidence, and requested cleanup evidence. The reviewer then writes
-`startup_review/latest.json` as a factual report.
+the human-like reviewer personally checks `.flowpilot/current.json`,
+`.flowpilot/index.json`, current-run `state.json`, `execution_frontier.json`,
+`routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory packets,
+continuation evidence, Codex automation records, Windows scheduled tasks,
+global watchdog registry, latest watchdog evidence, requested cleanup evidence,
+and prior-work import boundary when continuing. The reviewer then writes
+`startup_review/latest.json` inside the current run as a factual report.
 
 The PM reads the current factual report. If it has blockers, PM returns the
 work to workers and requires a new review after remediation. If it is clean,
-PM writes `startup_pm_gate/latest.json` and updates state plus frontier so
+PM writes `startup_pm_gate/latest.json` inside the current run and updates state plus frontier so
 downstream work can check `work_beyond_startup_allowed`.
 
 ## Final Route-Wide Gate Ledger
@@ -459,15 +473,16 @@ recording is explicitly disabled for a test. Global records are stored under
 
 The global registry is an index, not the authority. Before recording or
 performing a reset requirement, the singleton Codex global automation must
-reread project-local `.flowpilot/state.json` and
-`.flowpilot/watchdog/latest.json`. Repository scripts may scan and summarize
+reread project-local `.flowpilot/current.json`,
+`.flowpilot/runs/<run-id>/state.json`, and
+`.flowpilot/runs/<run-id>/watchdog/latest.json`. Repository scripts may scan and summarize
 the records, but the official reset-capable supervisor must run inside Codex so
 it can use the Codex app automation interface.
 
 For routes with real continuation, terminal closure must update lifecycle
 evidence so the watchdog is stopped or deleted before the heartbeat automation
 is stopped, and so the inactive lifecycle snapshot is written back to
-`state.json`, `.flowpilot/execution_frontier.json`, and watchdog evidence.
+current-run `state.json`, `execution_frontier.json`, and watchdog evidence.
 
 ## Lifecycle
 
@@ -478,9 +493,10 @@ and terminal cleanup. It records the status seen across:
   automations;
 - user-level global watchdog registry and supervisor records;
 - Windows scheduled tasks whose names or actions identify FlowPilot;
-- `.flowpilot/state.json`;
-- `.flowpilot/execution_frontier.json`;
-- `.flowpilot/watchdog/latest.json`.
+- `.flowpilot/current.json`;
+- `.flowpilot/runs/<run-id>/state.json`;
+- `.flowpilot/runs/<run-id>/execution_frontier.json`;
+- `.flowpilot/runs/<run-id>/watchdog/latest.json`.
 
 Lifecycle closure is valid only when the snapshot records either no required
 actions or explicit waived actions with reasons. Disabled Windows scheduled

@@ -19,7 +19,7 @@
 
 ## Pre-Freeze Product Function Architecture
 
-- Product function architecture: `.flowpilot/product_function_architecture.json`
+- Product function architecture: `.flowpilot/runs/<run-id>/product_function_architecture.json`
 - PM synthesis: `<path-or-null>`
 - Product FlowGuard officer modelability approval: `<path-or-null>`
 - Human-like reviewer usefulness challenge: `<path-or-null>`

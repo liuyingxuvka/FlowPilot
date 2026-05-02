@@ -6,10 +6,10 @@
   "built_from_route_version": 0,
   "built_at": "<iso-8601-timestamp-or-null>",
   "source_paths": {
-    "state": ".flowpilot/state.json",
-    "execution_frontier": ".flowpilot/execution_frontier.json",
-    "active_flow": ".flowpilot/routes/<route-id>/flow.json",
-    "capabilities": ".flowpilot/capabilities.json"
+    "state": ".flowpilot/runs/<run-id>/state.json",
+    "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
+    "active_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
+    "capabilities": ".flowpilot/runs/<run-id>/capabilities.json"
   },
   "current_route_scanned": false,
   "effective_nodes_resolved": false,

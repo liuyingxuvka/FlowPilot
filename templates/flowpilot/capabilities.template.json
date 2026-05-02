@@ -1,8 +1,10 @@
 {
   "canonical": true,
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
   "capabilities": [
     {
-      "evidence_path": ".flowpilot/capabilities/self_interrogation-0001.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/self_interrogation-0001.json",
       "id": "self_interrogation",
       "required": true,
       "source_skill": "grill-me",
@@ -10,7 +12,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/flowguard_modeling-0001.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/flowguard_modeling-0001.json",
       "id": "flowguard_modeling",
       "required": true,
       "source_skill": "model-first-function-flow",
@@ -18,7 +20,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/material_intake_packet.json",
+      "evidence_path": ".flowpilot/runs/run-001/material_intake_packet.json",
       "id": "material_intake_handoff",
       "required": "before PM product-function architecture, contract freeze, route generation, or capability routing",
       "source_skill": "flowpilot",
@@ -37,7 +39,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/product_function_architecture.json",
+      "evidence_path": ".flowpilot/runs/run-001/product_function_architecture.json",
       "id": "product_function_architecture",
       "required": "before contract freeze for every formal FlowPilot route",
       "source_skill": "flowpilot",
@@ -56,7 +58,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/six-agent-crew-when-formal.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/six-agent-crew-when-formal.json",
       "id": "six_agent_crew",
       "required": "for every formal FlowPilot route",
       "source_skill": "flowpilot",
@@ -71,6 +73,8 @@
         "product_flowguard_officer_agent",
         "worker_a_agent",
         "worker_b_agent",
+        "current_task_fresh_agent_ids_when_live_background_agents_authorized",
+        "historical_agent_ids_compared_and_excluded",
         "project_manager_decision_evidence",
         "heartbeat_recovery_loaded_role_memory",
         "heartbeat_recovery_resumed_or_replaced_each_role",
@@ -81,7 +85,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/pm-completion-runway-when-formal.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/pm-completion-runway-when-formal.json",
       "id": "pm_completion_runway",
       "required": "for every formal heartbeat resume or PM route-position decision",
       "source_skill": "flowpilot",
@@ -99,7 +103,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/final_route_wide_gate_ledger.json",
+      "evidence_path": ".flowpilot/runs/run-001/final_route_wide_gate_ledger.json",
       "id": "final_route_wide_gate_ledger",
       "required": "before any formal FlowPilot route can emit a final report or PM completion decision",
       "source_skill": "flowpilot",
@@ -119,7 +123,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/host-continuation-capability-when-formal.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/host-continuation-capability-when-formal.json",
       "id": "host_continuation_capability",
       "required": "for every formal FlowPilot route before route execution",
       "source_skill": "flowpilot",
@@ -134,7 +138,7 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/child_skill_fidelity-when-needed.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/child_skill_fidelity-when-needed.json",
       "id": "child_skill_fidelity",
       "required": "when any source_skill beyond FlowPilot core is invoked",
       "source_skill": "flowpilot",
@@ -162,7 +166,7 @@
       "status": "conditional"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/ui_concept_loop-when-needed.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/ui_concept_loop-when-needed.json",
       "id": "ui_concept_loop",
       "required": "when task_requires_ui",
       "source_skill": "concept-led-ui-redesign",
@@ -178,7 +182,7 @@
       "status": "conditional"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/ui_concept_target-when-needed.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/ui_concept_target-when-needed.json",
       "id": "ui_concept_target",
       "required": "when required by concept-led-ui-redesign before UI implementation",
       "source_skill": "concept-led-ui-redesign",
@@ -193,7 +197,7 @@
       "status": "conditional"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/ui_polish-when-needed.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/ui_polish-when-needed.json",
       "id": "ui_polish",
       "required": "when task_requires_ui",
       "source_skill": "frontend-design",
@@ -201,7 +205,7 @@
       "status": "conditional"
     },
     {
-      "evidence_path": ".flowpilot/capabilities/child_node_sidecar_subagents-when-used.json",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/child_node_sidecar_subagents-when-used.json",
       "id": "child_node_sidecar_subagents",
       "required": "when sidecar_subagents_are_used",
       "source_skill": "FlowPilot coordination protocol",

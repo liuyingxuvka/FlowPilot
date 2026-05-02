@@ -1,6 +1,7 @@
 """User-level singleton supervisor for FlowPilot watchdog records.
 
-The local project watchdog writes full evidence under `.flowpilot/watchdog/`
+The local project watchdog writes full evidence under the active run's
+`watchdog/`
 and a compact copy under the user-level global FlowPilot watchdog directory.
 This supervisor reads that global index, revalidates project-local evidence,
 and writes local/global supervisor decisions.
@@ -22,6 +23,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+from flowpilot_paths import resolve_flowpilot_paths
 
 
 RUNNING_STATUSES = {"running", "in_progress", "active"}
@@ -361,7 +364,8 @@ def release_lock(lock: dict[str, Any], *, dry_run: bool) -> None:
 
 
 def _project_status(project_root: Path) -> dict[str, Any]:
-    state_path = project_root / ".flowpilot" / "state.json"
+    paths = resolve_flowpilot_paths(project_root)
+    state_path = Path(paths["state_path"])
     try:
         state = read_json(state_path)
     except Exception as exc:
@@ -373,6 +377,9 @@ def _project_status(project_root: Path) -> dict[str, Any]:
         }
     return {
         "loaded": True,
+        "layout": paths["layout"],
+        "run_id": paths["run_id"],
+        "run_root": str(paths["run_root"]),
         "state_path": str(state_path),
         "status": state.get("status"),
         "active_route": state.get("active_route"),
@@ -439,7 +446,7 @@ def update_project_registration(args: argparse.Namespace) -> dict[str, Any]:
             "route_version": project.get("route_version"),
             "frontier_version": project.get("frontier_version"),
             "last_heartbeat": project.get("last_heartbeat"),
-            "latest_local_watchdog": str(project_root / ".flowpilot" / "watchdog" / "latest.json"),
+            "latest_local_watchdog": str(Path(resolve_flowpilot_paths(project_root)["watchdog_dir"]) / "latest.json"),
             "latest_global_watchdog": str(global_dir / "projects" / project_key / "latest.json"),
             "heartbeat_automation_id": args.heartbeat_automation_id or None,
             "manual_stop": bool(project.get("manual_stop")),
@@ -488,7 +495,7 @@ def write_project_supervisor_record(
     dry_run: bool,
     event_needed: bool,
 ) -> dict[str, Any]:
-    record_dir = project_root / ".flowpilot" / "watchdog"
+    record_dir = Path(resolve_flowpilot_paths(project_root)["watchdog_dir"])
     latest_path = record_dir / "global_supervisor.json"
     events_jsonl = record_dir / "global_supervisor_events.jsonl"
     write_result = {
@@ -566,7 +573,7 @@ def classify_project(entry: dict[str, Any], global_dir: Path, *, now: datetime) 
     if not state_path.exists():
         result.update(
             decision="missing_project_state",
-            reason="project-local .flowpilot/state.json is missing",
+            reason="project-local active-run state.json is missing",
         )
         return result
 

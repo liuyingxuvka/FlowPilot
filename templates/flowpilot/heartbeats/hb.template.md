@@ -6,7 +6,7 @@ Node: `node-001-start`
 
 Decision: `<decision>`
 
-Execution frontier: `.flowpilot/execution_frontier.json`
+Execution frontier: `.flowpilot/runs/<run-id>/execution_frontier.json`
 
 Frontier version: `<frontier-version>`
 

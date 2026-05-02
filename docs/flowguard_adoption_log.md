@@ -282,7 +282,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ## flowpilot-explicit-opt-in-trigger-20260502 - Make FlowPilot skill activation explicit opt-in only
 
-- Project: FlowGuardProjectAutopilot_20260430
+- Project: FlowPilot development repository
 - Trigger reason: User requested that FlowPilot only be used when they explicitly say to use the skill, and not because a task is substantial or a .flowpilot directory exists.
 - Status: completed
 - Skill decision: use_flowguard
@@ -322,7 +322,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ## flowpilot-startup-review-pm-gate-20260502 - PM-owned startup gate with reviewer report
 
-- Project: FlowGuardProjectAutopilot_20260430
+- Project: FlowPilot development repository
 - Trigger reason: User clarified that the human-like reviewer should audit startup evidence and report to PM, while PM owns the startup gate and sends blockers back to workers until rechecked.
 - Status: completed
 - Skill decision: use_flowguard
@@ -356,7 +356,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ## flowpilot-remove-startup-guard-20260502 - Reviewer facts plus PM-only startup opening
 
-- Project: FlowGuardProjectAutopilot_20260430
+- Project: FlowPilot development repository
 - Trigger reason: User rejected a replacement startup review script and required deletion of the separate startup guard concept. Reviewer must check facts and report; PM is the only startup opener.
 - Status: completed
 - Skill decision: use_flowguard
@@ -397,7 +397,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ## flowpilot-subagent-user-decision-review-20260502 - Startup reviewer binds subagent facts to user answer
 
-- Project: FlowGuardProjectAutopilot_20260430
+- Project: FlowPilot development repository
 - Trigger reason: User clarified that reviewer facts must be bound to user decisions, including subagent authorization.
 - Status: completed
 - Skill decision: use_flowguard
@@ -417,3 +417,74 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Results
 - Startup PM-review, install check, and smoke autopilot passed.
+
+
+## flowpilot-fresh-subagents-per-new-task-20260502 - New FlowPilot tasks cannot reuse historical agent IDs
+
+- Project: FlowPilot development repository
+- Trigger reason: User identified that a new FlowPilot task had reused six historical background-agent IDs from old role memory. Every new formal FlowPilot task must create a fresh live-agent cohort when background agents are authorized.
+- Status: completed
+- Skill decision: use_flowguard
+- Models updated: `simulations/startup_pm_review_model.py`, `simulations/meta_model.py`, `simulations/capability_model.py`.
+
+### Modeled Risks
+- Reviewer counts six live role records but accepts `agent_id` values restored from prior routes or older tasks.
+- PM opens startup from a report that lacks current-task live-agent freshness and historical-ID nonreuse checks.
+- Formal route or capability work proceeds after reused historical IDs are recorded as current live-agent evidence.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- `python -m py_compile simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py`
+- `python simulations\run_startup_pm_review_checks.py`
+- `python simulations\run_meta_checks.py`
+- `python simulations\run_capability_checks.py`
+- `python scripts\check_install.py`
+- `python scripts\smoke_autopilot.py`
+- `git diff --check`
+
+### Findings
+- New formal startup now requires fresh current-task live background agents after startup answers and current route allocation.
+- Historical `agent_id` values are audit history only. Same-task heartbeat/manual-resume may resume the current task-born cohort, but new tasks cannot reuse old IDs.
+- Startup reviewer templates now require current-task freshness evidence, historical ID comparison, and blocker reporting for reused IDs.
+- Startup PM-review now detects `reviewer_clean_accepts_reused_historical_agent_ids`.
+- Meta and capability models renamed startup crew labels to fresh-spawn labels and gate work on current-task fresh live-agent evidence or explicit single-agent fallback.
+
+### Results
+- Py compile, startup PM-review, meta checks, capability checks, install check, smoke autopilot, template JSON load, installed-skill hash sync, and diff whitespace checks passed.
+
+
+## flowpilot-run-directory-isolation-20260502 - Fresh run folder per formal invocation
+
+- Project: FlowPilot development repository
+- Trigger reason: User asked whether FlowPilot state should live in the target project or the local installed FlowPilot skill folder, then approved changing FlowPilot to start each use in an isolated per-run folder.
+- Status: completed
+- Skill decision: use_flowguard
+- Models updated: `simulations/startup_pm_review_model.py`, `simulations/meta_model.py`, `simulations/capability_model.py`.
+
+### Modeled Risks
+- A new FlowPilot invocation resumes old top-level `.flowpilot/state.json` as current state.
+- "Continue previous work" bypasses fresh startup by directly reusing an old run's control state.
+- Reviewer opens a clean startup report without checking current run pointer/index consistency.
+- PM opens startup before the prior-work import packet exists for a continuation run.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- `python -m py_compile scripts\flowpilot_paths.py scripts\flowpilot_user_flow_diagram.py scripts\flowpilot_busy_lease.py scripts\flowpilot_run_with_busy_lease.py scripts\flowpilot_lifecycle.py scripts\flowpilot_global_supervisor.py scripts\flowpilot_watchdog.py simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py`
+- `python simulations\run_startup_pm_review_checks.py`
+- `python simulations\run_meta_checks.py`
+- `python simulations\run_capability_checks.py`
+- `python scripts\check_install.py`
+- `python scripts\smoke_autopilot.py`
+- `python scripts\flowpilot_user_flow_diagram.py --root . --json`
+- `python scripts\flowpilot_busy_lease.py status --root . --json`
+- `python scripts\flowpilot_lifecycle.py --root . --mode pause --json`
+- `git diff --check`
+
+### Findings
+- FlowPilot's installed skill folder remains protocol/template storage only; per-project runtime state belongs in the target project's `.flowpilot/`.
+- New formal invocations now create `.flowpilot/runs/<run-id>/`; top-level `current.json` and `index.json` are pointer/catalog files only.
+- Continuing prior work creates a new run and imports old outputs as read-only evidence. Old control state, old live-agent IDs, old screenshots/icons/assets, and old route gates are not current evidence.
+- Runtime helpers resolve active-run paths through `scripts/flowpilot_paths.py` while preserving read compatibility with legacy `.flowpilot/` projects.
+
+### Results
+- Startup PM-review, meta, capability, install, smoke, template JSON parse, legacy-layout path resolution, busy-lease status, lifecycle inventory, installed-skill sync, and diff whitespace checks passed.

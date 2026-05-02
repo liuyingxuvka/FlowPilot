@@ -11,8 +11,8 @@ import capability_model as model
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "capability_results.json"
-GRAPH_STATE_LIMIT = 120_000
-CHECK_STATE_LIMIT = 120_000
+GRAPH_STATE_LIMIT = 300_000
+CHECK_STATE_LIMIT = 300_000
 
 REQUIRED_LABELS = (
     "classified_backend_task",
@@ -24,16 +24,24 @@ REQUIRED_LABELS = (
     "default_mode_recorded",
     "startup_background_agents_answered",
     "startup_scheduled_continuation_answered",
+    "run_directory_created",
+    "current_pointer_written",
+    "run_index_updated",
+    "new_task_no_prior_import",
+    "continue_previous_work_selected",
+    "prior_work_import_packet_written",
+    "control_state_written_under_run_root",
+    "top_level_control_state_absent_or_quarantined",
     "showcase_floor_committed",
     "visible_self_interrogation_completed",
     "contract_frozen",
     "six_agent_crew_policy_written",
-    "project_manager_spawned_or_restored",
-    "human_like_reviewer_spawned_or_restored",
-    "process_flowguard_officer_spawned_or_restored",
-    "product_flowguard_officer_spawned_or_restored",
-    "worker_a_spawned_or_restored",
-    "worker_b_spawned_or_restored",
+    "project_manager_spawned_fresh_for_task",
+    "human_like_reviewer_spawned_fresh_for_task",
+    "process_flowguard_officer_spawned_fresh_for_task",
+    "product_flowguard_officer_spawned_fresh_for_task",
+    "worker_a_spawned_fresh_for_task",
+    "worker_b_spawned_fresh_for_task",
     "crew_ledger_written",
     "role_identity_protocol_recorded",
     "pm_flowguard_delegation_policy_recorded",
@@ -97,7 +105,7 @@ REQUIRED_LABELS = (
     "capability_user_flow_diagram_refreshed",
     "capability_user_flow_diagram_emitted",
     "live_subagent_start_authorized",
-    "six_live_subagents_started",
+    "fresh_six_live_subagents_started",
     "startup_preflight_reviewer_fact_report_blocked",
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
@@ -211,6 +219,12 @@ def _state_id(state: model.State) -> str:
     return (
         f"{state.status}|kind={state.task_kind}|enabled={state.flowpilot_enabled}|"
         f"mode_offer={state.mode_choice_offered}|showcase={state.showcase_floor_committed}|"
+        f"run={state.run_directory_created},{state.current_pointer_written},"
+        f"{state.run_index_updated},{state.prior_work_mode},"
+        f"{state.prior_work_import_packet_written},"
+        f"{state.control_state_written_under_run_root},"
+        f"{state.top_level_control_state_absent_or_quarantined},"
+        f"{state.old_control_state_reused_as_current}|"
         f"self={state.self_interrogation_done},{state.visible_self_interrogation_done},"
         f"{state.self_interrogation_questions},{state.self_interrogation_layer_count},"
         f"{state.self_interrogation_questions_per_layer},{state.self_interrogation_layers},"
@@ -322,7 +336,12 @@ def _state_id(state: model.State) -> str:
         f"user_flow={state.capability_user_flow_diagram_emitted}|"
         f"live_subagents={state.live_subagent_decision_recorded},"
         f"{state.live_subagents_started},"
+        f"{state.live_subagents_current_task_fresh},"
+        f"{state.historical_agent_ids_compared},"
+        f"{state.reused_historical_agent_ids},"
         f"{state.single_agent_role_continuity_authorized}|"
+        f"startup_review_run={state.startup_reviewer_checked_run_isolation},"
+        f"{state.startup_reviewer_checked_prior_work_boundary}|"
         f"work_beyond_startup={state.work_beyond_startup_allowed}|"
         f"sidecar={state.child_node_sidecar_scan_done},"
         f"{state.sidecar_need},{state.subagent_pool_exists},"
