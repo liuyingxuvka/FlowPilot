@@ -1,0 +1,128 @@
+{
+  "hazard_checks": {
+    "hazards": {
+      "guard_before_continuation": {
+        "detected": true,
+        "failures": [
+          "startup guard passed before canonical startup activation was complete"
+        ],
+        "state": {
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "continuation_ready": false,
+          "crew_ledger_current": true,
+          "execution_frontier_written": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "shadow_route_detected": false,
+          "startup_guard_passed": true
+        }
+      },
+      "imagegen_before_frontier": {
+        "detected": true,
+        "failures": [
+          "work beyond startup started before the startup guard passed"
+        ],
+        "state": {
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "continuation_ready": false,
+          "crew_ledger_current": false,
+          "execution_frontier_written": false,
+          "imagegen_started": true,
+          "implementation_started": false,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "shadow_route_detected": false,
+          "startup_guard_passed": false
+        }
+      },
+      "implementation_before_crew": {
+        "detected": true,
+        "failures": [
+          "work beyond startup started before the startup guard passed"
+        ],
+        "state": {
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "continuation_ready": false,
+          "crew_ledger_current": false,
+          "execution_frontier_written": true,
+          "imagegen_started": false,
+          "implementation_started": true,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "shadow_route_detected": false,
+          "startup_guard_passed": false
+        }
+      },
+      "route_execution_before_guard": {
+        "detected": true,
+        "failures": [
+          "work beyond startup started before the startup guard passed"
+        ],
+        "state": {
+          "canonical_state_written": true,
+          "child_skill_started": false,
+          "continuation_ready": true,
+          "crew_ledger_current": true,
+          "execution_frontier_written": true,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "role_memory_packets_current": 6,
+          "route_execution_started": true,
+          "route_file_written": true,
+          "shadow_route_detected": false,
+          "startup_guard_passed": false
+        }
+      },
+      "shadow_route_child_skill": {
+        "detected": true,
+        "failures": [
+          "work beyond startup started before the startup guard passed"
+        ],
+        "state": {
+          "canonical_state_written": false,
+          "child_skill_started": true,
+          "continuation_ready": false,
+          "crew_ledger_current": false,
+          "execution_frontier_written": false,
+          "imagegen_started": false,
+          "implementation_started": false,
+          "role_memory_packets_current": 0,
+          "route_execution_started": false,
+          "route_file_written": true,
+          "shadow_route_detected": true,
+          "startup_guard_passed": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "safe_graph": {
+    "edge_count": 11,
+    "invariant_failures": [],
+    "labels": [
+      "canonical_state_written",
+      "child_skill_started",
+      "continuation_ready",
+      "crew_ledger_current",
+      "execution_frontier_written",
+      "imagegen_started",
+      "implementation_started",
+      "role_memory_packets_current",
+      "route_execution_started",
+      "route_file_written",
+      "startup_activation_guard_passed"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 12
+  }
+}

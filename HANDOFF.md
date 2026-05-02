@@ -138,6 +138,13 @@ model-backed autopilot:
 - Crew records now separate `role_key`, `display_name`, and diagnostic-only
   `agent_id` so UI and authority checks do not drift when host agent names or
   handles change.
+- Formal startup now has a startup activation hard gate. Before any child
+  skill, imagegen, implementation, route chunk, or completion work, state,
+  execution frontier, active route, six-role crew ledger, role memory packets,
+  and continuation evidence must agree on the same active nonterminal route.
+  `scripts/flowpilot_startup_guard.py --record-pass` writes
+  `.flowpilot/startup_guard/latest.json`; route-local artifacts without that
+  canonical match are shadow routes to quarantine or supersede.
 - Long operations now have an explicit busy-lease wrapper helper:
   `scripts/flowpilot_run_with_busy_lease.py`.
 

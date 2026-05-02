@@ -66,6 +66,36 @@ For tiny maintenance inside an already active FlowPilot project, record
 continuity in `.flowpilot/` when useful, but do not claim that a full formal
 FlowPilot route has completed unless the showcase-grade gates actually ran.
 
+## Startup Hard Gate
+
+Formal FlowPilot startup is an activation transaction, not a collection of
+optional status notes. Before any child skill, image generation, implementation
+chunk, route-execution chunk, or completion work starts, the controller must
+prove that the same active nonterminal route is current in:
+
+- `.flowpilot/state.json`;
+- `.flowpilot/execution_frontier.json`;
+- `.flowpilot/routes/<active-route>/flow.json`;
+- `.flowpilot/crew_ledger.json`;
+- all six role memory packets;
+- continuation evidence, either automated heartbeat/watchdog/global supervisor
+  readiness or explicit `manual-resume` no-automation evidence.
+
+Run the hard gate and record its pass:
+
+```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
+```
+
+`startup_activation.work_beyond_startup_allowed` must be true in state and
+frontier before work beyond startup. If the host or current tool policy cannot
+create live subagents, record recovered/replaced role evidence and role memory;
+do not claim live subagents were started. If only a route-local file,
+generated concept, screenshot, or implementation artifact exists without
+matching canonical state/frontier/crew/continuation evidence, treat it as a
+shadow route, quarantine or supersede it, and rerun startup instead of
+continuing from that partial state.
+
 FlowPilot is especially useful when the task involves:
 
 - building or refactoring a large software system;
@@ -241,7 +271,20 @@ fallback and note why in `.flowpilot/mode.json` or the first heartbeat.
     route mutation, completion review, or user request. Include active route,
     active node, next jumps, checks, fallback branches, continuation state, and
     current acceptance delta as nearby text.
-39. Execute the first bounded chunk only after the continuation mode is known.
+39. Set `startup_activation` in state/frontier from the current route,
+    execution frontier, crew ledger, role memory, continuation, and visible
+    plan evidence, then run:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
+    ```
+
+    Do not run child skills, imagegen, implementation, formal route chunks, or
+    completion work until the guard records
+    `work_beyond_startup_allowed: true`. A route-local file without matching
+    canonical state/frontier/crew/continuation evidence is a shadow route and
+    must be quarantined or superseded before continuing.
+40. Execute the first bounded chunk only after the continuation mode is known.
     In automated mode, the heartbeat rehydrates the crew from persisted role
     memory, asks the project manager for a completion-oriented runway, and the
     main executor syncs that runway into the current visible plan projection.
@@ -1164,6 +1207,8 @@ Canonical state is machine-readable:
   checks before advance, and visible Codex plan projection. For terminal
   states it also records the final heartbeat/watchdog lifecycle snapshot so
   stale `active: true` values cannot survive after closure.
+- `startup_guard/latest.json`: recorded pass/fail evidence for the formal
+  startup activation hard gate.
 - `mode.json`: selected run mode and hard-gate policy.
 - `contract.md`: frozen acceptance contract and explicit later approvals.
 - `capabilities.json`: required and conditional capability gates.
@@ -1367,6 +1412,8 @@ Required early gate:
 - if the host does not support real wakeups, `manual-resume` evidence before
   route execution and no heartbeat/watchdog/global-supervisor automation
   created;
+- startup activation guard pass before child skills, imagegen, implementation,
+  formal route chunks, or completion work;
 - FlowGuard process design before route execution.
 - candidate route-tree generation and root FlowGuard freeze before `route v1`;
 - strict gate-obligation review model before reviewer-closable gates advance;
@@ -1525,6 +1572,7 @@ or mutation, the ledger is rebuilt from scratch and replayed again.
 
 No formal chunk starts without:
 
+- startup activation guard pass recorded in state and execution frontier;
 - current route checked by FlowGuard;
 - English summary synced from canonical machine-readable state;
 - execution frontier written for the active route version;

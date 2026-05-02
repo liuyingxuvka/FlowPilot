@@ -15,6 +15,22 @@
     "evidence_path": "<path-or-null>",
     "unattended_recovery_claim_allowed": false
   },
+  "startup_activation": {
+    "hard_gate_required": true,
+    "route_files_written": false,
+    "canonical_state_written": false,
+    "execution_frontier_written": false,
+    "crew_ledger_current": false,
+    "role_memory_packets_current": 0,
+    "continuation_ready": false,
+    "startup_guard_command": "python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json",
+    "startup_guard_passed": false,
+    "startup_guard_checked_at": null,
+    "startup_guard_evidence_path": null,
+    "guard_route_id": null,
+    "shadow_route_detected": false,
+    "work_beyond_startup_allowed": false
+  },
   "controlled_stop_notice": {
     "required_when_nonterminal": true,
     "route_complete": false,

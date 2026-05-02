@@ -33,11 +33,18 @@ its side effect is recorded.
    their route node or verification command is active.
 11. Build a task-local FlowGuard model under `.flowpilot/task-models/`.
 12. Run route and task-model checks.
-13. Execute only the first bounded chunk whose verification is declared.
+13. Run the startup activation guard:
+
+   ```powershell
+   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json
+   ```
+
+14. Execute only the first bounded chunk whose verification is declared.
 
 ## Expected Evidence
 
 - `.flowpilot/state.json` points to the active node.
+- `.flowpilot/startup_guard/latest.json` records a startup hard-gate pass.
 - `.flowpilot/product_function_architecture.json` records the pre-contract PM
   product design gate.
 - `.flowpilot/capabilities.json` records required gates.

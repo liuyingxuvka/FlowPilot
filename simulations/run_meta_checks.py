@@ -82,6 +82,7 @@ REQUIRED_LABELS = (
     "codex_plan_synced",
     "user_flow_diagram_refreshed",
     "visible_user_flow_diagram_emitted",
+    "startup_activation_guard_passed",
     "continuation_resume_ready_checked",
     "heartbeat_loaded_state",
     "heartbeat_loaded_execution_frontier",
@@ -274,6 +275,7 @@ def _state_id(state: model.State) -> str:
         f"checked={state.route_checked}|md={state.markdown_synced}|"
         f"frontier={state.execution_frontier_written}:{state.frontier_version}|"
         f"plan={state.codex_plan_synced}:{state.plan_version}|"
+        f"startup_guard={state.startup_activation_guard_passed}|"
         f"unfinished_recovery={state.unfinished_current_node_recovery_checked}|"
         f"parent_subtree={state.parent_subtree_review_checked},"
         f"{state.parent_product_function_model_checked},"

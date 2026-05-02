@@ -1304,3 +1304,56 @@ Results after integration:
 - invariant failures: 0;
 - missing required labels: 0;
 - stuck states: 0.
+
+## 2026-05-02 - Startup Activation Hard Gate
+
+Trigger: a formal FlowPilot route could produce route-local artifacts while
+canonical state, execution frontier, crew ledger, role memory, and continuation
+evidence still described an older completed route. This allowed child-skill or
+imagegen work to appear as if FlowPilot startup had happened when the core
+activation transaction had not completed.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- route file written without canonical active state;
+- imagegen or implementation before execution frontier and crew activation;
+- startup guard recorded before continuation readiness;
+- route execution before a guard pass;
+- shadow route artifacts accepted as startup evidence.
+
+Model and protocol changes:
+
+- added `scripts/flowpilot_startup_guard.py`;
+- added `simulations/startup_guard_model.py` and
+  `simulations/run_startup_guard_checks.py`;
+- added `startup_activation_guard_passed` to the meta and capability models;
+- added `startup_activation` to state/frontier templates and route/node gates;
+- documented shadow routes as invalid startup evidence.
+
+Validation:
+
+```powershell
+python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\run_startup_guard_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py
+python scripts\check_install.py
+python simulations\run_startup_guard_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\flowpilot_startup_guard.py --root . --route-id route-021 --json
+```
+
+Results after integration:
+
+- startup guard safe path: 12 states, 11 edges, 0 invariant failures;
+- all five startup-bypass hazard states detected;
+- meta model states: 92194;
+- meta model edges: 96734;
+- capability model states: 86306;
+- capability model edges: 91548;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0;
+- current ignored route-021 runtime correctly fails the startup guard because it
+  is terminal, archived, lacks `startup_activation`, and has deleted
+  continuation automation.

@@ -49,6 +49,22 @@
     "continuation_readiness_checked": false,
     "continuation_readiness_kind": "<automated-heartbeat-health|manual-resume-packet|blocked|unknown>"
   },
+  "startup_activation": {
+    "hard_gate_required": true,
+    "route_files_written": false,
+    "canonical_state_written": false,
+    "execution_frontier_written": false,
+    "crew_ledger_current": false,
+    "role_memory_packets_current": 0,
+    "continuation_ready": false,
+    "startup_guard_command": "python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json",
+    "startup_guard_passed": false,
+    "startup_guard_checked_at": null,
+    "startup_guard_evidence_path": null,
+    "guard_route_id": null,
+    "shadow_route_detected": false,
+    "work_beyond_startup_allowed": false
+  },
   "controlled_stop_notice": {
     "required_when_nonterminal": true,
     "route_complete": false,
@@ -303,6 +319,7 @@
     "product_function_architecture_approved_before_contract_freeze",
     "continuation_mode_checked",
     "continuation_resume_ready_checked",
+    "startup_activation_guard_passed",
     "unfinished_current_node_checked",
     "route_model_checked",
     "chunk_verification_defined",

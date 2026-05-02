@@ -147,6 +147,7 @@ class State:
     heartbeat_schedule_created: bool = False
     stable_heartbeat_launcher_recorded: bool = False
     heartbeat_health_checked: bool = False
+    startup_activation_guard_passed: bool = False
     external_watchdog_policy_recorded: bool = False
     external_watchdog_busy_lease_policy_recorded: bool = False
     external_watchdog_busy_lease_autowrap_policy_recorded: bool = False
@@ -587,6 +588,7 @@ def _route_ready(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.user_flow_diagram_refreshed
         and state.visible_user_flow_diagram_emitted
+        and state.startup_activation_guard_passed
         and state.issue == "none"
         and state.high_risk_gate != "pending"
         and state.chunk_state == "none"
@@ -676,6 +678,7 @@ class AutopilotStep:
         "heartbeat_schedule_created",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
+        "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
         "external_watchdog_busy_lease_autowrap_policy_recorded",
@@ -858,6 +861,7 @@ class AutopilotStep:
         "heartbeat_schedule_created",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
+        "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
         "external_watchdog_busy_lease_autowrap_policy_recorded",
@@ -1725,6 +1729,26 @@ class AutopilotStep:
                 label="visible_user_flow_diagram_emitted",
                 action="emit visible user flow diagram with current node, next jumps, checks, fallback branches, and simulated path",
                 visible_user_flow_diagram_emitted=True,
+                active_node="run_startup_activation_guard",
+            )
+            return
+
+        if (
+            state.route_version > 0
+            and state.route_checked
+            and state.markdown_synced
+            and state.execution_frontier_written
+            and state.codex_plan_synced
+            and state.user_flow_diagram_refreshed
+            and state.visible_user_flow_diagram_emitted
+            and not state.startup_activation_guard_passed
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="startup_activation_guard_passed",
+                action="run startup hard gate against state, frontier, active route, crew ledger, role memory, and continuation evidence before child work",
+                startup_activation_guard_passed=True,
                 active_node="ready_for_chunk",
             )
             return
@@ -3172,6 +3196,8 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         return InvariantResult.fail("final report emitted before execution frontier and Codex plan sync")
     if not state.visible_user_flow_diagram_emitted:
         return InvariantResult.fail("final report emitted before visible user flow diagram")
+    if not state.startup_activation_guard_passed:
+        return InvariantResult.fail("final report emitted before startup activation guard pass")
     if not (
         state.completion_self_interrogation_done
         and state.high_value_work_review == "exhausted"
@@ -3257,6 +3283,10 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         or state.chunk_state in {"ready", "executed", "verified", "checkpoint_pending"}
         or state.final_report_emitted
     )
+    formal_execution_started = (
+        state.chunk_state in {"ready", "executed", "verified", "checkpoint_pending"}
+        or state.final_report_emitted
+    )
     if route_version_exists and not (
         _crew_ready(state)
         and state.pm_initial_route_decision_recorded
@@ -3279,6 +3309,10 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     ):
         return InvariantResult.fail(
             "formal route or work started before candidate tree plus root process/product/strict-review model checks"
+        )
+    if formal_execution_started and not state.startup_activation_guard_passed:
+        return InvariantResult.fail(
+            "formal execution started before the startup activation hard gate passed"
         )
     return InvariantResult.pass_()
 

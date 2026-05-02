@@ -51,28 +51,42 @@ for review.
    native plan/task-list tool such as Codex `update_plan`, call it with that
    runway before work starts; if not, record the fallback projection method and
    show the runway in chat.
-20. Before terminal completion, have the project manager rebuild
+20. Before any child-skill execution, image generation, implementation, or
+   bounded route chunk, set `startup_activation` in state/frontier from the
+   current route, crew, role memory, continuation, and visible-plan evidence,
+   then run:
+
+   ```powershell
+   python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json
+   ```
+
+   Work beyond startup is blocked until the guard passes and records
+   `work_beyond_startup_allowed: true`. A route-local file without matching
+   canonical state/frontier/crew/continuation evidence is a shadow route and
+   must be quarantined or superseded before continuing.
+21. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
    collect all effective node gates and child-skill gates, resolve generated
    resource lineage, check stale evidence and superseded-node explanations, get
    human-like backward review, and allow PM completion approval only when
    unresolved count is zero.
-21. Update heartbeats, role memory packets, node reports, and checkpoints
+22. Update heartbeats, role memory packets, node reports, and checkpoints
    after verified progress.
-22. On any controlled nonterminal stop, write the controlled-stop notice into
+23. On any controlled nonterminal stop, write the controlled-stop notice into
    state/frontier or heartbeat evidence and show the user whether to wait for
    heartbeat or type `continue FlowPilot`. On terminal completion, write the
    completion notice instead of a resume prompt.
 
 ## Files
 
-- `state.template.json`: current pointer, host continuation mode, and
-  controlled-stop/completion notice state.
+- `state.template.json`: current pointer, host continuation mode, startup
+  activation hard-gate state, and controlled-stop/completion notice state.
 - `execution_frontier.template.json`: current route version, active node, next
   jump, current mainline, host continuation decision, PM completion runway,
   PM-owned child-skill gate manifest, checks before advance,
   native/fallback visible plan sync method, visible plan projection depth, and
-  the single user-facing flow diagram settings plus resume notice metadata.
+  the single user-facing flow diagram settings plus startup guard and resume
+  notice metadata.
 - `mode.template.json`: run mode and hard-gate policy.
 - `crew_ledger.template.json`: persistent six-agent crew roles, ids, status,
   authority boundaries, memory paths, recovery rules, and terminal archive

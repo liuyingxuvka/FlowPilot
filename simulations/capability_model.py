@@ -165,6 +165,7 @@ class State:
     heartbeat_schedule_created: bool = False
     stable_heartbeat_launcher_recorded: bool = False
     heartbeat_health_checked: bool = False
+    startup_activation_guard_passed: bool = False
     external_watchdog_policy_recorded: bool = False
     external_watchdog_busy_lease_policy_recorded: bool = False
     external_watchdog_busy_lease_autowrap_policy_recorded: bool = False
@@ -683,6 +684,7 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
+        and state.startup_activation_guard_passed
     )
 
 
@@ -740,6 +742,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
+        and state.startup_activation_guard_passed
     )
 
 
@@ -797,6 +800,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
+        and state.startup_activation_guard_passed
     )
 
 
@@ -1089,6 +1093,7 @@ class CapabilityRouterStep:
         "heartbeat_schedule_created",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
+        "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
         "external_watchdog_busy_lease_autowrap_policy_recorded",
@@ -1291,6 +1296,7 @@ class CapabilityRouterStep:
         "heartbeat_schedule_created",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
+        "startup_activation_guard_passed",
         "external_watchdog_policy_recorded",
         "external_watchdog_busy_lease_policy_recorded",
         "external_watchdog_busy_lease_autowrap_policy_recorded",
@@ -2157,6 +2163,26 @@ class CapabilityRouterStep:
                 label="capability_user_flow_diagram_emitted",
                 action="emit visible capability user flow diagram with next gates, checks, and fallback branches",
                 capability_user_flow_diagram_emitted=True,
+            )
+            return
+
+        if (
+            state.capability_route_checked
+            and state.capability_product_function_model_checked
+            and state.capability_evidence_synced
+            and state.execution_frontier_written
+            and state.codex_plan_synced
+            and state.frontier_version == state.capability_route_version
+            and state.plan_version == state.frontier_version
+            and state.capability_user_flow_diagram_refreshed
+            and state.capability_user_flow_diagram_emitted
+            and not state.startup_activation_guard_passed
+        ):
+            yield _step(
+                state,
+                label="startup_activation_guard_passed",
+                action="run startup hard gate against state, frontier, active route, crew ledger, role memory, and continuation evidence before capability work",
+                startup_activation_guard_passed=True,
             )
             return
 
@@ -3569,6 +3595,15 @@ def dependency_plan_before_route_or_implementation(
         or state.final_quality_candidate_review_done
         or state.status == "complete"
     )
+    work_beyond_startup_started = (
+        state.quality_package_done
+        or state.non_ui_implemented
+        or state.ui_implemented
+        or state.child_node_sidecar_scan_done
+        or state.final_verification_done
+        or state.completion_visible_user_flow_diagram_emitted
+        or state.status == "complete"
+    )
     if route_or_work_started and not (
         _crew_ready(state)
         and state.pm_initial_capability_decision_recorded
@@ -3580,6 +3615,10 @@ def dependency_plan_before_route_or_implementation(
     ):
         return InvariantResult.fail(
             "capability route or implementation started before six-agent crew, PM capability decision, product-function architecture, frozen contract, dependency plan, host continuation decision, and FlowGuard process design"
+        )
+    if work_beyond_startup_started and not state.startup_activation_guard_passed:
+        return InvariantResult.fail(
+            "capability work beyond startup started before the startup activation hard gate passed"
         )
     return InvariantResult.pass_()
 

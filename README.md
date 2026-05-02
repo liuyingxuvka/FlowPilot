@@ -115,9 +115,11 @@ formal FlowPilot route is designed for substantial work.
 7. Discover required child skills and extract their gate manifests.
 8. Build and check the process route with FlowGuard.
 9. Build and check product/function models where behavior needs modeling.
-10. Execute bounded chunks with verification before checkpoint.
-11. Mutate the route when new facts invalidate the current path.
-12. Complete only after the final route-wide gate ledger has zero unresolved
+10. Pass the startup activation guard so state, frontier, route, crew, role
+    memory, and continuation evidence agree before child work starts.
+11. Execute bounded chunks with verification before checkpoint.
+12. Mutate the route when new facts invalidate the current path.
+13. Complete only after the final route-wide gate ledger has zero unresolved
     obligations and the required review/PM approvals are recorded.
 
 ## Child Skills And Companion Capabilities
@@ -230,6 +232,7 @@ python scripts/check_install.py
 Run the public package checks:
 
 ```powershell
+python simulations/run_startup_guard_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
 python scripts/check_install.py
@@ -275,10 +278,10 @@ checks, recovery, and evidence are worth the overhead.
   failure-mode references.
 - `templates/flowpilot/` - reusable `.flowpilot/` templates for target
   projects.
-- `simulations/` - FlowGuard regression models for process and capability
-  routing.
-- `scripts/` - install, smoke, lifecycle, busy-lease, heartbeat, and watchdog
-  helpers.
+- `simulations/` - FlowGuard regression models for startup activation, process,
+  and capability routing.
+- `scripts/` - install, smoke, startup-guard, lifecycle, busy-lease,
+  heartbeat, and watchdog helpers.
 - `docs/` - project brief, protocol, design decisions, schema, verification,
   and model findings.
 - `examples/minimal/` - a compact adoption example.

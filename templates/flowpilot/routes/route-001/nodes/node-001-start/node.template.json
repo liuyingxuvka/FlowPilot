@@ -12,6 +12,7 @@
     ".flowpilot/capabilities.json",
     ".flowpilot/routes/route-001/flow.json",
     ".flowpilot/routes/route-001/flow.md",
+    ".flowpilot/startup_guard/latest.json",
     ".flowpilot/task-models/<route-model>/results.json"
   ],
   "id": "node-001-start",
@@ -32,11 +33,13 @@
     "flowguard_modeling",
     "candidate_route_tree_generated",
     "root_route_model_checked",
-    "capability_evidence_synced"
+    "capability_evidence_synced",
+    "startup_activation_guard_passed"
   ],
   "status": "pending",
   "verification": [
     "python -c \"import flowguard; print(flowguard.SCHEMA_VERSION)\"",
+    "python scripts/flowpilot_startup_guard.py --root . --route-id route-001 --record-pass --json",
     "<route-check-command>"
   ]
 }

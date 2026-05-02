@@ -23,7 +23,8 @@
         "child_skill_gate_manifest_pm_approved",
         "candidate_route_tree_generated",
         "root_route_model_checked",
-        "capability_evidence_synced"
+        "capability_evidence_synced",
+        "startup_activation_guard_passed"
       ],
       "status": "pending",
       "summary": "Run startup interrogation, complete material intake handoff, complete PM-owned product-function architecture, freeze the contract, generate a candidate route tree, and freeze the checked root model as the first route version."

@@ -21,6 +21,7 @@ Machine-readable files are the source of truth:
 - `watchdog/events.jsonl`
 - `lifecycle/latest.json`
 - `lifecycle/events.jsonl`
+- `startup_guard/latest.json`
 - user-level `$CODEX_HOME/flowpilot/watchdog/registry.json`
 - user-level `$CODEX_HOME/flowpilot/watchdog/projects/*/latest.json`
 - user-level `$CODEX_HOME/flowpilot/watchdog/supervisor/latest.json`
@@ -45,9 +46,31 @@ Markdown files are English summaries for review.
 - last heartbeat;
 - last checkpoint;
 - next node;
-- next action.
+- next action;
+- startup activation hard-gate status.
 
 It should not store the whole history.
+
+`startup_activation` is the route-start transaction record. A formal route
+cannot enter child-skill execution, image generation, implementation, or route
+chunks until this block and the matching frontier block show:
+
+- `hard_gate_required: true`;
+- canonical route files, `state.json`, and `execution_frontier.json` are
+  written for the same active nonterminal route;
+- `crew_ledger_current: true`;
+- `role_memory_packets_current` is at least 6;
+- `continuation_ready: true`, either as an automated heartbeat/watchdog/global
+  bundle or explicit `manual-resume` no-automation evidence;
+- `startup_guard_passed: true`;
+- `startup_guard_evidence_path` points to `startup_guard/latest.json`;
+- `work_beyond_startup_allowed: true`;
+- `shadow_route_detected: false`.
+
+A route-local file, generated concept, screenshot, or implementation artifact
+without matching canonical state/frontier/crew/continuation evidence is a
+shadow route. Shadow routes are invalid startup evidence and must be
+quarantined or superseded before work continues.
 
 ## Crew Ledger
 
@@ -171,6 +194,7 @@ The frontier records:
   complete, whether a resume notice must be shown on controlled nonterminal
   stop, whether heartbeat wakeup can be waited for, and the exact manual resume
   prompt;
+- startup activation guard metadata matching `state.json`;
 - update timestamp.
 
 If the route structure changes, FlowPilot writes a new route version, reruns
@@ -211,6 +235,19 @@ source skill, source step, gate type, evidence required, `draft_owner`,
 `approval_status`, and `approval_evidence_path`. Parent resume is invalid
 until every current child-skill gate is approved by its assigned role or
 blocked/waived with evidence from the responsible role.
+
+Before any child-skill, imagegen, implementation, or formal route chunk starts,
+run:
+
+```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
+```
+
+The command passes only when `state.json`, `execution_frontier.json`,
+`routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory
+packets, and continuation evidence agree on the same active route. With
+`--record-pass`, it writes `startup_guard/latest.json` and updates state plus
+frontier so downstream work can check `work_beyond_startup_allowed`.
 
 ## Final Route-Wide Gate Ledger
 

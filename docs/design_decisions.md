@@ -35,6 +35,15 @@ the loosest option.
 
 Run modes change autonomy and hard-gate behavior, not the quality floor.
 
+Startup includes a hard activation transaction before child skills, imagegen,
+implementation, route chunks, or completion work. The transaction is valid only
+when state, execution frontier, active route, current six-role crew ledger,
+role memory packets, and continuation evidence all describe the same active
+nonterminal route. `scripts/flowpilot_startup_guard.py` records the pass in
+`.flowpilot/startup_guard/latest.json` and sets
+`work_beyond_startup_allowed: true`; otherwise route-local files are treated as
+shadow routes that must be quarantined or superseded.
+
 ## FlowGuard Binding
 
 The skill is strongly bound to real FlowGuard and the `model-first-function-flow`

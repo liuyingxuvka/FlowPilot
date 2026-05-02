@@ -176,3 +176,26 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   - `python scripts\check_install.py`
   - `python scripts\smoke_autopilot.py`
   - JSON parse check for `templates/flowpilot`, `.flowpilot`, and `.flowguard`
+
+## 2026-05-02 - Startup Activation Hard Gate
+
+- Trigger: the user found that a formal FlowPilot restart could bypass the
+  intended startup crew, continuation, and route-state activation sequence.
+- Decision: `use_flowguard`.
+- Modeled workflow: startup activation from route file creation through
+  canonical state/frontier sync, current six-role crew ledger, role memory,
+  continuation readiness, startup guard pass, and first work beyond startup.
+- Findings:
+  - A route-local file without matching canonical state/frontier/crew evidence
+    is a shadow route, not a valid partial startup.
+  - Child-skill, imagegen, implementation, route chunk, and completion work are
+    blocked until `startup_activation_guard_passed`.
+  - Existing route-021 terminal local runtime correctly fails the new guard.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  - `python -m py_compile scripts\flowpilot_startup_guard.py simulations\startup_guard_model.py simulations\run_startup_guard_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py`
+  - `python scripts\check_install.py`
+  - `python simulations\run_startup_guard_checks.py`
+  - `python simulations\run_meta_checks.py`
+  - `python simulations\run_capability_checks.py`
+  - `python scripts\flowpilot_startup_guard.py --root . --route-id route-021 --json`

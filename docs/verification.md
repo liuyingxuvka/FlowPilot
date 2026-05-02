@@ -5,6 +5,7 @@
 Run:
 
 ```powershell
+python simulations/run_startup_guard_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
 python scripts/check_install.py
@@ -20,6 +21,8 @@ Expected:
 - reachable success.
 - execution frontier and visible Codex plan sync labels are present before
   behavior-bearing work.
+- startup guard checks reject shadow routes and require the guard pass before
+  child-skill, imagegen, implementation, or route-execution work.
 
 Route-local models under `.flowpilot/task-models/` belong to an adopted target
 project's runtime evidence. They should be checked when present in that target
@@ -57,6 +60,33 @@ Expected:
 
 - meta simulation passes;
 - capability simulation passes.
+- startup guard simulation passes.
+
+## Startup Guard Check
+
+For an active target project after route, state, frontier, crew, role memory,
+continuation, and visible-plan evidence have been written, run:
+
+```powershell
+python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
+```
+
+Expected:
+
+- `state.json`, `execution_frontier.json`, and `routes/<active-route>/flow.json`
+  agree on the same active nonterminal route;
+- `crew_ledger.json` is current for that route and all six role memory packets
+  are present and current;
+- continuation is either a complete automated bundle or explicit
+  `manual-resume` evidence with no automation claim;
+- `startup_activation` in state and frontier records the hard gate;
+- the command writes `.flowpilot/startup_guard/latest.json` and sets
+  `work_beyond_startup_allowed: true`.
+
+If this command fails, FlowPilot must not run child skills, image generation,
+implementation, route chunks, or completion work. A route-local file without
+matching canonical state/frontier/crew/continuation evidence is a shadow route,
+not a recoverable partial pass.
 
 ## External Watchdog Check
 

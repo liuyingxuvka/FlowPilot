@@ -120,7 +120,21 @@ branches, heartbeat behavior, and any task-local behavior models.
     route mutation, completion review, or user request. Include active route,
     active node, next jumps, checks, fallback branches, continuation state, and
     acceptance delta as nearby text.
-37. Start the first bounded chunk only after continuation mode is known.
+37. Run the startup activation guard before any child-skill execution, image
+    generation, implementation, formal route chunk, or completion work:
+
+    ```powershell
+    python scripts/flowpilot_startup_guard.py --root . --route-id <active-route> --record-pass --json
+    ```
+
+    The guard must verify matching active route, canonical state,
+    execution frontier, current six-role crew ledger, current role memory,
+    continuation readiness, and `startup_activation` records in state and
+    frontier. Work beyond startup is illegal until the guard records
+    `work_beyond_startup_allowed: true`. A route-local file without matching
+    canonical state/frontier/crew/continuation evidence is a shadow route and
+    must be quarantined or superseded before continuing.
+38. Start the first bounded chunk only after continuation mode is known.
     Automated routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
     project manager issues a completion-oriented runway, the main executor syncs that

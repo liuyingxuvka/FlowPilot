@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 91544,
+    "edge_count": 91548,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -158,6 +158,7 @@
       "sidecar_report_returned",
       "sidecar_scope_checked",
       "six_agent_crew_policy_written",
+      "startup_activation_guard_passed",
       "strict_gate_obligation_review_model_checked",
       "subagent_spawned_on_demand",
       "terminal_lifecycle_frontier_written",
@@ -186,29 +187,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 86302,
+    "state_count": 86306,
     "terminal_counts": {
       "blocked": 546,
       "complete": 546
     }
   },
   "loop": {
-    "edge_count": 91544,
+    "edge_count": 91548,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 86302,
+    "state_count": 86306,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 91544,
+    "edge_count": 91548,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 86302,
+    "state_count": 86306,
     "status": "OK",
     "success_state_count": 546
   }
