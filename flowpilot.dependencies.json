@@ -11,6 +11,7 @@
     "skills_subdir": "skills",
     "overwrite_existing_by_default": false,
     "install_missing_skills_by_default": false,
+    "repo_owned_skill_source_freshness_required": true,
     "companion_skill_publication": "manual_user_action_only"
   },
   "dependencies": [
@@ -140,6 +141,28 @@
       ]
     },
     {
+      "name": "autonomous-concept-ui-redesign",
+      "type": "codex_skill",
+      "required": false,
+      "companion": true,
+      "install_name": "autonomous-concept-ui-redesign",
+      "repo_path": "skills/autonomous-concept-ui-redesign",
+      "source": {
+        "kind": "copy_from_this_repository"
+      },
+      "install": {
+        "mode": "copy_from_repo",
+        "auto_install_missing": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: autonomous-concept-ui-redesign"
+        }
+      ]
+    },
+    {
       "name": "frontend-design",
       "type": "codex_skill",
       "required": false,
@@ -164,6 +187,62 @@
           "kind": "skill_file",
           "path": "SKILL.md",
           "contains": "name: frontend-design"
+        }
+      ]
+    },
+    {
+      "name": "design-iterator",
+      "type": "codex_skill",
+      "required": false,
+      "companion": true,
+      "install_name": "design-iterator",
+      "source": {
+        "kind": "github",
+        "repo": "ratacat/claude-skills",
+        "ref": "main",
+        "path": "skills/design-iterator",
+        "url": "https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator"
+      },
+      "install": {
+        "mode": "github_skill",
+        "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: design-iterator"
+        }
+      ]
+    },
+    {
+      "name": "design-implementation-reviewer",
+      "type": "codex_skill",
+      "required": false,
+      "companion": true,
+      "install_name": "design-implementation-reviewer",
+      "source": {
+        "kind": "github",
+        "repo": "ratacat/claude-skills",
+        "ref": "main",
+        "path": "skills/design-implementation-reviewer",
+        "url": "https://github.com/ratacat/claude-skills/tree/main/skills/design-implementation-reviewer"
+      },
+      "install": {
+        "mode": "github_skill",
+        "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
+      },
+      "checks": [
+        {
+          "kind": "skill_file",
+          "path": "SKILL.md",
+          "contains": "name: design-implementation-reviewer"
         }
       ]
     }

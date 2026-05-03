@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 305707,
+    "edge_count": 522670,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -53,7 +53,11 @@
       "crew_memory_archived_at_terminal",
       "crew_memory_packets_written",
       "current_pointer_written",
+      "defect_ledger_initialized",
+      "defect_ledger_zero_blocking",
       "dependency_plan_recorded",
+      "evidence_credibility_triage_done",
+      "evidence_ledger_initialized",
       "execution_frontier_written",
       "experiment_found_new_path",
       "explicit_full_auto_mode_selected",
@@ -87,6 +91,7 @@
       "final_standard_scenario_pack_replayed",
       "flowguard_officer_model_adversarial_probe_done",
       "flowguard_process_designed",
+      "flowpilot_improvement_live_report_initialized",
       "flowpilot_skill_improvement_report_written",
       "fresh_six_live_subagents_started",
       "heartbeat_asked_project_manager",
@@ -158,6 +163,7 @@
       "pm_returns_startup_blockers_to_worker",
       "pm_runway_synced_to_visible_plan",
       "pm_start_gate_opened_from_fact_report",
+      "pm_triages_blocking_human_review_defect",
       "prior_work_import_packet_written",
       "process_flowguard_officer_spawned_fresh_for_task",
       "product_architecture_officer_adversarial_probe_done",
@@ -237,30 +243,30 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 292707,
+    "state_count": 502502,
     "terminal_counts": {
-      "blocked": 7832,
-      "complete": 640
+      "blocked": 13032,
+      "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 305707,
+    "edge_count": 522670,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 292707,
+    "state_count": 502502,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 305707,
+    "edge_count": 522670,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 292707,
+    "state_count": 502502,
     "status": "OK",
-    "success_state_count": 640
+    "success_state_count": 1280
   }
 }

@@ -149,13 +149,17 @@ branches, heartbeat behavior, and any task-local behavior models.
     the PM runway before executing work. Persisted `.flowpilot` evidence alone
     is not enough when the native tool exists.
 36. Emit the simplified English FlowPilot Route Sign Mermaid in chat when this
-    is startup, a key node change, route mutation, review/validation failure
-    return, completion review, or user request, unless Cockpit UI is open and
-    showing the same graph. Include active route, active node, next jumps,
+    is startup, a new major `flow.json` route-node entry, parent/module or leaf
+    route-node entry, PM current-node work brief, legacy key node change, route
+    mutation, review/validation failure return, completion review, or user
+    request, unless Cockpit UI is open and showing the same graph. Major node
+    means an effective node in the current route/mainline, not an internal
+    subnode, micro-step, or heartbeat tick. Include active route, active node, next jumps,
     checks, fallback or repair branches, continuation state, and acceptance
     delta as nearby text. If the route returns for repair, the Mermaid must
     show that return edge and the reviewer must check the visible chat block
-    before the node can advance.
+    before the node can advance. Generated files or display packets alone do
+    not satisfy this gate.
 37. Run the startup activation review before any child-skill execution, image
     generation, implementation, formal route chunk, or completion work. There
     is no third startup opener or runtime startup-check script. The human-like
@@ -566,23 +570,26 @@ the next chunk. Each continuation micro-step should run a lightweight self-check
 before execution when it starts new work.
 
 Until the desktop Cockpit is available, chat is the temporary cockpit. At
-startup, key node changes, route mutation, review or validation failure
-returns, completion review, or explicit user request, emit the same simplified
-English FlowPilot Route Sign Mermaid that the Cockpit UI displays. Do not
-refresh it on every heartbeat. The diagram is a 6-8 stage or route-node
-FlowPilot process view with the current stage highlighted, plus short text for
-the active route, active node, next checks, continuation state, and acceptance
-delta.
+startup, every new major `flow.json` route-node entry, parent/module or leaf
+route-node entry, PM current-node work brief, legacy key node change, route
+mutation, review or validation failure returns, completion review, or explicit
+user request, emit the same simplified English FlowPilot Route Sign Mermaid
+that the Cockpit UI displays. Do not refresh it on every heartbeat or internal
+subnode/micro-step. The diagram is a 6-8 stage or route-node FlowPilot process
+view with the current stage highlighted, plus short text for the active route,
+active node, next checks, continuation state, and acceptance delta.
 
 The user flow diagram is a display of existing `.flowpilot` route/frontier
 state, not a new execution path. Chat and UI use the same generated Mermaid
 source at `.flowpilot/runs/<run-id>/diagrams/user-flow-diagram.mmd`. Superseded
 or paused routes remain history, not separate primary diagrams.
 
-When Cockpit UI is not open, the chat Mermaid block is a hard gate. Route
-mutation, review failure, validation failure, or any backtrack to a repair
-target must add a visible `returns for repair` edge before the route sign can
-be treated as current.
+When Cockpit UI is not open, the chat Mermaid block is a hard gate. A generated
+file, Markdown preview, or display packet alone does not satisfy the gate, and
+`chat_displayed_in_chat` may be marked true only after the exact Mermaid block
+appeared in the assistant message. Route mutation, review failure, validation
+failure, or any backtrack to a repair target must add a visible `returns for
+repair` edge before the route sign can be treated as current.
 
 Raw FlowGuard Mermaid exports are engineering diagnostics. They are disabled by
 default, generated only on explicit request, and must not replace the user flow
@@ -598,7 +605,9 @@ gate.
 
 When `scripts/flowpilot_user_flow_diagram.py` is available, it is the standard
 route-sign hook: generate chat Markdown with
-`--markdown --trigger <trigger> --write`, paste that exact block into chat when
+`--markdown --trigger <trigger> --write` (`major_node_entry` is the preferred
+trigger for ordinary route-node entry; `key_node_change` is a legacy alias),
+paste that exact block into chat when
 required, then record the reviewer gate with
 `--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,
 manually compose the same English Mermaid from the active route/frontier and
@@ -725,6 +734,27 @@ checkpoint writes, node transitions, user-flow-diagram refreshes, and visible
 plan syncs must not recreate, re-register, start, restart, or re-enable
 heartbeat automation unless they are explicitly in the lifecycle setup/repair
 gate.
+
+Controlled nonterminal pause also writes
+`.flowpilot/runs/<run-id>/pause_snapshot.json` with the current route/node,
+open blockers, fixed-pending-recheck items, evidence caveats, heartbeat/agent
+lifecycle, cleanup boundary, and artifacts that must not be reused in a fresh
+run.
+
+## Defect And Evidence Governance
+
+Each formal run has a PM-owned defect ledger under
+`.flowpilot/runs/<run-id>/defects/` and an evidence credibility ledger under
+`.flowpilot/runs/<run-id>/evidence/`. Any role that discovers a defect writes
+the first event. PM triages severity, owner, route impact, and closure
+condition. Open blockers and `fixed_pending_recheck` defects block node
+closure, route advancement, final ledger approval, and terminal completion.
+
+Evidence that may close a gate is classified as `valid`, `invalid`, `stale`,
+or `superseded`, with source kind `live_project`, `fixture`, `synthetic`,
+`historical`, or `generated_concept`. Fixture evidence can prove a capability,
+but final reporting must disclose it separately from live-project evidence.
+Invalid or stale evidence cannot close a current gate.
 
 ## Dual-Layer Product And Process Modeling
 
@@ -1058,7 +1088,9 @@ FlowPilot must also project key child-skill milestones into current node
 details as a mini-route, without copying the child skill's detailed prompt text.
 
 FlowPilot must not compress child skills into vague shortcuts. For example,
-`concept-led-ui-redesign` means the concept-led workflow and comparison loop;
+`autonomous-concept-ui-redesign` means the non-interactive concept, implementation,
+iteration, deviation-review, geometry-QA, screenshot-QA, and final-verdict
+pipeline; `concept-led-ui-redesign` means the concept-led workflow and comparison loop;
 `model-first-function-flow` means the real FlowGuard applicability decision,
 model, checks, counterexample review, and adoption note where required.
 
@@ -1076,8 +1108,9 @@ inventory local skills -> PM selects required/conditional skills
 ```
 
 For UI skills, the visible mini-route should stay at milestone level, such as
-`concept target -> implementation -> screenshot QA -> divergence review ->
-iteration closure`. The UI child skills own the visual execution details.
+`contract/concept target -> frontend implementation -> design iteration ->
+deviation review -> geometry QA -> screenshot QA -> final verdict`. The UI
+child skills own the visual execution details.
 
 If any child-skill step is missing, stale, mismatched, or too low quality, the
 route returns to the child-skill loop. The parent node does not resume until
@@ -1109,10 +1142,12 @@ visual design itself.
 FlowPilot checks these process facts:
 
 - a UI or visual route was detected;
-- `concept-led-ui-redesign` was invoked when concept-led visual work is in
-  scope;
-- `frontend-design` was invoked when product UI polish or implementation
-  guidance is in scope;
+- `autonomous-concept-ui-redesign` was invoked for UI redesign, implementation,
+  polish, visual iteration, deviation review, layout QA, and final UI verdict;
+- its internal UI child-skill evidence records `concept-led-ui-redesign` when
+  concept-led visual work is in scope, `frontend-design` implementation,
+  `design-iterator` rounds or a recorded skip, and
+  `design-implementation-reviewer` deviation review or a recorded skip;
 - the child skill produced or explicitly waived the pre-implementation concept
   target/reference decision;
 - generated concept targets have both a source decision and an authenticity
@@ -1129,6 +1164,9 @@ FlowPilot checks these process facts:
   reviewer reasons before UI implementation planning;
 - rendered QA evidence exists after implementation when required by the child
   skill;
+- geometry QA evidence exists after implementation and before final visual
+  closure; screenshots are required visual sanity evidence but not sufficient
+  anti-overlap proof;
 - rendered QA evidence includes a rendered-UI aesthetic verdict with concrete
   reviewer reasons before divergence or loop closure;
 - rendered QA evidence includes reviewer-owned personal walkthrough evidence
@@ -1241,8 +1279,9 @@ Completion requires:
 - PM-owned final route-wide gate ledger rebuilt from the current route, with
   effective nodes resolved, child-skill gates collected, root acceptance and
   node acceptance obligations accounted for, selected standard scenarios
-  replayed, stale evidence checked, superseded nodes explained, zero unresolved
-  items, zero unresolved residual risks, terminal human backward replay map
+  replayed, evidence credibility ledger reconciled, stale evidence checked,
+  superseded nodes explained, zero unresolved items, zero open blockers, zero
+  fixed-pending-recheck defects, zero unresolved residual risks, terminal human backward replay map
   built, reviewer replay from delivered product through root, parent, and leaf
   nodes passed, every replay segment has a PM decision, repair/restart policy
   recorded, and PM ledger approval recorded;

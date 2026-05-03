@@ -401,13 +401,17 @@ all three in one compact sentence.
     change the heartbeat automation prompt just because the route or next jump
     changed.
 39. Emit the simplified English FlowPilot Route Sign Mermaid in chat when this
-    is startup, a key node change, route mutation, review/validation failure
-    return, completion review, or user request, unless Cockpit UI is open and
-    showing the same graph. Include active route, active node, next jumps,
+    is startup, a new major `flow.json` route-node entry, parent/module or leaf
+    route-node entry, PM current-node work brief, legacy key node change, route
+    mutation, review/validation failure return, completion review, or user
+    request, unless Cockpit UI is open and showing the same graph. Major node
+    means an effective node in the current route/mainline, not an internal
+    subnode, micro-step, or heartbeat tick. Include active route, active node, next jumps,
     checks, fallback or repair branches, continuation state, and current
     acceptance delta as nearby text. If the route returns for repair, the
     Mermaid must show that return edge and the reviewer must check the visible
-    chat block before the node can advance.
+    chat block before the node can advance. Generated files or display packets
+    alone do not satisfy this gate.
 40. Set `startup_activation` in state/frontier from the three-question prompt,
     the recorded stop-and-wait state, the three explicit startup answers,
     banner evidence, current route, execution frontier, crew ledger, role
@@ -615,11 +619,12 @@ unrun, failed, or untriaged.
 
 ## FlowPilot Skill Improvement Notes
 
-FlowPilot keeps a lightweight self-improvement notebook that is independent of
-the current project's acceptance gates. It records problems with FlowPilot
-itself: unclear protocol text, weak templates, hard-to-find code paths, missing
-review fields, model/tooling friction, Cockpit display gaps, or other issues
-that would be useful when later maintaining the FlowPilot root repository.
+FlowPilot keeps a live self-improvement notebook that is independent of the
+current project's acceptance gates. It records problems with FlowPilot itself:
+unclear protocol text, weak templates, hard-to-find code paths, missing review
+fields, model/tooling friction, evidence-governance gaps, pause/restart gaps,
+Cockpit display gaps, or other issues that would be useful when later
+maintaining the FlowPilot root repository.
 
 These notes do not block the current project and do not require the root
 FlowPilot repository to be fixed inside the current run. If a small issue
@@ -628,20 +633,59 @@ project blockers such as missing permissions, unavailable dependencies, or a
 required user choice remain ordinary route blockers; they are not parked in the
 skill-improvement report.
 
-At each node checkpoint, parent review, child-skill closure, repair review, or
-other meaningful boundary, ask the roles whether the run exposed a FlowPilot
-skill issue. Append any observation to:
+Initialize `.flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json`
+at run start with status `live_updating`. At each node checkpoint, parent
+review, child-skill closure, repair review, controlled pause, or other
+meaningful boundary, ask the roles whether the run exposed a FlowPilot skill
+issue. Append any observation to:
 `.flowpilot/runs/<run-id>/flowpilot_skill_improvement_observations.jsonl`.
 When no issue is observed, it is enough to record the node-level check as
 complete; do not write long empty node reports.
 
-Before terminal completion, the project manager writes:
+Before terminal completion, the project manager rebuilds:
 `.flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json`.
 The report summarizes all observations, temporary compensations used in this
 run, candidate FlowPilot root-repo files to inspect later, and PM notes for a
 human maintainer. It must also be written when no obvious FlowPilot skill
 improvement was observed. The report is a terminal artifact, not a gate that
 demands fixing the reported issues before the current project completes.
+
+## Defect And Evidence Governance
+
+Every formal run initializes these ledgers before review, repair, pause, or
+completion work:
+
+- `.flowpilot/runs/<run-id>/defects/defect_ledger.json`
+- `.flowpilot/runs/<run-id>/defects/defect_events.jsonl`
+- `.flowpilot/runs/<run-id>/evidence/evidence_ledger.json`
+- `.flowpilot/runs/<run-id>/evidence/evidence_events.jsonl`
+
+Any role that discovers a product defect, FlowPilot skill defect, process
+defect, evidence defect, or tool/environment defect records a defect event
+immediately. The project manager then triages severity, owner, route impact,
+and close condition. The PM owns prioritization and closure, but cannot close a
+blocker by assertion: the same role class that owns the blocked gate must
+recheck the repaired artifact first.
+
+Blocking defects use this state flow:
+
+```text
+open -> accepted/fixing -> fixed_pending_recheck -> closed
+```
+
+`open` blocker defects and `fixed_pending_recheck` defects block node closure,
+route advancement, final ledger approval, and terminal completion. A repair
+report alone changes the state only to `fixed_pending_recheck`; it is not a
+pass. If a reviewer or officer blocks a gate, FlowPilot records the blocker in
+the defect ledger before routing repair work.
+
+Evidence credibility is tracked separately from defect status. Every material
+evidence item that may close a gate is classified by status:
+`valid`, `invalid`, `stale`, or `superseded`, and by source kind:
+`live_project`, `fixture`, `synthetic`, `historical`, or `generated_concept`.
+Fixture evidence may prove a capability, but the final report must disclose it
+separately from live-project evidence. Invalid or stale evidence cannot close a
+current gate, even when a newer screenshot or report replaces it.
 
 ## Persistent Six-Agent Crew
 
@@ -1041,9 +1085,11 @@ parent/module review, node checkpoint review, and final completion review.
 Until the desktop Cockpit can reliably show live progress, the chat is the
 temporary cockpit. FlowPilot has one user-facing realtime route sign for both
 chat and the Cockpit UI. Show the simplified English Mermaid route sign at
-startup, key node changes, route mutation, review or validation failure returns,
-completion review, or explicit user request. Do not refresh or repost it on
-every heartbeat.
+startup, every new major `flow.json` route-node entry, parent/module or leaf
+route-node entry, PM current-node work brief, legacy key node change, route
+mutation, review or validation failure returns, completion review, or explicit
+user request. Do not refresh or repost it on every heartbeat or internal
+subnode/micro-step.
 
 The route sign is a projection of existing canonical route/frontier state; it
 is not a separate execution path and it must not invent a new route. The graph
@@ -1056,8 +1102,10 @@ the route backward. Chat and UI use the same generated Mermaid source at
 When Cockpit UI is not open, the chat Mermaid block is a hard gate. The
 assistant must paste the chat-ready FlowPilot Route Sign before starting work
 for the new major node, route mutation, repair return, completion review, or
-user-requested progress explanation. A generated file alone does not satisfy
-the gate.
+user-requested progress explanation. A generated file, Markdown preview, or
+display packet alone does not satisfy the gate, and `chat_displayed_in_chat`
+may be marked true only after the exact Mermaid block appeared in the assistant
+message.
 
 Raw FlowGuard Mermaid exports are diagnostic state graphs. They are disabled by
 default, generated only on explicit request, and must not replace the user flow
@@ -1072,8 +1120,9 @@ records a pass or equivalent reviewer evidence.
 
 When `scripts/flowpilot_user_flow_diagram.py` is available in the project, use
 it as the route-sign hook: generate chat Markdown with
-`--markdown --trigger <trigger> --write`, paste that exact block into chat when
-required, then record the reviewer gate with
+`--markdown --trigger <trigger> --write` (`major_node_entry` is the preferred
+trigger for ordinary route-node entry; `key_node_change` is a legacy alias),
+paste that exact block into chat when required, then record the reviewer gate with
 `--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,
 manually compose the same English Mermaid from the active route/frontier and
 record equivalent reviewer evidence.
@@ -1493,6 +1542,13 @@ manual-resume evidence. Use `scripts/flowpilot_lifecycle.py` as the read-only
 inventory helper and then perform required Codex automation changes through
 the official Codex app automation interface.
 
+For any controlled nonterminal pause, FlowPilot also writes
+`.flowpilot/runs/<run-id>/pause_snapshot.json`. The snapshot names the current
+route/node/gate, open blockers, fixed-pending-recheck defects, invalid or
+fixture-only evidence caveats, heartbeat and agent lifecycle state, artifacts
+safe to delete, lessons to preserve, and artifacts that must not be reused in a
+fresh run. A pause without this snapshot is not reconciled.
+
 At terminal closure, write terminal/inactive route state, write the
 stopped/inactive lifecycle state back to `.flowpilot/runs/<run-id>/state.json`,
 `.flowpilot/runs/<run-id>/execution_frontier.json`, and lifecycle evidence,
@@ -1778,11 +1834,14 @@ Required early gate:
 Conditional UI gates:
 
 - detect that the route has a user-facing UI or visual-delivery surface;
-- invoke `concept-led-ui-redesign` through the child-skill fidelity gate when
-  concept-led visual work is in scope;
-- invoke `frontend-design` through the child-skill fidelity gate when product UI
-  polish, layout, responsiveness, accessibility, or implementation guidance is
-  in scope;
+- invoke `autonomous-concept-ui-redesign` through the child-skill fidelity gate
+  for UI redesign, UI implementation, UI polish, layout, responsiveness,
+  accessibility, visual iteration, and UI QA routes. The experimental
+  orchestrator owns the concept-led front half, `frontend-design`
+  implementation, `design-iterator` refinement,
+  `design-implementation-reviewer` deviation review, and geometry/screenshot
+  QA. Keep `concept-led-ui-redesign` available as an internal dependency and
+  fallback, not the default FlowPilot UI route;
 - before generated concept targets, record the UI child skill's shared visual
   direction source and reuse that direction for concept image, implementation,
   app icon/assets, and QA;
@@ -2065,21 +2124,26 @@ closure suite recorded at
 `.flowpilot/runs/<run-id>/terminal_closure_suite.json`. The suite is a hard
 gate and runs in this order:
 
-1. confirm residual risk triage has zero unresolved items;
-2. synchronize terminal state across `state.json`,
+1. confirm the defect ledger has zero open blockers and zero
+   fixed-pending-recheck defects;
+2. reconcile the evidence ledger so invalid, stale, superseded, fixture-only,
+   synthetic, historical, and generated-concept evidence is accounted for and
+   no invalid item closes a current gate;
+3. confirm residual risk triage has zero unresolved items;
+4. synchronize terminal state across `state.json`,
    `execution_frontier.json`, active `flow.json`, `run.json`,
    `.flowpilot/current.json`, and `.flowpilot/index.json`;
-3. refresh terminal-state evidence such as screenshots, scenario replay
+5. refresh terminal-state evidence such as screenshots, scenario replay
    outputs, and final acceptance rechecks;
-4. rebuild the final ledger if evidence changed;
-5. run lifecycle reconciliation across Codex heartbeat automations, local
+6. rebuild the final ledger if evidence changed;
+7. run lifecycle reconciliation across Codex heartbeat automations, local
    state, frontier, and heartbeat/manual-resume evidence;
-6. pause/delete route heartbeat when automated continuation was used, or record
+8. pause/delete route heartbeat when automated continuation was used, or record
    manual-resume no-automation evidence;
-7. archive role memory and crew status;
-8. write the PM-owned FlowPilot skill improvement report for future manual
+9. archive role memory and crew status;
+10. write the PM-owned FlowPilot skill improvement report for future manual
    root-repo maintenance;
-9. write the final report only when required lifecycle actions are zero.
+11. write the final report only when required lifecycle actions are zero.
 
 The final report is therefore a terminal output, not the thing that performs
 cleanup. If cleanup changes state, evidence, screenshots, or the ledger, the

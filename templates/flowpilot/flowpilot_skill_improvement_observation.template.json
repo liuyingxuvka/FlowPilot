@@ -5,6 +5,7 @@
   "route_version": 0,
   "node_id": "<node-id-or-terminal>",
   "gate_id": "<gate-id-or-null>",
+  "related_defect_id": "<defect-id-or-null>",
   "recorded_at": "<iso-8601-timestamp>",
   "reported_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|main_executor>",
   "observation_kind": "<protocol_ambiguity|template_gap|script_or_tooling_gap|model_gap|code_pointer_unclear|review_standard_weak|automation_friction|ui_or_cockpit_gap|other>",

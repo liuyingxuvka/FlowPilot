@@ -1,0 +1,199 @@
+{
+  "hazard_checks": {
+    "hazards": {
+      "blocker_never_logged": {
+        "detected": true,
+        "failures": [
+          "PM triaged a blocker before the discovering role logged a defect event"
+        ],
+        "state": {
+          "blocker_open": false,
+          "defect_closed_by_pm": false,
+          "defect_event_logged": false,
+          "defect_ledger_initialized": true,
+          "evidence_classified": false,
+          "evidence_ledger_initialized": true,
+          "evidence_registered": false,
+          "fixed_pending_recheck": false,
+          "fixture_evidence_disclosed": false,
+          "flowpilot_skill_issue_observed": false,
+          "heartbeat_reconciled": false,
+          "invalid_evidence_seen": false,
+          "pause_requested": false,
+          "pause_snapshot_written": false,
+          "pm_triaged_defect": true,
+          "repair_recorded": false,
+          "replacement_evidence_linked": false,
+          "reviewer_blocker_found": true,
+          "run_started": true,
+          "same_class_recheck_passed": false,
+          "skill_improvement_live_report_initialized": true,
+          "skill_issue_live_report_updated": false,
+          "terminal_completion_allowed": false,
+          "terminal_completion_started": false
+        }
+      },
+      "closed_without_recheck": {
+        "detected": true,
+        "failures": [
+          "PM closed a blocker before repair and same-class recheck"
+        ],
+        "state": {
+          "blocker_open": false,
+          "defect_closed_by_pm": true,
+          "defect_event_logged": true,
+          "defect_ledger_initialized": true,
+          "evidence_classified": false,
+          "evidence_ledger_initialized": true,
+          "evidence_registered": false,
+          "fixed_pending_recheck": false,
+          "fixture_evidence_disclosed": false,
+          "flowpilot_skill_issue_observed": false,
+          "heartbeat_reconciled": false,
+          "invalid_evidence_seen": false,
+          "pause_requested": false,
+          "pause_snapshot_written": false,
+          "pm_triaged_defect": true,
+          "repair_recorded": true,
+          "replacement_evidence_linked": false,
+          "reviewer_blocker_found": true,
+          "run_started": true,
+          "same_class_recheck_passed": false,
+          "skill_improvement_live_report_initialized": true,
+          "skill_issue_live_report_updated": false,
+          "terminal_completion_allowed": false,
+          "terminal_completion_started": false
+        }
+      },
+      "invalid_evidence_overwritten": {
+        "detected": true,
+        "failures": [
+          "terminal completion allowed before invalid/stale/fixture evidence was classified"
+        ],
+        "state": {
+          "blocker_open": false,
+          "defect_closed_by_pm": false,
+          "defect_event_logged": false,
+          "defect_ledger_initialized": true,
+          "evidence_classified": false,
+          "evidence_ledger_initialized": true,
+          "evidence_registered": false,
+          "fixed_pending_recheck": false,
+          "fixture_evidence_disclosed": false,
+          "flowpilot_skill_issue_observed": false,
+          "heartbeat_reconciled": false,
+          "invalid_evidence_seen": true,
+          "pause_requested": false,
+          "pause_snapshot_written": false,
+          "pm_triaged_defect": false,
+          "repair_recorded": false,
+          "replacement_evidence_linked": false,
+          "reviewer_blocker_found": false,
+          "run_started": true,
+          "same_class_recheck_passed": false,
+          "skill_improvement_live_report_initialized": true,
+          "skill_issue_live_report_updated": false,
+          "terminal_completion_allowed": true,
+          "terminal_completion_started": true
+        }
+      },
+      "pause_without_snapshot": {
+        "detected": true,
+        "failures": [
+          "terminal completion or restart path skipped pause snapshot after pause request"
+        ],
+        "state": {
+          "blocker_open": false,
+          "defect_closed_by_pm": false,
+          "defect_event_logged": false,
+          "defect_ledger_initialized": true,
+          "evidence_classified": false,
+          "evidence_ledger_initialized": true,
+          "evidence_registered": false,
+          "fixed_pending_recheck": false,
+          "fixture_evidence_disclosed": false,
+          "flowpilot_skill_issue_observed": false,
+          "heartbeat_reconciled": true,
+          "invalid_evidence_seen": false,
+          "pause_requested": true,
+          "pause_snapshot_written": false,
+          "pm_triaged_defect": false,
+          "repair_recorded": false,
+          "replacement_evidence_linked": false,
+          "reviewer_blocker_found": false,
+          "run_started": true,
+          "same_class_recheck_passed": false,
+          "skill_improvement_live_report_initialized": true,
+          "skill_issue_live_report_updated": false,
+          "terminal_completion_allowed": true,
+          "terminal_completion_started": true
+        }
+      },
+      "terminal_with_pending_recheck": {
+        "detected": true,
+        "failures": [
+          "terminal completion allowed with open blocker or pending recheck"
+        ],
+        "state": {
+          "blocker_open": false,
+          "defect_closed_by_pm": false,
+          "defect_event_logged": true,
+          "defect_ledger_initialized": true,
+          "evidence_classified": false,
+          "evidence_ledger_initialized": true,
+          "evidence_registered": false,
+          "fixed_pending_recheck": true,
+          "fixture_evidence_disclosed": false,
+          "flowpilot_skill_issue_observed": false,
+          "heartbeat_reconciled": false,
+          "invalid_evidence_seen": false,
+          "pause_requested": false,
+          "pause_snapshot_written": false,
+          "pm_triaged_defect": true,
+          "repair_recorded": true,
+          "replacement_evidence_linked": false,
+          "reviewer_blocker_found": false,
+          "run_started": true,
+          "same_class_recheck_passed": false,
+          "skill_improvement_live_report_initialized": true,
+          "skill_issue_live_report_updated": false,
+          "terminal_completion_allowed": true,
+          "terminal_completion_started": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "safe_graph": {
+    "edge_count": 22,
+    "invariant_failures": [],
+    "labels": [
+      "defect_event_logged_by_discovering_role",
+      "defect_ledger_initialized",
+      "evidence_ledger_initialized",
+      "evidence_status_and_source_classified",
+      "fixture_evidence_disclosed_separately",
+      "flowpilot_skill_issue_observed",
+      "heartbeat_lifecycle_reconciled_for_pause",
+      "invalid_evidence_registered",
+      "invalid_parallel_screenshot_seen",
+      "pause_requested",
+      "pause_snapshot_written",
+      "pm_closed_rechecked_defect",
+      "pm_triaged_blocking_defect",
+      "repair_recorded_fixed_pending_recheck",
+      "replacement_evidence_linked",
+      "reviewer_blocker_found",
+      "run_started",
+      "same_class_recheck_passed",
+      "skill_improvement_live_report_initialized",
+      "skill_issue_live_report_updated",
+      "terminal_completion_allowed",
+      "terminal_completion_started"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 23
+  }
+}

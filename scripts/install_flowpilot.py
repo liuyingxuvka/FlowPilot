@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import json
 import os
@@ -51,6 +52,31 @@ def installed_skill_path(root: Path, install_name: str) -> Path | None:
     return None
 
 
+def iter_hashable_files(path: Path) -> list[Path]:
+    ignored_dirs = {"__pycache__", ".git"}
+    files: list[Path] = []
+    for item in path.rglob("*"):
+        if not item.is_file():
+            continue
+        if any(part in ignored_dirs for part in item.relative_to(path).parts):
+            continue
+        if item.suffix in {".pyc", ".pyo"}:
+            continue
+        files.append(item)
+    return sorted(files, key=lambda item: item.relative_to(path).as_posix())
+
+
+def directory_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    for item in iter_hashable_files(path):
+        relpath = item.relative_to(path).as_posix()
+        digest.update(relpath.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(item.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def check_skill(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
     install_name = dependency.get("install_name") or dependency["name"]
     path = installed_skill_path(root, install_name)
@@ -70,6 +96,23 @@ def check_skill(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
             if expected and expected not in text:
                 result["ok"] = False
                 result.setdefault("errors", []).append(f"missing expected text: {expected}")
+    if dependency.get("repo_path") and dependency.get("source", {}).get("kind") == "copy_from_this_repository":
+        source_path = ROOT / dependency["repo_path"]
+        result["source_path"] = str(source_path)
+        if source_path.exists():
+            source_digest = directory_digest(source_path)
+            installed_digest = directory_digest(path)
+            result["source_digest"] = source_digest
+            result["installed_digest"] = installed_digest
+            result["source_fresh"] = source_digest == installed_digest
+            if source_digest != installed_digest:
+                result["ok"] = False
+                result.setdefault("errors", []).append(
+                    "installed skill content differs from repository source"
+                )
+        else:
+            result["ok"] = False
+            result.setdefault("errors", []).append(f"missing repository source: {source_path}")
     return result
 
 

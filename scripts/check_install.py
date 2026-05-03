@@ -27,6 +27,10 @@ REQUIRED_FILES = [
     "skills/flowpilot/references/protocol.md",
     "skills/flowpilot/references/installation_contract.md",
     "skills/flowpilot/references/failure_modes.md",
+    "skills/autonomous-concept-ui-redesign/SKILL.md",
+    "skills/autonomous-concept-ui-redesign/references/dependency-map.md",
+    "skills/autonomous-concept-ui-redesign/references/layout-geometry-qa.md",
+    "skills/autonomous-concept-ui-redesign/references/run-report-template.md",
     "templates/flowpilot/README.md",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
@@ -46,6 +50,11 @@ REQUIRED_FILES = [
     "templates/flowpilot/flowguard_modeling_report.template.json",
     "templates/flowpilot/role_approval.template.json",
     "templates/flowpilot/human_review.template.json",
+    "templates/flowpilot/defects/defect_ledger.template.json",
+    "templates/flowpilot/defects/defect_event.template.json",
+    "templates/flowpilot/evidence/evidence_ledger.template.json",
+    "templates/flowpilot/evidence/evidence_event.template.json",
+    "templates/flowpilot/pause_snapshot.template.json",
     "templates/flowpilot/final_route_wide_gate_ledger.template.json",
     "templates/flowpilot/terminal_human_backward_replay_map.template.json",
     "templates/flowpilot/terminal_closure_suite.template.json",
@@ -76,6 +85,9 @@ REQUIRED_FILES = [
     "simulations/user_flow_diagram_model.py",
     "simulations/run_user_flow_diagram_checks.py",
     "simulations/user_flow_diagram_results.json",
+    "simulations/defect_governance_model.py",
+    "simulations/run_defect_governance_checks.py",
+    "simulations/defect_governance_results.json",
     "simulations/startup_pm_review_model.py",
     "simulations/run_startup_pm_review_checks.py",
     "simulations/startup_pm_review_results.json",
@@ -85,6 +97,7 @@ REQUIRED_FILES = [
     "scripts/install_flowpilot.py",
     "scripts/check_public_release.py",
     "scripts/flowpilot_paths.py",
+    "scripts/flowpilot_defects.py",
     "scripts/flowpilot_lifecycle.py",
     "scripts/flowpilot_user_flow_diagram.py",
     "scripts/smoke_autopilot.py",
@@ -114,6 +127,11 @@ JSON_FILES = [
     "templates/flowpilot/flowguard_modeling_report.template.json",
     "templates/flowpilot/role_approval.template.json",
     "templates/flowpilot/human_review.template.json",
+    "templates/flowpilot/defects/defect_ledger.template.json",
+    "templates/flowpilot/defects/defect_event.template.json",
+    "templates/flowpilot/evidence/evidence_ledger.template.json",
+    "templates/flowpilot/evidence/evidence_event.template.json",
+    "templates/flowpilot/pause_snapshot.template.json",
     "templates/flowpilot/final_route_wide_gate_ledger.template.json",
     "templates/flowpilot/terminal_human_backward_replay_map.template.json",
     "templates/flowpilot/terminal_closure_suite.template.json",
@@ -128,6 +146,7 @@ JSON_FILES = [
     "templates/flowpilot/checkpoints/checkpoint.template.json",
     "templates/flowpilot/capabilities/capability-evidence.template.json",
     "templates/flowpilot/experiments/experiment-001/experiment.template.json",
+    "simulations/defect_governance_results.json",
 ]
 
 OPTIONAL_RUNTIME_JSON_FILES = [
@@ -173,6 +192,16 @@ def main() -> int:
         text = skill_path.read_text(encoding="utf-8")
         has_name = "\nname: flowpilot\n" in f"\n{text}"
         result["checks"].append({"name": "skill_name:flowpilot", "ok": has_name})
+        if not has_name:
+            result["ok"] = False
+
+    autonomous_skill_path = ROOT / "skills/autonomous-concept-ui-redesign/SKILL.md"
+    if autonomous_skill_path.exists():
+        text = autonomous_skill_path.read_text(encoding="utf-8")
+        has_name = "\nname: autonomous-concept-ui-redesign\n" in f"\n{text}"
+        result["checks"].append(
+            {"name": "skill_name:autonomous-concept-ui-redesign", "ok": has_name}
+        )
         if not has_name:
             result["ok"] = False
 

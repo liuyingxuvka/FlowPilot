@@ -221,6 +221,13 @@ class State:
     lifecycle_reconciliation_done: bool = False
     controlled_stop_notice_recorded: bool = False
     terminal_completion_notice_recorded: bool = False
+    defect_ledger_initialized: bool = False
+    evidence_ledger_initialized: bool = False
+    flowpilot_improvement_live_report_initialized: bool = False
+    flowpilot_improvement_live_report_updated: bool = False
+    defect_ledger_zero_blocking: bool = False
+    evidence_credibility_triage_done: bool = False
+    pause_snapshot_written: bool = False
     flowguard_process_design_done: bool = False
     flowguard_officer_model_adversarial_probe_done: bool = False
     flowguard_model_report_risk_tiers_done: bool = False
@@ -233,6 +240,7 @@ class State:
     capability_product_function_model_checked: bool = False
     capability_product_function_model_product_officer_approved: bool = False
 
+    ui_autonomous_pipeline_selected: bool = False
     ui_inspected: bool = False
     ui_concept_done: bool = False
     ui_concept_target_ready: bool = False
@@ -250,6 +258,7 @@ class State:
     visual_asset_aesthetic_reasons_recorded: bool = False
     ui_implemented: bool = False
     ui_screenshot_qa_done: bool = False
+    ui_geometry_qa_done: bool = False
     ui_reviewer_personal_walkthrough_done: bool = False
     ui_interaction_reachability_checked: bool = False
     ui_layout_overlap_density_checked: bool = False
@@ -425,11 +434,13 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_parent_backward_replays_collected": False,
         "final_route_wide_gate_ledger_product_process_gates_collected": False,
         "final_route_wide_gate_ledger_resource_lineage_resolved": False,
+        "evidence_credibility_triage_done": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
         "final_residual_risk_triage_done": False,
         "final_residual_risk_unresolved_count_zero": False,
+        "defect_ledger_zero_blocking": False,
         "final_route_wide_gate_ledger_pm_built": False,
         "terminal_human_backward_review_map_built": False,
         "terminal_human_backward_replay_started_from_delivered_product": False,
@@ -530,6 +541,7 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "visual_asset_design_recommendations_recorded": False,
         "ui_implemented": False,
         "ui_screenshot_qa_done": False,
+        "ui_geometry_qa_done": False,
         "ui_reviewer_personal_walkthrough_done": False,
         "ui_interaction_reachability_checked": False,
         "ui_layout_overlap_density_checked": False,
@@ -690,6 +702,9 @@ def _run_isolation_ready(state: State) -> bool:
         state.run_directory_created
         and state.current_pointer_written
         and state.run_index_updated
+        and state.defect_ledger_initialized
+        and state.evidence_ledger_initialized
+        and state.flowpilot_improvement_live_report_initialized
         and prior_work_resolved
         and state.control_state_written_under_run_root
         and state.top_level_control_state_absent_or_quarantined
@@ -778,11 +793,13 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_parent_backward_replays_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
+        and state.evidence_credibility_triage_done
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
         and state.final_residual_risk_triage_done
         and state.final_residual_risk_unresolved_count_zero
+        and state.defect_ledger_zero_blocking
         and state.final_route_wide_gate_ledger_pm_built
         and state.terminal_human_backward_review_map_built
         and state.terminal_human_backward_replay_started_from_delivered_product
@@ -1158,6 +1175,14 @@ def _final_route_wide_gate_ledger_steps(
             final_route_wide_gate_ledger_resource_lineage_resolved=True,
         )
         return
+    if not state.evidence_credibility_triage_done:
+        yield _step(
+            state,
+            label="evidence_credibility_triage_done",
+            action=f"PM reconciles {domain} evidence credibility: valid live-project evidence is separated from invalid, stale, superseded, fixture-only, synthetic, historical, and generated-concept evidence",
+            evidence_credibility_triage_done=True,
+        )
+        return
     if not state.final_route_wide_gate_ledger_stale_evidence_checked:
         yield _step(
             state,
@@ -1196,6 +1221,14 @@ def _final_route_wide_gate_ledger_steps(
             label="final_residual_risk_unresolved_count_zero",
             action=f"PM records zero unresolved residual {domain} risks before final ledger can be built",
             final_residual_risk_unresolved_count_zero=True,
+        )
+        return
+    if not state.defect_ledger_zero_blocking:
+        yield _step(
+            state,
+            label="defect_ledger_zero_blocking",
+            action=f"PM checks the {domain} defect ledger and records zero open blockers and zero fixed-pending-recheck defects before final ledger can be built",
+            defect_ledger_zero_blocking=True,
         )
         return
     if not state.final_route_wide_gate_ledger_pm_built:
@@ -1443,6 +1476,13 @@ class CapabilityRouterStep:
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
+        "defect_ledger_initialized",
+        "evidence_ledger_initialized",
+        "flowpilot_improvement_live_report_initialized",
+        "flowpilot_improvement_live_report_updated",
+        "defect_ledger_zero_blocking",
+        "evidence_credibility_triage_done",
+        "pause_snapshot_written",
         "flowguard_process_design_done",
         "flowguard_officer_model_adversarial_probe_done",
         "meta_route_checked",
@@ -1462,6 +1502,7 @@ class CapabilityRouterStep:
         "plan_version",
         "capability_user_flow_diagram_refreshed",
         "capability_user_flow_diagram_emitted",
+        "ui_autonomous_pipeline_selected",
         "ui_concept_done",
         "ui_concept_target_ready",
         "ui_concept_target_visible",
@@ -1476,6 +1517,7 @@ class CapabilityRouterStep:
         "visual_asset_aesthetic_review_done",
         "visual_asset_aesthetic_reasons_recorded",
         "ui_screenshot_qa_done",
+        "ui_geometry_qa_done",
         "ui_reviewer_personal_walkthrough_done",
         "ui_interaction_reachability_checked",
         "ui_layout_overlap_density_checked",
@@ -1716,6 +1758,13 @@ class CapabilityRouterStep:
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
+        "defect_ledger_initialized",
+        "evidence_ledger_initialized",
+        "flowpilot_improvement_live_report_initialized",
+        "flowpilot_improvement_live_report_updated",
+        "defect_ledger_zero_blocking",
+        "evidence_credibility_triage_done",
+        "pause_snapshot_written",
         "flowguard_process_design_done",
         "flowguard_officer_model_adversarial_probe_done",
         "meta_route_checked",
@@ -1727,6 +1776,7 @@ class CapabilityRouterStep:
         "parent_backward_review_targets_enumerated",
         "parent_backward_review_targets_route_version",
         "parent_backward_targets_count",
+        "ui_autonomous_pipeline_selected",
         "ui_inspected",
         "ui_concept_done",
         "ui_concept_target_ready",
@@ -1744,6 +1794,7 @@ class CapabilityRouterStep:
         "visual_asset_aesthetic_reasons_recorded",
         "ui_implemented",
         "ui_screenshot_qa_done",
+        "ui_geometry_qa_done",
         "ui_reviewer_personal_walkthrough_done",
         "ui_interaction_reachability_checked",
         "ui_layout_overlap_density_checked",
@@ -1834,6 +1885,13 @@ class CapabilityRouterStep:
         "pm_completion_decision_recorded",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
+        "defect_ledger_initialized",
+        "evidence_ledger_initialized",
+        "flowpilot_improvement_live_report_initialized",
+        "flowpilot_improvement_live_report_updated",
+        "defect_ledger_zero_blocking",
+        "evidence_credibility_triage_done",
+        "pause_snapshot_written",
         "child_node_sidecar_scan_done",
         "sidecar_need",
         "subagent_pool_exists",
@@ -1958,6 +2016,33 @@ class CapabilityRouterStep:
                 label="run_index_updated",
                 action="update .flowpilot/index.json with the new run identity and creation metadata",
                 run_index_updated=True,
+            )
+            return
+
+        if not state.defect_ledger_initialized:
+            yield _step(
+                state,
+                label="defect_ledger_initialized",
+                action="create the run-level defect ledger before capability reviews, repairs, pauses, or completion can record findings",
+                defect_ledger_initialized=True,
+            )
+            return
+
+        if not state.evidence_ledger_initialized:
+            yield _step(
+                state,
+                label="evidence_ledger_initialized",
+                action="create the run-level evidence credibility ledger before capability evidence can close gates",
+                evidence_ledger_initialized=True,
+            )
+            return
+
+        if not state.flowpilot_improvement_live_report_initialized:
+            yield _step(
+                state,
+                label="flowpilot_improvement_live_report_initialized",
+                action="initialize the live FlowPilot improvement report before capability work can expose skill or process defects",
+                flowpilot_improvement_live_report_initialized=True,
             )
             return
 
@@ -3298,6 +3383,7 @@ class CapabilityRouterStep:
                 action="block because capability state is not ready for implementation and emit a nonterminal resume notice",
                 status="blocked",
                 controlled_stop_notice_recorded=True,
+                pause_snapshot_written=True,
             )
             return
 
@@ -3434,6 +3520,7 @@ class CapabilityRouterStep:
                     label="skill_improvement_observation_logged",
                     action="PM records a nonblocking FlowPilot skill improvement observation for later root-repo maintenance while continuing the backend project",
                     current_node_skill_improvement_check_done=True,
+                    flowpilot_improvement_live_report_updated=True,
                 )
                 return
             if not state.role_memory_refreshed_after_work:
@@ -3823,11 +3910,19 @@ class CapabilityRouterStep:
             return
 
         if state.task_kind == "ui":
+            if not state.ui_autonomous_pipeline_selected:
+                yield _step(
+                    state,
+                    label="ui_autonomous_pipeline_selected",
+                    action="PM selects autonomous-concept-ui-redesign as the default UI child-skill orchestrator",
+                    ui_autonomous_pipeline_selected=True,
+                )
+                return
             if not state.ui_inspected:
                 yield _step(
                     state,
                     label="ui_inspected",
-                    action="inspect current UI/product before concept work",
+                    action="autonomous UI pipeline inspects current UI/product before concept or implementation work",
                     ui_inspected=True,
                 )
                 return
@@ -3835,7 +3930,7 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="ui_concept_done",
-                    action="run concept-led UI redesign gate",
+                    action="run autonomous UI pipeline product framing and concept-led design contract gate",
                     ui_concept_done=True,
                 )
                 return
@@ -3904,7 +3999,7 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="ui_frontend_design_plan_done",
-                    action="run frontend-design implementation planning gate",
+                    action="autonomous UI pipeline briefs frontend-design for implementation planning",
                     ui_frontend_design_plan_done=True,
                 )
                 return
@@ -3992,8 +4087,16 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="ui_screenshot_qa_done",
-                    action="run rendered screenshot QA",
+                    action="run rendered screenshot QA after autonomous UI implementation",
                     ui_screenshot_qa_done=True,
+                )
+                return
+            if not state.ui_geometry_qa_done:
+                yield _step(
+                    state,
+                    label="ui_geometry_qa_done",
+                    action="run autonomous UI geometry QA for text overflow, overlap, viewport fit, and high-DPI/window-size risks",
+                    ui_geometry_qa_done=True,
                 )
                 return
             if not state.ui_reviewer_personal_walkthrough_done:
@@ -4043,6 +4146,7 @@ class CapabilityRouterStep:
                         action="human-like reviewer rejects rendered UI aesthetics with concrete ugly/weak reasons and sends it back for UI repair",
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
@@ -4081,6 +4185,7 @@ class CapabilityRouterStep:
                         visual_asset_aesthetic_reasons_recorded=False,
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
@@ -4146,6 +4251,7 @@ class CapabilityRouterStep:
                     label="skill_improvement_observation_logged",
                     action="PM records a nonblocking FlowPilot skill improvement observation for later root-repo maintenance while continuing the UI project",
                     current_node_skill_improvement_check_done=True,
+                    flowpilot_improvement_live_report_updated=True,
                 )
                 return
             if not state.role_memory_refreshed_after_work:
@@ -4181,6 +4287,7 @@ class CapabilityRouterStep:
                         action="record bounded UI rework because the route is still too thin or weakly evidenced",
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
@@ -4455,6 +4562,7 @@ class CapabilityRouterStep:
                         visual_asset_aesthetic_reasons_recorded=False,
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
@@ -4572,6 +4680,7 @@ class CapabilityRouterStep:
             action="block because task kind is unknown and emit a nonterminal resume notice",
             status="blocked",
             controlled_stop_notice_recorded=True,
+            pause_snapshot_written=True,
         )
 
 
@@ -4674,6 +4783,10 @@ def controlled_stop_notice_required(state: State, trace) -> InvariantResult:
     if state.status == "blocked" and not state.controlled_stop_notice_recorded:
         return InvariantResult.fail(
             "controlled nonterminal capability stop reached blocked state without a resume notice"
+        )
+    if state.status == "blocked" and not state.pause_snapshot_written:
+        return InvariantResult.fail(
+            "controlled nonterminal capability stop reached blocked state without a pause snapshot"
         )
     if state.status == "complete" and not state.terminal_completion_notice_recorded:
         return InvariantResult.fail(
@@ -4949,8 +5062,18 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
     del trace
     if state.task_kind != "ui":
         return InvariantResult.pass_()
-    if state.ui_implemented and not (
+    if (
         state.ui_inspected
+        or state.ui_concept_done
+        or state.ui_frontend_design_plan_done
+        or state.ui_implemented
+    ) and not state.ui_autonomous_pipeline_selected:
+        return InvariantResult.fail(
+            "UI work started before PM selected autonomous-concept-ui-redesign"
+        )
+    if state.ui_implemented and not (
+        state.ui_autonomous_pipeline_selected
+        and state.ui_inspected
         and state.ui_concept_done
         and state.ui_concept_target_ready
         and state.ui_concept_target_visible
@@ -5023,8 +5146,15 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         state.ui_concept_target_ready and state.ui_concept_target_visible
     ):
         return InvariantResult.fail("rendered QA ran before the source UI skill's pre-implementation decision was ready and visible or waived")
+    if state.ui_geometry_qa_done and not (
+        state.ui_implemented and state.ui_screenshot_qa_done
+    ):
+        return InvariantResult.fail(
+            "geometry QA ran before UI implementation and screenshot QA evidence"
+        )
     if state.ui_implementation_aesthetic_review_done and not (
         state.ui_screenshot_qa_done
+        and state.ui_geometry_qa_done
         and state.ui_reviewer_personal_walkthrough_done
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
@@ -5038,6 +5168,7 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
         and state.ui_screenshot_qa_done
+        and state.ui_geometry_qa_done
         and state.ui_reviewer_personal_walkthrough_done
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
@@ -5052,6 +5183,7 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
         and state.ui_screenshot_qa_done
+        and state.ui_geometry_qa_done
         and state.ui_reviewer_personal_walkthrough_done
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
@@ -5072,6 +5204,7 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("final verification ran before child-skill conformance audit and quality loop closure")
     if state.final_verification_done and state.task_kind == "ui" and not (
         state.ui_screenshot_qa_done
+        and state.ui_geometry_qa_done
         and state.ui_concept_personal_visual_review_done
         and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
@@ -5253,6 +5386,14 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
     if not _gates_lifecycle_valid(state):
         return InvariantResult.fail("completed before showcase, heartbeat, and FlowGuard capability gates")
     if not (
+        state.defect_ledger_initialized
+        and state.evidence_ledger_initialized
+        and state.flowpilot_improvement_live_report_initialized
+    ):
+        return InvariantResult.fail(
+            "completed before run-level defect, evidence, and live FlowPilot improvement ledgers were initialized"
+        )
+    if not (
         _crew_ready(state)
         and state.pm_initial_capability_decision_recorded
         and state.pm_resume_decision_recorded
@@ -5307,6 +5448,10 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
     if not _final_route_wide_gate_ledger_ready(state):
         return InvariantResult.fail(
             "completed before PM-built dynamic route-wide gate ledger, reviewer backward replay, and PM ledger approval"
+        )
+    if not (state.defect_ledger_zero_blocking and state.evidence_credibility_triage_done):
+        return InvariantResult.fail(
+            "completed before defect ledger zero-blocker check and evidence credibility triage"
         )
     if not (
         state.capability_product_function_model_checked
@@ -5825,7 +5970,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="ui_route_requires_ui_capabilities",
-        description="UI implementation requires child-skill-routed UI evidence before implementation, rendered QA after implementation, and source-skill loop closure before completion.",
+        description="UI implementation requires the autonomous UI child-skill route, child-skill-routed UI evidence before implementation, geometry/rendered QA after implementation, and source-skill loop closure before completion.",
         predicate=ui_route_requires_ui_capabilities,
     ),
     Invariant(

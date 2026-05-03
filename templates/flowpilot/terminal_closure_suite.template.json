@@ -9,6 +9,8 @@
   "completed_at": "<iso-8601-timestamp-or-null>",
   "purpose": "The terminal closure suite runs after final ledger approval and before final report. It prevents completion-state drift, stale screenshots, lingering automation, and unresolved residual risks.",
   "required_order": [
+    "defect_ledger_zero_blocking_and_pending_recheck",
+    "evidence_credibility_ledger_reconciled",
     "risk_triage_zero_unresolved",
     "terminal_human_backward_replay_passed",
     "sync_terminal_state_files",
@@ -35,6 +37,23 @@
       "evidence_gap",
       "route_gap"
     ]
+  },
+  "defect_ledger": {
+    "path": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/defects/defect_events.jsonl",
+    "required": true,
+    "blocker_open_count": null,
+    "fixed_pending_recheck_count": null,
+    "pm_closed_defects_have_recheck_evidence": false,
+    "completion_blocked_until_zero": true
+  },
+  "evidence_ledger": {
+    "path": ".flowpilot/runs/<run-id>/evidence/evidence_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/evidence/evidence_events.jsonl",
+    "required": true,
+    "invalid_stale_or_superseded_items_accounted_for": false,
+    "fixture_only_evidence_disclosed_separately": false,
+    "invalid_evidence_closes_no_current_gate": true
   },
   "terminal_human_backward_replay": {
     "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",

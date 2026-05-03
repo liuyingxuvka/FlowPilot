@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 258706,
+    "edge_count": 525949,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -69,7 +69,11 @@
       "crew_memory_packets_written",
       "current_child_skill_gate_independent_validation_done",
       "current_pointer_written",
+      "defect_ledger_initialized",
+      "defect_ledger_zero_blocking",
       "dependency_plan_recorded",
+      "evidence_credibility_triage_done",
+      "evidence_ledger_initialized",
       "execution_frontier_written",
       "explicit_full_auto_mode_selected",
       "final_acceptance_matrix_reviewed",
@@ -103,6 +107,7 @@
       "flowguard_dependency_checked",
       "flowguard_officer_model_adversarial_probe_done",
       "flowguard_process_designed",
+      "flowpilot_improvement_live_report_initialized",
       "flowpilot_invocation_policy_mapped",
       "flowpilot_skill_improvement_report_written",
       "fresh_six_live_subagents_started",
@@ -217,6 +222,7 @@
       "terminal_lifecycle_frontier_written",
       "terminal_state_and_evidence_refreshed",
       "top_level_control_state_absent_or_quarantined",
+      "ui_autonomous_pipeline_selected",
       "ui_concept_aesthetic_review_failed",
       "ui_concept_aesthetic_review_passed",
       "ui_concept_design_recommendations_recorded",
@@ -226,6 +232,7 @@
       "ui_concept_target_visible",
       "ui_divergence_review_done",
       "ui_frontend_design_plan_done",
+      "ui_geometry_qa_done",
       "ui_implementation_aesthetic_review_failed",
       "ui_implementation_aesthetic_review_passed",
       "ui_implemented",
@@ -250,30 +257,30 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 245702,
+    "state_count": 500493,
     "terminal_counts": {
       "blocked": 0,
-      "complete": 2184
+      "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 258706,
+    "edge_count": 525949,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 245702,
+    "state_count": 500493,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 258706,
+    "edge_count": 525949,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 245702,
+    "state_count": 500493,
     "status": "OK",
-    "success_state_count": 2184
+    "success_state_count": 4368
   }
 }

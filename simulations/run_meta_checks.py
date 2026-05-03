@@ -11,8 +11,8 @@ import meta_model as model
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "results.json"
-GRAPH_STATE_LIMIT = 500_000
-CHECK_STATE_LIMIT = 500_000
+GRAPH_STATE_LIMIT = 900_000
+CHECK_STATE_LIMIT = 900_000
 
 
 REQUIRED_LABELS = (
@@ -519,8 +519,7 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
     }
 
 
-def explore_state_graph(max_states: int = 5000) -> dict:
-    graph = _build_reachable_graph(max_states=max_states)
+def _graph_report_from_graph(graph: dict) -> dict:
     labels = graph["labels"]
     invariant_failures = graph["invariant_failures"]
 
@@ -534,6 +533,11 @@ def explore_state_graph(max_states: int = 5000) -> dict:
         "invariant_failures": invariant_failures,
         "terminal_counts": graph["terminal_counts"],
     }
+
+
+def explore_state_graph(max_states: int = 5000) -> dict:
+    graph = _build_reachable_graph(max_states=max_states)
+    return _graph_report_from_graph(graph)
 
 
 def _reverse_reachable(edges: list[list[tuple[str, int]]], starts: set[int]) -> set[int]:
@@ -651,7 +655,7 @@ def _check_loops(graph: dict) -> dict:
 
 def main() -> int:
     graph = _build_reachable_graph(max_states=GRAPH_STATE_LIMIT)
-    graph_report = explore_state_graph(max_states=GRAPH_STATE_LIMIT)
+    graph_report = _graph_report_from_graph(graph)
     progress_report = _check_progress(graph)
     loop_report = _check_loops(graph)
 

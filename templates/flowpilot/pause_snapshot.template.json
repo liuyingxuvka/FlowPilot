@@ -1,0 +1,35 @@
+{
+  "schema_version": "flowpilot.pause_snapshot.v1",
+  "run_id": "<run-id>",
+  "written_at": "<iso-8601-timestamp>",
+  "pause_reason": "<user_requested|blocked|tool_boundary|manual_pause|other>",
+  "current_route": "<route-id-or-null>",
+  "route_version": 0,
+  "active_node": "<node-id-or-null>",
+  "current_gate": "<gate-id-or-null>",
+  "next_allowed_action": "<resume_current_gate|repair_blocker|manual_restart|start_new_run>",
+  "defect_summary": {
+    "defect_ledger_path": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
+    "open_blockers": [],
+    "fixed_pending_recheck": [],
+    "deferred_items": []
+  },
+  "evidence_summary": {
+    "evidence_ledger_path": ".flowpilot/runs/<run-id>/evidence/evidence_ledger.json",
+    "invalid_or_stale_evidence": [],
+    "fixture_only_evidence_to_disclose": []
+  },
+  "lifecycle_summary": {
+    "heartbeat_automation_ids": [],
+    "codex_automation_status_checked": false,
+    "active_background_agents": [],
+    "closed_or_paused_background_agents": [],
+    "manual_resume_notice_required": false
+  },
+  "cleanup_boundary": {
+    "temporary_artifacts_safe_to_delete": [],
+    "evidence_or_lessons_to_preserve": [],
+    "must_not_reuse_in_next_fresh_run": []
+  },
+  "human_readable_summary": "<short pause summary>"
+}

@@ -198,6 +198,21 @@ for review.
   overlap/clipping, whitespace/density, crowded or underfilled regions,
   aesthetic verdict, and concrete design recommendations. Worker screenshots
   and smoke logs are pointers only.
+- `defects/defect_ledger.template.json`: PM-owned run-level defect ledger. Any
+  role can register a product, FlowPilot skill, process, evidence, or
+  tool/environment defect; PM triages and closes only after required recheck
+  evidence.
+- `defects/defect_event.template.json`: append-only defect event shape used for
+  creation, triage, repair, recheck, closure, deferral, and reopening.
+- `evidence/evidence_ledger.template.json`: run-level evidence credibility
+  ledger that separates valid live-project evidence from invalid, stale,
+  superseded, fixture, synthetic, historical, and generated-concept evidence.
+- `evidence/evidence_event.template.json`: append-only evidence event shape
+  used when evidence is registered, invalidated, marked stale, superseded, or
+  linked to a defect.
+- `pause_snapshot.template.json`: controlled-pause snapshot with current
+  route/node, blockers, pending rechecks, evidence caveats, heartbeat/agent
+  lifecycle, and cleanup boundary for fresh restarts.
 - `parent_backward_replay.template.json`: local parent/composite replay
   evidence required for every effective route node with children before that
   parent closes.
@@ -212,9 +227,10 @@ for review.
   FlowPilot skill issue observation appended to the run's JSONL log without
   blocking current project completion.
 - `flowpilot_skill_improvement_report.template.json`: PM-owned terminal
-  summary of FlowPilot skill improvement observations for later manual
-  root-repo maintenance. The report is a completion artifact, not a requirement
-  to fix the root repo inside the current run.
+  and live-updated summary of FlowPilot skill improvement observations for
+  later manual root-repo maintenance. The report is updated during the run and
+  rebuilt at terminal closure; it is not a requirement to fix the root repo
+  inside the current run.
 - `contract.template.md`: acceptance contract shell.
 - `capabilities.template.json`: required and conditional capability gates.
 - `startup_banner.template.md`: post-answer visible chat banner for formal startup.
@@ -233,7 +249,9 @@ for review.
 - `diagrams/user-flow-diagram.template.mmd`: simplified English Mermaid
   FlowPilot Route Sign source for both chat fallback and UI display.
 - `diagrams/user-flow-diagram.template.md`: Markdown preview wrapper for the
-  same route sign, including the closed-Cockpit chat display requirement.
+  same route sign, including the closed-Cockpit chat display requirement for
+  startup, major route-node entry, PM current-node work brief, repair returns,
+  completion review, and explicit user requests.
 - `checkpoints/checkpoint.template.json`: verified milestone shell.
 - `capabilities/capability-evidence.template.json`: capability evidence shell.
 - `experiments/experiment-001/experiment.template.json`: bounded experiment

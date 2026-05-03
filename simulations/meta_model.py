@@ -208,6 +208,19 @@ class State:
     lifecycle_reconciliation_done: bool = False
     controlled_stop_notice_recorded: bool = False
     terminal_completion_notice_recorded: bool = False
+    defect_ledger_initialized: bool = False
+    evidence_ledger_initialized: bool = False
+    flowpilot_improvement_live_report_initialized: bool = False
+    defect_event_logged_for_blocker: bool = False
+    pm_defect_triage_done: bool = False
+    blocking_defect_open: bool = False
+    blocking_defect_fixed_pending_recheck: bool = False
+    defect_same_class_recheck_done: bool = False
+    defect_ledger_zero_blocking: bool = False
+    evidence_credibility_triage_done: bool = False
+    invalid_evidence_recorded: bool = False
+    flowpilot_improvement_live_report_updated: bool = False
+    pause_snapshot_written: bool = False
 
     route_version: int = 0
     route_checked: bool = False
@@ -443,9 +456,11 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_resource_lineage_resolved": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
+        "evidence_credibility_triage_done": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
         "final_residual_risk_triage_done": False,
         "final_residual_risk_unresolved_count_zero": False,
+        "defect_ledger_zero_blocking": False,
         "final_route_wide_gate_ledger_pm_built": False,
         "terminal_human_backward_review_map_built": False,
         "terminal_human_backward_replay_started_from_delivered_product": False,
@@ -708,9 +723,11 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
+        and state.evidence_credibility_triage_done
         and state.final_route_wide_gate_ledger_unresolved_count_zero
         and state.final_residual_risk_triage_done
         and state.final_residual_risk_unresolved_count_zero
+        and state.defect_ledger_zero_blocking
         and state.final_route_wide_gate_ledger_pm_built
         and state.terminal_human_backward_review_map_built
         and state.terminal_human_backward_replay_started_from_delivered_product
@@ -730,6 +747,9 @@ def _route_ready(state: State) -> bool:
         state.status == "running"
         and state.flowpilot_enabled
         and state.startup_banner_emitted
+        and state.defect_ledger_initialized
+        and state.evidence_ledger_initialized
+        and state.flowpilot_improvement_live_report_initialized
         and state.mode_choice_offered
         and state.mode_selected
         and state.showcase_floor_committed
@@ -1163,6 +1183,19 @@ class AutopilotStep:
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
+        "defect_ledger_initialized",
+        "evidence_ledger_initialized",
+        "flowpilot_improvement_live_report_initialized",
+        "defect_event_logged_for_blocker",
+        "pm_defect_triage_done",
+        "blocking_defect_open",
+        "blocking_defect_fixed_pending_recheck",
+        "defect_same_class_recheck_done",
+        "defect_ledger_zero_blocking",
+        "evidence_credibility_triage_done",
+        "invalid_evidence_recorded",
+        "flowpilot_improvement_live_report_updated",
+        "pause_snapshot_written",
         "route_version",
         "route_checked",
         "markdown_synced",
@@ -1300,6 +1333,19 @@ class AutopilotStep:
         "pm_completion_decision_recorded",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
+        "defect_ledger_initialized",
+        "evidence_ledger_initialized",
+        "flowpilot_improvement_live_report_initialized",
+        "defect_event_logged_for_blocker",
+        "pm_defect_triage_done",
+        "blocking_defect_open",
+        "blocking_defect_fixed_pending_recheck",
+        "defect_same_class_recheck_done",
+        "defect_ledger_zero_blocking",
+        "evidence_credibility_triage_done",
+        "invalid_evidence_recorded",
+        "flowpilot_improvement_live_report_updated",
+        "pause_snapshot_written",
         "heartbeat_records",
     )
     accepted_input_type = Tick
@@ -1431,6 +1477,36 @@ class AutopilotStep:
                 label="run_index_updated",
                 action="update .flowpilot/index.json with the new run identity and creation metadata",
                 run_index_updated=True,
+                active_node="initialize_defect_ledger",
+            )
+            return
+
+        if not state.defect_ledger_initialized:
+            yield _step(
+                state,
+                label="defect_ledger_initialized",
+                action="create the run-level defect ledger and event log before any review, repair, pause, or completion gate can record findings",
+                defect_ledger_initialized=True,
+                active_node="initialize_evidence_ledger",
+            )
+            return
+
+        if not state.evidence_ledger_initialized:
+            yield _step(
+                state,
+                label="evidence_ledger_initialized",
+                action="create the run-level evidence credibility ledger before screenshots, fixture reports, generated assets, or model outputs can close gates",
+                evidence_ledger_initialized=True,
+                active_node="initialize_flowpilot_improvement_report",
+            )
+            return
+
+        if not state.flowpilot_improvement_live_report_initialized:
+            yield _step(
+                state,
+                label="flowpilot_improvement_live_report_initialized",
+                action="initialize the live FlowPilot improvement report so skill or process defects are captured even if the run pauses before terminal closure",
+                flowpilot_improvement_live_report_initialized=True,
                 active_node="resolve_prior_work_boundary",
             )
             return
@@ -2202,6 +2278,7 @@ class AutopilotStep:
                     status="blocked",
                     heartbeat_active=False,
                     controlled_stop_notice_recorded=True,
+                    pause_snapshot_written=True,
                     active_node="blocked",
                 )
                 return
@@ -2509,6 +2586,7 @@ class AutopilotStep:
                 status="blocked",
                 heartbeat_active=False,
                 controlled_stop_notice_recorded=True,
+                pause_snapshot_written=True,
                 high_risk_gate="denied",
                 active_node="blocked",
             )
@@ -2632,6 +2710,7 @@ class AutopilotStep:
                     status="blocked",
                     heartbeat_active=False,
                     controlled_stop_notice_recorded=True,
+                    pause_snapshot_written=True,
                     active_node="blocked",
                 )
                 return
@@ -2711,6 +2790,7 @@ class AutopilotStep:
                     status="blocked",
                     heartbeat_active=False,
                     controlled_stop_notice_recorded=True,
+                    pause_snapshot_written=True,
                     active_node="blocked",
                 )
                 return
@@ -2828,6 +2908,15 @@ class AutopilotStep:
             return
 
         if state.issue == "inspection_failure":
+            if state.blocking_defect_open and not state.pm_defect_triage_done:
+                yield _step(
+                    state,
+                    label="pm_triages_blocking_human_review_defect",
+                    action="PM reads the defect ledger entry, assigns severity, owner, route impact, and same-class recheck condition before repair routing",
+                    pm_defect_triage_done=True,
+                    active_node="pm_inspection_repair_strategy_decision",
+                )
+                return
             if not state.inspection_issue_grilled:
                 yield _step(
                     state,
@@ -2845,6 +2934,7 @@ class AutopilotStep:
                     status="blocked",
                     heartbeat_active=False,
                     controlled_stop_notice_recorded=True,
+                    pause_snapshot_written=True,
                     active_node="blocked",
                 )
                 return
@@ -2903,6 +2993,9 @@ class AutopilotStep:
                 issue="none",
                 route_revisions=state.route_revisions + 1,
                 human_inspection_repairs=state.human_inspection_repairs + 1,
+                blocking_defect_open=False,
+                blocking_defect_fixed_pending_recheck=True,
+                defect_same_class_recheck_done=False,
                 chunk_state="none",
                 verification_defined=False,
                 checkpoint_written=False,
@@ -3007,6 +3100,7 @@ class AutopilotStep:
                 status="blocked",
                 heartbeat_active=False,
                 controlled_stop_notice_recorded=True,
+                pause_snapshot_written=True,
                 active_node="blocked",
             )
             return
@@ -3439,6 +3533,16 @@ class AutopilotStep:
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
+            if not state.evidence_credibility_triage_done:
+                yield _step(
+                    state,
+                    label="evidence_credibility_triage_done",
+                    action="PM reconciles the evidence ledger, separating valid live-project evidence from invalid, stale, superseded, fixture-only, synthetic, historical, and generated-concept evidence before final ledger closure",
+                    evidence_credibility_triage_done=True,
+                    invalid_evidence_recorded=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
             if not state.final_route_wide_gate_ledger_stale_evidence_checked:
                 yield _step(
                     state,
@@ -3481,6 +3585,15 @@ class AutopilotStep:
                     label="final_residual_risk_unresolved_count_zero",
                     action="PM records zero unresolved residual risks before final ledger can be built",
                     final_residual_risk_unresolved_count_zero=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
+            if not state.defect_ledger_zero_blocking:
+                yield _step(
+                    state,
+                    label="defect_ledger_zero_blocking",
+                    action="PM checks the defect ledger and records zero open blocker defects and zero fixed-pending-recheck defects before final ledger can be built",
+                    defect_ledger_zero_blocking=True,
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
@@ -4184,8 +4297,14 @@ class AutopilotStep:
                     yield _step(
                         state,
                         label="human_inspection_found_blocking_issue",
-                        action="human-like reviewer rejects the node evidence and requires a route-mutating repair",
+                        action="human-like reviewer rejects the node evidence, writes a blocking defect event, and requires a route-mutating repair",
                         issue="inspection_failure",
+                        defect_event_logged_for_blocker=True,
+                        blocking_defect_open=True,
+                        pm_defect_triage_done=False,
+                        blocking_defect_fixed_pending_recheck=False,
+                        defect_same_class_recheck_done=False,
+                        defect_ledger_zero_blocking=False,
                         chunk_state="none",
                         verification_defined=False,
                         checkpoint_written=False,
@@ -4195,9 +4314,15 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="node_human_inspection_passed",
-                    action="human-like reviewer accepts the repaired node evidence and product behavior",
+                    action="human-like reviewer accepts the repaired node evidence and product behavior, closing any fixed-pending same-class blocker",
                     node_human_inspection_passed=True,
                     node_human_review_reviewer_approved=True,
+                    blocking_defect_fixed_pending_recheck=False,
+                    defect_same_class_recheck_done=(
+                        state.blocking_defect_fixed_pending_recheck
+                        or state.defect_same_class_recheck_done
+                    ),
+                    defect_ledger_zero_blocking=True,
                     active_node="write_checkpoint",
                 )
                 return
@@ -4214,6 +4339,7 @@ class AutopilotStep:
                     label="skill_improvement_observation_logged",
                     action="PM records a nonblocking FlowPilot skill improvement observation for later root-repo maintenance before checkpoint path",
                     current_node_skill_improvement_check_done=True,
+                    flowpilot_improvement_live_report_updated=True,
                     active_node="write_checkpoint",
                 )
                 return
@@ -4235,6 +4361,7 @@ class AutopilotStep:
             status="blocked",
             heartbeat_active=False,
             controlled_stop_notice_recorded=True,
+            pause_snapshot_written=True,
             active_node="blocked",
         )
 
@@ -4254,6 +4381,14 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         return InvariantResult.fail("final report emitted before the three startup questions were answered")
     if not state.startup_banner_emitted:
         return InvariantResult.fail("final report emitted before FlowPilot startup banner was visible")
+    if not (
+        state.defect_ledger_initialized
+        and state.evidence_ledger_initialized
+        and state.flowpilot_improvement_live_report_initialized
+    ):
+        return InvariantResult.fail(
+            "final report emitted before run-level defect, evidence, and live FlowPilot improvement ledgers were initialized"
+        )
     if not (state.mode_choice_offered and state.mode_selected):
         return InvariantResult.fail("final report emitted before mode choice was offered and selected")
     if not (state.showcase_floor_committed and state.visible_self_interrogation_done):
@@ -4368,6 +4503,14 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     if not _final_route_wide_gate_ledger_ready(state):
         return InvariantResult.fail(
             "final report emitted before PM-built dynamic route-wide gate ledger, reviewer backward replay, and PM ledger approval"
+        )
+    if state.blocking_defect_open or state.blocking_defect_fixed_pending_recheck:
+        return InvariantResult.fail(
+            "final report emitted with an open blocker or fixed-pending-recheck defect still in the defect ledger"
+        )
+    if not (state.defect_ledger_zero_blocking and state.evidence_credibility_triage_done):
+        return InvariantResult.fail(
+            "final report emitted before defect ledger zero-blocker check and evidence credibility triage"
         )
     if not _full_interrogation_ready(
         total_questions=state.completion_self_interrogation_questions,
@@ -4582,6 +4725,10 @@ def controlled_stop_notice_required(state: State, trace) -> InvariantResult:
     if state.status == "blocked" and not state.controlled_stop_notice_recorded:
         return InvariantResult.fail(
             "controlled nonterminal stop reached blocked state without a resume notice"
+        )
+    if state.status == "blocked" and not state.pause_snapshot_written:
+        return InvariantResult.fail(
+            "controlled nonterminal stop reached blocked state without a pause snapshot"
         )
     if state.status == "complete" and not state.terminal_completion_notice_recorded:
         return InvariantResult.fail(
@@ -5092,6 +5239,14 @@ def actor_authority_gates_require_correct_role(
         and state.node_reviewer_independent_probe_done
     ):
         return InvariantResult.fail("node reviewer approval is stale without a node human review pass and independent probe")
+    if state.node_human_review_reviewer_approved and (
+        state.blocking_defect_open or state.blocking_defect_fixed_pending_recheck
+    ):
+        return InvariantResult.fail(
+            "node reviewer approval recorded while a blocker was open or fixed-pending-recheck in the defect ledger"
+        )
+    if state.pm_defect_triage_done and not state.defect_event_logged_for_blocker:
+        return InvariantResult.fail("PM triaged a blocking defect before the discovering role logged a defect event")
     if state.node_human_inspection_passed and not state.node_human_review_reviewer_approved:
         return InvariantResult.fail("node human review pass lacks reviewer approval")
     if (

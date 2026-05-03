@@ -1092,3 +1092,242 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep the parent-review trigger structural. Semantic labels such as high-risk, integration, feature, or downstream dependency can inform the review context but must not decide whether the replay is required.
+
+
+## flowpilot-desktop-cockpit-state-lifecycle-20260503 - Model FlowPilot desktop cockpit state lifecycle before native implementation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Stateful desktop cockpit behavior: real route mapping, task tabs, i18n, settings support/sponsor, tray lifecycle, fresh asset lineage, and restrained motion
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-03T16:27:18+00:00
+- Ended: 2026-05-03T16:27:18+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- .flowpilot/runs/run-20260503-174644-desktop-cockpit/task-models/desktop-cockpit-state-lifecycle/model.py
+
+### Commands
+- OK (0.000s): `flowguard import check: schema 1.0`
+- OK (0.000s): `python .flowpilot\runs\run-20260503-174644-desktop-cockpit\task-models\desktop-cockpit-state-lifecycle\run_checks.py`
+
+### Findings
+- FlowGuard exploration passed after reducing the event set to representative state transitions; explicit hazard states detect cross-run route mix, stale frontier success, partial i18n, unsafe support/sponsor, close-exits-app, old assets, decorative motion, card pile layout, and skipped implementation gate.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Initial broad event exploration timed out, so the model was narrowed to representative events plus explicit hazard-state checks.
+
+### Skipped Steps
+- Runtime conformance replay skipped because production desktop code does not exist yet; required after implementation.
+- Real Windows tray interaction skipped until the native desktop app launches.
+
+### Next Actions
+- Proceed to concept-led design language and fresh imagegen candidate search, then conformance and interaction checks after implementation.
+
+
+## flowpilot-desktop-cockpit-realtime-route-amendment-20260503 - Add realtime no-manual-refresh route-map requirement to FlowPilot desktop cockpit model
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified the cockpit route map must update live from FlowPilot source files without a manual refresh click
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-03T16:39:58+00:00
+- Ended: 2026-05-03T16:39:58+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- .flowpilot/runs/run-20260503-174644-desktop-cockpit/task-models/desktop-cockpit-state-lifecycle/model.py
+
+### Commands
+- OK (0.000s): `python .flowpilot\runs\run-20260503-174644-desktop-cockpit\task-models\desktop-cockpit-state-lifecycle\run_checks.py`
+
+### Findings
+- Model now includes realtime_watch_enabled, source_change_seen, auto_refresh_applied, and manual_refresh_required; implementation is blocked if route correctness depends on manual refresh.
+
+### Counterexamples
+- Initial realtime model found stale success after a later frontier conflict; resolving route state now clears the prior visible success panel before rerender or degradation.
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Implement a native file watcher or bounded automatic polling loop and prove source-change update without pressing refresh.
+
+
+## flowpilot-desktop-cockpit-model-role-remediation-20260503 - Remediate product officer model block for realtime and tray lifecycle gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Product officer blocked the cockpit state model because implementation_allowed omitted tray lifecycle and realtime degraded-source path
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-03T16:45:31+00:00
+- Ended: 2026-05-03T16:45:31+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- .flowpilot/runs/run-20260503-174644-desktop-cockpit/task-models/desktop-cockpit-state-lifecycle/model.py
+
+### Commands
+- OK (0.000s): `python .flowpilot\runs\run-20260503-174644-desktop-cockpit\task-models\desktop-cockpit-state-lifecycle\run_checks.py`
+
+### Findings
+- Added tray_lifecycle_verified gate before implementation_allowed and added route_auto_refreshed_degraded for changed-source conflicts/missing files.
+
+### Counterexamples
+- Product officer found implementation_allowed reachable without tray lifecycle evidence; the model now blocks that state.
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Request product and process officer re-review on amended passing results.
+
+
+## flowpilot-major-node-route-sign-display-20260503 - Require FlowPilot Route Sign display at major route-node entry
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User observed that the FlowPilot route sign appeared on the first node but not on later major node entries in another thread.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-03T17:57:00+00:00
+- Ended: 2026-05-03T17:57:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/user_flow_diagram_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile scripts\flowpilot_user_flow_diagram.py simulations\user_flow_diagram_model.py simulations\run_user_flow_diagram_checks.py scripts\check_install.py`
+- OK: `python simulations\run_user_flow_diagram_checks.py`: 72 states, 71 edges, no invariant failures, all display-trigger labels present
+- OK: `python scripts\flowpilot_user_flow_diagram.py --root . --trigger major_node_entry --markdown --json`: accepted the new trigger and generated active-node Mermaid
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py`: 292707 states, 305707 edges, no invariant failures, missing labels, stuck states, or nonterminating components
+- OK: `python simulations\run_capability_checks.py`: 245702 states, 258706 edges, no invariant failures, missing labels, stuck states, or nonterminating components
+
+### Findings
+- The bug was a protocol and trigger vocabulary gap: startup and `key_node_change` were modeled, but ordinary later major `flow.json` node entry was not a first-class route-sign trigger.
+- The display packet could also be marked `chat_displayed_in_chat` from a script argument, which is weaker than proving the Mermaid block actually appeared in the assistant message.
+- FlowPilot now treats `major_node_entry`, `parent_node_entry`, `leaf_node_entry`, and `pm_work_brief` as explicit display triggers, while ordinary heartbeat ticks and internal subnodes do not trigger reposts.
+
+### Counterexamples
+- `major_node_entry_not_classified`: a major node entry in closed-Cockpit mode did not require chat Mermaid before node work.
+
+### Friction Points
+- The current workspace had concurrent untracked desktop cockpit files and pre-existing result-file changes. Verification was run without editing those scopes; the pre-existing `capability_results.json` diff was restored after the broad check regenerated it.
+
+### Skipped Steps
+- No live external thread transcript was available, so the fix targets the reusable skill protocol, trigger set, templates, and model rather than rewriting that thread's history.
+
+### Next Actions
+- In the next real FlowPilot run, use `--trigger major_node_entry` before entering each major route node when Cockpit is closed, paste the generated Markdown in chat, and only then mark chat display evidence.
+
+
+## flowpilot-autonomous-ui-route-20260503 - Route UI work through autonomous concept UI redesign
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested that FlowPilot replace its default UI child-skill route with the new experimental autonomous UI orchestration skill while keeping the old concept-led skill available.
+- Status: completed with one unrelated concurrent self-check caveat
+- Skill decision: use_flowguard
+- Started: 2026-05-03T19:05:00+00:00
+- Ended: 2026-05-03T19:05:00+00:00
+- Duration seconds: 0.000
+- Commands OK: mostly true
+
+### Model Files
+- simulations/capability_model.py
+- simulations/run_capability_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\install_flowpilot.py`
+- OK: `python -m json.tool flowpilot.dependencies.json`
+- OK: `python -m json.tool templates\flowpilot\capabilities.template.json`
+- OK: `python simulations\run_capability_checks.py`: 247882 states, 260886 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python simulations\run_meta_checks.py`: 292707 states, 305707 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python scripts\install_flowpilot.py --check --json`: FlowPilot, autonomous UI skill, frontend-design, design-iterator, design-implementation-reviewer, concept-led-ui-redesign, FlowGuard, and imagegen provider detected
+- OK: local skill validation for installed `flowpilot`, `autonomous-concept-ui-redesign`, `design-iterator`, and `design-implementation-reviewer`
+- OK: repository/installed hash comparison for FlowPilot and autonomous UI skill files
+- OK with warnings: `git diff --check` reported only CRLF normalization warnings
+- Caveat: `python scripts\check_install.py` failed on concurrently added defect-governance required files/results that were outside this UI-route change.
+
+### Findings
+- FlowPilot now routes UI redesign, implementation, polish, visual iteration, deviation review, and geometry/screenshot QA through `autonomous-concept-ui-redesign` by default.
+- The old `concept-led-ui-redesign` remains installed and declared as an internal dependency/fallback for the autonomous route rather than being deleted.
+- The capability model now requires the PM to select the autonomous UI pipeline before UI work and requires geometry QA before final UI visual closure.
+
+### Counterexamples
+- Initial capability check found states where ordinary route-repair resets cleared the new autonomous-pipeline selection while leaving UI concept evidence alive. The model was revised so the pipeline selection is route-strategy state and is not cleared by generic execution-quality resets.
+
+### Friction Points
+- Another active thread modified the repository during this task, including defect-governance check requirements and desktop-cockpit files. This task did not revert those changes.
+
+### Skipped Steps
+- `check_public_release.py --skip-url-check` timed out when it included full validation because the validation suite is long-running in the dirty concurrent workspace; the manifest-only release preflight was run with `--skip-validation` and passed with only the dirty-worktree warning.
+
+### Next Actions
+- Restart Codex or start a fresh thread so the newly installed skills appear in the available skill list, then invoke FlowPilot on a UI task and verify the PM selects `autonomous-concept-ui-redesign` for the UI child-skill route.
+
+## FlowPilot Defect Governance And Clean Restart Guard
+
+- Task ID: `flowpilot-defect-governance-clean-restart-20260503`
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-03T21:00:00+02:00
+- Ended: 2026-05-03T22:00:08+02:00
+- Commands OK: true
+
+### Model Files
+- `simulations/defect_governance_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile scripts\flowpilot_defects.py simulations\defect_governance_model.py simulations\run_defect_governance_checks.py simulations\meta_model.py simulations\capability_model.py scripts\install_flowpilot.py scripts\check_install.py`
+- OK: `python -m unittest tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_defects`
+- OK: `python simulations\run_defect_governance_checks.py`: 23 states, 22 edges, no invariant failures
+- OK: `python simulations\run_meta_checks.py`: 502502 states, 522670 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python simulations\run_capability_checks.py`: 500493 states, 525949 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python simulations\run_user_flow_diagram_checks.py`
+- OK: `python simulations\run_startup_pm_review_checks.py`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --install-missing --force --json`
+- OK: `python scripts\install_flowpilot.py --check --json`: installed FlowPilot source digest matched repository source digest
+- OK with warnings: `git diff --check` reported only CRLF normalization warnings
+
+### Findings
+- FlowPilot now initializes a run-level defect ledger, evidence ledger, and live skill improvement report before route work starts.
+- Reviewer or worker blockers must be logged as defect events by the discovering role before PM triage; PM owns triage and closure, but closure requires repair plus same-class recheck first.
+- Terminal closure now fails while blocker defects are open or fixed but still pending recheck.
+- Evidence that is fixture-only, stale, invalid, or superseded must remain classified instead of being overwritten by later good evidence.
+- Controlled pause now writes a pause snapshot so a later restart can separate reusable context from obsolete UI work.
+- Repository-owned installed FlowPilot skills are now checked for source freshness, not just presence.
+- The previous desktop cockpit experiment run, generated cockpit folder, runtime package cache, test data file, and stale `.flowpilot/current.json`/`index.json` pointers were removed to support a clean next run.
+
+### Counterexamples
+- The new defect governance model explicitly detects: blocker triage before defect logging, PM closure without same-class recheck, terminal completion with fixed-pending-recheck defects, invalid evidence being treated as erased, and pause/restart without a snapshot.
+- The expanded meta model initially exposed a duplicate state-field assignment during route repair modeling; the route-repair transition was corrected and the graph runners were adjusted to reuse the already-built graph.
+
+### Friction Points
+- The repository was already dirty from concurrent skill work, including autonomous UI skill files and prior FlowPilot model changes. This task preserved those changes and avoided deleting or reverting them.
+- Expanded state space made meta and capability checks large, so graph state limits were raised and duplicate graph construction was removed from the runners.
+
+### Skipped Steps
+- No new desktop UI was built in this task; the user's instruction was to prepare the FlowPilot process for a future clean UI restart and remove old UI traces.
+
+### Next Actions
+- Start the next FlowPilot desktop UI task from a fresh run; verify the run creates defect/evidence ledgers and a live improvement report before design or implementation begins.

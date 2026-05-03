@@ -23,6 +23,9 @@ Expected result:
 - schema version is reported;
 - `flowpilot.dependencies.json` parses;
 - `skills/flowpilot/SKILL.md` exists and declares `name: flowpilot`;
+- repo-owned installed skills report `source_fresh: true`, meaning the
+  installed Codex skill content matches the repository source rather than only
+  existing on disk;
 - template and simulation files exist;
 - project-control files under `.flowpilot/current.json`,
   `.flowpilot/index.json`, and `.flowpilot/runs/<run-id>/` exist.
@@ -48,12 +51,25 @@ The installer:
   `flowpilot.dependencies.json`;
 - reports host-specific capabilities such as `raster_image_generation`;
 - skips already installed skills by default;
+- reports repo-owned installed skills as stale when their content digest differs
+  from the repository source;
 - refuses to overwrite system skills;
 - installs missing GitHub-backed skills only when their manifest source is
   explicit.
 
 If a companion skill has no public source in the manifest, the installer reports
 that dependency as missing-source instead of guessing or publishing anything.
+
+Use `--force` when intentionally refreshing a repository-owned installed skill
+from the current checkout:
+
+```powershell
+python scripts/install_flowpilot.py --install-missing --force --json
+```
+
+Without `--force`, an already installed but stale repo-owned skill remains
+installed and the check reports it as not ok; FlowPilot must not describe that
+state as ready.
 
 Host-specific capabilities are not hard-coded by skill name. Codex may satisfy
 `raster_image_generation` with the built-in `imagegen` skill. Another host may

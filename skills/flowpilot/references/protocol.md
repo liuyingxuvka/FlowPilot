@@ -155,13 +155,17 @@ long-form public explanation lives in `docs/protocol.md`.
     the PM runway before executing work. Persisted `.flowpilot` evidence alone
     is not enough when the native tool exists.
 36. Emit the simplified English FlowPilot Route Sign Mermaid in chat when this
-    is startup, a key node change, route mutation, review/validation failure
-    return, completion review, or user request, unless Cockpit UI is open and
-    showing the same graph. Include active route, active node, next jumps,
+    is startup, a new major `flow.json` route-node entry, parent/module or leaf
+    route-node entry, PM current-node work brief, legacy key node change, route
+    mutation, review/validation failure return, completion review, or user
+    request, unless Cockpit UI is open and showing the same graph. Major node
+    means an effective node in the current route/mainline, not an internal
+    subnode, micro-step, or heartbeat tick. Include active route, active node, next jumps,
     checks, fallback or repair branches, continuation state, and acceptance
     delta as nearby text. If the route returns for repair, the Mermaid must
     show that return edge and the reviewer must check the visible chat block
-    before the node can advance.
+    before the node can advance. Generated files or display packets alone do
+    not satisfy this gate.
 37. Run the startup activation review before any child-skill execution, image
     generation, implementation, formal route chunk, or completion work. There
     is no third startup opener or runtime startup-check script. The human-like
@@ -328,12 +332,16 @@ terminal replay scenarios unless resolved earlier by repair and recheck.
 
 ## FlowPilot Skill Improvement Notes
 
-Each node, repair, review, child-skill closure, parent replay, and terminal
-boundary may expose issues in FlowPilot itself: unclear protocol, weak
-templates, missing fields, hard-to-find code paths, model/tooling friction,
-automation friction, or Cockpit display gaps. Any role may append a concise
+Each node, repair, review, child-skill closure, parent replay, controlled
+pause, and terminal boundary may expose issues in FlowPilot itself: unclear
+protocol, weak templates, missing fields, hard-to-find code paths,
+model/tooling friction, evidence governance gaps, automation friction,
+pause/restart gaps, or Cockpit display gaps. Any role may append a concise
 observation to
 `.flowpilot/runs/<run-id>/flowpilot_skill_improvement_observations.jsonl`.
+Initialize `.flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json`
+at run start with status `live_updating` so paused runs still preserve the
+lesson.
 
 These observations do not block the current project and do not require fixing
 the FlowPilot root repository inside the current run. If a small FlowPilot
@@ -342,6 +350,31 @@ observation, and continue. At terminal closure, the project manager writes
 `.flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json` for later
 manual FlowPilot maintenance, including the case where no obvious skill issue
 was observed.
+
+## Defect And Evidence Governance
+
+Every formal run initializes
+`.flowpilot/runs/<run-id>/defects/defect_ledger.json`,
+`.flowpilot/runs/<run-id>/defects/defect_events.jsonl`,
+`.flowpilot/runs/<run-id>/evidence/evidence_ledger.json`, and
+`.flowpilot/runs/<run-id>/evidence/evidence_events.jsonl` before review,
+repair, pause, or terminal closure. Any discovering role writes the first
+defect event. PM triages severity, owner, route impact, and close condition.
+Same-class reviewer/officer recheck is required before PM closes a blocker.
+
+Blocking defect flow:
+
+```text
+open -> accepted/fixing -> fixed_pending_recheck -> closed
+```
+
+`open` blockers and `fixed_pending_recheck` items block node closure, route
+advancement, final ledger approval, and terminal completion. Evidence is
+classified separately as `valid`, `invalid`, `stale`, or `superseded`, with
+source kind `live_project`, `fixture`, `synthetic`, `historical`, or
+`generated_concept`. Fixture evidence may prove capability but must be
+disclosed separately from live-project proof. Invalid or stale evidence cannot
+close a current gate.
 
 ## Parent Backward Replay
 
@@ -533,9 +566,11 @@ simplified English 6-8 stage or route-node graph from
 stage and active route/node highlighted. Superseded or paused routes stay in
 history with replacement reasons and checkpoint/failure evidence.
 
-If Cockpit UI is not open, the chat Mermaid block is mandatory at startup, key
-node changes, route mutation, review or validation failure returns, completion
-review, and explicit user requests. The route sign must show a visible
+If Cockpit UI is not open, the chat Mermaid block is mandatory at startup,
+major route-node entry, parent/module or leaf route-node entry, PM current-node
+work brief, legacy key node change, route mutation, review or validation
+failure returns, completion review, and explicit user requests. The route sign
+must show a visible
 `returns for repair` edge when review, validation, or route mutation sends the
 route back to an earlier or current repair node.
 
@@ -551,7 +586,9 @@ when required. A file-only check does not pass the gate.
 
 When `scripts/flowpilot_user_flow_diagram.py` is available, it is the standard
 route-sign hook: generate chat Markdown with
-`--markdown --trigger <trigger> --write`, paste that exact block into chat when
+`--markdown --trigger <trigger> --write` (`major_node_entry` is the preferred
+trigger for ordinary route-node entry; `key_node_change` is a legacy alias),
+paste that exact block into chat when
 required, then record the reviewer gate with
 `--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,
 manually compose the same English Mermaid from the active route/frontier and
@@ -801,16 +838,20 @@ needs the mapped child-skill steps, step evidence, output match, domain-quality
 decision, iteration closure, assigned role approvals, and completion-standard
 verification.
 
-For UI skills, expose only key milestones such as `concept target ->
-implementation -> screenshot QA -> divergence review -> iteration closure`.
-Do not copy every UI prompt rule into FlowPilot.
+For UI skills, expose only key milestones such as `contract/concept target ->
+frontend implementation -> design iteration -> deviation review -> geometry QA
+-> screenshot QA -> final verdict`. Do not copy every UI prompt rule into
+FlowPilot.
 
 Conditional:
 
 - UI routes require child-skill-routed UI evidence, not FlowPilot-authored UI
-  design prompts. Invoke `concept-led-ui-redesign` when concept-led visual work
-  is in scope and `frontend-design` when product UI polish or implementation
-  guidance is in scope.
+  design prompts. Invoke `autonomous-concept-ui-redesign` for UI redesign,
+  implementation, polish, visual iteration, deviation review, and layout QA.
+  The orchestrator composes `concept-led-ui-redesign`, `frontend-design`,
+  `design-iterator`, `design-implementation-reviewer`, image generation when
+  needed, and geometry/screenshot QA. Keep the older concept-led skill as an
+  internal dependency or explicit fallback, not the default UI route.
 - Before UI implementation, record the source skill's concept-target decision:
   generated/selected target, authoritative reference, explicit waiver, or
   blocker. Post-implementation rendered QA evidence cannot be relabeled as this

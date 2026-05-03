@@ -11,8 +11,8 @@ import capability_model as model
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "capability_results.json"
-GRAPH_STATE_LIMIT = 500_000
-CHECK_STATE_LIMIT = 500_000
+GRAPH_STATE_LIMIT = 900_000
+CHECK_STATE_LIMIT = 900_000
 
 REQUIRED_LABELS = (
     "classified_backend_task",
@@ -151,6 +151,7 @@ REQUIRED_LABELS = (
     "quality_package_small_raise_in_current_node",
     "quality_package_route_raise_needed",
     "non_ui_implemented",
+    "ui_autonomous_pipeline_selected",
     "ui_inspected",
     "ui_concept_done",
     "ui_concept_target_ready",
@@ -169,6 +170,7 @@ REQUIRED_LABELS = (
     "visual_asset_aesthetic_review_failed",
     "ui_implemented",
     "ui_screenshot_qa_done",
+    "ui_geometry_qa_done",
     "ui_reviewer_personal_walkthrough_done",
     "ui_interaction_reachability_checked",
     "ui_layout_overlap_density_checked",
@@ -439,7 +441,8 @@ def _state_id(state: model.State) -> str:
         f"subtree_rebuilds={state.capability_subtree_rebuilds},"
         f"raises={state.quality_route_raises},"
         f"reworks={state.quality_reworks}|"
-        f"ui={state.ui_inspected},{state.ui_concept_done},{state.ui_concept_target_ready},"
+        f"ui={state.ui_autonomous_pipeline_selected},{state.ui_inspected},"
+        f"{state.ui_concept_done},{state.ui_concept_target_ready},"
         f"{state.ui_concept_target_visible},"
         f"{state.ui_concept_personal_visual_review_done},"
         f"{state.ui_concept_design_recommendations_recorded},"
@@ -452,6 +455,7 @@ def _state_id(state: model.State) -> str:
         f"{state.visual_asset_aesthetic_review_done},"
         f"{state.visual_asset_aesthetic_reasons_recorded},"
         f"{state.ui_implemented},{state.ui_screenshot_qa_done},"
+        f"{state.ui_geometry_qa_done},"
         f"{state.ui_reviewer_personal_walkthrough_done},"
         f"{state.ui_interaction_reachability_checked},"
         f"{state.ui_layout_overlap_density_checked},"
@@ -561,8 +565,7 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
     }
 
 
-def explore_state_graph(max_states: int = 5000) -> dict:
-    graph = _build_reachable_graph(max_states=max_states)
+def _graph_report_from_graph(graph: dict) -> dict:
     labels = graph["labels"]
     invariant_failures = graph["invariant_failures"]
 
@@ -576,6 +579,11 @@ def explore_state_graph(max_states: int = 5000) -> dict:
         "invariant_failures": invariant_failures,
         "terminal_counts": graph["terminal_counts"],
     }
+
+
+def explore_state_graph(max_states: int = 5000) -> dict:
+    graph = _build_reachable_graph(max_states=max_states)
+    return _graph_report_from_graph(graph)
 
 
 def _reverse_reachable(edges: list[list[tuple[str, int]]], starts: set[int]) -> set[int]:
@@ -693,7 +701,7 @@ def _check_loops(graph: dict) -> dict:
 
 def main() -> int:
     graph = _build_reachable_graph(max_states=GRAPH_STATE_LIMIT)
-    graph_report = explore_state_graph(max_states=GRAPH_STATE_LIMIT)
+    graph_report = _graph_report_from_graph(graph)
     progress_report = _check_progress(graph)
     loop_report = _check_loops(graph)
 
