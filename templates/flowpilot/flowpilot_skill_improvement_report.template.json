@@ -1,0 +1,41 @@
+{
+  "schema_version": "flowpilot.skill_improvement_report.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "pm_owned": true,
+  "status": "<not_started|written>",
+  "written_at": "<iso-8601-timestamp-or-null>",
+  "purpose": "Independent run-end report for FlowPilot skill maintainers. It records protocol, template, model, script, review-standard, automation, or code-pointer issues observed while completing the current project. Its observations do not block current project completion and do not require root-repo fixes inside the current run.",
+  "source_observation_log": ".flowpilot/runs/<run-id>/flowpilot_skill_improvement_observations.jsonl",
+  "current_project_completion_policy": {
+    "observations_block_current_project": false,
+    "root_repo_fixes_required_before_completion": false,
+    "allowed_current_run_action": "If a small issue affects the active project, compensate locally and continue. Preserve the observation for future FlowPilot root-repo maintenance.",
+    "only_true_blockers": "Ordinary project blockers such as missing permissions, unavailable dependencies, or required user choices remain handled by the active route, not by this skill-improvement report."
+  },
+  "summary": {
+    "observation_count": 0,
+    "nodes_with_observations": [],
+    "repeated_themes": [],
+    "highest_value_future_fixes": [],
+    "no_obvious_skill_improvement_observed": false
+  },
+  "observations": [
+    {
+      "observation_id": "<observation-id>",
+      "node_id": "<node-id-or-terminal>",
+      "reported_by_role": "<role>",
+      "observation_kind": "<kind>",
+      "summary": "<short issue>",
+      "temporary_compensation_used": "<compensation-or-null>",
+      "suggested_root_fix": "<future-fix-or-null>",
+      "candidate_root_files": [],
+      "evidence_paths": [],
+      "pm_triage_status": "<accepted_for_skill_backlog|duplicate|not_a_skill_issue>"
+    }
+  ],
+  "pm_notes_for_human_maintainer": [
+    "<plain-language note for future manual FlowPilot root-repo cleanup>"
+  ]
+}

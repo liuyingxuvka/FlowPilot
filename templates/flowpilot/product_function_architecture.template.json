@@ -8,6 +8,7 @@
   "source_inputs": {
     "startup_self_interrogation_path": "<path-or-null>",
     "material_intake_packet_path": ".flowpilot/runs/<run-id>/material_intake_packet.json",
+    "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
     "pm_material_understanding_path": ".flowpilot/pm_material_understanding.json",
     "draft_floor_source": "<chat|file|user-brief|other>",
     "known_product_context_paths": []
@@ -81,12 +82,25 @@
       "evidence_paths": []
     }
   ],
+  "root_acceptance_contract": {
+    "path": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
+    "pm_owned": true,
+    "root_thresholds_defined": false,
+    "proof_matrix_written": false,
+    "standard_scenario_pack_selected": false,
+    "unresolved_residual_risks_allowed": false,
+    "note": "The PM records only root-level hard requirements, high-risk requirements, and proof obligations here. Node-local details are created later in node_acceptance_plan files."
+  },
   "approvals": {
     "project_manager_synthesis_path": "<path-or-null>",
+    "independent_validation_required": true,
+    "completion_report_only_allowed": false,
     "product_flowguard_officer_modelability": "<pending|approved|blocked>",
     "product_flowguard_officer_report_path": "<path-or-null>",
+    "product_flowguard_officer_independent_validation_path": "<path-or-null>",
     "human_like_reviewer_usefulness_challenge": "<pending|passed|blocked>",
     "human_like_reviewer_report_path": "<path-or-null>",
+    "human_like_reviewer_independent_validation_path": "<path-or-null>",
     "human_like_reviewer_fact_check_required": true,
     "human_like_reviewer_checked_user_request": false,
     "human_like_reviewer_checked_material_sources": [],

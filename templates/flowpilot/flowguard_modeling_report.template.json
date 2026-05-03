@@ -6,6 +6,40 @@
   "node_id": "<node-id-or-null>",
   "written_at": "<iso-8601-timestamp>",
   "officer_role_key": "<process_flowguard_officer|product_flowguard_officer>",
+  "execution_ownership": {
+    "model_author_role": "<process_flowguard_officer|product_flowguard_officer>",
+    "model_runner_role": "<process_flowguard_officer|product_flowguard_officer>",
+    "model_interpreter_role": "<process_flowguard_officer|product_flowguard_officer>",
+    "approved_by_role": "<process_flowguard_officer|product_flowguard_officer>",
+    "report_only_review": false,
+    "valid_unchanged_reuse": false,
+    "valid_unchanged_reuse_basis": "<same request, same model files, same inputs, same invariants, same expected answer, and prior officer-owned run still current|none>",
+    "main_executor_outputs_used_as_pointers_only": [
+      "<path-or-command-output-reference>"
+    ],
+    "commands_run_by_officer": [
+      "<command>"
+    ],
+    "commands_reviewed_from_existing_outputs": [
+      "<command-or-output-path>"
+    ],
+    "model_boundary_checked_by_officer": false,
+    "model_files_written_by_officer": [
+      "<path>"
+    ],
+    "input_snapshot_paths": [
+      "<path>"
+    ],
+    "invariant_results_checked": false,
+    "missing_labels_checked": false,
+    "counterexamples_or_missing_labels_inspected": true,
+    "state_edge_counts_recorded": true,
+    "state_fields_checked": [],
+    "adversarial_hypotheses_tested": [],
+    "concrete_evidence_references": [],
+    "blindspots_recorded": true,
+    "absolute_no_risk_claim_used": false
+  },
   "modelability": {
     "result": "<modelable|needs_evidence|needs_split|blocked>",
     "reason": "<why this result was chosen>",
@@ -26,6 +60,39 @@
     "failure_paths": [
       "<path that can fail or stall>"
     ]
+  },
+  "pm_decision_packet": {
+    "risk_tiers": {
+      "hard_blockers": [
+        "<invariant violation, unrecoverable state, duplicate side effect, unsafe publish/delete path, or other must-fix-before-advance issue>"
+      ],
+      "pm_review_required": [
+        "<model-derived hotspot, ambiguity, missing evidence, external dependency, or human walkthrough target requiring PM decision>"
+      ],
+      "terminal_replay_or_later_gate": [
+        "<risk that is not current-gate blocking only because it is explicitly mapped to a named later gate or terminal replay scenario>"
+      ],
+      "non_risk_scope_notes": [
+        "<scope boundary or known non-risk limitation that should not be reported as unresolved risk>"
+      ]
+    },
+    "model_derived_review_agenda": [
+      "<state, transition, invariant, counterexample, loop, abstraction gap, or conformance target the PM should consider for manual review or route work>"
+    ],
+    "toolchain_or_model_improvement_suggestions": [
+      "<FlowGuard model abstraction, helper, replay adapter, evidence source, or toolchain improvement suggested by the model review>"
+    ],
+    "human_walkthrough_recommendations": [
+      "<specific flow, command, UI path, artifact, or process path that should be walked manually or replayed against real evidence>"
+    ],
+    "pm_decision_options": [
+      {
+        "decision": "<continue_current_route|mutate_route|add_evidence_node|split_request|repair_before_advance|block>",
+        "reason": "<why this option fits the report evidence>",
+        "cost_or_tradeoff": "<expected cost, delay, or risk tradeoff>"
+      }
+    ],
+    "confidence_boundary": "<what the model result proves, what it does not prove, and which assumptions PM must treat as residual context>"
   },
   "recommendation": {
     "decision": "<recommended PM decision>",

@@ -16,6 +16,7 @@
   "gate_families": {
     "child_skill_gates_collected": false,
     "human_review_gates_collected": false,
+    "parent_backward_replays_collected": false,
     "product_process_gates_collected": false,
     "generated_resource_lineage_collected": false,
     "final_completion_gates_collected": false
@@ -24,12 +25,17 @@
     "generated_resource_lineage_resolved": false,
     "stale_evidence_checked": false,
     "superseded_nodes_explained": false,
+    "standard_scenarios_replayed": false,
+    "residual_risk_triage_done": false,
+    "unresolved_residual_risk_count_zero": false,
     "waivers_have_required_role": false,
     "blocked_items_have_pm_repair_or_stop_decision": false
   },
   "counts": {
     "effective_node_count": 0,
     "gate_count": 0,
+    "parent_node_count": 0,
+    "parent_backward_replay_count": 0,
     "approved_count": 0,
     "waived_count": 0,
     "superseded_count": 0,
@@ -38,7 +44,19 @@
     "consumed_resource_count": 0,
     "discarded_resource_count": 0,
     "unresolved_resource_count": 0,
+    "unresolved_residual_risk_count": 0,
     "unresolved_count": null
+  },
+  "residual_risk_triage": {
+    "path": ".flowpilot/runs/<run-id>/residual_risk_triage.json",
+    "required": true,
+    "policy": "Completion reports must not carry unresolved residual risks. Every risk-like item is triaged as blocking, test_gap, evidence_gap, route_gap, resolved_issue, non_risk_scope_note, explicit_exception_with_required_approval, or false_positive.",
+    "blocking_items_returned_to_route": false,
+    "test_gaps_returned_to_qa": false,
+    "evidence_gaps_repaired": false,
+    "scope_notes_renamed": false,
+    "explicit_exceptions_have_required_approval": false,
+    "unresolved_residual_risk_count": null
   },
   "generated_resources": [
     {
@@ -61,26 +79,140 @@
       "route_version": 0,
       "node_id": "<node-id>",
       "gate_id": "<gate-id>",
-      "gate_family": "<child_skill|human_review|product_model|process_model|verification|resource_lineage|lifecycle|completion>",
+      "gate_family": "<child_skill|human_review|parent_backward_replay|product_model|process_model|verification|resource_lineage|lifecycle|completion>",
       "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
       "status": "<approved|waived|blocked|superseded|stale|unresolved>",
       "evidence_paths": [],
+      "independent_validation": {
+        "required": true,
+        "completion_report_only_allowed": false,
+        "evidence_path": "<path-or-null>",
+        "direct_sources_checked": [],
+        "state_fields_checked": [],
+        "commands_or_probes_run": [],
+        "adversarial_hypotheses_tested": [],
+        "concrete_evidence_references": [],
+        "triaged_blindspots": []
+      },
+      "human_review_requirements": {
+        "personal_walkthrough_required": "<true|false>",
+        "personal_walkthrough_done": "<true|false>",
+        "worker_report_only": "<true|false>",
+        "design_recommendations_recorded": "<true|false>"
+      },
+      "parent_backward_replay_requirements": {
+        "applies_when_node_has_children": "<true|false>",
+        "parent_backward_replay_path": "<path-or-null>",
+        "structural_trigger_confirmed": "<true|false>",
+        "reviewer_started_from_parent_delivered_result": "<true|false>",
+        "pm_segment_decision_recorded": "<true|false>",
+        "same_parent_replay_rerun_after_latest_repair": "<true|false>"
+      },
       "superseded_by": "<node-or-gate-id-or-null>",
       "superseded_reason": "<reason-or-null>",
       "waiver_reason": "<reason-or-null>",
       "unresolved_reason": "<reason-or-null>"
     }
   ],
+  "terminal_human_backward_replay": {
+    "required": true,
+    "status": "not_started",
+    "review_map_path": ".flowpilot/runs/<run-id>/terminal_human_backward_replay_map.json",
+    "pm_review_map_built": false,
+    "reviewer_role": "human_like_reviewer",
+    "starts_from_delivered_product": true,
+    "report_only_allowed": false,
+    "ordered_replay_segments": [
+      {
+        "segment_id": "root-acceptance",
+        "segment_type": "root_acceptance",
+        "source_entries": [],
+        "node_acceptance_plan_paths": [],
+        "reviewer_manual_checks": [],
+        "reviewer_evidence_path": "<path-or-null>",
+        "pm_segment_decision": "<continue|repair|route_mutation|pm_stop|not_reviewed>",
+        "pm_decision_evidence_path": "<path-or-null>"
+      },
+      {
+        "segment_id": "parent-nodes",
+        "segment_type": "parent_or_module_nodes",
+        "source_entries": [],
+        "local_parent_backward_replay_paths": [],
+        "node_acceptance_plan_paths": [],
+        "reviewer_manual_checks": [],
+        "reviewer_evidence_path": "<path-or-null>",
+        "pm_segment_decision": "<continue|repair|route_mutation|pm_stop|not_reviewed>",
+        "pm_decision_evidence_path": "<path-or-null>"
+      },
+      {
+        "segment_id": "leaf-nodes",
+        "segment_type": "leaf_nodes",
+        "source_entries": [],
+        "node_acceptance_plan_paths": [],
+        "reviewer_manual_checks": [],
+        "reviewer_evidence_path": "<path-or-null>",
+        "pm_segment_decision": "<continue|repair|route_mutation|pm_stop|not_reviewed>",
+        "pm_decision_evidence_path": "<path-or-null>"
+      }
+    ],
+    "required_segment_checks": {
+      "root_acceptance_reviewed": false,
+      "parent_nodes_reviewed": false,
+      "leaf_nodes_reviewed": false,
+      "every_effective_node_replayed_by_reviewer": false,
+      "pm_segment_decisions_recorded": false,
+      "worker_or_completion_report_only_segments": 0
+    },
+    "repair_restart_policy": {
+      "required": true,
+      "recorded": false,
+      "default_restart": "restart_from_delivered_product",
+      "impacted_ancestor_restart_allowed_only_with_pm_reason": true,
+      "repair_invalidates_affected_evidence": true,
+      "repair_requires_rebuilt_ledger": true,
+      "repair_requires_rerun_reviewer_backward_replay": true,
+      "repair_requires_pm_reapproval": true
+    },
+    "blocking_findings": [],
+    "passed": false
+  },
   "reviewer_backward_check": {
     "required": true,
     "status": "not_started",
     "reviewer_role": "human_like_reviewer",
-    "evidence_path": "<path-or-null>"
+    "evidence_path": "<path-or-null>",
+    "must_use_terminal_human_backward_replay": true,
+    "requires_delivered_product_start": true,
+    "requires_pm_segment_decisions": true,
+    "requires_repair_restart_policy": true
   },
   "pm_completion_approval": {
     "status": "not_started",
     "requires_unresolved_count_zero": true,
-    "approval_evidence_path": "<path-or-null>"
+    "requires_reviewer_backward_check": true,
+    "requires_independent_adversarial_audit": true,
+    "completion_report_only_allowed": false,
+    "approval_evidence_path": "<path-or-null>",
+    "independent_validation_evidence_path": "<path-or-null>",
+    "pm_decision_surface_audit": {
+      "current_route_frontier_ledger_checked": false,
+      "stale_or_superseded_evidence_checked": false,
+      "waiver_authority_checked": false,
+      "unresolved_counts_checked": false,
+      "reviewer_replay_checked": false,
+      "blockers_and_downstream_consequences_checked": false,
+      "frozen_user_goal_consistency_checked": false,
+      "triaged_blindspots": []
+    }
+  },
+  "terminal_closure_suite": {
+    "path": ".flowpilot/runs/<run-id>/terminal_closure_suite.json",
+    "required": true,
+    "status": "<not_started|running|passed|blocked>",
+    "terminal_state_files_synced": false,
+    "completion_state_evidence_refreshed": false,
+    "lifecycle_reconciliation_required_actions_zero": false,
+    "heartbeat_or_manual_resume_lifecycle_reconciled": false
   },
   "completion_allowed": false
 }

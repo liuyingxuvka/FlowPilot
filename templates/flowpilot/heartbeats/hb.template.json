@@ -44,14 +44,6 @@
     "evidence_path": "<notice-evidence-path-or-null>",
     "last_written_at": "<iso-8601-timestamp-or-null>"
   },
-  "global_supervisor_registration": {
-    "refreshed_this_heartbeat": false,
-    "refresh_command": "python scripts/flowpilot_global_supervisor.py --refresh-registration --root . --heartbeat-automation-id <heartbeat-automation-id> --json",
-    "unregister_command": "python scripts/flowpilot_global_supervisor.py --unregister-project --root . --unregister-reason <pause|stop|complete> --json",
-    "global_supervisor_cadence_minutes": 30,
-    "registration_lease_minutes": 90,
-    "delete_global_supervisor_only_after_empty_registry": true
-  },
   "project_manager_decision_path": "<pm-decision-evidence-path-or-null>",
   "project_manager_decision": "<execute_completion_runway|pm_stop|block|mutate_route|complete|null>",
   "pm_selected_current_gate": "<gate-id-or-null>",
@@ -75,6 +67,21 @@
   "current_node_completion": {
     "advance_allowed": false,
     "status": "unfinished"
+  },
+  "user_flow_diagram_display_gate": {
+    "diagram_kind": "flowpilot_realtime_route_sign",
+    "language": "en",
+    "display_trigger": "<startup|key_node_change|route_mutation|review_failure|validation_failure|completion|user_request|null>",
+    "cockpit_open": false,
+    "chat_display_required": false,
+    "chat_displayed_in_chat": false,
+    "return_or_repair_edge_present": false,
+    "display_packet_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram-display.json",
+    "review_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram-review.json",
+    "reviewer_checked_visible_chat_mermaid": false,
+    "reviewer_checked_active_route_node_match": false,
+    "reviewer_checked_return_edge_when_required": false,
+    "advance_blocked_until_passed": true
   },
   "position_check": {
     "capabilities_loaded": false,

@@ -1,0 +1,63 @@
+{
+  "schema_version": "flowpilot.terminal_human_backward_replay_map.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "pm_owned": true,
+  "status": "<not_started|ready_for_reviewer|reviewing|repair_required|passed|blocked>",
+  "built_from_ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",
+  "built_at": "<iso-8601-timestamp-or-null>",
+  "purpose": "A PM-built ordered map for terminal human backward replay. The reviewer starts from the delivered product, then checks root acceptance, parent nodes, and leaf nodes against current product behavior and node acceptance plans.",
+  "replay_order": [
+    "delivered_product",
+    "root_acceptance",
+    "parent_or_module_nodes",
+    "leaf_nodes",
+    "pm_segment_decisions",
+    "repair_restart_policy"
+  ],
+  "segments": [
+    {
+      "segment_id": "<segment-id>",
+      "segment_type": "<delivered_product|root_acceptance|parent_or_module_node|leaf_node>",
+      "node_id": "<node-id-or-null>",
+      "parent_node_id": "<parent-node-id-or-null>",
+      "ledger_entry_ids": [],
+      "node_acceptance_plan_path": "<path-or-null>",
+      "local_parent_backward_replay_path": "<path-or-null>",
+      "local_parent_backward_replay_used_as_pointer_only": true,
+      "root_acceptance_obligations": [],
+      "standard_scenarios": [],
+      "risk_scenarios": [],
+      "current_product_checks_required": [],
+      "reviewer_report_path": "<path-or-null>",
+      "pm_decision": "<not_reviewed|continue|repair|route_mutation|pm_stop>",
+      "pm_decision_path": "<path-or-null>",
+      "stale_after_repair": false
+    }
+  ],
+  "coverage": {
+    "effective_nodes_total": 0,
+    "effective_nodes_reviewed_by_human": 0,
+    "root_acceptance_reviewed": false,
+    "parent_nodes_reviewed": false,
+    "leaf_nodes_reviewed": false,
+    "every_effective_node_has_pm_segment_decision": false
+  },
+  "repair_restart_policy": {
+    "default_restart": "restart_from_delivered_product",
+    "impacted_ancestor_restart_allowed_only_with_pm_reason": true,
+    "latest_repair_invalidates_affected_segments": true,
+    "latest_repair_requires_ledger_rebuild": true,
+    "latest_repair_requires_replay_rerun": true,
+    "latest_repair_requires_pm_reapproval": true,
+    "narrow_restart_reason": "<reason-or-null>"
+  },
+  "completion_gate": {
+    "reviewer_passed": false,
+    "pm_segment_decisions_recorded": false,
+    "repair_restart_policy_recorded": false,
+    "unresolved_repair_findings": 0,
+    "completion_allowed": false
+  }
+}

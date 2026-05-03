@@ -2,6 +2,14 @@
 
 Date: 2026-04-30
 
+## Superseding Note: Heartbeat-Only Continuation
+
+As of 2026-05-03, the active FlowPilot protocol no longer includes the
+external stale-heartbeat recovery loop or the user-level supervisor. Historical
+sections below document earlier model work, but current source, templates,
+runtime helpers, and lifecycle checks use only stable heartbeat continuation
+or explicit manual resume.
+
 ## Scope
 
 This preflight modeled the project-control workflow for the planned `flowpilot`
@@ -610,10 +618,11 @@ Additional capability-routing rules:
 - FlowPilot is opt-in only. It is enabled only after the user explicitly invokes
   FlowPilot or the `flowpilot` skill; an existing `.flowpilot/` directory is
   continuity state after invocation, not a trigger by itself.
-- Run-mode choice must be offered before self-interrogation. Show options from
-  loose to strict: `full-auto`, `autonomous`, `guided`, `strict-gated`. If the
-  host cannot pause or the user asks to continue, `autonomous` may be recorded
-  as fallback with a reason.
+- Run-mode choice is one part of the three-question startup gate and must be
+  answered explicitly before self-interrogation. Show options from loose to
+  strict: `full-auto`, `autonomous`, `guided`, `strict-gated`. Do not infer a
+  fallback mode from host pause limits, invocation text, existing `.flowpilot/`
+  state, or prior routes.
 - Formal FlowPilot routes have no lower default tier: they start at
   showcase-grade scope.
 - Capability routes require visible self-interrogation, heartbeat schedule,
@@ -1717,3 +1726,168 @@ git diff --check
 Results: startup PM-review, meta, capability, install, smoke, legacy-layout
 path resolution, busy-lease status, lifecycle inventory, template JSON parse,
 FlowGuard import, and whitespace checks passed.
+
+### 2026-05-03 Follow-Up - Reviewer-Owned UI Walkthrough
+
+The user identified a review-quality gap: UI screenshot QA, automated
+interaction evidence, or worker reports could be mistaken for human-like
+reviewer approval. FlowPilot now treats those artifacts as pointers only. For
+UI, browser, desktop, rendered visual, localization, and interaction gates, the
+reviewer must personally walk the surface or block/request more evidence.
+
+The capability model now requires these UI review gates before rendered
+aesthetic, divergence, and final verification closure:
+
+- concept personal visual review and concept design recommendations;
+- rendered UI personal walkthrough;
+- click/keyboard reachability checks for required controls;
+- text overlap/clipping, whitespace, density, crowding, hierarchy,
+  readability, and responsive/window-size checks;
+- reviewer design recommendations for PM routing.
+
+Validation reran with:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python -m py_compile simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py
+python simulations\run_capability_checks.py
+python simulations\run_meta_checks.py
+python scripts\check_install.py
+```
+
+Results: capability model passed with 185422 states and 195906 edges; meta
+model passed with 184421 states and 193501 edges; install/template checks
+passed, including `templates/flowpilot/human_review.template.json`.
+
+### 2026-05-03 Follow-Up - Officer-Owned Async FlowGuard Gates
+
+The user identified a role-boundary and throughput gap: FlowGuard simulations
+could still appear to be run by the main executor while the process/product
+FlowGuard officers only approved existing outputs. FlowPilot now treats
+FlowGuard model gates as officer-owned asynchronous gates when live background
+roles are available.
+
+The repaired protocol is:
+
+- PM writes a modeling request with assigned officer roles, output root, answer
+  shape, and main-executor parallel-preparation boundary;
+- process/product FlowGuard officers author, run, interpret, and approve or
+  block their own model reports;
+- main executor may continue read-only context gathering, dependency inventory,
+  and non-model evidence drafts while models run, but cannot freeze routes,
+  implement protected work, checkpoint, complete, or claim model approval from
+  its own command output;
+- officer reports must include model author, runner, interpreter, commands run
+  by officer, input snapshots, model files, state/edge counts, counterexample
+  or missing-label inspection, blindspots, and decision.
+
+Validation reran with:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python -m py_compile .flowpilot\task-models\actor-authority-flow\model.py .flowpilot\task-models\actor-authority-flow\run_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py
+python .flowpilot\task-models\actor-authority-flow\run_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+```
+
+Results: actor-authority checks passed with 29 states and 28 edges and caught
+new hazards for missing PM modeling request, gated main-executor parallel work,
+and report-only officer approval. Meta checks passed with 184427 states and
+193507 edges. Capability checks passed with 190728 states and 201212 edges.
+
+### 2026-05-03 Follow-Up - Universal Adversarial Role Approval
+
+The user identified that the UI reviewer fix and officer-owned FlowGuard fix
+were both instances of a broader approval-quality gap: any PM, reviewer, or
+FlowGuard officer approval can become weak if it merely reads a completion
+report or another role's evidence packet.
+
+FlowPilot now treats every role approval as an independent adversarial
+validation gate:
+
+- reports, screenshots, logs, and role outputs are evidence pointers only;
+- the approving role must personally check direct sources, files, screenshots,
+  state fields, model outputs, route/frontier/ledger entries, or live behavior
+  relevant to the gate;
+- the approving role must record adversarial hypotheses tested, concrete
+  evidence references, commands or probes run when applicable, residual
+  blindspots, and a decision;
+- completion-report-only approval is invalid for startup PM opening, material
+  intake, product architecture, child-skill manifests, FlowGuard model gates,
+  implementation/human review, composite backward review, final product replay,
+  and the final route-wide PM ledger approval.
+
+Validation reran with:
+
+```powershell
+python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py
+python simulations\run_startup_pm_review_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+```
+
+Results: startup PM-review passed with 442 safe states and 441 edges, including
+the `pm_opens_without_independent_gate_audit` hazard. Meta model passed with
+208227 states and 217307 edges. Capability model passed with 202980 states and
+213464 edges. All three had zero invariant failures, zero missing labels, zero
+stuck states, and no nonterminating components where applicable.
+
+### 2026-05-03 Follow-Up - Local Skill Inventory Before PM Skill Selection
+
+Trigger: the user clarified that FlowPilot should inventory locally available
+skills and host capabilities early, but the project manager should decide which
+skills actually serve the product only after product-function architecture and
+capability mapping.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- the material packet omits local skills that could materially affect route
+  planning;
+- raw local skill availability is treated as authority to invoke a child skill;
+- child-skill discovery starts before the PM classifies candidates as
+  required, conditional, deferred, or rejected;
+- the PM approves a child-skill gate manifest before PM skill selection exists.
+
+Protocol changes:
+
+- material intake now includes a candidate-only local skill and host capability
+  inventory;
+- added `local_skill_inventory.template.json`;
+- added `pm_child_skill_selection.template.json`;
+- child-skill route discovery now proceeds only from PM-selected skills, not
+  from raw local availability.
+
+Validation:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+python scripts\check_install.py
+python scripts\smoke_autopilot.py
+git diff --check
+```
+
+Results: FlowGuard import reported schema `1.0`. Meta checks passed with
+292707 states, 305707 edges, zero invariant failures, zero missing labels, zero
+stuck states, and no nonterminating components. Capability checks passed with
+245702 states, 258706 edges, zero invariant failures, zero missing labels, zero
+stuck states, and no nonterminating components. Installation checks and
+autopilot smoke checks passed. `git diff --check` reported only existing
+Windows line-ending warnings, with no whitespace errors.
+
+Finding: the first meta-model rerun exposed an over-broad checkpoint invariant
+for the FlowPilot skill-improvement observation check. The checkpoint action
+correctly reset current-node execution gates for the next node, but the
+invariant treated any written checkpoint with the reset gate as a failure. The
+invariant is now scoped to the `checkpoint_pending` path, so it still rejects
+checkpoint writes before the PM observation check without rejecting the
+post-checkpoint next-node reset.
+
+The protocol-level invariant is that skill inventory is early descriptive
+material, while child-skill execution requires PM selection and the existing
+child-skill fidelity gates.

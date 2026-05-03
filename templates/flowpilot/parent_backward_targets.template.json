@@ -1,0 +1,41 @@
+{
+  "schema_version": "flowpilot.parent_backward_targets.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "pm_owned": true,
+  "status": "<not_started|current|stale|superseded>",
+  "built_from_flow_path": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
+  "built_at": "<iso-8601-timestamp-or-null>",
+  "trigger_rule": {
+    "structural_trigger": "any_effective_route_node_with_children",
+    "semantic_importance_classification_required": false,
+    "importance_labels_are_context_only": [
+      "high_risk",
+      "integration",
+      "feature",
+      "downstream_dependency"
+    ],
+    "leaf_nodes_exempt_from_parent_backward_replay": true
+  },
+  "targets": [
+    {
+      "parent_node_id": "<parent-node-id>",
+      "child_node_ids": [],
+      "parent_backward_replay_path": ".flowpilot/runs/<run-id>/routes/<route-id>/nodes/<parent-node-id>/parent_backward_replay.json",
+      "status": "<not_started|reviewing|repair_required|passed|blocked|superseded>",
+      "pm_segment_decision": "<not_reviewed|continue|repair_existing_child|add_sibling_child|rebuild_child_subtree|bubble_to_parent|pm_stop>",
+      "latest_repair_requires_rerun": "<true|false>",
+      "latest_replay_route_version": 0
+    }
+  ],
+  "coverage": {
+    "effective_route_nodes_total": 0,
+    "parent_nodes_with_children_total": 0,
+    "parent_targets_total": 0,
+    "parent_targets_with_replay_passed": 0,
+    "parent_targets_with_pm_decision": 0,
+    "stale_after_route_mutation": false,
+    "all_required_parent_replays_passed": false
+  }
+}

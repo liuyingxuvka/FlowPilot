@@ -1,25 +1,26 @@
 flowchart LR
-  intake["Goal & materials"]
-  product["Product understanding"]
-  modeling["FlowGuard modeling"]
-  route["Route & current node"]
-  execution["Execution & child skills"]
-  verification["Verification"]
-  completion["Final review"]
-  repair["Repair / route change"]
+  %% FlowPilot realtime route sign. This is the user-facing graph, not raw FlowGuard Mermaid.
+  startup["Startup Gate"]
+  product["Product Map"]
+  modeling["FlowGuard Model"]
+  route["Route Plan"]
+  execution["Build / Execute"]
+  verification["Review & QA"]
+  completion["Completion"]
+  repair["Repair Return"]
 
-  intake --> product
+  startup --> product
   product --> modeling
   modeling --> route
   route --> execution
   execution --> verification
   verification --> completion
-  verification -- "needs change" --> repair
-  repair --> modeling
+  verification -- "returns for repair" --> repair
+  repair --> route
 
   classDef active fill:#e6fbff,stroke:#00bcd4,stroke-width:3px,color:#0f172a;
   classDef normal fill:#f8fafc,stroke:#cbd5e1,color:#334155;
   classDef repair fill:#fff7ed,stroke:#fb923c,color:#7c2d12;
-  class intake,product,modeling,route,execution,verification,completion normal;
+  class startup,product,modeling,route,execution,verification,completion normal;
   class repair repair;
   class route active;

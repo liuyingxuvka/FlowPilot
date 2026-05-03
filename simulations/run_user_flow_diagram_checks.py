@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot startup PM/reviewer model."""
+"""Run checks for the FlowPilot realtime user route sign model."""
 
 from __future__ import annotations
 
@@ -6,52 +6,29 @@ import json
 from collections import deque
 from pathlib import Path
 
-import startup_pm_review_model as model
+import user_flow_diagram_model as model
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "startup_pm_review_results.json"
+RESULTS_PATH = ROOT / "user_flow_diagram_results.json"
+
 REQUIRED_LABELS = (
-    "startup_three_questions_asked",
-    "startup_dialog_stopped_for_user_answers",
-    "run_mode_answer_recorded",
-    "background_agents_allowed",
-    "background_agents_declined_single_agent",
-    "scheduled_continuation_allowed",
-    "scheduled_continuation_declined_manual",
-    "explicit_startup_answers_recorded",
-    "startup_banner_emitted_after_answers",
-    "run_directory_created",
-    "current_pointer_written",
-    "run_index_updated",
-    "new_task_no_prior_import",
-    "continue_previous_work_selected",
-    "prior_work_import_packet_written",
-    "control_state_written_under_run_root",
-    "top_level_control_state_absent_or_quarantined",
-    "route_file_written",
-    "canonical_state_written",
-    "execution_frontier_written",
-    "crew_ledger_current",
-    "role_memory_packets_current",
-    "fresh_live_subagents_started",
-    "single_agent_role_continuity_authorized",
-    "automated_heartbeat_factually_verified",
-    "manual_resume_ready",
-    "clean_start_required_by_user",
-    "clean_start_not_required",
-    "old_route_cleanup_verified",
-    "reviewer_independently_checked_startup_facts",
-    "startup_preflight_reviewer_fact_report_blocked",
-    "pm_returns_startup_blockers_to_worker",
-    "startup_worker_remediation_completed",
-    "startup_preflight_reviewer_fact_report_clean",
-    "pm_independently_audited_startup_gate",
-    "pm_start_gate_opened_from_fact_report",
-    "route_execution_started",
-    "child_skill_started",
-    "imagegen_started",
-    "implementation_started",
+    "route_frontier_loaded",
+    "current_node_resolved",
+    "trigger_startup_chat_required",
+    "trigger_key_node_change_chat_required",
+    "trigger_route_mutation_cockpit_open",
+    "trigger_review_failure_chat_required",
+    "trigger_validation_failure_chat_required",
+    "trigger_completion_chat_required",
+    "trigger_user_request_chat_required",
+    "realtime_route_sign_generated",
+    "return_edge_added",
+    "chat_mermaid_displayed",
+    "cockpit_route_sign_displayed",
+    "reviewer_checked_chat_route_sign",
+    "node_work_started_after_display_gate",
+    "node_advanced_after_reviewer_gate",
 )
 
 
@@ -87,8 +64,8 @@ def explore_safe_graph() -> dict[str, object]:
 
 
 def check_hazards() -> dict[str, object]:
-    results: dict[str, object] = {}
     ok = True
+    results: dict[str, object] = {}
     for name, state in model.hazard_states().items():
         failures = model.invariant_failures(state)
         detected = bool(failures)
@@ -109,7 +86,10 @@ def main() -> int:
         "safe_graph": safe,
         "hazard_checks": hazards,
     }
-    RESULTS_PATH.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    RESULTS_PATH.write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["ok"] else 1
 

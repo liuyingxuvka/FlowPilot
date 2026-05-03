@@ -93,7 +93,10 @@ The second layer checks what the AI is building.
 The project manager can also invoke FlowGuard proactively when a route,
 repair, feature, product-object, file-format, protocol, or validation decision
 is uncertain. Those requests use structured modeling request/report evidence,
-then feed a PM route decision instead of becoming vague delegation.
+then feed a PM route decision instead of becoming vague delegation. Officer
+reports are not "no risk" certificates: they classify hard blockers, PM
+review-required items, later-gate replay items, toolchain/model improvement
+ideas, and concrete human walkthrough targets.
 
 This is the main reason FlowPilot is heavier than a normal prompt or task
 planner. The extra structure is intentional: it trades setup cost for
@@ -140,21 +143,35 @@ start.
 4. Show the FlowPilot banner only after the startup-question gate opens.
 5. Enable FlowPilot and create or load `.flowpilot/`.
 6. Run visible self-interrogation before freezing the contract.
-7. Inventory materials and have the reviewer approve material sufficiency.
+7. Inventory materials plus local skills and host capabilities as
+   candidate-only resources, then have the reviewer approve material
+   sufficiency.
 8. Have the project manager write the product/function architecture.
 9. Freeze the acceptance contract as a floor, not a ceiling.
-10. Discover required child skills and extract their gate manifests.
-11. Build and check the process route with FlowGuard.
-12. Build and check product/function models where behavior needs modeling.
-13. Have the human-like reviewer write the startup preflight report, then have
+10. Have the project manager choose required, conditional, deferred, and
+    rejected child skills from the product capability map and local inventory.
+11. Discover only PM-selected child skills and extract their gate manifests.
+12. Build and check the process route with FlowGuard.
+13. Build and check product/function models where behavior needs modeling.
+14. Have the human-like reviewer write the startup preflight report, then have
     the project manager open or return the startup gate from that report.
-14. Pass the startup activation guard so state, frontier, route, crew, role
+15. Pass the startup activation guard so state, frontier, route, crew, role
     memory, continuation evidence, reviewer report, and PM start-gate decision
     agree before child work starts.
-15. Execute bounded chunks with verification before checkpoint.
-16. Mutate the route when new facts invalidate the current path.
-17. Complete only after the final route-wide gate ledger has zero unresolved
-    obligations and the required review/PM approvals are recorded.
+16. Execute bounded chunks with verification before checkpoint.
+17. Before any parent/composite route node closes, enumerate it structurally
+    from `flow.json` and run a local human backward replay through the parent
+    delivered result, child rollup, child evidence, and PM segment decision.
+18. Mutate the route when new facts invalidate the current path.
+19. Complete only after the final route-wide gate ledger has zero unresolved
+    obligations, terminal human backward replay has manually checked the
+    delivered product through root, parent, and leaf-node obligations, every
+    replay segment has a PM decision, and the required PM approval is recorded.
+20. Before terminal completion, have the project manager write a run-local
+    FlowPilot skill improvement report. This report records protocol,
+    template, model, tooling, review-standard, or code-pointer issues for
+    later manual FlowPilot maintenance; its observations do not block the
+    current project or require root-repo fixes inside the run.
 
 ## Child Skills And Companion Capabilities
 
@@ -172,6 +189,12 @@ Depending on the route, FlowPilot may call or coordinate with:
   are appropriate in Codex; other hosts may satisfy the same
   `raster_image_generation` capability with a differently named provider;
 - other domain-specific skills required by the active project.
+
+FlowPilot inventories local skills early so the PM knows what execution
+resources exist, but the PM product/function architecture chooses the product
+shape first. A local skill is invoked only after the PM selection manifest marks
+it `required` or `conditional` for a product capability and the child-skill
+gate manifest maps that skill's own workflow into the route.
 
 When FlowPilot invokes a child skill, it must load the child skill's own
 instructions, map its required checks into route gates, record evidence, and
@@ -215,7 +238,7 @@ Typical files include:
 - role memory and crew ledger files;
 - task-local FlowGuard models under `task-models/`;
 - checkpoints;
-- heartbeat, watchdog, or manual-resume evidence;
+- heartbeat or manual-resume evidence;
 - `final_route_wide_gate_ledger.json`.
 
 This public repository ships reusable templates under `templates/flowpilot/`.
@@ -227,13 +250,11 @@ project to adopt FlowPilot.
 FlowPilot first probes the host environment.
 
 If the host supports real wakeups or automations, FlowPilot can use a stable
-heartbeat launcher, a paired watchdog, and a singleton global supervisor. The
-global supervisor uses a fixed 30-minute cadence and watches active project
-registration leases refreshed by the project heartbeat. When a route pauses,
-stops, or completes, FlowPilot unregisters that project and deletes the global
-supervisor last only if no other active registrations remain. The watchdog can
-detect stale heartbeat evidence, but recovery is not claimed until a later
-heartbeat proves the route resumed.
+one-minute heartbeat launcher. The launcher reloads persisted route state,
+execution frontier, crew ledger, and role memory before asking the project
+manager for the next completion-oriented runway. Recovery is not claimed just
+because a heartbeat record exists; it is claimed only when a later continuation
+turn loads current state and makes or records concrete progress.
 
 If the host does not support real wakeups, FlowPilot records `manual-resume`
 mode and continues from persisted `.flowpilot/` files without pretending that
@@ -338,8 +359,7 @@ checks, recovery, and evidence are worth the overhead.
   projects.
 - `simulations/` - FlowGuard regression models for startup activation, process,
   and capability routing.
-- `scripts/` - install, smoke, startup-guard, lifecycle, busy-lease,
-  heartbeat, and watchdog helpers.
+- `scripts/` - install, smoke, startup-guard, lifecycle, and heartbeat helpers.
 - `flowpilot.dependencies.json` - FlowPilot's installer-readable dependency
   manifest.
 - `docs/` - project brief, protocol, design decisions, schema, verification,

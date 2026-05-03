@@ -1,0 +1,103 @@
+{
+  "schema_version": "flowpilot.role_approval.v1",
+  "approval_id": "<approval-id>",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "node_id": "<node-id-or-null>",
+  "gate_id": "<gate-id>",
+  "approval_scope": "<startup_pm_gate|material_sufficiency|product_architecture|child_skill_gate|process_model|product_model|human_review|parent_backward_review|route_mutation|pm_runway|final_ledger|lifecycle|completion>",
+  "approver_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+  "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+  "decided_at": "<iso-8601-timestamp-or-null>",
+  "completion_report_only": false,
+  "report_inputs_used_as_pointers": [
+    {
+      "path": "<worker-report-completion-report-screenshot-log-or-summary-path>",
+      "kind": "<worker_report|completion_report|screenshot|smoke_log|pm_summary|model_snippet|other>",
+      "used_for": "<navigation-context-only>"
+    }
+  ],
+  "direct_sources_checked": [
+    {
+      "path": "<file-material-screenshot-model-route-frontier-ledger-log-or-output-path>",
+      "kind": "<source_file|material|screenshot|model_file|state_file|frontier|route|ledger|log|runtime_output|delivered_artifact|other>",
+      "checked_by_approver": true,
+      "finding": "<brief concrete observation>"
+    }
+  ],
+  "state_fields_checked": [
+    {
+      "path": "<state-frontier-ledger-or-model-path>",
+      "field": "<field-or-entry-id>",
+      "expected": "<expected-value-or-condition>",
+      "observed": "<observed-value-or-condition>"
+    }
+  ],
+  "commands_or_probes_run": [
+    {
+      "probe": "<manual-operation-command-model-check-browser-click-sample-or-replay>",
+      "performed_by_approver": true,
+      "result": "<observed-result>",
+      "evidence_path": "<path-or-null>"
+    }
+  ],
+  "adversarial_hypotheses_tested": [
+    {
+      "hypothesis": "<how this gate could be wrong-stale-incomplete-unreachable-incorrectly-waived-or-report-only>",
+      "probe_or_source_used": "<source-or-probe>",
+      "result": "<ruled_out|confirmed|inconclusive>",
+      "follow_up": "<none|request_more_evidence|route_mutation|repair|pm_stop>"
+    }
+  ],
+  "concrete_evidence_references": [
+    {
+      "reference": "<file-path-screenshot-path-state-field-command-output-model-label-counterexample-id-or-ledger-entry>",
+      "supports": "<what decision fact this supports>"
+    }
+  ],
+  "role_specific_checks": {
+    "pm_decision_surface_audit": {
+      "required_for_pm": "<true|false>",
+      "current_route_frontier_ledger_checked": false,
+      "stale_or_superseded_evidence_checked": false,
+      "waiver_authority_checked": false,
+      "unresolved_counts_checked": false,
+      "blockers_and_downstream_consequences_checked": false,
+      "frozen_user_goal_consistency_checked": false
+    },
+    "reviewer_direct_inspection": {
+      "required_for_reviewer": "<true|false>",
+      "neutral_observation_written": false,
+      "artifact_or_behavior_personally_checked": false,
+      "failure_or_edge_cases_probed": false,
+      "obligations_classified": false
+    },
+    "flowguard_officer_model_audit": {
+      "required_for_officer": "<true|false>",
+      "model_boundary_checked": false,
+      "model_files_checked": [],
+      "commands_run_or_valid_reuse_recorded": false,
+      "state_edge_counts_recorded": false,
+      "invariant_results_checked": false,
+      "missing_labels_checked": false,
+      "counterexamples_inspected": false,
+      "blindspots_recorded": false
+    }
+  },
+  "risk_or_blindspot_triage": [
+    {
+      "item": "<risk-gap-blindspot-or-note>",
+      "classification": "<blocking|test_gap|evidence_gap|route_gap|resolved_issue|non_risk_scope_note|explicit_exception_with_required_approval|false_positive>",
+      "action": "<return_to_node|return_to_qa|repair_evidence|route_mutation|pm_stop|rename_as_note|record_exception|delete>",
+      "resolved_or_approved": false,
+      "evidence_path": "<path-or-null>"
+    }
+  ],
+  "decision": {
+    "status": "<approved|blocked|request_more_evidence|mutate_route|pm_stop>",
+    "blocking_findings": [],
+    "route_mutation_required": false,
+    "approval_valid": false,
+    "unresolved_residual_risk_count": 0
+  }
+}

@@ -6,7 +6,10 @@
   "execution_owner": "project_manager",
   "required_approver": "project_manager",
   "approval_status": "draft",
+  "completion_report_only_allowed": false,
+  "independent_validation_evidence_path": "<path-or-null>",
   "source_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
+  "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
   "user_intent_interpretation": "<PM interpretation of the task after reviewed materials>",
   "source_claim_matrix": [
     {
@@ -45,5 +48,10 @@
     "conditions": [
       "<condition-or-blocker>"
     ]
+  },
+  "handoff_to_skill_selection": {
+    "candidate_inventory_ready": false,
+    "selection_must_wait_for_product_capability_map": true,
+    "notes": "<candidate skills are execution resources, not product requirements>"
   }
 }

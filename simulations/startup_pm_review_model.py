@@ -4,8 +4,9 @@ The runtime startup gate has only two authority roles:
 
 - the human-like reviewer independently checks facts and writes a factual
   report with blockers;
-- the project manager opens work beyond startup only from the current clean
-  factual report, or returns blockers to workers.
+- the project manager independently audits the current clean factual report,
+  direct startup evidence, and report-only failure hypotheses before opening
+  work beyond startup, or returns blockers to workers.
 
 There is no third startup opener or runtime startup-check script in this model.
 """
@@ -55,13 +56,6 @@ class State:
     route_heartbeat_interval_minutes: int = 0
     actual_heartbeat_automation_checked: bool = False
     actual_heartbeat_interval_minutes: int = 0
-    watchdog_kind: str = "unknown"  # unknown | windows_task_scheduler | codex_cron | none
-    windows_watchdog_task_checked: bool = False
-    windows_watchdog_task_active: bool = False
-    global_supervisor_checked: bool = False
-    global_supervisor_cadence_minutes: int = 0
-    global_registration_checked: bool = False
-    global_registration_active: bool = False
     clean_start_requirement: str = "unknown"  # unknown | required | not_required
     old_route_cleanup_done: bool = False
     reviewer_checked_user_authorization: bool = False
@@ -73,11 +67,10 @@ class State:
     reviewer_checked_live_agent_freshness: bool = False
     reviewer_checked_no_historical_agent_reuse: bool = False
     reviewer_checked_shadow_route: bool = False
-    reviewer_checked_real_heartbeat: bool = False
-    reviewer_checked_real_watchdog: bool = False
-    reviewer_checked_global_supervisor: bool = False
+    reviewer_checked_continuation_evidence: bool = False
     startup_review_status: str = "pending"  # pending | blocked | clean
     worker_remediation_done: bool = False
+    pm_independent_gate_audit_done: bool = False
     pm_start_gate_decision: str = "pending"  # pending | return_to_worker | open
     reviewer_opened_start_gate: bool = False
     work_beyond_startup_allowed: bool = False
@@ -137,13 +130,6 @@ def automated_continuation_facts_ready(state: State) -> bool:
         and state.route_heartbeat_interval_minutes == 1
         and state.actual_heartbeat_automation_checked
         and state.actual_heartbeat_interval_minutes == 1
-        and state.watchdog_kind == "windows_task_scheduler"
-        and state.windows_watchdog_task_checked
-        and state.windows_watchdog_task_active
-        and state.global_supervisor_checked
-        and state.global_supervisor_cadence_minutes == 30
-        and state.global_registration_checked
-        and state.global_registration_active
     )
 
 
@@ -185,16 +171,12 @@ def reviewer_fact_scope_complete(state: State) -> bool:
             and state.reviewer_checked_live_agent_freshness
             and state.reviewer_checked_no_historical_agent_reuse
         )
-    continuation_scope = (
-        state.reviewer_checked_real_heartbeat
-        and state.reviewer_checked_real_watchdog
-        and state.reviewer_checked_global_supervisor
-    )
-    if state.scheduled_continuation_answer == "manual":
+    continuation_scope = state.reviewer_checked_continuation_evidence
+    if state.scheduled_continuation_answer == "allow":
         continuation_scope = (
-            state.reviewer_checked_real_heartbeat
-            and state.reviewer_checked_real_watchdog
-            and state.reviewer_checked_global_supervisor
+            continuation_scope
+            and state.actual_heartbeat_automation_checked
+            and state.actual_heartbeat_interval_minutes == 1
         )
     return (
         state.reviewer_checked_user_authorization
@@ -223,6 +205,7 @@ def startup_ready_for_pm_open(state: State) -> bool:
         and cleanup_matches_request(state)
         and reviewer_fact_scope_complete(state)
         and state.startup_review_status == "clean"
+        and state.pm_independent_gate_audit_done
         and not state.reviewer_opened_start_gate
         and not state.shadow_route_detected
     )
@@ -318,20 +301,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if state.scheduled_continuation_answer == "allow" and not state.automated_continuation_ready:
         yield Transition(
-            "automated_continuation_bundle_factually_verified",
+            "automated_heartbeat_factually_verified",
             replace(
                 state,
                 automated_continuation_ready=True,
                 route_heartbeat_interval_minutes=1,
                 actual_heartbeat_automation_checked=True,
                 actual_heartbeat_interval_minutes=1,
-                watchdog_kind="windows_task_scheduler",
-                windows_watchdog_task_checked=True,
-                windows_watchdog_task_active=True,
-                global_supervisor_checked=True,
-                global_supervisor_cadence_minutes=30,
-                global_registration_checked=True,
-                global_registration_active=True,
             ),
         )
         return
@@ -359,9 +335,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_checked_live_agent_freshness=True,
                 reviewer_checked_no_historical_agent_reuse=True,
                 reviewer_checked_shadow_route=True,
-                reviewer_checked_real_heartbeat=True,
-                reviewer_checked_real_watchdog=True,
-                reviewer_checked_global_supervisor=True,
+                reviewer_checked_continuation_evidence=True,
             ),
         )
         return
@@ -390,10 +364,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_checked_live_agent_freshness=False,
                 reviewer_checked_no_historical_agent_reuse=False,
                 reviewer_checked_shadow_route=False,
-                reviewer_checked_real_heartbeat=False,
-                reviewer_checked_real_watchdog=False,
-                reviewer_checked_global_supervisor=False,
+                reviewer_checked_continuation_evidence=False,
+                pm_independent_gate_audit_done=False,
             ),
+        )
+        return
+    if (
+        state.startup_review_status == "clean"
+        and not state.pm_independent_gate_audit_done
+        and state.pm_start_gate_decision == "pending"
+    ):
+        yield Transition(
+            "pm_independently_audited_startup_gate",
+            replace(state, pm_independent_gate_audit_done=True),
         )
         return
     if state.startup_review_status == "clean" and state.pm_start_gate_decision == "pending":
@@ -459,9 +442,11 @@ def invariant_failures(state: State) -> list[str]:
     if state.startup_review_status == "clean" and not reviewer_fact_scope_complete(state):
         failures.append("reviewer wrote a clean startup report without independently checking required facts")
     if state.pm_start_gate_decision == "open" and not startup_ready_for_pm_open(state):
-        failures.append("PM opened startup without a current clean factual reviewer report and verified startup facts")
+        failures.append("PM opened startup without a current clean factual reviewer report, verified startup facts, and independent PM audit")
     if state.pm_start_gate_decision == "open" and state.startup_review_status != "clean":
         failures.append("PM opened startup without a clean reviewer report")
+    if state.pm_start_gate_decision == "open" and not state.pm_independent_gate_audit_done:
+        failures.append("PM opened startup without independently auditing startup gate evidence")
     if state.pm_start_gate_decision == "open" and not cleanup_matches_request(state):
         failures.append("PM opened startup before old-route cleanup matched the user request")
     if state.pm_start_gate_decision == "open" and not run_isolation_ready(state):
@@ -516,7 +501,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.automated_continuation_ready and state.scheduled_continuation_answer != "allow":
         failures.append("automated continuation was recorded without the user's scheduled-continuation answer")
     if state.scheduled_continuation_answer == "allow" and state.startup_review_status == "clean" and not automated_continuation_facts_ready(state):
-        failures.append("reviewer accepted automated continuation without one-minute route heartbeat, Windows watchdog task, and 30-minute global supervisor facts")
+        failures.append("reviewer accepted automated continuation without verified one-minute route heartbeat facts")
     if work_started(state) and not state.work_beyond_startup_allowed:
         failures.append("work beyond startup started before PM allowed work from the factual reviewer report")
     if state.shadow_route_detected and state.work_beyond_startup_allowed:
@@ -555,13 +540,6 @@ def _ready_base(**changes: object) -> State:
         route_heartbeat_interval_minutes=1,
         actual_heartbeat_automation_checked=True,
         actual_heartbeat_interval_minutes=1,
-        watchdog_kind="windows_task_scheduler",
-        windows_watchdog_task_checked=True,
-        windows_watchdog_task_active=True,
-        global_supervisor_checked=True,
-        global_supervisor_cadence_minutes=30,
-        global_registration_checked=True,
-        global_registration_active=True,
         clean_start_requirement="not_required",
         reviewer_checked_user_authorization=True,
         reviewer_checked_route_state_frontier=True,
@@ -572,10 +550,9 @@ def _ready_base(**changes: object) -> State:
         reviewer_checked_live_agent_freshness=True,
         reviewer_checked_no_historical_agent_reuse=True,
         reviewer_checked_shadow_route=True,
-        reviewer_checked_real_heartbeat=True,
-        reviewer_checked_real_watchdog=True,
-        reviewer_checked_global_supervisor=True,
+        reviewer_checked_continuation_evidence=True,
         startup_review_status="clean",
+        pm_independent_gate_audit_done=True,
     )
     return replace(base, **changes)
 
@@ -591,9 +568,7 @@ def hazard_states() -> dict[str, State]:
             explicit_user_answer_recorded=True,
         ),
         "reviewer_clean_without_fact_checks": _ready_base(
-            reviewer_checked_real_heartbeat=False,
-            reviewer_checked_real_watchdog=False,
-            reviewer_checked_global_supervisor=False,
+            reviewer_checked_continuation_evidence=False,
         ),
         "reviewer_clean_without_run_isolation_check": _ready_base(
             reviewer_checked_run_isolation=False,
@@ -623,10 +598,8 @@ def hazard_states() -> dict[str, State]:
             route_heartbeat_interval_minutes=30,
             actual_heartbeat_interval_minutes=30,
         ),
-        "reviewer_clean_accepts_codex_watchdog": _ready_base(watchdog_kind="codex_cron"),
-        "reviewer_clean_without_windows_task": _ready_base(windows_watchdog_task_checked=False, windows_watchdog_task_active=False),
-        "reviewer_clean_without_global_supervisor": _ready_base(global_supervisor_checked=False, global_registration_active=False),
         "reviewer_directly_opens_start_gate": _ready_base(reviewer_opened_start_gate=True, work_beyond_startup_allowed=True),
+        "pm_opens_without_independent_gate_audit": _ready_base(pm_independent_gate_audit_done=False, pm_start_gate_decision="open", work_beyond_startup_allowed=True),
         "pm_opens_without_reviewer_report": _ready_base(startup_review_status="pending", pm_start_gate_decision="open", work_beyond_startup_allowed=True),
         "pm_opens_blocked_report": _ready_base(startup_review_status="blocked", pm_start_gate_decision="open", work_beyond_startup_allowed=True),
         "clean_start_without_cleanup": _ready_base(clean_start_requirement="required", old_route_cleanup_done=False, pm_start_gate_decision="open", work_beyond_startup_allowed=True),

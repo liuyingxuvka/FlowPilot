@@ -21,14 +21,19 @@
     "routes_root": ".flowpilot/runs/run-001/routes",
     "crew_ledger": ".flowpilot/runs/run-001/crew_ledger.json",
     "crew_memory_root": ".flowpilot/runs/run-001/crew_memory",
+    "material_intake_packet": ".flowpilot/runs/run-001/material_intake_packet.json",
+    "local_skill_inventory": ".flowpilot/runs/run-001/local_skill_inventory.json",
+    "pm_material_understanding": ".flowpilot/runs/run-001/pm_material_understanding.json",
+    "product_function_architecture": ".flowpilot/runs/run-001/product_function_architecture.json",
+    "pm_child_skill_selection": ".flowpilot/runs/run-001/pm_child_skill_selection.json",
     "startup_review": ".flowpilot/runs/run-001/startup_review/latest.json",
     "startup_pm_gate": ".flowpilot/runs/run-001/startup_pm_gate/latest.json",
     "evidence_root": ".flowpilot/runs/run-001/evidence",
     "checkpoints_root": ".flowpilot/runs/run-001/checkpoints",
     "diagrams_root": ".flowpilot/runs/run-001/diagrams",
-    "watchdog_root": ".flowpilot/runs/run-001/watchdog",
     "lifecycle_root": ".flowpilot/runs/run-001/lifecycle",
-    "busy_lease": ".flowpilot/runs/run-001/busy_lease.json"
+    "flowpilot_skill_improvement_observations": ".flowpilot/runs/run-001/flowpilot_skill_improvement_observations.jsonl",
+    "flowpilot_skill_improvement_report": ".flowpilot/runs/run-001/flowpilot_skill_improvement_report.json"
   },
   "prior_work_import": {
     "enabled": false,

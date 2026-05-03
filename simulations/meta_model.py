@@ -15,6 +15,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 TARGET_CHUNKS = 2
+TARGET_PARENT_NODES = 2
 CREW_SIZE = 6
 MAX_ROUTE_REVISIONS = 2
 MAX_IMPL_RETRIES = 1
@@ -23,6 +24,7 @@ MAX_STANDARD_EXPANSIONS = 1
 MAX_QUALITY_ROUTE_RAISES = 1
 MAX_QUALITY_REWORKS = 1
 MAX_COMPOSITE_STRUCTURAL_REPAIRS = 1
+MAX_TERMINAL_BACKWARD_REPLAY_REPAIRS = 1
 MIN_FULL_GRILLME_QUESTIONS_PER_LAYER = 100
 MIN_FOCUSED_GRILLME_QUESTIONS = 20
 MAX_FOCUSED_GRILLME_QUESTIONS = 50
@@ -92,7 +94,10 @@ class State:
     material_sources_scanned: bool = False
     material_source_summaries_written: bool = False
     material_source_quality_classified: bool = False
+    local_skill_inventory_written: bool = False
+    local_skill_inventory_candidate_classified: bool = False
     material_intake_packet_written: bool = False
+    material_reviewer_direct_source_probe_done: bool = False
     material_reviewer_sufficiency_checked: bool = False
     material_reviewer_sufficiency_approved: bool = False
     pm_material_understanding_memo_written: bool = False
@@ -106,10 +111,22 @@ class State:
     product_function_gap_review_done: bool = False
     product_function_negative_scope_written: bool = False
     product_function_acceptance_matrix_written: bool = False
+    root_acceptance_thresholds_defined: bool = False
+    root_acceptance_proof_matrix_written: bool = False
+    standard_scenario_pack_selected: bool = False
+    product_architecture_officer_adversarial_probe_done: bool = False
     product_function_architecture_product_officer_approved: bool = False
+    product_architecture_reviewer_adversarial_probe_done: bool = False
     product_function_architecture_reviewer_challenged: bool = False
     visible_user_flow_diagram_emitted: bool = False
     user_flow_diagram_refreshed: bool = False
+    user_flow_diagram_chat_display_required: bool = False
+    user_flow_diagram_chat_displayed: bool = False
+    user_flow_diagram_return_edge_required: bool = False
+    user_flow_diagram_return_edge_present: bool = False
+    user_flow_diagram_reviewer_display_checked: bool = False
+    user_flow_diagram_reviewer_route_match_checked: bool = False
+    raw_flowguard_mermaid_used_as_user_flow: bool = False
     dependency_plan_recorded: bool = False
     future_installs_deferred: bool = False
     contract_frozen: bool = False
@@ -125,12 +142,19 @@ class State:
     crew_ledger_written: bool = False
     role_identity_protocol_recorded: bool = False
     pm_flowguard_delegation_policy_recorded: bool = False
+    officer_owned_async_modeling_policy_recorded: bool = False
+    officer_model_report_provenance_policy_recorded: bool = False
+    main_executor_parallel_prep_boundary_recorded: bool = False
+    independent_approval_protocol_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
     pm_initial_route_decision_recorded: bool = False
+    pm_child_skill_selection_manifest_written: bool = False
+    pm_child_skill_selection_scope_decisions_recorded: bool = False
     child_skill_route_design_discovery_started: bool = False
     child_skill_initial_gate_manifest_extracted: bool = False
     child_skill_gate_approvers_assigned: bool = False
+    child_skill_manifest_independent_validation_done: bool = False
     child_skill_manifest_reviewer_reviewed: bool = False
     child_skill_manifest_process_officer_approved: bool = False
     child_skill_manifest_product_officer_approved: bool = False
@@ -177,19 +201,9 @@ class State:
     startup_reviewer_checked_no_historical_agent_reuse: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
+    startup_pm_independent_gate_audit_done: bool = False
     pm_start_gate_opened: bool = False
     work_beyond_startup_allowed: bool = False
-    external_watchdog_policy_recorded: bool = False
-    external_watchdog_busy_lease_policy_recorded: bool = False
-    external_watchdog_busy_lease_autowrap_policy_recorded: bool = False
-    external_watchdog_source_drift_policy_recorded: bool = False
-    external_watchdog_automation_created: bool = False
-    external_watchdog_hidden_noninteractive_configured: bool = False
-    external_watchdog_active: bool = False
-    global_watchdog_supervisor_checked: bool = False
-    global_watchdog_supervisor_singleton_ready: bool = False
-    global_watchdog_supervisor_cadence_minutes: int = 0
-    external_watchdog_stopped_before_heartbeat: bool = False
     terminal_lifecycle_frontier_written: bool = False
     lifecycle_reconciliation_done: bool = False
     controlled_stop_notice_recorded: bool = False
@@ -203,6 +217,11 @@ class State:
     frontier_version: int = 0
     plan_version: int = 0
     flowguard_process_design_done: bool = False
+    flowguard_officer_model_adversarial_probe_done: bool = False
+    flowguard_model_report_risk_tiers_done: bool = False
+    flowguard_model_report_pm_review_agenda_done: bool = False
+    flowguard_model_report_toolchain_recommendations_done: bool = False
+    flowguard_model_report_confidence_boundary_done: bool = False
     candidate_route_tree_generated: bool = False
     root_route_model_checked: bool = False
     root_route_model_process_officer_approved: bool = False
@@ -215,6 +234,8 @@ class State:
     parent_focused_interrogation_done: bool = False
     parent_focused_interrogation_questions: int = 0
     parent_focused_interrogation_scope_id: str = ""
+    parent_backward_structural_trigger_rule_recorded: bool = False
+    parent_backward_review_targets_enumerated: bool = False
     unfinished_current_node_recovery_checked: bool = False
     active_node: str = "new"
 
@@ -224,6 +245,8 @@ class State:
     node_focused_interrogation_scope_id: str = ""
     node_product_function_model_checked: bool = False
     node_product_function_model_product_officer_approved: bool = False
+    node_acceptance_plan_written: bool = False
+    node_acceptance_risk_experiments_mapped: bool = False
     lightweight_self_check_done: bool = False
     lightweight_self_check_questions: int = 0
     lightweight_self_check_scope_id: str = ""
@@ -235,8 +258,10 @@ class State:
     node_human_review_context_loaded: bool = False
     node_human_neutral_observation_written: bool = False
     node_human_manual_experiments_run: bool = False
+    node_reviewer_independent_probe_done: bool = False
     node_human_inspection_passed: bool = False
     node_human_review_reviewer_approved: bool = False
+    current_node_skill_improvement_check_done: bool = False
     node_human_inspections_passed: int = 0
     inspection_issue_grilled: bool = False
     pm_repair_decision_interrogations: int = 0
@@ -245,9 +270,12 @@ class State:
     composite_child_evidence_replayed: bool = False
     composite_backward_neutral_observation_written: bool = False
     composite_structure_decision_recorded: bool = False
+    composite_reviewer_independent_probe_done: bool = False
     composite_backward_human_review_passed: bool = False
     composite_backward_review_reviewer_approved: bool = False
     composite_backward_reviews_passed: int = 0
+    composite_backward_pm_segment_decision_recorded: bool = False
+    composite_backward_pm_segment_decisions_recorded: int = 0
     composite_issue_grilled: bool = False
     composite_issue_strategy: str = "none"
     composite_structural_route_repairs: int = 0
@@ -262,7 +290,7 @@ class State:
     checkpoint_written: bool = False
     role_memory_refreshed_after_work: bool = False
 
-    issue: str = "none"  # none | model_gap | inspection_failure | composite_backward_failure | impl_failure | unknown_failure | no_progress
+    issue: str = "none"  # none | model_gap | inspection_failure | composite_backward_failure | terminal_backward_review_failure | impl_failure | unknown_failure | no_progress
     route_revisions: int = 0
     impl_retries: int = 0
     experiments: int = 0
@@ -283,28 +311,46 @@ class State:
     completion_visible_roadmap_emitted: bool = False
     final_feature_matrix_review_done: bool = False
     final_acceptance_matrix_review_done: bool = False
+    final_standard_scenario_pack_replayed: bool = False
     final_quality_candidate_review_done: bool = False
     final_product_function_model_replayed: bool = False
+    final_product_model_officer_adversarial_probe_done: bool = False
     final_product_function_model_product_officer_approved: bool = False
     final_human_review_context_loaded: bool = False
     final_human_neutral_observation_written: bool = False
     final_human_manual_experiments_run: bool = False
+    final_human_reviewer_independent_probe_done: bool = False
     final_human_inspection_passed: bool = False
     final_human_review_reviewer_approved: bool = False
     final_route_wide_gate_ledger_current_route_scanned: bool = False
     final_route_wide_gate_ledger_effective_nodes_resolved: bool = False
     final_route_wide_gate_ledger_child_skill_gates_collected: bool = False
     final_route_wide_gate_ledger_human_review_gates_collected: bool = False
+    final_route_wide_gate_ledger_parent_backward_replays_collected: bool = False
     final_route_wide_gate_ledger_product_process_gates_collected: bool = False
     final_route_wide_gate_ledger_resource_lineage_resolved: bool = False
     final_route_wide_gate_ledger_stale_evidence_checked: bool = False
     final_route_wide_gate_ledger_superseded_nodes_explained: bool = False
     final_route_wide_gate_ledger_unresolved_count_zero: bool = False
+    final_residual_risk_triage_done: bool = False
+    final_residual_risk_unresolved_count_zero: bool = False
     final_route_wide_gate_ledger_pm_built: bool = False
+    terminal_human_backward_review_map_built: bool = False
+    terminal_human_backward_replay_started_from_delivered_product: bool = False
+    terminal_human_backward_root_acceptance_reviewed: bool = False
+    terminal_human_backward_parent_nodes_reviewed: bool = False
+    terminal_human_backward_leaf_nodes_reviewed: bool = False
+    terminal_human_backward_pm_segment_decisions_recorded: bool = False
+    terminal_human_backward_repair_restart_policy_recorded: bool = False
+    terminal_human_backward_replay_repairs: int = 0
     final_route_wide_gate_ledger_reviewer_backward_checked: bool = False
+    final_ledger_pm_independent_audit_done: bool = False
     final_route_wide_gate_ledger_pm_completion_approved: bool = False
     high_value_work_review: str = "unknown"  # unknown | exhausted
     standard_expansions: int = 0
+    terminal_closure_suite_run: bool = False
+    terminal_state_and_evidence_refreshed: bool = False
+    flowpilot_skill_improvement_report_written: bool = False
     final_report_emitted: bool = False
     pm_completion_decision_recorded: bool = False
     heartbeat_records: int = 0
@@ -341,6 +387,7 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "node_human_review_context_loaded": False,
         "node_human_neutral_observation_written": False,
         "node_human_manual_experiments_run": False,
+        "node_reviewer_independent_probe_done": False,
         "node_human_inspection_passed": False,
         "node_human_review_reviewer_approved": False,
         "inspection_issue_grilled": False,
@@ -348,8 +395,10 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "composite_child_evidence_replayed": False,
         "composite_backward_neutral_observation_written": False,
         "composite_structure_decision_recorded": False,
+        "composite_reviewer_independent_probe_done": False,
         "composite_backward_human_review_passed": False,
         "composite_backward_review_reviewer_approved": False,
+        "composite_backward_pm_segment_decision_recorded": False,
         "composite_issue_grilled": False,
         "composite_issue_strategy": "none",
     }
@@ -376,6 +425,8 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "plan_sync_method_recorded": False,
             "visible_plan_has_runway_depth": False,
             "pm_node_decision_recorded": False,
+            "node_acceptance_plan_written": False,
+            "node_acceptance_risk_experiments_mapped": False,
         }
     )
     return gates
@@ -387,14 +438,28 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_effective_nodes_resolved": False,
         "final_route_wide_gate_ledger_child_skill_gates_collected": False,
         "final_route_wide_gate_ledger_human_review_gates_collected": False,
+        "final_route_wide_gate_ledger_parent_backward_replays_collected": False,
         "final_route_wide_gate_ledger_product_process_gates_collected": False,
         "final_route_wide_gate_ledger_resource_lineage_resolved": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
+        "final_residual_risk_triage_done": False,
+        "final_residual_risk_unresolved_count_zero": False,
         "final_route_wide_gate_ledger_pm_built": False,
+        "terminal_human_backward_review_map_built": False,
+        "terminal_human_backward_replay_started_from_delivered_product": False,
+        "terminal_human_backward_root_acceptance_reviewed": False,
+        "terminal_human_backward_parent_nodes_reviewed": False,
+        "terminal_human_backward_leaf_nodes_reviewed": False,
+        "terminal_human_backward_pm_segment_decisions_recorded": False,
+        "terminal_human_backward_repair_restart_policy_recorded": False,
         "final_route_wide_gate_ledger_reviewer_backward_checked": False,
+        "final_ledger_pm_independent_audit_done": False,
         "final_route_wide_gate_ledger_pm_completion_approved": False,
+        "terminal_closure_suite_run": False,
+        "terminal_state_and_evidence_refreshed": False,
+        "flowpilot_skill_improvement_report_written": False,
     }
 
 
@@ -457,7 +522,12 @@ def _product_function_architecture_ready(state: State) -> bool:
         and state.product_function_gap_review_done
         and state.product_function_negative_scope_written
         and state.product_function_acceptance_matrix_written
+        and state.root_acceptance_thresholds_defined
+        and state.root_acceptance_proof_matrix_written
+        and state.standard_scenario_pack_selected
+        and state.product_architecture_officer_adversarial_probe_done
         and state.product_function_architecture_product_officer_approved
+        and state.product_architecture_reviewer_adversarial_probe_done
         and state.product_function_architecture_reviewer_challenged
     )
 
@@ -468,7 +538,10 @@ def _material_handoff_ready(state: State) -> bool:
         and state.material_sources_scanned
         and state.material_source_summaries_written
         and state.material_source_quality_classified
+        and state.local_skill_inventory_written
+        and state.local_skill_inventory_candidate_classified
         and state.material_intake_packet_written
+        and state.material_reviewer_direct_source_probe_done
         and state.material_reviewer_sufficiency_checked
         and state.material_reviewer_sufficiency_approved
         and state.pm_material_understanding_memo_written
@@ -490,6 +563,10 @@ def _crew_ready(state: State) -> bool:
         and state.crew_ledger_written
         and state.role_identity_protocol_recorded
         and state.pm_flowguard_delegation_policy_recorded
+        and state.officer_owned_async_modeling_policy_recorded
+        and state.officer_model_report_provenance_policy_recorded
+        and state.main_executor_parallel_prep_boundary_recorded
+        and state.independent_approval_protocol_recorded
         and state.crew_memory_policy_written
         and state.crew_memory_packets_written == CREW_SIZE
     )
@@ -503,24 +580,11 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.heartbeat_schedule_created
         and state.route_heartbeat_interval_minutes == 1
         and state.stable_heartbeat_launcher_recorded
-        and state.external_watchdog_policy_recorded
-        and state.external_watchdog_busy_lease_policy_recorded
-        and state.external_watchdog_busy_lease_autowrap_policy_recorded
-        and state.external_watchdog_source_drift_policy_recorded
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_hidden_noninteractive_configured
-        and state.global_watchdog_supervisor_checked
-        and state.global_watchdog_supervisor_singleton_ready
-        and state.global_watchdog_supervisor_cadence_minutes == 30
     )
 
 
 def _automated_continuation_ready(state: State) -> bool:
-    return (
-        _automated_continuation_configured(state)
-        and state.external_watchdog_active
-        and not state.external_watchdog_stopped_before_heartbeat
-    )
+    return _automated_continuation_configured(state)
 
 
 def _manual_resume_ready(state: State) -> bool:
@@ -531,16 +595,6 @@ def _manual_resume_ready(state: State) -> bool:
         and not state.heartbeat_schedule_created
         and state.route_heartbeat_interval_minutes == 0
         and not state.stable_heartbeat_launcher_recorded
-        and not state.external_watchdog_policy_recorded
-        and not state.external_watchdog_busy_lease_policy_recorded
-        and not state.external_watchdog_busy_lease_autowrap_policy_recorded
-        and not state.external_watchdog_source_drift_policy_recorded
-        and not state.external_watchdog_automation_created
-        and not state.external_watchdog_hidden_noninteractive_configured
-        and not state.external_watchdog_active
-        and not state.global_watchdog_supervisor_checked
-        and not state.global_watchdog_supervisor_singleton_ready
-        and state.global_watchdog_supervisor_cadence_minutes == 0
     )
 
 
@@ -581,14 +635,30 @@ def _live_subagent_startup_resolved(state: State) -> bool:
     )
 
 
+def _user_flow_display_gate_passed(state: State) -> bool:
+    return (
+        state.user_flow_diagram_refreshed
+        and state.visible_user_flow_diagram_emitted
+        and not state.raw_flowguard_mermaid_used_as_user_flow
+        and (
+            not state.user_flow_diagram_chat_display_required
+            or state.user_flow_diagram_chat_displayed
+        )
+        and (
+            not state.user_flow_diagram_return_edge_required
+            or state.user_flow_diagram_return_edge_present
+        )
+        and state.user_flow_diagram_reviewer_display_checked
+        and state.user_flow_diagram_reviewer_route_match_checked
+    )
+
+
 def _continuation_lifecycle_valid(state: State) -> bool:
     return (
         _continuation_ready(state)
         or (
             _automated_continuation_configured(state)
             and state.lifecycle_reconciliation_done
-            and state.external_watchdog_stopped_before_heartbeat
-            and not state.external_watchdog_active
         )
     )
 
@@ -608,6 +678,7 @@ def _startup_pm_gate_ready(state: State) -> bool:
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_pm_independent_gate_audit_done
         and state.pm_start_gate_opened
     )
 
@@ -616,14 +687,11 @@ def _terminal_continuation_reconciled(state: State) -> bool:
     if _automated_continuation_configured(state):
         return (
             state.lifecycle_reconciliation_done
-            and state.external_watchdog_stopped_before_heartbeat
-            and not state.external_watchdog_active
             and state.terminal_lifecycle_frontier_written
         )
     if _manual_resume_ready(state):
         return (
             state.lifecycle_reconciliation_done
-            and not state.external_watchdog_active
             and state.terminal_lifecycle_frontier_written
         )
     return False
@@ -635,13 +703,24 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_effective_nodes_resolved
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
+        and state.final_route_wide_gate_ledger_parent_backward_replays_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_triage_done
+        and state.final_residual_risk_unresolved_count_zero
         and state.final_route_wide_gate_ledger_pm_built
+        and state.terminal_human_backward_review_map_built
+        and state.terminal_human_backward_replay_started_from_delivered_product
+        and state.terminal_human_backward_root_acceptance_reviewed
+        and state.terminal_human_backward_parent_nodes_reviewed
+        and state.terminal_human_backward_leaf_nodes_reviewed
+        and state.terminal_human_backward_pm_segment_decisions_recorded
+        and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_reviewer_backward_checked
+        and state.final_ledger_pm_independent_audit_done
         and state.final_route_wide_gate_ledger_pm_completion_approved
     )
 
@@ -667,23 +746,26 @@ def _route_ready(state: State) -> bool:
         and state.child_skill_route_design_discovery_started
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
         and state.child_skill_manifest_process_officer_approved
         and state.child_skill_manifest_product_officer_approved
         and state.child_skill_manifest_pm_approved_for_route
         and _continuation_ready(state)
         and state.flowguard_process_design_done
+        and state.flowguard_officer_model_adversarial_probe_done
         and state.route_version > 0
         and state.route_checked
         and state.root_product_function_model_checked
         and state.strict_gate_obligation_review_model_checked
+        and state.parent_backward_structural_trigger_rule_recorded
+        and state.parent_backward_review_targets_enumerated
         and state.markdown_synced
         and state.execution_frontier_written
         and state.codex_plan_synced
         and state.frontier_version == state.route_version
         and state.plan_version == state.frontier_version
-        and state.user_flow_diagram_refreshed
-        and state.visible_user_flow_diagram_emitted
+        and _user_flow_display_gate_passed(state)
         and _live_subagent_startup_resolved(state)
         and _startup_pm_gate_ready(state)
         and state.work_beyond_startup_allowed
@@ -726,6 +808,7 @@ class AutopilotStep:
         "material_source_summaries_written",
         "material_source_quality_classified",
         "material_intake_packet_written",
+        "material_reviewer_direct_source_probe_done",
         "material_reviewer_sufficiency_checked",
         "material_reviewer_sufficiency_approved",
         "pm_material_understanding_memo_written",
@@ -739,10 +822,22 @@ class AutopilotStep:
         "product_function_gap_review_done",
         "product_function_negative_scope_written",
         "product_function_acceptance_matrix_written",
+        "root_acceptance_thresholds_defined",
+        "root_acceptance_proof_matrix_written",
+        "standard_scenario_pack_selected",
+        "product_architecture_officer_adversarial_probe_done",
         "product_function_architecture_product_officer_approved",
+        "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
         "visible_user_flow_diagram_emitted",
         "user_flow_diagram_refreshed",
+        "user_flow_diagram_chat_display_required",
+        "user_flow_diagram_chat_displayed",
+        "user_flow_diagram_return_edge_required",
+        "user_flow_diagram_return_edge_present",
+        "user_flow_diagram_reviewer_display_checked",
+        "user_flow_diagram_reviewer_route_match_checked",
+        "raw_flowguard_mermaid_used_as_user_flow",
         "dependency_plan_recorded",
         "future_installs_deferred",
         "contract_frozen",
@@ -757,12 +852,17 @@ class AutopilotStep:
         "crew_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
+        "officer_owned_async_modeling_policy_recorded",
+        "officer_model_report_provenance_policy_recorded",
+        "main_executor_parallel_prep_boundary_recorded",
+        "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
         "pm_initial_route_decision_recorded",
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
         "child_skill_gate_approvers_assigned",
+        "child_skill_manifest_independent_validation_done",
         "child_skill_manifest_reviewer_reviewed",
         "child_skill_manifest_process_officer_approved",
         "child_skill_manifest_product_officer_approved",
@@ -806,24 +906,15 @@ class AutopilotStep:
         "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
+        "startup_pm_independent_gate_audit_done",
         "pm_start_gate_opened",
         "work_beyond_startup_allowed",
-        "external_watchdog_policy_recorded",
-        "external_watchdog_busy_lease_policy_recorded",
-        "external_watchdog_busy_lease_autowrap_policy_recorded",
-        "external_watchdog_source_drift_policy_recorded",
-        "external_watchdog_automation_created",
-        "external_watchdog_hidden_noninteractive_configured",
-        "external_watchdog_active",
-        "global_watchdog_supervisor_checked",
-        "global_watchdog_supervisor_singleton_ready",
-        "global_watchdog_supervisor_cadence_minutes",
-        "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
         "flowguard_process_design_done",
+        "flowguard_officer_model_adversarial_probe_done",
         "candidate_route_tree_generated",
         "root_route_model_checked",
         "root_route_model_process_officer_approved",
@@ -836,6 +927,8 @@ class AutopilotStep:
         "parent_focused_interrogation_done",
         "parent_focused_interrogation_questions",
         "parent_focused_interrogation_scope_id",
+        "parent_backward_structural_trigger_rule_recorded",
+        "parent_backward_review_targets_enumerated",
         "unfinished_current_node_recovery_checked",
         "route_checked",
         "markdown_synced",
@@ -849,6 +942,8 @@ class AutopilotStep:
         "node_focused_interrogation_scope_id",
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
+        "node_acceptance_plan_written",
+        "node_acceptance_risk_experiments_mapped",
         "lightweight_self_check_done",
         "lightweight_self_check_questions",
         "lightweight_self_check_scope_id",
@@ -860,8 +955,10 @@ class AutopilotStep:
         "node_human_review_context_loaded",
         "node_human_neutral_observation_written",
         "node_human_manual_experiments_run",
+        "node_reviewer_independent_probe_done",
         "node_human_inspection_passed",
         "node_human_review_reviewer_approved",
+        "current_node_skill_improvement_check_done",
         "node_human_inspections_passed",
         "inspection_issue_grilled",
         "human_inspection_repairs",
@@ -869,9 +966,12 @@ class AutopilotStep:
         "composite_child_evidence_replayed",
         "composite_backward_neutral_observation_written",
         "composite_structure_decision_recorded",
+        "composite_reviewer_independent_probe_done",
         "composite_backward_human_review_passed",
         "composite_backward_review_reviewer_approved",
         "composite_backward_reviews_passed",
+        "composite_backward_pm_segment_decision_recorded",
+        "composite_backward_pm_segment_decisions_recorded",
         "composite_issue_grilled",
         "composite_issue_strategy",
         "composite_structural_route_repairs",
@@ -895,26 +995,44 @@ class AutopilotStep:
         "completion_visible_roadmap_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
+        "final_standard_scenario_pack_replayed",
         "final_quality_candidate_review_done",
         "final_product_function_model_replayed",
+        "final_product_model_officer_adversarial_probe_done",
         "final_product_function_model_product_officer_approved",
         "final_human_review_context_loaded",
         "final_human_neutral_observation_written",
         "final_human_manual_experiments_run",
+        "final_human_reviewer_independent_probe_done",
         "final_human_inspection_passed",
         "final_human_review_reviewer_approved",
         "final_route_wide_gate_ledger_current_route_scanned",
         "final_route_wide_gate_ledger_effective_nodes_resolved",
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
+        "final_route_wide_gate_ledger_parent_backward_replays_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
         "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
+        "final_residual_risk_triage_done",
+        "final_residual_risk_unresolved_count_zero",
         "final_route_wide_gate_ledger_pm_built",
+        "terminal_human_backward_review_map_built",
+        "terminal_human_backward_replay_started_from_delivered_product",
+        "terminal_human_backward_root_acceptance_reviewed",
+        "terminal_human_backward_parent_nodes_reviewed",
+        "terminal_human_backward_leaf_nodes_reviewed",
+        "terminal_human_backward_pm_segment_decisions_recorded",
+        "terminal_human_backward_repair_restart_policy_recorded",
+        "terminal_human_backward_replay_repairs",
         "final_route_wide_gate_ledger_reviewer_backward_checked",
+        "final_ledger_pm_independent_audit_done",
         "final_route_wide_gate_ledger_pm_completion_approved",
+        "terminal_closure_suite_run",
+        "terminal_state_and_evidence_refreshed",
+        "flowpilot_skill_improvement_report_written",
         "pm_completion_decision_recorded",
     )
     writes = (
@@ -948,6 +1066,7 @@ class AutopilotStep:
         "material_source_summaries_written",
         "material_source_quality_classified",
         "material_intake_packet_written",
+        "material_reviewer_direct_source_probe_done",
         "material_reviewer_sufficiency_checked",
         "material_reviewer_sufficiency_approved",
         "pm_material_understanding_memo_written",
@@ -961,10 +1080,22 @@ class AutopilotStep:
         "product_function_gap_review_done",
         "product_function_negative_scope_written",
         "product_function_acceptance_matrix_written",
+        "root_acceptance_thresholds_defined",
+        "root_acceptance_proof_matrix_written",
+        "standard_scenario_pack_selected",
+        "product_architecture_officer_adversarial_probe_done",
         "product_function_architecture_product_officer_approved",
+        "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
         "visible_user_flow_diagram_emitted",
         "user_flow_diagram_refreshed",
+        "user_flow_diagram_chat_display_required",
+        "user_flow_diagram_chat_displayed",
+        "user_flow_diagram_return_edge_required",
+        "user_flow_diagram_return_edge_present",
+        "user_flow_diagram_reviewer_display_checked",
+        "user_flow_diagram_reviewer_route_match_checked",
+        "raw_flowguard_mermaid_used_as_user_flow",
         "dependency_plan_recorded",
         "future_installs_deferred",
         "contract_frozen",
@@ -979,10 +1110,15 @@ class AutopilotStep:
         "crew_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
+        "officer_owned_async_modeling_policy_recorded",
+        "officer_model_report_provenance_policy_recorded",
+        "main_executor_parallel_prep_boundary_recorded",
+        "independent_approval_protocol_recorded",
         "pm_initial_route_decision_recorded",
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
         "child_skill_gate_approvers_assigned",
+        "child_skill_manifest_independent_validation_done",
         "child_skill_manifest_reviewer_reviewed",
         "child_skill_manifest_process_officer_approved",
         "child_skill_manifest_product_officer_approved",
@@ -1020,19 +1156,9 @@ class AutopilotStep:
         "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
+        "startup_pm_independent_gate_audit_done",
         "pm_start_gate_opened",
         "work_beyond_startup_allowed",
-        "external_watchdog_policy_recorded",
-        "external_watchdog_busy_lease_policy_recorded",
-        "external_watchdog_busy_lease_autowrap_policy_recorded",
-        "external_watchdog_source_drift_policy_recorded",
-        "external_watchdog_automation_created",
-        "external_watchdog_hidden_noninteractive_configured",
-        "external_watchdog_active",
-        "global_watchdog_supervisor_checked",
-        "global_watchdog_supervisor_singleton_ready",
-        "global_watchdog_supervisor_cadence_minutes",
-        "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
@@ -1045,6 +1171,7 @@ class AutopilotStep:
         "frontier_version",
         "plan_version",
         "flowguard_process_design_done",
+        "flowguard_officer_model_adversarial_probe_done",
         "candidate_route_tree_generated",
         "root_route_model_checked",
         "root_route_model_process_officer_approved",
@@ -1057,6 +1184,8 @@ class AutopilotStep:
         "parent_focused_interrogation_done",
         "parent_focused_interrogation_questions",
         "parent_focused_interrogation_scope_id",
+        "parent_backward_structural_trigger_rule_recorded",
+        "parent_backward_review_targets_enumerated",
         "unfinished_current_node_recovery_checked",
         "active_node",
         "chunk_state",
@@ -1065,6 +1194,8 @@ class AutopilotStep:
         "node_focused_interrogation_scope_id",
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
+        "node_acceptance_plan_written",
+        "node_acceptance_risk_experiments_mapped",
         "lightweight_self_check_done",
         "lightweight_self_check_questions",
         "lightweight_self_check_scope_id",
@@ -1076,8 +1207,10 @@ class AutopilotStep:
         "node_human_review_context_loaded",
         "node_human_neutral_observation_written",
         "node_human_manual_experiments_run",
+        "node_reviewer_independent_probe_done",
         "node_human_inspection_passed",
         "node_human_review_reviewer_approved",
+        "current_node_skill_improvement_check_done",
         "node_human_inspections_passed",
         "inspection_issue_grilled",
         "human_inspection_repairs",
@@ -1085,9 +1218,12 @@ class AutopilotStep:
         "composite_child_evidence_replayed",
         "composite_backward_neutral_observation_written",
         "composite_structure_decision_recorded",
+        "composite_reviewer_independent_probe_done",
         "composite_backward_human_review_passed",
         "composite_backward_review_reviewer_approved",
         "composite_backward_reviews_passed",
+        "composite_backward_pm_segment_decision_recorded",
+        "composite_backward_pm_segment_decisions_recorded",
         "composite_issue_grilled",
         "composite_issue_strategy",
         "composite_structural_route_repairs",
@@ -1120,28 +1256,46 @@ class AutopilotStep:
         "completion_visible_roadmap_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
+        "final_standard_scenario_pack_replayed",
         "final_quality_candidate_review_done",
         "final_product_function_model_replayed",
+        "final_product_model_officer_adversarial_probe_done",
         "final_product_function_model_product_officer_approved",
         "final_human_review_context_loaded",
         "final_human_neutral_observation_written",
         "final_human_manual_experiments_run",
+        "final_human_reviewer_independent_probe_done",
         "final_human_inspection_passed",
         "final_human_review_reviewer_approved",
         "final_route_wide_gate_ledger_current_route_scanned",
         "final_route_wide_gate_ledger_effective_nodes_resolved",
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
+        "final_route_wide_gate_ledger_parent_backward_replays_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
         "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
+        "final_residual_risk_triage_done",
+        "final_residual_risk_unresolved_count_zero",
         "final_route_wide_gate_ledger_pm_built",
+        "terminal_human_backward_review_map_built",
+        "terminal_human_backward_replay_started_from_delivered_product",
+        "terminal_human_backward_root_acceptance_reviewed",
+        "terminal_human_backward_parent_nodes_reviewed",
+        "terminal_human_backward_leaf_nodes_reviewed",
+        "terminal_human_backward_pm_segment_decisions_recorded",
+        "terminal_human_backward_repair_restart_policy_recorded",
+        "terminal_human_backward_replay_repairs",
         "final_route_wide_gate_ledger_reviewer_backward_checked",
+        "final_ledger_pm_independent_audit_done",
         "final_route_wide_gate_ledger_pm_completion_approved",
         "high_value_work_review",
         "standard_expansions",
+        "terminal_closure_suite_run",
+        "terminal_state_and_evidence_refreshed",
+        "flowpilot_skill_improvement_report_written",
         "final_report_emitted",
         "pm_completion_decision_recorded",
         "controlled_stop_notice_recorded",
@@ -1214,8 +1368,8 @@ class AutopilotStep:
             )
             yield _step(
                 state,
-                label="default_mode_recorded",
-                action="record explicit user answer selecting the default full-auto mode",
+                label="explicit_full_auto_mode_selected",
+                action="record explicit user answer selecting full-auto mode",
                 mode_selected=True,
                 active_node="await_background_agent_answer",
             )
@@ -1457,8 +1611,48 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="pm_flowguard_delegation_policy_recorded",
-                action="record that the project manager may create structured FlowGuard modeling requests for uncertain process or product decisions and assign them to the process or product FlowGuard officer",
+                action="record that the project manager creates structured FlowGuard modeling requests for uncertain process or product decisions and assigns them to the process or product FlowGuard officer",
                 pm_flowguard_delegation_policy_recorded=True,
+                active_node="record_officer_owned_async_modeling_policy",
+            )
+            return
+
+        if not state.officer_owned_async_modeling_policy_recorded:
+            yield _step(
+                state,
+                label="officer_owned_async_modeling_policy_recorded",
+                action="record that FlowGuard model gates dispatch to officer-owned run directories while the main executor may continue only non-dependent preparation",
+                officer_owned_async_modeling_policy_recorded=True,
+                active_node="record_officer_model_report_provenance_policy",
+            )
+            return
+
+        if not state.officer_model_report_provenance_policy_recorded:
+            yield _step(
+                state,
+                label="officer_model_report_provenance_policy_recorded",
+                action="require officer model reports to prove model author, runner, interpreter, commands, input snapshots, state counts, counterexample inspection, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, blindspots, and decision",
+                officer_model_report_provenance_policy_recorded=True,
+                active_node="record_main_executor_parallel_prep_boundary",
+            )
+            return
+
+        if not state.main_executor_parallel_prep_boundary_recorded:
+            yield _step(
+                state,
+                label="main_executor_parallel_prep_boundary_recorded",
+                action="record that main-executor parallel work during officer modeling cannot satisfy route freeze, implementation, checkpoint, completion, or protected model gates",
+                main_executor_parallel_prep_boundary_recorded=True,
+                active_node="record_independent_approval_protocol",
+            )
+            return
+
+        if not state.independent_approval_protocol_recorded:
+            yield _step(
+                state,
+                label="independent_approval_protocol_recorded",
+                action="record that every PM, reviewer, and FlowGuard officer approval requires independent adversarial validation evidence and cannot be completion-report-only",
+                independent_approval_protocol_recorded=True,
                 active_node="write_crew_memory_packets",
             )
             return
@@ -1514,12 +1708,42 @@ class AutopilotStep:
             )
             return
 
+        if not state.local_skill_inventory_written:
+            yield _step(
+                state,
+                label="local_skill_inventory_written",
+                action="main executor inventories locally available skills and host capabilities as candidate resources before the material packet is finalized",
+                local_skill_inventory_written=True,
+                active_node="classify_local_skill_candidates",
+            )
+            return
+
+        if not state.local_skill_inventory_candidate_classified:
+            yield _step(
+                state,
+                label="local_skill_inventory_candidate_classified",
+                action="main executor classifies local skills as candidate-only resources without treating availability as PM approval to use them",
+                local_skill_inventory_candidate_classified=True,
+                active_node="write_material_intake_packet",
+            )
+            return
+
         if not state.material_intake_packet_written:
             yield _step(
                 state,
                 label="material_intake_packet_written",
-                action="main executor writes the Material Intake Packet as descriptive startup evidence",
+                action="main executor writes the Material Intake Packet, including local skill inventory, as descriptive startup evidence",
                 material_intake_packet_written=True,
+                active_node="probe_material_intake_sources",
+            )
+            return
+
+        if not state.material_reviewer_direct_source_probe_done:
+            yield _step(
+                state,
+                label="material_reviewer_direct_source_probe_done",
+                action="human-like reviewer opens or samples actual materials and tests whether the packet could be summary-only before sufficiency approval",
+                material_reviewer_direct_source_probe_done=True,
                 active_node="review_material_intake_packet",
             )
             return
@@ -1650,6 +1874,46 @@ class AutopilotStep:
                 label="product_function_acceptance_matrix_written",
                 action="write a functional acceptance matrix covering inputs, outputs, states, failure cases, and required evidence for each core capability",
                 product_function_acceptance_matrix_written=True,
+                active_node="define_root_acceptance_thresholds",
+            )
+            return
+
+        if not state.root_acceptance_thresholds_defined:
+            yield _step(
+                state,
+                label="root_acceptance_thresholds_defined",
+                action="project manager defines early hard acceptance thresholds for the important root requirements before contract freeze",
+                root_acceptance_thresholds_defined=True,
+                active_node="write_root_acceptance_proof_matrix",
+            )
+            return
+
+        if not state.root_acceptance_proof_matrix_written:
+            yield _step(
+                state,
+                label="root_acceptance_proof_matrix_written",
+                action="project manager writes the root proof matrix mapping each hard requirement to minimum experiment, inspection, evidence, owner, and approver",
+                root_acceptance_proof_matrix_written=True,
+                active_node="select_standard_scenario_pack",
+            )
+            return
+
+        if not state.standard_scenario_pack_selected:
+            yield _step(
+                state,
+                label="standard_scenario_pack_selected",
+                action="project manager selects the standard scenario pack for terminal replay of happy paths, edge cases, regressions, lifecycle, and PM-risk scenarios",
+                standard_scenario_pack_selected=True,
+                active_node="product_officer_probe_product_function_architecture",
+            )
+            return
+
+        if not state.product_architecture_officer_adversarial_probe_done:
+            yield _step(
+                state,
+                label="product_architecture_officer_adversarial_probe_done",
+                action="product FlowGuard officer checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture",
+                product_architecture_officer_adversarial_probe_done=True,
                 active_node="approve_product_function_architecture",
             )
             return
@@ -1660,6 +1924,16 @@ class AutopilotStep:
                 label="product_function_architecture_product_officer_approved",
                 action="product FlowGuard officer approves that the PM product-function architecture is modelable and strong enough to freeze the contract from",
                 product_function_architecture_product_officer_approved=True,
+                active_node="reviewer_probe_product_function_architecture",
+            )
+            return
+
+        if not state.product_architecture_reviewer_adversarial_probe_done:
+            yield _step(
+                state,
+                label="product_architecture_reviewer_adversarial_probe_done",
+                action="human-like reviewer attacks the PM product architecture against user tasks, inspected materials, missing features, unnecessary visible text, and weak failure states",
+                product_architecture_reviewer_adversarial_probe_done=True,
                 active_node="challenge_product_function_architecture",
             )
             return
@@ -1699,7 +1973,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="host_continuation_capability_supported",
-                action="probe host automation capability and confirm real heartbeat, watchdog, and global supervisor setup is supported",
+                action="probe host automation capability and confirm real heartbeat setup is supported",
                 continuation_probe_done=True,
                 host_continuation_supported=True,
                 active_node="create_heartbeat_schedule",
@@ -1707,7 +1981,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="host_continuation_capability_unsupported_manual_resume",
-                action="probe host automation capability, find no real wakeup support, and record manual-resume mode without creating heartbeat, watchdog, or global supervisor automation",
+                action="probe host automation capability, find no real wakeup support, and record manual-resume mode without creating heartbeat automation",
                 continuation_probe_done=True,
                 host_continuation_supported=False,
                 manual_resume_mode_recorded=True,
@@ -1723,61 +1997,6 @@ class AutopilotStep:
                 heartbeat_schedule_created=True,
                 route_heartbeat_interval_minutes=1,
                 stable_heartbeat_launcher_recorded=True,
-                active_node="record_external_watchdog_policy",
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_policy_recorded:
-            yield _step(
-                state,
-                label="external_watchdog_policy_recorded",
-                action="record external watchdog stale threshold, evidence path, and official automation reset action",
-                external_watchdog_policy_recorded=True,
-                active_node="record_busy_lease_autowrap_policy",
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_busy_lease_autowrap_policy_recorded:
-            yield _step(
-                state,
-                label="external_watchdog_busy_lease_autowrap_policy_recorded",
-                action="record busy-lease suppression plus automatic bounded-operation wrapper policy for long commands and waits",
-                external_watchdog_busy_lease_policy_recorded=True,
-                external_watchdog_busy_lease_autowrap_policy_recorded=True,
-                active_node="record_watchdog_source_drift_policy",
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_source_drift_policy_recorded:
-            yield _step(
-                state,
-                label="external_watchdog_source_drift_policy_recorded",
-                action="record watchdog source-status policy: trust state, latest heartbeat, and busy lease only; record frontier/lifecycle drift diagnostics; never inspect live subagent busy state",
-                external_watchdog_source_drift_policy_recorded=True,
-                active_node="ensure_global_watchdog_supervisor",
-            )
-            return
-
-        if state.host_continuation_supported and not state.global_watchdog_supervisor_checked:
-            yield _step(
-                state,
-                label="global_watchdog_supervisor_verified",
-                action="look up the singleton Codex global watchdog supervisor; if none is active and at least one project registration lease is active, create or reactivate exactly one fixed 30-minute cron automation using the canonical automation_update parameter shape",
-                global_watchdog_supervisor_checked=True,
-                global_watchdog_supervisor_singleton_ready=True,
-                global_watchdog_supervisor_cadence_minutes=30,
-                active_node="create_external_watchdog_automation",
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_automation_created:
-            yield _step(
-                state,
-                label="external_watchdog_automation_created",
-                action="create paired external watchdog automation immediately after heartbeat schedule creation with hidden/noninteractive execution",
-                external_watchdog_automation_created=True,
-                external_watchdog_hidden_noninteractive_configured=True,
-                external_watchdog_active=True,
                 active_node="design_flowguard_route",
             )
             return
@@ -1788,6 +2007,26 @@ class AutopilotStep:
                 label="pm_initial_route_decision_recorded",
                 action="ask the project manager to choose the initial route-design direction from the contract, self-interrogation, dependencies, and crew reports",
                 pm_initial_route_decision_recorded=True,
+                active_node="select_child_skills",
+            )
+            return
+
+        if not state.pm_child_skill_selection_manifest_written:
+            yield _step(
+                state,
+                label="pm_child_skill_selection_manifest_written",
+                action="project manager writes a child-skill selection manifest from the product architecture, route direction, and local skill inventory",
+                pm_child_skill_selection_manifest_written=True,
+                active_node="classify_child_skill_selection_scope",
+            )
+            return
+
+        if not state.pm_child_skill_selection_scope_decisions_recorded:
+            yield _step(
+                state,
+                label="pm_child_skill_selection_scope_decisions_recorded",
+                action="project manager classifies candidate skills as required, conditional, deferred, or rejected before child-skill gate discovery",
+                pm_child_skill_selection_scope_decisions_recorded=True,
                 active_node="discover_child_skill_gates",
             )
             return
@@ -1796,7 +2035,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="child_skill_route_design_discovery_started",
-                action="project manager discovers likely child skills and gate surfaces before FlowGuard route design",
+                action="project manager discovers gate surfaces only from PM-selected child skills, not from raw local skill availability",
                 child_skill_route_design_discovery_started=True,
                 active_node="extract_child_skill_gate_manifest",
             )
@@ -1818,6 +2057,16 @@ class AutopilotStep:
                 label="child_skill_gate_approvers_assigned",
                 action="project manager assigns required approver roles for every child-skill gate and forbids main-executor or worker self-approval",
                 child_skill_gate_approvers_assigned=True,
+                active_node="probe_child_skill_gate_manifest",
+            )
+            return
+
+        if not state.child_skill_manifest_independent_validation_done:
+            yield _step(
+                state,
+                label="child_skill_manifest_independent_validation_done",
+                action="reviewer, process officer, product officer, and PM independently probe child-skill manifest slices instead of accepting the extraction report",
+                child_skill_manifest_independent_validation_done=True,
                 active_node="review_child_skill_gate_manifest",
             )
             return
@@ -1882,11 +2131,25 @@ class AutopilotStep:
             )
             return
 
+        if not state.flowguard_officer_model_adversarial_probe_done:
+            yield _step(
+                state,
+                label="flowguard_officer_model_adversarial_probe_done",
+                action="FlowGuard officers run or validate model checks, inspect counterexamples, cite state fields, labels, counts, commands, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, and blindspots before model approvals",
+                flowguard_officer_model_adversarial_probe_done=True,
+                flowguard_model_report_risk_tiers_done=True,
+                flowguard_model_report_pm_review_agenda_done=True,
+                flowguard_model_report_toolchain_recommendations_done=True,
+                flowguard_model_report_confidence_boundary_done=True,
+                active_node="check_root_route_model",
+            )
+            return
+
         if not state.root_route_model_checked:
             yield _step(
                 state,
                 label="root_route_model_checked",
-                action="process FlowGuard officer runs and approves checks against the candidate route tree before route freeze",
+                action="process FlowGuard officer approves checks against the candidate route tree from officer-owned adversarial model evidence",
                 root_route_model_checked=True,
                 root_route_model_process_officer_approved=True,
                 active_node="check_root_product_function_model",
@@ -1897,7 +2160,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="root_product_function_model_checked",
-                action="product FlowGuard officer runs and approves checks against the root product-function model before route freeze",
+                action="product FlowGuard officer approves checks against the root product-function model from officer-owned adversarial model evidence",
                 root_product_function_model_checked=True,
                 root_product_function_model_product_officer_approved=True,
                 active_node="check_strict_gate_obligation_review_model",
@@ -1947,6 +2210,26 @@ class AutopilotStep:
                 label="route_model_checked",
                 action="run FlowGuard checks for active route",
                 route_checked=True,
+                active_node="sync_markdown_summary",
+            )
+            return
+
+        if not state.parent_backward_structural_trigger_rule_recorded:
+            yield _step(
+                state,
+                label="parent_backward_structural_trigger_rule_recorded",
+                action="project manager records the structural trigger: every effective route node with children requires local parent backward replay, without semantic importance guessing",
+                parent_backward_structural_trigger_rule_recorded=True,
+                active_node="enumerate_parent_backward_targets",
+            )
+            return
+
+        if not state.parent_backward_review_targets_enumerated:
+            yield _step(
+                state,
+                label="parent_backward_review_targets_enumerated",
+                action="project manager enumerates all effective parent/composite nodes directly from flow.json before route execution or after route mutation",
+                parent_backward_review_targets_enumerated=True,
                 active_node="sync_markdown_summary",
             )
             return
@@ -2005,8 +2288,29 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="visible_user_flow_diagram_emitted",
-                action="emit visible user flow diagram with current node, next jumps, checks, fallback branches, and simulated path",
+                action="emit simplified English FlowPilot Route Sign Mermaid in chat when Cockpit UI is not open, with current node, next jumps, checks, fallback branches, and simulated path",
                 visible_user_flow_diagram_emitted=True,
+                user_flow_diagram_chat_display_required=True,
+                user_flow_diagram_chat_displayed=True,
+                user_flow_diagram_return_edge_present=state.user_flow_diagram_return_edge_required,
+                user_flow_diagram_reviewer_display_checked=False,
+                user_flow_diagram_reviewer_route_match_checked=False,
+                active_node="resolve_live_subagent_startup",
+            )
+            return
+
+        if (
+            state.visible_user_flow_diagram_emitted
+            and state.user_flow_diagram_refreshed
+            and not state.user_flow_diagram_reviewer_display_checked
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="user_flow_diagram_reviewer_display_checked",
+                action="human-like reviewer checks the visible chat Mermaid route sign, active route/node match, and return-for-repair edge before route progress",
+                user_flow_diagram_reviewer_display_checked=True,
+                user_flow_diagram_reviewer_route_match_checked=True,
                 active_node="resolve_live_subagent_startup",
             )
             return
@@ -2018,7 +2322,7 @@ class AutopilotStep:
             and state.execution_frontier_written
             and state.codex_plan_synced
             and state.user_flow_diagram_refreshed
-            and state.visible_user_flow_diagram_emitted
+            and _user_flow_display_gate_passed(state)
             and not state.live_subagent_decision_recorded
             and state.issue == "none"
         ):
@@ -2038,7 +2342,7 @@ class AutopilotStep:
             and state.execution_frontier_written
             and state.codex_plan_synced
             and state.user_flow_diagram_refreshed
-            and state.visible_user_flow_diagram_emitted
+            and _user_flow_display_gate_passed(state)
             and state.live_subagent_decision_recorded
             and not state.live_subagents_started
             and not state.single_agent_role_continuity_authorized
@@ -2065,7 +2369,7 @@ class AutopilotStep:
             and state.execution_frontier_written
             and state.codex_plan_synced
             and state.user_flow_diagram_refreshed
-            and state.visible_user_flow_diagram_emitted
+            and _user_flow_display_gate_passed(state)
             and _live_subagent_startup_resolved(state)
             and not state.startup_preflight_review_report_written
             and not state.startup_worker_remediation_completed
@@ -2124,6 +2428,7 @@ class AutopilotStep:
                 startup_reviewer_checked_prior_work_boundary=False,
                 startup_reviewer_checked_live_agent_freshness=False,
                 startup_reviewer_checked_no_historical_agent_reuse=False,
+                startup_pm_independent_gate_audit_done=False,
                 active_node="startup_preflight_review",
             )
             return
@@ -2135,7 +2440,7 @@ class AutopilotStep:
             and state.execution_frontier_written
             and state.codex_plan_synced
             and state.user_flow_diagram_refreshed
-            and state.visible_user_flow_diagram_emitted
+            and _user_flow_display_gate_passed(state)
             and _live_subagent_startup_resolved(state)
             and not state.startup_preflight_review_report_written
             and state.startup_worker_remediation_completed
@@ -2159,6 +2464,23 @@ class AutopilotStep:
         if (
             state.startup_preflight_review_report_written
             and not state.startup_preflight_review_blocking_findings
+            and not state.startup_pm_independent_gate_audit_done
+            and not state.pm_start_gate_opened
+            and state.issue == "none"
+        ):
+            yield _step(
+                state,
+                label="startup_pm_independent_gate_audit_done",
+                action="PM independently audits startup run isolation, prior-work boundary, live-agent freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
+                startup_pm_independent_gate_audit_done=True,
+                active_node="pm_start_gate_decision",
+            )
+            return
+
+        if (
+            state.startup_preflight_review_report_written
+            and not state.startup_preflight_review_blocking_findings
+            and state.startup_pm_independent_gate_audit_done
             and not state.pm_start_gate_opened
             and state.issue == "none"
         ):
@@ -2192,6 +2514,115 @@ class AutopilotStep:
             )
             return
 
+        if state.issue == "terminal_backward_review_failure":
+            if (
+                state.pm_repair_decision_interrogations
+                <= state.human_inspection_repairs
+                + state.composite_structural_route_repairs
+                + state.terminal_human_backward_replay_repairs
+            ):
+                yield _step(
+                    state,
+                    label="terminal_human_backward_pm_repair_decision_interrogated",
+                    action="PM decides the terminal backward replay repair target, affected downstream nodes, stale evidence, and whether the restarted final review begins at the delivered product or an impacted ancestor",
+                    pm_repair_decision_interrogations=(
+                        state.pm_repair_decision_interrogations + 1
+                    ),
+                    active_node="pm_terminal_backward_replay_repair_strategy",
+                )
+                return
+            yield _step(
+                state,
+                label="route_updated_after_terminal_human_backward_replay_failure",
+                action="mutate the route to repair a terminal human backward replay finding, invalidate affected downstream evidence, and require a rebuilt ledger plus restarted final review",
+                route_version=state.route_version + 1,
+                route_checked=False,
+                markdown_synced=False,
+                execution_frontier_written=False,
+                codex_plan_synced=False,
+                frontier_version=0,
+                plan_version=0,
+                visible_user_flow_diagram_emitted=False,
+                user_flow_diagram_refreshed=False,
+                user_flow_diagram_reviewer_display_checked=False,
+                user_flow_diagram_reviewer_route_match_checked=False,
+                flowguard_process_design_done=False,
+                flowguard_officer_model_adversarial_probe_done=False,
+                flowguard_model_report_risk_tiers_done=False,
+                flowguard_model_report_pm_review_agenda_done=False,
+                flowguard_model_report_toolchain_recommendations_done=False,
+                flowguard_model_report_confidence_boundary_done=False,
+                child_skill_route_design_discovery_started=False,
+                child_skill_initial_gate_manifest_extracted=False,
+                child_skill_gate_approvers_assigned=False,
+                child_skill_manifest_independent_validation_done=False,
+                child_skill_manifest_reviewer_reviewed=False,
+                child_skill_manifest_process_officer_approved=False,
+                child_skill_manifest_product_officer_approved=False,
+                child_skill_manifest_pm_approved_for_route=False,
+                candidate_route_tree_generated=False,
+                root_route_model_checked=False,
+                root_route_model_process_officer_approved=False,
+                root_product_function_model_checked=False,
+                root_product_function_model_product_officer_approved=False,
+                strict_gate_obligation_review_model_checked=False,
+                parent_backward_review_targets_enumerated=False,
+                parent_subtree_review_checked=False,
+                issue="none",
+                terminal_human_backward_replay_repairs=(
+                    state.terminal_human_backward_replay_repairs + 1
+                ),
+                required_chunks=state.required_chunks,
+                completed_chunks=max(0, state.completed_chunks - 1),
+                node_human_inspections_passed=max(
+                    0, state.node_human_inspections_passed - 1
+                ),
+                composite_backward_reviews_passed=max(
+                    0, state.composite_backward_reviews_passed - 1
+                ),
+                composite_backward_pm_segment_decisions_recorded=max(
+                    0, state.composite_backward_pm_segment_decisions_recorded - 1
+                ),
+                chunk_state="none",
+                verification_defined=False,
+                checkpoint_written=False,
+                parent_focused_interrogation_done=False,
+                parent_focused_interrogation_questions=0,
+                parent_focused_interrogation_scope_id="",
+                unfinished_current_node_recovery_checked=False,
+                node_focused_interrogation_done=False,
+                node_focused_interrogation_questions=0,
+                node_focused_interrogation_scope_id="",
+                lightweight_self_check_done=False,
+                lightweight_self_check_questions=0,
+                lightweight_self_check_scope_id="",
+                node_visible_roadmap_emitted=False,
+                completion_self_interrogation_done=False,
+                completion_self_interrogation_questions=0,
+                completion_self_interrogation_layer_count=0,
+                completion_self_interrogation_questions_per_layer=0,
+                completion_self_interrogation_layers=0,
+                completion_visible_roadmap_emitted=False,
+                high_value_work_review="unknown",
+                final_feature_matrix_review_done=False,
+                final_acceptance_matrix_review_done=False,
+                final_standard_scenario_pack_replayed=False,
+                final_quality_candidate_review_done=False,
+                final_product_function_model_replayed=False,
+                final_product_model_officer_adversarial_probe_done=False,
+                final_product_function_model_product_officer_approved=False,
+                final_human_review_context_loaded=False,
+                final_human_neutral_observation_written=False,
+                final_human_manual_experiments_run=False,
+                final_human_reviewer_independent_probe_done=False,
+                final_human_inspection_passed=False,
+                final_human_review_reviewer_approved=False,
+                pm_completion_decision_recorded=False,
+                active_node="run_terminal_backward_replay_repair_route_checks",
+                **_reset_execution_scope_gates(),
+            )
+            return
+
         if state.issue == "model_gap":
             if state.route_revisions >= MAX_ROUTE_REVISIONS:
                 yield _step(
@@ -2217,10 +2648,18 @@ class AutopilotStep:
                 plan_version=0,
                 visible_user_flow_diagram_emitted=False,
                 user_flow_diagram_refreshed=False,
+                user_flow_diagram_reviewer_display_checked=False,
+                user_flow_diagram_reviewer_route_match_checked=False,
                 flowguard_process_design_done=False,
+                flowguard_officer_model_adversarial_probe_done=False,
+                flowguard_model_report_risk_tiers_done=False,
+                flowguard_model_report_pm_review_agenda_done=False,
+                flowguard_model_report_toolchain_recommendations_done=False,
+                flowguard_model_report_confidence_boundary_done=False,
                 child_skill_route_design_discovery_started=False,
                 child_skill_initial_gate_manifest_extracted=False,
                 child_skill_gate_approvers_assigned=False,
+                child_skill_manifest_independent_validation_done=False,
                 child_skill_manifest_reviewer_reviewed=False,
                 child_skill_manifest_process_officer_approved=False,
                 child_skill_manifest_product_officer_approved=False,
@@ -2231,6 +2670,7 @@ class AutopilotStep:
                 root_product_function_model_checked=False,
                 root_product_function_model_product_officer_approved=False,
                 strict_gate_obligation_review_model_checked=False,
+                parent_backward_review_targets_enumerated=False,
                 parent_subtree_review_checked=False,
                 parent_focused_interrogation_done=False,
                 parent_focused_interrogation_questions=0,
@@ -2299,12 +2739,16 @@ class AutopilotStep:
                 "frontier_version": 0,
                 "plan_version": 0,
                 "visible_user_flow_diagram_emitted": False,
+                "user_flow_diagram_refreshed": False,
+                "user_flow_diagram_reviewer_display_checked": False,
+                "user_flow_diagram_reviewer_route_match_checked": False,
                 "candidate_route_tree_generated": False,
                 "root_route_model_checked": False,
                 "root_route_model_process_officer_approved": False,
                 "root_product_function_model_checked": False,
                 "root_product_function_model_product_officer_approved": False,
                 "strict_gate_obligation_review_model_checked": False,
+                "parent_backward_review_targets_enumerated": False,
                 "parent_subtree_review_checked": False,
                 "parent_focused_interrogation_done": False,
                 "parent_focused_interrogation_questions": 0,
@@ -2338,6 +2782,9 @@ class AutopilotStep:
                     composite_backward_reviews_passed=max(
                         0, state.composite_backward_reviews_passed - 1
                     ),
+                    composite_backward_pm_segment_decisions_recorded=max(
+                        0, state.composite_backward_pm_segment_decisions_recorded - 1
+                    ),
                     **common_changes,
                     **_reset_execution_scope_gates(),
                 )
@@ -2356,6 +2803,9 @@ class AutopilotStep:
                     composite_backward_reviews_passed=max(
                         0, state.composite_backward_reviews_passed - 1
                     ),
+                    composite_backward_pm_segment_decisions_recorded=max(
+                        0, state.composite_backward_pm_segment_decisions_recorded - 1
+                    ),
                     composite_new_sibling_nodes=state.composite_new_sibling_nodes + 1,
                     **common_changes,
                     **_reset_execution_scope_gates(),
@@ -2370,6 +2820,7 @@ class AutopilotStep:
                 completed_chunks=0,
                 node_human_inspections_passed=0,
                 composite_backward_reviews_passed=0,
+                composite_backward_pm_segment_decisions_recorded=0,
                 composite_subtree_rebuilds=state.composite_subtree_rebuilds + 1,
                 **common_changes,
                 **_reset_execution_scope_gates(),
@@ -2425,10 +2876,18 @@ class AutopilotStep:
                 plan_version=0,
                 visible_user_flow_diagram_emitted=False,
                 user_flow_diagram_refreshed=False,
+                user_flow_diagram_reviewer_display_checked=False,
+                user_flow_diagram_reviewer_route_match_checked=False,
                 flowguard_process_design_done=False,
+                flowguard_officer_model_adversarial_probe_done=False,
+                flowguard_model_report_risk_tiers_done=False,
+                flowguard_model_report_pm_review_agenda_done=False,
+                flowguard_model_report_toolchain_recommendations_done=False,
+                flowguard_model_report_confidence_boundary_done=False,
                 child_skill_route_design_discovery_started=False,
                 child_skill_initial_gate_manifest_extracted=False,
                 child_skill_gate_approvers_assigned=False,
+                child_skill_manifest_independent_validation_done=False,
                 child_skill_manifest_reviewer_reviewed=False,
                 child_skill_manifest_process_officer_approved=False,
                 child_skill_manifest_product_officer_approved=False,
@@ -2439,6 +2898,7 @@ class AutopilotStep:
                 root_product_function_model_checked=False,
                 root_product_function_model_product_officer_approved=False,
                 strict_gate_obligation_review_model_checked=False,
+                parent_backward_review_targets_enumerated=False,
                 parent_subtree_review_checked=False,
                 issue="none",
                 route_revisions=state.route_revisions + 1,
@@ -2498,10 +2958,18 @@ class AutopilotStep:
                     plan_version=0,
                     visible_user_flow_diagram_emitted=False,
                     user_flow_diagram_refreshed=False,
+                    user_flow_diagram_reviewer_display_checked=False,
+                    user_flow_diagram_reviewer_route_match_checked=False,
                     flowguard_process_design_done=False,
+                    flowguard_officer_model_adversarial_probe_done=False,
+                    flowguard_model_report_risk_tiers_done=False,
+                    flowguard_model_report_pm_review_agenda_done=False,
+                    flowguard_model_report_toolchain_recommendations_done=False,
+                    flowguard_model_report_confidence_boundary_done=False,
                     child_skill_route_design_discovery_started=False,
                     child_skill_initial_gate_manifest_extracted=False,
                     child_skill_gate_approvers_assigned=False,
+                    child_skill_manifest_independent_validation_done=False,
                     child_skill_manifest_reviewer_reviewed=False,
                     child_skill_manifest_process_officer_approved=False,
                     child_skill_manifest_product_officer_approved=False,
@@ -2512,6 +2980,7 @@ class AutopilotStep:
                     root_product_function_model_checked=False,
                     root_product_function_model_product_officer_approved=False,
                     strict_gate_obligation_review_model_checked=False,
+                    parent_backward_review_targets_enumerated=False,
                     parent_subtree_review_checked=False,
                     parent_focused_interrogation_done=False,
                     parent_focused_interrogation_questions=0,
@@ -2579,6 +3048,15 @@ class AutopilotStep:
                     active_node="composite_backward_human_review",
                 )
                 return
+            if not state.composite_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="composite_reviewer_independent_probe_done",
+                    action="composite backward reviewer independently probes child evidence, parent model fit, missing sibling paths, stale artifacts, and report-only failure hypotheses before approving closure",
+                    composite_reviewer_independent_probe_done=True,
+                    active_node="composite_backward_human_review",
+                )
+                return
             if not state.composite_backward_human_review_passed:
                 if state.composite_structural_route_repairs < MAX_COMPOSITE_STRUCTURAL_REPAIRS:
                     yield _step(
@@ -2618,10 +3096,21 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="composite_backward_review_passed",
-                    action="human-like composite backward reviewer accepts the child rollup before checkpoint",
+                    action="human-like composite backward reviewer accepts the child rollup before PM decides the parent segment",
                     composite_backward_human_review_passed=True,
                     composite_backward_review_reviewer_approved=True,
                     composite_backward_reviews_passed=state.composite_backward_reviews_passed + 1,
+                    active_node="record_parent_backward_pm_segment_decision",
+                )
+                return
+            if not state.composite_backward_pm_segment_decision_recorded:
+                yield _step(
+                    state,
+                    label="composite_backward_pm_segment_decision_recorded",
+                    action="project manager records the parent backward replay segment decision before parent checkpoint closure",
+                    composite_backward_pm_segment_decision_recorded=True,
+                    composite_backward_pm_segment_decisions_recorded=state.composite_backward_pm_segment_decisions_recorded
+                    + 1,
                     active_node="write_checkpoint",
                 )
                 return
@@ -2690,6 +3179,15 @@ class AutopilotStep:
                     label="final_acceptance_matrix_reviewed",
                     action="review acceptance matrix and identify missing verification evidence before completion grill-me",
                     final_acceptance_matrix_review_done=True,
+                    active_node="final_standard_scenario_pack_replay",
+                )
+                return
+            if not state.final_standard_scenario_pack_replayed:
+                yield _step(
+                    state,
+                    label="final_standard_scenario_pack_replayed",
+                    action="replay the standard scenario pack and node-risk scenarios against the final product before quality-candidate and completion closure",
+                    final_standard_scenario_pack_replayed=True,
                     active_node="final_quality_candidate_review",
                 )
                 return
@@ -2699,6 +3197,15 @@ class AutopilotStep:
                     label="final_quality_candidate_reviewed",
                     action="summarize quality candidates as done, deferred with reason, waived with reason, or must-supplement before completion grill-me",
                     final_quality_candidate_review_done=True,
+                    active_node="final_product_function_replay",
+                )
+                return
+            if not state.final_product_model_officer_adversarial_probe_done:
+                yield _step(
+                    state,
+                    label="final_product_model_officer_adversarial_probe_done",
+                    action="product FlowGuard officer adversarially rechecks the final product model boundary, state fields, counterexamples, counts, and blindspots before approving final replay",
+                    final_product_model_officer_adversarial_probe_done=True,
                     active_node="final_product_function_replay",
                 )
                 return
@@ -2736,6 +3243,15 @@ class AutopilotStep:
                     label="final_human_manual_experiments_run",
                     action="operate or inspect the final product as a human reviewer before completion grill-me",
                     final_human_manual_experiments_run=True,
+                    active_node="final_human_inspection_decision",
+                )
+                return
+            if not state.final_human_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="final_human_reviewer_independent_probe_done",
+                    action="final human-like reviewer independently attacks the completed product with direct operation or inspection, concrete artifact references, missing-gate hypotheses, and report-only failure checks before approval",
+                    final_human_reviewer_independent_probe_done=True,
                     active_node="final_human_inspection_decision",
                 )
                 return
@@ -2780,10 +3296,18 @@ class AutopilotStep:
                         plan_version=0,
                         visible_user_flow_diagram_emitted=False,
                         user_flow_diagram_refreshed=False,
+                        user_flow_diagram_reviewer_display_checked=False,
+                        user_flow_diagram_reviewer_route_match_checked=False,
                         flowguard_process_design_done=False,
+                        flowguard_officer_model_adversarial_probe_done=False,
+                        flowguard_model_report_risk_tiers_done=False,
+                        flowguard_model_report_pm_review_agenda_done=False,
+                        flowguard_model_report_toolchain_recommendations_done=False,
+                        flowguard_model_report_confidence_boundary_done=False,
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
                         child_skill_gate_approvers_assigned=False,
+                        child_skill_manifest_independent_validation_done=False,
                         child_skill_manifest_reviewer_reviewed=False,
                         child_skill_manifest_process_officer_approved=False,
                         child_skill_manifest_product_officer_approved=False,
@@ -2794,6 +3318,7 @@ class AutopilotStep:
                         root_product_function_model_checked=False,
                         root_product_function_model_product_officer_approved=False,
                         strict_gate_obligation_review_model_checked=False,
+                        parent_backward_review_targets_enumerated=False,
                         parent_subtree_review_checked=False,
                         parent_focused_interrogation_done=False,
                         parent_focused_interrogation_questions=0,
@@ -2803,6 +3328,8 @@ class AutopilotStep:
                         completed_chunks=TARGET_CHUNKS - 1,
                         node_human_inspections_passed=TARGET_CHUNKS - 1,
                         composite_backward_reviews_passed=TARGET_CHUNKS - 1,
+                        composite_backward_pm_segment_decisions_recorded=TARGET_PARENT_NODES
+                        - 1,
                         checkpoint_written=False,
                         completion_self_interrogation_done=False,
                         completion_self_interrogation_questions=0,
@@ -2824,12 +3351,15 @@ class AutopilotStep:
                         node_visible_roadmap_emitted=False,
                         final_feature_matrix_review_done=False,
                         final_acceptance_matrix_review_done=False,
+                        final_standard_scenario_pack_replayed=False,
                         final_quality_candidate_review_done=False,
                         final_product_function_model_replayed=False,
+                        final_product_model_officer_adversarial_probe_done=False,
                         final_product_function_model_product_officer_approved=False,
                         final_human_review_context_loaded=False,
                         final_human_neutral_observation_written=False,
                         final_human_manual_experiments_run=False,
+                        final_human_reviewer_independent_probe_done=False,
                         final_human_inspection_passed=False,
                         final_human_review_reviewer_approved=False,
                         pm_completion_decision_recorded=False,
@@ -2882,6 +3412,15 @@ class AutopilotStep:
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
+            if not state.final_route_wide_gate_ledger_parent_backward_replays_collected:
+                yield _step(
+                    state,
+                    label="final_route_wide_gate_ledger_parent_backward_replays_collected",
+                    action="PM collects every structurally required local parent backward replay and its PM segment decision into the final ledger",
+                    final_route_wide_gate_ledger_parent_backward_replays_collected=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
             if not state.final_route_wide_gate_ledger_product_process_gates_collected:
                 yield _step(
                     state,
@@ -2927,12 +3466,105 @@ class AutopilotStep:
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
+            if not state.final_residual_risk_triage_done:
+                yield _step(
+                    state,
+                    label="final_residual_risk_triage_done",
+                    action="PM triages every remaining risk or blindspot as fixed, routed to repair, current-gate blocker, terminal replay scenario, non-risk note, or explicit exception",
+                    final_residual_risk_triage_done=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
+            if not state.final_residual_risk_unresolved_count_zero:
+                yield _step(
+                    state,
+                    label="final_residual_risk_unresolved_count_zero",
+                    action="PM records zero unresolved residual risks before final ledger can be built",
+                    final_residual_risk_unresolved_count_zero=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
             if not state.final_route_wide_gate_ledger_pm_built:
                 yield _step(
                     state,
                     label="final_route_wide_gate_ledger_pm_built",
                     action="PM writes the final route-wide gate ledger from current route state and evidence, not from the startup checklist",
                     final_route_wide_gate_ledger_pm_built=True,
+                    active_node="terminal_human_backward_review_map",
+                )
+                return
+            if not state.terminal_human_backward_review_map_built:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_review_map_built",
+                    action="PM converts the clean final ledger into an ordered human backward replay map from delivered product to root, parent, and leaf node obligations",
+                    terminal_human_backward_review_map_built=True,
+                    active_node="terminal_human_backward_replay",
+                )
+                return
+            if not state.terminal_human_backward_replay_started_from_delivered_product:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_replay_started_from_delivered_product",
+                    action="human-like reviewer starts terminal replay from the delivered product itself, not from ledger entries or worker reports",
+                    terminal_human_backward_replay_started_from_delivered_product=True,
+                    active_node="terminal_human_backward_root_review",
+                )
+                return
+            if not state.terminal_human_backward_root_acceptance_reviewed:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_root_acceptance_reviewed",
+                    action="human-like reviewer manually checks the final product against root acceptance and baseline functional obligations before drilling into nodes",
+                    terminal_human_backward_root_acceptance_reviewed=True,
+                    active_node="terminal_human_backward_parent_reviews",
+                )
+                return
+            if not state.terminal_human_backward_parent_nodes_reviewed:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_parent_nodes_reviewed",
+                    action="human-like reviewer walks backward through each effective parent or module node and checks whether child outcomes compose into the parent goal",
+                    terminal_human_backward_parent_nodes_reviewed=True,
+                    active_node="terminal_human_backward_leaf_reviews",
+                )
+                return
+            if not state.terminal_human_backward_leaf_nodes_reviewed:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_leaf_nodes_reviewed",
+                    action="human-like reviewer manually checks every effective leaf node against its node acceptance plan, experiments, and current product behavior",
+                    terminal_human_backward_leaf_nodes_reviewed=True,
+                    active_node="terminal_human_backward_pm_segment_decisions",
+                )
+                return
+            if (
+                state.terminal_human_backward_replay_repairs
+                < MAX_TERMINAL_BACKWARD_REPLAY_REPAIRS
+            ):
+                yield _step(
+                    state,
+                    label="terminal_human_backward_replay_found_repair_issue",
+                    action="terminal human backward replay finds a current product or node-detail issue that must return to PM repair routing instead of being parked in the report",
+                    issue="terminal_backward_review_failure",
+                    active_node="terminal_human_backward_replay_repair",
+                )
+                return
+            if not state.terminal_human_backward_pm_segment_decisions_recorded:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_pm_segment_decisions_recorded",
+                    action="PM reviews each reviewer segment result, records continue or repair decisions, and confirms no segment was accepted from report-only evidence",
+                    terminal_human_backward_pm_segment_decisions_recorded=True,
+                    active_node="terminal_human_backward_restart_policy",
+                )
+                return
+            if not state.terminal_human_backward_repair_restart_policy_recorded:
+                yield _step(
+                    state,
+                    label="terminal_human_backward_repair_restart_policy_recorded",
+                    action="PM records that any terminal replay repair invalidates affected evidence and restarts final review from the delivered product unless a narrower impacted-ancestor restart is justified",
+                    terminal_human_backward_repair_restart_policy_recorded=True,
                     active_node="final_route_wide_gate_ledger_reviewer_replay",
                 )
                 return
@@ -2940,8 +3572,17 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="final_route_wide_gate_ledger_reviewer_backward_checked",
-                    action="human-like reviewer checks the final product backward through the PM-built route-wide ledger",
+                    action="human-like reviewer completes the terminal human backward replay through every effective root, parent, and leaf-node obligation in the PM-built map",
                     final_route_wide_gate_ledger_reviewer_backward_checked=True,
+                    active_node="final_route_wide_gate_ledger_pm_approval",
+                )
+                return
+            if not state.final_ledger_pm_independent_audit_done:
+                yield _step(
+                    state,
+                    label="final_ledger_pm_independent_audit_done",
+                    action="PM independently audits route/frontier/ledger entries, stale evidence, waiver authority, unresolved counts, reviewer replay, and blindspots before completion approval",
+                    final_ledger_pm_independent_audit_done=True,
                     active_node="final_route_wide_gate_ledger_pm_approval",
                 )
                 return
@@ -2951,6 +3592,24 @@ class AutopilotStep:
                     label="final_route_wide_gate_ledger_pm_completion_approved",
                     action="project manager approves the clean route-wide gate ledger before lifecycle closure and final completion decision",
                     final_route_wide_gate_ledger_pm_completion_approved=True,
+                    active_node="terminal_closure_suite",
+                )
+                return
+            if not state.terminal_closure_suite_run:
+                yield _step(
+                    state,
+                    label="terminal_closure_suite_run",
+                    action="run terminal closure suite after final ledger approval to check final state, frontier, ledger, checkpoints, lifecycle evidence, role memory, and final report readiness",
+                    terminal_closure_suite_run=True,
+                    active_node="terminal_state_evidence_refresh",
+                )
+                return
+            if not state.terminal_state_and_evidence_refreshed:
+                yield _step(
+                    state,
+                    label="terminal_state_and_evidence_refreshed",
+                    action="refresh terminal state, execution frontier, ledger pointers, role memory, lifecycle evidence, and completion notice readiness before route shutdown",
+                    terminal_state_and_evidence_refreshed=True,
                     active_node="ready_to_complete",
                 )
                 return
@@ -2958,26 +3617,16 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="lifecycle_reconciliation_completed",
-                    action="scan Codex automations, global supervisor records, Windows scheduled tasks, local state, execution frontier, and watchdog evidence before route shutdown",
+                    action="scan Codex heartbeat automations, local state, and execution frontier before route shutdown",
                     lifecycle_reconciliation_done=True,
                     active_node="reconcile_lifecycle",
-                )
-                return
-            if not state.external_watchdog_stopped_before_heartbeat:
-                yield _step(
-                    state,
-                    label="external_watchdog_stopped_before_heartbeat",
-                    action="stop paired external watchdog automation before stopping heartbeat",
-                    external_watchdog_active=False,
-                    external_watchdog_stopped_before_heartbeat=True,
-                    active_node="ready_to_stop_heartbeat",
                 )
                 return
             if not state.terminal_lifecycle_frontier_written:
                 yield _step(
                     state,
                     label="terminal_lifecycle_frontier_written",
-                    action="write watchdog inactive and terminal heartbeat lifecycle back to execution frontier before stopping heartbeat",
+                    action="write terminal heartbeat lifecycle back to execution frontier before stopping heartbeat",
                     terminal_lifecycle_frontier_written=True,
                     active_node="terminal_lifecycle_frontier_synced",
                 )
@@ -2997,6 +3646,15 @@ class AutopilotStep:
                     label="crew_archived_at_terminal",
                     action="archive persistent crew ledger and final role statuses after role memory archive and before final report",
                     crew_archived=True,
+                    active_node="ready_to_emit_final_report",
+                )
+                return
+            if not state.flowpilot_skill_improvement_report_written:
+                yield _step(
+                    state,
+                    label="flowpilot_skill_improvement_report_written",
+                    action="PM writes a nonblocking FlowPilot skill improvement report from node observations for later manual root-repo maintenance, without requiring those skill issues to be fixed before current project completion",
+                    flowpilot_skill_improvement_report_written=True,
                     active_node="ready_to_emit_final_report",
                 )
                 return
@@ -3026,7 +3684,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_loaded_state",
-                    action="continuation turn loads local state, active route, latest heartbeat or manual-resume evidence, watchdog evidence when present, lifecycle evidence, and crew ledger",
+                    action="continuation turn loads local state, active route, latest heartbeat or manual-resume evidence, lifecycle evidence, and crew ledger",
                     heartbeat_loaded_state=True,
                     active_node="heartbeat_load_frontier",
                 )
@@ -3184,6 +3842,26 @@ class AutopilotStep:
                     action="product FlowGuard officer runs and approves the active leaf's product-function model before defining implementation work",
                     node_product_function_model_checked=True,
                     node_product_function_model_product_officer_approved=True,
+                    active_node="write_node_acceptance_plan",
+                )
+                return
+            if not state.node_acceptance_plan_written:
+                yield _step(
+                    state,
+                    label="node_acceptance_plan_written",
+                    action="project manager writes the current node acceptance plan with root mappings, local criteria, concrete experiments, evidence paths, and approver",
+                    node_acceptance_plan_written=True,
+                    current_node_skill_improvement_check_done=False,
+                    checkpoint_written=False,
+                    active_node="map_node_acceptance_risk_experiments",
+                )
+                return
+            if not state.node_acceptance_risk_experiments_mapped:
+                yield _step(
+                    state,
+                    label="node_acceptance_risk_experiments_mapped",
+                    action="project manager maps current-node risk hypotheses to experiments and terminal replay scenarios before implementation starts",
+                    node_acceptance_risk_experiments_mapped=True,
                     active_node="lightweight_self_check",
                 )
                 return
@@ -3236,10 +3914,18 @@ class AutopilotStep:
                         plan_version=0,
                         visible_user_flow_diagram_emitted=False,
                         user_flow_diagram_refreshed=False,
+                        user_flow_diagram_reviewer_display_checked=False,
+                        user_flow_diagram_reviewer_route_match_checked=False,
                         flowguard_process_design_done=False,
+                        flowguard_officer_model_adversarial_probe_done=False,
+                        flowguard_model_report_risk_tiers_done=False,
+                        flowguard_model_report_pm_review_agenda_done=False,
+                        flowguard_model_report_toolchain_recommendations_done=False,
+                        flowguard_model_report_confidence_boundary_done=False,
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
                         child_skill_gate_approvers_assigned=False,
+                        child_skill_manifest_independent_validation_done=False,
                         child_skill_manifest_reviewer_reviewed=False,
                         child_skill_manifest_process_officer_approved=False,
                         child_skill_manifest_product_officer_approved=False,
@@ -3250,6 +3936,7 @@ class AutopilotStep:
                         root_product_function_model_checked=False,
                         root_product_function_model_product_officer_approved=False,
                         strict_gate_obligation_review_model_checked=False,
+                        parent_backward_review_targets_enumerated=False,
                         parent_subtree_review_checked=False,
                         parent_focused_interrogation_done=False,
                         parent_focused_interrogation_questions=0,
@@ -3480,6 +4167,15 @@ class AutopilotStep:
                     active_node="human_inspection_decision",
                 )
                 return
+            if not state.node_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="node_reviewer_independent_probe_done",
+                    action="human-like reviewer independently attacks node evidence with direct probes, concrete artifact or state references, missing-path hypotheses, and report-only failure checks before approval",
+                    node_reviewer_independent_probe_done=True,
+                    active_node="human_inspection_decision",
+                )
+                return
             if not state.node_human_inspection_passed:
                 if (
                     state.completed_chunks == 0
@@ -3502,6 +4198,22 @@ class AutopilotStep:
                     action="human-like reviewer accepts the repaired node evidence and product behavior",
                     node_human_inspection_passed=True,
                     node_human_review_reviewer_approved=True,
+                    active_node="write_checkpoint",
+                )
+                return
+            if not state.current_node_skill_improvement_check_done:
+                yield _step(
+                    state,
+                    label="skill_improvement_observation_check_no_issue",
+                    action="PM asks the roles whether this node exposed a FlowPilot skill issue and records that no obvious skill improvement observation was found before checkpoint path",
+                    current_node_skill_improvement_check_done=True,
+                    active_node="write_checkpoint",
+                )
+                yield _step(
+                    state,
+                    label="skill_improvement_observation_logged",
+                    action="PM records a nonblocking FlowPilot skill improvement observation for later root-repo maintenance before checkpoint path",
+                    current_node_skill_improvement_check_done=True,
                     active_node="write_checkpoint",
                 )
                 return
@@ -3598,9 +4310,20 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         return InvariantResult.fail("final report emitted before target chunks verified")
     if state.node_human_inspections_passed < state.completed_chunks:
         return InvariantResult.fail("final report emitted before every completed chunk passed human-like product inspection")
-    if state.composite_backward_reviews_passed < state.completed_chunks:
+    if not (
+        state.parent_backward_structural_trigger_rule_recorded
+        and state.parent_backward_review_targets_enumerated
+    ):
         return InvariantResult.fail(
-            "final report emitted before every completed composite checkpoint passed backward human-like review"
+            "final report emitted before parent backward replay targets were structurally enumerated from the current route"
+        )
+    if state.composite_backward_reviews_passed < TARGET_PARENT_NODES:
+        return InvariantResult.fail(
+            "final report emitted before every structurally enumerated parent/composite node passed backward human-like review"
+        )
+    if state.composite_backward_pm_segment_decisions_recorded < TARGET_PARENT_NODES:
+        return InvariantResult.fail(
+            "final report emitted before every parent backward replay had a PM segment decision"
         )
     if not state.checkpoint_written:
         return InvariantResult.fail("final report emitted without final checkpoint")
@@ -3615,8 +4338,10 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         and state.plan_version == state.frontier_version
     ):
         return InvariantResult.fail("final report emitted before execution frontier and Codex plan sync")
-    if not state.visible_user_flow_diagram_emitted:
-        return InvariantResult.fail("final report emitted before visible user flow diagram")
+    if not _user_flow_display_gate_passed(state):
+        return InvariantResult.fail(
+            "final report emitted before visible FlowPilot Route Sign chat/reviewer gate passed"
+        )
     if not state.work_beyond_startup_allowed:
         return InvariantResult.fail("final report emitted before PM opened work beyond startup from a factual reviewer report")
     if not (
@@ -3629,6 +4354,7 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     if not (
         state.final_feature_matrix_review_done
         and state.final_acceptance_matrix_review_done
+        and state.final_standard_scenario_pack_replayed
         and state.final_quality_candidate_review_done
         and state.final_product_function_model_replayed
         and state.final_human_review_context_loaded
@@ -3651,6 +4377,14 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     ):
         return InvariantResult.fail(
             "final report emitted before completion self-interrogation used dynamic layers, 100 questions per active layer, and required risk-family coverage"
+        )
+    if not (
+        state.terminal_closure_suite_run
+        and state.terminal_state_and_evidence_refreshed
+        and state.flowpilot_skill_improvement_report_written
+    ):
+        return InvariantResult.fail(
+            "final report emitted before terminal closure suite refreshed state, evidence, lifecycle, role memory, and the PM-owned nonblocking FlowPilot skill improvement report"
         )
     return InvariantResult.pass_()
 
@@ -3684,7 +4418,7 @@ def mode_choice_before_contract(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
-def startup_banner_before_mode_choice(state: State, trace) -> InvariantResult:
+def startup_question_gate_before_heavy_startup(state: State, trace) -> InvariantResult:
     del trace
     if state.mode_choice_offered and not state.startup_questions_asked:
         return InvariantResult.fail("mode question offered before the three-question startup gate was opened")
@@ -3788,9 +4522,10 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_pm_independent_gate_audit_done
     ):
         return InvariantResult.fail(
-            "PM start gate opened before a clean factual reviewer startup report"
+            "PM start gate opened before a clean factual reviewer startup report and independent PM gate audit"
         )
     if state.pm_start_gate_opened and state.pm_returned_startup_blockers:
         return InvariantResult.fail(
@@ -3877,8 +4612,10 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             and state.plan_version == state.frontier_version
         ):
             return InvariantResult.fail("chunk started before execution frontier and Codex plan were synced")
-        if not state.visible_user_flow_diagram_emitted:
-            return InvariantResult.fail("chunk started before visible user flow diagram was emitted")
+        if not _user_flow_display_gate_passed(state):
+            return InvariantResult.fail(
+                "chunk started before visible FlowPilot Route Sign chat/reviewer gate passed"
+            )
         if not _continuation_ready(state):
             return InvariantResult.fail("chunk started before host continuation capability was probed and recorded")
         if not (
@@ -3933,6 +4670,13 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             )
         if not state.node_product_function_model_checked:
             return InvariantResult.fail("chunk started before active node product-function model check")
+        if not (
+            state.node_acceptance_plan_written
+            and state.node_acceptance_risk_experiments_mapped
+        ):
+            return InvariantResult.fail(
+                "chunk started before current node acceptance plan and risk experiment mapping"
+            )
         if not state.lightweight_self_check_done:
             return InvariantResult.fail("chunk started before lightweight heartbeat self-check")
         if not _lightweight_self_check_ready(
@@ -4002,9 +4746,29 @@ def subagent_must_merge_before_completion(state: State, trace) -> InvariantResul
 
 def route_updates_force_recheck_and_resync(state: State, trace) -> InvariantResult:
     del trace
+    if state.raw_flowguard_mermaid_used_as_user_flow:
+        return InvariantResult.fail(
+            "raw FlowGuard Mermaid was used as the user-facing FlowPilot route sign"
+        )
     if state.visible_user_flow_diagram_emitted and not state.user_flow_diagram_refreshed:
         return InvariantResult.fail(
             "visible user flow diagram emitted before refreshing the current user flow diagram"
+        )
+    if state.visible_user_flow_diagram_emitted:
+        if state.user_flow_diagram_chat_display_required and not state.user_flow_diagram_chat_displayed:
+            return InvariantResult.fail(
+                "Cockpit closed route sign was emitted without displaying Mermaid in chat"
+            )
+        if state.user_flow_diagram_return_edge_required and not state.user_flow_diagram_return_edge_present:
+            return InvariantResult.fail(
+                "route sign for repair or route mutation was emitted without a return edge"
+            )
+    if state.user_flow_diagram_reviewer_display_checked and not (
+        state.visible_user_flow_diagram_emitted
+        and state.user_flow_diagram_reviewer_route_match_checked
+    ):
+        return InvariantResult.fail(
+            "reviewer checked user flow diagram without visible display and route/node match evidence"
         )
     if (
         state.human_inspection_repairs + state.composite_structural_route_repairs
@@ -4022,7 +4786,7 @@ def route_updates_force_recheck_and_resync(state: State, trace) -> InvariantResu
             and state.frontier_version == state.route_version
             and state.plan_version == state.frontier_version
             and state.user_flow_diagram_refreshed
-            and state.visible_user_flow_diagram_emitted
+            and _user_flow_display_gate_passed(state)
         ):
             return InvariantResult.fail("route update was not checked, summarized, frontier-synced, plan-synced, and visibly mapped before work")
     return InvariantResult.pass_()
@@ -4045,24 +4809,16 @@ def stable_heartbeat_prompt_not_route_state(state: State, trace) -> InvariantRes
     return InvariantResult.pass_()
 
 
-def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> InvariantResult:
+def heartbeat_continuation_is_lifecycle_state(state: State, trace) -> InvariantResult:
     del trace
     automation_bits = (
         state.heartbeat_schedule_created
         or state.route_heartbeat_interval_minutes != 0
         or state.stable_heartbeat_launcher_recorded
-        or state.external_watchdog_policy_recorded
-        or state.external_watchdog_busy_lease_policy_recorded
-        or state.external_watchdog_automation_created
-        or state.external_watchdog_hidden_noninteractive_configured
-        or state.external_watchdog_active
-        or state.global_watchdog_supervisor_checked
-        or state.global_watchdog_supervisor_singleton_ready
-        or state.global_watchdog_supervisor_cadence_minutes != 0
     )
     if state.manual_resume_mode_recorded and automation_bits:
         return InvariantResult.fail(
-            "manual-resume mode recorded but heartbeat/watchdog/global-supervisor automation state was still created"
+            "manual-resume mode recorded but heartbeat automation state was still created"
         )
     formal_started = (
         state.route_checked
@@ -4072,70 +4828,16 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
     if formal_started and state.host_continuation_supported and (
         state.heartbeat_schedule_created
         or state.route_heartbeat_interval_minutes != 0
-        or state.external_watchdog_policy_recorded
-        or state.external_watchdog_automation_created
-        or state.global_watchdog_supervisor_checked
     ) and not _continuation_lifecycle_valid(state):
         return InvariantResult.fail(
-            "host continuation support produced a partial heartbeat/watchdog/global-supervisor setup"
+            "host continuation support produced a partial heartbeat setup"
         )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_policy_recorded
+    if state.host_continuation_supported and state.heartbeat_schedule_created and (
+        state.route_heartbeat_interval_minutes != 1
+        or not state.stable_heartbeat_launcher_recorded
     ):
         return InvariantResult.fail(
-            "active external watchdog automation lost its lifecycle policy gate; ordinary node progress must not re-enter watchdog setup"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_busy_lease_policy_recorded
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks busy-lease suppression policy; long active work can be misread as a stale heartbeat"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_busy_lease_autowrap_policy_recorded
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks automatic busy-lease wrapper policy for long commands and waits"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_source_drift_policy_recorded
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks source-status drift policy and could trust stale or unsupported sources"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_hidden_noninteractive_configured
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation is not configured for hidden/noninteractive execution"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not (
-            state.global_watchdog_supervisor_checked
-            and state.global_watchdog_supervisor_singleton_ready
-            and state.global_watchdog_supervisor_cadence_minutes == 30
-        )
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks verified singleton Codex global supervisor at fixed 30-minute cadence"
+            "automated continuation must use a stable one-minute heartbeat launcher"
         )
     return InvariantResult.pass_()
 
@@ -4146,9 +4848,11 @@ def material_handoff_before_pm_route_design(state: State, trace) -> InvariantRes
         state.material_sources_scanned
         and state.material_source_summaries_written
         and state.material_source_quality_classified
+        and state.local_skill_inventory_written
+        and state.local_skill_inventory_candidate_classified
     ):
         return InvariantResult.fail(
-            "Material Intake Packet was written before sources were scanned, summarized, and quality-classified"
+            "Material Intake Packet was written before sources and local skills were scanned, summarized, quality-classified, and candidate-classified"
         )
     if state.material_reviewer_sufficiency_approved and not (
         state.material_intake_packet_written
@@ -4174,6 +4878,29 @@ def material_handoff_before_pm_route_design(state: State, trace) -> InvariantRes
         return InvariantResult.fail(
             "PM route decision was recorded before reviewed material handoff"
         )
+    if state.pm_child_skill_selection_manifest_written and not (
+        _product_function_architecture_ready(state)
+        and state.contract_frozen
+        and state.pm_initial_route_decision_recorded
+    ):
+        return InvariantResult.fail(
+            "PM child-skill selection manifest was written before product architecture, frozen contract, and initial route direction were ready"
+        )
+    if state.pm_child_skill_selection_scope_decisions_recorded and not (
+        state.pm_child_skill_selection_manifest_written
+        and state.product_function_capability_map_written
+        and state.local_skill_inventory_candidate_classified
+    ):
+        return InvariantResult.fail(
+            "PM child-skill selection decisions were recorded before the PM manifest, product capability map, and local skill candidate classification"
+        )
+    if state.child_skill_route_design_discovery_started and not (
+        state.pm_child_skill_selection_manifest_written
+        and state.pm_child_skill_selection_scope_decisions_recorded
+    ):
+        return InvariantResult.fail(
+            "child-skill route discovery started from raw local skill availability instead of the PM selection manifest"
+        )
     return InvariantResult.pass_()
 
 
@@ -4181,9 +4908,40 @@ def actor_authority_gates_require_correct_role(
     state: State, trace
 ) -> InvariantResult:
     del trace
+    any_role_approval = (
+        state.startup_self_interrogation_pm_ratified
+        or state.material_reviewer_sufficiency_approved
+        or state.product_function_architecture_product_officer_approved
+        or state.product_function_architecture_reviewer_challenged
+        or state.child_skill_manifest_reviewer_reviewed
+        or state.child_skill_manifest_process_officer_approved
+        or state.child_skill_manifest_product_officer_approved
+        or state.child_skill_manifest_pm_approved_for_route
+        or state.root_route_model_process_officer_approved
+        or state.root_product_function_model_product_officer_approved
+        or state.parent_product_function_model_product_officer_approved
+        or state.node_product_function_model_product_officer_approved
+        or state.node_human_review_reviewer_approved
+        or state.composite_backward_review_reviewer_approved
+        or state.final_product_function_model_product_officer_approved
+        or state.final_human_review_reviewer_approved
+        or state.final_route_wide_gate_ledger_pm_completion_approved
+        or state.pm_start_gate_opened
+    )
+    if any_role_approval and not state.independent_approval_protocol_recorded:
+        return InvariantResult.fail(
+            "role approval was recorded before the independent adversarial approval protocol existed"
+        )
     if state.startup_self_interrogation_pm_ratified and not _crew_ready(state):
         return InvariantResult.fail(
             "startup self-interrogation was ratified before the six-agent crew was ready"
+        )
+    if (
+        state.material_reviewer_sufficiency_approved
+        and not state.material_reviewer_direct_source_probe_done
+    ):
+        return InvariantResult.fail(
+            "material reviewer approved sufficiency before independently probing direct source material"
         )
     if state.product_function_architecture_pm_synthesized and not (
         _crew_ready(state) and _material_handoff_ready(state)
@@ -4200,6 +4958,9 @@ def actor_authority_gates_require_correct_role(
         and state.product_function_gap_review_done
         and state.product_function_negative_scope_written
         and state.product_function_acceptance_matrix_written
+        and state.root_acceptance_thresholds_defined
+        and state.root_acceptance_proof_matrix_written
+        and state.standard_scenario_pack_selected
     )
     if (
         state.product_function_architecture_product_officer_approved
@@ -4208,12 +4969,20 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "product-function architecture approval was recorded before all PM product artifacts existed"
         )
+    if (
+        state.product_function_architecture_product_officer_approved
+        and not state.product_architecture_officer_adversarial_probe_done
+    ):
+        return InvariantResult.fail(
+            "product officer approved product-function architecture before adversarial modelability and failure-path probe"
+        )
     if state.product_function_architecture_reviewer_challenged and not (
         state.product_function_architecture_product_officer_approved
         and state.reviewer_ready
+        and state.product_architecture_reviewer_adversarial_probe_done
     ):
         return InvariantResult.fail(
-            "human-like reviewer challenged the product-function architecture before product officer approval or reviewer recovery"
+            "human-like reviewer challenged the product-function architecture before product officer approval, reviewer recovery, or independent adversarial probe"
         )
     if state.flowguard_process_design_done and not (
         state.startup_self_interrogation_pm_ratified
@@ -4229,14 +4998,48 @@ def actor_authority_gates_require_correct_role(
         )
     if state.child_skill_manifest_pm_approved_for_route and not (
         state.child_skill_route_design_discovery_started
+        and state.pm_child_skill_selection_manifest_written
+        and state.pm_child_skill_selection_scope_decisions_recorded
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
         and state.child_skill_manifest_process_officer_approved
         and state.child_skill_manifest_product_officer_approved
     ):
         return InvariantResult.fail(
-            "PM approved child-skill gate manifest before discovery, extraction, approver assignment, and reviewer/officer approvals"
+            "PM approved child-skill gate manifest before PM skill selection, discovery, extraction, approver assignment, independent validation, and reviewer/officer approvals"
+        )
+    if (
+        state.child_skill_manifest_reviewer_reviewed
+        or state.child_skill_manifest_process_officer_approved
+        or state.child_skill_manifest_product_officer_approved
+    ) and not state.child_skill_manifest_independent_validation_done:
+        return InvariantResult.fail(
+            "child-skill manifest role approval was recorded before independent manifest validation"
+        )
+    if (
+        state.root_route_model_process_officer_approved
+        or state.root_product_function_model_product_officer_approved
+        or state.parent_product_function_model_product_officer_approved
+        or state.node_product_function_model_product_officer_approved
+    ) and not state.flowguard_officer_model_adversarial_probe_done:
+        return InvariantResult.fail(
+            "FlowGuard officer model approval was recorded before adversarial model probe evidence"
+        )
+    if (
+        state.root_route_model_process_officer_approved
+        or state.root_product_function_model_product_officer_approved
+        or state.parent_product_function_model_product_officer_approved
+        or state.node_product_function_model_product_officer_approved
+    ) and not (
+        state.flowguard_model_report_risk_tiers_done
+        and state.flowguard_model_report_pm_review_agenda_done
+        and state.flowguard_model_report_toolchain_recommendations_done
+        and state.flowguard_model_report_confidence_boundary_done
+    ):
+        return InvariantResult.fail(
+            "FlowGuard officer model approval was recorded before the report extracted PM risk tiers, review agenda, toolchain recommendations, and confidence boundary"
         )
     if state.root_route_model_process_officer_approved and not state.root_route_model_checked:
         return InvariantResult.fail("root route approval is stale without a root route model check")
@@ -4284,16 +5087,22 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "node product-function model check lacks product FlowGuard officer approval"
         )
-    if state.node_human_review_reviewer_approved and not state.node_human_inspection_passed:
-        return InvariantResult.fail("node reviewer approval is stale without a node human review pass")
+    if state.node_human_review_reviewer_approved and not (
+        state.node_human_inspection_passed
+        and state.node_reviewer_independent_probe_done
+    ):
+        return InvariantResult.fail("node reviewer approval is stale without a node human review pass and independent probe")
     if state.node_human_inspection_passed and not state.node_human_review_reviewer_approved:
         return InvariantResult.fail("node human review pass lacks reviewer approval")
     if (
         state.composite_backward_review_reviewer_approved
-        and not state.composite_backward_human_review_passed
+        and not (
+            state.composite_backward_human_review_passed
+            and state.composite_reviewer_independent_probe_done
+        )
     ):
         return InvariantResult.fail(
-            "composite reviewer approval is stale without a composite backward review pass"
+            "composite reviewer approval is stale without a composite backward review pass and independent probe"
         )
     if (
         state.composite_backward_human_review_passed
@@ -4304,10 +5113,13 @@ def actor_authority_gates_require_correct_role(
         )
     if (
         state.final_product_function_model_product_officer_approved
-        and not state.final_product_function_model_replayed
+        and not (
+            state.final_product_function_model_replayed
+            and state.final_product_model_officer_adversarial_probe_done
+        )
     ):
         return InvariantResult.fail(
-            "final product-function approval is stale without final product replay"
+            "final product-function approval is stale without final product replay and adversarial officer probe"
         )
     if (
         state.final_product_function_model_replayed
@@ -4316,8 +5128,11 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "final product-function replay lacks product FlowGuard officer approval"
         )
-    if state.final_human_review_reviewer_approved and not state.final_human_inspection_passed:
-        return InvariantResult.fail("final reviewer approval is stale without final human review pass")
+    if state.final_human_review_reviewer_approved and not (
+        state.final_human_inspection_passed
+        and state.final_human_reviewer_independent_probe_done
+    ):
+        return InvariantResult.fail("final reviewer approval is stale without final human review pass and independent probe")
     if state.final_human_inspection_passed and not state.final_human_review_reviewer_approved:
         return InvariantResult.fail("final human review pass lacks reviewer approval")
     if state.final_route_wide_gate_ledger_pm_built and not (
@@ -4325,33 +5140,61 @@ def actor_authority_gates_require_correct_role(
         and state.final_route_wide_gate_ledger_effective_nodes_resolved
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
+        and state.final_route_wide_gate_ledger_parent_backward_replays_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_triage_done
+        and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "PM built final route-wide gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, and zero unresolved count"
+            "PM built final route-wide gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, zero unresolved count, and zero unresolved residual risks"
         )
     if state.final_route_wide_gate_ledger_reviewer_backward_checked and not (
         state.final_route_wide_gate_ledger_pm_built
+        and state.terminal_human_backward_review_map_built
+        and state.terminal_human_backward_replay_started_from_delivered_product
+        and state.terminal_human_backward_root_acceptance_reviewed
+        and state.terminal_human_backward_parent_nodes_reviewed
+        and state.terminal_human_backward_leaf_nodes_reviewed
+        and state.terminal_human_backward_pm_segment_decisions_recorded
+        and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "final route-wide gate ledger reviewer replay ran before PM-built clean ledger"
+            "final route-wide gate ledger reviewer replay ran before PM-built clean ledger and terminal human backward review map, delivered-product replay, node-by-node checks, PM segment decisions, and repair restart policy"
         )
     if state.final_route_wide_gate_ledger_pm_completion_approved and not (
         state.final_route_wide_gate_ledger_pm_built
+        and state.terminal_human_backward_review_map_built
+        and state.terminal_human_backward_pm_segment_decisions_recorded
+        and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_reviewer_backward_checked
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_triage_done
+        and state.final_residual_risk_unresolved_count_zero
+        and state.final_ledger_pm_independent_audit_done
     ):
         return InvariantResult.fail(
-            "PM approved final route-wide gate ledger before reviewer replay and zero unresolved count"
+            "PM approved final route-wide gate ledger before reviewer replay, zero unresolved count, zero unresolved residual risks, and independent PM audit"
         )
     if state.pm_completion_decision_recorded and not state.final_route_wide_gate_ledger_pm_completion_approved:
         return InvariantResult.fail(
             "PM completion decision recorded before final route-wide gate ledger approval"
+        )
+    if state.pm_completion_decision_recorded and not state.flowpilot_skill_improvement_report_written:
+        return InvariantResult.fail(
+            "PM completion decision recorded before the nonblocking FlowPilot skill improvement report was written"
+        )
+    if state.pm_completion_decision_recorded and not (
+        state.terminal_closure_suite_run
+        and state.terminal_state_and_evidence_refreshed
+    ):
+        return InvariantResult.fail(
+            "PM completion decision recorded before terminal closure suite refreshed state and evidence"
         )
     if state.pm_completion_decision_recorded and not state.crew_archived:
         return InvariantResult.fail("PM completion decision recorded before crew archive")
@@ -4402,9 +5245,9 @@ INVARIANTS = (
         predicate=mode_choice_before_contract,
     ),
     Invariant(
-        name="startup_banner_before_mode_choice",
-        description="FlowPilot emits a visible startup banner before mode selection or other heavy startup work.",
-        predicate=startup_banner_before_mode_choice,
+        name="startup_question_gate_before_heavy_startup",
+        description="FlowPilot asks the three startup questions, stops for answers, and emits the banner only after all three answers are explicit.",
+        predicate=startup_question_gate_before_heavy_startup,
     ),
     Invariant(
         name="dependency_plan_before_route_or_work",
@@ -4452,9 +5295,9 @@ INVARIANTS = (
         predicate=stable_heartbeat_prompt_not_route_state,
     ),
     Invariant(
-        name="external_watchdog_policy_is_lifecycle_state",
-        description="External watchdog policy is established with the paired automation lifecycle and is not reset at ordinary checkpoints or node transitions.",
-        predicate=external_watchdog_policy_is_lifecycle_state,
+        name="heartbeat_continuation_is_lifecycle_state",
+        description="Automated continuation uses only a stable heartbeat launcher; manual-resume routes must not create heartbeat automation.",
+        predicate=heartbeat_continuation_is_lifecycle_state,
     ),
     Invariant(
         name="material_handoff_before_pm_route_design",

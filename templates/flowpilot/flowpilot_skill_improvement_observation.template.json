@@ -1,0 +1,29 @@
+{
+  "schema_version": "flowpilot.skill_improvement_observation.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "node_id": "<node-id-or-terminal>",
+  "gate_id": "<gate-id-or-null>",
+  "recorded_at": "<iso-8601-timestamp>",
+  "reported_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|main_executor>",
+  "observation_kind": "<protocol_ambiguity|template_gap|script_or_tooling_gap|model_gap|code_pointer_unclear|review_standard_weak|automation_friction|ui_or_cockpit_gap|other>",
+  "summary": "<short description of the FlowPilot skill issue or improvement opportunity>",
+  "observed_in_current_run": "<what happened in this run>",
+  "temporary_compensation_used": "<how this run continued or compensated, or null>",
+  "current_project_impact": "<none|minor_compensated|handled_in_current_project>",
+  "does_not_block_current_project": true,
+  "suggested_root_fix": "<future FlowPilot root-repo fix, or null>",
+  "candidate_root_files": [
+    "<relative-path-or-null>"
+  ],
+  "evidence_paths": [
+    "<path-or-null>"
+  ],
+  "pm_triage": {
+    "status": "<untriaged|accepted_for_skill_backlog|duplicate|not_a_skill_issue>",
+    "triaged_by_role": "project_manager",
+    "triaged_at": "<iso-8601-timestamp-or-null>",
+    "notes": "<pm-notes-or-null>"
+  }
+}

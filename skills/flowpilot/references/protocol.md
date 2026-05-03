@@ -53,7 +53,9 @@ long-form public explanation lives in `docs/protocol.md`.
 10. Before PM product-function synthesis or route decisions, require the main
     executor to write `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,
-    coverage map, and unread or deferred materials.
+    local skill and host capability inventory, coverage map, and unread or
+    deferred materials. Local skills are candidate resources only until PM
+    selection.
 11. The human-like reviewer approves or blocks material sufficiency. The packet
     is PM-ready only when obvious sources are not missing, large materials are
     sampled or scoped honestly, summaries are specific, contradictions and
@@ -73,53 +75,63 @@ long-form public explanation lives in `docs/protocol.md`.
     usefulness, unnecessary display, missing workflow support, bad defaults,
     and failure-state gaps. If either blocks, the project manager revises the
     architecture before the route continues.
+
+    Before freezing the contract, the project manager also writes
+    `.flowpilot/runs/<run-id>/root_acceptance_contract.json` and selects
+    `.flowpilot/runs/<run-id>/standard_scenario_pack.json`. The root contract
+    turns the PM's important hard requirements into early proof obligations.
+    The scenario pack defines the baseline happy-path, edge/failure,
+    regression, and PM-risk replay set that terminal review must exercise.
 15. Freeze the acceptance contract as a floor in
     `.flowpilot/runs/<run-id>/contract.md` from
     the approved product-function architecture and startup interrogation.
 16. Write the capabilities manifest, including material handoff and
     product-function architecture evidence.
-17. Ask the project manager to discover likely child skills, load each likely
-    child skill's `SKILL.md` and relevant references, and extract a
-    child-skill gate manifest with key stages, required checks, standards,
-    evidence needs, skipped-reference reasons, visible mini-route milestones,
-    and required approver roles.
-18. Have the human-like reviewer, process FlowGuard officer, and product
+17. Ask the project manager to write the PM child-skill selection manifest from
+    the product capability map, frozen contract, capabilities manifest, and
+    local skill inventory. The PM classifies candidate skills as `required`,
+    `conditional`, `deferred`, or `rejected`; local availability alone never
+    creates route work.
+18. Ask the project manager to discover child-skill gates only from
+    PM-selected skills, load each likely child skill's `SKILL.md` and relevant
+    references, and extract a child-skill gate manifest with key stages,
+    required checks, standards, evidence needs, skipped-reference reasons,
+    visible mini-route milestones, and required approver roles.
+19. Have the human-like reviewer, process FlowGuard officer, and product
     FlowGuard officer review their slices of the manifest. The project manager
     then approves or blocks manifest inclusion in route modeling, the
     execution frontier, and the PM runway. The main executor and workers are
     forbidden approvers for child-skill gates.
-19. Verify the real `flowguard` package and required skills.
-20. Inspect dependency/tool needs and write a dependency plan.
-21. Install only the minimum dependencies needed for FlowPilot itself and the
+20. Verify the real `flowguard` package and required skills.
+21. Inspect dependency/tool needs and write a dependency plan.
+22. Install only the minimum dependencies needed for FlowPilot itself and the
     current route/model checks.
-22. Defer future route, chunk, or native-build dependencies until the node or
+23. Defer future route, chunk, or native-build dependencies until the node or
     check that actually needs them.
-23. Probe host continuation capability only after the scheduled-continuation
+24. Probe host continuation capability only after the scheduled-continuation
     startup answer is recorded. If the user allowed scheduled continuation and
     setup fails, stop and ask for a new decision instead of silently switching
     to manual resume.
-24. If the user allowed scheduled continuation and the host supports real
-    wakeups, create the all-or-none automated
-    continuation bundle: stable heartbeat launcher, paired external watchdog,
-    and singleton global watchdog supervisor. The launcher loads persisted
-    route/frontier state rather than carrying route-specific next-jump
-    instructions in its prompt. On wakeup it loads role memory, resumes or
-    replaces each role from that memory, then asks the project manager for a
-    completion-oriented runway from the current position to project
-    completion.
-25. If the user selected manual resume, record `manual-resume` mode and do not
-    create heartbeat, watchdog, or global-supervisor automation.
-26. Record the controlled-stop notice policy: completed routes emit a
+25. If the user allowed scheduled continuation and the host supports real
+    wakeups, create the automated continuation: a stable one-minute heartbeat
+    launcher. The launcher loads persisted route/frontier state rather than
+    carrying route-specific next-jump instructions in its prompt. On wakeup it
+    loads role memory, resumes or replaces each role from that memory, then
+    asks the project manager for a completion-oriented runway from the current
+    position to project completion.
+26. If the user selected manual resume, record `manual-resume` mode and do not
+    create heartbeat automation.
+27. Record the controlled-stop notice policy: completed routes emit a
     completion notice; controlled nonterminal stops emit a resume notice that
     says whether to wait for heartbeat or type `continue FlowPilot`.
-27. Ask the project manager for the initial route-design decision.
-28. Ask the process FlowGuard officer to use FlowGuard as process designer for
+28. Ask the project manager for the initial route-design decision.
+29. Ask the process FlowGuard officer to use FlowGuard as process designer for
     the active route.
-29. Generate a candidate route tree from the approved product-function
+30. Generate a candidate route tree from the approved product-function
     architecture, contract, and PM-approved child-skill gate manifest.
-30. The process FlowGuard officer authors, runs, interprets, and approves or
+31. The process FlowGuard officer authors, runs, interprets, and approves or
     blocks the root development-process model against the candidate tree.
-31. The product FlowGuard officer authors, runs, interprets, and approves or
+32. The product FlowGuard officer authors, runs, interprets, and approves or
     blocks the root product-function model for the target product or workflow
     behavior, using the approved product-function architecture as a source
     artifact.
@@ -131,7 +143,9 @@ long-form public explanation lives in `docs/protocol.md`.
     node, next node, current mainline, fallback, checks before advance, and the
     current-node completion guard. Include actor authority for the current
     gate: draft owner, execution owner, required approver, forbidden
-    approvers, approval status, and approval evidence path. Also record the
+    approvers, approval status, approval evidence path, independent validation
+    requirement, completion report-only prohibition, and independent validation
+    evidence path. Also record the
     latest PM completion runway, including downstream steps, hard-stop
     conditions, checkpoint cadence, and any PM stop signal.
 35. Sync the visible Codex plan list from the latest PM completion runway,
@@ -140,10 +154,14 @@ long-form public explanation lives in `docs/protocol.md`.
     list tool, such as Codex `update_plan`, call that tool immediately with
     the PM runway before executing work. Persisted `.flowpilot` evidence alone
     is not enough when the native tool exists.
-36. Emit the user flow diagram in chat when this is startup, a key node change,
-    route mutation, completion review, or user request. Include active route,
-    active node, next jumps, checks, fallback branches, continuation state, and
-    acceptance delta as nearby text.
+36. Emit the simplified English FlowPilot Route Sign Mermaid in chat when this
+    is startup, a key node change, route mutation, review/validation failure
+    return, completion review, or user request, unless Cockpit UI is open and
+    showing the same graph. Include active route, active node, next jumps,
+    checks, fallback or repair branches, continuation state, and acceptance
+    delta as nearby text. If the route returns for repair, the Mermaid must
+    show that return edge and the reviewer must check the visible chat block
+    before the node can advance.
 37. Run the startup activation review before any child-skill execution, image
     generation, implementation, formal route chunk, or completion work. There
     is no third startup opener or runtime startup-check script. The human-like
@@ -163,10 +181,10 @@ long-form public explanation lives in `docs/protocol.md`.
     legacy-only, or quarantined and is not being used as current state. It
     must also check user authorization against actual state,
     old-route and old-asset cleanup when a clean start was requested, the real
-    route heartbeat automation at one minute, the external Windows watchdog
-    task, the singleton global supervisor at thirty minutes, global registry
-    registration, latest watchdog evidence, residual route state, and
-    shadow-route evidence. It must bind the background-agent answer to actual
+    route heartbeat automation at one minute when scheduled continuation is
+    allowed, manual-resume evidence when manual continuation is selected,
+    residual route state, and shadow-route evidence. It must bind the
+    background-agent answer to actual
     subagent state: if the user allowed background agents, verify six live
     role-bearing subagents were freshly spawned for this FlowPilot task after
     that user decision and after current route allocation, and verify none of
@@ -217,7 +235,9 @@ capability routing, the main executor writes
 `.flowpilot/runs/<run-id>/material_intake_packet.json`. It inventories user-provided and
 repository-local materials, summarizes what each source appears to contain,
 classifies authority, freshness, completeness, contradictions, privacy/safety
-notes, maps coverage to user intent, and names unread or deferred materials.
+notes, inventories locally installed skills and host capabilities as
+candidate-only resources, maps coverage to user intent, and names unread or
+deferred materials.
 
 The human-like reviewer approves material sufficiency before the project
 manager uses the packet. The reviewer must open or sample the actual materials
@@ -256,6 +276,130 @@ weak failure states, and user-task gaps. Contract freeze, route generation,
 capability routing, and implementation are blocked until both review slices are
 resolved.
 
+## PM Child-Skill Selection
+
+After the product-function architecture and capabilities manifest, and before
+child-skill gate extraction, the project manager writes
+`.flowpilot/runs/<run-id>/pm_child_skill_selection.json`. This artifact is the
+boundary between "the machine has this skill" and "the route should use this
+skill."
+
+The PM reads the product capability map, frozen contract, capabilities
+manifest, and local skill inventory, then classifies candidate skills as
+`required`, `conditional`, `deferred`, or `rejected`. Required and conditional
+skills name the product capabilities they support, trigger conditions,
+hard-gate or user-approval needs, files to load, and references deferred with
+reason. Available but unused skills receive negative-selection reasons so the
+route does not grow accidental UI, publishing, README, promotion, or other
+domain work merely because those skills exist locally.
+
+Child-skill route discovery may proceed only from this PM selection manifest.
+If a later node reveals a new needed skill, the PM updates the selection
+manifest before the current-node child-skill manifest is refined.
+
+## Root Acceptance Contract And Standard Scenarios
+
+Before contract freeze, the project manager writes
+`.flowpilot/runs/<run-id>/root_acceptance_contract.json`. It records the small
+set of PM-owned root requirements that must become route-wide proof
+obligations: why each requirement matters, the acceptance threshold, the
+minimum experiment or inspection evidence, the owner, the required approver,
+and the terminal replay expectation.
+
+The project manager also selects or writes
+`.flowpilot/runs/<run-id>/standard_scenario_pack.json`. This is the compensating
+scenario baseline used when individual nodes cannot know every downstream
+detail at startup. It includes happy-path, boundary/failure, regression,
+state/lifecycle, localization/accessibility, and user-risk scenarios when
+applicable. Terminal review replays this pack plus any risk scenarios added by
+node acceptance plans.
+
+## Node Acceptance Plans
+
+Before a formal route chunk or implementation-bearing node starts, the project
+manager writes the node's `node_acceptance_plan.json`. It maps the current node
+to the root acceptance contract, child-skill gates, risk hypotheses, concrete
+experiments or manual walkthroughs, required evidence, and required approver.
+
+The plan is intentionally node-local. It must not explode every future route
+obligation up front, but every current-node requirement, known risk, and
+dependency on later review must be named. PM-risk items from these plans become
+terminal replay scenarios unless resolved earlier by repair and recheck.
+
+## FlowPilot Skill Improvement Notes
+
+Each node, repair, review, child-skill closure, parent replay, and terminal
+boundary may expose issues in FlowPilot itself: unclear protocol, weak
+templates, missing fields, hard-to-find code paths, model/tooling friction,
+automation friction, or Cockpit display gaps. Any role may append a concise
+observation to
+`.flowpilot/runs/<run-id>/flowpilot_skill_improvement_observations.jsonl`.
+
+These observations do not block the current project and do not require fixing
+the FlowPilot root repository inside the current run. If a small FlowPilot
+weakness affects the active project, compensate locally, record the
+observation, and continue. At terminal closure, the project manager writes
+`.flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json` for later
+manual FlowPilot maintenance, including the case where no obvious skill issue
+was observed.
+
+## Parent Backward Replay
+
+Do not infer "important" parent nodes from semantics. The trigger is purely
+route structure: every effective route node with children is a parent/composite
+node and must run a local backward replay before that parent closes. Labels
+such as high risk, integration, feature, or downstream dependency may make the
+review more detailed, but they do not decide whether review is required.
+
+When the checked route is created or mutated, the project manager enumerates
+all effective parent/composite nodes from `flow.json` into the frontier. As
+each parent reaches closure, PM writes
+`.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<parent-node-id>/parent_backward_replay.json`.
+The human-like reviewer starts from the parent-level delivered result, then
+checks the parent goal, child rollup, child evidence, child node acceptance
+plans, and current product behavior. Child-local passes are pointers only.
+
+After each replay segment, PM records continue, repair an existing child, add
+or route to a sibling child, rebuild the child subtree, bubble impact to the
+next parent, or PM stop. Repair or route mutation makes affected child evidence
+and parent rollups stale, and the same parent replay reruns before closure.
+Terminal review later consumes these local parent replays as evidence pointers
+but still independently replays the final delivered product.
+
+## Universal Adversarial Approval Baseline
+
+Every PM, reviewer, and FlowGuard officer approval must be an independent
+adversarial validation event. Completion reports, worker summaries,
+screenshots, smoke logs, model-result snippets, and PM summaries are pointers
+only; they cannot be the approval basis by themselves.
+
+Each approval record includes `independent_validation` evidence: completion
+report only is false; pointer reports consulted; direct sources checked;
+state fields, route/frontier/ledger files, screenshots, logs, model files, or
+materials checked; commands, probes, walkthroughs, model checks, or samples run;
+adversarial hypotheses tested; concrete evidence references;
+risk-or-blindspot triage that classifies every finding as fixed, routed to
+repair, current-gate blocker, terminal replay scenario, non-risk note, or
+explicit role-approved exception; and
+approve/block/request-more-evidence/mutate/PM-stop decision.
+
+Approval records must not park real unresolved risks as acceptable residuals.
+When a finding is a real risk, the approver sends the route back to repair,
+adds a current-node check, adds a terminal replay scenario, requests evidence,
+or blocks completion. The completed route can contain resolved issues,
+non-risk notes, and explicit role-approved exceptions only.
+
+PM approvals attack route, frontier, ledger, stale evidence, waiver authority,
+blockers, downstream consequences, unresolved counts, and consistency with the
+frozen user goal. Reviewer approvals attack the artifact, behavior, source
+material, output, UI surface, log, screenshot, backend effect, delivered
+product, and edge/failure cases directly. FlowGuard officer approvals attack
+model boundary, model files, commands or valid unchanged reuse, state/edge
+counts, invariant results, missing labels, counterexamples, and blindspots.
+
+An approval without this evidence is pending or blocked. PM cannot launder a
+report-only reviewer/officer pass; the correct role must recheck the gate.
+
 ## Reviewer Fact-Check Baseline
 
 The human-like reviewer is a factual reviewer, not a report reader. For every
@@ -268,15 +412,15 @@ Reviewer fact checks must name what was directly checked:
 - source artifacts or material samples for material sufficiency;
 - user request, inspected materials, and expected workflow reality for
   product-function architecture usefulness;
-- live startup state, route, frontier, role memory, automation records, Windows
-  scheduled task evidence, global supervisor, watchdog evidence, and cleanup
-  boundary for startup;
+- live startup state, route, frontier, role memory, heartbeat or manual-resume
+  evidence, and cleanup boundary for startup;
 - loaded child-skill source instructions, mapped gates, evidence plan, actual
   child-skill outputs, and output/evidence match for child-skill gates;
 - actual product behavior, rendered output, logs, screenshots, interactions, or
   backend effects for implementation inspections;
-- current route/frontier/ledger/evidence files and delivered product for final
-  backward replay.
+- delivered product first, then root acceptance, parent/module nodes, leaf-node
+  behavior, node acceptance plans, current route/frontier/ledger/evidence files,
+  and PM replay map for terminal human backward replay.
 
 A reviewer decision that cites only a worker/PM summary without direct
 fact-check evidence is invalid. PM decisions may rely on reviewer reports only
@@ -293,7 +437,7 @@ Repeat until complete or blocked:
    `.flowpilot/runs/<run-id>/crew_ledger.json`,
    `.flowpilot/runs/<run-id>/crew_memory/`, active route,
    active node, continuation mode, last heartbeat or manual-resume record,
-   watchdog evidence when present, lifecycle evidence, and last checkpoint.
+   lifecycle evidence, and last checkpoint.
 2. Rehydrate the six-agent crew before PM runway work. Stored agent ids may be
    resumed only when they belong to the same active FlowPilot task-born cohort.
    A new formal FlowPilot task must create fresh live subagents instead of
@@ -374,9 +518,9 @@ group, module, leaf-node, and child-skill entry and uses 20-40 questions by
 default, up to 50 for complex boundaries. Lightweight self-check is for
 continuation micro-steps and tiny reversible choices and uses 5-10 questions.
 Every round records its tier, scope id, question count, and evidence. Until
-the Cockpit UI is available, chat is the temporary cockpit and must show user
-flow diagrams, next jumps, checks, fallback exits, continuation state, and
-acceptance delta.
+the Cockpit UI is available, chat is the temporary cockpit and must show the
+simplified English FlowPilot Route Sign Mermaid, next jumps, checks, fallback
+or repair exits, continuation state, and acceptance delta.
 Formal startup, route mutation, and completion self-interrogation evidence is
 only draft evidence until the project manager ratifies the scope, layer
 coverage, count, and decision set. The project manager's ratification path is
@@ -384,15 +528,34 @@ stored in the frontier authority record.
 
 The user flow diagram is the single display view over canonical `.flowpilot`
 state, not an alternate execution path. Chat and Cockpit UI render the same
-6-8 stage graph from `.flowpilot/runs/<run-id>/diagrams/user-flow-diagram.mmd`, with the
-current stage highlighted and active route/node named nearby. Superseded or
-paused routes stay in history with replacement reasons and checkpoint/failure
-evidence.
+simplified English 6-8 stage or route-node graph from
+`.flowpilot/runs/<run-id>/diagrams/user-flow-diagram.mmd`, with the current
+stage and active route/node highlighted. Superseded or paused routes stay in
+history with replacement reasons and checkpoint/failure evidence.
+
+If Cockpit UI is not open, the chat Mermaid block is mandatory at startup, key
+node changes, route mutation, review or validation failure returns, completion
+review, and explicit user requests. The route sign must show a visible
+`returns for repair` edge when review, validation, or route mutation sends the
+route back to an earlier or current repair node.
 
 Raw FlowGuard Mermaid exports are diagnostic only. They are disabled by
 default and generated only on explicit request. Route mutation invalidates the
 old user flow diagram; recheck the route and refresh the artifact before
 showing it as current progress.
+
+The human-like reviewer must check the visible display surface. In
+closed-Cockpit cases the reviewer must confirm that the Mermaid block appeared
+in chat, matches the active route/frontier node, and includes the repair edge
+when required. A file-only check does not pass the gate.
+
+When `scripts/flowpilot_user_flow_diagram.py` is available, it is the standard
+route-sign hook: generate chat Markdown with
+`--markdown --trigger <trigger> --write`, paste that exact block into chat when
+required, then record the reviewer gate with
+`--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,
+manually compose the same English Mermaid from the active route/frontier and
+record equivalent reviewer evidence.
 
 Each full round must also cover the full layer matrix: goal/acceptance,
 functional capability, data/state/source of truth, implementation strategy and
@@ -406,7 +569,7 @@ For formal multi-hour routes, continuation evidence must include the real
 host-level continuation or wakeup record when the host supports it. If no such
 tool exists, record `manual-resume` fallback/limitation instead of treating
 JSON heartbeat files as a passed real-continuation gate. Unsupported hosts must
-not create heartbeat, watchdog, or global-supervisor automation.
+not create heartbeat automation.
 
 Every meaningful route scope has two FlowGuard scopes: the
 development-process model and the product-function model. The process model
@@ -420,8 +583,29 @@ interprets, and approves or blocks process-model coverage. The product
 FlowGuard officer authors, runs, interprets, and approves or blocks
 product-model coverage. The main executor may provide context and receive the
 report, but it must not author or run FlowGuard model files for the officers.
-Passing command output without the matching officer's ownership and approval
-is a draft, not a completed gate.
+Passing command output without the matching officer's ownership, model-boundary
+check, command execution or valid unchanged reuse, counterexample/missing-label
+inspection, cited model files, state fields, state/edge counts, blindspots, and
+approval is a draft, not a completed gate.
+
+Model gates are dispatched as officer-owned asynchronous gates when live
+background roles are available. The PM writes a modeling request with an
+officer output root and a main-executor parallel-preparation boundary. While
+the matching officer authors, runs, interprets, and reports, the main executor
+may continue only non-dependent preparation such as read-only context gathering,
+dependency inventory, and non-model evidence drafts. Implementation, route
+freeze, checkpoint closure, completion closure, or any protected gate remains
+blocked until the officer report is approved.
+
+Officer reports must prove execution ownership with `model_author_role`,
+`model_runner_role`, `model_interpreter_role`, `approved_by_role`,
+`commands_run_by_officer`, model files, input snapshots, state/edge counts,
+invariant and missing-label results, counterexample inspection, PM risk-tier
+extraction, model-derived review agenda, toolchain/model improvement
+suggestions, confidence boundary, blindspots, and any valid unchanged-reuse
+basis. If the host cannot let live officers run tools, FlowPilot records
+explicit single-agent fallback and does not claim parallel officer execution.
+Main-executor outputs are pointers only.
 
 PM-initiated FlowGuard modeling is a decision-support move, not a vague
 handoff. When the project manager cannot confidently choose a route, repair,
@@ -429,12 +613,17 @@ feature, target-object hypothesis, file/protocol structure, or validation path
 from existing evidence, the PM may write a structured modeling request and
 assign it to the process FlowGuard officer, the product FlowGuard officer, or
 both. The request names the decision, uncertainty, evidence, candidate options
-or option-generation need, assigned officer scope, and required answer shape.
-The officer first checks modelability. Missing evidence becomes an
+or option-generation need, assigned officer scope, required answer shape,
+officer output root, and main-executor parallel-preparation boundary. The
+officer first checks modelability. Missing evidence becomes an
 evidence-collection node; an over-broad question becomes split modeling
 requests. A valid report includes coverage, blindspots, failure paths,
-recommendation, confidence, next smallest executable action, and route mutation
-candidate. The PM synthesizes the report and records the route decision.
+PM-facing risk tiers, model-derived review agenda, toolchain or model
+improvement suggestions, human walkthrough recommendations, recommendation,
+confidence, next smallest executable action, and route mutation candidate. It
+must avoid absolute "no risk" wording; it states the model boundary and gives
+PM decision options. The PM synthesizes the report and records the route
+decision.
 
 Human-like inspection is a route mechanism, not a comment. Inspectors load the
 contract, route, product model, child-skill evidence, screenshots/logs/output,
@@ -489,7 +678,7 @@ Every reset or inserted child then runs its own focused interrogation,
 development-process model, product-function model, execution, neutral
 observation, inspection, and same parent/composite recheck.
 
-Every non-leaf parent/module/group must also run a composite backward review
+Every effective route node with children must also run a parent backward replay
 before it closes. Child-local passes are inputs, not sufficient closure
 evidence. The parent review reloads the child evidence, replays it against the
 parent product-function model, inspects whether the children compose into the
@@ -500,15 +689,12 @@ contract changed. The affected evidence and parent rollups become stale until
 the changed child/subtree passes and the same parent backward review reruns.
 
 Pause, restart, and terminal closure use a unified lifecycle reconciliation
-gate. Before claiming any of those states, FlowPilot scans Codex app
-automations, the user-level global supervisor/registry, Windows scheduled
-tasks, `.flowpilot/runs/<run-id>/state.json`,
-`.flowpilot/runs/<run-id>/execution_frontier.json`, and
-latest watchdog evidence. Disabled Windows FlowPilot scheduled tasks are still
-residual lifecycle objects unless they are unregistered or explicitly waived.
-`scripts/flowpilot_lifecycle.py` provides a read-only inventory and required
-action list; actual Codex automation changes still use the official Codex app
-automation interface.
+gate. Before claiming any of those states, FlowPilot scans Codex app heartbeat
+automations, `.flowpilot/runs/<run-id>/state.json`,
+`.flowpilot/runs/<run-id>/execution_frontier.json`, and latest heartbeat or
+manual-resume evidence. `scripts/flowpilot_lifecycle.py` provides a read-only
+inventory and required action list; actual Codex automation changes still use
+the official Codex app automation interface.
 
 Heartbeat automations should stay stable after creation. Route mutations,
 next-node changes, and current-mainline plan updates are persisted in
@@ -523,104 +709,26 @@ and either execute that gate or record a concrete blocker. Heartbeat evidence
 must name the selected gate, action attempted, result, and updated completion
 guard. A heartbeat that only writes "next I will..." is a no-progress failure.
 
-When host automation appears active but heartbeat evidence stops advancing,
-FlowPilot may use `scripts/flowpilot_watchdog.py` or an equivalent external
-watchdog. The watchdog resolves `.flowpilot/current.json` and checks
-`.flowpilot/runs/<run-id>/state.json`, the active route heartbeat id,
-`.flowpilot/runs/<run-id>/busy_lease.json`, and host automation metadata.
-Because host heartbeats do not interrupt an already-running Codex turn,
-bounded long operations must create a route/node-matched busy lease before
-starting and clear or refresh it afterward. If the latest heartbeat is older
-than the configured N-minute threshold but the lease is active, matching, and
-non-expired, the watchdog records `busy_not_stale` and does not request reset.
-If the lease was just cleared, the watchdog records `post_busy_grace` and
-waits a bounded grace window before requesting reset, because the next
-heartbeat can only arrive after the active turn yields back to the host
-scheduler. Default the grace window to 10x the heartbeat interval unless route
-evidence records a different value. Default the stale threshold to 10 minutes.
-If no valid lease or post-busy grace exists, it writes `.flowpilot/runs/<run-id>/watchdog/`
-evidence requiring FlowPilot to call the official Codex app automation
-interface and set the active heartbeat automation to `PAUSED`, then back to
-`ACTIVE`. The watchdog does not mutate `automation.toml` directly. A later
-heartbeat proves whether the reset worked.
-
-The watchdog also writes a compact user-level global record by default. Use
-`$FLOWPILOT_GLOBAL_RECORD_DIR` to override the directory; otherwise it uses
-`$CODEX_HOME/flowpilot/watchdog`. The project-local watchdog evidence is still
-authoritative. The global registry is an index that a singleton supervisor
-uses to find projects whose local evidence must be reread before any reset is
-requested.
-
-Watchdog reset decisions trust only `.flowpilot/runs/<run-id>/state.json`, latest heartbeat
-evidence, and `.flowpilot/runs/<run-id>/busy_lease.json`. `execution_frontier.json`,
-`lifecycle/latest.json`, host automation metadata, and global records are
-diagnostic drift signals only. Live subagent busy state is not inspected. Each
-watchdog record includes `source_status` with trusted sources, diagnostic
-sources, source timestamps, drift warnings, and
-`live_subagent_state_used: false`.
-
-Heartbeat, watchdog, and global supervisor are an all-or-none lifecycle bundle
-when the host supports real continuation. The route heartbeat cadence is fixed
-at one minute: route heartbeat automations use
+Automated continuation is heartbeat-only lifecycle state. The route heartbeat
+cadence is fixed at one minute: route heartbeat automations use
 `rrule: FREQ=MINUTELY;INTERVAL=1`, and route/frontier evidence records
-`route_heartbeat_interval_minutes: 1`. This is distinct from the user-level
-global supervisor's fixed 30-minute cadence. Creating or repairing a real
-heartbeat continuation for a formal long-running route also creates or verifies
-the external watchdog automation, verifies the singleton global supervisor,
-and records the pairing. If any piece cannot be created, roll back to
-`manual-resume` before route execution or record a concrete blocker. On
-terminal closure for automated routes, first write terminal/inactive route
-state and unregister this project's global supervisor registration lease. Then
-disable or delete the project watchdog automation, write that evidence, write
-the inactive lifecycle snapshot back to `.flowpilot/runs/<run-id>/state.json`,
-`.flowpilot/runs/<run-id>/execution_frontier.json`, and watchdog evidence, and only then
-disable or delete the heartbeat automation. Delete the user-level global
-supervisor last only after a locked registry reread confirms no active,
-unexpired registrations remain. For manual-resume routes, record that no
-heartbeat/watchdog/global-supervisor automation exists to stop.
+`route_heartbeat_interval_minutes: 1`. Creating or repairing real heartbeat
+continuation writes lifecycle evidence with the heartbeat id, cadence, active
+state, and official host automation source. If the heartbeat cannot be created
+or verified, roll back to `manual-resume` before route execution or record a
+concrete blocker.
+
+On terminal closure for automated routes, write terminal/inactive route state,
+write the inactive lifecycle snapshot back to
+`.flowpilot/runs/<run-id>/state.json`,
+`.flowpilot/runs/<run-id>/execution_frontier.json`, write lifecycle evidence,
+and then disable or delete the heartbeat automation. For manual-resume routes,
+record that no heartbeat automation exists to stop.
+
 This lifecycle policy is not node-local. Ordinary checkpoints, node
-transitions, user-flow-diagram refreshes, and Codex plan syncs must preserve the
-recorded watchdog policy and automation pairing; they may read watchdog
-evidence but must not recreate, re-register, start, restart, or re-enable the
-paired watchdog automation.
-For Windows Task Scheduler watchdogs, the pairing also includes
-hidden/noninteractive execution evidence. Use the bundled
-`scripts/register_windows_watchdog_task.ps1` or an equivalent task definition
-that avoids direct visible `python.exe` console actions, and record
-`hidden_noninteractive: true` plus `visible_window_risk: false`.
-
-The user-level global supervisor is singleton Codex automation infrastructure,
-not a Windows scheduled task, and exists only for hosts that support Codex
-automation. Create or verify it through the Codex app automation interface using
-`templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md` as the
-prompt source and a fixed 30-minute cadence. This verification happens in
-the same lifecycle setup that creates or repairs the heartbeat and paired
-watchdog. Each heartbeat refreshes the current project's global registration
-lease. Startup first inspects existing Codex cron automations by id, name, and
-prompt. Reuse one active singleton at the fixed cadence; update one paused
-singleton to `ACTIVE` when global protection is required; create only when no
-singleton exists and at least one project registration is active. The validated
-creation shape is `kind: cron`, `rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as
-one workspace string path, `executionEnvironment: local`, `reasoningEffort:
-medium`, and `status: ACTIVE`. A local route or chat unregisters only its own
-project record. On pause, stop, or completion, unregister the project first,
-stop the project heartbeat/watchdog, then reread the registry under the
-singleton lock; delete the user-level global supervisor last only when no
-active, unexpired registrations remain. The supervisor must reread local state
-and watchdog evidence, expire terminal/manual-stop routes, supersede old route
-generations, and dedupe repeated stale events before it records or performs
-any reset.
-
-Busy leases are bounded active-work evidence only. They are not completion
-proof and must not be open-ended. Recently cleared matching leases suppress
-reset only during the post-busy grace window. Missing, expired, old-cleared,
-mismatched, or malformed leases do not suppress a reset requirement.
-
-The main executor must start a bounded lease, or use
-`scripts/flowpilot_run_with_busy_lease.py`, around commands and waits that may
-outlive the stale threshold. Before checkpoint, route advancement, pause, or
-completion, it verifies that no active lease remains unless the same bounded
-operation is still running and refreshed with a new expiry.
+transitions, user-flow-diagram refreshes, and Codex plan syncs must not
+recreate, re-register, start, restart, or re-enable heartbeat automation unless
+they are explicitly in the lifecycle setup/repair gate.
 
 ## Capability Gates
 
@@ -642,8 +750,9 @@ Required:
   behavior-bearing work;
 - root, parent, leaf, repair, and capability product-function model checks
   whenever those scopes affect delivered behavior;
-- PM-owned child-skill gate manifest before route modeling: discover likely
-  child skills, read each invoked `source_skill`'s `SKILL.md`, load relevant
+- PM-owned child-skill gate manifest before route modeling: discover child
+  skills only from the PM selection manifest, read each invoked
+  `source_skill`'s `SKILL.md`, load relevant
   references or record skips, map the child workflow and completion standard
   into route gates, show a child-skill mini-route of key milestones, assign
   required approvers, and write the evidence checklist;
@@ -664,17 +773,22 @@ Required:
   rebuilds it from the current route and execution frontier, resolves effective
   and superseded nodes, collects child-skill, human-review, product-model, and
   process-model gates, resolves generated-resource lineage, checks stale
-  evidence, records zero unresolved current obligations, obtains human-like
-  backward replay, and then records PM ledger approval;
+  evidence, replays the standard scenario pack and node-risk scenarios, triages
+  every risk or blindspot, records zero unresolved current obligations and zero
+  unresolved residual risks, builds a terminal human backward replay map,
+  requires the reviewer to start from the delivered product and replay root,
+  parent, and leaf-node obligations by hand, records PM segment decisions and a
+  repair/restart policy, and then records PM ledger approval;
 - strict obligation classification before any reviewer pass: current-gate
   obligations clear, future obligations named, and nonblocking notes separated
   from blockers;
 - anti-rough-finish review before checkpoint or completion closure;
 - human-like product inspection before checkpoint and final completion, with
   route mutation and same-inspector recheck for blocking issues;
-- composite backward review before every non-leaf parent/module/group closure,
-  with child-evidence replay, parent product-model comparison, human-like
-  parent review, and structural route mutation when child composition fails;
+- parent backward replay before every effective route node with children can
+  close, with child-evidence replay, parent product-model comparison,
+  human-like parent review, PM segment decision, and structural route mutation
+  when child composition fails;
 - capability evidence sync before implementation.
 
 Capabilities sourced from child skills may complete only after their own
@@ -741,17 +855,27 @@ Conditional:
 
 `complete` is allowed only when final verification exists, anti-rough-finish
 review passed, feature/acceptance/quality-candidate reviews are complete,
-product-function model replay and final human-like inspection passed,
+every structurally required local parent backward replay has a reviewer pass
+and PM segment decision, product-function model replay and final human-like
+inspection passed,
 PM-owned final route-wide gate ledger has been rebuilt from the current route,
 its generated-resource lineage is resolved, its unresolved count is zero, the
-human-like reviewer has replayed it backward, and the PM has approved the clean ledger,
+human-like reviewer has replayed it backward from the delivered product through
+root, parent, and leaf-node segments in the PM-built replay map, every replay
+segment has a PM decision, repair/restart policy is recorded, and the PM has
+approved the clean ledger with independent adversarial audit evidence citing route/frontier,
+effective entries, stale/superseded evidence, waiver authority, unresolved
+counts, reviewer replay, standard scenario replay, node acceptance plan
+coverage, and risk-or-blindspot triage with zero unresolved residual risks,
 completion self-interrogation finds no obvious high-value work remaining, and
 final report evidence exists. Open inspection issues, unrechecked repairs, or
-missing same-inspector recheck evidence block completion. For routes with paired
-heartbeat/watchdog continuation,
-completion closure stops or deletes the watchdog and writes terminal lifecycle
-state back to local state/frontier/watchdog evidence before stopping the
-heartbeat.
+missing same-inspector recheck evidence block completion. For routes with
+automated heartbeat continuation, completion closure writes terminal lifecycle
+state back to local state/frontier/lifecycle evidence before stopping the
+heartbeat. Terminal closure also runs
+`.flowpilot/runs/<run-id>/terminal_closure_suite.json`, refreshing terminal
+state/frontier/ledger/checkpoint evidence, controlled-stop/completion notice
+status, automation lifecycle, role memory, and final user-report readiness.
 `blocked` is required when a hard gate is denied, the model
 cannot be stabilized, experiments are exhausted, or dependencies cannot be
 connected.

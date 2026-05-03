@@ -25,6 +25,9 @@
       "process_officer_approval_path": "<path-or-null>",
       "product_officer_approval_path": "<path-or-null>",
       "pm_route_inclusion_approval_path": "<path-or-null>",
+      "independent_validation_required": true,
+      "completion_report_only_allowed": false,
+      "independent_validation_paths": [],
       "main_executor_self_approval_allowed": false,
       "all_current_gates_assigned_role_approved": false
     },
@@ -35,6 +38,16 @@
     "step_evidence": [],
     "evidence_matches_outputs": false,
     "domain_quality_review": "pending",
+    "human_review_gate_evidence": {
+      "review_paths": [],
+      "worker_report_only_allowed": false,
+      "completion_report_only_allowed": false,
+      "independent_validation_paths": [],
+      "all_required_personal_walkthroughs_done": false,
+      "all_required_design_recommendations_recorded": false,
+      "unreachable_or_untested_controls": [],
+      "current_gate_visual_or_interaction_blockers": []
+    },
     "iteration_loop_closed": false,
     "completion_standard_met": false
   },
@@ -42,6 +55,7 @@
     "included_in_final_ledger": false,
     "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",
     "gate_entries": [],
+    "independent_validation_entries": [],
     "generated_resource_entries": [],
     "stale_after_route_version": null,
     "superseded_by": "<node-or-gate-id-or-null>",

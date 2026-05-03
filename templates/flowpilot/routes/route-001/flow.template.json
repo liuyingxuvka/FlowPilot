@@ -11,6 +11,8 @@
       "required_gates": [
         "self_interrogation",
         "material_intake_packet_written",
+        "local_skill_inventory_written",
+        "local_skill_inventory_candidate_classified",
         "material_reviewer_sufficiency_approved",
         "pm_material_understanding_memo_written",
         "pm_material_discovery_decision_recorded",
@@ -18,6 +20,8 @@
         "product_function_architecture_product_officer_approved",
         "product_function_architecture_reviewer_challenged",
         "flowguard_modeling",
+        "pm_child_skill_selection_manifest_written",
+        "pm_child_skill_selection_scope_decisions_recorded",
         "child_skill_gate_manifest_extracted",
         "child_skill_gate_approvers_assigned",
         "child_skill_gate_manifest_pm_approved",

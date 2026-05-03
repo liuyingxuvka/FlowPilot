@@ -17,15 +17,12 @@
     "top_level_control_state_absent_or_quarantined",
     "prior_work_import_boundary",
     "old_route_and_asset_reuse_boundary",
-    "heartbeat_watchdog_supervisor_evidence",
+    "heartbeat_or_manual_resume_evidence",
     "background_agent_user_decision_and_role_evidence",
     "current_task_live_agent_freshness",
     "historical_agent_id_nonreuse",
     "shadow_route_and_residual_state",
-    "real_codex_automation_records",
-    "windows_scheduled_tasks",
-    "global_watchdog_registry",
-    "watchdog_latest_evidence"
+    "real_codex_automation_records"
   ],
   "fact_sources": {
     "current_pointer_json": ".flowpilot/current.json",
@@ -41,16 +38,11 @@
     "fresh_live_agent_evidence": ".flowpilot/runs/<run-id>/evidence/live_subagents_fresh_for_current_task.json",
     "excluded_historical_agent_ids": ".flowpilot/runs/<run-id>/evidence/excluded_historical_agent_ids.json",
     "codex_automation_records": "$CODEX_HOME/automations",
-    "windows_scheduled_tasks": "Get-ScheduledTask filtered to FlowPilot watchdog tasks",
-    "global_watchdog_registry": "$CODEX_HOME/flowpilot/watchdog/registry.json",
-    "watchdog_latest_evidence": ".flowpilot/runs/<run-id>/watchdog/latest.json",
     "clean_start_boundary": ".flowpilot/runs/<run-id>/routes/<route-id>/evidence/clean_start_nonreuse_boundary.json"
   },
   "required_facts": {
     "route_heartbeat_interval_minutes": 1,
     "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
-    "watchdog_kind": "windows_task_scheduler",
-    "global_supervisor_cadence_minutes": 30,
     "live_subagents_required_when_user_allows_background_agents": 6,
     "live_subagents_must_be_fresh_for_current_task": true,
     "prior_route_agent_ids_must_not_be_reused_as_current_live_agents": true,

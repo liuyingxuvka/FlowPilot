@@ -20,10 +20,19 @@ for review.
    `continues_from_run_id` and write a prior-work import packet that treats old
    runs and project files as input materials. Do not reuse old control state,
    old live-agent IDs, old screenshots, or old route gates as current evidence.
-5. Emit `startup_banner.template.md` in chat as the first visible launch marker.
-6. Offer run-mode selection and record the selected mode or fallback reason.
-7. Run Grill-me style self-interrogation.
-8. Create a fresh fixed six-agent crew for the new formal FlowPilot task, write
+5. Ask the three startup questions: run mode, background-agent permission, and
+   scheduled-continuation permission. Stop immediately after asking and wait
+   for a later user reply. Do not emit the banner, create route state, load
+   child skills, spawn subagents, probe heartbeat, run image generation, or
+   start implementation in the question-asking response.
+6. Record all three later user answers explicitly. Do not infer a run mode,
+   background-agent authorization, scheduled-continuation authorization, or
+   fallback execution from invocation text, `.flowpilot/` state, host limits,
+   or previous routes.
+7. Emit `startup_banner.template.md` in chat only after the complete explicit
+   answer set has been recorded.
+8. Run Grill-me style self-interrogation.
+9. Create a fresh fixed six-agent crew for the new formal FlowPilot task, write
    `crew_ledger.json`, and write a compact role memory packet for every
    required crew role. The default startup target is six live background
    subagents freshly spawned after the startup answers and current route
@@ -31,50 +40,66 @@ for review.
    `agent_id` values are audit history only. If authorization is missing or
    startup fails, pause and ask. Continue with memory-seeded single-agent
    six-role continuity only after an explicit user fallback decision.
-9. Main executor writes `material_intake_packet.json`, then the human-like
-   reviewer approves material sufficiency before PM planning uses it.
-10. Project manager writes `pm_material_understanding.json`, classifies material
+10. Main executor writes `material_intake_packet.json`, including local skill
+   and host capability inventory as candidate-only resources, then the
+   human-like reviewer approves material sufficiency before PM planning uses it.
+11. Project manager writes `pm_material_understanding.json`, classifies material
    complexity, and records whether messy/raw materials require discovery,
    cleanup, modeling, research, validation, or reconciliation nodes.
-11. Ask the project manager to synthesize `product_function_architecture.json`
+12. Ask the project manager to synthesize `product_function_architecture.json`
    before contract freeze, including user tasks, capabilities, feature
    decisions, visible-display rationale, missing-feature review, negative
    scope, and the functional acceptance matrix.
-12. Product FlowGuard officer approves modelability and the human-like reviewer
+13. Product FlowGuard officer approves modelability and the human-like reviewer
    challenges usefulness and missing or unnecessary product behavior.
-13. Freeze the acceptance contract from the approved product-function
+14. Project manager writes `root_acceptance_contract.json` for the PM-owned
+   hard requirements and selects `standard_scenario_pack.json` as the baseline
+   replay pack for final review.
+15. Freeze the acceptance contract from the approved product-function
    architecture before route execution.
-14. Ask the project manager for the initial route-design decision.
-15. Project manager extracts the child-skill gate manifest from likely invoked
-   child skills, assigns required approvers, and gets reviewer/officer/PM
-   approval before route modeling.
-16. Generate a candidate route tree and freeze it only after root FlowGuard
-   checks pass.
-17. Review each parent subtree with FlowGuard before entering child work.
-18. Refine the child-skill gate manifest for the current node before executing
+16. Ask the project manager for the initial route-design decision.
+17. Project manager writes `pm_child_skill_selection.json` from the product
+   architecture, capability map, frozen contract, and local skill inventory.
+18. Project manager extracts the child-skill gate manifest only from
+   PM-selected child skills, assigns required approvers, and gets
+   reviewer/officer/PM approval before route modeling.
+19. Generate a candidate route tree and freeze it only after root FlowGuard
+    checks pass.
+20. Enumerate every effective route node with children as a parent backward
+   replay target. This is structural, not a high-risk/integration heuristic.
+21. Review each parent subtree with FlowGuard before entering child work.
+22. Refine the child-skill gate manifest for the current node before executing
    an invoked child skill, and require assigned-role approval before the
    parent node resumes.
-19. Run child-skill conformance checks when a node invokes another skill.
-20. Probe host continuation capability. If real wakeups are supported, create
-   the all-or-none automated bundle: a one-minute route heartbeat
-   (`FREQ=MINUTELY;INTERVAL=1`), paired watchdog, and singleton global
-   supervisor at the fixed 30-minute cadence. Each heartbeat refreshes the
-   project registration lease. If unsupported, record `manual-resume` and do
-   not create any of those automations.
-21. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
+23. Run child-skill conformance checks when a node invokes another skill.
+24. Before each implementation-bearing node or formal route chunk, write that
+   node's `node_acceptance_plan.json` with root mappings, risk hypotheses,
+   concrete experiments, evidence paths, and terminal replay obligations.
+25. Before any parent/composite node closes, write
+   `parent_backward_replay.json`, have the reviewer start from the
+   parent-level delivered result and replay the child rollup, then record the
+   PM segment decision. Repair reruns the same parent replay.
+26. Probe host continuation capability only after the scheduled-continuation
+   startup answer is recorded. If real wakeups are authorized and supported,
+   create a stable one-minute route heartbeat (`FREQ=MINUTELY;INTERVAL=1`). If
+   the user selected manual resume, record `manual-resume` and do not create
+   heartbeat automation. If automated continuation was authorized but setup is
+   unsupported or fails, stop for a new user decision instead of silently
+   switching to manual resume.
+27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
    syncing the visible Codex plan or advancing work. Each PM resume decision
    records a completion-oriented runway and the main executor replaces the
    current visible plan projection from that runway. If the host exposes a
    native plan/task-list tool such as Codex `update_plan`, call it with that
    runway before work starts; if not, record the fallback projection method and
    show the runway in chat.
-22. Before any child-skill execution, image generation, implementation, or
+28. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
    current route, crew, role memory, live-subagent startup decision,
    continuation, and visible-plan evidence. The human-like reviewer then
    personally checks the real route, state, frontier, crew, role memory,
-   heartbeat, watchdog, global supervisor, Windows scheduled task, automation,
-   and cleanup evidence, then writes
+   heartbeat or manual-resume evidence, automation records, and cleanup
+   evidence, then writes
    `.flowpilot/runs/<run-id>/startup_review/latest.json`.
 
    The reviewer reports facts and blockers only. PM reads the report, returns
@@ -89,15 +114,32 @@ for review.
    record with neither live agents nor explicit fallback authorization, or
    missing requested old-route cleanup is blocked and must be repaired before
    continuing.
-23. Before terminal completion, have the project manager rebuild
+29. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
    collect all effective node gates and child-skill gates, resolve generated
-   resource lineage, check stale evidence and superseded-node explanations, get
-   human-like backward review, and allow PM completion approval only when
-   unresolved count is zero.
-22. Update heartbeats, role memory packets, node reports, and checkpoints
+   resource lineage, replay the standard scenario pack plus node-risk
+   scenarios, triage every risk or blindspot, check stale evidence and
+   superseded-node explanations, build `terminal_human_backward_replay_map.json`,
+   require the reviewer to start from the delivered product and manually replay
+   root, parent, and leaf-node obligations, record PM decisions after every
+   replay segment, and allow PM completion approval only when unresolved count
+   and unresolved residual risk count are both zero.
+29. Run `terminal_closure_suite.json` so state/frontier/ledger/checkpoints,
+   lifecycle evidence, role memory, and final report readiness are refreshed
+   before the terminal completion notice.
+30. Update heartbeats, role memory packets, node reports, and checkpoints
    after verified progress.
-23. On any controlled nonterminal stop, write the controlled-stop notice into
+31. At each node or meaningful review boundary, append any FlowPilot skill
+   issue or improvement observation to
+   `flowpilot_skill_improvement_observations.jsonl`. Observations are about
+   FlowPilot itself: unclear protocol, weak templates, missing checks, hard to
+   find code paths, or tooling friction. They do not block the current project.
+32. Before the terminal completion notice, have the project manager write
+   `flowpilot_skill_improvement_report.json` summarizing observations for
+   future manual FlowPilot root-repo maintenance. The report must exist even
+   when it says no obvious skill improvement was observed, but its contents do
+   not require root-repo fixes before completing the current project.
+33. On any controlled nonterminal stop, write the controlled-stop notice into
    state/frontier or heartbeat evidence and show the user whether to wait for
    heartbeat or type `continue FlowPilot`. On terminal completion, write the
    completion notice instead of a resume prompt.
@@ -109,9 +151,9 @@ for review.
 - `execution_frontier.template.json`: current route version, active node, next
   jump, current mainline, host continuation decision, PM completion runway,
   PM-owned child-skill gate manifest, checks before advance,
-  native/fallback visible plan sync method, visible plan projection depth, and
-  the single user-facing flow diagram settings plus startup PM gate and resume
-  notice metadata.
+  native/fallback visible plan sync method, visible plan projection depth, the
+  realtime FlowPilot Route Sign chat/UI display gate, and startup PM gate and
+  resume notice metadata.
 - `mode.template.json`: run mode and hard-gate policy.
 - `crew_ledger.template.json`: persistent six-agent crew roles, ids, status,
   authority boundaries, memory paths, recovery rules, and terminal archive
@@ -119,32 +161,79 @@ for review.
 - `crew_memory/role_memory.template.json`: compact per-role recovery memory
   packet used to resume or replace unavailable subagents after heartbeat or
   manual resume.
-- `material_intake_packet.template.json`: main-executor material inventory and
-  source-quality packet reviewed before PM planning.
+- `material_intake_packet.template.json`: main-executor material inventory,
+  local skill and host capability inventory, and source-quality packet
+  reviewed before PM planning.
+- `local_skill_inventory.template.json`: optional standalone local skill and
+  host capability inventory consumed by the material packet and PM selection.
 - `pm_material_understanding.template.json`: PM interpretation, source-claim
   matrix, open questions, material complexity, and discovery decision.
 - `product_function_architecture.template.json`: PM-owned pre-contract product
   function architecture package.
+- `pm_child_skill_selection.template.json`: PM-owned selection of required,
+  conditional, deferred, and rejected child skills after product architecture.
+- `root_acceptance_contract.template.json`: PM-owned early hard-requirement
+  threshold and proof-obligation package.
+- `standard_scenario_pack.template.json`: baseline scenario replay pack for
+  happy paths, edge/failure paths, regressions, lifecycle, and PM-risk cases.
 - `flowguard_modeling_request.template.json`: PM-authored request for proactive
-  process/product/object modeling when a decision is uncertain.
+  process/product/object modeling when a decision is uncertain. It records the
+  officer-owned async dispatch mode, officer output root, and what
+  non-dependent preparation the main executor may do while reports are pending.
 - `flowguard_modeling_report.template.json`: FlowGuard officer report that
-  returns modelability, blindspots, failure paths, recommendation, and route
-  mutation candidate for PM decision.
+  returns modelability, execution ownership provenance, blindspots, failure
+  paths, PM risk tiers, model-derived review agenda, toolchain/model
+  improvement suggestions, human walkthrough recommendations, recommendation,
+  confidence boundary, and route mutation candidate for PM decision. Report
+  templates distinguish officer-run commands from main-executor outputs used as
+  pointers and avoid absolute no-risk claims.
+- `role_approval.template.json`: PM, reviewer, or FlowGuard officer
+  independent adversarial approval evidence. It records direct sources checked,
+  state fields, probes, adversarial hypotheses, concrete evidence references,
+  risk-or-blindspot triage, unresolved residual risk count, and rejects
+  completion-report-only approval.
+- `human_review.template.json`: reviewer-owned node, visual, interaction,
+  parent, or final inspection report. For UI and interaction gates it records
+  the reviewer's personal walkthrough, reachability checks, text
+  overlap/clipping, whitespace/density, crowded or underfilled regions,
+  aesthetic verdict, and concrete design recommendations. Worker screenshots
+  and smoke logs are pointers only.
+- `parent_backward_replay.template.json`: local parent/composite replay
+  evidence required for every effective route node with children before that
+  parent closes.
 - `final_route_wide_gate_ledger.template.json`: PM-owned terminal ledger
   rebuilt from the current route before final completion approval.
+- `terminal_human_backward_replay_map.template.json`: PM-owned terminal review
+  map that orders reviewer replay from delivered product to root, parent, and
+  leaf-node obligations, with PM segment decisions and repair restart policy.
+- `terminal_closure_suite.template.json`: terminal state, lifecycle, evidence,
+  role-memory, and final-report readiness suite run before completion notice.
+- `flowpilot_skill_improvement_observation.template.json`: node/review-level
+  FlowPilot skill issue observation appended to the run's JSONL log without
+  blocking current project completion.
+- `flowpilot_skill_improvement_report.template.json`: PM-owned terminal
+  summary of FlowPilot skill improvement observations for later manual
+  root-repo maintenance. The report is a completion artifact, not a requirement
+  to fix the root repo inside the current run.
 - `contract.template.md`: acceptance contract shell.
 - `capabilities.template.json`: required and conditional capability gates.
-- `startup_banner.template.md`: first visible chat banner for formal startup.
+- `startup_banner.template.md`: post-answer visible chat banner for formal startup.
 - `routes/route-001/flow.template.json`: initial route.
 - `routes/route-001/flow.template.md`: route summary shell.
 - `routes/route-001/nodes/node-001-start/node.template.json`: first node.
+- `node_acceptance_plan.template.json`: per-node experiment and risk-replay
+  plan copied into implementation-bearing route nodes.
+- `parent_backward_targets.template.json`: PM-owned structural list of every
+  effective route node with children that must receive local backward replay.
+- `parent_backward_replay.template.json`: local parent/composite replay report
+  copied into every structurally required parent node before closure.
 - `heartbeats/hb.template.json`: heartbeat/manual-resume evidence shell,
-  including continuation readiness and controlled-stop notice fields.
-- `watchdog/watchdog.template.json`: external stale-heartbeat check shell.
-- `diagrams/user-flow-diagram.template.mmd`: Mermaid-style user flow source for
-  both chat fallback and UI display.
+  including continuation readiness, controlled-stop notice fields, and the
+  latest route-sign display gate state.
+- `diagrams/user-flow-diagram.template.mmd`: simplified English Mermaid
+  FlowPilot Route Sign source for both chat fallback and UI display.
 - `diagrams/user-flow-diagram.template.md`: Markdown preview wrapper for the
-  same user flow diagram.
+  same route sign, including the closed-Cockpit chat display requirement.
 - `checkpoints/checkpoint.template.json`: verified milestone shell.
 - `capabilities/capability-evidence.template.json`: capability evidence shell.
 - `experiments/experiment-001/experiment.template.json`: bounded experiment

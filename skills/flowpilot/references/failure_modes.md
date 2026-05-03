@@ -28,12 +28,9 @@ The FlowGuard models for FlowPilot found or guard against:
 - FlowPilot assumes every host supports real wakeups and blocks or creates
   fake heartbeat evidence in hosts such as generic CLI or VS Code agents that
   expose no automation interface;
-- host continuation capability is not probed before heartbeat/watchdog/global
-  supervisor setup;
-- heartbeat is created while the paired watchdog or singleton global
-  supervisor is missing, leaving a half-protected automation state;
-- host does not support real wakeups but FlowPilot still creates heartbeat,
-  watchdog, or global-supervisor automation;
+- host continuation capability is not probed before heartbeat setup;
+- host does not support real wakeups but FlowPilot still creates heartbeat
+  automation;
 - host does not support real wakeups and FlowPilot treats that as skill
   failure instead of recording `manual-resume` fallback evidence;
 - heartbeat automation prompt rewritten for ordinary route/plan changes instead
@@ -56,22 +53,9 @@ The FlowGuard models for FlowPilot found or guard against:
 - continuation resumes an unfinished node, writes a future-facing "continue to
   next gate" decision, and stops without executing the persisted `next_gate` or
   recording a concrete blocker;
-- host automation marked active while heartbeat evidence stops advancing and no
-  external stale-heartbeat watchdog records the gap;
-- external watchdog writes only local evidence and leaves no user-level global
-  record for cross-project stale-event review;
-- external watchdog reset evidence misreported as guaranteed recovery before a
-  later heartbeat proves that the automation fired again;
-- external watchdog treats live subagent busy state as a reset-decision source,
-  or omits source-status/drift warnings for stale state/frontier/lifecycle
-  evidence;
-- duplicate user-level global supervisors process the same stale queue;
-- a local chat, route, or project disables the user-level global supervisor
-  instead of unregistering only its own project record;
-- global stale-event processing resets a heartbeat without rereading
-  project-local state and watchdog evidence;
-- a Windows or external global task is treated as the official reset actor even
-  though only Codex automation can reset Codex heartbeat automations;
+- host automation is marked active while heartbeat evidence stops advancing and
+  FlowPilot claims unattended recovery without a later continuation turn that
+  loads current state and makes or records concrete progress;
 - route decided before FlowGuard process design;
 - formal route work starts before the fixed six-agent crew is created,
   restored, and persisted in `crew_ledger.json`;
@@ -132,6 +116,8 @@ The FlowGuard models for FlowPilot found or guard against:
   valid before the changed route, frontier, visible plan, and affected child
   work are rechecked;
 - child skill named but its `SKILL.md` and relevant references were not read;
+- local skill availability treated as approval to invoke a skill before the PM
+  writes a required/conditional/deferred/rejected selection manifest;
 - route modeled before the project manager extracts a child-skill gate
   manifest from the loaded skill files;
 - child-skill gates enter the route without required approver roles and
@@ -232,11 +218,10 @@ Keep these failure modes in the model and tests.
   mutation. Raw FlowGuard Mermaid exports stay off by default and are generated
   only on explicit request.
 - FlowPilot must probe host continuation capability before route execution. If
-  real wakeups are supported, create the automated continuation bundle as one
-  lifecycle setup: stable heartbeat, paired watchdog, singleton global
-  supervisor, and hidden/noninteractive watchdog evidence when applicable. If
-  real wakeups are unsupported, record `manual-resume` fallback evidence and do
-  not create heartbeat/watchdog/global-supervisor automation.
+  real wakeups are supported, create automated continuation as one lifecycle
+  setup: stable one-minute heartbeat with lifecycle evidence. If real wakeups
+  are unsupported, record `manual-resume` fallback evidence and do not create
+  heartbeat automation.
 - Heartbeat must include real host continuation when available and a health
   check before each formal node. Manual-resume mode must include state/frontier
   freshness evidence instead of claiming unattended recovery.
@@ -252,19 +237,6 @@ Keep these failure modes in the model and tests.
   the persisted `current_subnode` or `next_gate`, or record a concrete blocker.
   A heartbeat may not close by only writing "continue to X" when the next gate
   is still executable.
-- Multi-hour routes on hosts with real wakeups should record an external
-  watchdog policy. A watchdog may detect stale heartbeats, require an official
-  Codex app automation reset (`PAUSED -> ACTIVE`), and write
-  `.flowpilot/runs/<run-id>/watchdog/` evidence. It must not mutate `automation.toml`
-  directly, and a reset is not proof of recovery until a later heartbeat
-  appears. Unsupported hosts record `manual-resume` and skip watchdog/global
-  supervisor setup entirely.
-- External watchdogs should also write compact user-level global records under
-  `$FLOWPILOT_GLOBAL_RECORD_DIR` or `$CODEX_HOME/flowpilot/watchdog`. The global
-  registry is an index; project-local watchdog evidence remains authoritative.
-- Watchdog reset decisions trust only active-run `state.json`, latest heartbeat evidence,
-  and `busy_lease.json`. Frontier, lifecycle, automation, and global records
-  are diagnostic drift signals; live subagent busy state is not inspected.
 - PM-initiated FlowGuard modeling must not be vague delegation. If PM asks a
   FlowGuard officer to model an uncertain route, product, object, file format,
   protocol, or repair decision, the request names the decision, uncertainty,
@@ -272,33 +244,9 @@ Keep these failure modes in the model and tests.
   required answer shape. The officer checks modelability first; missing
   evidence creates evidence work, over-broad requests split, and only an
   actionable report can feed PM route decision.
-- The user-level global supervisor must be singleton Codex app cron automation.
-  Verify it in the same setup step that creates or repairs heartbeat and
-  watchdog. Reuse one active automation, update one paused singleton to
-  `ACTIVE` when global protection is required, and reject or exit duplicate
-  startup attempts unless a human explicitly forces replacement. The fixed
-  creation shape uses `kind: cron`, `rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds`
-  as one workspace string path, `executionEnvironment: local`,
-  `reasoningEffort: medium`, and `status: ACTIVE`. Each heartbeat refreshes
-  this project's global registration lease. Pause, stop, and completion
-  unregister only the current project; the user-level global supervisor is
-  deleted last only after a locked registry reread confirms no active,
-  unexpired registrations remain.
-- The global supervisor must reread project-local state and watchdog evidence,
-  expire terminal/manual-stop records, supersede old route generations, and
-  dedupe repeated stale events before recording a reset requirement.
-- The watchdog policy is lifecycle state, not node-local state. Checkpoints,
-  node transitions, user-flow-diagram refreshes, and visible plan syncs must not
-  recreate, re-register, start, restart, or re-enable the paired watchdog
-  automation. Visible command windows during normal node advance indicate a
-  lifecycle reset or task configuration bug.
-- Windows watchdog scheduled tasks must be hidden/noninteractive. A direct
-  interactive `python.exe` action is a failure risk because it can flash a
-  console window even when the task is not being recreated.
 - Pause, restart, and terminal cleanup must scan all lifecycle authorities:
-  Codex automations, global supervisor records, Windows scheduled tasks, local
-  state, execution frontier, and watchdog evidence. Disabled Windows FlowPilot
-  tasks are still residual objects until unregistered or explicitly waived.
+  Codex heartbeat automations, local state, execution frontier, and
+  heartbeat/manual-resume evidence.
 - Every invoked child skill must pass a fidelity gate: load its contract, map
   its workflow and completion standard into route gates, show the child-skill
   mini-route, write the evidence checklist, and verify completion against the

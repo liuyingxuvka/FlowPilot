@@ -15,8 +15,8 @@ The stable heartbeat prompt is not the route state. It loads:
 - `.flowpilot/state.json`;
 - the active route `flow.json`;
 - `.flowpilot/execution_frontier.json`;
-- latest heartbeat evidence;
-- latest watchdog evidence.
+- latest heartbeat or manual-resume evidence;
+- lifecycle evidence.
 
 The execution frontier stores the active route version, active node, next node,
 current mainline, fallback, current-node completion guard, PM completion
@@ -26,19 +26,16 @@ rechecks the affected route/subtree when needed, rewrites the frontier, asks
 the PM for a completion-oriented runway, syncs the visible plan from that
 runway, and continues without rewriting the heartbeat automation prompt.
 
-At terminal closure, the paired watchdog shutdown is also written back to the
-frontier. FlowPilot stops or deletes the watchdog first, writes watchdog
-inactive and terminal heartbeat lifecycle state to local state/frontier evidence,
-and only then stops or pauses the heartbeat. This is a final writeback gate, not
-a repeated polling requirement during ordinary progress.
+At terminal closure, terminal heartbeat lifecycle state is written back to local
+state/frontier evidence before FlowPilot stops or pauses the heartbeat. This is
+a final writeback gate, not a repeated polling requirement during ordinary
+progress.
 
 Pause, restart, and terminal cleanup now share one lifecycle reconciliation
-gate. The controller scans Codex automation records, the global supervisor and
-registry, Windows scheduled tasks, local state, execution frontier, and
-watchdog evidence before claiming the lifecycle state is clean. Disabled
-Windows FlowPilot scheduled tasks are residual lifecycle objects until
-unregistered or explicitly waived. `scripts/flowpilot_lifecycle.py` provides
-the read-only inventory and required-action list.
+gate. The controller scans Codex heartbeat automation records, local state,
+execution frontier, and heartbeat/manual-resume evidence before claiming the
+lifecycle state is clean. `scripts/flowpilot_lifecycle.py` provides the
+read-only inventory and required-action list.
 
 `next_node` is only a planned jump while the current node is unfinished. If
 `unfinished_current_node` is true or
@@ -63,8 +60,8 @@ The first model exposed two workflow bugs:
    protocol still supports repeated route changes through checked route
    versions.
 4. Route-013 exposed a terminal lifecycle writeback bug: external shutdown
-   evidence showed the watchdog had been deleted, but local frontier/watchdog
-   state still said `active: true`. The model now requires
+   evidence changed but local frontier lifecycle state still said
+   `active: true`. The model now requires
    `terminal_lifecycle_frontier_written` before completion.
 
 ## Final Check Result

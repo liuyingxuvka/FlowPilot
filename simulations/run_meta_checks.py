@@ -11,8 +11,8 @@ import meta_model as model
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "results.json"
-GRAPH_STATE_LIMIT = 300_000
-CHECK_STATE_LIMIT = 300_000
+GRAPH_STATE_LIMIT = 500_000
+CHECK_STATE_LIMIT = 500_000
 
 
 REQUIRED_LABELS = (
@@ -21,7 +21,7 @@ REQUIRED_LABELS = (
     "startup_banner_emitted",
     "mode_choice_offered",
     "mode_selected_by_user",
-    "default_mode_recorded",
+    "explicit_full_auto_mode_selected",
     "startup_background_agents_answered",
     "startup_scheduled_continuation_answered",
     "run_directory_created",
@@ -45,12 +45,19 @@ REQUIRED_LABELS = (
     "crew_ledger_written",
     "role_identity_protocol_recorded",
     "pm_flowguard_delegation_policy_recorded",
+    "officer_owned_async_modeling_policy_recorded",
+    "officer_model_report_provenance_policy_recorded",
+    "main_executor_parallel_prep_boundary_recorded",
+    "independent_approval_protocol_recorded",
     "crew_memory_packets_written",
     "startup_self_interrogation_pm_ratified",
     "material_sources_scanned",
     "material_source_summaries_written",
     "material_source_quality_classified",
+    "local_skill_inventory_written",
+    "local_skill_inventory_candidate_classified",
     "material_intake_packet_written",
+    "material_reviewer_direct_source_probe_done",
     "material_reviewer_sufficiency_checked",
     "material_reviewer_sufficiency_approved",
     "pm_material_understanding_memo_written",
@@ -64,42 +71,50 @@ REQUIRED_LABELS = (
     "product_function_missing_feature_review_done",
     "product_function_negative_scope_written",
     "product_function_acceptance_matrix_written",
+    "root_acceptance_thresholds_defined",
+    "root_acceptance_proof_matrix_written",
+    "standard_scenario_pack_selected",
+    "product_architecture_officer_adversarial_probe_done",
     "product_function_architecture_product_officer_approved",
+    "product_architecture_reviewer_adversarial_probe_done",
     "product_function_architecture_reviewer_challenged",
     "dependency_plan_recorded",
     "host_continuation_capability_supported",
     "host_continuation_capability_unsupported_manual_resume",
     "heartbeat_schedule_created",
-    "external_watchdog_policy_recorded",
-    "external_watchdog_busy_lease_autowrap_policy_recorded",
-    "external_watchdog_source_drift_policy_recorded",
-    "external_watchdog_automation_created",
-    "global_watchdog_supervisor_verified",
     "pm_initial_route_decision_recorded",
+    "pm_child_skill_selection_manifest_written",
+    "pm_child_skill_selection_scope_decisions_recorded",
     "child_skill_route_design_discovery_started",
     "child_skill_initial_gate_manifest_extracted",
     "child_skill_gate_approvers_assigned",
+    "child_skill_manifest_independent_validation_done",
     "child_skill_manifest_reviewer_reviewed",
     "child_skill_manifest_process_officer_approved",
     "child_skill_manifest_product_officer_approved",
     "child_skill_manifest_pm_approved_for_route",
     "flowguard_process_designed",
+    "flowguard_officer_model_adversarial_probe_done",
     "candidate_route_tree_generated",
     "root_route_model_checked",
     "root_product_function_model_checked",
     "strict_gate_obligation_review_model_checked",
     "route_model_checked",
+    "parent_backward_structural_trigger_rule_recorded",
+    "parent_backward_review_targets_enumerated",
     "markdown_summary_synced",
     "execution_frontier_written",
     "codex_plan_synced",
     "user_flow_diagram_refreshed",
     "visible_user_flow_diagram_emitted",
+    "user_flow_diagram_reviewer_display_checked",
     "live_subagent_start_authorized",
     "fresh_six_live_subagents_started",
     "startup_preflight_reviewer_fact_report_blocked",
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
     "startup_preflight_reviewer_fact_report_clean",
+    "startup_pm_independent_gate_audit_done",
     "pm_start_gate_opened_from_fact_report",
     "continuation_resume_ready_checked",
     "heartbeat_loaded_state",
@@ -118,6 +133,8 @@ REQUIRED_LABELS = (
     "parent_focused_interrogation_completed",
     "node_focused_interrogation_completed",
     "node_product_function_model_checked",
+    "node_acceptance_plan_written",
+    "node_acceptance_risk_experiments_mapped",
     "lightweight_self_check_completed",
     "quality_package_passed_no_raise",
     "quality_package_small_raise_in_current_node",
@@ -128,6 +145,7 @@ REQUIRED_LABELS = (
     "node_human_inspection_context_loaded",
     "node_human_neutral_observation_written",
     "node_human_manual_experiments_run",
+    "node_reviewer_independent_probe_done",
     "human_inspection_found_blocking_issue",
     "human_inspection_issue_grilled",
     "pm_repair_decision_interrogated",
@@ -138,6 +156,7 @@ REQUIRED_LABELS = (
     "composite_child_evidence_replayed",
     "composite_backward_neutral_observation_written",
     "composite_structure_decision_recorded",
+    "composite_reviewer_independent_probe_done",
     "composite_backward_review_found_existing_child_gap",
     "composite_backward_review_found_missing_sibling",
     "composite_backward_review_found_subtree_mismatch",
@@ -146,16 +165,22 @@ REQUIRED_LABELS = (
     "route_updated_to_add_composite_sibling",
     "route_updated_to_rebuild_composite_subtree",
     "composite_backward_review_passed",
+    "composite_backward_pm_segment_decision_recorded",
+    "skill_improvement_observation_check_no_issue",
+    "skill_improvement_observation_logged",
     "role_memory_packets_refreshed_after_work",
     "checkpoint_written",
     "completion_visible_user_flow_diagram_emitted",
     "final_feature_matrix_reviewed",
     "final_acceptance_matrix_reviewed",
+    "final_standard_scenario_pack_replayed",
     "final_quality_candidate_reviewed",
+    "final_product_model_officer_adversarial_probe_done",
     "final_product_function_model_replayed",
     "final_human_review_context_loaded",
     "final_human_neutral_observation_written",
     "final_human_manual_experiments_run",
+    "final_human_reviewer_independent_probe_done",
     "final_human_inspection_passed",
     "completion_self_interrogation_completed",
     "high_value_work_found_and_route_expanded",
@@ -164,19 +189,35 @@ REQUIRED_LABELS = (
     "final_route_wide_gate_ledger_effective_nodes_resolved",
     "final_route_wide_gate_ledger_child_skill_gates_collected",
     "final_route_wide_gate_ledger_human_review_gates_collected",
+    "final_route_wide_gate_ledger_parent_backward_replays_collected",
     "final_route_wide_gate_ledger_product_process_gates_collected",
     "final_route_wide_gate_ledger_resource_lineage_resolved",
     "final_route_wide_gate_ledger_stale_evidence_checked",
     "final_route_wide_gate_ledger_superseded_nodes_explained",
     "final_route_wide_gate_ledger_unresolved_count_zero",
+    "final_residual_risk_triage_done",
+    "final_residual_risk_unresolved_count_zero",
     "final_route_wide_gate_ledger_pm_built",
+    "terminal_human_backward_review_map_built",
+    "terminal_human_backward_replay_started_from_delivered_product",
+    "terminal_human_backward_root_acceptance_reviewed",
+    "terminal_human_backward_parent_nodes_reviewed",
+    "terminal_human_backward_leaf_nodes_reviewed",
+    "terminal_human_backward_replay_found_repair_issue",
+    "terminal_human_backward_pm_repair_decision_interrogated",
+    "route_updated_after_terminal_human_backward_replay_failure",
+    "terminal_human_backward_pm_segment_decisions_recorded",
+    "terminal_human_backward_repair_restart_policy_recorded",
     "final_route_wide_gate_ledger_reviewer_backward_checked",
+    "final_ledger_pm_independent_audit_done",
     "final_route_wide_gate_ledger_pm_completion_approved",
+    "terminal_closure_suite_run",
+    "terminal_state_and_evidence_refreshed",
     "lifecycle_reconciliation_completed",
-    "external_watchdog_stopped_before_heartbeat",
     "terminal_lifecycle_frontier_written",
     "crew_memory_archived_at_terminal",
     "crew_archived_at_terminal",
+    "flowpilot_skill_improvement_report_written",
     "pm_completion_decision_recorded",
     "final_report_emitted",
     "verification_found_model_gap",
@@ -224,6 +265,7 @@ def _state_id(state: model.State) -> str:
         f"{state.material_source_summaries_written},"
         f"{state.material_source_quality_classified},"
         f"{state.material_intake_packet_written},"
+        f"{state.material_reviewer_direct_source_probe_done},"
         f"{state.material_reviewer_sufficiency_checked},"
         f"{state.material_reviewer_sufficiency_approved},"
         f"{state.pm_material_understanding_memo_written},"
@@ -238,7 +280,12 @@ def _state_id(state: model.State) -> str:
         f"{state.product_function_gap_review_done},"
         f"{state.product_function_negative_scope_written},"
         f"{state.product_function_acceptance_matrix_written},"
+        f"{state.root_acceptance_thresholds_defined},"
+        f"{state.root_acceptance_proof_matrix_written},"
+        f"{state.standard_scenario_pack_selected},"
+        f"{state.product_architecture_officer_adversarial_probe_done},"
         f"{state.product_function_architecture_product_officer_approved},"
+        f"{state.product_architecture_reviewer_adversarial_probe_done},"
         f"{state.product_function_architecture_reviewer_challenged}|"
         f"user_flow={state.visible_user_flow_diagram_emitted}|"
         f"crew={state.crew_policy_written},{state.crew_count},"
@@ -250,9 +297,15 @@ def _state_id(state: model.State) -> str:
         f"{state.crew_memory_packets_written},"
         f"{state.pm_initial_route_decision_recorded},"
         f"{state.crew_archived},{state.crew_memory_archived}|"
+        f"officer_async={state.pm_flowguard_delegation_policy_recorded},"
+        f"{state.officer_owned_async_modeling_policy_recorded},"
+        f"{state.officer_model_report_provenance_policy_recorded},"
+        f"{state.main_executor_parallel_prep_boundary_recorded},"
+        f"{state.independent_approval_protocol_recorded}|"
         f"child_manifest={state.child_skill_route_design_discovery_started},"
         f"{state.child_skill_initial_gate_manifest_extracted},"
         f"{state.child_skill_gate_approvers_assigned},"
+        f"{state.child_skill_manifest_independent_validation_done},"
         f"{state.child_skill_manifest_reviewer_reviewed},"
         f"{state.child_skill_manifest_process_officer_approved},"
         f"{state.child_skill_manifest_product_officer_approved},"
@@ -278,18 +331,13 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_node_decision_recorded}|"
         f"stable_heartbeat={state.stable_heartbeat_launcher_recorded}|"
         f"continuation_ready={state.heartbeat_health_checked}|"
-        f"external_watchdog={state.external_watchdog_policy_recorded},"
-        f"{state.external_watchdog_busy_lease_policy_recorded},"
-        f"{state.external_watchdog_automation_created},"
-        f"{state.external_watchdog_hidden_noninteractive_configured},"
-        f"{state.external_watchdog_active},"
-        f"global_supervisor={state.global_watchdog_supervisor_checked},"
-        f"{state.global_watchdog_supervisor_singleton_ready},"
-        f"{state.global_watchdog_supervisor_cadence_minutes},"
+        f"continuation_lifecycle={state.heartbeat_schedule_created},"
+        f"{state.route_heartbeat_interval_minutes},"
+        f"{state.manual_resume_mode_recorded},"
         f"{state.lifecycle_reconciliation_done},"
-        f"{state.external_watchdog_stopped_before_heartbeat},"
         f"{state.terminal_lifecycle_frontier_written}|"
-        f"fg_design={state.flowguard_process_design_done}|"
+        f"fg_design={state.flowguard_process_design_done},"
+        f"{state.flowguard_officer_model_adversarial_probe_done}|"
         f"candidate_tree={state.candidate_route_tree_generated}|"
         f"root_model={state.root_route_model_checked},"
         f"{state.root_route_model_process_officer_approved},"
@@ -306,12 +354,15 @@ def _state_id(state: model.State) -> str:
         f"{state.reused_historical_agent_ids},"
         f"{state.single_agent_role_continuity_authorized}|"
         f"startup_review_run={state.startup_reviewer_checked_run_isolation},"
-        f"{state.startup_reviewer_checked_prior_work_boundary}|"
+        f"{state.startup_reviewer_checked_prior_work_boundary},"
+        f"{state.startup_pm_independent_gate_audit_done}|"
         f"work_beyond_startup={state.work_beyond_startup_allowed}|"
         f"unfinished_recovery={state.unfinished_current_node_recovery_checked}|"
         f"parent_subtree={state.parent_subtree_review_checked},"
         f"{state.parent_product_function_model_checked},"
         f"{state.parent_product_function_model_product_officer_approved}|"
+        f"parent_backward_targets={state.parent_backward_structural_trigger_rule_recorded},"
+        f"{state.parent_backward_review_targets_enumerated}|"
         f"chunk={state.chunk_state}|done={state.completed_chunks}/{state.required_chunks}|"
         f"node_map={state.node_visible_roadmap_emitted}|"
         f"parent_focused={state.parent_focused_interrogation_done},"
@@ -322,6 +373,8 @@ def _state_id(state: model.State) -> str:
         f"{state.node_focused_interrogation_scope_id}|"
         f"node_product={state.node_product_function_model_checked},"
         f"{state.node_product_function_model_product_officer_approved}|"
+        f"node_acceptance={state.node_acceptance_plan_written},"
+        f"{state.node_acceptance_risk_experiments_mapped}|"
         f"micro_self={state.lightweight_self_check_done},"
         f"{state.lightweight_self_check_questions},"
         f"{state.lightweight_self_check_scope_id}|"
@@ -334,6 +387,7 @@ def _state_id(state: model.State) -> str:
         f"human_review={state.node_human_review_context_loaded},"
         f"{state.node_human_neutral_observation_written},"
         f"{state.node_human_manual_experiments_run},"
+        f"{state.node_reviewer_independent_probe_done},"
         f"{state.node_human_inspection_passed},"
         f"{state.node_human_review_reviewer_approved},"
         f"node_review_count={state.node_human_inspections_passed},"
@@ -344,25 +398,33 @@ def _state_id(state: model.State) -> str:
         f"{state.composite_child_evidence_replayed},"
         f"{state.composite_backward_neutral_observation_written},"
         f"{state.composite_structure_decision_recorded},"
+        f"{state.composite_reviewer_independent_probe_done},"
         f"{state.composite_backward_human_review_passed},"
         f"{state.composite_backward_review_reviewer_approved},"
         f"composite_review_count={state.composite_backward_reviews_passed},"
+        f"pm_segment={state.composite_backward_pm_segment_decision_recorded},"
+        f"{state.composite_backward_pm_segment_decisions_recorded},"
         f"composite_issue={state.composite_issue_grilled},"
         f"{state.composite_issue_strategy},"
         f"structural_repairs={state.composite_structural_route_repairs},"
         f"siblings={state.composite_new_sibling_nodes},"
         f"subtree_rebuilds={state.composite_subtree_rebuilds},"
+        f"skill_improvement={state.current_node_skill_improvement_check_done},"
+        f"{state.flowpilot_skill_improvement_report_written},"
         f"raises={state.quality_route_raises},"
         f"reworks={state.quality_reworks}|"
         f"complete_map={state.completion_visible_roadmap_emitted}|"
         f"final_reviews={state.final_feature_matrix_review_done},"
         f"{state.final_acceptance_matrix_review_done},"
+        f"{state.final_standard_scenario_pack_replayed},"
         f"{state.final_quality_candidate_review_done},"
+        f"{state.final_product_model_officer_adversarial_probe_done},"
         f"{state.final_product_function_model_replayed},"
         f"{state.final_product_function_model_product_officer_approved},"
         f"{state.final_human_review_context_loaded},"
         f"{state.final_human_neutral_observation_written},"
         f"{state.final_human_manual_experiments_run},"
+        f"{state.final_human_reviewer_independent_probe_done},"
         f"{state.final_human_inspection_passed},"
         f"{state.final_human_review_reviewer_approved},"
         f"{state.pm_completion_decision_recorded}|"
@@ -370,14 +432,28 @@ def _state_id(state: model.State) -> str:
         f"{state.final_route_wide_gate_ledger_effective_nodes_resolved},"
         f"{state.final_route_wide_gate_ledger_child_skill_gates_collected},"
         f"{state.final_route_wide_gate_ledger_human_review_gates_collected},"
+        f"{state.final_route_wide_gate_ledger_parent_backward_replays_collected},"
         f"{state.final_route_wide_gate_ledger_product_process_gates_collected},"
         f"{state.final_route_wide_gate_ledger_resource_lineage_resolved},"
         f"{state.final_route_wide_gate_ledger_stale_evidence_checked},"
         f"{state.final_route_wide_gate_ledger_superseded_nodes_explained},"
         f"{state.final_route_wide_gate_ledger_unresolved_count_zero},"
+        f"{state.final_residual_risk_triage_done},"
+        f"{state.final_residual_risk_unresolved_count_zero},"
         f"{state.final_route_wide_gate_ledger_pm_built},"
+        f"{state.terminal_human_backward_review_map_built},"
+        f"{state.terminal_human_backward_replay_started_from_delivered_product},"
+        f"{state.terminal_human_backward_root_acceptance_reviewed},"
+        f"{state.terminal_human_backward_parent_nodes_reviewed},"
+        f"{state.terminal_human_backward_leaf_nodes_reviewed},"
+        f"{state.terminal_human_backward_pm_segment_decisions_recorded},"
+        f"{state.terminal_human_backward_repair_restart_policy_recorded},"
+        f"{state.terminal_human_backward_replay_repairs},"
         f"{state.final_route_wide_gate_ledger_reviewer_backward_checked},"
+        f"{state.final_ledger_pm_independent_audit_done},"
         f"{state.final_route_wide_gate_ledger_pm_completion_approved}|"
+        f"terminal_closure={state.terminal_closure_suite_run},"
+        f"{state.terminal_state_and_evidence_refreshed}|"
         f"stop_notice={state.controlled_stop_notice_recorded},"
         f"{state.terminal_completion_notice_recorded}|"
         f"complete_self_q={state.completion_self_interrogation_done},"

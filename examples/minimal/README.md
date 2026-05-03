@@ -38,7 +38,7 @@ its side effect is recorded.
 11. Build a task-local FlowGuard model under `.flowpilot/task-models/`.
 12. Run route and task-model checks.
 13. Have the human-like reviewer directly check the real route, state,
-   frontier, crew, role memory, continuation, heartbeat, watchdog, global
+   frontier, crew, role memory, continuation, heartbeat/manual-resume
    supervisor, and cleanup evidence, then write
    `.flowpilot/startup_review/latest.json` as a factual report.
 14. Have the PM open `.flowpilot/startup_pm_gate/latest.json` and set

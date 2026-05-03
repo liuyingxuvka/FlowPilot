@@ -40,13 +40,18 @@ model-backed autopilot:
   after full self-interrogation and six-agent crew recovery, but before PM
   product-function architecture. It inventories user-provided and
   repository-local materials, records source summaries, authority, freshness,
-  contradictions, unread or deferred sources, reviewer sufficiency, PM
-  source-claim matrix, open questions, complexity, and discovery/cleanup route
-  consequences.
+  contradictions, local skills and host capabilities as candidate-only
+  resources, unread or deferred sources, reviewer sufficiency, PM source-claim
+  matrix, open questions, complexity, and discovery/cleanup route consequences.
 - Formal startup then has a PM-owned product-function architecture gate before
   contract freeze. It captures user tasks, product capabilities, feature
   necessity, display rationale, missing high-value features, negative scope,
   and a functional acceptance matrix.
+- Child-skill routing now has a PM-owned selection gate between product
+  architecture/capability mapping and child-skill gate extraction. The PM reads
+  the local skill inventory and classifies candidate skills as required,
+  conditional, deferred, or rejected; child-skill discovery may proceed only
+  from PM-selected skills, never from raw local availability.
 - UI projects conditionally route through `concept-led-ui-redesign` and
   `frontend-design`, followed by rendered screenshot QA and divergence review.
 - Formal FlowPilot routes now use a persistent six-agent crew: project
@@ -59,11 +64,13 @@ model-backed autopilot:
 - Human-like inspection is now a route mechanism. Blocking inspection findings
   must be grilled into specific repairable issues, mutate the route into
   repair nodes, and close only after repair evidence and same-inspector recheck.
-- Every non-leaf parent/module/group now requires composite backward
-  human-like review before closure. If child-local passes do not compose into
-  the parent goal, FlowPilot structurally mutates the route to rework an
-  existing child, insert an adjacent sibling child, rebuild the child subtree,
-  or bubble impact upward before rerunning the parent review.
+- Every effective route node with children now requires local parent backward
+  human-like replay before closure. The trigger is structural, not a semantic
+  guess about risk, integration, feature status, or downstream dependency. If
+  child-local passes do not compose into the parent goal, FlowPilot
+  structurally mutates the route to rework an existing child, insert an
+  adjacent sibling child, rebuild the child subtree, or bubble impact upward
+  before rerunning the same parent review and recording a PM segment decision.
 - Generated UI concept targets require two separate gates: source and
   authenticity. Source proves the asset came from `imagegen` or an
   authoritative user reference; authenticity proves the content is an
@@ -75,23 +82,28 @@ model-backed autopilot:
   writing "continue to the next gate."
 - Heartbeat is optional host capability. Unsupported hosts run in
   `manual-resume` mode from the same `.flowpilot/` state/frontier/crew-memory
-  evidence and must not require heartbeat/watchdog/global-supervisor automation.
+  evidence and must not require heartbeat automation.
   Any controlled nonterminal stop records and displays a resume notice; terminal
   completion records a completion notice instead of a resume prompt.
 - Human-like inspection now begins with a neutral observation pass before
   judgement. The inspector first records what the artifact, screenshot, output,
   or exercised feature actually appears to be, then compares that observation
   with the frozen contract, product model, and evidence.
+- UI, browser, desktop, visual, localization, and interaction review gates now
+  require reviewer-owned personal walkthrough evidence. Screenshot QA,
+  interaction smoke logs, or worker reports are only pointers. The reviewer
+  must personally check reachable controls, clicks/keyboard paths,
+  overlap/clipping, whitespace, density, crowding, hierarchy, readability,
+  responsive/window fit, aesthetics, and concrete design recommendations, or
+  block/request more evidence.
 - Blocking review failures now force structural route mutation. The failed
   child remains as failed/superseded history, affected evidence becomes stale,
   the route version and execution frontier change, and FlowPilot either resets
   the existing child, inserts an adjacent repair/regeneration sibling, splits
   the finding into multiple focused children, or rebuilds/bubbles the subtree.
 - Pause, restart, and terminal cleanup now require unified lifecycle
-  reconciliation across Codex automations, global supervisor records, Windows
-  scheduled tasks, local state, execution frontier, and watchdog evidence.
-  Disabled Windows FlowPilot tasks are still residual objects until
-  unregistered or explicitly waived.
+  reconciliation across Codex heartbeat automations, local state, execution
+  frontier, and heartbeat/manual-resume evidence.
 - Heartbeat recovery now restores or replaces the six-agent crew before asking
   the project manager for a completion-oriented runway from the current
   position to project completion. The main executor no longer decides route
@@ -126,6 +138,16 @@ model-backed autopilot:
   human-like observations, judgement, and rechecks require the reviewer. The
   main executor may draft, run tools, integrate, and report but may not
   self-approve these gates.
+- Every PM, reviewer, and FlowGuard officer approval now has a universal
+  adversarial approval baseline. Completion reports, worker reports,
+  screenshots, logs, and prior role reports are only pointers. The approving
+  role must personally probe the relevant sources or state, test failure
+  hypotheses, cite concrete files/screenshots/state fields/commands/results,
+  record residual blindspots, and write independent validation evidence before
+  approving. Completion-report-only approval is invalid across startup gates,
+  material intake, product architecture, child-skill manifests, FlowGuard model
+  gates, implementation/human review, composite backward review, final product
+  replay, and the final route-wide ledger.
 - Terminal completion now requires a PM-owned dynamic route-wide gate ledger
   rebuilt from the current route, not the initial route. The ledger resolves
   effective and superseded nodes, child-skill gates, human-review gates,
@@ -141,15 +163,24 @@ model-backed autopilot:
   files only. Continuing old work creates a new run and imports old outputs as
   read-only evidence; old control state, agent IDs, screenshots, icons, or
   route files must not become current state.
-- Watchdog decisions now trust only current-run `state.json`, latest heartbeat
-  evidence, and `.flowpilot/runs/<run-id>/busy_lease.json`. Frontier,
-  lifecycle, automation, and global records are drift diagnostics; live
-  subagent busy state is not a supported watchdog source.
+- Heartbeat/manual-resume lifecycle state now trusts current-run `state.json`,
+  latest heartbeat evidence, execution frontier, and crew memory. There is no
+  extra reset path or registry layer.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns
   the process FlowGuard officer, product FlowGuard officer, or both, receives
   a modelability-aware report, and then records the route decision.
+- FlowGuard modeling requests are now officer-owned async gates when live
+  background roles are available. The PM records the request and officer output
+  root, the matching officer authors/runs/interprets the model and writes
+  execution provenance, and the main executor may only do non-dependent
+  preparation while the model gate is pending.
+- FlowGuard officer reports are PM decision-support packets, not absolute
+  no-risk certificates. The officers must extract model-derived risk tiers,
+  PM review-required hotspots, human walkthrough targets, toolchain/model
+  improvement suggestions, and a confidence boundary; PM decides whether to
+  continue, repair, add evidence, split, mutate, or block.
 - FlowPilot now has one user-facing flow diagram for both chat and Cockpit UI:
   a 6-8 stage FlowPilot process view with the current stage highlighted. Raw
   FlowGuard Mermaid graphs are diagnostic exports only and are disabled by
@@ -162,7 +193,7 @@ model-backed autopilot:
   skill, imagegen, implementation, route chunk, or completion work, the
   human-like reviewer must personally check real state/frontier/route,
   six-role crew ledger, role memory packets, live-agent freshness for the
-  current task, continuation, heartbeat, watchdog, global supervisor, and
+  current task, continuation, heartbeat/manual-resume lifecycle, and
   cleanup evidence, current run pointer/index evidence, and prior-work import
   boundary when continuing, then write
   `.flowpilot/runs/<run-id>/startup_review/latest.json` as a factual report.
@@ -179,8 +210,14 @@ model-backed autopilot:
   implementation are blocked until a later user reply explicitly answers all
   three questions and `startup_activation.startup_questions` records both the
   stop-and-wait evidence and banner-after-answers evidence.
-- Long operations now have an explicit busy-lease wrapper helper:
-  `scripts/flowpilot_run_with_busy_lease.py`.
+- Long operations no longer carry a FlowPilot stale-heartbeat wrapper; use
+  ordinary checkpoints, logs, and host tool status for bounded-operation
+  evidence.
+- FlowPilot now records PM-owned skill-improvement observations separately from
+  current project acceptance. Roles may note protocol/template/tooling issues
+  during node or review work, PM writes a final
+  `flowpilot_skill_improvement_report.json`, and those observations never block
+  current project completion or require root-repo fixes inside the active run.
 
 ## Model-Backed Rules Found During Preflight
 
@@ -198,8 +235,8 @@ FlowGuard caught and fixed these design issues:
    applies to `running` state.
 6. Technical evidence such as screenshot existence, app launch, or test pass
    cannot substitute for product-function modeling and human-like inspection.
-7. Child-local passes cannot substitute for composite backward review at every
-   non-leaf parent/module/group closure.
+7. Child-local passes cannot substitute for local parent backward replay at
+   every structurally enumerated route node with children.
 8. Structural route repair must invalidate stale implementation or child
    evidence before the changed route is rechecked and work resumes.
 9. Source-only concept acceptance is unsafe. A generated file can still be a
@@ -241,11 +278,19 @@ FlowGuard caught and fixed these design issues:
     terminal completion must rescan the current route, collect all effective
     child-skill and review gates, check stale evidence, explain superseded
     nodes, and rerun human-like backward replay before PM completion approval.
-19. Asking the three startup questions is not a soft prompt. It is a hard
+19. The final backward replay must be a terminal human acceptance pass, not
+    merely a ledger audit. The PM builds an ordered replay map; the reviewer
+    starts from the delivered product, then manually checks root acceptance,
+    parent/module nodes, and leaf nodes against current product behavior and
+    node acceptance plans. After every segment, PM records continue/repair/stop
+    decisions. A repair invalidates affected evidence and normally restarts the
+    final review from the delivered product; narrower impacted-ancestor reruns
+    require a PM reason.
+20. Asking the three startup questions is not a soft prompt. It is a hard
     pause boundary: if FlowPilot keeps working in the same response after the
     questions, any later startup evidence is invalid and the PM must not open
     `work_beyond_startup_allowed`.
-19. Generated-resource existence is not useful output by itself. Concept
+21. Generated-resource existence is not useful output by itself. Concept
     images, visual assets, screenshots, route diagrams, model reports, and
     similar generated artifacts must be consumed by implementation/QA/final
     output or explicitly superseded, quarantined, or discarded with reason in

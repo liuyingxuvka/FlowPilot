@@ -7,10 +7,6 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_BUSY_LEASE_REL = ".flowpilot/busy_lease.json"
-DEFAULT_WATCHDOG_REL = ".flowpilot/watchdog"
-
-
 def read_json_if_exists(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -70,18 +66,14 @@ def resolve_flowpilot_paths(project_root: Path) -> dict[str, Any]:
         "routes_root": active_root / "routes",
         "crew_ledger_path": active_root / "crew_ledger.json",
         "crew_memory_root": active_root / "crew_memory",
-        "watchdog_dir": active_root / "watchdog",
         "lifecycle_dir": active_root / "lifecycle",
         "diagrams_dir": active_root / "diagrams",
-        "busy_lease_path": active_root / "busy_lease.json",
     }
 
 
 def resolve_project_relative_path(project_root: Path, raw: str, *, default_key: str) -> Path:
     paths = resolve_flowpilot_paths(project_root)
-    if raw == DEFAULT_BUSY_LEASE_REL and default_key == "busy_lease_path":
-        return Path(paths["busy_lease_path"])
-    if raw == DEFAULT_WATCHDOG_REL and default_key == "watchdog_dir":
-        return Path(paths["watchdog_dir"])
+    if default_key in paths and raw == str(paths[default_key]):
+        return Path(paths[default_key])
     path = Path(raw)
     return path if path.is_absolute() else project_root.resolve() / path

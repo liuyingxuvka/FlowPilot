@@ -156,6 +156,15 @@ Each inspector can produce:
 - request to rerun or expand a product model;
 - request to mutate the route.
 
+For UI, browser, desktop, rendered-output, and interaction gates, inspector
+work cannot be delegated to a worker report. Automated screenshots and
+interaction logs are pointers. The inspector must personally walk the surface or
+block the gate with a concrete reason it cannot be operated. The report records
+the opened surfaces, window sizes, click or keyboard paths, reachable and
+unreachable controls, text overlap or clipping, whitespace/density/crowding,
+hierarchy/readability, responsive fit, aesthetic verdict when visual quality is
+in scope, and repair suggestions for PM routing.
+
 ## Inspector Grill
 
 When an inspector finds a blocking issue, the issue is not accepted as a vague
@@ -344,7 +353,7 @@ The route can complete only when all of these are true:
 - every blocking issue is repaired and rechecked by the same inspector class;
 - backward review passed from final output to root acceptance;
 - final product reviewer agrees the result is showcase-grade;
-- heartbeat/watchdog lifecycle is closed in the correct order.
+- heartbeat/manual-resume lifecycle is closed in the correct order.
 
 This is intentionally stricter than "tests pass" or "the app opens." It is
 designed to prevent the exact failure where a visually poor or functionally

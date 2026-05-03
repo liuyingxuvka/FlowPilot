@@ -16,6 +16,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 CREW_SIZE = 6
+TARGET_PARENT_NODES = 1
 MAX_STANDARD_EXPANSIONS = 1
 MAX_QUALITY_ROUTE_RAISES = 1
 MAX_QUALITY_REWORKS = 1
@@ -90,7 +91,10 @@ class State:
     material_sources_scanned: bool = False
     material_source_summaries_written: bool = False
     material_source_quality_classified: bool = False
+    local_skill_inventory_written: bool = False
+    local_skill_inventory_candidate_classified: bool = False
     material_intake_packet_written: bool = False
+    material_reviewer_direct_source_probe_done: bool = False
     material_reviewer_sufficiency_checked: bool = False
     material_reviewer_sufficiency_approved: bool = False
     pm_material_understanding_memo_written: bool = False
@@ -104,7 +108,12 @@ class State:
     product_function_gap_review_done: bool = False
     product_function_negative_scope_written: bool = False
     product_function_acceptance_matrix_written: bool = False
+    root_acceptance_thresholds_defined: bool = False
+    root_acceptance_proof_matrix_written: bool = False
+    standard_scenario_pack_selected: bool = False
+    product_architecture_officer_adversarial_probe_done: bool = False
     product_function_architecture_product_officer_approved: bool = False
+    product_architecture_reviewer_adversarial_probe_done: bool = False
     product_function_architecture_reviewer_challenged: bool = False
     contract_frozen: bool = False
     crew_policy_written: bool = False
@@ -118,6 +127,10 @@ class State:
     crew_ledger_written: bool = False
     role_identity_protocol_recorded: bool = False
     pm_flowguard_delegation_policy_recorded: bool = False
+    officer_owned_async_modeling_policy_recorded: bool = False
+    officer_model_report_provenance_policy_recorded: bool = False
+    main_executor_parallel_prep_boundary_recorded: bool = False
+    independent_approval_protocol_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
     pm_initial_capability_decision_recorded: bool = False
@@ -143,9 +156,12 @@ class State:
     manual_resume_mode_recorded: bool = False
 
     capabilities_manifest_written: bool = False
+    pm_child_skill_selection_manifest_written: bool = False
+    pm_child_skill_selection_scope_decisions_recorded: bool = False
     child_skill_route_design_discovery_started: bool = False
     child_skill_initial_gate_manifest_extracted: bool = False
     child_skill_gate_approvers_assigned: bool = False
+    child_skill_manifest_independent_validation_done: bool = False
     child_skill_manifest_reviewer_reviewed: bool = False
     child_skill_manifest_process_officer_approved: bool = False
     child_skill_manifest_product_officer_approved: bool = False
@@ -160,6 +176,8 @@ class State:
     child_skill_requirements_mapped: bool = False
     child_skill_evidence_plan_written: bool = False
     child_skill_subroute_projected: bool = False
+    node_acceptance_plan_written: bool = False
+    node_acceptance_risk_experiments_mapped: bool = False
     child_skill_node_gate_manifest_refined: bool = False
     child_skill_gate_authority_records_written: bool = False
     child_skill_conformance_model_checked: bool = False
@@ -169,6 +187,7 @@ class State:
     child_skill_evidence_matches_outputs: bool = False
     child_skill_domain_quality_checked: bool = False
     child_skill_iteration_loop_closed: bool = False
+    current_child_skill_gate_independent_validation_done: bool = False
     child_skill_current_gates_role_approved: bool = False
     child_skill_completion_verified: bool = False
     dependency_plan_recorded: bool = False
@@ -195,24 +214,19 @@ class State:
     startup_reviewer_checked_no_historical_agent_reuse: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
+    startup_pm_independent_gate_audit_done: bool = False
     pm_start_gate_opened: bool = False
     work_beyond_startup_allowed: bool = False
-    external_watchdog_policy_recorded: bool = False
-    external_watchdog_busy_lease_policy_recorded: bool = False
-    external_watchdog_busy_lease_autowrap_policy_recorded: bool = False
-    external_watchdog_source_drift_policy_recorded: bool = False
-    external_watchdog_automation_created: bool = False
-    external_watchdog_hidden_noninteractive_configured: bool = False
-    external_watchdog_active: bool = False
-    global_watchdog_supervisor_checked: bool = False
-    global_watchdog_supervisor_singleton_ready: bool = False
-    global_watchdog_supervisor_cadence_minutes: int = 0
-    external_watchdog_stopped_before_heartbeat: bool = False
     terminal_lifecycle_frontier_written: bool = False
     lifecycle_reconciliation_done: bool = False
     controlled_stop_notice_recorded: bool = False
     terminal_completion_notice_recorded: bool = False
     flowguard_process_design_done: bool = False
+    flowguard_officer_model_adversarial_probe_done: bool = False
+    flowguard_model_report_risk_tiers_done: bool = False
+    flowguard_model_report_pm_review_agenda_done: bool = False
+    flowguard_model_report_toolchain_recommendations_done: bool = False
+    flowguard_model_report_confidence_boundary_done: bool = False
     meta_route_checked: bool = False
     meta_route_process_officer_approved: bool = False
     capability_route_process_officer_approved: bool = False
@@ -223,15 +237,23 @@ class State:
     ui_concept_done: bool = False
     ui_concept_target_ready: bool = False
     ui_concept_target_visible: bool = False
+    ui_concept_personal_visual_review_done: bool = False
+    ui_concept_design_recommendations_recorded: bool = False
     ui_concept_aesthetic_review_done: bool = False
     ui_concept_aesthetic_reasons_recorded: bool = False
     ui_frontend_design_plan_done: bool = False
     visual_asset_scope: str = "unknown"  # unknown | none | required
     visual_asset_style_review_done: bool = False
+    visual_asset_personal_visual_review_done: bool = False
+    visual_asset_design_recommendations_recorded: bool = False
     visual_asset_aesthetic_review_done: bool = False
     visual_asset_aesthetic_reasons_recorded: bool = False
     ui_implemented: bool = False
     ui_screenshot_qa_done: bool = False
+    ui_reviewer_personal_walkthrough_done: bool = False
+    ui_interaction_reachability_checked: bool = False
+    ui_layout_overlap_density_checked: bool = False
+    ui_reviewer_design_recommendations_recorded: bool = False
     ui_implementation_aesthetic_review_done: bool = False
     ui_implementation_aesthetic_reasons_recorded: bool = False
     ui_divergence_review_done: bool = False
@@ -242,14 +264,22 @@ class State:
     implementation_human_review_context_loaded: bool = False
     implementation_human_neutral_observation_written: bool = False
     implementation_human_manual_experiments_run: bool = False
+    implementation_reviewer_independent_probe_done: bool = False
     implementation_human_inspection_passed: bool = False
     implementation_human_review_reviewer_approved: bool = False
     capability_backward_context_loaded: bool = False
     capability_child_evidence_replayed: bool = False
     capability_backward_neutral_observation_written: bool = False
     capability_structure_decision_recorded: bool = False
+    capability_backward_reviewer_independent_probe_done: bool = False
     capability_backward_human_review_passed: bool = False
     capability_backward_review_reviewer_approved: bool = False
+    parent_backward_structural_trigger_rule_recorded: bool = False
+    parent_backward_review_targets_enumerated: bool = False
+    parent_backward_review_targets_route_version: int = 0
+    parent_backward_targets_count: int = TARGET_PARENT_NODES
+    capability_backward_pm_segment_decision_recorded: bool = False
+    capability_backward_pm_segment_decisions_recorded: int = 0
     capability_backward_issue_grilled: bool = False
     capability_backward_issue_strategy: str = "none"
     pm_repair_decision_interrogations: int = 0
@@ -262,6 +292,7 @@ class State:
     validation_matrix_defined: bool = False
     anti_rough_finish_done: bool = False
     role_memory_refreshed_after_work: bool = False
+    current_node_skill_improvement_check_done: bool = False
     quality_route_raises: int = 0
     quality_reworks: int = 0
     final_verification_done: bool = False
@@ -273,28 +304,45 @@ class State:
     completion_visible_user_flow_diagram_emitted: bool = False
     final_feature_matrix_review_done: bool = False
     final_acceptance_matrix_review_done: bool = False
+    final_standard_scenario_pack_replayed: bool = False
     final_quality_candidate_review_done: bool = False
     final_product_function_model_replayed: bool = False
+    final_product_model_officer_adversarial_probe_done: bool = False
     final_product_function_model_product_officer_approved: bool = False
     final_human_review_context_loaded: bool = False
     final_human_neutral_observation_written: bool = False
     final_human_manual_experiments_run: bool = False
+    final_human_reviewer_independent_probe_done: bool = False
     final_human_inspection_passed: bool = False
     final_human_review_reviewer_approved: bool = False
     final_route_wide_gate_ledger_current_route_scanned: bool = False
     final_route_wide_gate_ledger_effective_nodes_resolved: bool = False
     final_route_wide_gate_ledger_child_skill_gates_collected: bool = False
     final_route_wide_gate_ledger_human_review_gates_collected: bool = False
+    final_route_wide_gate_ledger_parent_backward_replays_collected: bool = False
     final_route_wide_gate_ledger_product_process_gates_collected: bool = False
     final_route_wide_gate_ledger_resource_lineage_resolved: bool = False
     final_route_wide_gate_ledger_stale_evidence_checked: bool = False
     final_route_wide_gate_ledger_superseded_nodes_explained: bool = False
     final_route_wide_gate_ledger_unresolved_count_zero: bool = False
+    final_residual_risk_triage_done: bool = False
+    final_residual_risk_unresolved_count_zero: bool = False
     final_route_wide_gate_ledger_pm_built: bool = False
+    terminal_human_backward_review_map_built: bool = False
+    terminal_human_backward_replay_started_from_delivered_product: bool = False
+    terminal_human_backward_root_acceptance_reviewed: bool = False
+    terminal_human_backward_parent_nodes_reviewed: bool = False
+    terminal_human_backward_leaf_nodes_reviewed: bool = False
+    terminal_human_backward_pm_segment_decisions_recorded: bool = False
+    terminal_human_backward_repair_restart_policy_recorded: bool = False
     final_route_wide_gate_ledger_reviewer_backward_checked: bool = False
+    final_ledger_pm_independent_audit_done: bool = False
     final_route_wide_gate_ledger_pm_completion_approved: bool = False
     high_value_work_review: str = "unknown"  # unknown | exhausted
     standard_expansions: int = 0
+    terminal_closure_suite_run: bool = False
+    terminal_state_and_evidence_refreshed: bool = False
+    flowpilot_skill_improvement_report_written: bool = False
     pm_completion_decision_recorded: bool = False
 
     child_node_sidecar_scan_done: bool = False
@@ -339,21 +387,27 @@ def _reset_human_inspection_gates() -> dict[str, object]:
         "implementation_human_review_context_loaded": False,
         "implementation_human_neutral_observation_written": False,
         "implementation_human_manual_experiments_run": False,
+        "implementation_reviewer_independent_probe_done": False,
         "implementation_human_inspection_passed": False,
         "implementation_human_review_reviewer_approved": False,
         "capability_backward_context_loaded": False,
         "capability_child_evidence_replayed": False,
         "capability_backward_neutral_observation_written": False,
         "capability_structure_decision_recorded": False,
+        "capability_backward_reviewer_independent_probe_done": False,
         "capability_backward_human_review_passed": False,
         "capability_backward_review_reviewer_approved": False,
+        "capability_backward_pm_segment_decision_recorded": False,
         "capability_backward_issue_grilled": False,
         "capability_backward_issue_strategy": "none",
         "final_product_function_model_replayed": False,
+        "final_product_model_officer_adversarial_probe_done": False,
         "final_product_function_model_product_officer_approved": False,
+        "final_standard_scenario_pack_replayed": False,
         "final_human_review_context_loaded": False,
         "final_human_neutral_observation_written": False,
         "final_human_manual_experiments_run": False,
+        "final_human_reviewer_independent_probe_done": False,
         "final_human_inspection_passed": False,
         "final_human_review_reviewer_approved": False,
         "pm_completion_decision_recorded": False,
@@ -368,14 +422,28 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_effective_nodes_resolved": False,
         "final_route_wide_gate_ledger_child_skill_gates_collected": False,
         "final_route_wide_gate_ledger_human_review_gates_collected": False,
+        "final_route_wide_gate_ledger_parent_backward_replays_collected": False,
         "final_route_wide_gate_ledger_product_process_gates_collected": False,
         "final_route_wide_gate_ledger_resource_lineage_resolved": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
+        "final_residual_risk_triage_done": False,
+        "final_residual_risk_unresolved_count_zero": False,
         "final_route_wide_gate_ledger_pm_built": False,
+        "terminal_human_backward_review_map_built": False,
+        "terminal_human_backward_replay_started_from_delivered_product": False,
+        "terminal_human_backward_root_acceptance_reviewed": False,
+        "terminal_human_backward_parent_nodes_reviewed": False,
+        "terminal_human_backward_leaf_nodes_reviewed": False,
+        "terminal_human_backward_pm_segment_decisions_recorded": False,
+        "terminal_human_backward_repair_restart_policy_recorded": False,
         "final_route_wide_gate_ledger_reviewer_backward_checked": False,
+        "final_ledger_pm_independent_audit_done": False,
         "final_route_wide_gate_ledger_pm_completion_approved": False,
+        "terminal_closure_suite_run": False,
+        "terminal_state_and_evidence_refreshed": False,
+        "flowpilot_skill_improvement_report_written": False,
     }
 
 
@@ -399,13 +467,17 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "plan_sync_method_recorded": False,
             "visible_plan_has_runway_depth": False,
             "pm_capability_work_decision_recorded": False,
+            "node_acceptance_plan_written": False,
+            "node_acceptance_risk_experiments_mapped": False,
             "child_skill_node_gate_manifest_refined": False,
             "child_skill_gate_authority_records_written": False,
+            "current_child_skill_gate_independent_validation_done": False,
             "child_skill_current_gates_role_approved": False,
             "child_node_sidecar_scan_done": False,
             "sidecar_need": "unknown",
             "subagent_scope_checked": False,
             "role_memory_refreshed_after_work": False,
+            "current_node_skill_improvement_check_done": False,
             "critical_path_blocked": False,
         }
     )
@@ -431,6 +503,7 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "child_skill_route_design_discovery_started": False,
         "child_skill_initial_gate_manifest_extracted": False,
         "child_skill_gate_approvers_assigned": False,
+        "child_skill_manifest_independent_validation_done": False,
         "child_skill_manifest_reviewer_reviewed": False,
         "child_skill_manifest_process_officer_approved": False,
         "child_skill_manifest_product_officer_approved": False,
@@ -448,11 +521,19 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "non_ui_implemented": False,
         "ui_concept_target_ready": False,
         "ui_concept_target_visible": False,
+        "ui_concept_personal_visual_review_done": False,
+        "ui_concept_design_recommendations_recorded": False,
         "ui_frontend_design_plan_done": False,
         "visual_asset_scope": "unknown",
         "visual_asset_style_review_done": False,
+        "visual_asset_personal_visual_review_done": False,
+        "visual_asset_design_recommendations_recorded": False,
         "ui_implemented": False,
         "ui_screenshot_qa_done": False,
+        "ui_reviewer_personal_walkthrough_done": False,
+        "ui_interaction_reachability_checked": False,
+        "ui_layout_overlap_density_checked": False,
+        "ui_reviewer_design_recommendations_recorded": False,
         "ui_implementation_aesthetic_review_done": False,
         "ui_implementation_aesthetic_reasons_recorded": False,
         "ui_divergence_review_done": False,
@@ -473,6 +554,7 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "dependency_plan_recorded": False,
         "future_installs_deferred": False,
         "flowguard_process_design_done": False,
+        "flowguard_officer_model_adversarial_probe_done": False,
         "meta_route_checked": False,
         "meta_route_process_officer_approved": False,
         "subagent_status": "none",
@@ -519,7 +601,12 @@ def _product_function_architecture_ready(state: State) -> bool:
         and state.product_function_gap_review_done
         and state.product_function_negative_scope_written
         and state.product_function_acceptance_matrix_written
+        and state.root_acceptance_thresholds_defined
+        and state.root_acceptance_proof_matrix_written
+        and state.standard_scenario_pack_selected
+        and state.product_architecture_officer_adversarial_probe_done
         and state.product_function_architecture_product_officer_approved
+        and state.product_architecture_reviewer_adversarial_probe_done
         and state.product_function_architecture_reviewer_challenged
     )
 
@@ -530,7 +617,10 @@ def _material_handoff_ready(state: State) -> bool:
         and state.material_sources_scanned
         and state.material_source_summaries_written
         and state.material_source_quality_classified
+        and state.local_skill_inventory_written
+        and state.local_skill_inventory_candidate_classified
         and state.material_intake_packet_written
+        and state.material_reviewer_direct_source_probe_done
         and state.material_reviewer_sufficiency_checked
         and state.material_reviewer_sufficiency_approved
         and state.pm_material_understanding_memo_written
@@ -552,6 +642,10 @@ def _crew_ready(state: State) -> bool:
         and state.crew_ledger_written
         and state.role_identity_protocol_recorded
         and state.pm_flowguard_delegation_policy_recorded
+        and state.officer_owned_async_modeling_policy_recorded
+        and state.officer_model_report_provenance_policy_recorded
+        and state.main_executor_parallel_prep_boundary_recorded
+        and state.independent_approval_protocol_recorded
         and state.crew_memory_policy_written
         and state.crew_memory_packets_written == CREW_SIZE
     )
@@ -565,24 +659,11 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.heartbeat_schedule_created
         and state.route_heartbeat_interval_minutes == 1
         and state.stable_heartbeat_launcher_recorded
-        and state.external_watchdog_policy_recorded
-        and state.external_watchdog_busy_lease_policy_recorded
-        and state.external_watchdog_busy_lease_autowrap_policy_recorded
-        and state.external_watchdog_source_drift_policy_recorded
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_hidden_noninteractive_configured
-        and state.global_watchdog_supervisor_checked
-        and state.global_watchdog_supervisor_singleton_ready
-        and state.global_watchdog_supervisor_cadence_minutes == 30
     )
 
 
 def _automated_continuation_ready(state: State) -> bool:
-    return (
-        _automated_continuation_configured(state)
-        and state.external_watchdog_active
-        and not state.external_watchdog_stopped_before_heartbeat
-    )
+    return _automated_continuation_configured(state)
 
 
 def _manual_resume_ready(state: State) -> bool:
@@ -593,16 +674,6 @@ def _manual_resume_ready(state: State) -> bool:
         and not state.heartbeat_schedule_created
         and state.route_heartbeat_interval_minutes == 0
         and not state.stable_heartbeat_launcher_recorded
-        and not state.external_watchdog_policy_recorded
-        and not state.external_watchdog_busy_lease_policy_recorded
-        and not state.external_watchdog_busy_lease_autowrap_policy_recorded
-        and not state.external_watchdog_source_drift_policy_recorded
-        and not state.external_watchdog_automation_created
-        and not state.external_watchdog_hidden_noninteractive_configured
-        and not state.external_watchdog_active
-        and not state.global_watchdog_supervisor_checked
-        and not state.global_watchdog_supervisor_singleton_ready
-        and state.global_watchdog_supervisor_cadence_minutes == 0
     )
 
 
@@ -660,8 +731,6 @@ def _continuation_lifecycle_valid(state: State) -> bool:
         or (
             _automated_continuation_configured(state)
             and state.lifecycle_reconciliation_done
-            and state.external_watchdog_stopped_before_heartbeat
-            and not state.external_watchdog_active
         )
     )
 
@@ -681,6 +750,7 @@ def _startup_pm_gate_ready(state: State) -> bool:
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_pm_independent_gate_audit_done
         and state.pm_start_gate_opened
     )
 
@@ -689,14 +759,11 @@ def _terminal_continuation_reconciled(state: State) -> bool:
     if _automated_continuation_configured(state):
         return (
             state.lifecycle_reconciliation_done
-            and state.external_watchdog_stopped_before_heartbeat
-            and not state.external_watchdog_active
             and state.terminal_lifecycle_frontier_written
         )
     if _manual_resume_ready(state):
         return (
             state.lifecycle_reconciliation_done
-            and not state.external_watchdog_active
             and state.terminal_lifecycle_frontier_written
         )
     return False
@@ -708,13 +775,24 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_effective_nodes_resolved
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
+        and state.final_route_wide_gate_ledger_parent_backward_replays_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_triage_done
+        and state.final_residual_risk_unresolved_count_zero
         and state.final_route_wide_gate_ledger_pm_built
+        and state.terminal_human_backward_review_map_built
+        and state.terminal_human_backward_replay_started_from_delivered_product
+        and state.terminal_human_backward_root_acceptance_reviewed
+        and state.terminal_human_backward_parent_nodes_reviewed
+        and state.terminal_human_backward_leaf_nodes_reviewed
+        and state.terminal_human_backward_pm_segment_decisions_recorded
+        and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_reviewer_backward_checked
+        and state.final_ledger_pm_independent_audit_done
         and state.final_route_wide_gate_ledger_pm_completion_approved
     )
 
@@ -748,6 +826,7 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.child_skill_route_design_discovery_started
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
         and state.child_skill_manifest_process_officer_approved
         and state.child_skill_manifest_product_officer_approved
@@ -768,12 +847,18 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.flowguard_dependency_checked
         and _continuation_ready(state)
         and state.flowguard_process_design_done
+        and state.flowguard_officer_model_adversarial_probe_done
         and state.meta_route_checked
         and state.meta_route_process_officer_approved
         and state.capability_route_checked
         and state.capability_route_process_officer_approved
         and state.capability_product_function_model_checked
         and state.capability_product_function_model_product_officer_approved
+        and state.parent_backward_structural_trigger_rule_recorded
+        and state.parent_backward_review_targets_enumerated
+        and state.parent_backward_review_targets_route_version
+        == state.capability_route_version
+        and state.parent_backward_targets_count > 0
         and state.capability_evidence_synced
         and state.execution_frontier_written
         and state.codex_plan_synced
@@ -809,6 +894,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.child_skill_route_design_discovery_started
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
         and state.child_skill_manifest_process_officer_approved
         and state.child_skill_manifest_product_officer_approved
@@ -829,6 +915,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.flowguard_dependency_checked
         and _continuation_lifecycle_valid(state)
         and state.flowguard_process_design_done
+        and state.flowguard_officer_model_adversarial_probe_done
         and state.meta_route_checked
         and state.meta_route_process_officer_approved
         and state.capability_route_checked
@@ -869,6 +956,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.child_skill_route_design_discovery_started
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
         and state.child_skill_manifest_process_officer_approved
         and state.child_skill_manifest_product_officer_approved
@@ -889,6 +977,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.flowguard_dependency_checked
         and _continuation_lifecycle_valid(state)
         and state.flowguard_process_design_done
+        and state.flowguard_officer_model_adversarial_probe_done
         and state.meta_route_checked
         and state.meta_route_process_officer_approved
         and state.capability_route_checked
@@ -959,6 +1048,14 @@ def _capability_backward_review_steps(
             capability_structure_decision_recorded=True,
         )
         return
+    if not state.capability_backward_reviewer_independent_probe_done:
+        yield _step(
+            state,
+            label="capability_backward_reviewer_independent_probe_done",
+            action=f"human-like reviewer probes {domain} child evidence against parent obligations, stale rollups, missing siblings, and report-only closure before backward approval",
+            capability_backward_reviewer_independent_probe_done=True,
+        )
+        return
     if not state.capability_backward_human_review_passed:
         if (
             state.capability_structural_route_repairs == 0
@@ -986,9 +1083,19 @@ def _capability_backward_review_steps(
         yield _step(
             state,
             label="capability_backward_review_passed",
-            action=f"human-like backward reviewer accepts the {domain} capability rollup before child-skill completion closure",
+            action=f"human-like backward reviewer accepts the {domain} capability rollup before PM records the parent segment decision",
             capability_backward_human_review_passed=True,
             capability_backward_review_reviewer_approved=True,
+        )
+        return
+    if not state.capability_backward_pm_segment_decision_recorded:
+        yield _step(
+            state,
+            label="capability_backward_pm_segment_decision_recorded",
+            action=f"project manager records the {domain} parent backward replay segment decision before capability closure",
+            capability_backward_pm_segment_decision_recorded=True,
+            capability_backward_pm_segment_decisions_recorded=state.capability_backward_pm_segment_decisions_recorded
+            + 1,
         )
 
 
@@ -1025,6 +1132,14 @@ def _final_route_wide_gate_ledger_steps(
             label="final_route_wide_gate_ledger_human_review_gates_collected",
             action=f"PM collects all {domain} human-review, parent-review, strict-obligation, and same-inspector gates",
             final_route_wide_gate_ledger_human_review_gates_collected=True,
+        )
+        return
+    if not state.final_route_wide_gate_ledger_parent_backward_replays_collected:
+        yield _step(
+            state,
+            label="final_route_wide_gate_ledger_parent_backward_replays_collected",
+            action=f"PM collects every structurally required local {domain} parent backward replay and PM segment decision",
+            final_route_wide_gate_ledger_parent_backward_replays_collected=True,
         )
         return
     if not state.final_route_wide_gate_ledger_product_process_gates_collected:
@@ -1067,6 +1182,22 @@ def _final_route_wide_gate_ledger_steps(
             final_route_wide_gate_ledger_unresolved_count_zero=True,
         )
         return
+    if not state.final_residual_risk_triage_done:
+        yield _step(
+            state,
+            label="final_residual_risk_triage_done",
+            action=f"PM triages every remaining {domain} risk or blindspot as fixed, routed to repair, current-gate blocker, terminal replay scenario, non-risk note, or explicit exception",
+            final_residual_risk_triage_done=True,
+        )
+        return
+    if not state.final_residual_risk_unresolved_count_zero:
+        yield _step(
+            state,
+            label="final_residual_risk_unresolved_count_zero",
+            action=f"PM records zero unresolved residual {domain} risks before final ledger can be built",
+            final_residual_risk_unresolved_count_zero=True,
+        )
+        return
     if not state.final_route_wide_gate_ledger_pm_built:
         yield _step(
             state,
@@ -1075,19 +1206,83 @@ def _final_route_wide_gate_ledger_steps(
             final_route_wide_gate_ledger_pm_built=True,
         )
         return
+    if not state.terminal_human_backward_review_map_built:
+        yield _step(
+            state,
+            label="terminal_human_backward_review_map_built",
+            action=f"PM converts the final {domain} ledger into an ordered human backward replay map from delivered output to root, parent, and leaf obligations",
+            terminal_human_backward_review_map_built=True,
+        )
+        return
+    if not state.terminal_human_backward_replay_started_from_delivered_product:
+        yield _step(
+            state,
+            label="terminal_human_backward_replay_started_from_delivered_product",
+            action=f"human-like reviewer starts terminal {domain} replay from the delivered output itself rather than ledger entries or worker reports",
+            terminal_human_backward_replay_started_from_delivered_product=True,
+        )
+        return
+    if not state.terminal_human_backward_root_acceptance_reviewed:
+        yield _step(
+            state,
+            label="terminal_human_backward_root_acceptance_reviewed",
+            action=f"human-like reviewer manually checks final {domain} output against root acceptance and baseline functional obligations",
+            terminal_human_backward_root_acceptance_reviewed=True,
+        )
+        return
+    if not state.terminal_human_backward_parent_nodes_reviewed:
+        yield _step(
+            state,
+            label="terminal_human_backward_parent_nodes_reviewed",
+            action=f"human-like reviewer walks backward through effective parent {domain} nodes and checks that child outcomes compose into parent goals",
+            terminal_human_backward_parent_nodes_reviewed=True,
+        )
+        return
+    if not state.terminal_human_backward_leaf_nodes_reviewed:
+        yield _step(
+            state,
+            label="terminal_human_backward_leaf_nodes_reviewed",
+            action=f"human-like reviewer manually checks every effective leaf {domain} node against its node acceptance plan, experiments, and current output behavior",
+            terminal_human_backward_leaf_nodes_reviewed=True,
+        )
+        return
+    if not state.terminal_human_backward_pm_segment_decisions_recorded:
+        yield _step(
+            state,
+            label="terminal_human_backward_pm_segment_decisions_recorded",
+            action=f"PM records continue or repair decisions for every terminal {domain} backward replay segment",
+            terminal_human_backward_pm_segment_decisions_recorded=True,
+        )
+        return
+    if not state.terminal_human_backward_repair_restart_policy_recorded:
+        yield _step(
+            state,
+            label="terminal_human_backward_repair_restart_policy_recorded",
+            action=f"PM records that any terminal {domain} replay repair invalidates affected evidence and restarts final review from the delivered output unless a narrower impacted-ancestor restart is justified",
+            terminal_human_backward_repair_restart_policy_recorded=True,
+        )
+        return
     if not state.final_route_wide_gate_ledger_reviewer_backward_checked:
         yield _step(
             state,
             label="final_route_wide_gate_ledger_reviewer_backward_checked",
-            action=f"human-like reviewer checks final {domain} output backward through the PM-built route-wide ledger",
+            action=f"human-like reviewer completes terminal {domain} backward replay through every effective root, parent, and leaf-node obligation in the PM-built map",
             final_route_wide_gate_ledger_reviewer_backward_checked=True,
+        )
+        return
+    if not state.final_ledger_pm_independent_audit_done:
+        yield _step(
+            state,
+            label="final_ledger_pm_independent_audit_done",
+            action=f"PM independently audits {domain} route/frontier/ledger entries, stale evidence, waiver authority, unresolved counts, reviewer replay, and blindspots before completion approval",
+            final_ledger_pm_independent_audit_done=True,
         )
         return
     if not state.final_route_wide_gate_ledger_pm_completion_approved:
         yield _step(
             state,
             label="final_route_wide_gate_ledger_pm_completion_approved",
-            action=f"PM approves the clean route-wide {domain} gate ledger before lifecycle closure and final completion decision",
+            action=f"PM approves the clean route-wide {domain} gate ledger from independent adversarial audit evidence before lifecycle closure and final completion decision",
             final_route_wide_gate_ledger_pm_completion_approved=True,
         )
 
@@ -1125,6 +1320,7 @@ class CapabilityRouterStep:
         "material_source_summaries_written",
         "material_source_quality_classified",
         "material_intake_packet_written",
+        "material_reviewer_direct_source_probe_done",
         "material_reviewer_sufficiency_checked",
         "material_reviewer_sufficiency_approved",
         "pm_material_understanding_memo_written",
@@ -1138,7 +1334,12 @@ class CapabilityRouterStep:
         "product_function_gap_review_done",
         "product_function_negative_scope_written",
         "product_function_acceptance_matrix_written",
+        "root_acceptance_thresholds_defined",
+        "root_acceptance_proof_matrix_written",
+        "standard_scenario_pack_selected",
+        "product_architecture_officer_adversarial_probe_done",
         "product_function_architecture_product_officer_approved",
+        "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
         "visible_self_interrogation_done",
         "contract_frozen",
@@ -1153,6 +1354,10 @@ class CapabilityRouterStep:
         "crew_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
+        "officer_owned_async_modeling_policy_recorded",
+        "officer_model_report_provenance_policy_recorded",
+        "main_executor_parallel_prep_boundary_recorded",
+        "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
         "pm_initial_capability_decision_recorded",
@@ -1178,6 +1383,7 @@ class CapabilityRouterStep:
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
         "child_skill_gate_approvers_assigned",
+        "child_skill_manifest_independent_validation_done",
         "child_skill_manifest_reviewer_reviewed",
         "child_skill_manifest_process_officer_approved",
         "child_skill_manifest_product_officer_approved",
@@ -1192,6 +1398,8 @@ class CapabilityRouterStep:
         "child_skill_requirements_mapped",
         "child_skill_evidence_plan_written",
         "child_skill_subroute_projected",
+        "node_acceptance_plan_written",
+        "node_acceptance_risk_experiments_mapped",
         "child_skill_node_gate_manifest_refined",
         "child_skill_gate_authority_records_written",
         "child_skill_conformance_model_checked",
@@ -1201,6 +1409,7 @@ class CapabilityRouterStep:
         "child_skill_evidence_matches_outputs",
         "child_skill_domain_quality_checked",
         "child_skill_iteration_loop_closed",
+        "current_child_skill_gate_independent_validation_done",
         "child_skill_current_gates_role_approved",
         "child_skill_completion_verified",
         "dependency_plan_recorded",
@@ -1227,30 +1436,25 @@ class CapabilityRouterStep:
         "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
+        "startup_pm_independent_gate_audit_done",
         "pm_start_gate_opened",
         "work_beyond_startup_allowed",
-        "external_watchdog_policy_recorded",
-        "external_watchdog_busy_lease_policy_recorded",
-        "external_watchdog_busy_lease_autowrap_policy_recorded",
-        "external_watchdog_source_drift_policy_recorded",
-        "external_watchdog_automation_created",
-        "external_watchdog_hidden_noninteractive_configured",
-        "external_watchdog_active",
-        "global_watchdog_supervisor_checked",
-        "global_watchdog_supervisor_singleton_ready",
-        "global_watchdog_supervisor_cadence_minutes",
-        "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
         "flowguard_process_design_done",
+        "flowguard_officer_model_adversarial_probe_done",
         "meta_route_checked",
         "capability_route_checked",
         "meta_route_process_officer_approved",
         "capability_route_process_officer_approved",
         "capability_product_function_model_checked",
         "capability_product_function_model_product_officer_approved",
+        "parent_backward_structural_trigger_rule_recorded",
+        "parent_backward_review_targets_enumerated",
+        "parent_backward_review_targets_route_version",
+        "parent_backward_targets_count",
         "capability_evidence_synced",
         "execution_frontier_written",
         "codex_plan_synced",
@@ -1261,13 +1465,21 @@ class CapabilityRouterStep:
         "ui_concept_done",
         "ui_concept_target_ready",
         "ui_concept_target_visible",
+        "ui_concept_personal_visual_review_done",
+        "ui_concept_design_recommendations_recorded",
         "ui_concept_aesthetic_review_done",
         "ui_concept_aesthetic_reasons_recorded",
         "visual_asset_scope",
         "visual_asset_style_review_done",
+        "visual_asset_personal_visual_review_done",
+        "visual_asset_design_recommendations_recorded",
         "visual_asset_aesthetic_review_done",
         "visual_asset_aesthetic_reasons_recorded",
         "ui_screenshot_qa_done",
+        "ui_reviewer_personal_walkthrough_done",
+        "ui_interaction_reachability_checked",
+        "ui_layout_overlap_density_checked",
+        "ui_reviewer_design_recommendations_recorded",
         "ui_implementation_aesthetic_review_done",
         "ui_implementation_aesthetic_reasons_recorded",
         "ui_visual_iteration_loop_closed",
@@ -1278,17 +1490,22 @@ class CapabilityRouterStep:
         "validation_matrix_defined",
         "anti_rough_finish_done",
         "role_memory_refreshed_after_work",
+        "current_node_skill_improvement_check_done",
         "implementation_human_review_context_loaded",
         "implementation_human_neutral_observation_written",
         "implementation_human_manual_experiments_run",
+        "implementation_reviewer_independent_probe_done",
         "implementation_human_inspection_passed",
         "implementation_human_review_reviewer_approved",
         "capability_backward_context_loaded",
         "capability_child_evidence_replayed",
         "capability_backward_neutral_observation_written",
         "capability_structure_decision_recorded",
+        "capability_backward_reviewer_independent_probe_done",
         "capability_backward_human_review_passed",
         "capability_backward_review_reviewer_approved",
+        "capability_backward_pm_segment_decision_recorded",
+        "capability_backward_pm_segment_decisions_recorded",
         "capability_backward_issue_grilled",
         "capability_backward_issue_strategy",
         "capability_structural_route_repairs",
@@ -1303,26 +1520,43 @@ class CapabilityRouterStep:
         "completion_visible_user_flow_diagram_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
+        "final_standard_scenario_pack_replayed",
         "final_quality_candidate_review_done",
         "final_product_function_model_replayed",
+        "final_product_model_officer_adversarial_probe_done",
         "final_product_function_model_product_officer_approved",
         "final_human_review_context_loaded",
         "final_human_neutral_observation_written",
         "final_human_manual_experiments_run",
+        "final_human_reviewer_independent_probe_done",
         "final_human_inspection_passed",
         "final_human_review_reviewer_approved",
         "final_route_wide_gate_ledger_current_route_scanned",
         "final_route_wide_gate_ledger_effective_nodes_resolved",
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
+        "final_route_wide_gate_ledger_parent_backward_replays_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
         "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
+        "final_residual_risk_triage_done",
+        "final_residual_risk_unresolved_count_zero",
         "final_route_wide_gate_ledger_pm_built",
+        "terminal_human_backward_review_map_built",
+        "terminal_human_backward_replay_started_from_delivered_product",
+        "terminal_human_backward_root_acceptance_reviewed",
+        "terminal_human_backward_parent_nodes_reviewed",
+        "terminal_human_backward_leaf_nodes_reviewed",
+        "terminal_human_backward_pm_segment_decisions_recorded",
+        "terminal_human_backward_repair_restart_policy_recorded",
         "final_route_wide_gate_ledger_reviewer_backward_checked",
+        "final_ledger_pm_independent_audit_done",
         "final_route_wide_gate_ledger_pm_completion_approved",
+        "terminal_closure_suite_run",
+        "terminal_state_and_evidence_refreshed",
+        "flowpilot_skill_improvement_report_written",
         "pm_completion_decision_recorded",
         "child_node_sidecar_scan_done",
         "sidecar_need",
@@ -1363,6 +1597,7 @@ class CapabilityRouterStep:
         "material_source_summaries_written",
         "material_source_quality_classified",
         "material_intake_packet_written",
+        "material_reviewer_direct_source_probe_done",
         "material_reviewer_sufficiency_checked",
         "material_reviewer_sufficiency_approved",
         "pm_material_understanding_memo_written",
@@ -1376,7 +1611,12 @@ class CapabilityRouterStep:
         "product_function_gap_review_done",
         "product_function_negative_scope_written",
         "product_function_acceptance_matrix_written",
+        "root_acceptance_thresholds_defined",
+        "root_acceptance_proof_matrix_written",
+        "standard_scenario_pack_selected",
+        "product_architecture_officer_adversarial_probe_done",
         "product_function_architecture_product_officer_approved",
+        "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
         "contract_frozen",
         "crew_policy_written",
@@ -1390,6 +1630,10 @@ class CapabilityRouterStep:
         "crew_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
+        "officer_owned_async_modeling_policy_recorded",
+        "officer_model_report_provenance_policy_recorded",
+        "main_executor_parallel_prep_boundary_recorded",
+        "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
         "pm_initial_capability_decision_recorded",
@@ -1412,6 +1656,7 @@ class CapabilityRouterStep:
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
         "child_skill_gate_approvers_assigned",
+        "child_skill_manifest_independent_validation_done",
         "child_skill_manifest_reviewer_reviewed",
         "child_skill_manifest_process_officer_approved",
         "child_skill_manifest_product_officer_approved",
@@ -1426,6 +1671,8 @@ class CapabilityRouterStep:
         "child_skill_requirements_mapped",
         "child_skill_evidence_plan_written",
         "child_skill_subroute_projected",
+        "node_acceptance_plan_written",
+        "node_acceptance_risk_experiments_mapped",
         "child_skill_node_gate_manifest_refined",
         "child_skill_gate_authority_records_written",
         "child_skill_conformance_model_checked",
@@ -1435,6 +1682,7 @@ class CapabilityRouterStep:
         "child_skill_evidence_matches_outputs",
         "child_skill_domain_quality_checked",
         "child_skill_iteration_loop_closed",
+        "current_child_skill_gate_independent_validation_done",
         "child_skill_current_gates_role_approved",
         "child_skill_completion_verified",
         "dependency_plan_recorded",
@@ -1461,42 +1709,45 @@ class CapabilityRouterStep:
         "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
+        "startup_pm_independent_gate_audit_done",
         "pm_start_gate_opened",
         "work_beyond_startup_allowed",
-        "external_watchdog_policy_recorded",
-        "external_watchdog_busy_lease_policy_recorded",
-        "external_watchdog_busy_lease_autowrap_policy_recorded",
-        "external_watchdog_source_drift_policy_recorded",
-        "external_watchdog_automation_created",
-        "external_watchdog_hidden_noninteractive_configured",
-        "external_watchdog_active",
-        "global_watchdog_supervisor_checked",
-        "global_watchdog_supervisor_singleton_ready",
-        "global_watchdog_supervisor_cadence_minutes",
-        "external_watchdog_stopped_before_heartbeat",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
         "flowguard_process_design_done",
+        "flowguard_officer_model_adversarial_probe_done",
         "meta_route_checked",
         "meta_route_process_officer_approved",
         "capability_route_process_officer_approved",
         "capability_product_function_model_checked",
         "capability_product_function_model_product_officer_approved",
+        "parent_backward_structural_trigger_rule_recorded",
+        "parent_backward_review_targets_enumerated",
+        "parent_backward_review_targets_route_version",
+        "parent_backward_targets_count",
         "ui_inspected",
         "ui_concept_done",
         "ui_concept_target_ready",
         "ui_concept_target_visible",
+        "ui_concept_personal_visual_review_done",
+        "ui_concept_design_recommendations_recorded",
         "ui_concept_aesthetic_review_done",
         "ui_concept_aesthetic_reasons_recorded",
         "ui_frontend_design_plan_done",
         "visual_asset_scope",
         "visual_asset_style_review_done",
+        "visual_asset_personal_visual_review_done",
+        "visual_asset_design_recommendations_recorded",
         "visual_asset_aesthetic_review_done",
         "visual_asset_aesthetic_reasons_recorded",
         "ui_implemented",
         "ui_screenshot_qa_done",
+        "ui_reviewer_personal_walkthrough_done",
+        "ui_interaction_reachability_checked",
+        "ui_layout_overlap_density_checked",
+        "ui_reviewer_design_recommendations_recorded",
         "ui_implementation_aesthetic_review_done",
         "ui_implementation_aesthetic_reasons_recorded",
         "ui_divergence_review_done",
@@ -1509,17 +1760,22 @@ class CapabilityRouterStep:
         "validation_matrix_defined",
         "anti_rough_finish_done",
         "role_memory_refreshed_after_work",
+        "current_node_skill_improvement_check_done",
         "implementation_human_review_context_loaded",
         "implementation_human_neutral_observation_written",
         "implementation_human_manual_experiments_run",
+        "implementation_reviewer_independent_probe_done",
         "implementation_human_inspection_passed",
         "implementation_human_review_reviewer_approved",
         "capability_backward_context_loaded",
         "capability_child_evidence_replayed",
         "capability_backward_neutral_observation_written",
         "capability_structure_decision_recorded",
+        "capability_backward_reviewer_independent_probe_done",
         "capability_backward_human_review_passed",
         "capability_backward_review_reviewer_approved",
+        "capability_backward_pm_segment_decision_recorded",
+        "capability_backward_pm_segment_decisions_recorded",
         "capability_backward_issue_grilled",
         "capability_backward_issue_strategy",
         "capability_structural_route_repairs",
@@ -1536,28 +1792,45 @@ class CapabilityRouterStep:
         "completion_visible_user_flow_diagram_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
+        "final_standard_scenario_pack_replayed",
         "final_quality_candidate_review_done",
         "final_product_function_model_replayed",
+        "final_product_model_officer_adversarial_probe_done",
         "final_product_function_model_product_officer_approved",
         "final_human_review_context_loaded",
         "final_human_neutral_observation_written",
         "final_human_manual_experiments_run",
+        "final_human_reviewer_independent_probe_done",
         "final_human_inspection_passed",
         "final_human_review_reviewer_approved",
         "final_route_wide_gate_ledger_current_route_scanned",
         "final_route_wide_gate_ledger_effective_nodes_resolved",
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
+        "final_route_wide_gate_ledger_parent_backward_replays_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
         "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
+        "final_residual_risk_triage_done",
+        "final_residual_risk_unresolved_count_zero",
         "final_route_wide_gate_ledger_pm_built",
+        "terminal_human_backward_review_map_built",
+        "terminal_human_backward_replay_started_from_delivered_product",
+        "terminal_human_backward_root_acceptance_reviewed",
+        "terminal_human_backward_parent_nodes_reviewed",
+        "terminal_human_backward_leaf_nodes_reviewed",
+        "terminal_human_backward_pm_segment_decisions_recorded",
+        "terminal_human_backward_repair_restart_policy_recorded",
         "final_route_wide_gate_ledger_reviewer_backward_checked",
+        "final_ledger_pm_independent_audit_done",
         "final_route_wide_gate_ledger_pm_completion_approved",
         "high_value_work_review",
         "standard_expansions",
+        "terminal_closure_suite_run",
+        "terminal_state_and_evidence_refreshed",
+        "flowpilot_skill_improvement_report_written",
         "pm_completion_decision_recorded",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
@@ -1637,8 +1910,8 @@ class CapabilityRouterStep:
             )
             yield _step(
                 state,
-                label="default_mode_recorded",
-                action="record explicit user answer selecting the default full-auto mode",
+                label="explicit_full_auto_mode_selected",
+                action="record explicit user answer selecting full-auto mode",
                 mode_selected=True,
             )
             return
@@ -1850,8 +2123,44 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="pm_flowguard_delegation_policy_recorded",
-                action="record that the project manager may create structured FlowGuard modeling requests for uncertain capability, process, product, or object decisions and assign them to the process or product FlowGuard officer",
+                action="record that the project manager creates structured FlowGuard modeling requests for uncertain capability, process, product, or object decisions and assigns them to the process or product FlowGuard officer",
                 pm_flowguard_delegation_policy_recorded=True,
+            )
+            return
+
+        if not state.officer_owned_async_modeling_policy_recorded:
+            yield _step(
+                state,
+                label="officer_owned_async_modeling_policy_recorded",
+                action="record that capability FlowGuard model gates dispatch to officer-owned run directories while the main executor may continue only non-dependent preparation",
+                officer_owned_async_modeling_policy_recorded=True,
+            )
+            return
+
+        if not state.officer_model_report_provenance_policy_recorded:
+            yield _step(
+                state,
+                label="officer_model_report_provenance_policy_recorded",
+                action="require capability officer model reports to prove model author, runner, interpreter, commands, input snapshots, state counts, counterexample inspection, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, blindspots, and decision",
+                officer_model_report_provenance_policy_recorded=True,
+            )
+            return
+
+        if not state.main_executor_parallel_prep_boundary_recorded:
+            yield _step(
+                state,
+                label="main_executor_parallel_prep_boundary_recorded",
+                action="record that main-executor parallel work during capability officer modeling cannot satisfy route checks, implementation, checkpoint, completion, or protected model gates",
+                main_executor_parallel_prep_boundary_recorded=True,
+            )
+            return
+
+        if not state.independent_approval_protocol_recorded:
+            yield _step(
+                state,
+                label="independent_approval_protocol_recorded",
+                action="record that every PM, reviewer, and FlowGuard officer approval requires independent adversarial validation evidence and cannot be completion-report-only",
+                independent_approval_protocol_recorded=True,
             )
             return
 
@@ -1901,12 +2210,39 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.local_skill_inventory_written:
+            yield _step(
+                state,
+                label="local_skill_inventory_written",
+                action="main executor inventories locally available skills and host capabilities as candidate resources before the material packet is finalized",
+                local_skill_inventory_written=True,
+            )
+            return
+
+        if not state.local_skill_inventory_candidate_classified:
+            yield _step(
+                state,
+                label="local_skill_inventory_candidate_classified",
+                action="main executor classifies local skills as candidate-only resources without treating availability as PM approval to use them",
+                local_skill_inventory_candidate_classified=True,
+            )
+            return
+
         if not state.material_intake_packet_written:
             yield _step(
                 state,
                 label="material_intake_packet_written",
-                action="main executor writes the Material Intake Packet before PM capability planning",
+                action="main executor writes the Material Intake Packet, including local skill inventory, before PM capability planning",
                 material_intake_packet_written=True,
+            )
+            return
+
+        if not state.material_reviewer_direct_source_probe_done:
+            yield _step(
+                state,
+                label="material_reviewer_direct_source_probe_done",
+                action="human-like reviewer opens or samples actual materials and tests whether the packet could be summary-only before sufficiency approval",
+                material_reviewer_direct_source_probe_done=True,
             )
             return
 
@@ -2027,6 +2363,42 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.root_acceptance_thresholds_defined:
+            yield _step(
+                state,
+                label="root_acceptance_thresholds_defined",
+                action="project manager defines early hard acceptance thresholds for important capability requirements before contract freeze",
+                root_acceptance_thresholds_defined=True,
+            )
+            return
+
+        if not state.root_acceptance_proof_matrix_written:
+            yield _step(
+                state,
+                label="root_acceptance_proof_matrix_written",
+                action="project manager writes the root proof matrix mapping hard capability requirements to experiments, inspections, evidence, owners, and approvers",
+                root_acceptance_proof_matrix_written=True,
+            )
+            return
+
+        if not state.standard_scenario_pack_selected:
+            yield _step(
+                state,
+                label="standard_scenario_pack_selected",
+                action="project manager selects the standard scenario pack for terminal replay of happy paths, edge cases, regressions, lifecycle, and PM-risk scenarios",
+                standard_scenario_pack_selected=True,
+            )
+            return
+
+        if not state.product_architecture_officer_adversarial_probe_done:
+            yield _step(
+                state,
+                label="product_architecture_officer_adversarial_probe_done",
+                action="product FlowGuard officer checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture",
+                product_architecture_officer_adversarial_probe_done=True,
+            )
+            return
+
         if not state.product_function_architecture_product_officer_approved:
             yield _step(
                 state,
@@ -2037,6 +2409,14 @@ class CapabilityRouterStep:
             return
 
         if not state.product_function_architecture_reviewer_challenged:
+            if not state.product_architecture_reviewer_adversarial_probe_done:
+                yield _step(
+                    state,
+                    label="product_architecture_reviewer_adversarial_probe_done",
+                    action="human-like reviewer attacks the PM product architecture against user tasks, inspected materials, missing features, unnecessary visible text, and weak failure states",
+                    product_architecture_reviewer_adversarial_probe_done=True,
+                )
+                return
             yield _step(
                 state,
                 label="product_function_architecture_reviewer_challenged",
@@ -2078,11 +2458,29 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.pm_child_skill_selection_manifest_written:
+            yield _step(
+                state,
+                label="pm_child_skill_selection_manifest_written",
+                action="project manager writes a child-skill selection manifest from the product architecture, capability map, and local skill inventory",
+                pm_child_skill_selection_manifest_written=True,
+            )
+            return
+
+        if not state.pm_child_skill_selection_scope_decisions_recorded:
+            yield _step(
+                state,
+                label="pm_child_skill_selection_scope_decisions_recorded",
+                action="project manager classifies candidate skills as required, conditional, deferred, or rejected before child-skill route discovery",
+                pm_child_skill_selection_scope_decisions_recorded=True,
+            )
+            return
+
         if not state.child_skill_route_design_discovery_started:
             yield _step(
                 state,
                 label="child_skill_route_design_discovery_started",
-                action="project manager starts route-design discovery of likely child skills from the frozen contract and capability manifest",
+                action="project manager starts route-design discovery only from PM-selected child skills, not from raw local skill availability",
                 child_skill_route_design_discovery_started=True,
             )
             return
@@ -2102,6 +2500,15 @@ class CapabilityRouterStep:
                 label="child_skill_gate_approvers_assigned",
                 action="assign required approver roles for every child-skill gate and forbid main-executor or worker self-approval",
                 child_skill_gate_approvers_assigned=True,
+            )
+            return
+
+        if not state.child_skill_manifest_independent_validation_done:
+            yield _step(
+                state,
+                label="child_skill_manifest_independent_validation_done",
+                action="reviewer, process officer, product officer, and PM independently probe the child-skill manifest slices instead of accepting the extraction report",
+                child_skill_manifest_independent_validation_done=True,
             )
             return
 
@@ -2257,14 +2664,14 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="host_continuation_capability_supported",
-                action="probe host automation capability and confirm real heartbeat, watchdog, and global supervisor setup is supported",
+                action="probe host automation capability and confirm real heartbeat setup is supported",
                 continuation_probe_done=True,
                 host_continuation_supported=True,
             )
             yield _step(
                 state,
                 label="host_continuation_capability_unsupported_manual_resume",
-                action="probe host automation capability, find no real wakeup support, and record manual-resume mode without creating heartbeat, watchdog, or global supervisor automation",
+                action="probe host automation capability, find no real wakeup support, and record manual-resume mode without creating heartbeat automation",
                 continuation_probe_done=True,
                 host_continuation_supported=False,
                 manual_resume_mode_recorded=True,
@@ -2279,56 +2686,6 @@ class CapabilityRouterStep:
                 heartbeat_schedule_created=True,
                 route_heartbeat_interval_minutes=1,
                 stable_heartbeat_launcher_recorded=True,
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_policy_recorded:
-            yield _step(
-                state,
-                label="external_watchdog_policy_recorded",
-                action="record external watchdog stale threshold, evidence path, and official automation reset action",
-                external_watchdog_policy_recorded=True,
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_busy_lease_autowrap_policy_recorded:
-            yield _step(
-                state,
-                label="external_watchdog_busy_lease_autowrap_policy_recorded",
-                action="record busy-lease suppression plus automatic bounded-operation wrapper policy for long commands and waits",
-                external_watchdog_busy_lease_policy_recorded=True,
-                external_watchdog_busy_lease_autowrap_policy_recorded=True,
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_source_drift_policy_recorded:
-            yield _step(
-                state,
-                label="external_watchdog_source_drift_policy_recorded",
-                action="record watchdog source-status policy: trust state, latest heartbeat, and busy lease only; record frontier/lifecycle drift diagnostics; never inspect live subagent busy state",
-                external_watchdog_source_drift_policy_recorded=True,
-            )
-            return
-
-        if state.host_continuation_supported and not state.global_watchdog_supervisor_checked:
-            yield _step(
-                state,
-                label="global_watchdog_supervisor_verified",
-                action="look up the singleton Codex global watchdog supervisor; if none is active and at least one project registration lease is active, create or reactivate exactly one fixed 30-minute cron automation using the canonical automation_update parameter shape",
-                global_watchdog_supervisor_checked=True,
-                global_watchdog_supervisor_singleton_ready=True,
-                global_watchdog_supervisor_cadence_minutes=30,
-            )
-            return
-
-        if state.host_continuation_supported and not state.external_watchdog_automation_created:
-            yield _step(
-                state,
-                label="external_watchdog_automation_created",
-                action="create paired external watchdog automation immediately after heartbeat schedule creation with hidden/noninteractive execution",
-                external_watchdog_automation_created=True,
-                external_watchdog_hidden_noninteractive_configured=True,
-                external_watchdog_active=True,
             )
             return
 
@@ -2350,11 +2707,24 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.flowguard_officer_model_adversarial_probe_done:
+            yield _step(
+                state,
+                label="flowguard_officer_model_adversarial_probe_done",
+                action="FlowGuard officers run or validate model checks, inspect counterexamples, cite state fields, labels, counts, commands, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, and blindspots before model approvals",
+                flowguard_officer_model_adversarial_probe_done=True,
+                flowguard_model_report_risk_tiers_done=True,
+                flowguard_model_report_pm_review_agenda_done=True,
+                flowguard_model_report_toolchain_recommendations_done=True,
+                flowguard_model_report_confidence_boundary_done=True,
+            )
+            return
+
         if not state.meta_route_checked:
             yield _step(
                 state,
                 label="meta_route_checked",
-                action="process FlowGuard officer runs and approves meta-route checks",
+                action="process FlowGuard officer approves meta-route checks from officer-owned adversarial model evidence",
                 meta_route_checked=True,
                 meta_route_process_officer_approved=True,
             )
@@ -2364,10 +2734,34 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="capability_route_checked",
-                action="process FlowGuard officer runs and approves capability-route checks",
+                action="process FlowGuard officer approves capability-route checks from officer-owned adversarial model evidence",
                 capability_route_version=state.capability_route_version or 1,
                 capability_route_checked=True,
                 capability_route_process_officer_approved=True,
+            )
+            return
+
+        if not state.parent_backward_structural_trigger_rule_recorded:
+            yield _step(
+                state,
+                label="parent_backward_structural_trigger_rule_recorded",
+                action="project manager records that every effective capability route node with children requires local parent backward replay without semantic importance guessing",
+                parent_backward_structural_trigger_rule_recorded=True,
+            )
+            return
+
+        if (
+            not state.parent_backward_review_targets_enumerated
+            or state.parent_backward_review_targets_route_version
+            != state.capability_route_version
+        ):
+            yield _step(
+                state,
+                label="parent_backward_review_targets_enumerated",
+                action="project manager enumerates all effective capability parent/composite nodes directly from the current route structure",
+                parent_backward_review_targets_enumerated=True,
+                parent_backward_review_targets_route_version=state.capability_route_version,
+                parent_backward_targets_count=TARGET_PARENT_NODES,
             )
             return
 
@@ -2375,7 +2769,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="capability_product_function_model_checked",
-                action="product FlowGuard officer runs and approves the capability product-function model",
+                action="product FlowGuard officer approves the capability product-function model from officer-owned adversarial model evidence",
                 capability_product_function_model_checked=True,
                 capability_product_function_model_product_officer_approved=True,
             )
@@ -2548,6 +2942,7 @@ class CapabilityRouterStep:
                 startup_reviewer_checked_prior_work_boundary=False,
                 startup_reviewer_checked_live_agent_freshness=False,
                 startup_reviewer_checked_no_historical_agent_reuse=False,
+                startup_pm_independent_gate_audit_done=False,
             )
             return
 
@@ -2582,6 +2977,21 @@ class CapabilityRouterStep:
         if (
             state.startup_preflight_review_report_written
             and not state.startup_preflight_review_blocking_findings
+            and not state.startup_pm_independent_gate_audit_done
+            and not state.pm_start_gate_opened
+        ):
+            yield _step(
+                state,
+                label="startup_pm_independent_gate_audit_done",
+                action="PM independently audits capability startup run isolation, prior-work boundary, live-agent freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
+                startup_pm_independent_gate_audit_done=True,
+            )
+            return
+
+        if (
+            state.startup_preflight_review_report_written
+            and not state.startup_preflight_review_blocking_findings
+            and state.startup_pm_independent_gate_audit_done
             and not state.pm_start_gate_opened
         ):
             yield _step(
@@ -2651,7 +3061,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_loaded_state",
-                action="continuation turn loads local state, active route, capability evidence, latest heartbeat or manual-resume evidence, watchdog evidence when present, lifecycle evidence, and crew ledger",
+                action="continuation turn loads local state, active route, capability evidence, latest heartbeat or manual-resume evidence, lifecycle evidence, and crew ledger",
                 heartbeat_loaded_state=True,
             )
             return
@@ -2740,6 +3150,32 @@ class CapabilityRouterStep:
                 label="pm_capability_work_decision_recorded",
                 action="project manager assigns the current capability work package before implementation or child-skill execution",
                 pm_capability_work_decision_recorded=True,
+            )
+            return
+
+        if (
+            _base_ready(state)
+            and state.pm_capability_work_decision_recorded
+            and not state.node_acceptance_plan_written
+        ):
+            yield _step(
+                state,
+                label="node_acceptance_plan_written",
+                action="project manager writes the current capability node acceptance plan with root mappings, local criteria, concrete experiments, evidence paths, and approver",
+                node_acceptance_plan_written=True,
+            )
+            return
+
+        if (
+            _base_ready(state)
+            and state.pm_capability_work_decision_recorded
+            and not state.node_acceptance_risk_experiments_mapped
+        ):
+            yield _step(
+                state,
+                label="node_acceptance_risk_experiments_mapped",
+                action="project manager maps current capability risk hypotheses to experiments and terminal replay scenarios before implementation starts",
+                node_acceptance_risk_experiments_mapped=True,
             )
             return
 
@@ -2908,6 +3344,7 @@ class CapabilityRouterStep:
                     child_skill_route_design_discovery_started=False,
                     child_skill_initial_gate_manifest_extracted=False,
                     child_skill_gate_approvers_assigned=False,
+                    child_skill_manifest_independent_validation_done=False,
                     child_skill_manifest_reviewer_reviewed=False,
                     child_skill_manifest_process_officer_approved=False,
                     child_skill_manifest_product_officer_approved=False,
@@ -2929,6 +3366,11 @@ class CapabilityRouterStep:
                     dependency_plan_recorded=False,
                     future_installs_deferred=False,
                     flowguard_process_design_done=False,
+                    flowguard_officer_model_adversarial_probe_done=False,
+                    flowguard_model_report_risk_tiers_done=False,
+                    flowguard_model_report_pm_review_agenda_done=False,
+                    flowguard_model_report_toolchain_recommendations_done=False,
+                    flowguard_model_report_confidence_boundary_done=False,
                     meta_route_checked=False,
                     meta_route_process_officer_approved=False,
                     subagent_status="none",
@@ -2978,6 +3420,20 @@ class CapabilityRouterStep:
                     label="child_skill_iteration_loop_closed",
                     action="close child-skill iteration loop before final verification",
                     child_skill_iteration_loop_closed=True,
+                )
+                return
+            if not state.current_node_skill_improvement_check_done:
+                yield _step(
+                    state,
+                    label="skill_improvement_observation_check_no_issue",
+                    action="PM asks the backend capability roles whether this node exposed a FlowPilot skill issue and records that no obvious skill improvement observation was found",
+                    current_node_skill_improvement_check_done=True,
+                )
+                yield _step(
+                    state,
+                    label="skill_improvement_observation_logged",
+                    action="PM records a nonblocking FlowPilot skill improvement observation for later root-repo maintenance while continuing the backend project",
+                    current_node_skill_improvement_check_done=True,
                 )
                 return
             if not state.role_memory_refreshed_after_work:
@@ -3047,11 +3503,19 @@ class CapabilityRouterStep:
                     implementation_human_manual_experiments_run=True,
                 )
                 return
+            if not state.implementation_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="implementation_reviewer_independent_probe_done",
+                    action="human-like reviewer attacks backend evidence with direct probes, checked state/log references, and report-only failure hypotheses before approval",
+                    implementation_reviewer_independent_probe_done=True,
+                )
+                return
             if not state.implementation_human_inspection_passed:
                 yield _step(
                     state,
                     label="implementation_human_inspection_passed",
-                    action="human-like reviewer accepts the backend product behavior and evidence",
+                    action="human-like reviewer accepts the backend product behavior from independent adversarial inspection evidence",
                     implementation_human_inspection_passed=True,
                     implementation_human_review_reviewer_approved=True,
                 )
@@ -3063,6 +3527,14 @@ class CapabilityRouterStep:
                 yield from capability_backward_steps
                 return
             if not state.child_skill_current_gates_role_approved:
+                if not state.current_child_skill_gate_independent_validation_done:
+                    yield _step(
+                        state,
+                        label="current_child_skill_gate_independent_validation_done",
+                        action="required child-skill approvers run independent probes and cite concrete evidence before closing current backend child-skill gates",
+                        current_child_skill_gate_independent_validation_done=True,
+                    )
+                    return
                 yield _step(
                     state,
                     label="child_skill_current_gates_role_approved",
@@ -3102,6 +3574,14 @@ class CapabilityRouterStep:
                     final_acceptance_matrix_review_done=True,
                 )
                 return
+            if not state.final_standard_scenario_pack_replayed:
+                yield _step(
+                    state,
+                    label="final_standard_scenario_pack_replayed",
+                    action="replay the standard scenario pack and backend node-risk scenarios against the final product before completion closure",
+                    final_standard_scenario_pack_replayed=True,
+                )
+                return
             if not state.final_quality_candidate_review_done:
                 yield _step(
                     state,
@@ -3110,11 +3590,19 @@ class CapabilityRouterStep:
                     final_quality_candidate_review_done=True,
                 )
                 return
+            if not state.final_product_model_officer_adversarial_probe_done:
+                yield _step(
+                    state,
+                    label="final_product_model_officer_adversarial_probe_done",
+                    action="product FlowGuard officer adversarially rechecks final backend product model replay, state fields, counterexamples, counts, and blindspots before approval",
+                    final_product_model_officer_adversarial_probe_done=True,
+                )
+                return
             if not state.final_product_function_model_replayed:
                 yield _step(
                     state,
                     label="final_product_function_model_replayed",
-                    action="product FlowGuard officer replays and approves backend final behavior against the capability product-function model",
+                    action="product FlowGuard officer approves backend final behavior from adversarial model replay evidence",
                     final_product_function_model_replayed=True,
                     final_product_function_model_product_officer_approved=True,
                 )
@@ -3143,11 +3631,19 @@ class CapabilityRouterStep:
                     final_human_manual_experiments_run=True,
                 )
                 return
+            if not state.final_human_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="final_human_reviewer_independent_probe_done",
+                    action="final human-like reviewer attacks backend completion with direct probes, state/log references, missing-gate hypotheses, and report-only checks",
+                    final_human_reviewer_independent_probe_done=True,
+                )
+                return
             if not state.final_human_inspection_passed:
                 yield _step(
                     state,
                     label="final_human_inspection_passed",
-                    action="final human-like reviewer accepts backend product completeness",
+                    action="final human-like reviewer accepts backend product completeness from independent adversarial inspection evidence",
                     final_human_inspection_passed=True,
                     final_human_review_reviewer_approved=True,
                 )
@@ -3188,6 +3684,7 @@ class CapabilityRouterStep:
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
                         child_skill_gate_approvers_assigned=False,
+                        child_skill_manifest_independent_validation_done=False,
                         child_skill_manifest_reviewer_reviewed=False,
                         child_skill_manifest_process_officer_approved=False,
                         child_skill_manifest_product_officer_approved=False,
@@ -3214,6 +3711,11 @@ class CapabilityRouterStep:
                         dependency_plan_recorded=False,
                         future_installs_deferred=False,
                         flowguard_process_design_done=False,
+                        flowguard_officer_model_adversarial_probe_done=False,
+                        flowguard_model_report_risk_tiers_done=False,
+                        flowguard_model_report_pm_review_agenda_done=False,
+                        flowguard_model_report_toolchain_recommendations_done=False,
+                        flowguard_model_report_confidence_boundary_done=False,
                         meta_route_checked=False,
                         meta_route_process_officer_approved=False,
                         subagent_status="none",
@@ -3230,7 +3732,6 @@ class CapabilityRouterStep:
                         final_quality_candidate_review_done=False,
                         heartbeat_health_checked=False,
                         lifecycle_reconciliation_done=False,
-                        external_watchdog_stopped_before_heartbeat=False,
                         terminal_lifecycle_frontier_written=False,
                         standard_expansions=state.standard_expansions + 1,
                         **_reset_execution_quality_gates(),
@@ -3248,28 +3749,35 @@ class CapabilityRouterStep:
             if final_ledger_steps:
                 yield from final_ledger_steps
                 return
+            if not state.terminal_closure_suite_run:
+                yield _step(
+                    state,
+                    label="terminal_closure_suite_run",
+                    action="run terminal closure suite after backend final ledger approval to check final state, frontier, ledger, checkpoints, lifecycle evidence, role memory, and final report readiness",
+                    terminal_closure_suite_run=True,
+                )
+                return
+            if not state.terminal_state_and_evidence_refreshed:
+                yield _step(
+                    state,
+                    label="terminal_state_and_evidence_refreshed",
+                    action="refresh backend terminal state, execution frontier, ledger pointers, role memory, lifecycle evidence, and completion notice readiness before route close",
+                    terminal_state_and_evidence_refreshed=True,
+                )
+                return
             if not state.lifecycle_reconciliation_done:
                 yield _step(
                     state,
                     label="lifecycle_reconciliation_completed",
-                    action="scan Codex automations, global supervisor records, Windows scheduled tasks, local state, execution frontier, and watchdog evidence before backend route close",
+                    action="scan Codex heartbeat automations, local state, and execution frontier before backend route close",
                     lifecycle_reconciliation_done=True,
-                )
-                return
-            if not state.external_watchdog_stopped_before_heartbeat:
-                yield _step(
-                    state,
-                    label="external_watchdog_stopped_before_heartbeat",
-                    action="stop paired external watchdog automation before stopping heartbeat",
-                    external_watchdog_active=False,
-                    external_watchdog_stopped_before_heartbeat=True,
                 )
                 return
             if not state.terminal_lifecycle_frontier_written:
                 yield _step(
                     state,
                     label="terminal_lifecycle_frontier_written",
-                    action="write stopped watchdog and terminal heartbeat lifecycle back to execution frontier before route close",
+                    action="write terminal heartbeat lifecycle back to execution frontier before route close",
                     terminal_lifecycle_frontier_written=True,
                 )
                 return
@@ -3287,6 +3795,14 @@ class CapabilityRouterStep:
                     label="crew_archived_at_terminal",
                     action="archive persistent crew ledger after role memory and backend lifecycle reconciliation",
                     crew_archived=True,
+                )
+                return
+            if not state.flowpilot_skill_improvement_report_written:
+                yield _step(
+                    state,
+                    label="flowpilot_skill_improvement_report_written",
+                    action="PM writes a nonblocking FlowPilot skill improvement report from backend capability observations for later manual root-repo maintenance, without requiring those skill issues to be fixed before current project completion",
+                    flowpilot_skill_improvement_report_written=True,
                 )
                 return
             if not state.pm_completion_decision_recorded:
@@ -3339,6 +3855,22 @@ class CapabilityRouterStep:
                     ui_concept_target_visible=True,
                 )
                 return
+            if not state.ui_concept_personal_visual_review_done:
+                yield _step(
+                    state,
+                    label="ui_concept_personal_visual_review_done",
+                    action="human-like reviewer personally inspects the concept image instead of relying on a worker summary",
+                    ui_concept_personal_visual_review_done=True,
+                )
+                return
+            if not state.ui_concept_design_recommendations_recorded:
+                yield _step(
+                    state,
+                    label="ui_concept_design_recommendations_recorded",
+                    action="human-like reviewer records concrete concept improvement ideas or states why no concept repair is needed",
+                    ui_concept_design_recommendations_recorded=True,
+                )
+                return
             if not state.ui_concept_aesthetic_review_done:
                 yield _step(
                     state,
@@ -3354,11 +3886,15 @@ class CapabilityRouterStep:
                         action="human-like reviewer rejects the concept aesthetics with concrete ugly/weak reasons and sends it back for concept regeneration",
                         ui_concept_target_ready=False,
                         ui_concept_target_visible=False,
+                        ui_concept_personal_visual_review_done=False,
+                        ui_concept_design_recommendations_recorded=False,
                         ui_concept_aesthetic_review_done=False,
                         ui_concept_aesthetic_reasons_recorded=False,
                         ui_frontend_design_plan_done=False,
                         visual_asset_scope="unknown",
                         visual_asset_style_review_done=False,
+                        visual_asset_personal_visual_review_done=False,
+                        visual_asset_design_recommendations_recorded=False,
                         visual_asset_aesthetic_review_done=False,
                         visual_asset_aesthetic_reasons_recorded=False,
                         ui_visual_iterations=state.ui_visual_iterations + 1,
@@ -3399,6 +3935,28 @@ class CapabilityRouterStep:
                 return
             if (
                 state.visual_asset_scope == "required"
+                and not state.visual_asset_personal_visual_review_done
+            ):
+                yield _step(
+                    state,
+                    label="visual_asset_personal_visual_review_done",
+                    action="human-like reviewer personally inspects product-facing visual assets instead of relying on an asset report",
+                    visual_asset_personal_visual_review_done=True,
+                )
+                return
+            if (
+                state.visual_asset_scope == "required"
+                and not state.visual_asset_design_recommendations_recorded
+            ):
+                yield _step(
+                    state,
+                    label="visual_asset_design_recommendations_recorded",
+                    action="human-like reviewer records concrete visual-asset improvement ideas or states why no asset repair is needed",
+                    visual_asset_design_recommendations_recorded=True,
+                )
+                return
+            if (
+                state.visual_asset_scope == "required"
                 and not state.visual_asset_aesthetic_review_done
             ):
                 yield _step(
@@ -3414,6 +3972,8 @@ class CapabilityRouterStep:
                         label="visual_asset_aesthetic_review_failed",
                         action="human-like reviewer rejects app-icon or visual-asset aesthetics with concrete ugly/weak reasons and sends it back for regeneration",
                         visual_asset_style_review_done=False,
+                        visual_asset_personal_visual_review_done=False,
+                        visual_asset_design_recommendations_recorded=False,
                         visual_asset_aesthetic_review_done=False,
                         visual_asset_aesthetic_reasons_recorded=False,
                         ui_visual_iterations=state.ui_visual_iterations + 1,
@@ -3436,6 +3996,38 @@ class CapabilityRouterStep:
                     ui_screenshot_qa_done=True,
                 )
                 return
+            if not state.ui_reviewer_personal_walkthrough_done:
+                yield _step(
+                    state,
+                    label="ui_reviewer_personal_walkthrough_done",
+                    action="human-like reviewer personally launches or opens the UI and walks through rendered states instead of reading the QA report only",
+                    ui_reviewer_personal_walkthrough_done=True,
+                )
+                return
+            if not state.ui_interaction_reachability_checked:
+                yield _step(
+                    state,
+                    label="ui_interaction_reachability_checked",
+                    action="human-like reviewer personally checks clicks, tabs, language switching, settings, support, tray lifecycle, and required interactive reachability",
+                    ui_interaction_reachability_checked=True,
+                )
+                return
+            if not state.ui_layout_overlap_density_checked:
+                yield _step(
+                    state,
+                    label="ui_layout_overlap_density_checked",
+                    action="human-like reviewer personally checks text overlap, clipping, whitespace, density, crowded controls, hierarchy, and responsive layout fit",
+                    ui_layout_overlap_density_checked=True,
+                )
+                return
+            if not state.ui_reviewer_design_recommendations_recorded:
+                yield _step(
+                    state,
+                    label="ui_reviewer_design_recommendations_recorded",
+                    action="human-like reviewer records concrete UI repair or enhancement suggestions before passing aesthetic/divergence closure",
+                    ui_reviewer_design_recommendations_recorded=True,
+                )
+                return
             if not state.ui_implementation_aesthetic_review_done:
                 yield _step(
                     state,
@@ -3451,6 +4043,10 @@ class CapabilityRouterStep:
                         action="human-like reviewer rejects rendered UI aesthetics with concrete ugly/weak reasons and sends it back for UI repair",
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_reviewer_personal_walkthrough_done=False,
+                        ui_interaction_reachability_checked=False,
+                        ui_layout_overlap_density_checked=False,
+                        ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
                         ui_visual_iterations=state.ui_visual_iterations + 1,
@@ -3472,15 +4068,23 @@ class CapabilityRouterStep:
                         action="rerun UI child-skill work after its loop decision changes required evidence",
                         ui_concept_target_ready=False,
                         ui_concept_target_visible=False,
+                        ui_concept_personal_visual_review_done=False,
+                        ui_concept_design_recommendations_recorded=False,
                         ui_concept_aesthetic_review_done=False,
                         ui_concept_aesthetic_reasons_recorded=False,
                         ui_frontend_design_plan_done=False,
                         visual_asset_scope="unknown",
                         visual_asset_style_review_done=False,
+                        visual_asset_personal_visual_review_done=False,
+                        visual_asset_design_recommendations_recorded=False,
                         visual_asset_aesthetic_review_done=False,
                         visual_asset_aesthetic_reasons_recorded=False,
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_reviewer_personal_walkthrough_done=False,
+                        ui_interaction_reachability_checked=False,
+                        ui_layout_overlap_density_checked=False,
+                        ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
                         ui_divergence_review_done=False,
@@ -3530,6 +4134,20 @@ class CapabilityRouterStep:
                     child_skill_iteration_loop_closed=True,
                 )
                 return
+            if not state.current_node_skill_improvement_check_done:
+                yield _step(
+                    state,
+                    label="skill_improvement_observation_check_no_issue",
+                    action="PM asks the UI capability roles whether this node exposed a FlowPilot skill issue and records that no obvious skill improvement observation was found",
+                    current_node_skill_improvement_check_done=True,
+                )
+                yield _step(
+                    state,
+                    label="skill_improvement_observation_logged",
+                    action="PM records a nonblocking FlowPilot skill improvement observation for later root-repo maintenance while continuing the UI project",
+                    current_node_skill_improvement_check_done=True,
+                )
+                return
             if not state.role_memory_refreshed_after_work:
                 yield _step(
                     state,
@@ -3563,6 +4181,10 @@ class CapabilityRouterStep:
                         action="record bounded UI rework because the route is still too thin or weakly evidenced",
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_reviewer_personal_walkthrough_done=False,
+                        ui_interaction_reachability_checked=False,
+                        ui_layout_overlap_density_checked=False,
+                        ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
                         ui_divergence_review_done=False,
@@ -3602,11 +4224,19 @@ class CapabilityRouterStep:
                     implementation_human_manual_experiments_run=True,
                 )
                 return
+            if not state.implementation_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="implementation_reviewer_independent_probe_done",
+                    action="human-like reviewer attacks UI evidence with direct operation, screenshots, state references, reachability, layout, aesthetics, and report-only failure hypotheses before approval",
+                    implementation_reviewer_independent_probe_done=True,
+                )
+                return
             if not state.implementation_human_inspection_passed:
                 yield _step(
                     state,
                     label="implementation_human_inspection_passed",
-                    action="human-like reviewer accepts the UI product behavior, visual quality, and evidence",
+                    action="human-like reviewer accepts the UI product behavior, visual quality, and evidence from independent adversarial inspection evidence",
                     implementation_human_inspection_passed=True,
                     implementation_human_review_reviewer_approved=True,
                 )
@@ -3618,6 +4248,14 @@ class CapabilityRouterStep:
                 yield from capability_backward_steps
                 return
             if not state.child_skill_current_gates_role_approved:
+                if not state.current_child_skill_gate_independent_validation_done:
+                    yield _step(
+                        state,
+                        label="current_child_skill_gate_independent_validation_done",
+                        action="required child-skill approvers run independent probes and cite concrete evidence before closing current UI child-skill gates",
+                        current_child_skill_gate_independent_validation_done=True,
+                    )
+                    return
                 yield _step(
                     state,
                     label="child_skill_current_gates_role_approved",
@@ -3657,6 +4295,14 @@ class CapabilityRouterStep:
                     final_acceptance_matrix_review_done=True,
                 )
                 return
+            if not state.final_standard_scenario_pack_replayed:
+                yield _step(
+                    state,
+                    label="final_standard_scenario_pack_replayed",
+                    action="replay the standard scenario pack and UI node-risk scenarios against the final product before completion closure",
+                    final_standard_scenario_pack_replayed=True,
+                )
+                return
             if not state.final_quality_candidate_review_done:
                 yield _step(
                     state,
@@ -3665,11 +4311,19 @@ class CapabilityRouterStep:
                     final_quality_candidate_review_done=True,
                 )
                 return
+            if not state.final_product_model_officer_adversarial_probe_done:
+                yield _step(
+                    state,
+                    label="final_product_model_officer_adversarial_probe_done",
+                    action="product FlowGuard officer adversarially rechecks final UI product model replay, state fields, counterexamples, counts, and blindspots before approval",
+                    final_product_model_officer_adversarial_probe_done=True,
+                )
+                return
             if not state.final_product_function_model_replayed:
                 yield _step(
                     state,
                     label="final_product_function_model_replayed",
-                    action="product FlowGuard officer replays and approves UI final behavior against the capability product-function model",
+                    action="product FlowGuard officer approves UI final behavior from adversarial model replay evidence",
                     final_product_function_model_replayed=True,
                     final_product_function_model_product_officer_approved=True,
                 )
@@ -3698,11 +4352,19 @@ class CapabilityRouterStep:
                     final_human_manual_experiments_run=True,
                 )
                 return
+            if not state.final_human_reviewer_independent_probe_done:
+                yield _step(
+                    state,
+                    label="final_human_reviewer_independent_probe_done",
+                    action="final human-like reviewer attacks UI completion with direct operation, screenshots, reachability, layout, aesthetics, missing-gate hypotheses, and report-only checks",
+                    final_human_reviewer_independent_probe_done=True,
+                )
+                return
             if not state.final_human_inspection_passed:
                 yield _step(
                     state,
                     label="final_human_inspection_passed",
-                    action="final human-like reviewer accepts UI product completeness and visual quality",
+                    action="final human-like reviewer accepts UI product completeness and visual quality from independent adversarial inspection evidence",
                     final_human_inspection_passed=True,
                     final_human_review_reviewer_approved=True,
                 )
@@ -3743,6 +4405,7 @@ class CapabilityRouterStep:
                         child_skill_route_design_discovery_started=False,
                         child_skill_initial_gate_manifest_extracted=False,
                         child_skill_gate_approvers_assigned=False,
+                        child_skill_manifest_independent_validation_done=False,
                         child_skill_manifest_reviewer_reviewed=False,
                         child_skill_manifest_process_officer_approved=False,
                         child_skill_manifest_product_officer_approved=False,
@@ -3769,20 +4432,33 @@ class CapabilityRouterStep:
                         dependency_plan_recorded=False,
                         future_installs_deferred=False,
                         flowguard_process_design_done=False,
+                        flowguard_officer_model_adversarial_probe_done=False,
+                        flowguard_model_report_risk_tiers_done=False,
+                        flowguard_model_report_pm_review_agenda_done=False,
+                        flowguard_model_report_toolchain_recommendations_done=False,
+                        flowguard_model_report_confidence_boundary_done=False,
                         meta_route_checked=False,
                         meta_route_process_officer_approved=False,
                         subagent_status="none",
                         ui_concept_target_ready=False,
                         ui_concept_target_visible=False,
+                        ui_concept_personal_visual_review_done=False,
+                        ui_concept_design_recommendations_recorded=False,
                         ui_concept_aesthetic_review_done=False,
                         ui_concept_aesthetic_reasons_recorded=False,
                         ui_frontend_design_plan_done=False,
                         visual_asset_scope="unknown",
                         visual_asset_style_review_done=False,
+                        visual_asset_personal_visual_review_done=False,
+                        visual_asset_design_recommendations_recorded=False,
                         visual_asset_aesthetic_review_done=False,
                         visual_asset_aesthetic_reasons_recorded=False,
                         ui_implemented=False,
                         ui_screenshot_qa_done=False,
+                        ui_reviewer_personal_walkthrough_done=False,
+                        ui_interaction_reachability_checked=False,
+                        ui_layout_overlap_density_checked=False,
+                        ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
                         ui_divergence_review_done=False,
@@ -3800,7 +4476,6 @@ class CapabilityRouterStep:
                         final_quality_candidate_review_done=False,
                         heartbeat_health_checked=False,
                         lifecycle_reconciliation_done=False,
-                        external_watchdog_stopped_before_heartbeat=False,
                         terminal_lifecycle_frontier_written=False,
                         standard_expansions=state.standard_expansions + 1,
                         **_reset_execution_quality_gates(),
@@ -3818,28 +4493,35 @@ class CapabilityRouterStep:
             if final_ledger_steps:
                 yield from final_ledger_steps
                 return
+            if not state.terminal_closure_suite_run:
+                yield _step(
+                    state,
+                    label="terminal_closure_suite_run",
+                    action="run terminal closure suite after UI final ledger approval to check final state, frontier, ledger, checkpoints, lifecycle evidence, role memory, and final report readiness",
+                    terminal_closure_suite_run=True,
+                )
+                return
+            if not state.terminal_state_and_evidence_refreshed:
+                yield _step(
+                    state,
+                    label="terminal_state_and_evidence_refreshed",
+                    action="refresh UI terminal state, execution frontier, ledger pointers, role memory, lifecycle evidence, and completion notice readiness before route close",
+                    terminal_state_and_evidence_refreshed=True,
+                )
+                return
             if not state.lifecycle_reconciliation_done:
                 yield _step(
                     state,
                     label="lifecycle_reconciliation_completed",
-                    action="scan Codex automations, global supervisor records, Windows scheduled tasks, local state, execution frontier, and watchdog evidence before UI route close",
+                    action="scan Codex heartbeat automations, local state, and execution frontier before UI route close",
                     lifecycle_reconciliation_done=True,
-                )
-                return
-            if not state.external_watchdog_stopped_before_heartbeat:
-                yield _step(
-                    state,
-                    label="external_watchdog_stopped_before_heartbeat",
-                    action="stop paired external watchdog automation before stopping heartbeat",
-                    external_watchdog_active=False,
-                    external_watchdog_stopped_before_heartbeat=True,
                 )
                 return
             if not state.terminal_lifecycle_frontier_written:
                 yield _step(
                     state,
                     label="terminal_lifecycle_frontier_written",
-                    action="write stopped watchdog and terminal heartbeat lifecycle back to execution frontier before route close",
+                    action="write terminal heartbeat lifecycle back to execution frontier before route close",
                     terminal_lifecycle_frontier_written=True,
                 )
                 return
@@ -3857,6 +4539,14 @@ class CapabilityRouterStep:
                     label="crew_archived_at_terminal",
                     action="archive persistent crew ledger after role memory and UI lifecycle reconciliation",
                     crew_archived=True,
+                )
+                return
+            if not state.flowpilot_skill_improvement_report_written:
+                yield _step(
+                    state,
+                    label="flowpilot_skill_improvement_report_written",
+                    action="PM writes a nonblocking FlowPilot skill improvement report from UI capability observations for later manual root-repo maintenance, without requiring those skill issues to be fixed before current project completion",
+                    flowpilot_skill_improvement_report_written=True,
                 )
                 return
             if not state.pm_completion_decision_recorded:
@@ -3959,11 +4649,13 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             and state.plan_sync_method_recorded
             and state.visible_plan_has_runway_depth
             and state.pm_capability_work_decision_recorded
+            and state.node_acceptance_plan_written
+            and state.node_acceptance_risk_experiments_mapped
             and state.child_skill_node_gate_manifest_refined
             and state.child_skill_gate_authority_records_written
         ):
             return InvariantResult.fail(
-                "implementation started before continuation loaded role memory, rehydrated the crew, synced the PM completion runway into a sufficiently deep visible plan, and wrote node-level child-skill gate authority records"
+                "implementation started before continuation loaded role memory, rehydrated the crew, synced the PM completion runway into a sufficiently deep visible plan, wrote node acceptance plan/risk experiments, and wrote node-level child-skill gate authority records"
             )
         if not (
             state.quality_package_done
@@ -4005,6 +4697,8 @@ def dependency_plan_before_route_or_implementation(
         or state.execution_frontier_written
         or state.codex_plan_synced
         or state.capability_user_flow_diagram_emitted
+        or state.node_acceptance_plan_written
+        or state.node_acceptance_risk_experiments_mapped
         or state.quality_package_done
         or state.non_ui_implemented
         or state.ui_implemented
@@ -4012,14 +4706,20 @@ def dependency_plan_before_route_or_implementation(
         or state.completion_visible_user_flow_diagram_emitted
         or state.final_feature_matrix_review_done
         or state.final_acceptance_matrix_review_done
+        or state.final_standard_scenario_pack_replayed
         or state.final_quality_candidate_review_done
+        or state.terminal_closure_suite_run
         or state.status == "complete"
     )
     work_beyond_startup_started = (
-        state.quality_package_done
+        state.node_acceptance_plan_written
+        or state.node_acceptance_risk_experiments_mapped
+        or state.child_skill_node_gate_manifest_refined
+        or state.child_skill_gate_authority_records_written
+        or state.child_node_sidecar_scan_done
+        or state.quality_package_done
         or state.non_ui_implemented
         or state.ui_implemented
-        or state.child_node_sidecar_scan_done
         or state.final_verification_done
         or state.completion_visible_user_flow_diagram_emitted
         or state.status == "complete"
@@ -4077,9 +4777,10 @@ def dependency_plan_before_route_or_implementation(
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_pm_independent_gate_audit_done
     ):
         return InvariantResult.fail(
-            "PM start gate opened before a clean factual reviewer startup report"
+            "PM start gate opened before a clean factual reviewer startup report and independent PM gate audit"
         )
     if state.pm_start_gate_opened and state.pm_returned_startup_blockers:
         return InvariantResult.fail(
@@ -4215,9 +4916,10 @@ def child_skill_fidelity_before_capability_work(
         and state.capability_backward_neutral_observation_written
         and state.capability_structure_decision_recorded
         and state.capability_backward_human_review_passed
+        and state.capability_backward_pm_segment_decision_recorded
     ):
         return InvariantResult.fail(
-            "completion closure started before capability backward composite review with neutral observation"
+            "completion closure started before capability backward composite review with neutral observation and PM segment decision"
         )
     if state.child_skill_completion_verified and not (
         state.child_skill_execution_evidence_audited
@@ -4252,6 +4954,8 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         and state.ui_concept_done
         and state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_concept_personal_visual_review_done
+        and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
         and state.ui_frontend_design_plan_done
@@ -4262,28 +4966,44 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
     if state.ui_frontend_design_plan_done and not (
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_concept_personal_visual_review_done
+        and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
     ):
         return InvariantResult.fail(
             "frontend design planning started before concept aesthetic verdict and reasons"
         )
+    if state.ui_concept_aesthetic_review_done and not (
+        state.ui_concept_target_ready
+        and state.ui_concept_target_visible
+        and state.ui_concept_personal_visual_review_done
+        and state.ui_concept_design_recommendations_recorded
+        and state.ui_concept_aesthetic_reasons_recorded
+    ):
+        return InvariantResult.fail(
+            "concept aesthetic review completed without reviewer personal visual review, recommendations, and concrete reasons"
+        )
     if state.ui_implemented and state.visual_asset_scope == "unknown":
         return InvariantResult.fail("UI implemented before visual asset scope decision")
     if state.ui_implemented and state.visual_asset_scope == "required":
         if not (
             state.visual_asset_style_review_done
+            and state.visual_asset_personal_visual_review_done
+            and state.visual_asset_design_recommendations_recorded
             and state.visual_asset_aesthetic_review_done
             and state.visual_asset_aesthetic_reasons_recorded
         ):
             return InvariantResult.fail(
-                "UI implemented before required visual asset style and aesthetic review"
+                "UI implemented before required visual asset personal review, design recommendations, and aesthetic review"
             )
     if state.visual_asset_style_review_done and not (
         state.ui_inspected
         and state.ui_concept_done
         and state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_concept_personal_visual_review_done
+        and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
         and state.ui_frontend_design_plan_done
@@ -4292,10 +5012,12 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
     if state.visual_asset_aesthetic_review_done and not (
         state.visual_asset_scope == "required"
         and state.visual_asset_style_review_done
+        and state.visual_asset_personal_visual_review_done
+        and state.visual_asset_design_recommendations_recorded
         and state.visual_asset_aesthetic_reasons_recorded
     ):
         return InvariantResult.fail(
-            "visual asset aesthetic review completed without required scope, style review, and reasons"
+            "visual asset aesthetic review completed without required scope, personal review, recommendations, style review, and reasons"
         )
     if state.ui_screenshot_qa_done and not (
         state.ui_concept_target_ready and state.ui_concept_target_visible
@@ -4303,15 +5025,23 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("rendered QA ran before the source UI skill's pre-implementation decision was ready and visible or waived")
     if state.ui_implementation_aesthetic_review_done and not (
         state.ui_screenshot_qa_done
+        and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_interaction_reachability_checked
+        and state.ui_layout_overlap_density_checked
+        and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_reasons_recorded
     ):
         return InvariantResult.fail(
-            "rendered UI aesthetic review completed without screenshot QA and concrete reasons"
+            "rendered UI aesthetic review completed without reviewer personal walkthrough, reachability, layout/density checks, recommendations, screenshot QA, and concrete reasons"
         )
     if state.ui_divergence_review_done and not (
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
         and state.ui_screenshot_qa_done
+        and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_interaction_reachability_checked
+        and state.ui_layout_overlap_density_checked
+        and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_review_done
         and state.ui_implementation_aesthetic_reasons_recorded
     ):
@@ -4322,6 +5052,10 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
         and state.ui_screenshot_qa_done
+        and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_interaction_reachability_checked
+        and state.ui_layout_overlap_density_checked
+        and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_review_done
         and state.ui_implementation_aesthetic_reasons_recorded
         and state.ui_divergence_review_done
@@ -4338,8 +5072,14 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("final verification ran before child-skill conformance audit and quality loop closure")
     if state.final_verification_done and state.task_kind == "ui" and not (
         state.ui_screenshot_qa_done
+        and state.ui_concept_personal_visual_review_done
+        and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
+        and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_interaction_reachability_checked
+        and state.ui_layout_overlap_density_checked
+        and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_review_done
         and state.ui_implementation_aesthetic_reasons_recorded
         and state.ui_divergence_review_done
@@ -4349,11 +5089,13 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
     if state.final_verification_done and state.visual_asset_scope == "required":
         if not (
             state.visual_asset_style_review_done
+            and state.visual_asset_personal_visual_review_done
+            and state.visual_asset_design_recommendations_recorded
             and state.visual_asset_aesthetic_review_done
             and state.visual_asset_aesthetic_reasons_recorded
         ):
             return InvariantResult.fail(
-                "UI final verification before required visual asset style and aesthetic review"
+                "UI final verification before required visual asset personal review, recommendations, and aesthetic review"
             )
     return InvariantResult.pass_()
 
@@ -4410,26 +5152,16 @@ def stable_heartbeat_prompt_not_capability_route_state(
     return InvariantResult.pass_()
 
 
-def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> InvariantResult:
+def heartbeat_continuation_is_lifecycle_state(state: State, trace) -> InvariantResult:
     del trace
     automation_bits = (
         state.heartbeat_schedule_created
         or state.route_heartbeat_interval_minutes != 0
         or state.stable_heartbeat_launcher_recorded
-        or state.external_watchdog_policy_recorded
-        or state.external_watchdog_busy_lease_policy_recorded
-        or state.external_watchdog_busy_lease_autowrap_policy_recorded
-        or state.external_watchdog_source_drift_policy_recorded
-        or state.external_watchdog_automation_created
-        or state.external_watchdog_hidden_noninteractive_configured
-        or state.external_watchdog_active
-        or state.global_watchdog_supervisor_checked
-        or state.global_watchdog_supervisor_singleton_ready
-        or state.global_watchdog_supervisor_cadence_minutes != 0
     )
     if state.manual_resume_mode_recorded and automation_bits:
         return InvariantResult.fail(
-            "manual-resume mode recorded but heartbeat/watchdog/global-supervisor automation state was still created"
+            "manual-resume mode recorded but heartbeat automation state was still created"
         )
     formal_started = (
         state.capability_route_checked
@@ -4440,70 +5172,16 @@ def external_watchdog_policy_is_lifecycle_state(state: State, trace) -> Invarian
     if formal_started and state.host_continuation_supported and (
         state.heartbeat_schedule_created
         or state.route_heartbeat_interval_minutes != 0
-        or state.external_watchdog_policy_recorded
-        or state.external_watchdog_automation_created
-        or state.global_watchdog_supervisor_checked
     ) and not _continuation_lifecycle_valid(state):
         return InvariantResult.fail(
-            "host continuation support produced a partial heartbeat/watchdog/global-supervisor setup"
+            "host continuation support produced a partial heartbeat setup"
         )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_policy_recorded
+    if state.host_continuation_supported and state.heartbeat_schedule_created and (
+        state.route_heartbeat_interval_minutes != 1
+        or not state.stable_heartbeat_launcher_recorded
     ):
         return InvariantResult.fail(
-            "active external watchdog automation lost its lifecycle policy gate during capability routing"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_busy_lease_policy_recorded
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks busy-lease suppression policy during capability routing"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_busy_lease_autowrap_policy_recorded
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks automatic busy-lease wrapper policy during capability routing"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_source_drift_policy_recorded
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks source-status drift policy during capability routing"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not state.external_watchdog_hidden_noninteractive_configured
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation is not configured for hidden/noninteractive execution during capability routing"
-        )
-    if (
-        state.status == "running"
-        and state.external_watchdog_automation_created
-        and state.external_watchdog_active
-        and not (
-            state.global_watchdog_supervisor_checked
-            and state.global_watchdog_supervisor_singleton_ready
-            and state.global_watchdog_supervisor_cadence_minutes == 30
-        )
-    ):
-        return InvariantResult.fail(
-            "active external watchdog automation lacks verified singleton Codex global supervisor at fixed 30-minute cadence during capability routing"
+            "automated continuation must use a stable one-minute heartbeat launcher"
         )
     return InvariantResult.pass_()
 
@@ -4615,6 +5293,7 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
     if not (
         state.final_feature_matrix_review_done
         and state.final_acceptance_matrix_review_done
+        and state.final_standard_scenario_pack_replayed
         and state.final_quality_candidate_review_done
         and state.final_product_function_model_replayed
         and state.final_human_review_context_loaded
@@ -4640,9 +5319,10 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
         and state.capability_backward_neutral_observation_written
         and state.capability_structure_decision_recorded
         and state.capability_backward_human_review_passed
+        and state.capability_backward_pm_segment_decision_recorded
     ):
         return InvariantResult.fail(
-            "completed before capability product-function model, implementation inspection, and backward composite review"
+            "completed before capability product-function model, implementation inspection, backward composite review, and PM segment decision"
         )
     if not (
         state.completion_self_interrogation_done
@@ -4659,6 +5339,14 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
     ):
         return InvariantResult.fail(
             "completed before completion self-interrogation used dynamic layers, 100 questions per active layer, and required risk-family coverage"
+        )
+    if not (
+        state.terminal_closure_suite_run
+        and state.terminal_state_and_evidence_refreshed
+        and state.flowpilot_skill_improvement_report_written
+    ):
+        return InvariantResult.fail(
+            "completed before terminal closure suite refreshed state, evidence, lifecycle, role memory, and the PM-owned nonblocking FlowPilot skill improvement report"
         )
     if state.task_kind == "backend" and not state.non_ui_implemented:
         return InvariantResult.fail("backend route completed before implementation")
@@ -4687,9 +5375,11 @@ def material_handoff_before_capability_route_design(
         state.material_sources_scanned
         and state.material_source_summaries_written
         and state.material_source_quality_classified
+        and state.local_skill_inventory_written
+        and state.local_skill_inventory_candidate_classified
     ):
         return InvariantResult.fail(
-            "capability Material Intake Packet was written before sources were scanned, summarized, and quality-classified"
+            "capability Material Intake Packet was written before sources and local skills were scanned, summarized, quality-classified, and candidate-classified"
         )
     if state.material_reviewer_sufficiency_approved and not (
         state.material_intake_packet_written
@@ -4715,6 +5405,29 @@ def material_handoff_before_capability_route_design(
         return InvariantResult.fail(
             "PM capability route decision was recorded before reviewed material handoff"
         )
+    if state.pm_child_skill_selection_manifest_written and not (
+        _product_function_architecture_ready(state)
+        and state.contract_frozen
+        and state.capabilities_manifest_written
+    ):
+        return InvariantResult.fail(
+            "PM child-skill selection manifest was written before product architecture, frozen contract, and capabilities manifest were ready"
+        )
+    if state.pm_child_skill_selection_scope_decisions_recorded and not (
+        state.pm_child_skill_selection_manifest_written
+        and state.product_function_capability_map_written
+        and state.local_skill_inventory_candidate_classified
+    ):
+        return InvariantResult.fail(
+            "PM child-skill selection decisions were recorded before the PM manifest, product capability map, and local skill candidate classification"
+        )
+    if state.child_skill_route_design_discovery_started and not (
+        state.pm_child_skill_selection_manifest_written
+        and state.pm_child_skill_selection_scope_decisions_recorded
+    ):
+        return InvariantResult.fail(
+            "child-skill route discovery started from raw local skill availability instead of the PM selection manifest"
+        )
     return InvariantResult.pass_()
 
 
@@ -4725,6 +5438,30 @@ def actor_authority_gates_require_correct_role(
     if state.self_interrogation_pm_ratified and not _crew_ready(state):
         return InvariantResult.fail(
             "capability startup self-interrogation was ratified before six-agent crew readiness"
+        )
+    any_role_approval = (
+        state.self_interrogation_pm_ratified
+        or state.material_reviewer_sufficiency_approved
+        or state.product_function_architecture_product_officer_approved
+        or state.product_function_architecture_reviewer_challenged
+        or state.child_skill_manifest_reviewer_reviewed
+        or state.child_skill_manifest_process_officer_approved
+        or state.child_skill_manifest_product_officer_approved
+        or state.child_skill_manifest_pm_approved_for_route
+        or state.child_skill_conformance_model_process_officer_approved
+        or state.meta_route_process_officer_approved
+        or state.capability_route_process_officer_approved
+        or state.capability_product_function_model_product_officer_approved
+        or state.implementation_human_review_reviewer_approved
+        or state.capability_backward_review_reviewer_approved
+        or state.final_product_function_model_product_officer_approved
+        or state.final_human_review_reviewer_approved
+        or state.final_route_wide_gate_ledger_pm_completion_approved
+        or state.pm_start_gate_opened
+    )
+    if any_role_approval and not state.independent_approval_protocol_recorded:
+        return InvariantResult.fail(
+            "role approval was recorded before the independent adversarial approval protocol existed"
         )
     if state.product_function_architecture_pm_synthesized and not (
         _crew_ready(state) and _material_handoff_ready(state)
@@ -4741,20 +5478,31 @@ def actor_authority_gates_require_correct_role(
         and state.product_function_gap_review_done
         and state.product_function_negative_scope_written
         and state.product_function_acceptance_matrix_written
+        and state.root_acceptance_thresholds_defined
+        and state.root_acceptance_proof_matrix_written
+        and state.standard_scenario_pack_selected
     )
-    if (
-        state.product_function_architecture_product_officer_approved
-        and not product_architecture_inputs_ready
+    if state.material_reviewer_sufficiency_approved and not (
+        state.material_reviewer_direct_source_probe_done
+        and state.material_reviewer_sufficiency_checked
     ):
         return InvariantResult.fail(
-            "capability product-function architecture approval was recorded before all PM product artifacts existed"
+            "capability material approval was recorded before reviewer direct source probes"
+        )
+    if state.product_function_architecture_product_officer_approved and not (
+        product_architecture_inputs_ready
+        and state.product_architecture_officer_adversarial_probe_done
+    ):
+        return InvariantResult.fail(
+            "capability product-function architecture approval was recorded before all PM product artifacts and officer adversarial probes existed"
         )
     if state.product_function_architecture_reviewer_challenged and not (
         state.product_function_architecture_product_officer_approved
+        and state.product_architecture_reviewer_adversarial_probe_done
         and state.reviewer_ready
     ):
         return InvariantResult.fail(
-            "capability product-function architecture reviewer challenge ran before product officer approval or reviewer recovery"
+            "capability product-function architecture reviewer challenge ran before product officer approval, reviewer recovery, or reviewer adversarial probes"
         )
     if state.flowguard_process_design_done and not (
         state.self_interrogation_pm_ratified
@@ -4766,18 +5514,22 @@ def actor_authority_gates_require_correct_role(
         )
     if state.child_skill_manifest_pm_approved_for_route and not (
         state.child_skill_route_design_discovery_started
+        and state.pm_child_skill_selection_manifest_written
+        and state.pm_child_skill_selection_scope_decisions_recorded
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
         and state.child_skill_manifest_process_officer_approved
         and state.child_skill_manifest_product_officer_approved
     ):
         return InvariantResult.fail(
-            "PM approved child-skill gate manifest before discovery, extraction, approver assignment, and reviewer/officer approvals"
+            "PM approved child-skill gate manifest before PM skill selection, discovery, extraction, approver assignment, and reviewer/officer approvals"
         )
     if state.child_skill_manifest_process_officer_approved and not (
         state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
     ):
         return InvariantResult.fail(
             "process FlowGuard officer approved child-skill process gates before manifest extraction and approver assignment"
@@ -4785,6 +5537,7 @@ def actor_authority_gates_require_correct_role(
     if state.child_skill_manifest_product_officer_approved and not (
         state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
     ):
         return InvariantResult.fail(
             "product FlowGuard officer approved child-skill product gates before manifest extraction and approver assignment"
@@ -4792,6 +5545,7 @@ def actor_authority_gates_require_correct_role(
     if state.child_skill_manifest_reviewer_reviewed and not (
         state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
+        and state.child_skill_manifest_independent_validation_done
     ):
         return InvariantResult.fail(
             "human-like reviewer reviewed child-skill gates before manifest extraction and approver assignment"
@@ -4799,12 +5553,15 @@ def actor_authority_gates_require_correct_role(
     if state.child_skill_gate_authority_records_written and not (
         state.child_skill_node_gate_manifest_refined
         and state.child_skill_manifest_pm_approved_for_route
+        and state.node_acceptance_plan_written
+        and state.node_acceptance_risk_experiments_mapped
     ):
         return InvariantResult.fail(
-            "current child-skill gate authority records were written before PM-approved route manifest and node-level refinement"
+            "current child-skill gate authority records were written before PM-approved route manifest, node acceptance plan, risk experiment mapping, and node-level refinement"
         )
     if state.child_skill_current_gates_role_approved and not (
         state.child_skill_gate_authority_records_written
+        and state.current_child_skill_gate_independent_validation_done
         and state.child_skill_execution_evidence_audited
         and state.child_skill_evidence_matches_outputs
         and state.child_skill_domain_quality_checked
@@ -4827,11 +5584,29 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "child-skill conformance model lacks process FlowGuard officer approval"
         )
-    if state.meta_route_process_officer_approved and not state.meta_route_checked:
+    if state.meta_route_process_officer_approved and not (
+        state.meta_route_checked and state.flowguard_officer_model_adversarial_probe_done
+    ):
         return InvariantResult.fail("meta-route approval is stale without meta-route check")
+    if (
+        state.meta_route_process_officer_approved
+        or state.capability_route_process_officer_approved
+        or state.capability_product_function_model_product_officer_approved
+    ) and not (
+        state.flowguard_model_report_risk_tiers_done
+        and state.flowguard_model_report_pm_review_agenda_done
+        and state.flowguard_model_report_toolchain_recommendations_done
+        and state.flowguard_model_report_confidence_boundary_done
+    ):
+        return InvariantResult.fail(
+            "FlowGuard capability model approval was recorded before the report extracted PM risk tiers, review agenda, toolchain recommendations, and confidence boundary"
+        )
     if state.meta_route_checked and not state.meta_route_process_officer_approved:
         return InvariantResult.fail("meta-route check lacks process FlowGuard officer approval")
-    if state.capability_route_process_officer_approved and not state.capability_route_checked:
+    if state.capability_route_process_officer_approved and not (
+        state.capability_route_checked
+        and state.flowguard_officer_model_adversarial_probe_done
+    ):
         return InvariantResult.fail(
             "capability-route approval is stale without capability-route check"
         )
@@ -4841,7 +5616,10 @@ def actor_authority_gates_require_correct_role(
         )
     if (
         state.capability_product_function_model_product_officer_approved
-        and not state.capability_product_function_model_checked
+        and not (
+            state.capability_product_function_model_checked
+            and state.flowguard_officer_model_adversarial_probe_done
+        )
     ):
         return InvariantResult.fail(
             "capability product-function approval is stale without product-function model check"
@@ -4855,7 +5633,10 @@ def actor_authority_gates_require_correct_role(
         )
     if (
         state.implementation_human_review_reviewer_approved
-        and not state.implementation_human_inspection_passed
+        and not (
+            state.implementation_human_inspection_passed
+            and state.implementation_reviewer_independent_probe_done
+        )
     ):
         return InvariantResult.fail(
             "implementation reviewer approval is stale without implementation human review pass"
@@ -4867,7 +5648,10 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail("implementation human review pass lacks reviewer approval")
     if (
         state.capability_backward_review_reviewer_approved
-        and not state.capability_backward_human_review_passed
+        and not (
+            state.capability_backward_human_review_passed
+            and state.capability_backward_reviewer_independent_probe_done
+        )
     ):
         return InvariantResult.fail(
             "capability backward reviewer approval is stale without backward review pass"
@@ -4879,7 +5663,10 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail("capability backward review pass lacks reviewer approval")
     if (
         state.final_product_function_model_product_officer_approved
-        and not state.final_product_function_model_replayed
+        and not (
+            state.final_product_function_model_replayed
+            and state.final_product_model_officer_adversarial_probe_done
+        )
     ):
         return InvariantResult.fail(
             "final product replay approval is stale without final product replay"
@@ -4891,7 +5678,10 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "final product replay lacks product FlowGuard officer approval"
         )
-    if state.final_human_review_reviewer_approved and not state.final_human_inspection_passed:
+    if state.final_human_review_reviewer_approved and not (
+        state.final_human_inspection_passed
+        and state.final_human_reviewer_independent_probe_done
+    ):
         return InvariantResult.fail("final reviewer approval is stale without final human review pass")
     if state.final_human_inspection_passed and not state.final_human_review_reviewer_approved:
         return InvariantResult.fail("final human review pass lacks reviewer approval")
@@ -4900,33 +5690,61 @@ def actor_authority_gates_require_correct_role(
         and state.final_route_wide_gate_ledger_effective_nodes_resolved
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
+        and state.final_route_wide_gate_ledger_parent_backward_replays_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_triage_done
+        and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "PM built final route-wide capability gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, and zero unresolved count"
+            "PM built final route-wide capability gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, zero unresolved count, and zero unresolved residual risks"
         )
     if state.final_route_wide_gate_ledger_reviewer_backward_checked and not (
         state.final_route_wide_gate_ledger_pm_built
+        and state.terminal_human_backward_review_map_built
+        and state.terminal_human_backward_replay_started_from_delivered_product
+        and state.terminal_human_backward_root_acceptance_reviewed
+        and state.terminal_human_backward_parent_nodes_reviewed
+        and state.terminal_human_backward_leaf_nodes_reviewed
+        and state.terminal_human_backward_pm_segment_decisions_recorded
+        and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "final route-wide capability ledger reviewer replay ran before PM-built clean ledger"
+            "final route-wide capability ledger reviewer replay ran before PM-built clean ledger and terminal human backward review map, delivered-output replay, node-by-node checks, PM segment decisions, and repair restart policy"
         )
     if state.final_route_wide_gate_ledger_pm_completion_approved and not (
         state.final_route_wide_gate_ledger_pm_built
+        and state.terminal_human_backward_review_map_built
+        and state.terminal_human_backward_pm_segment_decisions_recorded
+        and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_reviewer_backward_checked
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_residual_risk_triage_done
+        and state.final_residual_risk_unresolved_count_zero
+        and state.final_ledger_pm_independent_audit_done
     ):
         return InvariantResult.fail(
-            "PM approved final route-wide capability ledger before reviewer replay and zero unresolved count"
+            "PM approved final route-wide capability ledger before reviewer replay, zero unresolved count, zero unresolved residual risks, and independent PM audit"
         )
     if state.pm_completion_decision_recorded and not state.final_route_wide_gate_ledger_pm_completion_approved:
         return InvariantResult.fail(
             "PM completion decision recorded before final route-wide capability gate ledger approval"
+        )
+    if state.pm_completion_decision_recorded and not state.flowpilot_skill_improvement_report_written:
+        return InvariantResult.fail(
+            "PM completion decision recorded before the nonblocking FlowPilot skill improvement report was written"
+        )
+    if state.pm_completion_decision_recorded and not (
+        state.terminal_closure_suite_run
+        and state.terminal_state_and_evidence_refreshed
+    ):
+        return InvariantResult.fail(
+            "PM completion decision recorded before terminal closure suite refreshed capability state and evidence"
         )
     if state.crew_archived and not state.crew_memory_archived:
         return InvariantResult.fail("crew ledger archived before compact role memory archive")
@@ -4962,6 +5780,12 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
     ) and not state.role_memory_refreshed_after_work:
         return InvariantResult.fail(
             "final verification started before role memory packets were refreshed after implementation work"
+        )
+    if state.final_verification_done and (
+        state.non_ui_implemented or state.ui_implemented
+    ) and not state.current_node_skill_improvement_check_done:
+        return InvariantResult.fail(
+            "final verification started before PM checked whether the capability node exposed a nonblocking FlowPilot skill improvement observation"
         )
     if state.crew_archived and not state.crew_memory_archived:
         return InvariantResult.fail("crew archive written before role memory archive")
@@ -5015,9 +5839,9 @@ INVARIANTS = (
         predicate=stable_heartbeat_prompt_not_capability_route_state,
     ),
     Invariant(
-        name="external_watchdog_policy_is_lifecycle_state",
-        description="External watchdog policy is established with the paired automation lifecycle and is not reset by capability gates.",
-        predicate=external_watchdog_policy_is_lifecycle_state,
+        name="heartbeat_continuation_is_lifecycle_state",
+        description="Automated continuation uses only a stable heartbeat launcher; manual-resume routes must not create heartbeat automation.",
+        predicate=heartbeat_continuation_is_lifecycle_state,
     ),
     Invariant(
         name="backend_route_does_not_run_ui_gates",

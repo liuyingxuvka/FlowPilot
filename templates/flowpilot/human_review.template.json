@@ -1,0 +1,112 @@
+{
+  "schema_version": "flowpilot.human_review.v1",
+  "review_id": "<review-id>",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "node_id": "<node-id>",
+  "gate_id": "<gate-id>",
+  "review_scope": "<node|child_skill|visual|interaction|parent_backward|final_backward|terminal_human_backward_replay>",
+  "reviewer_role": "human_like_reviewer",
+  "required_approver": "human_like_reviewer",
+  "worker_report_only": false,
+  "completion_report_only": false,
+  "independent_validation_evidence_path": "<path-or-null>",
+  "reviewer_personal_walkthrough_done": false,
+  "checked_at": "<iso-8601-timestamp-or-null>",
+  "context_loaded": {
+    "contract_path": ".flowpilot/runs/<run-id>/contract.md",
+    "state_path": ".flowpilot/runs/<run-id>/state.json",
+    "frontier_path": ".flowpilot/runs/<run-id>/execution_frontier.json",
+    "route_path": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
+    "product_model_report_paths": [],
+    "child_skill_evidence_paths": [],
+    "worker_report_paths_used_as_pointers": []
+  },
+  "adversarial_validation": {
+    "direct_sources_checked": [],
+    "state_fields_checked": [],
+    "commands_or_probes_run": [],
+    "adversarial_hypotheses_tested": [],
+    "concrete_evidence_references": [],
+    "risk_or_blindspot_triage": []
+  },
+  "neutral_observation": {
+    "written": false,
+    "summary": "<what the artifact, screenshot, UI, output, or exercised feature visibly appears to be>",
+    "screenshots_viewed": [],
+    "opened_surfaces": [],
+    "viewport_or_window_sizes": [],
+    "desktop_browser_or_window_artifacts": [],
+    "behavior_observed": []
+  },
+  "personal_walkthrough": {
+    "required_for_this_gate": "<true|false>",
+    "performed_by_reviewer": false,
+    "blocked_reason_if_not_performed": "<reason-or-null>",
+    "interaction_paths_exercised": [],
+    "keyboard_paths_exercised": [],
+    "controls_checked": [],
+    "unreachable_or_untested_controls": [],
+    "language_settings_support_tray_checks": [],
+    "failure_or_empty_states_checked": []
+  },
+  "terminal_human_backward_replay": {
+    "required_for_this_gate": "<true|false>",
+    "review_map_path": ".flowpilot/runs/<run-id>/terminal_human_backward_replay_map.json",
+    "started_from_delivered_product": false,
+    "root_acceptance_segment_reviewed": false,
+    "parent_segments_reviewed": [],
+    "leaf_node_segments_reviewed": [],
+    "node_acceptance_plans_consulted": [],
+    "current_product_behaviors_checked_per_node": [],
+    "pm_segment_handoff_paths": [],
+    "repair_findings_sent_to_pm": [],
+    "rerun_required_after_repair": "<true|false>"
+  },
+  "parent_backward_replay": {
+    "required_for_this_gate": "<true|false>",
+    "review_path": ".flowpilot/runs/<run-id>/routes/<route-id>/nodes/<parent-node-id>/parent_backward_replay.json",
+    "structural_trigger_confirmed": false,
+    "parent_has_children": "<true|false>",
+    "started_from_parent_delivered_result": false,
+    "parent_goal_reviewed": false,
+    "child_rollup_reviewed": false,
+    "child_node_acceptance_plans_consulted": [],
+    "current_product_behaviors_checked_per_child": [],
+    "children_compose_into_parent_goal": "<true|false|null>",
+    "pm_segment_decision_path": "<path-or-null>",
+    "repair_findings_sent_to_pm": [],
+    "same_parent_replay_required_after_repair": "<true|false>"
+  },
+  "visual_layout_review": {
+    "required_for_this_gate": "<true|false>",
+    "text_overlap_or_clipping_findings": [],
+    "layout_density_whitespace_findings": [],
+    "crowding_or_underfilled_region_findings": [],
+    "hierarchy_readability_findings": [],
+    "responsive_or_window_fit_findings": [],
+    "aesthetic_verdict": "<pass|weak|fail|not_applicable>",
+    "aesthetic_reasons": []
+  },
+  "design_recommendations": [
+    {
+      "finding_id": "<finding-id>",
+      "recommendation": "<specific repair, addition, simplification, spacing, hierarchy, or interaction idea>",
+      "suggested_pm_action": "<local_repair|route_mutation|downstream_follow_up|waiver|pm_stop>"
+    }
+  ],
+  "obligation_classification": [
+    {
+      "finding_id": "<finding-id>",
+      "classification": "<current_gate_required|future_gate_required|nonblocking_note>",
+      "downstream_gate_if_future": "<gate-id-or-null>"
+    }
+  ],
+  "decision": {
+    "status": "<pass|weak_pass|blocked|request_more_evidence>",
+    "blocking_findings": [],
+    "same_inspector_recheck_required": "<true|false>",
+    "approval_valid": false,
+    "unresolved_residual_risk_count": 0
+  }
+}

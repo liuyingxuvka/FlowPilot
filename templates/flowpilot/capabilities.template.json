@@ -28,6 +28,9 @@
         "material_inventory",
         "source_summaries",
         "source_quality_classification",
+        "local_skill_inventory_path",
+        "local_skills_marked_candidate_only",
+        "host_capability_inventory",
         "coverage_map",
         "unread_or_deferred_materials",
         "human_like_reviewer_sufficiency_approval",
@@ -54,6 +57,23 @@
         "functional_acceptance_matrix",
         "product_flowguard_officer_modelability_approval",
         "human_like_reviewer_usefulness_challenge"
+      ],
+      "status": "planned"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/pm_child_skill_selection.json",
+      "id": "pm_child_skill_selection",
+      "required": "after PM product-function architecture and capabilities manifest, before child-skill route-design discovery",
+      "source_skill": "flowpilot",
+      "evidence_required": [
+        "product_function_architecture_path",
+        "capabilities_manifest_path",
+        "local_skill_inventory_path",
+        "candidate_skills_classified_required_conditional_deferred_rejected",
+        "negative_selection_for_available_but_unused_skills",
+        "hard_gates_or_user_approval_needed",
+        "raw_inventory_not_used_as_route_authority",
+        "pm_decision_recorded"
       ],
       "status": "planned"
     },
@@ -130,8 +150,8 @@
       "evidence_required": [
         "host_capability_probe_result",
         "automated_or_manual_resume_mode",
-        "if_automated_then_heartbeat_watchdog_and_global_supervisor_ready",
-        "if_manual_resume_then_no_heartbeat_watchdog_or_global_supervisor_created",
+        "if_automated_then_stable_heartbeat_ready",
+        "if_manual_resume_then_no_heartbeat_automation_created",
         "unattended_recovery_claim_allowed_flag",
         "fallback_or_blocker_reason_when_setup_fails"
       ],

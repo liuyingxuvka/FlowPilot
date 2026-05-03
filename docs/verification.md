@@ -24,8 +24,7 @@ Expected:
 - execution frontier and visible Codex plan sync labels are present before
   behavior-bearing work.
 - startup PM-review checks reject shadow routes, report-only reviewer bypasses,
-  wrong heartbeat cadence, non-Windows watchdog claims, and any work before PM
-  startup opening.
+  wrong heartbeat cadence, and any work before PM startup opening.
 
 Route-local models under `.flowpilot/task-models/` belong to an adopted target
 project's runtime evidence. They should be checked when present in that target
@@ -101,8 +100,8 @@ reviewer must personally check the real startup facts and write
 
 The reviewer report is not approval. It must check user authorization versus
 actual state, route/state/frontier consistency, requested old-route or old-asset
-cleanup, heartbeat/watchdog/global-supervisor evidence, background-agent role
-evidence, and shadow or residual route state. If the report has blockers, the
+cleanup, heartbeat or manual-resume evidence, background-agent role evidence,
+and shadow or residual route state. If the report has blockers, the
 PM sends remediation back to workers/main executor and requires another
 reviewer report.
 
@@ -140,110 +139,23 @@ completion work. A route-local file without matching canonical
 state/frontier/crew/continuation evidence is a shadow route, not a recoverable
 partial pass.
 
-## External Watchdog Check
+## Heartbeat Lifecycle Check
 
 Run:
 
 ```powershell
-python scripts/flowpilot_watchdog.py --root . --stale-minutes 10 --dry-run --json
-python scripts/flowpilot_global_supervisor.py --status --json
+python scripts/flowpilot_lifecycle.py --root . --mode scan --write-record --json
 ```
-
-The default stale threshold is 10 minutes. For long operations that may run
-past the stale threshold, create a bounded busy lease before the operation and
-clear it afterward. Clearing the lease
-starts a bounded post-busy grace window, defaulting to 10x the heartbeat
-interval, before stale reset can be required:
-
-```powershell
-python scripts/flowpilot_busy_lease.py start --root . --operation "build or validation step" --max-minutes 30 --json
-python scripts/flowpilot_busy_lease.py clear --root . --reason "operation finished" --json
-```
-
-For command-line operations, prefer the wrapper so start/clear evidence cannot
-be forgotten:
-
-```powershell
-python scripts/flowpilot_run_with_busy_lease.py --root . --operation "long validation step" --max-minutes 30 -- python -c "print('ok')"
-```
-
-For Windows Task Scheduler watchdogs, use the bundled helper so the task is
-hidden/noninteractive:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_windows_watchdog_task.ps1 `
-  -TaskName "FlowPilot Route XXX Watchdog" `
-  -ProjectRoot . `
-  -HeartbeatAutomationId "<heartbeat-automation-id>"
-```
-
-Inspect or disable a residual watchdog without starting it:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_windows_watchdog_task.ps1 `
-  -TaskName "FlowPilot Route XXX Watchdog" -Status
-
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/register_windows_watchdog_task.ps1 `
-  -TaskName "FlowPilot Route XXX Watchdog" -Disable
-```
-
-Verify the user-level singleton global supervisor through the Codex app
-automation interface. It should be a `cron` automation, use the prompt in
-`templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md`, and run
-at the fixed 30-minute cadence. Do not create a Windows global scheduled task
-for this role.
-
-Do not use this 30-minute cadence for project routes. Route heartbeat
-automations are separate and must use `rrule: FREQ=MINUTELY;INTERVAL=1`; route
-and execution-frontier evidence should record
-`route_heartbeat_interval_minutes: 1` and the heartbeat rrule.
-
-With the current Codex app `automation_update` interface, use `kind: cron`,
-`rrule: FREQ=MINUTELY;INTERVAL=30`, `cwds` as a single workspace string path,
-`executionEnvironment: local`, `reasoningEffort: medium`, and `status:
-ACTIVE`. Inspect existing Codex cron automations before creation. Reuse one
-active singleton, update one paused singleton when global protection is
-required, and create only when no singleton exists and at least one active
-project registration exists. Verify every heartbeat refreshes its global
-registration lease. On pause, stop, or completion, unregister the project first
-and delete the global supervisor last only after confirming that no active,
-unexpired registrations remain.
 
 Expected:
 
-- the active route and latest heartbeat are loaded;
-- project-local watchdog evidence includes a `global_record` link unless global
-  recording was explicitly disabled for a test;
-- the user-level global registry is treated as an index and the supervisor
-  rereads project-local evidence before recording reset requirements;
-- at most one Codex global supervisor automation is active;
-- lifecycle metadata shows the watchdog is paired with the heartbeat and, for
-  active long-running routes, the watchdog automation is active;
-- for Windows scheduled tasks, lifecycle metadata shows
-  `hidden_noninteractive: true` and `visible_window_risk: false`;
-- for terminal routes, lifecycle metadata shows the watchdog is inactive and
-  terminal lifecycle writeback is recorded in local state/frontier evidence;
-- when a heartbeat is old but a valid busy lease matches the current route and
-  node, the decision is `busy_not_stale` and reset is not required;
-- when a heartbeat is old and a matching busy lease was recently cleared inside
-  the grace window, the decision is `post_busy_grace` and reset is not
-  required yet;
-- `source_status.trusted_for_decision` lists only `state_json`,
-  `latest_heartbeat`, and `busy_lease_json`;
-- `source_status.live_subagent_state_used` is `false`;
-- stale or disagreeing `execution_frontier.json` and `lifecycle/latest.json`
-  appear as diagnostic drift warnings, not as reset-decision authorities;
-- host automation metadata is reported when available;
-- stale heartbeats produce `stale_official_reset_required` until FlowPilot
-  invokes the official Codex app automation reset;
-- the script does not claim recovery until a later heartbeat appears.
-
-After FlowPilot invokes the official reset through the Codex app automation
-interface, record that result:
-
-```powershell
-python scripts/flowpilot_watchdog.py --root . --stale-minutes 10 --official-reset-attempted --official-reset-ok --json
-```
+- the active route, latest heartbeat/manual-resume evidence, state, and
+  execution frontier are loaded;
+- automated routes record a one-minute heartbeat schedule and official
+  automation source when supported;
+- manual-resume routes record that no heartbeat automation exists;
+- terminal routes write inactive lifecycle state back to state/frontier
+  evidence before completion is claimed.
 
 ## Lifecycle Reconciliation Check
 
@@ -251,24 +163,20 @@ Before pausing, restarting, or closing a formal route, run a unified lifecycle
 inventory:
 
 ```powershell
-python scripts/flowpilot_lifecycle.py --root . --mode pause --include-windows-tasks --write-record --json
-python scripts/flowpilot_lifecycle.py --root . --mode restart --include-windows-tasks --write-record --json
-python scripts/flowpilot_lifecycle.py --root . --mode terminal --include-windows-tasks --write-record --json
+python scripts/flowpilot_lifecycle.py --root . --mode pause --write-record --json
+python scripts/flowpilot_lifecycle.py --root . --mode restart --write-record --json
+python scripts/flowpilot_lifecycle.py --root . --mode terminal --write-record --json
 ```
 
 Use the mode that matches the lifecycle operation. The command is read-only
 except for writing `.flowpilot/runs/<run-id>/lifecycle/latest.json` and events. It does not
-change Codex automations or Windows tasks. If it reports required actions,
-complete them through the official Codex app automation interface or the
-Windows task helper, then rerun the inventory before claiming pause, restart,
-or terminal cleanup.
+change Codex automations. If it reports required actions, complete them through
+the official Codex app automation interface, then rerun the inventory before
+claiming pause, restart, or terminal cleanup.
 
 Expected:
 
-- Codex automations, global supervisor records, Windows scheduled tasks, local
-  state, execution frontier, and watchdog evidence are all represented;
-- disabled Windows FlowPilot scheduled tasks are reported as residual actions
-  unless explicitly waived;
-- local state/frontier/watchdog lifecycle fields agree with the intended
-  operation;
+- Codex heartbeat automations, local state, execution frontier, and
+  heartbeat/manual-resume evidence are all represented;
+- local state/frontier lifecycle fields agree with the intended operation;
 - `.flowpilot/runs/<run-id>/lifecycle/latest.json` exists for the latest lifecycle operation.

@@ -8,8 +8,6 @@ FlowPilot requires:
 - installer-readable dependency metadata in `flowpilot.dependencies.json`;
 - writable project workspace for `.flowpilot/`;
 - Python available on `PATH` for checks and task-local models.
-- optional external scheduler, such as Windows Task Scheduler, when a formal
-  route needs an outside watchdog in addition to Codex host automation.
 
 Minimum runtime check:
 
@@ -17,7 +15,6 @@ Minimum runtime check:
 python scripts/install_flowpilot.py --check
 python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
 python scripts/check_install.py
-python scripts/flowpilot_watchdog.py --root . --stale-minutes 10 --dry-run --json
 ```
 
 Expected result:
@@ -29,10 +26,6 @@ Expected result:
 - template and simulation files exist;
 - project-control files under `.flowpilot/current.json`,
   `.flowpilot/index.json`, and `.flowpilot/runs/<run-id>/` exist.
-- the watchdog can resolve `.flowpilot/current.json` and read the active-run
-  state, the active route, and the
-  latest heartbeat, then plan or perform an automation reset without claiming
-  recovery before a later heartbeat proves it.
 
 If dependencies are missing, the installing agent should connect the real
 FlowGuard source before using this skill. Do not create a local mini-framework

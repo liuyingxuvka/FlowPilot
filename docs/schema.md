@@ -17,24 +17,28 @@ user-level:
 - `crew_ledger.json`
 - `crew_memory/*.json`
 - `product_function_architecture.json`
+- `root_acceptance_contract.json`
+- `standard_scenario_pack.json`
 - `final_route_wide_gate_ledger.json`
+- `terminal_closure_suite.json`
 - `contract.md`
 - `capabilities.json`
 - `routes/*/flow.json`
+- `routes/*/parent_backward_targets.json`
 - `routes/*/nodes/*/node.json`
+- `routes/*/nodes/*/node_acceptance_plan.json`
+- `routes/*/nodes/*/parent_backward_replay.json`
 - `heartbeats/*.json`
-- `watchdog/latest.json`
-- `watchdog/events/*.json`
-- `watchdog/events.jsonl`
 - `lifecycle/latest.json`
 - `lifecycle/events.jsonl`
 - `startup_review/latest.json`
 - `startup_pm_gate/latest.json`
-- user-level `$CODEX_HOME/flowpilot/watchdog/registry.json`
-- user-level `$CODEX_HOME/flowpilot/watchdog/projects/*/latest.json`
-- user-level `$CODEX_HOME/flowpilot/watchdog/supervisor/latest.json`
+- `human_reviews/*.json`
+- `role_approvals/*.json`
 - `checkpoints/*.json`
 - `experiments/*/experiment.json`
+- `flowpilot_skill_improvement_observations.jsonl`
+- `flowpilot_skill_improvement_report.json`
 
 Markdown files are English summaries for review.
 
@@ -49,6 +53,9 @@ Markdown files are English summaries for review.
 - visible Codex plan projection version;
 - run mode;
 - product-function architecture path;
+- root acceptance contract path;
+- standard scenario pack path;
+- terminal closure suite path;
 - final route-wide gate ledger path;
 - status;
 - last heartbeat;
@@ -81,14 +88,13 @@ chunks until this block and the matching frontier block show:
 - `live_subagent_startup` records either six live background agents
   started/resumed after a user decision or explicit user authorization for
   single-agent six-role continuity;
-- `continuation_ready: true`, either as an automated heartbeat/watchdog/global
-  bundle or explicit `manual-resume` no-automation evidence;
+- `continuation_ready: true`, either as automated heartbeat evidence or
+  explicit `manual-resume` no-automation evidence;
 - `startup_preflight_review` records the human-like reviewer's factual startup
   audit, including user authorization versus actual state, route/state/frontier
   consistency, old-route or old-asset cleanup when requested, real Codex
-  automation records, Windows scheduled tasks, global watchdog registry,
-  latest watchdog evidence, heartbeat/watchdog/global-supervisor evidence,
-  background-agent role evidence, and shadow or residual route state;
+  heartbeat automation or manual-resume evidence, background-agent role
+  evidence, and shadow or residual route state;
 - `pm_start_gate` records the project manager's decision from the current
   reviewer report. The reviewer cannot open this gate. If the report has
   blockers, PM sends remediation back to workers and requires a recheck;
@@ -135,14 +141,12 @@ runtime startup-check script writes it. It must include:
   `requires_worker_remediation`;
 - `blocking_findings`;
 - scope flags for user authorization, route consistency, cleanup boundary,
-  continuation evidence, real Codex automation records, Windows scheduled
-  tasks, global watchdog registry, watchdog latest evidence, background-agent
-  roles, user background-agent decision versus actual subagent state, live
-  subagent count or explicit single-agent authorization, and shadow/residual
-  state;
-- required facts for route heartbeat interval 1 minute, route heartbeat RRULE
-  `FREQ=MINUTELY;INTERVAL=1`, watchdog kind `windows_task_scheduler`, and
-  global supervisor cadence 30 minutes;
+  continuation evidence, real Codex heartbeat automation or manual-resume
+  evidence, background-agent roles, user background-agent decision versus
+  actual subagent state, live subagent count or explicit single-agent
+  authorization, and shadow/residual state;
+- required facts for route heartbeat interval 1 minute and route heartbeat
+  RRULE `FREQ=MINUTELY;INTERVAL=1` when automated continuation is selected;
 - if `answers.background_agents.answer` is `allow`, six live role-bearing
   subagents must be active or resumed after the user decision;
 - if `answers.background_agents.answer` is `single-agent`, explicit
@@ -236,8 +240,9 @@ after explicit user authorization for single-agent role continuity.
 ## Material Intake Packet
 
 `material_intake_packet.json` is the main-executor material inventory and
-source-quality packet. The reviewer sufficiency block must show direct source
-inspection, not report-only acceptance:
+source-quality packet. It also records a local skill and host capability
+inventory as candidate-only route material. The reviewer sufficiency block
+must show direct source inspection, not report-only acceptance:
 
 - `reviewer_fact_check_required: true`;
 - `direct_material_sources_checked` and `direct_material_samples_checked`;
@@ -246,6 +251,33 @@ inspection, not report-only acceptance:
 
 Reviewer approval is invalid when the packet only summarizes worker claims
 without direct material-source checks.
+
+The local skill inventory portion records skill names, `SKILL.md` paths,
+description summaries, candidate fit, possible product capabilities, hard gates
+or safety notes, read depth, deferred/private skills, and host capability
+providers. It must mark every entry as candidate-only until PM selection.
+
+## PM Child-Skill Selection
+
+`pm_child_skill_selection.json` is the PM-owned bridge from product capability
+mapping to child-skill gate extraction. It is written after
+`product_function_architecture.json`, the frozen contract, and
+`capabilities.json`, and before child-skill route-design discovery.
+
+It records:
+
+- product-function architecture, capabilities manifest, frozen contract, and
+  local skill inventory source paths;
+- a selection rule stating that product capability needs choose skills, not
+  local availability;
+- skill decisions marked `required`, `conditional`, `deferred`, or `rejected`;
+- supported product capabilities and trigger conditions for each selected
+  skill;
+- hard gates or user approvals needed before use;
+- `SKILL.md` files and references to load now, plus deferred references with
+  reasons;
+- negative selection reasons for available but unused skills;
+- proof that raw inventory was not used as route authority.
 
 ## Product Function Architecture
 
@@ -276,6 +308,99 @@ The acceptance contract freezes from this artifact. Later product-function
 models check and refine coverage, but they do not substitute for the
 pre-contract PM architecture gate.
 
+## Root Acceptance Contract
+
+`root_acceptance_contract.json` is the PM-owned early hard-requirement package
+written before contract freeze. It converts the most important user/PM
+requirements into route-wide proof obligations without trying to pre-design
+every node test.
+
+It records:
+
+- source requirement ids and user-facing rationale;
+- acceptance threshold for each root obligation;
+- minimum experiment, inspection, replay, or evidence type;
+- owner role and required approver;
+- terminal replay expectation;
+- proof matrix status;
+- whether unresolved residual risks are allowed. For completed routes this must
+  be false.
+
+## Standard Scenario Pack
+
+`standard_scenario_pack.json` is the compensating scenario baseline used by
+terminal review. It is selected or written before contract freeze and replayed
+again near completion.
+
+It records scenario families such as:
+
+- core happy path;
+- edge and failure handling;
+- regression of repaired or previously risky behavior;
+- lifecycle/state recovery;
+- localization, accessibility, and interaction coverage when relevant;
+- PM-risk scenarios inherited from the root contract or node acceptance plans.
+
+Each scenario records the target requirement, operation or experiment design,
+expected evidence, required approver, status, and final replay result.
+
+## Node Acceptance Plan
+
+`routes/*/nodes/*/node_acceptance_plan.json` is written before a formal route
+chunk or implementation-bearing node starts. It maps only the current node,
+not every future node.
+
+It records:
+
+- root acceptance requirements touched by the node;
+- child-skill gates and approvers used by the node;
+- current-node acceptance criteria;
+- concrete experiments, manual walkthroughs, commands, screenshots, or probes;
+- known risk hypotheses and how each will be checked;
+- risk scenarios that must be replayed in final review if not closed earlier;
+- evidence paths and approval owner;
+- node structure: whether this is a leaf, parent, or composite node, whether
+  it has children, and the local parent backward replay path when applicable;
+- unresolved residual risk count, which must be zero before the node can close
+  unless the required role records an explicit exception that does not lower the
+  frozen contract.
+
+## Parent Backward Replay
+
+`routes/*/parent_backward_targets.json` is PM-owned structural planning
+evidence built from the current route. It enumerates every effective `flow.json`
+node that has children and points each one at its required
+`parent_backward_replay.json`. The file becomes stale whenever the route
+version changes and must be rebuilt from the new route before affected parent
+closure or terminal ledger approval.
+
+`routes/*/nodes/*/parent_backward_replay.json` is required for every effective
+route node with children. The trigger is structural: if the current `flow.json`
+node has child nodes, the parent replay is required. No semantic classification
+such as high risk, integration, feature, or downstream dependency is needed to
+turn this gate on, and those labels cannot turn it off.
+
+It records:
+
+- the parent node id, route version, and source route/frontier paths;
+- the structural trigger evidence showing the parent has children;
+- the parent goal and parent-level delivered result;
+- child node ids, child acceptance plan paths, child evidence paths, and
+  product/model evidence used as pointers;
+- replay segments starting from the parent-level delivered result, then parent
+  goal, child rollup, child node segments, structure fit, PM segment decision,
+  and repair/restart policy;
+- reviewer evidence showing a neutral observation, independent probe, direct
+  current-artifact or behavior checks, and whether children compose into the
+  parent goal;
+- the PM segment decision: continue, repair existing child, add sibling child,
+  rebuild child subtree, bubble to parent, or PM stop;
+- stale-evidence and same-parent-rerun status after repair.
+
+Parent closure is invalid until the reviewer pass and PM segment decision are
+recorded for that parent, unresolved blocking findings are zero, and any latest
+repair has rerun the same parent replay.
+
 ## Execution Frontier
 
 `execution_frontier.json` is the source of truth for the next jump and current
@@ -301,17 +426,30 @@ The frontier records:
 - latest PM completion runway, including current gate, downstream steps,
   hard-stop conditions, checkpoint cadence, plan replacement status, and any
   PM stop signal;
-- PM-owned child-skill gate manifest status: route-design discovery,
-  loaded child-skill files, initial manifest path, current-node refined
-  manifest path, required approver assignments, reviewer/officer/PM approval
-  evidence, and whether all current child-skill gates have assigned-role
-  approval;
+- PM-owned child-skill selection status: local skill inventory path, selection
+  manifest path, required/conditional/deferred/rejected decisions, and proof
+  that raw local availability did not create route work;
+- PM-owned child-skill gate manifest status: route-design discovery from
+  PM-selected skills, loaded child-skill files, initial manifest path,
+  current-node refined manifest path, required approver assignments,
+  reviewer/officer/PM approval evidence, and whether all current child-skill
+  gates have assigned-role approval;
 - PM-owned final route-wide gate ledger status: ledger path, built route
   version, current-route scan, effective-node resolution, child-skill gate
   collection, human-review gate collection, product/process model gate
-  collection, stale-evidence check, superseded-node explanation, unresolved
-  count, reviewer backward check path, PM ledger approval path, and whether
-  completion is allowed;
+  collection, standard scenario replay, residual risk triage, stale-evidence
+  check, superseded-node explanation, unresolved count, unresolved residual
+  risk count, terminal human backward replay map path, reviewer delivered-product
+  replay status, PM segment-decision status, repair/restart policy status, PM
+  ledger approval path, and whether completion is allowed;
+- root acceptance contract and standard scenario pack paths;
+- current node acceptance plan path, status, required experiments, and terminal
+  replay obligations;
+- parent backward replay trigger rule, structurally enumerated parent targets,
+  current parent replay path/status, PM segment decision status, and unresolved
+  parent replay blocker count;
+- terminal closure suite path and latest state/evidence/lifecycle refresh
+  status;
 - whether the current node is unfinished;
 - the concrete `current_subnode` or `next_gate` that the next continuation turn must
   execute while the node is unfinished;
@@ -324,8 +462,8 @@ The frontier records:
   strategy interrogation evidence path when a review failure mutates the route;
 - route mutation status;
 - stable heartbeat launcher metadata when automated continuation is supported;
-- paired watchdog lifecycle metadata when automated continuation is supported,
-  or manual-resume no-automation evidence when unsupported;
+- heartbeat lifecycle metadata when automated continuation is supported, or
+  manual-resume no-automation evidence when unsupported;
 - controlled-stop and completion notice metadata: whether the current route is
   complete, whether a resume notice must be shown on controlled nonterminal
   stop, whether heartbeat wakeup can be waited for, and the exact manual resume
@@ -368,23 +506,82 @@ next legal gate. The initial manifest is PM-owned route-design evidence; the
 current-node manifest is a contextual refinement. Each gate record names its
 source skill, source step, gate type, evidence required, `draft_owner`,
 `execution_owner`, `required_approver`, `forbidden_approvers`,
-`approval_status`, and `approval_evidence_path`. Parent resume is invalid
-until every current child-skill gate is approved by its assigned role or
-blocked/waived with evidence from the responsible role.
+`approval_status`, `approval_evidence_path`,
+`independent_validation_required: true`,
+`completion_report_only_allowed: false`, and
+`independent_validation_evidence_path`. Parent resume is invalid until every
+current child-skill gate is approved by its assigned role with independent
+validation evidence, or blocked/waived with evidence from the responsible role.
 
 Before any child-skill, imagegen, implementation, or formal route chunk starts,
 the human-like reviewer personally checks `.flowpilot/current.json`,
 `.flowpilot/index.json`, current-run `state.json`, `execution_frontier.json`,
 `routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory packets,
-continuation evidence, Codex automation records, Windows scheduled tasks,
-global watchdog registry, latest watchdog evidence, requested cleanup evidence,
-and prior-work import boundary when continuing. The reviewer then writes
+continuation evidence, Codex heartbeat automation or manual-resume evidence,
+requested cleanup evidence, and prior-work import boundary when continuing.
+The reviewer then writes
 `startup_review/latest.json` inside the current run as a factual report.
 
 The PM reads the current factual report. If it has blockers, PM returns the
 work to workers and requires a new review after remediation. If it is clean,
 PM writes `startup_pm_gate/latest.json` inside the current run and updates state plus frontier so
 downstream work can check `work_beyond_startup_allowed`.
+
+## Adversarial Approval Evidence
+
+`role_approvals/*.json` is the canonical evidence family for any PM,
+human-like reviewer, process FlowGuard officer, or product FlowGuard officer
+approval that is not already embedded in a richer role-owned report. Every
+approval gate may reference one of these files through
+`independent_validation_evidence_path`.
+
+Each approval evidence object includes:
+
+- `approval_id`, `run_id`, `route_id`, `node_id`, and `gate_id`;
+- `approver_role`: `project_manager`, `human_like_reviewer`,
+  `process_flowguard_officer`, or `product_flowguard_officer`;
+- `approval_scope`: route, material, product architecture, child-skill gate,
+  process model, product model, human review, parent backward review,
+  startup PM gate, repair, final ledger, lifecycle, or completion;
+- `completion_report_only: false`;
+- `report_inputs_used_as_pointers`: completion reports, worker reports,
+  screenshots, smoke logs, PM summaries, or model snippets consulted only as
+  navigation aids;
+- `direct_sources_checked`: exact files, materials, screenshots, route/frontier
+  files, ledger entries, model files, logs, runtime outputs, or delivered
+  artifacts opened by the approver;
+- `state_fields_checked`: `.flowpilot` paths and fields, model state fields,
+  runtime fields, counters, or ledger entry ids compared;
+- `commands_or_probes_run`: manual operations, local commands, browser/UI
+  probes, replay commands, FlowGuard checks, sample reads, or other active
+  probes run by the approver;
+- `adversarial_hypotheses_tested`: concrete failure theories such as stale
+  evidence, missing child gate, wrong approver, report-only pass, bad model
+  boundary, unreachable interaction, incorrect waiver, or unresolved blocker;
+- `concrete_evidence_references`: file paths, screenshot paths, command output
+  summaries, model labels, state/edge counts, counterexample ids, ledger entry
+  ids, and checked state fields supporting the decision;
+- `role_specific_checks`: PM audit, reviewer direct inspection, or FlowGuard
+  officer model-boundary/counterexample checks as applicable;
+- `risk_or_blindspot_triage`;
+- `unresolved_residual_risk_count`;
+- `decision`: `approved`, `blocked`, `request_more_evidence`, `mutate_route`,
+  or `pm_stop`.
+
+An approval is invalid when `completion_report_only` is true, when direct
+sources and probes are empty, or when the evidence cites only worker/completion
+reports without the approving role's own checks. PM completion approval must
+include a decision-surface audit of the current route/frontier/ledger, stale
+evidence, superseded entries, waiver authority, unresolved counts, reviewer
+backward replay, standard scenario replay, node acceptance plan coverage, and
+risk-or-blindspot triage with zero unresolved residual risks. FlowGuard officer approval must cite
+model files, commands or valid unchanged reuse, state/edge counts, invariant
+results, missing labels, counterexamples inspected, PM risk tiers,
+model-derived review agenda, toolchain/model improvement suggestions,
+confidence boundary, and blindspots. Officer model reports are decision
+support for the PM: they must classify hard blockers, PM review-required
+items, later-gate or terminal-replay items, and non-risk scope notes instead
+of making absolute "no risk" claims.
 
 ## Final Route-Wide Gate Ledger
 
@@ -400,19 +597,94 @@ The ledger records:
 - current-route scan and effective-node resolution status;
 - child-skill, human-review, product-model, process-model, verification,
   lifecycle, and completion gate entries;
+- root acceptance obligations and current proof status;
+- standard scenario pack replay status;
+- node acceptance plan coverage and PM-risk scenario replay status;
 - generated-resource lineage for concept images, visual assets, screenshots,
   route diagrams, model reports, and other generated artifacts;
 - required approver, approval status, evidence paths, waiver reasons, blocked
   reasons, superseded-by links, and unresolved reasons for each entry;
 - stale evidence count, generated-resource count, unresolved-resource count,
-  and unresolved count;
-- human-like reviewer backward-check evidence path;
+  unresolved count, and unresolved residual risk count;
+- residual risk triage: every risk or blindspot classified as fixed, routed to
+  repair, current-gate blocker, terminal replay scenario, non-risk note, or
+  explicit role-approved exception;
+- terminal human backward replay map path and status;
+- human-like reviewer backward-check evidence path, including delivered-product
+  start, root acceptance segment, parent/module node segments, leaf-node
+  segments, node acceptance plan comparisons, and current product checks;
+- local parent backward replay paths for parent/module segments, used as
+  evidence pointers rather than substitutes for terminal human replay;
+- PM segment-decision evidence for every replay segment;
+- repair/restart policy evidence showing that any terminal replay repair
+  invalidates affected evidence and restarts final review from the delivered
+  product unless a narrower impacted-ancestor restart has a PM reason;
 - PM ledger approval evidence path;
 - `completion_allowed`.
 
 Terminal completion requires `unresolved_count` to be zero, reviewer backward
-check to pass, and PM ledger approval to be recorded. If route mutation occurs
-after the ledger is built, the ledger is stale and must be rebuilt.
+check to pass through the terminal human backward replay map, PM segment
+decisions and repair/restart policy to be recorded, PM ledger approval to be
+recorded, the standard scenario pack to be replayed, and
+`unresolved_residual_risk_count` to be zero. If route mutation or terminal
+replay repair occurs after the ledger is built, the ledger and replay map are
+stale and must be rebuilt.
+
+`terminal_human_backward_replay_map.json` is PM-owned terminal review planning
+evidence. It is built from the current final ledger and orders the reviewer
+walkthrough from the delivered product to root acceptance, parent/module nodes,
+and leaf nodes. Every effective node must either appear in a replay segment or
+be explained as superseded, waived by the correct role, or out of the current
+route. Reviewer reports for these segments must inspect current product
+behavior, not only evidence files. PM decisions for each segment are one of
+continue, repair, route mutation, correct-role exception, or PM stop. Repair
+findings invalidate affected evidence; the default rerun starts final review
+from the delivered product, with narrower impacted-ancestor reruns allowed only
+when PM records why earlier segments cannot be affected.
+
+## Terminal Closure Suite
+
+`terminal_closure_suite.json` is run after final route-wide ledger approval and
+before the terminal completion notice. It prevents a clean review from ending
+with stale state or stale automation.
+
+It records:
+
+- latest state, execution frontier, route, ledger, checkpoint, and lifecycle
+  paths checked;
+- standard scenario and residual-risk replay status;
+- terminal human backward replay pass status and repair/restart freshness;
+- heartbeat stop or manual-resume no-automation evidence;
+- role memory and crew archive status;
+- FlowPilot skill improvement report path and written status;
+- controlled-stop/completion notice status;
+- final report readiness and user-visible summary evidence.
+
+Terminal completion is invalid when this suite is missing, stale, or records an
+unresolved blocker.
+
+## FlowPilot Skill Improvement Report
+
+`flowpilot_skill_improvement_observations.jsonl` is an append-only run-level
+log for issues with FlowPilot itself. Any role may add an observation at a
+node, review, repair, child-skill closure, parent replay, or terminal boundary.
+Observations are about the skill, not the target product: unclear protocol
+text, weak templates, missing report fields, hard-to-find code paths, model or
+tooling friction, automation friction, Cockpit display gaps, or similar future
+maintenance notes.
+
+Each observation records the node or gate, reporting role, kind, summary,
+observed behavior, temporary compensation used in the current run, candidate
+FlowPilot root-repo files, evidence paths, PM triage status, and
+`does_not_block_current_project: true`.
+
+`flowpilot_skill_improvement_report.json` is PM-owned and written before the
+terminal completion notice. It summarizes the observation log for later manual
+FlowPilot root-repo maintenance. The report must also exist when no obvious
+skill improvement was observed. Its contents do not require fixing the
+FlowPilot root repository before the current project completes. If a FlowPilot
+weakness affects the active project, the route may compensate locally and still
+finish; true project blockers remain ordinary route blockers.
 
 ## Inspection Evidence
 
@@ -422,87 +694,51 @@ output, or exercised feature actually appears to be, including visible content,
 window or desktop artifacts, responses to operations, and any required behavior
 that was not observable.
 
+Reviewer-owned reports live under `human_reviews/` or the current node's
+review-evidence directory. For UI, browser, desktop, visual, localization, or
+interactive gates, the report must show direct review, not report-only
+acceptance:
+
+- `reviewer_role: human_like_reviewer`;
+- `worker_report_only: false`;
+- `reviewer_personal_walkthrough_done: true`;
+- `opened_surfaces`, `viewport_or_window_sizes`, and `screenshots_viewed`;
+- `interaction_paths_exercised` and `unreachable_or_untested_controls`;
+- `text_overlap_or_clipping_findings`;
+- `layout_density_whitespace_findings`;
+- `crowding_or_underfilled_region_findings`;
+- `hierarchy_readability_findings`;
+- `aesthetic_verdict`: `pass`, `weak`, or `fail` when visual quality matters;
+- `design_recommendations`, including concrete repair ideas or an explicit
+  statement that no current-gate design repair is needed;
+- `obligation_classification`: `current_gate_required`,
+  `future_gate_required`, or `nonblocking_note` for each finding.
+
+An approval is invalid when the report only cites worker screenshots, automated
+screenshot QA, or interaction smoke logs without the reviewer's personal
+walkthrough and visual/layout findings. If the reviewer cannot operate the
+surface, the gate blocks or requests more evidence; it does not pass from the
+worker report alone.
+
 For generated UI concept targets, the observation also records whether the
 candidate appears to be an independent concept, an existing screenshot, an
 existing-image variant, a desktop/window capture, old route UI evidence, or
 prior failed evidence with cosmetic changes. The later authenticity decision
 must cite this observation.
 
-## Watchdog
-
-`watchdog/latest.json` records the latest external stale-heartbeat check. Event
-records under `watchdog/events/` and `watchdog/events.jsonl` preserve notable
-stale checks and official automation reset results.
-
-The watchdog schema records:
-
-- checked time;
-- stale threshold;
-- active route, node, and last heartbeat;
-- lifecycle pairing: heartbeat automation id, watchdog automation id or task
-  name, watchdog automation kind, whether it was created with the heartbeat,
-  active state, hidden/noninteractive execution state, visible window risk,
-  stopped-before-heartbeat state, terminal frontier writeback state, and the
-  required terminal shutdown order;
-- heartbeat timestamp, source, and age;
-- host automation metadata when available;
-- whether the official Codex app reset was required, attempted, accepted, or
-  failed;
-- the decision, such as `healthy`, `stale_official_reset_required`,
-  `stale_official_reset_invoked`, `stale_official_reset_failed`,
-  `inactive_terminal_route`, or `config_error`.
-
-`stale_official_reset_invoked` is not a successful recovery by itself. It means
-the watchdog detected the gap and FlowPilot invoked the official automation
-reset. The proof is a later heartbeat with a newer timestamp.
-
-The local watchdog record also contains `global_record`, unless global
-recording is explicitly disabled for a test. Global records are stored under
-`$FLOWPILOT_GLOBAL_RECORD_DIR` when set, otherwise under
-`$CODEX_HOME/flowpilot/watchdog`. The global schema contains:
-
-- `registry.json`: project key, project root, latest local watchdog path,
-  latest global watchdog path, route/node, last decision, heartbeat automation
-  id, manual-stop flag, and registration-active flag;
-- `projects/<project-key>/latest.json`: compact copy of the latest local
-  watchdog decision and project metadata;
-- `events/events.jsonl` and event JSON files: notable global watchdog poll
-  events;
-- `supervisor/latest.json`: singleton supervisor processing result, reset
-  requirements, and local writeback status.
-
-The global registry is an index, not the authority. Before recording or
-performing a reset requirement, the singleton Codex global automation must
-reread project-local `.flowpilot/current.json`,
-`.flowpilot/runs/<run-id>/state.json`, and
-`.flowpilot/runs/<run-id>/watchdog/latest.json`. Repository scripts may scan and summarize
-the records, but the official reset-capable supervisor must run inside Codex so
-it can use the Codex app automation interface.
-
-For routes with real continuation, terminal closure must update lifecycle
-evidence so the watchdog is stopped or deleted before the heartbeat automation
-is stopped, and so the inactive lifecycle snapshot is written back to
-current-run `state.json`, `execution_frontier.json`, and watchdog evidence.
-
 ## Lifecycle
 
 `lifecycle/latest.json` is the unified inventory snapshot for pause, restart,
 and terminal cleanup. It records the status seen across:
 
-- Codex app automation records for FlowPilot heartbeat and global supervisor
-  automations;
-- user-level global watchdog registry and supervisor records;
-- Windows scheduled tasks whose names or actions identify FlowPilot;
+- Codex app automation records for FlowPilot heartbeat automations;
 - `.flowpilot/current.json`;
 - `.flowpilot/runs/<run-id>/state.json`;
 - `.flowpilot/runs/<run-id>/execution_frontier.json`;
-- `.flowpilot/runs/<run-id>/watchdog/latest.json`.
+- latest heartbeat or manual-resume evidence.
 
 Lifecycle closure is valid only when the snapshot records either no required
-actions or explicit waived actions with reasons. Disabled Windows scheduled
-tasks still count as residual lifecycle objects until unregistered or waived.
-For restart, stale disabled tasks must be unregistered/recreated or explicitly
-adopted into the current route before the route is considered protected.
+actions or explicit waived actions with reasons.
 
 The lifecycle helper does not call Codex automation APIs. It records required
 actions so the controller can use the official Codex app automation interface.

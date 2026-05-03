@@ -1,0 +1,97 @@
+{
+  "schema_version": "flowpilot.parent_backward_replay.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "parent_node_id": "<parent-node-id>",
+  "pm_owned": true,
+  "status": "<not_started|ready_for_reviewer|reviewing|repair_required|passed|blocked|superseded>",
+  "created_at": "<iso-8601-timestamp-or-null>",
+  "updated_at": "<iso-8601-timestamp-or-null>",
+  "purpose": "A local human backward replay required before any effective route node with children can close. It starts from the parent-level delivered result and checks whether child outcomes compose into the parent goal.",
+  "trigger_rule": {
+    "structural_trigger": "any_effective_route_node_with_children",
+    "semantic_importance_classification_required": false,
+    "high_risk_integration_feature_or_dependency_labels_are_context_only": true,
+    "leaf_nodes_exempt_from_parent_backward_replay": true,
+    "cannot_be_waived_because_children_passed_locally": true
+  },
+  "source_paths": {
+    "route_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
+    "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
+    "parent_node": ".flowpilot/runs/<run-id>/routes/<route-id>/nodes/<parent-node-id>/node.json",
+    "parent_node_acceptance_plan": ".flowpilot/runs/<run-id>/routes/<route-id>/nodes/<parent-node-id>/node_acceptance_plan.json",
+    "parent_product_function_model_report": "<path-or-null>",
+    "child_node_acceptance_plans": [],
+    "child_evidence_paths": [],
+    "current_artifact_or_behavior_paths": []
+  },
+  "parent_scope": {
+    "parent_goal": "<parent-goal-summary>",
+    "children_expected_to_compose": [],
+    "parent_delivered_result_description": "<current-parent-level-result-or-output>",
+    "current_product_or_artifact_surfaces_to_check": []
+  },
+  "replay_order": [
+    "parent_delivered_result",
+    "parent_goal",
+    "child_rollup",
+    "child_node_segments",
+    "structure_fit_decision",
+    "pm_segment_decision",
+    "repair_restart_policy"
+  ],
+  "segments": [
+    {
+      "segment_id": "<segment-id>",
+      "child_node_id": "<child-node-id-or-null>",
+      "segment_type": "<parent_delivered_result|parent_goal|child_rollup|child_node|structure_fit>",
+      "node_acceptance_plan_path": "<path-or-null>",
+      "evidence_paths_used_as_pointers": [],
+      "reviewer_manual_checks_required": [],
+      "reviewer_manual_checks_done": [],
+      "current_behavior_checked": false,
+      "reviewer_report_path": "<path-or-null>",
+      "pm_segment_decision": "<not_reviewed|continue|repair_existing_child|add_sibling_child|rebuild_child_subtree|bubble_to_parent|pm_stop>",
+      "pm_decision_path": "<path-or-null>",
+      "stale_after_repair": false
+    }
+  ],
+  "coverage": {
+    "effective_child_nodes_total": 0,
+    "effective_child_nodes_reviewed_by_human": 0,
+    "parent_delivered_result_reviewed": false,
+    "parent_product_model_compared": false,
+    "every_effective_child_segment_reviewed": false,
+    "every_segment_has_pm_decision": false,
+    "worker_or_completion_report_only_segments": 0
+  },
+  "reviewer_report": {
+    "reviewer_role": "human_like_reviewer",
+    "report_path": "<path-or-null>",
+    "started_from_parent_delivered_result": false,
+    "neutral_observation_written": false,
+    "independent_probe_done": false,
+    "child_evidence_replayed": false,
+    "children_compose_into_parent_goal": "<true|false|null>",
+    "blocking_findings": [],
+    "approval_valid": false
+  },
+  "pm_decision": {
+    "decision_owner": "project_manager",
+    "status": "<not_reviewed|continue|repair_existing_child|add_sibling_child|rebuild_child_subtree|bubble_to_parent|pm_stop>",
+    "decision_path": "<path-or-null>",
+    "repair_target_node_id": "<node-id-or-null>",
+    "route_mutation_required": false,
+    "affected_evidence_marked_stale": false,
+    "same_parent_replay_rerun_required": "<true|false>",
+    "same_parent_replay_rerun_after_latest_repair": "<true|false>"
+  },
+  "closure_gate": {
+    "required_before_parent_checkpoint": true,
+    "reviewer_passed": false,
+    "pm_segment_decision_recorded": false,
+    "unresolved_blocking_findings": 0,
+    "parent_closure_allowed": false
+  }
+}

@@ -20,6 +20,8 @@
 ## Pre-Freeze Product Function Architecture
 
 - Product function architecture: `.flowpilot/runs/<run-id>/product_function_architecture.json`
+- Root acceptance contract: `.flowpilot/runs/<run-id>/root_acceptance_contract.json`
+- Standard scenario pack: `.flowpilot/runs/<run-id>/standard_scenario_pack.json`
 - PM synthesis: `<path-or-null>`
 - Product FlowGuard officer modelability approval: `<path-or-null>`
 - Human-like reviewer usefulness challenge: `<path-or-null>`
@@ -34,10 +36,16 @@ decisions, display rationale, or negative scope.
 - Active route checked by FlowGuard.
 - Product-function architecture evidence written and approved before contract
   freeze.
+- Root-level hard requirements, high-risk proof obligations, and standard
+  scenarios selected before contract freeze.
+- Node-level acceptance plans written before each implementation chunk or node
+  checkpoint.
 - Required capability evidence written.
 - Formal chunks verified.
 - Subagent work, if any, merged by the main agent.
 - Final verification passed.
+- Residual risk triage completed with zero unresolved residual risks.
+- Terminal closure suite passed after final state/evidence refresh.
 - Final report emitted.
 
 ## Approved Contract Changes

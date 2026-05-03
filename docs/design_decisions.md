@@ -14,24 +14,30 @@ It uses heartbeat ideas, but its core identity is project autopilot:
 - chunk verification;
 - recovery and rollback.
 
-## Default-On Startup
+## Explicit Startup Activation
 
-When FlowPilot is invoked, or when `.flowpilot/` exists, FlowPilot is enabled by
-default. The controller should not first decide whether FlowPilot should exist.
+FlowPilot is enabled only after the user explicitly invokes FlowPilot or the
+`flowpilot` skill. An existing `.flowpilot/` directory is continuity state after
+explicit invocation, not a trigger by itself. Once FlowPilot has been explicitly
+invoked, the controller should not first decide whether a lighter tier should
+exist; it enters the formal startup gate.
 
 A formal FlowPilot route is showcase-grade by default. There is no lower
 quality tier for a formal FlowPilot run. For small maintenance work inside an
 active project, FlowPilot may record continuity state, but it should not claim a
 full formal route unless the showcase-grade gates ran.
 
-The first user-facing startup gate is run-mode selection. If the host cannot
-pause or the user asks to continue without selecting a mode, `full-auto` is
-recorded as the fallback with a reason.
+The first user-facing startup gate is the three-question prompt: run mode,
+background-agent permission, and scheduled-continuation permission. The
+assistant must stop immediately after asking and wait for the user's later
+reply before banner display, route writes, child skills, subagents, heartbeat
+probes, image generation, or implementation.
 
 The mode prompt is displayed from loosest to strictest:
-`full-auto`, `autonomous`, `guided`, `strict-gated`. `full-auto` is the
-fallback default when no explicit selection is available, even though it is not
-the loosest option.
+`full-auto`, `autonomous`, `guided`, `strict-gated`. No run mode is recorded
+until the user explicitly answers. A compact later reply may provide all three
+startup answers at once, but host limits, invocation text, existing state, and
+prior routes cannot create an implicit `full-auto` or `autonomous` fallback.
 
 Run modes change autonomy and hard-gate behavior, not the quality floor.
 
@@ -39,7 +45,7 @@ Startup includes a PM-owned activation transaction before child skills,
 imagegen, implementation, route chunks, or completion work. The transaction is
 valid only when the human-like reviewer has personally checked real
 state/frontier/route, current six-role crew ledger, role memory packets,
-continuation, heartbeat, Windows watchdog, global supervisor, and cleanup
+continuation, heartbeat/manual-resume evidence, and cleanup
 evidence for the same active nonterminal route. The reviewer writes a factual
 `.flowpilot/runs/<run-id>/startup_review/latest.json` report and cannot open startup. The PM
 is the only startup opener, writing `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and
@@ -161,8 +167,8 @@ Required early gate:
   recovery/heartbeat, and delivery/showcase quality;
 - user flow diagram before route execution and visible node roadmap before
   formal chunks;
-- host continuation probe, then real heartbeat/watchdog/global-supervisor
-  automation when supported or manual-resume evidence when unsupported;
+- host continuation probe, then real one-minute heartbeat automation when
+  supported or manual-resume evidence when unsupported;
 - FlowGuard process design before route execution;
 - quality package before formal chunks;
 - anti-rough-finish and final matrix reviews before completion closure;
@@ -196,7 +202,11 @@ product FlowGuard officer, worker A, and worker B. The project manager owns
 route, heartbeat-resume runway, PM stop signals, repair, and completion
 decisions. The reviewer inspects; the FlowGuard officers own their models end
 to end by authoring, running, interpreting, and approving or blocking them.
-They do not implement product code.
+They do not implement product code and they do not decide route movement. Their
+reports give the project manager a decision packet: hard blockers,
+PM-review-required hotspots, later-gate replay items, non-risk scope notes,
+toolchain/model improvement suggestions, human walkthrough targets, and the
+confidence boundary of the model result.
 
 The crew is persistent as six roles, and the default formal startup target is
 six live background subagents where the host/tool policy permits them.
@@ -241,3 +251,19 @@ After meaningful PM decisions, reviewer judgements, FlowGuard officer reports,
 or worker sidecar reports, the role's report path and memory packet are both
 updated before checkpoint. Terminal closure archives both the crew ledger and
 role memory status after lifecycle reconciliation.
+
+## Skill Improvement Reports
+
+FlowPilot should learn from its own runs without letting self-maintenance
+interrupt the current project. Nodes, reviews, repairs, and terminal closure
+may expose FlowPilot skill issues such as unclear protocol, weak templates,
+missing report fields, hard-to-find code paths, model/tooling friction, or
+Cockpit display gaps. Those observations are appended to the run-local
+`flowpilot_skill_improvement_observations.jsonl` log.
+
+At terminal closure, the project manager writes
+`flowpilot_skill_improvement_report.json` for later manual maintenance of the
+FlowPilot root repository. The report is required as a record, but its
+observations do not block current project completion and do not require root
+repository fixes inside the current run. If a small FlowPilot weakness affects
+the active project, compensate locally, record the observation, and continue.

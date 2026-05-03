@@ -2,6 +2,8 @@
 
 Date: 2026-05-02
 
+Updated: 2026-05-03
+
 ## Scope
 
 This audit checks whether FlowPilot reviewer gates require direct factual
@@ -12,10 +14,9 @@ review or can be satisfied by reading worker/PM summaries.
 1. Startup activation previously depended on a separate runtime startup check.
    That path is removed. Startup now has only a human-like reviewer factual
    report and a PM-owned startup opening decision. The reviewer must check real
-   state/frontier/route, crew, role memory, automation records, Windows
-   scheduled task evidence, watchdog evidence, global supervisor evidence,
-   background-agent user decision versus actual subagent state, live subagent
-   count plus current-task freshness or explicit single-agent fallback
+   state/frontier/route, crew, role memory, heartbeat or manual-resume
+   evidence, background-agent user decision versus actual subagent state, live
+   subagent count plus current-task freshness or explicit single-agent fallback
    authorization, and cleanup boundary. PM may open only from a clean factual
    report.
 2. Live-subagent review is not a count-only check. For every new formal
@@ -41,18 +42,39 @@ review or can be satisfied by reading worker/PM summaries.
 7. Product-function architecture usefulness challenge wording was too easy to
    read as PM-package-only review. It now requires comparison against the user
    request, inspected materials, and expected workflow reality.
+8. UI screenshot, browser, desktop, interaction, and aesthetic gates had a
+   weaker path: automated screenshot QA or worker interaction logs could be
+   treated as enough evidence if the reviewer wrote only an aesthetic or
+   pass/fail summary. These gates now require reviewer-owned personal
+   walkthrough evidence, reachability checks, overlap/clipping checks,
+   whitespace/density/crowding review, and concrete design recommendations.
+9. The same weakness existed outside UI: some PM, reviewer, and FlowGuard
+   officer approvals could still read as "approve after reviewing the evidence
+   packet." All role approvals now require independent adversarial validation:
+   direct source/state probes, concrete evidence references, failure
+   hypotheses tested, and residual blindspots. Startup PM opening, material
+   sufficiency, product architecture, child-skill manifests, FlowGuard model
+   approvals, node/composite/final human review, final product replay, and
+   final ledger approval are all covered.
 
 ## New Baseline
 
-Reviewer decisions that cite only worker or PM summaries are invalid. Worker
-reports can point to evidence, but reviewer-owned gates must name the direct
-facts checked for the gate.
+Reviewer, PM, and FlowGuard officer decisions that cite only worker, PM, or
+other-role summaries are invalid. Reports can point to evidence, but
+role-owned gates must name the direct facts checked, adversarial hypotheses
+tested, and concrete evidence references used for the decision.
 
 ## Follow-Up Watch Points
 
 - Future reviewer templates should include a `worker_report_only: false` or
   equivalent field when the gate can otherwise be confused with a summary
   review.
+- UI and visual reviewer templates should include
+  `reviewer_personal_walkthrough_done`, direct screenshot/surface paths,
+  interaction paths exercised, unreachable controls, text overlap/clipping,
+  whitespace/density/crowding findings, aesthetic verdict, and design
+  recommendations. A human-review gate should block or request more evidence
+  when the reviewer cannot personally operate the surface.
 - Startup reviewer reports should include `current_task_fresh_agents: true`,
   `reused_historical_agent_ids: []`, and direct evidence paths for current
   agent birth or spawn time when live background agents are authorized.

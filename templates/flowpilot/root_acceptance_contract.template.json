@@ -1,0 +1,61 @@
+{
+  "schema_version": "flowpilot.root_acceptance_contract.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "pm_owned": true,
+  "status": "<draft|approved|blocked|superseded>",
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "source_paths": {
+    "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "contract": ".flowpilot/runs/<run-id>/contract.md",
+    "material_intake_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
+    "pm_material_understanding": ".flowpilot/runs/<run-id>/pm_material_understanding.json"
+  },
+  "scope_rule": "This root contract records only project-level hard requirements, high-risk requirements, and proof obligations that must be preserved across all nodes. Node-local details are added later in node_acceptance_plan files.",
+  "root_requirements": [
+    {
+      "requirement_id": "<requirement-id>",
+      "source": "<user_request|product_function_architecture|material|pm_added_high_risk>",
+      "priority": "<must|should>",
+      "risk_level": "<low|medium|high>",
+      "why_it_matters": "<user-or-product-impact>",
+      "proof_required": "<automated_test|manual_experiment|screenshot|model_replay|artifact_audit|mixed>",
+      "cannot_be_closed_by_report_only": true,
+      "minimum_evidence": [],
+      "standard_scenarios": [],
+      "owner_role": "project_manager",
+      "required_reviewer_or_officer": "<human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>"
+    }
+  ],
+  "proof_matrix": [
+    {
+      "requirement_id": "<requirement-id>",
+      "early_gate": "<startup|pre_contract|route_design|node_entry|final_review>",
+      "must_have_before_implementation": "<true|false>",
+      "expected_node_plan_coverage": "<none|one_or_more_nodes|all_affected_nodes>",
+      "expected_final_replay": true,
+      "evidence_paths": []
+    }
+  ],
+  "standard_scenario_pack": {
+    "required": true,
+    "path": ".flowpilot/runs/<run-id>/standard_scenario_pack.json",
+    "selected_scenario_ids": [],
+    "selection_reason": "<why-these-fixtures-cover-root-high-risks>"
+  },
+  "completion_policy": {
+    "unresolved_residual_risks_allowed": false,
+    "risk_triage_required_before_completion": true,
+    "allowed_completion_notes": [
+      "resolved_issue",
+      "non_risk_scope_note",
+      "explicit_exception_with_required_approval"
+    ]
+  },
+  "approvals": {
+    "project_manager_approval_path": "<path-or-null>",
+    "product_flowguard_officer_modelability_path": "<path-or-null>",
+    "human_like_reviewer_challenge_path": "<path-or-null>"
+  }
+}
