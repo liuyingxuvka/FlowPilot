@@ -13,10 +13,13 @@ Source artifacts:
 - reviewer check: `.flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json`
 
 Render this same graph in chat and in the Cockpit UI. When Cockpit UI is not
-open, the chat Mermaid block is mandatory at startup, key node changes, route
-mutation, review or validation failure returns, completion review, and explicit
-user request. The reviewer must confirm the chat block matches the active
-route/node and shows the return or repair edge when the route goes backward.
+open, the chat Mermaid block is mandatory at startup, every new major
+`flow.json` route-node entry, parent/module or leaf route-node entry, PM
+current-node work brief, legacy key node change, route mutation, review or
+validation failure return, completion review, and explicit user request. A
+generated file or display packet is not visible evidence by itself. The
+reviewer must confirm the chat block matches the active route/node and shows
+the return or repair edge when the route goes backward.
 
 ```mermaid
 flowchart LR

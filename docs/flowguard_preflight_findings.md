@@ -1891,3 +1891,52 @@ post-checkpoint next-node reset.
 The protocol-level invariant is that skill inventory is early descriptive
 material, while child-skill execution requires PM selection and the existing
 child-skill fidelity gates.
+
+### 2026-05-03 Follow-Up - Major Node Route Sign Display
+
+Trigger: the user observed that a real FlowPilot run displayed the route sign
+on the first node but did not keep showing it on later major route-node entry.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- startup display passed, but later ordinary major route-node entry was not
+  classified as a chat-display trigger;
+- `chat_displayed_in_chat` could be treated as true from a generated display
+  packet rather than from the exact Mermaid block appearing in the assistant
+  message;
+- internal subnodes or heartbeat ticks could be confused with major route-node
+  entries.
+
+Protocol and model changes:
+
+- added `major_node_entry`, `parent_node_entry`, `leaf_node_entry`, and
+  `pm_work_brief` as explicit user-flow diagram display triggers;
+- kept `key_node_change` as a legacy alias;
+- clarified that major node means an effective node in the current
+  `flow.json`/mainline, not a current subnode, micro-step, or heartbeat tick;
+- clarified that generated files, Markdown previews, and display packets do
+  not satisfy closed-Cockpit chat display until the Mermaid block is actually
+  pasted in the assistant message;
+- added a `major_node_entry_not_classified` hazard to the user-flow diagram
+  model.
+
+Validation:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python -m py_compile scripts\flowpilot_user_flow_diagram.py simulations\user_flow_diagram_model.py simulations\run_user_flow_diagram_checks.py scripts\check_install.py
+python simulations\run_user_flow_diagram_checks.py
+python scripts\flowpilot_user_flow_diagram.py --root . --trigger major_node_entry --markdown --json
+python scripts\check_install.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+```
+
+Results: FlowGuard import reported schema `1.0`. User-flow diagram checks
+passed with 72 states and 71 edges, all required trigger labels present, and
+the new major-node classification hazard detected. Meta checks passed with
+292707 states and 305707 edges. Capability checks passed with 245702 states and
+258706 edges. No invariant failures, missing labels, stuck states, or
+nonterminating components were reported.

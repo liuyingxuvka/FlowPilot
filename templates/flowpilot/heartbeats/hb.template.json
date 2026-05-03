@@ -71,10 +71,11 @@
   "user_flow_diagram_display_gate": {
     "diagram_kind": "flowpilot_realtime_route_sign",
     "language": "en",
-    "display_trigger": "<startup|key_node_change|route_mutation|review_failure|validation_failure|completion|user_request|null>",
+    "display_trigger": "<startup|major_node_entry|parent_node_entry|leaf_node_entry|pm_work_brief|key_node_change|route_mutation|review_failure|validation_failure|completion|user_request|null>",
     "cockpit_open": false,
     "chat_display_required": false,
     "chat_displayed_in_chat": false,
+    "chat_display_evidence_rule": "Only true after the exact Mermaid block appears in the assistant message.",
     "return_or_repair_edge_present": false,
     "display_packet_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram-display.json",
     "review_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram-review.json",

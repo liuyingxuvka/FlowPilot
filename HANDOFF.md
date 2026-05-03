@@ -52,8 +52,11 @@ model-backed autopilot:
   the local skill inventory and classifies candidate skills as required,
   conditional, deferred, or rejected; child-skill discovery may proceed only
   from PM-selected skills, never from raw local availability.
-- UI projects conditionally route through `concept-led-ui-redesign` and
-  `frontend-design`, followed by rendered screenshot QA and divergence review.
+- UI projects now default to the experimental
+  `autonomous-concept-ui-redesign` child skill, which composes
+  `concept-led-ui-redesign`, `frontend-design`, `design-iterator`,
+  `design-implementation-reviewer`, and geometry/screenshot QA. The older
+  concept-led skill remains available as an internal dependency and fallback.
 - Formal FlowPilot routes now use a persistent six-agent crew: project
   manager, human-like reviewer, process FlowGuard officer, product FlowGuard
   officer, worker A, and worker B. The project manager owns route,
@@ -184,8 +187,11 @@ model-backed autopilot:
 - FlowPilot now has one user-facing flow diagram for both chat and Cockpit UI:
   a 6-8 stage FlowPilot process view with the current stage highlighted. Raw
   FlowGuard Mermaid graphs are diagnostic exports only and are disabled by
-  default. Route or key-node changes make the previous user flow diagram stale
-  until it is refreshed from the rechecked route and execution frontier.
+  default. Startup, each new major `flow.json` route-node entry, parent/module
+  or leaf route-node entry, PM current-node work brief, route mutation, repair
+  return, completion review, and explicit user requests require the chat
+  Mermaid when Cockpit is closed. Generated files or display packets alone do
+  not count as chat display.
 - Crew records now separate `role_key`, `display_name`, and diagnostic-only
   `agent_id` so UI and authority checks do not drift when host agent names or
   handles change.

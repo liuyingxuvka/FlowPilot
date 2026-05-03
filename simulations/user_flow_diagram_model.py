@@ -2,7 +2,8 @@
 
 Risk intent: the user-facing Mermaid route sign must be a visible control
 artifact, not a stale file. When Cockpit UI is not open, chat display is the
-required surface for startup, key node changes, route mutations, review or
+required surface for startup, major route-node entry, parent/module or leaf
+route-node entry, PM current-node work brief, route mutations, review or
 validation returns, completion review, and explicit user requests. A raw
 FlowGuard state graph cannot satisfy this user-facing gate.
 """
@@ -17,6 +18,10 @@ from flowguard import InvariantResult
 
 DISPLAY_TRIGGERS = {
     "startup",
+    "major_node_entry",
+    "parent_node_entry",
+    "leaf_node_entry",
+    "pm_work_brief",
     "key_node_change",
     "route_mutation",
     "review_failure",
@@ -78,6 +83,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.display_trigger == "none":
         for label, trigger, cockpit_open in (
             ("trigger_startup_chat_required", "startup", False),
+            ("trigger_major_node_entry_chat_required", "major_node_entry", False),
+            ("trigger_parent_node_entry_chat_required", "parent_node_entry", False),
+            ("trigger_leaf_node_entry_chat_required", "leaf_node_entry", False),
+            ("trigger_pm_work_brief_chat_required", "pm_work_brief", False),
             ("trigger_key_node_change_chat_required", "key_node_change", False),
             ("trigger_route_mutation_cockpit_open", "route_mutation", True),
             ("trigger_review_failure_chat_required", "review_failure", False),
@@ -149,6 +158,18 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.display_trigger in DISPLAY_TRIGGERS and state.raw_flowguard_graph_used:
         failures.append("raw FlowGuard Mermaid was used as the user-facing route sign")
+    if (
+        state.display_trigger in DISPLAY_TRIGGERS
+        and not state.cockpit_open
+        and not state.chat_display_required
+        and (
+            state.simplified_mermaid_generated
+            or state.reviewer_passed
+            or state.node_work_started
+            or state.node_advanced
+        )
+    ):
+        failures.append("closed-Cockpit display trigger did not require chat Mermaid")
     if state.chat_display_required and (
         state.reviewer_passed or state.node_work_started or state.node_advanced
     ):
@@ -178,7 +199,7 @@ def hazard_states() -> dict[str, State]:
         "chat_required_no_chat": State(
             route_frontier_loaded=True,
             current_node_resolved=True,
-            display_trigger="key_node_change",
+            display_trigger="major_node_entry",
             chat_display_required=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
@@ -249,6 +270,20 @@ def hazard_states() -> dict[str, State]:
             active_node_highlighted=True,
             chat_mermaid_displayed=True,
             node_advanced=True,
+        ),
+        "major_node_entry_not_classified": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="major_node_entry",
+            cockpit_open=False,
+            chat_display_required=False,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            reviewer_checked_display=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+            node_work_started=True,
         ),
         "cockpit_closed_ui_only": State(
             route_frontier_loaded=True,

@@ -192,7 +192,8 @@ Conditional UI gates:
 The first local Cockpit remains a showcase example and progress-view artifact,
 not a global design specification for all FlowPilot-driven UIs. Its default
 progress surface is the same user flow diagram shown in chat, refreshed at
-startup, key node changes, route mutation, completion review, or user request.
+startup, major route-node entry, PM current-node work brief, route mutation,
+completion review, or user request.
 
 ## Persistent Crew And Workers
 

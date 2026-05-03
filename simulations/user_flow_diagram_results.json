@@ -43,7 +43,7 @@
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
           "display_packet_written": false,
-          "display_trigger": "key_node_change",
+          "display_trigger": "major_node_entry",
           "english_flowpilot_labels": true,
           "node_advanced": false,
           "node_work_started": true,
@@ -73,6 +73,34 @@
           "current_node_resolved": true,
           "display_packet_written": false,
           "display_trigger": "startup",
+          "english_flowpilot_labels": true,
+          "node_advanced": false,
+          "node_work_started": true,
+          "raw_flowguard_graph_used": false,
+          "return_edge_present": false,
+          "return_edge_required": false,
+          "reviewer_checked_chat_surface": false,
+          "reviewer_checked_display": true,
+          "reviewer_checked_route_match": true,
+          "reviewer_passed": true,
+          "route_frontier_loaded": true,
+          "simplified_mermaid_generated": true
+        }
+      },
+      "major_node_entry_not_classified": {
+        "detected": true,
+        "failures": [
+          "closed-Cockpit display trigger did not require chat Mermaid"
+        ],
+        "state": {
+          "active_node_highlighted": true,
+          "chat_display_required": false,
+          "chat_mermaid_displayed": false,
+          "cockpit_open": false,
+          "cockpit_route_sign_displayed": false,
+          "current_node_resolved": true,
+          "display_packet_written": false,
+          "display_trigger": "major_node_entry",
           "english_flowpilot_labels": true,
           "node_advanced": false,
           "node_work_started": true,
@@ -208,7 +236,7 @@
   },
   "ok": true,
   "safe_graph": {
-    "edge_count": 47,
+    "edge_count": 71,
     "invariant_failures": [],
     "labels": [
       "chat_mermaid_displayed",
@@ -222,6 +250,10 @@
       "route_frontier_loaded",
       "trigger_completion_chat_required",
       "trigger_key_node_change_chat_required",
+      "trigger_leaf_node_entry_chat_required",
+      "trigger_major_node_entry_chat_required",
+      "trigger_parent_node_entry_chat_required",
+      "trigger_pm_work_brief_chat_required",
       "trigger_review_failure_chat_required",
       "trigger_route_mutation_cockpit_open",
       "trigger_startup_chat_required",
@@ -230,6 +262,6 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 48
+    "state_count": 72
   }
 }

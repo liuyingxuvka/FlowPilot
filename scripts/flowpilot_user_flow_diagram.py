@@ -20,6 +20,10 @@ from flowpilot_paths import resolve_flowpilot_paths
 
 DISPLAY_TRIGGERS = {
     "startup",
+    "major_node_entry",
+    "parent_node_entry",
+    "leaf_node_entry",
+    "pm_work_brief",
     "key_node_change",
     "route_mutation",
     "review_failure",
@@ -432,6 +436,7 @@ def build_chat_markdown(
             f"- Current node: `{active_node or 'unknown'}`",
             f"- Current stage: `{current_stage}`",
             f"- Display gate: {gate_text}",
+            "- Chat evidence: mark displayed only after this exact Mermaid block appears in the assistant message.",
             f"- Return/repair: `{repair_text}`",
             f"- Generated at: `{generated_at}`",
             "",

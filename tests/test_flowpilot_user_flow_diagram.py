@@ -89,6 +89,23 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIn("Now: node-006-final-verification", payload["mermaid"])
         self.assertNotIn("FlowGuard Model<br/>Now", payload["mermaid"])
 
+    def test_major_node_entry_requires_chat_route_sign(self) -> None:
+        root = self.make_project(active_node="node-004-desktop-implementation")
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="major_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        self.assertTrue(payload["chat_display_required"])
+        self.assertIn("Trigger: `major_node_entry`", payload["markdown"])
+        self.assertIn("mark displayed only after this exact Mermaid block appears", payload["markdown"])
+
     def test_review_failure_shows_return_edge_and_passes_when_chat_displayed(self) -> None:
         root = self.make_project(
             active_node="node-004-desktop-implementation",
