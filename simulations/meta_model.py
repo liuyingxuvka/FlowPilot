@@ -126,6 +126,7 @@ class State:
     user_flow_diagram_return_edge_present: bool = False
     user_flow_diagram_reviewer_display_checked: bool = False
     user_flow_diagram_reviewer_route_match_checked: bool = False
+    user_flow_diagram_fresh_for_current_node: bool = False
     raw_flowguard_mermaid_used_as_user_flow: bool = False
     dependency_plan_recorded: bool = False
     future_installs_deferred: bool = False
@@ -417,6 +418,21 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
     }
 
 
+def _reset_user_flow_diagram_gate() -> dict[str, object]:
+    return {
+        "visible_user_flow_diagram_emitted": False,
+        "user_flow_diagram_refreshed": False,
+        "user_flow_diagram_chat_display_required": False,
+        "user_flow_diagram_chat_displayed": False,
+        "user_flow_diagram_return_edge_required": False,
+        "user_flow_diagram_return_edge_present": False,
+        "user_flow_diagram_reviewer_display_checked": False,
+        "user_flow_diagram_reviewer_route_match_checked": False,
+        "user_flow_diagram_fresh_for_current_node": False,
+        "raw_flowguard_mermaid_used_as_user_flow": False,
+    }
+
+
 def _reset_execution_scope_gates() -> dict[str, object]:
     gates = _reset_quality_gates()
     gates.update(_reset_dual_layer_scope_gates())
@@ -665,6 +681,7 @@ def _user_flow_display_gate_passed(state: State) -> bool:
         )
         and state.user_flow_diagram_reviewer_display_checked
         and state.user_flow_diagram_reviewer_route_match_checked
+        and state.user_flow_diagram_fresh_for_current_node
     )
 
 
@@ -857,6 +874,7 @@ class AutopilotStep:
         "user_flow_diagram_return_edge_present",
         "user_flow_diagram_reviewer_display_checked",
         "user_flow_diagram_reviewer_route_match_checked",
+        "user_flow_diagram_fresh_for_current_node",
         "raw_flowguard_mermaid_used_as_user_flow",
         "dependency_plan_recorded",
         "future_installs_deferred",
@@ -1115,6 +1133,7 @@ class AutopilotStep:
         "user_flow_diagram_return_edge_present",
         "user_flow_diagram_reviewer_display_checked",
         "user_flow_diagram_reviewer_route_match_checked",
+        "user_flow_diagram_fresh_for_current_node",
         "raw_flowguard_mermaid_used_as_user_flow",
         "dependency_plan_recorded",
         "future_installs_deferred",
@@ -2372,6 +2391,7 @@ class AutopilotStep:
                 user_flow_diagram_return_edge_present=state.user_flow_diagram_return_edge_required,
                 user_flow_diagram_reviewer_display_checked=False,
                 user_flow_diagram_reviewer_route_match_checked=False,
+                user_flow_diagram_fresh_for_current_node=False,
                 active_node="resolve_live_subagent_startup",
             )
             return
@@ -2388,6 +2408,7 @@ class AutopilotStep:
                 action="human-like reviewer checks the visible chat Mermaid route sign, active route/node match, and return-for-repair edge before route progress",
                 user_flow_diagram_reviewer_display_checked=True,
                 user_flow_diagram_reviewer_route_match_checked=True,
+                user_flow_diagram_fresh_for_current_node=True,
                 active_node="resolve_live_subagent_startup",
             )
             return
@@ -3220,7 +3241,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="checkpoint_written",
-                action="write verified checkpoint",
+                action="write verified checkpoint; when another route node remains, invalidate old route-sign display evidence before the next node entry",
                 checkpoint_written=True,
                 chunk_state="none",
                 heartbeat_health_checked=False,
@@ -3236,9 +3257,14 @@ class AutopilotStep:
                 node_visible_roadmap_emitted=False,
                 parent_subtree_review_checked=False,
                 unfinished_current_node_recovery_checked=False,
-                active_node="ready_for_chunk"
+                active_node="refresh_user_flow_diagram"
                 if state.completed_chunks < state.required_chunks
                 else "ready_to_complete",
+                **(
+                    _reset_user_flow_diagram_gate()
+                    if state.completed_chunks < state.required_chunks
+                    else {}
+                ),
                 **_reset_execution_scope_gates(),
             )
             return
@@ -5383,6 +5409,19 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def next_route_node_requires_fresh_route_sign(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.node_acceptance_plan_written
+        and 0 < state.completed_chunks < state.required_chunks
+        and not state.user_flow_diagram_fresh_for_current_node
+    ):
+        return InvariantResult.fail(
+            "next route-node acceptance plan reused stale FlowPilot Route Sign display evidence"
+        )
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="no_completion_before_verified_contract",
@@ -5443,6 +5482,11 @@ INVARIANTS = (
         name="route_updates_force_recheck_and_resync",
         description="A changed route must be FlowGuard-checked and summarized before more work.",
         predicate=route_updates_force_recheck_and_resync,
+    ),
+    Invariant(
+        name="next_route_node_requires_fresh_route_sign",
+        description="A new route-node entry must refresh and visibly display its own FlowPilot Route Sign.",
+        predicate=next_route_node_requires_fresh_route_sign,
     ),
     Invariant(
         name="stable_heartbeat_prompt_not_route_state",

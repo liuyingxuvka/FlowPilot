@@ -106,6 +106,40 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIn("Trigger: `major_node_entry`", payload["markdown"])
         self.assertIn("mark displayed only after this exact Mermaid block appears", payload["markdown"])
 
+    def test_active_run_and_current_node_aliases_resolve_current_route(self) -> None:
+        root = self.make_project(active_node="node-004-desktop-implementation")
+        current_path = root / ".flowpilot" / "current.json"
+        current_path.write_text(
+            json.dumps(
+                {
+                    "active_run_id": "run-test",
+                    "active_route_id": "route-001",
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        frontier_path = root / ".flowpilot" / "runs" / "run-test" / "execution_frontier.json"
+        frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
+        frontier["route_id"] = frontier.pop("active_route")
+        frontier["current_node"] = frontier.pop("active_node")
+        frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="major_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        self.assertEqual(payload["run_id"], "run-test")
+        self.assertEqual(payload["active_route"], "route-001")
+        self.assertEqual(payload["active_node"], "node-004-desktop-implementation")
+        self.assertIn("node-004-desktop-implementation", payload["mermaid"])
+
     def test_review_failure_shows_return_edge_and_passes_when_chat_displayed(self) -> None:
         root = self.make_project(
             active_node="node-004-desktop-implementation",

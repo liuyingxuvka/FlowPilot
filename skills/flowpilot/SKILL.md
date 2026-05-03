@@ -606,7 +606,17 @@ early without pretending to know every future node's implementation detail.
 ## Node Acceptance Plans
 
 At each active node entry, before implementation work, child-skill execution,
-or node checkpoint, the project manager writes a node acceptance plan:
+child-skill execution, focused grill-me, quality package work, or node
+checkpoint, FlowPilot must first refresh and visibly display the current-node
+FlowPilot Route Sign from the active `flow.json` and `execution_frontier.json`.
+Use `major_node_entry` for ordinary major route nodes, `parent_node_entry` for
+parent/module entry, `leaf_node_entry` for leaf entry, and `pm_work_brief` when
+the PM issues the current-node work brief. When Cockpit UI is closed or not
+proven visible, paste the chat-ready Mermaid block before any tool call or file
+edit for that node. Generated diagram files alone do not satisfy node entry.
+
+After the visible route-sign gate passes, the project manager writes a node
+acceptance plan:
 `.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/node_acceptance_plan.json`.
 
 The node plan maps inherited root high-risk requirements, node-local
@@ -1569,7 +1579,8 @@ visibility, and validation.
 At each parent/module or leaf-node entry, use this sequence:
 
 ```text
-enter parent or node -> focused grill-me -> quality package
+enter parent or node -> refresh and visibly display FlowPilot Route Sign
+-> focused grill-me -> quality package
 -> FlowGuard or route check -> execute chunk -> verify -> checkpoint
 ```
 

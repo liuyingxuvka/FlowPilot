@@ -110,8 +110,34 @@ def _route_mutation_pending(frontier: dict[str, Any]) -> bool:
     return bool(route_mutation.get("pending") or failed_review.get("blocking"))
 
 
+def _active_route(frontier: dict[str, Any], state: dict[str, Any], route: dict[str, Any] | None = None) -> str | None:
+    route = route or {}
+    value = (
+        frontier.get("active_route")
+        or frontier.get("route_id")
+        or state.get("active_route")
+        or state.get("route_id")
+        or route.get("route_id")
+    )
+    return str(value) if value else None
+
+
+def _active_node(frontier: dict[str, Any], state: dict[str, Any] | None = None, route: dict[str, Any] | None = None) -> str | None:
+    state = state or {}
+    route = route or {}
+    value = (
+        frontier.get("active_node")
+        or frontier.get("current_node")
+        or state.get("active_node")
+        or state.get("current_node")
+        or route.get("active_node")
+        or route.get("current_node")
+    )
+    return str(value) if value else None
+
+
 def classify_current_stage(frontier: dict[str, Any], route: dict[str, Any]) -> str:
-    active_node = frontier.get("active_node") or route.get("active_node")
+    active_node = _active_node(frontier, route=route)
     status = _normalize(frontier.get("status"))
     route_status = _normalize(route.get("status"))
     route_mutation = frontier.get("route_mutation") or {}
@@ -259,7 +285,7 @@ def _build_route_node_mermaid(
     active_node: str | None,
     return_path: dict[str, Any],
 ) -> str:
-    active_route = frontier.get("active_route") or route.get("route_id") or "unknown route"
+    active_route = _active_route(frontier, {}, route) or "unknown route"
     route_version = frontier.get("route_version") or route.get("route_version") or "unknown"
     node_ids = [str(node.get("id")) for node in nodes]
     mermaid_ids = {node_id: f"n{index + 1:02d}" for index, node_id in enumerate(node_ids)}
@@ -331,7 +357,7 @@ def _build_stage_mermaid(
     active_node: str | None,
     return_path: dict[str, Any],
 ) -> str:
-    active_route = frontier.get("active_route") or route.get("route_id") or "unknown route"
+    active_route = _active_route(frontier, {}, route) or "unknown route"
     route_version = frontier.get("route_version") or route.get("route_version") or "unknown"
     lines = [
         "flowchart LR",
@@ -378,7 +404,7 @@ def build_mermaid(
     current_stage: str,
     trigger: str,
 ) -> tuple[str, dict[str, Any]]:
-    active_node = frontier.get("active_node") or route.get("active_node")
+    active_node = _active_node(frontier, route=route)
     nodes = _route_nodes(frontier, route)
     return_path = detect_return_path(
         frontier=frontier,
@@ -503,7 +529,7 @@ def generate(
     frontier_path = Path(paths["frontier_path"])
     frontier = _load_json(frontier_path)
     state = _load_json(Path(paths["state_path"]))
-    active_route = frontier.get("active_route") or state.get("active_route")
+    active_route = _active_route(frontier, state)
     route_path = Path(paths["routes_root"]) / str(active_route or "route-001") / "flow.json"
     route = _load_json(route_path)
     current_stage = classify_current_stage(frontier, route)
@@ -514,7 +540,8 @@ def generate(
         current_stage=current_stage,
         trigger=trigger,
     )
-    active_node = frontier.get("active_node") or route.get("active_node")
+    active_route = _active_route(frontier, state, route)
+    active_node = _active_node(frontier, state, route)
     chat_display_required = trigger in DISPLAY_TRIGGERS and not cockpit_open
     markdown = build_chat_markdown(
         source,

@@ -334,7 +334,16 @@ and required standard scenario selection exist.
 
 ## Node Acceptance Plans
 
-At active node entry, the project manager writes
+At active node entry, FlowPilot first refreshes and visibly displays the
+current-node FlowPilot Route Sign from the active `flow.json` and
+`execution_frontier.json`. Use `major_node_entry` for ordinary major route
+nodes, `parent_node_entry` for parent/module entry, `leaf_node_entry` for leaf
+entry, and `pm_work_brief` when the PM issues the current-node work brief. When
+Cockpit UI is closed or not proven visible, paste the chat-ready Mermaid block
+before any tool call or file edit for that node. Generated diagram files alone
+do not satisfy node entry.
+
+After the visible route-sign gate passes, the project manager writes
 `.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/node_acceptance_plan.json`.
 The plan maps inherited root high-risk requirements, node-local obligations,
 experiments, checks, fixtures, screenshots, model replays, standard scenarios,
@@ -929,8 +938,9 @@ readiness has been checked (automated heartbeat health or manual-resume
 freshness), focused
 parent-scope grill-me, parent-subtree FlowGuard review, focused node-level
 grill-me, and the lightweight continuation self-check are complete. No formal
-chunk may start until the user flow diagram and current node roadmap have been
-shown in chat.
+chunk may start until the fresh current-node FlowPilot Route Sign and current
+node roadmap have been shown in chat or, when Cockpit is the primary surface,
+visibly confirmed in Cockpit.
 No formal chunk may start until `.flowpilot/runs/<run-id>/execution_frontier.json` matches
 the active route version and the visible Codex plan has been synced from that
 frontier.
@@ -948,7 +958,8 @@ active leaf product-function model have been checked.
 Before formal execution, run the reusable quality package:
 
 ```text
-enter parent or node -> focused grill-me -> quality package
+enter parent or node -> refresh and visibly display FlowPilot Route Sign
+-> focused grill-me -> quality package
 -> FlowGuard/route check -> execute chunk -> verify -> checkpoint
 ```
 

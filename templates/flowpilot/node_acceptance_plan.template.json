@@ -12,9 +12,22 @@
     "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
     "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
     "route_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
-    "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json"
+    "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "route_sign_display_packet": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
+    "route_sign_review": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
   },
-  "purpose": "Written at node entry. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
+  "purpose": "Written at node entry after the current-node FlowPilot Route Sign has been refreshed and visibly displayed. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
+  "route_sign_entry_gate": {
+    "required_before_plan_approval": true,
+    "trigger": "<major_node_entry|parent_node_entry|leaf_node_entry|pm_work_brief>",
+    "current_node_in_route_sign": "<node-id>",
+    "chat_mermaid_displayed_when_cockpit_closed": false,
+    "cockpit_displayed_when_used_as_primary_surface": false,
+    "reviewer_confirmed_visible_display": false,
+    "reviewer_confirmed_route_and_node_match": false,
+    "display_packet_path": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
+    "review_path": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
+  },
   "node_structure": {
     "node_kind": "<leaf|parent|composite>",
     "has_children": "<true|false>",

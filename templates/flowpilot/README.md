@@ -72,9 +72,11 @@ for review.
    an invoked child skill, and require assigned-role approval before the
    parent node resumes.
 23. Run child-skill conformance checks when a node invokes another skill.
-24. Before each implementation-bearing node or formal route chunk, write that
+24. Before each implementation-bearing node or formal route chunk, refresh and
+   visibly display the current-node FlowPilot Route Sign, then write that
    node's `node_acceptance_plan.json` with root mappings, risk hypotheses,
-   concrete experiments, evidence paths, and terminal replay obligations.
+   concrete experiments, evidence paths, route-sign display proof, and
+   terminal replay obligations.
 25. Before any parent/composite node closes, write
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the

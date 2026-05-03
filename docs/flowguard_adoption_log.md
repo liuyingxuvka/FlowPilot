@@ -1331,3 +1331,44 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Start the next FlowPilot desktop UI task from a fresh run; verify the run creates defect/evidence ledgers and a live improvement report before design or implementation begins.
+
+## FlowPilot Route Sign Node Entry Freshness
+
+- Task ID: `flowpilot-route-sign-node-entry-freshness-20260503`
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-03T22:20:00+02:00
+- Ended: 2026-05-03T22:55:00+02:00
+- Commands OK: true
+
+### Model Files
+- `simulations/meta_model.py`
+- `simulations/user_flow_diagram_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile scripts\flowpilot_paths.py scripts\flowpilot_user_flow_diagram.py simulations\meta_model.py`
+- OK: `python -m unittest discover -s tests`: 10 tests
+- OK: `python simulations\run_user_flow_diagram_checks.py`: 72 states, 71 edges, no invariant failures
+- OK: `python simulations\run_meta_checks.py`: 506342 states, 526510 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --check --json`: installed FlowPilot source digest matched repository source digest
+- OK with warnings: `git diff --check` reported only CRLF normalization warnings
+
+### Findings
+- The repeated display failure had three causes: the concrete node-entry sequence did not call the route-sign display gate, the model allowed stale first-node display evidence to survive into later nodes, and the diagram path resolver did not understand active-run fields such as `active_run_id`, `route_id`, and `current_node`.
+- Node entry now requires refreshing and visibly displaying the current-node FlowPilot Route Sign before focused grill-me, quality package work, node acceptance planning, child-skill execution, implementation, or checkpoint.
+- The meta model now tracks `user_flow_diagram_fresh_for_current_node`; a later node cannot write its node acceptance plan using a stale route sign from an earlier node.
+- The active-run alias fix was verified against the current `.flowpilot/current.json` layout and produced a route sign for `route-001` / `N2_CONCEPT` instead of `unknown`.
+
+### Counterexamples
+- The first meta-model attempt intentionally failed by detecting stale route-sign evidence, but it was too broad and also rejected valid intermediate states where the next node was in the middle of refreshing the route sign. The invariant was narrowed to the node acceptance plan boundary and backed by a fresh-current-node flag.
+
+### Friction Points
+- The active run had no `diagrams/` directory and no later-node display record, proving that previous fixes added trigger vocabulary but did not force the actual invocation path.
+
+### Skipped Steps
+- No new UI work was performed. The fix is limited to FlowPilot protocol, route-sign generation, templates, model checks, tests, and installed skill synchronization.
+
+### Next Actions
+- On the next FlowPilot invocation or resume, verify that entering a major route node displays the current-node Mermaid route sign before any node work starts when Cockpit is not visibly open.

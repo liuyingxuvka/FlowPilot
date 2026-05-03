@@ -320,10 +320,19 @@ node acceptance plans.
 
 ## Node Acceptance Plans
 
-Before a formal route chunk or implementation-bearing node starts, the project
-manager writes the node's `node_acceptance_plan.json`. It maps the current node
-to the root acceptance contract, child-skill gates, risk hypotheses, concrete
-experiments or manual walkthroughs, required evidence, and required approver.
+Before a formal route chunk or implementation-bearing node starts, FlowPilot
+first refreshes and visibly displays the current-node FlowPilot Route Sign from
+the active `flow.json` and `execution_frontier.json`. Use `major_node_entry` for
+ordinary major route nodes, `parent_node_entry` for parent/module entry,
+`leaf_node_entry` for leaf entry, and `pm_work_brief` when the PM issues the
+current-node work brief. When Cockpit UI is closed or not proven visible, paste
+the chat-ready Mermaid block before any tool call or file edit for that node.
+Generated diagram files alone do not satisfy node entry.
+
+After the visible route-sign gate passes, the project manager writes the node's
+`node_acceptance_plan.json`. It maps the current node to the root acceptance
+contract, child-skill gates, risk hypotheses, concrete experiments or manual
+walkthroughs, required evidence, and required approver.
 
 The plan is intentionally node-local. It must not explode every future route
 obligation up front, but every current-node requirement, known risk, and
@@ -777,8 +786,8 @@ Required:
   feature decisions, display rationale, missing-feature review, negative
   scope, product officer modelability approval, and reviewer usefulness
   challenge;
-- user flow diagram before route execution and visible node roadmap before
-  formal chunks;
+- user flow diagram before route execution, fresh FlowPilot Route Sign display
+  at each current-node entry, and visible node roadmap before formal chunks;
 - continuation readiness before behavior-bearing work: real one-minute route
   heartbeat schedule and heartbeat health when supported, or manual-resume
   packet freshness when unsupported;

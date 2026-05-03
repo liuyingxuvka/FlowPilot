@@ -40,11 +40,11 @@ def resolve_flowpilot_paths(project_root: Path) -> dict[str, Any]:
     index_path = flowpilot_root / "index.json"
     current = read_json_if_exists(current_path)
 
-    run_id = current.get("current_run_id") or current.get("run_id")
+    run_id = current.get("current_run_id") or current.get("active_run_id") or current.get("run_id")
     run_root = _resolve_under_project(
         root,
         flowpilot_root,
-        current.get("current_run_root") or current.get("run_root"),
+        current.get("current_run_root") or current.get("active_run_root") or current.get("run_root"),
     )
     if run_root is None and run_id:
         run_root = flowpilot_root / "runs" / str(run_id)

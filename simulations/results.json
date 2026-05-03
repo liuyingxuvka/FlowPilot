@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 522670,
+    "edge_count": 526510,
     "invariant_failures": [],
     "labels": [
       "anti_rough_finish_found_rework",
@@ -243,29 +243,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 502502,
+    "state_count": 506342,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 522670,
+    "edge_count": 526510,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 502502,
+    "state_count": 506342,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 522670,
+    "edge_count": 526510,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 502502,
+    "state_count": 506342,
     "status": "OK",
     "success_state_count": 1280
   }
