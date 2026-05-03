@@ -25,7 +25,10 @@ long-form public explanation lives in `docs/protocol.md`.
 5. Create or load `.flowpilot/`, allocate a fresh `run_id`, create
    `.flowpilot/runs/<run-id>/`, write `.flowpilot/current.json`, and update
    `.flowpilot/index.json`. These top-level files are only pointers/catalogs.
-   Current control state must live under the run directory. Continuing prior
+   Current control state must live under the run directory. The active-run
+   resolver is authoritative: read `.flowpilot/current.json`, then load
+   `.flowpilot/runs/<run-id>/`. Old top-level state files are legacy evidence
+   only and must not silently override an active run. Continuing prior
    work still creates a new run and writes a
    `.flowpilot/runs/<run-id>/prior_work_import_packet.json`; old state,
    routes, agent IDs, screenshots, icons, or evidence may be referenced as
@@ -366,10 +369,12 @@ Every formal run initializes
 `.flowpilot/runs/<run-id>/defects/defect_ledger.json`,
 `.flowpilot/runs/<run-id>/defects/defect_events.jsonl`,
 `.flowpilot/runs/<run-id>/evidence/evidence_ledger.json`, and
-`.flowpilot/runs/<run-id>/evidence/evidence_events.jsonl` before review,
-repair, pause, or terminal closure. Any discovering role writes the first
-defect event. PM triages severity, owner, route impact, and close condition.
-Same-class reviewer/officer recheck is required before PM closes a blocker.
+`.flowpilot/runs/<run-id>/evidence/evidence_events.jsonl`,
+`.flowpilot/runs/<run-id>/generated_resource_ledger.json`, and
+`.flowpilot/runs/<run-id>/activity_stream.jsonl` before review, repair, pause,
+or terminal closure. Any discovering role writes the first defect event. PM
+triages severity, owner, route impact, and close condition. Same-class
+reviewer/officer recheck is required before PM closes a blocker.
 
 Blocking defect flow:
 
@@ -384,6 +389,20 @@ source kind `live_project`, `fixture`, `synthetic`, `historical`, or
 `generated_concept`. Fixture evidence may prove capability but must be
 disclosed separately from live-project proof. Invalid or stale evidence cannot
 close a current gate.
+
+Every generated concept, image, icon, screenshot, diagram, model output, or
+similar resource is registered in the generated resource ledger immediately
+when created. Each item records origin, path, owning node or gate, and one
+disposition: `selected`, `used`, `superseded`, `discarded`, `deleted`, or
+`quarantined`. Terminal completion may only close after every generated
+resource has a current disposition and reason.
+
+The activity stream is append-only. PM decisions, reviewer holds/releases and
+reports, officer modeling actions, worker reports, route mutations, checkpoint
+writes, heartbeat/manual-resume actions, and terminal closure events append
+progress records as they happen. Cockpit and chat progress displays read from
+this stream plus current route/frontier state, so users see progress without
+manual refresh or ad hoc status reconstruction.
 
 ## Parent Backward Replay
 
@@ -442,6 +461,14 @@ counts, invariant results, missing labels, counterexamples, and blindspots.
 An approval without this evidence is pending or blocked. PM cannot launder a
 report-only reviewer/officer pass; the correct role must recheck the gate.
 
+The project manager owns reviewer timing. Before worker or main-executor work
+that will later need review, the PM writes a review hold instruction naming the
+expected gate and saying the reviewer waits. After worker output,
+verification, and anti-rough-finish evidence are ready, the PM writes a review
+release order naming the gate, evidence paths, scope, and required
+inspections. Reviewer work before that release is precheck only: it may note
+risks for PM, but it cannot open, close, or block the gate.
+
 ## Reviewer Fact-Check Baseline
 
 The human-like reviewer is a factual reviewer, not a report reader. For every
@@ -480,14 +507,20 @@ Repeat until complete or blocked:
    `.flowpilot/runs/<run-id>/crew_memory/`, active route,
    active node, continuation mode, last heartbeat or manual-resume record,
    lifecycle evidence, and last checkpoint.
-2. Rehydrate the six-agent crew before PM runway work. Stored agent ids may be
-   resumed only when they belong to the same active FlowPilot task-born cohort.
-   A new formal FlowPilot task must create fresh live subagents instead of
-   resuming prior-route IDs. If live agents are unavailable, ask for the
-   missing startup/fallback decision before replacing roles from memory.
-   Record resumed, replaced, seeded, blocked, and unavailable roles. Live
-   background agents are the default startup target; role continuity through
-   persisted memory is allowed only after explicit fallback approval.
+   `.flowpilot/current.json` to `.flowpilot/runs/<run-id>/` is authoritative;
+   top-level legacy state is import or quarantine evidence only and must not
+   override the active run.
+2. Rehydrate all six role identities and work memories before PM runway work.
+   Stored agent ids may be resumed only when they belong to the same active
+   FlowPilot task-born cohort. A new formal FlowPilot task must create fresh
+   live subagents instead of resuming prior-route IDs. If live agents are
+   unavailable, ask for the missing startup/fallback decision before replacing
+   roles from memory. Record resumed, replaced, seeded, blocked, and
+   unavailable roles in a crew rehydration report covering project manager,
+   reviewer, process FlowGuard officer, product FlowGuard officer, worker A,
+   and worker B. Do not lazily rehydrate a role only when it is first needed.
+   Live background agents are the default startup target; role continuity
+   through persisted memory is allowed only after explicit fallback approval.
 3. Ask the rehydrated project manager for a completion-oriented runway from
    the current position to project completion. The runway names the current
    gate, downstream steps, hard-stop conditions, checkpoint cadence, and any PM
@@ -512,7 +545,10 @@ Repeat until complete or blocked:
 6. Confirm no hard gate, issue branch, or unmerged sidecar worker work is open.
 7. Confirm automated heartbeat health when supported, or manual-resume
    state/checkpoint freshness when unsupported, then confirm
-   unfinished-current-node recovery state.
+   unfinished-current-node recovery state. Continuation evidence records host
+   kind (`codex_heartbeat_automation`, `windows_scheduled_task`,
+   `manual_resume`, or `blocked_unsupported`) and the exact host evidence
+   source.
 8. Run focused parent-scope grill-me, then rerun the current parent node's
    FlowGuard process model against its existing child subtree and rerun the
    parent product-function model before entering child work.
@@ -818,7 +854,8 @@ Required:
 - PM-owned final route-wide gate ledger before terminal completion. The PM
   rebuilds it from the current route and execution frontier, resolves effective
   and superseded nodes, collects child-skill, human-review, product-model, and
-  process-model gates, resolves generated-resource lineage, checks stale
+  process-model gates, resolves generated-resource lineage with dispositions
+  `selected`, `used`, `superseded`, `discarded`, `deleted`, or `quarantined`, checks stale
   evidence, replays the standard scenario pack and node-risk scenarios, triages
   every risk or blindspot, records zero unresolved current obligations and zero
   unresolved residual risks, builds a terminal human backward replay map,

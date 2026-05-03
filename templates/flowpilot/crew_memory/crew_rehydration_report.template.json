@@ -1,0 +1,62 @@
+{
+  "schema_version": "flowpilot.crew_rehydration_report.v1",
+  "run_id": "<run-id>",
+  "run_root": ".flowpilot/runs/<run-id>",
+  "route_id": "<route-id>",
+  "frontier_path": ".flowpilot/runs/<run-id>/execution_frontier.json",
+  "crew_ledger_path": ".flowpilot/runs/<run-id>/crew_ledger.json",
+  "crew_memory_root": ".flowpilot/runs/<run-id>/crew_memory",
+  "recorded_at": "<iso-8601-timestamp>",
+  "recorded_by_role": "<main_executor|project_manager>",
+  "status": "<not_started|passed|blocked|partial>",
+  "required_roles": [
+    "project_manager",
+    "human_like_reviewer",
+    "process_flowguard_officer",
+    "product_flowguard_officer",
+    "worker_a",
+    "worker_b"
+  ],
+  "policy": {
+    "role_continuity_required": true,
+    "same_task_agent_id_resume_only": true,
+    "historical_agent_ids_are_audit_history_only": true,
+    "replacement_must_be_seeded_from_memory": true,
+    "pm_runway_request_blocked_until_passed": true
+  },
+  "inputs_checked": {
+    "state_loaded": false,
+    "frontier_loaded": false,
+    "crew_ledger_loaded": false,
+    "role_memory_packets_loaded": 0,
+    "role_memory_schema_checked": false,
+    "current_task_agent_freshness_checked": false,
+    "historical_agent_ids_compared": false
+  },
+  "role_results": [
+    {
+      "role_key": "<role-key>",
+      "display_name": "<display-name>",
+      "memory_path": ".flowpilot/runs/<run-id>/crew_memory/<role-key>.json",
+      "previous_agent_id": "<agent-id-or-null>",
+      "result": "<resumed_same_task_agent|spawned_fresh_for_task|replaced_from_memory|blocked|not_needed>",
+      "new_agent_id": "<agent-id-or-null>",
+      "same_task_agent_id": "<true|false|null>",
+      "historical_agent_id_reused": false,
+      "seeded_from_memory": false,
+      "blocker": "<blocker-or-null>",
+      "evidence_path": "<path-or-null>"
+    }
+  ],
+  "summary": {
+    "roles_required": 6,
+    "roles_rehydrated": 0,
+    "roles_replaced_from_memory": 0,
+    "roles_blocked": 0,
+    "all_replacements_seeded_from_memory": false,
+    "six_agent_crew_restored": false,
+    "six_agent_crew_rehydrated": false,
+    "pm_runway_request_allowed": false
+  },
+  "blocking_findings": []
+}

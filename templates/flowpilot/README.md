@@ -12,7 +12,9 @@ for review.
 2. Create a new run directory under `.flowpilot/runs/<run-id>/` for every new
    formal FlowPilot invocation. The top level keeps only thin catalog files:
    `current.json` points at the active run, and `index.json` lists all runs for
-   Cockpit tabs and audit lookup.
+   Cockpit tabs and audit lookup. Resolve the active run from
+   `current.json -> runs/<run-id>`; old top-level state files are legacy
+   evidence only and must not override the active run.
 3. Copy run-scoped templates into the new run directory and replace template
    placeholders such as `<project-name>`, `<task-summary>`, `<run-id>`, and
    `<continues-from-run-id>`.
@@ -77,6 +79,11 @@ for review.
    node's `node_acceptance_plan.json` with root mappings, risk hypotheses,
    concrete experiments, evidence paths, route-sign display proof, and
    terminal replay obligations.
+   PM owns reviewer timing: write a review hold before worker/main-executor
+   work, then after worker output, verification, and anti-rough-finish evidence
+   are ready, write a review release naming gate, evidence paths, scope, and
+   required inspections. Early reviewer work is precheck only and cannot open
+   or block the gate.
 25. Before any parent/composite node closes, write
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the
@@ -87,7 +94,9 @@ for review.
    the user selected manual resume, record `manual-resume` and do not create
    heartbeat automation. If automated continuation was authorized but setup is
    unsupported or fails, stop for a new user decision instead of silently
-   switching to manual resume.
+   switching to manual resume. Continuation evidence records host kind
+   (`codex_heartbeat_automation`, `windows_scheduled_task`, `manual_resume`, or
+   `blocked_unsupported`) and the exact host evidence source.
 27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
    syncing the visible Codex plan or advancing work. Each PM resume decision
    records a completion-oriented runway and the main executor replaces the
@@ -116,10 +125,15 @@ for review.
    record with neither live agents nor explicit fallback authorization, or
    missing requested old-route cleanup is blocked and must be repaired before
    continuing.
+   Before PM runway work on heartbeat or manual resume, restore all six role
+   identities and work memories from `crew_ledger.json` and `crew_memory/`,
+   then write a crew rehydration report. Do not lazily rehydrate roles only
+   when first needed.
 29. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
-   collect all effective node gates and child-skill gates, resolve generated
-   resource lineage, replay the standard scenario pack plus node-risk
+   collect all effective node gates and child-skill gates, resolve every
+   generated resource with disposition `selected`, `used`, `superseded`,
+   `discarded`, `deleted`, or `quarantined`, replay the standard scenario pack plus node-risk
    scenarios, triage every risk or blindspot, check stale evidence and
    superseded-node explanations, build `terminal_human_backward_replay_map.json`,
    require the reviewer to start from the delivered product and manually replay
@@ -129,8 +143,9 @@ for review.
 29. Run `terminal_closure_suite.json` so state/frontier/ledger/checkpoints,
    lifecycle evidence, role memory, and final report readiness are refreshed
    before the terminal completion notice.
-30. Update heartbeats, role memory packets, node reports, and checkpoints
-   after verified progress.
+30. Update heartbeats, role memory packets, node reports, checkpoints, and the
+   append-only activity stream after verified progress. Cockpit and chat
+   progress read from activity events plus current route/frontier state.
 31. At each node or meaningful review boundary, append any FlowPilot skill
    issue or improvement observation to
    `flowpilot_skill_improvement_observations.jsonl`. Observations are about
@@ -163,6 +178,9 @@ for review.
 - `crew_memory/role_memory.template.json`: compact per-role recovery memory
   packet used to resume or replace unavailable subagents after heartbeat or
   manual resume.
+- `crew_memory/crew_rehydration_report.template.json`: resume-time all-role recovery report
+  proving project manager, reviewer, both FlowGuard officers, and both workers
+  were restored from ledger and role memory before PM runway work.
 - `material_intake_packet.template.json`: main-executor material inventory,
   local skill and host capability inventory, and source-quality packet
   reviewed before PM planning.
@@ -212,6 +230,13 @@ for review.
 - `evidence/evidence_event.template.json`: append-only evidence event shape
   used when evidence is registered, invalidated, marked stale, superseded, or
   linked to a defect.
+- `generated_resource_ledger.template.json`: immediate registry for
+  every generated concept, image, icon, screenshot, diagram, model output, or
+  similar resource, with disposition `selected`, `used`, `superseded`,
+  `discarded`, `deleted`, or `quarantined`.
+- `activity_stream.template.json`: append-only progress stream for PM,
+  reviewer, officer, worker, route, checkpoint, heartbeat/manual-resume, and
+  terminal events consumed by Cockpit/chat progress.
 - `pause_snapshot.template.json`: controlled-pause snapshot with current
   route/node, blockers, pending rechecks, evidence caveats, heartbeat/agent
   lifecycle, and cleanup boundary for fresh restarts.
@@ -246,8 +271,8 @@ for review.
 - `parent_backward_replay.template.json`: local parent/composite replay report
   copied into every structurally required parent node before closure.
 - `heartbeats/hb.template.json`: heartbeat/manual-resume evidence shell,
-  including continuation readiness, controlled-stop notice fields, and the
-  latest route-sign display gate state.
+  including continuation readiness, host kind, exact host evidence source,
+  controlled-stop notice fields, and the latest route-sign display gate state.
 - `diagrams/user-flow-diagram.template.mmd`: simplified English Mermaid
   FlowPilot Route Sign source for both chat fallback and UI display.
 - `diagrams/user-flow-diagram.template.md`: Markdown preview wrapper for the

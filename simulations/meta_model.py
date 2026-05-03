@@ -165,6 +165,7 @@ class State:
     heartbeat_loaded_crew_memory: bool = False
     heartbeat_restored_crew: bool = False
     heartbeat_rehydrated_crew: bool = False
+    crew_rehydration_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
     heartbeat_pm_decision_requested: bool = False
     pm_resume_decision_recorded: bool = False
@@ -178,6 +179,8 @@ class State:
     crew_archived: bool = False
     crew_memory_archived: bool = False
     continuation_probe_done: bool = False
+    continuation_host_kind_recorded: bool = False
+    continuation_evidence_written: bool = False
     host_continuation_supported: bool = False
     manual_resume_mode_recorded: bool = False
     heartbeat_active: bool = False
@@ -211,6 +214,9 @@ class State:
     terminal_completion_notice_recorded: bool = False
     defect_ledger_initialized: bool = False
     evidence_ledger_initialized: bool = False
+    generated_resource_ledger_initialized: bool = False
+    activity_stream_initialized: bool = False
+    activity_stream_latest_event_written: bool = False
     flowpilot_improvement_live_report_initialized: bool = False
     defect_event_logged_for_blocker: bool = False
     pm_defect_triage_done: bool = False
@@ -269,6 +275,10 @@ class State:
     quality_raise_decision_recorded: bool = False
     validation_matrix_defined: bool = False
     anti_rough_finish_done: bool = False
+    pm_review_hold_instruction_written: bool = False
+    worker_output_ready_for_review: bool = False
+    pm_review_release_order_written: bool = False
+    pm_released_reviewer_for_current_gate: bool = False
     node_human_review_context_loaded: bool = False
     node_human_neutral_observation_written: bool = False
     node_human_manual_experiments_run: bool = False
@@ -404,6 +414,10 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "node_reviewer_independent_probe_done": False,
         "node_human_inspection_passed": False,
         "node_human_review_reviewer_approved": False,
+        "pm_review_hold_instruction_written": False,
+        "worker_output_ready_for_review": False,
+        "pm_review_release_order_written": False,
+        "pm_released_reviewer_for_current_gate": False,
         "inspection_issue_grilled": False,
         "composite_backward_context_loaded": False,
         "composite_child_evidence_replayed": False,
@@ -444,6 +458,7 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "heartbeat_loaded_crew_memory": False,
             "heartbeat_restored_crew": False,
             "heartbeat_rehydrated_crew": False,
+            "crew_rehydration_report_written": False,
             "replacement_roles_seeded_from_memory": False,
             "heartbeat_pm_decision_requested": False,
             "pm_resume_decision_recorded": False,
@@ -606,6 +621,8 @@ def _crew_ready(state: State) -> bool:
 def _automated_continuation_configured(state: State) -> bool:
     return (
         state.continuation_probe_done
+        and state.continuation_host_kind_recorded
+        and state.continuation_evidence_written
         and state.host_continuation_supported
         and not state.manual_resume_mode_recorded
         and state.heartbeat_schedule_created
@@ -621,6 +638,8 @@ def _automated_continuation_ready(state: State) -> bool:
 def _manual_resume_ready(state: State) -> bool:
     return (
         state.continuation_probe_done
+        and state.continuation_host_kind_recorded
+        and state.continuation_evidence_written
         and not state.host_continuation_supported
         and state.manual_resume_mode_recorded
         and not state.heartbeat_schedule_created
@@ -766,6 +785,9 @@ def _route_ready(state: State) -> bool:
         and state.startup_banner_emitted
         and state.defect_ledger_initialized
         and state.evidence_ledger_initialized
+        and state.generated_resource_ledger_initialized
+        and state.activity_stream_initialized
+        and state.activity_stream_latest_event_written
         and state.flowpilot_improvement_live_report_initialized
         and state.mode_choice_offered
         and state.mode_selected
@@ -910,6 +932,7 @@ class AutopilotStep:
         "heartbeat_loaded_crew_memory",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
+        "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
         "pm_resume_decision_recorded",
@@ -921,6 +944,8 @@ class AutopilotStep:
         "crew_archived",
         "crew_memory_archived",
         "continuation_probe_done",
+        "continuation_host_kind_recorded",
+        "continuation_evidence_written",
         "host_continuation_supported",
         "manual_resume_mode_recorded",
         "heartbeat_schedule_created",
@@ -951,6 +976,12 @@ class AutopilotStep:
         "lifecycle_reconciliation_done",
         "controlled_stop_notice_recorded",
         "terminal_completion_notice_recorded",
+        "defect_ledger_initialized",
+        "evidence_ledger_initialized",
+        "generated_resource_ledger_initialized",
+        "activity_stream_initialized",
+        "activity_stream_latest_event_written",
+        "flowpilot_improvement_live_report_initialized",
         "flowguard_process_design_done",
         "flowguard_officer_model_adversarial_probe_done",
         "candidate_route_tree_generated",
@@ -990,6 +1021,10 @@ class AutopilotStep:
         "quality_raise_decision_recorded",
         "validation_matrix_defined",
         "anti_rough_finish_done",
+        "pm_review_hold_instruction_written",
+        "worker_output_ready_for_review",
+        "pm_review_release_order_written",
+        "pm_released_reviewer_for_current_gate",
         "node_human_review_context_loaded",
         "node_human_neutral_observation_written",
         "node_human_manual_experiments_run",
@@ -1164,7 +1199,11 @@ class AutopilotStep:
         "child_skill_manifest_pm_approved_for_route",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
+        "heartbeat_loaded_crew_memory",
         "heartbeat_restored_crew",
+        "heartbeat_rehydrated_crew",
+        "crew_rehydration_report_written",
+        "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
@@ -1173,6 +1212,12 @@ class AutopilotStep:
         "pm_runway_synced_to_plan",
         "pm_node_decision_recorded",
         "crew_archived",
+        "crew_memory_archived",
+        "continuation_probe_done",
+        "continuation_host_kind_recorded",
+        "continuation_evidence_written",
+        "host_continuation_supported",
+        "manual_resume_mode_recorded",
         "heartbeat_active",
         "heartbeat_schedule_created",
         "route_heartbeat_interval_minutes",
@@ -1204,6 +1249,9 @@ class AutopilotStep:
         "terminal_completion_notice_recorded",
         "defect_ledger_initialized",
         "evidence_ledger_initialized",
+        "generated_resource_ledger_initialized",
+        "activity_stream_initialized",
+        "activity_stream_latest_event_written",
         "flowpilot_improvement_live_report_initialized",
         "defect_event_logged_for_blocker",
         "pm_defect_triage_done",
@@ -1256,6 +1304,10 @@ class AutopilotStep:
         "quality_raise_decision_recorded",
         "validation_matrix_defined",
         "anti_rough_finish_done",
+        "pm_review_hold_instruction_written",
+        "worker_output_ready_for_review",
+        "pm_review_release_order_written",
+        "pm_released_reviewer_for_current_gate",
         "node_human_review_context_loaded",
         "node_human_neutral_observation_written",
         "node_human_manual_experiments_run",
@@ -1354,6 +1406,9 @@ class AutopilotStep:
         "terminal_completion_notice_recorded",
         "defect_ledger_initialized",
         "evidence_ledger_initialized",
+        "generated_resource_ledger_initialized",
+        "activity_stream_initialized",
+        "activity_stream_latest_event_written",
         "flowpilot_improvement_live_report_initialized",
         "defect_event_logged_for_blocker",
         "pm_defect_triage_done",
@@ -1516,6 +1571,27 @@ class AutopilotStep:
                 label="evidence_ledger_initialized",
                 action="create the run-level evidence credibility ledger before screenshots, fixture reports, generated assets, or model outputs can close gates",
                 evidence_ledger_initialized=True,
+                active_node="initialize_generated_resource_ledger",
+            )
+            return
+
+        if not state.generated_resource_ledger_initialized:
+            yield _step(
+                state,
+                label="generated_resource_ledger_initialized",
+                action="create the run-level generated-resource ledger before imagegen concepts, visual assets, screenshots, diagrams, or model reports are produced or discarded",
+                generated_resource_ledger_initialized=True,
+                active_node="initialize_activity_stream",
+            )
+            return
+
+        if not state.activity_stream_initialized:
+            yield _step(
+                state,
+                label="activity_stream_initialized",
+                action="create the run-level activity stream so PM, reviewer, officer, worker, route, heartbeat, and user-visible progress events can be displayed without manual refresh",
+                activity_stream_initialized=True,
+                activity_stream_latest_event_written=True,
                 active_node="initialize_flowpilot_improvement_report",
             )
             return
@@ -2068,16 +2144,20 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="host_continuation_capability_supported",
-                action="probe host automation capability and confirm real heartbeat setup is supported",
+                action="probe host automation capability, record host-kind continuation evidence, and confirm real heartbeat setup is supported",
                 continuation_probe_done=True,
+                continuation_host_kind_recorded=True,
+                continuation_evidence_written=True,
                 host_continuation_supported=True,
                 active_node="create_heartbeat_schedule",
             )
             yield _step(
                 state,
                 label="host_continuation_capability_unsupported_manual_resume",
-                action="probe host automation capability, find no real wakeup support, and record manual-resume mode without creating heartbeat automation",
+                action="probe host automation capability, record host-kind evidence, find no real wakeup support, and record manual-resume mode without creating heartbeat automation",
                 continuation_probe_done=True,
+                continuation_host_kind_recorded=True,
+                continuation_evidence_written=True,
                 host_continuation_supported=False,
                 manual_resume_mode_recorded=True,
                 active_node="design_flowguard_route",
@@ -3862,6 +3942,15 @@ class AutopilotStep:
                     label="heartbeat_rehydrated_six_agent_crew",
                     action="continuation turn records full six-role rehydration status before asking the PM",
                     heartbeat_rehydrated_crew=True,
+                    active_node="write_crew_rehydration_report",
+                )
+                return
+            if not state.crew_rehydration_report_written:
+                yield _step(
+                    state,
+                    label="crew_rehydration_report_written",
+                    action="write the six-role rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
+                    crew_rehydration_report_written=True,
                     active_node="heartbeat_ask_project_manager",
                 )
                 return
@@ -4001,6 +4090,15 @@ class AutopilotStep:
                     label="node_acceptance_risk_experiments_mapped",
                     action="project manager maps current-node risk hypotheses to experiments and terminal replay scenarios before implementation starts",
                     node_acceptance_risk_experiments_mapped=True,
+                    active_node="pm_review_hold_instruction",
+                )
+                return
+            if not state.pm_review_hold_instruction_written:
+                yield _step(
+                    state,
+                    label="pm_review_hold_instruction_written",
+                    action="project manager tells the human-like reviewer to wait and not review current-node work until worker output and verification are ready for a PM release order",
+                    pm_review_hold_instruction_written=True,
                     active_node="lightweight_self_check",
                 )
                 return
@@ -4248,7 +4346,7 @@ class AutopilotStep:
                     label="anti_rough_finish_passed",
                     action="review the verified chunk for thin functionality, missing states, weak evidence, and rushed closure before human-like inspection",
                     anti_rough_finish_done=True,
-                    active_node="load_human_inspection_context",
+                    active_node="mark_worker_output_ready_for_pm_review_release",
                 )
                 if (
                     state.completed_chunks == 0
@@ -4278,6 +4376,33 @@ class AutopilotStep:
                         active_node="quality_rework",
                         **_reset_execution_scope_gates(),
                     )
+                return
+            if not state.worker_output_ready_for_review:
+                yield _step(
+                    state,
+                    label="worker_output_ready_for_review",
+                    action="record that current-node worker output, verification evidence, and anti-rough-finish result are ready for PM review-release decision",
+                    worker_output_ready_for_review=True,
+                    active_node="pm_review_release_order",
+                )
+                return
+            if not state.pm_review_release_order_written:
+                yield _step(
+                    state,
+                    label="pm_review_release_order_written",
+                    action="project manager writes the review release order naming the gate, evidence paths, reviewer scope, and what the reviewer must inspect",
+                    pm_review_release_order_written=True,
+                    active_node="pm_release_reviewer_for_current_gate",
+                )
+                return
+            if not state.pm_released_reviewer_for_current_gate:
+                yield _step(
+                    state,
+                    label="pm_released_reviewer_for_current_gate",
+                    action="project manager explicitly releases the reviewer to start current-gate review after worker output is ready",
+                    pm_released_reviewer_for_current_gate=True,
+                    active_node="load_human_inspection_context",
+                )
                 return
             if not state.node_human_review_context_loaded:
                 yield _step(
@@ -4410,10 +4535,13 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     if not (
         state.defect_ledger_initialized
         and state.evidence_ledger_initialized
+        and state.generated_resource_ledger_initialized
+        and state.activity_stream_initialized
+        and state.activity_stream_latest_event_written
         and state.flowpilot_improvement_live_report_initialized
     ):
         return InvariantResult.fail(
-            "final report emitted before run-level defect, evidence, and live FlowPilot improvement ledgers were initialized"
+            "final report emitted before run-level defect, evidence, generated-resource, activity stream, and live FlowPilot improvement ledgers were initialized"
         )
     if not (state.mode_choice_offered and state.mode_selected):
         return InvariantResult.fail("final report emitted before mode choice was offered and selected")
@@ -4797,6 +4925,7 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             and state.heartbeat_loaded_crew_memory
             and state.heartbeat_restored_crew
             and state.heartbeat_rehydrated_crew
+            and state.crew_rehydration_report_written
             and state.replacement_roles_seeded_from_memory
             and state.heartbeat_pm_decision_requested
             and state.pm_resume_decision_recorded
@@ -4810,6 +4939,10 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
         ):
             return InvariantResult.fail(
                 "chunk started before heartbeat rehydrated the crew from role memory and PM completion runway was synced into a sufficiently deep visible plan"
+            )
+        if not state.pm_review_hold_instruction_written:
+            return InvariantResult.fail(
+                "chunk started before PM told the reviewer to wait for a later release order"
             )
         if state.chunk_state in {"ready", "executed"} and not state.verification_defined:
             return InvariantResult.fail("chunk started without chunk-level verification")
@@ -4897,6 +5030,32 @@ def human_review_judgement_requires_neutral_observation(state: State, trace) -> 
         return InvariantResult.fail("composite backward judgement passed without neutral observation")
     if state.final_human_inspection_passed and not state.final_human_neutral_observation_written:
         return InvariantResult.fail("final human-like judgement passed without neutral observation")
+    return InvariantResult.pass_()
+
+
+def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantResult:
+    del trace
+    reviewer_started_current_node = (
+        state.node_human_review_context_loaded
+        or state.node_human_neutral_observation_written
+        or state.node_human_manual_experiments_run
+        or state.node_reviewer_independent_probe_done
+        or state.node_human_inspection_passed
+        or state.node_human_review_reviewer_approved
+    )
+    if reviewer_started_current_node and not (
+        state.pm_review_hold_instruction_written
+        and state.worker_output_ready_for_review
+        and state.pm_review_release_order_written
+        and state.pm_released_reviewer_for_current_gate
+    ):
+        return InvariantResult.fail(
+            "human-like reviewer started current-node review before PM release order after worker output readiness"
+        )
+    if state.pm_review_release_order_written and not state.worker_output_ready_for_review:
+        return InvariantResult.fail(
+            "PM wrote a current-gate review release before worker output was ready"
+        )
     return InvariantResult.pass_()
 
 
@@ -5397,6 +5556,7 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.heartbeat_loaded_crew_memory
         and state.heartbeat_restored_crew
         and state.heartbeat_rehydrated_crew
+        and state.crew_rehydration_report_written
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
@@ -5474,6 +5634,11 @@ INVARIANTS = (
         predicate=human_review_judgement_requires_neutral_observation,
     ),
     Invariant(
+        name="pm_review_release_controls_reviewer_start",
+        description="PM holds the reviewer until worker output is ready, then writes an explicit release order.",
+        predicate=pm_review_release_controls_reviewer_start,
+    ),
+    Invariant(
         name="subagent_must_merge_before_completion",
         description="Optional subagent results must return to the main agent before completion.",
         predicate=subagent_must_merge_before_completion,
@@ -5517,7 +5682,7 @@ INVARIANTS = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 120
+MAX_SEQUENCE_LENGTH = 140
 
 
 def initial_state() -> State:

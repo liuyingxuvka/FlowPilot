@@ -50,6 +50,8 @@ REQUIRED_LABELS = (
     "main_executor_parallel_prep_boundary_recorded",
     "independent_approval_protocol_recorded",
     "crew_memory_packets_written",
+    "generated_resource_ledger_initialized",
+    "activity_stream_initialized",
     "self_interrogation_pm_ratified",
     "material_sources_scanned",
     "material_source_summaries_written",
@@ -132,6 +134,7 @@ REQUIRED_LABELS = (
     "heartbeat_loaded_crew_memory",
     "heartbeat_restored_six_agent_crew",
     "heartbeat_rehydrated_six_agent_crew",
+    "crew_rehydration_report_written",
     "heartbeat_asked_project_manager",
     "pm_resume_completion_runway_recorded",
     "pm_runway_synced_to_visible_plan",
@@ -147,6 +150,7 @@ REQUIRED_LABELS = (
     "subagent_spawned_on_demand",
     "sidecar_report_returned",
     "main_agent_merged_sidecar_report",
+    "pm_review_hold_instruction_written",
     "quality_package_passed_no_raise",
     "quality_package_small_raise_in_current_node",
     "quality_package_route_raise_needed",
@@ -192,6 +196,9 @@ REQUIRED_LABELS = (
     "final_verification_done",
     "anti_rough_finish_passed",
     "anti_rough_finish_found_rework",
+    "worker_output_ready_for_review",
+    "pm_review_release_order_written",
+    "pm_released_reviewer_for_current_gate",
     "implementation_human_review_context_loaded",
     "implementation_human_neutral_observation_written",
     "implementation_human_manual_experiments_run",
@@ -356,7 +363,9 @@ def _state_id(state: model.State) -> str:
         f"fg={state.flowguard_dependency_checked}|"
         f"continuation={state.continuation_probe_done},"
         f"{state.host_continuation_supported},"
-        f"{state.manual_resume_mode_recorded}|"
+        f"{state.manual_resume_mode_recorded},"
+        f"{state.continuation_host_kind_recorded},"
+        f"{state.continuation_evidence_written}|"
         f"heartbeat={state.heartbeat_schedule_created},"
         f"{state.stable_heartbeat_launcher_recorded},"
         f"{state.heartbeat_loaded_state},"
@@ -364,6 +373,7 @@ def _state_id(state: model.State) -> str:
         f"{state.heartbeat_loaded_crew_memory},"
         f"{state.heartbeat_restored_crew},"
         f"{state.heartbeat_rehydrated_crew},"
+        f"{state.crew_rehydration_report_written},"
         f"{state.replacement_roles_seeded_from_memory},"
         f"{state.heartbeat_pm_decision_requested},"
         f"{state.pm_resume_decision_recorded},"
@@ -395,6 +405,9 @@ def _state_id(state: model.State) -> str:
         f"evidence={state.capability_evidence_synced}|"
         f"frontier={state.execution_frontier_written}:{state.frontier_version}|"
         f"plan={state.codex_plan_synced}:{state.plan_version}|"
+        f"resource_ledgers={state.generated_resource_ledger_initialized},"
+        f"{state.activity_stream_initialized},"
+        f"{state.activity_stream_latest_event_written}|"
         f"user_flow={state.capability_user_flow_diagram_emitted}|"
         f"live_subagents={state.live_subagent_decision_recorded},"
         f"{state.live_subagents_started},"
@@ -410,6 +423,10 @@ def _state_id(state: model.State) -> str:
         f"{state.sidecar_need},{state.subagent_pool_exists},"
         f"{state.subagent_idle_available},{state.subagent_scope_checked}|"
         f"sub={state.subagent_status}|"
+        f"pm_review={state.pm_review_hold_instruction_written},"
+        f"{state.worker_output_ready_for_review},"
+        f"{state.pm_review_release_order_written},"
+        f"{state.pm_released_reviewer_for_current_gate}|"
         f"quality={state.quality_package_done},"
         f"{state.quality_candidate_registry_checked},"
         f"{state.quality_raise_decision_recorded},"

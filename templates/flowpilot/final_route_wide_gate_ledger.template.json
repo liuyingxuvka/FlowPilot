@@ -9,7 +9,8 @@
     "state": ".flowpilot/runs/<run-id>/state.json",
     "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
     "active_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
-    "capabilities": ".flowpilot/runs/<run-id>/capabilities.json"
+    "capabilities": ".flowpilot/runs/<run-id>/capabilities.json",
+    "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json"
   },
   "current_route_scanned": false,
   "effective_nodes_resolved": false,
@@ -73,6 +74,14 @@
       "unresolved_reason": "<reason-or-null>"
     }
   ],
+  "generated_resource_ledger": {
+    "path": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/generated_resource_events.jsonl",
+    "required": true,
+    "unresolved_resource_count": null,
+    "unresolved_resource_count_zero": false,
+    "ledger_entries_match_final_gate_entries": false
+  },
   "entries": [
     {
       "entry_id": "<route-node-or-gate-id>",

@@ -87,9 +87,10 @@
   "next_chunk": "<next-bounded-chunk-or-null>",
   "continuation": {
     "host_probe_done": false,
+    "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
     "mode": "<unknown|automated|manual-resume|blocked>",
     "host_supports_real_wakeups": null,
-    "probe_evidence_path": "<path-or-null>",
+    "probe_evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
     "automated_bundle_required": false,
     "automated_bundle_ready": false,
     "route_heartbeat_interval_minutes": 1,
@@ -590,6 +591,7 @@
     "role_memory_schema_checked": false,
     "live_agent_continuity": "best_effort",
     "role_continuity": "mandatory",
+    "rehydration_report_template": "templates/flowpilot/crew_memory/crew_rehydration_report.template.json",
     "restored_roles": [],
     "replaced_roles": [],
     "unavailable_roles": [],
@@ -604,6 +606,14 @@
     "decision": "<execute_completion_runway|pm_stop|block|mutate_route|complete|null>",
     "repair_strategy_interrogation_path": "<pm-repair-strategy-interrogation-evidence-path-or-null>",
     "recorded_at": "<iso-8601-timestamp-or-null>"
+  },
+  "run_ledgers": {
+    "review_release_order_path": ".flowpilot/runs/run-001/review_release_order.json",
+    "continuation_evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
+    "generated_resource_ledger_path": ".flowpilot/runs/run-001/generated_resource_ledger.json",
+    "generated_resource_event_log_path": ".flowpilot/runs/run-001/generated_resource_events.jsonl",
+    "activity_stream_path": ".flowpilot/runs/run-001/activity_stream.jsonl",
+    "activity_latest_path": ".flowpilot/runs/run-001/activity_latest.json"
   },
   "codex_plan_projection": [
     {

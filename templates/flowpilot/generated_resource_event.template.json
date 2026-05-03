@@ -1,0 +1,14 @@
+{
+  "schema_version": "flowpilot.generated_resource_event.v1",
+  "event_id": "<event-id>",
+  "run_id": "<run-id>",
+  "resource_id": "<resource-id>",
+  "recorded_at": "<iso-8601-timestamp>",
+  "recorded_by_role": "<role>",
+  "event_type": "<registered|source_checked|authenticity_checked|consumed|linked_to_gate|superseded|quarantined|discarded|reopened>",
+  "from_disposition": "<disposition-or-null>",
+  "to_disposition": "<disposition-or-null>",
+  "summary": "<what changed>",
+  "paths": [],
+  "notes": "<notes-or-null>"
+}

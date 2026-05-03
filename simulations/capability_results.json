@@ -1,8 +1,9 @@
 {
   "graph": {
-    "edge_count": 525949,
+    "edge_count": 545807,
     "invariant_failures": [],
     "labels": [
+      "activity_stream_initialized",
       "anti_rough_finish_found_rework",
       "anti_rough_finish_passed",
       "autopilot_started",
@@ -67,6 +68,7 @@
       "crew_ledger_written",
       "crew_memory_archived_at_terminal",
       "crew_memory_packets_written",
+      "crew_rehydration_report_written",
       "current_child_skill_gate_independent_validation_done",
       "current_pointer_written",
       "defect_ledger_initialized",
@@ -111,6 +113,7 @@
       "flowpilot_invocation_policy_mapped",
       "flowpilot_skill_improvement_report_written",
       "fresh_six_live_subagents_started",
+      "generated_resource_ledger_initialized",
       "heartbeat_asked_project_manager",
       "heartbeat_loaded_crew_memory",
       "heartbeat_loaded_execution_frontier",
@@ -163,9 +166,12 @@
       "pm_material_complexity_classified",
       "pm_material_discovery_decision_recorded",
       "pm_material_understanding_memo_written",
+      "pm_released_reviewer_for_current_gate",
       "pm_repair_decision_interrogated",
       "pm_resume_completion_runway_recorded",
       "pm_returns_startup_blockers_to_worker",
+      "pm_review_hold_instruction_written",
+      "pm_review_release_order_written",
       "pm_runway_synced_to_visible_plan",
       "pm_start_gate_opened_from_fact_report",
       "prior_work_import_packet_written",
@@ -253,33 +259,34 @@
       "visual_asset_required",
       "visual_asset_style_review_done",
       "worker_a_spawned_fresh_for_task",
-      "worker_b_spawned_fresh_for_task"
+      "worker_b_spawned_fresh_for_task",
+      "worker_output_ready_for_review"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 500493,
+    "state_count": 520351,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 525949,
+    "edge_count": 545807,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 500493,
+    "state_count": 520351,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 525949,
+    "edge_count": 545807,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 500493,
+    "state_count": 520351,
     "status": "OK",
     "success_state_count": 4368
   }

@@ -69,11 +69,13 @@ Every formal FlowPilot invocation creates a new active run directory under
 `.flowpilot/runs/<run-id>/`. The top-level `.flowpilot/current.json` is only a
 pointer to the active run, and `.flowpilot/index.json` is only a catalog of
 runs for audit and Cockpit tabs. All mutable control state for the run lives
-under that run root. If the user asks to continue previous work, create a new
-run anyway, record `continues_from_run_id`, and import prior run/project
-materials as read-only inputs; do not reuse old control state, old live-agent
-IDs, old route gates, old screenshots, or old generated assets as current
-evidence.
+under that run root. The active-run resolver is authoritative: read
+`.flowpilot/current.json`, then load `.flowpilot/runs/<run-id>/`. Old top-level
+state files are legacy evidence only and must not silently override an active
+run. If the user asks to continue previous work, create a new run anyway,
+record `continues_from_run_id`, and import prior run/project materials as
+read-only inputs; do not reuse old control state, old live-agent IDs, old route
+gates, old screenshots, or old generated assets as current evidence.
 
 If the user is editing, auditing, discussing, or repairing the FlowPilot skill
 itself without explicitly asking to use FlowPilot, treat that as ordinary
@@ -669,6 +671,8 @@ completion work:
 - `.flowpilot/runs/<run-id>/defects/defect_events.jsonl`
 - `.flowpilot/runs/<run-id>/evidence/evidence_ledger.json`
 - `.flowpilot/runs/<run-id>/evidence/evidence_events.jsonl`
+- `.flowpilot/runs/<run-id>/generated_resource_ledger.json`
+- `.flowpilot/runs/<run-id>/activity_stream.jsonl`
 
 Any role that discovers a product defect, FlowPilot skill defect, process
 defect, evidence defect, or tool/environment defect records a defect event
@@ -696,6 +700,20 @@ evidence item that may close a gate is classified by status:
 Fixture evidence may prove a capability, but the final report must disclose it
 separately from live-project evidence. Invalid or stale evidence cannot close a
 current gate, even when a newer screenshot or report replaces it.
+
+Every generated concept, image, icon, screenshot, diagram, model output, or
+similar resource is registered in the generated resource ledger immediately
+when it is created. Each item records origin, path, owning node or gate, and
+one disposition: `selected`, `used`, `superseded`, `discarded`, `deleted`, or
+`quarantined`. Terminal completion may only close after every generated
+resource has a current disposition and reason.
+
+The activity stream is append-only. PM decisions, reviewer holds/releases and
+reports, officer modeling actions, worker reports, route mutations, checkpoint
+writes, heartbeat/manual-resume actions, and terminal closure events append
+progress records as they happen. Cockpit and chat progress displays read from
+this stream plus current route/frontier state, so users see progress without
+manual refresh or ad hoc status reconstruction.
 
 ## Persistent Six-Agent Crew
 
@@ -761,9 +779,13 @@ role with the same role charter plus the latest role memory packet. A
 replacement role that starts from a generic prompt without its memory packet is
 not recovered and cannot approve gates.
 
-Heartbeat recovery loads the ledger and all required role memory packets first,
-checks the memory schema/freshness, records which roles were resumed,
-replaced, or blocked, and only then asks the project manager for a
+Heartbeat recovery and manual resume load the ledger and all required role
+memory packets first, restore all six role identities and work memories, check
+the memory schema/freshness, and write a crew rehydration report for project
+manager, reviewer, process FlowGuard officer, product FlowGuard officer,
+worker A, and worker B. Do not lazily rehydrate a role only when it is first
+needed. Only after that report records which roles were resumed, replaced,
+seeded, blocked, or unavailable does FlowPilot ask the project manager for a
 completion-oriented runway from the current route position to project
 completion. If any required role is missing and cannot be replaced from memory,
 the current gate blocks rather than falling back to main-executor approval.
@@ -857,6 +879,14 @@ Authority rules:
 - if a reviewer or FlowGuard officer blocks a gate, the project manager cannot
   ignore the block. The PM must run repair-strategy interrogation and select a
   route mutation, blocker, or corrected rework path.
+
+The project manager owns reviewer timing. Before worker or main-executor work
+that will later need review, the PM writes a review hold instruction naming the
+expected gate and saying the reviewer waits. After worker output,
+verification, and anti-rough-finish evidence are ready, the PM writes a review
+release order naming the gate, evidence paths, scope, and required
+inspections. Reviewer work before that release is precheck only: it may note
+risks for PM, but it cannot open, close, or block the gate.
 
 If the required approver is unavailable, heartbeat recovery restores or
 replaces that role before work continues. If restoration fails, the current
@@ -1449,13 +1479,17 @@ must not create heartbeat automation and must not claim unattended recovery.
 
 Every automated heartbeat must resolve `.flowpilot/current.json`, then load the
 active run's `state.json`, active `flow.json`, `execution_frontier.json`,
-`crew_ledger.json`, and `crew_memory/`. It then rehydrates the fixed six-agent crew:
-resume known agent ids when possible, and if live agents are unavailable,
-record the block and ask before replacing roles from memory packets. Only
-after live startup or explicit fallback authorization is recorded may it record
-the rehydration status and ask the project manager for a completion-oriented
-runway from the current route position to project completion. Manual-resume
-turns load the same files and ask for the same PM runway before continuing. The
+`crew_ledger.json`, and `crew_memory/`. `.flowpilot/current.json` to
+`.flowpilot/runs/<run-id>/` is authoritative; top-level legacy state is import
+or quarantine evidence only and must not override the active run. It then
+rehydrates the fixed six-agent crew: restore every role identity and work
+memory, resume known agent ids when possible, and if live agents are
+unavailable, record the block and ask before replacing roles from memory
+packets. Only after live startup or explicit fallback authorization is recorded
+may it write the crew rehydration report and ask the project manager for a
+completion-oriented runway from the current route position to project
+completion. Manual-resume turns load the same files, write the same all-role
+rehydration report, and ask for the same PM runway before continuing. The
 runway must include the current gate, downstream
 steps, role approvals, hard-stop conditions, checkpoint cadence, and any PM
 stop signal. The main executor immediately replaces the current visible Codex
@@ -1476,9 +1510,11 @@ heartbeat or manual-resume turn must execute at least the selected gate when it
 is executable, then continue along the PM runway as far as hard gates and real
 execution limits allow. It may not end by only writing a future-facing
 decision such as "continue to icon generation" or "next do X" while the gate is
-still executable. Continuation evidence must name the PM runway, the selected
-gate, actions attempted, results, checkpoint writes, and the updated
-completion guard.
+still executable. Continuation evidence must name the host kind
+(`codex_heartbeat_automation`, `windows_scheduled_task`, `manual_resume`, or
+`blocked_unsupported`), the exact host evidence source, the PM runway, the
+selected gate, crew rehydration report, actions attempted, results, checkpoint
+writes, and the updated completion guard.
 
 ## Controlled Nonterminal Stop Notice
 
@@ -1540,9 +1576,9 @@ heartbeat cadence is fixed at one minute: create route heartbeats with
 `route_heartbeat_interval_minutes: 1` plus the rrule in route/frontier
 evidence. Whenever FlowPilot creates or updates real heartbeat continuation
 for a formal long-running route, it records the heartbeat id, cadence, active
-state, official host automation source, and fallback. If the heartbeat cannot
-be created or verified, roll back to `manual-resume` before route execution or
-record a concrete blocker.
+state, host kind, exact official host automation source, and fallback. If the
+heartbeat cannot be created or verified, roll back to `manual-resume` before
+route execution or record a concrete blocker.
 
 Pause, restart, and terminal closure use one unified lifecycle reconciliation
 gate. Before claiming any of those states, FlowPilot scans Codex app heartbeat
@@ -1999,8 +2035,8 @@ The PM-owned ledger records:
   and node acceptance plans for all effective nodes;
 - generated-resource lineage for concept images, product-facing visual assets,
   screenshots, route diagrams, model reports, and other generated artifacts,
-  with each item marked consumed, included in final output, used as evidence,
-  superseded, quarantined, or intentionally discarded with reason;
+  with each item marked `selected`, `used`, `superseded`, `discarded`,
+  `deleted`, or `quarantined` with reason;
 - stale, invalidated, missing, waived, blocked, and unresolved evidence;
 - residual risk triage, with zero unresolved residual risks;
 - `unresolved_count`.

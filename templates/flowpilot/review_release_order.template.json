@@ -1,0 +1,40 @@
+{
+  "schema_version": "flowpilot.review_release_order.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "node_id": "<node-id>",
+  "gate_id": "<gate-id>",
+  "pm_owned": true,
+  "status": "<draft|released|blocked|superseded>",
+  "purpose": "Project-manager order that releases the human-like reviewer only after worker output is ready for the current gate.",
+  "worker_output": {
+    "ready_for_review": false,
+    "owner_role": "<worker_a|worker_b|main_executor|other>",
+    "output_summary": "<summary>",
+    "output_paths": [],
+    "known_limitations": []
+  },
+  "release_scope": {
+    "reviewer_role": "human_like_reviewer",
+    "review_type": "<node_human_review|implementation_review|parent_backward_replay|terminal_backward_replay|other>",
+    "review_target": "<artifact-or-product-surface>",
+    "required_direct_checks": [],
+    "evidence_pointers": [],
+    "completion_report_only_allowed": false,
+    "worker_report_only_allowed": false
+  },
+  "pm_gate": {
+    "pm_role": "project_manager",
+    "hold_instruction_path": "<path-or-null>",
+    "release_reason": "<why-review-can-start>",
+    "hard_stops": [],
+    "released_at": "<iso-8601-timestamp-or-null>",
+    "release_evidence_path": "<path-or-null>"
+  },
+  "reviewer_acknowledgement": {
+    "acknowledged": false,
+    "acknowledged_at": "<iso-8601-timestamp-or-null>",
+    "reviewer_report_path": "<path-or-null>"
+  }
+}

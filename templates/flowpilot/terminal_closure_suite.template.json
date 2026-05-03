@@ -55,6 +55,21 @@
     "fixture_only_evidence_disclosed_separately": false,
     "invalid_evidence_closes_no_current_gate": true
   },
+  "generated_resource_ledger": {
+    "path": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/generated_resource_events.jsonl",
+    "required": true,
+    "unresolved_resource_count": null,
+    "completion_blocked_until_unresolved_zero": true,
+    "final_ledger_resource_lineage_checked": false
+  },
+  "activity_stream": {
+    "path": ".flowpilot/runs/<run-id>/activity_stream.jsonl",
+    "latest_event_path": ".flowpilot/runs/<run-id>/activity_latest.json",
+    "required": true,
+    "terminal_completion_event_written": false,
+    "stream_is_audit_trail_not_gate_approval": true
+  },
   "terminal_human_backward_replay": {
     "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",
     "review_map_path": ".flowpilot/runs/<run-id>/terminal_human_backward_replay_map.json",

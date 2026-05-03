@@ -16,11 +16,12 @@
   "role_memory_packets_loaded": 0,
   "role_memory_packets_required": 6,
   "role_memory_schema_checked": false,
-  "crew_rehydration_status_path": "<path-or-null>",
+  "crew_rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/crew_rehydration_report.json",
   "six_agent_crew_restored": false,
   "six_agent_crew_rehydrated": false,
   "continuation": {
     "host_probe_done": false,
+    "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
     "mode": "<automated|manual-resume|blocked|unknown>",
     "host_supports_real_wakeups": null,
     "route_heartbeat_interval_minutes": 1,
@@ -28,7 +29,7 @@
     "automated_bundle_ready": false,
     "manual_resume_recorded": false,
     "unattended_recovery_claim_allowed": false,
-    "evidence_path": "<host-continuation-probe-or-manual-resume-evidence-path>",
+    "evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
     "continuation_readiness_checked": false,
     "continuation_readiness_kind": "<automated-heartbeat-health|manual-resume-packet|blocked|unknown>"
   },
@@ -96,5 +97,6 @@
     "unfinished_current_node_checked": false
   },
   "validation_result": "pending",
+  "activity_event_path": ".flowpilot/runs/run-001/activity_latest.json",
   "timestamp": "<iso-8601-timestamp>"
 }

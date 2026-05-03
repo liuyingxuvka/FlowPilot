@@ -34,7 +34,8 @@
     "reused_historical_agent_ids": [],
     "reviewer_must_compare_against_prior_ledgers": true
   },
-  "rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/rehydration-latest.json",
+  "rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/crew_rehydration_report.json",
+  "rehydration_report_template": "templates/flowpilot/crew_memory/crew_rehydration_report.template.json",
   "created_at": "<iso-8601-timestamp>",
   "updated_at": "<iso-8601-timestamp>",
   "roles": [

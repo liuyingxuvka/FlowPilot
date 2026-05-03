@@ -1,0 +1,65 @@
+{
+  "schema_version": "flowpilot.generated_resource_ledger.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "status": "<active|paused|complete>",
+  "purpose": "Canonical run-level ledger for generated artifacts that must be consumed, cited as evidence, superseded, quarantined, or discarded with a reason before completion.",
+  "event_log_path": ".flowpilot/runs/<run-id>/generated_resource_events.jsonl",
+  "allowed_resource_types": [
+    "imagegen_concept",
+    "visual_asset",
+    "screenshot",
+    "route_diagram",
+    "model_report",
+    "qa_report",
+    "generated_document",
+    "other"
+  ],
+  "allowed_dispositions": [
+    "pending",
+    "consumed_by_implementation",
+    "included_in_final_output",
+    "qa_evidence",
+    "flowguard_evidence",
+    "user_flow_diagram",
+    "superseded",
+    "quarantined",
+    "discarded_with_reason"
+  ],
+  "counts": {
+    "total": 0,
+    "pending": 0,
+    "consumed": 0,
+    "included_in_final_output": 0,
+    "evidence": 0,
+    "superseded": 0,
+    "quarantined": 0,
+    "discarded": 0,
+    "unresolved": 0
+  },
+  "resources": [
+    {
+      "resource_id": "<resource-id>",
+      "resource_type": "<imagegen_concept|visual_asset|screenshot|route_diagram|model_report|qa_report|generated_document|other>",
+      "created_at": "<iso-8601-timestamp>",
+      "created_by_role": "<role>",
+      "created_by_gate": "<node-or-gate-id>",
+      "path": "<path-or-url>",
+      "source_prompt_or_command_path": "<path-or-null>",
+      "authenticity_or_source_evidence_path": "<path-or-null>",
+      "disposition": "<pending|consumed_by_implementation|included_in_final_output|qa_evidence|flowguard_evidence|user_flow_diagram|superseded|quarantined|discarded_with_reason>",
+      "consumed_by": [],
+      "evidence_for_gates": [],
+      "superseded_by": "<resource-id-or-null>",
+      "quarantine_reason": "<reason-or-null>",
+      "discard_reason": "<reason-or-null>",
+      "unresolved_reason": "<reason-or-null>"
+    }
+  ],
+  "completion_policy": {
+    "terminal_completion_requires_unresolved_zero": true,
+    "generated_resource_existence_alone_is_not_completion_evidence": true,
+    "final_route_wide_gate_ledger_must_resolve_resource_lineage": true
+  }
+}

@@ -21,8 +21,9 @@
   "continuation_mode": "<unknown|automated|manual-resume|blocked>",
   "host_continuation_probe": {
     "done": false,
+    "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
     "host_supports_real_wakeups": null,
-    "evidence_path": "<path-or-null>",
+    "evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
     "unattended_recovery_claim_allowed": false
   },
   "startup_activation": {
@@ -133,6 +134,7 @@
   "mode": null,
   "crew_ledger": ".flowpilot/runs/run-001/crew_ledger.json",
   "crew_memory_root": ".flowpilot/runs/run-001/crew_memory",
+  "crew_rehydration_report": ".flowpilot/runs/run-001/crew_memory/crew_rehydration_report.json",
   "material_intake_packet": ".flowpilot/runs/run-001/material_intake_packet.json",
   "local_skill_inventory": ".flowpilot/runs/run-001/local_skill_inventory.json",
   "pm_material_understanding": ".flowpilot/runs/run-001/pm_material_understanding.json",
@@ -143,6 +145,14 @@
   "parent_backward_targets": ".flowpilot/runs/run-001/routes/route-001/parent_backward_targets.json",
   "current_parent_backward_replay": ".flowpilot/runs/run-001/routes/route-001/nodes/<parent-node-id>/parent_backward_replay.json",
   "terminal_closure_suite": ".flowpilot/runs/run-001/terminal_closure_suite.json",
+  "review_release_order": ".flowpilot/runs/run-001/review_release_order.json",
+  "continuation_evidence": ".flowpilot/runs/run-001/continuation_evidence.json",
+  "defect_ledger": ".flowpilot/runs/run-001/defects/defect_ledger.json",
+  "evidence_ledger": ".flowpilot/runs/run-001/evidence/evidence_ledger.json",
+  "generated_resource_ledger": ".flowpilot/runs/run-001/generated_resource_ledger.json",
+  "generated_resource_events": ".flowpilot/runs/run-001/generated_resource_events.jsonl",
+  "activity_stream": ".flowpilot/runs/run-001/activity_stream.jsonl",
+  "activity_latest": ".flowpilot/runs/run-001/activity_latest.json",
   "flowpilot_skill_improvement_observations": ".flowpilot/runs/run-001/flowpilot_skill_improvement_observations.jsonl",
   "flowpilot_skill_improvement_report": ".flowpilot/runs/run-001/flowpilot_skill_improvement_report.json",
   "final_route_wide_gate_ledger": ".flowpilot/runs/run-001/final_route_wide_gate_ledger.json",

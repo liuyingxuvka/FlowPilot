@@ -50,6 +50,8 @@ REQUIRED_LABELS = (
     "main_executor_parallel_prep_boundary_recorded",
     "independent_approval_protocol_recorded",
     "crew_memory_packets_written",
+    "generated_resource_ledger_initialized",
+    "activity_stream_initialized",
     "startup_self_interrogation_pm_ratified",
     "material_sources_scanned",
     "material_source_summaries_written",
@@ -122,6 +124,7 @@ REQUIRED_LABELS = (
     "heartbeat_loaded_crew_memory",
     "heartbeat_restored_six_agent_crew",
     "heartbeat_rehydrated_six_agent_crew",
+    "crew_rehydration_report_written",
     "heartbeat_asked_project_manager",
     "pm_resume_completion_runway_recorded",
     "pm_runway_synced_to_visible_plan",
@@ -135,6 +138,7 @@ REQUIRED_LABELS = (
     "node_product_function_model_checked",
     "node_acceptance_plan_written",
     "node_acceptance_risk_experiments_mapped",
+    "pm_review_hold_instruction_written",
     "lightweight_self_check_completed",
     "quality_package_passed_no_raise",
     "quality_package_small_raise_in_current_node",
@@ -142,6 +146,9 @@ REQUIRED_LABELS = (
     "chunk_verification_passed",
     "anti_rough_finish_passed",
     "anti_rough_finish_found_rework",
+    "worker_output_ready_for_review",
+    "pm_review_release_order_written",
+    "pm_released_reviewer_for_current_gate",
     "node_human_inspection_context_loaded",
     "node_human_neutral_observation_written",
     "node_human_manual_experiments_run",
@@ -312,13 +319,16 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_manifest_pm_approved_for_route}|"
         f"continuation={state.continuation_probe_done},"
         f"{state.host_continuation_supported},"
-        f"{state.manual_resume_mode_recorded}|"
+        f"{state.manual_resume_mode_recorded},"
+        f"{state.continuation_host_kind_recorded},"
+        f"{state.continuation_evidence_written}|"
         f"heartbeat_schedule={state.heartbeat_schedule_created}|"
         f"heartbeat_recovery={state.heartbeat_loaded_state},"
         f"{state.heartbeat_loaded_frontier},"
         f"{state.heartbeat_loaded_crew_memory},"
         f"{state.heartbeat_restored_crew},"
         f"{state.heartbeat_rehydrated_crew},"
+        f"{state.crew_rehydration_report_written},"
         f"{state.replacement_roles_seeded_from_memory},"
         f"{state.heartbeat_pm_decision_requested},"
         f"{state.pm_resume_decision_recorded},"
@@ -347,6 +357,9 @@ def _state_id(state: model.State) -> str:
         f"checked={state.route_checked}|md={state.markdown_synced}|"
         f"frontier={state.execution_frontier_written}:{state.frontier_version}|"
         f"plan={state.codex_plan_synced}:{state.plan_version}|"
+        f"resource_ledgers={state.generated_resource_ledger_initialized},"
+        f"{state.activity_stream_initialized},"
+        f"{state.activity_stream_latest_event_written}|"
         f"live_subagents={state.live_subagent_decision_recorded},"
         f"{state.live_subagents_started},"
         f"{state.live_subagents_current_task_fresh},"
@@ -374,7 +387,8 @@ def _state_id(state: model.State) -> str:
         f"node_product={state.node_product_function_model_checked},"
         f"{state.node_product_function_model_product_officer_approved}|"
         f"node_acceptance={state.node_acceptance_plan_written},"
-        f"{state.node_acceptance_risk_experiments_mapped}|"
+        f"{state.node_acceptance_risk_experiments_mapped},"
+        f"{state.pm_review_hold_instruction_written}|"
         f"micro_self={state.lightweight_self_check_done},"
         f"{state.lightweight_self_check_questions},"
         f"{state.lightweight_self_check_scope_id}|"
@@ -383,6 +397,9 @@ def _state_id(state: model.State) -> str:
         f"{state.quality_raise_decision_recorded},"
         f"{state.validation_matrix_defined},"
         f"{state.anti_rough_finish_done},"
+        f"{state.worker_output_ready_for_review},"
+        f"{state.pm_review_release_order_written},"
+        f"{state.pm_released_reviewer_for_current_gate},"
         f"role_memory_refresh={state.role_memory_refreshed_after_work},"
         f"human_review={state.node_human_review_context_loaded},"
         f"{state.node_human_neutral_observation_written},"

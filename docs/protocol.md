@@ -21,7 +21,10 @@ branches, heartbeat behavior, and any task-local behavior models.
 5. Create or load `.flowpilot/`, allocate a fresh `run_id`, create
    `.flowpilot/runs/<run-id>/`, write `.flowpilot/current.json`, and update
    `.flowpilot/index.json`. These top-level files are only pointers/catalogs.
-   Current control state must live under the run directory. Continuing prior
+   Current control state must live under the run directory. The active-run
+   resolver is authoritative: read `.flowpilot/current.json`, then load
+   `.flowpilot/runs/<run-id>/`. Old top-level state files are legacy evidence
+   only and must not silently override an active run. Continuing prior
    work still creates a new run and writes a
    `.flowpilot/runs/<run-id>/prior_work_import_packet.json`; old state,
    routes, agent IDs, screenshots, icons, or evidence may be referenced as
@@ -417,6 +420,14 @@ manager approves route inclusion, route mutation, parent return, and final
 child-to-parent closure. The main executor and workers may draft evidence or
 implementation output, but their self-approval is invalid.
 
+The project manager owns reviewer timing. Before worker or main-executor work
+that will later need review, the PM writes a review hold instruction naming the
+expected gate and saying the reviewer waits. After worker output,
+verification, and anti-rough-finish evidence are ready, the PM writes a review
+release order naming the gate, evidence paths, scope, and required
+inspections. Reviewer work before that release is precheck only: it may note
+risks for PM, but it cannot open, close, or block the gate.
+
 If a required authority blocks a gate, FlowPilot does not advance on evidence
 existence. It records the block, grills the issue when needed, asks the project
 manager for repair-strategy interrogation, mutates or blocks the route, and
@@ -674,6 +685,9 @@ agents are unavailable, it records the block and asks before replacing roles
 from memory packets. After live startup or explicit fallback authorization is
 recorded, it records the rehydration status and asks the project manager for
 the next completion-oriented runway.
+The resolver order is mandatory on heartbeat and manual resume:
+`.flowpilot/current.json` to `.flowpilot/runs/<run-id>/` is authoritative, and
+top-level legacy state must be ignored except as import or quarantine evidence.
 Route mutations, next-node changes, PM runway changes, and current-mainline
 plan updates are persisted in files and then reflected in chat/plan output;
 ordinary route changes should not rewrite the heartbeat automation prompt.
@@ -690,17 +704,24 @@ planned future jump. The jump is legal only after node status, required gates,
 declared verification, node evidence, and continuation/checkpoint evidence are
 written.
 
-On heartbeat or manual resume, "continue later" is not progress. FlowPilot asks
-the project manager for a completion-oriented runway only after the crew memory
+On heartbeat or manual resume, "continue later" is not progress. FlowPilot
+first restores all six role identities and work memory from
+`crew_ledger.json` and every role memory packet, then writes a crew
+rehydration report covering project manager, reviewer, process FlowGuard
+officer, product FlowGuard officer, worker A, and worker B. It must not lazily
+rehydrate a role only when that role is first needed. FlowPilot asks the
+project manager for a completion-oriented runway only after the crew memory
 rehydration gate passes. It syncs that runway into the visible plan, then loads
 the persisted `current_subnode` or `next_gate` for the unfinished active node.
 It must execute at least that gate in the current turn when executable, then
 continue along the PM runway until a PM stop signal, hard gate, blocker, route
 mutation, or real environment/tool limit stops progress. Continuation evidence
-must name the PM runway, selected gate, role-memory rehydration result, actions
-attempted, results, checkpoint writes, and updated completion guard. It may not
-end by only writing a future-facing decision such as "continue to X" while the
-gate remains executable.
+must name the host kind (`codex_heartbeat_automation`,
+`windows_scheduled_task`, `manual_resume`, or `blocked_unsupported`), the exact
+host evidence source, the PM runway, selected gate, role-memory rehydration
+result, actions attempted, results, checkpoint writes, and updated completion
+guard. It may not end by only writing a future-facing decision such as
+"continue to X" while the gate remains executable.
 
 The visible plan sync is a host-facing control gate. When a native plan tool is
 available, the main executor must call it, not only update `.flowpilot` files.
@@ -754,16 +775,32 @@ run.
 
 Each formal run has a PM-owned defect ledger under
 `.flowpilot/runs/<run-id>/defects/` and an evidence credibility ledger under
-`.flowpilot/runs/<run-id>/evidence/`. Any role that discovers a defect writes
-the first event. PM triages severity, owner, route impact, and closure
-condition. Open blockers and `fixed_pending_recheck` defects block node
-closure, route advancement, final ledger approval, and terminal completion.
+`.flowpilot/runs/<run-id>/evidence/`. It also has an append-only activity
+stream at `.flowpilot/runs/<run-id>/activity_stream.jsonl`. Any role that
+discovers a defect writes the first event. PM triages severity, owner, route
+impact, and closure condition. Open blockers and `fixed_pending_recheck`
+defects block node closure, route advancement, final ledger approval, and
+terminal completion.
 
 Evidence that may close a gate is classified as `valid`, `invalid`, `stale`,
 or `superseded`, with source kind `live_project`, `fixture`, `synthetic`,
 `historical`, or `generated_concept`. Fixture evidence can prove a capability,
 but final reporting must disclose it separately from live-project evidence.
 Invalid or stale evidence cannot close a current gate.
+
+Every generated concept, image, icon, screenshot, diagram, model output, or
+similar resource is registered in the generated resource ledger immediately
+when it is created. Each item records origin, path, owning node or gate, and
+one disposition: `selected`, `used`, `superseded`, `discarded`, `deleted`, or
+`quarantined`. Terminal completion may only close after every generated
+resource has a current disposition and reason.
+
+The activity stream is append-only. PM decisions, reviewer holds/releases and
+reports, officer modeling actions, worker reports, route mutations, checkpoint
+writes, heartbeat/manual-resume actions, and terminal closure events append
+progress records as they happen. Cockpit and chat progress displays read from
+this stream plus current route/frontier state, so users see progress without
+manual refresh or ad hoc status reconstruction.
 
 ## Dual-Layer Product And Process Modeling
 
@@ -1218,8 +1255,8 @@ The ledger must resolve:
   acceptance plans for all effective nodes;
 - every generated resource, including concept images, product-facing visual
   assets, screenshots, route diagrams, model reports, and other generated
-  artifacts, with a disposition of consumed, final-output, evidence,
-  superseded, quarantined, or intentionally discarded with reason;
+  artifacts, with a current generated-resource-ledger disposition of
+  `selected`, `used`, `superseded`, `discarded`, `deleted`, or `quarantined`;
 - stale, invalidated, missing, waived, blocked, and unresolved evidence;
 - residual risk triage with zero unresolved residual risks.
 

@@ -444,6 +444,8 @@ def build_chat_markdown(
     cockpit_open: bool,
     chat_display_required: bool,
     return_path: dict[str, Any],
+    source_status: str,
+    source_findings: list[str],
 ) -> str:
     gate_text = (
         "Chat Mermaid is required because Cockpit UI is not open."
@@ -453,11 +455,15 @@ def build_chat_markdown(
     repair_text = "none"
     if return_path["required"]:
         repair_text = f"{return_path.get('return_source') or 'review gate'} returns to {return_path.get('repair_target') or active_node or 'current node'}"
+    source_text = source_status
+    if source_findings:
+        source_text = f"{source_status}: {'; '.join(source_findings)}"
     return "\n".join(
         [
             "# FlowPilot Route Sign",
             "",
             f"- Trigger: `{trigger}`",
+            f"- Source status: `{source_text}`",
             f"- Current route: `{active_route or 'unknown'}`",
             f"- Current node: `{active_node or 'unknown'}`",
             f"- Current stage: `{current_stage}`",
@@ -493,6 +499,8 @@ def _review_display(
         findings.append("The display artifact is not the simplified English FlowPilot route sign.")
     if display_packet["raw_flowguard_mermaid"]["enabled"]:
         findings.append("Raw FlowGuard Mermaid cannot satisfy the user route sign gate.")
+    if display_packet["source_health"]["status"] != "ok":
+        findings.extend(display_packet["source_health"]["findings"])
     if display_packet["return_or_repair"]["required"] and not display_packet["return_or_repair"]["edge_present"]:
         findings.append("A review/validation return or route mutation lacks a visible repair edge.")
     active_node = str(display_packet.get("active_node") or "")
@@ -527,11 +535,21 @@ def generate(
 ) -> dict[str, Any]:
     paths = resolve_flowpilot_paths(root)
     frontier_path = Path(paths["frontier_path"])
-    frontier = _load_json(frontier_path)
-    state = _load_json(Path(paths["state_path"]))
+    source_health = {
+        "status": paths["path_status"],
+        "findings": list(paths["path_findings"]),
+        "current_declares_run": paths["current_declares_run"],
+        "active_run_root_valid": paths["active_run_root_valid"],
+    }
+    if source_health["status"] == "ok":
+        frontier = _load_json(frontier_path)
+        state = _load_json(Path(paths["state_path"]))
+    else:
+        frontier = {}
+        state = {}
     active_route = _active_route(frontier, state)
     route_path = Path(paths["routes_root"]) / str(active_route or "route-001") / "flow.json"
-    route = _load_json(route_path)
+    route = _load_json(route_path) if source_health["status"] == "ok" else {}
     current_stage = classify_current_stage(frontier, route)
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     source, route_sign = build_mermaid(
@@ -553,6 +571,8 @@ def generate(
         cockpit_open=cockpit_open,
         chat_display_required=chat_display_required,
         return_path=route_sign,
+        source_status=source_health["status"],
+        source_findings=source_health["findings"],
     )
     mermaid_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
 
@@ -573,8 +593,15 @@ def generate(
         "chat_displayed_in_chat": mark_chat_displayed,
         "cockpit_ui_displayed": mark_ui_displayed,
         "display_gate_status": "passed"
-        if ((not chat_display_required or mark_chat_displayed) and (not cockpit_open or mark_ui_displayed or display_surface in {"chat", "both"}))
+        if (
+            source_health["status"] == "ok"
+            and (not chat_display_required or mark_chat_displayed)
+            and (not cockpit_open or mark_ui_displayed or display_surface in {"chat", "both"})
+        )
+        else "blocked_degraded_source"
+        if source_health["status"] != "ok"
         else "pending_visible_display",
+        "source_health": source_health,
         "same_graph_for_chat_and_ui": True,
         "simplified_flowpilot_english_mermaid": True,
         "raw_flowguard_mermaid": {
@@ -627,7 +654,7 @@ def generate(
             _write_json(review_path, review_payload)
 
     return {
-        "ok": review_payload is None or review_payload["status"] == "pass",
+        "ok": source_health["status"] == "ok" and (review_payload is None or review_payload["status"] == "pass"),
         "write": write,
         "diagram_kind": "flowpilot_realtime_route_sign",
         "language": "en",
@@ -638,6 +665,11 @@ def generate(
         "current_stage": current_stage,
         "layout": paths["layout"],
         "flowpilot_layout": paths["layout"],
+        "flowpilot_path_status": paths["path_status"],
+        "flowpilot_path_findings": list(paths["path_findings"]),
+        "current_declares_run": paths["current_declares_run"],
+        "active_run_root_valid": paths["active_run_root_valid"],
+        "display_gate_status": display_packet["display_gate_status"],
         "route_sign_layout": route_sign["layout"],
         "run_id": paths["run_id"],
         "run_root": str(paths["run_root"]),
