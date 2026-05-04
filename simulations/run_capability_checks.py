@@ -49,7 +49,7 @@ REQUIRED_LABELS = (
     "pm_flowguard_delegation_policy_recorded",
     "officer_owned_async_modeling_policy_recorded",
     "officer_model_report_provenance_policy_recorded",
-    "main_executor_parallel_prep_boundary_recorded",
+    "controller_coordination_boundary_recorded",
     "independent_approval_protocol_recorded",
     "crew_memory_packets_written",
     "generated_resource_ledger_initialized",
@@ -167,7 +167,7 @@ REQUIRED_LABELS = (
     "idle_subagent_reused",
     "subagent_spawned_on_demand",
     "sidecar_report_returned",
-    "main_agent_merged_sidecar_report",
+    "authorized_integration_review_packet_completed",
     "pm_review_hold_instruction_written",
     "quality_package_passed_no_raise",
     "quality_package_small_raise_in_current_node",
@@ -357,7 +357,7 @@ def _state_id(state: model.State) -> str:
         f"officer_async={state.pm_flowguard_delegation_policy_recorded},"
         f"{state.officer_owned_async_modeling_policy_recorded},"
         f"{state.officer_model_report_provenance_policy_recorded},"
-        f"{state.main_executor_parallel_prep_boundary_recorded},"
+        f"{state.controller_coordination_boundary_recorded},"
         f"{state.independent_approval_protocol_recorded}|"
         f"contract={state.contract_frozen}|"
         f"child_manifest={state.child_skill_route_design_discovery_started},"

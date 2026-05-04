@@ -38,7 +38,7 @@
   "approval": {
     "pm_decision_recorded": true,
     "raw_inventory_used_as_authority": false,
-    "main_executor_self_approval_allowed": false,
+    "controller_self_approval_allowed": false,
     "worker_approval_allowed": false
   }
 }

@@ -51,7 +51,7 @@
     "decision_path": "<path-or-null>"
   },
   "worker_assignment": {
-    "owner_role": "<worker_a|worker_b|main_executor>",
+    "owner_role": "<worker_a|worker_b|authorized_non_controller>",
     "disjoint_scope": true,
     "owned_paths_or_responsibility": [],
     "worker_report_path": ".flowpilot/runs/<run-id>/research/<research-package-id>/worker_report.json",

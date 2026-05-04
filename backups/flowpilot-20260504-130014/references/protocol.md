@@ -55,18 +55,12 @@ long-form public explanation lives in `docs/protocol.md`.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
-   The main assistant becomes the controller for packet flow, not the default
-   implementation worker.
-10. Before PM product-function synthesis or route decisions, require a
-    PM-authored material-intake `NODE_PACKET` and reviewer dispatch approval.
-    The authorized worker writes
-    `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
+10. Before PM product-function synthesis or route decisions, require the main
+    executor to write `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,
     local skill and host capability inventory, coverage map, and unread or
     deferred materials. Local skills are candidate resources only until PM
-    selection. Controller-origin material intake is invalid unless a PM packet
-    explicitly assigns that administrative task to the controller and the
-    reviewer approves dispatch.
+    selection.
 11. The human-like reviewer approves or blocks material sufficiency. The packet
     is PM-ready only when obvious sources are not missing, large materials are
     sampled or scoped honestly, summaries are specific, contradictions and
@@ -122,7 +116,7 @@ long-form public explanation lives in `docs/protocol.md`.
 19. Have the human-like reviewer, process FlowGuard officer, and product
     FlowGuard officer review their slices of the manifest. The project manager
     then approves or blocks manifest inclusion in route modeling, the
-    execution frontier, and the PM runway. The controller and workers are
+    execution frontier, and the PM runway. The main executor and workers are
     forbidden approvers for child-skill gates.
 20. Verify the real `flowguard` package and required skills.
 21. Inspect dependency/tool needs and write a dependency plan.
@@ -219,7 +213,7 @@ long-form public explanation lives in `docs/protocol.md`.
     fallback authorization and do not claim live subagents. The reviewer writes a report only; the reviewer
     does not approve startup and does not open the gate. The project manager
     reads the report. If it contains blockers, PM sends remediation items back
-    to authorized workers through a PM packet and requires a new factual reviewer report. If it
+    to workers/main executor and requires a new factual reviewer report. If it
     is clean, PM writes `pm_start_gate` evidence opening startup from that
     exact report.
 
@@ -231,24 +225,10 @@ long-form public explanation lives in `docs/protocol.md`.
     workers. A route-local file without matching canonical
     state/frontier/crew/continuation evidence is a shadow route and must be
     quarantined or superseded before continuing.
-38. Start only the first packet-gated chunk whose continuation mode is known.
-    The PM writes a `NODE_PACKET`, the reviewer approves dispatch, the worker
-    receives only that packet, and the worker returns `NODE_RESULT` before
-    stopping for the next packet. The controller relays result -> reviewer ->
-    PM -> next packet and continues internally when `stop_for_user: false`.
-    Every PM decision to the controller must include a controller reminder:
-    the main assistant is only the packet-flow controller and must not
-    implement, install, edit, test, approve, or advance from its own evidence.
-    If the reminder is missing, the controller requests a corrected PM decision
-    instead of dispatching work.
-    Every controller-to-sub-agent message must also include a role reminder for
-    that recipient, and every sub-agent response must echo both the controller
-    boundary and its own role boundary. Missing reminders are blockers, not
-    cosmetic omissions.
-39. Start only the first chunk whose continuation mode is known. Automated
+38. Start only the first chunk whose continuation mode is known. Automated
     routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
-    project manager issues a completion-oriented runway, the controller syncs that
+    project manager issues a completion-oriented runway, the main executor syncs that
     runway into the visible plan, and focused parent grill-me, parent-subtree
     review, unfinished-current-node recovery check, focused node grill-me,
     lightweight self-check, quality package, child-skill gates when needed,
@@ -271,16 +251,13 @@ answer set is complete.
 ## Material Intake And PM Handoff
 
 Before PM product-function architecture, contract freeze, route generation, or
-capability routing, the PM writes a material-intake `NODE_PACKET`, the reviewer
-approves dispatch, and an authorized worker writes
+capability routing, the main executor writes
 `.flowpilot/runs/<run-id>/material_intake_packet.json`. It inventories user-provided and
 repository-local materials, summarizes what each source appears to contain,
 classifies authority, freshness, completeness, contradictions, privacy/safety
 notes, inventories locally installed skills and host capabilities as
 candidate-only resources, maps coverage to user intent, and names unread or
-deferred materials. Controller-origin material intake cannot close the gate
-unless the PM packet explicitly assigns that administrative action and the
-reviewer approves dispatch.
+deferred materials.
 
 The human-like reviewer approves material sufficiency before the project
 manager uses the packet. The reviewer must open or sample the actual materials
@@ -539,9 +516,9 @@ counts, invariant results, missing labels, counterexamples, and blindspots.
 An approval without this evidence is pending or blocked. PM cannot launder a
 report-only reviewer/officer pass; the correct role must recheck the gate.
 
-The project manager owns reviewer timing. Before worker or officer work that
-will later need review, the PM writes a review hold instruction naming the
-expected gate and saying the reviewer waits. After authorized output,
+The project manager owns reviewer timing. Before worker or main-executor work
+that will later need review, the PM writes a review hold instruction naming the
+expected gate and saying the reviewer waits. After worker output,
 verification, and anti-rough-finish evidence are ready, the PM writes a review
 release order naming the gate, evidence paths, scope, and required
 inspections. Reviewer work before that release is precheck only: it may note
@@ -618,7 +595,7 @@ Repeat until complete or blocked:
    runway as far as hard gates and real execution limits allow. Do not write only a
    future-facing "continue to X" decision while the gate is still executable.
    If the selected gate has draft evidence but lacks the required role's
-   approval, request that approval or block; do not let the controller
+   approval, request that approval or block; do not let the main executor
    self-approve.
 6. Confirm no hard gate, issue branch, or unmerged sidecar worker work is open.
 7. Confirm automated heartbeat health when supported, or manual-resume
@@ -743,7 +720,7 @@ completion.
 Model execution is role-specific. The process FlowGuard officer authors, runs,
 interprets, and approves or blocks process-model coverage. The product
 FlowGuard officer authors, runs, interprets, and approves or blocks
-product-model coverage. The controller may provide context and receive the
+product-model coverage. The main executor may provide context and receive the
 report, but it must not author or run FlowGuard model files for the officers.
 Passing command output without the matching officer's ownership, model-boundary
 check, command execution or valid unchanged reuse, counterexample/missing-label
@@ -752,11 +729,10 @@ approval is a draft, not a completed gate.
 
 Model gates are dispatched as officer-owned asynchronous gates when live
 background roles are available. The PM writes a modeling request with an
-officer output root and a controller non-dependent coordination boundary. While
-the matching officer authors, runs, interprets, and reports, the controller may
-continue only non-dependent coordination such as read-only status
-reconciliation, dependency inventory routing, and relaying already-authorized
-packets that cannot satisfy or bypass the pending model gate. Implementation, route
+officer output root and a main-executor parallel-preparation boundary. While
+the matching officer authors, runs, interprets, and reports, the main executor
+may continue only non-dependent preparation such as read-only context gathering,
+dependency inventory, and non-model evidence drafts. Implementation, route
 freeze, checkpoint closure, completion closure, or any protected gate remains
 blocked until the officer report is approved.
 
@@ -768,7 +744,7 @@ extraction, model-derived review agenda, toolchain/model improvement
 suggestions, confidence boundary, blindspots, and any valid unchanged-reuse
 basis. If the host cannot let live officers run tools, FlowPilot records
 explicit single-agent fallback and does not claim parallel officer execution.
-Controller outputs are pointers only.
+Main-executor outputs are pointers only.
 
 PM-initiated FlowGuard modeling is a decision-support move, not a vague
 handoff. When the project manager cannot confidently choose a route, repair,
@@ -777,7 +753,7 @@ from existing evidence, the PM may write a structured modeling request and
 assign it to the process FlowGuard officer, the product FlowGuard officer, or
 both. The request names the decision, uncertainty, evidence, candidate options
 or option-generation need, assigned officer scope, required answer shape,
-officer output root, and controller non-dependent coordination boundary. The
+officer output root, and main-executor parallel-preparation boundary. The
 officer first checks modelability. Missing evidence becomes an
 evidence-collection node; an over-broad question becomes split modeling
 requests. A valid report includes coverage, blindspots, failure paths,
@@ -794,7 +770,7 @@ and parent context; then they operate or inspect the product like a real
 reviewer. Blocking issues must be made specific through inspector grilling and
 must mutate the route into repair work. A repair closes only after repair
 process/product models, repair evidence, and same-inspector recheck pass.
-Human-like inspection is reviewer-owned: the controller cannot substitute a
+Human-like inspection is reviewer-owned: the main executor cannot substitute a
 self-review for the human-like reviewer's neutral observation, pass/block
 decision, or same-class recheck.
 
@@ -1032,8 +1008,8 @@ Conditional:
   floor, checkpoint, or completion decision.
 - Reuse a suitable idle subagent before spawning a new one. Spawn only on demand
   when no idle subagent fits and the task is worth the coordination cost.
-- Sidecar reports require an authorized integration/review packet before
-  dependent implementation, checkpoint, route advancement, or completion.
+- Sidecar reports require main-agent merge and verification before dependent
+  implementation, checkpoint, route advancement, or completion.
 
 ## Terminal States
 

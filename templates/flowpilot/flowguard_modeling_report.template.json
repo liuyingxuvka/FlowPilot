@@ -14,7 +14,7 @@
     "report_only_review": false,
     "valid_unchanged_reuse": false,
     "valid_unchanged_reuse_basis": "<same request, same model files, same inputs, same invariants, same expected answer, and prior officer-owned run still current|none>",
-    "main_executor_outputs_used_as_pointers_only": [
+    "controller_outputs_used_as_pointers_only": [
       "<path-or-command-output-reference>"
     ],
     "commands_run_by_officer": [

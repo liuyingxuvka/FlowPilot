@@ -28,7 +28,7 @@
       "independent_validation_required": true,
       "completion_report_only_allowed": false,
       "independent_validation_paths": [],
-      "main_executor_self_approval_allowed": false,
+      "controller_self_approval_allowed": false,
       "all_current_gates_assigned_role_approved": false
     },
     "workflow_steps_mapped": [],

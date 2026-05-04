@@ -226,9 +226,10 @@ Formal routes use persistent role slots:
 | **Worker B** | Performs bounded sidecar implementation, research, investigation, or verification work. |
 
 Workers do not own checkpoints, route mutation, acceptance-floor changes, or
-final completion. The main executor can edit files and integrate results, but
-it should not self-approve FlowGuard model gates, reviewer gates, route repair,
-or completion gates.
+final completion. The controller relays packets and status only. Authorized
+workers or officers create implementation evidence, and the controller must not
+self-approve FlowGuard model gates, reviewer gates, route repair, or completion
+gates.
 
 This matters because large AI-agent projects often fail through authority
 collapse: the same agent drafts the plan, implements it, reviews it, accepts

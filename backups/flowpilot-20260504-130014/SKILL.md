@@ -21,150 +21,6 @@ chunk, recovery path, and capability choices may change, and later
 self-interrogation may raise standards when obvious high-value work remains.
 The original completion floor may not silently change.
 
-## Experimental Packet-Gated Control Plane
-
-When a formal FlowPilot run uses background agents, the main assistant is the
-controller, not the default implementation worker. The controller may hold the
-global route state, relay messages, maintain the live status board, and request
-the next decision, but it must not personally perform product implementation,
-stateful project work, route advancement, review closure, or PM approval.
-
-The controller's allowed actions are:
-
-- create and relay PM-authored node packets;
-- relay worker results to the reviewer;
-- relay reviewer decisions to the PM;
-- maintain a packet/status ledger;
-- perform read-only consistency checks needed to route the packet;
-- stop for the user only on hard blockers, explicit human gates, or completion.
-
-The controller's forbidden actions are:
-
-- writing product code, project data, route evidence, screenshots, or release
-  artifacts for a worker node;
-- installing dependencies or running stateful commands for a worker node;
-- marking route nodes complete from controller-origin evidence;
-- writing reviewer pass decisions or PM advance decisions for itself;
-- dispatching a worker without a current PM packet and reviewer dispatch pass;
-- using later route knowledge to expand a worker packet beyond its current
-  node.
-
-Role-origin evidence is a hard gate. Only artifacts produced by the authorized
-role for the current node can close that node. Controller-origin
-implementation artifacts cannot close worker gates. Controller-origin review
-artifacts cannot close reviewer gates. Controller-origin PM approval artifacts
-cannot close PM gates. If the reviewer detects a role-origin mismatch, the
-decision must be `block_invalid_role_origin`, and the PM may not advance from
-that evidence. The PM must either discard the evidence, issue a repair packet
-to an authorized worker, or quarantine/restart the run if the contamination
-affects trust in the route.
-
-Workers use least-context node packets. A worker receives only the current
-packet, not the full route, not downstream nodes, and not a general instruction
-to complete the whole project. Each packet must include:
-
-```text
-NODE_PACKET:
-  packet_id:
-  node_id:
-  objective:
-  inputs:
-  allowed_read_paths:
-  allowed_write_paths:
-  allowed_commands_or_side_effects:
-  forbidden_actions:
-  acceptance_slice:
-  verification_required:
-  return_format:
-  stop_after_result: true
-```
-
-Worker output is a packet result, not a route decision:
-
-```text
-NODE_RESULT:
-  packet_id:
-  node_id:
-  status: completed | blocked | needs_pm
-  changed_files:
-  commands_run:
-  evidence:
-  open_issues:
-  request_next_packet: true
-```
-
-PM and reviewer decisions must be machine-consumable:
-
-```text
-REVIEW_DECISION:
-  packet_id:
-  decision: pass | block | needs_repair | needs_user
-  can_pm_advance: true | false
-  blocking_issues:
-```
-
-```text
-PM_DECISION:
-  decision: issue_next_packet | repair_current | mutate_route | block_user | complete
-  next_packet:
-  stop_for_user: true | false
-  controller_reminder: "Controller: relay and coordinate only. Do not implement, install, edit, test, approve, or advance from your own evidence."
-```
-
-Every PM response to the controller must include `controller_reminder`. The PM
-must restate that the main assistant is only the packet-flow controller and may
-not personally perform implementation, dependency installation, stateful
-commands, gate approval, route advancement, or evidence generation. If a PM
-response omits this reminder, the controller must request a corrected
-`PM_DECISION` before dispatching work.
-
-Every sub-agent response to the controller must include the same controller
-role reminder, adapted to that agent's role. The controller must also include a
-role reminder in every message it sends to a sub-agent:
-
-```text
-ROLE_REMINDER:
-  controller_boundary: "Main assistant is Controller only: relay, coordinate, record status, and request role decisions. It must not implement or close gates from its own evidence."
-  recipient_role:
-  recipient_allowed_actions:
-  recipient_forbidden_actions:
-  return_to_controller_only: true
-```
-
-If a worker, reviewer, PM, officer, simulator, or verifier response omits its
-role reminder, the controller requests a corrected response before using it as
-gate evidence. If the controller omits the recipient role reminder when
-dispatching a packet, the reviewer must block dispatch as
-`missing_role_reminder`.
-
-The worker stops after `NODE_RESULT`, but the FlowPilot controller does not
-stop for the user merely because a worker, reviewer, or PM produced an
-intermediate packet. If `stop_for_user` is false and no hard blocker exists,
-the controller immediately continues the internal loop: reviewer result -> PM
-decision -> next packet -> reviewer dispatch approval -> worker dispatch.
-
-If a host provides a tool broker or permission layer, every state-changing tool
-call must require a current execution ticket derived from PM and reviewer
-decisions. If no such broker exists, the role-origin evidence rule still
-applies: unauthorized controller work is invalid and cannot close any gate.
-
-The live FlowPilot status surface should report packet location rather than
-implementation progress invented by the controller:
-
-```text
-Flow Status:
-  run_id:
-  active_node:
-  packet_id:
-  holder: PM | Reviewer | WorkerA | WorkerB | Controller | User
-  pm_authorization:
-  reviewer_dispatch:
-  worker_status:
-  reviewer_result:
-  next_expected_event:
-  controller_allowed_action:
-```
-
 ## Required Dependencies
 
 - Real `flowguard` Python package.
@@ -316,15 +172,9 @@ boundary, old-route/old-asset cleanup boundary, and real Codex heartbeat or
 manual-resume evidence.
 
 The project manager reads that factual report, either sends concrete
-remediation items back to authorized workers through a PM-authored packet or writes
+remediation items back to the workers/main executor or writes
 `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` opening startup from the current clean
 reviewer report.
-
-Opening startup does not authorize the controller to begin implementation. It
-only authorizes the packet loop to begin. The first work beyond startup must be
-a PM-authored `NODE_PACKET`, followed by reviewer dispatch approval. The
-controller may not convert startup approval into direct execution, dependency
-installation, source extraction, implementation, QA, or route advancement.
 
 `startup_activation.work_beyond_startup_allowed` must be true in state and
 frontier before work beyond startup, and that flag may be written only by the
@@ -434,36 +284,22 @@ all four in one compact sentence.
    floor, current crew ledger, and current role memory packets. The project
    manager ratifies the startup interrogation. From this point the project
    manager owns route, resume, repair, and completion decisions; the main
-   assistant becomes the controller for packet flow and may not act as the
-   implementation worker unless a PM packet explicitly assigns a small
-   controller-owned administrative task and the reviewer approves that role
-   assignment.
-9a. If background agents are allowed, work beyond startup must use the
-    packet-gated control plane. The PM writes the first `NODE_PACKET`, the
-    reviewer approves or blocks dispatch, and only then may a worker receive
-    the packet. The controller relays packets and status only. If the
-    controller performs implementation or writes gate-closing evidence itself,
-    the reviewer must mark the evidence invalid for role-origin mismatch.
-10. Before PM product-function synthesis or route decisions, require a
-    PM-authored material-intake `NODE_PACKET` and reviewer dispatch approval.
-    The authorized worker writes
-    `.flowpilot/runs/<run-id>/material_intake_packet.json`. This packet
+   executor implements those decisions and enforces hard safety gates.
+10. Before PM product-function synthesis or route decisions, require the main
+    executor to write a `.flowpilot/runs/<run-id>/material_intake_packet.json`. This packet
     inventories user-provided and repository-local materials, summarizes what
     each source is for, classifies authority/freshness/contradictions/missing
     context, inventories locally available skills and host capabilities as
     candidate resources, and names what remains unread or uncertain. Local
     skill availability is descriptive material only; it is not permission to
-    invoke that skill. If the controller writes this artifact without explicit
-    PM packet assignment and reviewer dispatch approval, the reviewer must
-    reject it as controller-origin evidence.
+    invoke that skill.
 11. The human-like reviewer must approve material sufficiency before PM route
     planning. The reviewer checks whether the packet is clear enough for the
     project manager: no obvious sources omitted, source summaries are not
     superficial, large tables/documents are sampled or scoped honestly,
     contradictions and uncertainty are visible, and the packet will not
-    mislead route design. If the reviewer blocks, the PM issues a repair
-    `NODE_PACKET` to an authorized worker; the controller only relays the
-    packet and may not revise the intake itself.
+    mislead route design. If the reviewer blocks, the main executor revises
+    the intake packet before PM planning continues.
 12. The project manager writes
     `.flowpilot/pm_material_understanding.json` from the reviewed packet and
     user intent. It records source-claim matrix, open questions, material
@@ -474,8 +310,7 @@ all four in one compact sentence.
     gap that affects product architecture, route choice, node acceptance, or
     implementation, the PM must convert that gap into a formal research package
     before dependent planning continues. The package assigns worker A, worker B,
-    or another explicitly authorized non-controller worker to search, inspect,
-    reconcile, model, or run a bounded
+    or the main executor to search, inspect, reconcile, model, or run a bounded
     experiment; records allowed source/tool boundaries including web/browser
     availability and private/paid/account hard gates; and defines reviewer
     source checks and stop conditions. Worker output is a pointer only. The
@@ -523,7 +358,7 @@ all four in one compact sentence.
     and conformance gates require the process FlowGuard officer; product or
     functional behavior gates require the product FlowGuard officer; route
     inclusion, route mutation, and parent return require the project manager.
-    The controller, worker A, and worker B are forbidden approvers for
+    The main executor, worker A, and worker B are forbidden approvers for
     child-skill gates.
 20. Have the human-like reviewer, process FlowGuard officer, and product
     FlowGuard officer review their slices of the child-skill gate manifest.
@@ -554,8 +389,7 @@ all four in one compact sentence.
 29. Ask the process FlowGuard officer to use FlowGuard as process designer for
     the control route. The PM writes an officer-owned modeling request first;
     the request is dispatched to the matching officer run directory and names
-    any non-dependent read-only coordination the controller may relay while
-    the officer works.
+    what, if anything, the main executor may prepare in parallel.
 30. Generate a candidate route tree from the approved product-function
     architecture, frozen contract, and PM-approved child-skill gate manifest.
 31. The process FlowGuard officer authors, runs, interprets, and approves or
@@ -571,7 +405,7 @@ all four in one compact sentence.
     state/edge counts, missing-label or counterexample inspection, PM risk
     tiers, model-derived review agenda, toolchain/model improvement
     suggestions, confidence boundary, blindspots, and decision. A report that
-    only reviews controller-origin outputs is not a completed FlowGuard gate.
+    only reviews main-executor outputs is not a completed FlowGuard gate.
 34. The process FlowGuard officer authors and runs the strict gate-obligation
     review model so reviewer caveats cannot close a current gate unless all
     current-scope obligations are already resolved.
@@ -627,8 +461,8 @@ all four in one compact sentence.
     authorization and does not claim live subagents. The reviewer does not
     output approval and cannot open startup.
     The project manager reads the report. If it has blocking findings, the PM
-    sends concrete remediation items back to authorized workers through a PM
-    packet and requires another reviewer report after repair. If the report has no
+    sends concrete remediation items back to the workers/main executor and
+    requires another reviewer report after repair. If the report has no
     blockers, the PM writes `pm_start_gate` evidence opening startup from that
     exact factual report and sets `work_beyond_startup_allowed: true`.
 
@@ -647,7 +481,7 @@ all four in one compact sentence.
 40. Execute the first bounded chunk only after the continuation mode is known.
     In automated mode, the heartbeat rehydrates the crew from persisted role
     memory, asks the project manager for a completion-oriented runway, and the
-    controller syncs that runway into the current visible plan projection.
+    main executor syncs that runway into the current visible plan projection.
     In manual-resume mode, the active turn loads the same
     state/frontier/crew-memory inputs and asks the project manager for the same
     completion-oriented runway. In both modes,
@@ -664,12 +498,8 @@ or chooses the initial route. It prevents FlowPilot from planning from an
 unclear pile of files, screenshots, tables, notes, prior route evidence, or
 unread repository state.
 
-Material intake is worker-owned under packet control. The PM writes a
-material-intake `NODE_PACKET`, the reviewer approves dispatch, and the
-authorized worker writes
-`.flowpilot/runs/<run-id>/material_intake_packet.json`. The controller may
-relay source lists and status only; controller-origin intake evidence cannot
-close this gate. The packet records:
+The main executor owns the descriptive intake and writes
+`.flowpilot/runs/<run-id>/material_intake_packet.json`. It records:
 
 - `user_intent`: the user request and the decision the materials must support;
 - `material_inventory`: each user-provided, repository-local, generated, or
@@ -720,17 +550,14 @@ If web/browser capability is absent or private/paid/account access would be
 needed, PM routes to local-source fallback, user clarification, manual research,
 or block; FlowPilot must not claim external research was done.
 
-Worker A, worker B, or another explicitly authorized non-controller role
-executes the package and writes `worker_report.json` with raw source pointers,
-commands or probes, negative findings, contradictions, and confidence
-boundaries. The controller cannot execute the research package unless the PM
-packet explicitly assigns a controller-owned administrative action and the
-reviewer approves that exception. The human-like reviewer then writes
-`reviewer_report.json` after directly checking original sources, search
-results, local files, logs, screenshots, or experiment outputs. A reviewer
-decision based only on the worker summary is invalid. If the reviewer blocks,
-PM returns a concrete rework package to the worker, inserts a follow-up node,
-asks the user, mutates the route, or blocks. PM may feed the result into
+Worker A, worker B, or the main executor executes the package and writes
+`worker_report.json` with raw source pointers, commands or probes, negative
+findings, contradictions, and confidence boundaries. The human-like reviewer
+then writes `reviewer_report.json` after directly checking original sources,
+search results, local files, logs, screenshots, or experiment outputs. A
+reviewer decision based only on the worker summary is invalid. If the reviewer
+blocks, PM returns a concrete rework package to the worker, inserts a follow-up
+node, asks the user, mutates the route, or blocks. PM may feed the result into
 product-function architecture, node acceptance, or route design only after
 reviewer sufficiency passes and PM records how the result was absorbed or how
 the route changed.
@@ -1046,7 +873,7 @@ needed. Only after that report records which roles were resumed, replaced,
 seeded, blocked, or unavailable does FlowPilot ask the project manager for a
 completion-oriented runway from the current route position to project
 completion. If any required role is missing and cannot be replaced from memory,
-the current gate blocks rather than falling back to controller approval.
+the current gate blocks rather than falling back to main-executor approval.
 
 After any meaningful role output, update both the role report path and the
 role memory packet before checkpoint or route advancement. Store compact
@@ -1081,28 +908,24 @@ fact-check evidence is invalid. PM decisions may rely on reviewer reports only
 after those reports identify the factual sources checked and contain no current
 gate blockers.
 
-The main assistant is the controller, not the project manager and not the
-default implementation worker. It relays packets, records status, performs
-read-only consistency checks needed to route the packet, and enforces hard
-stops by returning conflicts to the correct role. It may provide product
-context, source paths, logs, screenshots, and prior evidence to authorized
-roles, but it must not create gate-closing implementation evidence, reviewer
-passes, PM decisions, or officer model approvals for itself. If the project
-manager's decision conflicts with a hard safety gate, blocking reviewer report,
-FlowGuard counterexample, or user instruction, the controller feeds that
-conflict back to the project manager for a corrected route decision instead of
-silently overriding the route.
+The main executor is not the project manager. It performs local edits, tool
+calls, integrations, non-model verification, and hard-gate enforcement. It may
+provide product context, source paths, logs, screenshots, and prior evidence to
+the FlowGuard officers, but it must not author, run, interpret, or approve
+FlowGuard model gates for them. If the project manager's decision conflicts
+with a hard safety gate, blocking reviewer report, FlowGuard counterexample,
+or user instruction, the main executor feeds that conflict back to the project
+manager for a corrected route decision instead of silently overriding the
+route.
 
 ## Actor Authority Matrix
 
 Formal FlowPilot gates carry actor authority, not only evidence paths. The
-controller may not draft gate-closing evidence, run ordinary state-changing
-tools, edit project files, or integrate worker results as completion evidence
-unless a PM packet explicitly assigns that narrow administrative action and
-the reviewer approves dispatch. Worker and officer outputs remain drafts until
-the correct required role approves the gate. FlowGuard model gates are
-different: the matching FlowGuard officer is the draft owner, execution owner,
-interpreter, and required approver. Evidence existence is not approval.
+main executor may draft non-model evidence, run ordinary local tools, edit
+files, and integrate results, but its output remains a draft until the correct
+role approves the gate. FlowGuard model gates are different: the matching
+FlowGuard officer is the draft owner, execution owner, interpreter, and
+required approver. Evidence existence is not approval.
 
 Each meaningful gate in `.flowpilot/runs/<run-id>/execution_frontier.json` records:
 
@@ -1122,10 +945,11 @@ Each meaningful gate in `.flowpilot/runs/<run-id>/execution_frontier.json` recor
 
 Authority rules:
 
-- startup self-interrogation is PM-ratified before route/model gates advance;
-- material intake is drafted by an authorized worker from a PM-authored
-  `NODE_PACKET`, sufficiency-approved by the human-like reviewer, and
-  interpreted by the project manager before product or route decisions;
+- startup self-interrogation may be drafted by the main executor, but the
+  project manager must ratify it before route/model gates advance;
+- material intake is drafted by the main executor, sufficiency-approved by the
+  human-like reviewer, and interpreted by the project manager before product or
+  route decisions;
 - route advancement, heartbeat-resume runway selection, PM stop signals,
   repair strategy, route mutation, and completion require project-manager
   approval;
@@ -1141,9 +965,9 @@ Authority rules:
   ignore the block. The PM must run repair-strategy interrogation and select a
   route mutation, blocker, or corrected rework path.
 
-The project manager owns reviewer timing. Before worker or officer work that
-will later need review, the PM writes a review hold instruction naming the
-expected gate and saying the reviewer waits. After authorized output,
+The project manager owns reviewer timing. Before worker or main-executor work
+that will later need review, the PM writes a review hold instruction naming the
+expected gate and saying the reviewer waits. After worker output,
 verification, and anti-rough-finish evidence are ready, the PM writes a review
 release order naming the gate, evidence paths, scope, and required
 inspections. Reviewer work before that release is precheck only: it may note
@@ -1151,7 +975,7 @@ risks for PM, but it cannot open, close, or block the gate.
 
 If the required approver is unavailable, heartbeat recovery restores or
 replaces that role before work continues. If restoration fails, the current
-gate is blocked with evidence; it is not self-approved by the controller.
+gate is blocked with evidence; it is not self-approved by the main executor.
 
 Approval records must not park unresolved risks as acceptable residuals. A
 real risk triggers repair, route mutation, return to QA, request for more
@@ -1206,7 +1030,7 @@ Role-specific minimums:
 - FlowGuard officer approvals must personally own the model boundary, model
   files, command execution or explicitly valid reuse, state/edge counts,
   invariant results, missing labels, counterexample inspection, and model
-  blindspots. A controller summary of a passing model is not an officer
+  blindspots. A main-executor summary of a passing model is not an officer
   approval.
 
 An approval without this independent validation evidence is `pending` or
@@ -1245,11 +1069,10 @@ Approver defaults:
 - route inclusion, route mutation, parent return, and child-to-parent closure:
   project manager.
 
-Worker agents may draft evidence, run ordinary tools, or implement the current
-chunk only within their PM-authored packet and reviewer-approved dispatch. The
-controller may only relay their evidence and cannot approve a child-skill gate.
-If a child-skill gate has draft evidence but lacks its required approver, the
-gate is pending or blocked. It is not complete.
+The main executor and worker agents may draft evidence, run ordinary tools, or
+implement the current chunk, but they cannot approve a child-skill gate. If a
+child-skill gate has draft evidence but lacks its required approver, the gate
+is pending or blocked. It is not complete.
 
 The initial manifest feeds FlowGuard route modeling, the execution frontier,
 and the PM completion runway. At node entry, the project manager refines the
@@ -1492,10 +1315,10 @@ product model.
 The matching FlowGuard officer owns the model end to end. The process
 FlowGuard officer authors, runs, interprets, and approves or blocks
 development-process models. The product FlowGuard officer authors, runs,
-interprets, and approves or blocks product-function models. The controller may
-provide context and receive the officer report, but it must not author or run
-the FlowGuard model files on the officer's behalf. A model file, passing
-command output, or controller summary is not approval unless the matching
+interprets, and approves or blocks product-function models. The main executor
+may provide context and receive the officer report, but it must not author or
+run the FlowGuard model files on the officer's behalf. A model file, passing
+command output, or main-executor summary is not approval unless the matching
 officer personally checked the model boundary, ran the model or recorded valid
 unchanged reuse, inspected counterexamples or missing-label output, cited model
 files, state fields, commands, state/edge counts, and blindspots, and wrote an
@@ -1508,12 +1331,11 @@ FlowGuard model gates run as officer-owned asynchronous gates when live
 background roles are available. The PM creates the modeling request, dispatches
 it to the matching process/product officer, and records the output root under
 `.flowpilot/runs/<run-id>/officer_runs/<request-id>/`. While the officer runs
-the model, the controller may continue only non-dependent coordination:
-read-only status reconciliation, dependency inventory routing, and relaying
-already-authorized packets that cannot satisfy or bypass the pending model
-gate. Implementation, route freeze, checkpoint closure, completion closure, or
-any gate protected by that model remains blocked until the officer report is
-approved.
+the model, the main executor may continue only non-dependent preparation:
+read-only material review, dependency inventory, non-model evidence drafts, and
+other work that cannot satisfy or bypass the pending model gate. Implementation,
+route freeze, checkpoint closure, completion closure, or any gate protected by
+that model remains blocked until the officer report is approved.
 
 Every officer report must contain execution provenance:
 `model_author_role`, `model_runner_role`, `model_interpreter_role`,
@@ -1524,7 +1346,7 @@ agenda, toolchain/model improvement suggestions, confidence boundary,
 blindspots, and whether unchanged reuse was valid.
 If the environment cannot let a live officer run tools directly, FlowPilot must
 record the fallback explicitly as single-agent role continuity and cannot claim
-parallel officer execution speedup. Controller command output can be a
+parallel officer execution speedup. Main-executor command output can be a
 pointer, but not `commands_run_by_officer`.
 
 ## PM-Initiated FlowGuard Modeling
@@ -1549,8 +1371,8 @@ The PM may assign the request to:
 A PM modeling request is valid only when it names the decision to be made, the
 uncertainty, known evidence sources, candidate options or an explicit request
 to generate candidates, assigned officer scope, answer shape needed for PM
-action, officer output root, and the controller's non-dependent coordination
-boundary while the request is pending. Use `flowguard_modeling_request.template.json`
+action, officer output root, and the main-executor parallel-preparation boundary
+while the request is pending. Use `flowguard_modeling_request.template.json`
 for persistent evidence. The assigned officer first performs a modelability
 check. If the request lacks evidence, the route gains an evidence-collection
 node. If the request is too broad, the route gains split modeling requests. Only
@@ -1758,7 +1580,7 @@ completion. Manual-resume turns load the same files, write the same all-role
 rehydration report, and ask for the same PM runway before continuing. The
 runway must include the current gate, downstream
 steps, role approvals, hard-stop conditions, checkpoint cadence, and any PM
-stop signal. The controller immediately replaces the current visible Codex
+stop signal. The main executor immediately replaces the current visible Codex
 plan projection with that runway and continues along it until the PM stop
 signal, a hard gate, a blocker, route mutation, or real environment/tool limit
 stops progress. If the current node is unfinished after an interruption, the
@@ -1823,7 +1645,7 @@ FlowPilot should keep the persisted resume packet current at each checkpoint
 and before risky/long operations.
 
 The visible plan projection is a host-facing execution control, not just a
-JSON note. When a native plan tool exists, the controller must call it after
+JSON note. When a native plan tool exists, the main executor must call it after
 each PM runway decision and after any route mutation that changes the runway.
 The plan must contain the current executable gate plus downstream runway items
 toward completion. Do not leave the native plan as a one-step list, and do not
@@ -2019,7 +1841,7 @@ ask the project manager for that runway, sync it into the visible plan, verify
 the selected gate's authority record, execute at least one bounded gate when
 possible, then keep advancing through downstream runway steps until a PM stop
 signal, hard gate, blocker, route mutation, or real environment/tool limit
-stops progress. If a gate requires a role-specific approver, the controller
+stops progress. If a gate requires a role-specific approver, the main executor
 cannot advance from its own draft; it must obtain the required role's approval
 or record a blocker. Writing only "continue to X" is invalid no-progress
 continuation evidence.
@@ -2251,7 +2073,7 @@ FlowPilot only enforces the process boundary:
 - post-implementation rendered QA includes an aesthetic verdict with concrete
   reviewer reasons before divergence or loop closure;
 - post-implementation rendered QA includes reviewer-owned personal walkthrough
-  evidence. The reviewer, not only the controller or worker, must operate
+  evidence. The reviewer, not only the main executor or worker, must operate
   the rendered surface where the gate is interactive and record reachable and
   unreachable controls, text overlap/clipping, layout density, excessive
   whitespace, crowded areas, and concrete design recommendations;
@@ -2277,7 +2099,7 @@ project-manager node decision
 -> no need, reuse worker A/B if idle, or spawn/replace only when a worker slot is unavailable
 -> bounded/disjoint sidecar task
 -> sidecar report returned
--> authorized integration/review packet
+-> main-agent merge and verification
 -> worker returns to idle crew slot
 ```
 
@@ -2285,17 +2107,15 @@ Run the sidecar scan at child-node entry, not as a parent/module gate.
 Worker agents handle bounded helper tasks inside the current child node. They
 must not own the child node, route advancement, frozen acceptance floor,
 checkpoint, or completion decision. The project manager may assign bounded
-sidecar work, but an authorized integration worker or required reviewer must
-merge/verify the result before dependent work proceeds. The controller only
-relays the result, review request, and PM decision.
+sidecar work, but the main executor still merges and verifies the result before
+dependent work proceeds.
 
 Reuse worker A or worker B before spawning or replacing capacity. Spawn or
 replace only when no fixed worker slot is available or recoverable and the
 sidecar task is worth the coordination cost.
 
-Worker returned is not complete. The controller must route the result to the
-required verifier/reviewer and then ask the project manager whether the current
-node can proceed.
+Worker returned is not complete. The main executor must merge, verify, and ask
+the project manager whether the current node can proceed.
 
 ## Final Route-Wide Gate Ledger
 
@@ -2371,13 +2191,6 @@ by the correct role. It may not declare completion while any `blocking`,
 
 No formal chunk starts without:
 
-- a PM-authored `NODE_PACKET` for exactly the current node;
-- reviewer dispatch approval for that packet, with `can_pm_advance` or
-  `dispatch_allowed` true for the current packet only;
-- a packet holder/status entry showing whether the packet is with PM,
-  reviewer, worker, controller, or user;
-- explicit role-origin authority for every artifact that the chunk may use to
-  close gates;
 - PM-owned startup activation recorded in state and execution frontier from a
   current clean factual reviewer report;
 - current route checked by FlowGuard;
@@ -2419,8 +2232,6 @@ No formal chunk starts without:
 
 Each formal chunk must declare:
 
-- packet id and node id;
-- assigned role or worker identity;
 - intent;
 - owned paths or owned responsibility;
 - expected artifacts;
@@ -2439,14 +2250,6 @@ Each formal chunk must declare:
 If the next step is uncertain, run a bounded experiment instead of a formal
 chunk. Experiments answer one question and either resume the route, update the
 route, or block with evidence.
-
-For packet-gated runs, a chunk ends when the authorized worker returns
-`NODE_RESULT`. The controller must relay that result to the reviewer and must
-not execute the next chunk itself. If reviewer passes and PM issues the next
-packet with `stop_for_user: false`, the controller continues the internal loop
-by dispatching the next packet after reviewer dispatch approval. If reviewer
-blocks, the PM must issue a repair packet or stop for the user; the controller
-may not silently continue.
 
 ## Residual Risk Triage Gate
 
@@ -2596,8 +2399,7 @@ Complete only when:
 - frozen contract remains intact;
 - route checks pass;
 - required capability evidence exists;
-- sidecar subagent work is merged and verified by an authorized
-  integration/review packet;
+- sidecar subagent work is merged and verified by the main agent;
 - final verification passes;
 - anti-rough-finish review has passed;
 - every completed node has product-function model evidence, human-like
@@ -2645,8 +2447,6 @@ appropriate automated or manual-resume notice.
 ## References
 
 - `references/protocol.md`: compact operator protocol.
-- `references/packet_control_plane.md`: packet-gated controller/PM/reviewer/worker
-  loop and role-origin evidence rule.
 - `references/installation_contract.md`: dependency and self-check contract.
 - `references/failure_modes.md`: failures the FlowGuard models must keep
   guarding against.

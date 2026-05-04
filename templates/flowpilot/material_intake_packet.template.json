@@ -2,8 +2,8 @@
   "artifact_type": "flowpilot_material_intake_packet",
   "schema_version": 1,
   "created_at": "<iso-8601-timestamp>",
-  "draft_owner": "main_executor",
-  "execution_owner": "main_executor",
+  "draft_owner": "<worker_a|worker_b>",
+  "execution_owner": "<worker_a|worker_b>",
   "required_approver": "human_like_reviewer",
   "approval_status": "draft",
   "approval_evidence_path": "<path-or-null>",
@@ -38,7 +38,7 @@
   ],
   "local_skill_inventory": {
     "inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
-    "inventory_owner": "main_executor",
+    "inventory_owner": "<worker_a|worker_b>",
     "purpose": "Expose available local skills and host capabilities as candidate resources for PM route design without approving their use.",
     "candidate_only_until_pm_selected": true,
     "raw_availability_is_not_route_authority": true,
@@ -88,7 +88,7 @@
       "question": "<question-that-may-need-a-PM-research-package>",
       "route_impact": "<blocking|changes-route|can-defer|nonblocking>",
       "likely_source_or_experiment_needed": "<local-inspection|web-search|browser-check|user-material|FlowGuard-model|bounded-experiment|source-reconciliation|unknown>",
-      "suggested_worker_owner": "<worker_a|worker_b|main_executor|unknown>",
+      "suggested_worker_owner": "<worker_a|worker_b|authorized_non_controller|unknown>",
       "must_be_decided_by_pm": true
     }
   ],

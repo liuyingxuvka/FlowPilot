@@ -10,7 +10,7 @@
   "source_node_acceptance_plan": "<path-or-null>",
   "started_at": "<iso-8601-timestamp>",
   "ended_at": "<iso-8601-timestamp-or-null>",
-  "owner_role": "<main_executor|worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+  "owner_role": "<worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
   "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
   "question": "<one-question-this-experiment-answers>",
   "hypothesis_to_attack": "<what-could-make-the-current-route-or-assumption-wrong>",

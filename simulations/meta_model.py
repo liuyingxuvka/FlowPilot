@@ -161,7 +161,7 @@ class State:
     pm_flowguard_delegation_policy_recorded: bool = False
     officer_owned_async_modeling_policy_recorded: bool = False
     officer_model_report_provenance_policy_recorded: bool = False
-    main_executor_parallel_prep_boundary_recorded: bool = False
+    controller_coordination_boundary_recorded: bool = False
     independent_approval_protocol_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
@@ -219,6 +219,11 @@ class State:
     startup_reviewer_checked_prior_work_boundary: bool = False
     startup_reviewer_checked_live_agent_freshness: bool = False
     startup_reviewer_checked_no_historical_agent_reuse: bool = False
+    startup_reviewer_checked_capability_resolution: bool = False
+    startup_reviewer_checked_current_run_heartbeat_binding: bool = False
+    startup_pm_capability_resolution_recorded: bool = False
+    heartbeat_bound_to_current_run: bool = False
+    heartbeat_same_name_only_checked: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
     startup_pm_independent_gate_audit_done: bool = False
@@ -646,7 +651,7 @@ def _crew_ready(state: State) -> bool:
         and state.pm_flowguard_delegation_policy_recorded
         and state.officer_owned_async_modeling_policy_recorded
         and state.officer_model_report_provenance_policy_recorded
-        and state.main_executor_parallel_prep_boundary_recorded
+        and state.controller_coordination_boundary_recorded
         and state.independent_approval_protocol_recorded
         and state.crew_memory_policy_written
         and state.crew_memory_packets_written == CREW_SIZE
@@ -663,6 +668,8 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.heartbeat_schedule_created
         and state.route_heartbeat_interval_minutes == 1
         and state.stable_heartbeat_launcher_recorded
+        and state.heartbeat_bound_to_current_run
+        and not state.heartbeat_same_name_only_checked
     )
 
 
@@ -764,7 +771,17 @@ def _startup_pm_gate_ready(state: State) -> bool:
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_reviewer_checked_capability_resolution
+        and (
+            state.manual_resume_mode_recorded
+            or (
+                state.startup_reviewer_checked_current_run_heartbeat_binding
+                and state.heartbeat_bound_to_current_run
+                and not state.heartbeat_same_name_only_checked
+            )
+        )
         and state.startup_pm_independent_gate_audit_done
+        and state.startup_pm_capability_resolution_recorded
         and state.pm_start_gate_opened
     )
 
@@ -963,7 +980,7 @@ class AutopilotStep:
         "pm_flowguard_delegation_policy_recorded",
         "officer_owned_async_modeling_policy_recorded",
         "officer_model_report_provenance_policy_recorded",
-        "main_executor_parallel_prep_boundary_recorded",
+        "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
@@ -1250,7 +1267,7 @@ class AutopilotStep:
         "pm_flowguard_delegation_policy_recorded",
         "officer_owned_async_modeling_policy_recorded",
         "officer_model_report_provenance_policy_recorded",
-        "main_executor_parallel_prep_boundary_recorded",
+        "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
         "pm_initial_route_decision_recorded",
         "child_skill_route_design_discovery_started",
@@ -1877,7 +1894,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="officer_owned_async_modeling_policy_recorded",
-                action="record that FlowGuard model gates dispatch to officer-owned run directories while the main executor may continue only non-dependent preparation",
+                action="record that FlowGuard model gates dispatch to officer-owned run directories while the controller may relay only non-dependent coordination",
                 officer_owned_async_modeling_policy_recorded=True,
                 active_node="record_officer_model_report_provenance_policy",
             )
@@ -1889,16 +1906,16 @@ class AutopilotStep:
                 label="officer_model_report_provenance_policy_recorded",
                 action="require officer model reports to prove model author, runner, interpreter, commands, input snapshots, state counts, counterexample inspection, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, blindspots, and decision",
                 officer_model_report_provenance_policy_recorded=True,
-                active_node="record_main_executor_parallel_prep_boundary",
+                active_node="record_controller_coordination_boundary",
             )
             return
 
-        if not state.main_executor_parallel_prep_boundary_recorded:
+        if not state.controller_coordination_boundary_recorded:
             yield _step(
                 state,
-                label="main_executor_parallel_prep_boundary_recorded",
-                action="record that main-executor parallel work during officer modeling cannot satisfy route freeze, implementation, checkpoint, completion, or protected model gates",
-                main_executor_parallel_prep_boundary_recorded=True,
+                label="controller_coordination_boundary_recorded",
+                action="record that controller coordination during officer modeling cannot satisfy route freeze, implementation, checkpoint, completion, or protected model gates",
+                controller_coordination_boundary_recorded=True,
                 active_node="record_independent_approval_protocol",
             )
             return
@@ -1938,7 +1955,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="material_sources_scanned",
-                action="main executor scans user-provided and repository-local materials before PM route design",
+                action="authorized worker scans user-provided and repository-local materials before PM route design",
                 material_sources_scanned=True,
                 active_node="summarize_material_sources",
             )
@@ -1948,7 +1965,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="material_source_summaries_written",
-                action="main executor writes purpose, contents, and current-state summaries for every relevant material source",
+                action="authorized worker writes purpose, contents, and current-state summaries for every relevant material source",
                 material_source_summaries_written=True,
                 active_node="classify_material_source_quality",
             )
@@ -1958,7 +1975,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="material_source_quality_classified",
-                action="main executor classifies source authority, freshness, contradictions, missing context, and readiness",
+                action="authorized worker classifies source authority, freshness, contradictions, missing context, and readiness",
                 material_source_quality_classified=True,
                 active_node="write_material_intake_packet",
             )
@@ -1968,7 +1985,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="local_skill_inventory_written",
-                action="main executor inventories locally available skills and host capabilities as candidate resources before the material packet is finalized",
+                action="authorized worker inventories locally available skills and host capabilities as candidate resources before the material packet is finalized",
                 local_skill_inventory_written=True,
                 active_node="classify_local_skill_candidates",
             )
@@ -1978,7 +1995,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="local_skill_inventory_candidate_classified",
-                action="main executor classifies local skills as candidate-only resources without treating availability as PM approval to use them",
+                action="authorized worker classifies local skills as candidate-only resources without treating availability as PM approval to use them",
                 local_skill_inventory_candidate_classified=True,
                 active_node="write_material_intake_packet",
             )
@@ -1988,7 +2005,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="material_intake_packet_written",
-                action="main executor writes the Material Intake Packet, including local skill inventory, as descriptive startup evidence",
+                action="authorized worker writes the Material Intake Packet, including local skill inventory, as packet-controlled startup evidence",
                 material_intake_packet_written=True,
                 active_node="probe_material_intake_sources",
             )
@@ -2425,6 +2442,8 @@ class AutopilotStep:
                 heartbeat_schedule_created=True,
                 route_heartbeat_interval_minutes=1,
                 stable_heartbeat_launcher_recorded=True,
+                heartbeat_bound_to_current_run=True,
+                heartbeat_same_name_only_checked=False,
                 active_node="design_flowguard_route",
             )
             return
@@ -2483,7 +2502,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="child_skill_gate_approvers_assigned",
-                action="project manager assigns required approver roles for every child-skill gate and forbids main-executor or worker self-approval",
+                action="project manager assigns required approver roles for every child-skill gate and forbids controller or worker self-approval",
                 child_skill_gate_approvers_assigned=True,
                 active_node="probe_child_skill_gate_manifest",
             )
@@ -2817,6 +2836,8 @@ class AutopilotStep:
                 startup_reviewer_checked_prior_work_boundary=True,
                 startup_reviewer_checked_live_agent_freshness=True,
                 startup_reviewer_checked_no_historical_agent_reuse=True,
+                startup_reviewer_checked_capability_resolution=True,
+                startup_reviewer_checked_current_run_heartbeat_binding=not state.manual_resume_mode_recorded,
                 active_node="pm_interprets_startup_review",
             )
             return
@@ -2859,7 +2880,10 @@ class AutopilotStep:
                 startup_reviewer_checked_prior_work_boundary=False,
                 startup_reviewer_checked_live_agent_freshness=False,
                 startup_reviewer_checked_no_historical_agent_reuse=False,
+                startup_reviewer_checked_capability_resolution=False,
+                startup_reviewer_checked_current_run_heartbeat_binding=False,
                 startup_pm_independent_gate_audit_done=False,
+                startup_pm_capability_resolution_recorded=False,
                 active_node="startup_preflight_review",
             )
             return
@@ -2888,6 +2912,8 @@ class AutopilotStep:
                 startup_reviewer_checked_prior_work_boundary=True,
                 startup_reviewer_checked_live_agent_freshness=True,
                 startup_reviewer_checked_no_historical_agent_reuse=True,
+                startup_reviewer_checked_capability_resolution=True,
+                startup_reviewer_checked_current_run_heartbeat_binding=not state.manual_resume_mode_recorded,
                 active_node="pm_interprets_startup_review",
             )
             return
@@ -2904,6 +2930,7 @@ class AutopilotStep:
                 label="startup_pm_independent_gate_audit_done",
                 action="PM independently audits startup run isolation, prior-work boundary, live-agent freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
                 startup_pm_independent_gate_audit_done=True,
+                startup_pm_capability_resolution_recorded=True,
                 active_node="pm_start_gate_decision",
             )
             return
@@ -4216,7 +4243,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_asked_project_manager",
-                    action="continuation turn asks the project manager what the main executor should do next",
+                    action="continuation turn asks the project manager what the controller should do next",
                     heartbeat_pm_decision_requested=True,
                     active_node="await_pm_resume_decision",
                 )
@@ -4237,7 +4264,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="pm_runway_synced_to_visible_plan",
-                    action="main executor calls the host native plan tool when available, or records the fallback method, and replaces the visible plan with a downstream PM runway projection",
+                    action="controller calls the host native plan tool when available, or records the fallback method, and replaces the visible plan with a downstream PM runway projection",
                     pm_runway_synced_to_plan=True,
                     plan_sync_method_recorded=True,
                     visible_plan_has_runway_depth=True,
@@ -4257,7 +4284,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="pm_node_work_decision_recorded",
-                    action="project manager assigns the current node work package before the main executor defines implementation work",
+                    action="project manager assigns the current node work package before the controller dispatches authorized work",
                     pm_node_decision_recorded=True,
                     active_node="check_unfinished_current_node",
                 )
@@ -4545,8 +4572,8 @@ class AutopilotStep:
             if state.subagent_status == "returned":
                 yield _step(
                     state,
-                    label="main_agent_merged_sidecar_report",
-                    action="main agent verifies and merges the sidecar report while keeping node ownership",
+                    label="authorized_integration_review_packet_completed",
+                    action="authorized integration/review packet verifies the sidecar report while PM keeps node ownership",
                     sidecar_need="none",
                     subagent_status="idle",
                     subagent_idle_available=True,
@@ -5093,7 +5120,17 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_reviewer_checked_capability_resolution
+        and (
+            state.manual_resume_mode_recorded
+            or (
+                state.startup_reviewer_checked_current_run_heartbeat_binding
+                and state.heartbeat_bound_to_current_run
+                and not state.heartbeat_same_name_only_checked
+            )
+        )
         and state.startup_pm_independent_gate_audit_done
+        and state.startup_pm_capability_resolution_recorded
     ):
         return InvariantResult.fail(
             "PM start gate opened before a clean factual reviewer startup report and independent PM gate audit"
@@ -5133,6 +5170,12 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
     if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
         return InvariantResult.fail(
             "work beyond startup was allowed before reviewer fact report and PM-owned start-gate opening"
+        )
+    if state.heartbeat_schedule_created and (
+        not state.heartbeat_bound_to_current_run or state.heartbeat_same_name_only_checked
+    ):
+        return InvariantResult.fail(
+            "startup heartbeat evidence did not bind the automation to the current run instead of a same-name record"
         )
     return InvariantResult.pass_()
 
@@ -5445,9 +5488,11 @@ def heartbeat_continuation_is_lifecycle_state(state: State, trace) -> InvariantR
     if state.host_continuation_supported and state.heartbeat_schedule_created and (
         state.route_heartbeat_interval_minutes != 1
         or not state.stable_heartbeat_launcher_recorded
+        or not state.heartbeat_bound_to_current_run
+        or state.heartbeat_same_name_only_checked
     ):
         return InvariantResult.fail(
-            "automated continuation must use a stable one-minute heartbeat launcher"
+            "automated continuation must use a stable one-minute heartbeat launcher bound to the current run"
         )
     return InvariantResult.pass_()
 
@@ -5993,7 +6038,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="subagent_must_merge_before_completion",
-        description="Optional subagent results must return to the main agent before completion.",
+        description="Optional subagent results must return to the controller before completion.",
         predicate=subagent_must_merge_before_completion,
     ),
     Invariant(

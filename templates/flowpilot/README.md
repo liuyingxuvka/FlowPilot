@@ -95,7 +95,7 @@ for review.
    `node_acceptance_plan.json` with root mappings, risk hypotheses, concrete
    experiments, evidence paths, route-sign display proof, and terminal replay
    obligations.
-   PM owns reviewer timing: write a review hold before worker/main-executor
+   PM owns reviewer timing: write a review hold before worker/officer
    work, then after worker output, verification, and anti-rough-finish evidence
    are ready, write a review release naming gate, evidence paths, scope, and
    required inspections. Early reviewer work is precheck only and cannot open
@@ -115,7 +115,7 @@ for review.
    `blocked_unsupported`) and the exact host evidence source.
 27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
    syncing the visible Codex plan or advancing work. Each PM resume decision
-   records a completion-oriented runway and the main executor replaces the
+   records a completion-oriented runway and the controller replaces the
    current visible plan projection from that runway. If the host exposes a
    native plan/task-list tool such as Codex `update_plan`, call it with that
    runway before work starts; if not, record the fallback projection method and
@@ -199,7 +199,7 @@ for review.
 - `crew_memory/crew_rehydration_report.template.json`: resume-time all-role recovery report
   proving project manager, reviewer, both FlowGuard officers, and both workers
   were restored from ledger and role memory before PM runway work.
-- `material_intake_packet.template.json`: main-executor material inventory,
+- `material_intake_packet.template.json`: authorized-worker material inventory,
   local skill and host capability inventory, and source-quality packet
   reviewed before PM planning.
 - `local_skill_inventory.template.json`: optional standalone local skill and
@@ -227,13 +227,13 @@ for review.
 - `flowguard_modeling_request.template.json`: PM-authored request for proactive
   process/product/object modeling when a decision is uncertain. It records the
   officer-owned async dispatch mode, officer output root, and what
-  non-dependent preparation the main executor may do while reports are pending.
+  non-dependent coordination the controller may relay while reports are pending.
 - `flowguard_modeling_report.template.json`: FlowGuard officer report that
   returns modelability, execution ownership provenance, blindspots, failure
   paths, PM risk tiers, model-derived review agenda, toolchain/model
   improvement suggestions, human walkthrough recommendations, recommendation,
   confidence boundary, and route mutation candidate for PM decision. Report
-  templates distinguish officer-run commands from main-executor outputs used as
+  templates distinguish officer-run commands from controller outputs used as
   pointers and avoid absolute no-risk claims.
 - `role_approval.template.json`: PM, reviewer, or FlowGuard officer
   independent adversarial approval evidence. It records direct sources checked,

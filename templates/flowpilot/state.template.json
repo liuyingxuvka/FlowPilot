@@ -68,6 +68,24 @@
         "evidence_path": null
       }
     },
+    "startup_capability_resolution": {
+      "required": true,
+      "requested_capabilities": {
+        "background_agents": "<allow|single-agent|pause|unknown>",
+        "scheduled_continuation": "<allow|manual|pause|unknown>",
+        "display_surface": "<cockpit|chat|pause|unknown>"
+      },
+      "resolved_capabilities": {
+        "background_agents": "<six-live-agents|single-agent-fallback|blocked|unknown>",
+        "scheduled_continuation": "<current-run-heartbeat|manual-resume-fallback|blocked|unknown>",
+        "display_surface": "<cockpit|chat-fallback|chat-requested|blocked|unknown>"
+      },
+      "reviewer_probe_required_before_fallback": true,
+      "pm_fallback_decision_required": true,
+      "worker_claim_only_fallback_forbidden": true,
+      "review_report_path": ".flowpilot/runs/run-001/startup_review/latest.json",
+      "pm_decision_path": ".flowpilot/runs/run-001/startup_pm_gate/latest.json"
+    },
     "route_files_written": false,
     "run_directory_created": false,
     "current_pointer_written": false,
@@ -83,6 +101,8 @@
       "decision": "unknown",
       "user_decision_recorded": false,
       "user_authorized_live_start": false,
+      "requested_background_agents": "<allow|single-agent|unknown>",
+      "capability_status": "<unknown|available|unavailable|damaged>",
       "live_start_attempted": false,
       "live_agents_active": 0,
       "current_task_fresh_agents_required": true,
@@ -94,10 +114,38 @@
       "historical_agent_reuse_blocked": true,
       "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/live_subagents_fresh_for_current_task.json",
       "single_agent_role_continuity_authorized": false,
+      "single_agent_fallback_pm_recorded": false,
+      "single_agent_fallback_reviewer_verified_unavailable_or_damaged": false,
       "blocker": "no_user_decision",
       "evidence_path": null
     },
+    "display_surface_startup": {
+      "requested_display_surface": "<cockpit|chat|unknown>",
+      "capability_status": "<unknown|available|unavailable|damaged>",
+      "cockpit_open_attempted": false,
+      "cockpit_ui_opened": false,
+      "chat_route_sign_displayed": false,
+      "chat_fallback_pm_recorded": false,
+      "chat_fallback_reviewer_verified_missing_or_damaged_cockpit": false,
+      "fallback_does_not_satisfy_product_ui_delivery": true,
+      "evidence_path": null
+    },
     "continuation_ready": false,
+    "scheduled_continuation_startup": {
+      "requested_scheduled_continuation": "<allow|manual|unknown>",
+      "capability_status": "<unknown|available|unavailable|damaged>",
+      "current_run_heartbeat_required_when_available": true,
+      "heartbeat_id": null,
+      "heartbeat_name": null,
+      "heartbeat_bound_to_current_run": false,
+      "heartbeat_target_thread_or_workspace_matches_current_run": false,
+      "heartbeat_prompt_or_metadata_contains_current_run_id": false,
+      "heartbeat_frontier_source_matches_current_run": false,
+      "same_name_heartbeat_only_is_insufficient": true,
+      "manual_resume_fallback_pm_recorded": false,
+      "manual_resume_fallback_reviewer_verified_unavailable_or_damaged": false,
+      "evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json"
+    },
     "startup_preflight_review": {
       "required": true,
       "reviewer_role": "human_like_reviewer",
@@ -118,6 +166,12 @@
       "checked_no_historical_agent_id_reuse": false,
       "checked_shadow_route_and_residual_state": false,
       "checked_real_codex_automation_records": false,
+      "checked_background_agent_capability_probe": false,
+      "checked_scheduled_continuation_capability_probe": false,
+      "checked_cockpit_capability_probe": false,
+      "checked_current_run_heartbeat_binding": false,
+      "checked_no_same_name_heartbeat_substitution": false,
+      "verified_any_fallbacks_are_capability_fallbacks_only": false,
       "factual_evidence_checked": false
     },
     "pm_start_gate": {

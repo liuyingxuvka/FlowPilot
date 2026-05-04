@@ -3,7 +3,7 @@
   "schema_version": 1,
   "created_at": "<iso-8601-timestamp>",
   "run_id": "<run-id>",
-  "owner": "main_executor",
+  "owner": "<worker_a|worker_b>",
   "purpose": "Inventory locally available skills and host capabilities as candidate resources before PM product and route decisions.",
   "candidate_only_until_pm_selected": true,
   "raw_availability_is_not_authority_to_invoke": true,

@@ -4,7 +4,7 @@
 
 This model protects FlowPilot's run-level defect and evidence governance. It is
 not a product-specific model. It covers defects discovered by PM, reviewer,
-FlowGuard officers, workers, or the main executor while a formal FlowPilot run
+FlowGuard officers, workers, or the controller while a formal FlowPilot run
 is active.
 
 ## Failure Modes

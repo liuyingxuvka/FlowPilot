@@ -147,7 +147,7 @@ class State:
     pm_flowguard_delegation_policy_recorded: bool = False
     officer_owned_async_modeling_policy_recorded: bool = False
     officer_model_report_provenance_policy_recorded: bool = False
-    main_executor_parallel_prep_boundary_recorded: bool = False
+    controller_coordination_boundary_recorded: bool = False
     independent_approval_protocol_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
@@ -234,6 +234,11 @@ class State:
     startup_reviewer_checked_prior_work_boundary: bool = False
     startup_reviewer_checked_live_agent_freshness: bool = False
     startup_reviewer_checked_no_historical_agent_reuse: bool = False
+    startup_reviewer_checked_capability_resolution: bool = False
+    startup_reviewer_checked_current_run_heartbeat_binding: bool = False
+    startup_pm_capability_resolution_recorded: bool = False
+    heartbeat_bound_to_current_run: bool = False
+    heartbeat_same_name_only_checked: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
     startup_pm_independent_gate_audit_done: bool = False
@@ -707,7 +712,7 @@ def _crew_ready(state: State) -> bool:
         and state.pm_flowguard_delegation_policy_recorded
         and state.officer_owned_async_modeling_policy_recorded
         and state.officer_model_report_provenance_policy_recorded
-        and state.main_executor_parallel_prep_boundary_recorded
+        and state.controller_coordination_boundary_recorded
         and state.independent_approval_protocol_recorded
         and state.crew_memory_policy_written
         and state.crew_memory_packets_written == CREW_SIZE
@@ -724,6 +729,8 @@ def _automated_continuation_configured(state: State) -> bool:
         and state.heartbeat_schedule_created
         and state.route_heartbeat_interval_minutes == 1
         and state.stable_heartbeat_launcher_recorded
+        and state.heartbeat_bound_to_current_run
+        and not state.heartbeat_same_name_only_checked
     )
 
 
@@ -824,7 +831,17 @@ def _startup_pm_gate_ready(state: State) -> bool:
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_reviewer_checked_capability_resolution
+        and (
+            state.manual_resume_mode_recorded
+            or (
+                state.startup_reviewer_checked_current_run_heartbeat_binding
+                and state.heartbeat_bound_to_current_run
+                and not state.heartbeat_same_name_only_checked
+            )
+        )
         and state.startup_pm_independent_gate_audit_done
+        and state.startup_pm_capability_resolution_recorded
         and state.pm_start_gate_opened
     )
 
@@ -1467,7 +1484,7 @@ class CapabilityRouterStep:
         "pm_flowguard_delegation_policy_recorded",
         "officer_owned_async_modeling_policy_recorded",
         "officer_model_report_provenance_policy_recorded",
-        "main_executor_parallel_prep_boundary_recorded",
+        "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
@@ -1777,7 +1794,7 @@ class CapabilityRouterStep:
         "pm_flowguard_delegation_policy_recorded",
         "officer_owned_async_modeling_policy_recorded",
         "officer_model_report_provenance_policy_recorded",
-        "main_executor_parallel_prep_boundary_recorded",
+        "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
@@ -2374,7 +2391,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="officer_owned_async_modeling_policy_recorded",
-                action="record that capability FlowGuard model gates dispatch to officer-owned run directories while the main executor may continue only non-dependent preparation",
+                action="record that capability FlowGuard model gates dispatch to officer-owned run directories while the controller may relay only non-dependent coordination",
                 officer_owned_async_modeling_policy_recorded=True,
             )
             return
@@ -2388,12 +2405,12 @@ class CapabilityRouterStep:
             )
             return
 
-        if not state.main_executor_parallel_prep_boundary_recorded:
+        if not state.controller_coordination_boundary_recorded:
             yield _step(
                 state,
-                label="main_executor_parallel_prep_boundary_recorded",
-                action="record that main-executor parallel work during capability officer modeling cannot satisfy route checks, implementation, checkpoint, completion, or protected model gates",
-                main_executor_parallel_prep_boundary_recorded=True,
+                label="controller_coordination_boundary_recorded",
+                action="record that controller coordination during capability officer modeling cannot satisfy route checks, implementation, checkpoint, completion, or protected model gates",
+                controller_coordination_boundary_recorded=True,
             )
             return
 
@@ -2429,7 +2446,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="material_sources_scanned",
-                action="main executor scans user-provided and repository-local materials before capability route design",
+                action="authorized worker scans user-provided and repository-local materials before capability route design",
                 material_sources_scanned=True,
             )
             return
@@ -2438,7 +2455,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="material_source_summaries_written",
-                action="main executor writes purpose, contents, and current-state summaries for capability-relevant materials",
+                action="authorized worker writes purpose, contents, and current-state summaries for capability-relevant materials",
                 material_source_summaries_written=True,
             )
             return
@@ -2447,7 +2464,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="material_source_quality_classified",
-                action="main executor classifies source authority, freshness, contradictions, missing context, and readiness",
+                action="authorized worker classifies source authority, freshness, contradictions, missing context, and readiness",
                 material_source_quality_classified=True,
             )
             return
@@ -2456,7 +2473,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="local_skill_inventory_written",
-                action="main executor inventories locally available skills and host capabilities as candidate resources before the material packet is finalized",
+                action="authorized worker inventories locally available skills and host capabilities as candidate resources before the material packet is finalized",
                 local_skill_inventory_written=True,
             )
             return
@@ -2465,7 +2482,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="local_skill_inventory_candidate_classified",
-                action="main executor classifies local skills as candidate-only resources without treating availability as PM approval to use them",
+                action="authorized worker classifies local skills as candidate-only resources without treating availability as PM approval to use them",
                 local_skill_inventory_candidate_classified=True,
             )
             return
@@ -2474,7 +2491,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="material_intake_packet_written",
-                action="main executor writes the Material Intake Packet, including local skill inventory, before PM capability planning",
+                action="authorized worker writes the Material Intake Packet, including local skill inventory, before PM capability planning",
                 material_intake_packet_written=True,
             )
             return
@@ -2892,7 +2909,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="child_skill_gate_approvers_assigned",
-                action="assign required approver roles for every child-skill gate and forbid main-executor or worker self-approval",
+                action="assign required approver roles for every child-skill gate and forbid controller or worker self-approval",
                 child_skill_gate_approvers_assigned=True,
             )
             return
@@ -3084,6 +3101,8 @@ class CapabilityRouterStep:
                 heartbeat_schedule_created=True,
                 route_heartbeat_interval_minutes=1,
                 stable_heartbeat_launcher_recorded=True,
+                heartbeat_bound_to_current_run=True,
+                heartbeat_same_name_only_checked=False,
             )
             return
 
@@ -3302,6 +3321,8 @@ class CapabilityRouterStep:
                 startup_reviewer_checked_prior_work_boundary=True,
                 startup_reviewer_checked_live_agent_freshness=True,
                 startup_reviewer_checked_no_historical_agent_reuse=True,
+                startup_reviewer_checked_capability_resolution=True,
+                startup_reviewer_checked_current_run_heartbeat_binding=not state.manual_resume_mode_recorded,
             )
             return
 
@@ -3340,7 +3361,10 @@ class CapabilityRouterStep:
                 startup_reviewer_checked_prior_work_boundary=False,
                 startup_reviewer_checked_live_agent_freshness=False,
                 startup_reviewer_checked_no_historical_agent_reuse=False,
+                startup_reviewer_checked_capability_resolution=False,
+                startup_reviewer_checked_current_run_heartbeat_binding=False,
                 startup_pm_independent_gate_audit_done=False,
+                startup_pm_capability_resolution_recorded=False,
             )
             return
 
@@ -3369,6 +3393,8 @@ class CapabilityRouterStep:
                 startup_reviewer_checked_prior_work_boundary=True,
                 startup_reviewer_checked_live_agent_freshness=True,
                 startup_reviewer_checked_no_historical_agent_reuse=True,
+                startup_reviewer_checked_capability_resolution=True,
+                startup_reviewer_checked_current_run_heartbeat_binding=not state.manual_resume_mode_recorded,
             )
             return
 
@@ -3383,6 +3409,7 @@ class CapabilityRouterStep:
                 label="startup_pm_independent_gate_audit_done",
                 action="PM independently audits capability startup run isolation, prior-work boundary, live-agent freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
                 startup_pm_independent_gate_audit_done=True,
+                startup_pm_capability_resolution_recorded=True,
             )
             return
 
@@ -3535,7 +3562,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="pm_runway_synced_to_visible_plan",
-                action="main executor calls the host native plan tool when available, or records the fallback method, and replaces the visible capability plan with a downstream PM runway projection",
+                action="controller calls the host native plan tool when available, or records the fallback method, and replaces the visible capability plan with a downstream PM runway projection",
                 pm_runway_synced_to_plan=True,
                 plan_sync_method_recorded=True,
                 visible_plan_has_runway_depth=True,
@@ -3717,8 +3744,8 @@ class CapabilityRouterStep:
         if state.subagent_status == "returned":
             yield _step(
                 state,
-                label="main_agent_merged_sidecar_report",
-                action="main agent reviews, merges, and verifies the sidecar result while keeping node ownership",
+                label="authorized_integration_review_packet_completed",
+                action="authorized integration/review packet verifies the sidecar result while PM keeps node ownership",
                 sidecar_need="none",
                 subagent_status="idle",
                 subagent_idle_available=True,
@@ -3998,7 +4025,7 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="child_skill_current_gates_role_approved",
-                    action="required reviewer, process officer, product officer, or PM approvals close the current child-skill gates; main-executor drafts are not approvals",
+                    action="required reviewer, process officer, product officer, or PM approvals close the current child-skill gates; controller drafts are not approvals",
                     child_skill_current_gates_role_approved=True,
                 )
                 return
@@ -4763,7 +4790,7 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="child_skill_current_gates_role_approved",
-                    action="required reviewer, process officer, product officer, or PM approvals close the current UI child-skill gates; main-executor drafts are not approvals",
+                    action="required reviewer, process officer, product officer, or PM approvals close the current UI child-skill gates; controller drafts are not approvals",
                     child_skill_current_gates_role_approved=True,
                 )
                 return
@@ -5296,7 +5323,17 @@ def dependency_plan_before_route_or_implementation(
                 and state.startup_reviewer_checked_no_historical_agent_reuse
             )
         )
+        and state.startup_reviewer_checked_capability_resolution
+        and (
+            state.manual_resume_mode_recorded
+            or (
+                state.startup_reviewer_checked_current_run_heartbeat_binding
+                and state.heartbeat_bound_to_current_run
+                and not state.heartbeat_same_name_only_checked
+            )
+        )
         and state.startup_pm_independent_gate_audit_done
+        and state.startup_pm_capability_resolution_recorded
     ):
         return InvariantResult.fail(
             "PM start gate opened before a clean factual reviewer startup report and independent PM gate audit"
@@ -5336,6 +5373,12 @@ def dependency_plan_before_route_or_implementation(
     if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
         return InvariantResult.fail(
             "capability work was allowed before reviewer fact report and PM-owned start-gate opening"
+        )
+    if state.heartbeat_schedule_created and (
+        not state.heartbeat_bound_to_current_run or state.heartbeat_same_name_only_checked
+    ):
+        return InvariantResult.fail(
+            "startup heartbeat evidence did not bind the automation to the current run instead of a same-name record"
         )
     return InvariantResult.pass_()
 
@@ -5718,9 +5761,11 @@ def heartbeat_continuation_is_lifecycle_state(state: State, trace) -> InvariantR
     if state.host_continuation_supported and state.heartbeat_schedule_created and (
         state.route_heartbeat_interval_minutes != 1
         or not state.stable_heartbeat_launcher_recorded
+        or not state.heartbeat_bound_to_current_run
+        or state.heartbeat_same_name_only_checked
     ):
         return InvariantResult.fail(
-            "automated continuation must use a stable one-minute heartbeat launcher"
+            "automated continuation must use a stable one-minute heartbeat launcher bound to the current run"
         )
     return InvariantResult.pass_()
 

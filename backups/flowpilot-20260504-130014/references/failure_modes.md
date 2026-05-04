@@ -41,7 +41,7 @@ The FlowGuard models for FlowPilot found or guard against:
   resumed run walks for one or two minutes and stops instead of receiving a
   completion-oriented runway;
 - project manager resume output is not synced into the visible Codex plan
-  projection before the controller dispatches authorized work;
+  projection before the main executor starts work;
 - FlowPilot writes PM runway evidence under `.flowpilot/` but does not call
   the host native plan tool, such as Codex `update_plan`, even though the tool
   exists and the user can see a stale desktop plan;
@@ -71,9 +71,9 @@ The FlowGuard models for FlowPilot found or guard against:
   structured role memory fields;
 - role identity is conflated so raw `agent_id` becomes the user-facing label or
   the authority key instead of diagnostic-only recovery evidence;
-- controller decides the next route jump directly instead of asking the
+- main executor decides the next route jump directly instead of asking the
   project manager;
-- controller authors or runs FlowGuard model files for an officer, turning
+- main executor authors or runs FlowGuard model files for an officer, turning
   the officer into an approval-only stamp;
 - project manager, reviewer, or FlowGuard officer performs implementation work
   instead of keeping role authority separate;
@@ -122,7 +122,7 @@ The FlowGuard models for FlowPilot found or guard against:
   manifest from the loaded skill files;
 - child-skill gates enter the route without required approver roles and
   forbidden approvers;
-- the controller treats its own relayed or draft evidence as child-skill gate approval;
+- the main executor treats its own draft evidence as child-skill gate approval;
 - node-level child-skill execution starts from the startup manifest without PM
   current-node refinement;
 - child skill workflow collapsed into a weaker FlowPilot shorthand;
@@ -308,7 +308,7 @@ Keep these failure modes in the model and tests.
 - Child-node sidecar scan is the only formal subagent opportunity gate. Parent
   or module review may not directly spawn subagents or transfer node ownership.
 - Sidecar scope checking must be separate from reuse-or-spawn assignment.
-- `sidecar_report_returned` is not completion evidence; authorized integration/review and
+- `sidecar_report_returned` is not completion evidence; main-agent merge and
   verification are required.
 - Formal routes create a persistent six-agent crew: project manager,
   human-like reviewer, process FlowGuard officer, product FlowGuard officer,

@@ -384,7 +384,7 @@
     "product_officer_independent_validation_path": "<path-or-null>",
     "pm_independent_validation_path": "<path-or-null>",
     "node_refinement_done": false,
-    "main_executor_self_approval_allowed": false,
+    "controller_self_approval_allowed": false,
     "all_current_child_skill_gates_approved": false,
     "gates": [
       {
@@ -400,11 +400,11 @@
         "personal_walkthrough_required": "<true|false>",
         "reviewer_walkthrough_evidence_path": "<path-or-null>",
         "design_recommendations_required": "<true|false>",
-        "draft_owner": "<main_executor|project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
+        "draft_owner": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
         "execution_owner": "<role-or-null>",
         "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
         "forbidden_approvers": [
-          "main_executor",
+          "controller",
           "worker_a",
           "worker_b"
         ],
@@ -473,11 +473,11 @@
   },
   "current_gate_authority": {
     "gate_id": "<current-gate-or-null>",
-    "draft_owner": "<main_executor|project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|null>",
+    "draft_owner": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|authorized_non_controller|null>",
     "execution_owner": "<role-or-null>",
     "required_approver": "<role-or-null>",
     "forbidden_approvers": [
-      "main_executor",
+      "controller",
       "worker_a",
       "worker_b"
     ],
@@ -506,10 +506,10 @@
   },
   "authority_matrix": {
     "startup_self_interrogation": {
-      "draft_owner": "main_executor",
+      "draft_owner": "project_manager",
       "required_approver": "project_manager",
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "worker_a",
         "worker_b"
       ]
@@ -522,7 +522,7 @@
         "human_like_reviewer"
       ],
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "worker_a",
         "worker_b"
       ]
@@ -533,7 +533,7 @@
       "interpretation_owner": "process_flowguard_officer",
       "required_approver": "process_flowguard_officer",
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "project_manager",
         "product_flowguard_officer",
         "worker_a",
@@ -546,7 +546,7 @@
       "interpretation_owner": "product_flowguard_officer",
       "required_approver": "product_flowguard_officer",
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "project_manager",
         "process_flowguard_officer",
         "worker_a",
@@ -557,7 +557,7 @@
       "execution_owner": "human_like_reviewer",
       "required_approver": "human_like_reviewer",
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "project_manager",
         "worker_a",
         "worker_b"
@@ -567,7 +567,7 @@
       "required_approver": "project_manager",
       "requires_pm_repair_strategy_interrogation": true,
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "human_like_reviewer",
         "process_flowguard_officer",
         "product_flowguard_officer",
@@ -578,7 +578,7 @@
     "completion": {
       "required_approver": "project_manager",
       "forbidden_approvers": [
-        "main_executor",
+        "controller",
         "worker_a",
         "worker_b"
       ]

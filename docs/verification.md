@@ -112,7 +112,7 @@ The reviewer report is not approval. It must check user authorization versus
 actual state, route/state/frontier consistency, requested old-route or old-asset
 cleanup, heartbeat or manual-resume evidence, background-agent role evidence,
 and shadow or residual route state. If the report has blockers, the
-PM sends remediation back to workers/main executor and requires another
+PM sends remediation back to authorized workers through a packet and requires another
 reviewer report.
 
 After the project manager opens `pm_start_gate` from the current clean reviewer

@@ -117,7 +117,7 @@ model-backed autopilot:
   frontier, and heartbeat/manual-resume evidence.
 - Heartbeat recovery now restores or replaces the six-agent crew before asking
   the project manager for a completion-oriented runway from the current
-  position to project completion. The main executor no longer decides route
+  position to project completion. The controller no longer decides route
   advancement directly from the frontier, and it must replace the visible plan
   projection from each PM runway instead of working from a one-step gate.
 - The six-agent crew is persistent as roles, but each new formal FlowPilot task
@@ -147,7 +147,7 @@ model-backed autopilot:
   officer; product-function architecture modelability and product-function
   models require the product FlowGuard officer; product usefulness challenge,
   human-like observations, judgement, and rechecks require the reviewer. The
-  main executor may draft, run tools, integrate, and report but may not
+  controller may relay, record status, request decisions, and enforce hard stops but may not
   self-approve these gates.
 - Every PM, reviewer, and FlowGuard officer approval now has a universal
   adversarial approval baseline. Completion reports, worker reports,
@@ -185,7 +185,7 @@ model-backed autopilot:
 - FlowGuard modeling requests are now officer-owned async gates when live
   background roles are available. The PM records the request and officer output
   root, the matching officer authors/runs/interprets the model and writes
-  execution provenance, and the main executor may only do non-dependent
+  execution provenance, and the controller may only do non-dependent
   preparation while the model gate is pending.
 - FlowGuard officer reports are PM decision-support packets, not absolute
   no-risk certificates. The officers must extract model-derived risk tiers,
@@ -239,7 +239,7 @@ model-backed autopilot:
 FlowGuard caught and fixed these design issues:
 
 1. High-risk gates must not overlap active formal chunks.
-2. `sidecar report returned` is not enough for completion; the main agent must
+2. `sidecar report returned` is not enough for completion; the controller must
    merge and verify the result.
 3. Subagent opportunity checks belong at child-node entry. Parent/module review
    may identify likely helper work but must not spawn subagents or transfer node
@@ -284,7 +284,7 @@ FlowGuard caught and fixed these design issues:
     a functional acceptance matrix, FlowPilot may freeze a contract around
     unnecessary UI text or miss obvious high-value functions.
 17. A PM product-function architecture package cannot substitute for material
-    intake when source materials are non-trivial. The main executor must
+    intake when source materials are non-trivial. The controller must
     inventory and summarize materials, the reviewer must approve sufficiency,
     and the PM must record material understanding and complexity before product
     architecture or route decisions.

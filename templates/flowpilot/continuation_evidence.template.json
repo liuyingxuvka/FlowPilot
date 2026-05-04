@@ -3,7 +3,7 @@
   "run_id": "<run-id>",
   "run_root": ".flowpilot/runs/<run-id>",
   "recorded_at": "<iso-8601-timestamp>",
-  "recorded_by_role": "<main_executor|project_manager|process_flowguard_officer|human_like_reviewer>",
+  "recorded_by_role": "<controller|project_manager|process_flowguard_officer|human_like_reviewer>",
   "host": {
     "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
     "supports_real_wakeups": null,

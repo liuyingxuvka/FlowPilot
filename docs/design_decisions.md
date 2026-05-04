@@ -120,7 +120,7 @@ project manager extracts a gate manifest from the loaded child skill before
 route modeling, assigns required approvers for every child-skill check, and
 asks the reviewer plus both FlowGuard officers to review their slices before
 PM route inclusion. Node entry refines the manifest for current context. The
-main executor can draft evidence and implement, but cannot approve child-skill
+authorized workers can draft evidence and implement only from current packets, but cannot approve child-skill
 gates or return the parent node from its own checklist pass.
 
 ## Quality Package
@@ -153,7 +153,7 @@ rather than duplicating the child skill's prompt text.
 Required early gate:
 
 - showcase-grade floor;
-- material intake before PM route design: the main executor writes a Material
+- material intake before PM route design: the controller writes a Material
   Intake Packet, the human-like reviewer approves sufficiency, and the project
   manager writes a material understanding memo with complexity classification
   and any discovery-subtree decision;
@@ -221,7 +221,7 @@ role may be replaced from its latest memory packet only after explicit user
 fallback approval. Raw chat transcripts are not the memory source of truth.
 
 Every PM resume or route-position decision must produce a completion-oriented
-runway, not only a next gate. The main executor replaces the current visible
+runway, not only a next gate. The controller replaces the current visible
 plan projection with that runway and keeps progressing until a PM stop signal,
 hard gate, blocker, route mutation, or real execution limit stops it. Old PM
 runways remain historical evidence rather than the current plan.
@@ -241,13 +241,13 @@ project-manager node decision
 -> no need, reuse worker A/B, or replace only when unrecoverable
 -> bounded/disjoint sidecar task
 -> report returned
--> main-agent merge and verification
+-> authorized integration/review packet
 -> worker returns to idle crew slot
 ```
 
 Worker agents must not own child nodes, checkpoints, route advancement,
 acceptance-floor changes, or completion. Returned sidecar work must be merged
-and verified by the main executor, then the project manager decides the next
+and verified by the controller, then the project manager decides the next
 route movement.
 
 After meaningful PM decisions, reviewer judgements, FlowGuard officer reports,

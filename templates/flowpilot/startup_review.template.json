@@ -18,7 +18,11 @@
     "prior_work_import_boundary",
     "old_route_and_asset_reuse_boundary",
     "heartbeat_or_manual_resume_evidence",
+    "current_run_heartbeat_binding_not_same_name_only",
     "background_agent_user_decision_and_role_evidence",
+    "background_agent_capability_probe",
+    "scheduled_continuation_capability_probe",
+    "cockpit_display_capability_probe",
     "current_task_live_agent_freshness",
     "historical_agent_id_nonreuse",
     "shadow_route_and_residual_state",
@@ -38,11 +42,13 @@
     "fresh_live_agent_evidence": ".flowpilot/runs/<run-id>/evidence/live_subagents_fresh_for_current_task.json",
     "excluded_historical_agent_ids": ".flowpilot/runs/<run-id>/evidence/excluded_historical_agent_ids.json",
     "codex_automation_records": "$CODEX_HOME/automations",
+    "current_run_heartbeat_record": "$CODEX_HOME/automations/<automation-id>/automation.toml",
     "clean_start_boundary": ".flowpilot/runs/<run-id>/routes/<route-id>/evidence/clean_start_nonreuse_boundary.json"
   },
   "required_facts": {
     "route_heartbeat_interval_minutes": 1,
     "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "route_heartbeat_must_target_current_run_not_same_name": true,
     "live_subagents_required_when_user_allows_background_agents": 6,
     "live_subagents_must_be_fresh_for_current_task": true,
     "prior_route_agent_ids_must_not_be_reused_as_current_live_agents": true,
@@ -50,6 +56,51 @@
     "continue_previous_work_requires_prior_work_import_packet": true,
     "old_control_state_reuse_for_current_run_forbidden": true,
     "single_agent_role_continuity_requires_explicit_user_authorization": true
+  },
+  "startup_capability_resolution": {
+    "worker_claims_are_pointers_only": true,
+    "fallback_requires_reviewer_direct_probe": true,
+    "fallback_requires_pm_decision": true,
+    "background_agents": {
+      "requested": "<allow|single-agent|unknown>",
+      "capability_status": "<available|unavailable|damaged|unknown>",
+      "reviewer_direct_probe_done": "<true|false>",
+      "reviewer_verified_unavailable_or_damaged": "<true|false>",
+      "resolved_mode": "<six-live-agents|single-agent-fallback|blocked|unknown>",
+      "evidence_refs": []
+    },
+    "scheduled_continuation": {
+      "requested": "<allow|manual|unknown>",
+      "capability_status": "<available|unavailable|damaged|unknown>",
+      "reviewer_direct_probe_done": "<true|false>",
+      "reviewer_verified_unavailable_or_damaged": "<true|false>",
+      "resolved_mode": "<current-run-heartbeat|manual-resume-fallback|blocked|unknown>",
+      "evidence_refs": []
+    },
+    "display_surface": {
+      "requested": "<cockpit|chat|unknown>",
+      "capability_status": "<available|unavailable|damaged|unknown>",
+      "reviewer_direct_probe_done": "<true|false>",
+      "reviewer_verified_missing_or_damaged_cockpit": "<true|false>",
+      "resolved_mode": "<cockpit|chat-fallback|chat-requested|blocked|unknown>",
+      "fallback_is_display_only_not_product_ui_completion": true,
+      "evidence_refs": []
+    }
+  },
+  "heartbeat_binding": {
+    "required_when_scheduled_continuation_resolves_to_heartbeat": true,
+    "automation_id": "<automation-id-or-null>",
+    "automation_name": "<name-or-null>",
+    "rrule": "<rrule-or-null>",
+    "status": "<ACTIVE|PAUSED|null>",
+    "target_thread_or_workspace": "<target-or-null>",
+    "current_run_id": "<run-id>",
+    "current_route_id": "<route-id>",
+    "current_frontier_path": ".flowpilot/runs/<run-id>/execution_frontier.json",
+    "prompt_or_metadata_contains_current_run_id": "<true|false>",
+    "workspace_or_target_matches_current_run": "<true|false>",
+    "frontier_source_matches_current_run": "<true|false>",
+    "same_name_only_match_rejected": true
   },
   "background_agent_freshness": {
     "user_allowed_background_agents": "<true|false>",

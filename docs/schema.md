@@ -246,7 +246,7 @@ after explicit user authorization for single-agent role continuity.
 
 ## Material Intake Packet
 
-`material_intake_packet.json` is the main-executor material inventory and
+`material_intake_packet.json` is the authorized-worker material inventory and
 source-quality packet. It also records a local skill and host capability
 inventory as candidate-only route material. The reviewer sufficiency block
 must show direct source inspection, not report-only acceptance:

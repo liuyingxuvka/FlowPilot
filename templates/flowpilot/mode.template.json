@@ -18,7 +18,7 @@
   "mode": null,
   "mode_order": "loose_to_strict",
   "mode_selection_policy": "Ask the run-mode startup question as part of the four-question startup gate, from loosest to strictest: full-auto, autonomous, guided, strict-gated. Do not record a formal mode until the user explicitly answers; a compact later reply may supply all four startup answers at once. Do not infer a default mode, display surface, or fallback from invocation text, existing .flowpilot state, host limitations, or prior routes.",
-  "safe_automatic_install_policy": "Project-local, reversible, non-secret tools and libraries may be installed automatically when needed for the active node, current chunk, or declared checks. Startup records a dependency plan and installs only minimal controller/check tooling; future dependencies are deferred until needed.",
+  "safe_automatic_install_policy": "Project-local, reversible, non-secret tools and libraries may be installed automatically only through the current packet authority when needed for the active node, current chunk, or declared checks. Startup records a dependency plan and installs only minimal FlowPilot/check tooling; future dependencies are deferred until needed.",
   "selected_at": null,
   "selected_by": null,
   "selection_reason": "pending explicit startup answer"

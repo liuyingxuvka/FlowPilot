@@ -1765,3 +1765,42 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Future UI child-skill gate manifests should preserve the recorded 10/20 budget unless the user explicitly requests a different iteration count.
+
+
+## flowpilot-startup-capability-fallback-review - Require reviewer-verified startup capability fallback
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot startup protocol change affecting background-agent, scheduled-continuation, Cockpit display, PM gate, and reviewer evidence behavior
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T12:35:00+02:00
+- Ended: 2026-05-04T12:55:00+02:00
+
+### Model Files
+- `simulations/startup_pm_review_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\capability_model.py scripts\check_install.py`
+- OK: JSON parse for `templates\flowpilot\state.template.json`, `templates\flowpilot\startup_review.template.json`, and `templates\flowpilot\startup_pm_gate.template.json`
+- OK: `python simulations\run_startup_pm_review_checks.py`: 2610 states, 2609 edges, no invariant failures, no missing labels, all fallback hazards detected
+- OK: `python simulations\run_meta_checks.py`: 539167 states, 559339 edges, no invariant failures, no missing labels, no stuck states
+- OK: `python simulations\run_capability_checks.py`: 522749 states, 548209 edges, no invariant failures, no missing labels, no stuck states
+- OK: `python scripts\check_install.py`: 177 checks passed
+
+### Findings
+- Startup answers are now modeled as requested capabilities rather than automatic proof that live agents, heartbeat, or Cockpit are available.
+- Single-agent, manual-resume, and chat-display fallback require reviewer direct probing plus PM-recorded capability resolution; worker/front-executor claims alone are invalid.
+- Heartbeat evidence must prove attachment to the current run/thread/workspace/frontier. A same-name automation in another location is explicitly rejected.
+- Chat route signs can be a display fallback for a missing or damaged Cockpit, but they do not satisfy product work whose scope is to build or repair Cockpit UI.
+
+### Counterexamples
+- Detected fake fallback hazards: PM fallback without reviewer probe, worker-claimed unavailability accepted by PM, ambiguous capability status opened by PM, and same-name heartbeat accepted as current heartbeat.
+
+### Skipped Steps
+- `python scripts\smoke_autopilot.py` was not rerun because this change is protocol/model/template focused and the targeted startup, meta, capability, JSON, and install checks passed.
+
+### Next Actions
+- Future FlowPilot startup implementations should write `startup_capability_resolution`, reviewer capability probes, and PM fallback decisions before opening work beyond startup.

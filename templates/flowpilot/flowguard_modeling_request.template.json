@@ -10,19 +10,19 @@
   "assigned_officer_role_keys": [
     "<process_flowguard_officer|product_flowguard_officer>"
   ],
-  "main_executor_parallel_work": {
+  "controller_coordination": {
     "allowed": true,
     "allowed_scope": [
-      "read-only context gathering",
-      "material or dependency inventory",
-      "draft non-model evidence",
-      "prepare non-behavior-bearing scaffolds"
+      "read-only status reconciliation",
+      "dependency inventory routing",
+      "relaying already-authorized packets",
+      "requesting corrected role evidence"
     ],
     "blocked_scope_until_officer_reports": [
       "implementation protected by this model gate",
       "route freeze or route advance protected by this model gate",
       "checkpoint or completion closure protected by this model gate",
-      "claiming model approval from main-executor command output"
+      "claiming model approval from controller command output"
     ]
   },
   "decision_to_make": "<what PM must decide after the report>",

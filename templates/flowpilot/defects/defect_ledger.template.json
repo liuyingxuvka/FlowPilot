@@ -61,7 +61,7 @@
         "triaged_at": "<iso-8601-timestamp-or-null>",
         "route_impact": "<none|blocks_current_gate|requires_repair_node|requires_route_mutation|terminal_only>",
         "owner_role": "<role-or-null>",
-        "recheck_role_class": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker|main_executor|none>",
+        "recheck_role_class": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker|controller|none>",
         "close_condition": "<specific evidence required before closure>"
       },
       "evidence_paths": [],

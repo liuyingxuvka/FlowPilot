@@ -4,7 +4,7 @@
   "run_id": "<run-id>",
   "package_id": "<research-package-id>",
   "created_at": "<iso-8601-timestamp>",
-  "worker_role": "<worker_a|worker_b|main_executor>",
+  "worker_role": "<worker_a|worker_b|authorized_non_controller>",
   "source_research_package": ".flowpilot/runs/<run-id>/research/<research-package-id>/research_package.json",
   "status": "<draft|ready_for_review|blocked|superseded>",
   "question_answered": "<yes|partial|no>",

@@ -178,7 +178,7 @@
         "current_node_gate_manifest_refined_before_execution",
         "required_approvers_assigned_per_gate",
         "reviewer_or_officer_or_pm_approval_per_current_gate",
-        "main_executor_self_approval_forbidden",
+        "controller_self_approval_forbidden",
         "workflow_steps_mapped_to_route_gates",
         "completion_standard_mapped",
         "child_skill_conformance_model_checked_when_material",
@@ -270,8 +270,8 @@
         "bounded_disjoint_scope_check",
         "idle_reuse_or_spawn_reason",
         "sidecar_report_path",
-        "main_agent_merge_and_verification",
-        "node_route_checkpoint_completion_ownership_remained_with_main_agent"
+        "authorized_integration_review_packet",
+        "node_route_checkpoint_completion_ownership_remained_with_pm"
       ],
       "status": "conditional"
     }

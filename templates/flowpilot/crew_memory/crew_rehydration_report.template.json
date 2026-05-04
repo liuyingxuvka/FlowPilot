@@ -7,7 +7,7 @@
   "crew_ledger_path": ".flowpilot/runs/<run-id>/crew_ledger.json",
   "crew_memory_root": ".flowpilot/runs/<run-id>/crew_memory",
   "recorded_at": "<iso-8601-timestamp>",
-  "recorded_by_role": "<main_executor|project_manager>",
+  "recorded_by_role": "<controller|project_manager>",
   "status": "<not_started|passed|blocked|partial>",
   "required_roles": [
     "project_manager",

@@ -43,11 +43,12 @@ branches, heartbeat behavior, and any task-local behavior models.
    is six live background agents freshly spawned for this task after the
    startup answers and current route allocation. Prior-route or earlier-task
    `agent_id` values are audit history only and must not be resumed or counted
-   as current live-agent evidence. If authorization is missing or startup
-   fails, pause and ask the user whether to start them. If the user declines,
-   or if the host/tool cannot provide fresh live subagents after an authorized
-   attempt, ask whether to continue with single-agent six-role continuity and
-   record that explicit fallback decision before proceeding.
+   as current live-agent evidence. If authorization is missing, pause and ask.
+   If the user asked for live background agents but the host/tool appears
+   unable to provide them, treat that as an unproven capability failure until
+   the human-like reviewer directly probes the host/tool state and writes the
+   finding for PM. Only the PM may record single-agent six-role continuity as
+   a capability fallback, and worker/front-executor claims are pointers only.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
@@ -104,7 +105,7 @@ branches, heartbeat behavior, and any task-local behavior models.
 19. Have the human-like reviewer, process FlowGuard officer, and product
     FlowGuard officer review their slices of the manifest. The project manager
     then approves or blocks manifest inclusion in route modeling, the
-    execution frontier, and the PM runway. The main executor, worker A, and
+    execution frontier, and the PM runway. The controller, worker A, and
     worker B are forbidden approvers for child-skill gates.
 20. Verify FlowGuard and required dependency skills.
 21. Inspect dependency/tool needs and write a dependency plan.
@@ -114,8 +115,12 @@ branches, heartbeat behavior, and any task-local behavior models.
     check that actually needs them.
 24. Probe host continuation capability only after the scheduled-continuation
     startup answer is recorded. If the user allowed scheduled continuation and
-    setup fails, stop and ask for a new decision instead of silently switching
-    to manual resume.
+    setup fails, do not silently switch to manual resume. The human-like
+    reviewer must directly check whether the host has real scheduled
+    continuation and whether any candidate heartbeat is attached to this
+    current run. A same-name automation from another thread, workspace, route,
+    or stale run is not heartbeat evidence. PM may record manual-resume as a
+    capability fallback only after that reviewer report.
 25. If the user allowed scheduled continuation and the host supports real
     wakeups, create the automated continuation: a stable one-minute heartbeat
     launcher. The launcher loads persisted route/frontier state rather than
@@ -194,18 +199,38 @@ branches, heartbeat behavior, and any task-local behavior models.
     must also check user authorization against actual state,
     old-route and old-asset cleanup when a clean start was requested, the real
     route heartbeat automation at one minute when scheduled continuation is
-    allowed, manual-resume evidence when manual continuation is selected,
+    allowed, manual-resume evidence when manual continuation is selected or
+    reviewer-verified scheduler unavailability is PM-downgraded,
     residual route state, and shadow-route evidence. It must bind the
     background-agent answer to actual
     subagent state: if the user allowed background agents, verify six live
     role-bearing subagents were freshly spawned for this FlowPilot task after
     that user decision and after current route allocation, and verify none of
     their `agent_id` values comes from prior route ledgers or older role-memory
-    packets. If the user chose single-agent continuity, verify the explicit
-    fallback authorization and do not claim live subagents. The reviewer writes a report only; the reviewer
+    packets. If live agents are unavailable or damaged, the reviewer must
+    directly probe and say so; PM may then record single-agent continuity as a
+    capability fallback without treating the worker's failed-start report as
+    proof. If the user chose single-agent continuity, verify the explicit
+    fallback authorization and do not claim live subagents.
+
+    It must bind the scheduled-continuation answer to actual automation state:
+    if heartbeat is used, verify the concrete automation id, cadence, status,
+    target thread/workspace, prompt or metadata, current `run_id`, current
+    route, and frontier source. Name equality alone is insufficient because an
+    automation with the same name may belong to another thread, workspace, or
+    old run. If scheduler/heartbeat support is unavailable or damaged, the
+    reviewer must directly probe and report that fact before PM records
+    manual-resume fallback.
+
+    It must bind the display-surface answer to actual display state: if the
+    user requested Cockpit and Cockpit is missing or damaged, the reviewer must
+    directly probe and report that fact before PM records chat route signs as a
+    display fallback. That fallback is only a route-display fallback; it does
+    not satisfy a product requirement to build or repair the Cockpit UI. The
+    reviewer writes a report only; the reviewer
     does not approve startup and does not open the gate. The project manager
     reads the report. If it contains blockers, PM sends remediation items back
-    to workers/main executor and requires a new factual reviewer report. If it
+    to authorized workers through a PM packet and requires a new factual reviewer report. If it
     is clean, PM writes `pm_start_gate` evidence opening startup from that
     exact report.
 
@@ -220,7 +245,7 @@ branches, heartbeat behavior, and any task-local behavior models.
 38. Start the first bounded chunk only after continuation mode is known.
     Automated routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
-    project manager issues a completion-oriented runway, the main executor syncs that
+    project manager issues a completion-oriented runway, the controller syncs that
     runway into the visible plan, and continuation readiness,
     parent-subtree review, unfinished-current-node recovery check,
     child-skill gates when needed, dual-layer product/process gates,
@@ -253,7 +278,7 @@ answer set is complete.
 ## Material Intake And PM Handoff
 
 Material intake is a first-class startup gate between PM ratification of
-self-interrogation and PM product-function architecture. The main executor
+self-interrogation and PM product-function architecture. The controller
 does the descriptive work first: it inventories materials, reads or samples
 enough to say what each source is for, records source quality and uncertainty,
 inventories locally installed skills and host capabilities as candidate-only
@@ -293,7 +318,7 @@ the route changed.
 
 The product-function architecture gate is the missing design layer between
 startup self-interrogation, reviewed material handoff, and contract freeze. It
-is owned by the project manager, not by the main executor, and it must exist
+is owned by the project manager, not by the controller, and it must exist
 before route generation or implementation.
 
 The canonical artifact is `.flowpilot/runs/<run-id>/product_function_architecture.json`.
@@ -438,7 +463,7 @@ parent, and leaf obligations.
 
 FlowPilot's six-agent crew is an authority system, not a decorative report
 list. Every formal gate records who may draft it, who executes it, who must
-approve it, and who is forbidden to approve it. The main executor can create
+approve it, and who is forbidden to approve it. The controller can create
 draft non-model evidence, run ordinary implementation commands, edit files,
 integrate sidecar reports, and enforce hard gates, but cannot self-approve
 route, model, inspection, repair, or completion gates. For FlowGuard model
@@ -468,10 +493,10 @@ reviewer approves human/product/visual/interaction review judgements; the
 process FlowGuard officer approves process and conformance gates; the product
 FlowGuard officer approves product-function impact gates; and the project
 manager approves route inclusion, route mutation, parent return, and final
-child-to-parent closure. The main executor and workers may draft evidence or
+child-to-parent closure. Authorized workers may draft evidence or
 implementation output, but their self-approval is invalid.
 
-The project manager owns reviewer timing. Before worker or main-executor work
+The project manager owns reviewer timing. Before worker or controller work
 that will later need review, the PM writes a review hold instruction naming the
 expected gate and saying the reviewer waits. After worker output,
 verification, and anti-rough-finish evidence are ready, the PM writes a review
@@ -485,7 +510,7 @@ manager for repair-strategy interrogation, mutates or blocks the route, and
 rewrites the execution frontier. If a required authority is missing on
 heartbeat resume, FlowPilot restores or replaces that role before work
 continues; if it cannot, the gate blocks rather than falling back to
-main-executor self-approval.
+controller-origin self-approval.
 
 ## Universal Adversarial Approval Baseline
 
@@ -700,7 +725,7 @@ target-object uncertainty.
 
 Each request must name the decision, uncertainty, evidence sources, candidate
 options or option-generation need, assigned officer scope, required answer
-shape, officer output root, and main-executor parallel-preparation boundary.
+shape, officer output root, and controller parallel-preparation boundary.
 The assigned officer first checks modelability. If evidence is missing, the
 route gains evidence-collection work. If the request is too broad, it is split
 into smaller modelable requests. A report is valid only after modelability is
@@ -775,7 +800,7 @@ guard. It may not end by only writing a future-facing decision such as
 "continue to X" while the gate remains executable.
 
 The visible plan sync is a host-facing control gate. When a native plan tool is
-available, the main executor must call it, not only update `.flowpilot` files.
+available, the controller must call it, not only update `.flowpilot` files.
 The synced projection must contain the current executable gate and downstream
 runway items toward completion; a one-step projection is stale-plan evidence.
 If no native plan tool exists, record the fallback projection method and show
@@ -869,7 +894,7 @@ pass is not enough for implementation, checkpoint, or completion.
 The matching FlowGuard officer owns model execution. The process FlowGuard
 officer authors, runs, interprets, and approves or blocks process model
 coverage. The product FlowGuard officer authors, runs, interprets, and
-approves or blocks product model coverage. The main executor may provide
+approves or blocks product model coverage. The controller may provide
 context and receive the report, but it must not author or run FlowGuard model
 files on the officer's behalf. The officer approval must cite the model
 boundary, model files, commands run or valid unchanged reuse, state/edge counts,

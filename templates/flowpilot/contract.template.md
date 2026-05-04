@@ -42,7 +42,7 @@ decisions, display rationale, or negative scope.
   checkpoint.
 - Required capability evidence written.
 - Formal chunks verified.
-- Subagent work, if any, merged by the main agent.
+- Subagent work, if any, merged through an authorized integration/review packet.
 - Final verification passed.
 - Residual risk triage completed with zero unresolved residual risks.
 - Terminal closure suite passed after final state/evidence refresh.

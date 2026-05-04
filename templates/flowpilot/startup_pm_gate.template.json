@@ -18,6 +18,10 @@
     "blocked_findings_and_remediation_state_checked": false,
     "background_agent_decision_matches_actual_state_checked": false,
     "continuation_lifecycle_evidence_checked": false,
+    "startup_capability_resolution_checked": false,
+    "reviewer_probe_evidence_checked_for_each_fallback": false,
+    "current_run_heartbeat_binding_checked": false,
+    "same_name_heartbeat_substitution_rejected": false,
     "old_route_cleanup_or_prior_import_boundary_checked": false,
     "adversarial_hypotheses_tested": [],
     "concrete_evidence_references": [],
@@ -27,6 +31,37 @@
   "old_control_state_reuse_blocks_startup": true,
   "requires_current_task_fresh_live_agent_report_when_background_agents_allowed": true,
   "reused_historical_agent_ids_block_startup": true,
+  "capability_fallback_policy": {
+    "worker_claim_only_fallback_forbidden": true,
+    "reviewer_direct_probe_required": true,
+    "pm_records_final_resolution": true,
+    "ambiguous_capability_status_blocks_startup": true,
+    "chat_fallback_for_missing_cockpit_is_display_fallback_only": true
+  },
+  "capability_resolution_decision": {
+    "background_agents": {
+      "requested": "<allow|single-agent|unknown>",
+      "resolved": "<six-live-agents|single-agent-fallback|blocked|unknown>",
+      "fallback_reason": "<none|host_unavailable|host_damaged|blocked|unknown>",
+      "reviewer_verified_fallback_path": "<path-or-null>",
+      "pm_fallback_recorded": false
+    },
+    "scheduled_continuation": {
+      "requested": "<allow|manual|unknown>",
+      "resolved": "<current-run-heartbeat|manual-resume-fallback|blocked|unknown>",
+      "fallback_reason": "<none|host_unavailable|host_damaged|blocked|unknown>",
+      "reviewer_verified_fallback_path": "<path-or-null>",
+      "current_run_heartbeat_automation_id": "<automation-id-or-null>",
+      "pm_fallback_recorded": false
+    },
+    "display_surface": {
+      "requested": "<cockpit|chat|unknown>",
+      "resolved": "<cockpit|chat-fallback|chat-requested|blocked|unknown>",
+      "fallback_reason": "<none|missing_cockpit|damaged_cockpit|blocked|unknown>",
+      "reviewer_verified_fallback_path": "<path-or-null>",
+      "pm_fallback_recorded": false
+    }
+  },
   "worker_remediation_required": false,
   "remediation_items": [],
   "work_beyond_startup_allowed": false,
