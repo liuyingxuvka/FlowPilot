@@ -267,6 +267,16 @@ route decision directly without that discovery decision.
 After the material handoff and before contract freeze, the project manager
 writes `.flowpilot/runs/<run-id>/product_function_architecture.json`. Required contents:
 
+- high-standard posture: FlowPilot invocation means the project is important,
+  the PM sets the highest reasonably achievable standard for strong AI workers,
+  and rough-demo completion is not acceptable;
+- highest achievable product target and unacceptable-result review: what the
+  strongest feasible result should look like, and which placeholder, fake,
+  thin, misleading, unstable, incomplete, or low-quality outputs must fail;
+- semantic fidelity policy: map user goals to material support, identify
+  forbidden downgrades, and route material gaps to discovery, staged delivery
+  with explicit gaps, user clarification, or block rather than silently
+  redefining the requested product;
 - user-task map;
 - product capability map;
 - feature decisions marked `must`, `should`, `optional`, or `reject`;
@@ -278,12 +288,13 @@ writes `.flowpilot/runs/<run-id>/product_function_architecture.json`. Required c
   checks, and evidence paths.
 
 The product FlowGuard officer approves modelability and product-function
-coverage. The human-like reviewer challenges usefulness by comparing the PM
-architecture against the user request, inspected materials, and expected
-workflow reality: unnecessary display, missing workflow support, bad defaults,
-weak failure states, and user-task gaps. Contract freeze, route generation,
-capability routing, and implementation are blocked until both review slices are
-resolved.
+coverage. The human-like reviewer challenges usefulness, ambition, and
+completeness by comparing the PM architecture against the user request,
+inspected materials, and expected workflow reality: unnecessary display,
+missing workflow support, bad defaults, hidden semantic downgrades, placeholder
+artifacts that would be embarrassing to show, weak failure states, and user-task
+gaps. Contract freeze, route generation, capability routing, and implementation
+are blocked until both review slices are resolved.
 
 ## PM Child-Skill Selection
 

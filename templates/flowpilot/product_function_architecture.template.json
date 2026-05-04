@@ -13,6 +13,41 @@
     "draft_floor_source": "<chat|file|user-brief|other>",
     "known_product_context_paths": []
   },
+  "high_standard_posture": {
+    "flowpilot_invocation_means_important_project": true,
+    "target_grade": "highest_reasonably_achievable",
+    "pm_sets_worker_standard": true,
+    "lowest_viable_route_rejected": true,
+    "worker_effort_is_not_pm_constraint": true,
+    "minimum_professional_bar": "<what would be credible to show a colleague or stakeholder>"
+  },
+  "highest_achievable_product_target": {
+    "product_vision": "<what the strongest feasible result should feel like and enable>",
+    "best_feasible_route": "<specialized skills, discovery, modeling, assets, QA, or staged work needed to reach that target>",
+    "experience_quality_bar": "<visual, interaction, data, document, automation, or domain quality expectations>",
+    "verification_quality_bar": "<proof needed before PM can call the result high quality>"
+  },
+  "unacceptable_result_review": [
+    {
+      "failure_id": "<failure-id>",
+      "rough_or_embarrassing_result": "<placeholder, fake, thin, misleading, unstable, incomplete, or low-quality result>",
+      "why_it_must_fail": "<user/product reason>",
+      "required_repair_or_route_change": "<repair, discovery, redesign, child-skill route, ask-user, or block>"
+    }
+  ],
+  "semantic_fidelity_policy": {
+    "silent_downgrade_forbidden": true,
+    "material_gap_default": "<insert_discovery_or_validation_node|stage_delivery_with_explicit_gap|ask_user|block>",
+    "user_goal_to_evidence": [
+      {
+        "user_goal": "<requested product outcome>",
+        "material_support": "<strong|partial|missing|contradictory>",
+        "allowed_representation": "<what can be honestly built from current material>",
+        "forbidden_downgrade": "<what would change the user's meaning without approval>",
+        "required_action_if_gap_remains": "<discover|clean|research|model|ask_user|defer_with_explicit_label|block>"
+      }
+    ]
+  },
   "user_task_map": [
     {
       "task_id": "<task-id>",

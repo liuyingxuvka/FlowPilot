@@ -13,10 +13,16 @@
     "pm_material_understanding": ".flowpilot/runs/<run-id>/pm_material_understanding.json"
   },
   "scope_rule": "This root contract records only project-level hard requirements, high-risk requirements, and proof obligations that must be preserved across all nodes. Node-local details are added later in node_acceptance_plan files.",
+  "quality_floor_inheritance": {
+    "source": "product_function_architecture.high_standard_posture",
+    "highest_reasonably_achievable_is_floor": true,
+    "silent_semantic_downgrade_forbidden": true,
+    "rough_or_placeholder_completion_forbidden": true
+  },
   "root_requirements": [
     {
       "requirement_id": "<requirement-id>",
-      "source": "<user_request|product_function_architecture|material|pm_added_high_risk>",
+      "source": "<user_request|product_function_architecture|material|pm_added_high_risk|pm_added_quality_floor>",
       "priority": "<must|should>",
       "risk_level": "<low|medium|high>",
       "why_it_matters": "<user-or-product-impact>",

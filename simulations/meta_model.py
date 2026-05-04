@@ -106,6 +106,9 @@ class State:
     pm_material_complexity_classified: bool = False
     pm_material_discovery_decision_recorded: bool = False
     product_function_architecture_pm_synthesized: bool = False
+    product_function_high_standard_posture_written: bool = False
+    product_function_target_and_failure_bar_written: bool = False
+    product_function_semantic_fidelity_policy_written: bool = False
     product_function_user_task_map_written: bool = False
     product_function_capability_map_written: bool = False
     product_function_feature_decisions_written: bool = False
@@ -564,6 +567,9 @@ def _product_function_architecture_ready(state: State) -> bool:
     return (
         _material_handoff_ready(state)
         and state.product_function_architecture_pm_synthesized
+        and state.product_function_high_standard_posture_written
+        and state.product_function_target_and_failure_bar_written
+        and state.product_function_semantic_fidelity_policy_written
         and state.product_function_user_task_map_written
         and state.product_function_capability_map_written
         and state.product_function_feature_decisions_written
@@ -877,6 +883,9 @@ class AutopilotStep:
         "pm_material_complexity_classified",
         "pm_material_discovery_decision_recorded",
         "product_function_architecture_pm_synthesized",
+        "product_function_high_standard_posture_written",
+        "product_function_target_and_failure_bar_written",
+        "product_function_semantic_fidelity_policy_written",
         "product_function_user_task_map_written",
         "product_function_capability_map_written",
         "product_function_feature_decisions_written",
@@ -1149,6 +1158,9 @@ class AutopilotStep:
         "pm_material_complexity_classified",
         "pm_material_discovery_decision_recorded",
         "product_function_architecture_pm_synthesized",
+        "product_function_high_standard_posture_written",
+        "product_function_target_and_failure_bar_written",
+        "product_function_semantic_fidelity_policy_written",
         "product_function_user_task_map_written",
         "product_function_capability_map_written",
         "product_function_feature_decisions_written",
@@ -1998,6 +2010,36 @@ class AutopilotStep:
                 label="product_function_architecture_pm_synthesized",
                 action="project manager synthesizes grilled ideas into a product-function architecture decision package before contract freeze",
                 product_function_architecture_pm_synthesized=True,
+                active_node="write_product_function_high_standard_posture",
+            )
+            return
+
+        if not state.product_function_high_standard_posture_written:
+            yield _step(
+                state,
+                label="product_function_high_standard_posture_written",
+                action="project manager records that a FlowPilot invocation means an important project and sets the highest reasonably achievable worker standard, not the lowest viable route or a self-effort estimate",
+                product_function_high_standard_posture_written=True,
+                active_node="write_product_function_target_and_failure_bar",
+            )
+            return
+
+        if not state.product_function_target_and_failure_bar_written:
+            yield _step(
+                state,
+                label="product_function_target_and_failure_bar_written",
+                action="project manager describes the strongest feasible product target and the rough, embarrassing, or placeholder results that must be rejected before completion",
+                product_function_target_and_failure_bar_written=True,
+                active_node="write_product_function_semantic_fidelity_policy",
+            )
+            return
+
+        if not state.product_function_semantic_fidelity_policy_written:
+            yield _step(
+                state,
+                label="product_function_semantic_fidelity_policy_written",
+                action="project manager maps user goals to material evidence and records that source gaps require discovery, staged delivery, or user clarification instead of silent semantic downgrade",
+                product_function_semantic_fidelity_policy_written=True,
                 active_node="write_product_function_user_task_map",
             )
             return
@@ -5315,6 +5357,9 @@ def actor_authority_gates_require_correct_role(
         )
     product_architecture_inputs_ready = (
         state.product_function_architecture_pm_synthesized
+        and state.product_function_high_standard_posture_written
+        and state.product_function_target_and_failure_bar_written
+        and state.product_function_semantic_fidelity_policy_written
         and state.product_function_user_task_map_written
         and state.product_function_capability_map_written
         and state.product_function_feature_decisions_written

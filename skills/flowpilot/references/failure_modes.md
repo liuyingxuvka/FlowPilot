@@ -180,6 +180,9 @@ The FlowGuard models for FlowPilot found or guard against:
 - completion before final feature matrix, acceptance matrix, and
   quality-candidate reviews;
 - completion while obvious high-value work remains;
+- PM product-function architecture silently choosing a lowest-viable route,
+  accepting placeholder-quality output, or downgrading the user's semantic goal
+  because materials are incomplete;
 - no-progress recovery loops.
 
 Keep these failure modes in the model and tests.
@@ -190,6 +193,9 @@ Keep these failure modes in the model and tests.
   running-state helper.
 - A formal FlowPilot route must start from the showcase-grade floor; do not add
   a lower default tier.
+- The PM product-function architecture must record the highest reasonably
+  achievable target, unacceptable-result bar, and semantic-fidelity/no-silent-
+  downgrade policy before contract freeze.
 - Full grill-me runs at formal boundaries only: startup, route mutation or
   standard expansion, and completion review.
   It must be user-visible, persisted as evidence, contain at least 100

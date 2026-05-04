@@ -1645,3 +1645,44 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Integrate remote `main` without force-push, then publish the prepared v0.2.0 source release.
+
+## FlowPilot PM Highest-Reasonable-Standard Gate
+
+- Task ID: `flowpilot-pm-high-standard-product-architecture-20260504`
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T09:42:00+02:00
+- Ended: 2026-05-04T10:54:12+02:00
+- Commands OK: true
+
+### Model Files
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py`
+- OK: JSON parse check for `templates/flowpilot/**/*.json`
+- OK: `python simulations\run_meta_checks.py`: 533145 states, 553313 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python simulations\run_capability_checks.py`: 520359 states, 545815 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\smoke_autopilot.py`
+
+### Findings
+- The PM product-function architecture now includes an explicit high-standard posture: a FlowPilot invocation means the project is important and the PM sets the highest reasonably achievable worker standard, not a lowest-viable route.
+- The product-function gate now requires a strongest feasible product target, an unacceptable-result review, and a semantic-fidelity/no-silent-downgrade policy before user-task, capability, route, or contract freeze can proceed.
+- Material gaps now have an explicit default: add discovery/validation, stage the delivery with an explicit gap, ask the user, or block. They cannot silently redefine the requested product.
+- Source and installed FlowPilot skill copies were synchronized for the user-facing rule text.
+
+### Counterexamples
+- A route can otherwise pass by converting a requested product into a thin seed-data demo or placeholder UI while claiming the narrower artifact is the product. The new model labels make that downgrade visible before contract freeze.
+
+### Friction Points
+- Full smoke now takes about nine minutes because it reruns both large meta and capability models after release/startup checks.
+- The repository already had unrelated working-tree changes in cockpit, release, and documentation paths; this change stayed scoped to FlowPilot protocol, templates, model gates, and installed skill text.
+
+### Skipped Steps
+- No public release or GitHub publication work was performed.
+
+### Next Actions
+- In the next real FlowPilot UI run, verify the PM architecture packet explicitly rejects fake/placeholder maps, thin demos, and silent source-data downgrades before route generation.

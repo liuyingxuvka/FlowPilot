@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 553307,
+    "edge_count": 553313,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -182,8 +182,11 @@
       "product_function_capability_map_written",
       "product_function_display_rationale_written",
       "product_function_feature_decisions_written",
+      "product_function_high_standard_posture_written",
       "product_function_missing_feature_review_done",
       "product_function_negative_scope_written",
+      "product_function_semantic_fidelity_policy_written",
+      "product_function_target_and_failure_bar_written",
       "product_function_user_task_map_written",
       "project_manager_spawned_fresh_for_task",
       "quality_package_passed_no_raise",
@@ -252,29 +255,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 533139,
+    "state_count": 533145,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 553307,
+    "edge_count": 553313,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 533139,
+    "state_count": 533145,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 553307,
+    "edge_count": 553313,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 533139,
+    "state_count": 533145,
     "status": "OK",
     "success_state_count": 1280
   }

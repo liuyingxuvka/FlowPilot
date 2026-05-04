@@ -260,7 +260,10 @@ all four in one compact sentence.
 5. Enable FlowPilot, ensure `.flowpilot/` exists, create a new
    `.flowpilot/runs/<run-id>/` directory, update `.flowpilot/current.json` and
    `.flowpilot/index.json`, and record the selected mode inside the run root.
-6. Commit the showcase-grade long-horizon floor.
+6. Commit the showcase-grade long-horizon floor. A formal FlowPilot invocation
+   means the project is important: the project manager sets the highest
+   reasonably achievable standard for strong AI workers, not the lowest viable
+   route and not an estimate of the PM's own effort.
 7. Run visible full grill-me using FlowPilot's formal invocation policy. In
    the same startup round, draft the intended acceptance floor, seed the
    improvement candidate pool, seed the initial validation direction, and
@@ -306,13 +309,16 @@ all four in one compact sentence.
 13. Require the project manager to synthesize
     `.flowpilot/runs/<run-id>/product_function_architecture.json` before contract freeze.
     The package must include a user-task map, product capability map, feature
-    necessity decisions (`must`, `should`, `optional`, `reject`), display
-    rationale for every visible label/control/status/card, missing high-value
-    feature review, negative scope, and a functional acceptance matrix.
+    necessity decisions (`must`, `should`, `optional`, `reject`), a high-standard
+    posture, strongest feasible product target, explicit unacceptable-result
+    review, semantic-fidelity and no-silent-downgrade policy, display rationale
+    for every visible label/control/status/card, missing high-value feature
+    review, negative scope, and a functional acceptance matrix.
 14. The product FlowGuard officer approves or blocks whether the architecture
     can be modeled and checked. The human-like reviewer challenges usefulness:
     unnecessary features, unnecessary visible text, missing workflow support,
-    bad defaults, weak failure states, and gaps between user tasks and product
+    bad defaults, weak failure states, silent semantic downgrades, placeholder
+    or embarrassing artifacts, and gaps between user tasks and product
     behavior. If either role blocks, the project manager revises the package
     before the route continues.
 15. Freeze the acceptance contract as a floor, not a ceiling, from the
@@ -529,6 +535,19 @@ The project manager owns the synthesis and writes
 `.flowpilot/runs/<run-id>/product_function_architecture.json`. The package is required to
 contain:
 
+- `high_standard_posture`: records that FlowPilot invocation means an
+  important project, target grade is highest reasonably achievable, the PM is
+  setting worker standards, and rough-demo completion is not acceptable;
+- `highest_achievable_product_target`: the strongest feasible product target,
+  the route or specialized skills likely needed, and the experience and proof
+  quality bars before the PM can call the result high quality;
+- `unacceptable_result_review`: concrete placeholder, fake, thin, misleading,
+  unstable, incomplete, or low-quality results that must fail review and route
+  to repair, discovery, redesign, user clarification, or block;
+- `semantic_fidelity_policy`: user goals mapped to material support, allowed
+  representations, forbidden downgrades, and the rule that material gaps require
+  discovery, staged delivery with explicit gaps, user clarification, or block
+  rather than silently redefining the user's requested product;
 - `user_task_map`: user jobs, trigger conditions, desired outcomes, and
   failure/recovery expectations;
 - `product_capability_map`: product capabilities needed to serve those tasks,
@@ -550,11 +569,12 @@ contain:
 The product FlowGuard officer approves or blocks modelability and coverage:
 whether the architecture can be represented as product-function models and
 checked without hand-waving. The human-like reviewer separately challenges
-usefulness and completeness by comparing the PM architecture against the user
-request, inspected materials, and expected workflow reality: unnecessary
-features, missing high-value workflow support, confusing display choices, weak
-default states, failure states, and gaps between what users need and what the
-product exposes.
+usefulness, ambition, and completeness by comparing the PM architecture against
+the user request, inspected materials, and expected workflow reality:
+unnecessary features, missing high-value workflow support, confusing display
+choices, weak default states, failure states, hidden downgrades from the user's
+meaning, placeholder artifacts that would be embarrassing to show, and gaps
+between what users need and what the product exposes.
 
 The acceptance contract freezes only after this package exists and both
 review slices are resolved. Later product-function models refine and verify

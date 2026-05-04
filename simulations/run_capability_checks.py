@@ -68,6 +68,9 @@ REQUIRED_LABELS = (
     "pm_material_complexity_classified",
     "pm_material_discovery_decision_recorded",
     "product_function_architecture_pm_synthesized",
+    "product_function_high_standard_posture_written",
+    "product_function_target_and_failure_bar_written",
+    "product_function_semantic_fidelity_policy_written",
     "product_function_user_task_map_written",
     "product_function_capability_map_written",
     "product_function_feature_decisions_written",
@@ -300,6 +303,9 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_material_discovery_decision_recorded}|"
         f"product_function_architecture="
         f"{state.product_function_architecture_pm_synthesized},"
+        f"{state.product_function_high_standard_posture_written},"
+        f"{state.product_function_target_and_failure_bar_written},"
+        f"{state.product_function_semantic_fidelity_policy_written},"
         f"{state.product_function_user_task_map_written},"
         f"{state.product_function_capability_map_written},"
         f"{state.product_function_feature_decisions_written},"

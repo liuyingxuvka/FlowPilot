@@ -274,6 +274,16 @@ before route generation or implementation.
 The canonical artifact is `.flowpilot/runs/<run-id>/product_function_architecture.json`.
 It records:
 
+- high-standard posture: FlowPilot invocation means the project is important,
+  the PM sets the highest reasonably achievable standard for strong AI workers,
+  and rough-demo completion is not acceptable;
+- highest achievable product target and unacceptable-result review: what the
+  strongest feasible result should look like, and which placeholder, fake,
+  thin, misleading, unstable, incomplete, or low-quality outputs must fail;
+- semantic fidelity policy: map user goals to material support, identify
+  forbidden downgrades, and route material gaps to discovery, staged delivery
+  with explicit gaps, user clarification, or block rather than silently
+  redefining the requested product;
 - the user-task map;
 - the product capability map;
 - feature necessity decisions: `must`, `should`, `optional`, or `reject`;
@@ -285,13 +295,14 @@ It records:
   checks, and evidence paths.
 
 The product FlowGuard officer approves or blocks whether the architecture can
-be modeled and checked. The human-like reviewer challenges usefulness and
-completeness before the contract freezes by comparing the PM architecture
-against the user request, inspected materials, and expected workflow reality:
-unnecessary features, unnecessary visible text, missing workflow support, bad
-defaults, failure-state gaps, and weak user-task coverage. A product-function
-model later in the route validates the design; it does not replace this
-pre-contract PM synthesis gate.
+be modeled and checked. The human-like reviewer challenges usefulness,
+ambition, and completeness before the contract freezes by comparing the PM
+architecture against the user request, inspected materials, and expected
+workflow reality: unnecessary features, unnecessary visible text, missing
+workflow support, bad defaults, hidden semantic downgrades, placeholder
+artifacts that would be embarrassing to show, failure-state gaps, and weak
+user-task coverage. A product-function model later in the route validates the
+design; it does not replace this pre-contract PM synthesis gate.
 
 ## PM Child-Skill Selection
 

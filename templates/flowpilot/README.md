@@ -52,10 +52,13 @@ for review.
    cleanup, modeling, research, validation, or reconciliation nodes.
 12. Ask the project manager to synthesize `product_function_architecture.json`
    before contract freeze, including user tasks, capabilities, feature
-   decisions, visible-display rationale, missing-feature review, negative
-   scope, and the functional acceptance matrix.
+   decisions, high-standard posture, strongest feasible product target,
+   unacceptable-result review, semantic-fidelity/no-silent-downgrade policy,
+   visible-display rationale, missing-feature review, negative scope, and the
+   functional acceptance matrix.
 13. Product FlowGuard officer approves modelability and the human-like reviewer
-   challenges usefulness and missing or unnecessary product behavior.
+   challenges usefulness, ambition, hidden downgrades, placeholder-quality
+   output, and missing or unnecessary product behavior.
 14. Project manager writes `root_acceptance_contract.json` for the PM-owned
    hard requirements and selects `standard_scenario_pack.json` as the baseline
    replay pack for final review.
