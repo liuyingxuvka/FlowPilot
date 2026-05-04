@@ -1,9 +1,9 @@
 {
   "backup_id": "flowpilot-20260504-130014",
-  "source": "C:\\Users\\liu_y\\.codex\\skills\\flowpilot",
-  "backup_dir": "C:\\Users\\liu_y\\.codex\\skill_backups\\flowpilot-20260504-130014",
-  "repository_backup_dir": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\backups\\flowpilot-20260504-130014",
+  "source": "%USERPROFILE%\\.codex\\skills\\flowpilot",
+  "backup_dir": "%USERPROFILE%\\.codex\\skill_backups\\flowpilot-20260504-130014",
+  "repository_backup_dir": "backups\\flowpilot-20260504-130014",
   "created_at": "2026-05-04T13:00:26.6482169+02:00",
   "original_skill_sha256": "A4B8505B09B43C227D9256D60F7C28B28EFA99C6E5D5D020EC8E1ACEEF6B30D3",
-  "rollback_command": "Get-ChildItem -LiteralPath 'C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\backups\\flowpilot-20260504-130014' -Exclude BACKUP_MANIFEST.json,README.md | Copy-Item -Destination 'C:\\Users\\liu_y\\.codex\\skills\\flowpilot' -Recurse -Force"
+  "rollback_command": "From the repository root: Get-ChildItem -LiteralPath '.\\backups\\flowpilot-20260504-130014' -Exclude BACKUP_MANIFEST.json,README.md | Copy-Item -Destination (Join-Path $env:USERPROFILE '.codex\\skills\\flowpilot') -Recurse -Force"
 }

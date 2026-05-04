@@ -3,6 +3,41 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-04 - FlowPilot v0.2.1 Release Metadata And Tag Preflight
+
+- Trigger: after the post-`v0.2.0` controller, PM/reviewer, heartbeat, and
+  Cockpit cleanup changes were pushed to `main`, the user asked whether the
+  GitHub tag, version metadata, and README should be updated too.
+- Decision: `use_flowguard`.
+- Mode: `process_preflight` for release/tag side effects.
+- Scope updated:
+  - bumped `VERSION` to `0.2.1`;
+  - split post-`v0.2.0` work into a new `CHANGELOG.md` `0.2.1` section;
+  - updated README current-release links and corrected the Chinese Cockpit
+    description to match the current source tree;
+  - kept the rollback backup in the repository while replacing local absolute
+    paths in the backup README, manifest, and zip with portable path examples.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema
+    `1.0`;
+  - `python simulations/run_release_tooling_checks.py`;
+  - `python scripts/check_install.py`;
+  - `python scripts/audit_local_install_sync.py --json`;
+  - `python scripts/smoke_autopilot.py`;
+  - `python scripts/check_public_release.py --skip-validation --json`;
+  - `python scripts/check_public_release.py --skip-url-check --skip-validation --json`;
+  - `git diff --check`.
+- Results:
+  - release-tooling model passed with 16 states, 15 edges, zero invariant
+    failures, and all required labels present;
+  - install, local-sync audit, smoke, dependency URL, public-boundary, and
+    whitespace checks passed;
+  - public release preflight initially blocked on a backup README containing a
+    machine-specific path; the backup text and archive were sanitized and the
+    privacy scan then passed;
+  - GitHub repository ruleset `Protect default branch` was active for the
+    branch target.
+
 ## 2026-05-04 - Heartbeat Resume Re-Enters Packet Control Plane
 
 - Trigger: after the controller/PM/reviewer packet redesign, the user asked

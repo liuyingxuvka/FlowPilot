@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  Current release: <a href="https://github.com/liuyingxuvka/FlowPilot/releases/tag/v0.2.0"><strong>v0.2.0</strong></a> · MIT License · Source release
+  Current release: <a href="https://github.com/liuyingxuvka/FlowPilot/releases/tag/v0.2.1"><strong>v0.2.1</strong></a> · MIT License · Source release
 </p>
 <!-- README HERO END -->
 
 English comes first. The second half is a full Chinese mirror.
 
-Current release: **v0.2.0**.
+Current release: **v0.2.1**.
 
 FlowPilot is a model-backed project-control system for large AI-agent-led
 software and engineering projects. Its foundation is **FlowGuard**: a
@@ -360,7 +360,7 @@ FlowPilot 是一个面向大型 AI Agent 软件和工程项目的模型化项目
 
 关键点是：FlowPilot 不只是模拟正在构建的产品或工作流。它还会在开发进行时实时模拟 **开发流程本身**：当前状态、允许的状态转移、打开的关卡、角色权威、当前或过期证据、恢复路径，以及最终完成条件。
 
-当前发布版本：**v0.2.0**。
+当前发布版本：**v0.2.1**。
 
 FlowPilot 不是“有限状态控制 + FlowGuard”两个并列概念。FlowPilot 是一个基于 FlowGuard 的工程项目：
 
@@ -376,9 +376,10 @@ FlowPilot = FlowGuard 有限状态模拟和检查
 
 当前仓库已经发布 FlowPilot 的初始实现包：Codex 技能、可复用 `.flowpilot/` 模板、基于 FlowGuard 的模拟、安装和验证脚本、示例以及协议文档。
 
-`v0.2.0` 增加了原生 FlowPilot Cockpit 源码包。Cockpit 是 Windows 桌面 UI，
-用于从同一套 `.flowpilot/` 项目控制状态查看当前运行、路线前线、节点状态、
-证据、中英文界面、支持入口和托盘生命周期。
+早期的原生 FlowPilot Cockpit 原型已经从当前 active source tree 移除，
+以便下一版 Windows 桌面 UI 可以从零重建，不复用旧 UI 资产或实现代码。
+在新的 Cockpit 实现完成前，FlowPilot run 应使用聊天路线图/route signs
+作为可见控制界面；旧原型只能从 git 历史恢复，不能作为当前 UI 证据。
 
 ## FlowGuard 是基础
 

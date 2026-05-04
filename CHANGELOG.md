@@ -2,7 +2,30 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
-## 0.2.0 - 2026-05-04
+## 0.2.1 - 2026-05-04
+
+### Added
+
+- Added PM-owned research packages so material, mechanism, source, validation,
+  reconciliation, and experiment gaps must be assigned, reviewed, and absorbed
+  before they can support route or product decisions.
+- Added controller packet-gate evidence, including the run-local
+  `packet_ledger` template and packet-control FlowGuard checks.
+- Added repository backup artifacts for the previous installed `flowpilot`
+  skill so rollback remains possible without deleting the new version.
+
+### Changed
+
+- Hardened the controller authority boundary: the controller relays PM,
+  reviewer, officer, and worker packets but may not execute worker packets or
+  self-approve role gates.
+- Tightened PM product-function quality gates, high-standard node rechecks, and
+  UI iteration budget guidance.
+- Updated heartbeat/manual resume so continuation loads the packet ledger,
+  requires PM `controller_reminder`, requires reviewer dispatch policy before
+  worker execution, and blocks ambiguous worker state for PM recovery.
+- Updated local install sync checks to require the legacy Cockpit prototype to
+  be absent from the active tree before a clean UI restart.
 
 ### Removed
 
@@ -10,23 +33,27 @@ All notable changes to FlowPilot will be documented in this file.
   the next Windows desktop UI can be rebuilt from scratch without reusing old
   UI assets or implementation code.
 
-### Changed
+### Fixed
 
-- Updated local install sync checks to require the legacy Cockpit prototype to
-  be absent from the active tree instead of requiring the old source package.
+- Corrected README release/version language and the Chinese Cockpit section so
+  both languages describe the current source package consistently.
+- Removed post-`v0.2.0` changes from the `0.2.0` changelog section so the
+  changelog matches the actual git tag boundary.
+
+## 0.2.0 - 2026-05-04
 
 ### Added
 
 - Added the native Windows-oriented FlowPilot Cockpit package with a live route/task view, multi-task tabs, English/Chinese UI strings, settings, and support entry.
-- Added `scripts/audit_local_install_sync.py` to verify repository-owned installed skills are source-fresh and installed skill names are not duplicated before release.
+- Added `scripts/audit_local_install_sync.py` to verify repository-owned installed skills are source-fresh, installed skill names are not duplicated, and Cockpit source files are tracked before release.
 - Added a `VERSION` file so release checks and documentation have a single current version marker.
 - Added autonomous UI design rules for native desktop screenshot verification, concept/resource traceability, and real app icon realization checks.
-- Added a run-local `packet_ledger` template and heartbeat recovery contract so automated/manual resume re-enters the PM -> reviewer -> worker packet loop instead of letting the controller infer worker work.
+
+### Changed
 
 - Updated FlowPilot startup protocol from three questions to four by adding a display-surface choice: open Cockpit UI or continue with chat route signs.
 - Updated the installer with `--sync-repo-owned` so repository-owned skills can be refreshed without pulling optional companion skills by default.
-- Tightened release modeling so local install sync and duplicate installed skill names are release gates.
-- Tightened heartbeat/manual resume modeling so continuation must load the packet ledger, require PM `controller_reminder`, and require reviewer dispatch policy before implementation-bearing work.
+- Tightened release modeling so local install sync, duplicate installed skill names, and tracked Cockpit source are release gates.
 
 ### Fixed
 

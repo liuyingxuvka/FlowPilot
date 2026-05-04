@@ -3,20 +3,20 @@
 This directory preserves the installed `flowpilot` skill snapshot taken before
 the packet-gated controller experiment.
 
-Use it to roll the installed skill back:
+From the repository root, use it to roll the installed skill back:
 
 ```powershell
-$backup = "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430\backups\flowpilot-20260504-130014"
-$target = "C:\Users\liu_y\.codex\skills\flowpilot"
+$backup = Resolve-Path ".\backups\flowpilot-20260504-130014"
+$target = Join-Path $env:USERPROFILE ".codex\skills\flowpilot"
 Get-ChildItem -LiteralPath $backup -Exclude BACKUP_MANIFEST.json,README.md |
   Copy-Item -Destination $target -Recurse -Force
 ```
 
-Use it to roll the repository skill source back:
+From the repository root, use it to roll the repository skill source back:
 
 ```powershell
-$backup = "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430\backups\flowpilot-20260504-130014"
-$target = "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430\skills\flowpilot"
+$backup = Resolve-Path ".\backups\flowpilot-20260504-130014"
+$target = Resolve-Path ".\skills\flowpilot"
 Get-ChildItem -LiteralPath $backup -Exclude BACKUP_MANIFEST.json,README.md |
   Copy-Item -Destination $target -Recurse -Force
 ```
