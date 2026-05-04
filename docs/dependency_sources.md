@@ -71,7 +71,8 @@ Use `scripts/install_flowpilot.py --sync-repo-owned` to refresh stale or
 missing repository-owned Codex skills from the current checkout. Use
 `scripts/audit_local_install_sync.py` before publishing or handoff to confirm
 that repo-owned installed skills are source-fresh, installed skill names are
-unique, and Cockpit source files are tracked.
+unique, and the legacy Cockpit prototype is absent from the active source
+tree before a from-scratch UI restart.
 
 Host-specific tools are not hard dependencies by name. For example, Codex maps
 the `raster_image_generation` capability to its built-in `imagegen` skill, but

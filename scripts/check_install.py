@@ -118,15 +118,6 @@ REQUIRED_FILES = [
     "scripts/flowpilot_lifecycle.py",
     "scripts/flowpilot_user_flow_diagram.py",
     "scripts/smoke_autopilot.py",
-    "flowpilot_cockpit/__init__.py",
-    "flowpilot_cockpit/__main__.py",
-    "flowpilot_cockpit/app.py",
-    "flowpilot_cockpit/i18n.py",
-    "flowpilot_cockpit/models.py",
-    "flowpilot_cockpit/state_reader.py",
-    "flowpilot_cockpit/styles.py",
-    "tests/test_flowpilot_cockpit_i18n.py",
-    "tests/test_flowpilot_cockpit_state_reader.py",
 ]
 
 JSON_FILES = [

@@ -48,11 +48,11 @@ This repository now publishes the initial FlowPilot implementation package:
 the Codex skill, reusable `.flowpilot/` templates, FlowGuard-backed simulations,
 installer and validation scripts, examples, and protocol documentation.
 
-Release `v0.2.0` adds the native FlowPilot Cockpit source package. The Cockpit
-is a Windows desktop UI for inspecting current `.flowpilot/` runs, route
-frontiers, node status, evidence, bilingual English/Chinese labels, support
-entry points, and tray lifecycle behavior from the same project-control state
-that chat route signs use.
+The earlier native FlowPilot Cockpit prototype has been removed from the active
+source tree so the next desktop UI can be rebuilt from scratch. Current
+FlowPilot work should use chat route signs when no fresh Cockpit implementation
+exists; the old prototype remains recoverable from git history only and must
+not be reused as current UI evidence.
 
 ## FlowGuard Is The Foundation
 
@@ -295,12 +295,9 @@ chunks, record persistent evidence, and complete only through the final ledger.
 Use `FlowPilot` for the public project name.
 Use `flowpilot` for implementation slugs such as the skill directory name.
 
-To inspect a local FlowPilot workspace with the native Cockpit UI, install
-PySide6 in the active Python environment and run:
-
-```powershell
-python -m flowpilot_cockpit --project-root .
-```
+No active native Cockpit implementation is currently shipped in this checkout.
+When a FlowPilot run requests a UI before a new implementation exists, use chat
+route signs until that run builds and verifies a fresh Windows desktop UI.
 
 ## Verification
 
@@ -324,8 +321,6 @@ current install.
 The implementation package includes:
 
 - `skills/flowpilot/` - the FlowPilot skill;
-- `flowpilot_cockpit/` - native desktop Cockpit source for live route/run
-  inspection;
 - `templates/flowpilot/` - reusable `.flowpilot/` project-control templates;
 - `simulations/` - FlowGuard models and regression checks;
 - `scripts/` - install, smoke, lifecycle, and heartbeat helpers;
@@ -564,12 +559,9 @@ chunks, record persistent evidence, and complete only through the final ledger.
 公开项目名使用 `FlowPilot`。
 实现 slug 或技能目录名使用 `flowpilot`。
 
-要用原生 Cockpit UI 检查本地 FlowPilot workspace，请在当前 Python 环境安装
-PySide6 后运行：
-
-```powershell
-python -m flowpilot_cockpit --project-root .
-```
+当前 checkout 不再携带可用的原生 Cockpit 实现。如果 FlowPilot run 在新的
+UI 实现完成前请求打开 UI，应先使用聊天中的路线图/route signs，直到该 run
+重新构建并验证一个全新的 Windows 桌面 UI。
 
 ## 验证
 
@@ -589,7 +581,6 @@ python scripts/audit_local_install_sync.py
 实现包包含：
 
 - `skills/flowpilot/` - FlowPilot 技能；
-- `flowpilot_cockpit/` - 用于实时路线/运行检查的原生桌面 Cockpit 源码；
 - `templates/flowpilot/` - 可复用 `.flowpilot/` 项目控制模板；
 - `simulations/` - FlowGuard 模型和回归检查；
 - `scripts/` - 安装、smoke、生命周期和 heartbeat 辅助脚本；

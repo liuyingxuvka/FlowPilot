@@ -1,4 +1,4 @@
-"""Audit repository source, local Codex skill installs, and Cockpit source state."""
+"""Audit repository source, local Codex skill installs, and legacy UI cleanup."""
 
 from __future__ import annotations
 
@@ -17,14 +17,8 @@ import install_flowpilot
 
 ROOT = Path(__file__).resolve().parents[1]
 
-COCKPIT_SOURCE_FILES = [
-    "flowpilot_cockpit/__init__.py",
-    "flowpilot_cockpit/__main__.py",
-    "flowpilot_cockpit/app.py",
-    "flowpilot_cockpit/i18n.py",
-    "flowpilot_cockpit/models.py",
-    "flowpilot_cockpit/state_reader.py",
-    "flowpilot_cockpit/styles.py",
+LEGACY_COCKPIT_SOURCE_PATHS = [
+    "flowpilot_cockpit",
     "tests/test_flowpilot_cockpit_i18n.py",
     "tests/test_flowpilot_cockpit_state_reader.py",
 ]
@@ -137,25 +131,25 @@ def main() -> int:
         result["ok"] = False
     else:
         add_check(checks, name="git_tracked_files_available", ok=True, count=len(tracked))
-        missing = [path for path in COCKPIT_SOURCE_FILES if path not in tracked]
+        present = [path for path in LEGACY_COCKPIT_SOURCE_PATHS if path in tracked]
         add_check(
             checks,
-            name="cockpit_source_files_tracked",
-            ok=not missing,
-            missing=missing,
-            expected=COCKPIT_SOURCE_FILES,
+            name="legacy_cockpit_source_not_tracked",
+            ok=not present,
+            present=present,
+            expected_absent=LEGACY_COCKPIT_SOURCE_PATHS,
         )
-        if missing:
+        if present:
             result["ok"] = False
 
-    cockpit_missing_on_disk = [path for path in COCKPIT_SOURCE_FILES if not (ROOT / path).exists()]
+    legacy_cockpit_present_on_disk = [path for path in LEGACY_COCKPIT_SOURCE_PATHS if (ROOT / path).exists()]
     add_check(
         checks,
-        name="cockpit_source_files_exist",
-        ok=not cockpit_missing_on_disk,
-        missing=cockpit_missing_on_disk,
+        name="legacy_cockpit_source_absent_from_main_tree",
+        ok=not legacy_cockpit_present_on_disk,
+        present=legacy_cockpit_present_on_disk,
     )
-    if cockpit_missing_on_disk:
+    if legacy_cockpit_present_on_disk:
         result["ok"] = False
 
     if args.json:

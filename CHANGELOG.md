@@ -4,18 +4,27 @@ All notable changes to FlowPilot will be documented in this file.
 
 ## 0.2.0 - 2026-05-04
 
-### Added
+### Removed
 
-- Added the native Windows-oriented FlowPilot Cockpit package with a live route/task view, multi-task tabs, English/Chinese UI strings, settings, and support entry.
-- Added `scripts/audit_local_install_sync.py` to verify repository-owned installed skills are source-fresh, installed skill names are not duplicated, and Cockpit source files are tracked before release.
-- Added a `VERSION` file so release checks and documentation have a single current version marker.
-- Added autonomous UI design rules for native desktop screenshot verification, concept/resource traceability, and real app icon realization checks.
+- Removed the previous native Cockpit prototype from the active source tree so
+  the next Windows desktop UI can be rebuilt from scratch without reusing old
+  UI assets or implementation code.
 
 ### Changed
 
+- Updated local install sync checks to require the legacy Cockpit prototype to
+  be absent from the active tree instead of requiring the old source package.
+
+### Added
+
+- Added the native Windows-oriented FlowPilot Cockpit package with a live route/task view, multi-task tabs, English/Chinese UI strings, settings, and support entry.
+- Added `scripts/audit_local_install_sync.py` to verify repository-owned installed skills are source-fresh and installed skill names are not duplicated before release.
+- Added a `VERSION` file so release checks and documentation have a single current version marker.
+- Added autonomous UI design rules for native desktop screenshot verification, concept/resource traceability, and real app icon realization checks.
+
 - Updated FlowPilot startup protocol from three questions to four by adding a display-surface choice: open Cockpit UI or continue with chat route signs.
 - Updated the installer with `--sync-repo-owned` so repository-owned skills can be refreshed without pulling optional companion skills by default.
-- Tightened release modeling so local install sync, duplicate installed skill names, and tracked Cockpit source are release gates.
+- Tightened release modeling so local install sync and duplicate installed skill names are release gates.
 
 ### Fixed
 

@@ -58,7 +58,8 @@ Expected:
 - repository-owned installed skills are source-fresh;
 - installed skill names are unique, so stale backup skills cannot shadow the
   active FlowPilot skill;
-- native Cockpit source files are tracked in git.
+- the legacy Cockpit prototype is absent from the active source tree before a
+  from-scratch UI restart.
 - If local `.flowpilot/` runtime state exists, its main JSON files parse.
 
 ## Public Release Check
