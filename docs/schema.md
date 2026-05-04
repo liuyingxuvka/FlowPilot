@@ -13,6 +13,7 @@ user-level:
 - `runs/<run-id>/run.json`
 - `runs/<run-id>/state.json`
 - `runs/<run-id>/execution_frontier.json`
+- `runs/<run-id>/packet_ledger.json`
 - `mode.json`
 - `crew_ledger.json`
 - `crew_memory/*.json`
@@ -66,6 +67,9 @@ Markdown files are English summaries for review.
 - next node;
 - next action;
 - startup activation hard-gate status.
+- packet control-plane status: active packet id, holder, PM decision path,
+  reviewer dispatch path, worker result path, review decision path, and next
+  legal controller relay action.
 
 It should not store the whole history.
 
@@ -440,6 +444,10 @@ The frontier records:
 - latest PM completion runway, including current gate, downstream steps,
   hard-stop conditions, checkpoint cadence, plan replacement status, and any
   PM stop signal;
+- packet control-plane status, including active packet id, holder, PM
+  controller reminder presence, reviewer dispatch evidence, worker identity,
+  worker result, review decision, ambiguity block, and whether the internal
+  packet loop can continue without stopping for the user;
 - PM-owned child-skill selection status: local skill inventory path, selection
   manifest path, required/conditional/deferred/rejected decisions, and proof
   that raw local availability did not create route work;
@@ -497,10 +505,27 @@ unless the host continuation itself needs repair.
 `current_node_completion.advance_allowed` is false. In that state, the next
 continuation turn, whether automated heartbeat or manual resume, resumes
 `active_node`, obtains a PM completion runway, replaces the visible plan
-projection from that runway, selects the persisted `current_subnode` or
-`next_gate`, and must execute at least that gate when it is executable before
-continuing along the runway. A continuation record that only says "continue to
-next gate" without an executed gate or blocker is invalid no-progress evidence.
+projection from that runway, selects the persisted `current_subnode`,
+`next_gate`, and packet recovery state, and continues the packet loop when it
+is executable. A continuation record that only says "continue to next gate"
+without reviewer/worker/PM packet progress or a concrete blocker is invalid
+no-progress evidence.
+
+## Packet Ledger
+
+`packet_ledger.json` is the run-local source of truth for the packet-gated
+controller loop. It records the active packet id, packet holder, PM decision
+evidence, reviewer dispatch evidence, assigned worker, worker result evidence,
+review decision evidence, next legal controller relay action, and whether
+ambiguous worker state blocks controller execution.
+
+Heartbeat and manual resume load the packet ledger before asking PM for the
+current decision. The controller may not mint packets, finish worker packets,
+or advance from controller-origin evidence. If PM issues a packet, the ledger
+must show `controller_reminder` and reviewer dispatch before worker execution.
+If a worker result exists, the next action is reviewer review. If packet holder
+or worker-result state is ambiguous, the next action is PM recovery/reissue,
+not controller execution.
 
 On any controlled stop before terminal completion, the frontier or heartbeat
 record stores a `controlled_stop_notice` packet. Automated mode may set

@@ -1,0 +1,36 @@
+{
+  "schema_version": "flowpilot.packet_ledger.v1",
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
+  "updated_at": "<iso-8601-timestamp>",
+  "controller_boundary": {
+    "controller_only": true,
+    "controller_may_execute_worker_packet": false,
+    "controller_may_advance_from_own_evidence": false,
+    "pm_controller_reminder_required": true,
+    "reviewer_dispatch_required_before_worker": true,
+    "role_reminder_required_in_controller_messages": true,
+    "role_echo_required_in_subagent_responses": true
+  },
+  "active_packet_id": "<packet-id-or-null>",
+  "active_packet_status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+  "active_packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
+  "packets": [
+    {
+      "packet_id": "<packet-id>",
+      "node_id": "<node-id>",
+      "created_by_role": "project_manager",
+      "created_at": "<iso-8601-timestamp>",
+      "pm_decision_path": "<pm-decision-evidence-path>",
+      "pm_controller_reminder_present": false,
+      "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
+      "reviewer_dispatch_decision": "<pending|approved|blocked>",
+      "assigned_worker_role": "<worker_a|worker_b|authorized_non_controller|null>",
+      "worker_result_path": "<node-result-path-or-null>",
+      "review_decision_path": "<review-decision-path-or-null>",
+      "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+      "ambiguous_worker_state_blocks_controller_execution": true,
+      "controller_origin_evidence_allowed": false
+    }
+  ]
+}

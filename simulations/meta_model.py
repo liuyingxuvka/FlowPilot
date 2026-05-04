@@ -178,12 +178,15 @@ class State:
     child_skill_manifest_pm_approved_for_route: bool = False
     heartbeat_loaded_state: bool = False
     heartbeat_loaded_frontier: bool = False
+    heartbeat_loaded_packet_ledger: bool = False
     heartbeat_loaded_crew_memory: bool = False
     heartbeat_restored_crew: bool = False
     heartbeat_rehydrated_crew: bool = False
     crew_rehydration_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
     heartbeat_pm_decision_requested: bool = False
+    heartbeat_pm_controller_reminder_checked: bool = False
+    heartbeat_reviewer_dispatch_policy_checked: bool = False
     pm_resume_decision_recorded: bool = False
     pm_completion_runway_recorded: bool = False
     pm_runway_hard_stops_recorded: bool = False
@@ -477,12 +480,15 @@ def _reset_execution_scope_gates() -> dict[str, object]:
         {
             "heartbeat_loaded_state": False,
             "heartbeat_loaded_frontier": False,
+            "heartbeat_loaded_packet_ledger": False,
             "heartbeat_loaded_crew_memory": False,
             "heartbeat_restored_crew": False,
             "heartbeat_rehydrated_crew": False,
             "crew_rehydration_report_written": False,
             "replacement_roles_seeded_from_memory": False,
             "heartbeat_pm_decision_requested": False,
+            "heartbeat_pm_controller_reminder_checked": False,
+            "heartbeat_reviewer_dispatch_policy_checked": False,
             "pm_resume_decision_recorded": False,
             "pm_completion_runway_recorded": False,
             "pm_runway_hard_stops_recorded": False,
@@ -995,12 +1001,15 @@ class AutopilotStep:
         "child_skill_manifest_pm_approved_for_route",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
+        "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_crew_memory",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
         "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
+        "heartbeat_pm_controller_reminder_checked",
+        "heartbeat_reviewer_dispatch_policy_checked",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
         "pm_runway_hard_stops_recorded",
@@ -1280,12 +1289,15 @@ class AutopilotStep:
         "child_skill_manifest_pm_approved_for_route",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
+        "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_crew_memory",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
         "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
+        "heartbeat_pm_controller_reminder_checked",
+        "heartbeat_reviewer_dispatch_policy_checked",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
         "pm_runway_hard_stops_recorded",
@@ -4199,6 +4211,15 @@ class AutopilotStep:
                     label="heartbeat_loaded_execution_frontier",
                     action="continuation turn loads execution_frontier.json before selecting work",
                     heartbeat_loaded_frontier=True,
+                    active_node="heartbeat_load_packet_ledger",
+                )
+                return
+            if not state.heartbeat_loaded_packet_ledger:
+                yield _step(
+                    state,
+                    label="heartbeat_loaded_packet_ledger",
+                    action="continuation turn loads packet_ledger.json before asking PM or dispatching worker work",
+                    heartbeat_loaded_packet_ledger=True,
                     active_node="heartbeat_load_crew_memory",
                 )
                 return
@@ -4243,8 +4264,26 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="heartbeat_asked_project_manager",
-                    action="continuation turn asks the project manager what the controller should do next",
+                    action="continuation turn asks the project manager for PM_DECISION from the current frontier and packet ledger",
                     heartbeat_pm_decision_requested=True,
+                    active_node="check_pm_controller_reminder",
+                )
+                return
+            if not state.heartbeat_pm_controller_reminder_checked:
+                yield _step(
+                    state,
+                    label="heartbeat_pm_controller_reminder_checked",
+                    action="controller requires PM_DECISION to include controller_reminder before dispatching any packet",
+                    heartbeat_pm_controller_reminder_checked=True,
+                    active_node="check_reviewer_dispatch_policy",
+                )
+                return
+            if not state.heartbeat_reviewer_dispatch_policy_checked:
+                yield _step(
+                    state,
+                    label="heartbeat_reviewer_dispatch_policy_checked",
+                    action="controller confirms NODE_PACKET dispatch requires reviewer approval and ambiguous worker state blocks controller execution",
+                    heartbeat_reviewer_dispatch_policy_checked=True,
                     active_node="await_pm_resume_decision",
                 )
                 return
@@ -5239,12 +5278,15 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
         if not (
             state.heartbeat_loaded_state
             and state.heartbeat_loaded_frontier
+            and state.heartbeat_loaded_packet_ledger
             and state.heartbeat_loaded_crew_memory
             and state.heartbeat_restored_crew
             and state.heartbeat_rehydrated_crew
             and state.crew_rehydration_report_written
             and state.replacement_roles_seeded_from_memory
             and state.heartbeat_pm_decision_requested
+            and state.heartbeat_pm_controller_reminder_checked
+            and state.heartbeat_reviewer_dispatch_policy_checked
             and state.pm_resume_decision_recorded
             and state.pm_completion_runway_recorded
             and state.pm_runway_hard_stops_recorded
@@ -5255,7 +5297,7 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             and state.pm_node_decision_recorded
         ):
             return InvariantResult.fail(
-                "chunk started before heartbeat rehydrated the crew from role memory and PM completion runway was synced into a sufficiently deep visible plan"
+                "chunk started before heartbeat loaded packet ledger, rehydrated roles, checked PM controller reminder/reviewer dispatch policy, and synced a sufficiently deep PM runway"
             )
         if not state.pm_review_hold_instruction_written:
             return InvariantResult.fail(
@@ -5947,6 +5989,7 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
     if state.heartbeat_pm_decision_requested and not (
         state.heartbeat_loaded_state
         and state.heartbeat_loaded_frontier
+        and state.heartbeat_loaded_packet_ledger
         and state.heartbeat_loaded_crew_memory
         and state.heartbeat_restored_crew
         and state.heartbeat_rehydrated_crew
@@ -5954,7 +5997,14 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "PM resume was requested before six-role memory rehydration completed"
+            "PM resume was requested before current-run state, packet ledger, and six-role memory rehydration completed"
+        )
+    if state.pm_resume_decision_recorded and not (
+        state.heartbeat_pm_controller_reminder_checked
+        and state.heartbeat_reviewer_dispatch_policy_checked
+    ):
+        return InvariantResult.fail(
+            "PM resume decision was accepted before controller reminder and reviewer-dispatch policy were checked"
         )
     if state.checkpoint_written and state.completed_chunks > 0 and not state.role_memory_refreshed_after_work:
         return InvariantResult.fail("checkpoint written before role memory refresh after meaningful role work")

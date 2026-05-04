@@ -21,10 +21,12 @@ All notable changes to FlowPilot will be documented in this file.
 - Added `scripts/audit_local_install_sync.py` to verify repository-owned installed skills are source-fresh and installed skill names are not duplicated before release.
 - Added a `VERSION` file so release checks and documentation have a single current version marker.
 - Added autonomous UI design rules for native desktop screenshot verification, concept/resource traceability, and real app icon realization checks.
+- Added a run-local `packet_ledger` template and heartbeat recovery contract so automated/manual resume re-enters the PM -> reviewer -> worker packet loop instead of letting the controller infer worker work.
 
 - Updated FlowPilot startup protocol from three questions to four by adding a display-surface choice: open Cockpit UI or continue with chat route signs.
 - Updated the installer with `--sync-repo-owned` so repository-owned skills can be refreshed without pulling optional companion skills by default.
 - Tightened release modeling so local install sync and duplicate installed skill names are release gates.
+- Tightened heartbeat/manual resume modeling so continuation must load the packet ledger, require PM `controller_reminder`, and require reviewer dispatch policy before implementation-bearing work.
 
 ### Fixed
 

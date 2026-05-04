@@ -31,7 +31,7 @@ stateful project work, route advancement, review closure, or PM approval.
 
 The controller's allowed actions are:
 
-- create and relay PM-authored node packets;
+- record and relay PM-authored node packets;
 - relay worker results to the reviewer;
 - relay reviewer decisions to the PM;
 - maintain a packet/status ledger;
@@ -542,10 +542,12 @@ all four in one compact sentence.
 26. If the user allowed scheduled continuation and the host supports real
     wakeups or automations, create the continuation as one lifecycle setup:
     stable one-minute heartbeat launcher. The heartbeat prompt should load
-    persisted state, the execution frontier, crew ledger, and role memory packets,
-    restore or replace the crew from that memory, and ask the project manager
-    for a completion-oriented runway plan from the current position to project
-    completion; it should not be rewritten for ordinary route or plan changes.
+    persisted state, the execution frontier, packet ledger, crew ledger, and
+    role memory packets, restore or replace the crew from that memory, and ask
+    the project manager for the current `PM_DECISION` plus a
+    completion-oriented runway. The controller may only relay PM packets,
+    reviewer dispatch/review decisions, worker results, and status; it should
+    not be rewritten for ordinary route or plan changes.
 27. If the user selected manual resume, do not create heartbeat automation.
     Record `manual-resume` continuation mode,
     keep `.flowpilot/` state/checkpoints authoritative, and continue the formal
@@ -723,10 +725,10 @@ or block; FlowPilot must not claim external research was done.
 Worker A, worker B, or another explicitly authorized non-controller role
 executes the package and writes `worker_report.json` with raw source pointers,
 commands or probes, negative findings, contradictions, and confidence
-boundaries. The controller cannot execute the research package unless the PM
-packet explicitly assigns a controller-owned administrative action and the
-reviewer approves that exception. The human-like reviewer then writes
-`reviewer_report.json` after directly checking original sources, search
+boundaries. The controller cannot execute the research package or turn missing
+research into controller-origin evidence; PM must assign a non-controller
+worker role or block for user/environment action. The human-like reviewer then
+writes `reviewer_report.json` after directly checking original sources, search
 results, local files, logs, screenshots, or experiment outputs. A reviewer
 decision based only on the worker summary is invalid. If the reviewer blocks,
 PM returns a concrete rework package to the worker, inserts a follow-up node,
@@ -1745,42 +1747,56 @@ must not create heartbeat automation and must not claim unattended recovery.
 
 Every automated heartbeat must resolve `.flowpilot/current.json`, then load the
 active run's `state.json`, active `flow.json`, `execution_frontier.json`,
-`crew_ledger.json`, and `crew_memory/`. `.flowpilot/current.json` to
+`crew_ledger.json`, `crew_memory/`, latest heartbeat/manual-resume evidence,
+and the packet ledger. `.flowpilot/current.json` to
 `.flowpilot/runs/<run-id>/` is authoritative; top-level legacy state is import
-or quarantine evidence only and must not override the active run. It then
-rehydrates the fixed six-agent crew: restore every role identity and work
-memory, resume known agent ids when possible, and if live agents are
-unavailable, record the block and ask before replacing roles from memory
-packets. Only after live startup or explicit fallback authorization is recorded
-may it write the crew rehydration report and ask the project manager for a
-completion-oriented runway from the current route position to project
-completion. Manual-resume turns load the same files, write the same all-role
-rehydration report, and ask for the same PM runway before continuing. The
-runway must include the current gate, downstream
-steps, role approvals, hard-stop conditions, checkpoint cadence, and any PM
-stop signal. The controller immediately replaces the current visible Codex
-plan projection with that runway and continues along it until the PM stop
-signal, a hard gate, a blocker, route mutation, or real environment/tool limit
-stops progress. If the current node is unfinished after an interruption, the
-next automated heartbeat or manual resume resumes that same node. It may not
-advance to the next node until validation and evidence for the current node
-are written.
+or quarantine evidence only and must not override the active run. The heartbeat
+prompt is a stable launcher, not a route-specific work prompt, and ordinary
+route changes must not rewrite it.
+
+After loading state, heartbeat/manual resume rehydrates the fixed six-agent
+crew: restore every role identity and work memory, resume known agent ids when
+possible, and if live agents are unavailable, record the block and ask before
+replacing roles from memory packets. Only after live startup or explicit
+fallback authorization is recorded may it write the crew rehydration report.
+Then the controller asks the project manager for the current `PM_DECISION`
+from the persisted frontier and packet ledger. The PM decision must include
+`controller_reminder`; if it is missing, the controller asks PM for a corrected
+decision and does not dispatch work. If PM issues or reissues a `NODE_PACKET`,
+the controller sends it to the human-like reviewer for dispatch approval with
+`ROLE_REMINDER` before any worker receives it. If a worker result is already
+persisted, the controller sends that `NODE_RESULT` to the reviewer; it does
+not re-execute or finish the worker's packet. If packet holder, worker
+identity, reviewer dispatch, or worker-result state is ambiguous, the
+controller blocks and asks PM for recovery, reissue, reassignment, quarantine,
+or route mutation rather than guessing the next worker action.
+
+The PM runway must include the current gate, downstream steps, role approvals,
+hard-stop conditions, checkpoint cadence, any PM stop signal, and the current
+packet recovery state. The controller immediately replaces the current visible
+Codex plan projection with that runway and continues the internal packet loop
+until the PM stop signal, a hard gate, a blocker, route mutation, or real
+environment/tool limit stops progress. If the current node is unfinished after
+an interruption, the next automated heartbeat or manual resume resumes that
+same node under PM/reviewer packet control. It may not advance to the next
+node until validation and evidence for the current node are written.
 Concretely, `unfinished_current_node: true` or
 `current_node_completion.advance_allowed: false` means the continuation turn
 must keep working on `active_node` and must ignore `next_node` as an execution
 target.
 `next_node` is only a planned jump after the completion guard is satisfied.
-The PM runway must include the persisted `current_subnode` or `next_gate` for
-that unfinished node, but it must not stop at that single gate. The automated
-heartbeat or manual-resume turn must execute at least the selected gate when it
-is executable, then continue along the PM runway as far as hard gates and real
-execution limits allow. It may not end by only writing a future-facing
-decision such as "continue to icon generation" or "next do X" while the gate is
-still executable. Continuation evidence must name the host kind
-(`codex_heartbeat_automation`, `windows_scheduled_task`, `manual_resume`, or
-`blocked_unsupported`), the exact host evidence source, the PM runway, the
-selected gate, crew rehydration report, actions attempted, results, checkpoint
-writes, and the updated completion guard.
+The PM runway must include the persisted `current_subnode`, `next_gate`, and
+packet recovery state for that unfinished node, but it must not stop at that
+single gate. The automated heartbeat or manual-resume turn must continue the
+packet loop when it is executable: PM decision -> reviewer dispatch -> worker
+packet or worker result -> reviewer result -> PM decision. It may not end by
+only writing a future-facing decision such as "continue to icon generation" or
+"next do X" while the packet loop remains executable. Continuation evidence
+must name the host kind (`codex_heartbeat_automation`,
+`windows_scheduled_task`, `manual_resume`, or `blocked_unsupported`), the exact
+host evidence source, the PM runway, the selected gate, packet recovery state,
+crew rehydration report, actions attempted, results, checkpoint writes, and
+the updated completion guard.
 
 ## Controlled Nonterminal Stop Notice
 

@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 559339,
+    "edge_count": 579379,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -103,9 +103,12 @@
       "heartbeat_asked_project_manager",
       "heartbeat_loaded_crew_memory",
       "heartbeat_loaded_execution_frontier",
+      "heartbeat_loaded_packet_ledger",
       "heartbeat_loaded_state",
+      "heartbeat_pm_controller_reminder_checked",
       "heartbeat_rehydrated_six_agent_crew",
       "heartbeat_restored_six_agent_crew",
+      "heartbeat_reviewer_dispatch_policy_checked",
       "heartbeat_schedule_created",
       "high_risk_gate_approved",
       "high_risk_gate_requested",
@@ -268,29 +271,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 539167,
+    "state_count": 559207,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 559339,
+    "edge_count": 579379,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 539167,
+    "state_count": 559207,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 559339,
+    "edge_count": 579379,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 539167,
+    "state_count": 559207,
     "status": "OK",
     "success_state_count": 1280
   }

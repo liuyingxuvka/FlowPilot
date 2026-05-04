@@ -44,9 +44,11 @@ for review.
    `agent_id` values are audit history only. If authorization is missing or
    startup fails, pause and ask. Continue with memory-seeded single-agent
    six-role continuity only after an explicit user fallback decision.
-10. Main executor writes `material_intake_packet.json`, including local skill
-   and host capability inventory as candidate-only resources, then the
-   human-like reviewer approves material sufficiency before PM planning uses it.
+10. PM issues a material-intake `NODE_PACKET`; after reviewer dispatch, an
+   authorized non-controller worker writes `material_intake_packet.json`,
+   including local skill and host capability inventory as candidate-only
+   resources. The human-like reviewer approves material sufficiency before PM
+   planning uses it.
 11. Project manager writes `pm_material_understanding.json`, classifies material
    complexity, and records whether messy/raw materials require discovery,
    cleanup, modeling, research, validation, or reconciliation nodes. When a
@@ -114,11 +116,14 @@ for review.
    (`codex_heartbeat_automation`, `windows_scheduled_task`, `manual_resume`, or
    `blocked_unsupported`) and the exact host evidence source.
 27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
-   syncing the visible Codex plan or advancing work. Each PM resume decision
-   records a completion-oriented runway and the controller replaces the
-   current visible plan projection from that runway. If the host exposes a
-   native plan/task-list tool such as Codex `update_plan`, call it with that
-   runway before work starts; if not, record the fallback projection method and
+   syncing the visible Codex plan or advancing work. Each heartbeat/manual
+   resume first reloads the packet ledger, asks PM for the current
+   `PM_DECISION` or recovery packet, requires `controller_reminder`, and sends
+   any `NODE_PACKET` through reviewer dispatch before a worker sees it. The
+   controller replaces the current visible plan projection from the PM runway
+   but does not execute worker packets itself. If the host exposes a native
+   plan/task-list tool such as Codex `update_plan`, call it with that runway
+   before packet dispatch; if not, record the fallback projection method and
    show the runway in chat.
 28. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
@@ -301,9 +306,13 @@ for review.
   effective route node with children that must receive local backward replay.
 - `parent_backward_replay.template.json`: local parent/composite replay report
   copied into every structurally required parent node before closure.
+- `packet_ledger.template.json`: active packet location, PM/reviewer/worker
+  evidence paths, and controller-only resume boundary used by heartbeat and
+  manual resume.
 - `heartbeats/hb.template.json`: heartbeat/manual-resume evidence shell,
   including continuation readiness, host kind, exact host evidence source,
-  controlled-stop notice fields, and the latest route-sign display gate state.
+  packet recovery state, controller-only resume contract, controlled-stop
+  notice fields, and the latest route-sign display gate state.
 - `diagrams/user-flow-diagram.template.mmd`: simplified English Mermaid
   FlowPilot Route Sign source for both chat fallback and UI display.
 - `diagrams/user-flow-diagram.template.md`: Markdown preview wrapper for the

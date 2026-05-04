@@ -463,12 +463,14 @@ parent, and leaf obligations.
 
 FlowPilot's six-agent crew is an authority system, not a decorative report
 list. Every formal gate records who may draft it, who executes it, who must
-approve it, and who is forbidden to approve it. The controller can create
-draft non-model evidence, run ordinary implementation commands, edit files,
-integrate sidecar reports, and enforce hard gates, but cannot self-approve
-route, model, inspection, repair, or completion gates. For FlowGuard model
-gates, the matching FlowGuard officer must author, run, interpret, and approve
-or block the model.
+approve it, and who is forbidden to approve it. The controller is the packet
+flow coordinator only: it can load state, relay PM packets, relay reviewer
+decisions, relay worker results, sync the visible plan from PM decisions,
+record status, and enforce hard stops. It cannot create worker evidence, run
+ordinary implementation commands for worker nodes, edit product files, approve
+gates, or advance the route from controller-origin evidence. For FlowGuard
+model gates, the matching FlowGuard officer must author, run, interpret, and
+approve or block the model.
 
 Canonical authority rules:
 
@@ -754,23 +756,35 @@ FlowPilot to resolve `.flowpilot/current.json`, then load
 `.flowpilot/runs/<run-id>/state.json`, the active `flow.json`,
 `.flowpilot/runs/<run-id>/execution_frontier.json`,
 `.flowpilot/runs/<run-id>/crew_ledger.json`,
-`.flowpilot/runs/<run-id>/crew_memory/`, lifecycle evidence, and latest
+`.flowpilot/runs/<run-id>/crew_memory/`,
+`.flowpilot/runs/<run-id>/packet_ledger.json`, lifecycle evidence, and latest
 heartbeat or manual-resume evidence. It then
 rehydrates the fixed crew by resuming stored agent ids when possible. If live
 agents are unavailable, it records the block and asks before replacing roles
 from memory packets. After live startup or explicit fallback authorization is
 recorded, it records the rehydration status and asks the project manager for
-the next completion-oriented runway.
+the current `PM_DECISION` and next completion-oriented runway.
 The resolver order is mandatory on heartbeat and manual resume:
 `.flowpilot/current.json` to `.flowpilot/runs/<run-id>/` is authoritative, and
 top-level legacy state must be ignored except as import or quarantine evidence.
-Route mutations, next-node changes, PM runway changes, and current-mainline
-plan updates are persisted in files and then reflected in chat/plan output;
-ordinary route changes should not rewrite the heartbeat automation prompt.
+Route mutations, next-node changes, PM runway changes, packet-holder changes,
+and current-mainline plan updates are persisted in files and then reflected in
+chat/plan output; ordinary route changes should not rewrite the heartbeat
+automation prompt.
 The heartbeat or manual-resume turn also loads the current gate's authority
 record. If a gate has draft evidence but lacks the required approver, it
 requests that approval or records a blocker; it does not treat the draft as
 complete.
+
+Heartbeat and manual resume also load `packet_ledger.json`. If no current
+packet is active, the controller asks PM for `PM_DECISION`. If PM issues or
+reissues a `NODE_PACKET`, the decision must include `controller_reminder`, and
+the packet goes to the reviewer for dispatch approval before any worker sees
+it. If a worker result is already present, the controller sends that
+`NODE_RESULT` to reviewer. If the holder, worker identity, prior reviewer
+dispatch, or worker-result state is ambiguous, the controller blocks and asks
+PM for recovery, reissue, reassignment, quarantine, or route mutation. It does
+not infer missing worker work and does not finish the packet itself.
 
 The frontier has a current-node completion guard. If
 `unfinished_current_node` is true or
@@ -788,16 +802,17 @@ officer, product FlowGuard officer, worker A, and worker B. It must not lazily
 rehydrate a role only when that role is first needed. FlowPilot asks the
 project manager for a completion-oriented runway only after the crew memory
 rehydration gate passes. It syncs that runway into the visible plan, then loads
-the persisted `current_subnode` or `next_gate` for the unfinished active node.
-It must execute at least that gate in the current turn when executable, then
-continue along the PM runway until a PM stop signal, hard gate, blocker, route
-mutation, or real environment/tool limit stops progress. Continuation evidence
-must name the host kind (`codex_heartbeat_automation`,
+the persisted `current_subnode`, `next_gate`, and packet recovery state for
+the unfinished active node. It continues the internal packet loop as far as PM
+and reviewer decisions allow, then continues along the PM runway until a PM
+stop signal, hard gate, blocker, route mutation, or real environment/tool limit
+stops progress. Continuation evidence must name the host kind
+(`codex_heartbeat_automation`,
 `windows_scheduled_task`, `manual_resume`, or `blocked_unsupported`), the exact
-host evidence source, the PM runway, selected gate, role-memory rehydration
-result, actions attempted, results, checkpoint writes, and updated completion
-guard. It may not end by only writing a future-facing decision such as
-"continue to X" while the gate remains executable.
+host evidence source, the PM runway, selected gate, packet recovery state,
+role-memory rehydration result, actions attempted, results, checkpoint writes,
+and updated completion guard. It may not end by only writing a future-facing
+decision such as "continue to X" while the packet loop remains executable.
 
 The visible plan sync is a host-facing control gate. When a native plan tool is
 available, the controller must call it, not only update `.flowpilot` files.

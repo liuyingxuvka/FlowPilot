@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 548209,
+    "edge_count": 555313,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -120,9 +120,12 @@
       "heartbeat_asked_project_manager",
       "heartbeat_loaded_crew_memory",
       "heartbeat_loaded_execution_frontier",
+      "heartbeat_loaded_packet_ledger",
       "heartbeat_loaded_state",
+      "heartbeat_pm_controller_reminder_checked",
       "heartbeat_rehydrated_six_agent_crew",
       "heartbeat_restored_six_agent_crew",
+      "heartbeat_reviewer_dispatch_policy_checked",
       "heartbeat_schedule_created",
       "high_value_capability_gap_found",
       "host_continuation_capability_supported",
@@ -282,29 +285,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 522749,
+    "state_count": 529853,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 548209,
+    "edge_count": 555313,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 522749,
+    "state_count": 529853,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 548209,
+    "edge_count": 555313,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 522749,
+    "state_count": 529853,
     "status": "OK",
     "success_state_count": 4368
   }

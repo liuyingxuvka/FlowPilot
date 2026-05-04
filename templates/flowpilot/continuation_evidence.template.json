@@ -13,6 +13,30 @@
     "evidence_sources": []
   },
   "continuation_mode": "<automated|manual-resume|blocked|unknown>",
+  "controller_resume_contract": {
+    "controller_only": true,
+    "stable_launcher": true,
+    "controller_may_execute_worker_packet": false,
+    "controller_may_advance_from_own_evidence": false,
+    "pm_decision_required_after_wakeup": true,
+    "pm_controller_reminder_required": true,
+    "reviewer_dispatch_required_before_worker": true,
+    "role_reminder_required_in_controller_messages": true,
+    "role_echo_required_in_subagent_responses": true
+  },
+  "packet_resume": {
+    "packet_ledger_path": ".flowpilot/runs/<run-id>/packet_ledger.json",
+    "active_packet_id": "<packet-id-or-null>",
+    "packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
+    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+    "pm_decision_path": "<pm-decision-evidence-path-or-null>",
+    "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
+    "worker_result_path": "<node-result-path-or-null>",
+    "review_decision_path": "<review-decision-path-or-null>",
+    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+    "ambiguous_worker_state_blocks_controller_execution": true,
+    "pm_reissue_or_repair_required_when_ambiguous": true
+  },
   "automated_continuation": {
     "selected": false,
     "automation_id": "<automation-id-or-null>",

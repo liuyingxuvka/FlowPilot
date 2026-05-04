@@ -136,11 +136,13 @@ long-form public explanation lives in `docs/protocol.md`.
     to manual resume.
 25. If the user allowed scheduled continuation and the host supports real
     wakeups, create the automated continuation: a stable one-minute heartbeat
-    launcher. The launcher loads persisted route/frontier state rather than
-    carrying route-specific next-jump instructions in its prompt. On wakeup it
-    loads role memory, resumes or replaces each role from that memory, then
-    asks the project manager for a completion-oriented runway from the current
-    position to project completion.
+    launcher. The launcher loads persisted route/frontier state and the packet
+    ledger rather than carrying route-specific next-jump instructions in its
+    prompt. On wakeup it loads role memory, resumes or replaces each role from
+    that memory, then asks the project manager for the current `PM_DECISION`
+    and completion-oriented runway. The controller may relay only PM packets,
+    reviewer dispatch/review decisions, worker results, visible-plan sync, and
+    status/control-stop notices.
 26. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 27. Record the controlled-stop notice policy: completed routes emit a
@@ -245,6 +247,11 @@ long-form public explanation lives in `docs/protocol.md`.
     that recipient, and every sub-agent response must echo both the controller
     boundary and its own role boundary. Missing reminders are blockers, not
     cosmetic omissions.
+    On heartbeat or manual resume, the controller reloads the packet ledger and
+    resumes from the packet holder. If a worker result is already present, it
+    goes to reviewer. If holder, dispatch evidence, worker identity, or result
+    state is unclear, the controller asks PM for recovery/reissue/reassignment
+    and must not finish the packet itself.
 39. Start only the first chunk whose continuation mode is known. Automated
     routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the

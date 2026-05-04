@@ -29,6 +29,13 @@ def main() -> int:
             "pm_advanced",
             "review_block_invalid_role_origin",
             "reviewer_dispatch_blocked",
+            "heartbeat_state_loaded",
+            "heartbeat_resume_pm_requested",
+            "heartbeat_pm_packet_issued",
+            "heartbeat_pm_missing_controller_reminder",
+            "heartbeat_loaded_worker_result_for_review",
+            "heartbeat_ambiguous_worker_blocked",
+            "heartbeat_missing_state_blocked",
         ),
     ).explore()
     print(report.format_text())

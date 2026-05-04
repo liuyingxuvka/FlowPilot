@@ -154,12 +154,15 @@ class State:
     pm_initial_capability_decision_recorded: bool = False
     heartbeat_loaded_state: bool = False
     heartbeat_loaded_frontier: bool = False
+    heartbeat_loaded_packet_ledger: bool = False
     heartbeat_loaded_crew_memory: bool = False
     heartbeat_restored_crew: bool = False
     heartbeat_rehydrated_crew: bool = False
     crew_rehydration_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
     heartbeat_pm_decision_requested: bool = False
+    heartbeat_pm_controller_reminder_checked: bool = False
+    heartbeat_reviewer_dispatch_policy_checked: bool = False
     pm_resume_decision_recorded: bool = False
     pm_completion_runway_recorded: bool = False
     pm_runway_hard_stops_recorded: bool = False
@@ -503,12 +506,15 @@ def _reset_execution_quality_gates() -> dict[str, object]:
         {
             "heartbeat_loaded_state": False,
             "heartbeat_loaded_frontier": False,
+            "heartbeat_loaded_packet_ledger": False,
             "heartbeat_loaded_crew_memory": False,
             "heartbeat_restored_crew": False,
             "heartbeat_rehydrated_crew": False,
             "crew_rehydration_report_written": False,
             "replacement_roles_seeded_from_memory": False,
             "heartbeat_pm_decision_requested": False,
+            "heartbeat_pm_controller_reminder_checked": False,
+            "heartbeat_reviewer_dispatch_policy_checked": False,
             "pm_resume_decision_recorded": False,
             "pm_completion_runway_recorded": False,
             "pm_runway_hard_stops_recorded": False,
@@ -1491,12 +1497,15 @@ class CapabilityRouterStep:
         "pm_initial_capability_decision_recorded",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
+        "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_crew_memory",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
         "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
+        "heartbeat_pm_controller_reminder_checked",
+        "heartbeat_reviewer_dispatch_policy_checked",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
         "pm_runway_hard_stops_recorded",
@@ -1801,12 +1810,15 @@ class CapabilityRouterStep:
         "pm_initial_capability_decision_recorded",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
+        "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_crew_memory",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
         "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
+        "heartbeat_pm_controller_reminder_checked",
+        "heartbeat_reviewer_dispatch_policy_checked",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
         "pm_runway_hard_stops_recorded",
@@ -3500,6 +3512,15 @@ class CapabilityRouterStep:
             )
             return
 
+        if _route_scaffold_ready(state) and not state.heartbeat_loaded_packet_ledger:
+            yield _step(
+                state,
+                label="heartbeat_loaded_packet_ledger",
+                action="continuation turn loads packet_ledger.json before asking PM or dispatching capability work",
+                heartbeat_loaded_packet_ledger=True,
+            )
+            return
+
         if _route_scaffold_ready(state) and not state.heartbeat_loaded_crew_memory:
             yield _step(
                 state,
@@ -3541,8 +3562,26 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="heartbeat_asked_project_manager",
-                action="continuation turn asks the project manager what capability gate to run next",
+                action="continuation turn asks the project manager for PM_DECISION from the current frontier and packet ledger",
                 heartbeat_pm_decision_requested=True,
+            )
+            return
+
+        if _route_scaffold_ready(state) and not state.heartbeat_pm_controller_reminder_checked:
+            yield _step(
+                state,
+                label="heartbeat_pm_controller_reminder_checked",
+                action="controller requires PM_DECISION to include controller_reminder before dispatching any capability packet",
+                heartbeat_pm_controller_reminder_checked=True,
+            )
+            return
+
+        if _route_scaffold_ready(state) and not state.heartbeat_reviewer_dispatch_policy_checked:
+            yield _step(
+                state,
+                label="heartbeat_reviewer_dispatch_policy_checked",
+                action="controller confirms NODE_PACKET dispatch requires reviewer approval and ambiguous worker state blocks controller execution",
+                heartbeat_reviewer_dispatch_policy_checked=True,
             )
             return
 
@@ -5173,12 +5212,15 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
         if not (
             state.heartbeat_loaded_state
             and state.heartbeat_loaded_frontier
+            and state.heartbeat_loaded_packet_ledger
             and state.heartbeat_loaded_crew_memory
             and state.heartbeat_restored_crew
             and state.heartbeat_rehydrated_crew
             and state.crew_rehydration_report_written
             and state.replacement_roles_seeded_from_memory
             and state.heartbeat_pm_decision_requested
+            and state.heartbeat_pm_controller_reminder_checked
+            and state.heartbeat_reviewer_dispatch_policy_checked
             and state.pm_resume_decision_recorded
             and state.pm_completion_runway_recorded
             and state.pm_runway_hard_stops_recorded
@@ -5195,7 +5237,7 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             and state.child_skill_gate_authority_records_written
         ):
             return InvariantResult.fail(
-                "implementation started before continuation loaded role memory, rehydrated the crew, synced the PM completion runway into a sufficiently deep visible plan, wrote node acceptance plan/risk experiments, and wrote node-level child-skill gate authority records"
+                "implementation started before continuation loaded packet ledger, rehydrated roles, checked PM controller reminder/reviewer dispatch policy, synced the PM runway, wrote node acceptance plan/risk experiments, and wrote node-level child-skill gate authority records"
             )
         if not (
             state.quality_package_done
@@ -6472,6 +6514,7 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
     if state.heartbeat_pm_decision_requested and not (
         state.heartbeat_loaded_state
         and state.heartbeat_loaded_frontier
+        and state.heartbeat_loaded_packet_ledger
         and state.heartbeat_loaded_crew_memory
         and state.heartbeat_restored_crew
         and state.heartbeat_rehydrated_crew
@@ -6479,7 +6522,14 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "heartbeat asked PM for capability work before crew role memory was loaded and rehydrated"
+            "heartbeat asked PM for capability work before current-run state, packet ledger, and crew role memory were loaded and rehydrated"
+        )
+    if state.pm_resume_decision_recorded and not (
+        state.heartbeat_pm_controller_reminder_checked
+        and state.heartbeat_reviewer_dispatch_policy_checked
+    ):
+        return InvariantResult.fail(
+            "PM capability resume decision was accepted before controller reminder and reviewer-dispatch policy were checked"
         )
     if state.final_verification_done and (
         state.non_ui_implemented or state.ui_implemented

@@ -3,6 +3,44 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-04 - Heartbeat Resume Re-Enters Packet Control Plane
+
+- Trigger: after the controller/PM/reviewer packet redesign, the user asked
+  whether heartbeat prompts also needed to change so a stopped or sleeping run
+  wakes as Controller only instead of continuing worker work directly.
+- Decision: `use_flowguard`.
+- Scope updated:
+  - heartbeat/manual-resume templates now carry a Controller-only wakeup
+    sequence, stable-launcher boundary, packet recovery state, and ambiguity
+    block policy;
+  - added `packet_ledger.template.json` and linked packet status into
+    `state.template.json`, `execution_frontier.template.json`, and
+    `continuation_evidence.template.json`;
+  - protocol docs now require heartbeat/manual resume to load current-run
+    state plus packet ledger, restore roles, ask PM for `PM_DECISION` with
+    `controller_reminder`, require reviewer dispatch before workers, and send
+    existing worker results to reviewer;
+  - packet-control, meta, and capability FlowGuard models now include
+    heartbeat packet-ledger load, PM reminder check, reviewer dispatch policy,
+    ambiguous-worker-state block, and missing-state block coverage.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema
+    `1.0`
+  - `python -m py_compile simulations/meta_model.py simulations/run_meta_checks.py simulations/capability_model.py simulations/run_capability_checks.py skills/flowpilot/assets/packet_control_plane_model.py skills/flowpilot/assets/run_packet_control_plane_checks.py scripts/check_install.py`
+  - `python skills/flowpilot/assets/run_packet_control_plane_checks.py`
+  - `python scripts/check_install.py`
+  - `python simulations/run_startup_pm_review_checks.py`
+  - `python simulations/run_meta_checks.py`
+  - `python simulations/run_capability_checks.py`
+- Results:
+  - packet control plane: 9 traces, zero invariant violations, zero dead
+    branches, zero missing labels;
+  - startup PM-review: passed;
+  - meta model: 559,207 states, 579,379 edges, zero invariant failures, zero
+    missing labels, zero stuck states;
+  - capability model: 529,853 states, 555,313 edges, zero invariant failures,
+    zero missing labels, zero stuck states.
+
 ## 2026-05-04 - Autonomous UI Skill Standalone Concept-Led Merge
 
 - Trigger: the user decided the old `concept-led-ui-redesign` skill should be

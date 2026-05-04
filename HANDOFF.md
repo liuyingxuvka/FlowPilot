@@ -177,6 +177,12 @@ model-backed autopilot:
 - Heartbeat/manual-resume lifecycle state now trusts current-run `state.json`,
   latest heartbeat evidence, execution frontier, and crew memory. There is no
   extra reset path or registry layer.
+- Heartbeat/manual-resume now re-enters the packet-gated controller loop. The
+  stable launcher loads the active run and packet ledger, restores roles, asks
+  PM for `PM_DECISION` with `controller_reminder`, requires reviewer dispatch
+  before worker execution, routes existing worker results to reviewer, and
+  blocks ambiguous worker state for PM recovery rather than letting Controller
+  infer or finish work.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns

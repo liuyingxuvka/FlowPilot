@@ -33,6 +33,10 @@ Hard boundaries:
 
 - This is the official user-level global supervisor because it runs inside
   Codex and can call the official automation API.
+- This supervisor is not a project controller, PM, reviewer, officer, or
+  worker. It must not execute route work, issue packets, approve gates, or
+  finish worker tasks. It only scans registrations and uses the official
+  automation interface for heartbeat reset actions.
 - Windows Task Scheduler or other external processes may observe and write
   evidence only; they must not be modeled as the official global reset actor.
 - There must be only one active FlowPilot global watchdog supervisor automation

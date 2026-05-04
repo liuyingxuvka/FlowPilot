@@ -138,6 +138,34 @@ ROLE_ECHO:
 
 Missing reminders are dispatch/review blockers, not cosmetic formatting gaps.
 
+## Heartbeat And Manual Resume
+
+Heartbeat and manual resume use the same packet control plane. The waking
+assistant is Controller only. It first resolves `.flowpilot/current.json`,
+loads the active run state/frontier/route, crew ledger, role memory, latest
+heartbeat or manual-resume evidence, and `packet_ledger.json`, then restores
+or replaces the six roles before asking PM for the current decision.
+
+The heartbeat prompt is a stable launcher. It must not carry route-specific
+next-step instructions and must not be rewritten just because the route or PM
+runway changed. Current work comes from persisted state and PM decisions.
+
+Resume rules:
+
+- If no current packet exists, ask PM for `PM_DECISION`.
+- If PM issues or reissues `NODE_PACKET`, require `controller_reminder`, then
+  send it to the reviewer for dispatch approval before any worker sees it.
+- If the packet is already with a worker, resume that exact packet only when
+  reviewer dispatch and worker identity are clear.
+- If a worker result exists, send `NODE_RESULT` to reviewer. Reviewer pass goes
+  to PM; reviewer block goes to PM for repair, mutation, user block, or stop.
+- If holder, worker identity, reviewer dispatch, or worker-result state is
+  ambiguous, block and ask PM for recovery/reissue/reassignment. Controller
+  must not infer missing worker work or finish the packet.
+- If PM says `stop_for_user: false`, the controller continues the internal
+  loop. A worker stopping after `NODE_RESULT` does not stop the route by
+  itself.
+
 ## Live Status
 
 The controller should report packet location and next expected event:

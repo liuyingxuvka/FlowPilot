@@ -260,6 +260,27 @@
     },
     "recorded_at": "<iso-8601-timestamp-or-null>"
   },
+  "packet_control_plane": {
+    "ledger_path": ".flowpilot/runs/run-001/packet_ledger.json",
+    "controller_role": "controller",
+    "controller_only": true,
+    "active_packet_id": "<packet-id-or-null>",
+    "packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
+    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+    "pm_decision_path": "<pm-decision-evidence-path-or-null>",
+    "pm_controller_reminder_present": false,
+    "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
+    "worker_identity": "<worker_a|worker_b|authorized_non_controller|null>",
+    "worker_result_path": "<node-result-path-or-null>",
+    "review_decision_path": "<review-decision-path-or-null>",
+    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+    "controller_may_execute_worker_packet": false,
+    "controller_may_finish_worker_packet": false,
+    "reviewer_dispatch_required_before_worker": true,
+    "ambiguous_worker_state_blocks_controller_execution": true,
+    "pm_reissue_or_repair_required_when_ambiguous": true,
+    "internal_loop_continues_when_pm_stop_for_user_false": true
+  },
   "product_function_architecture": {
     "path": ".flowpilot/runs/run-001/product_function_architecture.json",
     "pm_owned": true,
