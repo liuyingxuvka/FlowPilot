@@ -104,6 +104,7 @@ REQUIRED_LABELS = (
     "child_skill_requirements_mapped",
     "child_skill_evidence_plan_written",
     "child_skill_subroute_projected",
+    "current_node_high_standard_recheck_written",
     "node_acceptance_plan_written",
     "node_acceptance_risk_experiments_mapped",
     "child_skill_conformance_model_checked",
@@ -357,7 +358,8 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_requirements_mapped},"
         f"{state.child_skill_evidence_plan_written},"
         f"{state.child_skill_subroute_projected},"
-        f"node_acceptance={state.node_acceptance_plan_written},"
+        f"node_acceptance={state.current_node_high_standard_recheck_written},"
+        f"{state.node_acceptance_plan_written},"
         f"{state.node_acceptance_risk_experiments_mapped},"
         f"{state.child_skill_conformance_model_checked},"
         f"{state.child_skill_conformance_model_process_officer_approved},"

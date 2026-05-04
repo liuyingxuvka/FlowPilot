@@ -141,6 +141,7 @@ REQUIRED_LABELS = (
     "parent_focused_interrogation_completed",
     "node_focused_interrogation_completed",
     "node_product_function_model_checked",
+    "current_node_high_standard_recheck_written",
     "node_acceptance_plan_written",
     "node_acceptance_risk_experiments_mapped",
     "pm_review_hold_instruction_written",
@@ -394,7 +395,8 @@ def _state_id(state: model.State) -> str:
         f"{state.node_focused_interrogation_scope_id}|"
         f"node_product={state.node_product_function_model_checked},"
         f"{state.node_product_function_model_product_officer_approved}|"
-        f"node_acceptance={state.node_acceptance_plan_written},"
+        f"node_acceptance={state.current_node_high_standard_recheck_written},"
+        f"{state.node_acceptance_plan_written},"
         f"{state.node_acceptance_risk_experiments_mapped},"
         f"{state.pm_review_hold_instruction_written}|"
         f"micro_self={state.lightweight_self_check_done},"

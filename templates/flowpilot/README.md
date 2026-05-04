@@ -80,10 +80,13 @@ for review.
    parent node resumes.
 23. Run child-skill conformance checks when a node invokes another skill.
 24. Before each implementation-bearing node or formal route chunk, refresh and
-   visibly display the current-node FlowPilot Route Sign, then write that
-   node's `node_acceptance_plan.json` with root mappings, risk hypotheses,
-   concrete experiments, evidence paths, route-sign display proof, and
-   terminal replay obligations.
+   visibly display the current-node FlowPilot Route Sign. PM then performs the
+   current-node high-standard recheck against the strongest feasible product
+   target, unacceptable-result bar, semantic-fidelity policy, and likely local
+   downgrade risks. Only after that recheck does PM write that node's
+   `node_acceptance_plan.json` with root mappings, risk hypotheses, concrete
+   experiments, evidence paths, route-sign display proof, and terminal replay
+   obligations.
    PM owns reviewer timing: write a review hold before worker/main-executor
    work, then after worker output, verification, and anti-rough-finish evidence
    are ready, write a review release naming gate, evidence paths, scope, and
@@ -273,8 +276,9 @@ for review.
 - `routes/route-001/flow.template.json`: initial route.
 - `routes/route-001/flow.template.md`: route summary shell.
 - `routes/route-001/nodes/node-001-start/node.template.json`: first node.
-- `node_acceptance_plan.template.json`: per-node experiment and risk-replay
-  plan copied into implementation-bearing route nodes.
+- `node_acceptance_plan.template.json`: per-node PM high-standard recheck,
+  experiment, and risk-replay plan copied into implementation-bearing route
+  nodes.
 - `parent_backward_targets.template.json`: PM-owned structural list of every
   effective route node with children that must receive local backward replay.
 - `parent_backward_replay.template.json`: local parent/composite replay report

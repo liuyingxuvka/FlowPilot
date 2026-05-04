@@ -16,7 +16,7 @@
     "route_sign_display_packet": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
     "route_sign_review": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
   },
-  "purpose": "Written at node entry after the current-node FlowPilot Route Sign has been refreshed and visibly displayed. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
+  "purpose": "Written at node entry after the current-node FlowPilot Route Sign has been refreshed, visibly displayed, and the PM has rechecked this node against the run's highest-achievable product target. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
   "route_sign_entry_gate": {
     "required_before_plan_approval": true,
     "trigger": "<major_node_entry|parent_node_entry|leaf_node_entry|pm_work_brief>",
@@ -27,6 +27,19 @@
     "reviewer_confirmed_route_and_node_match": false,
     "display_packet_path": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
     "review_path": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
+  },
+  "pm_current_node_high_standard_recheck": {
+    "required_before_plan_approval": true,
+    "product_function_architecture_path": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "highest_achievable_product_target_rechecked": false,
+    "unacceptable_result_bar_rechecked": false,
+    "semantic_fidelity_policy_rechecked": false,
+    "node_contribution_to_target": "<how-this-node-advances-the-strongest-feasible-product-target>",
+    "likely_low_quality_or_placeholder_failure": "<what-this-node-could-degenerate-into-if-held-to-a-low-standard>",
+    "local_semantic_downgrade_risk": "<none|possible|active>",
+    "material_or_evidence_gap": "<gap-or-null>",
+    "pm_decision": "<raise_current_node|add_sibling_or_repair_node|insert_discovery_or_validation|ask_user|block|proceed>",
+    "decision_reason": "<why-this-decision-preserves-the-global-quality-floor>"
   },
   "node_structure": {
     "node_kind": "<leaf|parent|composite>",

@@ -345,7 +345,19 @@ current-node work brief. When Cockpit UI is closed or not proven visible, paste
 the chat-ready Mermaid block before any tool call or file edit for that node.
 Generated diagram files alone do not satisfy node entry.
 
-After the visible route-sign gate passes, the project manager writes the node's
+After the visible route-sign gate passes and before the node acceptance plan is
+approved, the project manager performs a current-node high-standard recheck.
+For every major, parent, module, and leaf node, PM reopens
+`product_function_architecture.json` and checks the current node against
+`high_standard_posture`, `highest_achievable_product_target`,
+`unacceptable_result_review`, and `semantic_fidelity_policy`. The recheck must
+answer how the node advances the strongest feasible target, what low-quality or
+placeholder result it could degrade into, whether material or implementation
+constraints are silently lowering semantic fidelity, and whether PM should raise
+the node, add a sibling or repair node, insert discovery or validation, ask the
+user, block, or proceed.
+
+Only after that recheck does the project manager write the node's
 `node_acceptance_plan.json`. It maps the current node to the root acceptance
 contract, child-skill gates, risk hypotheses, concrete experiments or manual
 walkthroughs, required evidence, and required approver.
@@ -862,6 +874,9 @@ Required:
 - strict gate-obligation review model before capability work that can be
   closed by a reviewer, so current-gate caveats cannot advance and future
   obligations must be mapped to named downstream gates;
+- current-node high-standard recheck completed by the PM against the strongest
+  feasible product target, unacceptable-result bar, semantic-fidelity policy,
+  and likely local downgrade risks before node acceptance plan approval;
 - quality package before implementation: feature thinness, improvement
   classification, child-skill mini-route visibility, validation strength, and
   rough-finish risk;

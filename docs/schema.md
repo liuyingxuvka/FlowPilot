@@ -356,6 +356,11 @@ not every future node.
 
 It records:
 
+- PM current-node high-standard recheck against `high_standard_posture`,
+  `highest_achievable_product_target`, `unacceptable_result_review`, and
+  `semantic_fidelity_policy`;
+- PM decision to raise the current node, add a sibling or repair node, insert
+  discovery or validation, ask the user, block, or proceed;
 - root acceptance requirements touched by the node;
 - child-skill gates and approvers used by the node;
 - current-node acceptance criteria;
@@ -447,8 +452,8 @@ The frontier records:
   replay status, PM segment-decision status, repair/restart policy status, PM
   ledger approval path, and whether completion is allowed;
 - root acceptance contract and standard scenario pack paths;
-- current node acceptance plan path, status, required experiments, and terminal
-  replay obligations;
+- current node acceptance plan path, PM high-standard recheck status, required
+  experiments, and terminal replay obligations;
 - parent backward replay trigger rule, structurally enumerated parent targets,
   current parent replay path/status, PM segment decision status, and unresolved
   parent replay blocker count;

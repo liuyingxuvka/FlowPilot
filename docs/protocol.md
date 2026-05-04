@@ -357,7 +357,19 @@ Cockpit UI is closed or not proven visible, paste the chat-ready Mermaid block
 before any tool call or file edit for that node. Generated diagram files alone
 do not satisfy node entry.
 
-After the visible route-sign gate passes, the project manager writes
+After the visible route-sign gate passes and before the node acceptance plan is
+approved, the project manager performs a current-node high-standard recheck.
+For every major, parent, module, and leaf node, PM reopens
+`product_function_architecture.json` and checks the current node against
+`high_standard_posture`, `highest_achievable_product_target`,
+`unacceptable_result_review`, and `semantic_fidelity_policy`. The recheck must
+answer how the node advances the strongest feasible target, what low-quality or
+placeholder result it could degrade into, whether material or implementation
+constraints are silently lowering semantic fidelity, and whether PM should raise
+the node, add a sibling or repair node, insert discovery or validation, ask the
+user, block, or proceed.
+
+Only after that recheck does the project manager write
 `.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/node_acceptance_plan.json`.
 The plan maps inherited root high-risk requirements, node-local obligations,
 experiments, checks, fixtures, screenshots, model replays, standard scenarios,

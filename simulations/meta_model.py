@@ -270,6 +270,7 @@ class State:
     node_focused_interrogation_scope_id: str = ""
     node_product_function_model_checked: bool = False
     node_product_function_model_product_officer_approved: bool = False
+    current_node_high_standard_recheck_written: bool = False
     node_acceptance_plan_written: bool = False
     node_acceptance_risk_experiments_mapped: bool = False
     lightweight_self_check_done: bool = False
@@ -474,6 +475,7 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "plan_sync_method_recorded": False,
             "visible_plan_has_runway_depth": False,
             "pm_node_decision_recorded": False,
+            "current_node_high_standard_recheck_written": False,
             "node_acceptance_plan_written": False,
             "node_acceptance_risk_experiments_mapped": False,
         }
@@ -1023,6 +1025,7 @@ class AutopilotStep:
         "node_focused_interrogation_scope_id",
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
+        "current_node_high_standard_recheck_written",
         "node_acceptance_plan_written",
         "node_acceptance_risk_experiments_mapped",
         "lightweight_self_check_done",
@@ -1309,6 +1312,7 @@ class AutopilotStep:
         "node_focused_interrogation_scope_id",
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
+        "current_node_high_standard_recheck_written",
         "node_acceptance_plan_written",
         "node_acceptance_risk_experiments_mapped",
         "lightweight_self_check_done",
@@ -4140,6 +4144,15 @@ class AutopilotStep:
                     action="product FlowGuard officer runs and approves the active leaf's product-function model before defining implementation work",
                     node_product_function_model_checked=True,
                     node_product_function_model_product_officer_approved=True,
+                    active_node="current_node_high_standard_recheck",
+                )
+                return
+            if not state.current_node_high_standard_recheck_written:
+                yield _step(
+                    state,
+                    label="current_node_high_standard_recheck_written",
+                    action="project manager rechecks the current node against the highest achievable product target, unacceptable-result bar, semantic-fidelity policy, and likely local downgrade risks before writing node acceptance",
+                    current_node_high_standard_recheck_written=True,
                     active_node="write_node_acceptance_plan",
                 )
                 return
@@ -4822,6 +4835,9 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         or state.execution_frontier_written
         or state.codex_plan_synced
         or state.visible_user_flow_diagram_emitted
+        or state.current_node_high_standard_recheck_written
+        or state.node_acceptance_plan_written
+        or state.node_acceptance_risk_experiments_mapped
         or state.chunk_state in {"ready", "executed", "verified", "checkpoint_pending"}
         or state.final_report_emitted
     )
@@ -5050,6 +5066,10 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             )
         if not state.node_product_function_model_checked:
             return InvariantResult.fail("chunk started before active node product-function model check")
+        if not state.current_node_high_standard_recheck_written:
+            return InvariantResult.fail(
+                "chunk started before PM current-node high-standard recheck against the product target and semantic fidelity policy"
+            )
         if not (
             state.node_acceptance_plan_written
             and state.node_acceptance_risk_experiments_mapped
@@ -5648,6 +5668,10 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
 
 def next_route_node_requires_fresh_route_sign(state: State, trace) -> InvariantResult:
     del trace
+    if state.node_acceptance_plan_written and not state.current_node_high_standard_recheck_written:
+        return InvariantResult.fail(
+            "node acceptance plan was written before PM current-node high-standard recheck"
+        )
     if (
         state.node_acceptance_plan_written
         and 0 < state.completed_chunks < state.required_chunks

@@ -184,6 +184,7 @@ class State:
     child_skill_requirements_mapped: bool = False
     child_skill_evidence_plan_written: bool = False
     child_skill_subroute_projected: bool = False
+    current_node_high_standard_recheck_written: bool = False
     node_acceptance_plan_written: bool = False
     node_acceptance_risk_experiments_mapped: bool = False
     child_skill_node_gate_manifest_refined: bool = False
@@ -498,6 +499,7 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "plan_sync_method_recorded": False,
             "visible_plan_has_runway_depth": False,
             "pm_capability_work_decision_recorded": False,
+            "current_node_high_standard_recheck_written": False,
             "node_acceptance_plan_written": False,
             "node_acceptance_risk_experiments_mapped": False,
             "child_skill_node_gate_manifest_refined": False,
@@ -1473,6 +1475,7 @@ class CapabilityRouterStep:
         "child_skill_requirements_mapped",
         "child_skill_evidence_plan_written",
         "child_skill_subroute_projected",
+        "current_node_high_standard_recheck_written",
         "node_acceptance_plan_written",
         "node_acceptance_risk_experiments_mapped",
         "child_skill_node_gate_manifest_refined",
@@ -1771,6 +1774,7 @@ class CapabilityRouterStep:
         "child_skill_requirements_mapped",
         "child_skill_evidence_plan_written",
         "child_skill_subroute_projected",
+        "current_node_high_standard_recheck_written",
         "node_acceptance_plan_written",
         "node_acceptance_risk_experiments_mapped",
         "child_skill_node_gate_manifest_refined",
@@ -3386,6 +3390,19 @@ class CapabilityRouterStep:
         if (
             _base_ready(state)
             and state.pm_capability_work_decision_recorded
+            and not state.current_node_high_standard_recheck_written
+        ):
+            yield _step(
+                state,
+                label="current_node_high_standard_recheck_written",
+                action="project manager rechecks the current capability node against the highest achievable product target, unacceptable-result bar, semantic-fidelity policy, and likely local downgrade risks before writing node acceptance",
+                current_node_high_standard_recheck_written=True,
+            )
+            return
+
+        if (
+            _base_ready(state)
+            and state.pm_capability_work_decision_recorded
             and not state.node_acceptance_plan_written
         ):
             yield _step(
@@ -4970,6 +4987,7 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             and state.plan_sync_method_recorded
             and state.visible_plan_has_runway_depth
             and state.pm_capability_work_decision_recorded
+            and state.current_node_high_standard_recheck_written
             and state.node_acceptance_plan_written
             and state.node_acceptance_risk_experiments_mapped
             and state.pm_review_hold_instruction_written
@@ -5023,6 +5041,7 @@ def dependency_plan_before_route_or_implementation(
         or state.execution_frontier_written
         or state.codex_plan_synced
         or state.capability_user_flow_diagram_emitted
+        or state.current_node_high_standard_recheck_written
         or state.node_acceptance_plan_written
         or state.node_acceptance_risk_experiments_mapped
         or state.quality_package_done
@@ -5038,7 +5057,8 @@ def dependency_plan_before_route_or_implementation(
         or state.status == "complete"
     )
     work_beyond_startup_started = (
-        state.node_acceptance_plan_written
+        state.current_node_high_standard_recheck_written
+        or state.node_acceptance_plan_written
         or state.node_acceptance_risk_experiments_mapped
         or state.child_skill_node_gate_manifest_refined
         or state.child_skill_gate_authority_records_written
@@ -5896,6 +5916,10 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "capability product-function architecture reviewer challenge ran before product officer approval, reviewer recovery, or reviewer adversarial probes"
         )
+    if state.node_acceptance_plan_written and not state.current_node_high_standard_recheck_written:
+        return InvariantResult.fail(
+            "capability node acceptance plan was written before PM current-node high-standard recheck"
+        )
     if state.flowguard_process_design_done and not (
         state.self_interrogation_pm_ratified
         and _product_function_architecture_ready(state)
@@ -5945,11 +5969,12 @@ def actor_authority_gates_require_correct_role(
     if state.child_skill_gate_authority_records_written and not (
         state.child_skill_node_gate_manifest_refined
         and state.child_skill_manifest_pm_approved_for_route
+        and state.current_node_high_standard_recheck_written
         and state.node_acceptance_plan_written
         and state.node_acceptance_risk_experiments_mapped
     ):
         return InvariantResult.fail(
-            "current child-skill gate authority records were written before PM-approved route manifest, node acceptance plan, risk experiment mapping, and node-level refinement"
+            "current child-skill gate authority records were written before PM-approved route manifest, current-node high-standard recheck, node acceptance plan, risk experiment mapping, and node-level refinement"
         )
     if state.child_skill_current_gates_role_approved and not (
         state.child_skill_gate_authority_records_written

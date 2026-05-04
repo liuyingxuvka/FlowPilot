@@ -644,8 +644,22 @@ the PM issues the current-node work brief. When Cockpit UI is closed or not
 proven visible, paste the chat-ready Mermaid block before any tool call or file
 edit for that node. Generated diagram files alone do not satisfy node entry.
 
-After the visible route-sign gate passes, the project manager writes a node
-acceptance plan:
+After the visible route-sign gate passes and before the node acceptance plan is
+approved, the project manager performs a current-node high-standard recheck.
+This recheck compares the current major, parent/module, or leaf node against
+`product_function_architecture.high_standard_posture`,
+`highest_achievable_product_target`, `unacceptable_result_review`, and
+`semantic_fidelity_policy`. It must answer:
+
+- how this node advances the strongest feasible product target;
+- what low-quality, placeholder, or locally convenient result this node could
+  degrade into;
+- whether current material, evidence, implementation, or UI constraints are
+  causing semantic downgrade from the user's intended product;
+- whether the PM decision is to raise the current node, add a sibling or repair
+  node, insert discovery or validation work, ask the user, block, or proceed.
+
+Only after that recheck does the project manager write a node acceptance plan:
 `.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/node_acceptance_plan.json`.
 
 The node plan maps inherited root high-risk requirements, node-local
@@ -2148,6 +2162,9 @@ No formal chunk starts without:
 - unfinished-current-node recovery checked;
 - focused node-level grill-me completed for the active leaf node;
 - active leaf product-function model checked;
+- current-node high-standard recheck completed by the PM against the strongest
+  feasible product target, unacceptable-result bar, and semantic-fidelity
+  policy;
 - current node acceptance plan approved, with inherited root high-risk
   requirements mapped, node-local experiments declared, selected standard
   scenarios recorded, and required experiments passed or triaged;
