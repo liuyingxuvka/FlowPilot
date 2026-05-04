@@ -27,15 +27,16 @@ quality tier for a formal FlowPilot run. For small maintenance work inside an
 active project, FlowPilot may record continuity state, but it should not claim a
 full formal route unless the showcase-grade gates ran.
 
-The first user-facing startup gate is the three-question prompt: run mode,
-background-agent permission, and scheduled-continuation permission. The
+The first user-facing startup gate is the four-question prompt: run mode,
+background-agent permission, scheduled-continuation permission, and display
+surface preference. The
 assistant must stop immediately after asking and wait for the user's later
 reply before banner display, route writes, child skills, subagents, heartbeat
 probes, image generation, or implementation.
 
 The mode prompt is displayed from loosest to strictest:
 `full-auto`, `autonomous`, `guided`, `strict-gated`. No run mode is recorded
-until the user explicitly answers. A compact later reply may provide all three
+until the user explicitly answers. A compact later reply may provide all four
 startup answers at once, but host limits, invocation text, existing state, and
 prior routes cannot create an implicit `full-auto` or `autonomous` fallback.
 
@@ -176,8 +177,9 @@ Required early gate:
 
 Conditional UI gates:
 
-- route UI work to `concept-led-ui-redesign` when concept-led visual work is in
-  scope;
+- route substantial UI redesign, visual iteration, app-icon, and rendered QA
+  work to `autonomous-concept-ui-redesign`; its concept-led front half is
+  built in and does not require the old `concept-led-ui-redesign` skill;
 - route UI polish and implementation guidance to `frontend-design` when
   applicable;
 - record the child skill's concept-target/reference decision before

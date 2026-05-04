@@ -7,14 +7,14 @@ branches, heartbeat behavior, and any task-local behavior models.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask three startup questions: run mode, background-agent permission, and
-   scheduled-continuation permission. End the assistant response immediately
+2. Ask four startup questions: run mode, background-agent permission,
+   scheduled-continuation permission, and whether to open Cockpit UI. End the assistant response immediately
    after these questions. Do not inspect files, start tools, create route state,
    launch subagents, probe heartbeat, or show the banner in the same response.
    FlowPilot remains in `startup_pending_user_answers` until the user's later
-   reply supplies all three answers.
+   reply supplies all four answers.
 3. Record the explicit answer set in state/frontier startup activation
-   evidence. A compact later user reply may satisfy all three only when the
+   evidence. A compact later user reply may satisfy all four only when the
    choices are explicit.
 4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
    the startup-question gate is open.
@@ -175,7 +175,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     canonical current-run state, execution frontier, current six-role crew
     ledger, current role memory, `.flowpilot/current.json`,
     `.flowpilot/index.json`, the run manifest, prior-work import packet when
-    continuing, the three explicit startup answers, stop-and-wait evidence,
+    continuing, the four explicit startup answers, stop-and-wait evidence,
     banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
@@ -224,7 +224,7 @@ not be reported as a full formal FlowPilot route unless the showcase gates ran.
 The startup banner is a user-visible launch marker, not route evidence; it
 exists so the user can immediately see when the heavy FlowPilot controller has
 started. The banner is illegal in the same assistant response that asks the
-three startup questions.
+four startup questions.
 
 Recommended explicit invocation for public docs, README examples, and GitHub
 usage:
@@ -233,9 +233,9 @@ usage:
 Use FlowPilot. Ask the startup questions first.
 ```
 
-FlowPilot invocation only opens the three-question startup prompt. It is not
+FlowPilot invocation only opens the four-question startup prompt. It is not
 authorization for a default mode, background agents, fallback execution,
-scheduled jobs, or manual resume. The assistant must stop immediately after
+scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
 
@@ -531,12 +531,12 @@ used as the authority key.
 
 ## Run Mode Startup Question
 
-Run mode is one part of the three-question startup gate, not a separate
+Run mode is one part of the four-question startup gate, not a separate
 fallback decision. Show modes left-to-right from loosest to strictest:
 `full-auto`, `autonomous`, `guided`, `strict-gated`.
 
 For a new formal route, do not record any run mode until the user explicitly
-answers the startup question. A compact later user reply may answer all three
+answers the startup question. A compact later user reply may answer all four
 startup questions at once, but `Use FlowPilot`, an existing `.flowpilot/`
 directory, host inability to pause, prior route state, or a generic request to
 continue must not be converted into an implicit `full-auto` or `autonomous`
@@ -1136,9 +1136,9 @@ FlowPilot must also project key child-skill milestones into current node
 details as a mini-route, without copying the child skill's detailed prompt text.
 
 FlowPilot must not compress child skills into vague shortcuts. For example,
-`autonomous-concept-ui-redesign` means the non-interactive concept, implementation,
-iteration, deviation-review, geometry-QA, screenshot-QA, and final-verdict
-pipeline; `concept-led-ui-redesign` means the concept-led workflow and comparison loop;
+`autonomous-concept-ui-redesign` means the non-interactive built-in concept-led
+workflow, implementation, iteration, deviation-review, geometry-QA,
+screenshot-QA, app-icon realization, and final-verdict pipeline;
 `model-first-function-flow` means the real FlowGuard applicability decision,
 model, checks, counterexample review, and adoption note where required.
 
@@ -1192,10 +1192,10 @@ FlowPilot checks these process facts:
 - a UI or visual route was detected;
 - `autonomous-concept-ui-redesign` was invoked for UI redesign, implementation,
   polish, visual iteration, deviation review, layout QA, and final UI verdict;
-- its internal UI child-skill evidence records `concept-led-ui-redesign` when
-  concept-led visual work is in scope, `frontend-design` implementation,
-  `design-iterator` rounds or a recorded skip, and
-  `design-implementation-reviewer` deviation review or a recorded skip;
+- its internal evidence records built-in concept-led framing/search gates,
+  `frontend-design` implementation, `design-iterator` rounds or a recorded
+  skip, and `design-implementation-reviewer` deviation review or a recorded
+  skip;
 - the child skill produced or explicitly waived the pre-implementation concept
   target/reference decision;
 - generated concept targets have both a source decision and an authenticity

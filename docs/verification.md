@@ -10,6 +10,7 @@ python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
 python scripts/check_install.py
+python scripts/audit_local_install_sync.py
 python scripts/smoke_autopilot.py
 ```
 
@@ -37,6 +38,7 @@ Run:
 
 ```powershell
 python scripts/install_flowpilot.py --check
+python scripts/audit_local_install_sync.py
 python scripts/check_install.py
 ```
 
@@ -45,11 +47,18 @@ Expected:
 - real FlowGuard import works;
 - `flowpilot.dependencies.json` parses;
 - required project files exist;
+- required dependencies are installed and fresh; missing optional companion
+  skills are reported as warnings rather than blocking the FlowPilot package
+  check;
 - `skills/flowpilot/SKILL.md` exists and declares `name: flowpilot`;
 - reusable FlowPilot templates exist;
 - simulation scripts exist;
 - template JSON files parse.
 - `templates/flowpilot/execution_frontier.template.json` parses.
+- repository-owned installed skills are source-fresh;
+- installed skill names are unique, so stale backup skills cannot shadow the
+  active FlowPilot skill;
+- native Cockpit source files are tracked in git.
 - If local `.flowpilot/` runtime state exists, its main JSON files parse.
 
 ## Public Release Check

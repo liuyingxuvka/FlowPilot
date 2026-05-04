@@ -249,12 +249,30 @@ def install_skill(
     return result
 
 
+def is_repo_owned_skill(dependency: dict[str, Any]) -> bool:
+    return (
+        dependency.get("type") == "codex_skill"
+        and bool(dependency.get("repo_path"))
+        and dependency.get("source", {}).get("kind") == "copy_from_this_repository"
+    )
+
+
 def dependency_status(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
     if dependency.get("type") == "python_package":
-        return check_python_package(dependency)
-    if dependency.get("type") == "codex_skill":
-        return check_skill(root, dependency)
-    return {"name": dependency.get("name", "unknown"), "ok": False, "error": "unknown dependency type"}
+        result = check_python_package(dependency)
+    elif dependency.get("type") == "codex_skill":
+        result = check_skill(root, dependency)
+    else:
+        result = {
+            "name": dependency.get("name", "unknown"),
+            "ok": False,
+            "error": "unknown dependency type",
+        }
+    result["required"] = bool(dependency.get("required", True))
+    result["companion"] = bool(dependency.get("companion", False))
+    if not result["ok"] and not result["required"]:
+        result["severity"] = "warning"
+    return result
 
 
 def host_capability_status(root: Path, capability: dict[str, Any]) -> dict[str, Any]:
@@ -317,6 +335,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Check only. This is the default.")
     parser.add_argument("--install-missing", action="store_true", help="Install missing auto-installable skills.")
+    parser.add_argument("--include-optional", action="store_true", help="With --install-missing, also install optional companion skills.")
+    parser.add_argument(
+        "--sync-repo-owned",
+        action="store_true",
+        help="Refresh missing or stale repository-owned Codex skills from this checkout.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Show planned actions without changing files.")
     parser.add_argument("--force", action="store_true", help="Overwrite existing non-system skill installs.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
@@ -339,13 +363,41 @@ def main() -> int:
     for dependency in manifest.get("dependencies", []):
         status = dependency_status(root, dependency)
         result["dependencies"].append(status)
+        if args.sync_repo_owned and is_repo_owned_skill(dependency):
+            if status.get("ok") and status.get("source_fresh") is True:
+                result["install_actions"].append(
+                    {
+                        "name": dependency["name"],
+                        "action": "already_fresh",
+                        "ok": True,
+                        "path": status.get("path"),
+                    }
+                )
+                continue
+            action = install_skill(root, dependency, dry_run=args.dry_run, force=True)
+            result["install_actions"].append(action)
+            if not action.get("ok"):
+                result["ok"] = False
+                continue
+            if not args.dry_run:
+                post_status = dependency_status(root, dependency)
+                result["dependencies"].append({**post_status, "after_install": True})
+                if not post_status.get("ok"):
+                    result["ok"] = False
+            continue
         if status.get("ok"):
             continue
+        required = bool(status.get("required", True))
 
         install_cfg = dependency.get("install", {})
-        should_install = args.install_missing and bool(install_cfg.get("auto_install_missing"))
+        should_install = (
+            args.install_missing
+            and bool(install_cfg.get("auto_install_missing"))
+            and (required or args.include_optional)
+        )
         if not should_install:
-            result["ok"] = False
+            if required:
+                result["ok"] = False
             continue
         action = install_skill(root, dependency, dry_run=args.dry_run, force=args.force)
         result["install_actions"].append(action)
@@ -361,7 +413,7 @@ def main() -> int:
     for capability in manifest.get("host_capabilities", []):
         result["host_capabilities"].append(host_capability_status(root, capability))
 
-    if args.install_missing and not args.dry_run and not args.skip_self_check:
+    if (args.install_missing or args.sync_repo_owned) and not args.dry_run and not args.skip_self_check:
         result["self_check"] = run_check_install()
         if not result["self_check"]["ok"]:
             result["ok"] = False

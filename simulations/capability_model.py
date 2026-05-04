@@ -69,6 +69,8 @@ class State:
     mode_selected: bool = False
     startup_background_agents_answered: bool = False
     startup_scheduled_continuation_answered: bool = False
+    startup_display_surface_answered: bool = False
+    startup_display_entry_action_done: bool = False
     run_directory_created: bool = False
     current_pointer_written: bool = False
     run_index_updated: bool = False
@@ -759,6 +761,7 @@ def _startup_questions_complete(state: State) -> bool:
         and state.mode_selected
         and state.startup_background_agents_answered
         and state.startup_scheduled_continuation_answered
+        and state.startup_display_surface_answered
     )
 
 
@@ -1193,7 +1196,12 @@ def _final_route_wide_gate_ledger_steps(
         yield _step(
             state,
             label="final_route_wide_gate_ledger_resource_lineage_resolved",
-            action=f"PM resolves generated-resource lineage for {domain}: consumed, final-output, evidence, superseded, quarantined, or intentionally discarded",
+            action=(
+                f"PM resolves generated-resource lineage for {domain} into terminal "
+                "dispositions: consumed_by_implementation, included_in_final_output, "
+                "qa_evidence, flowguard_evidence, user_flow_diagram, superseded, "
+                "quarantined, or discarded_with_reason"
+            ),
             final_route_wide_gate_ledger_resource_lineage_resolved=True,
         )
         return
@@ -1983,8 +1991,8 @@ class CapabilityRouterStep:
         if not state.startup_questions_asked:
             yield _step(
                 state,
-                label="startup_three_questions_asked",
-                action="ask run mode, background-agent permission, and scheduled-continuation permission before capability startup",
+                label="startup_four_questions_asked",
+                action="ask run mode, background-agent permission, scheduled-continuation permission, and whether to open Cockpit UI before capability startup",
                 startup_questions_asked=True,
             )
             return
@@ -2040,6 +2048,15 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.startup_display_surface_answered:
+            yield _step(
+                state,
+                label="startup_display_surface_answered",
+                action="record explicit user answer for opening Cockpit UI immediately versus using chat route signs",
+                startup_display_surface_answered=True,
+            )
+            return
+
         if not state.run_directory_created:
             yield _step(
                 state,
@@ -2064,6 +2081,15 @@ class CapabilityRouterStep:
                 label="run_index_updated",
                 action="update .flowpilot/index.json with the new run identity and creation metadata",
                 run_index_updated=True,
+            )
+            return
+
+        if not state.startup_display_entry_action_done:
+            yield _step(
+                state,
+                label="startup_display_entry_action_done",
+                action="open Cockpit UI immediately when requested, or display the chat route sign when the user chose chat",
+                startup_display_entry_action_done=True,
             )
             return
 
@@ -4863,6 +4889,8 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
             or state.mode_selected
             or state.startup_background_agents_answered
             or state.startup_scheduled_continuation_answered
+            or state.startup_display_surface_answered
+            or state.startup_display_entry_action_done
         )
     ):
         return InvariantResult.fail("capability startup continued after asking questions without stopping for the user's reply")
@@ -4871,11 +4899,13 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
         or state.self_interrogation_done
         or state.visible_self_interrogation_done
     ) and not (state.flowpilot_enabled and _startup_questions_complete(state)):
-        return InvariantResult.fail("showcase/self-interrogation ran before the three-question startup gate")
+        return InvariantResult.fail("showcase/self-interrogation ran before the four-question startup gate")
     if state.old_control_state_reused_as_current:
         return InvariantResult.fail("old FlowPilot control state was reused as the current capability run state")
     if (state.contract_frozen or state.meta_route_checked or state.work_beyond_startup_allowed) and not _run_isolation_ready(state):
         return InvariantResult.fail("capability routing advanced before a fresh current run directory and control-state boundary were established")
+    if (state.contract_frozen or state.meta_route_checked or state.work_beyond_startup_allowed) and not state.startup_display_entry_action_done:
+        return InvariantResult.fail("capability routing advanced before resolving the user's startup display surface answer")
     return InvariantResult.pass_()
 
 
@@ -5057,7 +5087,7 @@ def dependency_plan_before_route_or_implementation(
         )
     if state.work_beyond_startup_allowed and not _startup_questions_complete(state):
         return InvariantResult.fail(
-            "PM allowed capability work before the three startup answers were recorded"
+            "PM allowed capability work before the four startup answers were recorded"
         )
     if state.work_beyond_startup_allowed and not _run_isolation_ready(state):
         return InvariantResult.fail(

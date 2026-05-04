@@ -74,6 +74,8 @@ class State:
     mode_selected: bool = False
     startup_background_agents_answered: bool = False
     startup_scheduled_continuation_answered: bool = False
+    startup_display_surface_answered: bool = False
+    startup_display_entry_action_done: bool = False
     run_directory_created: bool = False
     current_pointer_written: bool = False
     run_index_updated: bool = False
@@ -554,6 +556,7 @@ def _startup_questions_complete(state: State) -> bool:
         and state.mode_selected
         and state.startup_background_agents_answered
         and state.startup_scheduled_continuation_answered
+        and state.startup_display_surface_answered
     )
 
 
@@ -1451,8 +1454,8 @@ class AutopilotStep:
         if not state.startup_questions_asked:
             yield _step(
                 state,
-                label="startup_three_questions_asked",
-                action="ask run mode, background-agent permission, and scheduled-continuation permission before banner",
+                label="startup_four_questions_asked",
+                action="ask run mode, background-agent permission, scheduled-continuation permission, and whether to open Cockpit UI before banner",
                 startup_questions_asked=True,
                 active_node="stop_for_startup_answers",
             )
@@ -1511,6 +1514,16 @@ class AutopilotStep:
                 label="startup_scheduled_continuation_answered",
                 action="record explicit user answer for heartbeat/automation versus manual resume",
                 startup_scheduled_continuation_answered=True,
+                active_node="await_display_surface_answer",
+            )
+            return
+
+        if not state.startup_display_surface_answered:
+            yield _step(
+                state,
+                label="startup_display_surface_answered",
+                action="record explicit user answer for opening Cockpit UI immediately versus using chat route signs",
+                startup_display_surface_answered=True,
                 active_node="emit_startup_banner",
             )
             return
@@ -1519,7 +1532,7 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="startup_banner_emitted",
-                action="emit a large ASCII FlowPilot startup banner only after the three startup answers",
+                action="emit a large ASCII FlowPilot startup banner only after the four startup answers",
                 startup_banner_emitted=True,
                 active_node="create_run_directory",
             )
@@ -1649,6 +1662,16 @@ class AutopilotStep:
                 label="top_level_control_state_absent_or_quarantined",
                 action="verify legacy top-level control state is absent, legacy-only, or quarantined before current work continues",
                 top_level_control_state_absent_or_quarantined=True,
+                active_node="resolve_startup_display_surface",
+            )
+            return
+
+        if not state.startup_display_entry_action_done:
+            yield _step(
+                state,
+                label="startup_display_entry_action_done",
+                action="open Cockpit UI immediately when requested, or display the chat route sign when the user chose chat",
+                startup_display_entry_action_done=True,
                 active_node="freeze_contract",
             )
             return
@@ -3634,7 +3657,12 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="final_route_wide_gate_ledger_resource_lineage_resolved",
-                    action="PM resolves generated-resource lineage into consumed, final-output, evidence, superseded, quarantined, or intentionally discarded entries",
+                    action=(
+                        "PM resolves generated-resource lineage into terminal dispositions: "
+                        "consumed_by_implementation, included_in_final_output, "
+                        "qa_evidence, flowguard_evidence, user_flow_diagram, "
+                        "superseded, quarantined, or discarded_with_reason"
+                    ),
                     final_route_wide_gate_ledger_resource_lineage_resolved=True,
                     active_node="final_route_wide_gate_ledger",
                 )
@@ -4529,7 +4557,7 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     if not state.flowpilot_enabled:
         return InvariantResult.fail("final report emitted before FlowPilot was enabled")
     if not _startup_questions_complete(state):
-        return InvariantResult.fail("final report emitted before the three startup questions were answered")
+        return InvariantResult.fail("final report emitted before the four startup questions were answered")
     if not state.startup_banner_emitted:
         return InvariantResult.fail("final report emitted before FlowPilot startup banner was visible")
     if not (
@@ -4718,7 +4746,7 @@ def mode_choice_before_contract(state: State, trace) -> InvariantResult:
 def startup_question_gate_before_heavy_startup(state: State, trace) -> InvariantResult:
     del trace
     if state.mode_choice_offered and not state.startup_questions_asked:
-        return InvariantResult.fail("mode question offered before the three-question startup gate was opened")
+        return InvariantResult.fail("mode question offered before the four-question startup gate was opened")
     if (
         not state.startup_dialog_stopped_for_answers
         and (
@@ -4726,16 +4754,20 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
             or state.mode_selected
             or state.startup_background_agents_answered
             or state.startup_scheduled_continuation_answered
+            or state.startup_display_surface_answered
+            or state.startup_display_entry_action_done
             or state.startup_banner_emitted
         )
     ):
         return InvariantResult.fail("startup continued after asking questions without stopping for the user's reply")
     if state.startup_banner_emitted and not _startup_questions_complete(state):
-        return InvariantResult.fail("startup banner emitted before all three startup answers were recorded")
+        return InvariantResult.fail("startup banner emitted before all four startup answers were recorded")
     if state.old_control_state_reused_as_current:
         return InvariantResult.fail("old FlowPilot control state was reused as the current run state")
     if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not _run_isolation_ready(state):
         return InvariantResult.fail("FlowPilot advanced before a fresh current run directory and control-state boundary were established")
+    if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not state.startup_display_entry_action_done:
+        return InvariantResult.fail("FlowPilot advanced before resolving the user's startup display surface answer")
     return InvariantResult.pass_()
 
 
@@ -4842,7 +4874,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         )
     if state.work_beyond_startup_allowed and not _startup_questions_complete(state):
         return InvariantResult.fail(
-            "PM allowed work beyond startup before the three startup answers were recorded"
+            "PM allowed work beyond startup before the four startup answers were recorded"
         )
     if state.work_beyond_startup_allowed and not _run_isolation_ready(state):
         return InvariantResult.fail(
@@ -5600,7 +5632,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="startup_question_gate_before_heavy_startup",
-        description="FlowPilot asks the three startup questions, stops for answers, and emits the banner only after all three answers are explicit.",
+        description="FlowPilot asks the four startup questions, stops for answers, and emits the banner only after all four answers are explicit.",
         predicate=startup_question_gate_before_heavy_startup,
     ),
     Invariant(

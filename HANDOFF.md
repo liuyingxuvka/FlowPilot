@@ -53,10 +53,11 @@ model-backed autopilot:
   conditional, deferred, or rejected; child-skill discovery may proceed only
   from PM-selected skills, never from raw local availability.
 - UI projects now default to the experimental
-  `autonomous-concept-ui-redesign` child skill, which composes
-  `concept-led-ui-redesign`, `frontend-design`, `design-iterator`,
-  `design-implementation-reviewer`, and geometry/screenshot QA. The older
-  concept-led skill remains available as an internal dependency and fallback.
+  `autonomous-concept-ui-redesign` child skill, which now owns the concept-led
+  product/design front half internally and composes `frontend-design`,
+  `design-iterator`, `design-implementation-reviewer`, image generation when
+  needed, and geometry/screenshot QA. The older `concept-led-ui-redesign` skill
+  is no longer a FlowPilot dependency.
 - Formal FlowPilot routes now use a persistent six-agent crew: project
   manager, human-like reviewer, process FlowGuard officer, product FlowGuard
   officer, worker A, and worker B. The project manager owns route,
@@ -208,14 +209,15 @@ model-backed autopilot:
   `work_beyond_startup_allowed: true`; there is no third startup opener or
   runtime startup-check script. Route-local artifacts without that canonical match
   are shadow routes to quarantine or supersede.
-- Formal startup now begins with a three-question pre-banner gate. On
+- Formal startup now begins with a four-question pre-banner gate. On
   `Use FlowPilot` / `使用开始`, the assistant asks for run mode, background-agent
-  permission, and scheduled-continuation permission, then the assistant response
-  must stop immediately and wait for the user's reply. The startup banner,
-  route writes, child skills, subagents, heartbeat probes, imagegen, and
-  implementation are blocked until a later user reply explicitly answers all
-  three questions and `startup_activation.startup_questions` records both the
-  stop-and-wait evidence and banner-after-answers evidence.
+  permission, scheduled-continuation permission, and whether to open Cockpit UI
+  or use chat route signs, then the assistant response must stop immediately and
+  wait for the user's reply. The startup banner, route writes, Cockpit launch,
+  child skills, subagents, heartbeat probes, imagegen, and implementation are
+  blocked until a later user reply explicitly answers all four questions and
+  `startup_activation.startup_questions` records both the stop-and-wait
+  evidence and banner-after-answers evidence.
 - Long operations no longer carry a FlowPilot stale-heartbeat wrapper; use
   ordinary checkpoints, logs, and host tool status for bounded-operation
   evidence.
@@ -292,7 +294,7 @@ FlowGuard caught and fixed these design issues:
     decisions. A repair invalidates affected evidence and normally restarts the
     final review from the delivered product; narrower impacted-ancestor reruns
     require a PM reason.
-20. Asking the three startup questions is not a soft prompt. It is a hard
+20. Asking the four startup questions is not a soft prompt. It is a hard
     pause boundary: if FlowPilot keeps working in the same response after the
     questions, any later startup evidence is invalid and the PM must not open
     `work_beyond_startup_allowed`.

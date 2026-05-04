@@ -93,34 +93,36 @@ startup questionnaire. It is not permission to choose a default mode, start
 background subagents, skip background subagents, create heartbeat/automation
 jobs, or fall back to manual resume.
 
-## Three-Question Startup Gate
+## Four-Question Startup Gate
 
 Before the banner, route creation, child skills, image generation,
 implementation, or model-backed work, FlowPilot must ask exactly these startup
-questions and stop until all three have explicit answers:
+questions and stop until all four have explicit answers:
 
 1. Run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`.
 2. Background agents: allow the standard six live background subagents, or use
    single-agent six-role continuity for this run.
 3. Scheduled continuation: allow heartbeat/automation jobs, or use manual
    resume only for this run.
+4. Display surface: open the FlowPilot Cockpit UI immediately when startup
+   state is ready, or keep using chat route signs for this run.
 
 The user may answer in one compact sentence, such as
-`FlowPilot: full-auto, allow background agents, allow heartbeat`. That counts
-as all three answers only if the answers are explicit. If any answer is
+`FlowPilot: full-auto, allow background agents, allow heartbeat, open Cockpit`.
+That counts as all four answers only if the answers are explicit. If any answer is
 missing, ambiguous, or says to pause, FlowPilot must remain in
 `startup_pending_user_answers` and ask for the missing answer. Do not infer an
 answer from "use FlowPilot", from the task's importance, from current tool
 availability, or from previous routes.
 
-After asking the three questions, the assistant's response must end immediately
+After asking the four questions, the assistant's response must end immediately
 and control must return to the user. Do not keep planning, inspecting files,
 starting tools, creating route state, launching subagents, probing heartbeat, or
 showing the banner in the same response that asks the questions. Record this as
 `startup_activation.startup_questions.dialog_stopped_for_user_answers: true`
 before accepting a later user reply as startup-question evidence.
 
-Only after the three startup answers are recorded from the later user reply may
+Only after the four startup answers are recorded from the later user reply may
 FlowPilot emit the startup banner in a fenced `text` block. The banner means the
 startup-question gate is open and formal FlowPilot startup has begun:
 
@@ -180,10 +182,14 @@ PM start-gate decision after a clean factual reviewer report.
 `startup_activation` must include `startup_preflight_review` and
 `pm_start_gate` blocks.
 `startup_activation.startup_questions`
-must show that the three-question prompt was asked before the banner, that the
+must show that the four-question prompt was asked before the banner, that the
 assistant stopped to wait for the user's reply, and that explicit answers for
-run mode, background agents, and scheduled continuation were later recorded
-before the banner is considered valid. The reviewer report must compare user
+run mode, background agents, scheduled continuation, and display surface were
+later recorded before the banner is considered valid. The display-surface
+answer controls the first user-facing progress surface after startup state is
+ready: if the user chose Cockpit, open the Cockpit UI immediately and record
+visible Cockpit evidence; if the user chose chat, show the chat FlowPilot Route
+Sign as before. The reviewer report must compare user
 authorization against actual state: live/single-agent role evidence,
 heartbeat/manual-resume evidence, route/state/frontier consistency, stale or
 residual route state, current run isolation, and any required old-route or old
@@ -234,14 +240,15 @@ At startup, ask for these modes left-to-right from loosest to strictest:
 `full-auto`, `autonomous`, `guided`, `strict-gated`. Do not record a default
 mode for a formal route unless the user explicitly answers the mode question.
 The simplified `Use FlowPilot` / `使用开始` trigger never carries implied startup
-answers. It asks the three questions and stops; the next user reply may answer
-all three in one compact sentence.
+answers. It asks the four questions and stops; the next user reply may answer
+all four in one compact sentence.
 
 ## Startup Workflow
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask the three startup questions: run mode, background-agent permission, and
-   scheduled-continuation permission. End the assistant response immediately
+2. Ask the four startup questions: run mode, background-agent permission,
+   scheduled-continuation permission, and whether to open Cockpit UI. End the
+   assistant response immediately
    after the questions and wait for the user's reply. No plan continuation, tool
    call, route write, child-skill loading, imagegen, subagent startup, heartbeat
    probe, or banner is allowed in that question-asking response.
@@ -414,8 +421,8 @@ all three in one compact sentence.
     Mermaid must show that return edge and the reviewer must check the visible
     chat block before the node can advance. Generated files or display packets
     alone do not satisfy this gate.
-40. Set `startup_activation` in state/frontier from the three-question prompt,
-    the recorded stop-and-wait state, the three explicit startup answers,
+40. Set `startup_activation` in state/frontier from the four-question prompt,
+    the recorded stop-and-wait state, the four explicit startup answers,
     banner evidence, current route, execution frontier, crew ledger, role
     memory, live-subagent startup decision and current-task freshness,
     continuation, and visible plan evidence. The human-like reviewer then writes
@@ -441,7 +448,7 @@ all three in one compact sentence.
 
     Do not run child skills, imagegen, implementation, formal route chunks, or
     completion work until the PM records
-    `work_beyond_startup_allowed: true`. If the three startup answers are not
+    `work_beyond_startup_allowed: true`. If the four startup answers are not
     complete, if the prompt did not stop for the user's reply, if the banner was
     emitted before the answers, if live-agent evidence conflicts with the
     background-agent answer, if any current live-agent ID was reused from prior
@@ -704,9 +711,12 @@ current gate, even when a newer screenshot or report replaces it.
 Every generated concept, image, icon, screenshot, diagram, model output, or
 similar resource is registered in the generated resource ledger immediately
 when it is created. Each item records origin, path, owning node or gate, and
-one disposition: `selected`, `used`, `superseded`, `discarded`, `deleted`, or
-`quarantined`. Terminal completion may only close after every generated
-resource has a current disposition and reason.
+one disposition. `pending` is allowed only before closure. Terminal dispositions
+are `consumed_by_implementation`, `included_in_final_output`, `qa_evidence`,
+`flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`, or
+`discarded_with_reason`. Terminal completion may only close after every
+generated resource has one terminal disposition, a supporting reason, and no
+unresolved resource count.
 
 The activity stream is append-only. PM decisions, reviewer holds/releases and
 reports, officer modeling actions, worker reports, route mutations, checkpoint
@@ -1122,9 +1132,12 @@ parent/module review, node checkpoint review, and final completion review.
 
 ## User Flow Diagram / Temporary Chat Cockpit
 
-Until the desktop Cockpit can reliably show live progress, the chat is the
-temporary cockpit. FlowPilot has one user-facing realtime route sign for both
-chat and the Cockpit UI. Show the simplified English Mermaid route sign at
+FlowPilot has one user-facing realtime route sign for both chat and the
+Cockpit UI. Startup asks the user which surface to use. If the user chose
+Cockpit, open the Cockpit UI as soon as startup route/frontier state is ready
+and use it as the primary display surface. If the user chose chat, or Cockpit
+is unavailable, closed, or not proven visible, show the simplified English
+Mermaid route sign at
 startup, every new major `flow.json` route-node entry, parent/module or leaf
 route-node entry, PM current-node work brief, legacy key node change, route
 mutation, review or validation failure returns, completion review, or explicit
@@ -1884,11 +1897,10 @@ Conditional UI gates:
 - invoke `autonomous-concept-ui-redesign` through the child-skill fidelity gate
   for UI redesign, UI implementation, UI polish, layout, responsiveness,
   accessibility, visual iteration, and UI QA routes. The experimental
-  orchestrator owns the concept-led front half, `frontend-design`
-  implementation, `design-iterator` refinement,
+  orchestrator owns the concept-led front half internally, then composes
+  `frontend-design` implementation, `design-iterator` refinement,
   `design-implementation-reviewer` deviation review, and geometry/screenshot
-  QA. Keep `concept-led-ui-redesign` available as an internal dependency and
-  fallback, not the default FlowPilot UI route;
+  QA. Do not require the old `concept-led-ui-redesign` skill;
 - before generated concept targets, record the UI child skill's shared visual
   direction source and reuse that direction for concept image, implementation,
   app icon/assets, and QA;
@@ -1912,6 +1924,15 @@ Conditional UI gates:
 - when product-facing visual assets are created, record an aesthetic verdict
   and concrete reasons before UI implementation or package polish. A failed
   app icon or asset blocks completion until regenerated or repaired;
+- when an app/software icon is in scope for a desktop, mobile, packaged web,
+  browser-extension, or branded software artifact, record a real application
+  identity binding gate from `autonomous-concept-ui-redesign`. An icon shown
+  only inside the UI, a concept image, or a report is not enough. Evidence must
+  show whether the selected icon source is bound to the runtime window/app
+  icon, taskbar/dock/shelf identity, tray/menu-bar icon when present, and
+  package/shortcut/installer manifest when packaging is in scope. If the host
+  still shows a runtime icon such as Python/Electron/browser, record that as a
+  partial/blocking gap instead of treating the in-UI mark as the final app icon;
 - after rendered screenshot QA, record a rendered-UI aesthetic verdict and
   concrete reasons before divergence closure. A visually weak implementation
   cannot be closed only because screenshots exist or tests pass;
@@ -2035,8 +2056,10 @@ The PM-owned ledger records:
   and node acceptance plans for all effective nodes;
 - generated-resource lineage for concept images, product-facing visual assets,
   screenshots, route diagrams, model reports, and other generated artifacts,
-  with each item marked `selected`, `used`, `superseded`, `discarded`,
-  `deleted`, or `quarantined` with reason;
+  with each item resolved to `consumed_by_implementation`,
+  `included_in_final_output`, `qa_evidence`, `flowguard_evidence`,
+  `user_flow_diagram`, `superseded`, `quarantined`, or
+  `discarded_with_reason` with reason;
 - stale, invalidated, missing, waived, blocked, and unresolved evidence;
 - residual risk triage, with zero unresolved residual risks;
 - `unresolved_count`.

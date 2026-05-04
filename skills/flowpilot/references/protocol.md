@@ -6,19 +6,21 @@ long-form public explanation lives in `docs/protocol.md`.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask the three startup questions:
+2. Ask the four startup questions:
    - run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`;
    - background agents: allow six live background subagents, or use
      single-agent six-role continuity for this run;
    - scheduled continuation: allow heartbeat/automation jobs, or use manual
-     resume only for this run.
+     resume only for this run;
+   - display surface: open Cockpit UI immediately when startup state is ready,
+     or use chat route signs for this run.
    End the assistant response immediately after these questions. Do not inspect
    files, start tools, create route state, launch subagents, probe heartbeat, or
    show the banner in the same response. FlowPilot remains in
    `startup_pending_user_answers` until the user's later reply supplies all
-   three answers.
+   four answers.
 3. Record the explicit answer set in state/frontier startup activation
-   evidence. A compact later user reply may satisfy all three only when the
+   evidence. A compact later user reply may satisfy all four only when the
    choices are explicit.
 4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
    the startup-question gate is open.
@@ -181,7 +183,7 @@ long-form public explanation lives in `docs/protocol.md`.
     canonical current-run state, execution frontier, current six-role crew
     ledger, current role memory, `.flowpilot/current.json`,
     `.flowpilot/index.json`, the run manifest, prior-work import packet when
-    continuing, the three explicit startup answers, stop-and-wait evidence,
+    continuing, the four explicit startup answers, stop-and-wait evidence,
     banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
@@ -229,9 +231,9 @@ usage:
 Use FlowPilot. Ask the startup questions first.
 ```
 
-FlowPilot invocation only opens the three-question startup prompt. It is not
+FlowPilot invocation only opens the four-question startup prompt. It is not
 authorization for a default mode, background agents, fallback execution,
-scheduled jobs, or manual resume. The assistant must stop immediately after
+scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
 
@@ -393,9 +395,11 @@ close a current gate.
 Every generated concept, image, icon, screenshot, diagram, model output, or
 similar resource is registered in the generated resource ledger immediately
 when created. Each item records origin, path, owning node or gate, and one
-disposition: `selected`, `used`, `superseded`, `discarded`, `deleted`, or
-`quarantined`. Terminal completion may only close after every generated
-resource has a current disposition and reason.
+disposition. `pending` is allowed only before closure. Terminal dispositions are
+`consumed_by_implementation`, `included_in_final_output`, `qa_evidence`,
+`flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`, or
+`discarded_with_reason`. Terminal completion may only close after every
+generated resource has a current terminal disposition and reason.
 
 The activity stream is append-only. PM decisions, reviewer holds/releases and
 reports, officer modeling actions, worker reports, route mutations, checkpoint
@@ -595,10 +599,12 @@ separate post-freeze interviews for those same topics. Focused grill-me is for p
 group, module, leaf-node, and child-skill entry and uses 20-40 questions by
 default, up to 50 for complex boundaries. Lightweight self-check is for
 continuation micro-steps and tiny reversible choices and uses 5-10 questions.
-Every round records its tier, scope id, question count, and evidence. Until
-the Cockpit UI is available, chat is the temporary cockpit and must show the
-simplified English FlowPilot Route Sign Mermaid, next jumps, checks, fallback
-or repair exits, continuation state, and acceptance delta.
+Every round records its tier, scope id, question count, and evidence. Startup
+asks whether Cockpit UI or chat should be the primary progress surface. If the
+user chose Cockpit, open it immediately after startup route/frontier state is
+ready; if the user chose chat, or Cockpit is unavailable or not proven visible,
+show the simplified English FlowPilot Route Sign Mermaid, next jumps, checks,
+fallback or repair exits, continuation state, and acceptance delta.
 Formal startup, route mutation, and completion self-interrogation evidence is
 only draft evidence until the project manager ratifies the scope, layer
 coverage, count, and decision set. The project manager's ratification path is
@@ -855,8 +861,10 @@ Required:
   rebuilds it from the current route and execution frontier, resolves effective
   and superseded nodes, collects child-skill, human-review, product-model, and
   process-model gates, resolves generated-resource lineage with dispositions
-  `selected`, `used`, `superseded`, `discarded`, `deleted`, or `quarantined`, checks stale
-  evidence, replays the standard scenario pack and node-risk scenarios, triages
+  `consumed_by_implementation`, `included_in_final_output`, `qa_evidence`,
+  `flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`, or
+  `discarded_with_reason`, checks stale evidence, replays the standard scenario
+  pack and node-risk scenarios, triages
   every risk or blindspot, records zero unresolved current obligations and zero
   unresolved residual risks, builds a terminal human backward replay map,
   requires the reviewer to start from the delivered product and replay root,
@@ -894,10 +902,10 @@ Conditional:
 - UI routes require child-skill-routed UI evidence, not FlowPilot-authored UI
   design prompts. Invoke `autonomous-concept-ui-redesign` for UI redesign,
   implementation, polish, visual iteration, deviation review, and layout QA.
-  The orchestrator composes `concept-led-ui-redesign`, `frontend-design`,
-  `design-iterator`, `design-implementation-reviewer`, image generation when
-  needed, and geometry/screenshot QA. Keep the older concept-led skill as an
-  internal dependency or explicit fallback, not the default UI route.
+  The orchestrator owns the concept-led front half internally, then composes
+  `frontend-design`, `design-iterator`, `design-implementation-reviewer`,
+  image generation when needed, and geometry/screenshot QA. Do not require the
+  old `concept-led-ui-redesign` skill.
 - Before UI implementation, record the source skill's concept-target decision:
   generated/selected target, authoritative reference, explicit waiver, or
   blocker. Post-implementation rendered QA evidence cannot be relabeled as this
@@ -924,6 +932,14 @@ Conditional:
   they are in scope. FlowPilot records scope, aesthetic verdict, concrete
   reasons, and evidence paths; the UI child skills own visual style and
   generation details.
+- App/software icons for desktop, mobile, packaged web, browser-extension, or
+  branded software artifacts require real application identity evidence from
+  the UI child skill. A selected icon or in-app logo is not enough unless it is
+  also bound to the platform surfaces that exist for that target: runtime
+  window/app icon, taskbar/dock/shelf icon, tray/menu-bar icon when present,
+  and package/shortcut/installer manifest when packaging is in scope. If the
+  platform still shows a host runtime icon, completion is partial or blocked
+  until the gap is fixed or explicitly waived with scope reason.
 - After rendered screenshot QA, record a rendered-UI aesthetic verdict and
   concrete reviewer reasons before divergence or loop closure. A screenshot
   existing is not proof that the UI looks good enough.

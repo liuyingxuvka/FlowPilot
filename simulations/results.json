@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 553304,
+    "edge_count": 553307,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -215,12 +215,14 @@
       "startup_background_agents_answered",
       "startup_banner_emitted",
       "startup_dialog_stopped_for_user_answers",
+      "startup_display_entry_action_done",
+      "startup_display_surface_answered",
+      "startup_four_questions_asked",
       "startup_pm_independent_gate_audit_done",
       "startup_preflight_reviewer_fact_report_blocked",
       "startup_preflight_reviewer_fact_report_clean",
       "startup_scheduled_continuation_answered",
       "startup_self_interrogation_pm_ratified",
-      "startup_three_questions_asked",
       "startup_worker_remediation_completed",
       "strict_gate_obligation_review_model_checked",
       "subagent_spawned_on_demand",
@@ -250,29 +252,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 533136,
+    "state_count": 533139,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 553304,
+    "edge_count": 553307,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 533136,
+    "state_count": 533139,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 553304,
+    "edge_count": 553307,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 533136,
+    "state_count": 533139,
     "status": "OK",
     "success_state_count": 1280
   }

@@ -128,7 +128,19 @@
           "question": "May FlowPilot create heartbeat or scheduled continuation jobs?",
           "answer": null,
           "answered": false
+        },
+        "display_surface": {
+          "question": "Should FlowPilot open the Cockpit UI when startup state is ready, or use chat route signs?",
+          "answer": null,
+          "answered": false
         }
+      },
+      "display_entry_action": {
+        "required": true,
+        "status": "pending",
+        "cockpit_ui_opened": false,
+        "chat_route_sign_displayed": false,
+        "evidence_path": null
       }
     },
     "route_files_written": false,

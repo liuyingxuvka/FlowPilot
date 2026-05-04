@@ -12,13 +12,15 @@ import startup_pm_review_model as model
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "startup_pm_review_results.json"
 REQUIRED_LABELS = (
-    "startup_three_questions_asked",
+    "startup_four_questions_asked",
     "startup_dialog_stopped_for_user_answers",
     "run_mode_answer_recorded",
     "background_agents_allowed",
     "background_agents_declined_single_agent",
     "scheduled_continuation_allowed",
     "scheduled_continuation_declined_manual",
+    "cockpit_ui_requested",
+    "chat_route_sign_requested",
     "explicit_startup_answers_recorded",
     "startup_banner_emitted_after_answers",
     "run_directory_created",
@@ -32,6 +34,8 @@ REQUIRED_LABELS = (
     "route_file_written",
     "canonical_state_written",
     "execution_frontier_written",
+    "cockpit_ui_opened_for_startup",
+    "startup_route_sign_displayed_in_chat",
     "crew_ledger_current",
     "role_memory_packets_current",
     "fresh_live_subagents_started",

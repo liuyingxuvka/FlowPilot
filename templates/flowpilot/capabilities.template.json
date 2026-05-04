@@ -134,6 +134,10 @@
         "child_skill_gates_collected",
         "human_review_gates_collected",
         "product_and_process_model_gates_collected",
+        "generated_resource_lineage_collected",
+        "generated_resource_lineage_resolved",
+        "pending_resource_count_zero",
+        "allowed_terminal_dispositions_checked",
         "stale_evidence_checked",
         "superseded_nodes_explained",
         "unresolved_count_zero",
@@ -232,6 +236,24 @@
         "layout_geometry_qa_evidence",
         "screenshot_qa_evidence",
         "autonomous_final_verdict"
+      ],
+      "status": "conditional"
+    },
+    {
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/app_icon_realization-when-app-icon-in-scope.json",
+      "id": "app_icon_realization",
+      "required": "when target is a desktop, mobile, packaged web, browser-extension, or branded software artifact with an app/software icon in scope",
+      "source_skill": "autonomous-concept-ui-redesign",
+      "evidence_required": [
+        "selected_icon_source_or_generation_record",
+        "exported_icon_assets_and_sizes",
+        "runtime_window_or_application_icon_binding",
+        "taskbar_dock_or_shelf_identity_evidence",
+        "tray_or_menu_bar_icon_binding_when_present",
+        "package_shortcut_or_installer_icon_manifest_when_in_scope",
+        "in_ui_mark_consistency_or_recorded_nonuse",
+        "host_runtime_icon_gap_status",
+        "source_skill_completion_decision"
       ],
       "status": "conditional"
     },

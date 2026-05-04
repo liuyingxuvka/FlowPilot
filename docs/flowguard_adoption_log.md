@@ -3,6 +3,229 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-04 - Autonomous UI Skill Standalone Concept-Led Merge
+
+- Trigger: the user decided the old `concept-led-ui-redesign` skill should be
+  removable and asked to migrate its concept-led front half into
+  `autonomous-concept-ui-redesign` without losing the existing autonomous UI
+  upgrades.
+- Decision: `use_flowguard`.
+- Scope updated:
+  - `skills/autonomous-concept-ui-redesign/SKILL.md` no longer loads the old
+    skill for `concept_redesign`; functional framing, display element review,
+    information architecture, concept brief, candidate search, selected concept
+    review, divergence review, visual QA, platform notes, and app-icon checks
+    are now built into this skill.
+  - `skills/autonomous-concept-ui-redesign/references/` gained the migrated
+    concept-led reference files.
+  - `skills/autonomous-concept-ui-redesign/scripts/app_icon_asset_check.py` was
+    migrated so app/software icon validation no longer depends on the old skill.
+  - `flowpilot.dependencies.json`, FlowPilot current docs, and README dependency
+    tables no longer declare `concept-led-ui-redesign` as a required or optional
+    FlowPilot dependency.
+- Preserved user-requested upgrades:
+  - default explicit accent color;
+  - app/software icon realization as a real platform identity gate;
+  - native desktop screenshot trust and real-platform recapture requirements.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema
+    `1.0`
+  - `python -m json.tool flowpilot.dependencies.json`
+  - `python -m py_compile skills/autonomous-concept-ui-redesign/scripts/app_icon_asset_check.py scripts/check_install.py scripts/install_flowpilot.py simulations/meta_model.py simulations/capability_model.py simulations/startup_pm_review_model.py`
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`
+  - `python scripts/install_flowpilot.py --check --json`
+  - `python scripts/check_install.py`
+  - `python simulations/run_startup_pm_review_checks.py`
+  - `python simulations/run_meta_checks.py`
+  - `python simulations/run_capability_checks.py`
+- Current install note: local installed `flowpilot` and
+  `autonomous-concept-ui-redesign` digests match the repository source after
+  sync. The dependency manifest no longer asks for the old
+  `concept-led-ui-redesign` skill.
+
+## 2026-05-04 - Skill Rule Tightening After Desktop Cockpit Review
+
+- Trigger: the user reviewed the FlowPilot desktop cockpit run and asked to
+  update reusable skill behavior while keeping external predictive KB out of
+  FlowPilot's public hard requirements.
+- Decision: `use_flowguard`.
+- Scope updated:
+  - `skills/autonomous-concept-ui-redesign/` now treats native desktop
+    offscreen/headless screenshots as provisional until renderer trust is
+    checked, and requires real platform recapture or `partial`/`blocked` when
+    text/readability is suspect.
+  - `skills/flowpilot/`, `templates/flowpilot/`, `simulations/meta_model.py`,
+    and `simulations/capability_model.py` now use one generated-resource
+    terminal disposition vocabulary:
+    `consumed_by_implementation`, `included_in_final_output`, `qa_evidence`,
+    `flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`,
+    and `discarded_with_reason`.
+  - The user's predictive KB support-entry cards were consolidated so the
+    canonical PayPal.Me support preference includes warm support copy and clear
+    no-purchase/no-rights boundaries.
+- Main findings:
+  - External KB postflight is a local/user workflow concern, not a FlowPilot
+    public dependency; no FlowPilot hard gate was added for external KB.
+  - Generated-resource rules already existed, but mixed labels such as
+    `selected`, `used`, `deleted`, `final-output`, and generic `evidence`
+    weakened execution clarity.
+  - Native desktop screenshot QA belongs in the autonomous UI skill, not the
+    older concept-led skill path.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  - `python -m py_compile simulations/meta_model.py simulations/capability_model.py simulations/run_meta_checks.py simulations/run_capability_checks.py`
+  - JSON parse checks for generated-resource and terminal closure templates
+  - YAML parse checks for the two support-entry KB cards
+  - old generated-resource vocabulary scan returned no hits
+  - `python simulations/run_meta_checks.py`
+  - `python simulations/run_capability_checks.py`
+  - `python scripts/check_install.py`
+  - `python -m unittest tests.test_flowpilot_defects tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_control_gates tests.test_flowpilot_meta_route_sign`
+  - installed `flowpilot` and `autonomous-concept-ui-redesign` skill copies
+    hash-match the repository sources
+- Caveats:
+  - `python scripts/install_flowpilot.py --check --json` still reports overall
+    `ok: false` because the optional old `concept-led-ui-redesign` companion
+    skill is not installed. The two repo-owned skills changed in this task are
+    fresh.
+  - `python scripts/smoke_autopilot.py` timed out after 124 seconds and was
+    stopped; direct meta, capability, install, JSON/YAML, and unit checks were
+    run instead.
+
+## 2026-05-04 - FlowPilot Four-Question Startup Display Surface
+
+- Trigger: after the native FlowPilot Cockpit UI existed, the user clarified
+  that formal startup must ask whether to open Cockpit UI or keep using chat
+  route signs.
+- Decision: `use_flowguard`.
+- Models updated: `simulations/startup_pm_review_model.py`,
+  `simulations/meta_model.py`, and `simulations/capability_model.py`.
+- Main findings:
+  - Startup now has four explicit answers: run mode, background-agent
+    permission, scheduled continuation, and display surface.
+  - The assistant must still stop immediately after asking the startup
+    questions; no banner, route write, subagent launch, heartbeat probe, UI
+    launch, imagegen, or implementation may happen in that same response.
+  - If the user chooses Cockpit, the startup display entry action is opening
+    Cockpit UI when startup state is ready; if the user chooses chat, the
+    startup route sign must be displayed in chat.
+  - The startup PM model now detects Cockpit requested but not opened, chat
+    requested but no route sign displayed, and chat used despite a Cockpit
+    answer.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)`: schema
+    `1.0`
+  - `python simulations/run_startup_pm_review_checks.py`
+  - `python simulations/run_meta_checks.py`
+  - `python simulations/run_capability_checks.py`
+  - `python -m unittest tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_cockpit_state_reader tests.test_flowpilot_cockpit_i18n`
+  - `python scripts/check_install.py`
+- Current install note: repository self-check passes, but
+  `skills/flowpilot` has been synced to
+  `%USERPROFILE%\.codex\skills\flowpilot`; the installed FlowPilot digest now
+  matches repository source. The installer was also tightened so missing
+  optional companion skills are warning-only by default and are installed only
+  with explicit `--include-optional`.
+
+## 2026-05-04 - Default Accent Color For UI Design Skills
+
+- Trigger: the user observed that the FlowPilot cockpit UI lacked a clear
+  emphasis color, causing dense UI regions to visually run together.
+- Decision: `use_flowguard` for a lightweight skill-behavior change; no new
+  targeted model was created because this was a bounded documentation and
+  local-skill policy update rather than a route-control state change.
+- Scope updated:
+  - `skills/autonomous-concept-ui-redesign/SKILL.md`
+  - installed `concept-led-ui-redesign` skill instructions and references
+  - installed `frontend-design` skill instructions
+- Main findings:
+  - The concept-led palette contract previously allowed either no accent or
+    one explicit accent color, so accent was genuinely optional by default.
+  - UI design routes now default to one explicit accent color unless the user
+    explicitly asks for no accent, an existing design system is neutral-only,
+    or a named product reason makes neutral-only safer.
+  - The accent must have a named job such as focus, selected state, primary
+    action, active route, key metric, or another hierarchy cue.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  - `rg` check for old optional-accent wording and new default-accent wording
+  - `python scripts/check_install.py`
+  - `python scripts/install_flowpilot.py --check --json`
+
+## 2026-05-04 - App Icon Realization Gate For Autonomous UI Routes
+
+- Trigger: the user observed that the generated UI/icon direction did not
+  prove the icon became the actual software, taskbar, tray, or package icon,
+  and clarified that the active FlowPilot UI route used
+  `autonomous-concept-ui-redesign`, not only `concept-led-ui-redesign`.
+- Decision: `use_flowguard` for a lightweight skill/protocol gate update; no
+  new targeted model was created because the change is an explicit child-skill
+  evidence requirement rather than a new route-control state machine.
+- Scope updated:
+  - `skills/autonomous-concept-ui-redesign/SKILL.md`
+  - `skills/autonomous-concept-ui-redesign/references/run-report-template.md`
+  - `skills/autonomous-concept-ui-redesign/references/layout-geometry-qa.md`
+  - `skills/flowpilot/SKILL.md`
+  - `skills/flowpilot/references/protocol.md`
+  - `templates/flowpilot/capabilities.template.json`
+- Main findings:
+  - The completed cockpit route selected
+    `autonomous-concept-ui-redesign via FlowPilot child-skill selection`.
+    `concept-led-ui-redesign` was an internal dependency for early design work,
+    not the main FlowPilot route strategy.
+  - The cockpit code sets a runtime-generated `QIcon` on the Qt application,
+    main window, settings dialog, and tray icon, but there is no persistent
+    selected icon source asset, `.ico`, AppUserModelID check, packaged
+    executable icon, shortcut, or installer manifest evidence.
+  - Future autonomous UI routes now require an app icon realization gate when
+    the target is a desktop, mobile, packaged web, browser-extension, or
+    branded software artifact. An icon shown only inside the UI or concept image
+    is not enough.
+  - Evidence must show whether the same selected icon source is bound to the
+    runtime window/app icon, taskbar/dock/shelf identity, tray/menu-bar icon
+    when present, and package/shortcut/installer manifest when packaging is in
+    scope.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  - `python -m json.tool templates/flowpilot/capabilities.template.json`
+  - `python scripts/check_install.py`
+  - `python scripts/install_flowpilot.py --install-missing --force --json`
+  - `rg` checks for the new app icon realization wording in repository and
+    installed skill copies
+- Caveat:
+  - `python scripts/install_flowpilot.py --check --json` reports the optional
+    companion `concept-led-ui-redesign` skill is currently absent from the
+    local Codex skills directory, even though the primary autonomous and
+    FlowPilot skills are installed and source-fresh. This should be repaired or
+    explicitly waived before another full autonomous concept route depends on
+    that sibling skill.
+
+## 2026-05-04 - FlowPilot Desktop Cockpit Clean Restart
+
+- Trigger: the user requested a from-zero FlowPilot Windows desktop cockpit UI
+  with live route/state mapping, multi-run tabs, bilingual UI, support entry,
+  tray lifecycle, fresh concept/icon direction, screenshots, interaction
+  checks, review, and iteration.
+- Decision: `use_flowguard`.
+- Models created: `.flowpilot/runs/run-20260503-233622-desktop-cockpit-restart/task-models/desktop-cockpit-process-control/`
+  and `.flowpilot/runs/run-20260503-233622-desktop-cockpit-restart/task-models/desktop-cockpit-product-state/`.
+- Main findings:
+  - The cockpit implementation must treat real FlowPilot route/frontier/state
+    files as source of truth and must not depend on a manual refresh click.
+  - The support entry uses the local KB-approved PayPal URL
+    `https://paypal.me/Yingxuliu` with support-only copy and no sales,
+    warranty, priority, commercial-rights, or feature-promise language.
+  - Fresh imagegen concept candidates and final screenshots are recorded in a
+    generated-resource evidence ledger with explicit dispositions.
+  - Native Qt screenshots should be captured from the real Windows platform on
+    this host; offscreen rendering produced unreadable glyph boxes.
+- Validation:
+  - `python .flowpilot/runs/run-20260503-233622-desktop-cockpit-restart/task-models/desktop-cockpit-process-control/run_checks.py`
+  - `python .flowpilot/runs/run-20260503-233622-desktop-cockpit-restart/task-models/desktop-cockpit-product-state/run_checks.py`
+  - `python -m compileall -q flowpilot_cockpit tests`
+  - `python -m unittest tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_cockpit_state_reader tests.test_flowpilot_cockpit_i18n`
+  - `python scripts/check_install.py`
+
 ## 2026-05-02 - Resource Output Lineage
 
 - Trigger: the user asked to rerun FlowPilot through FlowGuard and identify
@@ -851,8 +1074,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - Cleaned active protocol and template text so FlowPilot startup always asks
-  the three startup questions, stops for a later explicit answer set, and only
-  then emits the startup banner.
+  the explicit startup questions, stops for a later answer set, and only then
+  emits the startup banner.
 - Removed implicit mode fallback wording. `full-auto` is still an allowed mode,
   but it is recorded only as an explicit user answer.
 - Updated mode/state templates to start with `mode: null` until the explicit
@@ -1372,3 +1595,53 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - On the next FlowPilot invocation or resume, verify that entering a major route node displays the current-node Mermaid route sign before any node work starts when Cockpit is not visibly open.
+
+## FlowPilot v0.2.0 Release Sync And Cockpit Gates
+
+- Task ID: `flowpilot-v0-2-0-release-sync-cockpit-gates-20260504`
+- Status: completed_validation_ready_for_publication
+- Skill decision: use_flowguard
+- Started: 2026-05-04T08:05:00+02:00
+- Ended: 2026-05-04T08:41:25+02:00
+- Commands OK: true
+
+### Model Files
+- `simulations/release_tooling_model.py`
+- `simulations/startup_pm_review_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: repository-owned installed `flowpilot` and `autonomous-concept-ui-redesign` skills are source-fresh.
+- OK: stale release/private-path search: no current hits for `v0.1.0`, local absolute user paths, or old three-question startup phrases in release-facing source paths.
+- OK: `python -m compileall -q scripts simulations flowpilot_cockpit tests`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`: repo-owned installed skills fresh, installed skill names unique, Cockpit source files tracked.
+- OK: `python simulations\run_release_tooling_checks.py`: 16 safe states, 15 safe edges, all release hazards detected.
+- OK: `python simulations\run_startup_pm_review_checks.py`: 898 safe states, 897 safe edges, all startup display-surface hazards detected.
+- OK: `python -m unittest tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_cockpit_state_reader tests.test_flowpilot_cockpit_i18n`: 26 tests.
+- OK: `python simulations\run_meta_checks.py`: 533139 states, 553307 edges, no invariant failures, no stuck states, no nonterminating components.
+- OK: `python simulations\run_capability_checks.py`: 520353 states, 545809 edges, no invariant failures, no stuck states, no nonterminating components.
+- OK: `python simulations\run_user_flow_diagram_checks.py`
+- OK: `python simulations\run_defect_governance_checks.py`
+- OK: `git diff --check`: only CRLF normalization warnings.
+- OK with expected pre-commit warning: `python scripts\check_public_release.py --skip-url-check --json`: zero errors, one warning for dirty worktree before commit.
+
+### Findings
+- A releaseable Cockpit change needs an explicit local-sync audit, not only ordinary install presence checks, because installed skills can be present but stale.
+- Duplicate active installed skill names are a real local routing hazard; stale FlowPilot backup skills were moved out of the active Codex skills root before release validation.
+- Cockpit source files must be tracked before release; an untracked native UI package would otherwise make a local demo pass while publishing an incomplete package.
+
+### Counterexamples
+- The release tooling model now detects release preparation while duplicate installed FlowPilot skill names exist.
+- The release tooling model now detects release preparation while Cockpit source files remain untracked.
+
+### Friction Points
+- The local and remote `main` histories currently have no merge base, so the release must integrate `origin/main` without force-push or stop if only destructive publication would work.
+
+### Skipped Steps
+- Network URL checking was skipped in the public release preflight because dependency source shape was already checked and the release gate focused on local source, privacy, install, smoke, and FlowGuard validation.
+
+### Next Actions
+- Integrate remote `main` without force-push, then publish the prepared v0.2.0 source release.

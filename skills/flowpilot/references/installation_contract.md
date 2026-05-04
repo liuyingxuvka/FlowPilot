@@ -13,6 +13,7 @@ Minimum runtime check:
 
 ```powershell
 python scripts/install_flowpilot.py --check
+python scripts/audit_local_install_sync.py
 python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
 python scripts/check_install.py
 ```
@@ -47,15 +48,17 @@ The installer:
 
 - installs or checks `skills/flowpilot/`;
 - checks the real `flowguard` Python package;
-- checks required and companion Codex skills from
+- checks required and optional companion Codex skills from
   `flowpilot.dependencies.json`;
 - reports host-specific capabilities such as `raster_image_generation`;
 - skips already installed skills by default;
 - reports repo-owned installed skills as stale when their content digest differs
   from the repository source;
 - refuses to overwrite system skills;
-- installs missing GitHub-backed skills only when their manifest source is
-  explicit.
+- installs missing GitHub-backed required skills only when their manifest source
+  is explicit;
+- reports missing optional companions as warnings unless the user explicitly
+  requests companion installation with `--include-optional`.
 
 If a companion skill has no public source in the manifest, the installer reports
 that dependency as missing-source instead of guessing or publishing anything.
@@ -67,9 +70,21 @@ from the current checkout:
 python scripts/install_flowpilot.py --install-missing --force --json
 ```
 
+Use `--sync-repo-owned` for the safer normal refresh path. It updates missing
+or stale repository-owned skills from the current checkout without installing
+optional GitHub companion skills by default:
+
+```powershell
+python scripts/install_flowpilot.py --sync-repo-owned --json
+python scripts/audit_local_install_sync.py --json
+```
+
 Without `--force`, an already installed but stale repo-owned skill remains
 installed and the check reports it as not ok; FlowPilot must not describe that
 state as ready.
+
+Use `--include-optional` only when the user wants the installer to fetch
+optional companion skills as well as required dependencies.
 
 Host-specific capabilities are not hard-coded by skill name. Codex may satisfy
 `raster_image_generation` with the built-in `imagegen` skill. Another host may

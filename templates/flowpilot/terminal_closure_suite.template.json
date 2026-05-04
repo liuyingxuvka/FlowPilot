@@ -60,7 +60,10 @@
     "event_log_path": ".flowpilot/runs/<run-id>/generated_resource_events.jsonl",
     "required": true,
     "unresolved_resource_count": null,
+    "pending_resource_count": null,
     "completion_blocked_until_unresolved_zero": true,
+    "completion_blocked_until_pending_zero": true,
+    "all_resources_have_terminal_disposition": false,
     "final_ledger_resource_lineage_checked": false
   },
   "activity_stream": {

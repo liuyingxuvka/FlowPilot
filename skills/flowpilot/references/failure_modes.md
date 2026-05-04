@@ -290,7 +290,9 @@ Keep these failure modes in the model and tests.
   human-review gates, product/process model gates, generated-resource lineage,
   stale evidence, waivers, blockers, and unresolved items. Completion is
   blocked until unresolved count is zero, every generated resource has a
-  consumed/final-output/evidence/superseded/quarantined/discarded disposition,
+  consumed_by_implementation/included_in_final_output/qa_evidence/
+  flowguard_evidence/user_flow_diagram/superseded/quarantined/
+  discarded_with_reason disposition,
   the human-like reviewer has replayed the ledger backward from the final
   product, and the PM has approved the clean ledger.
 - Child-node sidecar scan is the only formal subagent opportunity gate. Parent

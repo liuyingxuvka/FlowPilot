@@ -113,34 +113,6 @@
       ]
     },
     {
-      "name": "concept-led-ui-redesign",
-      "type": "codex_skill",
-      "required": false,
-      "companion": true,
-      "install_name": "concept-led-ui-redesign",
-      "source": {
-        "kind": "github",
-        "repo": "liuyingxuvka/concept-led-ui-redesign-skill",
-        "ref": "main",
-        "path": "concept-led-ui-redesign",
-        "url": "https://github.com/liuyingxuvka/concept-led-ui-redesign-skill/tree/main/concept-led-ui-redesign"
-      },
-      "install": {
-        "mode": "github_skill",
-        "auto_install_missing": true
-      },
-      "release_check": {
-        "missing_source_is_blocker": true
-      },
-      "checks": [
-        {
-          "kind": "skill_file",
-          "path": "SKILL.md",
-          "contains": "name: concept-led-ui-redesign"
-        }
-      ]
-    },
-    {
       "name": "autonomous-concept-ui-redesign",
       "type": "codex_skill",
       "required": false,

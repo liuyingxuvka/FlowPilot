@@ -24,6 +24,10 @@ class State:
     dependency_sources_ready: bool = False
     dependency_sources_reported_missing: bool = False
     flowpilot_install_checked: bool = False
+    repo_owned_skill_sync_checked: bool = False
+    duplicate_installed_skill_names_checked: bool = False
+    duplicate_installed_skill_names_found: bool = False
+    cockpit_source_tracked: bool = False
     missing_dependencies_installed: bool = False
     existing_skill_overwritten: bool = False
     overwrite_force_requested: bool = False
@@ -92,6 +96,24 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, flowpilot_install_checked=True),
         )
         return
+    if not state.repo_owned_skill_sync_checked:
+        yield Transition(
+            "repo_owned_skill_sync_checked",
+            replace(state, repo_owned_skill_sync_checked=True),
+        )
+        return
+    if not state.duplicate_installed_skill_names_checked:
+        yield Transition(
+            "duplicate_installed_skill_names_absent",
+            replace(state, duplicate_installed_skill_names_checked=True),
+        )
+        return
+    if not state.cockpit_source_tracked:
+        yield Transition(
+            "cockpit_source_tracked",
+            replace(state, cockpit_source_tracked=True),
+        )
+        return
     if not state.missing_dependencies_installed:
         yield Transition(
             "missing_dependencies_installed_without_overwrite",
@@ -136,6 +158,11 @@ def invariant_failures(state: State) -> list[str]:
         and state.host_capability_declared
         and state.dependency_sources_checked
         and state.dependency_sources_ready
+        and state.flowpilot_install_checked
+        and state.repo_owned_skill_sync_checked
+        and state.duplicate_installed_skill_names_checked
+        and not state.duplicate_installed_skill_names_found
+        and state.cockpit_source_tracked
         and state.privacy_scan_done
         and not state.tracked_private_state_found
         and state.validation_done
@@ -148,6 +175,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("FlowPilot publish was allowed while dependency sources were missing")
     if state.tracked_private_state_found and state.flowpilot_release_prepared:
         failures.append("FlowPilot release was prepared with tracked private state present")
+    if state.duplicate_installed_skill_names_found and state.flowpilot_release_prepared:
+        failures.append("FlowPilot release was prepared while duplicate installed skill names existed")
+    if state.flowpilot_release_prepared and not state.cockpit_source_tracked:
+        failures.append("FlowPilot release was prepared before Cockpit source files were tracked")
     if state.companion_repo_written or state.companion_skill_packaged or state.companion_skill_published:
         failures.append("release tooling attempted to write, package, or publish a companion skill")
     if state.host_provider_hardcoded_universal:
@@ -178,6 +209,10 @@ def hazard_states() -> dict[str, State]:
             release_checker_written=True,
             dependency_sources_checked=True,
             dependency_sources_ready=True,
+            flowpilot_install_checked=True,
+            repo_owned_skill_sync_checked=True,
+            duplicate_installed_skill_names_checked=True,
+            cockpit_source_tracked=True,
             validation_done=True,
             validation_passed=True,
             flowpilot_release_prepared=True,
@@ -188,8 +223,42 @@ def hazard_states() -> dict[str, State]:
             release_checker_written=True,
             dependency_sources_checked=True,
             dependency_sources_ready=True,
+            flowpilot_install_checked=True,
+            repo_owned_skill_sync_checked=True,
+            duplicate_installed_skill_names_checked=True,
+            cockpit_source_tracked=True,
             privacy_scan_done=True,
             tracked_private_state_found=True,
+            validation_done=True,
+            validation_passed=True,
+            flowpilot_release_prepared=True,
+        ),
+        "release_with_duplicate_installed_skill_names": State(
+            manifest_written=True,
+            installer_written=True,
+            release_checker_written=True,
+            dependency_sources_checked=True,
+            dependency_sources_ready=True,
+            flowpilot_install_checked=True,
+            repo_owned_skill_sync_checked=True,
+            duplicate_installed_skill_names_checked=True,
+            duplicate_installed_skill_names_found=True,
+            cockpit_source_tracked=True,
+            privacy_scan_done=True,
+            validation_done=True,
+            validation_passed=True,
+            flowpilot_release_prepared=True,
+        ),
+        "release_with_untracked_cockpit_source": State(
+            manifest_written=True,
+            installer_written=True,
+            release_checker_written=True,
+            dependency_sources_checked=True,
+            dependency_sources_ready=True,
+            flowpilot_install_checked=True,
+            repo_owned_skill_sync_checked=True,
+            duplicate_installed_skill_names_checked=True,
+            privacy_scan_done=True,
             validation_done=True,
             validation_passed=True,
             flowpilot_release_prepared=True,

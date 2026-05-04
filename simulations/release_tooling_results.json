@@ -7,12 +7,15 @@
           "release tooling attempted to write, package, or publish a companion skill"
         ],
         "state": {
+          "cockpit_source_tracked": false,
           "companion_repo_written": false,
           "companion_skill_packaged": true,
           "companion_skill_published": false,
           "dependency_sources_checked": false,
           "dependency_sources_ready": false,
           "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": false,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": false,
           "flowpilot_install_checked": false,
           "flowpilot_publish_allowed": false,
@@ -25,6 +28,7 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": false,
           "release_checker_written": true,
+          "repo_owned_skill_sync_checked": false,
           "tracked_private_state_found": false,
           "validation_done": false,
           "validation_passed": false
@@ -36,12 +40,15 @@
           "release tooling attempted to write, package, or publish a companion skill"
         ],
         "state": {
+          "cockpit_source_tracked": false,
           "companion_repo_written": false,
           "companion_skill_packaged": false,
           "companion_skill_published": true,
           "dependency_sources_checked": false,
           "dependency_sources_ready": false,
           "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": false,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": false,
           "flowpilot_install_checked": false,
           "flowpilot_publish_allowed": false,
@@ -54,6 +61,7 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": false,
           "release_checker_written": true,
+          "repo_owned_skill_sync_checked": false,
           "tracked_private_state_found": false,
           "validation_done": false,
           "validation_passed": false
@@ -65,12 +73,15 @@
           "release tooling hard-coded a host-specific provider as universal"
         ],
         "state": {
+          "cockpit_source_tracked": false,
           "companion_repo_written": false,
           "companion_skill_packaged": false,
           "companion_skill_published": false,
           "dependency_sources_checked": false,
           "dependency_sources_ready": false,
           "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": false,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": false,
           "flowpilot_install_checked": false,
           "flowpilot_publish_allowed": false,
@@ -83,6 +94,7 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": false,
           "release_checker_written": true,
+          "repo_owned_skill_sync_checked": false,
           "tracked_private_state_found": false,
           "validation_done": false,
           "validation_passed": false
@@ -94,12 +106,15 @@
           "installer overwrote an existing skill without explicit force"
         ],
         "state": {
+          "cockpit_source_tracked": false,
           "companion_repo_written": false,
           "companion_skill_packaged": false,
           "companion_skill_published": false,
           "dependency_sources_checked": true,
           "dependency_sources_ready": false,
           "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": false,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": true,
           "flowpilot_install_checked": false,
           "flowpilot_publish_allowed": false,
@@ -112,6 +127,7 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": false,
           "release_checker_written": false,
+          "repo_owned_skill_sync_checked": false,
           "tracked_private_state_found": false,
           "validation_done": false,
           "validation_passed": false
@@ -121,15 +137,19 @@
         "detected": true,
         "failures": [
           "FlowPilot release was prepared before dependency, privacy, and validation gates passed",
-          "FlowPilot publish was allowed while dependency sources were missing"
+          "FlowPilot publish was allowed while dependency sources were missing",
+          "FlowPilot release was prepared before Cockpit source files were tracked"
         ],
         "state": {
+          "cockpit_source_tracked": false,
           "companion_repo_written": false,
           "companion_skill_packaged": false,
           "companion_skill_published": false,
           "dependency_sources_checked": true,
           "dependency_sources_ready": false,
           "dependency_sources_reported_missing": true,
+          "duplicate_installed_skill_names_checked": false,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": false,
           "flowpilot_install_checked": false,
           "flowpilot_publish_allowed": true,
@@ -142,6 +162,7 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": false,
           "release_checker_written": true,
+          "repo_owned_skill_sync_checked": false,
           "tracked_private_state_found": false,
           "validation_done": false,
           "validation_passed": false
@@ -153,14 +174,17 @@
           "FlowPilot release was prepared before dependency, privacy, and validation gates passed"
         ],
         "state": {
+          "cockpit_source_tracked": true,
           "companion_repo_written": false,
           "companion_skill_packaged": false,
           "companion_skill_published": false,
           "dependency_sources_checked": true,
           "dependency_sources_ready": true,
           "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": true,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": false,
-          "flowpilot_install_checked": false,
+          "flowpilot_install_checked": true,
           "flowpilot_publish_allowed": false,
           "flowpilot_release_prepared": true,
           "host_capability_declared": false,
@@ -171,6 +195,41 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": false,
           "release_checker_written": true,
+          "repo_owned_skill_sync_checked": true,
+          "tracked_private_state_found": false,
+          "validation_done": true,
+          "validation_passed": true
+        }
+      },
+      "release_with_duplicate_installed_skill_names": {
+        "detected": true,
+        "failures": [
+          "FlowPilot release was prepared before dependency, privacy, and validation gates passed",
+          "FlowPilot release was prepared while duplicate installed skill names existed"
+        ],
+        "state": {
+          "cockpit_source_tracked": true,
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": true,
+          "dependency_sources_ready": true,
+          "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": true,
+          "duplicate_installed_skill_names_found": true,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": true,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": true,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": true,
+          "release_checker_written": true,
+          "repo_owned_skill_sync_checked": true,
           "tracked_private_state_found": false,
           "validation_done": true,
           "validation_passed": true
@@ -183,14 +242,17 @@
           "FlowPilot release was prepared with tracked private state present"
         ],
         "state": {
+          "cockpit_source_tracked": true,
           "companion_repo_written": false,
           "companion_skill_packaged": false,
           "companion_skill_published": false,
           "dependency_sources_checked": true,
           "dependency_sources_ready": true,
           "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": true,
+          "duplicate_installed_skill_names_found": false,
           "existing_skill_overwritten": false,
-          "flowpilot_install_checked": false,
+          "flowpilot_install_checked": true,
           "flowpilot_publish_allowed": false,
           "flowpilot_release_prepared": true,
           "host_capability_declared": false,
@@ -201,7 +263,42 @@
           "overwrite_force_requested": false,
           "privacy_scan_done": true,
           "release_checker_written": true,
+          "repo_owned_skill_sync_checked": true,
           "tracked_private_state_found": true,
+          "validation_done": true,
+          "validation_passed": true
+        }
+      },
+      "release_with_untracked_cockpit_source": {
+        "detected": true,
+        "failures": [
+          "FlowPilot release was prepared before dependency, privacy, and validation gates passed",
+          "FlowPilot release was prepared before Cockpit source files were tracked"
+        ],
+        "state": {
+          "cockpit_source_tracked": false,
+          "companion_repo_written": false,
+          "companion_skill_packaged": false,
+          "companion_skill_published": false,
+          "dependency_sources_checked": true,
+          "dependency_sources_ready": true,
+          "dependency_sources_reported_missing": false,
+          "duplicate_installed_skill_names_checked": true,
+          "duplicate_installed_skill_names_found": false,
+          "existing_skill_overwritten": false,
+          "flowpilot_install_checked": true,
+          "flowpilot_publish_allowed": false,
+          "flowpilot_release_prepared": true,
+          "host_capability_declared": false,
+          "host_provider_hardcoded_universal": false,
+          "installer_written": true,
+          "manifest_written": true,
+          "missing_dependencies_installed": false,
+          "overwrite_force_requested": false,
+          "privacy_scan_done": true,
+          "release_checker_written": true,
+          "repo_owned_skill_sync_checked": true,
+          "tracked_private_state_found": false,
           "validation_done": true,
           "validation_passed": true
         }
@@ -211,12 +308,14 @@
   },
   "ok": true,
   "safe_graph": {
-    "edge_count": 12,
+    "edge_count": 15,
     "invariant_failures": [],
     "labels": [
+      "cockpit_source_tracked",
       "dependency_manifest_written",
       "dependency_sources_checked_missing_reported",
       "dependency_sources_checked_ready",
+      "duplicate_installed_skill_names_absent",
       "flowpilot_install_checked",
       "flowpilot_only_release_checker_written",
       "flowpilot_publish_allowed",
@@ -225,10 +324,11 @@
       "installer_written",
       "missing_dependencies_installed_without_overwrite",
       "privacy_scan_passed",
+      "repo_owned_skill_sync_checked",
       "validation_passed"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 13
+    "state_count": 16
   }
 }

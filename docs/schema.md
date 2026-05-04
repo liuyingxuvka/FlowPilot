@@ -72,7 +72,8 @@ chunks until this block and the matching frontier block show:
 
 - `hard_gate_required: true`;
 - `startup_questions` records explicit user answers for run mode,
-  background-agent permission, and scheduled-continuation permission;
+  background-agent permission, scheduled-continuation permission, and display
+  surface;
 - `startup_questions.dialog_stopped_for_user_answers: true`;
 - `startup_questions.banner_emitted_after_answers: true`;
 - `.flowpilot/current.json` points at the same run and `.flowpilot/index.json`
@@ -107,7 +108,7 @@ chunks until this block and the matching frontier block show:
 - `status`: `pending`, `answered`, or `blocked`;
 - `asked_before_banner: true`;
 - `dialog_stopped_for_user_answers: true` records that the assistant response
-  ended immediately after asking the three questions and no startup work ran
+  ended immediately after asking the four questions and no startup work ran
   until the user's later reply;
 - `explicit_user_answer_recorded: true` before the PM can open startup;
 - `answer_source`: `user_reply` or `user_reply_after_prompt`; values such as
@@ -119,6 +120,9 @@ chunks until this block and the matching frontier block show:
   or `single-agent` for single-agent six-role continuity;
 - `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or
   `manual` for manual resume;
+- `answers.display_surface.answer`: `cockpit` to open the native Cockpit UI
+  when startup state is ready, or `chat` to keep displaying route signs in
+  chat;
 - `answer_evidence_path`, `answered_at`, and
   `banner_emitted_after_answers: true`.
 

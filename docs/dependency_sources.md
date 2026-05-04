@@ -17,8 +17,9 @@ state.
 | --- | --- |
 | `model-first-function-flow` | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
 | `grill-me` | `https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me` |
-| `concept-led-ui-redesign` | `https://github.com/liuyingxuvka/concept-led-ui-redesign-skill/tree/main/concept-led-ui-redesign` |
 | `frontend-design` | `https://github.com/anthropics/skills/tree/main/skills/frontend-design` |
+| `design-iterator` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator` |
+| `design-implementation-reviewer` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-implementation-reviewer` |
 
 ## FlowGuard Source
 
@@ -39,6 +40,7 @@ The minimum runtime check is:
 
 ```powershell
 python scripts/install_flowpilot.py --check
+python scripts/audit_local_install_sync.py
 python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
 python scripts/check_install.py
 ```
@@ -58,10 +60,18 @@ truth. The manifest distinguishes:
 - `host_capabilities` for host-specific tools whose names differ across AI
   agents.
 
-`scripts/install_flowpilot.py --install-missing` may install missing
-auto-installable skills only when the manifest has a complete source. It skips
-existing local skills by default and does not publish or mutate companion skill
-repositories.
+`scripts/install_flowpilot.py --install-missing` installs missing
+auto-installable required skills only when the manifest has a complete source.
+Optional companion skills are warning-only by default; pass
+`--include-optional` when the user explicitly wants the installer to fetch
+missing companions. The installer skips existing local skills by default and
+does not publish or mutate companion skill repositories.
+
+Use `scripts/install_flowpilot.py --sync-repo-owned` to refresh stale or
+missing repository-owned Codex skills from the current checkout. Use
+`scripts/audit_local_install_sync.py` before publishing or handoff to confirm
+that repo-owned installed skills are source-fresh, installed skill names are
+unique, and Cockpit source files are tracked.
 
 Host-specific tools are not hard dependencies by name. For example, Codex maps
 the `raster_image_generation` capability to its built-in `imagegen` skill, but

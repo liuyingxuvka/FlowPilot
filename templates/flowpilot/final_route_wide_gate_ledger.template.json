@@ -66,6 +66,7 @@
       "created_by_gate": "<node-or-gate-id>",
       "created_path": "<path-or-null>",
       "disposition": "<consumed_by_implementation|included_in_final_output|qa_evidence|flowguard_evidence|user_flow_diagram|superseded|quarantined|discarded_with_reason>",
+      "terminal_disposition": true,
       "consumed_by": [
         "<node-gate-report-or-output-id>"
       ],
@@ -80,7 +81,18 @@
     "required": true,
     "unresolved_resource_count": null,
     "unresolved_resource_count_zero": false,
-    "ledger_entries_match_final_gate_entries": false
+    "ledger_entries_match_final_gate_entries": false,
+    "pending_dispositions_zero": false,
+    "allowed_terminal_dispositions": [
+      "consumed_by_implementation",
+      "included_in_final_output",
+      "qa_evidence",
+      "flowguard_evidence",
+      "user_flow_diagram",
+      "superseded",
+      "quarantined",
+      "discarded_with_reason"
+    ]
   },
   "entries": [
     {

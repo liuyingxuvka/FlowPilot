@@ -4,7 +4,7 @@
   "route_id": "<route-id-or-null>",
   "route_version": 0,
   "status": "<active|paused|complete>",
-  "purpose": "Canonical run-level ledger for generated artifacts that must be consumed, cited as evidence, superseded, quarantined, or discarded with a reason before completion.",
+  "purpose": "Canonical run-level ledger for generated artifacts. Every item starts as pending and must be resolved to one terminal disposition, with reason and gate linkage where applicable, before completion.",
   "event_log_path": ".flowpilot/runs/<run-id>/generated_resource_events.jsonl",
   "allowed_resource_types": [
     "imagegen_concept",
@@ -30,12 +30,14 @@
   "counts": {
     "total": 0,
     "pending": 0,
-    "consumed": 0,
+    "consumed_by_implementation": 0,
     "included_in_final_output": 0,
-    "evidence": 0,
+    "qa_evidence": 0,
+    "flowguard_evidence": 0,
+    "user_flow_diagram": 0,
     "superseded": 0,
     "quarantined": 0,
-    "discarded": 0,
+    "discarded_with_reason": 0,
     "unresolved": 0
   },
   "resources": [
@@ -59,7 +61,18 @@
   ],
   "completion_policy": {
     "terminal_completion_requires_unresolved_zero": true,
+    "terminal_completion_requires_pending_zero": true,
     "generated_resource_existence_alone_is_not_completion_evidence": true,
-    "final_route_wide_gate_ledger_must_resolve_resource_lineage": true
+    "final_route_wide_gate_ledger_must_resolve_resource_lineage": true,
+    "terminal_dispositions": [
+      "consumed_by_implementation",
+      "included_in_final_output",
+      "qa_evidence",
+      "flowguard_evidence",
+      "user_flow_diagram",
+      "superseded",
+      "quarantined",
+      "discarded_with_reason"
+    ]
   }
 }

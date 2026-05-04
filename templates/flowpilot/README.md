@@ -22,15 +22,17 @@ for review.
    `continues_from_run_id` and write a prior-work import packet that treats old
    runs and project files as input materials. Do not reuse old control state,
    old live-agent IDs, old screenshots, or old route gates as current evidence.
-5. Ask the three startup questions: run mode, background-agent permission, and
-   scheduled-continuation permission. Stop immediately after asking and wait
+5. Ask the four startup questions: run mode, background-agent permission,
+   scheduled-continuation permission, and whether to open Cockpit UI. Stop immediately after asking and wait
    for a later user reply. Do not emit the banner, create route state, load
    child skills, spawn subagents, probe heartbeat, run image generation, or
    start implementation in the question-asking response.
-6. Record all three later user answers explicitly. Do not infer a run mode,
-   background-agent authorization, scheduled-continuation authorization, or
-   fallback execution from invocation text, `.flowpilot/` state, host limits,
-   or previous routes.
+6. Record all four later user answers explicitly. Do not infer a run mode,
+   background-agent authorization, scheduled-continuation authorization,
+   display surface, or fallback execution from invocation text, `.flowpilot/`
+   state, host limits, or previous routes. If the user chose Cockpit, open the
+   Cockpit UI as soon as startup state is ready; if the user chose chat, show
+   the route sign in chat as before.
 7. Emit `startup_banner.template.md` in chat only after the complete explicit
    answer set has been recorded.
 8. Run Grill-me style self-interrogation.
@@ -132,8 +134,10 @@ for review.
 29. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
    collect all effective node gates and child-skill gates, resolve every
-   generated resource with disposition `selected`, `used`, `superseded`,
-   `discarded`, `deleted`, or `quarantined`, replay the standard scenario pack plus node-risk
+   generated resource with terminal disposition `consumed_by_implementation`,
+   `included_in_final_output`, `qa_evidence`, `flowguard_evidence`,
+   `user_flow_diagram`, `superseded`, `quarantined`, or
+   `discarded_with_reason`, replay the standard scenario pack plus node-risk
    scenarios, triage every risk or blindspot, check stale evidence and
    superseded-node explanations, build `terminal_human_backward_replay_map.json`,
    require the reviewer to start from the delivered product and manually replay
@@ -232,8 +236,10 @@ for review.
   linked to a defect.
 - `generated_resource_ledger.template.json`: immediate registry for
   every generated concept, image, icon, screenshot, diagram, model output, or
-  similar resource, with disposition `selected`, `used`, `superseded`,
-  `discarded`, `deleted`, or `quarantined`.
+  similar resource. `pending` is nonterminal; closure requires one of
+  `consumed_by_implementation`, `included_in_final_output`, `qa_evidence`,
+  `flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`, or
+  `discarded_with_reason`.
 - `activity_stream.template.json`: append-only progress stream for PM,
   reviewer, officer, worker, route, checkpoint, heartbeat/manual-resume, and
   terminal events consumed by Cockpit/chat progress.

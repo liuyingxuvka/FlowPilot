@@ -27,9 +27,14 @@ class State:
     run_mode_answered: bool = False
     background_agents_answer: str = "unknown"  # unknown | allow | single-agent | pause
     scheduled_continuation_answer: str = "unknown"  # unknown | allow | manual | pause
+    display_surface_answer: str = "unknown"  # unknown | cockpit | chat | pause
     explicit_user_answer_recorded: bool = False
     agent_self_recorded_authorization: bool = False
     banner_emitted: bool = False
+    cockpit_entry_action_done: bool = False
+    cockpit_ui_opened: bool = False
+    chat_route_sign_displayed: bool = False
+    cockpit_open_failed: bool = False
     run_directory_created: bool = False
     current_pointer_written: bool = False
     run_index_updated: bool = False
@@ -97,6 +102,7 @@ def startup_answers_complete(state: State) -> bool:
         and state.run_mode_answered
         and state.background_agents_answer in {"allow", "single-agent"}
         and state.scheduled_continuation_answer in {"allow", "manual"}
+        and state.display_surface_answer in {"cockpit", "chat"}
         and state.explicit_user_answer_recorded
         and not state.agent_self_recorded_authorization
     )
@@ -145,6 +151,23 @@ def cleanup_matches_request(state: State) -> bool:
     if state.clean_start_requirement == "required":
         return state.old_route_cleanup_done
     return state.clean_start_requirement == "not_required"
+
+
+def display_entry_action_matches_answer(state: State) -> bool:
+    if state.display_surface_answer == "cockpit":
+        return (
+            state.cockpit_entry_action_done
+            and state.cockpit_ui_opened
+            and not state.chat_route_sign_displayed
+            and not state.cockpit_open_failed
+        )
+    if state.display_surface_answer == "chat":
+        return (
+            state.cockpit_entry_action_done
+            and state.chat_route_sign_displayed
+            and not state.cockpit_ui_opened
+        )
+    return False
 
 
 def run_isolation_ready(state: State) -> bool:
@@ -202,6 +225,7 @@ def startup_ready_for_pm_open(state: State) -> bool:
         and state.role_memory_packets_current == REQUIRED_ROLE_MEMORY_PACKETS
         and subagent_decision_matches_answer(state)
         and continuation_matches_answer(state)
+        and display_entry_action_matches_answer(state)
         and cleanup_matches_request(state)
         and reviewer_fact_scope_complete(state)
         and state.startup_review_status == "clean"
@@ -222,7 +246,7 @@ def work_started(state: State) -> bool:
 
 def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.startup_questions_asked:
-        yield Transition("startup_three_questions_asked", replace(state, startup_questions_asked=True))
+        yield Transition("startup_four_questions_asked", replace(state, startup_questions_asked=True))
         return
     if not state.dialog_stopped_for_user_answers:
         yield Transition("startup_dialog_stopped_for_user_answers", replace(state, dialog_stopped_for_user_answers=True))
@@ -237,6 +261,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.scheduled_continuation_answer == "unknown":
         yield Transition("scheduled_continuation_allowed", replace(state, scheduled_continuation_answer="allow"))
         yield Transition("scheduled_continuation_declined_manual", replace(state, scheduled_continuation_answer="manual"))
+        return
+    if state.display_surface_answer == "unknown":
+        yield Transition("cockpit_ui_requested", replace(state, display_surface_answer="cockpit"))
+        yield Transition("chat_route_sign_requested", replace(state, display_surface_answer="chat"))
         return
     if not state.explicit_user_answer_recorded:
         yield Transition("explicit_startup_answers_recorded", replace(state, explicit_user_answer_recorded=True))
@@ -274,6 +302,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if not state.execution_frontier_written:
         yield Transition("execution_frontier_written", replace(state, execution_frontier_written=True))
+        return
+    if not state.cockpit_entry_action_done:
+        if state.display_surface_answer == "cockpit":
+            yield Transition(
+                "cockpit_ui_opened_for_startup",
+                replace(state, cockpit_entry_action_done=True, cockpit_ui_opened=True),
+            )
+        elif state.display_surface_answer == "chat":
+            yield Transition(
+                "startup_route_sign_displayed_in_chat",
+                replace(state, cockpit_entry_action_done=True, chat_route_sign_displayed=True),
+            )
         return
     if not state.crew_ledger_current:
         yield Transition("crew_ledger_current", replace(state, crew_ledger_current=True))
@@ -401,15 +441,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.banner_emitted and not startup_answers_complete(state):
-        failures.append("startup banner emitted before all three explicit startup answers")
+        failures.append("startup banner emitted before all four explicit startup answers")
     if (
         not state.dialog_stopped_for_user_answers
         and (
             state.run_mode_answered
             or state.background_agents_answer != "unknown"
             or state.scheduled_continuation_answer != "unknown"
+            or state.display_surface_answer != "unknown"
             or state.explicit_user_answer_recorded
             or state.banner_emitted
+            or state.cockpit_entry_action_done
+            or state.cockpit_ui_opened
+            or state.chat_route_sign_displayed
             or state.run_directory_created
             or state.current_pointer_written
             or state.run_index_updated
@@ -461,6 +505,16 @@ def invariant_failures(state: State) -> list[str]:
         or state.manual_resume_ready
     ):
         failures.append("agent self-recorded startup authorization without explicit user answer")
+    if state.cockpit_ui_opened and state.display_surface_answer != "cockpit":
+        failures.append("Cockpit UI was opened without the user's startup display answer")
+    if state.chat_route_sign_displayed and state.display_surface_answer != "chat":
+        failures.append("chat route sign was used as startup display despite the user's Cockpit answer")
+    if state.display_surface_answer == "cockpit" and state.startup_review_status == "clean" and not state.cockpit_ui_opened:
+        failures.append("reviewer accepted Cockpit startup display before the UI was opened")
+    if state.display_surface_answer == "chat" and state.startup_review_status == "clean" and not state.chat_route_sign_displayed:
+        failures.append("reviewer accepted chat startup display before the route sign appeared in chat")
+    if state.pm_start_gate_decision == "open" and not display_entry_action_matches_answer(state):
+        failures.append("PM opened startup before the display entry action matched the user's fourth startup answer")
     if state.single_agent_role_continuity_authorized and state.background_agents_answer != "single-agent":
         failures.append("single-agent role continuity was authorized without the user's single-agent answer")
     if state.live_subagents_started and state.background_agents_answer != "allow":
@@ -516,6 +570,7 @@ def _ready_base(**changes: object) -> State:
         run_mode_answered=True,
         background_agents_answer="allow",
         scheduled_continuation_answer="allow",
+        display_surface_answer="cockpit",
         explicit_user_answer_recorded=True,
         banner_emitted=True,
         run_directory_created=True,
@@ -527,6 +582,8 @@ def _ready_base(**changes: object) -> State:
         route_file_written=True,
         canonical_state_written=True,
         execution_frontier_written=True,
+        cockpit_entry_action_done=True,
+        cockpit_ui_opened=True,
         crew_ledger_current=True,
         role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
         live_subagents_started=True,
@@ -559,13 +616,34 @@ def _ready_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
-        "banner_before_three_answers": State(startup_questions_asked=True, run_mode_answered=True, banner_emitted=True),
+        "banner_before_four_answers": State(startup_questions_asked=True, run_mode_answered=True, banner_emitted=True),
         "answers_recorded_without_dialog_stop": State(
             startup_questions_asked=True,
             run_mode_answered=True,
             background_agents_answer="allow",
             scheduled_continuation_answer="allow",
+            display_surface_answer="cockpit",
             explicit_user_answer_recorded=True,
+        ),
+        "cockpit_requested_but_not_opened": _ready_base(
+            cockpit_entry_action_done=False,
+            cockpit_ui_opened=False,
+            pm_start_gate_decision="open",
+            work_beyond_startup_allowed=True,
+        ),
+        "chat_requested_but_not_displayed": _ready_base(
+            display_surface_answer="chat",
+            cockpit_entry_action_done=False,
+            cockpit_ui_opened=False,
+            chat_route_sign_displayed=False,
+            pm_start_gate_decision="open",
+            work_beyond_startup_allowed=True,
+        ),
+        "chat_used_despite_cockpit_answer": _ready_base(
+            cockpit_ui_opened=False,
+            chat_route_sign_displayed=True,
+            pm_start_gate_decision="open",
+            work_beyond_startup_allowed=True,
         ),
         "reviewer_clean_without_fact_checks": _ready_base(
             reviewer_checked_continuation_evidence=False,

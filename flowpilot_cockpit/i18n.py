@@ -1,0 +1,167 @@
+"""Small bilingual string table for the FlowPilot cockpit."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+SUPPORT_URL = "https://paypal.me/Yingxuliu"
+
+
+STRINGS: dict[str, dict[str, str]] = {
+    "en": {
+        "app_title": "FlowPilot Cockpit",
+        "live": "LIVE",
+        "source_ok": "Source OK",
+        "source_degraded": "Source degraded",
+        "settings": "Settings",
+        "support": "Support",
+        "language": "Language",
+        "language_name": "English",
+        "language_toggle": "English",
+        "node_inspector": "Node Inspector",
+        "route_canvas": "Route Canvas",
+        "freshness_events": "Freshness & Events",
+        "route": "Route",
+        "run": "Run",
+        "status": "Status",
+        "active_node": "Active node",
+        "route_version": "Route version",
+        "workspace": "Workspace",
+        "required_gates": "Required gates",
+        "evidence": "Evidence",
+        "source_findings": "Source findings",
+        "no_findings": "No source findings",
+        "no_nodes": "No route nodes found",
+        "watching": "Watching source files",
+        "last_scan": "Last scan",
+        "auto_refresh": "Auto refresh",
+        "tray_restore": "Restore cockpit",
+        "tray_exit": "Exit FlowPilot Cockpit",
+        "tray_minimized": "FlowPilot Cockpit is still watching in the tray.",
+        "settings_title": "Cockpit Settings",
+        "settings_intro": "Preferences apply immediately to the whole cockpit.",
+        "support_title": "Support the project",
+        "support_body": "Open the support page if FlowPilot saves you time. This is appreciation only; it does not create warranty, priority support, commercial rights, or feature commitments.",
+        "open_support": "Open support page",
+        "close": "Close",
+        "selected": "Selected",
+        "active": "Active",
+        "pending": "Pending",
+        "complete": "Complete",
+        "running": "Running",
+        "blocked": "Blocked",
+        "degraded": "Degraded",
+        "unknown": "Unknown",
+        "event_time": "Time",
+        "event_level": "Level",
+        "event_source": "Source",
+        "event": "Event",
+        "event_detail": "Detail",
+        "level_info": "Info",
+        "current": "Current",
+        "flow_loaded": "Route loaded",
+        "frontier_loaded": "Execution frontier loaded",
+        "state_loaded": "State loaded",
+        "evidence_loaded": "Evidence loaded",
+        "file_changed": "Source changed",
+        "health_ok": "Healthy",
+        "health_degraded": "Needs attention",
+    },
+    "zh": {
+        "app_title": "FlowPilot 驾驶舱",
+        "live": "实时",
+        "source_ok": "来源正常",
+        "source_degraded": "来源降级",
+        "settings": "设置",
+        "support": "支持",
+        "language": "语言",
+        "language_name": "中文",
+        "language_toggle": "中文",
+        "node_inspector": "节点检查器",
+        "route_canvas": "路线画布",
+        "freshness_events": "新鲜度与事件",
+        "route": "路线",
+        "run": "任务",
+        "status": "状态",
+        "active_node": "当前节点",
+        "route_version": "路线版本",
+        "workspace": "工作区",
+        "required_gates": "必需关卡",
+        "evidence": "证据",
+        "source_findings": "来源问题",
+        "no_findings": "没有来源问题",
+        "no_nodes": "没有找到路线节点",
+        "watching": "正在监听来源文件",
+        "last_scan": "上次扫描",
+        "auto_refresh": "自动更新",
+        "tray_restore": "恢复驾驶舱",
+        "tray_exit": "真正退出 FlowPilot 驾驶舱",
+        "tray_minimized": "FlowPilot 驾驶舱仍在托盘中监听。",
+        "settings_title": "驾驶舱设置",
+        "settings_intro": "偏好会立刻应用到整个驾驶舱。",
+        "support_title": "支持项目",
+        "support_body": "如果 FlowPilot 节省了你的时间，可以打开支持页面请作者喝杯咖啡。这只是表达感谢，不包含保修、优先支持、商业权利或功能承诺。",
+        "open_support": "打开支持页面",
+        "close": "关闭",
+        "selected": "已选中",
+        "active": "活动",
+        "pending": "待处理",
+        "complete": "完成",
+        "running": "运行中",
+        "blocked": "阻塞",
+        "degraded": "降级",
+        "unknown": "未知",
+        "event_time": "时间",
+        "event_level": "级别",
+        "event_source": "来源",
+        "event": "事件",
+        "event_detail": "详情",
+        "level_info": "信息",
+        "current": "当前",
+        "flow_loaded": "路线已加载",
+        "frontier_loaded": "执行前线已加载",
+        "state_loaded": "状态已加载",
+        "evidence_loaded": "证据已加载",
+        "file_changed": "来源已变化",
+        "health_ok": "健康",
+        "health_degraded": "需关注",
+    },
+}
+
+
+STATUS_KEY = {
+    "active": "active",
+    "running": "running",
+    "in_progress": "running",
+    "complete": "complete",
+    "completed": "complete",
+    "succeeded": "complete",
+    "pending": "pending",
+    "new": "pending",
+    "blocked": "blocked",
+    "failed": "blocked",
+    "error": "blocked",
+    "degraded": "degraded",
+}
+
+
+@dataclass
+class Translator:
+    language: str = "en"
+
+    def set_language(self, language: str) -> None:
+        if language not in STRINGS:
+            raise ValueError(f"Unsupported language: {language}")
+        self.language = language
+
+    def t(self, key: str) -> str:
+        table = STRINGS.get(self.language, STRINGS["en"])
+        return table.get(key, STRINGS["en"].get(key, key))
+
+    def status(self, status: str) -> str:
+        return self.t(STATUS_KEY.get(status, "unknown"))
+
+
+def available_languages() -> tuple[str, ...]:
+    return tuple(STRINGS)

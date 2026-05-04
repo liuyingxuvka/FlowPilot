@@ -16,8 +16,10 @@ CHECK_STATE_LIMIT = 900_000
 
 
 REQUIRED_LABELS = (
-    "startup_three_questions_asked",
+    "startup_four_questions_asked",
     "startup_dialog_stopped_for_user_answers",
+    "startup_display_surface_answered",
+    "startup_display_entry_action_done",
     "startup_banner_emitted",
     "mode_choice_offered",
     "mode_selected_by_user",
