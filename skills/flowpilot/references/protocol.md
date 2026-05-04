@@ -58,7 +58,7 @@ long-form public explanation lives in `docs/protocol.md`.
    The main assistant becomes the controller for packet flow, not the default
    implementation worker.
 10. Before PM product-function synthesis or route decisions, require a
-    PM-authored material-intake `NODE_PACKET` and reviewer dispatch approval.
+    PM-authored material-intake packet envelope/body pair and reviewer dispatch approval.
     The authorized worker writes
     `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,
@@ -234,10 +234,11 @@ long-form public explanation lives in `docs/protocol.md`.
     state/frontier/crew/continuation evidence is a shadow route and must be
     quarantined or superseded before continuing.
 38. Start only the first packet-gated chunk whose continuation mode is known.
-    The PM writes a `NODE_PACKET`, the reviewer approves dispatch, the worker
-    receives only that packet, and the worker returns `NODE_RESULT` before
-    stopping for the next packet. The controller relays result -> reviewer ->
-    PM -> next packet and continues internally when `stop_for_user: false`.
+    The PM writes a packet envelope/body pair, the reviewer approves dispatch,
+    the worker receives only that envelope plus the body addressed to its role,
+    and the worker returns a result envelope/body pair before stopping for the
+    next packet. The controller relays result envelope -> reviewer -> PM ->
+    next packet envelope and continues internally when `stop_for_user: false`.
     Every PM decision to the controller must include a controller reminder:
     the main assistant is only the packet-flow controller and must not
     implement, install, edit, test, approve, or advance from its own evidence.
@@ -278,8 +279,8 @@ answer set is complete.
 ## Material Intake And PM Handoff
 
 Before PM product-function architecture, contract freeze, route generation, or
-capability routing, the PM writes a material-intake `NODE_PACKET`, the reviewer
-approves dispatch, and an authorized worker writes
+capability routing, the PM writes a material-intake packet envelope/body pair,
+the reviewer approves dispatch, and an authorized worker writes
 `.flowpilot/runs/<run-id>/material_intake_packet.json`. It inventories user-provided and
 repository-local materials, summarizes what each source appears to contain,
 classifies authority, freshness, completeness, contradictions, privacy/safety

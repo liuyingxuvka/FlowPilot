@@ -1,0 +1,57 @@
+{
+  "schema_version": "flowpilot.packet_envelope.v1",
+  "packet_id": "<packet-id>",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "node_id": "<node-id>",
+  "is_current_node": true,
+  "created_at": "<iso-8601-timestamp>",
+  "from_role": "project_manager",
+  "to_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
+  "return_to": "controller",
+  "next_holder": "<Controller|WorkerA|WorkerB|Reviewer|ProcessFlowGuardOfficer|ProductFlowGuardOfficer|PM>",
+  "body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",
+  "body_hash": "<sha256-of-packet-body>",
+  "body_hash_algorithm": "sha256",
+  "supersedes_packet_id": null,
+  "stale_after_route_version": 0,
+  "controller_visibility": "envelope_only",
+  "controller_allowed_actions": [
+    "read_packet_envelope",
+    "update_packet_holder_and_status",
+    "relay_envelope_to_to_role",
+    "display_chat_mermaid_when_required",
+    "emit_holder_change_status_update",
+    "wait_for_role_return",
+    "return_envelope_to_pm_on_blocker"
+  ],
+  "controller_forbidden_actions": [
+    "read_packet_body",
+    "edit_packet_body",
+    "execute_packet_body",
+    "implement_worker_scope",
+    "generate_worker_artifacts",
+    "run_product_validation_for_worker_scope",
+    "approve_gate",
+    "close_node",
+    "change_to_role",
+    "rewrite_body_hash",
+    "relabel_wrong_role_origin"
+  ],
+  "body_access": {
+    "target_role_only": true,
+    "allowed_reader_roles": [
+      "<same-as-to_role>"
+    ],
+    "controller_can_read_body": false,
+    "reviewer_can_read_body_after_result_return": true,
+    "pm_can_read_body_for_reissue_or_completion": true
+  },
+  "integrity_policy": {
+    "body_hash_required": true,
+    "body_hash_mismatch_blocks_dispatch": true,
+    "stale_body_after_route_mutation_blocks_dispatch": true,
+    "wrong_holder_blocks_dispatch": true
+  }
+}

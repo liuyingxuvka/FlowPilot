@@ -26,12 +26,16 @@ All notable changes to FlowPilot will be documented in this file.
   worker execution, and blocks ambiguous worker state for PM recovery.
 - Updated local install sync checks to require the legacy Cockpit prototype to
   be absent from the active tree before a clean UI restart.
+- Updated install and local-sync audits to fail if retired external recovery
+  scripts, prompts, or templates reappear in the active source tree.
 
 ### Removed
 
 - Removed the previous native Cockpit prototype from the active source tree so
   the next Windows desktop UI can be rebuilt from scratch without reusing old
   UI assets or implementation code.
+- Removed the retired external recovery scripts, Windows task helper, prompt,
+  template, and obsolete findings page from the active source tree.
 
 ### Fixed
 
@@ -39,6 +43,9 @@ All notable changes to FlowPilot will be documented in this file.
   both languages describe the current source package consistently.
 - Removed post-`v0.2.0` changes from the `0.2.0` changelog section so the
   changelog matches the actual git tag boundary.
+- Replaced the accumulated preflight findings page with the current effective
+  FlowPilot continuation and startup boundaries so old recovery notes are not
+  mistaken for live protocol.
 
 ## 0.2.0 - 2026-05-04
 

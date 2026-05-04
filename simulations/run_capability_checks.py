@@ -220,6 +220,8 @@ REQUIRED_LABELS = (
     "worker_output_ready_for_review",
     "pm_review_release_order_written",
     "pm_released_reviewer_for_current_gate",
+    "packet_envelope_body_audit_done",
+    "packet_role_origin_audit_done",
     "implementation_human_review_context_loaded",
     "implementation_human_neutral_observation_written",
     "implementation_human_manual_experiments_run",
@@ -463,6 +465,10 @@ def _state_id(state: model.State) -> str:
         f"{state.worker_output_ready_for_review},"
         f"{state.pm_review_release_order_written},"
         f"{state.pm_released_reviewer_for_current_gate}|"
+        f"envelope_body={state.packet_envelope_body_audit_done},"
+        f"role_origin={state.packet_role_origin_audit_done},"
+        f"{state.packet_result_author_verified},"
+        f"{state.packet_result_author_matches_assignment}|"
         f"quality={state.quality_package_done},"
         f"{state.quality_candidate_registry_checked},"
         f"{state.quality_raise_decision_recorded},"

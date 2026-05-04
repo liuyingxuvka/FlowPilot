@@ -304,6 +304,17 @@ class State:
     worker_output_ready_for_review: bool = False
     pm_review_release_order_written: bool = False
     pm_released_reviewer_for_current_gate: bool = False
+    packet_envelope_body_audit_done: bool = False
+    packet_envelope_to_role_checked: bool = False
+    packet_body_hash_verified: bool = False
+    result_envelope_checked: bool = False
+    result_body_hash_verified: bool = False
+    completed_agent_id_role_verified: bool = False
+    controller_body_boundary_verified: bool = False
+    wrong_role_relabel_forbidden_verified: bool = False
+    packet_role_origin_audit_done: bool = False
+    packet_result_author_verified: bool = False
+    packet_result_author_matches_assignment: bool = False
     node_human_review_context_loaded: bool = False
     node_human_neutral_observation_written: bool = False
     node_human_manual_experiments_run: bool = False
@@ -443,6 +454,17 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "worker_output_ready_for_review": False,
         "pm_review_release_order_written": False,
         "pm_released_reviewer_for_current_gate": False,
+        "packet_envelope_body_audit_done": False,
+        "packet_envelope_to_role_checked": False,
+        "packet_body_hash_verified": False,
+        "result_envelope_checked": False,
+        "result_body_hash_verified": False,
+        "completed_agent_id_role_verified": False,
+        "controller_body_boundary_verified": False,
+        "wrong_role_relabel_forbidden_verified": False,
+        "packet_role_origin_audit_done": False,
+        "packet_result_author_verified": False,
+        "packet_result_author_matches_assignment": False,
         "inspection_issue_grilled": False,
         "composite_backward_context_loaded": False,
         "composite_child_evidence_replayed": False,
@@ -1101,6 +1123,17 @@ class AutopilotStep:
         "worker_output_ready_for_review",
         "pm_review_release_order_written",
         "pm_released_reviewer_for_current_gate",
+        "packet_envelope_body_audit_done",
+        "packet_envelope_to_role_checked",
+        "packet_body_hash_verified",
+        "result_envelope_checked",
+        "result_body_hash_verified",
+        "completed_agent_id_role_verified",
+        "controller_body_boundary_verified",
+        "wrong_role_relabel_forbidden_verified",
+        "packet_role_origin_audit_done",
+        "packet_result_author_verified",
+        "packet_result_author_matches_assignment",
         "node_human_review_context_loaded",
         "node_human_neutral_observation_written",
         "node_human_manual_experiments_run",
@@ -4734,6 +4767,33 @@ class AutopilotStep:
                     label="pm_released_reviewer_for_current_gate",
                     action="project manager explicitly releases the reviewer to start current-gate review after worker output is ready",
                     pm_released_reviewer_for_current_gate=True,
+                    active_node="review_packet_role_origin",
+                )
+                return
+            if not state.packet_envelope_body_audit_done:
+                yield _step(
+                    state,
+                    label="packet_envelope_body_audit_done",
+                    action="human-like reviewer checks packet envelope to_role, packet body hash, result envelope completed_by_role and completed_by_agent_id, result body hash, controller body-access boundary, and no wrong-role relabel before content review",
+                    packet_envelope_body_audit_done=True,
+                    packet_envelope_to_role_checked=True,
+                    packet_body_hash_verified=True,
+                    result_envelope_checked=True,
+                    result_body_hash_verified=True,
+                    completed_agent_id_role_verified=True,
+                    controller_body_boundary_verified=True,
+                    wrong_role_relabel_forbidden_verified=True,
+                    active_node="review_packet_role_origin",
+                )
+                return
+            if not state.packet_role_origin_audit_done:
+                yield _step(
+                    state,
+                    label="packet_role_origin_audit_done",
+                    action="human-like reviewer verifies every packet's PM author, reviewer dispatch, assigned worker, and actual result author after envelope/body integrity passes",
+                    packet_role_origin_audit_done=True,
+                    packet_result_author_verified=True,
+                    packet_result_author_matches_assignment=True,
                     active_node="load_human_inspection_context",
                 )
                 return
@@ -5411,9 +5471,20 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
         and state.worker_output_ready_for_review
         and state.pm_review_release_order_written
         and state.pm_released_reviewer_for_current_gate
+        and state.packet_envelope_body_audit_done
+        and state.packet_envelope_to_role_checked
+        and state.packet_body_hash_verified
+        and state.result_envelope_checked
+        and state.result_body_hash_verified
+        and state.completed_agent_id_role_verified
+        and state.controller_body_boundary_verified
+        and state.wrong_role_relabel_forbidden_verified
+        and state.packet_role_origin_audit_done
+        and state.packet_result_author_verified
+        and state.packet_result_author_matches_assignment
     ):
         return InvariantResult.fail(
-            "human-like reviewer started current-node review before PM release order after worker output readiness"
+            "human-like reviewer started current-node review before PM release order, envelope/body audit, and per-packet role-origin audit"
         )
     if state.pm_review_release_order_written and not state.worker_output_ready_for_review:
         return InvariantResult.fail(

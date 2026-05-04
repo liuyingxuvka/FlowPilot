@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 555313,
+    "edge_count": 565393,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -160,6 +160,8 @@
       "non_ui_implemented",
       "officer_model_report_provenance_policy_recorded",
       "officer_owned_async_modeling_policy_recorded",
+      "packet_envelope_body_audit_done",
+      "packet_role_origin_audit_done",
       "parent_backward_review_targets_enumerated",
       "parent_backward_structural_trigger_rule_recorded",
       "pm_capability_work_decision_recorded",
@@ -285,29 +287,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 529853,
+    "state_count": 539933,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 555313,
+    "edge_count": 565393,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 529853,
+    "state_count": 539933,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 555313,
+    "edge_count": 565393,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 529853,
+    "state_count": 539933,
     "status": "OK",
     "success_state_count": 4368
   }

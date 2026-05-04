@@ -3,6 +3,45 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-04 - Retired Recovery Residue Cleanup
+
+- Trigger: the user observed that FlowPilot runs could still refer to old
+  long-cadence recovery evidence, suggesting active prompts or required reading
+  still contained historical design residue.
+- Decision: `use_flowguard`.
+- Scope updated:
+  - deleted the retired recovery scripts, prompt, template, helper, and obsolete
+    findings page from the active source tree;
+  - replaced the preflight findings page with the current effective
+    heartbeat-only continuation, packet-control, PM/reviewer, and startup
+    display fallback boundaries;
+  - kept the retired recovery state filename ignored so old local residue or
+    backups cannot be accidentally committed;
+  - added install and local-sync checks that fail if retired recovery source
+    paths reappear;
+  - synchronized the installed `flowpilot` Codex skill and verified source
+    freshness.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema
+    `1.0`;
+  - `python -m py_compile scripts\audit_local_install_sync.py scripts\check_install.py scripts\install_flowpilot.py`;
+  - `python scripts\check_install.py`;
+  - `python simulations\run_meta_checks.py`;
+  - `python simulations\run_capability_checks.py`;
+  - `python simulations\run_startup_pm_review_checks.py`;
+  - `python scripts\install_flowpilot.py --sync-repo-owned --json`;
+  - `python scripts\audit_local_install_sync.py --json`;
+  - `python scripts\install_flowpilot.py --check --json`;
+  - `python scripts\smoke_autopilot.py`.
+- Results:
+  - install self-check and local sync audit passed;
+  - installed `flowpilot` source digest matched the repository source digest;
+  - meta, capability, and startup PM-review models passed with zero invariant
+    failures;
+  - smoke autopilot passed;
+  - remaining exact retired source path strings are confined to absence
+    guardrails.
+
 ## 2026-05-04 - FlowPilot v0.2.1 Release Metadata And Tag Preflight
 
 - Trigger: after the post-`v0.2.0` controller, PM/reviewer, heartbeat, and
@@ -352,52 +391,18 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   - `python scripts\check_install.py`
   - `python scripts\smoke_autopilot.py`
 
-## 2026-05-02 - Control Surface Protocol Patches
+## 2026-05-02 - Retired Recovery Prototype History
 
-- Trigger: the watchdog must not inspect unreliable background-agent busy state, and FlowPilot needed the four protocol patches for local busy leases, Mermaid route maps, role identity, and source drift evidence.
-- Decision: `use_flowguard`.
-- Models updated: `.flowpilot/task-models/control-surface-protocol-patches/`, `.flowpilot/task-models/external-watchdog-loop/`, `simulations/meta_model.py`, and `simulations/capability_model.py`.
-- Main findings:
-  - Long operations now require the busy-lease wrapper policy and terminal checkpoints require cleared leases.
-  - Watchdog decisions trust only `state.json`, latest heartbeat evidence, and `busy_lease.json`.
-  - `execution_frontier.json`, lifecycle records, automation metadata, and global records are diagnostic drift signals only.
-  - Live subagent busy state is explicitly not inspected.
-  - Visible route maps must be backed by refreshed Mermaid artifacts after route creation or mutation.
-  - Role identity is split into `role_key`, `display_name`, and diagnostic-only `agent_id`.
-- Validation:
-  - `python .flowpilot\task-models\control-surface-protocol-patches\run_checks.py`
-  - `python .flowpilot\task-models\external-watchdog-loop\run_checks.py`
-  - `python simulations\run_meta_checks.py`
-  - `python simulations\run_capability_checks.py`
-  - `python scripts\check_install.py`
-  - `python scripts\smoke_autopilot.py`
-  - `python scripts\flowpilot_watchdog.py --root . --dry-run --json`
-  - `python scripts\flowpilot_run_with_busy_lease.py --root . --operation "wrapper smoke" --max-minutes 1 --json -- python -c "print('lease-wrapper-ok')"`
-
-## 2026-05-02 - Global Supervisor Lifecycle
-
-- Trigger: user-level global supervisor checks were creating too many Codex conversations, and the user requested the agreed fixed 30-minute design rather than the earlier quiet thread-bound draft.
-- Decision: `use_flowguard`.
-- Models updated: `.flowpilot/task-models/global-reset-supervisor/`, `simulations/meta_model.py`, and `simulations/capability_model.py`.
-- Main findings:
-  - The user-level global supervisor cadence is fixed at 30 minutes and is not configurable.
-  - Heartbeat mode refreshes a per-project active registration lease before global supervisor singleton setup.
-  - Pause, stop, completion, terminal state, manual stop, missing project state, unreadable project state, and expired leases make a project ineligible for reset.
-  - Teardown order is project unregister first, project watchdog/heartbeat shutdown next, and user-level global supervisor deletion last only after empty-registry confirmation.
-  - The first model pass caught an ordering bug where terminal event expiry could delete the global supervisor while this project registration was still active; the terminal path now unregisters first.
-- Validation:
-  - `python .flowpilot\task-models\global-reset-supervisor\run_checks.py`
-  - `python simulations\run_meta_checks.py`
-  - `python simulations\run_capability_checks.py`
-  - `python -m py_compile` on touched Python files
-  - `python scripts\flowpilot_global_supervisor.py --status --json`
-  - `python scripts\flowpilot_watchdog.py --root . --dry-run --json`
-  - `python scripts\flowpilot_lifecycle.py --root . --json`
-  - `python scripts\flowpilot_global_supervisor.py --refresh-registration --root . --heartbeat-automation-id flowpilot-route-021-stable-heartbeat --dry-run --json`
-  - `python scripts\flowpilot_global_supervisor.py --unregister-project --root . --unregister-reason smoke --dry-run --json`
-  - `python scripts\check_install.py`
-  - `python scripts\smoke_autopilot.py`
-  - installed skill hash match plus quick validation
+- Historical status: superseded on 2026-05-04.
+- Original scope: a broader recovery prototype explored local activity leases,
+  reset orchestration, source-drift diagnostics, route-map refresh, and role
+  identity separation.
+- Current interpretation:
+  - route maps and role identity remain relevant protocol work;
+  - the recovery prototype itself is not an active FlowPilot requirement;
+  - current startup, continuation, install, and lifecycle behavior must follow
+    the 2026-05-04 current findings and executable checks instead of this
+    historical prototype.
 
 ## 2026-05-02 - User Flow Diagram Display Policy
 
@@ -659,9 +664,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Models updated: `simulations/startup_pm_review_model.py`, `simulations/meta_model.py`, `simulations/capability_model.py`.
 
 ### Modeled Risks
-- Reviewer accepts a 30-minute route heartbeat where route heartbeat must be one minute.
-- Reviewer accepts Codex cron as the external watchdog instead of a Windows scheduled task.
-- Reviewer accepts missing Windows watchdog task, missing global supervisor evidence, or missing global registry evidence.
+- Reviewer accepts stale or retired recovery evidence as current startup proof.
 - Reviewer writes a clean report without direct fact checks.
 - Reviewer opens startup directly.
 - PM opens without a clean factual report, opens a blocked report, or accepts worker remediation without reviewer recheck.
@@ -765,14 +768,14 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Commands
 - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
-- `python -m py_compile scripts\flowpilot_paths.py scripts\flowpilot_user_flow_diagram.py scripts\flowpilot_busy_lease.py scripts\flowpilot_run_with_busy_lease.py scripts\flowpilot_lifecycle.py scripts\flowpilot_global_supervisor.py scripts\flowpilot_watchdog.py simulations\startup_pm_review_model.py simulations\run_startup_pm_review_checks.py simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py scripts\smoke_autopilot.py`
+- `python -m py_compile` on the touched path, lifecycle, diagram, startup, meta,
+  capability, install, and smoke scripts
 - `python simulations\run_startup_pm_review_checks.py`
 - `python simulations\run_meta_checks.py`
 - `python simulations\run_capability_checks.py`
 - `python scripts\check_install.py`
 - `python scripts\smoke_autopilot.py`
 - `python scripts\flowpilot_user_flow_diagram.py --root . --json`
-- `python scripts\flowpilot_busy_lease.py status --root . --json`
 - `python scripts\flowpilot_lifecycle.py --root . --mode pause --json`
 - `git diff --check`
 
@@ -1877,3 +1880,87 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Future FlowPilot startup implementations should write `startup_capability_resolution`, reviewer capability probes, and PM fallback decisions before opening work beyond startup.
+
+
+## flowpilot-packet-role-origin-audit - Require reviewer-verified packet author ownership
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User required every packet/result review to verify the actual responsible actor produced the work, and to reject controller-authored work products as boundary violations.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T15:00:00+02:00
+- Ended: 2026-05-04T15:27:24+02:00
+
+### Model Files
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py skills\flowpilot\assets\packet_control_plane_model.py skills\flowpilot\assets\run_packet_control_plane_checks.py scripts\check_install.py`
+- OK: JSON parse checks for touched FlowPilot templates
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py`: no invariant violations, no dead branches, no reachability failures
+- OK: `python simulations\run_meta_checks.py`: no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python simulations\run_capability_checks.py`: no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python -m unittest tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+
+### Findings
+- Reviewer now has an explicit per-packet role-origin audit gate before content review can pass.
+- Controller-authored or unassigned-origin work products are blocked, require controller warning, and require PM repair or reissue.
+- Installed `flowpilot` skill copy was synchronized after the source change.
+
+### Counterexamples
+- The packet model now covers the case where Controller submits work as if it were the responsible worker; the route blocks instead of passing review.
+
+### Skipped Steps
+- No release, remote push, or publication action was taken.
+
+### Next Actions
+- Future packet templates should preserve `role_origin_audit` fields as a hard reviewer gate, not optional evidence.
+
+
+## flowpilot-packet-envelope-body-control-plane - Enforce envelope/body packet routing
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested the full packet envelope/body mechanism so Controller only routes envelopes and cannot read/execute worker bodies or close gates from controller-origin work.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T15:35:00+02:00
+- Ended: 2026-05-04T16:04:49+02:00
+
+### Model Files
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py skills\flowpilot\assets\packet_control_plane_model.py skills\flowpilot\assets\run_packet_control_plane_checks.py scripts\check_install.py`
+- OK: JSON parse for all `templates/flowpilot/**/*.json`: 55 templates
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py`: 18 traces, no invariant violations, no dead branches, no reachability failures
+- OK: `python -m unittest tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram`: 23 tests
+- OK: `python scripts\check_install.py`: installed-template and retired-path checks passed
+- OK: `python simulations\run_meta_checks.py`: 568935 states, 589107 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python simulations\run_capability_checks.py`: 539933 states, 565393 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`: `flowpilot` source_fresh true
+- OK: `python scripts\audit_local_install_sync.py --json`: repo-owned installed skills fresh
+- OK: `git diff --check`: only Windows line-ending warnings
+
+### Findings
+- Added packet envelope/body and result envelope/body templates plus controller status packets.
+- `packet_ledger` is now `flowpilot.packet_ledger.v2` and records envelope/body paths, hashes, holder history, controller envelope-only visibility, result envelope author fields, and envelope-aware role-origin audit fields.
+- Reviewer/PM gates now require `packet_envelope_body_audit_done` before content review, then the existing per-packet role-origin audit.
+- The packet model blocks controller body reads, controller body execution, wrong delivery, packet/result body hash mismatch, stale body reuse, wrong-role result completion, and controller-origin artifacts.
+- Installed `flowpilot` skill copy was synchronized with repository source.
+
+### Counterexamples
+- Model preflight initially showed heartbeat resume of an existing worker result could bypass packet-envelope/hash evidence if prior ledger checks were not modeled. The heartbeat branch now loads prior packet envelope and body hash checks before reviewer review.
+
+### Skipped Steps
+- No UI redesign, release, remote push, or publication action was taken.
+
+### Next Actions
+- Future FlowPilot runtime work should instantiate `packets/<packet-id>/packet_envelope.json`, `packet_body.md`, `result_envelope.json`, `result_body.md`, and `controller_status_packet.json` from these templates for real route runs.

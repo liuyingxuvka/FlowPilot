@@ -26,12 +26,64 @@ class FlowPilotControlGateTests(unittest.TestCase):
             worker_output_ready_for_review=True,
             pm_review_release_order_written=True,
             pm_released_reviewer_for_current_gate=True,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
             node_human_review_context_loaded=True,
         )
 
         result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
 
         self.assertTrue(result.ok)
+
+    def test_meta_reviewer_requires_packet_role_origin_audit(self) -> None:
+        state = meta_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_review_release_order_written=True,
+            pm_released_reviewer_for_current_gate=True,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=False,
+            node_human_review_context_loaded=True,
+        )
+
+        result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
+
+        self.assertFalse(result.ok)
+        self.assertIn("role-origin audit", result.message)
+
+    def test_meta_reviewer_requires_packet_envelope_body_audit(self) -> None:
+        state = meta_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_review_release_order_written=True,
+            pm_released_reviewer_for_current_gate=True,
+            packet_envelope_body_audit_done=False,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
+            node_human_review_context_loaded=True,
+        )
+
+        result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
+
+        self.assertFalse(result.ok)
+        self.assertIn("envelope/body audit", result.message)
 
     def test_meta_resume_requires_rehydration_report_before_pm(self) -> None:
         state = meta_model.State(
@@ -66,6 +118,53 @@ class FlowPilotControlGateTests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("PM release order", result.message)
+
+    def test_capability_reviewer_requires_packet_role_origin_audit(self) -> None:
+        state = capability_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_review_release_order_written=True,
+            pm_released_reviewer_for_current_gate=True,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=False,
+            implementation_human_review_context_loaded=True,
+        )
+
+        result = capability_model.pm_review_release_controls_reviewer_start(
+            state,
+            trace=(),
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("role-origin audit", result.message)
+
+    def test_capability_reviewer_requires_packet_envelope_body_audit(self) -> None:
+        state = capability_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_review_release_order_written=True,
+            pm_released_reviewer_for_current_gate=True,
+            packet_envelope_body_audit_done=False,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
+            implementation_human_review_context_loaded=True,
+        )
+
+        result = capability_model.pm_review_release_controls_reviewer_start(
+            state,
+            trace=(),
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("envelope/body audit", result.message)
 
     def test_capability_resume_requires_host_kind_evidence(self) -> None:
         state = capability_model.State(

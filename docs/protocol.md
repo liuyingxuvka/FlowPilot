@@ -498,6 +498,44 @@ manager approves route inclusion, route mutation, parent return, and final
 child-to-parent closure. Authorized workers may draft evidence or
 implementation output, but their self-approval is invalid.
 
+Every packet has a mandatory role-origin audit. Before a reviewer passes any
+packet result, the reviewer checks the PM-authored packet, the reviewer
+dispatch approval, the assigned worker or authorized role, and the actual
+result author. If the actual author is the controller, unknown, or different
+from the assigned role, the reviewer must return
+`block_invalid_role_origin`, record the controller-boundary warning, and send
+the packet back to PM for reissue, repair by the assigned role, quarantine,
+route mutation, user block, or stop. Controller-origin evidence cannot be
+accepted as "good enough" and cannot be repaired by the controller itself.
+
+Work packets use an envelope/body split. The PM gives the controller only a
+`packet_envelope` with `packet_id`, `from_role`, `to_role`, `node_id`,
+`is_current_node`, `body_path`, `body_hash`, `return_to`, `next_holder`, and
+controller allowed/forbidden actions. The detailed packet body lives at the
+referenced body path and is readable only by the addressed role, with reviewer
+and PM access limited to review, repair, or completion decisions. The
+controller may read envelopes, update holder/status, relay envelopes, display
+the required route sign, wait for returns, and ask PM for the next decision.
+The controller may not read or execute packet/result bodies, implement code,
+generate assets, run product validation, approve gates, close nodes, rewrite
+hashes, or relabel a wrong-role completion.
+
+Worker, reviewer, officer, and PM returns use the same envelope/body split.
+The returning role gives the controller a `result_envelope` naming
+`packet_id`, `completed_by_role`, `completed_by_agent_id`, `node_id`,
+`result_body_path`, `result_body_hash`, and `next_recipient`. Detailed
+commands, files, screenshots, evidence, and findings go into the result body.
+The controller relays the result envelope only. Reviewer and PM read the
+result body only from their authorized review/decision position.
+
+The role-origin audit is envelope-aware. The reviewer checks
+`packet_envelope.to_role`, `result_envelope.completed_by_role`, and whether
+`completed_by_agent_id` belongs to that role. Body hashes in both envelopes
+must match the referenced bodies, and stale bodies after route mutation cannot
+be accepted. Wrong-role completion cannot be fixed by cosigning, renaming, or
+rewriting the envelope; PM must reissue or repair the packet through the
+correct role.
+
 The project manager owns reviewer timing. Before worker or controller work
 that will later need review, the PM writes a review hold instruction naming the
 expected gate and saying the reviewer waits. After worker output,
@@ -778,13 +816,14 @@ complete.
 
 Heartbeat and manual resume also load `packet_ledger.json`. If no current
 packet is active, the controller asks PM for `PM_DECISION`. If PM issues or
-reissues a `NODE_PACKET`, the decision must include `controller_reminder`, and
-the packet goes to the reviewer for dispatch approval before any worker sees
-it. If a worker result is already present, the controller sends that
-`NODE_RESULT` to reviewer. If the holder, worker identity, prior reviewer
-dispatch, or worker-result state is ambiguous, the controller blocks and asks
-PM for recovery, reissue, reassignment, quarantine, or route mutation. It does
-not infer missing worker work and does not finish the packet itself.
+reissues a packet envelope/body pair, the decision must include
+`controller_reminder`, and the envelope goes to the reviewer for dispatch
+approval before any worker sees the body. If a worker result envelope is
+already present, the controller sends that `RESULT_ENVELOPE` to reviewer. If
+the holder, worker identity, prior reviewer dispatch, envelope/body hash, or
+worker-result state is ambiguous, the controller blocks and asks PM for
+recovery, reissue, reassignment, quarantine, or route mutation. It does not
+read bodies, infer missing worker work, or finish the packet itself.
 
 The frontier has a current-node completion guard. If
 `unfinished_current_node` is true or

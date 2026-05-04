@@ -23,6 +23,17 @@ LEGACY_COCKPIT_SOURCE_PATHS = [
     "tests/test_flowpilot_cockpit_state_reader.py",
 ]
 
+RETIRED_CONTINUATION_PATHS = [
+    "docs/external_watchdog_loop_findings.md",
+    "scripts/flowpilot_busy_lease.py",
+    "scripts/flowpilot_global_supervisor.py",
+    "scripts/flowpilot_run_with_busy_lease.py",
+    "scripts/flowpilot_watchdog.py",
+    "scripts/register_windows_watchdog_task.ps1",
+    "templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md",
+    "templates/flowpilot/watchdog/watchdog.template.json",
+]
+
 
 def add_check(
     checks: list[dict[str, Any]],
@@ -150,6 +161,17 @@ def main() -> int:
         present=legacy_cockpit_present_on_disk,
     )
     if legacy_cockpit_present_on_disk:
+        result["ok"] = False
+
+    retired_present_on_disk = [path for path in RETIRED_CONTINUATION_PATHS if (ROOT / path).exists()]
+    add_check(
+        checks,
+        name="retired_watchdog_supervisor_sources_absent_from_main_tree",
+        ok=not retired_present_on_disk,
+        present=retired_present_on_disk,
+        expected_absent=RETIRED_CONTINUATION_PATHS,
+    )
+    if retired_present_on_disk:
         result["ok"] = False
 
     if args.json:

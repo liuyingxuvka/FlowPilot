@@ -60,6 +60,11 @@ REQUIRED_FILES = [
     "templates/flowpilot/parent_backward_targets.template.json",
     "templates/flowpilot/parent_backward_replay.template.json",
     "templates/flowpilot/packet_ledger.template.json",
+    "templates/flowpilot/packets/packet_envelope.template.json",
+    "templates/flowpilot/packets/packet_body.template.md",
+    "templates/flowpilot/packets/result_envelope.template.json",
+    "templates/flowpilot/packets/result_body.template.md",
+    "templates/flowpilot/packets/controller_status_packet.template.json",
     "templates/flowpilot/flowguard_modeling_request.template.json",
     "templates/flowpilot/flowguard_modeling_report.template.json",
     "templates/flowpilot/role_approval.template.json",
@@ -149,6 +154,9 @@ JSON_FILES = [
     "templates/flowpilot/parent_backward_targets.template.json",
     "templates/flowpilot/parent_backward_replay.template.json",
     "templates/flowpilot/packet_ledger.template.json",
+    "templates/flowpilot/packets/packet_envelope.template.json",
+    "templates/flowpilot/packets/result_envelope.template.json",
+    "templates/flowpilot/packets/controller_status_packet.template.json",
     "templates/flowpilot/flowguard_modeling_request.template.json",
     "templates/flowpilot/flowguard_modeling_report.template.json",
     "templates/flowpilot/role_approval.template.json",
@@ -192,6 +200,17 @@ OPTIONAL_RUNTIME_JSON_FILES = [
     ".flowpilot/state.json",
     ".flowpilot/execution_frontier.json",
     ".flowpilot/routes/route-001/flow.json",
+]
+
+RETIRED_PATHS = [
+    "docs/external_watchdog_loop_findings.md",
+    "scripts/flowpilot_busy_lease.py",
+    "scripts/flowpilot_global_supervisor.py",
+    "scripts/flowpilot_run_with_busy_lease.py",
+    "scripts/flowpilot_watchdog.py",
+    "scripts/register_windows_watchdog_task.ps1",
+    "templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md",
+    "templates/flowpilot/watchdog/watchdog.template.json",
 ]
 
 
@@ -244,6 +263,12 @@ def main() -> int:
     )
     if not legacy_absent:
         result["ok"] = False
+
+    for relpath in RETIRED_PATHS:
+        absent = not (ROOT / relpath).exists()
+        result["checks"].append({"name": f"retired_path_absent:{relpath}", "ok": absent})
+        if not absent:
+            result["ok"] = False
 
     for relpath in JSON_FILES:
         path = ROOT / relpath

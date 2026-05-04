@@ -515,9 +515,42 @@ no-progress evidence.
 
 `packet_ledger.json` is the run-local source of truth for the packet-gated
 controller loop. It records the active packet id, packet holder, PM decision
-evidence, reviewer dispatch evidence, assigned worker, worker result evidence,
-review decision evidence, next legal controller relay action, and whether
-ambiguous worker state blocks controller execution.
+evidence, reviewer dispatch evidence, assigned worker, packet envelope/body
+paths and hashes, result envelope/body paths and hashes, review decision
+evidence, next legal controller relay action, and whether ambiguous worker
+state blocks controller execution.
+
+Packet envelopes live at
+`.flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json`. The
+envelope is the only packet object the controller may read. It contains
+`packet_id`, `from_role`, `to_role`, `node_id`, `is_current_node`,
+`body_path`, `body_hash`, `return_to`, `next_holder`,
+`controller_allowed_actions`, and `controller_forbidden_actions`. The packet
+body lives at the envelope `body_path` and is readable by the target role, with
+reviewer/PM access only for review, repair, or completion decisions.
+
+Result envelopes live at
+`.flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json`. Returning
+roles put `packet_id`, `completed_by_role`, `completed_by_agent_id`,
+`node_id`, `result_body_path`, `result_body_hash`, and `next_recipient` in the
+result envelope. Detailed commands, file changes, screenshots, model outputs,
+evidence, findings, and open issues go in `result_body.md`. The controller may
+relay the result envelope but may not read or repair the body.
+
+Each packet entry also contains a mandatory envelope-aware
+`role_origin_audit`. The reviewer must fill it before any pass decision by
+comparing the PM-authored packet envelope, reviewer dispatch evidence,
+`packet_envelope.to_role`, assigned worker or authorized role,
+`result_envelope.completed_by_role`, `completed_by_agent_id`, and actual
+result author evidence. Packet and result body hashes must match their
+envelopes, and stale bodies after route mutation block acceptance. A
+controller, unknown, or mismatched result author sets
+`invalid_role_origin_blocked: true`, requires a controller-boundary warning,
+and sends the packet back to PM for reissue, repair by the assigned role,
+quarantine, route mutation, user block, or stop. Wrong-role work cannot be
+cosigned, relabelled, or accepted as "good enough." A packet cannot close while
+`role_origin_audit.required_for_every_packet` is true and the audit is absent,
+mismatched, hash-invalid, or stale.
 
 Heartbeat and manual resume load the packet ledger before asking PM for the
 current decision. The controller may not mint packets, finish worker packets,

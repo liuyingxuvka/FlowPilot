@@ -17,6 +17,29 @@
       "used_for": "<navigation-context-only>"
     }
   ],
+  "packet_envelope_body_access": {
+    "packet_id": "<packet-id-or-null>",
+    "packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
+    "packet_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",
+    "result_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json",
+    "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
+    "approver_role_allowed_to_read_relevant_body": false,
+    "controller_body_access_forbidden": true,
+    "packet_body_hash_checked": false,
+    "result_body_hash_checked": false,
+    "stale_body_reuse_checked": false
+  },
+  "origin_check": {
+    "required_when_packet_bound": true,
+    "packet_envelope_to_role_checked": false,
+    "result_envelope_completed_by_role_checked": false,
+    "result_envelope_completed_by_agent_id_checked": false,
+    "completed_agent_id_belongs_to_completed_role": false,
+    "actual_author_matches_required_role": false,
+    "controller_origin_artifact_detected": false,
+    "wrong_role_cosign_or_relabel_forbidden": true,
+    "invalid_origin_blocks_approval": true
+  },
   "direct_sources_checked": [
     {
       "path": "<file-material-screenshot-model-route-frontier-ledger-log-or-output-path>",

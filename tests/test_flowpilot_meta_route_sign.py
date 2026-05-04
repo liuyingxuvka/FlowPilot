@@ -12,6 +12,7 @@ class FlowPilotMetaRouteSignTests(unittest.TestCase):
             completed_chunks=1,
             required_chunks=3,
             node_acceptance_plan_written=True,
+            current_node_high_standard_recheck_written=True,
             user_flow_diagram_refreshed=True,
             visible_user_flow_diagram_emitted=True,
             user_flow_diagram_chat_display_required=True,

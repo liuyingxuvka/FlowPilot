@@ -44,11 +44,11 @@ for review.
    `agent_id` values are audit history only. If authorization is missing or
    startup fails, pause and ask. Continue with memory-seeded single-agent
    six-role continuity only after an explicit user fallback decision.
-10. PM issues a material-intake `NODE_PACKET`; after reviewer dispatch, an
-   authorized non-controller worker writes `material_intake_packet.json`,
-   including local skill and host capability inventory as candidate-only
-   resources. The human-like reviewer approves material sufficiency before PM
-   planning uses it.
+10. PM issues a material-intake packet envelope/body pair; after reviewer
+   dispatch, an authorized non-controller worker reads the body and writes
+   `material_intake_packet.json`, including local skill and host capability
+   inventory as candidate-only resources. The human-like reviewer approves
+   material sufficiency before PM planning uses it.
 11. Project manager writes `pm_material_understanding.json`, classifies material
    complexity, and records whether messy/raw materials require discovery,
    cleanup, modeling, research, validation, or reconciliation nodes. When a
@@ -102,6 +102,12 @@ for review.
    are ready, write a review release naming gate, evidence paths, scope, and
    required inspections. Early reviewer work is precheck only and cannot open
    or block the gate.
+   PM work packets use the envelope/body split under `packets/`: the
+   controller sees only `packet_envelope.json` and `result_envelope.json`,
+   while detailed instructions and returned evidence stay in
+   `packet_body.md` and `result_body.md` for the addressed role, reviewer, or
+   PM. Controller body reads, body execution, wrong-role completion relabels,
+   and body-hash mismatches are blockers, not repairable formatting defects.
 25. Before any parent/composite node closes, write
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the
@@ -119,9 +125,9 @@ for review.
    syncing the visible Codex plan or advancing work. Each heartbeat/manual
    resume first reloads the packet ledger, asks PM for the current
    `PM_DECISION` or recovery packet, requires `controller_reminder`, and sends
-   any `NODE_PACKET` through reviewer dispatch before a worker sees it. The
-   controller replaces the current visible plan projection from the PM runway
-   but does not execute worker packets itself. If the host exposes a native
+   any packet envelope through reviewer dispatch before a worker sees the body.
+   The controller replaces the current visible plan projection from the PM
+   runway but does not read or execute worker bodies itself. If the host exposes a native
    plan/task-list tool such as Codex `update_plan`, call it with that runway
    before packet dispatch; if not, record the fallback projection method and
    show the runway in chat.

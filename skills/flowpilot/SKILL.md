@@ -49,57 +49,103 @@ The controller's forbidden actions are:
 - using later route knowledge to expand a worker packet beyond its current
   node.
 
-Role-origin evidence is a hard gate. Only artifacts produced by the authorized
-role for the current node can close that node. Controller-origin
-implementation artifacts cannot close worker gates. Controller-origin review
-artifacts cannot close reviewer gates. Controller-origin PM approval artifacts
-cannot close PM gates. If the reviewer detects a role-origin mismatch, the
-decision must be `block_invalid_role_origin`, and the PM may not advance from
-that evidence. The PM must either discard the evidence, issue a repair packet
-to an authorized worker, or quarantine/restart the run if the contamination
-affects trust in the route.
+Role-origin evidence and envelope/body integrity are hard gates. Only
+artifacts produced by the authorized role for the current node can close that
+node. Controller-origin implementation artifacts cannot close worker gates.
+Controller-origin review artifacts cannot close reviewer gates.
+Controller-origin PM approval artifacts cannot close PM gates. If the reviewer
+detects a role-origin mismatch, the decision must be
+`block_invalid_role_origin`, and the PM may not advance from that evidence.
+The PM must either discard the evidence, issue a repair packet to an
+authorized worker, or quarantine/restart the run if the contamination affects
+trust in the route.
 
-Workers use least-context node packets. A worker receives only the current
-packet, not the full route, not downstream nodes, and not a general instruction
-to complete the whole project. Each packet must include:
+The reviewer must perform this check for every packet, not only when something
+looks suspicious. Before any `pass`, the reviewer verifies the PM-authored
+packet envelope, reviewer dispatch record, `packet_envelope.to_role`, packet
+body hash, assigned worker or authorized role, result envelope,
+`result_envelope.completed_by_role`, `completed_by_agent_id`, result body
+hash, and the actual author of the returned result. If the result was produced
+by the controller, by an unknown actor, or by any role other than the assigned
+owner, the reviewer must block with `block_invalid_role_origin`, require
+rework by the assigned role, and record a controller-boundary warning. Body
+hash mismatches, stale packet/result bodies after route mutation, controller
+body reads, or controller body execution also block the gate. Wrong-role work
+cannot be made valid by cosigning, relabelling, or rewriting the envelope. The
+controller may not continue, repair the work, or reissue the packet on its
+own; it relays the block to PM for repair, reissue, quarantine, route
+mutation, or user block.
+
+Work packets use a least-context envelope/body split. The controller receives
+only the envelope and never the detailed body. A worker receives the current
+packet body only after reviewer dispatch, not the full route, not downstream
+nodes, and not a general instruction to complete the whole project.
+
+Each PM packet envelope must include:
 
 ```text
-NODE_PACKET:
+PACKET_ENVELOPE:
   packet_id:
+  from_role:
+  to_role:
   node_id:
-  objective:
-  inputs:
-  allowed_read_paths:
-  allowed_write_paths:
-  allowed_commands_or_side_effects:
-  forbidden_actions:
-  acceptance_slice:
-  verification_required:
-  return_format:
-  stop_after_result: true
+  is_current_node:
+  body_path:
+  body_hash:
+  return_to:
+  next_holder:
+  controller_allowed_actions:
+  controller_forbidden_actions:
 ```
 
-Worker output is a packet result, not a route decision:
+The packet body contains objective, inputs, allowed reads/writes, allowed
+commands or side effects, forbidden actions, acceptance slice, and required
+verification. The controller must not read, summarize, execute, edit, or
+complete that body.
+
+Worker, reviewer, officer, and PM output is a result envelope plus result
+body, not a route decision:
 
 ```text
-NODE_RESULT:
+RESULT_ENVELOPE:
   packet_id:
+  completed_by_role:
+  completed_by_agent_id:
   node_id:
-  status: completed | blocked | needs_pm
-  changed_files:
-  commands_run:
-  evidence:
-  open_issues:
-  request_next_packet: true
+  result_body_path:
+  result_body_hash:
+  next_recipient:
 ```
+
+The result body contains status, changed files, commands run, evidence,
+screenshots, findings, open issues, and requested next recipient. The
+controller must not read, summarize, repair, execute, or complete that body.
 
 PM and reviewer decisions must be machine-consumable:
 
 ```text
 REVIEW_DECISION:
   packet_id:
-  decision: pass | block | needs_repair | needs_user
+  decision: pass | block | needs_repair | needs_user | block_invalid_role_origin
   can_pm_advance: true | false
+  role_origin_audit:
+    pm_packet_author_verified:
+    reviewer_dispatch_authority_checked:
+    packet_envelope_to_role_checked:
+    packet_body_hash_checked:
+    result_envelope_completed_by_role_checked:
+    result_envelope_completed_by_agent_id_checked:
+    result_body_hash_checked:
+    expected_executor_role:
+    actual_result_author_role:
+    completed_by_agent_id:
+    completed_agent_id_belongs_to_role:
+    author_matches_assignment:
+    wrong_role_cosign_or_relabel_forbidden:
+    body_hash_mismatch_detected:
+    stale_body_reuse_detected:
+    controller_boundary_warning_issued:
+    rework_required_by_assigned_role:
   blocking_issues:
 ```
 
@@ -137,11 +183,12 @@ gate evidence. If the controller omits the recipient role reminder when
 dispatching a packet, the reviewer must block dispatch as
 `missing_role_reminder`.
 
-The worker stops after `NODE_RESULT`, but the FlowPilot controller does not
-stop for the user merely because a worker, reviewer, or PM produced an
-intermediate packet. If `stop_for_user` is false and no hard blocker exists,
-the controller immediately continues the internal loop: reviewer result -> PM
-decision -> next packet -> reviewer dispatch approval -> worker dispatch.
+The worker stops after returning `RESULT_ENVELOPE`, but the FlowPilot
+controller does not stop for the user merely because a worker, reviewer, or PM
+produced an intermediate packet. If `stop_for_user` is false and no hard
+blocker exists, the controller immediately continues the internal loop: result
+envelope -> reviewer result -> PM decision -> next packet envelope -> reviewer
+dispatch approval -> worker dispatch.
 
 If a host provides a tool broker or permission layer, every state-changing tool
 call must require a current execution ticket derived from PM and reviewer
@@ -322,9 +369,10 @@ reviewer report.
 
 Opening startup does not authorize the controller to begin implementation. It
 only authorizes the packet loop to begin. The first work beyond startup must be
-a PM-authored `NODE_PACKET`, followed by reviewer dispatch approval. The
-controller may not convert startup approval into direct execution, dependency
-installation, source extraction, implementation, QA, or route advancement.
+a PM-authored packet envelope/body pair, followed by reviewer dispatch
+approval. The controller may not convert startup approval into direct
+execution, dependency installation, source extraction, implementation, QA,
+body reads, or route advancement.
 
 `startup_activation.work_beyond_startup_allowed` must be true in state and
 frontier before work beyond startup, and that flag may be written only by the
@@ -439,13 +487,13 @@ all four in one compact sentence.
    controller-owned administrative task and the reviewer approves that role
    assignment.
 9a. If background agents are allowed, work beyond startup must use the
-    packet-gated control plane. The PM writes the first `NODE_PACKET`, the
-    reviewer approves or blocks dispatch, and only then may a worker receive
-    the packet. The controller relays packets and status only. If the
+    packet-gated control plane. The PM writes the first packet envelope/body
+    pair, the reviewer approves or blocks dispatch, and only then may a worker
+    receive the body addressed to its role. The controller relays envelopes and status only. If the
     controller performs implementation or writes gate-closing evidence itself,
     the reviewer must mark the evidence invalid for role-origin mismatch.
 10. Before PM product-function synthesis or route decisions, require a
-    PM-authored material-intake `NODE_PACKET` and reviewer dispatch approval.
+    PM-authored material-intake packet envelope/body pair and reviewer dispatch approval.
     The authorized worker writes
     `.flowpilot/runs/<run-id>/material_intake_packet.json`. This packet
     inventories user-provided and repository-local materials, summarizes what
@@ -462,8 +510,8 @@ all four in one compact sentence.
     superficial, large tables/documents are sampled or scoped honestly,
     contradictions and uncertainty are visible, and the packet will not
     mislead route design. If the reviewer blocks, the PM issues a repair
-    `NODE_PACKET` to an authorized worker; the controller only relays the
-    packet and may not revise the intake itself.
+    packet envelope/body pair to an authorized worker; the controller only
+    relays the envelope and may not revise the intake itself.
 12. The project manager writes
     `.flowpilot/pm_material_understanding.json` from the reviewed packet and
     user intent. It records source-claim matrix, open questions, material
@@ -667,8 +715,8 @@ unclear pile of files, screenshots, tables, notes, prior route evidence, or
 unread repository state.
 
 Material intake is worker-owned under packet control. The PM writes a
-material-intake `NODE_PACKET`, the reviewer approves dispatch, and the
-authorized worker writes
+material-intake packet envelope/body pair, the reviewer approves dispatch, and
+the authorized worker writes
 `.flowpilot/runs/<run-id>/material_intake_packet.json`. The controller may
 relay source lists and status only; controller-origin intake evidence cannot
 close this gate. The packet records:
@@ -1125,8 +1173,8 @@ Each meaningful gate in `.flowpilot/runs/<run-id>/execution_frontier.json` recor
 Authority rules:
 
 - startup self-interrogation is PM-ratified before route/model gates advance;
-- material intake is drafted by an authorized worker from a PM-authored
-  `NODE_PACKET`, sufficiency-approved by the human-like reviewer, and
+- material intake is drafted by an authorized worker from a PM-authored packet
+  envelope/body pair, sufficiency-approved by the human-like reviewer, and
   interpreted by the project manager before product or route decisions;
 - route advancement, heartbeat-resume runway selection, PM stop signals,
   repair strategy, route mutation, and completion require project-manager
@@ -1762,11 +1810,12 @@ fallback authorization is recorded may it write the crew rehydration report.
 Then the controller asks the project manager for the current `PM_DECISION`
 from the persisted frontier and packet ledger. The PM decision must include
 `controller_reminder`; if it is missing, the controller asks PM for a corrected
-decision and does not dispatch work. If PM issues or reissues a `NODE_PACKET`,
-the controller sends it to the human-like reviewer for dispatch approval with
-`ROLE_REMINDER` before any worker receives it. If a worker result is already
-persisted, the controller sends that `NODE_RESULT` to the reviewer; it does
-not re-execute or finish the worker's packet. If packet holder, worker
+decision and does not dispatch work. If PM issues or reissues a
+`PACKET_ENVELOPE` plus packet body, the controller sends only the envelope to
+the human-like reviewer for dispatch approval with `ROLE_REMINDER` before any
+worker receives the body. If a worker result envelope is already persisted, the
+controller sends that `RESULT_ENVELOPE` to the reviewer; it does not read,
+re-execute, repair, or finish the worker's body. If packet holder, worker
 identity, reviewer dispatch, or worker-result state is ambiguous, the
 controller blocks and asks PM for recovery, reissue, reassignment, quarantine,
 or route mutation rather than guessing the next worker action.
@@ -1882,7 +1931,8 @@ stopped/inactive lifecycle state back to `.flowpilot/runs/<run-id>/state.json`,
 `.flowpilot/runs/<run-id>/execution_frontier.json`, and lifecycle evidence,
 then stop or delete the heartbeat automation. Manual-resume routes record that
 no heartbeat automation exists to stop. This is a final writeback gate, not a
-requirement to poll additional supervisors during ordinary route progress.
+requirement to poll any retired external recovery layer during ordinary route
+progress.
 Ordinary route progress, checkpoint writes, node changes, plan syncs, and user
 flow diagram refreshes must not recreate, re-register, start, restart, or
 re-enable heartbeat automation unless they are explicitly in the lifecycle
@@ -2387,13 +2437,13 @@ by the correct role. It may not declare completion while any `blocking`,
 
 No formal chunk starts without:
 
-- a PM-authored `NODE_PACKET` for exactly the current node;
+- a PM-authored `PACKET_ENVELOPE` plus body for exactly the current node;
 - reviewer dispatch approval for that packet, with `can_pm_advance` or
   `dispatch_allowed` true for the current packet only;
 - a packet holder/status entry showing whether the packet is with PM,
   reviewer, worker, controller, or user;
-- explicit role-origin authority for every artifact that the chunk may use to
-  close gates;
+- explicit envelope/body/hash and role-origin authority for every artifact that
+  the chunk may use to close gates;
 - PM-owned startup activation recorded in state and execution frontier from a
   current clean factual reviewer report;
 - current route checked by FlowGuard;
@@ -2456,13 +2506,13 @@ If the next step is uncertain, run a bounded experiment instead of a formal
 chunk. Experiments answer one question and either resume the route, update the
 route, or block with evidence.
 
-For packet-gated runs, a chunk ends when the authorized worker returns
-`NODE_RESULT`. The controller must relay that result to the reviewer and must
-not execute the next chunk itself. If reviewer passes and PM issues the next
-packet with `stop_for_user: false`, the controller continues the internal loop
-by dispatching the next packet after reviewer dispatch approval. If reviewer
-blocks, the PM must issue a repair packet or stop for the user; the controller
-may not silently continue.
+For packet-gated runs, a chunk ends when the authorized worker returns a
+`RESULT_ENVELOPE`. The controller must relay that envelope to the reviewer and
+must not read the result body or execute the next chunk itself. If reviewer
+passes and PM issues the next packet with `stop_for_user: false`, the
+controller continues the internal loop by dispatching the next packet envelope
+after reviewer dispatch approval. If reviewer blocks, the PM must issue a
+repair packet or stop for the user; the controller may not silently continue.
 
 ## Residual Risk Triage Gate
 

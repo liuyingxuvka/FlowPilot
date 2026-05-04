@@ -61,14 +61,16 @@ Wakeup sequence:
    or explicitly replaced, block rather than continuing as Controller.
 3. Ask PM for `PM_DECISION` from the current frontier. PM must include
    `controller_reminder`.
-4. If PM issues `NODE_PACKET`, send it to reviewer for dispatch approval before
-   any worker receives it. Include `ROLE_REMINDER`.
+4. If PM issues a packet envelope/body pair, send only the envelope to reviewer
+   for dispatch approval before any worker receives the body. Include
+   `ROLE_REMINDER`.
 5. If a worker already has an unfinished packet, resume that exact packet only
    when prior reviewer dispatch and worker identity are clear. If unclear, ask
    PM for repair/reissue/quarantine; Controller must not finish it.
-6. If a worker result exists, route `NODE_RESULT` to reviewer. If reviewer
-   passes, route the decision to PM. If reviewer blocks, route the block to PM
-   for repair or mutation.
+6. If a worker result exists, route only the `RESULT_ENVELOPE` to reviewer.
+   Controller must not read or execute packet/result bodies. If reviewer
+   passes after envelope/body hash and role-origin checks, route the decision
+   to PM. If reviewer blocks, route the block to PM for repair or mutation.
 7. Continue the internal packet loop only when PM says `stop_for_user: false`;
    otherwise write the controlled stop notice.
 8. If the holder, worker identity, prior reviewer dispatch, or worker result is

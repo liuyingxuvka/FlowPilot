@@ -1,0 +1,53 @@
+{
+  "schema_version": "flowpilot.result_envelope.v1",
+  "packet_id": "<packet-id>",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "node_id": "<node-id>",
+  "source_packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
+  "completed_at": "<iso-8601-timestamp>",
+  "completed_by_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
+  "completed_by_agent_id": "<agent-id-or-single-agent-role-continuity-id>",
+  "expected_role_from_packet_envelope": "<packet-envelope-to_role>",
+  "completed_role_matches_packet_to_role": false,
+  "completed_agent_id_belongs_to_role": false,
+  "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
+  "result_body_hash": "<sha256-of-result-body>",
+  "result_body_hash_algorithm": "sha256",
+  "next_recipient": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+  "controller_visibility": "envelope_only",
+  "controller_allowed_actions": [
+    "read_result_envelope",
+    "update_packet_holder_and_status",
+    "relay_result_envelope_to_next_recipient",
+    "emit_holder_change_status_update",
+    "wait_for_next_role_return",
+    "ask_pm_for_repair_or_next_packet_on_blocker"
+  ],
+  "controller_forbidden_actions": [
+    "read_result_body",
+    "edit_result_body",
+    "execute_result_body",
+    "add_missing_evidence",
+    "run_product_validation_for_worker_scope",
+    "approve_gate",
+    "close_node",
+    "rewrite_completed_by_role",
+    "rewrite_completed_by_agent_id",
+    "relabel_wrong_role_origin",
+    "recompute_body_hash_to_hide_mismatch"
+  ],
+  "origin_policy": {
+    "controller_origin_artifact": false,
+    "wrong_role_completion_blocks_review_pass": true,
+    "wrong_role_completion_may_not_be_cosigned": true,
+    "wrong_role_completion_may_not_be_relabelled": true,
+    "pm_reissue_required_on_mismatch": true
+  },
+  "integrity_policy": {
+    "result_body_hash_required": true,
+    "result_body_hash_mismatch_blocks_review_pass": true,
+    "stale_result_body_after_route_mutation_blocks_review_pass": true
+  }
+}

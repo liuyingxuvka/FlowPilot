@@ -11,6 +11,16 @@
   "worker_output": {
     "ready_for_review": false,
     "owner_role": "<worker_a|worker_b|authorized_non_controller|other>",
+    "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown>",
+    "packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
+    "packet_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",
+    "packet_body_hash": "<sha256-of-packet-body-or-null>",
+    "result_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json",
+    "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
+    "result_body_hash": "<sha256-of-result-body-or-null>",
+    "controller_received_result_envelope_only": true,
+    "pm_requires_reviewer_role_origin_audit": true,
+    "pm_requires_reviewer_envelope_body_integrity_audit": true,
     "output_summary": "<summary>",
     "output_paths": [],
     "known_limitations": []
@@ -21,6 +31,20 @@
     "review_target": "<artifact-or-product-surface>",
     "required_direct_checks": [],
     "evidence_pointers": [],
+    "required_role_origin_checks": [
+      "verify PM packet author",
+      "verify reviewer dispatch approval",
+      "verify packet envelope to_role",
+      "verify packet body hash against packet envelope",
+      "verify result envelope completed_by_role",
+      "verify result envelope completed_by_agent_id belongs to that role",
+      "verify result body hash against result envelope",
+      "verify assigned worker identity",
+      "verify actual result author",
+      "block_invalid_role_origin when actual author is controller or unknown",
+      "block body_hash_mismatch or stale_packet_body before pass",
+      "forbid cosigning or relabelling wrong-role completion"
+    ],
     "completion_report_only_allowed": false,
     "worker_report_only_allowed": false
   },

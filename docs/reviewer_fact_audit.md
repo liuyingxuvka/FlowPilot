@@ -64,6 +64,17 @@ other-role summaries are invalid. Reports can point to evidence, but
 role-owned gates must name the direct facts checked, adversarial hypotheses
 tested, and concrete evidence references used for the decision.
 
+Every packet review also requires an explicit envelope-aware role-origin audit.
+The reviewer must compare the PM-authored packet envelope, reviewer dispatch
+approval, `packet_envelope.to_role`, packet body hash, assigned worker or
+authorized role, result envelope, `completed_by_role`,
+`completed_by_agent_id`, result body hash, and actual result author evidence
+before any pass. Controller, unknown-origin, wrong-role, cosigned/relabelled
+wrong-role results, body-hash mismatches, stale body reuse, or controller body
+access are blocking findings. Role-origin mismatches are
+`block_invalid_role_origin`, require a controller-boundary warning, and must be
+returned to PM for reissue or repair by the assigned role.
+
 ## Follow-Up Watch Points
 
 - Future reviewer templates should include a `worker_report_only: false` or
