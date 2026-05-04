@@ -520,6 +520,14 @@ The controller may not read or execute packet/result bodies, implement code,
 generate assets, run product validation, approve gates, close nodes, rewrite
 hashes, or relabel a wrong-role completion.
 
+The split is a runtime artifact, not only prose. The physical packet runtime
+writes `packet_envelope.json` and `packet_body.md` under
+`.flowpilot/runs/<run-id>/packets/<packet-id>/`, computes the body hash from
+the body file, and builds a controller handoff from envelope fields only. The
+controller context must not contain packet body text. If the body is present in
+the controller handoff or the packet files are missing, dispatch and review are
+blocked before content inspection.
+
 Worker, reviewer, officer, and PM returns use the same envelope/body split.
 The returning role gives the controller a `result_envelope` naming
 `packet_id`, `completed_by_role`, `completed_by_agent_id`, `node_id`,

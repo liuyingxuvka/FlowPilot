@@ -529,6 +529,14 @@ envelope is the only packet object the controller may read. It contains
 body lives at the envelope `body_path` and is readable by the target role, with
 reviewer/PM access only for review, repair, or completion decisions.
 
+`skills/flowpilot/assets/packet_runtime.py` is the physical writer used by the
+installed skill. Its repo wrapper is `scripts/flowpilot_packets.py`. The
+runtime writes the envelope and body as separate files, computes `body_hash`
+from the body file, writes or updates `packet_ledger.json`, and builds
+controller handoff payloads from envelope fields only. A valid review release
+records that physical packet files exist and that the controller context
+excluded body text.
+
 Result envelopes live at
 `.flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json`. Returning
 roles put `packet_id`, `completed_by_role`, `completed_by_agent_id`,

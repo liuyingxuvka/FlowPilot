@@ -16,9 +16,10 @@ Current source and runtime checks must preserve these boundaries:
 - the controller wakes only into the packet control plane and must ask PM for a
   `PM_DECISION` before dispatching work;
 - the controller may read packet/result envelopes only; packet/result bodies
-  are for the addressed role, reviewer, or PM, and controller body access,
-  body execution, wrong-role relabelling, hash mismatch acceptance, and stale
-  body reuse are control-plane blockers;
+  are physical files for the addressed role, reviewer, or PM. Missing packet
+  files, controller handoff text containing body content, controller body
+  access, body execution, wrong-role relabelling, hash mismatch acceptance, and
+  stale body reuse are control-plane blockers;
 - heartbeat/manual resume must load current-run state, execution frontier,
   packet ledger, and role memory before deciding what can proceed;
 - reviewer dispatch remains mandatory before existing or fresh worker output is

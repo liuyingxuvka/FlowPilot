@@ -22,6 +22,8 @@ class HeartbeatCase:
 class NodePacket:
     packet_id: str
     to_role: str = "worker_a"
+    physical_files_written: bool = True
+    controller_handoff_contains_body_content: bool = False
     has_controller_reminder: bool = True
     body_hash_valid: bool = True
     body_stale_after_route_mutation: bool = False
@@ -100,6 +102,9 @@ class State:
     reminder_checked: tuple[str, ...] = ()
     reminder_blocks: tuple[str, ...] = ()
     controller_envelope_reads: tuple[str, ...] = ()
+    physical_packet_files: tuple[str, ...] = ()
+    controller_handoff_envelope_only: tuple[str, ...] = ()
+    controller_handoff_body_leak_blocks: tuple[str, ...] = ()
     controller_body_access_blocks: tuple[str, ...] = ()
     controller_body_execution_blocks: tuple[str, ...] = ()
     holder_changes: tuple[str, ...] = ()
@@ -135,6 +140,8 @@ def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> 
     return NodePacket(
         packet_id,
         to_role=to_role,
+        physical_files_written=not packet_id.startswith("missing_physical_files"),
+        controller_handoff_contains_body_content=packet_id.startswith("controller_handoff_leaks_body"),
         has_controller_reminder=has_controller_reminder,
         body_hash_valid=not packet_id.startswith("body_hash_mismatch"),
         body_stale_after_route_mutation=packet_id.startswith("stale_packet_body"),
@@ -172,6 +179,8 @@ class HeartbeatResumeLoad:
         "heartbeat_state_blocks",
         "heartbeat_ambiguous_blocks",
         "reminder_checked",
+        "physical_packet_files",
+        "controller_handoff_envelope_only",
         "dispatches",
         "worker_results",
         "result_envelopes",
@@ -202,6 +211,8 @@ class HeartbeatResumeLoad:
                 state,
                 heartbeat_loads=state.heartbeat_loads + (packet_id,),
                 reminder_checked=state.reminder_checked + (packet_id,),
+                physical_packet_files=state.physical_packet_files + (packet_id,),
+                controller_handoff_envelope_only=state.controller_handoff_envelope_only + (packet_id,),
                 packet_envelope_checks=state.packet_envelope_checks + (packet_id,),
                 packet_body_hash_checks=state.packet_body_hash_checks + (packet_id,),
                 dispatches=state.dispatches + (packet_id,),
@@ -262,6 +273,34 @@ class PMResumeDecision:
         )
 
 
+class PacketRuntimeWrite:
+    name = "PacketRuntimeWrite"
+    accepted_input_type = (NodePacket, NodeResult)
+    reads = ("packets",)
+    writes = ("physical_packet_files", "review_blocks")
+    input_description = "PM-authored packet envelope/body intent"
+    output_description = "physical packet files or blocked missing runtime files"
+    idempotency = "Physical packet file writes are keyed by packet ID."
+
+    def apply(self, input_obj: NodePacket, state: State) -> Iterable[FunctionResult]:
+        if not isinstance(input_obj, NodePacket):
+            yield FunctionResult(input_obj, state, "packet_runtime_pass_through")
+            return
+        if not input_obj.physical_files_written:
+            new_state = replace(state, review_blocks=state.review_blocks + (input_obj.packet_id,))
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "missing_physical_packet_files"),
+                new_state,
+                "missing_physical_packet_files_blocked",
+            )
+            return
+        new_state = state if input_obj.packet_id in state.physical_packet_files else replace(
+            state,
+            physical_packet_files=state.physical_packet_files + (input_obj.packet_id,),
+        )
+        yield FunctionResult(input_obj, new_state, "packet_physical_files_written")
+
+
 class ControllerReminderCheck:
     name = "ControllerReminderCheck"
     accepted_input_type = (NodePacket, NodeResult)
@@ -285,12 +324,45 @@ class ControllerReminderCheck:
         yield FunctionResult(input_obj, new_state, "controller_reminder_checked")
 
 
+class ControllerEnvelopeOnlyHandoff:
+    name = "ControllerEnvelopeOnlyHandoff"
+    accepted_input_type = (NodePacket, NodeResult)
+    reads = ("reminder_checked",)
+    writes = ("controller_handoff_envelope_only", "controller_handoff_body_leak_blocks")
+    input_description = "controller-visible packet handoff"
+    output_description = "NodePacket with envelope-only controller context or blocked body leak"
+    idempotency = "Controller handoff isolation is keyed by packet ID."
+
+    def apply(self, input_obj: NodePacket, state: State) -> Iterable[FunctionResult]:
+        if not isinstance(input_obj, NodePacket):
+            yield FunctionResult(input_obj, state, "controller_handoff_pass_through")
+            return
+        if input_obj.controller_handoff_contains_body_content:
+            new_state = replace(
+                state,
+                controller_handoff_body_leak_blocks=state.controller_handoff_body_leak_blocks + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "controller_handoff_contains_packet_body"),
+                new_state,
+                "controller_handoff_body_content_blocked",
+            )
+            return
+        new_state = state if input_obj.packet_id in state.controller_handoff_envelope_only else replace(
+            state,
+            controller_handoff_envelope_only=state.controller_handoff_envelope_only + (input_obj.packet_id,),
+        )
+        yield FunctionResult(input_obj, new_state, "controller_handoff_envelope_only")
+
+
 class ControllerEnvelopeRelay:
     name = "ControllerEnvelopeRelay"
     accepted_input_type = (NodePacket, NodeResult)
     reads = ("reminder_checked",)
     writes = (
         "controller_envelope_reads",
+        "controller_handoff_envelope_only",
+        "controller_handoff_body_leak_blocks",
         "controller_body_access_blocks",
         "controller_body_execution_blocks",
         "holder_changes",
@@ -305,6 +377,17 @@ class ControllerEnvelopeRelay:
     def apply(self, input_obj: NodePacket, state: State) -> Iterable[FunctionResult]:
         if not isinstance(input_obj, NodePacket):
             yield FunctionResult(input_obj, state, "controller_envelope_pass_through")
+            return
+        if input_obj.controller_handoff_contains_body_content:
+            new_state = replace(
+                state,
+                controller_handoff_body_leak_blocks=state.controller_handoff_body_leak_blocks + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "controller_handoff_contains_packet_body"),
+                new_state,
+                "controller_handoff_body_content_blocked",
+            )
             return
         if input_obj.controller_attempts_body_read:
             new_state = replace(
@@ -334,6 +417,11 @@ class ControllerEnvelopeRelay:
             if input_obj.packet_id in state.controller_envelope_reads
             else state.controller_envelope_reads + (input_obj.packet_id,)
         )
+        envelope_only_handoffs = (
+            state.controller_handoff_envelope_only
+            if input_obj.packet_id in state.controller_handoff_envelope_only
+            else state.controller_handoff_envelope_only + (input_obj.packet_id,)
+        )
         holder_changes = (
             state.holder_changes if input_obj.packet_id in state.holder_changes else state.holder_changes + (input_obj.packet_id,)
         )
@@ -355,6 +443,7 @@ class ControllerEnvelopeRelay:
         new_state = replace(
             state,
             controller_envelope_reads=envelope_reads,
+            controller_handoff_envelope_only=envelope_only_handoffs,
             holder_changes=holder_changes,
             holder_status_updates=holder_status_updates,
             cockpit_missing_major_nodes=cockpit_missing,
@@ -718,6 +807,33 @@ def controller_body_boundary_blocks_never_advance(state: State, trace) -> Invari
     return InvariantResult.pass_()
 
 
+def controller_handoff_body_leak_never_advances(state: State, trace) -> InvariantResult:
+    del trace
+    blocked = set(state.controller_handoff_body_leak_blocks)
+    unsafe = blocked & (
+        set(state.dispatches)
+        | set(state.worker_results)
+        | set(state.result_envelope_checks)
+        | set(state.review_passes)
+        | set(state.advances)
+    )
+    if unsafe:
+        return InvariantResult.fail(f"controller handoff body leak advanced: {sorted(unsafe)!r}")
+    return InvariantResult.pass_()
+
+
+def controller_relay_requires_physical_files_and_envelope_only_handoff(state: State, trace) -> InvariantResult:
+    del trace
+    relayed = set(state.controller_envelope_reads)
+    missing_files = relayed - set(state.physical_packet_files)
+    if missing_files:
+        return InvariantResult.fail(f"controller relayed without physical packet files: {sorted(missing_files)!r}")
+    missing_handoff = relayed - set(state.controller_handoff_envelope_only)
+    if missing_handoff:
+        return InvariantResult.fail(f"controller relayed without envelope-only handoff: {sorted(missing_handoff)!r}")
+    return InvariantResult.pass_()
+
+
 def holder_change_requires_user_status_update(state: State, trace) -> InvariantResult:
     del trace
     missing = set(state.holder_changes) - set(state.holder_status_updates)
@@ -747,7 +863,13 @@ def dispatch_requires_packet_envelope_and_hash_checks(state: State, trace) -> In
 
 def packet_integrity_blocks_never_advance(state: State, trace) -> InvariantResult:
     del trace
-    blocked = set(state.wrong_delivery_blocks) | set(state.packet_body_hash_blocks) | set(state.stale_packet_body_blocks)
+    missing_files = set(state.packets) - set(state.physical_packet_files)
+    blocked = (
+        set(state.wrong_delivery_blocks)
+        | set(state.packet_body_hash_blocks)
+        | set(state.stale_packet_body_blocks)
+        | missing_files
+    )
     unsafe = blocked & (set(state.dispatches) | set(state.worker_results) | set(state.review_passes) | set(state.advances))
     if unsafe:
         return InvariantResult.fail(f"invalid packet envelope/body advanced: {sorted(unsafe)!r}")
@@ -864,6 +986,16 @@ INVARIANTS = (
         controller_body_boundary_blocks_never_advance,
     ),
     Invariant(
+        "controller_handoff_body_leak_never_advances",
+        "Controller handoff containing packet body content cannot dispatch, review, or advance.",
+        controller_handoff_body_leak_never_advances,
+    ),
+    Invariant(
+        "controller_relay_requires_physical_files_and_envelope_only_handoff",
+        "Controller relay requires physical packet files and an envelope-only handoff.",
+        controller_relay_requires_physical_files_and_envelope_only_handoff,
+    ),
+    Invariant(
         "holder_change_requires_user_status_update",
         "Every packet holder change requires a user-visible status update.",
         holder_change_requires_user_status_update,
@@ -934,6 +1066,8 @@ INVARIANTS = (
 EXTERNAL_INPUTS = (
     NodeCase("valid_worker_packet", "pass", "worker"),
     NodeCase("cockpit_missing_major_packet", "pass", "worker"),
+    NodeCase("missing_physical_files_packet", "block", "worker"),
+    NodeCase("controller_handoff_leaks_body_packet", "block", "controller"),
     NodeCase("controller_reads_body_packet", "block", "controller"),
     NodeCase("controller_executes_body_packet", "block", "controller"),
     NodeCase("wrong_delivery_packet", "block", "worker"),
@@ -969,7 +1103,9 @@ def build_workflow() -> Workflow:
             HeartbeatResumeLoad(),
             ControllerAskPMOnResume(),
             PMResumeDecision(),
+            PacketRuntimeWrite(),
             ControllerReminderCheck(),
+            ControllerEnvelopeOnlyHandoff(),
             ControllerEnvelopeRelay(),
             ReviewerDispatch(),
             WorkerOrControllerResult(),

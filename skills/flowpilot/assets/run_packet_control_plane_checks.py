@@ -21,8 +21,12 @@ def main() -> int:
         terminal_predicate=model.terminal_predicate,
         required_labels=(
             "pm_packet_issued",
+            "packet_physical_files_written",
+            "missing_physical_packet_files_blocked",
             "controller_reminder_checked",
             "controller_missing_pm_reminder",
+            "controller_handoff_envelope_only",
+            "controller_handoff_body_content_blocked",
             "controller_relayed_envelope_with_holder_status_update",
             "major_node_chat_mermaid_displayed_when_cockpit_missing",
             "controller_reads_packet_body_blocked",

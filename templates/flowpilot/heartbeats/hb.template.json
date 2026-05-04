@@ -106,6 +106,8 @@
     "controller_may_read_result_body": false,
     "controller_may_execute_body": false,
     "controller_may_relabel_wrong_role_origin": false,
+    "physical_packet_files_checked": false,
+    "controller_context_body_exclusion_checked": false,
     "packet_body_hash_checked_before_dispatch": false,
     "result_body_hash_checked_before_review_pass": false,
     "review_decision_path": "<review-decision-path-or-null>",

@@ -26,6 +26,7 @@ REQUIRED_FILES = [
     "docs/reviewer_fact_audit.md",
     "flowpilot.dependencies.json",
     "skills/flowpilot/SKILL.md",
+    "skills/flowpilot/assets/packet_runtime.py",
     "skills/flowpilot/references/protocol.md",
     "skills/flowpilot/references/installation_contract.md",
     "skills/flowpilot/references/failure_modes.md",
@@ -125,6 +126,7 @@ REQUIRED_FILES = [
     "scripts/flowpilot_paths.py",
     "scripts/flowpilot_defects.py",
     "scripts/flowpilot_lifecycle.py",
+    "scripts/flowpilot_packets.py",
     "scripts/flowpilot_user_flow_diagram.py",
     "scripts/smoke_autopilot.py",
 ]

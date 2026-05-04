@@ -108,6 +108,9 @@ for review.
    `packet_body.md` and `result_body.md` for the addressed role, reviewer, or
    PM. Controller body reads, body execution, wrong-role completion relabels,
    and body-hash mismatches are blockers, not repairable formatting defects.
+   Use the physical packet runtime (`skills/flowpilot/assets/packet_runtime.py`
+   in the installed skill, `scripts/flowpilot_packets.py` in the repo) to write
+   these files and generate controller handoffs from envelope fields only.
 25. Before any parent/composite node closes, write
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the

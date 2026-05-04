@@ -234,11 +234,14 @@ long-form public explanation lives in `docs/protocol.md`.
     state/frontier/crew/continuation evidence is a shadow route and must be
     quarantined or superseded before continuing.
 38. Start only the first packet-gated chunk whose continuation mode is known.
-    The PM writes a packet envelope/body pair, the reviewer approves dispatch,
-    the worker receives only that envelope plus the body addressed to its role,
-    and the worker returns a result envelope/body pair before stopping for the
+    The PM writes a physical packet envelope/body pair, the reviewer approves dispatch,
+    the worker receives only that envelope plus the body file addressed to its role,
+    and the worker returns a physical result envelope/body pair before stopping for the
     next packet. The controller relays result envelope -> reviewer -> PM ->
     next packet envelope and continues internally when `stop_for_user: false`.
+    The installed runtime is `skills/flowpilot/assets/packet_runtime.py`; the
+    repository wrapper is `scripts/flowpilot_packets.py`. Missing physical
+    files or body text in controller context blocks dispatch.
     Every PM decision to the controller must include a controller reminder:
     the main assistant is only the packet-flow controller and must not
     implement, install, edit, test, approve, or advance from its own evidence.

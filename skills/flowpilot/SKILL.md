@@ -103,6 +103,13 @@ commands or side effects, forbidden actions, acceptance slice, and required
 verification. The controller must not read, summarize, execute, edit, or
 complete that body.
 
+For real runs, use the physical packet runtime in
+`skills/flowpilot/assets/packet_runtime.py` or the repo wrapper
+`scripts/flowpilot_packets.py`. The PM must write a real
+`packet_envelope.json` and `packet_body.md`; the controller handoff is built
+from envelope fields only and must not include packet body text. Missing
+physical files or a controller handoff containing body content blocks dispatch.
+
 Worker, reviewer, officer, and PM output is a result envelope plus result
 body, not a route decision:
 
@@ -488,7 +495,8 @@ all four in one compact sentence.
    assignment.
 9a. If background agents are allowed, work beyond startup must use the
     packet-gated control plane. The PM writes the first packet envelope/body
-    pair, the reviewer approves or blocks dispatch, and only then may a worker
+    pair as physical files under `.flowpilot/runs/<run-id>/packets/<packet-id>/`,
+    the reviewer approves or blocks dispatch, and only then may a worker
     receive the body addressed to its role. The controller relays envelopes and status only. If the
     controller performs implementation or writes gate-closing evidence itself,
     the reviewer must mark the evidence invalid for role-origin mismatch.

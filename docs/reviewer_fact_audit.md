@@ -66,7 +66,8 @@ tested, and concrete evidence references used for the decision.
 
 Every packet review also requires an explicit envelope-aware role-origin audit.
 The reviewer must compare the PM-authored packet envelope, reviewer dispatch
-approval, `packet_envelope.to_role`, packet body hash, assigned worker or
+approval, physical packet/result files, controller context/body exclusion,
+`packet_envelope.to_role`, packet body hash, assigned worker or
 authorized role, result envelope, `completed_by_role`,
 `completed_by_agent_id`, result body hash, and actual result author evidence
 before any pass. Controller, unknown-origin, wrong-role, cosigned/relabelled

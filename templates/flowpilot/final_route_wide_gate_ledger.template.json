@@ -123,6 +123,8 @@
         "role_origin_audit_required": true,
         "role_origin_audit_done": false,
         "packet_envelope_checked": false,
+        "physical_packet_files_checked": false,
+        "controller_context_body_exclusion_checked": false,
         "packet_body_hash_checked": false,
         "result_envelope_checked": false,
         "result_body_hash_checked": false,

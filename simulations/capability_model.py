@@ -337,6 +337,8 @@ class State:
     worker_output_ready_for_review: bool = False
     pm_review_release_order_written: bool = False
     pm_released_reviewer_for_current_gate: bool = False
+    packet_runtime_physical_files_written: bool = False
+    controller_context_body_exclusion_verified: bool = False
     packet_envelope_body_audit_done: bool = False
     packet_envelope_to_role_checked: bool = False
     packet_body_hash_verified: bool = False
@@ -451,6 +453,8 @@ def _reset_human_inspection_gates() -> dict[str, object]:
         "worker_output_ready_for_review": False,
         "pm_review_release_order_written": False,
         "pm_released_reviewer_for_current_gate": False,
+        "packet_runtime_physical_files_written": False,
+        "controller_context_body_exclusion_verified": False,
         "packet_envelope_body_audit_done": False,
         "packet_envelope_to_role_checked": False,
         "packet_body_hash_verified": False,
@@ -1668,6 +1672,8 @@ class CapabilityRouterStep:
         "worker_output_ready_for_review",
         "pm_review_release_order_written",
         "pm_released_reviewer_for_current_gate",
+        "packet_runtime_physical_files_written",
+        "controller_context_body_exclusion_verified",
         "packet_envelope_body_audit_done",
         "packet_envelope_to_role_checked",
         "packet_body_hash_verified",
@@ -1989,6 +1995,8 @@ class CapabilityRouterStep:
         "worker_output_ready_for_review",
         "pm_review_release_order_written",
         "pm_released_reviewer_for_current_gate",
+        "packet_runtime_physical_files_written",
+        "controller_context_body_exclusion_verified",
         "packet_envelope_body_audit_done",
         "packet_envelope_to_role_checked",
         "packet_body_hash_verified",
@@ -4049,6 +4057,15 @@ class CapabilityRouterStep:
                     pm_released_reviewer_for_current_gate=True,
                 )
                 return
+            if not state.packet_runtime_physical_files_written:
+                yield _step(
+                    state,
+                    label="packet_runtime_physical_isolation_verified",
+                    action="packet runtime writes backend physical packet/result envelope-body files and verifies controller context excludes body content before reviewer audit",
+                    packet_runtime_physical_files_written=True,
+                    controller_context_body_exclusion_verified=True,
+                )
+                return
             if not state.packet_envelope_body_audit_done:
                 yield _step(
                     state,
@@ -4837,6 +4854,15 @@ class CapabilityRouterStep:
                     label="pm_released_reviewer_for_current_gate",
                     action="project manager explicitly releases the reviewer to start UI inspection after worker output is ready",
                     pm_released_reviewer_for_current_gate=True,
+                )
+                return
+            if not state.packet_runtime_physical_files_written:
+                yield _step(
+                    state,
+                    label="packet_runtime_physical_isolation_verified",
+                    action="packet runtime writes UI physical packet/result envelope-body files and verifies controller context excludes body content before reviewer audit",
+                    packet_runtime_physical_files_written=True,
+                    controller_context_body_exclusion_verified=True,
                 )
                 return
             if not state.packet_envelope_body_audit_done:
@@ -5983,6 +6009,8 @@ def pm_review_release_controls_reviewer_start(
         and state.worker_output_ready_for_review
         and state.pm_review_release_order_written
         and state.pm_released_reviewer_for_current_gate
+        and state.packet_runtime_physical_files_written
+        and state.controller_context_body_exclusion_verified
         and state.packet_envelope_body_audit_done
         and state.packet_envelope_to_role_checked
         and state.packet_body_hash_verified
@@ -5996,7 +6024,7 @@ def pm_review_release_controls_reviewer_start(
         and state.packet_result_author_matches_assignment
     ):
         return InvariantResult.fail(
-            "capability reviewer started current-gate review before PM release order, envelope/body audit, and per-packet role-origin audit"
+            "capability reviewer started current-gate review before PM release order, physical packet isolation, envelope/body audit, and per-packet role-origin audit"
         )
     if state.pm_review_release_order_written and not state.worker_output_ready_for_review:
         return InvariantResult.fail(

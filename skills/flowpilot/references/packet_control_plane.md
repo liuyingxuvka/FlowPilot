@@ -48,6 +48,15 @@ next decision. The controller must not read or execute `packet_body` or
 `result_body`, generate worker artifacts, run product validation, approve
 gates, close nodes, rewrite hashes, or relabel wrong-role completion.
 
+The split must be physical in real runs. Use
+`skills/flowpilot/assets/packet_runtime.py` in the installed skill or
+`scripts/flowpilot_packets.py` in this repository to write
+`.flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json`,
+`packet_body.md`, `result_envelope.json`, and `result_body.md`. The runtime
+computes hashes from those files and builds controller handoffs from envelope
+fields only. Missing physical files or body text in controller context blocks
+dispatch before review content inspection.
+
 The reviewer checks role origin and body integrity on every packet, not only
 when a mismatch is obvious. The audit compares the PM packet envelope,
 reviewer dispatch, `packet_envelope.to_role`, packet body hash, assigned

@@ -1964,3 +1964,56 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Future FlowPilot runtime work should instantiate `packets/<packet-id>/packet_envelope.json`, `packet_body.md`, `result_envelope.json`, `result_body.md`, and `controller_status_packet.json` from these templates for real route runs.
+
+
+## flowpilot-physical-packet-runtime - Enforce file-backed envelope/body handoff
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that envelope/body routing must be a real file-backed runtime handoff, not only a declarative rule or template.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T16:12:00+02:00
+- Ended: 2026-05-04T17:17:31+02:00
+
+### Model Files
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Runtime Files
+- `skills/flowpilot/assets/packet_runtime.py`
+- `scripts/flowpilot_packets.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile skills\flowpilot\assets\packet_runtime.py scripts\flowpilot_packets.py scripts\check_install.py`
+- OK: `python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py tests\test_flowpilot_control_gates.py`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates`
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py`: 20 traces, no invariant violations, no dead branches, no reachability failures
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram`: 31 tests
+- OK: JSON parse for all `templates/flowpilot/**/*.json`: 55 templates
+- OK: `python simulations\run_meta_checks.py`: 573799 states, 593971 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python simulations\run_capability_checks.py`: 544973 states, 570433 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python scripts\check_install.py`
+- OK: CLI smoke: `scripts\flowpilot_packets.py` issued a packet and controller handoff omitted the body sentinel
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`: `flowpilot` source_fresh true
+- OK: `python scripts\audit_local_install_sync.py --json`: repo-owned installed skills fresh
+- OK: `git diff --check`: only Windows line-ending warnings
+
+### Findings
+- Added an installed runtime that writes physical `packet_envelope.json`, `packet_body.md`, `result_envelope.json`, `result_body.md`, `controller_status_packet.json`, and `packet_ledger.json` entries.
+- Controller handoff is generated from envelope fields only. Runtime tests verify body text does not appear in controller handoff.
+- Reviewer validation now checks physical file hashes, packet/result role origin, completed-agent role membership, wrong-role completion, and controller-origin completion.
+- Meta and capability models now require `packet_runtime_physical_isolation_verified` before envelope/body audit and role-origin review can open.
+
+### Counterexamples
+- A controller handoff containing packet body content is now modeled as `controller_handoff_body_content_blocked` and cannot dispatch, review, or advance.
+- A PM packet without physical files is now modeled as `missing_physical_packet_files_blocked` and cannot dispatch.
+
+### Skipped Steps
+- No OS-level file permissions or encryption were added; the accepted scope was real files, controller context isolation, and review blocking.
+- No UI redesign, release, remote push, or publication action was taken.
+
+### Next Actions
+- Future FlowPilot route execution should call `packet_runtime.py` or `scripts\flowpilot_packets.py` when issuing and completing work packets, and should never paste body text into controller-visible chat.

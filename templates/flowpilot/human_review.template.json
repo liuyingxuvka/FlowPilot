@@ -41,6 +41,8 @@
     "pm_packet_author_verified": false,
     "reviewer_dispatch_authority_checked": false,
     "packet_envelope_checked": false,
+    "packet_runtime_physical_files_checked": false,
+    "controller_context_body_exclusion_checked": false,
     "packet_envelope_to_role_checked": false,
     "packet_body_hash_checked": false,
     "packet_body_hash_matches_envelope": false,

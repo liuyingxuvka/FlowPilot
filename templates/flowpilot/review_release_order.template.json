@@ -14,6 +14,8 @@
     "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown>",
     "packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
     "packet_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",
+    "physical_packet_files_written": false,
+    "controller_context_body_exclusion_verified": false,
     "packet_body_hash": "<sha256-of-packet-body-or-null>",
     "result_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json",
     "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
@@ -33,6 +35,8 @@
     "evidence_pointers": [],
     "required_role_origin_checks": [
       "verify PM packet author",
+      "verify physical packet/result envelope-body files exist",
+      "verify controller handoff/context contained envelope only and no body text",
       "verify reviewer dispatch approval",
       "verify packet envelope to_role",
       "verify packet body hash against packet envelope",

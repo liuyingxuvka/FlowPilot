@@ -45,6 +45,8 @@
     "review_decision_path": "<review-decision-path-or-null>",
     "role_origin_audit_path": "<role-origin-audit-evidence-path-or-null>",
     "role_origin_audit_required_before_review_pass": true,
+    "physical_packet_files_checked": false,
+    "controller_context_body_exclusion_checked": false,
     "packet_envelope_to_role_checked": false,
     "packet_body_hash_checked": false,
     "result_envelope_completed_by_role_checked": false,

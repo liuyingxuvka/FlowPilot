@@ -25,6 +25,8 @@
     "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
     "approver_role_allowed_to_read_relevant_body": false,
     "controller_body_access_forbidden": true,
+    "physical_packet_files_written": false,
+    "controller_context_body_exclusion_verified": false,
     "packet_body_hash_checked": false,
     "result_body_hash_checked": false,
     "stale_body_reuse_checked": false
