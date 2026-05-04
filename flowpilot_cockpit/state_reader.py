@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from .models import CockpitSnapshot, EventSummary, NodeSummary, RunSummary, normalize_status, status_health
+
+
+ACTIVE_RUN_STATUSES = {"active", "running", "in_progress"}
+COMPLETION_STATUSES = {"complete", "completed", "succeeded", "delivered"}
+VISIBLE_CURRENT_RUN_STATUSES = ACTIVE_RUN_STATUSES | COMPLETION_STATUSES
 
 
 def _read_json(path: Path, findings: list[str]) -> dict[str, Any]:
@@ -66,6 +72,33 @@ def _first_text(*values: object) -> str | None:
     return None
 
 
+def _normalized_id_set(values: Iterable[object] | None) -> set[str]:
+    if values is None:
+        return set()
+    if isinstance(values, str):
+        return {values}
+    return {text for value in values if (text := _first_text(value))}
+
+
+def _tab_title(title: str, run_id: str) -> str:
+    text = title.strip() or run_id
+    if len(text) <= 24:
+        return text
+    return f"{text[:21].rstrip()}..."
+
+
+def _is_active_run_status(status: str) -> bool:
+    return normalize_status(status) in ACTIVE_RUN_STATUSES
+
+
+def _is_visible_current_run_status(status: str) -> bool:
+    return normalize_status(status) in VISIBLE_CURRENT_RUN_STATUSES
+
+
+def _is_completion_status(status: str) -> bool:
+    return normalize_status(status) in COMPLETION_STATUSES
+
+
 class FlowPilotStateReader:
     """Build a cockpit snapshot from current FlowPilot files.
 
@@ -79,7 +112,11 @@ class FlowPilotStateReader:
         self.project_root = Path(project_root).resolve()
         self.flowpilot_root = self.project_root / ".flowpilot"
 
-    def read_project(self, selected_run_id: str | None = None) -> CockpitSnapshot:
+    def read_project(
+        self,
+        selected_run_id: str | None = None,
+        hidden_run_ids: Iterable[object] | None = None,
+    ) -> CockpitSnapshot:
         findings: list[str] = []
         watched: set[Path] = set()
         current_path = self.flowpilot_root / "current.json"
@@ -99,11 +136,26 @@ class FlowPilotStateReader:
             current.get("route_id"),
         )
 
-        runs = self._read_runs(index, current, active_run_id, selected_run_id, findings, watched)
-        selected = selected_run_id or active_run_id or (runs[0].run_id if runs else None)
-        if selected and not any(run.run_id == selected for run in runs):
-            findings.append(f"Selected run is not in the run catalog: {selected}")
-            selected = active_run_id if any(run.run_id == active_run_id for run in runs) else None
+        hidden_ids = _normalized_id_set(hidden_run_ids)
+        catalog_runs = self._read_runs(index, current, active_run_id, findings, watched, hidden_ids)
+        runs = [run for run in catalog_runs if run.visible]
+        visible_run_ids = {run.run_id for run in runs}
+        if active_run_id:
+            active_catalog_run = next((run for run in catalog_runs if run.run_id == active_run_id), None)
+            if active_catalog_run is None:
+                findings.append(f"Active/current run pointer is invalid: {active_run_id}")
+            elif not _is_visible_current_run_status(active_catalog_run.status):
+                findings.append(
+                    f"Active/current run pointer is not a live or completed current run: {active_run_id} ({active_catalog_run.status})"
+                )
+
+        selected = selected_run_id if selected_run_id in visible_run_ids else None
+        if selected is None and active_run_id in visible_run_ids:
+            selected = active_run_id
+        if selected is None and runs:
+            selected = runs[0].run_id
+
+        runs = [replace(run, selected=run.run_id == selected) for run in runs]
 
         selected_run = next((run for run in runs if run.run_id == selected), None)
         nodes: tuple[NodeSummary, ...] = ()
@@ -145,7 +197,12 @@ class FlowPilotStateReader:
             route_version = _safe_int(flow.get("version") or flow.get("route_version") or frontier.get("route_version"))
             updated_at = _first_text(state.get("updated_at"), frontier.get("updated_at"), run_data.get("updated_at"))
             nodes = self._nodes_from_flow(flow, active_node_id)
-            if active_node_id is None:
+            route_complete = _is_completion_status(route_status) and all(
+                _is_completion_status(node.status) for node in nodes
+            )
+            if route_complete:
+                active_node_id = None
+            elif active_node_id is None:
                 active_node_id = self._derive_active_node(nodes)
             events = self._events_from_sources(selected_run, state, frontier, flow, evidence_payload)
             evidence = self._evidence_from_payload(selected_run, evidence_payload)
@@ -177,9 +234,9 @@ class FlowPilotStateReader:
         index: dict[str, Any],
         current: dict[str, Any],
         active_run_id: str | None,
-        selected_run_id: str | None,
         findings: list[str],
         watched: set[Path],
+        hidden_run_ids: set[str],
     ) -> list[RunSummary]:
         raw_runs = index.get("runs")
         catalog: list[dict[str, Any]]
@@ -211,6 +268,11 @@ class FlowPilotStateReader:
                 run_json.get("active_route_id"),
                 current.get("active_route_id") if run_id == active_run_id else None,
             )
+            is_current = run_id == active_run_id
+            visible = (
+                _is_active_run_status(status)
+                or (is_current and _is_completion_status(status))
+            ) and run_id not in hidden_run_ids
             runs.append(
                 RunSummary(
                     run_id=run_id,
@@ -219,7 +281,10 @@ class FlowPilotStateReader:
                     active_route_id=active_route,
                     run_root=run_root,
                     created_at=_first_text(run_json.get("created_at"), item.get("created_at")),
-                    selected=run_id == (selected_run_id or active_run_id),
+                    tab_title=_tab_title(title, run_id),
+                    visible=visible,
+                    hidden=run_id in hidden_run_ids,
+                    is_current=is_current,
                     source_health=status_health([status], run_findings),
                     source_findings=tuple(run_findings),
                 )

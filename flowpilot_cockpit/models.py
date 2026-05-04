@@ -15,6 +15,10 @@ class RunSummary:
     run_root: Path
     created_at: str | None = None
     selected: bool = False
+    tab_title: str | None = None
+    visible: bool = True
+    hidden: bool = False
+    is_current: bool = False
     source_health: str = "unknown"
     source_findings: tuple[str, ...] = ()
 
@@ -90,6 +94,7 @@ STATUS_SEVERITY = {
     "complete": 1,
     "completed": 1,
     "succeeded": 1,
+    "delivered": 1,
     "pass": 1,
     "pending": 0,
     "new": 0,
