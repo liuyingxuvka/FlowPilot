@@ -1,6 +1,7 @@
 # Local FlowPilot/FlowGuard runtime state from this development workspace.
 .flowpilot/
 .flowguard/
+.flowpilot_global_supervisor_last.json
 
 # Private/local knowledge records.
 kb/
