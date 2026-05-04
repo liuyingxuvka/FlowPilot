@@ -20,6 +20,8 @@ TARGET_PARENT_NODES = 1
 MAX_STANDARD_EXPANSIONS = 1
 MAX_QUALITY_ROUTE_RAISES = 1
 MAX_QUALITY_REWORKS = 1
+DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS = 10
+MAX_UI_CHILD_SKILL_ITERATION_ROUNDS = 20
 # State-space bound for exploring repeat UI loop branches. This is not a
 # runtime limit; the child UI skill owns the actual iteration standard.
 MAX_UI_VISUAL_ITERATIONS = 2

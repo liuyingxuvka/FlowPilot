@@ -1983,6 +1983,9 @@ Conditional UI gates:
   `frontend-design` implementation, `design-iterator` refinement,
   `design-implementation-reviewer` deviation review, and geometry/screenshot
   QA. Do not require the old `concept-led-ui-redesign` skill;
+- when FlowPilot invokes the autonomous UI child skill and the user has not set
+  a different iteration count, record the UI refinement budget as 10
+  `design-iterator` rounds by default with a maximum of 20 rounds;
 - before generated concept targets, record the UI child skill's shared visual
   direction source and reuse that direction for concept image, implementation,
   app icon/assets, and QA;

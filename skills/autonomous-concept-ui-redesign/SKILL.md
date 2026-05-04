@@ -66,7 +66,7 @@ Default choices:
 - No Figma: skip Figma-specific comparison and use concept image, prior
   screenshot, current UI, or written design contract as baseline.
 - No concept need: skip imagegen and use a written design contract.
-- No user-specified iteration count: run 3 design-iterator rounds, maximum 5.
+- No user-specified iteration count: run 10 design-iterator rounds, maximum 20.
 - No user aesthetic preference: prioritize readability, information density,
   stable layout, low overlap risk, and consistency with the product.
 - No user-specified palette: select one explicit accent color by default and
@@ -213,8 +213,8 @@ Load `design-iterator` when any of these are true:
 
 Run a bounded loop:
 
-- default 3 rounds;
-- maximum 5 rounds unless FlowPilot explicitly raises the budget;
+- default 10 rounds;
+- maximum 20 rounds unless FlowPilot explicitly raises the budget;
 - one or two concrete changes per round;
 - screenshot after each round;
 - preserve working behavior and do not undo good prior changes.

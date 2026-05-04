@@ -960,6 +960,9 @@ Conditional:
   `frontend-design`, `design-iterator`, `design-implementation-reviewer`,
   image generation when needed, and geometry/screenshot QA. Do not require the
   old `concept-led-ui-redesign` skill.
+- When the user has not set a different iteration count, FlowPilot records the
+  autonomous UI refinement budget as 10 `design-iterator` rounds by default
+  with a maximum of 20 rounds.
 - Before UI implementation, record the source skill's concept-target decision:
   generated/selected target, authoritative reference, explicit waiver, or
   blocker. Post-implementation rendered QA evidence cannot be relabeled as this

@@ -1729,3 +1729,39 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Future FlowPilot material gaps should instantiate research package, worker report, and reviewer report artifacts rather than staying as informal notes.
+
+
+## flowpilot-ui-iteration-budget-10-20 - Raise FlowPilot UI refinement budget
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot child-skill behavior change for UI refinement loops across source, installed skills, active runs, and heartbeat continuation prompts
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T12:12:00+02:00
+- Ended: 2026-05-04T12:28:00+02:00
+
+### Model Files
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: JSON parse and budget assertion for the active FlowPilot Cockpit run and active ProjectRadar run state/frontier files
+- OK: `python simulations\run_capability_checks.py`: 522749 states, 548209 edges, no invariant failures, no missing labels, no stuck states, no nonterminating components
+- OK: `git diff --check` for the FlowPilot repository and standalone autonomous UI skill repository, with only existing Windows line-ending warnings
+
+### Findings
+- FlowPilot now records the autonomous UI refinement budget as 10 `design-iterator` rounds by default and a maximum of 20 rounds when the user has not set a different count.
+- The installed `flowpilot` and `autonomous-concept-ui-redesign` skill copies were synchronized with the repository source.
+- The current FlowPilot Cockpit redesign run and current ProjectRadar FlowPilot run now carry explicit `ui_iteration_budget` state so heartbeat continuation can inherit the 10/20 budget.
+
+### Counterexamples
+- none recorded
+
+### Skipped Steps
+- `simulations/run_meta_checks.py` was not rerun because this change affects UI child-skill budget and capability routing, not startup/meta-process control flow.
+
+### Next Actions
+- Future UI child-skill gate manifests should preserve the recorded 10/20 budget unless the user explicitly requests a different iteration count.

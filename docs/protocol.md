@@ -1247,6 +1247,9 @@ FlowPilot checks these process facts:
   `frontend-design` implementation, `design-iterator` rounds or a recorded
   skip, and `design-implementation-reviewer` deviation review or a recorded
   skip;
+- when the user has not set a different iteration count, FlowPilot records the
+  autonomous UI refinement budget as 10 `design-iterator` rounds by default
+  with a maximum of 20 rounds;
 - the child skill produced or explicitly waived the pre-implementation concept
   target/reference decision;
 - generated concept targets have both a source decision and an authenticity
