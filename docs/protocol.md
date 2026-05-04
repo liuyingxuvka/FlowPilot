@@ -520,6 +520,20 @@ The controller may not read or execute packet/result bodies, implement code,
 generate assets, run product validation, approve gates, close nodes, rewrite
 hashes, or relabel a wrong-role completion.
 
+All formal packet/result/review/PM mail must route through the controller. Each
+relay writes a `controller_relay` signature with the controller agent id,
+sender role, target role, holder before/after, envelope hash, and explicit
+`body_was_read_by_controller: false` plus `body_was_executed_by_controller:
+false`. The receiving role verifies that relay signature before opening any
+body. Missing signatures, wrong targets, hash mismatch, private role-to-role
+delivery, or missing no-read/no-execute declarations block body open and force
+sender reissue through PM.
+
+If the controller reads or executes a sealed internal body, it cannot continue
+relaying that mail. It records a contaminated return-to-sender entry and PM must
+request a fresh replacement from the original sender. Post-hoc signing,
+cosigning, relabeling, or hash rewriting cannot make the old mail valid.
+
 The split is a runtime artifact, not only prose. The physical packet runtime
 writes `packet_envelope.json` and `packet_body.md` under
 `.flowpilot/runs/<run-id>/packets/<packet-id>/`, computes the body hash from
@@ -543,6 +557,13 @@ must match the referenced bodies, and stale bodies after route mutation cannot
 be accepted. Wrong-role completion cannot be fixed by cosigning, renaming, or
 rewriting the envelope; PM must reissue or repair the packet through the
 correct role.
+
+The reviewer also performs a mail-chain audit before every subnode and
+major-node closure. The audit checks controller relay signatures, recipient
+pre-open checks, holder continuity, absence of private mail, and replacement
+coverage for contaminated, rejected, unopened, or missing mail. If a required
+letter was not opened when needed, reviewer sends the audit to PM. PM chooses
+restart node, repair node, or sender reissue; controller cannot fill the gap.
 
 The project manager owns reviewer timing. Before worker or controller work
 that will later need review, the PM writes a review hold instruction naming the

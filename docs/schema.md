@@ -518,16 +518,20 @@ controller loop. It records the active packet id, packet holder, PM decision
 evidence, reviewer dispatch evidence, assigned worker, packet envelope/body
 paths and hashes, result envelope/body paths and hashes, review decision
 evidence, next legal controller relay action, and whether ambiguous worker
-state blocks controller execution.
+state blocks controller execution. It also records controller relay signatures,
+recipient pre-open body checks, holder history, contaminated return-to-sender
+records, replacement links, and the latest packet-chain audit.
 
 Packet envelopes live at
 `.flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json`. The
 envelope is the only packet object the controller may read. It contains
 `packet_id`, `from_role`, `to_role`, `node_id`, `is_current_node`,
 `body_path`, `body_hash`, `return_to`, `next_holder`,
-`controller_allowed_actions`, and `controller_forbidden_actions`. The packet
-body lives at the envelope `body_path` and is readable by the target role, with
-reviewer/PM access only for review, repair, or completion decisions.
+`controller_allowed_actions`, `controller_forbidden_actions`, and
+`controller_relay`. The packet body lives at the envelope `body_path` and is
+readable by the target role only after that role verifies the controller relay
+signature and body hash. Reviewer/PM access is limited to review, repair, or
+completion decisions.
 
 `skills/flowpilot/assets/packet_runtime.py` is the physical writer used by the
 installed skill. Its repo wrapper is `scripts/flowpilot_packets.py`. The
@@ -535,15 +539,26 @@ runtime writes the envelope and body as separate files, computes `body_hash`
 from the body file, writes or updates `packet_ledger.json`, and builds
 controller handoff payloads from envelope fields only. A valid review release
 records that physical packet files exist and that the controller context
-excluded body text.
+excluded body text. If controller records that it read or executed a sealed
+body, the runtime marks the envelope contaminated and requires sender reissue;
+post-hoc signing or relabeling does not repair it.
 
 Result envelopes live at
 `.flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json`. Returning
 roles put `packet_id`, `completed_by_role`, `completed_by_agent_id`,
 `node_id`, `result_body_path`, `result_body_hash`, and `next_recipient` in the
-result envelope. Detailed commands, file changes, screenshots, model outputs,
+result envelope, plus the controller relay signature once Controller has
+relayed it. Detailed commands, file changes, screenshots, model outputs,
 evidence, findings, and open issues go in `result_body.md`. The controller may
-relay the result envelope but may not read or repair the body.
+relay the result envelope but may not read, execute, summarize, or repair the
+body.
+
+`packet_chain_audit.json` is the reviewer-owned audit for a subnode or major
+node. It checks packet/result relay signatures, body-open-after-relay records,
+holder continuity, absence of private role-to-role mail, and replacement
+coverage for contaminated, rejected, unopened, or missing mail. If the audit
+finds an unopened or missing required letter, it is sent to PM for a restart
+node, repair node, or sender reissue decision.
 
 Each packet entry also contains a mandatory envelope-aware
 `role_origin_audit`. The reviewer must fill it before any pass decision by
@@ -561,12 +576,14 @@ cosigned, relabelled, or accepted as "good enough." A packet cannot close while
 mismatched, hash-invalid, or stale.
 
 Heartbeat and manual resume load the packet ledger before asking PM for the
-current decision. The controller may not mint packets, finish worker packets,
-or advance from controller-origin evidence. If PM issues a packet, the ledger
-must show `controller_reminder` and reviewer dispatch before worker execution.
-If a worker result exists, the next action is reviewer review. If packet holder
-or worker-result state is ambiguous, the next action is PM recovery/reissue,
-not controller execution.
+current decision and must audit the mail chain without opening bodies. The
+controller may not mint packets, finish worker packets, or advance from
+controller-origin evidence. If PM issues a packet, the ledger must show
+`controller_reminder`, controller relay signature, recipient body-open record,
+and reviewer dispatch before worker execution. If a worker result exists, the
+next action is controller-relayed reviewer review. If packet holder, relay
+signature, body-open record, or worker-result state is ambiguous, the next
+action is PM recovery/reissue, not controller execution.
 
 On any controlled stop before terminal completion, the frontier or heartbeat
 record stores a `controlled_stop_notice` packet. Automated mode may set

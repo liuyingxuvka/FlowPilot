@@ -15,8 +15,19 @@ import re
 PACKET_ENVELOPE_SCHEMA = "flowpilot.packet_envelope.v1"
 RESULT_ENVELOPE_SCHEMA = "flowpilot.result_envelope.v1"
 CONTROLLER_HANDOFF_SCHEMA = "flowpilot.controller_handoff.v1"
+CONTROLLER_RELAY_SCHEMA = "flowpilot.controller_relay.v1"
+CHAIN_AUDIT_SCHEMA = "flowpilot.packet_chain_audit.v1"
 PACKET_LEDGER_SCHEMA = "flowpilot.packet_ledger.v2"
 PACKET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+SEALED_BODY_VISIBILITY = "sealed_target_role_only"
+USER_INTAKE_BODY_VISIBILITY = "external_user_input_controller_visible"
+ENVELOPE_HASH_EXCLUDED_KEYS = {
+    "body_opened_by_role",
+    "controller_relay",
+    "controller_relay_history",
+    "controller_return_to_sender",
+    "result_body_opened_by_role",
+}
 
 DEFAULT_CONTROLLER_ALLOWED_ACTIONS = [
     "read_packet_envelope",
@@ -87,6 +98,15 @@ def sha256_bytes(payload: bytes) -> str:
 
 def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
+
+
+def stable_json_hash(payload: dict[str, Any]) -> str:
+    return sha256_bytes(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+
+
+def envelope_hash(envelope: dict[str, Any]) -> str:
+    stable_payload = {key: value for key, value in envelope.items() if key not in ENVELOPE_HASH_EXCLUDED_KEYS}
+    return stable_json_hash(stable_payload)
 
 
 def write_text_atomic(path: Path, text: str) -> None:
@@ -184,6 +204,33 @@ def packet_paths_from_envelope(project_root: Path, envelope: dict[str, Any]) -> 
     }
 
 
+def packet_paths_from_result_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
+    validate_packet_id(str(envelope["packet_id"]))
+    result_body = resolve_project_path(project_root, str(envelope["result_body_path"]))
+    packet_dir = result_body.parent
+    packets_root = packet_dir.parent
+    run_root = packets_root.parent if packets_root.name == "packets" else active_run_root(project_root)[1]
+    return {
+        "run_id": run_root.name,
+        "run_root": run_root,
+        "packet_dir": packet_dir,
+        "packet_envelope": packet_dir / "packet_envelope.json",
+        "packet_body": packet_dir / "packet_body.md",
+        "result_envelope": packet_dir / "result_envelope.json",
+        "result_body": result_body,
+        "controller_status_packet": packet_dir / "controller_status_packet.json",
+        "packet_ledger": run_root / "packet_ledger.json",
+    }
+
+
+def packet_paths_from_any_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
+    if "body_path" in envelope:
+        return packet_paths_from_envelope(project_root, envelope)
+    if "result_body_path" in envelope:
+        return packet_paths_from_result_envelope(project_root, envelope)
+    raise PacketRuntimeError("envelope must contain body_path or result_body_path")
+
+
 def load_envelope(project_root: Path, envelope_path: str | Path) -> dict[str, Any]:
     return read_json(resolve_project_path(project_root, str(envelope_path)))
 
@@ -207,6 +254,10 @@ def _empty_packet_ledger(project_root: Path, run_id: str, run_root: Path) -> dic
             "controller_may_execute_worker_packet": False,
             "controller_may_advance_from_own_evidence": False,
             "controller_may_relabel_wrong_role_origin": False,
+            "all_formal_mail_must_route_through_controller": True,
+            "recipient_must_verify_controller_relay_before_body_open": True,
+            "controller_relay_signature_required": True,
+            "contaminated_mail_requires_sender_reissue": True,
             "pm_controller_reminder_required": True,
             "reviewer_dispatch_required_before_worker": True,
             "role_reminder_required_in_controller_messages": True,
@@ -253,6 +304,194 @@ def _upsert_packet_record(project_root: Path, ledger_path: Path, run_id: str, ru
     write_json_atomic(ledger_path, ledger)
 
 
+def _update_packet_record(project_root: Path, ledger_path: Path, packet_id: str, updates: dict[str, Any]) -> None:
+    if not ledger_path.exists():
+        return
+    ledger = read_json(ledger_path)
+    packets = ledger.get("packets")
+    if not isinstance(packets, list):
+        return
+    for record in packets:
+        if isinstance(record, dict) and record.get("packet_id") == packet_id:
+            for key, value in updates.items():
+                if key in {"holder_history", "controller_relay_history"}:
+                    existing = record.setdefault(key, [])
+                    if isinstance(existing, list):
+                        existing.extend(value if isinstance(value, list) else [value])
+                    else:
+                        record[key] = value if isinstance(value, list) else [value]
+                else:
+                    record[key] = value
+            ledger["active_packet_id"] = packet_id
+            if "active_packet_status" in updates:
+                ledger["active_packet_status"] = updates["active_packet_status"]
+            if "active_packet_holder" in updates:
+                ledger["active_packet_holder"] = updates["active_packet_holder"]
+            ledger["updated_at"] = utc_now()
+            write_json_atomic(ledger_path, ledger)
+            return
+
+
+def mark_controller_contamination(
+    project_root: Path,
+    *,
+    envelope: dict[str, Any],
+    envelope_path: str | Path,
+    controller_agent_id: str,
+    received_from_role: str,
+    reason: str = "controller_body_access_detected",
+) -> dict[str, Any]:
+    paths = packet_paths_from_any_envelope(project_root, envelope)
+    resolved_envelope_path = resolve_project_path(project_root, str(envelope_path))
+    record = {
+        "schema_version": "flowpilot.controller_return_to_sender.v1",
+        "packet_id": envelope["packet_id"],
+        "controller_agent_id": controller_agent_id,
+        "received_from_role": received_from_role,
+        "returned_to_role": received_from_role,
+        "reason": reason,
+        "contaminated": True,
+        "controller_must_not_relay": True,
+        "must_reissue_new_packet": True,
+        "replacement_packet_id": None,
+        "created_at": utc_now(),
+    }
+    envelope["controller_return_to_sender"] = record
+    write_json_atomic(resolved_envelope_path, envelope)
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        envelope["packet_id"],
+        {
+            "active_packet_status": "contaminated-returned-to-sender",
+            "active_packet_holder": received_from_role,
+            "controller_packet_body_access_detected": True,
+            "contaminated_evidence_disposition": "discarded",
+            "controller_return_to_sender": record,
+            "holder_history": {
+                "holder": received_from_role,
+                "status": "contaminated-returned-to-sender",
+                "changed_at": record["created_at"],
+                "user_status_update_written": True,
+                "controller_status_packet_path": envelope.get("controller_status_packet_path"),
+            },
+        },
+    )
+    return record
+
+
+def controller_relay_envelope(
+    project_root: Path,
+    *,
+    envelope: dict[str, Any],
+    envelope_path: str | Path,
+    controller_agent_id: str,
+    received_from_role: str | None = None,
+    relayed_to_role: str | None = None,
+    holder_before: str | None = None,
+    holder_after: str | None = None,
+    body_was_read_by_controller: bool = False,
+    body_was_executed_by_controller: bool = False,
+    private_role_to_role_delivery_detected: bool = False,
+) -> dict[str, Any]:
+    source_role = received_from_role or envelope.get("from_role") or envelope.get("completed_by_role") or "unknown"
+    target_role = relayed_to_role or envelope.get("to_role") or envelope.get("next_recipient") or "unknown"
+    if envelope.get("controller_return_to_sender", {}).get("contaminated"):
+        raise PacketRuntimeError("contaminated envelope cannot be relayed; sender must reissue a new packet")
+    if body_was_read_by_controller or body_was_executed_by_controller or private_role_to_role_delivery_detected:
+        reason = "private_role_to_role_delivery_detected" if private_role_to_role_delivery_detected else "controller_body_read_or_executed"
+        mark_controller_contamination(
+            project_root,
+            envelope=envelope,
+            envelope_path=envelope_path,
+            controller_agent_id=controller_agent_id,
+            received_from_role=source_role,
+            reason=reason,
+        )
+        raise PacketRuntimeError("controller relay violation detected; envelope returned to sender for reissue")
+
+    paths = packet_paths_from_any_envelope(project_root, envelope)
+    resolved_envelope_path = resolve_project_path(project_root, str(envelope_path))
+    body_visibility = envelope.get("body_visibility", SEALED_BODY_VISIBILITY)
+    relay = {
+        "schema_version": CONTROLLER_RELAY_SCHEMA,
+        "delivered_via_controller": True,
+        "controller_agent_id": controller_agent_id,
+        "received_from_role": source_role,
+        "relayed_to_role": target_role,
+        "received_at": utc_now(),
+        "relayed_at": utc_now(),
+        "envelope_hash": envelope_hash(envelope),
+        "body_was_read_by_controller": False,
+        "body_was_executed_by_controller": False,
+        "body_visibility": body_visibility,
+        "external_user_input_visible_to_controller": body_visibility == USER_INTAKE_BODY_VISIBILITY,
+        "holder_before": holder_before or source_role,
+        "holder_after": holder_after or target_role,
+        "private_role_to_role_delivery_detected": False,
+        "recipient_must_verify_before_body_open": True,
+    }
+    envelope["controller_relay"] = relay
+    history = list(envelope.get("controller_relay_history") or [])
+    history.append(relay)
+    envelope["controller_relay_history"] = history
+    write_json_atomic(resolved_envelope_path, envelope)
+
+    relay_kind = "packet_controller_relay" if "body_path" in envelope else "result_controller_relay"
+    active_status = "envelope-relayed" if "body_path" in envelope else "result-envelope-relayed"
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        envelope["packet_id"],
+        {
+            relay_kind: relay,
+            "controller_relay_history": relay,
+            "controller_relay_signature_required": True,
+            "recipient_must_verify_controller_relay_before_body_open": True,
+            "private_role_to_role_delivery_detected": False,
+            "active_packet_status": active_status,
+            "active_packet_holder": target_role,
+            "holder_history": {
+                "holder": target_role,
+                "status": active_status,
+                "changed_at": relay["relayed_at"],
+                "user_status_update_written": True,
+                "controller_status_packet_path": envelope.get("controller_status_packet_path"),
+            },
+        },
+    )
+    return envelope
+
+
+def verify_controller_relay(
+    envelope: dict[str, Any],
+    *,
+    recipient_role: str,
+) -> dict[str, Any]:
+    relay = envelope.get("controller_relay")
+    if envelope.get("controller_return_to_sender", {}).get("contaminated"):
+        raise PacketRuntimeError("contaminated envelope cannot be opened; sender must reissue a new packet")
+    if not isinstance(relay, dict):
+        raise PacketRuntimeError("missing controller relay signature")
+    if relay.get("delivered_via_controller") is not True:
+        raise PacketRuntimeError("envelope was not delivered via controller")
+    if relay.get("relayed_to_role") != recipient_role:
+        raise PacketRuntimeError(
+            f"controller relay target {relay.get('relayed_to_role')!r} does not match recipient {recipient_role!r}"
+        )
+    if relay.get("body_was_read_by_controller") is not False:
+        raise PacketRuntimeError("controller did not sign that body was unread")
+    if relay.get("body_was_executed_by_controller") is not False:
+        raise PacketRuntimeError("controller did not sign that body was unexecuted")
+    if relay.get("private_role_to_role_delivery_detected"):
+        raise PacketRuntimeError("private role-to-role delivery detected")
+    if relay.get("envelope_hash") != envelope_hash(envelope):
+        raise PacketRuntimeError("controller relay envelope hash mismatch")
+    if not relay.get("holder_before") or not relay.get("holder_after"):
+        raise PacketRuntimeError("controller relay holder chain is incomplete")
+    return relay
+
+
 def write_controller_status_packet(
     project_root: Path,
     envelope: dict[str, Any],
@@ -295,6 +534,11 @@ def create_packet(
     next_holder: str | None = None,
     controller_allowed_actions: list[str] | None = None,
     controller_forbidden_actions: list[str] | None = None,
+    packet_type: str = "work_packet",
+    body_visibility: str = SEALED_BODY_VISIBILITY,
+    replacement_for: str | None = None,
+    supersedes: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     paths = packet_paths(project_root, packet_id, run_id)
     resolved_run_id = str(paths["run_id"])
@@ -308,6 +552,7 @@ def create_packet(
     envelope = {
         "schema_version": PACKET_ENVELOPE_SCHEMA,
         "packet_id": packet_id,
+        "packet_type": packet_type,
         "from_role": from_role,
         "to_role": to_role,
         "node_id": node_id,
@@ -315,6 +560,9 @@ def create_packet(
         "body_path": project_relative(project_root, packet_body_path),
         "body_hash": body_hash,
         "body_hash_algorithm": "sha256",
+        "body_visibility": body_visibility,
+        "replacement_for": replacement_for,
+        "supersedes": supersedes or ([] if replacement_for is None else [replacement_for]),
         "return_to": return_to,
         "next_holder": next_holder or to_role,
         "controller_allowed_actions": controller_allowed_actions or DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
@@ -326,7 +574,9 @@ def create_packet(
             "target_role_can_read_body": True,
             "body_hash_required": True,
             "body_hash_mismatch_blocks_dispatch": True,
+            "recipient_must_verify_controller_relay_before_body_open": True,
         },
+        "metadata": metadata or {},
         "created_at": utc_now(),
     }
     write_json_atomic(packet_envelope_path, envelope)
@@ -340,9 +590,13 @@ def create_packet(
     )
     record = {
         "packet_id": packet_id,
+        "packet_type": packet_type,
         "node_id": node_id,
         "created_by_role": from_role,
         "created_at": envelope["created_at"],
+        "body_visibility": body_visibility,
+        "replacement_for": replacement_for,
+        "supersedes": supersedes or ([] if replacement_for is None else [replacement_for]),
         "packet_envelope_path": project_relative(project_root, packet_envelope_path),
         "packet_body_path": envelope["body_path"],
         "physical_packet_files_written": True,
@@ -351,13 +605,18 @@ def create_packet(
         "packet_body_hash_verified": False,
         "controller_packet_body_access_detected": False,
         "controller_packet_body_execution_detected": False,
+        "controller_relay_signature_required": True,
+        "recipient_must_verify_controller_relay_before_body_open": True,
         "packet_envelope": {
+            "packet_type": packet_type,
             "from_role": from_role,
             "to_role": to_role,
             "node_id": node_id,
             "is_current_node": is_current_node,
             "return_to": return_to,
             "next_holder": next_holder or to_role,
+            "body_visibility": body_visibility,
+            "replacement_for": replacement_for,
             "controller_allowed_actions": envelope["controller_allowed_actions"],
             "controller_forbidden_actions": envelope["controller_forbidden_actions"],
         },
@@ -405,7 +664,52 @@ def create_packet(
         "controller_origin_evidence_allowed": False,
     }
     _upsert_packet_record(project_root, paths["packet_ledger"], resolved_run_id, run_root, record)
+    for superseded_id in record["supersedes"]:
+        _update_packet_record(
+            project_root,
+            paths["packet_ledger"],
+            superseded_id,
+            {
+                "replaced_by": packet_id,
+                "replacement_packet_id": packet_id,
+                "active_packet_status": "superseded-by-replacement",
+            },
+        )
     return envelope
+
+
+def create_user_intake_packet(
+    project_root: Path,
+    *,
+    packet_id: str,
+    node_id: str,
+    body_text: str,
+    run_id: str | None = None,
+    startup_options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Preserve the user's initial prompt as the first PM-bound physical packet."""
+
+    metadata = {
+        "source": "user_chat_prompt",
+        "controller_bootstrap_scope": startup_options or {},
+        "controller_may_bootstrap_roles_heartbeat_and_ui": True,
+        "controller_must_not_make_pm_route_or_gate_decision": True,
+        "pm_must_request_startup_reviewer_gate_before_opening_start_gate": True,
+        "startup_gate_status": "not_open_until_pm_decision_after_reviewer_audit",
+    }
+    return create_packet(
+        project_root,
+        run_id=run_id,
+        packet_id=packet_id,
+        from_role="user",
+        to_role="project_manager",
+        node_id=node_id,
+        body_text=body_text,
+        packet_type="user_intake",
+        body_visibility=USER_INTAKE_BODY_VISIBILITY,
+        metadata=metadata,
+        next_holder="project_manager",
+    )
 
 
 def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) -> dict[str, Any]:
@@ -413,22 +717,46 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
     leaked_keys = sorted(body_keys & set(envelope))
     if leaked_keys:
         raise PacketRuntimeError(f"packet envelope contains forbidden body content keys: {leaked_keys!r}")
+    is_result_envelope = "result_body_path" in envelope
+    if is_result_envelope:
+        from_role = envelope.get("completed_by_role")
+        to_role = envelope.get("next_recipient")
+        body_path = envelope["result_body_path"]
+        body_hash = envelope["result_body_hash"]
+        envelope_kind = "result_envelope"
+        forbidden_actions = envelope.get("controller_forbidden_actions", RESULT_CONTROLLER_FORBIDDEN_ACTIONS)
+        allowed_actions = envelope.get("controller_allowed_actions", RESULT_CONTROLLER_ALLOWED_ACTIONS)
+    else:
+        from_role = envelope["from_role"]
+        to_role = envelope["to_role"]
+        body_path = envelope["body_path"]
+        body_hash = envelope["body_hash"]
+        envelope_kind = "packet_envelope"
+        forbidden_actions = envelope["controller_forbidden_actions"]
+        allowed_actions = envelope["controller_allowed_actions"]
     return {
         "schema_version": CONTROLLER_HANDOFF_SCHEMA,
-        "controller_visibility": "packet_envelope_only",
-        "packet_envelope_path": envelope_path,
+        "controller_visibility": "result_envelope_only" if is_result_envelope else "packet_envelope_only",
+        "envelope_kind": envelope_kind,
+        "envelope_path": envelope_path,
+        "packet_envelope_path": envelope_path if not is_result_envelope else envelope.get("source_packet_envelope_path", ""),
+        "result_envelope_path": envelope_path if is_result_envelope else "",
         "packet_id": envelope["packet_id"],
-        "from_role": envelope["from_role"],
-        "to_role": envelope["to_role"],
+        "packet_type": envelope.get("packet_type", "work_packet"),
+        "from_role": from_role,
+        "to_role": to_role,
         "node_id": envelope["node_id"],
         "is_current_node": envelope["is_current_node"],
-        "body_path": envelope["body_path"],
-        "body_hash": envelope["body_hash"],
-        "return_to": envelope["return_to"],
-        "next_holder": envelope["next_holder"],
-        "controller_allowed_actions": envelope["controller_allowed_actions"],
-        "controller_forbidden_actions": envelope["controller_forbidden_actions"],
-        "instruction": "Relay this envelope only. Do not read, summarize, execute, edit, or quote the packet body.",
+        "body_path": body_path,
+        "body_hash": body_hash,
+        "body_visibility": envelope.get("body_visibility", SEALED_BODY_VISIBILITY),
+        "controller_relay_signature_required": True,
+        "recipient_must_verify_controller_relay_before_body_open": True,
+        "return_to": envelope.get("return_to", "controller"),
+        "next_holder": envelope.get("next_holder", to_role),
+        "controller_allowed_actions": allowed_actions,
+        "controller_forbidden_actions": forbidden_actions,
+        "instruction": "Relay this envelope only. Do not read, summarize, execute, edit, or quote the sealed body.",
     }
 
 
@@ -437,11 +765,33 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
+    verify_controller_relay(envelope, recipient_role=role)
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
     body_path = resolve_project_path(project_root, envelope["body_path"])
     if sha256_file(body_path) != envelope["body_hash"]:
         raise PacketRuntimeError("packet body hash mismatch")
+    opened = {
+        "role": role,
+        "opened_at": utc_now(),
+        "controller_relay_verified": True,
+        "body_hash_verified": True,
+    }
+    envelope["body_opened_by_role"] = opened
+    paths = packet_paths_from_envelope(project_root, envelope)
+    write_json_atomic(paths["packet_envelope"], envelope)
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        envelope["packet_id"],
+        {
+            "packet_body_opened_by_role": role,
+            "packet_body_opened_after_controller_relay_check": True,
+            "packet_body_open_record": opened,
+            "active_packet_status": "packet-body-opened-by-recipient",
+            "active_packet_holder": role,
+        },
+    )
     return body_path.read_text(encoding="utf-8")
 
 
@@ -459,6 +809,11 @@ def write_result(
         raise PacketRuntimeError(
             f"completed_by_role {completed_by_role!r} does not match packet to_role {packet_envelope.get('to_role')!r}"
         )
+    if strict_role:
+        verify_controller_relay(packet_envelope, recipient_role=completed_by_role)
+        opened = packet_envelope.get("body_opened_by_role")
+        if not isinstance(opened, dict) or opened.get("role") != completed_by_role:
+            raise PacketRuntimeError("worker result cannot be written before the assigned role opens the packet body")
     paths = packet_paths_from_envelope(project_root, packet_envelope)
     result_body_path = paths["result_body"]
     result_envelope_path = paths["result_envelope"]
@@ -467,7 +822,12 @@ def write_result(
     result_envelope = {
         "schema_version": RESULT_ENVELOPE_SCHEMA,
         "packet_id": packet_envelope["packet_id"],
+        "packet_type": "result",
+        "run_id": packet_envelope.get("run_id", str(paths["run_id"])),
+        "node_id": packet_envelope.get("node_id"),
+        "is_current_node": packet_envelope.get("is_current_node", True),
         "source_packet_envelope_path": project_relative(project_root, paths["packet_envelope"]),
+        "completed_at": utc_now(),
         "completed_by_role": completed_by_role,
         "completed_by_agent_id": completed_by_agent_id,
         "expected_role_from_packet_envelope": packet_envelope["to_role"],
@@ -476,6 +836,9 @@ def write_result(
         "result_body_hash": result_body_hash,
         "result_body_hash_algorithm": "sha256",
         "next_recipient": next_recipient,
+        "return_to": "controller",
+        "next_holder": next_recipient,
+        "body_visibility": SEALED_BODY_VISIBILITY,
         "controller_allowed_actions": RESULT_CONTROLLER_ALLOWED_ACTIONS,
         "controller_forbidden_actions": RESULT_CONTROLLER_FORBIDDEN_ACTIONS,
         "created_at": utc_now(),
@@ -484,6 +847,7 @@ def write_result(
             "reviewer_or_pm_can_read_body": True,
             "result_body_hash_required": True,
             "result_body_hash_mismatch_blocks_review_pass": True,
+            "recipient_must_verify_controller_relay_before_body_open": True,
         },
     }
     write_json_atomic(result_envelope_path, result_envelope)
@@ -505,12 +869,14 @@ def write_result(
         "result_body_hash": result_body_hash,
         "result_body_hash_verified": False,
         "result_envelope": {
+            "packet_type": "result",
             "completed_by_role": completed_by_role,
             "completed_by_agent_id": completed_by_agent_id,
             "expected_role_from_packet_envelope": packet_envelope["to_role"],
             "completed_role_matches_packet_to_role": completed_by_role == packet_envelope["to_role"],
             "completed_agent_id_belongs_to_role": False,
             "next_recipient": next_recipient,
+            "controller_relay_signature_required": True,
         },
     }
     _upsert_packet_record(project_root, paths["packet_ledger"], str(paths["run_id"]), paths["run_root"], record)
@@ -518,12 +884,34 @@ def write_result(
 
 
 def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any], *, role: str) -> str:
+    verify_controller_relay(result_envelope, recipient_role=role)
     allowed = {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
     if role not in allowed:
         raise PacketRuntimeError(f"result body may only be read by {sorted(value for value in allowed if value)}, not {role!r}")
     body_path = resolve_project_path(project_root, result_envelope["result_body_path"])
     if sha256_file(body_path) != result_envelope["result_body_hash"]:
         raise PacketRuntimeError("result body hash mismatch")
+    opened = {
+        "role": role,
+        "opened_at": utc_now(),
+        "controller_relay_verified": True,
+        "body_hash_verified": True,
+    }
+    result_envelope["result_body_opened_by_role"] = opened
+    paths = packet_paths_from_result_envelope(project_root, result_envelope)
+    write_json_atomic(paths["result_envelope"], result_envelope)
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        result_envelope["packet_id"],
+        {
+            "result_body_opened_by_role": role,
+            "result_body_opened_after_controller_relay_check": True,
+            "result_body_open_record": opened,
+            "active_packet_status": "result-body-opened-by-recipient",
+            "active_packet_holder": role,
+        },
+    )
     return body_path.read_text(encoding="utf-8")
 
 
@@ -546,11 +934,34 @@ def validate_for_reviewer(
     completed_by_agent_id = result_envelope.get("completed_by_agent_id")
     agent_role = (agent_role_map or {}).get(str(completed_by_agent_id))
     agent_role_matches = agent_role == completed_by_role if agent_role_map is not None else completed_by_role != "controller"
+    packet_relay_valid = True
+    result_relay_valid = True
+    packet_opened_by_target = packet_envelope.get("body_opened_by_role", {}).get("role") == expected_role
+    result_opened_by_recipient = result_envelope.get("result_body_opened_by_role", {}).get("role") in {
+        result_envelope.get("next_recipient"),
+        "human_like_reviewer",
+        "project_manager",
+    }
+
+    try:
+        verify_controller_relay(packet_envelope, recipient_role=str(expected_role))
+    except PacketRuntimeError:
+        packet_relay_valid = False
+        blockers.append("missing_or_invalid_packet_controller_relay")
+    try:
+        verify_controller_relay(result_envelope, recipient_role=str(result_envelope.get("next_recipient")))
+    except PacketRuntimeError:
+        result_relay_valid = False
+        blockers.append("missing_or_invalid_result_controller_relay")
 
     if not packet_body_hash_matches:
         blockers.append("packet_body_hash_mismatch")
     if not result_body_hash_matches:
         blockers.append("result_body_hash_mismatch")
+    if not packet_opened_by_target:
+        blockers.append("packet_body_not_opened_by_target_after_relay_check")
+    if not result_opened_by_recipient:
+        blockers.append("result_body_not_opened_by_reviewer_or_pm_after_relay_check")
     if completed_by_role == "controller":
         blockers.append("controller_origin_artifact")
     if completed_by_role != expected_role:
@@ -564,6 +975,11 @@ def validate_for_reviewer(
         "packet_envelope_checked": True,
         "packet_runtime_physical_files_checked": True,
         "controller_context_body_exclusion_checked": True,
+        "controller_relay_signature_checked": True,
+        "packet_controller_relay_valid": packet_relay_valid,
+        "result_controller_relay_valid": result_relay_valid,
+        "packet_body_opened_by_target_after_relay_check": packet_opened_by_target,
+        "result_body_opened_by_reviewer_or_pm_after_relay_check": result_opened_by_recipient,
         "packet_envelope_to_role_checked": True,
         "packet_body_hash_checked": True,
         "packet_body_hash_matches_envelope": packet_body_hash_matches,
@@ -584,6 +1000,97 @@ def validate_for_reviewer(
     }
 
 
+def _load_ledger(project_root: Path, run_id: str | None = None) -> tuple[dict[str, Any], Path, str]:
+    resolved_run_id, run_root = active_run_root(project_root, run_id)
+    ledger_path = run_root / "packet_ledger.json"
+    if not ledger_path.exists():
+        raise PacketRuntimeError(f"packet ledger does not exist: {ledger_path}")
+    return read_json(ledger_path), ledger_path, resolved_run_id
+
+
+def _replacement_exists(records: list[dict[str, Any]], packet_id: str) -> bool:
+    for record in records:
+        if record.get("replacement_for") == packet_id:
+            return True
+        supersedes = record.get("supersedes")
+        if isinstance(supersedes, list) and packet_id in supersedes:
+            return True
+        if record.get("packet_envelope", {}).get("replacement_for") == packet_id:
+            return True
+    return False
+
+
+def audit_packet_chain(project_root: Path, *, run_id: str | None = None, node_id: str | None = None) -> dict[str, Any]:
+    ledger, ledger_path, resolved_run_id = _load_ledger(project_root, run_id)
+    raw_records = ledger.get("packets") or []
+    if not isinstance(raw_records, list):
+        raise PacketRuntimeError("packet_ledger.packets must be a list")
+    records = [item for item in raw_records if isinstance(item, dict)]
+    scoped_records = [item for item in records if node_id is None or item.get("node_id") == node_id]
+    blockers: list[dict[str, Any]] = []
+
+    def add_blocker(record: dict[str, Any], code: str, detail: str) -> None:
+        blockers.append(
+            {
+                "packet_id": record.get("packet_id"),
+                "node_id": record.get("node_id"),
+                "code": code,
+                "detail": detail,
+            }
+        )
+
+    for record in scoped_records:
+        packet_id = str(record.get("packet_id") or "")
+        replaced = bool(record.get("replaced_by")) or _replacement_exists(records, packet_id)
+        contaminated = bool(record.get("controller_return_to_sender") or record.get("controller_packet_body_access_detected"))
+        if contaminated:
+            if not replaced:
+                add_blocker(record, "contaminated_packet_without_replacement", "controller-contaminated mail needs a new sender-issued replacement packet")
+            continue
+        if record.get("private_role_to_role_delivery_detected"):
+            add_blocker(record, "private_delivery_detected", "formal packet/result did not route through controller")
+        if not record.get("packet_controller_relay"):
+            add_blocker(record, "missing_packet_controller_relay", "packet envelope was not signed and relayed by controller")
+        if not record.get("packet_body_opened_by_role"):
+            add_blocker(record, "packet_body_unopened_by_recipient", "target role did not record a post-relay packet body open")
+
+        result_exists = bool(record.get("result_body_hash")) or bool(record.get("result_envelope", {}).get("completed_by_role"))
+        result_path = record.get("result_envelope_path")
+        if result_path:
+            result_exists = result_exists or resolve_project_path(project_root, str(result_path)).exists()
+        if result_exists:
+            if not record.get("result_controller_relay"):
+                add_blocker(record, "missing_result_controller_relay", "result envelope was not signed and relayed by controller")
+            if not record.get("result_body_opened_by_role"):
+                add_blocker(record, "result_body_unopened_by_recipient", "reviewer or PM did not record a post-relay result body open")
+
+    audit = {
+        "schema_version": CHAIN_AUDIT_SCHEMA,
+        "run_id": resolved_run_id,
+        "node_id": node_id,
+        "ledger_path": project_relative(project_root, ledger_path),
+        "checked_packet_count": len(scoped_records),
+        "all_formal_mail_must_route_through_controller": True,
+        "controller_no_body_read_signature_required": True,
+        "recipient_pre_open_relay_check_required": True,
+        "contaminated_or_private_mail_requires_sender_reissue": True,
+        "unopened_or_missing_mail_sent_to_pm": bool(blockers),
+        "pm_decision_required": bool(blockers),
+        "pm_options": ["restart_node", "create_repair_node", "request_sender_reissue"],
+        "blockers": blockers,
+        "passed": not blockers,
+        "reviewer_instruction": "If blockers exist, send this unopened/missing-mail audit to PM; PM chooses restart node, repair node, or sender reissue.",
+        "created_at": utc_now(),
+    }
+    audit_path = ledger_path.with_name("packet_chain_audit.json")
+    write_json_atomic(audit_path, audit)
+    ledger["latest_packet_chain_audit_path"] = project_relative(project_root, audit_path)
+    ledger["latest_packet_chain_audit_passed"] = audit["passed"]
+    ledger["latest_packet_chain_audit_at"] = audit["created_at"]
+    write_json_atomic(ledger_path, ledger)
+    return audit
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create and validate physical FlowPilot packet envelope/body files.")
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
@@ -599,9 +1106,36 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     issue.add_argument("--body-file", default="")
     issue.add_argument("--return-to", default="controller")
     issue.add_argument("--next-holder", default="")
+    issue.add_argument("--replacement-for", default="")
+
+    intake = subparsers.add_parser("user-intake", help="Write the first user prompt packet for PM")
+    intake.add_argument("--run-id", default="")
+    intake.add_argument("--packet-id", required=True)
+    intake.add_argument("--node-id", required=True)
+    intake.add_argument("--body-text", default="")
+    intake.add_argument("--body-file", default="")
+    intake.add_argument("--startup-options-json", default="")
+    intake.add_argument("--background-agents-authorized", action="store_true")
+    intake.add_argument("--heartbeat-requested", action="store_true")
+    intake.add_argument("--display-surface", default="")
 
     handoff = subparsers.add_parser("handoff", help="Print controller-visible envelope handoff only")
     handoff.add_argument("--envelope-path", required=True)
+
+    relay = subparsers.add_parser("relay", help="Controller signs and relays an envelope without opening body")
+    relay.add_argument("--envelope-path", required=True)
+    relay.add_argument("--controller-agent-id", default="controller")
+    relay.add_argument("--received-from-role", default="")
+    relay.add_argument("--relayed-to-role", default="")
+    relay.add_argument("--holder-before", default="")
+    relay.add_argument("--holder-after", default="")
+    relay.add_argument("--body-was-read-by-controller", action="store_true")
+    relay.add_argument("--body-was-executed-by-controller", action="store_true")
+    relay.add_argument("--private-role-to-role-delivery-detected", action="store_true")
+
+    read_packet = subparsers.add_parser("read-packet", help="Target role verifies relay and opens packet body")
+    read_packet.add_argument("--envelope-path", required=True)
+    read_packet.add_argument("--role", required=True)
 
     complete = subparsers.add_parser("complete", help="Write result_envelope.json and result_body.md")
     complete.add_argument("--envelope-path", required=True)
@@ -616,6 +1150,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     review.add_argument("--envelope-path", required=True)
     review.add_argument("--result-envelope-path", required=True)
     review.add_argument("--agent-role-map-json", default="")
+
+    read_result = subparsers.add_parser("read-result", help="Reviewer/PM verifies relay and opens result body")
+    read_result.add_argument("--result-envelope-path", required=True)
+    read_result.add_argument("--role", required=True)
+
+    audit_chain = subparsers.add_parser("audit-chain", help="Reviewer audits packet mail chain for a run or node")
+    audit_chain.add_argument("--run-id", default="")
+    audit_chain.add_argument("--node-id", default="")
 
     return parser.parse_args(argv)
 
@@ -640,6 +1182,26 @@ def main(argv: list[str] | None = None) -> int:
             body_text=_read_text_arg(args.body_text, args.body_file),
             return_to=args.return_to,
             next_holder=args.next_holder or None,
+            replacement_for=args.replacement_for or None,
+        )
+        print(json.dumps(envelope, indent=2, sort_keys=True))
+        return 0
+    if args.command == "user-intake":
+        startup_options = json.loads(args.startup_options_json) if args.startup_options_json else {}
+        startup_options.update(
+            {
+                "background_agents_authorized": bool(args.background_agents_authorized),
+                "heartbeat_requested": bool(args.heartbeat_requested),
+                "display_surface": args.display_surface or "unspecified",
+            }
+        )
+        envelope = create_user_intake_packet(
+            root,
+            run_id=args.run_id or None,
+            packet_id=args.packet_id,
+            node_id=args.node_id,
+            body_text=_read_text_arg(args.body_text, args.body_file),
+            startup_options=startup_options,
         )
         print(json.dumps(envelope, indent=2, sort_keys=True))
         return 0
@@ -647,6 +1209,27 @@ def main(argv: list[str] | None = None) -> int:
         envelope = load_envelope(root, args.envelope_path)
         handoff = build_controller_handoff(envelope, envelope_path=args.envelope_path)
         print(controller_handoff_text(handoff))
+        return 0
+    if args.command == "relay":
+        envelope = load_envelope(root, args.envelope_path)
+        relayed = controller_relay_envelope(
+            root,
+            envelope=envelope,
+            envelope_path=args.envelope_path,
+            controller_agent_id=args.controller_agent_id,
+            received_from_role=args.received_from_role or None,
+            relayed_to_role=args.relayed_to_role or None,
+            holder_before=args.holder_before or None,
+            holder_after=args.holder_after or None,
+            body_was_read_by_controller=bool(args.body_was_read_by_controller),
+            body_was_executed_by_controller=bool(args.body_was_executed_by_controller),
+            private_role_to_role_delivery_detected=bool(args.private_role_to_role_delivery_detected),
+        )
+        print(json.dumps(relayed, indent=2, sort_keys=True))
+        return 0
+    if args.command == "read-packet":
+        envelope = load_envelope(root, args.envelope_path)
+        print(read_packet_body_for_role(root, envelope, role=args.role))
         return 0
     if args.command == "complete":
         envelope = load_envelope(root, args.envelope_path)
@@ -666,6 +1249,14 @@ def main(argv: list[str] | None = None) -> int:
         result = load_envelope(root, args.result_envelope_path)
         agent_role_map = json.loads(args.agent_role_map_json) if args.agent_role_map_json else None
         audit = validate_for_reviewer(root, packet_envelope=envelope, result_envelope=result, agent_role_map=agent_role_map)
+        print(json.dumps(audit, indent=2, sort_keys=True))
+        return 0 if audit["passed"] else 2
+    if args.command == "read-result":
+        result = load_envelope(root, args.result_envelope_path)
+        print(read_result_body_for_role(root, result, role=args.role))
+        return 0
+    if args.command == "audit-chain":
+        audit = audit_packet_chain(root, run_id=args.run_id or None, node_id=args.node_id or None)
         print(json.dumps(audit, indent=2, sort_keys=True))
         return 0 if audit["passed"] else 2
     raise PacketRuntimeError(f"unknown command: {args.command}")

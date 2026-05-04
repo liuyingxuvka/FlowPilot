@@ -1,0 +1,29 @@
+{
+  "schema_version": "flowpilot.packet_chain_audit.v1",
+  "run_id": "<run-id>",
+  "node_id": "<node-id-or-null>",
+  "ledger_path": ".flowpilot/runs/<run-id>/packet_ledger.json",
+  "checked_packet_count": 0,
+  "all_formal_mail_must_route_through_controller": true,
+  "controller_no_body_read_signature_required": true,
+  "recipient_pre_open_relay_check_required": true,
+  "contaminated_or_private_mail_requires_sender_reissue": true,
+  "unopened_or_missing_mail_sent_to_pm": false,
+  "pm_decision_required": false,
+  "pm_options": [
+    "restart_node",
+    "create_repair_node",
+    "request_sender_reissue"
+  ],
+  "blockers": [
+    {
+      "packet_id": "<packet-id>",
+      "node_id": "<node-id>",
+      "code": "<missing_packet_controller_relay|missing_result_controller_relay|packet_body_unopened_by_recipient|result_body_unopened_by_recipient|private_delivery_detected|contaminated_packet_without_replacement>",
+      "detail": "<reviewer finding>"
+    }
+  ],
+  "passed": false,
+  "reviewer_instruction": "If blockers exist, send this unopened/missing-mail audit to PM; PM chooses restart node, repair node, or sender reissue.",
+  "created_at": "<iso-8601-timestamp>"
+}

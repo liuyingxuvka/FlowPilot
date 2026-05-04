@@ -24,6 +24,10 @@
     "scheduled_continuation_capability_probe",
     "cockpit_display_capability_probe",
     "current_task_live_agent_freshness",
+    "first_user_intake_packet_delivered_to_pm",
+    "controller_mail_chain_relay_policy",
+    "no_private_role_to_role_mail",
+    "controller_did_not_make_pm_route_decision",
     "historical_agent_id_nonreuse",
     "shadow_route_and_residual_state",
     "real_codex_automation_records"
@@ -36,6 +40,8 @@
     "execution_frontier_json": ".flowpilot/runs/<run-id>/execution_frontier.json",
     "route_flow_json": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
     "crew_ledger_json": ".flowpilot/runs/<run-id>/crew_ledger.json",
+    "first_user_intake_packet_envelope": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
+    "packet_chain_audit": ".flowpilot/runs/<run-id>/packet_chain_audit.json",
     "role_memory_root": ".flowpilot/runs/<run-id>/crew_memory",
     "prior_work_import_packet": ".flowpilot/runs/<run-id>/prior_work_import_packet.json",
     "live_subagent_startup_state": ".flowpilot/runs/<run-id>/state.json#/startup_activation/live_subagent_startup",
@@ -56,6 +62,18 @@
     "continue_previous_work_requires_prior_work_import_packet": true,
     "old_control_state_reuse_for_current_run_forbidden": true,
     "single_agent_role_continuity_requires_explicit_user_authorization": true
+  },
+  "mail_control_plane": {
+    "first_user_intake_packet_from_user_to_pm": "<true|false>",
+    "user_intake_body_visibility": "external_user_input_controller_visible",
+    "controller_bootstrap_scope_limited_to_user_options": "<true|false>",
+    "pm_requested_startup_reviewer_gate_by_packet": "<true|false>",
+    "all_formal_mail_routed_through_controller": "<true|false>",
+    "controller_relay_signatures_checked": "<true|false>",
+    "controller_no_body_read_no_execute_signatures_checked": "<true|false>",
+    "recipient_pre_open_checks_required": true,
+    "private_role_to_role_mail_detected": "<true|false>",
+    "contaminated_or_unopened_mail_sent_to_pm": "<true|false>"
   },
   "startup_capability_resolution": {
     "worker_claims_are_pointers_only": true,

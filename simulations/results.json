@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 593971,
+    "edge_count": 598835,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -51,6 +51,7 @@
       "contract_frozen",
       "control_state_written_under_run_root",
       "controller_coordination_boundary_recorded",
+      "controller_mail_relay_chain_audit_done",
       "crew_archived_at_terminal",
       "crew_ledger_written",
       "crew_memory_archived_at_terminal",
@@ -274,29 +275,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 573799,
+    "state_count": 578663,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 593971,
+    "edge_count": 598835,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 573799,
+    "state_count": 578663,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 593971,
+    "edge_count": 598835,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 573799,
+    "state_count": 578663,
     "status": "OK",
     "success_state_count": 1280
   }

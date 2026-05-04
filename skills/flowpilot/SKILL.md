@@ -45,6 +45,7 @@ The controller's forbidden actions are:
 - installing dependencies or running stateful commands for a worker node;
 - marking route nodes complete from controller-origin evidence;
 - writing reviewer pass decisions or PM advance decisions for itself;
+- reading, summarizing, or executing `packet_body.md` or `result_body.md`;
 - dispatching a worker without a current PM packet and reviewer dispatch pass;
 - using later route knowledge to expand a worker packet beyond its current
   node.
@@ -81,6 +82,23 @@ only the envelope and never the detailed body. A worker receives the current
 packet body only after reviewer dispatch, not the full route, not downstream
 nodes, and not a general instruction to complete the whole project.
 
+All formal packet/result/review/PM mail routes through Controller; PM, reviewer,
+workers, and officers do not privately exchange formal packet bodies or result
+bodies. For every relay, Controller records a `controller_relay` signature on
+the envelope with `delivered_via_controller: true`, `body_was_read_by_controller:
+false`, `body_was_executed_by_controller: false`, `envelope_hash`, holder
+before/after, and the target role. A recipient must verify that signature before
+opening any packet or result body. If the signature is missing, points to the
+wrong recipient, has a hash mismatch, lacks the no-read/no-execute declaration,
+or shows private delivery, the recipient must not open the body; the mail is
+returned for sender reissue through PM.
+
+If Controller discovers it has read or executed a sealed internal body, it must
+not relay that mail. It records a contaminated return-to-sender entry and asks
+the original sender, via PM, to issue a new replacement packet. Wrong or
+contaminated mail cannot be repaired by post-hoc signing, cosigning, relabeling,
+or rewriting the hash.
+
 Each PM packet envelope must include:
 
 ```text
@@ -92,6 +110,7 @@ PACKET_ENVELOPE:
   is_current_node:
   body_path:
   body_hash:
+  controller_relay:
   return_to:
   next_holder:
   controller_allowed_actions:
@@ -109,6 +128,12 @@ For real runs, use the physical packet runtime in
 `packet_envelope.json` and `packet_body.md`; the controller handoff is built
 from envelope fields only and must not include packet body text. Missing
 physical files or a controller handoff containing body content blocks dispatch.
+The first user prompt is represented as a physical `user_intake` packet from
+`user` to `project_manager`. Its body visibility records the special fact that
+the original user chat was visible to Controller, but Controller may only do
+bootstrap actions from user options. PM receives that first packet, asks the
+reviewer for startup readiness review through Controller, and only PM may open
+the startup gate after a clean reviewer report.
 
 Worker, reviewer, officer, and PM output is a result envelope plus result
 body, not a route decision:
@@ -121,12 +146,22 @@ RESULT_ENVELOPE:
   node_id:
   result_body_path:
   result_body_hash:
+  controller_relay:
   next_recipient:
 ```
 
 The result body contains status, changed files, commands run, evidence,
 screenshots, findings, open issues, and requested next recipient. The
 controller must not read, summarize, repair, execute, or complete that body.
+
+Before each subnode and each major-node closure, the reviewer audits the full
+mail chain for that node: every required packet/result was relayed by
+Controller, every body open happened after relay verification, holder history is
+continuous, no private role-to-role mail was used, and contaminated/rejected
+mail has a replacement packet. If a required letter is missing or unopened, the
+reviewer sends the chain audit to PM. PM decides `restart_node`,
+`create_repair_node`, or `request_sender_reissue`; Controller does not fill the
+gap itself.
 
 PM and reviewer decisions must be machine-consumable:
 
@@ -483,17 +518,36 @@ all four in one compact sentence.
    for this FlowPilot task. Stored IDs from older routes or earlier tasks may
    seed role memory or be listed as excluded history, but they must not be
    resumed or counted as the current six live background agents. Same-route
-   heartbeat/manual-resume turns may later resume or replace only this
-   task-born cohort.
+    heartbeat/manual-resume turns may later resume or replace only this
+    task-born cohort.
+8a. Controller performs only the startup bootstrap authorized by the user's
+    explicit answers: create/record the fresh six-role cohort when allowed,
+    schedule heartbeat/manual-resume evidence when requested, open Cockpit or
+    prepare chat Mermaid fallback when requested, and write the crew/startup
+    evidence. These are Controller administrative actions, not PM route
+    decisions.
+8b. Controller then writes the first physical `user_intake` packet from `user`
+    to `project_manager` with the user's task prompt in `packet_body.md` and
+    the startup options in the envelope metadata. This is the only special body
+    visibility case: the original user chat was visible to Controller, but
+    Controller may not make PM decisions from it. Controller signs and relays
+    only the envelope to PM.
 9. Give the project manager the startup self-interrogation evidence, draft
    floor, current crew ledger, and current role memory packets. The project
    manager ratifies the startup interrogation. From this point the project
    manager owns route, resume, repair, and completion decisions; the main
    assistant becomes the controller for packet flow and may not act as the
    implementation worker unless a PM packet explicitly assigns a small
-   controller-owned administrative task and the reviewer approves that role
-   assignment.
-9a. If background agents are allowed, work beyond startup must use the
+    controller-owned administrative task and the reviewer approves that role
+    assignment.
+9a. PM must not open the startup gate directly after reading the first
+    `user_intake` body. PM sends a startup-readiness review packet to the
+    human-like reviewer through Controller. Reviewer checks the fresh six-role
+    cohort, crew ledger, heartbeat/manual-resume evidence, UI/chat display
+    choice, user-intake handling, mail-chain rules, no private role-to-role
+    communication, and no Controller overreach. Only after a clean reviewer
+    report may PM write `startup_pm_gate` and allow work beyond startup.
+9b. If background agents are allowed, work beyond startup must use the
     packet-gated control plane. The PM writes the first packet envelope/body
     pair as physical files under `.flowpilot/runs/<run-id>/packets/<packet-id>/`,
     the reviewer approves or blocks dispatch, and only then may a worker

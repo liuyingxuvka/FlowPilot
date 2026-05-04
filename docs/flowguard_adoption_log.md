@@ -2017,3 +2017,50 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Future FlowPilot route execution should call `packet_runtime.py` or `scripts\flowpilot_packets.py` when issuing and completing work packets, and should never paste body text into controller-visible chat.
+
+
+## flowpilot-controller-relay-mail-chain - Enforce controller-signed mail routing
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User required all formal FlowPilot mail to route through Controller, with Controller relay signatures, no-read/no-execute attestations, recipient pre-open checks, sender reissue on contamination, reviewer chain audit, startup user-intake mail, and heartbeat prompts aligned to the mail ledger.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T17:20:00+02:00
+- Ended: 2026-05-04T18:20:00+02:00
+
+### Model Files
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Runtime Files
+- `skills/flowpilot/assets/packet_runtime.py`
+- `scripts/flowpilot_packets.py`
+
+### Commands
+- OK: `python -m py_compile skills\flowpilot\assets\packet_runtime.py skills\flowpilot\assets\packet_control_plane_model.py skills\flowpilot\assets\run_packet_control_plane_checks.py simulations\meta_model.py simulations\capability_model.py simulations\run_meta_checks.py simulations\run_capability_checks.py scripts\check_install.py scripts\flowpilot_packets.py`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime`: 10 tests
+- OK: `scripts\flowpilot_packets.py` CLI smoke: issue, packet handoff, controller relay, recipient body open, complete, result handoff, controller result relay, reviewer result open, review, and chain audit all passed without body leakage in controller handoffs
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram`: 37 tests
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py`: 25 traces, no invariant violations, no dead branches, no reachability failures
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py`: 578663 states, 598835 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python simulations\run_capability_checks.py`: 550013 states, 575473 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+
+### Findings
+- Runtime now supports `controller_relay` signatures for packet and result envelopes, including no-read/no-execute fields, holder transitions, envelope hash, and recipient pre-open verification.
+- Recipients cannot open packet or result bodies until the relevant controller relay signature is present and valid.
+- Controller contamination or private role-to-role delivery returns the envelope to sender and requires a new replacement packet rather than post-hoc signing or relabelling.
+- Reviewer chain audit now flags missing relay signatures, unopened mail, contamination without replacement, and private delivery, then sends PM a restart, repair-node, or sender-reissue decision boundary.
+- Startup user prompts are written as a physical `user_intake` packet to PM, while explicit startup options remain controller-visible bootstrap instructions.
+- Heartbeat prompts now load state, frontier, crew memory, packet ledger, relay history, and chain audit status without opening sealed bodies.
+
+### Counterexamples
+- CLI smoke initially exposed that result envelope handoff still assumed packet-only `from_role` and `to_role` fields. `build_controller_handoff` now handles both packet envelopes and result envelopes without leaking sealed body text.
+
+### Skipped Steps
+- No encryption or OS-level ACLs were added; the accepted enforcement layer is physical files, controller context isolation, relay attestations, recipient checks, and reviewer/PM blocking.
+- No UI redesign, release, remote push, or publication action was taken.
+
+### Next Actions
+- Use the new runtime mail path for the next FlowPilot run startup: Controller bootstraps explicit user options, writes `user_intake` to PM, relays it with a controller signature, and PM starts only after reviewer startup-gate mail review.

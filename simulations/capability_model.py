@@ -339,6 +339,10 @@ class State:
     pm_released_reviewer_for_current_gate: bool = False
     packet_runtime_physical_files_written: bool = False
     controller_context_body_exclusion_verified: bool = False
+    controller_relay_signature_audit_done: bool = False
+    recipient_pre_open_relay_check_done: bool = False
+    packet_mail_chain_audit_done: bool = False
+    unopened_mail_pm_recovery_policy_recorded: bool = False
     packet_envelope_body_audit_done: bool = False
     packet_envelope_to_role_checked: bool = False
     packet_body_hash_verified: bool = False
@@ -455,6 +459,10 @@ def _reset_human_inspection_gates() -> dict[str, object]:
         "pm_released_reviewer_for_current_gate": False,
         "packet_runtime_physical_files_written": False,
         "controller_context_body_exclusion_verified": False,
+        "controller_relay_signature_audit_done": False,
+        "recipient_pre_open_relay_check_done": False,
+        "packet_mail_chain_audit_done": False,
+        "unopened_mail_pm_recovery_policy_recorded": False,
         "packet_envelope_body_audit_done": False,
         "packet_envelope_to_role_checked": False,
         "packet_body_hash_verified": False,
@@ -1674,6 +1682,10 @@ class CapabilityRouterStep:
         "pm_released_reviewer_for_current_gate",
         "packet_runtime_physical_files_written",
         "controller_context_body_exclusion_verified",
+        "controller_relay_signature_audit_done",
+        "recipient_pre_open_relay_check_done",
+        "packet_mail_chain_audit_done",
+        "unopened_mail_pm_recovery_policy_recorded",
         "packet_envelope_body_audit_done",
         "packet_envelope_to_role_checked",
         "packet_body_hash_verified",
@@ -1997,6 +2009,10 @@ class CapabilityRouterStep:
         "pm_released_reviewer_for_current_gate",
         "packet_runtime_physical_files_written",
         "controller_context_body_exclusion_verified",
+        "controller_relay_signature_audit_done",
+        "recipient_pre_open_relay_check_done",
+        "packet_mail_chain_audit_done",
+        "unopened_mail_pm_recovery_policy_recorded",
         "packet_envelope_body_audit_done",
         "packet_envelope_to_role_checked",
         "packet_body_hash_verified",
@@ -4066,6 +4082,17 @@ class CapabilityRouterStep:
                     controller_context_body_exclusion_verified=True,
                 )
                 return
+            if not state.packet_mail_chain_audit_done:
+                yield _step(
+                    state,
+                    label="controller_mail_relay_chain_audit_done",
+                    action="reviewer verifies backend packet/result controller relay signatures, recipient pre-open checks, no private role-to-role mail, and PM restart/repair/reissue handling for unopened or contaminated mail",
+                    controller_relay_signature_audit_done=True,
+                    recipient_pre_open_relay_check_done=True,
+                    packet_mail_chain_audit_done=True,
+                    unopened_mail_pm_recovery_policy_recorded=True,
+                )
+                return
             if not state.packet_envelope_body_audit_done:
                 yield _step(
                     state,
@@ -4863,6 +4890,17 @@ class CapabilityRouterStep:
                     action="packet runtime writes UI physical packet/result envelope-body files and verifies controller context excludes body content before reviewer audit",
                     packet_runtime_physical_files_written=True,
                     controller_context_body_exclusion_verified=True,
+                )
+                return
+            if not state.packet_mail_chain_audit_done:
+                yield _step(
+                    state,
+                    label="controller_mail_relay_chain_audit_done",
+                    action="reviewer verifies UI packet/result controller relay signatures, recipient pre-open checks, no private role-to-role mail, and PM restart/repair/reissue handling for unopened or contaminated mail",
+                    controller_relay_signature_audit_done=True,
+                    recipient_pre_open_relay_check_done=True,
+                    packet_mail_chain_audit_done=True,
+                    unopened_mail_pm_recovery_policy_recorded=True,
                 )
                 return
             if not state.packet_envelope_body_audit_done:
@@ -6011,6 +6049,10 @@ def pm_review_release_controls_reviewer_start(
         and state.pm_released_reviewer_for_current_gate
         and state.packet_runtime_physical_files_written
         and state.controller_context_body_exclusion_verified
+        and state.controller_relay_signature_audit_done
+        and state.recipient_pre_open_relay_check_done
+        and state.packet_mail_chain_audit_done
+        and state.unopened_mail_pm_recovery_policy_recorded
         and state.packet_envelope_body_audit_done
         and state.packet_envelope_to_role_checked
         and state.packet_body_hash_verified
@@ -6024,7 +6066,7 @@ def pm_review_release_controls_reviewer_start(
         and state.packet_result_author_matches_assignment
     ):
         return InvariantResult.fail(
-            "capability reviewer started current-gate review before PM release order, physical packet isolation, envelope/body audit, and per-packet role-origin audit"
+            "capability reviewer started current-gate review before PM release order, physical packet isolation, controller mail-chain audit, envelope/body audit, and per-packet role-origin audit"
         )
     if state.pm_review_release_order_written and not state.worker_output_ready_for_review:
         return InvariantResult.fail(

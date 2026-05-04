@@ -8,6 +8,7 @@ completed_by_role: <same-as-result-envelope-completed_by_role>
 completed_by_agent_id: <agent-id-or-single-agent-role-continuity-id>
 result_body_hash_algorithm: sha256
 controller_may_read: false
+recipient_must_verify_controller_relay_before_opening: true
 ---
 
 # Result Body
@@ -15,6 +16,12 @@ controller_may_read: false
 This file contains the detailed result for the packet. The controller must not
 read, summarize, repair, execute, or complete this result body. The controller
 only relays the result envelope to the next recipient.
+
+Before reading this file, reviewer, PM, or officer must verify that
+`result_envelope.json#controller_relay` was delivered by Controller, targets the
+reader role, matches the result envelope hash, and declares that Controller did
+not read or execute this body. If the check fails, do not read this body; return
+the unopened envelope for PM reissue or repair.
 
 ## Status
 

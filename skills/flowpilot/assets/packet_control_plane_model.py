@@ -31,6 +31,9 @@ class NodePacket:
     controller_attempts_body_execute: bool = False
     delivered_to_role: str = "worker_a"
     cockpit_missing_on_major_node: bool = False
+    controller_relay_signature_present: bool = True
+    recipient_opens_body_after_relay_check: bool = True
+    private_delivery_detected: bool = False
 
 
 @dataclass(frozen=True)
@@ -58,6 +61,8 @@ class NodeResult:
     completed_by_agent_id: str
     result_body_hash_valid: bool = True
     result_body_stale_after_route_mutation: bool = False
+    result_controller_relay_signature_present: bool = True
+    result_body_opened_after_relay_check: bool = True
 
 
 @dataclass(frozen=True)
@@ -107,6 +112,12 @@ class State:
     controller_handoff_body_leak_blocks: tuple[str, ...] = ()
     controller_body_access_blocks: tuple[str, ...] = ()
     controller_body_execution_blocks: tuple[str, ...] = ()
+    controller_return_to_sender: tuple[str, ...] = ()
+    controller_relay_signatures: tuple[str, ...] = ()
+    recipient_pre_open_checks: tuple[str, ...] = ()
+    packet_body_open_events: tuple[str, ...] = ()
+    private_delivery_blocks: tuple[str, ...] = ()
+    unopened_packet_blocks: tuple[str, ...] = ()
     holder_changes: tuple[str, ...] = ()
     holder_status_updates: tuple[str, ...] = ()
     cockpit_missing_major_nodes: tuple[str, ...] = ()
@@ -120,6 +131,9 @@ class State:
     worker_results: tuple[str, ...] = ()
     controller_artifacts: tuple[str, ...] = ()
     result_envelopes: tuple[str, ...] = ()
+    result_controller_relay_signatures: tuple[str, ...] = ()
+    result_body_open_events: tuple[str, ...] = ()
+    unopened_result_blocks: tuple[str, ...] = ()
     result_envelope_checks: tuple[str, ...] = ()
     result_body_hash_checks: tuple[str, ...] = ()
     completed_agent_role_checks: tuple[str, ...] = ()
@@ -127,6 +141,7 @@ class State:
     stale_result_body_blocks: tuple[str, ...] = ()
     wrong_role_completion_blocks: tuple[str, ...] = ()
     role_origin_audits: tuple[str, ...] = ()
+    mail_chain_audits: tuple[str, ...] = ()
     controller_warnings: tuple[str, ...] = ()
     pm_repair_requirements: tuple[str, ...] = ()
     review_passes: tuple[str, ...] = ()
@@ -149,6 +164,9 @@ def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> 
         controller_attempts_body_execute=packet_id.startswith("controller_executes_body"),
         delivered_to_role=delivered_to_role,
         cockpit_missing_on_major_node=packet_id.startswith("cockpit_missing_major"),
+        controller_relay_signature_present=not packet_id.startswith("missing_controller_relay"),
+        recipient_opens_body_after_relay_check=not packet_id.startswith("unopened_packet"),
+        private_delivery_detected=packet_id.startswith("private_delivery"),
     )
 
 
@@ -365,6 +383,10 @@ class ControllerEnvelopeRelay:
         "controller_handoff_body_leak_blocks",
         "controller_body_access_blocks",
         "controller_body_execution_blocks",
+        "controller_return_to_sender",
+        "controller_relay_signatures",
+        "private_delivery_blocks",
+        "pm_repair_requirements",
         "holder_changes",
         "holder_status_updates",
         "cockpit_missing_major_nodes",
@@ -393,22 +415,39 @@ class ControllerEnvelopeRelay:
             new_state = replace(
                 state,
                 controller_body_access_blocks=state.controller_body_access_blocks + (input_obj.packet_id,),
+                controller_return_to_sender=state.controller_return_to_sender + (input_obj.packet_id,),
+                pm_repair_requirements=state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "controller_reads_packet_body"),
                 new_state,
-                "controller_reads_packet_body_blocked",
+                "controller_contamination_returned_to_sender",
             )
             return
         if input_obj.controller_attempts_body_execute:
             new_state = replace(
                 state,
                 controller_body_execution_blocks=state.controller_body_execution_blocks + (input_obj.packet_id,),
+                controller_return_to_sender=state.controller_return_to_sender + (input_obj.packet_id,),
+                pm_repair_requirements=state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "controller_executes_worker_body"),
                 new_state,
-                "controller_executes_worker_body_blocked",
+                "controller_executes_worker_body_returned_to_sender",
+            )
+            return
+        if input_obj.private_delivery_detected:
+            new_state = replace(
+                state,
+                private_delivery_blocks=state.private_delivery_blocks + (input_obj.packet_id,),
+                controller_return_to_sender=state.controller_return_to_sender + (input_obj.packet_id,),
+                pm_repair_requirements=state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "private_role_to_role_delivery_detected"),
+                new_state,
+                "private_delivery_returned_to_sender",
             )
             return
 
@@ -417,6 +456,9 @@ class ControllerEnvelopeRelay:
             if input_obj.packet_id in state.controller_envelope_reads
             else state.controller_envelope_reads + (input_obj.packet_id,)
         )
+        controller_relay_signatures = state.controller_relay_signatures
+        if input_obj.controller_relay_signature_present and input_obj.packet_id not in controller_relay_signatures:
+            controller_relay_signatures = controller_relay_signatures + (input_obj.packet_id,)
         envelope_only_handoffs = (
             state.controller_handoff_envelope_only
             if input_obj.packet_id in state.controller_handoff_envelope_only
@@ -443,12 +485,15 @@ class ControllerEnvelopeRelay:
         new_state = replace(
             state,
             controller_envelope_reads=envelope_reads,
+            controller_relay_signatures=controller_relay_signatures,
             controller_handoff_envelope_only=envelope_only_handoffs,
             holder_changes=holder_changes,
             holder_status_updates=holder_status_updates,
             cockpit_missing_major_nodes=cockpit_missing,
             chat_mermaid_displays=chat_mermaid,
         )
+        if input_obj.controller_relay_signature_present and label == "controller_relayed_envelope_with_holder_status_update":
+            label = "controller_relay_signature_recorded"
         yield FunctionResult(input_obj, new_state, label)
 
 
@@ -459,11 +504,15 @@ class ReviewerDispatch:
     writes = (
         "packet_envelope_checks",
         "packet_body_hash_checks",
+        "recipient_pre_open_checks",
+        "packet_body_open_events",
         "wrong_delivery_blocks",
         "packet_body_hash_blocks",
         "stale_packet_body_blocks",
+        "unopened_packet_blocks",
         "dispatches",
         "review_blocks",
+        "pm_repair_requirements",
     )
     input_description = "PM packet envelope"
     output_description = "ApprovedPacket or DispatchBlocked"
@@ -487,6 +536,47 @@ class ReviewerDispatch:
             state,
             packet_envelope_checks=packet_envelope_checks,
             packet_body_hash_checks=packet_body_hash_checks,
+        )
+        if input_obj.packet_id not in state.controller_relay_signatures:
+            new_state = replace(
+                checked_state,
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "missing_controller_relay_signature"),
+                new_state,
+                "missing_controller_relay_signature_blocked",
+            )
+            return
+        recipient_pre_open_checks = (
+            checked_state.recipient_pre_open_checks
+            if input_obj.packet_id in checked_state.recipient_pre_open_checks
+            else checked_state.recipient_pre_open_checks + (input_obj.packet_id,)
+        )
+        if not input_obj.recipient_opens_body_after_relay_check:
+            new_state = replace(
+                checked_state,
+                recipient_pre_open_checks=recipient_pre_open_checks,
+                unopened_packet_blocks=checked_state.unopened_packet_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "packet_body_unopened_after_controller_relay"),
+                new_state,
+                "unopened_letter_sent_to_pm_for_restart_or_repair",
+            )
+            return
+        packet_body_open_events = (
+            checked_state.packet_body_open_events
+            if input_obj.packet_id in checked_state.packet_body_open_events
+            else checked_state.packet_body_open_events + (input_obj.packet_id,)
+        )
+        checked_state = replace(
+            checked_state,
+            recipient_pre_open_checks=recipient_pre_open_checks,
+            packet_body_open_events=packet_body_open_events,
         )
         if input_obj.delivered_to_role != input_obj.to_role:
             new_state = replace(
@@ -567,6 +657,8 @@ class WorkerOrControllerResult:
         completed_by_agent_id = f"agent-{completed_by_role}"
         result_body_hash_valid = not input_obj.packet_id.startswith("result_body_hash_mismatch")
         result_body_stale = input_obj.packet_id.startswith("stale_result_body")
+        result_controller_relay_signature_present = not input_obj.packet_id.startswith("missing_result_controller_relay")
+        result_body_opened_after_relay_check = not input_obj.packet_id.startswith("unopened_result")
         new_state = replace(
             state,
             worker_results=state.worker_results + (input_obj.packet_id,),
@@ -579,10 +671,50 @@ class WorkerOrControllerResult:
                 completed_by_agent_id,
                 result_body_hash_valid=result_body_hash_valid,
                 result_body_stale_after_route_mutation=result_body_stale,
+                result_controller_relay_signature_present=result_controller_relay_signature_present,
+                result_body_opened_after_relay_check=result_body_opened_after_relay_check,
             ),
             new_state,
             "worker_result_envelope",
         )
+
+
+class ControllerResultRelay:
+    name = "ControllerResultRelay"
+    accepted_input_type = NodeResult
+    reads = ("result_envelopes",)
+    writes = ("result_controller_relay_signatures", "holder_changes", "holder_status_updates")
+    input_description = "worker/reviewer/officer result envelope"
+    output_description = "result envelope relayed by controller or left unsigned for reviewer block"
+    idempotency = "Result relay signatures are keyed by packet ID."
+
+    def apply(self, input_obj: NodeResult, state: State) -> Iterable[FunctionResult]:
+        if not isinstance(input_obj, NodeResult):
+            yield FunctionResult(input_obj, state, "controller_result_relay_pass_through")
+            return
+        if not input_obj.result_controller_relay_signature_present:
+            yield FunctionResult(input_obj, state, "result_controller_relay_signature_missing")
+            return
+        relay_signatures = (
+            state.result_controller_relay_signatures
+            if input_obj.packet_id in state.result_controller_relay_signatures
+            else state.result_controller_relay_signatures + (input_obj.packet_id,)
+        )
+        holder_changes = (
+            state.holder_changes if input_obj.packet_id in state.holder_changes else state.holder_changes + (input_obj.packet_id,)
+        )
+        holder_status_updates = (
+            state.holder_status_updates
+            if input_obj.packet_id in state.holder_status_updates
+            else state.holder_status_updates + (input_obj.packet_id,)
+        )
+        new_state = replace(
+            state,
+            result_controller_relay_signatures=relay_signatures,
+            holder_changes=holder_changes,
+            holder_status_updates=holder_status_updates,
+        )
+        yield FunctionResult(input_obj, new_state, "controller_relayed_result_envelope_with_holder_status_update")
 
 
 class ReviewerResultEnvelopeCheck:
@@ -592,10 +724,13 @@ class ReviewerResultEnvelopeCheck:
     writes = (
         "result_envelope_checks",
         "result_body_hash_checks",
+        "result_body_open_events",
+        "unopened_result_blocks",
         "completed_agent_role_checks",
         "result_body_hash_blocks",
         "stale_result_body_blocks",
         "review_blocks",
+        "pm_repair_requirements",
     )
     input_description = "result envelope"
     output_description = "checked result or review block"
@@ -623,6 +758,37 @@ class ReviewerResultEnvelopeCheck:
             result_body_hash_checks=body_hash_checks,
             completed_agent_role_checks=agent_checks,
         )
+        if input_obj.packet_id not in state.result_controller_relay_signatures:
+            new_state = replace(
+                checked_state,
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                ReviewBlock(input_obj.packet_id, "missing_result_controller_relay_signature"),
+                new_state,
+                "missing_result_controller_relay_signature_blocked",
+            )
+            return
+        if not input_obj.result_body_opened_after_relay_check:
+            new_state = replace(
+                checked_state,
+                unopened_result_blocks=checked_state.unopened_result_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                ReviewBlock(input_obj.packet_id, "result_body_unopened_after_controller_relay"),
+                new_state,
+                "unopened_result_letter_sent_to_pm_for_restart_or_repair",
+            )
+            return
+        result_body_open_events = (
+            checked_state.result_body_open_events
+            if input_obj.packet_id in checked_state.result_body_open_events
+            else checked_state.result_body_open_events + (input_obj.packet_id,)
+        )
+        checked_state = replace(checked_state, result_body_open_events=result_body_open_events)
         if not input_obj.result_body_hash_valid:
             new_state = replace(
                 checked_state,
@@ -666,6 +832,7 @@ class ReviewerResult:
     reads = ("worker_results", "controller_artifacts", "result_envelope_checks", "completed_agent_role_checks")
     writes = (
         "role_origin_audits",
+        "mail_chain_audits",
         "controller_warnings",
         "pm_repair_requirements",
         "wrong_role_completion_blocks",
@@ -683,6 +850,10 @@ class ReviewerResult:
         audited_state = state if input_obj.packet_id in state.role_origin_audits else replace(
             state,
             role_origin_audits=state.role_origin_audits + (input_obj.packet_id,),
+        )
+        audited_state = audited_state if input_obj.packet_id in audited_state.mail_chain_audits else replace(
+            audited_state,
+            mail_chain_audits=audited_state.mail_chain_audits + (input_obj.packet_id,),
         )
         if input_obj.completed_by_role != "worker_a":
             label = "controller_origin_artifact_blocked" if input_obj.completed_by_role == "controller" else "result_completed_by_wrong_role_blocked"
@@ -773,6 +944,34 @@ def review_pass_requires_role_origin_audit(state: State, trace) -> InvariantResu
     missing = set(state.review_passes) - set(state.role_origin_audits)
     if missing:
         return InvariantResult.fail(f"review pass without role-origin audit: {sorted(missing)!r}")
+    return InvariantResult.pass_()
+
+
+def review_pass_requires_mail_chain_audit(state: State, trace) -> InvariantResult:
+    del trace
+    missing = set(state.review_passes) - set(state.mail_chain_audits)
+    if missing:
+        return InvariantResult.fail(f"review pass without packet mail-chain audit: {sorted(missing)!r}")
+    return InvariantResult.pass_()
+
+
+def recipient_body_open_requires_controller_relay_signature(state: State, trace) -> InvariantResult:
+    del trace
+    packet_missing = set(state.packet_body_open_events) - set(state.controller_relay_signatures)
+    if packet_missing:
+        return InvariantResult.fail(f"packet body opened without controller relay signature: {sorted(packet_missing)!r}")
+    result_missing = set(state.result_body_open_events) - set(state.result_controller_relay_signatures)
+    if result_missing:
+        return InvariantResult.fail(f"result body opened without controller relay signature: {sorted(result_missing)!r}")
+    return InvariantResult.pass_()
+
+
+def missing_or_unopened_mail_requires_pm_restart_or_repair(state: State, trace) -> InvariantResult:
+    del trace
+    blocked = set(state.unopened_packet_blocks) | set(state.unopened_result_blocks) | set(state.private_delivery_blocks)
+    missing = blocked - set(state.pm_repair_requirements)
+    if missing:
+        return InvariantResult.fail(f"mail-chain blocker lacked PM restart/repair requirement: {sorted(missing)!r}")
     return InvariantResult.pass_()
 
 
@@ -976,6 +1175,21 @@ INVARIANTS = (
         review_pass_requires_role_origin_audit,
     ),
     Invariant(
+        "review_pass_requires_mail_chain_audit",
+        "Reviewer pass requires a full packet/result mail-chain audit.",
+        review_pass_requires_mail_chain_audit,
+    ),
+    Invariant(
+        "recipient_body_open_requires_controller_relay_signature",
+        "Recipients may open packet/result bodies only after validating a controller relay signature.",
+        recipient_body_open_requires_controller_relay_signature,
+    ),
+    Invariant(
+        "missing_or_unopened_mail_requires_pm_restart_or_repair",
+        "Unopened, private, or missing-relay mail is sent to PM for restart, repair node, or sender reissue.",
+        missing_or_unopened_mail_requires_pm_restart_or_repair,
+    ),
+    Invariant(
         "invalid_origin_block_requires_warning",
         "Invalid role origin requires a controller warning and PM repair/reissue requirement.",
         invalid_origin_block_requires_warning,
@@ -1070,11 +1284,16 @@ EXTERNAL_INPUTS = (
     NodeCase("controller_handoff_leaks_body_packet", "block", "controller"),
     NodeCase("controller_reads_body_packet", "block", "controller"),
     NodeCase("controller_executes_body_packet", "block", "controller"),
+    NodeCase("missing_controller_relay_packet", "block", "worker"),
+    NodeCase("private_delivery_packet", "block", "worker"),
+    NodeCase("unopened_packet", "block", "worker"),
     NodeCase("wrong_delivery_packet", "block", "worker"),
     NodeCase("body_hash_mismatch_packet", "block", "worker"),
     NodeCase("stale_packet_body_packet", "block", "worker"),
     NodeCase("controller_origin_packet", "pass", "controller"),
     NodeCase("result_wrong_role_packet", "block", "worker_b"),
+    NodeCase("missing_result_controller_relay_packet", "block", "worker"),
+    NodeCase("unopened_result_packet", "block", "worker"),
     NodeCase("result_body_hash_mismatch_packet", "block", "worker"),
     NodeCase("stale_result_body_packet", "block", "worker"),
     NodeCase("dispatch_block_packet", "block", "none"),
@@ -1109,6 +1328,7 @@ def build_workflow() -> Workflow:
             ControllerEnvelopeRelay(),
             ReviewerDispatch(),
             WorkerOrControllerResult(),
+            ControllerResultRelay(),
             ReviewerResultEnvelopeCheck(),
             ReviewerResult(),
             PMRepairAfterInvalidOrigin(),

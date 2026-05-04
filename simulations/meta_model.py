@@ -306,6 +306,10 @@ class State:
     pm_released_reviewer_for_current_gate: bool = False
     packet_runtime_physical_files_written: bool = False
     controller_context_body_exclusion_verified: bool = False
+    controller_relay_signature_audit_done: bool = False
+    recipient_pre_open_relay_check_done: bool = False
+    packet_mail_chain_audit_done: bool = False
+    unopened_mail_pm_recovery_policy_recorded: bool = False
     packet_envelope_body_audit_done: bool = False
     packet_envelope_to_role_checked: bool = False
     packet_body_hash_verified: bool = False
@@ -458,6 +462,10 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "pm_released_reviewer_for_current_gate": False,
         "packet_runtime_physical_files_written": False,
         "controller_context_body_exclusion_verified": False,
+        "controller_relay_signature_audit_done": False,
+        "recipient_pre_open_relay_check_done": False,
+        "packet_mail_chain_audit_done": False,
+        "unopened_mail_pm_recovery_policy_recorded": False,
         "packet_envelope_body_audit_done": False,
         "packet_envelope_to_role_checked": False,
         "packet_body_hash_verified": False,
@@ -1129,6 +1137,10 @@ class AutopilotStep:
         "pm_released_reviewer_for_current_gate",
         "packet_runtime_physical_files_written",
         "controller_context_body_exclusion_verified",
+        "controller_relay_signature_audit_done",
+        "recipient_pre_open_relay_check_done",
+        "packet_mail_chain_audit_done",
+        "unopened_mail_pm_recovery_policy_recorded",
         "packet_envelope_body_audit_done",
         "packet_envelope_to_role_checked",
         "packet_body_hash_verified",
@@ -4786,6 +4798,18 @@ class AutopilotStep:
                     active_node="review_packet_role_origin",
                 )
                 return
+            if not state.packet_mail_chain_audit_done:
+                yield _step(
+                    state,
+                    label="controller_mail_relay_chain_audit_done",
+                    action="human-like reviewer verifies every packet/result envelope has controller relay signatures, recipients opened bodies only after relay checks, private role-to-role mail is absent, and unopened or contaminated mail is routed to PM for restart, repair node, or sender reissue",
+                    controller_relay_signature_audit_done=True,
+                    recipient_pre_open_relay_check_done=True,
+                    packet_mail_chain_audit_done=True,
+                    unopened_mail_pm_recovery_policy_recorded=True,
+                    active_node="review_packet_role_origin",
+                )
+                return
             if not state.packet_envelope_body_audit_done:
                 yield _step(
                     state,
@@ -5489,6 +5513,10 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
         and state.pm_released_reviewer_for_current_gate
         and state.packet_runtime_physical_files_written
         and state.controller_context_body_exclusion_verified
+        and state.controller_relay_signature_audit_done
+        and state.recipient_pre_open_relay_check_done
+        and state.packet_mail_chain_audit_done
+        and state.unopened_mail_pm_recovery_policy_recorded
         and state.packet_envelope_body_audit_done
         and state.packet_envelope_to_role_checked
         and state.packet_body_hash_verified
@@ -5502,7 +5530,7 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
         and state.packet_result_author_matches_assignment
     ):
         return InvariantResult.fail(
-            "human-like reviewer started current-node review before PM release order, physical packet isolation, envelope/body audit, and per-packet role-origin audit"
+            "human-like reviewer started current-node review before PM release order, physical packet isolation, controller mail-chain audit, envelope/body audit, and per-packet role-origin audit"
         )
     if state.pm_review_release_order_written and not state.worker_output_ready_for_review:
         return InvariantResult.fail(

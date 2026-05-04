@@ -28,6 +28,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=True,
             controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=True,
             packet_envelope_to_role_checked=True,
             packet_body_hash_verified=True,
@@ -54,6 +58,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=True,
             controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=True,
             packet_envelope_to_role_checked=True,
             packet_body_hash_verified=True,
@@ -79,6 +87,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=True,
             controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=False,
             packet_role_origin_audit_done=True,
             packet_result_author_verified=True,
@@ -91,6 +103,37 @@ class FlowPilotControlGateTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("envelope/body audit", result.message)
 
+    def test_meta_reviewer_requires_controller_mail_chain_audit(self) -> None:
+        state = meta_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_review_release_order_written=True,
+            pm_released_reviewer_for_current_gate=True,
+            packet_runtime_physical_files_written=True,
+            controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=False,
+            recipient_pre_open_relay_check_done=False,
+            packet_mail_chain_audit_done=False,
+            unopened_mail_pm_recovery_policy_recorded=False,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
+            node_human_review_context_loaded=True,
+        )
+
+        result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
+
+        self.assertFalse(result.ok)
+        self.assertIn("mail-chain audit", result.message)
+
     def test_meta_reviewer_requires_physical_packet_runtime(self) -> None:
         state = meta_model.State(
             pm_review_hold_instruction_written=True,
@@ -99,6 +142,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=False,
             controller_context_body_exclusion_verified=False,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=True,
             packet_envelope_to_role_checked=True,
             packet_body_hash_verified=True,
@@ -160,6 +207,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=True,
             controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=True,
             packet_envelope_to_role_checked=True,
             packet_body_hash_verified=True,
@@ -188,6 +239,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=True,
             controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=False,
             packet_role_origin_audit_done=True,
             packet_result_author_verified=True,
@@ -203,6 +258,40 @@ class FlowPilotControlGateTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("envelope/body audit", result.message)
 
+    def test_capability_reviewer_requires_controller_mail_chain_audit(self) -> None:
+        state = capability_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_review_release_order_written=True,
+            pm_released_reviewer_for_current_gate=True,
+            packet_runtime_physical_files_written=True,
+            controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=False,
+            recipient_pre_open_relay_check_done=False,
+            packet_mail_chain_audit_done=False,
+            unopened_mail_pm_recovery_policy_recorded=False,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
+            implementation_human_review_context_loaded=True,
+        )
+
+        result = capability_model.pm_review_release_controls_reviewer_start(
+            state,
+            trace=(),
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("mail-chain audit", result.message)
+
     def test_capability_reviewer_requires_physical_packet_runtime(self) -> None:
         state = capability_model.State(
             pm_review_hold_instruction_written=True,
@@ -211,6 +300,10 @@ class FlowPilotControlGateTests(unittest.TestCase):
             pm_released_reviewer_for_current_gate=True,
             packet_runtime_physical_files_written=False,
             controller_context_body_exclusion_verified=False,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
             packet_envelope_body_audit_done=True,
             packet_envelope_to_role_checked=True,
             packet_body_hash_verified=True,

@@ -241,12 +241,21 @@ result body the same way. The controller may relay envelopes and update
 holder/status, but it may not read or execute bodies, produce worker evidence,
 approve gates, close nodes, or relabel a wrong-role result.
 
+Every formal packet/result/review/PM letter routes through the controller. The
+controller signs each relay with a no-read/no-execute declaration and envelope
+hash; the recipient verifies that signature before opening the body. Private
+role-to-role mail, missing relay signatures, controller body access, or
+unopened required mail blocks the node and goes back to PM for restart, repair
+node, or sender reissue.
+
 This is implemented as physical runtime files, not only a wording convention.
 The installed helper `skills/flowpilot/assets/packet_runtime.py` writes
 `packet_envelope.json`, `packet_body.md`, `result_envelope.json`, and
 `result_body.md`; `scripts/flowpilot_packets.py` is the repo CLI wrapper.
 Controller handoff payloads are generated from envelope fields only and must
-not contain body text.
+not contain body text. The first user prompt is preserved as a physical
+`user_intake` packet from `user` to `project_manager`; PM then requests startup
+review through the same envelope/body path before opening the startup gate.
 
 For every packet, the reviewer must also verify role origin and body integrity:
 the PM packet envelope, reviewer dispatch, envelope `to_role`, body hashes,
@@ -546,9 +555,16 @@ packet body 里，只给目标角色读。返回结果也一样，用 result env
 controller 只能转交 envelope、更新 holder/status，不能读 body、执行 body、生成 worker 证据、
 批准 gate、关闭 node，或把错误角色的结果重新标成合法。
 
+所有正式信件都必须经过 controller。controller 每次转交都要在 envelope 上签名，声明自己
+没有读 body、没有执行 body，并记录 envelope hash；收件人开 body 之前必须先检查这个签名。
+私下传信、缺少签名、controller 看过内容，或者该打开的信没打开，都会阻塞节点，并交给 PM
+决定重启节点、补修节点，或让发信人重新寄出。
+
 这不是只写在规则里的格式要求：安装版里的 `skills/flowpilot/assets/packet_runtime.py`
 会实际写出这些文件，仓库里的 `scripts/flowpilot_packets.py` 是包装入口。controller
-handoff 只由 envelope 字段生成，不能包含 body 正文。
+handoff 只由 envelope 字段生成，不能包含 body 正文。用户最开始的提示词会保存成真实的
+`user_intake` packet，从 `user` 寄给 `project_manager`；PM 再通过同一套 envelope/body
+机制请求 startup review，审查干净后才可以打开 startup gate。
 
 每个 packet 都必须做负责人来源和 body 完整性审查：reviewer 要核对 PM packet envelope、
 reviewer 派发记录、envelope `to_role`、body hash、result envelope `completed_by_role`、

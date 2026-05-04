@@ -21,14 +21,17 @@ preventing controller/worker over-execution.
 ## Loop
 
 ```text
-PM issues PACKET_ENVELOPE + PACKET_BODY
--> Reviewer approves or blocks dispatch
--> Controller relays approved packet envelope to worker
+Controller bootstraps only user-approved startup options
+-> Controller writes USER_INTAKE envelope/body and relays envelope to PM
+-> PM asks Reviewer for startup-readiness review through Controller
+-> PM issues PACKET_ENVELOPE + PACKET_BODY after startup gate opens
+-> Controller signs relay and sends only the envelope to the target role
+-> Recipient verifies controller relay signature before opening the body
 -> Worker reads and executes exactly its packet body
 -> Worker returns RESULT_ENVELOPE + RESULT_BODY and waits
--> Controller relays result envelope to Reviewer
--> Reviewer passes, blocks, or requests repair
--> Controller relays review to PM
+-> Controller signs relay and sends only the result envelope to Reviewer
+-> Reviewer audits mail chain, role origin, hashes, and evidence
+-> Controller relays review envelope to PM
 -> PM issues next packet, repair packet, route mutation, user block, or complete
 -> Controller continues internally unless PM says stop_for_user: true
 ```
@@ -47,6 +50,22 @@ display required Mermaid route signs, wait for role returns, and ask PM for the
 next decision. The controller must not read or execute `packet_body` or
 `result_body`, generate worker artifacts, run product validation, approve
 gates, close nodes, rewrite hashes, or relabel wrong-role completion.
+
+All formal mail goes through Controller. PM, reviewer, worker, and officer
+roles must not privately pass packet/result bodies or formal review/decision
+mail. Each Controller relay writes `controller_relay` on the envelope with
+`delivered_via_controller: true`, `controller_agent_id`, `received_from_role`,
+`relayed_to_role`, holder before/after, `envelope_hash`,
+`body_was_read_by_controller: false`, and `body_was_executed_by_controller:
+false`. The recipient verifies this signature before opening any body. Missing
+signatures, wrong recipients, hash mismatch, private delivery, or missing
+no-read/no-execute declarations block body open and force sender reissue via PM.
+
+If Controller discovers it has opened or executed a sealed internal body, it
+must not continue relaying that mail. It records a contaminated
+return-to-sender entry and asks PM to obtain a fresh sender-issued replacement.
+The old packet cannot become valid by post-hoc signing, relabeling, cosigning,
+or hash rewriting.
 
 The split must be physical in real runs. Use
 `skills/flowpilot/assets/packet_runtime.py` in the installed skill or
@@ -69,6 +88,13 @@ an unknown actor, or from a different role, the reviewer must block, issue the
 controller-boundary warning, and require PM to reissue or repair the packet
 through the assigned role. Wrong-role completion cannot be cosigned,
 relabelled, or accepted as "good enough."
+
+At every subnode and every major-node closure, reviewer also audits the full
+mail chain for that node: controller relay signatures, recipient pre-open
+checks, holder continuity, no private mail, and replacement coverage for
+contaminated, rejected, missing, or unopened mail. If any required letter was
+not opened when needed, reviewer sends the chain audit to PM. PM chooses
+`restart_node`, `create_repair_node`, or `request_sender_reissue`.
 
 Reviewer decisions for role-origin mismatch:
 
@@ -100,12 +126,17 @@ PM responses:
 ```text
 PACKET_ENVELOPE:
   packet_id:
+  packet_type:
   from_role:
   to_role:
   node_id:
   is_current_node:
   body_path:
   body_hash:
+  body_visibility:
+  controller_relay:
+  replacement_for:
+  supersedes:
   return_to:
   next_holder:
   controller_allowed_actions:
@@ -127,11 +158,13 @@ PACKET_BODY:
 ```text
 RESULT_ENVELOPE:
   packet_id:
+  packet_type:
   completed_by_role:
   completed_by_agent_id:
   node_id:
   result_body_path:
   result_body_hash:
+  controller_relay:
   next_recipient:
 ```
 
@@ -151,6 +184,13 @@ REVIEW_DECISION:
   decision: pass | block | needs_repair | needs_user | block_invalid_role_origin
   can_pm_advance: true | false
   role_origin_audit:
+    packet_controller_relay_signature_checked:
+    result_controller_relay_signature_checked:
+    controller_signed_body_unread_and_unexecuted:
+    recipient_pre_open_relay_check_verified:
+    private_role_to_role_delivery_absent:
+    contaminated_or_rejected_packets_have_sender_replacements:
+    unopened_or_missing_mail_sent_to_pm:
     pm_packet_author_verified:
     reviewer_dispatch_authority_checked:
     packet_envelope_to_role_checked:
@@ -211,8 +251,9 @@ Missing reminders are dispatch/review blockers, not cosmetic formatting gaps.
 Heartbeat and manual resume use the same packet control plane. The waking
 assistant is Controller only. It first resolves `.flowpilot/current.json`,
 loads the active run state/frontier/route, crew ledger, role memory, latest
-heartbeat or manual-resume evidence, and `packet_ledger.json`, then restores
-or replaces the six roles before asking PM for the current decision.
+heartbeat or manual-resume evidence, `packet_ledger.json`, and controller
+relay history, then restores or replaces the six roles before asking PM for the
+current decision. It must not open `packet_body.md` or `result_body.md`.
 
 The heartbeat prompt is a stable launcher. It must not carry route-specific
 next-step instructions and must not be rewritten just because the route or PM
@@ -221,11 +262,17 @@ runway changed. Current work comes from persisted state and PM decisions.
 Resume rules:
 
 - If no current packet exists, ask PM for `PM_DECISION`.
+- Before normal continuation, audit the packet ledger for missing relay
+  signatures, private role-to-role mail, controller contamination, unopened
+  bodies, holder-chain breaks, and invalid stale/replacement chains. If any are
+  present, ask PM for restart, repair node, or sender reissue instead of
+  continuing.
 - If PM issues or reissues `PACKET_ENVELOPE` and `PACKET_BODY`, require
-  `controller_reminder`, then send only the envelope to the reviewer for
-  dispatch approval before any worker sees the body.
+  `controller_reminder`, sign the controller relay, then send only the envelope
+  to the target role or reviewer dispatch path before any worker sees the body.
 - If the packet is already with a worker, resume that exact packet only when
-  reviewer dispatch and worker identity are clear.
+  controller relay signature, recipient body-open record, reviewer dispatch,
+  and worker identity are clear.
 - If a worker result envelope exists, send the `RESULT_ENVELOPE` to reviewer.
   Reviewer and PM may read the result body from their authorized review or
   decision position. Reviewer pass goes to PM; reviewer block goes to PM for

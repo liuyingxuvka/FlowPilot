@@ -171,6 +171,7 @@ REQUIRED_LABELS = (
     "pm_review_release_order_written",
     "pm_released_reviewer_for_current_gate",
     "packet_runtime_physical_isolation_verified",
+    "controller_mail_relay_chain_audit_done",
     "packet_envelope_body_audit_done",
     "packet_role_origin_audit_done",
     "node_human_inspection_context_loaded",
@@ -441,6 +442,7 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_released_reviewer_for_current_gate},"
         f"physical_packet={state.packet_runtime_physical_files_written},"
         f"controller_body_excluded={state.controller_context_body_exclusion_verified},"
+        f"mail_chain_audit={state.packet_mail_chain_audit_done},"
         f"envelope_body={state.packet_envelope_body_audit_done},"
         f"role_origin={state.packet_role_origin_audit_done},"
         f"{state.packet_result_author_verified},"
