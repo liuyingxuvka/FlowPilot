@@ -262,6 +262,10 @@ Keep these failure modes in the model and tests.
   paths, skipped-step reasons, and final completion decision.
 - FlowGuard must design the route before implementation and then check the
   route after design changes.
+- Material, mechanism, source, validation, or experiment gaps must not remain
+  as informal PM notes. They become PM-owned research packages with bounded
+  worker execution, reviewer direct-source or experiment-output checks, and PM
+  absorption or route mutation before dependent planning or implementation.
 - The quality package is mandatory before formal chunks and implementation. It
   records thinness, candidate classification, child-skill mini-route
   visibility, validation strength, and rough-finish risk.

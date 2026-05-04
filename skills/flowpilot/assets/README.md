@@ -7,6 +7,7 @@ Reusable assets for FlowPilot live here or in the repository-level
 - route templates;
 - heartbeat templates;
 - capability evidence templates;
+- research package, worker report, and reviewer report templates;
 - experiment templates;
 - `templates/startup_banner.md` for the first visible chat launch marker;
 - minimal FlowGuard model templates.

@@ -105,6 +105,17 @@ class State:
     pm_material_understanding_memo_written: bool = False
     pm_material_complexity_classified: bool = False
     pm_material_discovery_decision_recorded: bool = False
+    pm_material_research_decision_recorded: bool = False
+    material_research_need: str = "unknown"  # unknown | not_required | required
+    pm_research_package_written: bool = False
+    research_tool_capability_decision_recorded: bool = False
+    research_worker_report_returned: bool = False
+    research_reviewer_direct_source_check_done: bool = False
+    research_reviewer_rework_required: bool = False
+    research_worker_rework_completed: bool = False
+    research_reviewer_recheck_done: bool = False
+    research_reviewer_sufficiency_passed: bool = False
+    pm_research_result_absorbed_or_route_mutated: bool = False
     product_function_architecture_pm_synthesized: bool = False
     product_function_high_standard_posture_written: bool = False
     product_function_target_and_failure_bar_written: bool = False
@@ -604,6 +615,19 @@ def _material_handoff_ready(state: State) -> bool:
         and state.pm_material_understanding_memo_written
         and state.pm_material_complexity_classified
         and state.pm_material_discovery_decision_recorded
+        and state.pm_material_research_decision_recorded
+        and (
+            state.material_research_need == "not_required"
+            or (
+                state.material_research_need == "required"
+                and state.pm_research_package_written
+                and state.research_tool_capability_decision_recorded
+                and state.research_worker_report_returned
+                and state.research_reviewer_direct_source_check_done
+                and state.research_reviewer_sufficiency_passed
+                and state.pm_research_result_absorbed_or_route_mutated
+            )
+        )
     )
 
 
@@ -884,6 +908,17 @@ class AutopilotStep:
         "pm_material_understanding_memo_written",
         "pm_material_complexity_classified",
         "pm_material_discovery_decision_recorded",
+        "pm_material_research_decision_recorded",
+        "material_research_need",
+        "pm_research_package_written",
+        "research_tool_capability_decision_recorded",
+        "research_worker_report_returned",
+        "research_reviewer_direct_source_check_done",
+        "research_reviewer_rework_required",
+        "research_worker_rework_completed",
+        "research_reviewer_recheck_done",
+        "research_reviewer_sufficiency_passed",
+        "pm_research_result_absorbed_or_route_mutated",
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
@@ -1160,6 +1195,17 @@ class AutopilotStep:
         "pm_material_understanding_memo_written",
         "pm_material_complexity_classified",
         "pm_material_discovery_decision_recorded",
+        "pm_material_research_decision_recorded",
+        "material_research_need",
+        "pm_research_package_written",
+        "research_tool_capability_decision_recorded",
+        "research_worker_report_returned",
+        "research_reviewer_direct_source_check_done",
+        "research_reviewer_rework_required",
+        "research_worker_rework_completed",
+        "research_reviewer_recheck_done",
+        "research_reviewer_sufficiency_passed",
+        "pm_research_result_absorbed_or_route_mutated",
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
@@ -2004,6 +2050,144 @@ class AutopilotStep:
                 label="pm_material_discovery_decision_recorded",
                 action="project manager records whether materials can feed route design directly or require a formal discovery, cleanup, modeling, or validation subtree",
                 pm_material_discovery_decision_recorded=True,
+                active_node="decide_material_research_package_need",
+            )
+            return
+
+        if not state.pm_material_research_decision_recorded:
+            yield _step(
+                state,
+                label="pm_material_research_decision_not_required",
+                action="project manager records that reviewed materials are sufficient and no formal research package is required before product architecture",
+                pm_material_research_decision_recorded=True,
+                material_research_need="not_required",
+                active_node="product_function_architecture",
+            )
+            yield _step(
+                state,
+                label="pm_material_research_decision_requires_package",
+                action="project manager records a material gap that must become a formal research, mechanism-discovery, evidence-collection, or experiment package before product architecture",
+                pm_material_research_decision_recorded=True,
+                material_research_need="required",
+                active_node="write_pm_research_package",
+            )
+            return
+
+        if state.material_research_need == "required":
+            if not state.pm_research_package_written:
+                yield _step(
+                    state,
+                    label="pm_research_package_written",
+                    action="project manager writes a bounded research package with question, route impact, allowed sources, worker owner, evidence standard, reviewer checks, and stop conditions",
+                    pm_research_package_written=True,
+                    active_node="record_research_tool_capability_decision",
+                )
+                return
+
+            if not state.research_tool_capability_decision_recorded:
+                yield _step(
+                    state,
+                    label="research_tool_capability_decision_recorded",
+                    action="project manager records whether local, browser, web search, account, or user-provided sources are available and routes missing capabilities to user clarification, fallback, or block",
+                    research_tool_capability_decision_recorded=True,
+                    active_node="worker_runs_research_package",
+                )
+                return
+
+            if not state.research_worker_report_returned:
+                yield _step(
+                    state,
+                    label="research_worker_report_returned",
+                    action="assigned worker searches, inspects, experiments, or reconciles sources and returns a research package report with raw evidence pointers and limitations",
+                    research_worker_report_returned=True,
+                    active_node="review_research_evidence_sources",
+                )
+                return
+
+            if not state.research_reviewer_direct_source_check_done:
+                yield _step(
+                    state,
+                    label="research_reviewer_direct_source_check_done",
+                    action="human-like reviewer directly checks original sources, search results, logs, screenshots, or experiment outputs instead of trusting the worker summary",
+                    research_reviewer_direct_source_check_done=True,
+                    active_node="decide_research_sufficiency",
+                )
+                return
+
+            if not state.research_reviewer_sufficiency_passed:
+                if not state.research_reviewer_rework_required:
+                    yield _step(
+                        state,
+                        label="research_reviewer_sufficiency_passed",
+                        action="human-like reviewer approves the research package as sufficient for PM route or product decisions after direct source checks",
+                        research_reviewer_sufficiency_passed=True,
+                        active_node="absorb_research_result",
+                    )
+                    yield _step(
+                        state,
+                        label="research_reviewer_rework_required",
+                        action="human-like reviewer rejects the worker research output as shallow, unsupported, stale, contradictory, or missing required source checks",
+                        research_reviewer_rework_required=True,
+                        active_node="worker_reworks_research_package",
+                    )
+                    return
+
+                if not state.research_worker_rework_completed:
+                    yield _step(
+                        state,
+                        label="research_worker_rework_completed",
+                        action="assigned worker reruns or expands the research package according to reviewer blockers and returns corrected evidence",
+                        research_worker_rework_completed=True,
+                        active_node="review_reworked_research_evidence",
+                    )
+                    return
+
+                if not state.research_reviewer_recheck_done:
+                    yield _step(
+                        state,
+                        label="research_reviewer_recheck_done",
+                        action="human-like reviewer rechecks the corrected research output against the original package and prior blockers",
+                        research_reviewer_recheck_done=True,
+                        active_node="approve_reworked_research_package",
+                    )
+                    return
+
+                yield _step(
+                    state,
+                    label="research_reviewer_sufficiency_passed",
+                    action="human-like reviewer approves the reworked research package after direct source recheck",
+                    research_reviewer_sufficiency_passed=True,
+                    research_reviewer_rework_required=False,
+                    research_worker_rework_completed=False,
+                    research_reviewer_recheck_done=False,
+                    active_node="absorb_research_result",
+                )
+                return
+
+            if not state.pm_research_result_absorbed_or_route_mutated:
+                yield _step(
+                    state,
+                    label="pm_research_result_absorbed_or_route_mutated",
+                    action="project manager absorbs approved research into material understanding, product architecture inputs, route mutation, or a blocked/user-clarification decision",
+                    pm_research_result_absorbed_or_route_mutated=True,
+                    active_node="close_material_research_gap",
+                )
+                return
+
+            yield _step(
+                state,
+                label="material_research_gap_closed",
+                action="project manager marks the approved research gap closed after preserving absorption or route-mutation evidence so downstream planning no longer branches on stale research state",
+                material_research_need="not_required",
+                pm_research_package_written=False,
+                research_tool_capability_decision_recorded=False,
+                research_worker_report_returned=False,
+                research_reviewer_direct_source_check_done=False,
+                research_reviewer_rework_required=False,
+                research_worker_rework_completed=False,
+                research_reviewer_recheck_done=False,
+                research_reviewer_sufficiency_passed=False,
+                pm_research_result_absorbed_or_route_mutated=False,
                 active_node="product_function_architecture",
             )
             return
@@ -5299,6 +5483,74 @@ def material_handoff_before_pm_route_design(state: State, trace) -> InvariantRes
     ):
         return InvariantResult.fail(
             "PM material discovery decision was recorded before understanding memo and complexity classification"
+        )
+    if state.pm_material_research_decision_recorded and not state.pm_material_discovery_decision_recorded:
+        return InvariantResult.fail(
+            "PM material research-package decision was recorded before the material discovery decision"
+        )
+    if (
+        state.pm_material_research_decision_recorded
+        and state.material_research_need not in {"not_required", "required"}
+    ):
+        return InvariantResult.fail("PM material research-package decision did not classify need")
+    if state.pm_research_package_written and not (
+        state.pm_material_research_decision_recorded
+        and state.material_research_need == "required"
+    ):
+        return InvariantResult.fail(
+            "PM research package was written without a recorded material gap requiring research"
+        )
+    if state.research_tool_capability_decision_recorded and not state.pm_research_package_written:
+        return InvariantResult.fail(
+            "research tool capability decision was recorded before the PM research package"
+        )
+    if state.research_worker_report_returned and not (
+        state.pm_research_package_written
+        and state.research_tool_capability_decision_recorded
+    ):
+        return InvariantResult.fail(
+            "worker research report returned before PM package and tool capability decision"
+        )
+    if state.research_reviewer_direct_source_check_done and not state.research_worker_report_returned:
+        return InvariantResult.fail(
+            "research reviewer checked sources before a worker research report existed"
+        )
+    if state.research_reviewer_rework_required and not state.research_reviewer_direct_source_check_done:
+        return InvariantResult.fail(
+            "research reviewer required rework before direct source checks"
+        )
+    if state.research_worker_rework_completed and not state.research_reviewer_rework_required:
+        return InvariantResult.fail(
+            "research worker rework completed before reviewer requested rework"
+        )
+    if state.research_reviewer_recheck_done and not state.research_worker_rework_completed:
+        return InvariantResult.fail(
+            "research reviewer rechecked before worker completed research rework"
+        )
+    if state.research_reviewer_sufficiency_passed and not (
+        state.research_reviewer_direct_source_check_done
+        and (
+            not state.research_reviewer_rework_required
+            or (
+                state.research_worker_rework_completed
+                and state.research_reviewer_recheck_done
+            )
+        )
+    ):
+        return InvariantResult.fail(
+            "research reviewer sufficiency passed without direct source check and required rework/recheck evidence"
+        )
+    if state.pm_research_result_absorbed_or_route_mutated and not state.research_reviewer_sufficiency_passed:
+        return InvariantResult.fail(
+            "PM absorbed or routed research result before reviewer sufficiency pass"
+        )
+    if (
+        state.product_function_architecture_pm_synthesized
+        and state.material_research_need == "required"
+        and not state.pm_research_result_absorbed_or_route_mutated
+    ):
+        return InvariantResult.fail(
+            "product-function architecture started while required material research package was unresolved"
         )
     if state.pm_initial_route_decision_recorded and not _material_handoff_ready(state):
         return InvariantResult.fail(

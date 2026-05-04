@@ -10,6 +10,59 @@ sections below document earlier model work, but current source, templates,
 runtime helpers, and lifecycle checks use only stable heartbeat continuation
 or explicit manual resume.
 
+## 2026-05-04 Follow-Up - PM Research Package Loop
+
+Trigger: the user clarified that FlowPilot should not merely note insufficient
+materials. When the project manager finds a material, mechanism, source,
+validation, reconciliation, or experiment gap, that gap should become a formal
+research/evidence package assigned to a worker, then independently checked by
+the human-like reviewer before PM uses the result.
+
+Decision: `use_flowguard`.
+
+Modeled risk:
+
+- product architecture or route design starts while a required material
+  research package is unresolved;
+- a worker research report directly closes a material gap;
+- reviewer approval happens without direct source or experiment-output checks;
+- reviewer rework findings are bypassed without worker rework and reviewer
+  recheck;
+- missing web/browser capability is treated as completed external research.
+
+Protocol and template changes:
+
+- added PM-owned `research_package.template.json`;
+- added `research_worker_report.template.json` and
+  `research_reviewer_report.template.json`;
+- updated material intake, PM material understanding, execution frontier, state,
+  node acceptance, experiment, route, schema, and protocol documents to carry
+  the research package loop;
+- meta and capability models now include labels for PM research-package
+  decision, worker report, reviewer direct-source check, reviewer rework,
+  worker rework, reviewer recheck, reviewer sufficiency pass, PM absorption or
+  route mutation, and material-gap closure.
+
+Validation:
+
+```powershell
+python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py
+python scripts\check_install.py
+python simulations\run_meta_checks.py
+python simulations\run_capability_checks.py
+```
+
+Results:
+
+- meta model states: 539167;
+- meta model edges: 559339;
+- capability model states: 522749;
+- capability model edges: 548209;
+- invariant failures: 0;
+- missing required labels: 0;
+- stuck states: 0;
+- nonterminating components: 0.
+
 ## Scope
 
 This preflight modeled the project-control workflow for the planned `flowpilot`

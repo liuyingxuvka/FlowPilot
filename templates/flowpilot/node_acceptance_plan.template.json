@@ -69,6 +69,8 @@
   "experiment_plan": [
     {
       "experiment_id": "<experiment-id>",
+      "source_research_package_id": "<research-package-id-or-null>",
+      "source_research_package_path": "<path-or-null>",
       "covers_requirements": [],
       "hypothesis_to_attack": "<how this requirement could falsely appear complete>",
       "standard_scenario_id": "<scenario-id-or-null>",
@@ -79,6 +81,8 @@
       "evidence_paths": [],
       "owner_role": "<main_executor|worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
       "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+      "worker_report_only_allowed": false,
+      "reviewer_or_officer_direct_check_required": true,
       "status": "<planned|passed|blocked|superseded>"
     }
   ],

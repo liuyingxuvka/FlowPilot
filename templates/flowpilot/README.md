@@ -49,7 +49,15 @@ for review.
    human-like reviewer approves material sufficiency before PM planning uses it.
 11. Project manager writes `pm_material_understanding.json`, classifies material
    complexity, and records whether messy/raw materials require discovery,
-   cleanup, modeling, research, validation, or reconciliation nodes.
+   cleanup, modeling, research, validation, or reconciliation nodes. When a
+   material, mechanism, source, or validation gap affects route/product
+   decisions, PM writes a formal research package under `research/`, assigns a
+   worker to search, inspect, experiment, or reconcile evidence, then releases
+   the human-like reviewer to check original sources or outputs directly.
+   Worker reports are pointers only. Reviewer failure returns to worker rework
+   or route mutation; PM may use the result only after reviewer sufficiency
+   passes and PM absorbs the result into material understanding or mutates the
+   route.
 12. Ask the project manager to synthesize `product_function_architecture.json`
    before contract freeze, including user tasks, capabilities, feature
    decisions, high-standard posture, strongest feasible product target,
@@ -197,7 +205,17 @@ for review.
 - `local_skill_inventory.template.json`: optional standalone local skill and
   host capability inventory consumed by the material packet and PM selection.
 - `pm_material_understanding.template.json`: PM interpretation, source-claim
-  matrix, open questions, material complexity, and discovery decision.
+  matrix, open questions, material complexity, discovery decision, and whether
+  formal research packages are required before product architecture.
+- `research_package.template.json`: PM-owned package that turns a material,
+  mechanism, source, validation, or experiment gap into bounded worker research
+  with explicit tool/source boundaries and reviewer checks.
+- `research_worker_report.template.json`: worker output for a research package,
+  including raw source pointers, negative findings, contradictions, and
+  confidence boundaries.
+- `research_reviewer_report.template.json`: human-like reviewer report that
+  directly checks source evidence or experiment output before PM may use the
+  worker result.
 - `product_function_architecture.template.json`: PM-owned pre-contract product
   function architecture package.
 - `pm_child_skill_selection.template.json`: PM-owned selection of required,

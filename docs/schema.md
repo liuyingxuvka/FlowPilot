@@ -33,6 +33,9 @@ user-level:
 - `lifecycle/events.jsonl`
 - `startup_review/latest.json`
 - `startup_pm_gate/latest.json`
+- `research/*/research_package.json`
+- `research/*/worker_report.json`
+- `research/*/reviewer_report.json`
 - `human_reviews/*.json`
 - `role_approvals/*.json`
 - `checkpoints/*.json`
@@ -365,6 +368,8 @@ It records:
 - child-skill gates and approvers used by the node;
 - current-node acceptance criteria;
 - concrete experiments, manual walkthroughs, commands, screenshots, or probes;
+- linked research packages for material, mechanism, source, validation, or
+  evidence gaps that need worker investigation and reviewer source checks;
 - known risk hypotheses and how each will be checked;
 - risk scenarios that must be replayed in final review if not closed earlier;
 - evidence paths and approval owner;

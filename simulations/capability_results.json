@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 545815,
+    "edge_count": 548209,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -70,6 +70,7 @@
       "crew_memory_packets_written",
       "crew_rehydration_report_written",
       "current_child_skill_gate_independent_validation_done",
+      "current_node_high_standard_recheck_written",
       "current_pointer_written",
       "defect_ledger_initialized",
       "defect_ledger_zero_blocking",
@@ -139,6 +140,7 @@
       "main_agent_merged_sidecar_report",
       "main_executor_parallel_prep_boundary_recorded",
       "material_intake_packet_written",
+      "material_research_gap_closed",
       "material_reviewer_direct_source_probe_done",
       "material_reviewer_sufficiency_approved",
       "material_reviewer_sufficiency_checked",
@@ -165,9 +167,13 @@
       "pm_initial_capability_decision_recorded",
       "pm_material_complexity_classified",
       "pm_material_discovery_decision_recorded",
+      "pm_material_research_decision_not_required",
+      "pm_material_research_decision_requires_package",
       "pm_material_understanding_memo_written",
       "pm_released_reviewer_for_current_gate",
       "pm_repair_decision_interrogated",
+      "pm_research_package_written",
+      "pm_research_result_absorbed_or_route_mutated",
       "pm_resume_completion_runway_recorded",
       "pm_returns_startup_blockers_to_worker",
       "pm_review_hold_instruction_written",
@@ -196,6 +202,13 @@
       "quality_package_passed_no_raise",
       "quality_package_route_raise_needed",
       "quality_package_small_raise_in_current_node",
+      "research_reviewer_direct_source_check_done",
+      "research_reviewer_recheck_done",
+      "research_reviewer_rework_required",
+      "research_reviewer_sufficiency_passed",
+      "research_tool_capability_decision_recorded",
+      "research_worker_report_returned",
+      "research_worker_rework_completed",
       "role_identity_protocol_recorded",
       "role_memory_packets_refreshed_after_capability_work",
       "root_acceptance_proof_matrix_written",
@@ -269,29 +282,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 520359,
+    "state_count": 522749,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 545815,
+    "edge_count": 548209,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 520359,
+    "state_count": 522749,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 545815,
+    "edge_count": 548209,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 520359,
+    "state_count": 522749,
     "status": "OK",
     "success_state_count": 4368
   }

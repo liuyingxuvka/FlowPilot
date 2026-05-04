@@ -306,7 +306,21 @@ all four in one compact sentence.
     complexity (`simple`, `normal`, or `messy/raw`), and whether materials can
     feed product/route design directly or require a formal discovery, cleanup,
     modeling, validation, or research subtree before implementation.
-13. Require the project manager to synthesize
+13. If the PM records a material, mechanism, source, validation, or experiment
+    gap that affects product architecture, route choice, node acceptance, or
+    implementation, the PM must convert that gap into a formal research package
+    before dependent planning continues. The package assigns worker A, worker B,
+    or the main executor to search, inspect, reconcile, model, or run a bounded
+    experiment; records allowed source/tool boundaries including web/browser
+    availability and private/paid/account hard gates; and defines reviewer
+    source checks and stop conditions. Worker output is a pointer only. The
+    human-like reviewer must directly check original sources, search results,
+    local files, logs, screenshots, or experiment outputs before passing
+    sufficiency. Reviewer failure returns to worker rework, route mutation,
+    user clarification, or block. PM may use the result only after reviewer
+    sufficiency passes and PM absorbs the research into material understanding,
+    product architecture inputs, or a route mutation.
+14. Require the project manager to synthesize
     `.flowpilot/runs/<run-id>/product_function_architecture.json` before contract freeze.
     The package must include a user-task map, product capability map, feature
     necessity decisions (`must`, `should`, `optional`, `reject`), a high-standard
@@ -314,25 +328,25 @@ all four in one compact sentence.
     review, semantic-fidelity and no-silent-downgrade policy, display rationale
     for every visible label/control/status/card, missing high-value feature
     review, negative scope, and a functional acceptance matrix.
-14. The product FlowGuard officer approves or blocks whether the architecture
+15. The product FlowGuard officer approves or blocks whether the architecture
     can be modeled and checked. The human-like reviewer challenges usefulness:
     unnecessary features, unnecessary visible text, missing workflow support,
     bad defaults, weak failure states, silent semantic downgrades, placeholder
     or embarrassing artifacts, and gaps between user tasks and product
     behavior. If either role blocks, the project manager revises the package
     before the route continues.
-15. Freeze the acceptance contract as a floor, not a ceiling, from the
+16. Freeze the acceptance contract as a floor, not a ceiling, from the
     approved product-function architecture and startup self-interrogation.
-16. Write `capabilities.json`, including product-function architecture
+17. Write `capabilities.json`, including product-function architecture
     evidence.
-17. Ask the project manager to write
+18. Ask the project manager to write
     `.flowpilot/runs/<run-id>/pm_child_skill_selection.json` from the product
     capability map, frozen contract, capabilities manifest, and local skill
     inventory. The PM classifies candidate skills as `required`,
     `conditional`, `deferred`, or `rejected`, with reasons. Skills that exist
     locally but do not serve the product are rejected or deferred; availability
     alone never creates route work.
-18. Ask the project manager to discover child-skill gates only from the
+19. Ask the project manager to discover child-skill gates only from the
     PM-selected skills. For each likely invoked child skill, load the child
     skill's `SKILL.md` and only the relevant references, then extract a
     child-skill gate manifest: key stages, required checks, standards,
@@ -524,6 +538,30 @@ formal work: the PM inserts discovery, cleanup, spreadsheet analysis, entity
 modeling, research, validation, or reconciliation nodes before product design
 or implementation nodes that depend on those materials.
 
+When the PM cannot safely decide from reviewed materials, the gap becomes a
+PM-owned research package rather than an informal note. Use
+`.flowpilot/runs/<run-id>/research/<research-package-id>/research_package.json`
+to name the decision, route impact, source/tool boundaries, worker assignment,
+evidence standard, reviewer direct-check requirements, and stop conditions.
+The package may request local repository inspection, user-provided materials,
+web search, browser/site inspection, source reconciliation, FlowGuard modeling,
+or a bounded experiment only when the host capability and hard gates allow it.
+If web/browser capability is absent or private/paid/account access would be
+needed, PM routes to local-source fallback, user clarification, manual research,
+or block; FlowPilot must not claim external research was done.
+
+Worker A, worker B, or the main executor executes the package and writes
+`worker_report.json` with raw source pointers, commands or probes, negative
+findings, contradictions, and confidence boundaries. The human-like reviewer
+then writes `reviewer_report.json` after directly checking original sources,
+search results, local files, logs, screenshots, or experiment outputs. A
+reviewer decision based only on the worker summary is invalid. If the reviewer
+blocks, PM returns a concrete rework package to the worker, inserts a follow-up
+node, asks the user, mutates the route, or blocks. PM may feed the result into
+product-function architecture, node acceptance, or route design only after
+reviewer sufficiency passes and PM records how the result was absorbed or how
+the route changed.
+
 ## Product Function Architecture Gate
 
 This gate sits after startup full grill-me, project-manager ratification, and
@@ -665,10 +703,13 @@ Only after that recheck does the project manager write a node acceptance plan:
 The node plan maps inherited root high-risk requirements, node-local
 obligations, concrete experiments/checks/fixtures/screenshots/model replays,
 standard scenarios, required approvers, and recovery paths. This is where
-later details become concrete. If a node plan exposes a test gap or evidence
-gap, the PM returns the route to QA, inserts repair work, mutates the route, or
-blocks. A node checkpoint cannot close while required node experiments are
-unrun, failed, or untriaged.
+later details become concrete. If a node plan exposes a material, mechanism,
+test, or evidence gap, the PM either links an existing approved research
+package or writes a new research package for worker execution and reviewer
+source validation before dependent implementation proceeds. The PM may also
+return the route to QA, insert repair work, mutate the route, ask the user, or
+block. A node checkpoint cannot close while required node experiments or
+research packages are unrun, failed, unreviewed, or untriaged.
 
 ## FlowPilot Skill Improvement Notes
 
@@ -1734,6 +1775,13 @@ Canonical state is machine-readable:
 - `inspections/*.json` or node-local inspection evidence: human-like review
   context, experiments, findings, blocking issues, repair targets, and
   same-inspector recheck results.
+- `research/<research-package-id>/research_package.json`: PM-owned package for
+  material, mechanism, source, validation, reconciliation, or experiment gaps.
+- `research/<research-package-id>/worker_report.json`: worker search,
+  inspection, reconciliation, or experiment output with raw evidence pointers
+  and confidence boundaries.
+- `research/<research-package-id>/reviewer_report.json`: reviewer-owned direct
+  source or experiment-output check before PM may use the research result.
 - `experiments/*/experiment.json`: bounded experiment evidence.
 - `flowpilot_skill_improvement_observations.jsonl`: append-only notes about
   FlowPilot skill issues or improvement opportunities observed during nodes,

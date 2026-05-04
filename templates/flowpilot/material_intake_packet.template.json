@@ -81,6 +81,17 @@
       "notes": "<brief evidence note>"
     }
   ],
+  "research_package_candidates": [
+    {
+      "gap_id": "<gap-id>",
+      "gap_type": "<material_gap|mechanism_gap|source_gap|experiment_gap|protocol_gap|validation_gap|reconciliation_gap>",
+      "question": "<question-that-may-need-a-PM-research-package>",
+      "route_impact": "<blocking|changes-route|can-defer|nonblocking>",
+      "likely_source_or_experiment_needed": "<local-inspection|web-search|browser-check|user-material|FlowGuard-model|bounded-experiment|source-reconciliation|unknown>",
+      "suggested_worker_owner": "<worker_a|worker_b|main_executor|unknown>",
+      "must_be_decided_by_pm": true
+    }
+  ],
   "unread_or_deferred_materials": [
     {
       "source": "<path-url-or-reference>",

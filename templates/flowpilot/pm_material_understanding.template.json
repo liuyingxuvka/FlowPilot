@@ -30,6 +30,25 @@
   ],
   "material_complexity": "<simple|normal|messy/raw>",
   "route_consequence": "<direct-route|formal-discovery-subtree|required-user-clarification|blocked>",
+  "research_package_decision": {
+    "decision_required_before_product_architecture": true,
+    "research_package_required": "<true|false>",
+    "reason": "<why-existing-reviewed-materials-are-sufficient-or-why-a-package-is-needed>",
+    "package_ids": [],
+    "package_paths": [],
+    "allowed_package_types": [
+      "material_research",
+      "mechanism_discovery",
+      "external_source_search",
+      "bounded_experiment",
+      "source_reconciliation",
+      "validation"
+    ],
+    "worker_execution_required_when_package_exists": true,
+    "reviewer_direct_source_check_required": true,
+    "pm_may_not_use_worker_report_directly": true,
+    "missing_tool_or_web_capability_route": "<not-applicable|use-local-sources|ask-user-for-source|manual-research-needed|block>"
+  },
   "discovery_subtree": {
     "required": false,
     "reason": "<why discovery is or is not required>",

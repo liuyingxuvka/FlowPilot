@@ -67,6 +67,18 @@ REQUIRED_LABELS = (
     "pm_material_understanding_memo_written",
     "pm_material_complexity_classified",
     "pm_material_discovery_decision_recorded",
+    "pm_material_research_decision_not_required",
+    "pm_material_research_decision_requires_package",
+    "pm_research_package_written",
+    "research_tool_capability_decision_recorded",
+    "research_worker_report_returned",
+    "research_reviewer_direct_source_check_done",
+    "research_reviewer_rework_required",
+    "research_worker_rework_completed",
+    "research_reviewer_recheck_done",
+    "research_reviewer_sufficiency_passed",
+    "pm_research_result_absorbed_or_route_mutated",
+    "material_research_gap_closed",
     "product_function_architecture_pm_synthesized",
     "product_function_high_standard_posture_written",
     "product_function_target_and_failure_bar_written",
@@ -301,7 +313,18 @@ def _state_id(state: model.State) -> str:
         f"{state.material_reviewer_sufficiency_approved},"
         f"{state.pm_material_understanding_memo_written},"
         f"{state.pm_material_complexity_classified},"
-        f"{state.pm_material_discovery_decision_recorded}|"
+        f"{state.pm_material_discovery_decision_recorded},"
+        f"{state.pm_material_research_decision_recorded},"
+        f"{state.material_research_need},"
+        f"{state.pm_research_package_written},"
+        f"{state.research_tool_capability_decision_recorded},"
+        f"{state.research_worker_report_returned},"
+        f"{state.research_reviewer_direct_source_check_done},"
+        f"{state.research_reviewer_rework_required},"
+        f"{state.research_worker_rework_completed},"
+        f"{state.research_reviewer_recheck_done},"
+        f"{state.research_reviewer_sufficiency_passed},"
+        f"{state.pm_research_result_absorbed_or_route_mutated}|"
         f"product_function_architecture="
         f"{state.product_function_architecture_pm_synthesized},"
         f"{state.product_function_high_standard_posture_written},"

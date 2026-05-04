@@ -24,6 +24,7 @@
     "material_intake_packet": ".flowpilot/runs/run-001/material_intake_packet.json",
     "local_skill_inventory": ".flowpilot/runs/run-001/local_skill_inventory.json",
     "pm_material_understanding": ".flowpilot/runs/run-001/pm_material_understanding.json",
+    "research_root": ".flowpilot/runs/run-001/research",
     "product_function_architecture": ".flowpilot/runs/run-001/product_function_architecture.json",
     "pm_child_skill_selection": ".flowpilot/runs/run-001/pm_child_skill_selection.json",
     "startup_review": ".flowpilot/runs/run-001/startup_review/latest.json",

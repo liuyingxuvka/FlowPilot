@@ -1,11 +1,44 @@
 {
-  "conclusion": null,
-  "evidence": [],
+  "artifact_type": "flowpilot_bounded_experiment",
+  "schema_version": "flowpilot.experiment.v2",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "node_id": "<node-id-or-null>",
   "experiment_id": "experiment-001",
-  "method": "<bounded-method>",
-  "question": "<one-question-this-experiment-answers>",
-  "result": "pending",
-  "route_change_required": null,
+  "source_research_package": "<path-or-null>",
+  "source_node_acceptance_plan": "<path-or-null>",
   "started_at": "<iso-8601-timestamp>",
-  "stop_condition": "<when-to-stop>"
+  "ended_at": "<iso-8601-timestamp-or-null>",
+  "owner_role": "<main_executor|worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+  "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+  "question": "<one-question-this-experiment-answers>",
+  "hypothesis_to_attack": "<what-could-make-the-current-route-or-assumption-wrong>",
+  "method": "<bounded-method>",
+  "variables_or_inputs": [],
+  "fixture_or_setup": "<fixture-setup-or-null>",
+  "steps": [],
+  "expected_observation": "<what-would-support-the-hypothesis-or-decision>",
+  "actual_observation": "<filled-after-run-or-null>",
+  "evidence": [
+    {
+      "path_or_reference": "<path-url-command-output-or-screenshot>",
+      "kind": "<log|screenshot|test-output|model-output|source-sample|other>",
+      "what_it_proves": "<evidence-claim>"
+    }
+  ],
+  "stop_condition": "<when-to-stop>",
+  "result": "<pending|passed|failed|inconclusive|blocked|superseded>",
+  "conclusion": "<decision-relevant-conclusion-or-null>",
+  "reviewer_or_officer_check": {
+    "direct_check_required": true,
+    "checked_by_role": "<human_like_reviewer|process_flowguard_officer|product_flowguard_officer|none>",
+    "check_path": "<path-or-null>",
+    "worker_report_only_allowed": false
+  },
+  "pm_route_consequence": {
+    "route_change_required": "<true|false|null>",
+    "decision": "<resume_route|mutate_route|insert_followup_experiment|ask_user|block|supersede>",
+    "decision_path": "<path-or-null>"
+  }
 }

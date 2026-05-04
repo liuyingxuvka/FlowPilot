@@ -1,0 +1,57 @@
+{
+  "artifact_type": "flowpilot_research_worker_report",
+  "schema_version": "flowpilot.research_worker_report.v1",
+  "run_id": "<run-id>",
+  "package_id": "<research-package-id>",
+  "created_at": "<iso-8601-timestamp>",
+  "worker_role": "<worker_a|worker_b|main_executor>",
+  "source_research_package": ".flowpilot/runs/<run-id>/research/<research-package-id>/research_package.json",
+  "status": "<draft|ready_for_review|blocked|superseded>",
+  "question_answered": "<yes|partial|no>",
+  "answer_summary": "<concise-answer-with-confidence-boundary>",
+  "commands_or_probes_run": [],
+  "sources_consulted": [
+    {
+      "source_id": "<source-id>",
+      "kind": "<official-doc|repository-source|user-material|web-search-result|paper|issue-thread|runtime-log|manual-experiment|other>",
+      "locator": "<path-url-query-command-or-reference>",
+      "accessed_at": "<iso-8601-timestamp-or-null>",
+      "authority": "<primary|secondary|community|unknown>",
+      "freshness": "<current|dated|unknown|not-time-sensitive>",
+      "relevance": "<high|medium|low>",
+      "summary": "<what-this-source-says>",
+      "limitations": "<what-this-source-does-not-prove>"
+    }
+  ],
+  "evidence_outputs": [
+    {
+      "evidence_id": "<evidence-id>",
+      "path_or_url": "<path-url-or-command-output>",
+      "kind": "<raw-source|note|table|screenshot|log|experiment-result|model-output|other>",
+      "supports_question": "<how-this-evidence-answers-the-package-question>"
+    }
+  ],
+  "contradictions_or_uncertainties": [
+    {
+      "issue": "<contradiction-or-unknown>",
+      "sources_involved": [],
+      "route_impact": "<blocking|changes-route|can-defer|nonblocking>",
+      "worker_recommendation": "<inspect-more|ask-user|model|experiment|block|accept-with-boundary>"
+    }
+  ],
+  "negative_findings": [
+    "<sources-or-hypotheses-that-did-not-support-the-assumption>"
+  ],
+  "confidence_boundary": {
+    "confidence": "<high|medium|low|unknown>",
+    "what_was_not_checked": [],
+    "tool_or_access_limits": [],
+    "privacy_or_safety_limits": []
+  },
+  "ready_for_reviewer": {
+    "ready": false,
+    "review_focus": [],
+    "direct_sources_reviewer_should_check": [],
+    "worker_report_only_allowed": false
+  }
+}

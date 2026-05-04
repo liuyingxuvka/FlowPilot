@@ -1686,3 +1686,46 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - In the next real FlowPilot UI run, verify the PM architecture packet explicitly rejects fake/placeholder maps, thin demos, and silent source-data downgrades before route generation.
+
+
+## flowpilot-research-package-loop - Add PM-owned research package worker reviewer loop to FlowPilot
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot process-control behavior change with route, evidence, worker, reviewer, and experiment states
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T10:02:25+00:00
+- Ended: 2026-05-04T10:02:25+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python -m py_compile simulations\meta_model.py simulations\run_meta_checks.py simulations\capability_model.py simulations\run_capability_checks.py scripts\check_install.py`
+- OK (0.000s): `python simulations\run_meta_checks.py`
+- OK (0.000s): `python simulations\run_capability_checks.py`
+- OK (0.000s): `python scripts\check_install.py`
+- OK (0.000s): `python scripts\smoke_autopilot.py`
+- OK (0.000s): `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\install_flowpilot.py --check --json`
+- OK (0.000s): `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- Required material research now blocks downstream product architecture until PM package, worker report, reviewer direct source check, reviewer sufficiency, and PM absorption or route mutation are complete.
+- Added material_research_gap_closed normalization to keep the executable graph finite while preserving the enforceable research gate.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Initial required/not-required research branching exceeded the 900000-state model threshold before downstream branch normalization; final meta and capability checks passed after normalization.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Future FlowPilot material gaps should instantiate research package, worker report, and reviewer report artifacts rather than staying as informal notes.

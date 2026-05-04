@@ -134,6 +134,8 @@ requires the agent to move through that model.
 During a run:
 
 - new material can change the route only through a recorded route mutation;
+- material or mechanism gaps become PM-owned research packages with bounded
+  worker execution and reviewer direct-source checks before PM can use them;
 - a failed review resets affected evidence instead of leaving old proof alive;
 - heartbeat or manual resume reloads the current execution frontier instead of
   guessing from chat history;
@@ -216,12 +218,12 @@ Formal routes use persistent role slots:
 
 | Role | Responsibility |
 | --- | --- |
-| **Project Manager** | Owns route decisions, material understanding, product/function architecture, repair strategy, completion runway, and final approval. |
-| **Human-like Reviewer** | Performs neutral observation, material sufficiency review, usefulness critique, product-style inspection, and final backward review. |
+| **Project Manager** | Owns route decisions, material understanding, research package scope, product/function architecture, repair strategy, completion runway, and final approval. |
+| **Human-like Reviewer** | Performs neutral observation, material sufficiency review, research source validation, usefulness critique, product-style inspection, and final backward review. |
 | **Process FlowGuard Officer** | Authors, runs, interprets, and approves or blocks process FlowGuard models. |
 | **Product FlowGuard Officer** | Authors, runs, interprets, and approves or blocks product/function FlowGuard models. |
-| **Worker A** | Performs bounded sidecar implementation, investigation, or verification work. |
-| **Worker B** | Performs bounded sidecar implementation, investigation, or verification work. |
+| **Worker A** | Performs bounded sidecar implementation, research, investigation, or verification work. |
+| **Worker B** | Performs bounded sidecar implementation, research, investigation, or verification work. |
 
 Workers do not own checkpoints, route mutation, acceptance-floor changes, or
 final completion. The main executor can edit files and integrate results, but

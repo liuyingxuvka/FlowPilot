@@ -70,7 +70,18 @@ long-form public explanation lives in `docs/protocol.md`.
     questions, material complexity (`simple`, `normal`, or `messy/raw`), and
     whether materials require a formal discovery, cleanup, modeling,
     validation, or research subtree before implementation.
-13. Require the project manager to write
+13. When a material, mechanism, source, validation, reconciliation, or
+    experiment gap affects dependent decisions, PM writes a formal research
+    package under `.flowpilot/runs/<run-id>/research/<research-package-id>/`.
+    The package names the decision, route impact, allowed source/tool
+    boundaries, worker owner, stop conditions, and reviewer direct-check
+    requirements. Worker output is only a pointer. The human-like reviewer
+    directly checks original sources, search results, local files, logs,
+    screenshots, or experiment outputs. Reviewer failure returns to worker
+    rework, follow-up research, route mutation, user clarification, or block.
+    PM may use the result only after reviewer sufficiency passes and PM records
+    absorption or route mutation.
+14. Require the project manager to write
     `.flowpilot/runs/<run-id>/product_function_architecture.json` before contract freeze:
     user-task map, product capability map, feature necessity decisions,
     display rationale, missing high-value feature review, negative scope, and
@@ -262,6 +273,20 @@ formal discovery, cleanup, modeling, validation, research, or reconciliation
 nodes are required before implementation. Messy/raw materials cannot feed a
 route decision directly without that discovery decision.
 
+If the PM cannot safely decide from reviewed materials, the gap becomes a
+PM-owned research package instead of a loose note. The package records the
+decision to be made, the route impact, allowed local/user/web/browser/source
+types, host capability decision, private/paid/account hard gates, worker owner,
+stop conditions, and reviewer direct-check requirements. Worker reports must
+include raw evidence pointers, negative findings, contradictions, and
+confidence boundaries. The reviewer must directly check original sources or
+experiment outputs; a summary-only pass is invalid. If the reviewer blocks,
+the PM returns concrete rework to the worker, inserts follow-up research or
+validation, mutates the route, asks the user, or blocks. Product architecture,
+route generation, node acceptance, and implementation that depend on the gap
+remain blocked until reviewer sufficiency passes and PM records how the result
+was absorbed or how the route changed.
+
 ## Product Function Architecture Gate
 
 After the material handoff and before contract freeze, the project manager
@@ -363,8 +388,11 @@ contract, child-skill gates, risk hypotheses, concrete experiments or manual
 walkthroughs, required evidence, and required approver.
 
 The plan is intentionally node-local. It must not explode every future route
-obligation up front, but every current-node requirement, known risk, and
-dependency on later review must be named. PM-risk items from these plans become
+obligation up front, but every current-node requirement, known risk, material
+gap, mechanism gap, evidence gap, and dependency on later review must be named.
+If a gap needs worker search, source reconciliation, external lookup, or an
+experiment, the plan links an approved research package or requires PM to write
+one before dependent work proceeds. PM-risk items from these plans become
 terminal replay scenarios unless resolved earlier by repair and recheck.
 
 ## FlowPilot Skill Improvement Notes

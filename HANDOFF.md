@@ -43,6 +43,13 @@ model-backed autopilot:
   contradictions, local skills and host capabilities as candidate-only
   resources, unread or deferred sources, reviewer sufficiency, PM source-claim
   matrix, open questions, complexity, and discovery/cleanup route consequences.
+- PM material gaps are now first-class research packages rather than informal
+  notes. If reviewed materials are insufficient for product architecture, route
+  choice, node acceptance, mechanism understanding, external source confidence,
+  or validation, the PM writes a bounded research/evidence package, assigns
+  worker execution, requires reviewer direct-source or experiment-output
+  checks, and only then absorbs the result into material understanding or
+  mutates/blocks the route.
 - Formal startup then has a PM-owned product-function architecture gate before
   contract freeze. It captures user tasks, product capabilities, feature
   necessity, display rationale, missing high-value features, negative scope,
