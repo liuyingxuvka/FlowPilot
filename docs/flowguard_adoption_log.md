@@ -3,6 +3,30 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-06 - FlowPilot v0.3.1 PM File-Backed Payload Patch
+
+- Trigger: after the `v0.3.0` source release was published, a relevant router
+  runtime change appeared locally to let PM-owned route artifacts use
+  file-backed role payload envelopes.
+- Decision: `use_flowguard`.
+- Mode: `process_preflight` for behavior-bearing router and release side
+  effects.
+- Scope updated:
+  - extended file-backed role payload loading to PM material understanding,
+    product-function architecture, and root acceptance contract events;
+  - added optional file-backed loading for PM/reviewer/officer artifacts that
+    already support direct payloads;
+  - preserved role-output envelope metadata in written PM artifacts;
+  - added router runtime coverage for PM material understanding through a
+    `memo_path`/`memo_hash` envelope;
+  - bumped release metadata to `0.3.1`.
+- Validation:
+  - `python -m py_compile skills\flowpilot\assets\flowpilot_router.py`;
+  - `python -m pytest tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_material_understanding_accepts_file_backed_memo_payload tests\test_flowpilot_router_runtime.py tests\test_flowpilot_control_gates.py -q`.
+- Results:
+  - targeted PM file-backed payload coverage passed;
+  - full router runtime and control gate suite passed with 68 tests.
+
 ## 2026-05-06 - FlowPilot v0.3.0 GitHub Skill Source Release Preflight
 
 - Trigger: the user asked to publish the local FlowPilot skill to GitHub main

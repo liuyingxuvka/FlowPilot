@@ -1026,8 +1026,36 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
 
     if not isinstance(payload, dict):
         raise RouterError("role event payload must be an object")
-    path_keys = ("body_path", "report_path", "decision_path", "result_body_path")
-    hash_keys = ("body_hash", "report_hash", "decision_hash", "result_body_hash")
+    path_keys = (
+        "body_path",
+        "report_path",
+        "decision_path",
+        "result_body_path",
+        "memo_path",
+        "architecture_path",
+        "contract_path",
+        "manifest_path",
+        "route_path",
+        "draft_path",
+        "plan_path",
+        "package_path",
+        "ledger_path",
+    )
+    hash_keys = (
+        "body_hash",
+        "report_hash",
+        "decision_hash",
+        "result_body_hash",
+        "memo_hash",
+        "architecture_hash",
+        "contract_hash",
+        "manifest_hash",
+        "route_hash",
+        "draft_hash",
+        "plan_hash",
+        "package_hash",
+        "ledger_hash",
+    )
     body_path_key = next((key for key in path_keys if payload.get(key)), None)
     if not body_path_key:
         if "path" in payload or "hash" in payload:
@@ -1074,6 +1102,27 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
         "chat_response_body_allowed": False,
     }
     return loaded
+
+
+def _load_file_backed_role_payload_if_present(project_root: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    path_keys = {
+        "body_path",
+        "report_path",
+        "decision_path",
+        "result_body_path",
+        "memo_path",
+        "architecture_path",
+        "contract_path",
+        "manifest_path",
+        "route_path",
+        "draft_path",
+        "plan_path",
+        "package_path",
+        "ledger_path",
+    }
+    if isinstance(payload, dict) and any(payload.get(key) for key in path_keys):
+        return _load_file_backed_role_payload(project_root, payload)
+    return payload
 
 
 def _role_output_envelope_record(payload: dict[str, Any]) -> dict[str, Any]:
@@ -3156,6 +3205,7 @@ def _write_worker_research_report(project_root: Path, run_root: Path, run_state:
 
 
 def _write_material_understanding(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     if payload.get("pm_owned", True) is not True:
         raise RouterError("material understanding must be PM-owned")
     if run_state["flags"].get("pm_research_requested") and not run_state["flags"].get("research_result_absorbed_by_pm"):
@@ -3173,11 +3223,13 @@ def _write_material_understanding(project_root: Path, run_root: Path, run_state:
             "deferred_sources": payload.get("deferred_sources") or [],
             "route_consequences": payload.get("route_consequences") or [],
             "written_at": utc_now(),
+            **_role_output_envelope_record(payload),
         },
     )
 
 
 def _write_product_function_architecture(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     if payload.get("pm_owned", True) is not True:
         raise RouterError("product-function architecture must be PM-owned")
     material_understanding_path = run_root / "pm_material_understanding.json"
@@ -3221,6 +3273,7 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
         "highest_achievable_product_target": payload.get("highest_achievable_product_target"),
         "functional_acceptance_matrix": root_requirements,
         "written_by_role": "project_manager",
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "product_function_architecture.json", architecture)
 
@@ -3260,6 +3313,7 @@ def _write_role_gate_report(
 
 
 def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     if payload.get("pm_owned", True) is not True:
         raise RouterError("root acceptance contract must be PM-owned")
     architecture_path = run_root / "product_function_architecture.json"
@@ -3296,6 +3350,7 @@ def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_stat
             "risk_triage_required_before_completion": True,
         },
         "written_by_role": "project_manager",
+        **_role_output_envelope_record(payload),
     }
     scenario_pack = {
         "schema_version": "flowpilot.standard_scenario_pack.v1",
@@ -3348,6 +3403,7 @@ def _freeze_root_acceptance_contract(project_root: Path, run_root: Path, run_sta
 
 
 def _write_dependency_policy(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     contract_path = run_root / "root_acceptance_contract.json"
     if not contract_path.exists() or read_json(contract_path).get("status") != "frozen":
         raise RouterError("dependency policy requires frozen root contract")
@@ -3379,11 +3435,13 @@ def _write_dependency_policy(project_root: Path, run_root: Path, run_state: dict
         "blocked_dependency_actions": payload.get("blocked_dependency_actions") or ["host_install_without_user_approval"],
         "written_by_role": "project_manager",
         "written_at": utc_now(),
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "dependency_policy.json", policy)
 
 
 def _write_capabilities_manifest(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     dependency_path = run_root / "dependency_policy.json"
     architecture_path = run_root / "product_function_architecture.json"
     contract_path = run_root / "root_acceptance_contract.json"
@@ -3419,6 +3477,7 @@ def _write_capabilities_manifest(project_root: Path, run_root: Path, run_state: 
         "capability_to_skill_needs": payload.get("capability_to_skill_needs") or [],
         "written_by_role": "project_manager",
         "written_at": utc_now(),
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "capabilities.json", manifest)
 
@@ -3447,6 +3506,7 @@ def _validate_selected_child_skills(selected_skills: Any) -> list[dict[str, Any]
 
 
 def _write_child_skill_selection(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     capabilities_path = run_root / "capabilities.json"
     if not capabilities_path.exists():
         raise RouterError("child-skill selection requires capabilities.json")
@@ -3475,11 +3535,13 @@ def _write_child_skill_selection(project_root: Path, run_root: Path, run_state: 
         "rejected_skills": payload.get("rejected_skills") or [],
         "written_by_role": "project_manager",
         "written_at": utc_now(),
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "pm_child_skill_selection.json", selection)
 
 
 def _write_child_skill_gate_manifest(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     selection_path = run_root / "pm_child_skill_selection.json"
     capabilities_path = run_root / "capabilities.json"
     contract_path = run_root / "root_acceptance_contract.json"
@@ -3522,6 +3584,7 @@ def _write_child_skill_gate_manifest(project_root: Path, run_root: Path, run_sta
             "product_officer_passed": False,
             "pm_approved_for_route": False,
         },
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "child_skill_gate_manifest.json", manifest)
 
@@ -4323,6 +4386,7 @@ def _pm_context_action_extra(project_root: Path, run_root: Path, entry: dict[str
 
 
 def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="route draft")
     contract_path = run_root / "root_acceptance_contract.json"
     if not contract_path.exists():
@@ -4349,6 +4413,7 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
         "nodes": draft.get("nodes") or payload.get("nodes") or [],
         "written_by_role": "project_manager",
         "written_at": utc_now(),
+        **_role_output_envelope_record(payload),
     }
     write_json(route_root / "flow.draft.json", route_payload)
     _write_display_plan_from_route(

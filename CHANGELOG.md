@@ -2,6 +2,19 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.3.1 - 2026-05-06
+
+### Fixed
+
+- Allowed PM-owned material understanding, product architecture, and root
+  acceptance contract events to accept file-backed role payload envelopes using
+  memo, architecture, contract, manifest, route, draft, plan, package, or
+  ledger paths.
+- Preserved role-output envelope metadata when PM file-backed material,
+  architecture, and contract artifacts are written into the run directory.
+- Added router runtime coverage for file-backed PM material understanding
+  payloads.
+
 ## 0.3.0 - 2026-05-06
 
 ### Added

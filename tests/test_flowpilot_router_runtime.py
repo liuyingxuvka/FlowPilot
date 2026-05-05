@@ -267,7 +267,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
         router.apply_action(root, "write_display_surface_status")
 
-    def complete_material_flow(self, root: Path) -> None:
+    def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "deliver_system_card")
@@ -324,7 +324,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.material_understanding")
         router.apply_action(root, "deliver_system_card")
-        router.record_external_event(root, "pm_writes_material_understanding", {"material_summary": "reviewed material accepted"})
+        router.record_external_event(
+            root,
+            "pm_writes_material_understanding",
+            material_understanding_payload or {"material_summary": "reviewed material accepted"},
+        )
 
     def complete_root_contract_before_child_skill_gates(self, root: Path) -> None:
         router.apply_action(root, str(router.next_action(root)["action_type"]))
@@ -1362,6 +1366,30 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         loaded = router._load_file_backed_role_payload(root, envelope)
         self.assertTrue(loaded["passed"])
         self.assertEqual(loaded["_role_output_envelope"]["body_path_key"], "report_path")
+
+    def test_pm_material_understanding_accepts_file_backed_memo_payload(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.complete_material_flow(
+            root,
+            self.role_output_envelope(
+                root,
+                "pm/material_understanding",
+                {
+                    "material_summary": "file backed material understanding",
+                    "route_consequences": ["continue route construction"],
+                },
+                path_key="memo_path",
+                hash_key="memo_hash",
+            ),
+        )
+
+        memo = read_json(run_root / "pm_material_understanding.json")
+        self.assertEqual(memo["material_summary"], "file backed material understanding")
+        self.assertEqual(memo["route_consequences"], ["continue route construction"])
+        self.assertEqual(memo["_role_output_envelope"]["body_path_key"], "memo_path")
 
     def test_system_card_delivery_requires_manifest_check(self) -> None:
         root = self.make_project()
