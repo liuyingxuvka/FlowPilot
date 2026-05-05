@@ -2438,6 +2438,110 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - No UI/Cockpit work, release, remote push, or publication action was taken.
 
 
+## flowpilot-resume-role-rehydration - Live six-role recovery before PM resume
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked whether heartbeat/manual resume immediately restores the six background roles and gives them current-run memory before PM continues.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Risk Intent
+- Prevent resume from treating six `crew_memory/*.json` files as proof that six live role agents exist.
+- Ensure heartbeat/manual resume asks the host to restore or spawn all six live roles before PM resume decisions.
+- Ensure each restored role receives current-run role memory and context; PM additionally receives resume evidence, frontier, packet/prompt ledgers, route memory, and display-plan context.
+- Keep Controller relay-only: it can load state, ask for host rehydration, and relay cards, but cannot infer progress or ask PM for a runway before the rehydration report exists.
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/SKILL.md`
+- `tests/test_flowpilot_router_runtime.py`
+- `simulations/flowpilot_resume_model.py`
+- `simulations/run_flowpilot_resume_checks.py`
+- `simulations/meta_model.py`
+- `simulations/run_meta_checks.py`
+- `simulations/capability_model.py`
+- `simulations/run_capability_checks.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_resume_model.py simulations\run_flowpilot_resume_checks.py simulations\meta_model.py simulations\capability_model.py simulations\run_meta_checks.py simulations\run_capability_checks.py tests\test_flowpilot_router_runtime.py`.
+- OK: targeted resume router tests for normal resume, ambiguous resume, manifest card presence, and small skill launcher.
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime`: 51 tests.
+- OK by background subagent: `python simulations\run_flowpilot_resume_checks.py`: no missing labels, no invariant failures.
+- OK by background subagent: `python simulations\run_startup_pm_review_checks.py`: no missing labels.
+- OK by background subagent: `python simulations\run_card_instruction_coverage_checks.py`: no card graph failures.
+- OK by background subagent: `python simulations\run_meta_checks.py`: no missing labels or invariant failures after a longer timeout.
+- OK by background subagent: `python simulations\run_capability_checks.py`: no missing labels or invariant failures after a longer timeout.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed skill source fresh.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- Runtime now separates `load_resume_state` from `rehydrate_role_agents`; the former loads current-run files, while the latter requires host evidence for all six live roles.
+- `pm.crew_rehydration_freshness` is now reachable between Controller resume reentry and PM resume decision.
+- PM resume decisions now require `continuation/crew_rehydration_report.json`, all six roles ready, and PM memory/context rehydration unless the startup answer selected single-agent continuity.
+- Missing role memory keeps resume ambiguous; replacement roles can be seeded from common current-run context, and PM still cannot continue the packet loop without explicit recovery evidence.
+- The resume, meta, and capability models now require host rehydration, current-run memory injection, and a rehydration report before PM runway work.
+
+### Skipped Steps
+- No release, remote push, or publication action was taken.
+- No unrelated concurrent agent edits were reverted or normalized.
+
+
+## flowpilot-display-plan-controller-sync - PM-owned visible plan projection
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified that a normal Codex plan can appear before FlowPilot roles exist, then remain misleading after Controller takes over.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Risk Intent
+- Clear any ordinary pre-FlowPilot visible plan as soon as Controller owns the run.
+- Restore the visible plan from PM-owned FlowPilot route/node state on startup, resume, route draft, route activation, route mutation, and current-node planning.
+- Keep the host-visible plan simple: one `display_plan.json` projection, no chat-history inference, no Controller-invented route items, and no extra status taxonomy.
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md`
+- `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+- `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\meta_model.py simulations\capability_model.py`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_display_plan_is_controller_synced_projection_from_pm_plan`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_sequence_creates_prompt_isolated_run`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime tests.test_flowpilot_packet_runtime`: 51 tests.
+- OK by background subagent: `python simulations\run_meta_checks.py`: no invariant failures, no stuck states, no nonterminating components.
+- OK by background subagent: `python simulations\run_capability_checks.py`: no invariant failures, no stuck states, no nonterminating components.
+- OK by background subagent: `python simulations\run_prompt_isolation_checks.py`.
+- OK by background subagent: `python simulations\run_flowpilot_resume_checks.py`: conformance replay skipped with documented reason.
+- OK by background subagent: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`.
+- OK: `python scripts\smoke_autopilot.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py`.
+
+### Findings
+- Router now emits a `sync_display_plan` action before resume/startup work when the host visible plan is stale or still reflects ordinary Codex planning.
+- If PM has not authored a route plan yet, Controller may only project a waiting-for-PM placeholder and records that it has no authority to invent route items.
+- PM route draft, route activation, route mutation, PM resume payloads, and node acceptance planning update `display_plan.json`; Controller only syncs that projection.
+- Meta and capability models now require `preflow_visible_plan_cleared` before frozen contract, route work, or post-startup work can proceed.
+
+### Skipped Steps
+- No release, remote push, or publication action was taken.
+- No unrelated concurrent agent edits were reverted or normalized.
+
+
 ## flowpilot-startup-hard-gates - Banner, task intake, and fresh role startup
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -27,8 +27,11 @@ REQUIRED_LABELS = (
     "execution_frontier_loaded",
     "crew_memory_loaded",
     "controller_relay_boundary_confirmed",
+    "host_spawn_or_rehydrate_six_resume_roles_requested",
     "crew_roles_restored_from_current_run_memory",
     "crew_roles_replaced_from_current_run_memory",
+    "current_run_memory_injected_into_resume_roles",
+    "crew_rehydration_report_written_before_pm_resume",
     "crew_capability_officer_lifecycle_flags_reconciled",
     "resume_state_clear_for_pm_decision",
     "ambiguous_resume_state_blocked_for_pm_recovery",
@@ -61,8 +64,10 @@ def _state_id(state: model.State) -> str:
         f"run={state.run_root_loaded},{state.run_root_matches_pointer}|"
         f"router={state.router_state_loaded}|packet={state.packet_ledger_loaded}|"
         f"prompt={state.prompt_ledger_loaded}|frontier={state.frontier_loaded}|"
-        f"crew={state.crew_memory_loaded},{state.crew_roles_ready},"
-        f"restored={state.crew_restored},replaced={state.crew_replaced}|"
+        f"crew={state.crew_memory_loaded},{state.host_role_rehydrate_requested},"
+        f"{state.crew_roles_ready},restored={state.crew_restored},"
+        f"replaced={state.crew_replaced},memory_injected={state.run_memory_injected_into_roles},"
+        f"report={state.crew_rehydration_report_written}|"
         f"lifecycle={state.crew_lifecycle_flags_current},"
         f"{state.capability_lifecycle_flags_current},"
         f"{state.officer_lifecycle_flags_current}|"

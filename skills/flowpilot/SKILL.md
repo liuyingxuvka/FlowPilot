@@ -5,16 +5,11 @@ description: Opt-in only. Use this skill only when the user explicitly asks to u
 
 # FlowPilot
 
-FlowPilot is now a prompt-isolated router skill. This file is intentionally
-small so activation does not load the full project-management protocol into the
-main assistant context.
+FlowPilot is a prompt-isolated router skill. This file stays small so activation does not load the full project-management protocol into main context.
 
 ## Activation Boundary
 
-Use FlowPilot only after an explicit user request to use FlowPilot in the
-current thread. If the user is editing, auditing, discussing, or repairing the
-FlowPilot skill itself, treat that as ordinary repository work unless they
-explicitly ask to run a formal FlowPilot route.
+Use FlowPilot only after an explicit user request in the current thread. If the user is editing, auditing, discussing, or repairing this skill, treat that as ordinary repository work unless they ask to run a formal FlowPilot route.
 
 Do not infer activation from task size, repository type, UI work, heartbeat
 language, or the presence of a `.flowpilot/` directory.
@@ -83,6 +78,8 @@ role, `spawn_result: spawned_fresh_for_task`,
 `spawned_after_startup_answers: true`, and the current `spawned_for_run_id`.
 Do not treat empty role slots, prior-route agent IDs, or on-demand later
 subagents as successful startup.
+
+When the router returns `rehydrate_role_agents` with `requires_host_spawn: true`, restore or spawn all six role agents before applying it. Give each role its listed core prompt and current-run memory/context; PM must receive the PM resume context. Echo memory/core hashes and resume tick in `rehydrated_role_agents`.
 
 ## Controller Boundary
 

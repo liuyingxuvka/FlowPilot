@@ -43,7 +43,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         return Path(tempfile.mkdtemp(prefix="flowpilot-router-"))
 
     def next_and_apply(self, root: Path, payload: dict | None = None) -> dict:
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         return router.apply_action(root, str(action["action_type"]), payload or {})
 
     def run_root_for(self, root: Path) -> Path:
@@ -67,7 +67,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         }
 
     def apply_next_packet_action(self, root: Path, expected_action_type: str) -> dict:
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         if action["action_type"] == "check_packet_ledger":
             router.apply_action(root, "check_packet_ledger")
             action = router.next_action(root)
@@ -157,6 +157,44 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 }
                 for role in router.CREW_ROLE_KEYS
             ],
+        }
+
+    def resume_role_agent_payload(self, root: Path, action: dict | None = None) -> dict:
+        action = action or self.next_after_display_sync(root)
+        records = []
+        for request in action["role_rehydration_request"]:
+            role = request["role_key"]
+            record = {
+                "role_key": role,
+                "agent_id": f"resume-agent-{request['rehydrated_after_resume_tick_id']}-{role}",
+                "rehydration_result": "rehydrated_from_current_run_memory",
+                "rehydrated_for_run_id": request["rehydrated_for_run_id"],
+                "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
+                "spawned_after_resume_state_loaded": True,
+                "core_prompt_path": request["core_prompt_path"],
+                "core_prompt_hash": request["core_prompt_hash"],
+            }
+            if request["role_memory_status"] == "available":
+                record.update(
+                    {
+                        "memory_packet_path": request["memory_packet_path"],
+                        "memory_packet_hash": request["memory_packet_hash"],
+                        "memory_seeded_from_current_run": True,
+                    }
+                )
+            else:
+                record.update(
+                    {
+                        "memory_missing_acknowledged": True,
+                        "replacement_seeded_from_common_run_context": True,
+                    }
+                )
+            if role == "project_manager":
+                record["pm_resume_context_delivered"] = True
+            records.append(record)
+        return {
+            "background_agents_capability_status": "available",
+            "rehydrated_role_agents": records,
         }
 
     def bootstrap_state(self, root: Path) -> dict:
@@ -1561,7 +1599,34 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(resume_evidence["controller_may_read_result_body"])
         self.assertFalse(resume_evidence["controller_may_infer_route_progress_from_chat_history"])
         self.assertEqual(resume_evidence["missing_paths"], [])
-        self.assertTrue(resume_evidence["roles_restored_or_replaced"])
+        self.assertTrue(resume_evidence["role_rehydration_required"])
+        self.assertFalse(resume_evidence["roles_restored_or_replaced"])
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        self.assertTrue(action["requires_host_spawn"])
+        self.assertEqual(action["spawn_policy"], "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision")
+        self.assertEqual(len(action["role_rehydration_request"]), 6)
+        pm_request = next(item for item in action["role_rehydration_request"] if item["role_key"] == "project_manager")
+        self.assertTrue(pm_request["pm_resume_context_required"])
+        self.assertIn("pm_prior_path_context", pm_request["pm_resume_context_paths"])
+        with self.assertRaisesRegex(router.RouterError, "background_agents_capability_status"):
+            router.apply_action(root, "rehydrate_role_agents")
+        payload = self.resume_role_agent_payload(root, action)
+        payload["rehydrated_role_agents"] = payload["rehydrated_role_agents"][:-1]
+        with self.assertRaisesRegex(router.RouterError, "missing rehydrated live role agent records"):
+            router.apply_action(root, "rehydrate_role_agents", payload)
+        action = router.next_action(root)
+        payload = self.resume_role_agent_payload(root, action)
+        payload["rehydrated_role_agents"][0]["memory_packet_hash"] = "bad"
+        with self.assertRaisesRegex(router.RouterError, "memory packet hash mismatch"):
+            router.apply_action(root, "rehydrate_role_agents", payload)
+        action = router.next_action(root)
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
+        rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
+        self.assertTrue(rehydration["all_six_roles_ready"])
+        self.assertTrue(rehydration["current_run_memory_complete"])
+        self.assertTrue(rehydration["pm_memory_rehydrated"])
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "check_prompt_manifest")
@@ -1572,6 +1637,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["card_id"], "controller.resume_reentry")
         router.apply_action(root, "deliver_system_card")
 
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "pm.crew_rehydration_freshness")
+        router.apply_action(root, "deliver_system_card")
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.resume_decision")
@@ -1598,6 +1667,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
         self.assertTrue((run_root / "continuation" / "pm_resume_decision.json").exists())
+        decision = read_json(run_root / "continuation" / "pm_resume_decision.json")
+        self.assertEqual(
+            decision["source_paths"]["crew_rehydration_report"],
+            self.rel(root, run_root / "continuation" / "crew_rehydration_report.json"),
+        )
 
     def test_resume_ambiguous_state_blocks_continue_without_recovery_evidence(self) -> None:
         root = self.make_project()
@@ -1607,7 +1681,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "heartbeat_or_manual_resume_requested")
         self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        self.assertEqual(action["memory_missing_role_keys"], ["worker_b"])
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
         self.deliver_expected_card(root, "controller.resume_reentry")
+        self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
         self.deliver_expected_card(root, "pm.resume_decision")
 
         with self.assertRaises(router.RouterError):
@@ -2293,6 +2372,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("reviewer.evidence_quality_review", card_ids)
         self.assertIn("reviewer.final_backward_replay", card_ids)
         self.assertIn("controller.resume_reentry", card_ids)
+        self.assertIn("pm.crew_rehydration_freshness", card_ids)
         self.assertIn("pm.resume_decision", card_ids)
         self.assertIn("pm.material_understanding", card_ids)
         self.assertIn("pm.research_package", card_ids)

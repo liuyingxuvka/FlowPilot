@@ -35,6 +35,9 @@ DISPLAY_PLAN_SCHEMA = "flowpilot.display_plan.v1"
 STARTUP_ANSWER_PROVENANCE = "explicit_user_reply"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
+ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
+ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
+RESUME_ROLE_AGENT_RESULTS = {ROLE_AGENT_REHYDRATION_RESULT, ROLE_AGENT_CONTINUITY_RESULT}
 STARTUP_ANSWER_ENUMS = {
     "background_agents": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
@@ -56,6 +59,8 @@ RUNTIME_FLAG_DEFAULTS = {
     "resume_state_loaded": False,
     "resume_state_ambiguous": False,
     "resume_roles_restored": False,
+    "resume_role_agents_rehydrated": False,
+    "crew_rehydration_report_written": False,
     "continuation_binding_recorded": False,
     "startup_display_status_written": False,
     "route_history_index_refreshed": False,
@@ -108,6 +113,7 @@ ROUTE_COMPLETION_FLAGS = (
 PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
     "pm.prior_path_context",
     "pm.route_skeleton",
+    "pm.crew_rehydration_freshness",
     "pm.resume_decision",
     "pm.current_node_loop",
     "pm.node_acceptance_plan",
@@ -290,10 +296,17 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "to_role": "controller",
     },
     {
+        "flag": "pm_crew_rehydration_freshness_card_delivered",
+        "label": "pm_crew_rehydration_freshness_card_delivered",
+        "card_id": "pm.crew_rehydration_freshness",
+        "requires_flag": "resume_roles_restored",
+        "to_role": "project_manager",
+    },
+    {
         "flag": "pm_resume_decision_card_delivered",
         "label": "pm_resume_decision_card_delivered",
         "card_id": "pm.resume_decision",
-        "requires_flag": "controller_resume_card_delivered",
+        "requires_flag": "pm_crew_rehydration_freshness_card_delivered",
         "to_role": "project_manager",
     },
     {
@@ -1512,6 +1525,281 @@ def _normalize_role_agent_records(state: dict[str, Any], payload: dict[str, Any]
     return [records_by_role[role] for role in CREW_ROLE_KEYS]
 
 
+def _latest_resume_tick_id(run_state: dict[str, Any]) -> str:
+    ticks = run_state.get("heartbeat_ticks") if isinstance(run_state.get("heartbeat_ticks"), list) else []
+    for tick in reversed(ticks):
+        if isinstance(tick, dict) and tick.get("tick_id"):
+            return str(tick["tick_id"])
+    return "manual-resume"
+
+
+def _role_core_prompt_path(run_root: Path, role: str) -> Path:
+    return run_root / "runtime_kit" / "cards" / "roles" / f"{role}.md"
+
+
+def _role_memory_path(run_root: Path, role: str) -> Path:
+    return run_root / "crew_memory" / f"{role}.json"
+
+
+def _path_hash(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    return packet_runtime.sha256_file(path)
+
+
+def _resume_role_context(project_root: Path, run_root: Path, run_state: dict[str, Any], role: str) -> dict[str, Any]:
+    memory_path = _role_memory_path(run_root, role)
+    core_path = _role_core_prompt_path(run_root, role)
+    common_context = {
+        "resume_reentry": project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
+        "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
+        "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
+        "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+        "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
+        "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+        "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
+        "display_plan": project_relative(project_root, _display_plan_path(run_root)),
+    }
+    context = {
+        "role_key": role,
+        "required_rehydration_result": ROLE_AGENT_REHYDRATION_RESULT,
+        "allowed_rehydration_results": sorted(RESUME_ROLE_AGENT_RESULTS),
+        "rehydrated_for_run_id": run_state["run_id"],
+        "rehydrated_after_resume_tick_id": _latest_resume_tick_id(run_state),
+        "spawned_after_resume_state_loaded": True,
+        "core_prompt_path": project_relative(project_root, core_path),
+        "core_prompt_hash": _path_hash(core_path),
+        "memory_packet_path": project_relative(project_root, memory_path),
+        "memory_packet_hash": _path_hash(memory_path),
+        "role_memory_status": "available" if memory_path.exists() else "missing",
+        "common_context_paths": common_context,
+        "controller_visibility": "state_and_envelopes_only",
+        "sealed_body_reads_allowed": False,
+        "chat_history_progress_inference_allowed": False,
+    }
+    if role == "project_manager":
+        context["pm_resume_context_required"] = True
+        context["pm_resume_context_paths"] = {
+            "resume_reentry": common_context["resume_reentry"],
+            "execution_frontier": common_context["execution_frontier"],
+            "packet_ledger": common_context["packet_ledger"],
+            "prompt_delivery_ledger": common_context["prompt_delivery_ledger"],
+            "crew_ledger": common_context["crew_ledger"],
+            "crew_memory": project_relative(project_root, run_root / "crew_memory"),
+            "route_history_index": common_context["route_history_index"],
+            "pm_prior_path_context": common_context["pm_prior_path_context"],
+            "display_plan": common_context["display_plan"],
+        }
+    return context
+
+
+def _resume_role_contexts(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    return [_resume_role_context(project_root, run_root, run_state, role) for role in CREW_ROLE_KEYS]
+
+
+def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    answers = _startup_answers_from_run(run_root)
+    mode = answers.get("background_agents")
+    contexts = _resume_role_contexts(project_root, run_root, run_state)
+    missing_memory = [item["role_key"] for item in contexts if item["role_memory_status"] != "available"]
+    extra: dict[str, Any] = {
+        "background_agents_mode": mode,
+        "role_keys": list(CREW_ROLE_KEYS),
+        "resume_tick_id": _latest_resume_tick_id(run_state),
+        "role_rehydration_request": contexts,
+        "memory_missing_role_keys": missing_memory,
+        "crew_rehydration_report_path": project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+        "controller_visibility": "state_and_envelopes_only",
+        "sealed_body_reads_allowed": False,
+        "chat_history_progress_inference_allowed": False,
+    }
+    if mode == "allow":
+        extra.update(
+            {
+                "requires_payload": "rehydrated_role_agents",
+                "requires_host_spawn": True,
+                "spawn_policy": "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision",
+                "pm_memory_rehydration_required": True,
+            }
+        )
+    elif mode == "single-agent":
+        extra.update(
+            {
+                "requires_host_spawn": False,
+                "single_agent_continuity_authorized": True,
+            }
+        )
+    return extra
+
+
+def _normalize_resume_role_agent_records(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> list[dict[str, Any]]:
+    answers = _startup_answers_from_run(run_root)
+    mode = answers.get("background_agents")
+    contexts = {item["role_key"]: item for item in _resume_role_contexts(project_root, run_root, run_state)}
+    resume_tick_id = _latest_resume_tick_id(run_state)
+    if mode == "single-agent":
+        return [
+            {
+                "role_key": role,
+                "status": "single_agent_resume_continuity_authorized",
+                "agent_id": None,
+                "rehydration_result": "not_requested_single_agent_continuity",
+                "rehydrated_for_run_id": run_state["run_id"],
+                "rehydrated_after_resume_tick_id": resume_tick_id,
+                "fallback_authorized_by_startup_answer": True,
+                "recorded_at": utc_now(),
+            }
+            for role in CREW_ROLE_KEYS
+        ]
+    if mode != "allow":
+        raise RouterError("cannot rehydrate roles before background_agents startup answer is recorded")
+    if payload.get("background_agents_capability_status") != "available":
+        raise RouterError("resume role rehydration requires background_agents_capability_status=available")
+    raw_records = payload.get("rehydrated_role_agents") or payload.get("role_agents")
+    if isinstance(raw_records, dict):
+        iterable = list(raw_records.values())
+    elif isinstance(raw_records, list):
+        iterable = raw_records
+    else:
+        raise RouterError("rehydrate_role_agents requires payload.rehydrated_role_agents list or object")
+    records_by_role: dict[str, dict[str, Any]] = {}
+    for raw in iterable:
+        if not isinstance(raw, dict):
+            raise RouterError("each rehydrated role agent record must be an object")
+        role = raw.get("role_key")
+        if role not in CREW_ROLE_KEYS:
+            raise RouterError(f"rehydrated role record has unsupported role_key: {role!r}")
+        if role in records_by_role:
+            raise RouterError(f"duplicate rehydrated role record for {role}")
+        context = contexts[str(role)]
+        agent_id = raw.get("agent_id")
+        if not isinstance(agent_id, str) or not agent_id.strip():
+            raise RouterError(f"{role} requires a non-empty live resume agent_id")
+        result = raw.get("rehydration_result") or raw.get("spawn_result")
+        if result not in RESUME_ROLE_AGENT_RESULTS:
+            raise RouterError(f"{role} requires resume rehydration result")
+        if raw.get("rehydrated_for_run_id") != run_state["run_id"]:
+            raise RouterError(f"{role} must be rehydrated_for_run_id={run_state['run_id']}")
+        if raw.get("rehydrated_after_resume_tick_id") != resume_tick_id:
+            raise RouterError(f"{role} must be rehydrated_after_resume_tick_id={resume_tick_id}")
+        if raw.get("spawned_after_resume_state_loaded") is not True:
+            raise RouterError(f"{role} must be spawned_after_resume_state_loaded=true")
+        if raw.get("core_prompt_path") != context["core_prompt_path"] or raw.get("core_prompt_hash") != context["core_prompt_hash"]:
+            raise RouterError(f"{role} core prompt identity mismatch")
+        memory_status = context["role_memory_status"]
+        if memory_status == "available":
+            if raw.get("memory_packet_path") != context["memory_packet_path"]:
+                raise RouterError(f"{role} memory packet path mismatch")
+            if raw.get("memory_packet_hash") != context["memory_packet_hash"]:
+                raise RouterError(f"{role} memory packet hash mismatch")
+            if raw.get("memory_seeded_from_current_run") is not True:
+                raise RouterError(f"{role} must be seeded from current-run role memory")
+        else:
+            if raw.get("memory_missing_acknowledged") is not True:
+                raise RouterError(f"{role} missing role memory must be acknowledged")
+            if raw.get("replacement_seeded_from_common_run_context") is not True:
+                raise RouterError(f"{role} replacement must be seeded from common current-run context")
+        if role == "project_manager" and raw.get("pm_resume_context_delivered") is not True:
+            raise RouterError("project_manager resume rehydration requires PM context delivery")
+        records_by_role[str(role)] = {
+            "role_key": str(role),
+            "status": "live_agent_rehydrated",
+            "agent_id": agent_id.strip(),
+            "rehydration_result": str(result),
+            "rehydrated_for_run_id": run_state["run_id"],
+            "rehydrated_after_resume_tick_id": resume_tick_id,
+            "spawned_after_resume_state_loaded": True,
+            "role_memory_status": memory_status,
+            "memory_packet_path": context["memory_packet_path"],
+            "memory_packet_hash": context["memory_packet_hash"],
+            "core_prompt_path": context["core_prompt_path"],
+            "core_prompt_hash": context["core_prompt_hash"],
+            "memory_seeded_from_current_run": memory_status == "available",
+            "replacement_seeded_from_common_run_context": memory_status != "available",
+            "pm_resume_context_delivered": role == "project_manager",
+            "recorded_at": utc_now(),
+        }
+    missing = [role for role in CREW_ROLE_KEYS if role not in records_by_role]
+    if missing:
+        raise RouterError(f"missing rehydrated live role agent records: {', '.join(missing)}")
+    return [records_by_role[role] for role in CREW_ROLE_KEYS]
+
+
+def _write_resume_role_rehydration_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    records = _normalize_resume_role_agent_records(project_root, run_root, run_state, payload)
+    memory_complete = all(record.get("role_memory_status") == "available" for record in records)
+    report_path = run_root / "continuation" / "crew_rehydration_report.json"
+    report = {
+        "schema_version": "flowpilot.crew_rehydration_report.v1",
+        "run_id": run_state["run_id"],
+        "resume_tick_id": _latest_resume_tick_id(run_state),
+        "background_agents_mode": _startup_answers_from_run(run_root).get("background_agents"),
+        "recorded_at": utc_now(),
+        "source_paths": {
+            "resume_reentry": project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
+            "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
+            "crew_memory": project_relative(project_root, run_root / "crew_memory"),
+            "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
+            "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
+            "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+            "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
+            "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+        },
+        "all_six_roles_ready": len(records) == len(CREW_ROLE_KEYS),
+        "current_run_memory_complete": memory_complete,
+        "missing_memory_role_keys": [record["role_key"] for record in records if record.get("role_memory_status") != "available"],
+        "pm_memory_rehydrated": any(
+            record["role_key"] == "project_manager"
+            and record.get("pm_resume_context_delivered") is True
+            and record.get("role_memory_status") == "available"
+            for record in records
+        ),
+        "role_records": records,
+        "controller_visibility": "state_and_envelopes_only",
+        "sealed_body_reads_allowed": False,
+        "chat_history_progress_inference_allowed": False,
+    }
+    write_json(report_path, report)
+    crew_path = run_root / "crew_ledger.json"
+    crew = read_json_if_exists(crew_path)
+    history = crew.get("resume_rehydration_history") if isinstance(crew.get("resume_rehydration_history"), list) else []
+    history.append(
+        {
+            "report_path": project_relative(project_root, report_path),
+            "resume_tick_id": report["resume_tick_id"],
+            "recorded_at": report["recorded_at"],
+            "all_six_roles_ready": report["all_six_roles_ready"],
+            "current_run_memory_complete": memory_complete,
+        }
+    )
+    crew.update(
+        {
+            "schema_version": "flowpilot.crew_ledger.v1",
+            "run_id": run_state["run_id"],
+            "role_slots": records,
+            "latest_resume_rehydration_report": project_relative(project_root, report_path),
+            "resume_rehydration_history": history,
+            "updated_at": utc_now(),
+        }
+    )
+    write_json(crew_path, crew)
+    run_state["flags"]["resume_roles_restored"] = True
+    run_state["flags"]["resume_role_agents_rehydrated"] = True
+    run_state["flags"]["crew_rehydration_report_written"] = True
+    if not memory_complete:
+        run_state["flags"]["resume_state_ambiguous"] = True
+
+
 def _create_run_id() -> str:
     return f"run-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
 
@@ -1662,7 +1950,10 @@ def _reset_resume_cycle_for_wakeup(run_state: dict[str, Any]) -> None:
         "resume_state_loaded",
         "resume_state_ambiguous",
         "resume_roles_restored",
+        "resume_role_agents_rehydrated",
+        "crew_rehydration_report_written",
         "controller_resume_card_delivered",
+        "pm_crew_rehydration_freshness_card_delivered",
         "pm_resume_decision_card_delivered",
         "pm_resume_recovery_decision_returned",
     ):
@@ -3349,6 +3640,8 @@ def _resume_waits_for_pm_decision(run_state: dict[str, Any]) -> bool:
     return (
         bool(flags.get("resume_reentry_requested"))
         and bool(flags.get("resume_state_loaded"))
+        and bool(flags.get("resume_roles_restored"))
+        and bool(flags.get("crew_rehydration_report_written"))
         and bool(flags.get("pm_resume_decision_card_delivered"))
         and not bool(flags.get("pm_resume_recovery_decision_returned"))
     )
@@ -3360,6 +3653,14 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
     if not resume_path.exists():
         raise RouterError("PM resume decision requires continuation/resume_reentry.json")
     resume_evidence = read_json(resume_path)
+    rehydration_path = run_root / "continuation" / "crew_rehydration_report.json"
+    if not run_state["flags"].get("resume_roles_restored") or not rehydration_path.exists():
+        raise RouterError("PM resume decision requires crew_rehydration_report before PM runway")
+    rehydration_report = read_json(rehydration_path)
+    if rehydration_report.get("all_six_roles_ready") is not True:
+        raise RouterError("PM resume decision requires all six roles ready")
+    if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("background_agents_mode") != "single-agent":
+        raise RouterError("PM resume decision requires project_manager memory rehydration")
     decision = str(payload.get("decision") or "continue_current_packet_loop")
     allowed_decisions = {
         "continue_current_packet_loop",
@@ -3407,8 +3708,16 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
                 "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
                 "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
                 "crew_memory": project_relative(project_root, run_root / "crew_memory"),
+                "crew_rehydration_report": project_relative(project_root, rehydration_path),
                 "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
                 "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+            },
+            "crew_rehydration_report": {
+                "path": project_relative(project_root, rehydration_path),
+                "all_six_roles_ready": bool(rehydration_report.get("all_six_roles_ready")),
+                "current_run_memory_complete": bool(rehydration_report.get("current_run_memory_complete")),
+                "pm_memory_rehydrated": bool(rehydration_report.get("pm_memory_rehydrated")),
+                "missing_memory_role_keys": rehydration_report.get("missing_memory_role_keys") or [],
             },
             "prior_path_context_review": prior_review,
             "controller_reminder": {
@@ -4707,39 +5016,68 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
     flags = run_state["flags"]
     if not flags.get("resume_reentry_requested"):
         return None
-    if flags.get("resume_state_loaded"):
-        return None
-    return make_action(
-        action_type="load_resume_state",
-        actor="controller",
-        label="controller_loads_resume_state_before_pm_decision",
-        summary="Controller loads current-run state, ledgers, frontier, and crew memory before any resume decision.",
-        allowed_reads=[
-            ".flowpilot/current.json",
-            project_relative(project_root, run_state_path(run_root)),
-            project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
-            project_relative(project_root, run_root / "packet_ledger.json"),
-            project_relative(project_root, run_root / "execution_frontier.json"),
-            project_relative(project_root, run_root / "crew_ledger.json"),
-            project_relative(project_root, run_root / "crew_memory"),
-            project_relative(project_root, _continuation_binding_path(run_root)),
-            project_relative(project_root, _route_history_index_path(run_root)),
-            project_relative(project_root, _pm_prior_path_context_path(run_root)),
-            project_relative(project_root, _display_plan_path(run_root)),
-        ],
-        allowed_writes=[
-            project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
-            project_relative(project_root, run_state_path(run_root)),
-            project_relative(project_root, _route_history_index_path(run_root)),
-            project_relative(project_root, _pm_prior_path_context_path(run_root)),
-        ],
-        extra={
-            "postcondition": "resume_state_loaded",
-            "controller_visibility": "state_and_envelopes_only",
-            "sealed_body_reads_allowed": False,
-            "chat_history_progress_inference_allowed": False,
-        },
-    )
+    if not flags.get("resume_state_loaded"):
+        return make_action(
+            action_type="load_resume_state",
+            actor="controller",
+            label="controller_loads_resume_state_before_role_rehydration",
+            summary="Controller loads current-run state, ledgers, frontier, and crew memory before live role rehydration.",
+            allowed_reads=[
+                ".flowpilot/current.json",
+                project_relative(project_root, run_state_path(run_root)),
+                project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, run_root / "execution_frontier.json"),
+                project_relative(project_root, run_root / "crew_ledger.json"),
+                project_relative(project_root, run_root / "crew_memory"),
+                project_relative(project_root, _continuation_binding_path(run_root)),
+                project_relative(project_root, _route_history_index_path(run_root)),
+                project_relative(project_root, _pm_prior_path_context_path(run_root)),
+                project_relative(project_root, _display_plan_path(run_root)),
+            ],
+            allowed_writes=[
+                project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
+                project_relative(project_root, run_state_path(run_root)),
+                project_relative(project_root, _route_history_index_path(run_root)),
+                project_relative(project_root, _pm_prior_path_context_path(run_root)),
+            ],
+            extra={
+                "postcondition": "resume_state_loaded",
+                "controller_visibility": "state_and_envelopes_only",
+                "sealed_body_reads_allowed": False,
+                "chat_history_progress_inference_allowed": False,
+                "role_rehydration_required_before_pm_resume_decision": True,
+            },
+        )
+    if not flags.get("resume_roles_restored"):
+        return make_action(
+            action_type="rehydrate_role_agents",
+            actor="controller",
+            label="host_rehydrates_resume_roles_before_pm_decision",
+            summary="Host restores or replaces all six live FlowPilot roles from current-run memory before PM resume decision.",
+            allowed_reads=[
+                project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
+                project_relative(project_root, run_root / "runtime_kit" / "cards" / "roles"),
+                project_relative(project_root, run_root / "crew_memory"),
+                project_relative(project_root, run_root / "crew_ledger.json"),
+                project_relative(project_root, run_root / "execution_frontier.json"),
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+                project_relative(project_root, _route_history_index_path(run_root)),
+                project_relative(project_root, _pm_prior_path_context_path(run_root)),
+                project_relative(project_root, _display_plan_path(run_root)),
+            ],
+            allowed_writes=[
+                project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+                project_relative(project_root, run_root / "crew_ledger.json"),
+                project_relative(project_root, run_state_path(run_root)),
+            ],
+            extra={
+                "postcondition": "resume_roles_restored",
+                **_resume_role_rehydration_action_extra(project_root, run_root, run_state),
+            },
+        )
+    return None
 
 
 def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
@@ -4798,9 +5136,10 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
     resume_waiting_for_pm = (
         bool(flags.get("resume_reentry_requested"))
         and bool(flags.get("resume_state_loaded"))
+        and bool(flags.get("resume_roles_restored"))
         and not bool(flags.get("pm_resume_recovery_decision_returned"))
     )
-    resume_card_ids = {"controller.resume_reentry", "pm.resume_decision"}
+    resume_card_ids = {"controller.resume_reentry", "pm.crew_rehydration_freshness", "pm.resume_decision"}
     for entry in SYSTEM_CARD_SEQUENCE:
         if resume_waiting_for_pm and entry["card_id"] not in resume_card_ids:
             continue
@@ -5118,7 +5457,7 @@ def next_action(project_root: Path, *, new_invocation: bool = False) -> dict[str
     return compute_controller_action(project_root, run_state, run_root)
 
 
-def apply_controller_action(project_root: Path, action_type: str) -> dict[str, Any]:
+def apply_controller_action(project_root: Path, action_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
     bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
     run_state, run_root = load_run_state(project_root, bootstrap)
     if run_state is None or run_root is None:
@@ -5272,7 +5611,9 @@ def apply_controller_action(project_root: Path, action_type: str) -> dict[str, A
             },
             "missing_paths": missing,
             "crew_memory_count": len(crew_memory_files),
-            "roles_restored_or_replaced": len(crew_memory_files) == len(CREW_ROLE_KEYS),
+            "crew_memory_ready_for_rehydration": len(crew_memory_files) == len(CREW_ROLE_KEYS),
+            "roles_restored_or_replaced": False,
+            "role_rehydration_required": True,
             "controller_visibility": "state_and_envelopes_only",
             "controller_may_read_packet_body": False,
             "controller_may_read_result_body": False,
@@ -5285,7 +5626,11 @@ def apply_controller_action(project_root: Path, action_type: str) -> dict[str, A
         write_json(run_root / "continuation" / "resume_reentry.json", resume_record)
         run_state["flags"]["resume_state_loaded"] = True
         run_state["flags"]["resume_state_ambiguous"] = bool(resume_record["ambiguous_state_blocks_controller_execution"])
-        run_state["flags"]["resume_roles_restored"] = bool(resume_record["roles_restored_or_replaced"])
+        run_state["flags"]["resume_roles_restored"] = False
+    elif action_type == "rehydrate_role_agents":
+        if not run_state["flags"].get("resume_state_loaded"):
+            raise RouterError("resume role rehydration requires load_resume_state first")
+        _write_resume_role_rehydration_report(project_root, run_root, run_state, payload or {})
     elif action_type == "sync_display_plan":
         sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         if not sync_payload["display_plan_exists"]:
@@ -5616,7 +5961,7 @@ def apply_action(project_root: Path, action_type: str, payload: dict[str, Any] |
     pending = bootstrap.get("pending_action")
     if isinstance(pending, dict) and pending.get("action_type") == action_type:
         return apply_bootloader_action(project_root, action_type, payload)
-    return apply_controller_action(project_root, action_type)
+    return apply_controller_action(project_root, action_type, payload)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:

@@ -148,8 +148,10 @@ REQUIRED_LABELS = (
     "heartbeat_loaded_execution_frontier",
     "heartbeat_loaded_packet_ledger",
     "heartbeat_loaded_crew_memory",
+    "heartbeat_host_spawn_or_rehydrate_six_roles",
     "heartbeat_restored_six_agent_crew",
     "heartbeat_rehydrated_six_agent_crew",
+    "heartbeat_injected_current_run_memory_into_roles",
     "crew_rehydration_report_written",
     "heartbeat_asked_project_manager",
     "heartbeat_pm_controller_reminder_checked",
@@ -408,8 +410,10 @@ def _state_id(state: model.State) -> str:
         f"{state.heartbeat_loaded_state},"
         f"{state.heartbeat_loaded_frontier},"
         f"{state.heartbeat_loaded_crew_memory},"
+        f"{state.heartbeat_host_rehydrate_requested},"
         f"{state.heartbeat_restored_crew},"
         f"{state.heartbeat_rehydrated_crew},"
+        f"{state.heartbeat_injected_current_run_memory_into_roles},"
         f"{state.crew_rehydration_report_written},"
         f"{state.replacement_roles_seeded_from_memory},"
         f"{state.heartbeat_pm_decision_requested},"

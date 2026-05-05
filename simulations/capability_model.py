@@ -159,8 +159,10 @@ class State:
     heartbeat_loaded_frontier: bool = False
     heartbeat_loaded_packet_ledger: bool = False
     heartbeat_loaded_crew_memory: bool = False
+    heartbeat_host_rehydrate_requested: bool = False
     heartbeat_restored_crew: bool = False
     heartbeat_rehydrated_crew: bool = False
+    heartbeat_injected_current_run_memory_into_roles: bool = False
     crew_rehydration_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
     heartbeat_pm_decision_requested: bool = False
@@ -545,8 +547,10 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "heartbeat_loaded_frontier": False,
             "heartbeat_loaded_packet_ledger": False,
             "heartbeat_loaded_crew_memory": False,
+            "heartbeat_host_rehydrate_requested": False,
             "heartbeat_restored_crew": False,
             "heartbeat_rehydrated_crew": False,
+            "heartbeat_injected_current_run_memory_into_roles": False,
             "crew_rehydration_report_written": False,
             "replacement_roles_seeded_from_memory": False,
             "heartbeat_pm_decision_requested": False,
@@ -1530,8 +1534,10 @@ class CapabilityRouterStep:
         "heartbeat_loaded_frontier",
         "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_crew_memory",
+        "heartbeat_host_rehydrate_requested",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
+        "heartbeat_injected_current_run_memory_into_roles",
         "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
@@ -1859,8 +1865,10 @@ class CapabilityRouterStep:
         "heartbeat_loaded_frontier",
         "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_crew_memory",
+        "heartbeat_host_rehydrate_requested",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
+        "heartbeat_injected_current_run_memory_into_roles",
         "crew_rehydration_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
@@ -3582,6 +3590,15 @@ class CapabilityRouterStep:
             )
             return
 
+        if _route_scaffold_ready(state) and not state.heartbeat_host_rehydrate_requested:
+            yield _step(
+                state,
+                label="heartbeat_host_spawn_or_rehydrate_six_roles",
+                action="router asks the host to restore or spawn all six live roles before PM resume",
+                heartbeat_host_rehydrate_requested=True,
+            )
+            return
+
         if _route_scaffold_ready(state) and not state.heartbeat_restored_crew:
             yield _step(
                 state,
@@ -3598,6 +3615,15 @@ class CapabilityRouterStep:
                 label="heartbeat_rehydrated_six_agent_crew",
                 action="rehydrate the six FlowPilot roles from role memory packets before asking the project manager for the next capability runway",
                 heartbeat_rehydrated_crew=True,
+            )
+            return
+
+        if _route_scaffold_ready(state) and not state.heartbeat_injected_current_run_memory_into_roles:
+            yield _step(
+                state,
+                label="heartbeat_injected_current_run_memory_into_roles",
+                action="host injects each role's current-run memory and PM resume context before PM runway",
+                heartbeat_injected_current_run_memory_into_roles=True,
             )
             return
 
@@ -5369,8 +5395,10 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             and state.heartbeat_loaded_frontier
             and state.heartbeat_loaded_packet_ledger
             and state.heartbeat_loaded_crew_memory
+            and state.heartbeat_host_rehydrate_requested
             and state.heartbeat_restored_crew
             and state.heartbeat_rehydrated_crew
+            and state.heartbeat_injected_current_run_memory_into_roles
             and state.crew_rehydration_report_written
             and state.replacement_roles_seeded_from_memory
             and state.heartbeat_pm_decision_requested
@@ -6688,13 +6716,15 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.heartbeat_loaded_frontier
         and state.heartbeat_loaded_packet_ledger
         and state.heartbeat_loaded_crew_memory
+        and state.heartbeat_host_rehydrate_requested
         and state.heartbeat_restored_crew
         and state.heartbeat_rehydrated_crew
+        and state.heartbeat_injected_current_run_memory_into_roles
         and state.crew_rehydration_report_written
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "heartbeat asked PM for capability work before current-run state, packet ledger, and crew role memory were loaded and rehydrated"
+            "heartbeat asked PM for capability work before current-run state, packet ledger, live crew rehydration, and role memory injection completed"
         )
     if state.pm_resume_decision_recorded and not (
         state.heartbeat_pm_controller_reminder_checked

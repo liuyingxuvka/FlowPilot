@@ -66,6 +66,7 @@ class State:
     prompt_ledger_loaded: bool = False
     frontier_loaded: bool = False
     crew_memory_loaded: bool = False
+    host_role_rehydrate_requested: bool = False
 
     controller_relay_boundary_confirmed: bool = False
     controller_read_forbidden_body: bool = False
@@ -77,6 +78,9 @@ class State:
     crew_roles_ready: bool = False
     crew_restored: bool = False
     crew_replaced: bool = False
+    run_memory_injected_into_roles: bool = False
+    crew_rehydration_report_written: bool = False
+    all_roles_current_run_bound: bool = False
     replacement_roles_seeded_from_memory: bool = False
     crew_old_agent_ids_reused: bool = False
     crew_lifecycle_flags_current: bool = False
@@ -361,10 +365,27 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, controller_relay_boundary_confirmed=True, holder="controller"),
         )
         return
+    if not state.host_role_rehydrate_requested:
+        yield Transition(
+            "host_spawn_or_rehydrate_six_resume_roles_requested",
+            replace(state, host_role_rehydrate_requested=True),
+        )
+        return
+    if not state.run_memory_injected_into_roles:
+        yield Transition(
+            "current_run_memory_injected_into_resume_roles",
+            replace(state, run_memory_injected_into_roles=True),
+        )
+        return
     if not state.crew_roles_ready:
         yield Transition(
             "crew_roles_restored_from_current_run_memory",
-            replace(state, crew_roles_ready=True, crew_restored=True),
+            replace(
+                state,
+                crew_roles_ready=True,
+                crew_restored=True,
+                all_roles_current_run_bound=True,
+            ),
         )
         yield Transition(
             "crew_roles_replaced_from_current_run_memory",
@@ -372,8 +393,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 crew_roles_ready=True,
                 crew_replaced=True,
+                all_roles_current_run_bound=True,
                 replacement_roles_seeded_from_memory=True,
             ),
+        )
+        return
+    if not state.crew_rehydration_report_written:
+        yield Transition(
+            "crew_rehydration_report_written_before_pm_resume",
+            replace(state, crew_rehydration_report_written=True),
         )
         return
     if not _lifecycle_flags_current(state):
@@ -566,10 +594,20 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("resume inferred route progress or PM decision from chat history")
 
     if state.crew_roles_ready and not (
+        state.host_role_rehydrate_requested
+        and state.all_roles_current_run_bound
+        and (
         state.crew_restored
         or (state.crew_replaced and state.replacement_roles_seeded_from_memory)
+        )
     ):
-        failures.append("crew roles became ready without restore or memory-seeded replacement")
+        failures.append("crew roles became ready without host rehydration, current-run binding, and restore or memory-seeded replacement")
+    if state.host_role_rehydrate_requested and state.crew_roles_ready and not state.run_memory_injected_into_roles:
+        failures.append("host restored resume roles before current-run memory was injected")
+    if state.run_memory_injected_into_roles and not state.crew_rehydration_report_written and (
+        state.pm_decision_requested or state.pm_decision_prompt_delivered or state.pm_decision_returned
+    ):
+        failures.append("PM resume path proceeded before crew rehydration report was written")
     if state.crew_replaced and not state.replacement_roles_seeded_from_memory:
         failures.append("replacement crew roles were not seeded from current-run memory")
     if state.crew_old_agent_ids_reused:
@@ -579,8 +617,13 @@ def invariant_failures(state: State) -> list[str]:
         or state.pm_decision_returned
         or state.route_progress_recorded
         or state.status == "complete"
-    ) and not _lifecycle_flags_current(state):
-        failures.append("PM resume or closure proceeded before crew/capability/officer lifecycle flags were reconciled")
+    ) and not (
+        state.host_role_rehydrate_requested
+        and state.run_memory_injected_into_roles
+        and state.crew_rehydration_report_written
+        and _lifecycle_flags_current(state)
+    ):
+        failures.append("PM resume or closure proceeded before live role rehydration, memory injection, report, and lifecycle reconciliation")
 
     if state.ambiguous_state == "ambiguous" and not (
         state.status == "blocked" and state.pm_recovery_requested
@@ -720,8 +763,12 @@ def _ready_for_pm(**changes: object) -> State:
         frontier_loaded=True,
         crew_memory_loaded=True,
         controller_relay_boundary_confirmed=True,
+        host_role_rehydrate_requested=True,
         crew_roles_ready=True,
         crew_restored=True,
+        run_memory_injected_into_roles=True,
+        crew_rehydration_report_written=True,
+        all_roles_current_run_bound=True,
         crew_lifecycle_flags_current=True,
         capability_lifecycle_flags_current=True,
         officer_lifecycle_flags_current=True,
@@ -785,9 +832,27 @@ def hazard_states() -> dict[str, State]:
             router_state_loaded=True,
         ),
         "old_run_control_state_reused": _ready_for_pm(old_run_control_state_reused=True),
+        "pm_decision_before_host_rehydrate": _ready_for_pm(
+            host_role_rehydrate_requested=False,
+            pm_decision_requested=True,
+        ),
         "pm_decision_before_crew_recovery": _ready_for_pm(
             crew_roles_ready=False,
             crew_restored=False,
+            pm_decision_requested=True,
+        ),
+        "pm_decision_before_run_memory_injection": _ready_for_pm(
+            run_memory_injected_into_roles=False,
+            crew_rehydration_report_written=False,
+            pm_decision_requested=True,
+        ),
+        "six_memory_files_counted_without_role_rehydrate": _ready_for_pm(
+            host_role_rehydrate_requested=False,
+            crew_roles_ready=True,
+            crew_restored=True,
+            all_roles_current_run_bound=True,
+            run_memory_injected_into_roles=False,
+            crew_rehydration_report_written=False,
             pm_decision_requested=True,
         ),
         "pm_decision_before_lifecycle_reconciliation": _ready_for_pm(
