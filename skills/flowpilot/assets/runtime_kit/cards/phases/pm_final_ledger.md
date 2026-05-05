@@ -22,6 +22,8 @@ Resolve:
 - effective and superseded nodes;
 - child-skill and review gates;
 - product/process FlowGuard gates;
+- minimum sufficient complexity dispositions for route nodes, skills, and
+  artifacts that were considered, superseded, deferred, or discarded;
 - generated-resource lineage;
 - stale, invalid, missing, waived, blocked, or superseded evidence;
 - zero unresolved count;
@@ -35,3 +37,8 @@ Then build `terminal_human_backward_replay_map.json` as ordered segments from
 delivered output to root, parents, leaves, child-skill gates, repairs, and
 generated resources. Request terminal backward replay from Reviewer; any repair
 or stale evidence found there requires ledger rebuild before closure.
+
+Do not let unused complexity survive as a completion note. Extra nodes, skills,
+resources, reports, or validation branches must either prove a current gate,
+be explicitly superseded, be quarantined, or be discarded with a concrete
+reason before unresolved count can be zero.

@@ -121,6 +121,11 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertIn("packet_envelope_only", handoff_text)
         self.assertIn("packet_body.md", handoff_text)
         self.assertIn("This mail is for `worker_a` only", handoff_text)
+        self.assertEqual(handoff["mutual_role_reminder"]["schema_version"], "flowpilot.mutual_role_reminder.v1")
+        self.assertIn("You are Controller only", handoff["mutual_role_reminder"]["controller_reminder"])
+        self.assertIn("project_manager", handoff["mutual_role_reminder"]["sender_reminder"])
+        self.assertIn("worker_a", handoff["mutual_role_reminder"]["recipient_reminder"])
+        self.assertIn("next envelope", handoff["reply_continuation_reminder"])
         self.assertFalse(handoff["chat_response_body_allowed"])
         self.assertNotIn(body_text, handoff_text)
         self.assertIn("read_packet_body", handoff["controller_forbidden_actions"])
@@ -135,6 +140,10 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
         envelope = self.relay_packet(root, envelope)
         self.assertIn("This mail is for `worker_a` only", envelope["controller_relay"]["recipient_role_reminder"])
+        self.assertIn("You are Controller only", envelope["controller_relay"]["mutual_role_reminder"]["controller_reminder"])
+        self.assertIn("project_manager", envelope["controller_relay"]["mutual_role_reminder"]["sender_reminder"])
+        self.assertIn("worker_a", envelope["controller_relay"]["mutual_role_reminder"]["recipient_reminder"])
+        self.assertIn("next envelope", envelope["controller_relay"]["reply_continuation_reminder"])
         self.assertFalse(envelope["controller_relay"]["chat_response_body_allowed"])
         body = packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
         self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, body)
@@ -165,9 +174,15 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(result_handoff["envelope_kind"], "result_envelope")
         self.assertEqual(result_handoff["controller_visibility"], "result_envelope_only")
         self.assertIn("result_body.md", result_handoff_text)
+        self.assertIn("worker_a", result_handoff["mutual_role_reminder"]["sender_reminder"])
+        self.assertIn("human_like_reviewer", result_handoff["mutual_role_reminder"]["recipient_reminder"])
+        self.assertIn("same visible mutual-role reminder", result_handoff["reply_continuation_reminder"])
         self.assertNotIn("RESULT_BODY_SECRET", result_handoff_text)
 
         result = self.relay_result(root, result)
+        self.assertIn("worker_a", result["controller_relay"]["mutual_role_reminder"]["sender_reminder"])
+        self.assertIn("human_like_reviewer", result["controller_relay"]["mutual_role_reminder"]["recipient_reminder"])
+        self.assertIn("same visible mutual-role reminder", result["controller_relay"]["reply_continuation_reminder"])
         packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
         audit = packet_runtime.validate_for_reviewer(
             root,

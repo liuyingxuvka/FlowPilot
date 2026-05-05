@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 612194,
+    "edge_count": 618200,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -58,6 +58,7 @@
       "crew_memory_packets_written",
       "crew_rehydration_report_written",
       "current_node_high_standard_recheck_written",
+      "current_node_minimum_sufficient_complexity_review_written",
       "current_pointer_written",
       "defect_ledger_initialized",
       "defect_ledger_zero_blocking",
@@ -160,6 +161,7 @@
       "parent_focused_interrogation_completed",
       "parent_product_function_model_checked",
       "parent_subtree_review_checked",
+      "pm_child_skill_minimum_sufficient_complexity_review_written",
       "pm_child_skill_selection_manifest_written",
       "pm_child_skill_selection_scope_decisions_recorded",
       "pm_completion_decision_recorded",
@@ -196,6 +198,7 @@
       "product_function_display_rationale_written",
       "product_function_feature_decisions_written",
       "product_function_high_standard_posture_written",
+      "product_function_minimum_sufficient_complexity_review_written",
       "product_function_missing_feature_review_done",
       "product_function_negative_scope_written",
       "product_function_semantic_fidelity_policy_written",
@@ -275,29 +278,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 592023,
+    "state_count": 598029,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 612194,
+    "edge_count": 618200,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 592023,
+    "state_count": 598029,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 612194,
+    "edge_count": 618200,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 592023,
+    "state_count": 598029,
     "status": "OK",
     "success_state_count": 1280
   }

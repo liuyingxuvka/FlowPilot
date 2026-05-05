@@ -41,6 +41,19 @@
     "pm_decision": "<raise_current_node|add_sibling_or_repair_node|insert_discovery_or_validation|ask_user|block|proceed>",
     "decision_reason": "<why-this-decision-preserves-the-global-quality-floor>"
   },
+  "minimum_sufficient_complexity_review": {
+    "required_before_plan_approval": true,
+    "simpler_equivalent_available": "<yes|no|unknown>",
+    "simpler_equivalent_description": "<description-or-null>",
+    "chosen_approach_justification": "<why-this-is-the-minimum-sufficient-node-plan>",
+    "extra_complexity_sources": [
+      "<extra-packet-check-fixture-artifact-role-handoff-or-validation-surface>"
+    ],
+    "extra_complexity_benefits": [
+      "<risk_reduction|semantic_fidelity|verification_strength|maintenance_reduction|failure_isolation|user_visible_value>"
+    ],
+    "unjustified_complexity_removed_or_deferred": []
+  },
   "node_structure": {
     "node_kind": "<leaf|parent|composite>",
     "has_children": "<true|false>",

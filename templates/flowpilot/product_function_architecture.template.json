@@ -21,6 +21,25 @@
     "worker_effort_is_not_pm_constraint": true,
     "minimum_professional_bar": "<what would be credible to show a colleague or stakeholder>"
   },
+  "minimum_sufficient_complexity_review": {
+    "principle": "When two approaches satisfy the same frozen acceptance contract, user-visible behavior, quality bar, and verification strength, choose the one with fewer moving parts and lower maintenance cost.",
+    "simpler_equivalent_considered": true,
+    "chosen_complexity_level": "<minimal|moderate|high>",
+    "rejected_extra_complexity": [
+      {
+        "item": "<feature-capability-surface-dependency-or-artifact>",
+        "reason": "<why-it-does-not-change-user-outcome-or-proof-strength>"
+      }
+    ],
+    "complexity_justifications": [
+      {
+        "item": "<accepted-feature-capability-surface-dependency-or-artifact>",
+        "extra_complexity": "<what-it-adds>",
+        "benefit": "<risk_reduction|semantic_fidelity|verification_strength|maintenance_reduction|failure_isolation|user_visible_value>",
+        "why_simpler_path_is_insufficient": "<reason>"
+      }
+    ]
+  },
   "highest_achievable_product_target": {
     "product_vision": "<what the strongest feasible result should feel like and enable>",
     "best_feasible_route": "<specialized skills, discovery, modeling, assets, QA, or staged work needed to reach that target>",

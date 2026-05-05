@@ -19,11 +19,18 @@ route-memory prior path context. The plan must state:
 - prior path context files read and how completed, superseded, stale, blocked,
   or experimental history affects this node;
 - concrete node requirements and proof obligations;
+- minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
 - whether the node has children and therefore requires parent backward replay;
 - forbidden low-standard or placeholder outcomes;
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.
+
+For Minimum Sufficient Complexity, record whether a simpler equivalent node
+plan exists, why the chosen packet/check/evidence structure is the smallest
+structure that still proves the node, and which extra complexity sources are
+justified by real risk, role authority, verification strength, failure
+isolation, or user-visible value.
 
 Write
 `.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/node_acceptance_plan.json`.

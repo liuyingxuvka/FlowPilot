@@ -19,6 +19,11 @@
     "silent_semantic_downgrade_forbidden": true,
     "rough_or_placeholder_completion_forbidden": true
   },
+  "minimum_sufficient_complexity_boundary": {
+    "source": "product_function_architecture.minimum_sufficient_complexity_review",
+    "freeze_outcomes_not_unnecessary_implementation_shape": true,
+    "complex_tool_route_or_artifact_is_hard_requirement_only_when_user_requested_or_required_for_proof": true
+  },
   "root_requirements": [
     {
       "requirement_id": "<requirement-id>",

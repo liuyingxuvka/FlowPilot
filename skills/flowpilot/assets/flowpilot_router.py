@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import flowpilot_user_flow_diagram
 import packet_runtime
 
 
@@ -32,12 +33,20 @@ RESUME_EVIDENCE_SCHEMA = "flowpilot.resume_reentry.v1"
 ROUTE_HISTORY_INDEX_SCHEMA = "flowpilot.route_history_index.v1"
 PM_PRIOR_PATH_CONTEXT_SCHEMA = "flowpilot.pm_prior_path_context.v1"
 DISPLAY_PLAN_SCHEMA = "flowpilot.display_plan.v1"
+ROUTE_STATE_SNAPSHOT_SCHEMA = "flowpilot.route_state_snapshot.v1"
+CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
+ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 STARTUP_ANSWER_PROVENANCE = "explicit_user_reply"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
 ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
 ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
 RESUME_ROLE_AGENT_RESULTS = {ROLE_AGENT_REHYDRATION_RESULT, ROLE_AGENT_CONTINUITY_RESULT}
+CONTROL_BLOCKER_LANES = {
+    "control_plane_reissue",
+    "pm_repair_decision_required",
+    "fatal_protocol_violation",
+}
 STARTUP_ANSWER_ENUMS = {
     "background_agents": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
@@ -499,6 +508,27 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "to_role": "project_manager",
     },
     {
+        "flag": "process_officer_route_check_card_delivered",
+        "label": "process_officer_route_process_check_card_delivered",
+        "card_id": "process_officer.route_process_check",
+        "requires_flag": "route_draft_written_by_pm",
+        "to_role": "process_flowguard_officer",
+    },
+    {
+        "flag": "product_officer_route_check_card_delivered",
+        "label": "product_officer_route_product_check_card_delivered",
+        "card_id": "product_officer.route_product_check",
+        "requires_flag": "process_officer_route_check_passed",
+        "to_role": "product_flowguard_officer",
+    },
+    {
+        "flag": "reviewer_route_check_card_delivered",
+        "label": "reviewer_route_challenge_card_delivered",
+        "card_id": "reviewer.route_challenge",
+        "requires_flag": "product_officer_route_check_passed",
+        "to_role": "human_like_reviewer",
+    },
+    {
         "flag": "pm_current_node_card_delivered",
         "label": "pm_current_node_loop_phase_card_delivered",
         "card_id": "pm.current_node_loop",
@@ -823,17 +853,17 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     },
     "process_officer_passes_route_check": {
         "flag": "process_officer_route_check_passed",
-        "requires_flag": "route_draft_written_by_pm",
+        "requires_flag": "process_officer_route_check_card_delivered",
         "summary": "Process FlowGuard Officer passed the route process check.",
     },
     "product_officer_passes_route_check": {
         "flag": "product_officer_route_check_passed",
-        "requires_flag": "process_officer_route_check_passed",
+        "requires_flag": "product_officer_route_check_card_delivered",
         "summary": "Product FlowGuard Officer passed the route product check.",
     },
     "reviewer_passes_route_check": {
         "flag": "reviewer_route_check_passed",
-        "requires_flag": "product_officer_route_check_passed",
+        "requires_flag": "reviewer_route_check_card_delivered",
         "summary": "Reviewer passed the route challenge.",
     },
     "pm_activates_reviewed_route": {
@@ -881,6 +911,10 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "requires_flag": "node_review_blocked",
         "summary": "PM mutated the route and invalidated affected stale evidence after a reviewer block.",
     },
+    "pm_records_control_blocker_repair_decision": {
+        "flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "PM recorded a repair decision for a router materialized control blocker.",
+    },
     "pm_completes_current_node_from_reviewed_result": {
         "flag": "node_completed_by_pm",
         "requires_flag": "node_reviewer_passed_result",
@@ -916,6 +950,10 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
 
 class RouterError(ValueError):
     """Raised when a router operation violates the state machine."""
+
+    def __init__(self, message: str, *, control_blocker: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.control_blocker = control_blocker
 
 
 def utc_now() -> str:
@@ -988,19 +1026,27 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
 
     if not isinstance(payload, dict):
         raise RouterError("role event payload must be an object")
-    body_path = (
-        payload.get("body_path")
-        or payload.get("report_path")
-        or payload.get("decision_path")
-        or payload.get("result_body_path")
-    )
-    if not body_path:
-        return payload
+    path_keys = ("body_path", "report_path", "decision_path", "result_body_path")
+    hash_keys = ("body_hash", "report_hash", "decision_hash", "result_body_hash")
+    body_path_key = next((key for key in path_keys if payload.get(key)), None)
+    if not body_path_key:
+        if "path" in payload or "hash" in payload:
+            raise RouterError(
+                "role event envelope must use body_path/report_path/decision_path/result_body_path "
+                "and body_hash/report_hash/decision_hash/result_body_hash"
+            )
+        raise RouterError("role event requires a file-backed body path")
+    body_hash_key = next((key for key in hash_keys if payload.get(key)), None)
+    if not body_hash_key:
+        raise RouterError("role event requires a body/report/decision hash")
+    body_path = payload[body_path_key]
     forbidden_controller_visible_body_keys = {
         "blockers",
         "checks",
+        "decision",
         "evidence",
         "findings",
+        "passed",
         "recommendations",
         "repair_instructions",
         "commands",
@@ -1014,15 +1060,16 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
     path = resolve_project_path(project_root, str(body_path))
     if not path.exists():
         raise RouterError(f"role body path is missing: {body_path}")
-    expected_hash = payload.get("body_hash") or payload.get("report_hash") or payload.get("decision_hash")
-    if expected_hash:
-        actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-        if actual_hash != expected_hash:
-            raise RouterError("role body hash mismatch")
+    expected_hash = str(payload[body_hash_key])
+    actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if actual_hash != expected_hash:
+        raise RouterError("role body hash mismatch")
     loaded = read_json(path)
     loaded["_role_output_envelope"] = {
         "body_path": project_relative(project_root, path),
-        "body_hash": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "body_hash": actual_hash,
+        "body_path_key": body_path_key,
+        "body_hash_key": body_hash_key,
         "controller_visibility": payload.get("controller_visibility") or "role_output_envelope_only",
         "chat_response_body_allowed": False,
     }
@@ -1154,6 +1201,10 @@ def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
         "ledger_checks": 0,
         "prompt_deliveries": 0,
         "mail_deliveries": 0,
+        "control_blockers": [],
+        "resolved_control_blockers": [],
+        "active_control_blocker": None,
+        "latest_control_blocker_path": None,
         "delivered_cards": [],
         "delivered_mail": [],
         "events": [],
@@ -1189,6 +1240,10 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
     state.setdefault("pending_action", None)
     state.setdefault("delivered_cards", [])
     state.setdefault("delivered_mail", [])
+    state.setdefault("control_blockers", [])
+    state.setdefault("resolved_control_blockers", [])
+    state.setdefault("active_control_blocker", None)
+    state.setdefault("latest_control_blocker_path", None)
     state.setdefault("events", [])
     return state, run_root
 
@@ -1261,7 +1316,654 @@ def make_action(
         action["to_role"] = to_role
     if extra:
         action.update(extra)
+    resolved_recipient = str(action.get("to_role") or actor)
+    action.setdefault("why_this_role", summary)
+    action["next_step_contract"] = {
+        "schema_version": "flowpilot.next_step_contract.v1",
+        "controller_has_explicit_next": True,
+        "action_type": action_type,
+        "recipient_role": resolved_recipient,
+        "controller_may_infer_next_from_chat": False,
+        "controller_may_contact_unlisted_role": False,
+        "controller_may_create_project_evidence": False,
+        "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
+        "allowed_external_events": action.get("allowed_external_events", []),
+        "postcondition": action.get("postcondition"),
+    }
     return action
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    return str(value)
+
+
+def _control_blocker_error_code(message: str) -> str:
+    cleaned: list[str] = []
+    for char in message.lower():
+        if char.isalnum():
+            cleaned.append(char)
+        elif cleaned and cleaned[-1] != "_":
+            cleaned.append("_")
+    code = "".join(cleaned).strip("_")
+    return code[:96] or "router_hard_rejection"
+
+
+def _project_relative_if_possible(project_root: Path, path: Path) -> str:
+    try:
+        return project_relative(project_root, path)
+    except RouterError:
+        return str(path)
+
+
+def _payload_source_paths(project_root: Path, run_root: Path, payload: dict[str, Any] | None) -> dict[str, str]:
+    source_paths = {
+        "router_state": project_relative(project_root, run_state_path(run_root)),
+    }
+    packet_ledger = run_root / "packet_ledger.json"
+    if packet_ledger.exists():
+        source_paths["packet_ledger"] = project_relative(project_root, packet_ledger)
+    if not isinstance(payload, dict):
+        return source_paths
+    for key in (
+        "body_path",
+        "report_path",
+        "decision_path",
+        "result_body_path",
+        "packet_envelope_path",
+        "result_envelope_path",
+        "packet_index_path",
+        "path",
+    ):
+        raw = payload.get(key)
+        if not raw:
+            continue
+        candidate = resolve_project_path(project_root, str(raw))
+        source_paths[key] = _project_relative_if_possible(project_root, candidate)
+    return source_paths
+
+
+def _control_payload_public_view(payload: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    forbidden_body_keys = {
+        "blockers",
+        "checks",
+        "commands",
+        "decision",
+        "decision_body",
+        "evidence",
+        "findings",
+        "passed",
+        "direct_material_sources_checked",
+        "packet_matches_checked_sources",
+        "pm_ready",
+        "recommendations",
+        "repair_instructions",
+        "report_body",
+        "result_body",
+    }
+    public: dict[str, Any] = {}
+    for key, value in payload.items():
+        if key in forbidden_body_keys:
+            public[key] = "[redacted: role body field was controller-visible]"
+            continue
+        if key.endswith("_path") or key.endswith("_hash") or key in {
+            "packet_id",
+            "route_id",
+            "node_id",
+            "role",
+            "from_role",
+            "to_role",
+            "expected_role",
+            "completed_by_role",
+            "reviewed_by_role",
+            "controller_visibility",
+            "chat_response_body_allowed",
+        }:
+            public[key] = _json_safe(value)
+    return public
+
+
+def _infer_responsible_role(event: str | None, payload: dict[str, Any] | None, message: str) -> str:
+    if isinstance(payload, dict):
+        for key in ("reviewed_by_role", "completed_by_role", "from_role", "to_role", "role", "expected_role"):
+            value = payload.get(key)
+            if isinstance(value, str) and value:
+                return value
+    if event:
+        if event.startswith("reviewer_") or "reviewer" in event:
+            return "human_like_reviewer"
+        if event.startswith("worker_") or "worker_" in event:
+            if "worker_b" in message or "worker-b" in message:
+                return "worker_b"
+            return "worker_a"
+        if event.startswith("product_officer_"):
+            return "product_flowguard_officer"
+        if event.startswith("process_officer_"):
+            return "process_flowguard_officer"
+        if event.startswith("pm_"):
+            return "project_manager"
+    lowered = message.lower()
+    if "product_flowguard_officer" in lowered:
+        return "product_flowguard_officer"
+    if "process_flowguard_officer" in lowered:
+        return "process_flowguard_officer"
+    if "human_like_reviewer" in lowered or "reviewer" in lowered:
+        return "human_like_reviewer"
+    if "project_manager" in lowered or message.startswith("PM "):
+        return "project_manager"
+    return "project_manager"
+
+
+def _classify_control_blocker(message: str, *, event: str | None = None, action_type: str | None = None) -> str:
+    del action_type
+    lowered = message.lower()
+    fatal_markers = (
+        "private role-to-role",
+        "controller relay violation",
+        "body was read by controller",
+        "body was executed by controller",
+        "body_was_read_by_controller",
+        "body_was_executed_by_controller",
+        "controller read",
+        "controller executes",
+        "contaminated envelope",
+        "leaked role body fields to controller",
+        "controller relay envelope hash mismatch",
+    )
+    if any(marker in lowered for marker in fatal_markers):
+        return "fatal_protocol_violation"
+    pm_markers = (
+        "controller-origin",
+        "wrong role",
+        "wrong-role",
+        "reviewer pass rejected by packet audit",
+        "packet group reviewer audit failed",
+        "body was not opened",
+        "unopened",
+        "stale",
+        "unresolved",
+        "final ledger",
+        "route mutation",
+        "parent segment",
+        "ambiguous",
+        "repair decision",
+        "packet body hash mismatch",
+        "result body hash mismatch",
+    )
+    if any(marker in lowered for marker in pm_markers):
+        return "pm_repair_decision_required"
+    if event in {
+        "current_node_reviewer_passes_result",
+        "reviewer_reports_material_sufficient",
+        "reviewer_reports_material_insufficient",
+        "reviewer_passes_research_direct_source_check",
+        "reviewer_passes_route_check",
+        "reviewer_final_backward_replay_passed",
+    }:
+        return "control_plane_reissue"
+    reissue_markers = (
+        "requires a file-backed body path",
+        "requires a body/report/decision hash",
+        "role body path is missing",
+        "role body hash mismatch",
+        "must be reviewed_by_role",
+        "must explicitly pass",
+        "gate report must",
+        "requires direct_material_sources_checked",
+        "requires packet_matches_checked_sources",
+        "requires pm_ready",
+        "must route to",
+        "requires packet_id",
+        "requires packet envelope",
+        "missing source paths",
+    )
+    if any(marker in lowered for marker in reissue_markers):
+        return "control_plane_reissue"
+    return "pm_repair_decision_required"
+
+
+def _should_materialize_control_blocker(
+    message: str,
+    *,
+    event: str | None = None,
+    action_type: str | None = None,
+    payload: dict[str, Any] | None = None,
+) -> bool:
+    lowered = message.lower()
+    if lowered.startswith("event ") and " requires " in lowered:
+        return False
+    if "run 'next' before applying" in lowered or "pending action is" in lowered:
+        return False
+    if "requires a file-backed body path" in lowered and not payload:
+        return False
+    material_markers = (
+        "requires a file-backed body path",
+        "requires a body/report/decision hash",
+        "role body path is missing",
+        "role body hash mismatch",
+        "leaked role body fields to controller",
+        "must be reviewed_by_role",
+        "must explicitly pass",
+        "gate report must",
+        "requires direct_material_sources_checked",
+        "requires packet_matches_checked_sources",
+        "requires pm_ready",
+        "packet group reviewer audit failed",
+        "reviewer pass rejected by packet audit",
+        "controller-origin",
+        "wrong role",
+        "wrong-role",
+        "missing controller relay signature",
+        "envelope was not delivered via controller",
+        "controller did not sign",
+        "private role-to-role",
+        "controller relay violation",
+        "contaminated envelope",
+        "body was not opened",
+        "unopened",
+        "packet body hash mismatch",
+        "result body hash mismatch",
+        "controller relay envelope hash mismatch",
+    )
+    if any(marker in lowered for marker in material_markers):
+        return True
+    if action_type in {
+        "relay_material_scan_packets",
+        "relay_material_scan_results_to_reviewer",
+        "relay_research_packet",
+        "relay_research_result_to_reviewer",
+        "relay_current_node_packet",
+        "relay_current_node_result_to_reviewer",
+    }:
+        return True
+    if isinstance(payload, dict) and any(
+        payload.get(key)
+        for key in (
+            "body_path",
+            "body_hash",
+            "report_path",
+            "report_hash",
+            "decision_path",
+            "decision_hash",
+            "result_body_path",
+            "result_body_hash",
+        )
+    ):
+        return event is not None and (
+            event.startswith("reviewer_")
+            or event.startswith("process_officer_")
+            or event.startswith("product_officer_")
+            or event in {"current_node_reviewer_passes_result", "pm_resume_recovery_decision_returned", "pm_records_parent_segment_decision"}
+        )
+    return False
+
+
+def _control_blocker_policy(category: str, *, responsible_role: str, event: str | None) -> dict[str, Any]:
+    if category == "control_plane_reissue":
+        target_role = responsible_role
+        instruction = (
+            f"Deliver this control blocker to `{target_role}` and request a same-role reissue of the rejected "
+            "envelope/report/ledger event. Quote only the control error, field names, and artifact path. "
+            "Do not open sealed bodies, summarize body content, or create project repair work."
+        )
+        allowed = [
+            "read this control blocker artifact",
+            "tell the responsible role to reissue the same control-plane output",
+            "quote error_code, error_message, source_paths, and blocker_artifact_path",
+        ]
+        forbidden = [
+            "open sealed packet/result/report bodies",
+            "infer project status from chat history",
+            "ask a worker to change project substance",
+            "convert the router rejection into PM-owned evidence",
+        ]
+        pm_required = False
+    elif category == "fatal_protocol_violation":
+        target_role = "project_manager"
+        instruction = (
+            "Stop normal route work and deliver this control blocker to `project_manager` for escalation. "
+            "This lane records a protocol-boundary violation; Controller must not contact workers directly or "
+            "repair the route from chat."
+        )
+        allowed = [
+            "read this control blocker artifact",
+            "deliver the artifact path to project_manager",
+            "wait for an explicit PM or user recovery decision",
+        ]
+        forbidden = [
+            "open sealed packet/result/report bodies",
+            "contact the worker directly",
+            "advance, close, or mutate the route",
+            "treat controller-visible leaked content as evidence",
+        ]
+        pm_required = True
+    else:
+        target_role = "project_manager"
+        instruction = (
+            "Deliver this control blocker to `project_manager` for a repair decision. Controller must not decide "
+            "whether the work is substantively acceptable and must not ask the worker for a content repair unless PM "
+            "later issues that instruction."
+        )
+        allowed = [
+            "read this control blocker artifact",
+            "deliver the artifact path to project_manager",
+            "quote error_code, error_message, source_paths, and handling_lane",
+        ]
+        forbidden = [
+            "open sealed packet/result/report bodies",
+            "contact the worker directly about project repair",
+            "summarize reviewer or worker body content",
+            "advance route state from the rejected event",
+        ]
+        pm_required = True
+    return {
+        "target_role": target_role,
+        "pm_decision_required": pm_required,
+        "controller_instruction": instruction,
+        "controller_allowed_actions": allowed,
+        "controller_forbidden_actions": forbidden,
+        "allowed_resolution_events": [event] if event and category == "control_plane_reissue" else sorted(EXTERNAL_EVENTS),
+    }
+
+
+def _write_control_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    source: str,
+    error_message: str,
+    event: str | None = None,
+    action_type: str | None = None,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    category = _classify_control_blocker(error_message, event=event, action_type=action_type)
+    if category not in CONTROL_BLOCKER_LANES:
+        category = "pm_repair_decision_required"
+    responsible_role = _infer_responsible_role(event, payload, error_message)
+    policy = _control_blocker_policy(category, responsible_role=responsible_role, event=event)
+    index = len(run_state.setdefault("control_blockers", [])) + 1
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    blocker_id = f"control-blocker-{index:04d}-{stamp}"
+    artifact_path = run_root / "control_blocks" / f"{blocker_id}.json"
+    artifact_rel = project_relative(project_root, artifact_path)
+    record = {
+        "schema_version": CONTROL_BLOCKER_SCHEMA,
+        "blocker_id": blocker_id,
+        "run_id": run_state.get("run_id"),
+        "created_at": utc_now(),
+        "source": source,
+        "originating_event": event,
+        "originating_action_type": action_type,
+        "handling_lane": category,
+        "error_code": _control_blocker_error_code(error_message),
+        "error_message": error_message,
+        "controller_visible_summary": error_message,
+        "blocker_artifact_path": artifact_rel,
+        "source_paths": _payload_source_paths(project_root, run_root, payload),
+        "responsible_role_for_reissue": responsible_role if category == "control_plane_reissue" else None,
+        "target_role": policy["target_role"],
+        "pm_decision_required": policy["pm_decision_required"],
+        "controller_instruction": policy["controller_instruction"],
+        "controller_allowed_actions": policy["controller_allowed_actions"],
+        "controller_forbidden_actions": policy["controller_forbidden_actions"],
+        "allowed_resolution_events": policy["allowed_resolution_events"],
+        "sealed_body_read_by_controller_allowed": False,
+        "controller_history_is_evidence": False,
+        "delivery_status": "pending",
+        "payload_envelope_public_view": _control_payload_public_view(payload),
+    }
+    write_json(artifact_path, record)
+    active = {
+        "blocker_id": blocker_id,
+        "handling_lane": category,
+        "blocker_artifact_path": artifact_rel,
+        "target_role": policy["target_role"],
+        "responsible_role_for_reissue": record["responsible_role_for_reissue"],
+        "pm_decision_required": policy["pm_decision_required"],
+        "delivery_status": "pending",
+        "originating_event": event,
+        "originating_action_type": action_type,
+        "created_at": record["created_at"],
+    }
+    run_state["active_control_blocker"] = active
+    run_state["latest_control_blocker_path"] = artifact_rel
+    run_state["control_blockers"].append(active)
+    run_state["pending_action"] = None
+    append_history(
+        run_state,
+        "router_recorded_control_blocker",
+        {
+            "blocker_id": blocker_id,
+            "handling_lane": category,
+            "target_role": policy["target_role"],
+            "originating_event": event,
+            "originating_action_type": action_type,
+        },
+    )
+    save_run_state(run_root, run_state)
+    return record
+
+
+def _control_blocker_record(project_root: Path, active: dict[str, Any]) -> dict[str, Any]:
+    raw_path = active.get("blocker_artifact_path")
+    if not raw_path:
+        return active
+    path = resolve_project_path(project_root, str(raw_path))
+    if not path.exists():
+        return active
+    return read_json(path)
+
+
+def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    active = run_state.get("active_control_blocker")
+    if not isinstance(active, dict):
+        return None
+    record = _control_blocker_record(project_root, active)
+    artifact_rel = str(record.get("blocker_artifact_path") or active.get("blocker_artifact_path") or "")
+    if not artifact_rel:
+        return None
+    if record.get("delivery_status") != "delivered":
+        lane = str(record.get("handling_lane") or active.get("handling_lane") or "pm_repair_decision_required")
+        target_role = str(record.get("target_role") or active.get("target_role") or "project_manager")
+        return make_action(
+            action_type="handle_control_blocker",
+            actor="controller",
+            label=f"controller_handles_{lane}_control_blocker",
+            summary=f"Deliver router control blocker {record.get('blocker_id')} to {target_role}; do not inspect sealed role bodies.",
+            allowed_reads=[artifact_rel, project_relative(project_root, run_state_path(run_root))],
+            allowed_writes=[
+                project_relative(project_root, run_state_path(run_root)),
+                project_relative(project_root, run_root / "control_blocks" / "control_blocker_delivery_ledger.json"),
+            ],
+            to_role=target_role,
+            extra={
+                "blocker_id": record.get("blocker_id"),
+                "blocker_artifact_path": artifact_rel,
+                "handling_lane": lane,
+                "pm_decision_required": bool(record.get("pm_decision_required")),
+                "responsible_role_for_reissue": record.get("responsible_role_for_reissue"),
+                "controller_instruction": record.get("controller_instruction"),
+                "controller_allowed_actions": record.get("controller_allowed_actions") or [],
+                "controller_forbidden_actions": record.get("controller_forbidden_actions") or [],
+                "controller_delivery_body": record.get("controller_instruction"),
+                "sealed_body_reads_allowed": False,
+                "controller_history_is_evidence": False,
+                "allowed_resolution_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS),
+            },
+        )
+    return make_action(
+        action_type="await_role_decision",
+        actor="controller",
+        label="controller_waits_for_control_blocker_resolution",
+        summary="A router control blocker has been delivered. Controller must wait for the target role's corrected event or PM recovery decision.",
+        allowed_reads=[artifact_rel, project_relative(project_root, run_state_path(run_root))],
+        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+        extra={"allowed_external_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS), "blocker_artifact_path": artifact_rel},
+    )
+
+
+def _mark_control_blocker_delivered(project_root: Path, run_root: Path, run_state: dict[str, Any], pending: dict[str, Any]) -> None:
+    artifact_rel = str(pending.get("blocker_artifact_path") or "")
+    if not artifact_rel:
+        raise RouterError("control blocker action is missing blocker_artifact_path")
+    artifact_path = resolve_project_path(project_root, artifact_rel)
+    record = read_json(artifact_path)
+    delivered_at = utc_now()
+    target_role = str(pending.get("to_role") or record.get("target_role") or "project_manager")
+    record["delivery_status"] = "delivered"
+    record["delivered_by"] = "controller"
+    record["delivered_to_role"] = target_role
+    record["delivered_at"] = delivered_at
+    write_json(artifact_path, record)
+    active = run_state.get("active_control_blocker")
+    if isinstance(active, dict) and active.get("blocker_id") == record.get("blocker_id"):
+        active["delivery_status"] = "delivered"
+        active["delivered_to_role"] = target_role
+        active["delivered_at"] = delivered_at
+    ledger_path = run_root / "control_blocks" / "control_blocker_delivery_ledger.json"
+    ledger = read_json_if_exists(ledger_path) or {"schema_version": "flowpilot.control_blocker_delivery_ledger.v1", "deliveries": []}
+    ledger.setdefault("deliveries", []).append(
+        {
+            "blocker_id": record.get("blocker_id"),
+            "blocker_artifact_path": artifact_rel,
+            "handling_lane": record.get("handling_lane"),
+            "delivered_by": "controller",
+            "delivered_to_role": target_role,
+            "delivered_at": delivered_at,
+        }
+    )
+    ledger["updated_at"] = delivered_at
+    write_json(ledger_path, ledger)
+
+
+def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    decision = _load_file_backed_role_payload(project_root, payload)
+    if decision.get("decided_by_role") != "project_manager":
+        raise RouterError("control blocker repair decision requires decided_by_role=project_manager")
+    active = run_state.get("active_control_blocker")
+    if not isinstance(active, dict) or active.get("delivery_status") != "delivered":
+        raise RouterError("control blocker repair decision requires a delivered active control blocker")
+    blocker_id = str(decision.get("blocker_id") or "")
+    if blocker_id != active.get("blocker_id"):
+        raise RouterError("control blocker repair decision must reference the active blocker_id")
+    allowed_decisions = {
+        "repair_completed",
+        "repair_not_required",
+        "resolved_by_followup_event",
+        "continue_after_pm_review",
+    }
+    if decision.get("decision") not in allowed_decisions:
+        raise RouterError("control blocker repair decision is not an allowed PM repair decision")
+    output = {
+        "schema_version": "flowpilot.control_blocker_repair_decision.v1",
+        "run_id": run_state["run_id"],
+        "blocker_id": blocker_id,
+        "decided_by_role": "project_manager",
+        "decision": decision["decision"],
+        "recorded_at": utc_now(),
+        **_role_output_envelope_record(decision),
+    }
+    decision_path = run_root / "control_blocks" / f"{blocker_id}.pm_repair_decision.json"
+    write_json(decision_path, output)
+
+
+def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str) -> bool:
+    if record.get("handling_lane") == "pm_repair_decision_required" and event == "pm_records_control_blocker_repair_decision":
+        return True
+    raw_events = record.get("allowed_resolution_events")
+    if isinstance(raw_events, list) and raw_events:
+        return event in {str(item) for item in raw_events}
+    if record.get("handling_lane") == "control_plane_reissue":
+        return event == record.get("originating_event")
+    return event in EXTERNAL_EVENTS
+
+
+def _resolve_delivered_control_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    resolved_by_event: str,
+    from_already_recorded_event: bool = False,
+) -> dict[str, Any] | None:
+    active = run_state.get("active_control_blocker")
+    if not isinstance(active, dict) or active.get("delivery_status") != "delivered":
+        return None
+    record = dict(active)
+    artifact_rel = str(active.get("blocker_artifact_path") or "")
+    artifact_path: Path | None = None
+    if artifact_rel:
+        artifact_path = resolve_project_path(project_root, artifact_rel)
+        if artifact_path.exists():
+            record = read_json(artifact_path)
+    if from_already_recorded_event and record.get("handling_lane") != "control_plane_reissue":
+        return None
+    if not _control_blocker_allows_resolution_event(record, resolved_by_event):
+        return None
+    if artifact_path and artifact_path.exists():
+        resolved_at = utc_now()
+        record["resolution_status"] = "accepted_followup_event_recorded"
+        record["resolved_by_event"] = resolved_by_event
+        record["resolved_at"] = resolved_at
+        write_json(artifact_path, record)
+    resolved = dict(active)
+    resolved["resolution_status"] = "accepted_followup_event_recorded"
+    resolved["resolved_by_event"] = resolved_by_event
+    resolved["resolved_at"] = record.get("resolved_at") or utc_now()
+    run_state.setdefault("resolved_control_blockers", []).append(resolved)
+    run_state["active_control_blocker"] = None
+    run_state["latest_control_blocker_path"] = None
+    append_history(
+        run_state,
+        "router_resolved_control_blocker",
+        {"blocker_id": resolved.get("blocker_id"), "resolved_by_event": resolved_by_event},
+    )
+    return resolved
+
+
+def _try_write_control_blocker_for_exception(
+    project_root: Path,
+    *,
+    source: str,
+    error_message: str,
+    event: str | None = None,
+    action_type: str | None = None,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    if not _should_materialize_control_blocker(
+        error_message,
+        event=event,
+        action_type=action_type,
+        payload=payload,
+    ):
+        return None
+    try:
+        bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+        run_state, run_root = load_run_state(project_root, bootstrap)
+        if run_state is None or run_root is None:
+            return None
+        return _write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source=source,
+            error_message=error_message,
+            event=event,
+            action_type=action_type,
+            payload=payload,
+        )
+    except Exception:
+        return None
 
 
 def _next_boot_action(state: dict[str, Any]) -> dict[str, Any] | None:
@@ -1413,7 +2115,7 @@ def _validate_user_request(payload: dict[str, Any]) -> dict[str, str]:
     }
 
 
-def _startup_banner_display() -> dict[str, str]:
+def _startup_banner_display() -> dict[str, Any]:
     banner_path = runtime_kit_source() / "cards" / "system" / "startup_banner.md"
     if not banner_path.exists():
         raise RouterError("startup banner card is missing")
@@ -1427,7 +2129,11 @@ def _startup_banner_display() -> dict[str, str]:
     return {
         "display_path": str(banner_path),
         "display_text": display_text,
+        "display_text_format": "plain_text",
         "display_required": True,
+        "controller_must_display_text_before_apply": True,
+        "generated_files_alone_satisfy_chat_display": False,
+        "controller_display_rule": "Paste this exact startup banner display_text in the user chat before applying emit_startup_banner or continuing; paths, files, flags, and state records do not count as display.",
     }
 
 
@@ -1824,6 +2530,78 @@ def _create_empty_packet_ledger(project_root: Path, run_id: str, run_root: Path)
     }
 
 
+def _active_packet_ledger_record(packet_ledger: dict[str, Any]) -> dict[str, Any] | None:
+    active_packet_id = packet_ledger.get("active_packet_id")
+    packets = packet_ledger.get("packets") if isinstance(packet_ledger.get("packets"), list) else []
+    if active_packet_id:
+        for record in reversed(packets):
+            if isinstance(record, dict) and record.get("packet_id") == active_packet_id:
+                return record
+    for record in reversed(packets):
+        if isinstance(record, dict):
+            return record
+    return None
+
+
+def _derive_resume_next_recipient_from_packet_ledger(run_root: Path) -> dict[str, Any]:
+    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json") or {}
+    record = _active_packet_ledger_record(packet_ledger)
+    active_packet_id = packet_ledger.get("active_packet_id")
+    status = str(packet_ledger.get("active_packet_status") or "")
+    holder = str(packet_ledger.get("active_packet_holder") or "")
+    packet_envelope = record.get("packet_envelope") if isinstance(record, dict) and isinstance(record.get("packet_envelope"), dict) else {}
+    result_envelope = record.get("result_envelope") if isinstance(record, dict) and isinstance(record.get("result_envelope"), dict) else {}
+    assigned_worker = str(record.get("assigned_worker_role") or packet_envelope.get("to_role") or "") if isinstance(record, dict) else ""
+    result_recipient = str(result_envelope.get("next_recipient") or "") if result_envelope else ""
+
+    controller_next_action = "resume_without_active_packet_then_request_pm_decision"
+    next_recipient = "project_manager"
+    reason = "No active packet is recorded, so resume must continue through PM resume decision after role rehydration."
+    if active_packet_id:
+        if status == "packet-with-controller":
+            next_recipient = assigned_worker or "unknown"
+            controller_next_action = "relay_packet_envelope_to_recorded_recipient"
+            reason = "Packet ledger says the packet is with Controller and records the worker recipient."
+        elif status in {"envelope-relayed", "packet-body-opened-by-recipient"}:
+            next_recipient = holder or assigned_worker or "unknown"
+            controller_next_action = "wait_for_recorded_packet_holder_result"
+            reason = "Packet ledger says the packet is already with a role; Controller waits for that role's envelope-only return."
+        elif status in {"worker-result-needs-review", "result-envelope-returned"}:
+            next_recipient = result_recipient or "human_like_reviewer"
+            controller_next_action = "relay_result_envelope_to_recorded_reviewer"
+            reason = "Packet ledger says a result envelope is with Controller and records the review recipient."
+        elif status in {"result-envelope-relayed", "result-body-opened-by-recipient"}:
+            next_recipient = holder or result_recipient or "human_like_reviewer"
+            controller_next_action = "wait_for_recorded_result_holder_review"
+            reason = "Packet ledger says the result is already with its review holder."
+        elif status == "contaminated-returned-to-sender":
+            next_recipient = holder or str(record.get("from_role") or "project_manager") if isinstance(record, dict) else "project_manager"
+            controller_next_action = "wait_for_sender_reissue_or_pm_repair_decision"
+            reason = "Packet ledger says the envelope was returned to sender because the control boundary was violated."
+        elif status == "superseded-by-replacement":
+            next_recipient = "project_manager"
+            controller_next_action = "wait_for_replacement_packet_or_pm_route_repair"
+            reason = "Packet ledger says this packet was superseded, so PM owns the replacement or route repair decision."
+        else:
+            next_recipient = holder or assigned_worker or result_recipient or "project_manager"
+            controller_next_action = "wait_for_ledger_recorded_holder_or_pm_resume_decision"
+            reason = "Packet ledger has an active packet with a non-standard status; Controller must not infer from chat."
+
+    return {
+        "schema_version": "flowpilot.resume_next_recipient.v1",
+        "source": "packet_ledger",
+        "active_packet_id": active_packet_id,
+        "active_packet_status": status or None,
+        "active_packet_holder": holder or None,
+        "controller_next_action": controller_next_action,
+        "next_recipient_role": next_recipient,
+        "controller_has_explicit_next_from_ledger": next_recipient != "unknown",
+        "controller_may_infer_next_from_chat_history": False,
+        "sealed_body_reads_allowed": False,
+        "reason": reason,
+    }
+
+
 def _create_empty_execution_frontier(run_id: str) -> dict[str, Any]:
     return {
         "schema_version": "flowpilot.execution_frontier.v1",
@@ -2087,6 +2865,9 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
 
 
 def _write_startup_activation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("approved_by_role") != "project_manager":
+        raise RouterError("PM startup activation requires approved_by_role=project_manager")
     if payload.get("decision") != "approved":
         raise RouterError("PM startup activation requires decision=approved")
     fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
@@ -2105,32 +2886,33 @@ def _write_startup_activation(project_root: Path, run_root: Path, run_state: dic
             "display_surface": answers.get("display_surface"),
             "fact_report_path": project_relative(project_root, run_root / "startup" / "startup_fact_report.json"),
             "approved_at": utc_now(),
+            **_role_output_envelope_record(payload),
         },
+    )
+
+
+def _startup_route_sign_payload(project_root: Path, *, write: bool, mark_chat_displayed: bool) -> dict[str, Any]:
+    return flowpilot_user_flow_diagram.generate(
+        project_root,
+        write=write,
+        trigger="startup",
+        cockpit_open=False,
+        display_surface="chat",
+        mark_chat_displayed=mark_chat_displayed,
+        mark_ui_displayed=False,
+        reviewer_check=False,
     )
 
 
 def _write_display_surface_status(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
     answers = _startup_answers_from_run(run_root)
     requested = str(answers.get("display_surface") or "chat route signs")
-    selected_surface = "chat_route_sign" if "chat" in requested.lower() else "chat_route_sign_fallback"
+    requested_normalized = requested.lower()
+    selected_surface = "chat_route_sign" if "chat" in requested_normalized else "chat_route_sign_fallback"
+    route_sign = _startup_route_sign_payload(project_root, write=True, mark_chat_displayed=True)
     sign_path = run_root / "diagrams" / "current_route_sign.md"
-    sign_text = "\n".join(
-        [
-            "# FlowPilot Route Sign",
-            "",
-            "```mermaid",
-            "flowchart LR",
-            "  A[Startup answers] --> B[Reviewer startup facts]",
-            "  B --> C[PM startup activation]",
-            "  C --> D[Current route frontier]",
-            "```",
-            "",
-            "Status: startup activation complete; waiting for the next PM-directed route step.",
-            "",
-        ]
-    )
     sign_path.parent.mkdir(parents=True, exist_ok=True)
-    sign_path.write_text(sign_text, encoding="utf-8")
+    sign_path.write_text(route_sign["markdown"], encoding="utf-8")
     write_json(
         run_root / "display" / "display_surface.json",
         {
@@ -2139,7 +2921,18 @@ def _write_display_surface_status(project_root: Path, run_root: Path, run_state:
             "requested_display_surface": requested,
             "selected_surface": selected_surface,
             "chat_route_sign_path": project_relative(project_root, sign_path),
+            "standard_route_sign_markdown_path": project_relative(project_root, Path(route_sign["markdown_preview_path"])),
+            "standard_route_sign_mermaid_path": project_relative(project_root, Path(route_sign["mermaid_path"])),
+            "standard_route_sign_display_packet_path": project_relative(project_root, Path(route_sign["display_packet_path"])),
+            "route_sign_mermaid_sha256": route_sign["mermaid_sha256"],
+            "chat_display_required": route_sign["chat_display_required"],
+            "chat_displayed_by_controller": True,
+            "generated_files_alone_satisfy_chat_display": False,
+            "controller_display_rule": "Controller must paste the router-provided display_text Mermaid block in chat before applying this action; generated files alone do not satisfy display.",
             "cockpit_status": "not_started_in_router_runtime",
+            "cockpit_probe_required_for_requested_cockpit": "cockpit" in requested_normalized,
+            "reviewer_fallback_check_required_for_requested_cockpit": "cockpit" in requested_normalized,
+            "fallback_is_display_only_not_product_ui_completion": True,
             "updated_at": utc_now(),
         },
     )
@@ -2858,6 +3651,10 @@ def _display_plan_path(run_root: Path) -> Path:
     return run_root / "display_plan.json"
 
 
+def _route_state_snapshot_path(run_root: Path) -> Path:
+    return run_root / "route_state_snapshot.json"
+
+
 def _optional_source_path(project_root: Path, path: Path) -> str | None:
     return project_relative(project_root, path) if path.exists() else None
 
@@ -2923,14 +3720,219 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
     plan = _current_display_plan(project_root, run_root, run_state)
     projection = _display_plan_projection(plan)
     digest = hashlib.sha256(json.dumps(projection, sort_keys=True).encode("utf-8")).hexdigest()
+    snapshot_path = _route_state_snapshot_path(run_root)
+    snapshot_digest = hashlib.sha256(snapshot_path.read_bytes()).hexdigest() if snapshot_path.exists() else None
     return {
         "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
         "display_plan_exists": _display_plan_path(run_root).exists(),
+        "route_state_snapshot_path": project_relative(project_root, snapshot_path),
+        "route_state_snapshot_exists": snapshot_path.exists(),
+        "route_state_snapshot_hash": snapshot_digest,
         "projection_hash": digest,
         "native_plan_projection": projection,
         "host_action": "replace_visible_plan",
         "controller_may_invent_route_items": False,
     }
+
+
+def _active_ui_task_catalog(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    current = read_json_if_exists(project_root / ".flowpilot" / "current.json") or {}
+    index = read_json_if_exists(project_root / ".flowpilot" / "index.json") or {}
+    run_id = str(run_state.get("run_id") or "")
+    run_root_rel = project_relative(project_root, run_root)
+    current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
+    current_run_root = str(current.get("current_run_root") or current.get("active_run_root") or "")
+    current_status = str(current.get("status") or run_state.get("status") or "")
+    hidden_statuses = {"completed", "closed", "stopped", "stopped_by_user", "abandoned", "discarded", "stale"}
+    current_pointer_matches = current_run_id == run_id and current_run_root == run_root_rel
+    active_tasks: list[dict[str, Any]] = []
+    if current_pointer_matches and current_status not in hidden_statuses:
+        active_tasks.append(
+            {
+                "run_id": run_id,
+                "run_root": run_root_rel,
+                "status": current_status or "running",
+                "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
+                "route_state_snapshot_path": project_relative(project_root, _route_state_snapshot_path(run_root)),
+                "close_tab_behavior": "return_to_dialog_route_display",
+            }
+        )
+    hidden_running = [
+        {
+            "run_id": str(item.get("run_id") or ""),
+            "run_root": str(item.get("run_root") or ""),
+            "status": str(item.get("status") or ""),
+            "hidden_reason": "not_current_pointer",
+        }
+        for item in index.get("runs", [])
+        if isinstance(item, dict)
+        and item.get("status") == "running"
+        and str(item.get("run_id") or "") != current_run_id
+    ]
+    return {
+        "schema_version": "flowpilot.active_ui_task_catalog.v1",
+        "authority": "current_json_only",
+        "current_pointer_matches_run": current_pointer_matches,
+        "active_tasks": active_tasks,
+        "hidden_non_current_running_index_entries": hidden_running,
+        "completed_abandoned_stale_history_default_visible": False,
+    }
+
+
+def _route_node_checklist(node: dict[str, Any], *, node_complete: bool = False) -> list[dict[str, Any]]:
+    raw_items = node.get("checklist")
+    if not isinstance(raw_items, list):
+        raw_items = node.get("required_gates")
+    if not isinstance(raw_items, list):
+        raw_items = node.get("acceptance_checklist")
+    if not isinstance(raw_items, list):
+        raw_items = []
+    checklist: list[dict[str, Any]] = []
+    for index, raw in enumerate(raw_items, start=1):
+        if isinstance(raw, dict):
+            item_id = str(raw.get("id") or raw.get("gate_id") or raw.get("label") or f"check-{index:03d}")
+            label = str(raw.get("label") or raw.get("title") or raw.get("gate") or item_id)
+            status = _plan_item_status(raw.get("status"), active=False)
+        else:
+            item_id = str(raw)
+            label = item_id.replace("_", " ")
+            status = "completed" if node_complete else "pending"
+        checklist.append({"id": item_id, "label": label, "status": status})
+    return checklist
+
+
+def _active_route_payload(run_root: Path, route_id: str | None = None) -> dict[str, Any] | None:
+    route_root = run_root / "routes"
+    candidates: list[Path] = []
+    if route_id:
+        candidates.extend([route_root / route_id / "flow.json", route_root / route_id / "flow.draft.json"])
+    if route_root.exists():
+        candidates.extend(sorted(route_root.glob("*/flow.json")))
+        candidates.extend(sorted(route_root.glob("*/flow.draft.json")))
+    seen: set[Path] = set()
+    for path in candidates:
+        if path in seen:
+            continue
+        seen.add(path)
+        if path.exists():
+            return read_json(path)
+    return None
+
+
+def _build_route_state_snapshot(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    route_payload: dict[str, Any] | None = None,
+    source_event: str | None = None,
+) -> dict[str, Any]:
+    current = read_json_if_exists(project_root / ".flowpilot" / "current.json") or {}
+    index = read_json_if_exists(project_root / ".flowpilot" / "index.json") or {}
+    frontier = read_json_if_exists(run_root / "execution_frontier.json") or {}
+    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json") or {}
+    active_route_id = str(frontier.get("active_route_id") or run_state.get("active_route_id") or "")
+    route = route_payload or _active_route_payload(run_root, active_route_id) or {}
+    if not active_route_id:
+        active_route_id = str(route.get("route_id") or "")
+    active_node_id = str(frontier.get("active_node_id") or route.get("active_node_id") or "")
+    run_id = str(run_state.get("run_id") or "")
+    current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
+    current_run_root = str(current.get("current_run_root") or current.get("active_run_root") or "")
+    run_root_rel = project_relative(project_root, run_root)
+    stale_running = [
+        {
+            "run_id": str(item.get("run_id") or ""),
+            "status": str(item.get("status") or ""),
+            "run_root": str(item.get("run_root") or ""),
+        }
+        for item in index.get("runs", [])
+        if isinstance(item, dict)
+        and item.get("status") == "running"
+        and str(item.get("run_id") or "") != current_run_id
+    ]
+    nodes: list[dict[str, Any]] = []
+    for position, node in enumerate(_iter_route_nodes(route), start=1):
+        node_id = str(node.get("node_id") or node.get("id") or f"node-{position:03d}")
+        status = _plan_item_status(node.get("status"), active=node_id == active_node_id)
+        node_complete = status == "completed"
+        nodes.append(
+            {
+                "id": node_id,
+                "label": str(node.get("title") or node.get("label") or node_id),
+                "status": status,
+                "is_active": node_id == active_node_id,
+                "is_complete": node_complete,
+                "checklist": _route_node_checklist(node, node_complete=node_complete),
+                "children": node.get("children") if isinstance(node.get("children"), list) else [],
+            }
+        )
+    pending_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    return {
+        "schema_version": ROUTE_STATE_SNAPSHOT_SCHEMA,
+        "run_id": run_id,
+        "run_root": run_root_rel,
+        "created_at": utc_now(),
+        "source_event": source_event,
+        "active_ui_task_catalog": _active_ui_task_catalog(project_root, run_root, run_state),
+        "authority": {
+            "active_source": "current_json_only",
+            "current_pointer_path": ".flowpilot/current.json",
+            "current_pointer_matches_run": current_run_id == run_id and current_run_root == run_root_rel,
+            "index_running_entries_are_not_active_authority": True,
+            "stale_running_index_entries": stale_running,
+        },
+        "route": {
+            "route_id": active_route_id or route.get("route_id"),
+            "route_version": route.get("route_version") or frontier.get("route_version"),
+            "active_node_id": active_node_id or None,
+            "nodes": nodes,
+        },
+        "frontier": {
+            "path": project_relative(project_root, run_root / "execution_frontier.json"),
+            "status": frontier.get("status"),
+            "active_route_id": frontier.get("active_route_id"),
+            "active_node_id": frontier.get("active_node_id"),
+            "route_version": frontier.get("route_version"),
+        },
+        "state": {
+            "path": project_relative(project_root, run_state_path(run_root)),
+            "status": run_state.get("status"),
+            "flags": dict(run_state.get("flags") or {}),
+        },
+        "packet_ledger": {
+            "path": project_relative(project_root, run_root / "packet_ledger.json"),
+            "active_packet_id": packet_ledger.get("active_packet_id"),
+            "active_packet_status": packet_ledger.get("active_packet_status"),
+            "active_packet_holder": packet_ledger.get("active_packet_holder"),
+            "latest_packet_chain_audit_passed": packet_ledger.get("latest_packet_chain_audit_passed"),
+            "latest_barrier_bundle_audit_passed": packet_ledger.get("latest_barrier_bundle_audit_passed"),
+        },
+        "next_action": {
+            "action_type": pending_action.get("action_type"),
+            "to_role": pending_action.get("to_role"),
+            "label": pending_action.get("label"),
+            "allowed_external_events": pending_action.get("allowed_external_events") or [],
+        },
+    }
+
+
+def _write_route_state_snapshot(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    route_payload: dict[str, Any] | None = None,
+    source_event: str | None = None,
+) -> None:
+    snapshot = _build_route_state_snapshot(
+        project_root,
+        run_root,
+        run_state,
+        route_payload=route_payload,
+        source_event=source_event,
+    )
+    write_json(_route_state_snapshot_path(run_root), snapshot)
 
 
 def _mark_display_plan_dirty(run_state: dict[str, Any]) -> None:
@@ -2948,7 +3950,6 @@ def _write_display_plan_from_route(
     active_node_id: str | None,
     source_event: str,
 ) -> None:
-    del project_root
     nodes = _iter_route_nodes(route_payload)
     items = []
     for index, node in enumerate(nodes, start=1):
@@ -2977,6 +3978,7 @@ def _write_display_plan_from_route(
         "updated_at": utc_now(),
     }
     write_json(_display_plan_path(run_root), plan)
+    _write_route_state_snapshot(project_root, run_root, run_state, route_payload=route_payload, source_event=source_event)
     _mark_display_plan_dirty(run_state)
 
 
@@ -2990,7 +3992,6 @@ def _update_display_plan_current_node(
     checklist: list[dict[str, Any]],
     source_event: str,
 ) -> None:
-    del project_root
     plan = read_json_if_exists(_display_plan_path(run_root))
     if not plan:
         plan = _waiting_for_pm_display_plan(run_state)
@@ -3017,6 +4018,7 @@ def _update_display_plan_current_node(
         }
     )
     write_json(_display_plan_path(run_root), plan)
+    _write_route_state_snapshot(project_root, run_root, run_state, source_event=source_event)
     _mark_display_plan_dirty(run_state)
 
 
@@ -3061,6 +4063,7 @@ def _write_display_plan_from_pm_payload(
     if isinstance(raw_plan.get("current_node"), dict):
         plan["current_node"] = raw_plan["current_node"]
     write_json(_display_plan_path(run_root), plan)
+    _write_route_state_snapshot(project_root, run_root, run_state, source_event=source_event)
     _mark_display_plan_dirty(run_state)
 
 
@@ -3360,6 +4363,16 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
     )
 
 
+def _current_route_draft_path(run_root: Path) -> Path:
+    route_root = run_root / "routes"
+    candidates = sorted(route_root.glob("*/flow.draft.json")) if route_root.exists() else []
+    if not candidates:
+        raise RouterError("route check requires a route draft")
+    if len(candidates) > 1:
+        raise RouterError("route check requires an unambiguous current route draft")
+    return candidates[0]
+
+
 def _latest_event_payload(run_state: dict[str, Any], event_name: str) -> dict[str, Any]:
     for event in reversed(run_state.get("events", [])):
         if isinstance(event, dict) and event.get("event") == event_name:
@@ -3443,6 +4456,15 @@ def _load_packet_index(path: Path, *, label: str) -> dict[str, Any]:
     return index
 
 
+def _ensure_barrier_bundles_ready(project_root: Path, *, node_id: str | None = None) -> None:
+    audit = packet_runtime.audit_barrier_bundles(project_root, node_id=node_id or None)
+    if not audit.get("passed"):
+        raise RouterError(
+            "barrier bundle audit failed before packet relay: "
+            + json.dumps(audit.get("blockers", []), sort_keys=True)
+        )
+
+
 def _material_scan_index_path(run_root: Path) -> Path:
     return run_root / "material" / "material_scan_packets.json"
 
@@ -3464,6 +4486,7 @@ def _relay_packet_records(
         if not envelope_path.exists():
             raise RouterError(f"packet envelope is missing: {envelope_path}")
         envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        _ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
             envelope=envelope,
@@ -3494,6 +4517,7 @@ def _relay_result_records(
             raise RouterError(f"result envelope must route to {to_role}")
         if result.get("completed_by_role") == "controller":
             raise RouterError("Controller-origin result is invalid")
+        _ensure_barrier_bundles_ready(project_root, node_id=str(result.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
             envelope=result,
@@ -3648,6 +4672,9 @@ def _resume_waits_for_pm_decision(run_state: dict[str, Any]) -> bool:
 
 
 def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("decision_owner") != "project_manager":
+        raise RouterError("PM resume decision requires decision_owner=project_manager")
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="PM resume decision")
     resume_path = run_root / "continuation" / "resume_reentry.json"
     if not resume_path.exists():
@@ -3728,6 +4755,7 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
                 "controller_may_create_project_evidence": False,
             },
             "recorded_at": utc_now(),
+            **_role_output_envelope_record(payload),
         },
     )
     _write_display_plan_from_pm_payload(
@@ -3894,6 +4922,7 @@ def _write_parent_backward_targets(project_root: Path, run_root: Path, run_state
 
 
 def _write_parent_backward_replay(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
     frontier = _active_frontier(run_root)
     if not _active_node_has_children(run_root, frontier):
         raise RouterError("parent backward replay is required only for active nodes with children")
@@ -3934,11 +4963,15 @@ def _write_parent_backward_replay(project_root: Path, run_root: Path, run_state:
             "unresolved_blocking_findings": 0,
             "parent_closure_allowed": False,
         },
+        **_role_output_envelope_record(payload),
     }
     write_json(_active_node_root(run_root, frontier) / "parent_backward_replay.json", replay)
 
 
-def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> str:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("decision_owner") != "project_manager":
+        raise RouterError("parent segment decision requires decision_owner=project_manager")
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="parent segment decision")
     frontier = _active_frontier(run_root)
     replay_path = _active_node_root(run_root, frontier) / "parent_backward_replay.json"
@@ -3964,6 +4997,7 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
             "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
         },
         "recorded_at": utc_now(),
+        **_role_output_envelope_record(payload),
     }
     write_json(_active_node_root(run_root, frontier) / "pm_parent_segment_decision.json", record)
     if decision != "continue":
@@ -3981,6 +5015,7 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
                 "prior_path_context_review": payload.get("prior_path_context_review"),
             },
         )
+    return decision
 
 
 def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -4026,6 +5061,10 @@ def _validate_current_node_result_event(project_root: Path, run_state: dict[str,
 
 def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "human_like_reviewer":
+        raise RouterError("current-node reviewer pass must be reviewed_by_role=human_like_reviewer")
+    if payload.get("passed") is not True:
+        raise RouterError("current-node reviewer pass must explicitly pass")
     packet_envelope, _ = _current_node_packet_context(project_root, run_state)
     result_envelope, _ = _current_node_result_context(project_root, run_state)
     raw_agent_map = payload.get("agent_role_map")
@@ -4040,27 +5079,39 @@ def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str
         raise RouterError(f"reviewer pass rejected by packet audit: {audit.get('blockers')}")
 
 
+def _route_payload_from_reviewed_draft(project_root: Path, run_root: Path, payload: dict[str, Any]) -> tuple[dict[str, Any], Path]:
+    draft_path = _current_route_draft_path(run_root)
+    draft = read_json(draft_path)
+    supplied_route = payload.get("route")
+    route_payload = dict(supplied_route) if isinstance(supplied_route, dict) else dict(draft)
+    route_payload["schema_version"] = "flowpilot.route.v1"
+    route_payload["activated_from_draft_path"] = project_relative(project_root, draft_path)
+    route_payload["activated_from_draft_hash"] = hashlib.sha256(draft_path.read_bytes()).hexdigest()
+    route_payload["reviewed_route_activation_source"] = "flow.draft.json"
+    if not route_payload.get("nodes"):
+        raise RouterError("reviewed route activation requires non-empty reviewed route draft nodes")
+    return route_payload, draft_path
+
+
 def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    route_id = str(payload.get("route_id") or "route-001")
-    active_node_id = str(payload.get("active_node_id") or payload.get("node_id") or "node-001")
-    route_version = int(payload.get("route_version") or 1)
+    route_payload, draft_path = _route_payload_from_reviewed_draft(project_root, run_root, payload)
+    route_id = str(payload.get("route_id") or route_payload.get("route_id") or draft_path.parent.name or "route-001")
+    route_payload["route_id"] = route_id
+    route_version = int(payload.get("route_version") or route_payload.get("route_version") or 1)
+    route_payload["route_version"] = route_version
+    route_nodes = _iter_route_nodes(route_payload)
+    first_node = route_nodes[0] if route_nodes else {}
+    active_node_id = str(
+        payload.get("active_node_id")
+        or payload.get("node_id")
+        or route_payload.get("active_node_id")
+        or first_node.get("node_id")
+        or first_node.get("id")
+        or "node-001"
+    )
     route_root = run_root / "routes" / route_id
-    route_payload = payload.get("route")
-    if not isinstance(route_payload, dict):
-        route_payload = {
-            "schema_version": "flowpilot.route.v1",
-            "route_id": route_id,
-            "route_version": route_version,
-            "active_node_id": active_node_id,
-            "source": "pm_reviewed_route_activation",
-            "nodes": [
-                {
-                    "node_id": active_node_id,
-                    "status": "active",
-                    "title": "Current node",
-                }
-            ],
-        }
+    route_payload["active_node_id"] = active_node_id
+    route_payload["source"] = "pm_activates_reviewed_route"
     route_payload["updated_at"] = utc_now()
     write_json(route_root / "flow.json", route_payload)
     frontier = {
@@ -4622,6 +5673,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
 
 
 def _write_terminal_backward_replay(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("reviewed_by_role") != "human_like_reviewer":
         raise RouterError("terminal backward replay must be reviewed_by_role=human_like_reviewer")
     if payload.get("passed") is not True:
@@ -4722,6 +5774,7 @@ def _write_terminal_backward_replay(project_root: Path, run_root: Path, run_stat
             "segment_reviews": segment_reviews,
             "report_only_allowed": False,
             "reviewed_at": utc_now(),
+            **_role_output_envelope_record(payload),
         },
     )
 
@@ -5017,6 +6070,7 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
     if not flags.get("resume_reentry_requested"):
         return None
     if not flags.get("resume_state_loaded"):
+        resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
         return make_action(
             action_type="load_resume_state",
             actor="controller",
@@ -5047,6 +6101,7 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
                 "sealed_body_reads_allowed": False,
                 "chat_history_progress_inference_allowed": False,
                 "role_rehydration_required_before_pm_resume_decision": True,
+                "resume_next_recipient_from_packet_ledger": resume_next,
             },
         )
     if not flags.get("resume_roles_restored"):
@@ -5085,7 +6140,10 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
     last_sync = run_state.get("visible_plan_sync") if isinstance(run_state.get("visible_plan_sync"), dict) else {}
     if last_sync.get("projection_hash") == sync_payload["projection_hash"]:
         return None
-    allowed_writes = [project_relative(project_root, run_state_path(run_root))]
+    allowed_writes = [
+        project_relative(project_root, run_state_path(run_root)),
+        project_relative(project_root, _route_state_snapshot_path(run_root)),
+    ]
     if not sync_payload["display_plan_exists"]:
         allowed_writes.append(project_relative(project_root, _display_plan_path(run_root)))
     return make_action(
@@ -5095,6 +6153,7 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
         summary="Replace the host visible plan from the run display_plan.json, or clear it to a waiting-for-PM placeholder before PM writes a route.",
         allowed_reads=[
             project_relative(project_root, _display_plan_path(run_root)),
+            project_relative(project_root, _route_state_snapshot_path(run_root)),
             project_relative(project_root, run_state_path(run_root)),
         ],
         allowed_writes=allowed_writes,
@@ -5111,11 +6170,15 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
         return None
     if flags.get("startup_display_status_written"):
         return None
+    route_sign = _startup_route_sign_payload(project_root, write=False, mark_chat_displayed=False)
+    answers = _startup_answers_from_run(run_root)
+    requested_display_surface = str(answers.get("display_surface") or "chat")
+    cockpit_requested = requested_display_surface == "cockpit"
     return make_action(
         action_type="write_display_surface_status",
         actor="controller",
         label="controller_writes_startup_display_surface_status",
-        summary="Write startup display-surface status and a chat route sign after PM startup activation.",
+        summary="Display the startup FlowPilot Route Sign Mermaid in chat, then write startup display-surface status after PM startup activation.",
         allowed_reads=[
             project_relative(project_root, run_root / "startup_answers.json"),
             project_relative(project_root, run_root / "startup" / "startup_activation.json"),
@@ -5124,9 +6187,25 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
         allowed_writes=[
             project_relative(project_root, run_root / "display" / "display_surface.json"),
             project_relative(project_root, run_root / "diagrams" / "current_route_sign.md"),
+            project_relative(project_root, run_root / "diagrams" / "user-flow-diagram.mmd"),
+            project_relative(project_root, run_root / "diagrams" / "user-flow-diagram.md"),
+            project_relative(project_root, run_root / "diagrams" / "user-flow-diagram-display.json"),
             project_relative(project_root, run_state_path(run_root)),
         ],
-        extra={"postcondition": "startup_display_status_written"},
+        extra={
+            "postcondition": "startup_display_status_written",
+            "display_text": route_sign["markdown"],
+            "display_text_format": "markdown_mermaid",
+            "controller_must_display_text_before_apply": True,
+            "generated_files_alone_satisfy_chat_display": False,
+            "chat_display_required": route_sign["chat_display_required"],
+            "route_sign_mermaid_sha256": route_sign["mermaid_sha256"],
+            "requested_display_surface": requested_display_surface,
+            "resolved_display_surface": "chat-fallback" if cockpit_requested else "chat-requested",
+            "cockpit_probe_required_for_requested_cockpit": cockpit_requested,
+            "reviewer_fallback_check_required_for_requested_cockpit": cockpit_requested,
+            "fallback_is_display_only_not_product_ui_completion": True,
+        },
     )
 
 
@@ -5400,7 +6479,9 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if run_state.get("pending_action"):
         return run_state["pending_action"]
     _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
-    action = _next_display_plan_action(project_root, run_state, run_root)
+    action = _next_control_blocker_action(project_root, run_state, run_root)
+    if action is None:
+        action = _next_display_plan_action(project_root, run_state, run_root)
     if action is None:
         action = _next_resume_action(project_root, run_state, run_root)
     if action is None:
@@ -5552,6 +6633,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         envelope, envelope_path = _current_node_packet_context(project_root, run_state)
         if not run_state["flags"].get("current_node_dispatch_allowed"):
             raise RouterError("current-node packet relay requires reviewer dispatch allowance")
+        _ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
             envelope=envelope,
@@ -5568,6 +6650,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         result, result_path = _current_node_result_context(project_root, run_state)
         if not run_state["flags"].get("current_node_worker_result_returned"):
             raise RouterError("current-node result relay requires worker result event")
+        _ensure_barrier_bundles_ready(project_root, node_id=str(result.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
             envelope=result,
@@ -5579,6 +6662,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["current_node_result_relayed_to_reviewer"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "load_resume_state":
+        resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
         required_paths = {
             "current_pointer": project_root / ".flowpilot" / "current.json",
             "router_state": run_state_path(run_root),
@@ -5620,6 +6704,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "controller_may_infer_route_progress_from_chat_history": False,
             "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
             "display_plan_projection": _display_plan_sync_payload(project_root, run_root, run_state)["native_plan_projection"],
+            "resume_next_recipient_from_packet_ledger": resume_next,
             "pm_resume_decision_required": True,
             "ambiguous_state_blocks_controller_execution": bool(missing) or len(crew_memory_files) != len(CREW_ROLE_KEYS),
         }
@@ -5636,8 +6721,12 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         if not sync_payload["display_plan_exists"]:
             write_json(_display_plan_path(run_root), _waiting_for_pm_display_plan(run_state))
             sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+        _write_route_state_snapshot(project_root, run_root, run_state, source_event="sync_display_plan")
+        sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         run_state["visible_plan_sync"] = {
             "display_plan_path": sync_payload["display_plan_path"],
+            "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
+            "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
             "projection_hash": sync_payload["projection_hash"],
             "synced_at": utc_now(),
             "host_action": sync_payload["host_action"],
@@ -5645,6 +6734,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     elif action_type == "write_display_surface_status":
         _write_display_surface_status(project_root, run_root, run_state)
         run_state["flags"]["startup_display_status_written"] = True
+    elif action_type == "handle_control_blocker":
+        _mark_control_blocker_delivered(project_root, run_root, run_state, pending)
     elif action_type == "await_role_decision":
         return {"ok": True, "applied": action_type, "waiting": True}
     else:
@@ -5659,7 +6750,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     return result
 
 
-def record_external_event(project_root: Path, event: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def _record_external_event_unchecked(project_root: Path, event: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
     if event not in EXTERNAL_EVENTS:
         raise RouterError(f"unknown external event: {event}")
     bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
@@ -5669,6 +6760,7 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
     meta = EXTERNAL_EVENTS[event]
     flag = meta["flag"]
     required_flag = meta.get("requires_flag")
+    parent_segment_decision: str | None = None
     if required_flag and not run_state["flags"].get(required_flag):
         raise RouterError(f"event {event} requires {required_flag}")
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"before_external_event:{event}")
@@ -5702,7 +6794,32 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
         _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
         save_run_state(run_root, run_state)
         return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
-    if run_state["flags"].get(flag):
+    active_blocker = run_state.get("active_control_blocker")
+    repeatable_pm_repair_decision = (
+        event == "pm_records_control_blocker_repair_decision"
+        and isinstance(active_blocker, dict)
+        and active_blocker.get("delivery_status") == "delivered"
+        and active_blocker.get("handling_lane") == "pm_repair_decision_required"
+    )
+    if run_state["flags"].get(flag) and not repeatable_pm_repair_decision:
+        resolved = _resolve_delivered_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            resolved_by_event=event,
+            from_already_recorded_event=True,
+        )
+        if resolved:
+            run_state["pending_action"] = None
+            _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_already_recorded_event:{event}")
+            save_run_state(run_root, run_state)
+            return {
+                "ok": True,
+                "event": event,
+                "already_recorded": True,
+                "control_blocker_resolved": True,
+                "blocker_id": resolved.get("blocker_id"),
+            }
         return {"ok": True, "event": event, "already_recorded": True}
     payload = payload or {}
     if event == "pm_activates_reviewed_route":
@@ -5888,6 +7005,52 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
         _sync_capability_evidence(project_root, run_root, run_state, payload)
     elif event == "pm_writes_route_draft":
         _write_route_draft(project_root, run_root, run_state, payload)
+    elif event == "process_officer_passes_route_check":
+        _write_role_gate_report(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            expected_role="process_flowguard_officer",
+            path=run_root / "flowguard" / "route_process_check.json",
+            schema_version="flowpilot.route_process_check.v1",
+            checked_paths=[
+                _current_route_draft_path(run_root),
+                run_root / "root_acceptance_contract.json",
+                run_root / "child_skill_gate_manifest.json",
+            ],
+        )
+    elif event == "product_officer_passes_route_check":
+        _write_role_gate_report(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            expected_role="product_flowguard_officer",
+            path=run_root / "flowguard" / "route_product_check.json",
+            schema_version="flowpilot.route_product_check.v1",
+            checked_paths=[
+                _current_route_draft_path(run_root),
+                run_root / "product_function_architecture.json",
+                run_root / "root_acceptance_contract.json",
+                run_root / "flowguard" / "route_process_check.json",
+            ],
+        )
+    elif event == "reviewer_passes_route_check":
+        _write_role_gate_report(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            expected_role="human_like_reviewer",
+            path=run_root / "reviews" / "route_challenge.json",
+            schema_version="flowpilot.route_review.v1",
+            checked_paths=[
+                _current_route_draft_path(run_root),
+                run_root / "flowguard" / "route_process_check.json",
+                run_root / "flowguard" / "route_product_check.json",
+            ],
+        )
     elif event == "pm_registers_current_node_packet":
         _validate_current_node_packet_event(project_root, run_root, run_state, payload)
     elif event == "worker_current_node_result_returned":
@@ -5899,7 +7062,7 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
     elif event == "reviewer_passes_parent_backward_replay":
         _write_parent_backward_replay(project_root, run_root, run_state, payload)
     elif event == "pm_records_parent_segment_decision":
-        _write_parent_segment_decision(project_root, run_root, run_state, payload)
+        parent_segment_decision = _write_parent_segment_decision(project_root, run_root, run_state, payload)
     elif event == "pm_completes_current_node_from_reviewed_result":
         _mark_frontier_node_completed(project_root, run_root, run_state, payload)
     elif event == "pm_records_evidence_quality_package":
@@ -5925,6 +7088,8 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
         _write_terminal_backward_replay(project_root, run_root, run_state, payload)
     elif event == "pm_mutates_route_after_review_block":
         _write_route_mutation(project_root, run_root, run_state, payload)
+    elif event == "pm_records_control_blocker_repair_decision":
+        _write_control_blocker_repair_decision(project_root, run_root, run_state, payload)
     elif event == "pm_approves_terminal_closure":
         _write_terminal_closure_suite(project_root, run_root, run_state, payload)
     elif event == "pm_accepts_reviewed_material":
@@ -5940,7 +7105,7 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
         "recorded_at": utc_now(),
     }
     run_state["flags"][flag] = True
-    if event == "pm_records_parent_segment_decision" and str(payload.get("decision") or "continue") != "continue":
+    if event == "pm_records_parent_segment_decision" and (parent_segment_decision or "continue") != "continue":
         run_state["flags"][flag] = False
     if event == "pm_absorbs_reviewed_research":
         run_state["flags"]["material_accepted_by_pm"] = True
@@ -5950,10 +7115,30 @@ def record_external_event(project_root: Path, event: str, payload: dict[str, Any
     elif event == "reviewer_reports_material_insufficient":
         run_state["material_review"] = "insufficient"
     append_history(run_state, event, payload)
+    _resolve_delivered_control_blocker(project_root, run_root, run_state, resolved_by_event=event)
     run_state["pending_action"] = None
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
     save_run_state(run_root, run_state)
     return {"ok": True, "event": event}
+
+
+def record_external_event(project_root: Path, event: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    try:
+        return _record_external_event_unchecked(project_root, event, payload)
+    except (RouterError, packet_runtime.PacketRuntimeError) as exc:
+        existing_blocker = getattr(exc, "control_blocker", None)
+        if isinstance(existing_blocker, dict):
+            raise
+        blocker = _try_write_control_blocker_for_exception(
+            project_root,
+            source="router.record_external_event",
+            error_message=str(exc),
+            event=event,
+            payload=payload,
+        )
+        if blocker:
+            raise RouterError(str(exc), control_blocker=blocker) from exc
+        raise
 
 
 def apply_action(project_root: Path, action_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -5961,7 +7146,64 @@ def apply_action(project_root: Path, action_type: str, payload: dict[str, Any] |
     pending = bootstrap.get("pending_action")
     if isinstance(pending, dict) and pending.get("action_type") == action_type:
         return apply_bootloader_action(project_root, action_type, payload)
-    return apply_controller_action(project_root, action_type, payload)
+    try:
+        return apply_controller_action(project_root, action_type, payload)
+    except (RouterError, packet_runtime.PacketRuntimeError) as exc:
+        existing_blocker = getattr(exc, "control_blocker", None)
+        if isinstance(existing_blocker, dict):
+            raise
+        blocker = _try_write_control_blocker_for_exception(
+            project_root,
+            source="router.apply_controller_action",
+            error_message=str(exc),
+            action_type=action_type,
+            payload=payload,
+        )
+        if blocker:
+            raise RouterError(str(exc), control_blocker=blocker) from exc
+        raise
+
+
+def write_role_output_envelope(
+    project_root: Path,
+    *,
+    output_path: str,
+    body: dict[str, Any] | None = None,
+    body_file: str | None = None,
+    path_key: str = "report_path",
+    hash_key: str = "report_hash",
+    event_name: str | None = None,
+    from_role: str | None = None,
+    to_role: str = "controller",
+) -> dict[str, Any]:
+    if path_key not in {"body_path", "report_path", "decision_path", "result_body_path"}:
+        raise RouterError(f"unsupported role envelope path key: {path_key}")
+    if hash_key not in {"body_hash", "report_hash", "decision_hash", "result_body_hash"}:
+        raise RouterError(f"unsupported role envelope hash key: {hash_key}")
+    path = resolve_project_path(project_root, output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if body_file:
+        source_path = resolve_project_path(project_root, body_file)
+        if not source_path.exists():
+            raise RouterError(f"role output body file is missing: {body_file}")
+        path.write_bytes(source_path.read_bytes())
+    elif body is not None:
+        write_json(path, body)
+    elif not path.exists():
+        raise RouterError("role output envelope requires body-json, body-file, or an existing output path")
+    body_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    envelope = {
+        "schema_version": ROLE_OUTPUT_ENVELOPE_SCHEMA,
+        path_key: project_relative(project_root, path),
+        hash_key: body_hash,
+        "controller_visibility": "role_output_envelope_only",
+        "chat_response_body_allowed": False,
+        "from_role": from_role,
+        "to_role": to_role,
+    }
+    if event_name:
+        envelope["event_name"] = event_name
+    return envelope
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -5980,6 +7222,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     event_parser.add_argument("--event", required=True)
     event_parser.add_argument("--payload-json", default="")
     event_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    envelope_parser = sub.add_parser("role-output-envelope", help="Write a role output body and return a controller-visible envelope")
+    envelope_parser.add_argument("--output-path", required=True)
+    envelope_parser.add_argument("--body-json", default="")
+    envelope_parser.add_argument("--body-file", default="")
+    envelope_parser.add_argument("--path-key", default="report_path")
+    envelope_parser.add_argument("--hash-key", default="report_hash")
+    envelope_parser.add_argument("--event-name", default="")
+    envelope_parser.add_argument("--from-role", default="")
+    envelope_parser.add_argument("--to-role", default="controller")
+    envelope_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     state_parser = sub.add_parser("state", help="Print bootstrap and current run router state")
     state_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     return parser.parse_args(argv)
@@ -5997,13 +7249,32 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "record-event":
             payload = json.loads(args.payload_json) if args.payload_json else {}
             result = record_external_event(root, args.event, payload)
+        elif args.command == "role-output-envelope":
+            body = json.loads(args.body_json) if args.body_json else None
+            result = write_role_output_envelope(
+                root,
+                output_path=args.output_path,
+                body=body,
+                body_file=args.body_file or None,
+                path_key=args.path_key,
+                hash_key=args.hash_key,
+                event_name=args.event_name or None,
+                from_role=args.from_role or None,
+                to_role=args.to_role,
+            )
         elif args.command == "state":
             bootstrap = load_bootstrap_state(root, create_if_missing=False)
             run_state, run_root = load_run_state(root, bootstrap)
+            active_ui_task_catalog = (
+                _active_ui_task_catalog(root, run_root, run_state)
+                if run_state is not None and run_root is not None
+                else {"schema_version": "flowpilot.active_ui_task_catalog.v1", "active_tasks": []}
+            )
             result = {
                 "bootstrap": bootstrap,
                 "run_root": str(run_root) if run_root else None,
                 "run_state": run_state,
+                "active_ui_task_catalog": active_ui_task_catalog,
             }
         else:
             raise RouterError(f"unknown command: {args.command}")
@@ -6011,6 +7282,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except Exception as exc:
         error = {"ok": False, "error": str(exc)}
+        control_blocker = getattr(exc, "control_blocker", None)
+        if isinstance(control_blocker, dict):
+            error["control_blocker"] = control_blocker
+            error["blocker_artifact_path"] = control_blocker.get("blocker_artifact_path")
+            error["handling_lane"] = control_blocker.get("handling_lane")
+            error["controller_instruction"] = control_blocker.get("controller_instruction")
         print(json.dumps(error, indent=2, sort_keys=True))
         return 2
 

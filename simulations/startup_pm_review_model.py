@@ -87,6 +87,11 @@ class State:
     reviewer_verified_background_agent_fallback_needed: bool = False
     reviewer_verified_scheduled_continuation_fallback_needed: bool = False
     reviewer_verified_cockpit_fallback_needed: bool = False
+    startup_reviewer_report_file_backed: bool = False
+    pm_startup_activation_decision_file_backed: bool = False
+    controller_direct_reviewer_recheck_requested: bool = False
+    controller_inspected_router_hard_checks: bool = False
+    controller_free_text_authority_used: bool = False
     worker_claimed_capability_unavailable: bool = False
     startup_review_status: str = "pending"  # pending | blocked | clean
     worker_remediation_done: bool = False
@@ -317,7 +322,9 @@ def startup_ready_for_pm_open(state: State) -> bool:
         and cleanup_matches_request(state)
         and reviewer_fact_scope_complete(state)
         and state.startup_review_status == "clean"
+        and state.startup_reviewer_report_file_backed
         and state.pm_independent_gate_audit_done
+        and state.pm_startup_activation_decision_file_backed
         and not state.reviewer_opened_start_gate
         and not state.shadow_route_detected
     )
@@ -534,8 +541,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if state.startup_review_status == "pending":
         if not state.worker_remediation_done:
-            yield Transition("startup_preflight_reviewer_fact_report_blocked", replace(state, startup_review_status="blocked"))
-        yield Transition("startup_preflight_reviewer_fact_report_clean", replace(state, startup_review_status="clean"))
+            yield Transition(
+                "startup_preflight_reviewer_fact_report_blocked",
+                replace(state, startup_review_status="blocked", startup_reviewer_report_file_backed=True),
+            )
+        yield Transition(
+            "startup_preflight_reviewer_fact_report_clean",
+            replace(state, startup_review_status="clean", startup_reviewer_report_file_backed=True),
+        )
         return
     if state.startup_review_status == "blocked" and state.pm_start_gate_decision == "pending":
         yield Transition("pm_returns_startup_blockers_to_worker", replace(state, pm_start_gate_decision="return_to_worker"))
@@ -547,7 +560,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 worker_remediation_done=True,
                 startup_review_status="pending",
+                startup_reviewer_report_file_backed=False,
                 pm_start_gate_decision="pending",
+                pm_startup_activation_decision_file_backed=False,
                 reviewer_checked_user_authorization=False,
                 reviewer_checked_route_state_frontier=False,
                 reviewer_checked_run_isolation=False,
@@ -603,7 +618,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.startup_review_status == "clean" and state.pm_start_gate_decision == "pending":
         yield Transition(
             "pm_start_gate_opened_from_fact_report",
-            replace(state, pm_start_gate_decision="open", work_beyond_startup_allowed=True),
+            replace(
+                state,
+                pm_start_gate_decision="open",
+                pm_startup_activation_decision_file_backed=True,
+                work_beyond_startup_allowed=True,
+            ),
         )
         return
     if not state.route_execution_started:
@@ -673,12 +693,22 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer wrote a clean startup report without checking run isolation and prior-work boundary")
     if state.startup_review_status == "clean" and not reviewer_fact_scope_complete(state):
         failures.append("reviewer wrote a clean startup report without independently checking required facts")
+    if state.startup_review_status in {"blocked", "clean"} and not state.startup_reviewer_report_file_backed:
+        failures.append("reviewer startup fact report was accepted without a file-backed report envelope")
     if state.pm_start_gate_decision == "open" and not startup_ready_for_pm_open(state):
         failures.append("PM opened startup without a current clean factual reviewer report, verified startup facts, and independent PM audit")
     if state.pm_start_gate_decision == "open" and state.startup_review_status != "clean":
         failures.append("PM opened startup without a clean reviewer report")
+    if state.pm_start_gate_decision == "open" and not state.pm_startup_activation_decision_file_backed:
+        failures.append("PM startup activation was accepted without a file-backed decision envelope")
     if state.pm_start_gate_decision == "open" and not state.pm_independent_gate_audit_done:
         failures.append("PM opened startup without independently auditing startup gate evidence")
+    if state.controller_direct_reviewer_recheck_requested:
+        failures.append("Controller directly requested reviewer recheck through free text instead of router-authorized mail")
+    if state.controller_inspected_router_hard_checks:
+        failures.append("Controller inspected router hard-check internals instead of using black-box router actions")
+    if state.controller_free_text_authority_used:
+        failures.append("Controller free text was treated as role authority")
     if state.pm_start_gate_decision == "open" and not cleanup_matches_request(state):
         failures.append("PM opened startup before old-route cleanup matched the user request")
     if state.pm_start_gate_decision == "open" and not run_isolation_ready(state):
@@ -899,7 +929,9 @@ def _ready_base(**changes: object) -> State:
         reviewer_probed_scheduled_continuation_capability=True,
         reviewer_probed_cockpit_capability=True,
         startup_review_status="clean",
+        startup_reviewer_report_file_backed=True,
         pm_independent_gate_audit_done=True,
+        pm_startup_activation_decision_file_backed=True,
     )
     return replace(base, **changes)
 
@@ -964,6 +996,23 @@ def hazard_states() -> dict[str, State]:
         ),
         "reviewer_clean_without_fact_checks": _ready_base(
             reviewer_checked_continuation_evidence=False,
+        ),
+        "reviewer_clean_report_not_file_backed": _ready_base(
+            startup_reviewer_report_file_backed=False,
+        ),
+        "pm_opens_from_inline_activation_decision": _ready_base(
+            pm_startup_activation_decision_file_backed=False,
+            pm_start_gate_decision="open",
+            work_beyond_startup_allowed=True,
+        ),
+        "controller_directs_reviewer_recheck": _ready_base(
+            controller_direct_reviewer_recheck_requested=True,
+        ),
+        "controller_reads_router_hard_checks": _ready_base(
+            controller_inspected_router_hard_checks=True,
+        ),
+        "controller_free_text_has_role_authority": _ready_base(
+            controller_free_text_authority_used=True,
         ),
         "reviewer_clean_without_run_isolation_check": _ready_base(
             reviewer_checked_run_isolation=False,

@@ -11,8 +11,7 @@ FlowPilot is a prompt-isolated router skill. This file stays small so activation
 
 Use FlowPilot only after an explicit user request in the current thread. If the user is editing, auditing, discussing, or repairing this skill, treat that as ordinary repository work unless they ask to run a formal FlowPilot route.
 
-Do not infer activation from task size, repository type, UI work, heartbeat
-language, or the presence of a `.flowpilot/` directory.
+Do not infer activation from task size, repository type, UI work, heartbeat language, or `.flowpilot/`.
 
 ## Required Launcher Behavior
 
@@ -60,8 +59,10 @@ values plus `provenance: explicit_user_reply`. Do not infer, summarize, or
 default the answers yourself. The router, not this skill file, decides the next
 action.
 
-When the router returns `emit_startup_banner`, display the returned `display_text`
-to the user before continuing. A path or state flag alone does not count.
+The startup banner and FlowPilot Route Sign are user-facing display text. When
+the router returns `display_text` for either one, paste that exact text into the
+chat before applying the action or continuing. Generated files, paths, flags,
+and state records do not count.
 
 When the router returns `record_user_request`, pass the exact current formal
 FlowPilot task text as `payload.user_request.text` with

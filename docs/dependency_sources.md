@@ -15,8 +15,10 @@ state.
 
 | Dependency | Source |
 | --- | --- |
+| `flowpilot` | `https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot` |
 | `model-first-function-flow` | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
 | `grill-me` | `https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me` |
+| `autonomous-concept-ui-redesign` | `https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign` |
 | `frontend-design` | `https://github.com/anthropics/skills/tree/main/skills/frontend-design` |
 | `design-iterator` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator` |
 | `design-implementation-reviewer` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-implementation-reviewer` |
@@ -53,10 +55,9 @@ installed and readable.
 FlowPilot uses `flowpilot.dependencies.json` as the installer-readable source of
 truth. The manifest distinguishes:
 
-- `copy_from_this_repository` for FlowPilot itself;
+- `github` for FlowPilot itself and required or companion skills that can be
+  installed from an explicit public repository path;
 - `python_environment` for the real `flowguard` package;
-- `github` for required or companion skills that can be installed from an
-  explicit public repository path;
 - `host_capabilities` for host-specific tools whose names differ across AI
   agents.
 
@@ -68,7 +69,10 @@ missing companions. The installer skips existing local skills by default and
 does not publish or mutate companion skill repositories.
 
 Use `scripts/install_flowpilot.py --sync-repo-owned` to refresh stale or
-missing repository-owned Codex skills from the current checkout. Use
+missing repository-owned Codex skills from the current checkout when a
+dependency also declares `repo_path` and `install.local_sync_mode:
+copy_from_repo`. This is a local development sync path only; public install
+source remains the GitHub source declared in the dependency entry. Use
 `scripts/audit_local_install_sync.py` before publishing or handoff to confirm
 that repo-owned installed skills are source-fresh, installed skill names are
 unique, and the legacy Cockpit prototype is absent from the active source

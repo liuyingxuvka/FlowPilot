@@ -1,0 +1,55 @@
+{
+  "schema_version": "flowpilot.barrier_bundle.v1",
+  "bundle_id": "<barrier-id>-<route-id>-<route-version-or-node-id>",
+  "barrier_id": "<startup|material|product_architecture|root_contract|child_skill_manifest|route_skeleton|current_node|parent_backward|final_closure>",
+  "node_id": "<node-id-or-null>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "equivalence_mode": "preserve_existing_packet_semantics",
+  "status": "<pending|passed|blocked|superseded>",
+  "member_packet_ids": [],
+  "obligations": [
+    {
+      "id": "<legacy-obligation-id>",
+      "status": "<passed|blocked|pending>",
+      "evidence_paths": [],
+      "evidence_hashes": []
+    }
+  ],
+  "role_slices": [
+    {
+      "role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|controller>",
+      "expected_role": "<same-role>",
+      "status": "<passed|blocked|pending>",
+      "evidence_path": "<path-or-null>",
+      "evidence_hash": "<sha256-or-null>"
+    }
+  ],
+  "controller_boundary": {
+    "controller_read_sealed_body": false,
+    "controller_originated_evidence": false,
+    "controller_summarized_body": false,
+    "ai_discretion_used": false
+  },
+  "cache_reuse": {
+    "claimed": false,
+    "input_hash_same": true,
+    "source_hash_same": true,
+    "evidence_hash_valid": true,
+    "invalidated": false
+  },
+  "route_mutation_recorded": false,
+  "stale_evidence_marked": false,
+  "frontier_rewritten_after_mutation": false,
+  "stale_evidence_used": false,
+  "cumulative_obligations": [],
+  "final_ledger_clean": false,
+  "terminal_backward_replay_passed": false,
+  "validation": {
+    "schema_version": "flowpilot.barrier_bundle_validation.v1",
+    "validated_by": "<process_flowguard_officer|product_flowguard_officer|human_like_reviewer|project_manager>",
+    "validated_at": "<iso-8601-timestamp-or-null>",
+    "passed": false,
+    "blockers": []
+  }
+}

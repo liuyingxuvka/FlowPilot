@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 580208,
+    "edge_count": 582582,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -74,6 +74,7 @@
       "crew_rehydration_report_written",
       "current_child_skill_gate_independent_validation_done",
       "current_node_high_standard_recheck_written",
+      "current_node_minimum_sufficient_complexity_review_written",
       "current_pointer_written",
       "defect_ledger_initialized",
       "defect_ledger_zero_blocking",
@@ -166,6 +167,7 @@
       "parent_backward_review_targets_enumerated",
       "parent_backward_structural_trigger_rule_recorded",
       "pm_capability_work_decision_recorded",
+      "pm_child_skill_minimum_sufficient_complexity_review_written",
       "pm_child_skill_selection_manifest_written",
       "pm_child_skill_selection_scope_decisions_recorded",
       "pm_completion_decision_recorded",
@@ -200,6 +202,7 @@
       "product_function_display_rationale_written",
       "product_function_feature_decisions_written",
       "product_function_high_standard_posture_written",
+      "product_function_minimum_sufficient_complexity_review_written",
       "product_function_missing_feature_review_done",
       "product_function_negative_scope_written",
       "product_function_semantic_fidelity_policy_written",
@@ -289,29 +292,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 554749,
+    "state_count": 557123,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 580208,
+    "edge_count": 582582,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 554749,
+    "state_count": 557123,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 580208,
+    "edge_count": 582582,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 554749,
+    "state_count": 557123,
     "status": "OK",
     "success_state_count": 4368
   }

@@ -1,5 +1,11 @@
 {
   "canonical": true,
+  "minimum_sufficient_complexity_review": {
+    "principle": "Use the smallest route structure that can satisfy the frozen contract with the required proof strength.",
+    "simpler_equivalent_route_considered": true,
+    "rejected_extra_route_complexity": [],
+    "route_complexity_justifications": []
+  },
   "nodes": [
     {
       "allowed_next": [
@@ -39,7 +45,12 @@
         "work_beyond_startup_allowed_by_pm"
       ],
       "status": "pending",
-      "summary": "Run startup interrogation, complete material intake handoff, complete PM-owned product-function architecture, freeze the contract, generate a candidate route tree, and freeze the checked root model as the first route version."
+      "summary": "Run startup interrogation, complete material intake handoff, complete PM-owned product-function architecture, freeze the contract, generate a candidate route tree, and freeze the checked root model as the first route version.",
+      "complexity_review": {
+        "node_needed_reason": "Startup and route-freeze gate owns independent hard gates that cannot be safely merged with implementation work.",
+        "could_merge_with": [],
+        "merge_rejected_reason": null
+      }
     },
     {
       "allowed_next": [
@@ -56,7 +67,12 @@
         "unfinished_current_node_recovery_checked"
       ],
       "status": "pending",
-      "summary": "Review the current parent node's child subtree before entering child work."
+      "summary": "Review the current parent node's child subtree before entering child work.",
+      "complexity_review": {
+        "node_needed_reason": "Parent subtree review is a distinct structural proof gate before child work.",
+        "could_merge_with": [],
+        "merge_rejected_reason": null
+      }
     },
     {
       "allowed_next": [
@@ -77,7 +93,12 @@
         "child_skill_iteration_loop_closed"
       ],
       "status": "conditional",
-      "summary": "Verify invoked child skills followed their own workflow and quality standard before the parent node resumes."
+      "summary": "Verify invoked child skills followed their own workflow and quality standard before the parent node resumes.",
+      "complexity_review": {
+        "node_needed_reason": "Conditional child-skill conformance is separate only when a selected child skill adds its own required gates.",
+        "could_merge_with": [],
+        "merge_rejected_reason": "May be skipped when no selected child skill requires separate conformance evidence."
+      }
     },
     {
       "allowed_next": [
@@ -90,7 +111,12 @@
         "chunk_verification_defined"
       ],
       "status": "pending",
-      "summary": "Execute bounded implementation chunks with declared verification."
+      "summary": "Execute bounded implementation chunks with declared verification.",
+      "complexity_review": {
+        "node_needed_reason": "Implementation is separated from verification so worker output cannot close itself.",
+        "could_merge_with": [],
+        "merge_rejected_reason": null
+      }
     },
     {
       "allowed_next": [
@@ -107,7 +133,12 @@
         "completion_report"
       ],
       "status": "pending",
-      "summary": "Run final verification, rebuild the PM-owned dynamic route-wide gate ledger from the current route, replay it backward with the human-like reviewer, then emit completion evidence only when unresolved count is zero."
+      "summary": "Run final verification, rebuild the PM-owned dynamic route-wide gate ledger from the current route, replay it backward with the human-like reviewer, then emit completion evidence only when unresolved count is zero.",
+      "complexity_review": {
+        "node_needed_reason": "Final verification and ledger closure are distinct completion authority gates.",
+        "could_merge_with": [],
+        "merge_rejected_reason": null
+      }
     }
   ],
   "route_id": "route-001",

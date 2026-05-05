@@ -28,6 +28,7 @@ REQUIRED_LABELS = (
     "trigger_user_request_chat_required",
     "realtime_route_sign_generated",
     "return_edge_added",
+    "router_returned_chat_mermaid_display_text",
     "chat_mermaid_displayed",
     "cockpit_route_sign_displayed",
     "reviewer_checked_chat_route_sign",

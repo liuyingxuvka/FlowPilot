@@ -17,9 +17,18 @@ Include:
 - product capability map;
 - negative scope and explicit user prohibitions;
 - semantic fidelity risks and forbidden downgrades;
+- minimum sufficient complexity review;
 - highest achievable product target;
 - functional acceptance matrix;
 - evidence and validation implications for the root contract.
+
+Use Minimum Sufficient Complexity here. Every accepted capability, feature,
+surface, and visible element must be tied to a user task, a hard acceptance
+criterion, a verification need, or a real risk reduction. Put features or UI
+elements with no such support into negative scope or defer them with a revisit
+condition. If a simpler architecture can produce the same user-visible behavior
+with the same proof strength, choose it and record the rejected extra
+complexity.
 
 Do not draft or activate a route from this card. Reviewer challenge and Product
 FlowGuard Officer modelability must pass first.

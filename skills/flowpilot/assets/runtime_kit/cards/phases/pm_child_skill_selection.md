@@ -20,3 +20,10 @@ Read:
 Write `.flowpilot/runs/<run-id>/pm_child_skill_selection.json` with each
 candidate skill classified as `required`, `conditional`, `deferred`, or
 `rejected`. Raw inventory must never be route authority.
+
+Apply Minimum Sufficient Complexity to every candidate. `required` means the
+skill closes a product, verification, or safety gap that the simpler main route
+cannot reliably close. `conditional` must name the trigger. `deferred` and
+`rejected` are valid high-quality decisions when a skill would add handoffs,
+references, gates, or artifacts without changing the user's outcome or the
+proof needed to trust it.

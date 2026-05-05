@@ -77,6 +77,17 @@ def directory_digest(path: Path) -> str:
     return digest.hexdigest()
 
 
+def has_local_repo_source(dependency: dict[str, Any]) -> bool:
+    return (
+        dependency.get("type") == "codex_skill"
+        and bool(dependency.get("repo_path"))
+        and (
+            dependency.get("source", {}).get("kind") == "copy_from_this_repository"
+            or dependency.get("install", {}).get("local_sync_mode") == "copy_from_repo"
+        )
+    )
+
+
 def check_skill(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
     install_name = dependency.get("install_name") or dependency["name"]
     path = installed_skill_path(root, install_name)
@@ -96,7 +107,7 @@ def check_skill(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
             if expected and expected not in text:
                 result["ok"] = False
                 result.setdefault("errors", []).append(f"missing expected text: {expected}")
-    if dependency.get("repo_path") and dependency.get("source", {}).get("kind") == "copy_from_this_repository":
+    if has_local_repo_source(dependency):
         source_path = ROOT / dependency["repo_path"]
         result["source_path"] = str(source_path)
         if source_path.exists():
@@ -250,11 +261,7 @@ def install_skill(
 
 
 def is_repo_owned_skill(dependency: dict[str, Any]) -> bool:
-    return (
-        dependency.get("type") == "codex_skill"
-        and bool(dependency.get("repo_path"))
-        and dependency.get("source", {}).get("kind") == "copy_from_this_repository"
-    )
+    return has_local_repo_source(dependency)
 
 
 def dependency_status(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
@@ -374,7 +381,20 @@ def main() -> int:
                     }
                 )
                 continue
-            action = install_skill(root, dependency, dry_run=args.dry_run, force=True)
+            repo_copy_dependency = {
+                **dependency,
+                "source": {"kind": "copy_from_this_repository"},
+                "install": {
+                    **dependency.get("install", {}),
+                    "mode": "copy_from_repo",
+                },
+            }
+            action = install_skill(
+                root,
+                repo_copy_dependency,
+                dry_run=args.dry_run,
+                force=True,
+            )
             result["install_actions"].append(action)
             if not action.get("ok"):
                 result["ok"] = False

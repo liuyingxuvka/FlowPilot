@@ -12,12 +12,19 @@
     "frozen_contract_path": ".flowpilot/runs/<run-id>/contract.md"
   },
   "selection_rule": "Product capability needs choose skills. Local skill availability alone never creates route work.",
+  "minimum_sufficient_complexity_rule": {
+    "principle": "A child skill is required only when it closes a product, verification, safety, or workflow gap that the simpler main route cannot reliably close.",
+    "raw_availability_is_not_a_reason": true,
+    "deferred_or_rejected_is_valid_high_quality_decision": true
+  },
   "skill_decisions": [
     {
       "skill_name": "<skill-name>",
       "decision": "<required|conditional|deferred|rejected>",
       "decision_reason": "<why this follows from the product capability map>",
       "supported_product_capabilities": [],
+      "simpler_path_without_skill": "<viable|not_viable|unknown>",
+      "why_skill_complexity_is_justified": "<product-verification-safety-or-workflow-benefit-or-null>",
       "trigger_condition": "<when conditional or deferred becomes active>",
       "hard_gates_or_user_approval_needed": [],
       "route_inclusion": "<initial_route|current_node_only|defer_until_trigger|exclude>",

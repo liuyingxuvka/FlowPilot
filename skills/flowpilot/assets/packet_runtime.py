@@ -11,13 +11,17 @@ from pathlib import Path
 from typing import Any
 import re
 
+import barrier_bundle
+
 
 PACKET_ENVELOPE_SCHEMA = "flowpilot.packet_envelope.v1"
 RESULT_ENVELOPE_SCHEMA = "flowpilot.result_envelope.v1"
 CONTROLLER_HANDOFF_SCHEMA = "flowpilot.controller_handoff.v1"
 CONTROLLER_RELAY_SCHEMA = "flowpilot.controller_relay.v1"
+MUTUAL_ROLE_REMINDER_SCHEMA = "flowpilot.mutual_role_reminder.v1"
 CHAIN_AUDIT_SCHEMA = "flowpilot.packet_chain_audit.v1"
 PACKET_LEDGER_SCHEMA = "flowpilot.packet_ledger.v2"
+BARRIER_BUNDLE_SCHEMA = barrier_bundle.BARRIER_BUNDLE_SCHEMA
 PACKET_IDENTITY_MARKER = "FLOWPILOT_PACKET_IDENTITY_BOUNDARY_V1"
 RESULT_IDENTITY_MARKER = "FLOWPILOT_RESULT_IDENTITY_BOUNDARY_V1"
 PACKET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
@@ -123,6 +127,31 @@ def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
     tmp_path = path.with_name(f".{path.name}.tmp")
     tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     tmp_path.replace(path)
+
+
+def mutual_role_reminder(*, source_role: str, target_role: str, envelope_kind: str) -> dict[str, str]:
+    return {
+        "schema_version": MUTUAL_ROLE_REMINDER_SCHEMA,
+        "controller_reminder": (
+            f"You are Controller only. Relay and record this {envelope_kind}; do not open, "
+            "summarize, execute, approve gates, mutate routes, close nodes, or issue "
+            "free-text work instructions."
+        ),
+        "sender_reminder": f"The sender/producer for this envelope is `{source_role}`.",
+        "recipient_reminder": (
+            f"The recipient is `{target_role}` for this envelope only. Open the body only "
+            "after verifying Controller relay, role target, and hash; act only inside the "
+            "addressed role and packet/result scope."
+        ),
+        "reply_continuation_reminder": (
+            "When returning or relaying the next envelope, include this same visible "
+            "mutual-role reminder so Controller and the next recipient are reminded again."
+        ),
+        "body_boundary_reminder": (
+            "Keep sealed body content out of Controller-visible chat; return envelope "
+            "metadata only."
+        ),
+    }
 
 
 def packet_identity_boundary(role: str) -> str:
@@ -325,8 +354,50 @@ def _empty_packet_ledger(project_root: Path, run_id: str, run_root: Path) -> dic
         "active_packet_id": None,
         "active_packet_status": None,
         "active_packet_holder": None,
+        "barrier_bundle_policy": {
+            "schema_version": BARRIER_BUNDLE_SCHEMA,
+            "equivalence_mode": barrier_bundle.BARRIER_BUNDLE_EQUIVALENCE_MODE,
+            "metadata_only": True,
+            "preserves_packet_and_result_body_isolation": True,
+            "controller_may_read_or_summarize_bundled_bodies": False,
+            "controller_may_approve_bundled_gates": False,
+            "ai_discretion_to_skip_or_downgrade_barriers": False,
+        },
+        "barrier_bundles": [],
         "packets": [],
     }
+
+
+def _upsert_barrier_bundle_record(ledger: dict[str, Any], bundle: dict[str, Any], *, packet_id: str) -> None:
+    bundles = ledger.setdefault("barrier_bundles", [])
+    if not isinstance(bundles, list):
+        raise PacketRuntimeError("packet_ledger.barrier_bundles must be a list")
+
+    stored = dict(bundle)
+    member_packet_ids = list(stored.get("member_packet_ids") or [])
+    if packet_id not in member_packet_ids:
+        member_packet_ids.append(packet_id)
+    stored["member_packet_ids"] = member_packet_ids
+    summary = barrier_bundle.barrier_bundle_summary(stored)
+    stored["validation_report"] = summary["validation_report"]
+    stored["status"] = "passed" if summary["validation_report"]["ok"] else stored.get("status", "blocked")
+    bundle_key = stored.get("bundle_id") or f"{stored.get('barrier_id', 'unknown')}:{packet_id}"
+    stored["bundle_id"] = bundle_key
+
+    existing_index = next(
+        (
+            index
+            for index, item in enumerate(bundles)
+            if isinstance(item, dict) and item.get("bundle_id") == bundle_key
+        ),
+        None,
+    )
+    if existing_index is None:
+        bundles.append(stored)
+    else:
+        merged = dict(bundles[existing_index])
+        merged.update(stored)
+        bundles[existing_index] = merged
 
 
 def _upsert_packet_record(project_root: Path, ledger_path: Path, run_id: str, run_root: Path, record: dict[str, Any]) -> None:
@@ -360,6 +431,8 @@ def _upsert_packet_record(project_root: Path, ledger_path: Path, run_id: str, ru
     ledger["active_packet_id"] = record["packet_id"]
     ledger["active_packet_status"] = record.get("active_packet_status") or ledger.get("active_packet_status")
     ledger["active_packet_holder"] = record.get("active_packet_holder") or ledger.get("active_packet_holder")
+    if isinstance(record.get("barrier_bundle"), dict):
+        _upsert_barrier_bundle_record(ledger, record["barrier_bundle"], packet_id=str(record["packet_id"]))
     write_json_atomic(ledger_path, ledger)
 
 
@@ -472,6 +545,12 @@ def controller_relay_envelope(
     paths = packet_paths_from_any_envelope(project_root, envelope)
     resolved_envelope_path = resolve_project_path(project_root, str(envelope_path))
     body_visibility = envelope.get("body_visibility", SEALED_BODY_VISIBILITY)
+    envelope_kind = "result_envelope" if "result_body_path" in envelope else "packet_envelope"
+    mutual_reminder = mutual_role_reminder(
+        source_role=str(source_role),
+        target_role=str(target_role),
+        envelope_kind=envelope_kind,
+    )
     relay = {
         "schema_version": CONTROLLER_RELAY_SCHEMA,
         "delivered_via_controller": True,
@@ -489,6 +568,8 @@ def controller_relay_envelope(
         "holder_after": holder_after or target_role,
         "private_role_to_role_delivery_detected": False,
         "recipient_must_verify_before_body_open": True,
+        "mutual_role_reminder": mutual_reminder,
+        "reply_continuation_reminder": mutual_reminder["reply_continuation_reminder"],
         "recipient_role_reminder": f"This mail is for `{target_role}` only.",
         "mail_only_reminder": "The recipient must answer through a file-backed packet/result/report body and return only an envelope to Controller.",
         "chat_response_body_allowed": False,
@@ -601,6 +682,7 @@ def create_packet(
     replacement_for: str | None = None,
     supersedes: list[str] | None = None,
     metadata: dict[str, Any] | None = None,
+    barrier_bundle: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     paths = packet_paths(project_root, packet_id, run_id)
     resolved_run_id = str(paths["run_id"])
@@ -649,6 +731,8 @@ def create_packet(
         "metadata": metadata or {},
         "created_at": utc_now(),
     }
+    if barrier_bundle is not None:
+        envelope["barrier_bundle"] = barrier_bundle
     write_json_atomic(packet_envelope_path, envelope)
 
     write_controller_status_packet(
@@ -735,6 +819,8 @@ def create_packet(
         },
         "controller_origin_evidence_allowed": False,
     }
+    if barrier_bundle is not None:
+        record["barrier_bundle"] = barrier_bundle
     _upsert_packet_record(project_root, paths["packet_ledger"], resolved_run_id, run_root, record)
     for superseded_id in record["supersedes"]:
         _update_packet_record(
@@ -806,6 +892,11 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
         envelope_kind = "packet_envelope"
         forbidden_actions = envelope["controller_forbidden_actions"]
         allowed_actions = envelope["controller_allowed_actions"]
+    mutual_reminder = mutual_role_reminder(
+        source_role=str(from_role),
+        target_role=str(to_role),
+        envelope_kind=envelope_kind,
+    )
     return {
         "schema_version": CONTROLLER_HANDOFF_SCHEMA,
         "controller_visibility": "result_envelope_only" if is_result_envelope else "packet_envelope_only",
@@ -829,6 +920,12 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
         "controller_allowed_actions": allowed_actions,
         "controller_forbidden_actions": forbidden_actions,
         "instruction": "Relay this envelope only. Do not read, summarize, execute, edit, or quote the sealed body.",
+        "mutual_role_reminder": mutual_reminder,
+        "controller_identity": mutual_reminder["controller_reminder"],
+        "recipient_identity_required": mutual_reminder["recipient_reminder"],
+        "sender_identity_required": mutual_reminder["sender_reminder"],
+        "reply_continuation_reminder": mutual_reminder["reply_continuation_reminder"],
+        "direct_controller_text_authoritative": False,
         "recipient_role_reminder": f"This mail is for `{to_role}` only.",
         "mail_only_reminder": "The recipient must answer through a file-backed packet/result/report body and return only an envelope to Controller.",
         "chat_response_body_allowed": False,
@@ -935,6 +1032,8 @@ def write_result(
             "required": True,
         },
     }
+    if isinstance(packet_envelope.get("barrier_bundle"), dict):
+        result_envelope["barrier_bundle"] = packet_envelope["barrier_bundle"]
     write_json_atomic(result_envelope_path, result_envelope)
 
     write_controller_status_packet(
@@ -966,6 +1065,8 @@ def write_result(
             "result_body_identity_boundary_marker": RESULT_IDENTITY_MARKER,
         },
     }
+    if isinstance(packet_envelope.get("barrier_bundle"), dict):
+        record["barrier_bundle"] = packet_envelope["barrier_bundle"]
     _upsert_packet_record(project_root, paths["packet_ledger"], str(paths["run_id"]), paths["run_root"], record)
     return result_envelope
 
@@ -1095,6 +1196,108 @@ def _load_ledger(project_root: Path, run_id: str | None = None) -> tuple[dict[st
     if not ledger_path.exists():
         raise PacketRuntimeError(f"packet ledger does not exist: {ledger_path}")
     return read_json(ledger_path), ledger_path, resolved_run_id
+
+
+def audit_barrier_bundles(
+    project_root: Path,
+    *,
+    run_id: str | None = None,
+    node_id: str | None = None,
+    bundle_id: str | None = None,
+) -> dict[str, Any]:
+    try:
+        ledger, ledger_path, resolved_run_id = _load_ledger(project_root, run_id)
+    except PacketRuntimeError:
+        return {
+            "schema_version": "flowpilot.barrier_bundle_audit.v1",
+            "run_id": run_id,
+            "node_id": node_id,
+            "bundle_id": bundle_id,
+            "ledger_missing": True,
+            "checked_bundle_count": 0,
+            "blockers": [],
+            "passed": True,
+            "created_at": utc_now(),
+        }
+
+    records = [item for item in ledger.get("packets", []) if isinstance(item, dict)]
+    packet_node = {
+        str(record.get("packet_id")): record.get("node_id")
+        for record in records
+        if record.get("packet_id")
+    }
+    bundles: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def add_bundle(raw: Any) -> None:
+        if not isinstance(raw, dict):
+            return
+        key = str(raw.get("bundle_id") or f"{raw.get('barrier_id', 'unknown')}:{len(seen)}")
+        if key in seen:
+            return
+        seen.add(key)
+        bundles.append(raw)
+
+    for raw_bundle in ledger.get("barrier_bundles", []):
+        add_bundle(raw_bundle)
+    for record in records:
+        add_bundle(record.get("barrier_bundle"))
+
+    scoped_bundles: list[dict[str, Any]] = []
+    for raw_bundle in bundles:
+        if bundle_id and raw_bundle.get("bundle_id") != bundle_id:
+            continue
+        if node_id:
+            bundle_node = raw_bundle.get("node_id")
+            member_nodes = {
+                packet_node.get(str(packet_id))
+                for packet_id in raw_bundle.get("member_packet_ids", [])
+            }
+            if bundle_node != node_id and node_id not in member_nodes:
+                continue
+        scoped_bundles.append(raw_bundle)
+
+    blockers: list[dict[str, Any]] = []
+    cumulative_obligations: list[str] = []
+    for raw_bundle in scoped_bundles:
+        report = barrier_bundle.validate_barrier_bundle(
+            raw_bundle,
+            cumulative_obligations=cumulative_obligations,
+        )
+        if report["ok"]:
+            cumulative_obligations.extend(barrier_bundle.passed_obligation_ids(raw_bundle))
+            continue
+        blockers.append(
+            {
+                "bundle_id": raw_bundle.get("bundle_id"),
+                "barrier_id": raw_bundle.get("barrier_id"),
+                "node_id": raw_bundle.get("node_id"),
+                "member_packet_ids": list(raw_bundle.get("member_packet_ids") or []),
+                "code": "barrier_bundle_invalid",
+                "failures": report["failures"],
+                "missing_obligations": report["missing_obligations"],
+                "missing_role_slices": report["missing_role_slices"],
+            }
+        )
+
+    audit = {
+        "schema_version": "flowpilot.barrier_bundle_audit.v1",
+        "run_id": resolved_run_id,
+        "node_id": node_id,
+        "bundle_id": bundle_id,
+        "ledger_path": project_relative(project_root, ledger_path),
+        "checked_bundle_count": len(scoped_bundles),
+        "blockers": blockers,
+        "passed": not blockers,
+        "created_at": utc_now(),
+    }
+    audit_path = ledger_path.with_name("barrier_bundle_audit.json")
+    write_json_atomic(audit_path, audit)
+    ledger["latest_barrier_bundle_audit_path"] = project_relative(project_root, audit_path)
+    ledger["latest_barrier_bundle_audit_passed"] = audit["passed"]
+    ledger["latest_barrier_bundle_audit_at"] = audit["created_at"]
+    write_json_atomic(ledger_path, ledger)
+    return audit
 
 
 def _replacement_exists(records: list[dict[str, Any]], packet_id: str) -> bool:

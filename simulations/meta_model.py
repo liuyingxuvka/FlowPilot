@@ -122,6 +122,7 @@ class State:
     product_function_architecture_pm_synthesized: bool = False
     product_function_high_standard_posture_written: bool = False
     product_function_target_and_failure_bar_written: bool = False
+    product_function_minimum_sufficient_complexity_review_written: bool = False
     product_function_semantic_fidelity_policy_written: bool = False
     product_function_user_task_map_written: bool = False
     product_function_capability_map_written: bool = False
@@ -170,6 +171,7 @@ class State:
     crew_memory_packets_written: int = 0
     pm_initial_route_decision_recorded: bool = False
     pm_child_skill_selection_manifest_written: bool = False
+    pm_child_skill_minimum_sufficient_complexity_review_written: bool = False
     pm_child_skill_selection_scope_decisions_recorded: bool = False
     child_skill_route_design_discovery_started: bool = False
     child_skill_initial_gate_manifest_extracted: bool = False
@@ -295,6 +297,7 @@ class State:
     node_product_function_model_checked: bool = False
     node_product_function_model_product_officer_approved: bool = False
     current_node_high_standard_recheck_written: bool = False
+    current_node_minimum_sufficient_complexity_review_written: bool = False
     node_acceptance_plan_written: bool = False
     node_acceptance_risk_experiments_mapped: bool = False
     lightweight_self_check_done: bool = False
@@ -315,6 +318,11 @@ class State:
     recipient_pre_open_relay_check_done: bool = False
     packet_mail_chain_audit_done: bool = False
     unopened_mail_pm_recovery_policy_recorded: bool = False
+    router_hard_rejection_seen: bool = False
+    control_blocker_artifact_written: bool = False
+    control_blocker_handling_lane: str = "none"  # none | control_plane_reissue | pm_repair_decision_required | fatal_protocol_violation
+    control_blocker_delivered_to_responsible_role: bool = False
+    control_blocker_delivered_to_pm: bool = False
     packet_envelope_body_audit_done: bool = False
     packet_envelope_to_role_checked: bool = False
     packet_body_hash_verified: bool = False
@@ -539,6 +547,7 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "visible_plan_has_runway_depth": False,
             "pm_node_decision_recorded": False,
             "current_node_high_standard_recheck_written": False,
+            "current_node_minimum_sufficient_complexity_review_written": False,
             "node_acceptance_plan_written": False,
             "node_acceptance_risk_experiments_mapped": False,
         }
@@ -634,6 +643,7 @@ def _product_function_architecture_ready(state: State) -> bool:
         and state.product_function_architecture_pm_synthesized
         and state.product_function_high_standard_posture_written
         and state.product_function_target_and_failure_bar_written
+        and state.product_function_minimum_sufficient_complexity_review_written
         and state.product_function_semantic_fidelity_policy_written
         and state.product_function_user_task_map_written
         and state.product_function_capability_map_written
@@ -984,6 +994,7 @@ class AutopilotStep:
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
+        "product_function_minimum_sufficient_complexity_review_written",
         "product_function_semantic_fidelity_policy_written",
         "product_function_user_task_map_written",
         "product_function_capability_map_written",
@@ -1128,6 +1139,7 @@ class AutopilotStep:
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
         "current_node_high_standard_recheck_written",
+        "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
         "node_acceptance_risk_experiments_mapped",
         "lightweight_self_check_done",
@@ -1292,6 +1304,7 @@ class AutopilotStep:
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
+        "product_function_minimum_sufficient_complexity_review_written",
         "product_function_semantic_fidelity_policy_written",
         "product_function_user_task_map_written",
         "product_function_capability_map_written",
@@ -1447,6 +1460,7 @@ class AutopilotStep:
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
         "current_node_high_standard_recheck_written",
+        "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
         "node_acceptance_risk_experiments_mapped",
         "lightweight_self_check_done",
@@ -2292,6 +2306,16 @@ class AutopilotStep:
                 label="product_function_target_and_failure_bar_written",
                 action="project manager describes the strongest feasible product target and the rough, embarrassing, or placeholder results that must be rejected before completion",
                 product_function_target_and_failure_bar_written=True,
+                active_node="write_product_function_minimum_sufficient_complexity_review",
+            )
+            return
+
+        if not state.product_function_minimum_sufficient_complexity_review_written:
+            yield _step(
+                state,
+                label="product_function_minimum_sufficient_complexity_review_written",
+                action="project manager records the minimum sufficient complexity review, rejecting features, surfaces, dependencies, or artifacts that do not change user outcome or proof strength",
+                product_function_minimum_sufficient_complexity_review_written=True,
                 active_node="write_product_function_semantic_fidelity_policy",
             )
             return
@@ -2521,6 +2545,16 @@ class AutopilotStep:
                 label="pm_child_skill_selection_manifest_written",
                 action="project manager writes a child-skill selection manifest from the product architecture, route direction, and local skill inventory",
                 pm_child_skill_selection_manifest_written=True,
+                active_node="record_child_skill_minimum_sufficient_complexity",
+            )
+            return
+
+        if not state.pm_child_skill_minimum_sufficient_complexity_review_written:
+            yield _step(
+                state,
+                label="pm_child_skill_minimum_sufficient_complexity_review_written",
+                action="project manager records simpler-path review for selected child skills and requires each required skill to justify its added handoffs, gates, references, or artifacts",
+                pm_child_skill_minimum_sufficient_complexity_review_written=True,
                 active_node="classify_child_skill_selection_scope",
             )
             return
@@ -4466,6 +4500,15 @@ class AutopilotStep:
                     label="current_node_high_standard_recheck_written",
                     action="project manager rechecks the current node against the highest achievable product target, unacceptable-result bar, semantic-fidelity policy, and likely local downgrade risks before writing node acceptance",
                     current_node_high_standard_recheck_written=True,
+                    active_node="current_node_minimum_sufficient_complexity_review",
+                )
+                return
+            if not state.current_node_minimum_sufficient_complexity_review_written:
+                yield _step(
+                    state,
+                    label="current_node_minimum_sufficient_complexity_review_written",
+                    action="project manager records why the current node packet, checks, handoffs, and evidence are the minimum sufficient structure for the node proof obligations",
+                    current_node_minimum_sufficient_complexity_review_written=True,
                     active_node="write_node_acceptance_plan",
                 )
                 return
@@ -5540,6 +5583,22 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
     return InvariantResult.pass_()
 
 
+def router_hard_rejection_requires_control_blocker_lane(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.router_hard_rejection_seen:
+        return InvariantResult.pass_()
+    lanes = {"control_plane_reissue", "pm_repair_decision_required", "fatal_protocol_violation"}
+    if not state.control_blocker_artifact_written:
+        return InvariantResult.fail("router hard rejection did not write a run-scoped control blocker artifact")
+    if state.control_blocker_handling_lane not in lanes:
+        return InvariantResult.fail("router hard rejection lacked a valid control blocker handling lane")
+    if state.control_blocker_handling_lane == "control_plane_reissue" and not state.control_blocker_delivered_to_responsible_role:
+        return InvariantResult.fail("control-plane reissue blocker was not routed back to the responsible role")
+    if state.control_blocker_handling_lane in {"pm_repair_decision_required", "fatal_protocol_violation"} and not state.control_blocker_delivered_to_pm:
+        return InvariantResult.fail("PM repair or fatal control blocker was not routed to Project Manager")
+    return InvariantResult.pass_()
+
+
 def subagent_must_merge_before_completion(state: State, trace) -> InvariantResult:
     del trace
     if state.final_report_emitted and state.subagent_status in {"pending", "returned"}:
@@ -5771,11 +5830,12 @@ def material_handoff_before_pm_route_design(state: State, trace) -> InvariantRes
         )
     if state.pm_child_skill_selection_scope_decisions_recorded and not (
         state.pm_child_skill_selection_manifest_written
+        and state.pm_child_skill_minimum_sufficient_complexity_review_written
         and state.product_function_capability_map_written
         and state.local_skill_inventory_candidate_classified
     ):
         return InvariantResult.fail(
-            "PM child-skill selection decisions were recorded before the PM manifest, product capability map, and local skill candidate classification"
+            "PM child-skill selection decisions were recorded before the PM manifest, minimum sufficient complexity review, product capability map, and local skill candidate classification"
         )
     if state.child_skill_route_design_discovery_started and not (
         state.pm_child_skill_selection_manifest_written
@@ -5836,6 +5896,7 @@ def actor_authority_gates_require_correct_role(
         state.product_function_architecture_pm_synthesized
         and state.product_function_high_standard_posture_written
         and state.product_function_target_and_failure_bar_written
+        and state.product_function_minimum_sufficient_complexity_review_written
         and state.product_function_semantic_fidelity_policy_written
         and state.product_function_user_task_map_written
         and state.product_function_capability_map_written
@@ -5885,6 +5946,7 @@ def actor_authority_gates_require_correct_role(
     if state.child_skill_manifest_pm_approved_for_route and not (
         state.child_skill_route_design_discovery_started
         and state.pm_child_skill_selection_manifest_written
+        and state.pm_child_skill_minimum_sufficient_complexity_review_written
         and state.pm_child_skill_selection_scope_decisions_recorded
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
@@ -5894,7 +5956,7 @@ def actor_authority_gates_require_correct_role(
         and state.child_skill_manifest_product_officer_approved
     ):
         return InvariantResult.fail(
-            "PM approved child-skill gate manifest before PM skill selection, discovery, extraction, approver assignment, independent validation, and reviewer/officer approvals"
+            "PM approved child-skill gate manifest before PM skill selection, minimum sufficient complexity review, discovery, extraction, approver assignment, independent validation, and reviewer/officer approvals"
         )
     if (
         state.child_skill_manifest_reviewer_reviewed
@@ -6117,7 +6179,7 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "PM resume was requested before current-run state, packet ledger, live six-role rehydration, and memory injection completed"
+            "PM resume was requested before current-run state, packet ledger, live six-role memory rehydration, and memory injection completed"
         )
     if state.pm_resume_decision_recorded and not (
         state.heartbeat_pm_controller_reminder_checked
@@ -6135,9 +6197,12 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
 
 def next_route_node_requires_fresh_route_sign(state: State, trace) -> InvariantResult:
     del trace
-    if state.node_acceptance_plan_written and not state.current_node_high_standard_recheck_written:
+    if state.node_acceptance_plan_written and not (
+        state.current_node_high_standard_recheck_written
+        and state.current_node_minimum_sufficient_complexity_review_written
+    ):
         return InvariantResult.fail(
-            "node acceptance plan was written before PM current-node high-standard recheck"
+            "node acceptance plan was written before PM current-node high-standard and minimum sufficient complexity rechecks"
         )
     if (
         state.node_acceptance_plan_written
@@ -6200,6 +6265,11 @@ INVARIANTS = (
         name="pm_review_release_controls_reviewer_start",
         description="PM holds the reviewer until worker output is ready, then writes an explicit release order.",
         predicate=pm_review_release_controls_reviewer_start,
+    ),
+    Invariant(
+        name="router_hard_rejection_requires_control_blocker_lane",
+        description="Router hard rejections write a control blocker artifact and route it by lane.",
+        predicate=router_hard_rejection_requires_control_blocker_lane,
     ),
     Invariant(
         name="subagent_must_merge_before_completion",

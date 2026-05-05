@@ -28,11 +28,13 @@ REQUIRED_FILES = [
     "docs/flowpilot_clean_rebuild_plan.md",
     "docs/legacy_to_router_equivalence.md",
     "docs/legacy_to_router_equivalence.json",
+    "docs/barrier_bundle_equivalence.md",
     "docs/legacy_prompt_to_cards_matrix.md",
     "docs/legacy_prompt_to_cards_matrix.json",
     "docs/flowpilot_ten_step_migration_status.json",
     "flowpilot.dependencies.json",
     "skills/flowpilot/SKILL.md",
+    "skills/flowpilot/assets/barrier_bundle.py",
     "skills/flowpilot/assets/flowpilot_router.py",
     "skills/flowpilot/assets/packet_runtime.py",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
@@ -65,6 +67,9 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
+    "skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md",
+    "skills/flowpilot/assets/runtime_kit/cards/officers/route_product_check.md",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
@@ -148,6 +153,7 @@ REQUIRED_FILES = [
     "templates/flowpilot/activity_event.template.json",
     "templates/flowpilot/pause_snapshot.template.json",
     "templates/flowpilot/final_route_wide_gate_ledger.template.json",
+    "templates/flowpilot/barrier_bundle.template.json",
     "templates/flowpilot/terminal_human_backward_replay_map.template.json",
     "templates/flowpilot/terminal_closure_suite.template.json",
     "templates/flowpilot/flowpilot_skill_improvement_observation.template.json",
@@ -182,6 +188,12 @@ REQUIRED_FILES = [
     "simulations/startup_pm_review_model.py",
     "simulations/run_startup_pm_review_checks.py",
     "simulations/startup_pm_review_results.json",
+    "simulations/barrier_equivalence_model.py",
+    "simulations/run_barrier_equivalence_checks.py",
+    "simulations/barrier_equivalence_results.json",
+    "simulations/router_next_recipient_model.py",
+    "simulations/run_router_next_recipient_checks.py",
+    "simulations/router_next_recipient_results.json",
     "simulations/prompt_isolation_model.py",
     "simulations/run_prompt_isolation_checks.py",
     "simulations/prompt_isolation_results.json",
@@ -206,7 +218,10 @@ REQUIRED_FILES = [
     "scripts/flowpilot_packets.py",
     "scripts/flowpilot_user_flow_diagram.py",
     "scripts/smoke_autopilot.py",
+    "skills/flowpilot/assets/flowpilot_paths.py",
+    "skills/flowpilot/assets/flowpilot_user_flow_diagram.py",
     "tests/test_flowpilot_router_runtime.py",
+    "tests/test_flowpilot_barrier_bundle.py",
     "tests/test_flowpilot_card_instruction_coverage.py",
 ]
 
@@ -217,6 +232,8 @@ JSON_FILES = [
     "docs/flowpilot_ten_step_migration_status.json",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
     "simulations/release_tooling_results.json",
+    "simulations/barrier_equivalence_results.json",
+    "simulations/router_next_recipient_results.json",
     "simulations/user_flow_diagram_results.json",
     "simulations/prompt_isolation_results.json",
     "simulations/card_instruction_coverage_results.json",
@@ -263,6 +280,7 @@ JSON_FILES = [
     "templates/flowpilot/activity_event.template.json",
     "templates/flowpilot/pause_snapshot.template.json",
     "templates/flowpilot/final_route_wide_gate_ledger.template.json",
+    "templates/flowpilot/barrier_bundle.template.json",
     "templates/flowpilot/terminal_human_backward_replay_map.template.json",
     "templates/flowpilot/terminal_closure_suite.template.json",
     "templates/flowpilot/flowpilot_skill_improvement_observation.template.json",
@@ -565,6 +583,42 @@ def main() -> int:
             result["checks"].append(
                 {
                     "name": "flowpilot_legacy_to_router_equivalence_valid",
+                    "ok": False,
+                    "error": repr(exc),
+                }
+            )
+
+    barrier_results_path = ROOT / "simulations/barrier_equivalence_results.json"
+    if barrier_results_path.exists():
+        try:
+            barrier_results = json.loads(barrier_results_path.read_text(encoding="utf-8"))
+            safe_graph = barrier_results.get("safe_graph")
+            hazard_checks = barrier_results.get("hazard_checks")
+            explorer = barrier_results.get("flowguard_explorer")
+            barrier_ok = (
+                barrier_results.get("ok") is True
+                and isinstance(safe_graph, dict)
+                and safe_graph.get("missing_obligations_at_completion") == []
+                and isinstance(hazard_checks, dict)
+                and hazard_checks.get("ok") is True
+                and isinstance(explorer, dict)
+                and explorer.get("ok") is True
+            )
+            result["checks"].append(
+                {
+                    "name": "flowpilot_barrier_equivalence_results_valid",
+                    "ok": barrier_ok,
+                    "barrier_count": safe_graph.get("barrier_count") if isinstance(safe_graph, dict) else 0,
+                    "legacy_obligation_count": safe_graph.get("legacy_obligation_count") if isinstance(safe_graph, dict) else 0,
+                }
+            )
+            if not barrier_ok:
+                result["ok"] = False
+        except Exception as exc:  # pragma: no cover - diagnostic script
+            result["ok"] = False
+            result["checks"].append(
+                {
+                    "name": "flowpilot_barrier_equivalence_results_valid",
                     "ok": False,
                     "error": repr(exc),
                 }

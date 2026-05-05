@@ -20,6 +20,7 @@ def main() -> int:
         [sys.executable, "simulations/run_card_instruction_coverage_checks.py"],
         [sys.executable, "simulations/run_release_tooling_checks.py"],
         [sys.executable, "simulations/run_startup_pm_review_checks.py"],
+        [sys.executable, "simulations/run_barrier_equivalence_checks.py"],
         [sys.executable, "simulations/run_meta_checks.py"],
         [sys.executable, "simulations/run_capability_checks.py"],
     ]

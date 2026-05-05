@@ -26,6 +26,7 @@
     "generated_resource_lineage_resolved": false,
     "stale_evidence_checked": false,
     "superseded_nodes_explained": false,
+    "unused_complexity_disposition_checked": false,
     "standard_scenarios_replayed": false,
     "residual_risk_triage_done": false,
     "unresolved_residual_risk_count_zero": false,
@@ -94,6 +95,15 @@
       "discarded_with_reason"
     ]
   },
+  "minimum_sufficient_complexity_dispositions": [
+    {
+      "item_id": "<node-skill-resource-report-validation-branch-or-artifact>",
+      "item_type": "<route_node|child_skill|generated_resource|report|validation_branch|dependency|other>",
+      "disposition": "<used_for_current_gate|superseded|quarantined|discarded_with_reason|deferred_with_revisit_condition>",
+      "reason": "<why-this-item-is-still-needed-or-how-it-was-resolved>",
+      "unresolved_complexity": false
+    }
+  ],
   "entries": [
     {
       "entry_id": "<route-node-or-gate-id>",

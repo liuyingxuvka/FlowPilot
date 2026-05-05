@@ -34,6 +34,21 @@ PM_HISTORY_CONTEXT_REQUIRED_CARD_IDS = frozenset(
         "pm.closure",
     }
 )
+PM_MINIMUM_COMPLEXITY_REQUIRED_CARD_IDS = frozenset(
+    {
+        "pm.core",
+        "pm.product_architecture",
+        "pm.root_contract",
+        "pm.child_skill_selection",
+        "pm.route_skeleton",
+        "pm.current_node_loop",
+        "pm.node_acceptance_plan",
+        "pm.review_repair",
+        "pm.evidence_quality_package",
+        "pm.final_ledger",
+        "pm.closure",
+    }
+)
 
 ACTION_TERMS_BY_ROLE: dict[str, tuple[str, ...]] = {
     "bootloader": ("display", "return", "router", "do not infer"),
@@ -79,6 +94,7 @@ class CardFacts:
     next_step_mentions_router: bool
     action_guidance: bool
     pm_history_context_guidance: bool
+    pm_minimum_complexity_guidance: bool
 
 
 @dataclass(frozen=True)
@@ -146,6 +162,24 @@ def _has_pm_history_context_guidance(card_id: str, role: str, text: str) -> bool
     has_context_pointer = "prior path context" in lower or "route-memory" in lower or "route_memory" in lower
     has_history_scope = "completed" in lower and "superseded" in lower and "stale" in lower
     return has_context_pointer and has_history_scope
+
+
+def _has_pm_minimum_complexity_guidance(card_id: str, role: str, text: str) -> bool:
+    if role != "project_manager" or card_id not in PM_MINIMUM_COMPLEXITY_REQUIRED_CARD_IDS:
+        return True
+    lower = text.lower()
+    return (
+        "minimum sufficient complexity" in lower
+        and (
+            "fewer" in lower
+            or "smallest" in lower
+            or "less state" in lower
+            or "lower maintenance" in lower
+            or "simpler" in lower
+            or "unnecessary" in lower
+            or "unused" in lower
+        )
+    )
 
 
 def _has_envelope_only_return(identity: dict[str, str], text: str) -> bool:
@@ -258,6 +292,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 action_guidance=_has_action_guidance(expected_role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(card_id, expected_role, text),
+                pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(card_id, expected_role, text),
             )
         )
 
@@ -286,6 +321,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 action_guidance=_has_action_guidance(role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(f"unmanifested:{rel}", role, text),
+                pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(f"unmanifested:{rel}", role, text),
             )
         )
     return tuple(sorted(facts, key=lambda card: card.card_id))
@@ -313,6 +349,8 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: card body lacks role-appropriate action guidance")
     if not card.pm_history_context_guidance:
         failures.append(f"{card.card_id}: missing PM prior path context guidance")
+    if not card.pm_minimum_complexity_guidance:
+        failures.append(f"{card.card_id}: missing PM minimum sufficient complexity guidance")
     return tuple(failures)
 
 
@@ -380,6 +418,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         next_step_mentions_router=True,
         action_guidance=True,
         pm_history_context_guidance=True,
+        pm_minimum_complexity_guidance=True,
     )
     return {
         "missing_identity_boundary": replace(good, identity_boundary=False),
@@ -394,6 +433,11 @@ def hazard_cards() -> dict[str, CardFacts]:
             good,
             card_id="pm.route_skeleton",
             pm_history_context_guidance=False,
+        ),
+        "missing_pm_minimum_complexity_guidance": replace(
+            good,
+            card_id="pm.route_skeleton",
+            pm_minimum_complexity_guidance=False,
         ),
         "active_card_unmanifested": replace(good, manifest_registered=False),
     }

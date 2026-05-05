@@ -134,6 +134,39 @@ class FlowPilotControlGateTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("mail-chain audit", result.message)
 
+    def test_meta_router_hard_rejection_requires_lane_artifact(self) -> None:
+        state = meta_model.State(router_hard_rejection_seen=True)
+
+        result = meta_model.router_hard_rejection_requires_control_blocker_lane(state, trace=())
+
+        self.assertFalse(result.ok)
+        self.assertIn("control blocker artifact", result.message)
+
+    def test_meta_router_hard_rejection_reissue_routes_to_responsible_role(self) -> None:
+        state = meta_model.State(
+            router_hard_rejection_seen=True,
+            control_blocker_artifact_written=True,
+            control_blocker_handling_lane="control_plane_reissue",
+            control_blocker_delivered_to_pm=True,
+        )
+
+        result = meta_model.router_hard_rejection_requires_control_blocker_lane(state, trace=())
+
+        self.assertFalse(result.ok)
+        self.assertIn("responsible role", result.message)
+
+    def test_meta_router_pm_repair_blocker_routes_to_pm(self) -> None:
+        state = meta_model.State(
+            router_hard_rejection_seen=True,
+            control_blocker_artifact_written=True,
+            control_blocker_handling_lane="pm_repair_decision_required",
+            control_blocker_delivered_to_pm=True,
+        )
+
+        result = meta_model.router_hard_rejection_requires_control_blocker_lane(state, trace=())
+
+        self.assertTrue(result.ok)
+
     def test_meta_reviewer_requires_physical_packet_runtime(self) -> None:
         state = meta_model.State(
             pm_review_hold_instruction_written=True,
@@ -291,6 +324,48 @@ class FlowPilotControlGateTests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("mail-chain audit", result.message)
+
+    def test_capability_router_hard_rejection_requires_lane_artifact(self) -> None:
+        state = capability_model.State(router_hard_rejection_seen=True)
+
+        result = capability_model.router_hard_rejection_requires_control_blocker_lane(
+            state,
+            trace=(),
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("control blocker artifact", result.message)
+
+    def test_capability_router_reissue_blocker_routes_to_responsible_role(self) -> None:
+        state = capability_model.State(
+            router_hard_rejection_seen=True,
+            control_blocker_artifact_written=True,
+            control_blocker_handling_lane="control_plane_reissue",
+            control_blocker_delivered_to_responsible_role=True,
+        )
+
+        result = capability_model.router_hard_rejection_requires_control_blocker_lane(
+            state,
+            trace=(),
+        )
+
+        self.assertTrue(result.ok)
+
+    def test_capability_router_fatal_blocker_routes_to_pm(self) -> None:
+        state = capability_model.State(
+            router_hard_rejection_seen=True,
+            control_blocker_artifact_written=True,
+            control_blocker_handling_lane="fatal_protocol_violation",
+            control_blocker_delivered_to_responsible_role=True,
+        )
+
+        result = capability_model.router_hard_rejection_requires_control_blocker_lane(
+            state,
+            trace=(),
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("Project Manager", result.message)
 
     def test_capability_reviewer_requires_physical_packet_runtime(self) -> None:
         state = capability_model.State(

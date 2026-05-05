@@ -323,6 +323,30 @@
       "source": "system"
     },
     {
+      "audience": "process_flowguard_officer",
+      "id": "process_officer.route_process_check",
+      "issued_by": "router",
+      "kind": "officer_gate",
+      "path": "cards/officers/route_process_check.md",
+      "source": "system"
+    },
+    {
+      "audience": "product_flowguard_officer",
+      "id": "product_officer.route_product_check",
+      "issued_by": "router",
+      "kind": "officer_gate",
+      "path": "cards/officers/route_product_check.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.route_challenge",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/route_challenge.md",
+      "source": "system"
+    },
+    {
       "audience": "project_manager",
       "id": "pm.current_node_loop",
       "issued_by": "router",

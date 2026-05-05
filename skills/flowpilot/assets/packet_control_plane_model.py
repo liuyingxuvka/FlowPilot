@@ -25,6 +25,7 @@ class NodePacket:
     physical_files_written: bool = True
     controller_handoff_contains_body_content: bool = False
     has_controller_reminder: bool = True
+    has_mutual_role_reminder: bool = True
     body_hash_valid: bool = True
     body_stale_after_route_mutation: bool = False
     controller_attempts_body_read: bool = False
@@ -62,6 +63,7 @@ class NodeResult:
     result_body_hash_valid: bool = True
     result_body_stale_after_route_mutation: bool = False
     result_controller_relay_signature_present: bool = True
+    result_has_mutual_role_reminder: bool = True
     result_body_opened_after_relay_check: bool = True
 
 
@@ -109,7 +111,9 @@ class State:
     controller_envelope_reads: tuple[str, ...] = ()
     physical_packet_files: tuple[str, ...] = ()
     controller_handoff_envelope_only: tuple[str, ...] = ()
+    controller_handoff_mutual_role_reminders: tuple[str, ...] = ()
     controller_handoff_body_leak_blocks: tuple[str, ...] = ()
+    mutual_role_reminder_blocks: tuple[str, ...] = ()
     controller_body_access_blocks: tuple[str, ...] = ()
     controller_body_execution_blocks: tuple[str, ...] = ()
     controller_return_to_sender: tuple[str, ...] = ()
@@ -132,6 +136,8 @@ class State:
     controller_artifacts: tuple[str, ...] = ()
     result_envelopes: tuple[str, ...] = ()
     result_controller_relay_signatures: tuple[str, ...] = ()
+    result_mutual_role_reminders: tuple[str, ...] = ()
+    result_mutual_role_reminder_blocks: tuple[str, ...] = ()
     result_body_open_events: tuple[str, ...] = ()
     unopened_result_blocks: tuple[str, ...] = ()
     result_envelope_checks: tuple[str, ...] = ()
@@ -158,6 +164,7 @@ def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> 
         physical_files_written=not packet_id.startswith("missing_physical_files"),
         controller_handoff_contains_body_content=packet_id.startswith("controller_handoff_leaks_body"),
         has_controller_reminder=has_controller_reminder,
+        has_mutual_role_reminder=not packet_id.startswith("missing_mutual_reminder"),
         body_hash_valid=not packet_id.startswith("body_hash_mismatch"),
         body_stale_after_route_mutation=packet_id.startswith("stale_packet_body"),
         controller_attempts_body_read=packet_id.startswith("controller_reads_body"),
@@ -346,7 +353,12 @@ class ControllerEnvelopeOnlyHandoff:
     name = "ControllerEnvelopeOnlyHandoff"
     accepted_input_type = (NodePacket, NodeResult)
     reads = ("reminder_checked",)
-    writes = ("controller_handoff_envelope_only", "controller_handoff_body_leak_blocks")
+    writes = (
+        "controller_handoff_envelope_only",
+        "controller_handoff_mutual_role_reminders",
+        "controller_handoff_body_leak_blocks",
+        "mutual_role_reminder_blocks",
+    )
     input_description = "controller-visible packet handoff"
     output_description = "NodePacket with envelope-only controller context or blocked body leak"
     idempotency = "Controller handoff isolation is keyed by packet ID."
@@ -366,9 +378,21 @@ class ControllerEnvelopeOnlyHandoff:
                 "controller_handoff_body_content_blocked",
             )
             return
+        if not input_obj.has_mutual_role_reminder:
+            new_state = replace(
+                state,
+                mutual_role_reminder_blocks=state.mutual_role_reminder_blocks + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "missing_visible_mutual_role_reminder"),
+                new_state,
+                "controller_handoff_missing_mutual_role_reminder_blocked",
+            )
+            return
         new_state = state if input_obj.packet_id in state.controller_handoff_envelope_only else replace(
             state,
             controller_handoff_envelope_only=state.controller_handoff_envelope_only + (input_obj.packet_id,),
+            controller_handoff_mutual_role_reminders=state.controller_handoff_mutual_role_reminders + (input_obj.packet_id,),
         )
         yield FunctionResult(input_obj, new_state, "controller_handoff_envelope_only")
 
@@ -380,7 +404,9 @@ class ControllerEnvelopeRelay:
     writes = (
         "controller_envelope_reads",
         "controller_handoff_envelope_only",
+        "controller_handoff_mutual_role_reminders",
         "controller_handoff_body_leak_blocks",
+        "mutual_role_reminder_blocks",
         "controller_body_access_blocks",
         "controller_body_execution_blocks",
         "controller_return_to_sender",
@@ -409,6 +435,18 @@ class ControllerEnvelopeRelay:
                 DispatchBlocked(input_obj.packet_id, "controller_handoff_contains_packet_body"),
                 new_state,
                 "controller_handoff_body_content_blocked",
+            )
+            return
+        if not input_obj.has_mutual_role_reminder:
+            new_state = replace(
+                state,
+                mutual_role_reminder_blocks=state.mutual_role_reminder_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "missing_visible_mutual_role_reminder"),
+                new_state,
+                "controller_relay_missing_mutual_role_reminder_blocked",
             )
             return
         if input_obj.controller_attempts_body_read:
@@ -464,6 +502,11 @@ class ControllerEnvelopeRelay:
             if input_obj.packet_id in state.controller_handoff_envelope_only
             else state.controller_handoff_envelope_only + (input_obj.packet_id,)
         )
+        mutual_role_reminders = (
+            state.controller_handoff_mutual_role_reminders
+            if input_obj.packet_id in state.controller_handoff_mutual_role_reminders
+            else state.controller_handoff_mutual_role_reminders + (input_obj.packet_id,)
+        )
         holder_changes = (
             state.holder_changes if input_obj.packet_id in state.holder_changes else state.holder_changes + (input_obj.packet_id,)
         )
@@ -487,6 +530,7 @@ class ControllerEnvelopeRelay:
             controller_envelope_reads=envelope_reads,
             controller_relay_signatures=controller_relay_signatures,
             controller_handoff_envelope_only=envelope_only_handoffs,
+            controller_handoff_mutual_role_reminders=mutual_role_reminders,
             holder_changes=holder_changes,
             holder_status_updates=holder_status_updates,
             cockpit_missing_major_nodes=cockpit_missing,
@@ -658,6 +702,7 @@ class WorkerOrControllerResult:
         result_body_hash_valid = not input_obj.packet_id.startswith("result_body_hash_mismatch")
         result_body_stale = input_obj.packet_id.startswith("stale_result_body")
         result_controller_relay_signature_present = not input_obj.packet_id.startswith("missing_result_controller_relay")
+        result_has_mutual_role_reminder = not input_obj.packet_id.startswith("missing_result_mutual_reminder")
         result_body_opened_after_relay_check = not input_obj.packet_id.startswith("unopened_result")
         new_state = replace(
             state,
@@ -672,6 +717,7 @@ class WorkerOrControllerResult:
                 result_body_hash_valid=result_body_hash_valid,
                 result_body_stale_after_route_mutation=result_body_stale,
                 result_controller_relay_signature_present=result_controller_relay_signature_present,
+                result_has_mutual_role_reminder=result_has_mutual_role_reminder,
                 result_body_opened_after_relay_check=result_body_opened_after_relay_check,
             ),
             new_state,
@@ -683,7 +729,13 @@ class ControllerResultRelay:
     name = "ControllerResultRelay"
     accepted_input_type = NodeResult
     reads = ("result_envelopes",)
-    writes = ("result_controller_relay_signatures", "holder_changes", "holder_status_updates")
+    writes = (
+        "result_controller_relay_signatures",
+        "result_mutual_role_reminders",
+        "result_mutual_role_reminder_blocks",
+        "holder_changes",
+        "holder_status_updates",
+    )
     input_description = "worker/reviewer/officer result envelope"
     output_description = "result envelope relayed by controller or left unsigned for reviewer block"
     idempotency = "Result relay signatures are keyed by packet ID."
@@ -694,6 +746,13 @@ class ControllerResultRelay:
             return
         if not input_obj.result_controller_relay_signature_present:
             yield FunctionResult(input_obj, state, "result_controller_relay_signature_missing")
+            return
+        if not input_obj.result_has_mutual_role_reminder:
+            new_state = replace(
+                state,
+                result_mutual_role_reminder_blocks=state.result_mutual_role_reminder_blocks + (input_obj.packet_id,),
+            )
+            yield FunctionResult(input_obj, new_state, "result_mutual_role_reminder_missing")
             return
         relay_signatures = (
             state.result_controller_relay_signatures
@@ -708,9 +767,15 @@ class ControllerResultRelay:
             if input_obj.packet_id in state.holder_status_updates
             else state.holder_status_updates + (input_obj.packet_id,)
         )
+        result_mutual_role_reminders = (
+            state.result_mutual_role_reminders
+            if input_obj.packet_id in state.result_mutual_role_reminders
+            else state.result_mutual_role_reminders + (input_obj.packet_id,)
+        )
         new_state = replace(
             state,
             result_controller_relay_signatures=relay_signatures,
+            result_mutual_role_reminders=result_mutual_role_reminders,
             holder_changes=holder_changes,
             holder_status_updates=holder_status_updates,
         )
@@ -1021,6 +1086,30 @@ def controller_handoff_body_leak_never_advances(state: State, trace) -> Invarian
     return InvariantResult.pass_()
 
 
+def missing_mutual_role_reminder_never_advances(state: State, trace) -> InvariantResult:
+    del trace
+    packet_blocked = set(state.mutual_role_reminder_blocks)
+    packet_unsafe = packet_blocked & (
+        set(state.dispatches)
+        | set(state.worker_results)
+        | set(state.result_envelope_checks)
+        | set(state.review_passes)
+        | set(state.advances)
+    )
+    if packet_unsafe:
+        return InvariantResult.fail(f"missing packet mutual-role reminder advanced: {sorted(packet_unsafe)!r}")
+
+    result_blocked = set(state.result_mutual_role_reminder_blocks)
+    result_unsafe = result_blocked & (
+        set(state.result_body_open_events)
+        | set(state.review_passes)
+        | set(state.advances)
+    )
+    if result_unsafe:
+        return InvariantResult.fail(f"missing result mutual-role reminder advanced: {sorted(result_unsafe)!r}")
+    return InvariantResult.pass_()
+
+
 def controller_relay_requires_physical_files_and_envelope_only_handoff(state: State, trace) -> InvariantResult:
     del trace
     relayed = set(state.controller_envelope_reads)
@@ -1030,6 +1119,17 @@ def controller_relay_requires_physical_files_and_envelope_only_handoff(state: St
     missing_handoff = relayed - set(state.controller_handoff_envelope_only)
     if missing_handoff:
         return InvariantResult.fail(f"controller relayed without envelope-only handoff: {sorted(missing_handoff)!r}")
+    missing_mutual_reminder = relayed - set(state.controller_handoff_mutual_role_reminders)
+    if missing_mutual_reminder:
+        return InvariantResult.fail(
+            f"controller relayed without visible mutual-role reminder: {sorted(missing_mutual_reminder)!r}"
+        )
+    result_relayed = set(state.result_controller_relay_signatures)
+    missing_result_mutual_reminder = result_relayed - set(state.result_mutual_role_reminders)
+    if missing_result_mutual_reminder:
+        return InvariantResult.fail(
+            f"controller relayed result without visible mutual-role reminder: {sorted(missing_result_mutual_reminder)!r}"
+        )
     return InvariantResult.pass_()
 
 
@@ -1205,8 +1305,13 @@ INVARIANTS = (
         controller_handoff_body_leak_never_advances,
     ),
     Invariant(
+        "missing_mutual_role_reminder_never_advances",
+        "Controller-visible packet/result handoffs without mutual role reminders cannot dispatch, review, or advance.",
+        missing_mutual_role_reminder_never_advances,
+    ),
+    Invariant(
         "controller_relay_requires_physical_files_and_envelope_only_handoff",
-        "Controller relay requires physical packet files and an envelope-only handoff.",
+        "Controller relay requires physical packet files, envelope-only handoff, and visible mutual role reminders.",
         controller_relay_requires_physical_files_and_envelope_only_handoff,
     ),
     Invariant(
@@ -1282,6 +1387,7 @@ EXTERNAL_INPUTS = (
     NodeCase("cockpit_missing_major_packet", "pass", "worker"),
     NodeCase("missing_physical_files_packet", "block", "worker"),
     NodeCase("controller_handoff_leaks_body_packet", "block", "controller"),
+    NodeCase("missing_mutual_reminder_packet", "block", "controller"),
     NodeCase("controller_reads_body_packet", "block", "controller"),
     NodeCase("controller_executes_body_packet", "block", "controller"),
     NodeCase("missing_controller_relay_packet", "block", "worker"),
@@ -1293,6 +1399,7 @@ EXTERNAL_INPUTS = (
     NodeCase("controller_origin_packet", "pass", "controller"),
     NodeCase("result_wrong_role_packet", "block", "worker_b"),
     NodeCase("missing_result_controller_relay_packet", "block", "worker"),
+    NodeCase("missing_result_mutual_reminder_packet", "block", "worker"),
     NodeCase("unopened_result_packet", "block", "worker"),
     NodeCase("result_body_hash_mismatch_packet", "block", "worker"),
     NodeCase("stale_result_body_packet", "block", "worker"),

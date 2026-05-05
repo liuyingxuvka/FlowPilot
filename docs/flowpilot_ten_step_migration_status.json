@@ -32,6 +32,42 @@
       "Final user-report generation remains an artifact expansion after closure; UI-specific evidence remains out of scope for this pass."
     ]
   },
+  "next_recipient_and_ui_snapshot_upgrade_2026_05_05": {
+    "scope": "P0/P1 router upgrade for explicit next-recipient routing and future native UI state mapping. This does not implement the Windows Cockpit UI.",
+    "status": "completed_installed",
+    "implemented_capabilities": [
+      "Router now dispatches route draft checks as explicit system cards to the process officer, product officer, and human reviewer before route activation can pass.",
+      "Every router action now includes a next_step_contract that records the explicit recipient role, whether sealed bodies may be read, and that Controller may not infer next steps from chat.",
+      "Route activation without an inline route now activates the reviewed PM flow.draft.json and records the activated draft path/hash instead of creating a dummy fallback route.",
+      "Role outputs can be returned as file-backed role-output envelopes, keeping report bodies out of Controller-visible chat while preserving hashes and paths.",
+      "Resume evidence now derives the next packet recipient/action from packet_ledger.json before role rehydration and PM resume decision.",
+      "The run writes route_state_snapshot.json for future UI consumption from current.json, route/frontier/state/packet ledger, and hides stale running index entries by default.",
+      "The CLI state command now exposes an active_ui_task_catalog that treats current.json as the only active-run authority for UI tab population."
+    ],
+    "latest_local_validation": [
+      "python -m py_compile simulations\\router_next_recipient_model.py simulations\\run_router_next_recipient_checks.py skills\\flowpilot\\assets\\flowpilot_router.py tests\\test_flowpilot_router_runtime.py",
+      "python simulations\\run_router_next_recipient_checks.py",
+      "python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_check_results_require_router_delivered_check_cards tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_reviewed_route_activation_uses_pm_draft_without_dummy_fallback tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_role_output_envelope_writes_body_and_keeps_controller_visible_payload_sealed tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_display_plan_is_controller_synced_projection_from_pm_plan tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_current_node_packet_relay_requires_reviewer_dispatch",
+      "python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_heartbeat_startup_records_one_minute_active_binding_for_resume_reentry tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_system_card_delivery_requires_manifest_check tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_product_architecture_and_root_contract_gate_route_skeleton",
+      "python scripts\\check_install.py",
+      "background: py_compile, router_next_recipient, prompt_isolation, flowpilot_resume, flowpilot_router_loop, meta, capability, check_install, and unittest suite passed in temp copy",
+      "python scripts\\install_flowpilot.py --sync-repo-owned --json",
+      "python scripts\\audit_local_install_sync.py --json",
+      "python scripts\\install_flowpilot.py --check --json"
+    ],
+    "installed_skill_sync": {
+      "status": "source_fresh_after_sync",
+      "installed_skill_path": "C:\\Users\\liu_y\\.codex\\skills\\flowpilot",
+      "source_path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot",
+      "installed_digest": "bbdc8dec24e55c4633fb114ebf26cd4945e4bb691f8cee991e98c7a36aa2fb88",
+      "source_digest": "bbdc8dec24e55c4633fb114ebf26cd4945e4bb691f8cee991e98c7a36aa2fb88"
+    },
+    "known_remaining_gaps": [
+      "Generalized async officer packets are still a later expansion beyond the new route-draft check cards.",
+      "Native Windows Cockpit rendering, tabs, tray behavior, icon assets, animation, and bilingual UI remain P2/UI implementation work.",
+      "route_state_snapshot.json is the runtime contract for the future UI, but no desktop UI process consumes it yet."
+    ]
+  },
   "steps": [
     {
       "step": 1,

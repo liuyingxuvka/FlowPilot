@@ -1,8 +1,8 @@
 {
   "actual_card_graph": {
-    "active_card_count": 56,
-    "card_count": 59,
-    "checked_count": 59,
+    "active_card_count": 59,
+    "card_count": 62,
+    "checked_count": 62,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
@@ -42,10 +42,12 @@
       "card_instruction_checked:pm.startup_intake",
       "card_instruction_checked:process_officer.child_skill_conformance_model",
       "card_instruction_checked:process_officer.core",
+      "card_instruction_checked:process_officer.route_process_check",
       "card_instruction_checked:product_officer.child_skill_product_fit",
       "card_instruction_checked:product_officer.core",
       "card_instruction_checked:product_officer.product_architecture_modelability",
       "card_instruction_checked:product_officer.root_contract_modelability",
+      "card_instruction_checked:product_officer.route_product_check",
       "card_instruction_checked:reviewer.child_skill_gate_manifest_review",
       "card_instruction_checked:reviewer.core",
       "card_instruction_checked:reviewer.current_node_dispatch",
@@ -58,6 +60,7 @@
       "card_instruction_checked:reviewer.product_architecture_challenge",
       "card_instruction_checked:reviewer.research_direct_source_check",
       "card_instruction_checked:reviewer.root_contract_challenge",
+      "card_instruction_checked:reviewer.route_challenge",
       "card_instruction_checked:reviewer.startup_fact_check",
       "card_instruction_checked:reviewer.strict_gate_obligation_review",
       "card_instruction_checked:reviewer.worker_result_review",
@@ -70,7 +73,7 @@
     "ok": true,
     "orphan_card_files": [],
     "router_sequence_manifest_errors": [],
-    "state_count": 61,
+    "state_count": 64,
     "status": "complete"
   },
   "hazard_checks": {
@@ -88,6 +91,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -111,6 +115,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -134,6 +139,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -157,6 +163,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -180,6 +187,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -203,6 +211,7 @@
           "next_step_source": false,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -227,6 +236,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": false,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -235,6 +245,30 @@
         "detected": true,
         "failures": [
           "pm.route_skeleton: missing PM prior path context guidance"
+        ]
+      },
+      "missing_pm_minimum_complexity_guidance": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "pm.route_skeleton",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": false,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "pm.route_skeleton: missing PM minimum sufficient complexity guidance"
         ]
       },
       "missing_required_return": {
@@ -250,6 +284,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": false,
           "role": "project_manager",
@@ -273,6 +308,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
@@ -296,6 +332,7 @@
           "next_step_source": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
           "recipient_role_matches": false,
           "required_return": true,
           "role": "project_manager",

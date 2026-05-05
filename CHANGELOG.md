@@ -2,6 +2,35 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.3.0 - 2026-05-06
+
+### Added
+
+- Added the prompt-isolated FlowPilot router runtime, route-sign/user-flow
+  diagram helpers, explicit next-recipient modeling, and broader router
+  regression coverage.
+- Added the physical packet runtime, barrier bundle support, packet envelope
+  templates, and role-origin/holder checks for controller relay boundaries.
+- Added route process/product officer cards, route challenge review, stronger
+  role cards, and updated route templates for packet-driven execution.
+
+### Changed
+
+- Changed the `flowpilot` dependency source from repository-copy semantics to
+  the public GitHub skill source while keeping a local checkout sync mode for
+  development and self-checks.
+- Reworked README positioning around FlowGuard models, packet mail, role
+  authority, and router rhythm as the current source package shape.
+- Expanded public release diagnostics to cover dependency source URLs,
+  repository-owned local sync freshness, and active protocol residue checks.
+
+### Fixed
+
+- Removed machine-specific local paths from release-facing tracked files so
+  public release checks pass without leaking workstation paths.
+- Tightened install tooling so GitHub-sourced repo-owned skills can still be
+  refreshed from the active checkout during local development.
+
 ## 0.2.1 - 2026-05-04
 
 ### Added

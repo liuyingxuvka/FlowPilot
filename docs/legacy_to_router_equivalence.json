@@ -1,5 +1,15 @@
 {
   "created_at": "2026-05-04",
+  "barrier_bundle_equivalence": {
+    "schema_version": "flowpilot.barrier_bundle_equivalence_reference.v1",
+    "contract": "docs/barrier_bundle_equivalence.md",
+    "runtime_schema": "skills/flowpilot/assets/barrier_bundle.py",
+    "template": "templates/flowpilot/barrier_bundle.template.json",
+    "flowguard_model": "simulations/barrier_equivalence_model.py",
+    "flowguard_results": "simulations/barrier_equivalence_results.json",
+    "equivalence_mode": "preserve_existing_packet_semantics",
+    "policy": "Barrier bundles may group control checks but may not merge role bodies, grant Controller authority, use AI discretion to skip gates, or complete without all legacy obligations."
+  },
   "entries": [
     {
       "id": "explicit_three_question_startup_gate",
@@ -116,14 +126,21 @@
     {
       "id": "flowguard_officer_model_gates",
       "legacy_obligation": "Process and product FlowGuard officers own modelability, model execution, risk tiers, and confidence boundaries before PM uses model results.",
-      "missing_work": "Product architecture and root-contract modelability are runtime-gated. Still add generalized officer request/report cards for process/product modeling packets and route/node model gates.",
+      "missing_work": "Product architecture, root-contract modelability, and route-draft process/product checks are runtime-gated. Still add generalized officer request/report cards for process/product modeling packets beyond these route-draft gates.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
         "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
         "skills/flowpilot/assets/runtime_kit/cards/officers/product_architecture_modelability.md",
         "skills/flowpilot/assets/runtime_kit/cards/officers/root_contract_modelability.md",
+        "skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md",
+        "skills/flowpilot/assets/runtime_kit/cards/officers/route_product_check.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md",
         "skills/flowpilot/assets/flowpilot_router.py product_officer_passes_product_architecture_modelability",
         "skills/flowpilot/assets/flowpilot_router.py product_officer_passes_root_acceptance_contract_modelability",
+        "skills/flowpilot/assets/flowpilot_router.py process_officer_route_check_card_delivered",
+        "skills/flowpilot/assets/flowpilot_router.py product_officer_route_check_card_delivered",
+        "skills/flowpilot/assets/flowpilot_router.py reviewer_route_check_card_delivered",
+        "simulations/router_next_recipient_model.py",
         "simulations/meta_model.py",
         "simulations/capability_model.py"
       ],
@@ -198,11 +215,14 @@
     {
       "id": "cockpit_or_chat_route_display",
       "legacy_obligation": "Formal runs display user-facing route signs in chat or Cockpit; raw FlowGuard graphs are diagnostic only.",
-      "missing_work": "Startup display-surface state and chat route sign are covered; add current-node display refresh events and Cockpit integration later.",
+      "missing_work": "Startup display-surface state, chat route sign, and canonical route_state_snapshot.json are covered; add native Cockpit rendering/integration later.",
       "new_enforcement": [
         "skills/flowpilot/assets/flowpilot_router.py STARTUP_QUESTIONS",
         "skills/flowpilot/assets/flowpilot_router.py write_display_surface_status",
+        "skills/flowpilot/assets/flowpilot_router.py route_state_snapshot",
+        "skills/flowpilot/assets/flowpilot_router.py active_ui_task_catalog",
         "tests/test_flowpilot_router_runtime.py test_startup_activation_requires_reviewer_facts_before_work",
+        "tests/test_flowpilot_router_runtime.py test_display_plan_is_controller_synced_projection_from_pm_plan",
         "templates/flowpilot/diagrams/user-flow-diagram.template.mmd",
         "simulations/user_flow_diagram_model.py"
       ],

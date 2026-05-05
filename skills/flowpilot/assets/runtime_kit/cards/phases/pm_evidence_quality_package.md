@@ -25,5 +25,13 @@ concept images, and visual assets must have terminal disposition. Old visuals
 or assets may be cited as historical context only; they cannot close a current
 UI or quality gate.
 
+Apply Minimum Sufficient Complexity here as evidence hygiene. Identify
+artifacts, resources, route diagrams, reports, or evidence branches that no
+longer change product trust, verification strength, or final delivery. They
+must be consumed, superseded, quarantined, or discarded with reason rather than
+left as unresolved complexity for the final ledger. Unnecessary evidence
+surfaces are not quality; they are maintenance cost unless they prove a current
+gate.
+
 If the route includes UI or visual work, include screenshot paths and visual
 review notes. If it does not, mark UI/visual evidence as not applicable.

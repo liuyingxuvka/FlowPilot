@@ -43,7 +43,19 @@
     "holder_before": "<completed_by_role>",
     "holder_after": "<next_recipient>",
     "private_role_to_role_delivery_detected": false,
-    "recipient_must_verify_before_body_open": true
+    "recipient_must_verify_before_body_open": true,
+    "mutual_role_reminder": {
+      "schema_version": "flowpilot.mutual_role_reminder.v1",
+      "controller_reminder": "You are Controller only. Relay and record this result_envelope; do not open, summarize, execute, approve gates, mutate routes, close nodes, or issue free-text work instructions.",
+      "sender_reminder": "The sender/producer for this envelope is `<completed_by_role>`.",
+      "recipient_reminder": "The recipient is `<next_recipient>` for this envelope only. Open the body only after verifying Controller relay, role target, and hash; act only inside the addressed role and packet/result scope.",
+      "reply_continuation_reminder": "When returning or relaying the next envelope, include this same visible mutual-role reminder so Controller and the next recipient are reminded again.",
+      "body_boundary_reminder": "Keep sealed body content out of Controller-visible chat; return envelope metadata only."
+    },
+    "reply_continuation_reminder": "When returning or relaying the next envelope, include this same visible mutual-role reminder so Controller and the next recipient are reminded again.",
+    "recipient_role_reminder": "This mail is for `<next_recipient>` only.",
+    "mail_only_reminder": "The recipient must answer through a file-backed packet/result/report body and return only an envelope to Controller.",
+    "chat_response_body_allowed": false
   },
   "controller_relay_history": [],
   "result_body_opened_by_role": {
@@ -87,5 +99,18 @@
     "missing_controller_relay_signature_blocks_body_open": true,
     "controller_read_or_execute_body_requires_sender_reissue": true,
     "private_role_to_role_delivery_blocks_body_open": true
+  },
+  "barrier_bundle": {
+    "schema_version": "flowpilot.barrier_bundle.v1",
+    "bundle_id": "<bundle-id-or-null>",
+    "barrier_id": "<barrier-id-or-null>",
+    "equivalence_mode": "preserve_existing_packet_semantics",
+    "member_packet_ids": [
+      "<packet-id>"
+    ],
+    "metadata_only": true,
+    "preserves_result_body_isolation": true,
+    "controller_may_read_or_summarize_bundled_bodies": false,
+    "controller_may_approve_bundled_gates": false
   }
 }

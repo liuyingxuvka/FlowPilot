@@ -26,3 +26,10 @@ Closure order:
 Completion cannot list unresolved risks as accepted completion payload.
 If closure evidence disagrees with the current pointer, frontier, heartbeat, or
 run index, block closure and repair lifecycle state first.
+
+Apply Minimum Sufficient Complexity before final approval. The completion
+decision must not depend on unused route branches, unconsumed generated
+resources, leftover skill invocations, or broad artifacts that never changed
+the delivered product or verification confidence. Close only after they are
+resolved by the final ledger as consumed, superseded, quarantined, or discarded
+with reason.

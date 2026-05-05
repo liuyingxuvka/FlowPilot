@@ -10,10 +10,26 @@ next_step_source: Do not infer the next FlowPilot action from this card, chat hi
 
 Current state contains a reviewer block.
 
+If the repair phase was entered because Controller delivered a router
+`control_blocker`, read the blocker artifact first. Treat
+`control_plane_reissue` as a malformed control-plane output that should be
+reissued by the responsible role unless the artifact also shows contamination.
+Treat `pm_repair_decision_required` as a PM decision point. Treat
+`fatal_protocol_violation` as a stop condition until PM or the user records an
+explicit recovery decision.
+
 Before choosing repair or mutation, read the latest route-memory prior path
 context and the reviewer block source path. Do not create a repair node from
 the current block alone if older completed, failed, superseded, stale, or
 experimental history changes the correct repair shape.
+
+Apply Minimum Sufficient Complexity to repair strategy. Choose the smallest
+repair that can close the blocker and restore the frozen contract. Prefer
+sender reissue or localized repair when that fully fixes the issue. Insert a
+sibling node, split a finding, rebuild a subtree, or bubble impact upward only
+when the blocker cannot be closed by the smaller repair, when evidence has
+become stale, or when the route structure itself is wrong. Record why the
+smaller repair was insufficient.
 
 Allowed PM decisions:
 

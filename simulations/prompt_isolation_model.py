@@ -197,6 +197,9 @@ class State:
     role_output_envelope_only_to_controller: bool = False
     role_chat_response_disclosed_body: bool = False
     controller_used_role_chat_body: bool = False
+    role_output_path_hash_verified: bool = False
+    controller_direct_free_text_instruction_used: bool = False
+    controller_inspected_router_internal_hard_checks: bool = False
     wrong_role_prompt_delivered: bool = False
     wrong_role_body_delivered: bool = False
     pm_used_unreviewed_evidence: bool = False
@@ -258,6 +261,7 @@ def _role_return(state: State, **changes: object) -> State:
         state,
         role_output_body_file_written=True,
         role_output_envelope_only_to_controller=True,
+        role_output_path_hash_verified=True,
         **changes,
     )
 
@@ -1651,13 +1655,19 @@ def invariant_failures(state: State) -> list[str]:
         )
     )
     if role_output_exists and not (
-        state.role_output_body_file_written and state.role_output_envelope_only_to_controller
+        state.role_output_body_file_written
+        and state.role_output_envelope_only_to_controller
+        and state.role_output_path_hash_verified
     ):
-        failures.append("role output reached Controller without file-backed body and envelope-only chat return")
+        failures.append("role output reached Controller without file-backed body, verified path/hash, and envelope-only chat return")
     if state.role_chat_response_disclosed_body:
         failures.append("role response disclosed body, blocker, evidence, or repair details in chat")
     if state.controller_used_role_chat_body:
         failures.append("Controller used role chat body content instead of treating it as contaminated mail")
+    if state.controller_direct_free_text_instruction_used:
+        failures.append("Controller direct free text was treated as authority instead of router-authorized mail")
+    if state.controller_inspected_router_internal_hard_checks:
+        failures.append("Controller inspected router hard-check internals instead of using black-box router actions")
     if state.pm_material_scan_card_delivered and not state.controller_role_confirmed:
         failures.append("PM material scan card delivered before Controller reset")
     if state.pm_material_scan_packets_issued and not (
@@ -2144,6 +2154,7 @@ def _ready(**changes: object) -> State:
         result_body_identity_boundaries_verified=True,
         role_output_body_file_written=True,
         role_output_envelope_only_to_controller=True,
+        role_output_path_hash_verified=True,
         bootloader_actions=14,
         router_action_requests=14,
     )
@@ -2650,9 +2661,12 @@ def hazard_states() -> dict[str, State]:
         "controller_relays_body_content": _ready(controller_relayed_body_content=True),
         "role_chat_response_discloses_body": _ready(role_chat_response_disclosed_body=True),
         "controller_uses_role_chat_body": _ready(controller_used_role_chat_body=True),
+        "controller_direct_free_text_instruction": _ready(controller_direct_free_text_instruction_used=True),
+        "controller_inspects_router_hard_checks": _ready(controller_inspected_router_internal_hard_checks=True),
         "role_output_without_file_backed_envelope": _ready(
             role_output_body_file_written=False,
             role_output_envelope_only_to_controller=False,
+            role_output_path_hash_verified=False,
         ),
         "wrong_role_prompt": _ready(wrong_role_prompt_delivered=True),
         "wrong_role_body": _ready(wrong_role_body_delivered=True),

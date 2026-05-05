@@ -21,6 +21,14 @@ For each active route node:
 If reviewer blocks, enter review repair. If reviewed evidence shows route
 structure is wrong, mutate the route and rerun required checks.
 
+Apply Minimum Sufficient Complexity during node execution. A current-node
+packet may not absorb adjacent ideas, opportunistic features, broad cleanup, or
+new validation surfaces unless they are required to close this node's accepted
+proof obligations. If new complexity is genuinely needed, record it as a route
+mutation, sibling node, discovery/validation node, or user blocker instead of
+silently expanding the current node. For equivalent node outcomes, keep the
+smallest packet scope with fewer handoffs, artifacts, and validation branches.
+
 The PM recheck must cite reviewed evidence, remaining proof obligations, stale
 evidence decisions, and why the result is not placeholder or report-only work.
 

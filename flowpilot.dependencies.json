@@ -22,11 +22,19 @@
       "install_name": "flowpilot",
       "repo_path": "skills/flowpilot",
       "source": {
-        "kind": "copy_from_this_repository"
+        "kind": "github",
+        "repo": "liuyingxuvka/FlowPilot",
+        "ref": "main",
+        "path": "skills/flowpilot",
+        "url": "https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot"
       },
       "install": {
-        "mode": "copy_from_repo",
-        "auto_install_missing": true
+        "mode": "github_skill",
+        "auto_install_missing": true,
+        "local_sync_mode": "copy_from_repo"
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
       },
       "checks": [
         {
@@ -118,13 +126,19 @@
       "required": false,
       "companion": true,
       "install_name": "autonomous-concept-ui-redesign",
-      "repo_path": "skills/autonomous-concept-ui-redesign",
       "source": {
-        "kind": "copy_from_this_repository"
+        "kind": "github",
+        "repo": "liuyingxuvka/autonomous-concept-ui-redesign-skill",
+        "ref": "main",
+        "path": "autonomous-concept-ui-redesign",
+        "url": "https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign"
       },
       "install": {
-        "mode": "copy_from_repo",
+        "mode": "github_skill",
         "auto_install_missing": true
+      },
+      "release_check": {
+        "missing_source_is_blocker": true
       },
       "checks": [
         {

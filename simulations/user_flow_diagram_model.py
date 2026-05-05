@@ -46,6 +46,8 @@ class State:
     active_node_highlighted: bool = False
     return_edge_present: bool = False
     display_packet_written: bool = False
+    router_display_text_returned: bool = False
+    generated_file_only_display_used: bool = False
     chat_mermaid_displayed: bool = False
     cockpit_route_sign_displayed: bool = False
     reviewer_checked_display: bool = False
@@ -120,6 +122,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.return_edge_required and not state.return_edge_present:
         yield Transition("return_edge_added", replace(state, return_edge_present=True))
         return
+    if state.chat_display_required and not state.router_display_text_returned:
+        yield Transition(
+            "router_returned_chat_mermaid_display_text",
+            replace(state, router_display_text_returned=True),
+        )
+        return
     if state.chat_display_required and not state.chat_mermaid_displayed:
         yield Transition("chat_mermaid_displayed", replace(state, chat_mermaid_displayed=True))
         return
@@ -173,6 +181,10 @@ def invariant_failures(state: State) -> list[str]:
     if state.chat_display_required and (
         state.reviewer_passed or state.node_work_started or state.node_advanced
     ):
+        if not state.router_display_text_returned:
+            failures.append("router did not return chat-ready Mermaid display_text before chat display gate")
+        if state.generated_file_only_display_used:
+            failures.append("generated route-sign files were treated as chat display evidence")
         if not state.chat_mermaid_displayed:
             failures.append("Cockpit was closed but node progress happened before Mermaid was shown in chat")
         if not state.simplified_mermaid_generated or not state.english_flowpilot_labels:
@@ -281,6 +293,22 @@ def hazard_states() -> dict[str, State]:
             english_flowpilot_labels=True,
             active_node_highlighted=True,
             reviewer_checked_display=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+            node_work_started=True,
+        ),
+        "generated_file_only_display": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="startup",
+            chat_display_required=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            display_packet_written=True,
+            generated_file_only_display_used=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
             reviewer_checked_route_match=True,
             reviewer_passed=True,
             node_work_started=True,

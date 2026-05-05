@@ -19,8 +19,13 @@ old route files, or Controller summaries.
 Route requirements:
 
 - fresh current run only;
+- Minimum Sufficient Complexity: choose the smallest route structure that can
+  satisfy the frozen contract with the required proof strength;
 - large nodes expanded horizontally;
 - each large node owns concrete checklist items;
+- each separate node must close a distinct risk, produce distinct evidence,
+  enforce a role boundary, enable real parallelism, isolate failure recovery,
+  or represent a user-visible milestone;
 - include a concise PM-authored visible route summary suitable for
   `display_plan.json`; it may be high level, but it must name the route nodes
   that Controller is allowed to show in the host visible plan;
@@ -35,3 +40,8 @@ checks pass.
 Return `prior_path_context_review` with the route-memory source paths and how
 prior completed, superseded, stale, blocked, or experimental work affects this
 route draft.
+
+Also return a complexity review. If a node could have been merged with an
+adjacent node, record why separation is still necessary. If two routes produce
+the same outcome and proof strength, choose the one with fewer nodes, handoffs,
+artifacts, and dependencies.

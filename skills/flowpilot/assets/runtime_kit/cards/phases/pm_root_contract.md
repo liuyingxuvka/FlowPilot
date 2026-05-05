@@ -21,5 +21,11 @@ The root contract is the completion floor. It records project-level hard
 requirements, high-risk requirements, proof obligations, scenario coverage, and
 what cannot be closed by a report alone.
 
+Apply Minimum Sufficient Complexity when freezing the contract. The root
+contract must freeze outcomes, hard risks, and proof obligations, not an
+unnecessary implementation shape. Do not turn a complex route, tool choice,
+child skill, or artifact family into a hard requirement unless the user asked
+for it or the proof obligation cannot be met without it.
+
 Do not draft a route until reviewer and Product FlowGuard Officer checks pass
 for the frozen contract.
