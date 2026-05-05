@@ -34,16 +34,11 @@
       "asked_before_banner": false,
       "dialog_stopped_for_user_answers": false,
       "explicit_user_answer_recorded": false,
-      "answer_source": null,
+      "provenance": null,
       "answer_evidence_path": null,
       "answered_at": null,
       "banner_emitted_after_answers": false,
       "answers": {
-        "run_mode": {
-          "question": "Choose run mode: full-auto, autonomous, guided, or strict-gated.",
-          "answer": null,
-          "answered": false
-        },
         "background_agents": {
           "question": "May FlowPilot use the standard six background subagents?",
           "answer": null,
@@ -226,6 +221,9 @@
       "controller_may_execute_packet_body": false,
       "controller_may_execute_result_body": false,
       "controller_may_relabel_wrong_role_origin": false,
+      "packet_body_identity_boundary_required": true,
+      "result_body_identity_boundary_required": true,
+      "role_identity_mismatch_blocks_advance": true,
       "all_formal_mail_must_route_through_controller": true,
       "controller_relay_signature_required": true,
       "controller_must_sign_body_unread_and_unexecuted": true,
@@ -283,7 +281,6 @@
     "ambiguous_worker_state_blocks_controller_execution": true,
     "pm_reissue_or_repair_required_when_ambiguous": true
   },
-  "mode": null,
   "crew_ledger": ".flowpilot/runs/run-001/crew_ledger.json",
   "crew_memory_root": ".flowpilot/runs/run-001/crew_memory",
   "crew_rehydration_report": ".flowpilot/runs/run-001/crew_memory/crew_rehydration_report.json",

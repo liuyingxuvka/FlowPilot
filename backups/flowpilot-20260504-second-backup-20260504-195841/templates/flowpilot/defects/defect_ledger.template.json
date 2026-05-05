@@ -1,0 +1,79 @@
+{
+  "schema_version": "flowpilot.defect_ledger.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "pm_owned": true,
+  "status": "<active|paused|complete>",
+  "purpose": "Canonical run-level ledger for product defects, FlowPilot skill defects, process defects, evidence defects, and tool/environment defects discovered during the run.",
+  "event_log_path": ".flowpilot/runs/<run-id>/defects/defect_events.jsonl",
+  "write_policy": {
+    "who_registers": "Any role that discovers a defect writes an event immediately.",
+    "who_triages": "The project manager classifies severity, owner, blocker status, and route impact.",
+    "who_repairs": "The assigned owner repairs or compensates according to PM triage.",
+    "who_rechecks": "The same role class that owns the blocked gate rechecks fixed blockers.",
+    "who_closes": "The project manager closes only after required recheck evidence is cited."
+  },
+  "allowed_defect_types": [
+    "target_product_defect",
+    "flowpilot_skill_defect",
+    "process_defect",
+    "evidence_defect",
+    "tool_environment_defect"
+  ],
+  "allowed_statuses": [
+    "open",
+    "accepted",
+    "fixing",
+    "fixed_pending_recheck",
+    "closed",
+    "deferred"
+  ],
+  "allowed_severities": [
+    "blocker",
+    "high",
+    "medium",
+    "low"
+  ],
+  "counts": {
+    "total": 0,
+    "open": 0,
+    "blocker_open": 0,
+    "fixed_pending_recheck": 0,
+    "closed": 0,
+    "deferred": 0
+  },
+  "defects": [
+    {
+      "defect_id": "<defect-id>",
+      "title": "<short title>",
+      "defect_type": "<target_product_defect|flowpilot_skill_defect|process_defect|evidence_defect|tool_environment_defect>",
+      "severity": "<blocker|high|medium|low>",
+      "status": "<open|accepted|fixing|fixed_pending_recheck|closed|deferred>",
+      "found_by_role": "<role>",
+      "found_at": "<iso-8601-timestamp>",
+      "affected_gate": "<gate-id-or-null>",
+      "affected_requirement": "<requirement-id-or-null>",
+      "description": "<plain-language defect description>",
+      "pm_triage": {
+        "triaged": false,
+        "triaged_by_role": "project_manager",
+        "triaged_at": "<iso-8601-timestamp-or-null>",
+        "route_impact": "<none|blocks_current_gate|requires_repair_node|requires_route_mutation|terminal_only>",
+        "owner_role": "<role-or-null>",
+        "recheck_role_class": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker|controller|none>",
+        "close_condition": "<specific evidence required before closure>"
+      },
+      "evidence_paths": [],
+      "repair_paths": [],
+      "recheck_paths": [],
+      "history": []
+    }
+  ],
+  "completion_policy": {
+    "route_or_node_completion_blocked_when_blocker_open": true,
+    "route_or_node_completion_blocked_when_fixed_pending_recheck": true,
+    "terminal_completion_requires_blocker_open_zero": true,
+    "terminal_completion_requires_fixed_pending_recheck_zero": true
+  }
+}

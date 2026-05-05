@@ -1,0 +1,783 @@
+{
+  "schema_version": "flowpilot.execution_frontier.v2",
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
+  "flowpilot_root": ".flowpilot",
+  "current_pointer": ".flowpilot/current.json",
+  "run_index": ".flowpilot/index.json",
+  "continues_from_run_id": null,
+  "prior_work_import_packet": ".flowpilot/runs/run-001/prior_work_import_packet.json",
+  "control_state_scope": "run_root_only",
+  "top_level_control_state_files_forbidden": true,
+  "active_route": "route-001",
+  "route_version": 1,
+  "frontier_version": 1,
+  "active_node": "node-001-start",
+  "current_subnode": "<subnode-id-or-null>",
+  "next_gate": "<gate-id-or-null>",
+  "user_flow_diagram": {
+    "enabled": true,
+    "diagram_kind": "flowpilot_realtime_route_sign",
+    "language": "en",
+    "display_mode": "<chat|cockpit_ui|both>",
+    "render_policy": "startup_major_node_entry_parent_node_entry_leaf_node_entry_pm_work_brief_key_node_change_route_mutation_review_failure_validation_failure_completion_or_user_request",
+    "display_triggers": [
+      "startup",
+      "major_node_entry",
+      "parent_node_entry",
+      "leaf_node_entry",
+      "pm_work_brief",
+      "key_node_change",
+      "route_mutation",
+      "review_failure",
+      "validation_failure",
+      "completion",
+      "user_request"
+    ],
+    "same_graph_for_chat_and_ui": true,
+    "stage_count_target": "6-8",
+    "highlight_current_stage": true,
+    "current_stage": "<intake|product|modeling|route|execution|verification|completion|repair>",
+    "cockpit_open": false,
+    "chat_display_required_when_cockpit_closed": true,
+    "chat_display_required": true,
+    "chat_displayed_in_chat": false,
+    "chat_display_evidence_rule": "Only mark true after the exact Mermaid block appears in the assistant message; generated files or display packets alone do not satisfy chat display.",
+    "display_gate_status": "<pending_visible_display|passed|blocked>",
+    "source_route_path": ".flowpilot/runs/run-001/routes/route-001/flow.json",
+    "source_frontier_path": ".flowpilot/runs/run-001/execution_frontier.json",
+    "mermaid_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram.mmd",
+    "markdown_preview_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram.md",
+    "display_packet_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram-display.json",
+    "review_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram-review.json",
+    "last_rendered_at": "<iso-8601-timestamp-or-null>",
+    "route_version_rendered": 1,
+    "frontier_version_rendered": 1,
+    "stale_after_route_mutation": false,
+    "return_or_repair": {
+      "required": false,
+      "is_backtrack": false,
+      "return_source": "<review-gate-or-node-id-or-null>",
+      "repair_target": "<node-id-or-null>",
+      "edge_present": false
+    },
+    "reviewer_display_gate": {
+      "required": true,
+      "reviewer_role": "human_like_reviewer",
+      "must_check_chat_when_cockpit_closed": true,
+      "must_check_active_route_node_match": true,
+      "must_check_return_edge_when_required": true,
+      "status": "<pending|passed|blocked>",
+      "blocking_findings": []
+    }
+  },
+  "debug_flowguard_mermaid": {
+    "enabled": false,
+    "render_policy": "on_request_only",
+    "write_by_default": false,
+    "satisfies_user_route_sign_gate": false,
+    "reason": "Raw FlowGuard state graphs are engineering diagnostics, not the default user progress view."
+  },
+  "current_mainline": [
+    "node-001-start"
+  ],
+  "next_node": "<node-id-or-null>",
+  "fallback_node": "<node-id-or-null>",
+  "current_chunk": "<current-bounded-chunk-or-null>",
+  "next_chunk": "<next-bounded-chunk-or-null>",
+  "continuation": {
+    "host_probe_done": false,
+    "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
+    "mode": "<unknown|automated|manual-resume|blocked>",
+    "host_supports_real_wakeups": null,
+    "probe_evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
+    "automated_bundle_required": false,
+    "automated_bundle_ready": false,
+    "route_heartbeat_interval_minutes": 1,
+    "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "manual_resume_recorded": false,
+    "unsupported_reason": "<reason-or-null>",
+    "unattended_recovery_claim_allowed": false,
+    "continuation_readiness_checked": false,
+    "continuation_readiness_kind": "<automated-heartbeat-health|manual-resume-packet|blocked|unknown>"
+  },
+  "startup_activation": {
+    "hard_gate_required": true,
+    "startup_questions": {
+      "required": true,
+      "status": "pending",
+      "asked_before_banner": false,
+      "dialog_stopped_for_user_answers": false,
+      "explicit_user_answer_recorded": false,
+      "answer_source": null,
+      "answer_evidence_path": null,
+      "answered_at": null,
+      "banner_emitted_after_answers": false,
+      "answers": {
+        "run_mode": {
+          "question": "Choose run mode: full-auto, autonomous, guided, or strict-gated.",
+          "answer": null,
+          "answered": false
+        },
+        "background_agents": {
+          "question": "May FlowPilot use the standard six background subagents?",
+          "answer": null,
+          "answered": false
+        },
+        "scheduled_continuation": {
+          "question": "May FlowPilot create heartbeat or scheduled continuation jobs?",
+          "answer": null,
+          "answered": false
+        },
+        "display_surface": {
+          "question": "Should FlowPilot open the Cockpit UI when startup state is ready, or use chat route signs?",
+          "answer": null,
+          "answered": false
+        }
+      },
+      "display_entry_action": {
+        "required": true,
+        "status": "pending",
+        "cockpit_ui_opened": false,
+        "chat_route_sign_displayed": false,
+        "evidence_path": null
+      }
+    },
+    "route_files_written": false,
+    "run_directory_created": false,
+    "current_pointer_written": false,
+    "run_index_updated": false,
+    "prior_work_import_packet_written_when_continuing": false,
+    "top_level_control_state_absent_or_quarantined": false,
+    "canonical_state_written": false,
+    "execution_frontier_written": false,
+    "crew_ledger_current": false,
+    "role_memory_packets_current": 0,
+    "live_subagent_startup": {
+      "required_by_default": true,
+      "decision": "unknown",
+      "user_decision_recorded": false,
+      "user_authorized_live_start": false,
+      "live_start_attempted": false,
+      "live_agents_active": 0,
+      "current_task_fresh_agents_required": true,
+      "fresh_agents_spawned_after_startup_answers": false,
+      "fresh_agents_spawned_after_route_allocation": false,
+      "agent_cohort_id": null,
+      "historical_agent_ids_compared": false,
+      "reused_historical_agent_ids": [],
+      "historical_agent_reuse_blocked": true,
+      "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/live_subagents_fresh_for_current_task.json",
+      "single_agent_role_continuity_authorized": false,
+      "blocker": "no_user_decision",
+      "evidence_path": null
+    },
+    "continuation_ready": false,
+    "startup_preflight_review": {
+      "required": true,
+      "reviewer_role": "human_like_reviewer",
+      "reviewer_decision_authority": "report_only_no_start_approval",
+      "report_path": ".flowpilot/runs/run-001/startup_review/latest.json",
+      "report_status": "pending",
+      "blocking_findings": null,
+      "checked_at": null,
+      "review_iteration": 0,
+      "checked_user_authorization_vs_state": false,
+      "checked_route_state_frontier_consistency": false,
+      "checked_old_route_and_asset_reuse_boundary": false,
+      "checked_heartbeat_or_manual_resume_evidence": false,
+      "checked_background_agent_role_evidence": false,
+      "checked_background_agent_user_decision_matches_actual_state": false,
+      "checked_live_subagent_count_or_single_agent_authorization": false,
+      "checked_live_subagent_current_task_freshness": false,
+      "checked_no_historical_agent_id_reuse": false,
+      "checked_shadow_route_and_residual_state": false,
+      "checked_real_codex_automation_records": false,
+      "factual_evidence_checked": false
+    },
+    "pm_start_gate": {
+      "required": true,
+      "decision_owner": "project_manager",
+      "decision": "pending",
+      "decision_path": null,
+      "based_on_review_report_path": null,
+      "independent_validation_required": true,
+      "completion_report_only_allowed": false,
+      "independent_validation_evidence_path": "<path-or-null>",
+      "worker_remediation_required": false,
+      "review_iteration": 0,
+      "opened_at": null
+    },
+    "startup_review_workflow": "human-like reviewer independently checks real facts and writes .flowpilot/runs/<run-id>/startup_review/latest.json; no third startup opener or runtime startup-check script exists",
+    "shadow_route_detected": false,
+    "work_beyond_startup_allowed": false
+  },
+  "controlled_stop_notice": {
+    "required_when_nonterminal": true,
+    "route_complete": false,
+    "checkpoint_saved": false,
+    "can_wait_for_heartbeat": false,
+    "resume_instruction": "<wait-for-heartbeat-or-type-continue-flowpilot>",
+    "manual_resume_prompt": "continue FlowPilot",
+    "blocker_summary": "<blocker-or-hard-gate-or-null>",
+    "notice_text": "<complete-message-or-nonterminal-resume-message>",
+    "evidence_path": "<notice-evidence-path-or-null>",
+    "last_written_at": "<iso-8601-timestamp-or-null>"
+  },
+  "pm_completion_runway": {
+    "latest_path": ".flowpilot/runs/run-001/evidence/pm-runway-latest.json",
+    "scope": "current-position-to-project-completion",
+    "current_gate": "<current-gate-or-null>",
+    "downstream_steps": [
+      {
+        "step": "<current-or-future-step>",
+        "status": "<in_progress|pending|blocked|complete>",
+        "required_roles": [],
+        "hard_stop": false
+      }
+    ],
+    "hard_stop_conditions": [
+      "user_authorization_required",
+      "required_role_blocks",
+      "route_mutation_required",
+      "tool_or_environment_blocker"
+    ],
+    "checkpoint_cadence": "<when-progress-must-be-written-back>",
+    "pm_stop_signal": false,
+    "synced_to_visible_plan": false,
+    "visible_plan_sync": {
+      "host_native_plan_tool_available": null,
+      "native_plan_tool_name": "<update_plan-or-equivalent-or-null>",
+      "native_plan_tool_called": false,
+      "fallback_projection_method": "<chat_and_flowpilot_state|none|null>",
+      "synced_at": "<iso-8601-timestamp-or-null>",
+      "item_count": 0,
+      "contains_current_gate": false,
+      "contains_downstream_runway": false,
+      "contains_completion_tail": false,
+      "one_step_projection_allowed": false,
+      "evidence_path": "<native-plan-sync-evidence-path-or-null>"
+    },
+    "recorded_at": "<iso-8601-timestamp-or-null>"
+  },
+  "packet_control_plane": {
+    "ledger_path": ".flowpilot/runs/run-001/packet_ledger.json",
+    "controller_role": "controller",
+    "controller_only": true,
+    "packet_root": ".flowpilot/runs/run-001/packets",
+    "controller_visibility": "packet_and_result_envelopes_only",
+    "active_packet_id": "<packet-id-or-null>",
+    "active_packet_envelope_path": ".flowpilot/runs/run-001/packets/<packet-id>/packet_envelope.json",
+    "active_packet_body_path": ".flowpilot/runs/run-001/packets/<packet-id>/packet_body.md",
+    "active_result_envelope_path": ".flowpilot/runs/run-001/packets/<packet-id>/result_envelope.json",
+    "active_result_body_path": ".flowpilot/runs/run-001/packets/<packet-id>/result_body.md",
+    "packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
+    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+    "controller_status_packet_path": ".flowpilot/runs/run-001/packets/<packet-id>/controller_status_packet.json",
+    "holder_change_user_status_update_required": true,
+    "holder_change_user_status_update_written": false,
+    "major_node_chat_mermaid_required_when_cockpit_missing": true,
+    "major_node_chat_mermaid_displayed_when_required": false,
+    "pm_decision_path": "<pm-decision-evidence-path-or-null>",
+    "pm_controller_reminder_present": false,
+    "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
+    "worker_identity": "<worker_a|worker_b|authorized_non_controller|null>",
+    "worker_result_path": "<node-result-path-or-null>",
+    "review_decision_path": "<review-decision-path-or-null>",
+    "envelope_body_policy": {
+      "controller_may_read_packet_body": false,
+      "controller_may_read_result_body": false,
+      "controller_may_execute_packet_body": false,
+      "controller_may_execute_result_body": false,
+      "controller_may_relabel_wrong_role_origin": false,
+      "physical_packet_files_required": true,
+      "controller_context_body_exclusion_required": true,
+      "packet_body_hash_required": true,
+      "result_body_hash_required": true,
+      "body_hash_mismatch_blocks_advance": true,
+      "stale_body_reuse_blocks_advance": true
+    },
+    "role_origin_audit": {
+      "required_for_every_packet": true,
+      "path": "<role-origin-audit-evidence-path-or-null>",
+      "packet_envelope_checked": false,
+      "packet_runtime_physical_files_checked": false,
+      "controller_context_body_exclusion_checked": false,
+      "packet_envelope_to_role_checked": false,
+      "packet_body_hash_checked": false,
+      "result_envelope_checked": false,
+      "result_envelope_completed_by_role_checked": false,
+      "result_envelope_completed_by_agent_id_checked": false,
+      "result_body_hash_checked": false,
+      "expected_executor_role": "<worker_a|worker_b|authorized_non_controller|null>",
+      "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown|null>",
+      "completed_by_agent_id": "<agent-id-or-null>",
+      "completed_agent_id_belongs_to_role": false,
+      "worker_result_author_matches_assignment": false,
+      "controller_origin_evidence_detected": false,
+      "wrong_role_completion_detected": false,
+      "wrong_role_cosign_or_relabel_forbidden": true,
+      "body_hash_mismatch_detected": false,
+      "stale_body_reuse_detected": false,
+      "controller_boundary_warning_issued": false,
+      "invalid_role_origin_blocks_advance": true,
+      "pm_reissue_or_repair_required_on_mismatch": true
+    },
+    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+    "controller_may_execute_worker_packet": false,
+    "controller_may_finish_worker_packet": false,
+    "controller_may_read_worker_body": false,
+    "controller_may_read_result_body": false,
+    "reviewer_dispatch_required_before_worker": true,
+    "ambiguous_worker_state_blocks_controller_execution": true,
+    "pm_reissue_or_repair_required_when_ambiguous": true,
+    "internal_loop_continues_when_pm_stop_for_user_false": true
+  },
+  "product_function_architecture": {
+    "path": ".flowpilot/runs/run-001/product_function_architecture.json",
+    "pm_owned": true,
+    "status": "<draft|approved|blocked|superseded>",
+    "user_task_map_written": false,
+    "product_capability_map_written": false,
+    "feature_decisions_written": false,
+    "high_standard_posture_written": false,
+    "target_and_failure_bar_written": false,
+    "semantic_fidelity_policy_written": false,
+    "display_rationale_written": false,
+    "missing_feature_review_done": false,
+    "negative_scope_written": false,
+    "functional_acceptance_matrix_written": false,
+    "product_officer_modelability_status": "<pending|approved|blocked>",
+    "product_officer_report_path": "<path-or-null>",
+    "reviewer_usefulness_challenge_status": "<pending|passed|blocked>",
+    "reviewer_report_path": "<path-or-null>",
+    "independent_validation_required": true,
+    "product_officer_independent_validation_path": "<path-or-null>",
+    "reviewer_independent_validation_path": "<path-or-null>",
+    "contract_freeze_allowed": false
+  },
+  "root_acceptance_contract": {
+    "path": ".flowpilot/runs/run-001/root_acceptance_contract.json",
+    "pm_owned": true,
+    "status": "<draft|approved|blocked|superseded>",
+    "root_thresholds_defined": false,
+    "proof_matrix_written": false,
+    "standard_scenario_pack_selected": false,
+    "unresolved_residual_risks_allowed": false,
+    "contract_freeze_allowed": false
+  },
+  "standard_scenario_pack": {
+    "path": ".flowpilot/runs/run-001/standard_scenario_pack.json",
+    "pm_owned": true,
+    "status": "<draft|approved|blocked|superseded>",
+    "selected_scenario_ids": [],
+    "all_root_high_risk_requirements_mapped": false,
+    "required_for_final_replay": true
+  },
+  "material_research_package": {
+    "root": ".flowpilot/runs/run-001/research",
+    "active_package_id": "<research-package-id-or-null>",
+    "active_package_path": ".flowpilot/runs/run-001/research/<research-package-id>/research_package.json",
+    "required_before_product_architecture_when_material_gap_exists": true,
+    "pm_decision_recorded": false,
+    "package_written": false,
+    "tool_capability_decision_recorded": false,
+    "worker_report_path": ".flowpilot/runs/run-001/research/<research-package-id>/worker_report.json",
+    "worker_report_ready": false,
+    "reviewer_report_path": ".flowpilot/runs/run-001/research/<research-package-id>/reviewer_report.json",
+    "reviewer_direct_source_check_done": false,
+    "reviewer_rework_required": false,
+    "worker_rework_completed": false,
+    "reviewer_recheck_done": false,
+    "reviewer_sufficiency_passed": false,
+    "pm_result_absorbed_or_route_mutated": false,
+    "missing_web_or_browser_capability_route": "<not-applicable|use-local-sources|ask-user-for-source|manual-research-needed|block>"
+  },
+  "current_node_acceptance_plan": {
+    "path": ".flowpilot/runs/run-001/routes/<route-id>/nodes/<node-id>/node_acceptance_plan.json",
+    "pm_owned": true,
+    "status": "<not_started|draft|approved|blocked|superseded>",
+    "pm_current_node_high_standard_recheck_written": false,
+    "highest_achievable_product_target_rechecked": false,
+    "unacceptable_result_bar_rechecked": false,
+    "semantic_fidelity_policy_rechecked": false,
+    "node_requirements_written": false,
+    "inherited_root_risks_mapped": false,
+    "experiments_declared": false,
+    "standard_scenarios_selected": false,
+    "all_required_experiments_passed_or_triaged": false,
+    "required_before_chunk_execution": true,
+    "required_before_node_checkpoint": true
+  },
+  "parent_backward_replay": {
+    "trigger_rule": "any_effective_route_node_with_children",
+    "semantic_importance_classification_required": false,
+    "parent_targets_enumerated_from_route": false,
+    "parent_targets_path": ".flowpilot/runs/run-001/routes/<route-id>/parent_backward_targets.json",
+    "current_parent_node_id": "<parent-node-id-or-null>",
+    "current_parent_has_children": "<true|false|null>",
+    "current_parent_replay_path": ".flowpilot/runs/run-001/routes/<route-id>/nodes/<parent-node-id>/parent_backward_replay.json",
+    "current_parent_replay_status": "<not_required|not_started|reviewing|repair_required|passed|blocked>",
+    "pm_segment_decision_recorded": false,
+    "required_before_parent_checkpoint": true,
+    "same_parent_replay_rerun_after_latest_repair": false,
+    "unresolved_parent_replay_blockers": 0
+  },
+  "pm_child_skill_selection": {
+    "pm_owned": true,
+    "selection_manifest_path": ".flowpilot/runs/run-001/pm_child_skill_selection.json",
+    "local_skill_inventory_path": ".flowpilot/runs/run-001/local_skill_inventory.json",
+    "source_product_function_architecture_path": ".flowpilot/runs/run-001/product_function_architecture.json",
+    "required_skills": [],
+    "conditional_skills": [],
+    "deferred_skills": [],
+    "rejected_skills": [],
+    "raw_inventory_used_as_route_authority": false,
+    "pm_decision_recorded": false,
+    "required_before_child_skill_gate_manifest": true
+  },
+  "child_skill_gate_manifest": {
+    "pm_owned": true,
+    "source_selection_manifest_path": ".flowpilot/runs/run-001/pm_child_skill_selection.json",
+    "discovery_limited_to_pm_selected_skills": true,
+    "route_design_discovery_done": false,
+    "initial_manifest_path": "<.flowpilot/runs/<run-id>/capabilities/child-skill-gate-manifest-*.json-or-null>",
+    "refined_manifest_path": "<.flowpilot/runs/<run-id>/capabilities/child-skill-gate-manifest-node-*.json-or-null>",
+    "source_skills_loaded": [],
+    "referenced_files_loaded_or_skipped": [],
+    "gate_count": 0,
+    "reviewer_review_path": "<path-or-null>",
+    "process_officer_approval_path": "<path-or-null>",
+    "product_officer_approval_path": "<path-or-null>",
+    "pm_route_inclusion_approval_path": "<path-or-null>",
+    "independent_validation_required": true,
+    "completion_report_only_allowed": false,
+    "reviewer_independent_validation_path": "<path-or-null>",
+    "process_officer_independent_validation_path": "<path-or-null>",
+    "product_officer_independent_validation_path": "<path-or-null>",
+    "pm_independent_validation_path": "<path-or-null>",
+    "node_refinement_done": false,
+    "controller_self_approval_allowed": false,
+    "all_current_child_skill_gates_approved": false,
+    "gates": [
+      {
+        "gate_id": "<child-skill-gate-id>",
+        "source_skill": "<skill-name>",
+        "source_step": "<child-skill-stage-or-check>",
+        "gate_type": "<process|conformance|product|human_review|visual|interaction|validation|route_inclusion|route_mutation|parent_return>",
+        "visible_milestone": "<mini-route-milestone>",
+        "evidence_required": [],
+        "evidence_paths": [],
+        "reviewer_direct_check_required": "<true|false>",
+        "worker_report_only_allowed": false,
+        "personal_walkthrough_required": "<true|false>",
+        "reviewer_walkthrough_evidence_path": "<path-or-null>",
+        "design_recommendations_required": "<true|false>",
+        "draft_owner": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
+        "execution_owner": "<role-or-null>",
+        "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+        "forbidden_approvers": [
+          "controller",
+          "worker_a",
+          "worker_b"
+        ],
+        "approval_status": "<draft|pending|approved|blocked|waived|superseded>",
+        "approval_evidence_path": "<path-or-null>",
+        "independent_validation_required": true,
+        "completion_report_only_allowed": false,
+        "independent_validation_evidence_path": "<path-or-null>",
+        "blocked_reason": "<reason-or-null>"
+      }
+    ]
+  },
+  "final_route_wide_gate_ledger": {
+    "path": ".flowpilot/runs/run-001/final_route_wide_gate_ledger.json",
+    "pm_owned": true,
+    "status": "not_started",
+    "built_from_route_version": 0,
+    "current_route_scanned": false,
+    "effective_nodes_resolved": false,
+    "child_skill_gates_collected": false,
+    "human_review_gates_collected": false,
+    "product_process_gates_collected": false,
+    "resource_lineage_resolved": false,
+    "stale_evidence_checked": false,
+    "superseded_nodes_explained": false,
+    "standard_scenarios_replayed": false,
+    "residual_risk_triage_done": false,
+    "unresolved_residual_risk_count_zero": false,
+    "unresolved_count": null,
+    "unresolved_count_zero": false,
+    "terminal_human_backward_replay_map_path": ".flowpilot/runs/run-001/terminal_human_backward_replay_map.json",
+    "terminal_human_backward_replay_status": "<not_started|reviewing|repair_required|passed|blocked>",
+    "terminal_human_backward_started_from_delivered_product": false,
+    "terminal_human_backward_root_reviewed": false,
+    "terminal_human_backward_parent_nodes_reviewed": false,
+    "terminal_human_backward_leaf_nodes_reviewed": false,
+    "terminal_human_backward_pm_segment_decisions_recorded": false,
+    "terminal_human_backward_repair_restart_policy_recorded": false,
+    "reviewer_backward_check_path": "<path-or-null>",
+    "pm_completion_approval_path": "<path-or-null>",
+    "pm_independent_validation_evidence_path": "<path-or-null>",
+    "completion_report_only_allowed": false,
+    "completion_allowed": false
+  },
+  "terminal_closure_suite": {
+    "path": ".flowpilot/runs/run-001/terminal_closure_suite.json",
+    "status": "<not_started|running|passed|blocked>",
+    "terminal_state_files_synced": false,
+    "completion_state_evidence_refreshed": false,
+    "final_ledger_rebuilt_after_refresh": false,
+    "lifecycle_reconciliation_required_actions_zero": false,
+    "completion_allowed": false
+  },
+  "unfinished_current_node": true,
+  "current_node_completion": {
+    "status": "unfinished",
+    "advance_allowed": false,
+    "required_before_advance": [
+      "node_status_completed",
+      "required_gates_completed",
+      "declared_verification_passed",
+      "node_evidence_written",
+      "heartbeat_evidence_written"
+    ],
+    "evidence_paths": []
+  },
+  "current_gate_authority": {
+    "gate_id": "<current-gate-or-null>",
+    "draft_owner": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|authorized_non_controller|null>",
+    "execution_owner": "<role-or-null>",
+    "required_approver": "<role-or-null>",
+    "forbidden_approvers": [
+      "controller",
+      "worker_a",
+      "worker_b"
+    ],
+    "approval_status": "<none|draft|pending|approved|blocked|superseded>",
+    "approval_evidence_path": "<path-or-null>",
+    "independent_validation_required": true,
+    "completion_report_only_allowed": false,
+    "independent_validation_evidence_path": "<path-or-null>",
+    "approved_by": "<role-or-null>",
+    "blocked_reason": "<reason-or-null>",
+    "route_mutation_required": false,
+    "strict_obligation_review": {
+      "required": true,
+      "obligation_matrix_path": "<path-or-null>",
+      "current_gate_obligations_clear": false,
+      "current_gate_caveats": [],
+      "future_gate_obligations": [
+        {
+          "obligation": "<future-scope-obligation>",
+          "mapped_gate": "<future-gate-or-node-id>"
+        }
+      ],
+      "nonblocking_notes": [],
+      "pass_with_current_gate_caveat_allowed": false
+    }
+  },
+  "authority_matrix": {
+    "startup_self_interrogation": {
+      "draft_owner": "project_manager",
+      "required_approver": "project_manager",
+      "forbidden_approvers": [
+        "controller",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    "product_function_architecture": {
+      "draft_owner": "project_manager",
+      "required_approver": "project_manager",
+      "secondary_required_approvers": [
+        "product_flowguard_officer",
+        "human_like_reviewer"
+      ],
+      "forbidden_approvers": [
+        "controller",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    "process_model": {
+      "draft_owner": "process_flowguard_officer",
+      "execution_owner": "process_flowguard_officer",
+      "interpretation_owner": "process_flowguard_officer",
+      "required_approver": "process_flowguard_officer",
+      "forbidden_approvers": [
+        "controller",
+        "project_manager",
+        "product_flowguard_officer",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    "product_model": {
+      "draft_owner": "product_flowguard_officer",
+      "execution_owner": "product_flowguard_officer",
+      "interpretation_owner": "product_flowguard_officer",
+      "required_approver": "product_flowguard_officer",
+      "forbidden_approvers": [
+        "controller",
+        "project_manager",
+        "process_flowguard_officer",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    "human_review": {
+      "execution_owner": "human_like_reviewer",
+      "required_approver": "human_like_reviewer",
+      "forbidden_approvers": [
+        "controller",
+        "project_manager",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    "route_mutation": {
+      "required_approver": "project_manager",
+      "requires_pm_repair_strategy_interrogation": true,
+      "forbidden_approvers": [
+        "controller",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    "completion": {
+      "required_approver": "project_manager",
+      "forbidden_approvers": [
+        "controller",
+        "worker_a",
+        "worker_b"
+      ]
+    }
+  },
+  "checks_before_next_jump": [
+    "crew_ledger_loaded",
+    "run_directory_created",
+    "current_pointer_written",
+    "run_index_updated",
+    "top_level_control_state_absent_or_quarantined",
+    "crew_memory_packets_loaded",
+    "current_task_fresh_live_agent_ids_checked",
+    "six_agent_crew_rehydrated",
+    "six_agent_crew_restored",
+    "project_manager_decision_recorded",
+    "product_function_architecture_approved_before_contract_freeze",
+    "material_research_package_completed_or_not_required",
+    "research_reviewer_direct_source_check_done_when_required",
+    "pm_research_result_absorbed_or_route_mutated_when_required",
+    "continuation_mode_checked",
+    "continuation_resume_ready_checked",
+    "startup_preflight_reviewer_fact_report_written",
+    "pm_start_gate_opened",
+    "work_beyond_startup_allowed_by_pm",
+    "startup_questions_answered_before_banner",
+    "startup_question_prompt_stopped_for_user_reply",
+    "user_flow_diagram_chat_display_gate_checked",
+    "user_flow_diagram_reviewer_display_gate_checked",
+    "independent_adversarial_approval_evidence_checked",
+    "unfinished_current_node_checked",
+    "route_model_checked",
+    "chunk_verification_defined",
+    "final_route_wide_gate_ledger_replayed_before_completion"
+  ],
+  "crew": {
+    "ledger_path": ".flowpilot/runs/run-001/crew_ledger.json",
+    "memory_root": ".flowpilot/runs/run-001/crew_memory",
+    "rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/rehydration-latest.json",
+    "required_roles": [
+      "project_manager",
+      "human_like_reviewer",
+      "process_flowguard_officer",
+      "product_flowguard_officer",
+      "worker_a",
+      "worker_b"
+    ],
+    "role_memory_required": true,
+    "role_memory_packets_loaded": 0,
+    "role_memory_packets_required": 6,
+    "role_memory_schema_checked": false,
+    "live_agent_continuity": "best_effort",
+    "role_continuity": "mandatory",
+    "rehydration_report_template": "templates/flowpilot/crew_memory/crew_rehydration_report.template.json",
+    "restored_roles": [],
+    "replaced_roles": [],
+    "unavailable_roles": [],
+    "all_replacements_seeded_from_memory": false,
+    "restored_for_current_heartbeat": false,
+    "rehydrated_for_current_heartbeat": false,
+    "archived_for_terminal": false
+  },
+  "project_manager_decision": {
+    "latest_path": "<pm-decision-evidence-path-or-null>",
+    "current_gate": "<current-gate-or-null>",
+    "decision": "<execute_completion_runway|pm_stop|block|mutate_route|complete|null>",
+    "repair_strategy_interrogation_path": "<pm-repair-strategy-interrogation-evidence-path-or-null>",
+    "recorded_at": "<iso-8601-timestamp-or-null>"
+  },
+  "run_ledgers": {
+    "review_release_order_path": ".flowpilot/runs/run-001/review_release_order.json",
+    "continuation_evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
+    "generated_resource_ledger_path": ".flowpilot/runs/run-001/generated_resource_ledger.json",
+    "generated_resource_event_log_path": ".flowpilot/runs/run-001/generated_resource_events.jsonl",
+    "activity_stream_path": ".flowpilot/runs/run-001/activity_stream.jsonl",
+    "activity_latest_path": ".flowpilot/runs/run-001/activity_latest.json"
+  },
+  "codex_plan_projection": [
+    {
+      "step": "Resume current node from execution frontier",
+      "status": "in_progress"
+    },
+    {
+      "step": "Run bounded chunk and verification",
+      "status": "pending"
+    },
+    {
+      "step": "Write heartbeat, checkpoint, and next jump evidence",
+      "status": "pending"
+    }
+  ],
+  "route_mutation": {
+    "pending": false,
+    "reason": null,
+    "requires_flowguard": true,
+    "failed_review": {
+      "blocking": false,
+      "failed_child": null,
+      "strategy": "<none|reset_child|insert_repair_sibling|split_children|rebuild_subtree|bubble_parent>",
+      "pm_repair_strategy_interrogated": false,
+      "stale_evidence_paths": [],
+      "repair_target": null
+    }
+  },
+  "lifecycle_reconciliation": {
+    "latest_path": ".flowpilot/runs/run-001/lifecycle/latest.json",
+    "required_for": [
+      "pause",
+      "restart",
+      "terminal"
+    ],
+    "scans": [
+      "codex_automations",
+      "state_json",
+      "execution_frontier_json",
+      "heartbeat_evidence"
+    ],
+    "completed_for_current_status": false
+  },
+  "heartbeat_launcher": {
+    "stable": true,
+    "automation_id": "<automation-id-or-null>",
+    "status": "<active|paused_after_completion|deleted_after_completion|not_created_unsupported_host|null>",
+    "rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "interval_minutes": 1,
+    "prompt_mutates_with_route": false
+  },
+  "updated_at": "<iso-8601-timestamp>"
+}

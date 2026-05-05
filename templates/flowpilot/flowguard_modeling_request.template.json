@@ -27,7 +27,14 @@
   },
   "decision_to_make": "<what PM must decide after the report>",
   "uncertainty": "<what is not known yet>",
-  "modeling_scope": "<process|product|object|combined>",
+  "modeling_scope": "<process|product|object|reference_system|migration_equivalence|experiment_derived_behavior|combined>",
+  "reference_system_or_object": {
+    "present": false,
+    "name": "<source-system-object-or-reference-behavior>",
+    "source_behavior_summary": "<observed workflow, state transitions, inputs, outputs, or invariants to model>",
+    "target_behavior_summary": "<target workflow, migration behavior, or equivalence expectation>",
+    "equivalence_question": "<what must remain equivalent or intentionally diverge>"
+  },
   "candidate_options": [
     {
       "id": "<option-id>",
@@ -42,6 +49,9 @@
       "freshness": "<known|stale|unknown>",
       "note": "<why this source matters>"
     }
+  ],
+  "experiment_requests_allowed_before_modeling": [
+    "<bounded command, fixture, sample trace, source run, or inspection needed to make the modelable behavior concrete>"
   ],
   "required_answer_shape": {
     "modelability_result": "<modelable|needs_evidence|needs_split|blocked>",

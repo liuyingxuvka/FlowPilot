@@ -1,0 +1,37 @@
+<!-- FLOWPILOT_IDENTITY_BOUNDARY_V1
+recipient_role: project_manager
+recipient_identity: FlowPilot project manager role
+allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
+forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
+required_return: Return only the decisions, reviews, reports, evidence, blockers, or handoff records that this recipient role is authorized to produce through the current FlowPilot route or packet path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. After completing or blocking this card, return authorized output through Controller; Controller must call flowpilot_router.py for the next action.
+-->
+# PM Final Ledger Phase
+
+Build the final route-wide gate ledger from the current route, not the initial
+route.
+Before building it, read the latest route-memory prior path context and use it
+to make sure every completed, superseded, stale, repaired, blocked, and
+experiment-influenced path is represented.
+
+Write `.flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json` as the
+source of truth for completion.
+
+Resolve:
+
+- effective and superseded nodes;
+- child-skill and review gates;
+- product/process FlowGuard gates;
+- generated-resource lineage;
+- stale, invalid, missing, waived, blocked, or superseded evidence;
+- zero unresolved count;
+- zero unresolved residual risks.
+
+Return `prior_path_context_review` and cite both route-memory files. If any
+repair or route mutation happened after that context was refreshed, block and
+ask Controller to refresh route memory before building the ledger.
+
+Then build `terminal_human_backward_replay_map.json` as ordered segments from
+delivered output to root, parents, leaves, child-skill gates, repairs, and
+generated resources. Request terminal backward replay from Reviewer; any repair
+or stale evidence found there requires ledger rebuild before closure.

@@ -1,0 +1,51 @@
+{
+  "schema_version": "flowpilot.evidence_ledger.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "status": "<active|paused|complete>",
+  "purpose": "Canonical run-level inventory of evidence credibility. Screenshots, smoke reports, model outputs, route signs, generated concepts, fixtures, and manual reviews must be classified instead of overwritten silently.",
+  "event_log_path": ".flowpilot/runs/<run-id>/evidence/evidence_events.jsonl",
+  "allowed_statuses": [
+    "valid",
+    "invalid",
+    "stale",
+    "superseded"
+  ],
+  "allowed_source_kinds": [
+    "live_project",
+    "fixture",
+    "synthetic",
+    "historical",
+    "generated_concept"
+  ],
+  "counts": {
+    "total": 0,
+    "valid": 0,
+    "invalid": 0,
+    "stale": 0,
+    "superseded": 0,
+    "fixture_only": 0,
+    "live_project": 0
+  },
+  "evidence_items": [
+    {
+      "evidence_id": "<evidence-id>",
+      "kind": "<screenshot|smoke_report|model_report|manual_review|route_sign|generated_asset|other>",
+      "path": "<path>",
+      "status": "<valid|invalid|stale|superseded>",
+      "source_kind": "<live_project|fixture|synthetic|historical|generated_concept>",
+      "produced_at": "<iso-8601-timestamp>",
+      "created_by_role": "<role>",
+      "closes_gate": "<gate-id-or-null>",
+      "validity_reason": "<why this evidence can or cannot close the gate>",
+      "superseded_by": "<evidence-id-or-null>",
+      "defect_ids": []
+    }
+  ],
+  "completion_policy": {
+    "terminal_ledger_must_account_for_invalid_stale_superseded": true,
+    "fixture_only_evidence_must_be_disclosed_separately_from_live_project_evidence": true,
+    "invalid_evidence_cannot_close_current_gate": true
+  }
+}

@@ -1,0 +1,983 @@
+{
+  "coverage_values": [
+    "covered",
+    "partially_covered",
+    "planned",
+    "deferred",
+    "retired"
+  ],
+  "created_at": "2026-05-04",
+  "current_card_manifest": "skills/flowpilot/assets/runtime_kit/manifest.json",
+  "decision_values": [
+    "preserve_as_hard_gate",
+    "preserve_as_system_card",
+    "preserve_as_router_validator",
+    "preserve_as_template_or_runtime_artifact",
+    "merge_into_existing_card",
+    "downgrade_to_router_invariant",
+    "defer_until_surface_exists",
+    "defer_until_release_work",
+    "retire_as_old_architecture_guard"
+  ],
+  "entries": [
+    {
+      "current_artifacts": [
+        "HANDOFF.md",
+        "docs/legacy_to_router_equivalence.json",
+        "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger"
+      ],
+      "current_cards": [
+        "pm.core",
+        "pm.final_ledger",
+        "pm.closure"
+      ],
+      "current_coverage": "covered",
+      "id": "core_rule",
+      "legacy_intent": "FlowPilot treats the user contract as the acceptance floor and does not silently lower completion standards.",
+      "legacy_line": 16,
+      "legacy_section": "Core Rule",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep final-ledger source-of-truth and frozen-contract replay regressions in sync with future route surfaces.",
+      "priority": "P1",
+      "reason": "This is not just an old prompt guard. It defines the acceptance floor and now has router-level final-ledger replay from the frozen root contract."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/packet_runtime.py",
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "simulations/flowpilot_router_loop_model.py",
+        "simulations/flowpilot_resume_model.py"
+      ],
+      "current_cards": [
+        "controller.core",
+        "reviewer.dispatch_request",
+        "reviewer.worker_result_review",
+        "pm.controller_reset_duty"
+      ],
+      "current_coverage": "covered",
+      "id": "packet_gated_control_plane",
+      "legacy_intent": "Controller relays envelopes, does not read sealed bodies, does not approve gates, and all formal role mail routes through Controller.",
+      "legacy_line": 24,
+      "legacy_section": "Experimental Packet-Gated Control Plane",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Extend the same packet validation path to research packets and FlowGuard officer packets.",
+      "priority": "P1",
+      "reason": "This is the central anti-contamination mechanism of the new design and already has executable coverage for user intake and current-node packets."
+    },
+    {
+      "current_artifacts": [
+        "scripts/check_install.py",
+        "flowpilot.dependencies.json"
+      ],
+      "current_cards": [
+        "process_officer.core",
+        "product_officer.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "required_dependencies",
+      "legacy_intent": "Real FlowGuard must be importable; do not fake the toolchain; host-specific tools are capability mapped.",
+      "legacy_line": 257,
+      "legacy_section": "Required Dependencies",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Add capability-probe cards/events only when a route actually needs a host capability.",
+      "priority": "P2",
+      "reason": "FlowGuard import is already checked, but host capability mapping is not yet expressed as system cards or router state."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/SKILL.md",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [],
+      "current_coverage": "covered",
+      "id": "explicit_activation_only",
+      "legacy_intent": "FlowPilot activates only when explicitly requested; existing .flowpilot state, UI work, or heartbeat wording cannot auto-start it.",
+      "legacy_line": 290,
+      "legacy_section": "Explicit Activation Only",
+      "new_architecture_decision": "downgrade_to_router_invariant",
+      "next_action": "Keep the small launcher test and check_install small-launcher check.",
+      "priority": "P1",
+      "reason": "The small launcher already blocks implicit activation and prevents the old monolithic prompt from being read. A large startup reviewer gate is not needed for this specific risk."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py BOOT_ACTIONS",
+        "simulations/prompt_isolation_model.py",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "startup_banner"
+      ],
+      "current_coverage": "covered",
+      "id": "three_question_startup_gate",
+      "legacy_intent": "Ask background-agent permission, scheduled-continuation permission, and display surface, then stop until explicit answers. The old run-mode question is retired.",
+      "legacy_line": 329,
+      "legacy_section": "Four-Question Startup Gate",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep the direct runtime regression that rejects banner/run-shell before explicit startup answers.",
+      "priority": "P1",
+      "reason": "This is still necessary because it controls user consent for background agents, continuation, and display surface. It is not only an old-prompt contamination workaround."
+    },
+    {
+      "current_artifacts": [
+        "simulations/startup_pm_review_model.py",
+        "templates/flowpilot/startup_review.template.json",
+        "templates/flowpilot/startup_pm_gate.template.json",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_crew_rehydration_freshness.md"
+      ],
+      "current_cards": [
+        "pm.startup_intake",
+        "pm.controller_reset_duty",
+        "controller.resume_reentry"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "startup_hard_gate",
+      "legacy_intent": "Before work starts, reviewer and PM check current run, route/frontier, crew, continuation, prior-work boundary, and display surface evidence.",
+      "legacy_line": 382,
+      "legacy_section": "Startup Hard Gate",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Add old-state import/quarantine import checks and richer display-surface refresh; do not copy the whole old gate.",
+      "priority": "P1",
+      "reason": "Some old checks can be downgraded because the small launcher prevents prompt overread. Real external authority checks are now split across startup fact-check, PM activation, continuation binding, and crew freshness cards; import quarantine remains the main gap."
+    },
+    {
+      "current_artifacts": [],
+      "current_cards": [],
+      "current_coverage": "retired",
+      "id": "run_modes",
+      "legacy_intent": "Full-auto, autonomous, guided, and strict-gated modes alter check-in behavior without lowering completion standards.",
+      "legacy_line": 466,
+      "legacy_section": "Run Modes",
+      "new_architecture_decision": "retire_as_old_architecture_guard",
+      "next_action": "Do not add a runtime mode card or router-visible mode state; keep hard gates and quality floor independent of any mode concept.",
+      "priority": "P2",
+      "reason": "The prompt-isolated router no longer needs or exposes run modes. Asking fewer questions reduces startup ambiguity without lowering completion standards or hard gates."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "docs/flowpilot_clean_rebuild_plan.md"
+      ],
+      "current_cards": [
+        "pm.core",
+        "pm.phase_map",
+        "pm.startup_intake",
+        "pm.material_understanding",
+        "pm.product_architecture",
+        "pm.route_skeleton"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "startup_workflow",
+      "legacy_intent": "The full old startup chain asks questions, creates run state, runs self-interrogation, creates crew, handles material, product architecture, route design, continuation, and route sign.",
+      "legacy_line": 486,
+      "legacy_section": "Startup Workflow",
+      "new_architecture_decision": "merge_into_existing_card",
+      "next_action": "Use this section as the main source for the next card batches: startup activation, material/research, product architecture, child-skill selection, and officer checks.",
+      "priority": "P1",
+      "reason": "This section was an oversized orchestration prompt. In the new design it should be split across many phase cards and router transitions rather than kept as one card."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/material_intake_packet.template.json",
+        "templates/flowpilot/pm_material_understanding.template.json",
+        "skills/flowpilot/assets/flowpilot_router.py EXTERNAL_EVENTS",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "pm.material_scan",
+        "reviewer.material_sufficiency",
+        "pm.event.reviewer_report",
+        "pm.material_absorb_or_research",
+        "pm.research_package",
+        "worker.research_report",
+        "reviewer.research_direct_source_check",
+        "pm.research_absorb_or_mutate",
+        "pm.material_understanding"
+      ],
+      "current_coverage": "covered",
+      "id": "material_intake_pm_handoff",
+      "legacy_intent": "Inventory materials, have reviewer approve sufficiency, and hand reviewed material to PM before product design.",
+      "legacy_line": 771,
+      "legacy_section": "Material Intake And PM Handoff",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Keep adding field-level validators as material and research schemas grow.",
+      "priority": "P1",
+      "reason": "The new card chain now forces PM scan issue, sealed material packet relay, reviewer sufficiency, PM absorb-or-research, research package, research capability decision, sealed research packet/result relay, reviewer direct-source check, PM research absorption, and PM material understanding before product architecture."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/product_function_architecture.template.json",
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "tests/test_flowpilot_router_runtime.py",
+        "simulations/run_prompt_isolation_checks.py"
+      ],
+      "current_cards": [
+        "pm.material_understanding",
+        "pm.product_architecture",
+        "product_officer.product_architecture_modelability",
+        "reviewer.product_architecture_challenge",
+        "pm.route_skeleton"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "product_function_architecture_gate",
+      "legacy_intent": "PM writes product-function architecture before contract freeze and route design.",
+      "legacy_line": 850,
+      "legacy_section": "Product Function Architecture Gate",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep strengthening required product architecture fields as product-function modeling expands.",
+      "priority": "P1",
+      "reason": "This prevents route work from starting from vague or implementation-shaped requirements. Runtime now requires PM material understanding, PM product architecture, product officer modelability, and reviewer challenge before root contract."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/pm_child_skill_selection.template.json",
+        "templates/flowpilot/local_skill_inventory.template.json"
+      ],
+      "current_cards": [
+        "pm.child_skill_selection",
+        "pm.child_skill_gate_manifest",
+        "reviewer.child_skill_gate_manifest_review",
+        "process_officer.child_skill_conformance_model",
+        "product_officer.child_skill_product_fit"
+      ],
+      "current_coverage": "covered",
+      "id": "pm_child_skill_selection_gate",
+      "legacy_intent": "PM chooses child skills from actual task needs, not raw availability.",
+      "legacy_line": 907,
+      "legacy_section": "PM Child-Skill Selection Gate",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep child-skill gate validators in sync with new child skills.",
+      "priority": "P2",
+      "reason": "This is still needed because child skills can inject large prompt surfaces. The new prompt-isolation design now routes selection, gate extraction, reviewer challenge, officer conformance, and product-fit review before route activation."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/root_acceptance_contract.template.json",
+        "templates/flowpilot/standard_scenario_pack.template.json",
+        "templates/flowpilot/contract.template.md",
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "tests/test_flowpilot_router_runtime.py",
+        "simulations/run_prompt_isolation_checks.py"
+      ],
+      "current_cards": [
+        "pm.root_contract",
+        "reviewer.root_contract_challenge",
+        "product_officer.root_contract_modelability"
+      ],
+      "current_coverage": "covered",
+      "id": "root_acceptance_contract_standard_scenarios",
+      "legacy_intent": "Freeze root acceptance and scenario pack as the completion floor.",
+      "legacy_line": 934,
+      "legacy_section": "Root Acceptance Contract And Standard Scenarios",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep frozen-contract replay fields aligned with root acceptance schema growth.",
+      "priority": "P1",
+      "reason": "Final completion now requires source-of-truth replay for every frozen root requirement."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/node_acceptance_plan.template.json",
+        "templates/flowpilot/parent_backward_targets.template.json",
+        "templates/flowpilot/parent_backward_replay.template.json",
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "pm.current_node_loop",
+        "pm.node_acceptance_plan",
+        "reviewer.node_acceptance_plan_review",
+        "pm.parent_backward_targets",
+        "reviewer.parent_backward_replay",
+        "pm.parent_segment_decision"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "node_acceptance_plans",
+      "legacy_intent": "Each route node has explicit acceptance, visible route-sign obligations, PM high-standard recheck, parent backward targets, and replay conditions.",
+      "legacy_line": 958,
+      "legacy_section": "Node Acceptance Plans",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add visible route-sign refresh; PM high-standard recheck validation is now router-required.",
+      "priority": "P1",
+      "reason": "The router now requires a reviewer-passed node acceptance plan, structured PM high-standard recheck, current-node packet registration, and parent backward replay before parent-node completion."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/flowpilot_skill_improvement_observation.template.json",
+        "templates/flowpilot/flowpilot_skill_improvement_report.template.json"
+      ],
+      "current_cards": [
+        "pm.child_skill_gate_manifest",
+        "reviewer.child_skill_gate_manifest_review",
+        "process_officer.child_skill_conformance_model",
+        "product_officer.child_skill_product_fit"
+      ],
+      "current_coverage": "covered",
+      "id": "flowpilot_skill_improvement_notes",
+      "legacy_intent": "Protocol/tooling improvement notes are recorded separately and do not block project completion.",
+      "legacy_line": 999,
+      "legacy_section": "FlowPilot Skill Improvement Notes",
+      "new_architecture_decision": "preserve_as_template_or_runtime_artifact",
+      "next_action": "Add nonblocking PM improvement-report card near closure.",
+      "priority": "P3",
+      "reason": "This is useful but not needed before startup/material/route gates."
+    },
+    {
+      "current_artifacts": [
+        "scripts/flowpilot_defects.py",
+        "templates/flowpilot/defects/defect_ledger.template.json",
+        "templates/flowpilot/evidence/evidence_ledger.template.json",
+        "simulations/defect_governance_model.py",
+        "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
+        "skills/flowpilot/assets/flowpilot_router.py _current_closure_state_clean"
+      ],
+      "current_cards": [
+        "pm.final_ledger",
+        "pm.closure"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "defect_evidence_governance",
+      "legacy_intent": "Track defects and evidence state; open blockers and stale evidence block terminal completion.",
+      "legacy_line": 1032,
+      "legacy_section": "Defect And Evidence Governance",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Add explicit defect-ledger reconciliation to the closure suite.",
+      "priority": "P1",
+      "reason": "Evidence, generated-resource, final-ledger, and residual-risk blockers are now bound into completion; explicit defect-ledger reconciliation remains to be added."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py CREW_ROLE_KEYS",
+        "templates/flowpilot/crew_ledger.template.json",
+        "templates/flowpilot/crew_memory/role_memory.template.json",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_crew_rehydration_freshness.md"
+      ],
+      "current_cards": [
+        "pm.core",
+        "reviewer.core",
+        "process_officer.core",
+        "product_officer.core",
+        "worker_a.core",
+        "worker_b.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "persistent_six_agent_crew",
+      "legacy_intent": "Use a fresh six-role crew per formal task; persist role memory; do not reuse old agent ids as current live roles.",
+      "legacy_line": 1088,
+      "legacy_section": "Persistent Six-Agent Crew",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Expand live-agent replacement validation and role memory writeback after closure.",
+      "priority": "P1",
+      "reason": "Even with smaller prompts, role authority depends on knowing which current role produced which decision. A crew rehydration/freshness card now covers resume/startup review; durable writeback remains an expansion."
+    },
+    {
+      "current_artifacts": [
+        "docs/reviewer_fact_audit.md",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "reviewer.core",
+        "reviewer.dispatch_request",
+        "reviewer.worker_result_review"
+      ],
+      "current_coverage": "covered",
+      "id": "reviewer_fact_check_baseline",
+      "legacy_intent": "Reviewer approvals require personal checking, not accepting worker/PM/controller summaries.",
+      "legacy_line": 1169,
+      "legacy_section": "Reviewer Fact-Check Baseline",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add reviewer cards for startup, material sufficiency, route review, final replay, and UI/display evidence.",
+      "priority": "P1",
+      "reason": "The reviewer core card carries the main rule. More specialized cards are needed as new gate types are added."
+    },
+    {
+      "current_artifacts": [
+        "scripts/check_install.py controller_policy_ok",
+        "simulations/prompt_isolation_model.py",
+        "simulations/flowpilot_router_loop_model.py",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "controller.core",
+        "pm.core",
+        "reviewer.core",
+        "process_officer.core",
+        "product_officer.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "actor_authority_matrix",
+      "legacy_intent": "Each gate has the correct actor; Controller is not PM/reviewer/officer/worker.",
+      "legacy_line": 1208,
+      "legacy_section": "Actor Authority Matrix",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Add explicit required_approver metadata to every gate artifact as schemas stabilize.",
+      "priority": "P1",
+      "reason": "Authority is central to the new architecture. The router now enforces many role-owned writes directly, but not every artifact carries explicit approver metadata yet."
+    },
+    {
+      "current_artifacts": [],
+      "current_cards": [
+        "reviewer.core",
+        "process_officer.core",
+        "product_officer.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "universal_adversarial_approval_baseline",
+      "legacy_intent": "Approvers must probe failure hypotheses and cite concrete evidence before approving.",
+      "legacy_line": 1274,
+      "legacy_section": "Universal Adversarial Approval Baseline",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add approval-baseline snippets to reviewer/officer/PM gate cards.",
+      "priority": "P2",
+      "reason": "The principle remains valid, but it should be delivered only to roles at approval points rather than kept in the launcher."
+    },
+    {
+      "current_artifacts": [],
+      "current_cards": [],
+      "current_coverage": "planned",
+      "id": "pm_owned_child_skill_gate_manifests",
+      "legacy_intent": "PM extracts and owns child-skill gate obligations before route work uses a child skill.",
+      "legacy_line": 1329,
+      "legacy_section": "PM-Owned Child-Skill Gate Manifests",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep gate manifest schema tied to PM-selected skills.",
+      "priority": "P2",
+      "reason": "Child skills are large prompt surfaces. The new architecture now requires PM selection and PM-owned gate extraction before reviewer and officer approval."
+    },
+    {
+      "current_artifacts": [
+        "simulations/meta_model.py",
+        "simulations/capability_model.py",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md"
+      ],
+      "current_cards": [
+        "pm.route_skeleton",
+        "reviewer.strict_gate_obligation_review"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "strict_gate_obligation_review",
+      "legacy_intent": "Reviewer/officer strict-gate review classifies caveats, blocks current-gate caveats, prevents PM override, routes repairs, invalidates stale evidence, and requires same-inspector recheck.",
+      "legacy_line": 1379,
+      "legacy_section": "Strict Gate Obligation Review",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Add caveat taxonomy fields, same-inspector recheck rule, and route activation validator.",
+      "priority": "P2",
+      "reason": "This is a blocking approval rule, not merely a model output. A focused reviewer card now exists; router artifact validation is still the next step."
+    },
+    {
+      "current_artifacts": [],
+      "current_cards": [],
+      "current_coverage": "planned",
+      "id": "self_interrogation",
+      "legacy_intent": "Interrogate understanding before freezing contract and route.",
+      "legacy_line": 1409,
+      "legacy_section": "Self-Interrogation",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Replace broad self-interrogation with a PM product-understanding challenge card after reviewed material.",
+      "priority": "P2",
+      "reason": "The old visible self-interrogation was partly a monolithic prompt countermeasure, but product understanding still needs a structured PM challenge step."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/diagrams/user-flow-diagram.template.mmd",
+        "simulations/user_flow_diagram_model.py"
+      ],
+      "current_cards": [
+        "controller.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "user_flow_diagram_temporary_chat_cockpit",
+      "legacy_intent": "Show a simple user-facing route/process sign in chat when Cockpit is unavailable, or in Cockpit when available; raw model graphs stay diagnostic.",
+      "legacy_line": 1497,
+      "legacy_section": "User Flow Diagram / Temporary Chat Cockpit",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Add display-surface router state, chat route-sign refresh events, and Cockpit-only evidence deferral.",
+      "priority": "P2",
+      "reason": "Cockpit-specific evidence can wait until the UI surface resumes, but the chat route sign is the active fallback display contract and must remain a startup/runtime gate."
+    },
+    {
+      "current_artifacts": [
+        "simulations/meta_model.py",
+        "simulations/capability_model.py",
+        "scripts/check_install.py"
+      ],
+      "current_cards": [
+        "process_officer.core",
+        "product_officer.core"
+      ],
+      "current_coverage": "covered",
+      "id": "flowguard_role",
+      "legacy_intent": "Use real FlowGuard for process design and product behavior modeling.",
+      "legacy_line": 1568,
+      "legacy_section": "FlowGuard Role",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add officer request/report cards when implementing officer async gates.",
+      "priority": "P2",
+      "reason": "Core role cards already preserve the real-FlowGuard rule; request/report cards are still missing."
+    },
+    {
+      "current_artifacts": [
+        "simulations/meta_model.py",
+        "simulations/capability_model.py"
+      ],
+      "current_cards": [
+        "process_officer.core",
+        "product_officer.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "dual_layer_product_process_models",
+      "legacy_intent": "Every meaningful scope has process and product/function models.",
+      "legacy_line": 1583,
+      "legacy_section": "Dual-Layer Product And Process Models",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Implement PM -> officer modeling request/result packet loop.",
+      "priority": "P2",
+      "reason": "The models exist for FlowPilot itself, but the runtime router does not yet create per-task modeling requests."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/flowguard_modeling_request.template.json",
+        "templates/flowpilot/flowguard_modeling_report.template.json",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md"
+      ],
+      "current_cards": [
+        "pm.core",
+        "process_officer.core",
+        "product_officer.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "pm_initiated_flowguard_modeling",
+      "legacy_intent": "PM may ask officers to model uncertain route, repair, feature, protocol, or validation decisions.",
+      "legacy_line": 1642,
+      "legacy_section": "PM-Initiated FlowGuard Modeling",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Expand the PM officer request/report card into generalized officer packet events.",
+      "priority": "P2",
+      "reason": "This remains useful and should be delivered as bounded officer packets, not broad context. The PM lifecycle card now exists; generalized packet events remain next."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/human_review.template.json"
+      ],
+      "current_cards": [
+        "reviewer.core",
+        "reviewer.worker_result_review",
+        "pm.review_repair"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "human_like_inspection_loop",
+      "legacy_intent": "Reviewer observes artifacts personally, judges against contract, blocks concrete repair issues, and rechecks.",
+      "legacy_line": 1703,
+      "legacy_section": "Human-Like Inspection Loop",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add reviewer observation/recheck cards for UI and product-behavior surfaces when those route types are active.",
+      "priority": "P1",
+      "reason": "The current reviewer result card is packet-focused, and startup/final replay cards now exist. UI/product inspection remains route-surface-specific."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/routes/route-001/flow.template.json",
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "pm.route_skeleton",
+        "pm.current_node_loop",
+        "pm.parent_backward_targets",
+        "reviewer.parent_backward_replay",
+        "pm.parent_segment_decision"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "recursive_route_tree_planning",
+      "legacy_intent": "Plan route as a tree with parent/leaf nodes, recursive closure, and parent backward replay.",
+      "legacy_line": 1809,
+      "legacy_section": "Recursive Route Tree Planning",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Expand from effective-node auto-advance to full recursive tree and repair sibling resolution.",
+      "priority": "P1",
+      "reason": "The router now auto-advances effective route nodes and gates parent closure on backward replay, but full recursive tree traversal and repair sibling resolution remain expansions."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/pause_snapshot.template.json",
+        "templates/flowpilot/continuation_evidence.template.json",
+        "simulations/flowpilot_resume_model.py"
+      ],
+      "current_cards": [
+        "controller.resume_reentry",
+        "pm.resume_decision"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "controlled_nonterminal_stop_notice",
+      "legacy_intent": "If stopping before completion, record resume evidence and show the correct notice.",
+      "legacy_line": 1912,
+      "legacy_section": "Controlled Nonterminal Stop Notice",
+      "new_architecture_decision": "preserve_as_template_or_runtime_artifact",
+      "next_action": "Add Controller pause-snapshot action and PM stop/block decision path.",
+      "priority": "P2",
+      "reason": "Resume reentry exists, but stop notices and pause snapshots are not yet router-driven."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py _write_evidence_quality_package",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md"
+      ],
+      "current_cards": [
+        "pm.evidence_quality_package",
+        "reviewer.evidence_quality_review",
+        "pm.final_ledger"
+      ],
+      "current_coverage": "covered",
+      "id": "quality_package",
+      "legacy_intent": "Collect thin-scope review evidence, high-value improvement triage, child-skill mini-route visibility, validation-matrix sufficiency, anti-rough-finish review, and human-like inspection before checkpoint.",
+      "legacy_line": 2003,
+      "legacy_section": "Quality Package",
+      "new_architecture_decision": "merge_into_existing_card",
+      "next_action": "Extend quality fields as new route surfaces require them.",
+      "priority": "P2",
+      "reason": "Quality package is now PM-authored and reviewer-checked before final ledger work; stale evidence, unresolved evidence, pending resources, old UI assets, and completion-report-only closure are blocked."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py create_run_shell",
+        "skills/flowpilot/assets/flowpilot_router.py load_resume_state",
+        "skills/flowpilot/assets/flowpilot_router.py _build_source_of_truth_final_entries"
+      ],
+      "current_cards": [
+        "controller.core",
+        "controller.resume_reentry"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "flowpilot_source_of_truth",
+      "legacy_intent": "Current run state lives under .flowpilot/runs/<run-id>; top-level files are pointers/catalog only.",
+      "legacy_line": 2048,
+      "legacy_section": "`.flowpilot/` Source Of Truth",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Add runtime import quarantine checks for old control files and old assets.",
+      "priority": "P1",
+      "reason": "Startup creates run-local state, resume loads run-local state, and final ledgers are rebuilt from source-of-truth artifacts. Continuing old work still needs import/quarantine validation."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/heartbeats/hb.template.json",
+        "templates/flowpilot/heartbeats/hb.template.md",
+        "skills/flowpilot/assets/flowpilot_router.py _write_host_heartbeat_binding",
+        "skills/flowpilot/assets/flowpilot_router.py _append_heartbeat_tick",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md"
+      ],
+      "current_cards": [
+        "controller.resume_reentry",
+        "pm.resume_decision"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "real_heartbeat_continuation",
+      "legacy_intent": "Use real scheduled continuation only when supported and authorized; otherwise record manual resume mode.",
+      "legacy_line": 2106,
+      "legacy_section": "Real Heartbeat Continuation",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Wire any host automation adapter to record the same one-minute binding event; do not create automation unless a formal run asks for it.",
+      "priority": "P1",
+      "reason": "The user correctly noted this is still a real external capability check. The router now records one-minute host heartbeat bindings and heartbeat ticks, but host automation creation remains outside the router."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/capabilities.template.json",
+        "templates/flowpilot/capabilities/capability-evidence.template.json",
+        "simulations/capability_model.py",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md"
+      ],
+      "current_cards": [
+        "pm.startup_intake",
+        "pm.officer_request_report_loop"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "capability_routing",
+      "legacy_intent": "Choose child capabilities from route needs and evidence, preserve source-skill workflow fidelity, record loaded-file evidence, map gates/approvers, model conformance, run domain-quality review, and do not resume parent work until the child loop closes.",
+      "legacy_line": 2155,
+      "legacy_section": "Capability Routing",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add source-skill loaded-file evidence, gate/approver mapping, domain-quality review, and child-loop closure validator.",
+      "priority": "P2",
+      "reason": "Capability routing remains necessary but should be packetized and PM-owned. The current rebuild has PM selection/gate-manifest/officer cards and capability model checks; child-loop closure fidelity remains the main gap."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/SKILL.md",
+        "skills/flowpilot/assets/runtime_kit/manifest.json",
+        "scripts/check_install.py"
+      ],
+      "current_cards": [
+        "controller.core",
+        "pm.core",
+        "worker_a.core",
+        "worker_b.core"
+      ],
+      "current_coverage": "covered",
+      "id": "prompt_layer_boundary",
+      "legacy_intent": "Do not load broad reference files into every actor; keep prompt layers bounded.",
+      "legacy_line": 2240,
+      "legacy_section": "Prompt Layer Boundary",
+      "new_architecture_decision": "downgrade_to_router_invariant",
+      "next_action": "Keep check_install enforcing small launcher and manifest card delivery.",
+      "priority": "P1",
+      "reason": "This is the main architectural win of the rebuild. It no longer needs a large warning block in the launcher."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/generated_resource_ledger.template.json",
+        "skills/flowpilot/assets/flowpilot_router.py _write_evidence_quality_package"
+      ],
+      "current_cards": [
+        "pm.evidence_quality_package",
+        "reviewer.evidence_quality_review"
+      ],
+      "current_coverage": "covered",
+      "id": "visual_example_particle",
+      "legacy_intent": "Old visual example guidance is an authenticity guard: old visuals must not be reused as current concept seeds or current evidence unless explicitly marked historical.",
+      "legacy_line": 2347,
+      "legacy_section": "Visual Example Particle",
+      "new_architecture_decision": "merge_into_existing_card",
+      "next_action": "Keep old visual assets quarantined as historical references only.",
+      "priority": "P3",
+      "reason": "The PM evidence quality package now rejects old assets reused as current UI/visual proof."
+    },
+    {
+      "current_artifacts": [
+        "skills/autonomous-concept-ui-redesign/",
+        "templates/flowpilot/generated_resource_ledger.template.json",
+        "skills/flowpilot/assets/flowpilot_router.py _write_evidence_quality_package"
+      ],
+      "current_cards": [
+        "pm.evidence_quality_package",
+        "reviewer.evidence_quality_review"
+      ],
+      "current_coverage": "covered",
+      "id": "ui_visual_evidence",
+      "legacy_intent": "UI/visual artifacts require source, authenticity, screenshot, and human-like review evidence.",
+      "legacy_line": 2358,
+      "legacy_section": "UI And Visual Evidence",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add richer UI walkthrough fields when Cockpit/UI route work resumes.",
+      "priority": "P3",
+      "reason": "UI/visual routes now require screenshot evidence and reject old-asset reuse before final ledger work. Richer walkthrough evidence remains route-surface-specific expansion."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/final_route_wide_gate_ledger.template.json",
+        "templates/flowpilot/terminal_human_backward_replay_map.template.json",
+        "simulations/flowpilot_router_loop_model.py",
+        "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_backward_replay",
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite"
+      ],
+      "current_cards": [
+        "pm.final_ledger",
+        "reviewer.final_backward_replay",
+        "pm.closure"
+      ],
+      "current_coverage": "covered",
+      "id": "final_route_wide_gate_ledger",
+      "legacy_intent": "PM rebuilds final ledger from current route, resolves stale/superseded/effective nodes, then reviewer performs terminal replay.",
+      "legacy_line": 2428,
+      "legacy_section": "Final Route-Wide Gate Ledger",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Keep replay segment generation aligned with future source-of-truth entry types.",
+      "priority": "P1",
+      "reason": "The router now writes a PM-owned source-of-truth final ledger, terminal replay map, segmented reviewer replay report, and terminal closure suite after PM closure."
+    },
+    {
+      "current_artifacts": [
+        "simulations/flowpilot_router_loop_model.py",
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "pm.current_node_loop",
+        "pm.node_acceptance_plan",
+        "reviewer.node_acceptance_plan_review",
+        "worker_a.core",
+        "worker_b.core",
+        "reviewer.current_node_dispatch",
+        "reviewer.worker_result_review"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "chunk_rule",
+      "legacy_intent": "Work is split into bounded chunks; chunks complete only after review and acceptance.",
+      "legacy_line": 2498,
+      "legacy_section": "Chunk Rule",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Extend the same packet loop to repair packets and officer packets.",
+      "priority": "P1",
+      "reason": "Current-node work is now bound to a reviewer-passed node acceptance plan and exact route version before worker dispatch."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger"
+      ],
+      "current_cards": [
+        "pm.final_ledger"
+      ],
+      "current_coverage": "covered",
+      "id": "residual_risk_triage_gate",
+      "legacy_intent": "Residual risks must be triaged before completion rather than hidden in the final report.",
+      "legacy_line": 2579,
+      "legacy_section": "Residual Risk Triage Gate",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Extend residual-risk source ledger if a route adds explicit risk entries.",
+      "priority": "P2",
+      "reason": "The PM final ledger writer now rejects nonzero unresolved residual risk before terminal replay."
+    },
+    {
+      "current_artifacts": [
+        "templates/flowpilot/terminal_closure_suite.template.json",
+        "scripts/flowpilot_lifecycle.py",
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite"
+      ],
+      "current_cards": [
+        "pm.closure"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "terminal_closure_suite",
+      "legacy_intent": "Terminal close reconciles defects, evidence, state, heartbeat/manual resume, role memory, and final report.",
+      "legacy_line": 2603,
+      "legacy_section": "Terminal Closure Suite",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Add explicit defect-ledger and role-memory reconciliation plus final user-report artifact.",
+      "priority": "P1",
+      "reason": "Closure is not only old-prompt protection; it prevents dangling automation/state/role memory. The router now writes the closure suite, disables continuation binding, and blocks dirty evidence/resource/final ledgers; defect and role-memory reconciliation remain expansions."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/assets/flowpilot_router.py _write_route_mutation",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "current_cards": [
+        "pm.review_repair",
+        "pm.event.reviewer_blocked"
+      ],
+      "current_coverage": "covered",
+      "id": "route_updates",
+      "legacy_intent": "New facts can mutate the route while preserving history and invalidating stale evidence.",
+      "legacy_line": 2640,
+      "legacy_section": "Route Updates",
+      "new_architecture_decision": "preserve_as_router_validator",
+      "next_action": "Expand route mutation from active repair nodes to full branch/sibling route replacement policies.",
+      "priority": "P1",
+      "reason": "Route mutation now preserves superseded history, appends repair nodes, updates frontier, and writes stale-evidence records when backward review blocks continuation."
+    },
+    {
+      "current_artifacts": [
+        "HANDOFF.md"
+      ],
+      "current_cards": [
+        "pm.core"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "hard_gates",
+      "legacy_intent": "Do not silently bypass frozen acceptance, release, destructive operations, secrets, or completion standards.",
+      "legacy_line": 2678,
+      "legacy_section": "Hard Gates",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Add gate metadata to route/ledger artifacts and require PM/user approval where applicable.",
+      "priority": "P1",
+      "reason": "Hard gates remain independent of prompt-size architecture."
+    },
+    {
+      "current_artifacts": [
+        "scripts/install_flowpilot.py",
+        "flowpilot.dependencies.json",
+        "scripts/check_install.py",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_dependency_policy.md"
+      ],
+      "current_cards": [
+        "pm.dependency_policy"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "automatic_tool_installation",
+      "legacy_intent": "Install only needed dependencies, defer route-specific dependencies, and avoid uncontrolled installs.",
+      "legacy_line": 2692,
+      "legacy_section": "Automatic Tool Installation",
+      "new_architecture_decision": "preserve_as_system_card",
+      "next_action": "Add router-visible dependency decision records when a route actually needs an install.",
+      "priority": "P2",
+      "reason": "This is also a runtime dependency policy, not only a release/install concern. A PM dependency-policy card now captures the rule; install-time decision artifacts remain the next runtime expansion."
+    },
+    {
+      "current_artifacts": [
+        "simulations/flowpilot_router_loop_model.py",
+        "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_backward_replay",
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite"
+      ],
+      "current_cards": [
+        "pm.final_ledger",
+        "reviewer.final_backward_replay",
+        "pm.closure"
+      ],
+      "current_coverage": "partially_covered",
+      "id": "completion",
+      "legacy_intent": "Completion requires evidence, final ledger, reviewer replay, PM approval, lifecycle cleanup, and clear user report.",
+      "legacy_line": 2720,
+      "legacy_section": "Completion",
+      "new_architecture_decision": "preserve_as_hard_gate",
+      "next_action": "Add final user-report artifact after terminal closure.",
+      "priority": "P1",
+      "reason": "The final completion standard remains valid. The router now enforces PM evidence quality, PM final ledger, segmented reviewer terminal replay, PM closure, and closure-suite lifecycle cleanup; final user-report writing remains expansion work."
+    },
+    {
+      "current_artifacts": [
+        "skills/flowpilot/references/protocol.md",
+        "skills/flowpilot/references/installation_contract.md",
+        "skills/flowpilot/references/failure_modes.md"
+      ],
+      "current_cards": [],
+      "current_coverage": "covered",
+      "id": "references",
+      "legacy_intent": "Old reference files explain protocol, installation, and failure modes.",
+      "legacy_line": 2773,
+      "legacy_section": "References",
+      "new_architecture_decision": "preserve_as_template_or_runtime_artifact",
+      "next_action": "Keep references available for targeted maintainer/card-writing reads; launcher and runtime roles must not bulk-read them during activation.",
+      "priority": "P3",
+      "reason": "References remain useful for maintainers and targeted card writing. The bulk-read prevention belongs to the prompt-layer-boundary rule, not to retiring the references."
+    }
+  ],
+  "recommended_next_batch": [
+    "officer.generalized_packet_runtime_family",
+    "pm.import_quarantine_decision",
+    "pm.final_user_report",
+    "controller.route_sign_refresh",
+    "closure.defect_and_role_memory_reconciliation"
+  ],
+  "schema_version": "flowpilot.legacy_prompt_to_cards_matrix.v1",
+  "scope": "Map the second-backup monolithic FlowPilot prompt sections to the prompt-isolated router, runtime cards, validators, and intentional retirements.",
+  "source_prompt": "backups/flowpilot-20260504-second-backup-20260504-195841/skills/flowpilot/SKILL.md",
+  "startup_hard_gate_reduction": {
+    "defer_until_surface_exists": [
+      "visible Cockpit evidence beyond the display-surface state contract",
+      "UI-specific route sign screenshot or interaction checks; chat route sign remains active when Cockpit is unavailable"
+    ],
+    "downgrade_to_router_invariants": [
+      "do not continue after asking startup questions",
+      "do not emit startup banner before answers",
+      "do not read broad FlowPilot references in the launcher",
+      "do not start work without a router pending action",
+      "Controller cannot approve or implement"
+    ],
+    "keep_as_hard_checks": [
+      "explicit three startup answers",
+      "fresh current run root and current/index pointer correctness",
+      "same-task six-role crew freshness or authorized fallback",
+      "continuation mode evidence: real heartbeat if authorized, manual resume if not",
+      "display-surface evidence: Cockpit or chat route sign according to the user's answer",
+      "old state, old assets, and old agent ids quarantined from current authority"
+    ],
+    "retire_as_old_architecture_guard": [
+      "large startup prose that existed only because the old SKILL.md loaded all downstream rules at once"
+    ],
+    "summary": "The old startup hard gate should not be copied wholesale. In the prompt-isolated architecture, the main anti-overread protections move to the small launcher, router pending actions, manifest checks, packet ledger checks, and Controller role cards."
+  }
+}

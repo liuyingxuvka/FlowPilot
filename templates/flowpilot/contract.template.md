@@ -13,7 +13,7 @@
 ## Explicit Constraints
 
 - Keep the original completion standard intact.
-- Stop for hard gates listed in `mode.json`.
+- Stop for FlowPilot hard gates: acceptance-contract changes, release/publish/deploy actions, destructive or irreversible actions, major technology-stack changes, heavy/global dependency installs, secrets/private account data, or lowering completion standards.
 - Treat skipped checks as skipped, not passed.
 - Preserve user-owned changes outside the active scope.
 

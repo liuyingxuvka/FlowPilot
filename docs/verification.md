@@ -6,6 +6,7 @@ Run:
 
 ```powershell
 python simulations/run_startup_pm_review_checks.py
+python simulations/run_card_instruction_coverage_checks.py
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
@@ -26,6 +27,9 @@ Expected:
   behavior-bearing work.
 - startup PM-review checks reject shadow routes, report-only reviewer bypasses,
   wrong heartbeat cadence, and any work before PM startup opening.
+- card instruction coverage checks reject cards that lack role identity,
+  `required_return`, `next_step_source`, router-return wording, or
+  role-appropriate action guidance.
 
 Route-local models under `.flowpilot/task-models/` belong to an adopted target
 project's runtime evidence. They should be checked when present in that target
@@ -100,6 +104,7 @@ Expected:
 - meta simulation passes;
 - capability simulation passes.
 - startup PM-review simulation passes.
+- card instruction coverage simulation passes.
 
 ## Startup PM Review Check
 

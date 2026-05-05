@@ -1,0 +1,121 @@
+{
+  "schema_version": "flowpilot.terminal_closure_suite.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "pm_owned": true,
+  "status": "<not_started|running|passed|blocked>",
+  "started_at": "<iso-8601-timestamp-or-null>",
+  "completed_at": "<iso-8601-timestamp-or-null>",
+  "purpose": "The terminal closure suite runs after final ledger approval and before final report. It prevents completion-state drift, stale screenshots, lingering automation, and unresolved residual risks.",
+  "required_order": [
+    "defect_ledger_zero_blocking_and_pending_recheck",
+    "evidence_credibility_ledger_reconciled",
+    "risk_triage_zero_unresolved",
+    "terminal_human_backward_replay_passed",
+    "sync_terminal_state_files",
+    "refresh_terminal_evidence",
+    "rebuild_final_ledger_if_evidence_changed",
+    "run_lifecycle_reconciliation",
+    "pause_or_delete_heartbeat",
+    "archive_crew_and_role_memory",
+    "write_flowpilot_skill_improvement_report",
+    "write_final_report"
+  ],
+  "risk_triage": {
+    "path": ".flowpilot/runs/<run-id>/residual_risk_triage.json",
+    "required": true,
+    "unresolved_residual_risk_count": null,
+    "allowed_terminal_classes": [
+      "resolved_issue",
+      "non_risk_scope_note",
+      "explicit_exception_with_required_approval"
+    ],
+    "blocking_classes": [
+      "blocking",
+      "test_gap",
+      "evidence_gap",
+      "route_gap"
+    ]
+  },
+  "defect_ledger": {
+    "path": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/defects/defect_events.jsonl",
+    "required": true,
+    "blocker_open_count": null,
+    "fixed_pending_recheck_count": null,
+    "pm_closed_defects_have_recheck_evidence": false,
+    "completion_blocked_until_zero": true
+  },
+  "evidence_ledger": {
+    "path": ".flowpilot/runs/<run-id>/evidence/evidence_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/evidence/evidence_events.jsonl",
+    "required": true,
+    "invalid_stale_or_superseded_items_accounted_for": false,
+    "fixture_only_evidence_disclosed_separately": false,
+    "invalid_evidence_closes_no_current_gate": true
+  },
+  "generated_resource_ledger": {
+    "path": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
+    "event_log_path": ".flowpilot/runs/<run-id>/generated_resource_events.jsonl",
+    "required": true,
+    "unresolved_resource_count": null,
+    "pending_resource_count": null,
+    "completion_blocked_until_unresolved_zero": true,
+    "completion_blocked_until_pending_zero": true,
+    "all_resources_have_terminal_disposition": false,
+    "final_ledger_resource_lineage_checked": false
+  },
+  "activity_stream": {
+    "path": ".flowpilot/runs/<run-id>/activity_stream.jsonl",
+    "latest_event_path": ".flowpilot/runs/<run-id>/activity_latest.json",
+    "required": true,
+    "terminal_completion_event_written": false,
+    "stream_is_audit_trail_not_gate_approval": true
+  },
+  "terminal_human_backward_replay": {
+    "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",
+    "review_map_path": ".flowpilot/runs/<run-id>/terminal_human_backward_replay_map.json",
+    "required": true,
+    "passed": false,
+    "pm_segment_decisions_recorded": false,
+    "repair_restart_policy_recorded": false,
+    "latest_repair_invalidated_review": "<true|false>",
+    "final_review_restarted_after_latest_repair": "<true|false>"
+  },
+  "terminal_state_sync": {
+    "state_json_complete": false,
+    "execution_frontier_complete": false,
+    "flow_json_complete": false,
+    "run_json_complete": false,
+    "current_json_complete": false,
+    "index_json_complete": false,
+    "state_frontier_route_versions_match": false
+  },
+  "evidence_refresh": {
+    "completion_state_screenshots_required": "<true|false>",
+    "completion_state_screenshots_recaptured": false,
+    "standard_scenarios_replayed": false,
+    "terminal_human_backward_replay_rerun_after_refresh": false,
+    "final_ledger_rebuilt_after_refresh": false,
+    "final_acceptance_recheck_rerun": false
+  },
+  "lifecycle_cleanup": {
+    "heartbeat_paused_or_absent": false,
+    "lifecycle_scan_required_actions_zero": false,
+    "lifecycle_evidence_path": "<path-or-null>"
+  },
+  "flowpilot_skill_improvement_report": {
+    "required": true,
+    "observation_log_path": ".flowpilot/runs/<run-id>/flowpilot_skill_improvement_observations.jsonl",
+    "report_path": ".flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json",
+    "pm_owned": true,
+    "written": false,
+    "observations_block_current_project": false,
+    "root_repo_fixes_required_before_completion": false,
+    "no_obvious_skill_improvement_observed_allowed": true,
+    "purpose": "Summarize FlowPilot skill issues observed during this run for later manual root-repo maintenance. The report itself is required as a terminal artifact, but its observations are not project completion blockers."
+  },
+  "completion_allowed": false,
+  "blocked_reason": "<reason-or-null>"
+}

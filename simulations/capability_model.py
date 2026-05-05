@@ -65,13 +65,15 @@ class State:
     status: str = "new"  # new | running | blocked | complete
     task_kind: str = "unknown"  # unknown | backend | ui
     flowpilot_enabled: bool = False
+    run_scoped_startup_bootstrap_created: bool = False
+    stale_top_level_bootstrap_reused: bool = False
     startup_questions_asked: bool = False
     startup_dialog_stopped_for_answers: bool = False
-    mode_choice_offered: bool = False
-    mode_selected: bool = False
     startup_background_agents_answered: bool = False
     startup_scheduled_continuation_answered: bool = False
     startup_display_surface_answered: bool = False
+    startup_answer_values_valid: bool = False
+    startup_answer_provenance: str = "none"  # none | explicit_user_reply | inferred | default | naked
     startup_display_entry_action_done: bool = False
     run_directory_created: bool = False
     current_pointer_written: bool = False
@@ -838,11 +840,11 @@ def _startup_questions_complete(state: State) -> bool:
     return (
         state.startup_questions_asked
         and state.startup_dialog_stopped_for_answers
-        and state.mode_choice_offered
-        and state.mode_selected
         and state.startup_background_agents_answered
         and state.startup_scheduled_continuation_answered
         and state.startup_display_surface_answered
+        and state.startup_answer_values_valid
+        and state.startup_answer_provenance == "explicit_user_reply"
     )
 
 
@@ -941,8 +943,6 @@ def _route_scaffold_ready(state: State) -> bool:
     return (
         state.task_kind in {"backend", "ui"}
         and state.flowpilot_enabled
-        and state.mode_choice_offered
-        and state.mode_selected
         and _run_isolation_ready(state)
         and state.showcase_floor_committed
         and state.self_interrogation_done
@@ -1009,8 +1009,6 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
     return (
         state.task_kind in {"backend", "ui"}
         and state.flowpilot_enabled
-        and state.mode_choice_offered
-        and state.mode_selected
         and _run_isolation_ready(state)
         and state.showcase_floor_committed
         and state.self_interrogation_done
@@ -1072,8 +1070,6 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
     return (
         state.task_kind in {"backend", "ui"}
         and state.flowpilot_enabled
-        and state.mode_choice_offered
-        and state.mode_selected
         and state.showcase_floor_committed
         and state.self_interrogation_done
         and state.self_interrogation_evidence
@@ -1449,8 +1445,6 @@ class CapabilityRouterStep:
         "flowpilot_enabled",
         "startup_questions_asked",
         "startup_dialog_stopped_for_answers",
-        "mode_choice_offered",
-        "mode_selected",
         "startup_background_agents_answered",
         "startup_scheduled_continuation_answered",
         "run_directory_created",
@@ -1778,8 +1772,6 @@ class CapabilityRouterStep:
         "flowpilot_enabled",
         "startup_questions_asked",
         "startup_dialog_stopped_for_answers",
-        "mode_choice_offered",
-        "mode_selected",
         "startup_background_agents_answered",
         "startup_scheduled_continuation_answered",
         "run_directory_created",
@@ -2146,14 +2138,15 @@ class CapabilityRouterStep:
                 action="start capability router",
                 status="running",
                 flowpilot_enabled=True,
+                run_scoped_startup_bootstrap_created=True,
             )
             return
 
         if not state.startup_questions_asked:
             yield _step(
                 state,
-                label="startup_four_questions_asked",
-                action="ask run mode, background-agent permission, scheduled-continuation permission, and whether to open Cockpit UI before capability startup",
+                label="startup_three_questions_asked",
+                action="ask background-agent permission, scheduled-continuation permission, and whether to open Cockpit UI before capability startup",
                 startup_questions_asked=True,
             )
             return
@@ -2164,30 +2157,6 @@ class CapabilityRouterStep:
                 label="startup_dialog_stopped_for_user_answers",
                 action="end the assistant response after asking startup questions and wait for the user's reply",
                 startup_dialog_stopped_for_answers=True,
-            )
-            return
-
-        if not state.mode_choice_offered:
-            yield _step(
-                state,
-                label="mode_choice_offered",
-                action="offer full-auto, autonomous, guided, and strict-gated modes from loosest to strictest",
-                mode_choice_offered=True,
-            )
-            return
-
-        if not state.mode_selected:
-            yield _step(
-                state,
-                label="mode_selected_by_user",
-                action="record user-selected run mode",
-                mode_selected=True,
-            )
-            yield _step(
-                state,
-                label="explicit_full_auto_mode_selected",
-                action="record explicit user answer selecting full-auto mode",
-                mode_selected=True,
             )
             return
 
@@ -2215,6 +2184,8 @@ class CapabilityRouterStep:
                 label="startup_display_surface_answered",
                 action="record explicit user answer for opening Cockpit UI immediately versus using chat route signs",
                 startup_display_surface_answered=True,
+                startup_answer_values_valid=True,
+                startup_answer_provenance="explicit_user_reply",
             )
             return
 
@@ -2462,7 +2433,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="pm_flowguard_delegation_policy_recorded",
-                action="record that the project manager creates structured FlowGuard modeling requests for uncertain capability, process, product, or object decisions and assigns them to the process or product FlowGuard officer",
+                action="record that the project manager creates structured FlowGuard modeling requests for uncertain capability, process, product, object/reference-system, migration-equivalence, experiment-derived behavior, or validation decisions and assigns them to the process or product FlowGuard officer",
                 pm_flowguard_delegation_policy_recorded=True,
             )
             return
@@ -5338,9 +5309,7 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
     if (
         not state.startup_dialog_stopped_for_answers
         and (
-            state.mode_choice_offered
-            or state.mode_selected
-            or state.startup_background_agents_answered
+            state.startup_background_agents_answered
             or state.startup_scheduled_continuation_answered
             or state.startup_display_surface_answered
             or state.startup_display_entry_action_done
@@ -5352,7 +5321,20 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
         or state.self_interrogation_done
         or state.visible_self_interrogation_done
     ) and not (state.flowpilot_enabled and _startup_questions_complete(state)):
-        return InvariantResult.fail("showcase/self-interrogation ran before the four-question startup gate")
+        return InvariantResult.fail("showcase/self-interrogation ran before the three-question startup gate")
+    if state.flowpilot_enabled and not state.run_scoped_startup_bootstrap_created:
+        return InvariantResult.fail("new capability startup did not create a run-scoped bootstrap")
+    if (
+        state.startup_background_agents_answered
+        and state.startup_scheduled_continuation_answered
+        and state.startup_display_surface_answered
+    ) and not (
+        state.startup_answer_values_valid
+        and state.startup_answer_provenance == "explicit_user_reply"
+    ):
+        return InvariantResult.fail("startup answers were recorded without legal values and explicit_user_reply provenance")
+    if state.stale_top_level_bootstrap_reused:
+        return InvariantResult.fail("stale top-level bootstrap was reused as current capability startup state")
     if state.old_control_state_reused_as_current:
         return InvariantResult.fail("old FlowPilot control state was reused as the current capability run state")
     if (state.contract_frozen or state.meta_route_checked or state.work_beyond_startup_allowed) and not _run_isolation_ready(state):
@@ -5556,7 +5538,7 @@ def dependency_plan_before_route_or_implementation(
         )
     if state.work_beyond_startup_allowed and not _startup_questions_complete(state):
         return InvariantResult.fail(
-            "PM allowed capability work before the four startup answers were recorded"
+            "PM allowed capability work before the three startup answers were recorded"
         )
     if state.work_beyond_startup_allowed and not _run_isolation_ready(state):
         return InvariantResult.fail(
@@ -6730,8 +6712,8 @@ INVARIANTS = (
         predicate=self_interrogation_before_contract,
     ),
     Invariant(
-        name="mode_choice_before_showcase_and_self_interrogation",
-        description="FlowPilot offers run-mode choice before showcase commitment and self-interrogation.",
+        name="startup_answers_before_showcase_and_self_interrogation",
+        description="FlowPilot asks only the three startup questions and waits for explicit answers before showcase commitment and self-interrogation.",
         predicate=mode_choice_before_showcase_and_self_interrogation,
     ),
     Invariant(

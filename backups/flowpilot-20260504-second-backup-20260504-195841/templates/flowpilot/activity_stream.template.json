@@ -1,0 +1,51 @@
+{
+  "schema_version": "flowpilot.activity_stream.v1",
+  "run_id": "<run-id>",
+  "run_root": ".flowpilot/runs/<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "status": "<active|paused|complete>",
+  "purpose": "Append-only human-readable and machine-readable stream of important run activity across roles, route changes, gates, ledgers, defects, evidence, generated resources, heartbeats, and lifecycle events.",
+  "event_log_path": ".flowpilot/runs/<run-id>/activity_stream.jsonl",
+  "latest_event_path": ".flowpilot/runs/<run-id>/activity_latest.json",
+  "allowed_event_types": [
+    "run_created",
+    "startup_question_asked",
+    "startup_answer_recorded",
+    "startup_review_written",
+    "pm_gate_decision",
+    "crew_memory_rehydrated",
+    "continuation_evidence_written",
+    "route_created",
+    "route_mutated",
+    "frontier_updated",
+    "node_started",
+    "gate_started",
+    "review_release_order_written",
+    "gate_approved",
+    "gate_blocked",
+    "defect_event",
+    "evidence_event",
+    "generated_resource_event",
+    "checkpoint_written",
+    "heartbeat_recorded",
+    "pause_recorded",
+    "completion_recorded"
+  ],
+  "counts": {
+    "total": 0,
+    "open_blockers": 0,
+    "latest_sequence": 0
+  },
+  "latest_event": {
+    "sequence": 0,
+    "event_id": "<event-id-or-null>",
+    "event_type": "<event-type-or-null>",
+    "recorded_at": "<iso-8601-timestamp-or-null>",
+    "summary": "<summary-or-null>"
+  },
+  "completion_policy": {
+    "activity_stream_is_audit_trail_not_gate_approval": true,
+    "important_gate_and_lifecycle_decisions_must_have_dedicated_evidence": true
+  }
+}

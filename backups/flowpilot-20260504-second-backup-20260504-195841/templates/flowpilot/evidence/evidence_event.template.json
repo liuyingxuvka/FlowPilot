@@ -1,0 +1,14 @@
+{
+  "schema_version": "flowpilot.evidence_event.v1",
+  "event_id": "<event-id>",
+  "run_id": "<run-id>",
+  "evidence_id": "<evidence-id>",
+  "recorded_at": "<iso-8601-timestamp>",
+  "recorded_by_role": "<role>",
+  "event_type": "<registered|validated|invalidated|marked_stale|superseded|linked_to_defect>",
+  "from_status": "<status-or-null>",
+  "to_status": "<status-or-null>",
+  "summary": "<what changed>",
+  "paths": [],
+  "notes": "<notes-or-null>"
+}

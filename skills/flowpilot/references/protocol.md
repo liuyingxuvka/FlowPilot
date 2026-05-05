@@ -6,8 +6,7 @@ long-form public explanation lives in `docs/protocol.md`.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask the four startup questions:
-   - run mode: `full-auto`, `autonomous`, `guided`, or `strict-gated`;
+2. Ask the three startup questions:
    - background agents: allow six live background subagents, or use
      single-agent six-role continuity for this run;
    - scheduled continuation: allow heartbeat/automation jobs, or use manual
@@ -17,10 +16,10 @@ long-form public explanation lives in `docs/protocol.md`.
    End the assistant response immediately after these questions. Do not inspect
    files, start tools, create route state, launch subagents, probe heartbeat, or
    show the banner in the same response. FlowPilot remains in
-   `startup_pending_user_answers` until the user's later reply supplies all
-   four answers.
+  `startup_pending_user_answers` until the user's later reply supplies all
+  three answers. Do not ask the user to choose a mode.
 3. Record the explicit answer set in state/frontier startup activation
-   evidence. A compact later user reply may satisfy all four only when the
+   evidence. A compact later user reply may satisfy all three only when the
    choices are explicit.
 4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
    the startup-question gate is open.
@@ -202,7 +201,7 @@ long-form public explanation lives in `docs/protocol.md`.
     canonical current-run state, execution frontier, current six-role crew
     ledger, current role memory, `.flowpilot/current.json`,
     `.flowpilot/index.json`, the run manifest, prior-work import packet when
-    continuing, the four explicit startup answers, stop-and-wait evidence,
+    continuing, the three explicit startup answers, stop-and-wait evidence,
     banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
@@ -273,8 +272,8 @@ usage:
 Use FlowPilot. Ask the startup questions first.
 ```
 
-FlowPilot invocation only opens the four-question startup prompt. It is not
-authorization for a default mode, background agents, fallback execution,
+FlowPilot invocation only opens the three-question startup prompt. It is not
+authorization for background agents, fallback execution,
 scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
@@ -799,6 +798,22 @@ must avoid absolute "no risk" wording; it states the model boundary and gives
 PM decision options. The PM synthesizes the report and records the route
 decision.
 
+Controller route memory is the PM's durable view of what already happened.
+The Controller refreshes `.flowpilot/runs/<run-id>/route_memory/route_history_index.json`
+and `.flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json` from the
+current frontier, route, mutation ledger, stale-evidence ledger, review
+markers, and research/modeling source paths. The Controller may write only an
+index and brief; it has no route decision authority and must not read sealed
+packet or result bodies.
+
+Before route drafting, resume continuation, node acceptance planning, repair
+choice, route mutation, parent segment decisions, evidence-quality packaging,
+final ledger construction, or closure, the PM reads both route-memory files
+and returns `prior_path_context_review`. That review cites both paths and
+states which completed nodes, superseded nodes, stale evidence, prior blocks,
+and experiments affected the decision. The Controller summary is not product
+evidence; it only points the PM to source files that may need direct review.
+
 Human-like inspection is a route mechanism, not a comment. Inspectors load the
 contract, route, product model, child-skill evidence, screenshots/logs/output,
 and parent context; then they operate or inspect the product like a real
@@ -908,7 +923,7 @@ they are explicitly in the lifecycle setup/repair gate.
 
 Required:
 
-- mode choice offered before showcase commitment and self-interrogation;
+- the three-question startup gate completed before showcase commitment and self-interrogation;
 - visible self-interrogation evidence before contract freeze;
 - PM-owned product-function architecture before contract freeze, including
   feature decisions, display rationale, missing-feature review, negative

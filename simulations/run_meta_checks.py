@@ -16,14 +16,11 @@ CHECK_STATE_LIMIT = 900_000
 
 
 REQUIRED_LABELS = (
-    "startup_four_questions_asked",
+    "startup_three_questions_asked",
     "startup_dialog_stopped_for_user_answers",
     "startup_display_surface_answered",
     "startup_display_entry_action_done",
     "startup_banner_emitted",
-    "mode_choice_offered",
-    "mode_selected_by_user",
-    "explicit_full_auto_mode_selected",
     "startup_background_agents_answered",
     "startup_scheduled_continuation_answered",
     "run_directory_created",
@@ -274,9 +271,9 @@ REQUIRED_LABELS = (
 def _state_id(state: model.State) -> str:
     return (
         f"{state.status}|node={state.active_node}|route={state.route_version}|"
-        f"enabled={state.flowpilot_enabled}|mode_offer={state.mode_choice_offered}|"
+        f"enabled={state.flowpilot_enabled}|"
         f"startup_banner={state.startup_banner_emitted}|"
-        f"mode={state.mode_selected}|deps={state.dependency_plan_recorded},"
+        f"deps={state.dependency_plan_recorded},"
         f"{state.future_installs_deferred}|contract={state.contract_frozen}|"
         f"run={state.run_directory_created},{state.current_pointer_written},"
         f"{state.run_index_updated},{state.prior_work_mode},"

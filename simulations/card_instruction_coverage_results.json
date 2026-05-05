@@ -1,0 +1,251 @@
+{
+  "actual_card_graph": {
+    "active_card_count": 55,
+    "card_count": 59,
+    "checked_count": 59,
+    "external_card_flag_errors": [],
+    "failures": [],
+    "labels": [
+      "card_instruction_checked:controller.core",
+      "card_instruction_checked:controller.resume_reentry",
+      "card_instruction_checked:pm.child_skill_gate_manifest",
+      "card_instruction_checked:pm.child_skill_selection",
+      "card_instruction_checked:pm.closure",
+      "card_instruction_checked:pm.continuation_capability_binding",
+      "card_instruction_checked:pm.controller_reset_duty",
+      "card_instruction_checked:pm.core",
+      "card_instruction_checked:pm.crew_rehydration_freshness",
+      "card_instruction_checked:pm.current_node_loop",
+      "card_instruction_checked:pm.dependency_policy",
+      "card_instruction_checked:pm.event.node_started",
+      "card_instruction_checked:pm.event.reviewer_blocked",
+      "card_instruction_checked:pm.event.reviewer_report",
+      "card_instruction_checked:pm.evidence_quality_package",
+      "card_instruction_checked:pm.final_ledger",
+      "card_instruction_checked:pm.material_absorb_or_research",
+      "card_instruction_checked:pm.material_scan",
+      "card_instruction_checked:pm.material_understanding",
+      "card_instruction_checked:pm.node_acceptance_plan",
+      "card_instruction_checked:pm.officer_request_report_loop",
+      "card_instruction_checked:pm.parent_backward_targets",
+      "card_instruction_checked:pm.parent_segment_decision",
+      "card_instruction_checked:pm.phase_map",
+      "card_instruction_checked:pm.prior_path_context",
+      "card_instruction_checked:pm.product_architecture",
+      "card_instruction_checked:pm.research_absorb_or_mutate",
+      "card_instruction_checked:pm.research_package",
+      "card_instruction_checked:pm.resume_decision",
+      "card_instruction_checked:pm.review_repair",
+      "card_instruction_checked:pm.root_contract",
+      "card_instruction_checked:pm.route_skeleton",
+      "card_instruction_checked:pm.startup_activation",
+      "card_instruction_checked:pm.startup_intake",
+      "card_instruction_checked:process_officer.child_skill_conformance_model",
+      "card_instruction_checked:process_officer.core",
+      "card_instruction_checked:product_officer.child_skill_product_fit",
+      "card_instruction_checked:product_officer.core",
+      "card_instruction_checked:product_officer.product_architecture_modelability",
+      "card_instruction_checked:product_officer.root_contract_modelability",
+      "card_instruction_checked:reviewer.child_skill_gate_manifest_review",
+      "card_instruction_checked:reviewer.core",
+      "card_instruction_checked:reviewer.current_node_dispatch",
+      "card_instruction_checked:reviewer.dispatch_request",
+      "card_instruction_checked:reviewer.evidence_quality_review",
+      "card_instruction_checked:reviewer.final_backward_replay",
+      "card_instruction_checked:reviewer.material_sufficiency",
+      "card_instruction_checked:reviewer.node_acceptance_plan_review",
+      "card_instruction_checked:reviewer.parent_backward_replay",
+      "card_instruction_checked:reviewer.product_architecture_challenge",
+      "card_instruction_checked:reviewer.research_direct_source_check",
+      "card_instruction_checked:reviewer.root_contract_challenge",
+      "card_instruction_checked:reviewer.startup_fact_check",
+      "card_instruction_checked:reviewer.strict_gate_obligation_review",
+      "card_instruction_checked:reviewer.worker_result_review",
+      "card_instruction_checked:startup_banner",
+      "card_instruction_checked:worker.research_report",
+      "card_instruction_checked:worker_a.core",
+      "card_instruction_checked:worker_b.core",
+      "card_instruction_coverage_complete"
+    ],
+    "ok": true,
+    "orphan_card_files": [],
+    "router_sequence_manifest_errors": [],
+    "state_count": 61,
+    "status": "complete"
+  },
+  "hazard_checks": {
+    "hazards": {
+      "active_card_unmanifested": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": false,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: active router card is not manifest registered"
+        ]
+      },
+      "missing_action_guidance": {
+        "card": {
+          "action_guidance": false,
+          "card_id": "hazard.good",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: card body lacks role-appropriate action guidance"
+        ]
+      },
+      "missing_identity_boundary": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "identity_boundary": false,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing FLOWPILOT_IDENTITY_BOUNDARY_V1"
+        ]
+      },
+      "missing_next_step_source": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": false,
+          "next_step_source": false,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing next_step_source",
+          "hazard.good: next_step_source does not name flowpilot_router.py"
+        ]
+      },
+      "missing_pm_history_context_guidance": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "pm.route_skeleton",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": false,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "pm.route_skeleton: missing PM prior path context guidance"
+        ]
+      },
+      "missing_required_return": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": false,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing required_return"
+        ]
+      },
+      "next_step_without_router": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": false,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: next_step_source does not name flowpilot_router.py"
+        ]
+      },
+      "wrong_recipient_role": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": false,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: recipient_role does not match router/manifest audience"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true
+}

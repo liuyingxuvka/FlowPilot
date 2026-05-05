@@ -17,13 +17,10 @@ CHECK_STATE_LIMIT = 900_000
 REQUIRED_LABELS = (
     "classified_backend_task",
     "classified_ui_task",
-    "startup_four_questions_asked",
+    "startup_three_questions_asked",
     "startup_dialog_stopped_for_user_answers",
     "startup_display_surface_answered",
     "startup_display_entry_action_done",
-    "mode_choice_offered",
-    "mode_selected_by_user",
-    "explicit_full_auto_mode_selected",
     "startup_background_agents_answered",
     "startup_scheduled_continuation_answered",
     "run_directory_created",
@@ -298,7 +295,7 @@ REQUIRED_LABELS = (
 def _state_id(state: model.State) -> str:
     return (
         f"{state.status}|kind={state.task_kind}|enabled={state.flowpilot_enabled}|"
-        f"mode_offer={state.mode_choice_offered}|showcase={state.showcase_floor_committed}|"
+        f"showcase={state.showcase_floor_committed}|"
         f"run={state.run_directory_created},{state.current_pointer_written},"
         f"{state.run_index_updated},{state.prior_work_mode},"
         f"{state.prior_work_import_packet_written},"

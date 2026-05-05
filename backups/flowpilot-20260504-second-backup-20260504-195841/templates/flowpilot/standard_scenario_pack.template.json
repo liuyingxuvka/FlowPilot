@@ -1,0 +1,125 @@
+{
+  "schema_version": "flowpilot.standard_scenario_pack.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "pm_owned": true,
+  "status": "<draft|approved|blocked|superseded>",
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "purpose": "A route-local pack of compensating scenarios used when the live project state does not naturally cover a high-risk requirement. Scenarios are selected by PM from the root acceptance contract and refined by node acceptance plans.",
+  "selection_policy": {
+    "select_for_root_high_risk_requirements": true,
+    "select_for_node_experiment_plans": true,
+    "unused_scenarios_require_reason": true,
+    "scenario_pass_is_not_completion_by_itself": true
+  },
+  "scenarios": [
+    {
+      "scenario_id": "multi_run_index",
+      "risk_family": "catalog_or_multi_task_state",
+      "description": "At least two indexed runs exist so a single-window task-tab UI or route catalog can prove switching behavior.",
+      "default_required_when": [
+        "multi-task UI",
+        "run catalog",
+        "task switching"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
+      "scenario_id": "terminal_complete_state",
+      "risk_family": "terminal_state_drift",
+      "description": "Route, run, pointer, frontier, ledger, screenshots, and lifecycle evidence all reflect terminal completion.",
+      "default_required_when": [
+        "any formal route completion"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": true,
+      "selection_or_skip_reason": "Terminal completion is always checked."
+    },
+    {
+      "scenario_id": "blocked_or_failed_gate",
+      "risk_family": "repair_route",
+      "description": "A blocked gate or failed experiment forces repair, route mutation, or PM stop instead of soft completion.",
+      "default_required_when": [
+        "review gates",
+        "risk triage",
+        "repair flows"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
+      "scenario_id": "stale_or_conflicting_frontier",
+      "risk_family": "state_authority",
+      "description": "State, frontier, index, and route disagree; the process must detect drift and block or repair before evidence closes.",
+      "default_required_when": [
+        "stateful workflow",
+        "route UI",
+        "automation",
+        "completion ledger"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
+      "scenario_id": "missing_source_artifact",
+      "risk_family": "evidence_integrity",
+      "description": "A required route, model, screenshot, material, or generated resource is missing and must become unresolved until repaired or correctly waived.",
+      "default_required_when": [
+        "generated evidence",
+        "artifact delivery",
+        "route ledger"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
+      "scenario_id": "long_localized_text",
+      "risk_family": "localization_layout",
+      "description": "Long localized strings or translated labels are exercised so UI/layout review cannot pass only short English paths.",
+      "default_required_when": [
+        "localized UI",
+        "multilingual reports"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
+      "scenario_id": "host_capability_absent",
+      "risk_family": "host_or_tool_boundary",
+      "description": "A host capability such as tray, browser, image generation, automation, or external scheduler is absent; route behavior must block, repair, or use an explicit allowed fallback.",
+      "default_required_when": [
+        "host-dependent feature",
+        "automation",
+        "desktop integration"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
+      "scenario_id": "legacy_or_old_asset_present",
+      "risk_family": "source_contamination",
+      "description": "Historical route state, screenshots, generated assets, or old agent IDs exist but must not become current evidence unless explicitly imported as read-only input.",
+      "default_required_when": [
+        "fresh start",
+        "visual design",
+        "continuing prior work"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    }
+  ],
+  "approval": {
+    "project_manager_selection_path": "<path-or-null>",
+    "reviewer_challenge_path": "<path-or-null>",
+    "approved": false
+  }
+}

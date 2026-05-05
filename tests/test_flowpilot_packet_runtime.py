@@ -88,8 +88,11 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(body_path.exists())
         self.assertTrue(ledger_path.exists())
         self.assertTrue(status_path.exists())
-        self.assertEqual(body_path.read_text(encoding="utf-8"), body_text)
-        self.assertEqual(envelope["body_hash"], hashlib.sha256(body_text.encode("utf-8")).hexdigest())
+        written_body = body_path.read_text(encoding="utf-8")
+        self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, written_body)
+        self.assertIn("recipient_role: worker_a", written_body)
+        self.assertIn(body_text, written_body)
+        self.assertEqual(envelope["body_hash"], hashlib.sha256(body_path.read_bytes()).hexdigest())
 
         ledger = self.read_json(ledger_path)
         self.assertEqual(ledger["schema_version"], "flowpilot.packet_ledger.v2")
@@ -126,10 +129,10 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
 
         envelope = self.relay_packet(root, envelope)
-        self.assertEqual(
-            packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a"),
-            "worker-only instructions",
-        )
+        body = packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, body)
+        self.assertIn("recipient_role: worker_a", body)
+        self.assertIn("worker-only instructions", body)
         with self.assertRaises(packet_runtime.PacketRuntimeError):
             packet_runtime.read_packet_body_for_role(root, envelope, role="controller")
 
@@ -168,6 +171,10 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         result_body_path = self.packet_dir(root) / "result_body.md"
         self.assertTrue(self.result_envelope_path(root).exists())
         self.assertTrue(result_body_path.exists())
+        result_body = result_body_path.read_text(encoding="utf-8")
+        self.assertIn(packet_runtime.RESULT_IDENTITY_MARKER, result_body)
+        self.assertIn("completed_by_role: worker_a", result_body)
+        self.assertIn("RESULT_BODY_SECRET", result_body)
         self.assertEqual(result["result_body_hash"], hashlib.sha256(result_body_path.read_bytes()).hexdigest())
         self.assertTrue(audit["passed"])
         self.assertTrue(audit["packet_runtime_physical_files_checked"])
@@ -337,10 +344,42 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(envelope["packet_type"], "user_intake")
         self.assertEqual(envelope["body_visibility"], packet_runtime.USER_INTAKE_BODY_VISIBILITY)
         self.assertTrue(envelope["controller_relay"]["external_user_input_visible_to_controller"])
-        self.assertEqual(
-            packet_runtime.read_packet_body_for_role(root, envelope, role="project_manager"),
-            "user task prompt",
+        user_intake_body = packet_runtime.read_packet_body_for_role(root, envelope, role="project_manager")
+        self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, user_intake_body)
+        self.assertIn("recipient_role: project_manager", user_intake_body)
+        self.assertIn("user task prompt", user_intake_body)
+
+    def test_packet_identity_boundary_is_required_on_read(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root, body_text="worker work"))
+        body_path = root / envelope["body_path"]
+        body_path.write_text("worker work without identity boundary", encoding="utf-8")
+        envelope["body_hash"] = hashlib.sha256(body_path.read_bytes()).hexdigest()
+        envelope["controller_relay"]["envelope_hash"] = packet_runtime.envelope_hash(envelope)
+
+        with self.assertRaises(packet_runtime.PacketRuntimeError):
+            packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+
+    def test_result_identity_boundary_is_required_on_read(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a-1",
+            result_body_text="valid result",
+            next_recipient="human_like_reviewer",
         )
+        result = self.relay_result(root, result)
+        result_path = root / result["result_body_path"]
+        result_path.write_text("result without identity boundary", encoding="utf-8")
+        result["result_body_hash"] = hashlib.sha256(result_path.read_bytes()).hexdigest()
+        result["controller_relay"]["envelope_hash"] = packet_runtime.envelope_hash(result)
+
+        with self.assertRaises(packet_runtime.PacketRuntimeError):
+            packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
 
 
 if __name__ == "__main__":

@@ -12,9 +12,8 @@ import startup_pm_review_model as model
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "startup_pm_review_results.json"
 REQUIRED_LABELS = (
-    "startup_four_questions_asked",
+    "startup_three_questions_asked",
     "startup_dialog_stopped_for_user_answers",
-    "run_mode_answer_recorded",
     "background_agents_allowed",
     "background_agents_declined_single_agent",
     "scheduled_continuation_allowed",

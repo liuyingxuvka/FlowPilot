@@ -168,6 +168,15 @@ model-backed autopilot:
   final output, used as evidence, superseded, quarantined, or discarded with
   reason, the human-like reviewer replays the final product backward through
   that ledger, and the PM records ledger-specific completion approval.
+- The clean rebuild implements this as a prompt-isolated router/card runtime:
+  PM writes `final_route_wide_gate_ledger.json`, the router creates
+  `terminal_human_backward_replay_map.json`, the human-like reviewer receives
+  `reviewer.final_backward_replay`, and completion/closure remains blocked
+  until `reviews/terminal_backward_replay.json` passes. The current runtime
+  validates stale evidence, unresolved evidence, pending resources, unresolved
+  residual risks, old UI/visual asset reuse, and completion-report-only closure.
+  The remaining terminal expansion is a closure-suite lifecycle writer after
+  PM closure approval.
 - Each formal FlowPilot invocation now creates a fresh
   `.flowpilot/runs/<run-id>/` directory in the target project. Top-level
   `.flowpilot/current.json` and `.flowpilot/index.json` are pointer/catalog
@@ -183,6 +192,12 @@ model-backed autopilot:
   before worker execution, routes existing worker results to reviewer, and
   blocks ambiguous worker state for PM recovery rather than letting Controller
   infer or finish work.
+- Material scan, research, and current-node execution now use physical
+  packet/result envelopes. Controller may relay envelope metadata only; workers
+  open packet bodies, reviewers open result bodies, and PM may complete a node
+  only after reviewer-passed result evidence plus any required parent backward
+  replay and PM segment decision. Generalized async FlowGuard officer
+  request/report packets remain the next packet-loop expansion.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns
@@ -222,13 +237,13 @@ model-backed autopilot:
   `work_beyond_startup_allowed: true`; there is no third startup opener or
   runtime startup-check script. Route-local artifacts without that canonical match
   are shadow routes to quarantine or supersede.
-- Formal startup now begins with a four-question pre-banner gate. On
-  `Use FlowPilot` / `使用开始`, the assistant asks for run mode, background-agent
+- Formal startup now begins with a three-question pre-banner gate. On
+  `Use FlowPilot` / `使用开始`, the assistant asks for background-agent
   permission, scheduled-continuation permission, and whether to open Cockpit UI
   or use chat route signs, then the assistant response must stop immediately and
   wait for the user's reply. The startup banner, route writes, Cockpit launch,
   child skills, subagents, heartbeat probes, imagegen, and implementation are
-  blocked until a later user reply explicitly answers all four questions and
+  blocked until a later user reply explicitly answers all three questions and
   `startup_activation.startup_questions` records both the stop-and-wait
   evidence and banner-after-answers evidence.
 - Long operations no longer carry a FlowPilot stale-heartbeat wrapper; use
@@ -307,7 +322,7 @@ FlowGuard caught and fixed these design issues:
     decisions. A repair invalidates affected evidence and normally restarts the
     final review from the delivered product; narrower impacted-ancestor reruns
     require a PM reason.
-20. Asking the four startup questions is not a soft prompt. It is a hard
+20. Asking the three startup questions is not a soft prompt. It is a hard
     pause boundary: if FlowPilot keeps working in the same response after the
     questions, any later startup evidence is invalid and the PM must not open
     `work_beyond_startup_allowed`.
@@ -330,7 +345,40 @@ FlowGuard caught and fixed these design issues:
 
 ## Current Implementation State
 
-- The main skill lives at `skills/flowpilot/SKILL.md`.
+- The main skill launcher lives at `skills/flowpilot/SKILL.md`. It is now
+  intentionally small and delegates formal startup to
+  `skills/flowpilot/assets/flowpilot_router.py`.
+- Prompt-isolated runtime cards live under
+  `skills/flowpilot/assets/runtime_kit/` and are listed in
+  `skills/flowpilot/assets/runtime_kit/manifest.json`.
+- Resume re-entry now has explicit Controller and PM system cards:
+  `controller.resume_reentry` and `pm.resume_decision`. The Controller loads
+  current-run state, frontier, packet ledger, and crew memory into
+  `continuation/resume_reentry.json` without reading sealed bodies or inferring
+  progress from chat history; ambiguous resume state blocks for PM recovery.
+- `flowpilot_router.py` now drives the current-node packet loop through the
+  physical `packet_runtime` envelope/body system. It requires route activation,
+  current-node packet registration, reviewer dispatch approval, packet ledger
+  checks, Controller envelope-only relay, worker result relay to reviewer, and
+  reviewer packet audit before PM node completion.
+- Route activation and review-block repair now write run-scoped route/frontier
+  state. `execution_frontier.json` tracks the active node, completed nodes, and
+  route-mutation repair state; mutation records are written before new repair
+  work can proceed.
+- `docs/flowpilot_clean_rebuild_plan.md` and
+  `docs/legacy_to_router_equivalence.json` are the current rebuild plan and
+  old-protocol equivalence checklist. `scripts/check_install.py` verifies both
+  documents, the runtime card manifest, packet schema alignment, resume model
+  results, and router-loop model results.
+- FlowGuard coverage now includes prompt isolation, heartbeat/manual resume,
+  and current-node/router-loop models:
+  `simulations/prompt_isolation_model.py`,
+  `simulations/flowpilot_resume_model.py`, and
+  `simulations/flowpilot_router_loop_model.py`.
+- The second legacy FlowPilot backup lives under
+  `backups/flowpilot-20260504-second-backup-20260504-195841/` with matching
+  zip archive. It is marked as a preserved backup and must not be deleted by
+  cleanup.
 - Reusable project-control templates live at `templates/flowpilot/`.
 - FlowGuard regression models live at `simulations/`.
 - Self-check and smoke scripts live at `scripts/`.
@@ -344,9 +392,16 @@ FlowGuard caught and fixed these design issues:
 
 Before public release:
 
-1. Review the README and docs for final GitHub presentation.
-2. Fill in final public FlowGuard source URLs if needed.
-3. Run privacy and public-boundary review before publishing.
+1. Extend the router beyond single-node scaffolding into full multi-node route
+   resolver validation.
+2. Integrate officer/research packet loops, stale-evidence/resource-ledger
+   writers, and terminal closure-suite artifacts with the new router runtime.
+3. Build a production replay adapter for the abstract resume and router-loop
+   FlowGuard models if they are promoted from design models to conformance
+   checks.
+4. Review the README and docs for final GitHub presentation.
+5. Fill in final public FlowGuard source URLs if needed.
+6. Run privacy and public-boundary review before publishing.
 
 ## Validation Commands
 
@@ -355,6 +410,9 @@ Run:
 ```powershell
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
+python simulations/run_prompt_isolation_checks.py
+python simulations/run_flowpilot_resume_checks.py
+python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

@@ -1,0 +1,38 @@
+{
+  "schema_version": "flowpilot.child_skill_gate_manifest.v1",
+  "run_id": "<run-id>",
+  "pm_owned": true,
+  "status": "<draft|approved|blocked|superseded>",
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "source_paths": {
+    "pm_child_skill_selection": ".flowpilot/runs/<run-id>/pm_child_skill_selection.json",
+    "capabilities_manifest": ".flowpilot/runs/<run-id>/capabilities.json",
+    "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json"
+  },
+  "raw_inventory_is_authority": false,
+  "controller_self_approval_allowed": false,
+  "selected_skills": [
+    {
+      "skill_name": "<skill-name>",
+      "decision": "<required|conditional>",
+      "supported_capabilities": [],
+      "references_loaded_now": [],
+      "references_deferred_with_reason": [],
+      "gates": [
+        {
+          "gate_id": "<gate-id>",
+          "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+          "evidence_required": [],
+          "controller_can_approve": false
+        }
+      ]
+    }
+  ],
+  "approval": {
+    "reviewer_passed": false,
+    "process_officer_passed": false,
+    "product_officer_passed": false,
+    "pm_approved_for_route": false
+  }
+}

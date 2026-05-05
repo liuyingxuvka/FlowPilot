@@ -1,0 +1,14 @@
+{
+  "schema_version": "flowpilot.current.v1",
+  "current_run_id": "run-001",
+  "current_run_root": ".flowpilot/runs/run-001",
+  "selected_at": "<iso-8601-timestamp>",
+  "selected_by": "flowpilot-controller",
+  "selection_reason": "<new_formal_start|resume_active_run|user_selected_run|migration>",
+  "status": "<startup_pending|running|paused|blocked|complete>",
+  "thin_pointer_only": true,
+  "control_state_must_live_under_run_root": true,
+  "state_path": ".flowpilot/runs/run-001/state.json",
+  "execution_frontier_path": ".flowpilot/runs/run-001/execution_frontier.json",
+  "index_path": ".flowpilot/index.json"
+}

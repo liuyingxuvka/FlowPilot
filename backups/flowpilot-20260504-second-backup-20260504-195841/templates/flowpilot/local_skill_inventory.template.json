@@ -1,0 +1,41 @@
+{
+  "artifact_type": "flowpilot_local_skill_inventory",
+  "schema_version": 1,
+  "created_at": "<iso-8601-timestamp>",
+  "run_id": "<run-id>",
+  "owner": "<worker_a|worker_b>",
+  "purpose": "Inventory locally available skills and host capabilities as candidate resources before PM product and route decisions.",
+  "candidate_only_until_pm_selected": true,
+  "raw_availability_is_not_authority_to_invoke": true,
+  "inventory_sources": [
+    {
+      "source": "<skills-directory-or-host-capability-source>",
+      "scan_method": "<filesystem|connector|host-tool-list|manual>",
+      "status": "<scanned|partially_scanned|unavailable>",
+      "notes": "<brief notes>"
+    }
+  ],
+  "skills": [
+    {
+      "skill_name": "<skill-name>",
+      "skill_path": "<absolute-or-run-relative-path-to-SKILL.md>",
+      "description_summary": "<short description from the skill header>",
+      "candidate_fit": "<required_candidate|conditional_candidate|unlikely|unknown>",
+      "possible_product_capabilities": [],
+      "hard_gates_or_safety_notes": [],
+      "read_depth": "<header_only|skill_md_read|references_deferred>",
+      "use_requires_pm_selection_manifest": true
+    }
+  ],
+  "host_capabilities": [
+    {
+      "capability_id": "<capability-id>",
+      "provider": "<tool-plugin-skill-or-host-feature>",
+      "available": "<yes|no|unknown>",
+      "candidate_fit": "<required_candidate|conditional_candidate|unlikely|unknown>",
+      "evidence": "<probe-result-or-note>",
+      "use_requires_pm_selection_manifest": true
+    }
+  ],
+  "not_selected_here": "Selection happens later in pm_child_skill_selection.json after PM product-function architecture and capability mapping."
+}

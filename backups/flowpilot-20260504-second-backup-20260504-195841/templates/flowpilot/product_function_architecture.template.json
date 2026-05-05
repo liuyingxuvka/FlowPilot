@@ -1,0 +1,146 @@
+{
+  "schema_version": "flowpilot.product_function_architecture.v1",
+  "project": "<project-name>",
+  "status": "draft",
+  "pm_owned": true,
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "source_inputs": {
+    "startup_self_interrogation_path": "<path-or-null>",
+    "material_intake_packet_path": ".flowpilot/runs/<run-id>/material_intake_packet.json",
+    "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
+    "pm_material_understanding_path": ".flowpilot/pm_material_understanding.json",
+    "draft_floor_source": "<chat|file|user-brief|other>",
+    "known_product_context_paths": []
+  },
+  "high_standard_posture": {
+    "flowpilot_invocation_means_important_project": true,
+    "target_grade": "highest_reasonably_achievable",
+    "pm_sets_worker_standard": true,
+    "lowest_viable_route_rejected": true,
+    "worker_effort_is_not_pm_constraint": true,
+    "minimum_professional_bar": "<what would be credible to show a colleague or stakeholder>"
+  },
+  "highest_achievable_product_target": {
+    "product_vision": "<what the strongest feasible result should feel like and enable>",
+    "best_feasible_route": "<specialized skills, discovery, modeling, assets, QA, or staged work needed to reach that target>",
+    "experience_quality_bar": "<visual, interaction, data, document, automation, or domain quality expectations>",
+    "verification_quality_bar": "<proof needed before PM can call the result high quality>"
+  },
+  "unacceptable_result_review": [
+    {
+      "failure_id": "<failure-id>",
+      "rough_or_embarrassing_result": "<placeholder, fake, thin, misleading, unstable, incomplete, or low-quality result>",
+      "why_it_must_fail": "<user/product reason>",
+      "required_repair_or_route_change": "<repair, discovery, redesign, child-skill route, ask-user, or block>"
+    }
+  ],
+  "semantic_fidelity_policy": {
+    "silent_downgrade_forbidden": true,
+    "material_gap_default": "<insert_discovery_or_validation_node|stage_delivery_with_explicit_gap|ask_user|block>",
+    "user_goal_to_evidence": [
+      {
+        "user_goal": "<requested product outcome>",
+        "material_support": "<strong|partial|missing|contradictory>",
+        "allowed_representation": "<what can be honestly built from current material>",
+        "forbidden_downgrade": "<what would change the user's meaning without approval>",
+        "required_action_if_gap_remains": "<discover|clean|research|model|ask_user|defer_with_explicit_label|block>"
+      }
+    ]
+  },
+  "user_task_map": [
+    {
+      "task_id": "<task-id>",
+      "user_or_actor": "<user-or-actor>",
+      "trigger": "<when-this-task-starts>",
+      "goal": "<desired-outcome>",
+      "current_gap": "<gap-or-null>",
+      "failure_or_recovery_expectations": []
+    }
+  ],
+  "product_capability_map": [
+    {
+      "capability_id": "<capability-id>",
+      "supports_tasks": [],
+      "behavior": "<what-the-product-must-do>",
+      "state_or_data_needed": [],
+      "workflow_or_ui_surface": "<surface-or-null>",
+      "integration_or_automation_need": "<need-or-null>",
+      "evidence_needed": []
+    }
+  ],
+  "feature_decisions": [
+    {
+      "feature_id": "<feature-id>",
+      "decision": "<must|should|optional|reject>",
+      "reason": "<why-this-decision-is-correct>",
+      "acceptance_impact": "<criterion-or-null>",
+      "supported_tasks": []
+    }
+  ],
+  "display_rationale": [
+    {
+      "surface": "<surface-name>",
+      "element_id": "<visible-element-id>",
+      "visible_text_or_control": "<label-control-status-card-alert-empty-state>",
+      "rationale": "<user-decision-system-state-or-evidence-purpose>",
+      "remove_if_no_purpose": true,
+      "supported_task_or_capability": "<task-or-capability-id>"
+    }
+  ],
+  "missing_feature_review": [
+    {
+      "gap_id": "<gap-id>",
+      "user_task_or_failure_mode": "<task-or-failure-mode>",
+      "missing_capability": "<capability-or-feature>",
+      "decision": "<add_to_must|add_to_should|defer_with_reason|reject_with_reason>",
+      "reason": "<reason>"
+    }
+  ],
+  "negative_scope": [
+    {
+      "item": "<rejected-feature-display-or-behavior>",
+      "reason": "<why-it-is-out-of-scope-or-harmful>",
+      "revisit_condition": "<condition-or-null>"
+    }
+  ],
+  "functional_acceptance_matrix": [
+    {
+      "acceptance_id": "<acceptance-id>",
+      "covers_tasks": [],
+      "inputs": [],
+      "expected_outputs": [],
+      "state_transitions": [],
+      "permissions_or_roles": [],
+      "failure_cases": [],
+      "checks": [],
+      "evidence_paths": []
+    }
+  ],
+  "root_acceptance_contract": {
+    "path": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
+    "pm_owned": true,
+    "root_thresholds_defined": false,
+    "proof_matrix_written": false,
+    "standard_scenario_pack_selected": false,
+    "unresolved_residual_risks_allowed": false,
+    "note": "The PM records only root-level hard requirements, high-risk requirements, and proof obligations here. Node-local details are created later in node_acceptance_plan files."
+  },
+  "approvals": {
+    "project_manager_synthesis_path": "<path-or-null>",
+    "independent_validation_required": true,
+    "completion_report_only_allowed": false,
+    "product_flowguard_officer_modelability": "<pending|approved|blocked>",
+    "product_flowguard_officer_report_path": "<path-or-null>",
+    "product_flowguard_officer_independent_validation_path": "<path-or-null>",
+    "human_like_reviewer_usefulness_challenge": "<pending|passed|blocked>",
+    "human_like_reviewer_report_path": "<path-or-null>",
+    "human_like_reviewer_independent_validation_path": "<path-or-null>",
+    "human_like_reviewer_fact_check_required": true,
+    "human_like_reviewer_checked_user_request": false,
+    "human_like_reviewer_checked_material_sources": [],
+    "human_like_reviewer_checked_workflow_reality": [],
+    "human_like_reviewer_worker_report_only": false,
+    "blocked_reason": "<reason-or-null>"
+  }
+}

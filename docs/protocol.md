@@ -7,14 +7,14 @@ branches, heartbeat behavior, and any task-local behavior models.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask four startup questions: run mode, background-agent permission,
+2. Ask three startup questions: background-agent permission,
    scheduled-continuation permission, and whether to open Cockpit UI. End the assistant response immediately
    after these questions. Do not inspect files, start tools, create route state,
    launch subagents, probe heartbeat, or show the banner in the same response.
    FlowPilot remains in `startup_pending_user_answers` until the user's later
-   reply supplies all four answers.
+   reply supplies all three answers. Do not ask the user to choose a mode.
 3. Record the explicit answer set in state/frontier startup activation
-   evidence. A compact later user reply may satisfy all four only when the
+   evidence. A compact later user reply may satisfy all three only when the
    choices are explicit.
 4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
    the startup-question gate is open.
@@ -191,7 +191,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     canonical current-run state, execution frontier, current six-role crew
     ledger, current role memory, `.flowpilot/current.json`,
     `.flowpilot/index.json`, the run manifest, prior-work import packet when
-    continuing, the four explicit startup answers, stop-and-wait evidence,
+    continuing, the three explicit startup answers, stop-and-wait evidence,
     banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
@@ -260,7 +260,7 @@ not be reported as a full formal FlowPilot route unless the showcase gates ran.
 The startup banner is a user-visible launch marker, not route evidence; it
 exists so the user can immediately see when the heavy FlowPilot controller has
 started. The banner is illegal in the same assistant response that asks the
-four startup questions.
+three startup questions.
 
 Recommended explicit invocation for public docs, README examples, and GitHub
 usage:
@@ -269,8 +269,8 @@ usage:
 Use FlowPilot. Ask the startup questions first.
 ```
 
-FlowPilot invocation only opens the four-question startup prompt. It is not
-authorization for a default mode, background agents, fallback execution,
+FlowPilot invocation only opens the three-question startup prompt. It is not
+authorization for background agents, fallback execution,
 scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
@@ -674,22 +674,16 @@ and routing id. `display_name` is the user-facing chat/UI label. `agent_id` is
 only a diagnostic/recovery handle and must not be shown as the primary label or
 used as the authority key.
 
-## Run Mode Startup Question
+## Retired Run Modes
 
-Run mode is one part of the four-question startup gate, not a separate
-fallback decision. Show modes left-to-right from loosest to strictest:
-`full-auto`, `autonomous`, `guided`, `strict-gated`.
-
-For a new formal route, do not record any run mode until the user explicitly
-answers the startup question. A compact later user reply may answer all four
-startup questions at once, but `Use FlowPilot`, an existing `.flowpilot/`
+FlowPilot no longer has run modes. `Use FlowPilot`, an existing `.flowpilot/`
 directory, host inability to pause, prior route state, or a generic request to
-continue must not be converted into an implicit `full-auto` or `autonomous`
-fallback. If the answer is missing or ambiguous, FlowPilot remains in
-`startup_pending_user_answers` and asks for the missing answer.
+continue cannot authorize background agents, scheduled jobs, fallback
+execution, or display-surface choices.
 
-Run modes change autonomy and gate behavior, not quality tier. Every formal
-FlowPilot mode keeps the same showcase-grade completion floor.
+Removing modes does not lower hard gates or quality tier. Every formal
+FlowPilot route keeps the same showcase-grade completion floor and still
+requires explicit approval for hard gates.
 
 ## Self-Interrogation And Heartbeat
 
@@ -1393,6 +1387,33 @@ FlowPilot checks these process facts:
 - post-implementation screenshots are not relabeled as pre-implementation
   concept evidence unless the child skill or user explicitly waived the concept
   target.
+
+## Controller Route Memory And PM Prior-Path Context
+
+The Controller maintains current-run route memory as source-path indexes under
+`.flowpilot/runs/<run-id>/route_memory/`:
+
+- `route_history_index.json` records the active frontier, effective nodes,
+  completed nodes, superseded nodes, route mutations, stale evidence ids,
+  review block/pass markers, research or modeling outputs, and concrete source
+  paths.
+- `pm_prior_path_context.json` is the PM-facing decision brief derived from the
+  same index.
+
+Both files are generated by the Controller, but the Controller has no decision
+authority and must not read sealed packet or result bodies to build them. These
+files are navigation aids and source indexes, not product acceptance evidence.
+
+Before any protected PM decision, the Controller refreshes route memory and
+the PM must read both files. Protected decisions include route drafting,
+resume continuation, current-node acceptance planning, repair choice, route
+mutation, parent segment decisions, evidence-quality packaging, final ledger
+construction, and closure. The PM output must include
+`prior_path_context_review` with both route-memory source paths, completed
+nodes considered, superseded nodes considered, stale evidence considered,
+prior blocks or experiments considered, and the impact on the decision. If the
+PM treats the Controller summary as evidence instead of an index, the decision
+is invalid.
 
 ## Final Route-Wide Gate Ledger
 

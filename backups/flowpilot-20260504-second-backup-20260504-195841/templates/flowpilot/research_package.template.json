@@ -1,0 +1,82 @@
+{
+  "artifact_type": "flowpilot_research_package",
+  "schema_version": "flowpilot.research_package.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "package_id": "<research-package-id>",
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "pm_owned": true,
+  "status": "<draft|assigned|worker_reported|reviewing|rework_required|accepted|route_mutated|blocked|superseded>",
+  "decision_context": {
+    "source_pm_material_understanding": ".flowpilot/runs/<run-id>/pm_material_understanding.json",
+    "source_node_acceptance_plan": "<path-or-null>",
+    "source_modeling_request": "<path-or-null>",
+    "gap_type": "<material_gap|mechanism_gap|source_gap|experiment_gap|protocol_gap|validation_gap|reconciliation_gap>",
+    "route_impact": "<blocking|changes-route|changes-product-architecture|changes-node-acceptance|can-defer|nonblocking>",
+    "decision_needed": "<what-the-PM-needs-to-decide-after-this-package>",
+    "known_evidence_paths": [],
+    "known_blindspots": []
+  },
+  "research_question": {
+    "primary_question": "<one-question-this-package-must-answer>",
+    "subquestions": [],
+    "hypotheses_to_attack": [],
+    "false_confidence_risks": []
+  },
+  "allowed_source_plan": {
+    "local_repository_sources_allowed": true,
+    "user_provided_sources_allowed": true,
+    "web_search_allowed_when_host_capability_exists": "<true|false|unknown>",
+    "browser_or_live_site_allowed_when_host_capability_exists": "<true|false|unknown>",
+    "private_account_or_secret_sources_allowed": false,
+    "paid_or_destructive_actions_allowed": false,
+    "external_publication_or_contact_allowed": false,
+    "hard_gate_required_before_private_paid_or_external_action": true,
+    "required_source_kinds": [
+      "<official-doc|repository-source|user-material|web-search-result|paper|issue-thread|runtime-log|manual-experiment|other>"
+    ],
+    "forbidden_source_kinds": [],
+    "authority_and_freshness_rules": [
+      "<how-worker-ranks-authority-freshness-and-contradictions>"
+    ]
+  },
+  "host_capability_decision": {
+    "required_before_worker_start": true,
+    "recorded": false,
+    "available_capabilities_checked": [],
+    "web_or_browser_capability_available": "<true|false|unknown>",
+    "missing_capability_route": "<use-local-sources|ask-user-for-source|manual-research-needed|block|not-applicable>",
+    "decision_path": "<path-or-null>"
+  },
+  "worker_assignment": {
+    "owner_role": "<worker_a|worker_b|authorized_non_controller>",
+    "disjoint_scope": true,
+    "owned_paths_or_responsibility": [],
+    "worker_report_path": ".flowpilot/runs/<run-id>/research/<research-package-id>/worker_report.json",
+    "stop_conditions": [
+      "<what-makes-the-worker-stop>"
+    ],
+    "time_or_attempt_budget": "<bounded-budget>",
+    "minimum_evidence_count": "<number-or-policy>",
+    "must_include_negative_or_contradictory_findings": true
+  },
+  "reviewer_gate": {
+    "reviewer_role": "human_like_reviewer",
+    "reviewer_report_path": ".flowpilot/runs/<run-id>/research/<research-package-id>/reviewer_report.json",
+    "worker_report_only_allowed": false,
+    "direct_source_check_required": true,
+    "minimum_direct_sources_to_check": "<number-or-policy>",
+    "must_check_raw_evidence_not_only_summary": true,
+    "must_check_authority_freshness_and_contradictions": true,
+    "must_record_rework_findings_when_blocked": true
+  },
+  "pm_acceptance_gate": {
+    "accepted_by_pm": false,
+    "pm_decision": "<pending|absorb_into_material_understanding|mutate_route|insert_followup_research|ask_user|block|supersede>",
+    "absorbed_into_paths": [],
+    "route_mutation_path": "<path-or-null>",
+    "decision_reason": "<why-the-approved-research-is-sufficient-or-what-changes-next>"
+  }
+}

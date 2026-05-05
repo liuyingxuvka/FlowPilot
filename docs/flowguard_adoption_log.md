@@ -2064,3 +2064,512 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Use the new runtime mail path for the next FlowPilot run startup: Controller bootstraps explicit user options, writes `user_intake` to PM, relays it with a controller signature, and PM starts only after reviewer startup-gate mail review.
+
+
+## flowpilot-prompt-isolation-state-machine - Model minimal prompt injection and packet routing
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified prompt contamination risk and requested a FlowGuard simulation before changing FlowPilot startup, PM, Controller, and role prompt injection behavior.
+- Status: design_model_passed
+- Skill decision: use_flowguard
+- Started: 2026-05-04T19:00:00+02:00
+- Ended: 2026-05-04T19:41:22+02:00
+
+### Model Files
+- `simulations/prompt_isolation_model.py`
+- `simulations/run_prompt_isolation_checks.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile simulations\prompt_isolation_model.py simulations\run_prompt_isolation_checks.py`
+- OK: `python simulations\run_prompt_isolation_checks.py`: 173 states, 172 edges, 4 complete states, no invariant failures, no missing labels, all hazard states detected
+
+### Findings
+- The proposed design now has an executable model for a minimal bootloader, copied runtime kit, user-intake packet, Controller-only relay role, PM controller-reset duty, phase/event prompt cards, reviewer dispatch, worker result review, route activation, current-node repair, final ledger, and closure.
+- The model exposes a real `flowguard.Workflow` wrapper and invariant while keeping a small explicit state graph runner for required-label, hazard, and reachability reporting.
+- The model treats PM and Controller as limited state roles: they only act after the current prompt card or PM decision explicitly instructs them.
+- The bootloader startup is now modeled as two separate actions: router computes an explicit `next_action`, then the bootloader performs exactly one startup action. Startup facts such as banner emission or run-shell creation fail if they appear without a matching router-approved bootloader action.
+- Every system prompt-card delivery requires a prior Controller instruction to check the prompt manifest.
+- Every runtime packet/result delivery requires a prior Controller instruction to check the packet ledger.
+- PM cannot use worker output until reviewer review produces an event back to PM, and current-node repair requires both repair phase and reviewer-blocked event cards.
+
+### Counterexamples
+- The model detects banner before answers, banner/run-shell progression without a router `next_action`, bootloader-generated prompt bodies, roles before copied kit, user intake before PM bootstrap cards, work before PM resets Controller, worker body without reviewer dispatch, PM use of unreviewed evidence, route activation without officer/reviewer checks, node packet without node cards, repair packet without block event card, final ledger before node completion, completion before closure cleanup, prompt delivery without manifest instruction, mail delivery without ledger instruction, Controller body reads, Controller-origin project evidence, and wrong-role prompt/body delivery.
+
+### Skipped Steps
+- No FlowPilot skill code, runtime templates, installed skill copy, heartbeat automation, background agents, UI code, release, remote push, or publication action was changed.
+- This is a design-level executable model only; implementation must still add the bootloader router, runtime kit, prompt delivery manifest, and validators.
+
+### Next Actions
+- Convert the current monolithic FlowPilot skill into a small router/bootloader plus role-scoped prompt cards and a runtime prompt-delivery manifest.
+- Add implementation validators equivalent to this model before allowing a real FlowPilot run to use the new startup path.
+
+
+## flowpilot-prompt-isolation-clean-rebuild - Router and card runtime implementation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested the legacy FlowPilot program be preserved as a second backup, then rebuilt from scratch around the prompt-isolation router/system-card/packet-ledger model rather than patched in place.
+- Status: implementation_partially_verified
+- Skill decision: use_flowguard
+- Started: 2026-05-04T19:58:00+02:00
+- Ended: 2026-05-04T20:15:23+02:00
+
+### Backup Files
+- `backups/flowpilot-20260504-second-backup-20260504-195841/`
+- `backups/flowpilot-20260504-second-backup-20260504-195841.zip`
+
+### Implementation Files
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/runtime_kit/manifest.json`
+- `skills/flowpilot/assets/runtime_kit/cards/`
+- `tests/test_flowpilot_router_runtime.py`
+- `scripts/check_install.py`
+
+### Commands
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`: 7 tests
+- OK: `python scripts\check_install.py`: includes router/runtime-kit files, prompt-isolation result files, and second-backup preservation check
+- OK: `python simulations\run_prompt_isolation_checks.py`: 173 states, 172 edges, 4 complete states, no invariant failures, no missing labels, all hazard states detected
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_router_runtime`: 42 tests
+- OK: `python simulations\run_meta_checks.py`: 578663 states, 598835 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK: `python simulations\run_capability_checks.py`: 550013 states, 575473 edges, no invariant failures, no missing labels, no stuck/nonterminating states, no nonterminating components, 4368 complete terminal states
+
+### Findings
+- The active FlowPilot skill entry is now a small bootloader instruction file. It tells the assistant to run the router, execute exactly one router action, record it, and return to the router.
+- `flowpilot_router.py` creates and validates pending action envelopes for startup, copies an audited runtime kit, initializes run-scoped mailbox/ledger state, and then switches to Controller-owned manifest/ledger delivery.
+- The runtime kit splits former long prompt content into role core cards, PM phase cards, PM event cards, reviewer cards, and a startup banner card. Cards are data; they do not advance the route by themselves.
+- System cards are manifest-addressed with `from: system`, `issued_by: router`, and `delivered_by: controller`.
+- The first PM bootstrap sequence now delivers PM core, Controller reset duty, PM phase map, and startup-intake card before ledger delivery of `user_intake`.
+- Follow-on phase/event cards require matching state flags, so final-ledger/current-node/repair cards are not delivered at startup.
+- `check_install.py` now verifies the router, runtime kit, prompt-isolation model artifacts, and the second backup manifest plus zip archive.
+
+### Counterexamples
+- `tests.test_flowpilot_router_runtime` initially exposed that the first router implementation delivered later PM phase cards before the `user_intake` mail. The router now requires explicit state flags before later phase/event cards become due.
+
+### Skipped Steps
+- The installed global Codex skill copy was not synced in this pass.
+- No release, remote push, publication, Cockpit UI work, heartbeat automation, or formal FlowPilot route was started.
+- The new router currently implements the startup/bootstrap and first Controller card/mail gates plus role-event recording. Full current-node packet orchestration still relies on existing packet runtime and must be integrated further with route/frontier state.
+
+### Next Actions
+- Wait for the background capability model result and fix any reported gap.
+- Extend router/controller integration from bootstrap gates into the full current-node packet loop and final-ledger loop.
+- Update install/audit scripts if global installed-skill synchronization is requested.
+
+
+## flowpilot-prompt-isolation-resume-current-node-loop - Resume and packet-loop enforcement
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved the clean-rebuild plan and requested execution with subagents for large FlowGuard simulations and regressions.
+- Status: implementation_verified_local
+- Skill decision: use_flowguard
+- Started: 2026-05-04T20:16:00+02:00
+- Ended: 2026-05-04T20:58:09+02:00
+
+### Implementation Files
+- `docs/flowpilot_clean_rebuild_plan.md`
+- `docs/legacy_to_router_equivalence.md`
+- `docs/legacy_to_router_equivalence.json`
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/runtime_kit/manifest.json`
+- `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md`
+- `tests/test_flowpilot_router_runtime.py`
+- `scripts/check_install.py`
+
+### Model Files
+- `simulations/flowpilot_resume_model.py`
+- `simulations/run_flowpilot_resume_checks.py`
+- `simulations/flowpilot_resume_results.json`
+- `simulations/flowpilot_router_loop_model.py`
+- `simulations/run_flowpilot_router_loop_checks.py`
+- `simulations/flowpilot_router_loop_results.json`
+- `simulations/prompt_isolation_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py tests\test_flowpilot_router_runtime.py simulations\run_flowpilot_resume_checks.py simulations\run_flowpilot_router_loop_checks.py simulations\flowpilot_resume_model.py simulations\flowpilot_router_loop_model.py`
+- OK: JSON parse for `docs\legacy_to_router_equivalence.json`, `simulations\flowpilot_resume_results.json`, `simulations\flowpilot_router_loop_results.json`, and `skills\flowpilot\assets\runtime_kit\manifest.json`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_router_runtime`: 49 tests
+- OK: `python simulations\run_prompt_isolation_checks.py`: 173 states, 172 edges, 4 complete states, no invariant failures, no missing labels, all hazards detected
+- OK: `python simulations\run_flowpilot_resume_checks.py`: 129 states, 128 edges, 8 complete states, 4 blocked states, no invariant failures, no missing labels, all 25 hazards detected
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`: 34 states, 33 edges, 2 complete states, 3 blocked states, no invariant failures, no missing labels, no stuck states, no nonterminating components, all hazards detected
+- OK: `python scripts\check_install.py`: runtime kit, card manifest, packet schema, equivalence JSON, resume/router-loop result files, and second-backup preservation checks passed
+- OK: `python simulations\run_release_tooling_checks.py`: 16 states, 15 edges, no invariant failures, no missing labels, all hazards detected
+- OK: `python simulations\run_startup_pm_review_checks.py`: 2610 states, 2609 edges, no invariant failures, no missing labels, all hazards detected
+- OK by background subagent: `python simulations\run_meta_checks.py`: 578663 states, 598835 edges, no invariant failures, no missing labels, no stuck/nonterminating states
+- OK by background subagent: `python simulations\run_capability_checks.py` equivalent runner logic: 550013 states, 575473 edges, no invariant failures, no missing labels, no stuck/nonterminating states. The first direct command attempt timed out at the subagent tool boundary after 124 seconds before output capture; the completed read-only regression passed.
+- Partial: `python scripts\smoke_autopilot.py` exceeded the foreground tool timeout after 244 seconds because it serially runs release, startup, meta, and capability checks. The four constituent checks passed separately or by background subagent.
+- OK: `git diff --check`: line-ending warnings only for modified text files; no whitespace errors.
+
+### Findings
+- Added resume re-entry system cards for Controller and PM. Controller now loads current-run state, frontier, packet ledger, and crew memory into `continuation/resume_reentry.json` without sealed-body reads or chat-history progress inference.
+- The router now writes minimal `execution_frontier.json` and per-role `crew_memory/*.json` during startup.
+- Startup `user_intake` and current-node work now use the physical `packet_runtime` schema `flowpilot.packet_ledger.v2`.
+- Current-node execution is now gated by route activation, PM packet registration, reviewer dispatch approval, packet ledger checks, Controller envelope-only relay, worker result relay to reviewer, reviewer audit, and only then PM node completion.
+- Route activation writes a run-scoped route/frontier skeleton. Reviewer-block route mutation writes mutation state and rewrites the active frontier to a repair node.
+- Final-ledger and terminal replay events now have router preconditions; they cannot be recorded from a stale or incomplete node path.
+- `check_install.py` now verifies legacy-to-router equivalence entries, duplicate-free manifest cards, hard Controller policy flags, packet-runtime schema alignment, and the new model result artifacts.
+
+### Counterexamples
+- Unit review exposed that `reviewer_reports_material_insufficient` was being classified as sufficient because the event string also ends with `sufficient`. The router now uses explicit event branches, and `tests.test_flowpilot_router_runtime` covers the insufficient case.
+- Router-loop modeling detects completion before final backward replay, final replay before clean ledger, final ledger with unresolved items, PM completion without reviewer pass, reviewer pass before routed worker result, stale mutation frontier reuse, worker dispatch before reviewer approval, Controller-origin project evidence, and Controller sealed-body reads.
+- Resume modeling detects dynamic launcher use, chat-history progress inference, old-run state reuse, ambiguous state without PM recovery, Controller-origin evidence, Controller self-approval, missing manifest/ledger checks, existing result routing without reviewer dispatch, and replacement crew without memory seed.
+
+### Skipped Steps
+- No global installed Codex skill copy was synced in this pass.
+- No formal FlowPilot run, heartbeat automation, Cockpit UI work, release, remote push, or publication action was started.
+- Abstract resume and router-loop conformance replay adapters are not yet implemented; the checks are executable design/state models plus runtime unit/self-check coverage.
+
+### Next Actions
+- Extend the router to full multi-node route resolver validation with route-version matching.
+- Add officer/research packet loops and PM absorb-or-mutate decisions.
+- Add stale-evidence and generated-resource ledger writers for route mutation and final closure.
+- Add final ledger file writer, unresolved-count/resource validation, terminal closure-suite events, and production replay adapters for promoted abstract models.
+
+
+## flowpilot-legacy-prompt-to-cards-matrix - Migration inventory and startup-gate reduction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to compare old FlowPilot prompt behavior against the clean card/router rebuild before deciding which startup gates and role cards to implement next.
+- Status: documentation_verified_local
+- Skill decision: skip_with_reason for a new FlowGuard behavior model in this step. This pass produced a traceable migration inventory and install self-check, but did not change runtime route behavior.
+- Date: 2026-05-04
+
+### Implementation Files
+- `docs/legacy_prompt_to_cards_matrix.md`
+- `docs/legacy_prompt_to_cards_matrix.json`
+- `scripts/check_install.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m json.tool docs\legacy_prompt_to_cards_matrix.json`
+- OK: `python -m py_compile scripts\check_install.py`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- All 45 second-backup legacy `##` prompt sections are mapped to a current or planned card, validator, template/runtime artifact, router invariant, or intentional deferral.
+- The old startup hard gate should not be copied wholesale. Prompt-overread protections move to the small launcher, manifest delivery, router pending actions, and packet ledgers.
+- Real external startup checks remain hard: three startup answers, current-run authority, same-task crew freshness or explicit fallback, heartbeat/manual continuation evidence, display-surface evidence, old-state quarantine, and PM startup opening from independent reviewer facts.
+- Background read-only audits corrected the matrix classification for chat route signs, strict-gate obligation review, quality package detail, capability routing fidelity, old visual evidence reuse, dependency installation policy, and reference-file preservation.
+
+### Skipped Steps
+- No production router behavior changed, so no new FlowGuard model or conformance replay was added in this pass.
+- Startup fact-check, PM activation, chat route-sign refresh, dependency-policy, material/research, and strict-gate cards are identified as next work but not implemented here.
+
+
+## flowpilot-ten-step-clean-rebuild-completion - Packet, evidence, resume, and final-ledger runtime
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested the ten-step clean rebuild be executed continuously, with background subagents handling heavy simulation and regression checks.
+- Status: implementation_verified_and_installed_source_fresh
+- Skill decision: use_flowguard
+- Date: 2026-05-04
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/runtime_kit/manifest.json`
+- `skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md`
+- `tests/test_flowpilot_router_runtime.py`
+- `scripts/check_install.py`
+- `docs/flowpilot_ten_step_migration_status.json`
+- `docs/legacy_to_router_equivalence.md`
+- `docs/legacy_to_router_equivalence.json`
+- `docs/legacy_prompt_to_cards_matrix.md`
+- `docs/legacy_prompt_to_cards_matrix.json`
+- `docs/flowpilot_clean_rebuild_plan.md`
+- `HANDOFF.md`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`: 21 tests
+- OK: `python scripts\check_install.py`: 54 runtime cards, manifest/card validity, packet schema, legacy maps, ten-step status, and second backup preservation checks passed
+- OK by background subagent: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_router_runtime`: 58 tests
+- OK by background subagent: `python simulations\run_prompt_isolation_checks.py`: 349 states, 348 edges, 54 hazards detected
+- OK by background subagent: `python simulations\run_flowpilot_resume_checks.py`: 129 states, 128 edges, 1986 traces, zero violations
+- OK by background subagent: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`: 91 states, 90 edges, 5199 traces, zero violations
+- OK by background subagent: `python simulations\run_meta_checks.py`: 578663 states, 598835 edges, zero invariant failures
+- OK by background subagent: `python simulations\run_capability_checks.py`: 550013 states, 575473 edges, zero invariant failures
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed `flowpilot` source refreshed
+- OK: `python scripts\audit_local_install_sync.py --json`: `flowpilot` and `autonomous-concept-ui-redesign` source_fresh true
+- OK: `python scripts\install_flowpilot.py --check --json`: dependency and host capability checks passed
+
+### Findings
+- Material scan, research, and current-node work now route through physical packet/result envelopes with Controller limited to envelope relay.
+- PM evidence quality package now writes evidence, generated-resource, and quality ledgers; stale/unresolved evidence, pending resources, missing UI screenshots, and reused old UI assets block the gate.
+- Resume now blocks ambiguous continuation until PM writes an explicit recovery decision with a controller-reminder boundary.
+- PM final ledger now writes `final_route_wide_gate_ledger.json` and `terminal_human_backward_replay_map.json`; reviewer final backward replay writes `reviews/terminal_backward_replay.json` and opens completion only after terminal replay passes.
+- FlowGuard model updates and runtime regressions now catch premature final ledger, final replay before reviewer card, stale/unresolved evidence, missing UI screenshots, old visual asset reuse, and unsafe resume continuation.
+
+### Skipped Steps
+- Generalized async FlowGuard officer request/report packets, automatic multi-node traversal beyond the current active-node resolver, old-state import quarantine, and closure-suite lifecycle writing remain future expansion work.
+
+
+## flowpilot-non-ui-runtime-upgrade - Heartbeat, standards, replay, mutation, and closure invalidation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to execute the first eight non-UI FlowPilot upgrade steps, with heavy model checks delegated to background subagents.
+- Status: implementation_verified
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/runtime_kit/manifest.json`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_crew_rehydration_freshness.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md`
+- `skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md`
+- `tests/test_flowpilot_router_runtime.py`
+- `simulations/flowpilot_resume_model.py`
+- `simulations/flowpilot_router_loop_model.py`
+- `docs/flowpilot_ten_step_migration_status.json`
+- `docs/legacy_prompt_to_cards_matrix.md`
+- `docs/legacy_prompt_to_cards_matrix.json`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_resume_model.py simulations\flowpilot_router_loop_model.py simulations\prompt_isolation_model.py scripts\check_install.py scripts\smoke_autopilot.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`: 28 tests
+- OK: `python scripts\check_install.py`: 58 runtime cards, legacy matrix, ten-step status, JSON, packet schema, and second backup checks passed
+- OK: `python simulations\run_prompt_isolation_checks.py`: 349 states, 348 edges, hazards detected as expected, zero violations
+- OK: `python simulations\run_flowpilot_resume_checks.py`: 134 states, 133 edges, hazards detected as expected, zero violations
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`: State Graph ok, 70 sequences, 7446 traces, zero violations; progress review ok with 114 states
+- OK by background subagent: `python simulations\run_meta_checks.py`: State Graph, Progress Review, and Loop/Stuck Review all ok, about 5m15s
+- OK by background subagent: `python simulations\run_capability_checks.py`: Capability State Graph, Progress Review, and Loop/Stuck Review all ok, about 6m34s
+- OK by background subagent: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_control_gates tests.test_flowpilot_defects tests.test_flowpilot_meta_route_sign tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_router_runtime`: 72.8s, no failures
+- OK by background subagent: `python scripts\smoke_autopilot.py`: 448s, no failures
+
+### Findings
+- Continuation now records manual resume or verified one-minute host heartbeat binding, and heartbeat ticks re-enter resume recovery when the work chain is broken or unknown.
+- PM node acceptance plans now require a structured high-standard recheck before worker dispatch.
+- Final ledger construction now rebuilds source-of-truth entries from the frozen root contract replay, effective route nodes, child-skill gates, ledgers, and route mutation history.
+- Parent backward review failures now mutate the route, preserve superseded history, write stale-evidence records, and restart review from the repair node.
+- Terminal backward replay now requires generated review segments plus reviewer and PM decisions for each segment before closure.
+- A unit regression exposed that dirty ledgers after terminal replay could still receive the PM closure card. The router now invalidates the route-completion chain before closure and restarts from PM evidence quality instead.
+
+### Skipped Steps
+- UI/Cockpit implementation was explicitly excluded by the user.
+- Generalized officer packet runtime, old-state import quarantine importer, run-mode policy, route-sign refresh, explicit defect/role-memory closure reconciliation, and final user-report generation remain planned follow-up surfaces.
+
+
+## flowpilot-final-mode-retirement-identity-install - Final validation and local sync
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to complete the final FlowPilot cleanup steps, delegate heavy regression to background subagents, and sync the local installed skill last.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Implementation Files
+- `docs/legacy_prompt_to_cards_matrix.md`
+- `docs/legacy_prompt_to_cards_matrix.json`
+- `docs/flowpilot_ten_step_migration_status.json`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile scripts\check_install.py simulations\meta_model.py simulations\capability_model.py`
+- OK: `python scripts\check_install.py`: run-mode retirement, identity templates, 45-entry legacy matrix, and second backup preservation passed
+- OK by background subagent: `python simulations\run_prompt_isolation_checks.py`
+- OK by background subagent: `python simulations\run_flowpilot_resume_checks.py`: conformance replay skipped with explicit no-production-adapter reason
+- OK by background subagent: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`: conformance replay skipped with explicit no-production-adapter reason
+- OK by background subagent: `python simulations\run_startup_pm_review_checks.py`
+- OK by background subagent: `python simulations\run_meta_checks.py`: 578661 states, 598832 edges, zero invariant failures, zero stuck states
+- OK by background subagent: `python simulations\run_capability_checks.py`: 550011 states, 575470 edges, zero invariant failures, zero stuck states
+- OK by background subagent: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime`: 40 tests in 68.237s
+- OK by background subagent: `python scripts\smoke_autopilot.py`: ok true; model smoke checks, progress review, and loop/stuck review passed
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed `flowpilot` overwritten from repository source
+- OK: `python scripts\audit_local_install_sync.py --json`: repo-owned skill freshness audit passed
+- OK: `python scripts\install_flowpilot.py --check --json`: installed `flowpilot` source_fresh true
+
+### Findings
+- Active runtime no longer stores or checks `run_mode` or `full_auto`; run modes are present only as a retired legacy-matrix item and as absence assertions in `scripts/check_install.py`.
+- Runtime cards and packet/result bodies now carry identity-boundary markers, and packet runtime checks enforce those markers before role-specific reads.
+- PM cards and the FlowGuard modeling request template explicitly preserve proactive modeling of reference systems, source objects, migration equivalence, and experiment-derived behavior.
+- The legacy matrix should preserve old source section names for traceability even when the new architecture maps them to reduced behavior; the old `Four-Question Startup Gate` now maps to a three-question startup gate with the run-mode question retired.
+
+### Skipped Steps
+- UI/Cockpit implementation was excluded by the user.
+- No release, remote push, or publication action was taken.
+- Production conformance replay adapters for abstract resume and router-loop models remain skipped with explicit reasons.
+
+
+## flowpilot-startup-boundary-cli-compat - Atomic startup stop boundary and CLI order compatibility
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User observed another AI got stuck after the three startup answers and also hit a router CLI `--json` ordering mismatch.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/references/protocol.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md`
+- `docs/protocol.md`
+- `simulations/prompt_isolation_model.py`
+- `simulations/run_prompt_isolation_checks.py`
+- `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\prompt_isolation_model.py simulations\run_prompt_isolation_checks.py tests\test_flowpilot_router_runtime.py`
+- OK by background subagent: `python -m unittest discover -s tests -v`: 69 tests
+- OK by background subagent: CLI parse checks for both `--json next` and `next --json`, plus both `--json apply ...` and `apply ... --json`
+- OK by background subagent: `python simulations\run_prompt_isolation_checks.py`: no missing labels, no safe-graph invariant failures; hazard failures detected as expected
+- OK by background subagent: `python simulations\run_startup_pm_review_checks.py`: no missing labels, no safe-graph invariant failures; hazard failures detected as expected
+- OK by background subagent: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed `flowpilot` overwritten from repository source
+- OK: `python scripts\audit_local_install_sync.py --json`: installed `flowpilot` source_fresh true
+- OK: `python scripts\install_flowpilot.py --check --json`: installed dependency check passed
+
+### Findings
+- `ask_startup_questions` now atomically records the waiting/stop boundary, so the next turn after user answers can go straight to `record_startup_answers` instead of getting stuck on an internal stop action.
+- Existing half-started bootstrap states with `write_startup_awaiting_answers_state` or `stop_for_startup_answers` pending are normalized to the answer-recording boundary.
+- Router CLI now accepts `--json` both before and after the subcommand, matching how agents naturally retry the documented example.
+- The prompt-isolation FlowGuard model now treats a non-atomic startup question stop boundary as a detected hazard.
+
+### Skipped Steps
+- No UI/Cockpit work, release, remote push, or publication action was taken.
+
+
+## flowpilot-controller-route-memory - PM prior path context before route decisions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified that PM route/node decisions could be made without a reliable current-run history summary of completed nodes, superseded nodes, stale evidence, review blocks, and experiment/model outputs.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Risk Intent
+- Preserve prompt isolation while ensuring PM does not plan future route work blind to prior route history.
+- Keep Controller relay-only: Controller may summarize route-memory indexes and source paths, but must not read sealed packet/result bodies or create acceptance evidence.
+- Require PM to read current route-memory files and return `prior_path_context_review` before protected decisions such as route draft, resume decision, node acceptance plan, route mutation, parent segment decision, evidence quality package, final ledger, and closure.
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/runtime_kit/manifest.json`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_prior_path_context.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_*.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md`
+- `simulations/prompt_isolation_model.py`
+- `simulations/flowpilot_router_loop_model.py`
+- `simulations/card_instruction_coverage_model.py`
+- `tests/test_flowpilot_router_runtime.py`
+- `docs/protocol.md`
+- `docs/schema.md`
+- `skills/flowpilot/references/protocol.md`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0.
+- OK: `python -m py_compile skills/flowpilot/assets/flowpilot_router.py simulations/prompt_isolation_model.py simulations/flowpilot_router_loop_model.py simulations/card_instruction_coverage_model.py tests/test_flowpilot_router_runtime.py`.
+- OK: `python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json`: no invariant failures, no stuck states, no nonterminating components.
+- OK: `python simulations/run_prompt_isolation_checks.py`: no missing labels and hazards detected.
+- OK: `python simulations/run_card_instruction_coverage_checks.py`: 59 cards checked, no orphan active cards, no router/manifest errors.
+- OK by background subagent: `python simulations/run_meta_checks.py`: no invariant failures, stuck states, or unreachable terminal states.
+- OK by background subagent: `python simulations/run_capability_checks.py`: no invariant failures, stuck states, or unreachable terminal states.
+- OK: `python simulations/run_flowpilot_resume_checks.py`: heartbeat/manual resume graph passed.
+- OK: `python simulations/run_startup_pm_review_checks.py`: startup gate graph passed.
+- OK: `python simulations/run_release_tooling_checks.py`: release tooling graph passed.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime tests.test_flowpilot_packet_runtime tests.test_flowpilot_card_instruction_coverage -v`: 45 tests.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`: installed `flowpilot` is fresh against repository source.
+- OK: `python scripts/audit_local_install_sync.py --json`: installed repo-owned skills are fresh.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+
+### Findings
+- A freshness-only invariant was too strong for decisions made before later route changes. The models now track per-decision prior-context usage so a later stale transition does not make an already-valid earlier decision appear invalid.
+- The new PM prior path card is router-delivered after capability evidence sync and before route skeleton. Protected PM cards also repeat the history requirement so the obligation is not carried only by earlier chat context.
+- Runtime writers reject protected PM decisions that omit `prior_path_context_review`, fail to cite both current route-memory files, or try to treat Controller history as evidence.
+- Controller route memory writes `.flowpilot/runs/<run-id>/route_memory/route_history_index.json` and `pm_prior_path_context.json` from route/frontier/ledger metadata only.
+
+### Skipped Steps
+- No UI/Cockpit implementation, remote push, GitHub release, or publication action was taken.
+
+
+## flowpilot-retire-product-understanding-orphan - Retire inactive product-understanding runtime card
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked whether the orphan product-understanding phase card was still needed after the clean router/card rebuild.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Risk Intent
+- Remove an inactive runtime card that could mislead future maintainers into thinking there is a delivered PM phase named `pm.product_understanding`.
+- Preserve the active replacement path: `pm.material_understanding` followed by `pm.product_architecture`.
+- Avoid touching parallel peer work, especially the active `pm.prior_path_context` card and router support.
+
+### Implementation Files
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_understanding.md`
+- `scripts/check_install.py`
+- `docs/legacy_prompt_to_cards_matrix.json`
+- `docs/flowpilot_clean_rebuild_plan.md`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0.
+- OK by background subagent: `python simulations\run_card_instruction_coverage_checks.py`: no failures and no orphan card files after retiring the inactive card.
+- OK by background subagent: `python -m unittest tests.test_flowpilot_card_instruction_coverage -v`: 2 tests.
+- OK by background subagent: `python scripts\check_install.py`.
+- OK by background subagent: `python simulations\run_meta_checks.py`: zero invariant failures, zero stuck states, zero nonterminating components.
+- OK by background subagent: `python simulations\run_capability_checks.py`: zero invariant failures, zero stuck states, zero nonterminating components.
+- OK by background subagent: `python scripts\smoke_autopilot.py`: passed, including card instruction coverage, meta checks, capability checks, and install checks.
+- OK: `python simulations\run_card_instruction_coverage_checks.py`: `card_count=59`, `active_card_count=55`, `checked_count=59`, `orphan_card_files=[]`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed `flowpilot` overwritten from repository source and `source_fresh=true`.
+- OK: `python scripts\audit_local_install_sync.py --json`: installed `flowpilot` and companion repo-owned skill sources fresh.
+- OK: `python scripts\install_flowpilot.py --check --json`: dependency check passed.
+
+### Findings
+- `pm_product_understanding.md` was not in the manifest or router-delivered active path and duplicated responsibilities now owned by the material-understanding and product-architecture gates.
+- The peer-added `pm.prior_path_context` card is active, useful, and intentionally preserved. It explains the current `card_count=59` and `active_card_count=55` after the inactive product-understanding card was removed.
+- Historical log lines still mention the former orphan because they describe an earlier validation run; they should remain as audit history rather than be rewritten.
+
+### Skipped Steps
+- No UI/Cockpit work, release, remote push, or publication action was taken.
+
+
+## flowpilot-card-instruction-coverage - Router-return prompt coverage for runtime cards
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified that prior route models could miss whether a delivered card actually tells the recipient what to do next.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Risk Intent
+- Prevent valid-looking router state transitions from relying on hidden chat memory or unstated prompt context.
+- Ensure every runtime card reminds the recipient of role identity, authorized return shape, and the rule that next FlowPilot action comes from Controller calling `flowpilot_router.py`.
+- Preserve prompt isolation by checking the actual runtime-card files, manifest entries, and router-delivered cards rather than only abstract state labels.
+
+### Implementation Files
+- `skills/flowpilot/assets/runtime_kit/cards/**/*.md`
+- `simulations/card_instruction_coverage_model.py`
+- `simulations/run_card_instruction_coverage_checks.py`
+- `simulations/card_instruction_coverage_results.json`
+- `tests/test_flowpilot_card_instruction_coverage.py`
+- `scripts/check_install.py`
+- `scripts/smoke_autopilot.py`
+- `docs/verification.md`
+
+### Commands
+- OK by background subagent: `python -m py_compile simulations\card_instruction_coverage_model.py simulations\run_card_instruction_coverage_checks.py`
+- OK by background subagent: `python simulations\run_card_instruction_coverage_checks.py`: `card_count=59`, `active_card_count=54`, `checked_count=59`, no failures; `cards\phases\pm_product_understanding.md` reported as an orphan card file but still checked for identity and router-return wording.
+- OK by background subagent: `python simulations\run_prompt_isolation_checks.py`: no missing labels, no invariant failures; hazards detected.
+- OK by background subagent: `python -m unittest tests.test_flowpilot_router_runtime -v`: 30 tests.
+- OK by background subagent: `python -m unittest tests.test_flowpilot_card_instruction_coverage -v`: 2 tests.
+- OK by background subagent: `python scripts\check_install.py`: prompt-manifest card check now includes `next_step_source` and `flowpilot_router.py`.
+- OK by background subagent: `python scripts\smoke_autopilot.py`: card instruction coverage, release tooling, startup PM review, meta, and capability checks passed.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed `flowpilot` overwritten from repository source.
+
+### Findings
+- The new coverage model reads real card text, manifest entries, and router constants. It rejects missing identity boundaries, wrong recipient roles, missing `required_return`, missing `next_step_source`, missing router-return wording, missing role-appropriate action guidance, and active router cards absent from the manifest.
+- Runtime cards now carry a machine-checkable `next_step_source` instruction telling roles not to infer the next FlowPilot action from the card, chat history, or prior prompts.
+- `pm_product_understanding.md` remains present as an orphan runtime card file outside the manifest/router active path. It is not delivered by the router, but it is still checked for the same identity and router-return instruction. A later cleanup can either retire it from the runtime kit or formally classify it in the manifest.
+
+### Skipped Steps
+- No UI/Cockpit work, release, remote push, or publication action was taken.

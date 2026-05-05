@@ -44,6 +44,8 @@
       "controller_context_body_exclusion_verified": false,
       "packet_body_hash": "<sha256-of-packet-body-or-null>",
       "packet_body_hash_verified": false,
+      "packet_body_identity_boundary_required": true,
+      "packet_body_identity_boundary_marker": "FLOWPILOT_PACKET_IDENTITY_BOUNDARY_V1",
       "packet_controller_relay": {
         "schema_version": "flowpilot.controller_relay.v1",
         "delivered_via_controller": true,
@@ -121,6 +123,8 @@
       "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
       "result_body_hash": "<sha256-of-result-body-or-null>",
       "result_body_hash_verified": false,
+      "result_body_identity_boundary_required": true,
+      "result_body_identity_boundary_marker": "FLOWPILOT_RESULT_IDENTITY_BOUNDARY_V1",
       "result_controller_relay": {
         "schema_version": "flowpilot.controller_relay.v1",
         "delivered_via_controller": true,

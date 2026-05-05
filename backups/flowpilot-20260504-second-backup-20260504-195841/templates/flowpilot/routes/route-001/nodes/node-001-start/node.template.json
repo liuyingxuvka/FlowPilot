@@ -1,0 +1,68 @@
+{
+  "allowed_exits": [
+    "node-002-parent-subtree-review",
+    "update_route",
+    "blocked"
+  ],
+  "expected_artifacts": [
+    ".flowpilot/runs/<run-id>/material_intake_packet.json",
+    ".flowpilot/runs/<run-id>/local_skill_inventory.json",
+    ".flowpilot/pm_material_understanding.json",
+    ".flowpilot/runs/<run-id>/research/<research-package-id>/research_package.json",
+    ".flowpilot/runs/<run-id>/research/<research-package-id>/worker_report.json",
+    ".flowpilot/runs/<run-id>/research/<research-package-id>/reviewer_report.json",
+    ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
+    ".flowpilot/runs/<run-id>/standard_scenario_pack.json",
+    ".flowpilot/contract.md",
+    ".flowpilot/runs/<run-id>/capabilities.json",
+    ".flowpilot/runs/<run-id>/pm_child_skill_selection.json",
+    ".flowpilot/runs/<run-id>/routes/route-001/flow.json",
+    ".flowpilot/runs/<run-id>/routes/route-001/flow.md",
+    ".flowpilot/runs/<run-id>/startup_review/latest.json",
+    ".flowpilot/runs/<run-id>/startup_pm_gate/latest.json",
+    ".flowpilot/task-models/<route-model>/results.json"
+  ],
+  "id": "node-001-start",
+  "intent": "Start FlowPilot, complete material intake handoff and PM-owned product-function architecture, freeze the acceptance contract from them, generate a candidate route tree, and freeze the checked root model before implementation.",
+  "owned_paths": [
+    ".flowpilot/"
+  ],
+  "recovery": "If the route fails model checks, update or replace the route before formal implementation.",
+  "required_gates": [
+    "self_interrogation",
+    "local_skill_inventory_written",
+    "local_skill_inventory_candidate_classified",
+    "material_intake_packet_written",
+    "material_reviewer_sufficiency_approved",
+    "pm_material_understanding_memo_written",
+    "pm_material_discovery_decision_recorded",
+    "pm_material_research_decision_recorded",
+    "research_package_completed_or_not_required",
+    "pm_research_result_absorbed_or_route_mutated_when_required",
+    "product_function_architecture_pm_synthesized",
+    "product_function_high_standard_posture_written",
+    "product_function_target_and_failure_bar_written",
+    "product_function_semantic_fidelity_policy_written",
+    "root_acceptance_thresholds_defined",
+    "root_acceptance_proof_matrix_written",
+    "standard_scenario_pack_selected",
+    "product_function_architecture_product_officer_approved",
+    "product_function_architecture_reviewer_challenged",
+    "pm_child_skill_selection_manifest_written",
+    "pm_child_skill_selection_scope_decisions_recorded",
+    "current_node_high_standard_recheck_written",
+    "flowguard_modeling",
+    "candidate_route_tree_generated",
+    "root_route_model_checked",
+    "capability_evidence_synced",
+    "startup_preflight_reviewer_fact_report_written",
+    "pm_start_gate_opened",
+    "work_beyond_startup_allowed_by_pm"
+  ],
+  "status": "pending",
+  "verification": [
+    "python -c \"import flowguard; print(flowguard.SCHEMA_VERSION)\"",
+    "<route-check-command>"
+  ]
+}

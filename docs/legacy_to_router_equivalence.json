@@ -1,0 +1,260 @@
+{
+  "created_at": "2026-05-04",
+  "entries": [
+    {
+      "id": "explicit_three_question_startup_gate",
+      "legacy_obligation": "Formal FlowPilot startup asks background-agent permission, scheduled-continuation permission, and display surface, then stops immediately until explicit answers arrive. The old run-mode question is retired.",
+      "missing_work": "Covered by runtime regression rejecting banner/run-shell before explicit startup answers; keep this test in sync with the boot action list.",
+      "new_enforcement": [
+        "skills/flowpilot/SKILL.md",
+        "skills/flowpilot/assets/flowpilot_router.py BOOT_ACTIONS",
+        "tests/test_flowpilot_router_runtime.py",
+        "simulations/prompt_isolation_model.py"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "fresh_run_root_and_legacy_backup_boundary",
+      "legacy_obligation": "Every formal invocation creates a fresh .flowpilot/runs/<run-id> root; old state, old assets, screenshots, icons, and agent ids do not become current control state.",
+      "missing_work": "Add route import/quarantine rules for continuing old work, and reject top-level control state other than current.json and index.json in new runs.",
+      "new_enforcement": [
+        "backups/flowpilot-20260504-second-backup-20260504-195841/BACKUP_MANIFEST.json",
+        "skills/flowpilot/assets/flowpilot_router.py create_run_shell",
+        "scripts/check_install.py flowpilot_second_backup_preserved"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "six_role_crew_authority",
+      "legacy_obligation": "The active FlowPilot crew has six role slots: PM, human-like reviewer, process FlowGuard officer, product FlowGuard officer, worker A, and worker B. Controller is not a crew approver.",
+      "missing_work": "Connect live subagent ids, same-task memory packets, replacement-from-memory, and role authority validators.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/flowpilot_router.py CREW_ROLE_KEYS",
+        "skills/flowpilot/assets/runtime_kit/cards/roles/",
+        "tests/test_flowpilot_router_runtime.py"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "controller_relay_only_boundary",
+      "legacy_obligation": "Controller relays, checks, records, and waits. It does not inspect sealed bodies, create project evidence, approve gates, or infer progress from chat history.",
+      "missing_work": "Keep adding role-isolation tests as new packet-loop actions are introduced.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+        "skills/flowpilot/assets/runtime_kit/manifest.json controller_policy",
+        "skills/flowpilot/assets/flowpilot_router.py compute_controller_action",
+        "simulations/prompt_isolation_model.py",
+        "simulations/flowpilot_resume_model.py"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "system_card_manifest_delivery",
+      "legacy_obligation": "Role instructions are small, role-scoped system cards delivered only after prompt manifest checks.",
+      "missing_work": "Extend the card set and coverage validator as new cards are added.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/manifest.json",
+        "skills/flowpilot/assets/flowpilot_router.py _next_system_card_action",
+        "tests/test_flowpilot_router_runtime.py test_system_card_delivery_requires_manifest_check",
+        "scripts/check_install.py flowpilot_prompt_manifest_cards_valid"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "packet_ledger_mail_delivery",
+      "legacy_obligation": "PM, reviewer, officers, workers, and user intake move through ledger-checked packet/mail delivery, not broad prompt context.",
+      "missing_work": "Extend sealed-envelope coverage from worker/material/research packets to generalized async officer modeling packets.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/packet_runtime.py",
+        "scripts/flowpilot_packets.py",
+        "skills/flowpilot/assets/flowpilot_router.py _next_mail_action",
+        "skills/flowpilot/assets/flowpilot_router.py _next_material_packet_action",
+        "skills/flowpilot/assets/flowpilot_router.py _next_research_packet_action",
+        "skills/flowpilot/assets/flowpilot_router.py _next_current_node_packet_action",
+        "tests/test_flowpilot_packet_runtime.py",
+        "tests/test_flowpilot_router_runtime.py test_user_intake_mail_requires_packet_ledger_check_after_pm_cards"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "pm_material_and_research_decisions",
+      "legacy_obligation": "PM decides whether material is sufficient, creates bounded research packages when needed, and only absorbs reviewed research into product or route decisions.",
+      "missing_work": "Runtime now covers material scan, reviewer direct sufficiency payloads, PM absorb-or-research, research package, capability decision, sealed research packet relay, worker research result relay, reviewer research check, PM research absorption, and PM material understanding. Keep adding field-level validators as schemas grow.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/material_sufficiency.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_absorb_or_research.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/research_direct_source_check.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_absorb_or_mutate.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_understanding.md",
+        "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_report.md",
+        "skills/flowpilot/assets/flowpilot_router.py _write_research_capability_decision",
+        "skills/flowpilot/assets/flowpilot_router.py relay_research_packet",
+        "skills/flowpilot/assets/flowpilot_router.py relay_research_result_to_reviewer",
+        "skills/flowpilot/assets/flowpilot_router.py EXTERNAL_EVENTS",
+        "tests/test_flowpilot_router_runtime.py test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card",
+        "tests/test_flowpilot_router_runtime.py test_research_required_blocks_product_architecture_until_absorbed",
+        "simulations/run_prompt_isolation_checks.py"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "reviewer_before_worker_evidence_use",
+      "legacy_obligation": "Worker output is only a pointer until the reviewer personally checks it and returns a report to PM.",
+      "missing_work": "Extend exact node/version matching to repair packets and officer packets.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/dispatch_request.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/current_node_dispatch.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
+        "skills/flowpilot/assets/flowpilot_router.py reviewer_current_node_dispatch_card_delivered",
+        "skills/flowpilot/assets/flowpilot_router.py relay_current_node_result_to_reviewer",
+        "simulations/prompt_isolation_model.py"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "flowguard_officer_model_gates",
+      "legacy_obligation": "Process and product FlowGuard officers own modelability, model execution, risk tiers, and confidence boundaries before PM uses model results.",
+      "missing_work": "Product architecture and root-contract modelability are runtime-gated. Still add generalized officer request/report cards for process/product modeling packets and route/node model gates.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
+        "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
+        "skills/flowpilot/assets/runtime_kit/cards/officers/product_architecture_modelability.md",
+        "skills/flowpilot/assets/runtime_kit/cards/officers/root_contract_modelability.md",
+        "skills/flowpilot/assets/flowpilot_router.py product_officer_passes_product_architecture_modelability",
+        "skills/flowpilot/assets/flowpilot_router.py product_officer_passes_root_acceptance_contract_modelability",
+        "simulations/meta_model.py",
+        "simulations/capability_model.py"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "route_frontier_and_current_node_loop",
+      "legacy_obligation": "The active route/frontier drive current node work; PM chooses current-node packets, reviewer checks results, and Controller does not create new nodes.",
+      "missing_work": "Add automatic multi-node route traversal and repair sibling resolution.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md",
+        "skills/flowpilot/assets/flowpilot_router.py _write_route_activation",
+        "skills/flowpilot/assets/flowpilot_router.py _write_node_acceptance_plan",
+        "simulations/flowpilot_router_loop_model.py",
+        "tests/test_flowpilot_router_runtime.py test_parent_node_requires_backward_replay_before_completion"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "route_mutation_and_stale_evidence",
+      "legacy_obligation": "Blocking findings structurally mutate the route and mark affected evidence stale before work continues.",
+      "missing_work": "Add dedicated route mutation card, stale evidence ledger updates, and a FlowGuard route-mutation/current-node-loop model.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
+        "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md",
+        "skills/flowpilot/assets/flowpilot_router.py _write_route_mutation",
+        "simulations/flowpilot_router_loop_model.py",
+        "simulations/meta_model.py",
+        "simulations/capability_model.py"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "heartbeat_manual_resume_reentry",
+      "legacy_obligation": "Heartbeat/manual resume wakes through a stable launcher, loads current-run state, rehydrates roles, asks PM for recovery, and re-enters packet-gated Controller loop.",
+      "missing_work": "Add production replay adapter later if resume evidence grows beyond the current router state file checks.",
+      "new_enforcement": [
+        "HANDOFF.md",
+        "docs/flowguard_preflight_findings.md",
+        "templates/flowpilot/heartbeats/hb.template.md",
+        "templates/flowpilot/continuation_evidence.template.json",
+        "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
+        "simulations/flowpilot_resume_model.py",
+        "tests/test_flowpilot_router_runtime.py test_resume_reentry_loads_state_before_resume_cards"
+      ],
+      "status": "covered"
+    },
+    {
+      "id": "final_route_wide_ledger_and_terminal_replay",
+      "legacy_obligation": "Completion requires PM-built current-route ledger, stale evidence/resource disposition, reviewer terminal backward replay, PM segment decisions, and PM completion approval.",
+      "missing_work": "Add closure-suite lifecycle writer after PM closure approval.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md",
+        "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md",
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md",
+        "skills/flowpilot/assets/flowpilot_router.py pm_records_final_route_wide_ledger_clean",
+        "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
+        "skills/flowpilot/assets/flowpilot_router.py reviewer_final_backward_replay_passed",
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_backward_replay",
+        "tests/test_flowpilot_router_runtime.py test_current_node_completion_requires_reviewer_passed_packet_audit",
+        "simulations/flowpilot_router_loop_model.py",
+        "templates/flowpilot/final_route_wide_gate_ledger.template.json",
+        "templates/flowpilot/terminal_human_backward_replay_map.template.json"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "cockpit_or_chat_route_display",
+      "legacy_obligation": "Formal runs display user-facing route signs in chat or Cockpit; raw FlowGuard graphs are diagnostic only.",
+      "missing_work": "Startup display-surface state and chat route sign are covered; add current-node display refresh events and Cockpit integration later.",
+      "new_enforcement": [
+        "skills/flowpilot/assets/flowpilot_router.py STARTUP_QUESTIONS",
+        "skills/flowpilot/assets/flowpilot_router.py write_display_surface_status",
+        "tests/test_flowpilot_router_runtime.py test_startup_activation_requires_reviewer_facts_before_work",
+        "templates/flowpilot/diagrams/user-flow-diagram.template.mmd",
+        "simulations/user_flow_diagram_model.py"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "retired_assets_and_old_state_quarantine",
+      "legacy_obligation": "Retired recovery scripts, old route state, old screenshots, old icons, and old concept assets stay out of the active runtime path.",
+      "missing_work": "Add runtime import quarantine checks for old assets and old agent ids when continuing prior work.",
+      "new_enforcement": [
+        "scripts/check_install.py RETIRED_PATHS",
+        "backups/flowpilot-20260504-second-backup-20260504-195841/BACKUP_MANIFEST.json"
+      ],
+      "status": "partially_covered"
+    },
+    {
+      "id": "skill_improvement_nonblocking_report",
+      "legacy_obligation": "FlowPilot skill improvement observations are recorded separately from project acceptance and never block current project completion.",
+      "missing_work": "Add runtime cards and router events for nonblocking improvement reports.",
+      "new_enforcement": [
+        "templates/flowpilot/flowpilot_skill_improvement_observation.template.json",
+        "templates/flowpilot/flowpilot_skill_improvement_report.template.json",
+        "simulations/meta_model.py",
+        "simulations/capability_model.py"
+      ],
+      "status": "planned"
+    }
+  ],
+  "required_legacy_obligations": [
+    "explicit_three_question_startup_gate",
+    "fresh_run_root_and_legacy_backup_boundary",
+    "six_role_crew_authority",
+    "controller_relay_only_boundary",
+    "system_card_manifest_delivery",
+    "packet_ledger_mail_delivery",
+    "pm_material_and_research_decisions",
+    "reviewer_before_worker_evidence_use",
+    "flowguard_officer_model_gates",
+    "route_frontier_and_current_node_loop",
+    "route_mutation_and_stale_evidence",
+    "heartbeat_manual_resume_reentry",
+    "final_route_wide_ledger_and_terminal_replay",
+    "cockpit_or_chat_route_display",
+    "retired_assets_and_old_state_quarantine",
+    "skill_improvement_nonblocking_report"
+  ],
+  "schema_version": "flowpilot.legacy_to_router_equivalence.v1",
+  "scope": "FlowPilot prompt-isolated clean rebuild",
+  "status_values": [
+    "covered",
+    "partially_covered",
+    "planned",
+    "quarantined"
+  ]
+}

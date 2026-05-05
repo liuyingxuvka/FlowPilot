@@ -27,20 +27,19 @@ quality tier for a formal FlowPilot run. For small maintenance work inside an
 active project, FlowPilot may record continuity state, but it should not claim a
 full formal route unless the showcase-grade gates ran.
 
-The first user-facing startup gate is the four-question prompt: run mode,
+The first user-facing startup gate is the three-question prompt:
 background-agent permission, scheduled-continuation permission, and display
 surface preference. The
 assistant must stop immediately after asking and wait for the user's later
 reply before banner display, route writes, child skills, subagents, heartbeat
 probes, image generation, or implementation.
 
-The mode prompt is displayed from loosest to strictest:
-`full-auto`, `autonomous`, `guided`, `strict-gated`. No run mode is recorded
-until the user explicitly answers. A compact later reply may provide all four
+Run modes are retired entirely. A compact later reply may provide all three
 startup answers at once, but host limits, invocation text, existing state, and
-prior routes cannot create an implicit `full-auto` or `autonomous` fallback.
+prior routes cannot authorize background agents, scheduled jobs, fallback
+execution, or display-surface choices.
 
-Run modes change autonomy and hard-gate behavior, not the quality floor.
+Removing modes does not change hard-gate behavior or the quality floor.
 
 Startup includes a PM-owned activation transaction before child skills,
 imagegen, implementation, route chunks, or completion work. The transaction is

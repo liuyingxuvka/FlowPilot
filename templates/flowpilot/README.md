@@ -22,12 +22,12 @@ for review.
    `continues_from_run_id` and write a prior-work import packet that treats old
    runs and project files as input materials. Do not reuse old control state,
    old live-agent IDs, old screenshots, or old route gates as current evidence.
-5. Ask the four startup questions: run mode, background-agent permission,
+5. Ask the three startup questions: background-agent permission,
    scheduled-continuation permission, and whether to open Cockpit UI. Stop immediately after asking and wait
    for a later user reply. Do not emit the banner, create route state, load
    child skills, spawn subagents, probe heartbeat, run image generation, or
    start implementation in the question-asking response.
-6. Record all four later user answers explicitly. Do not infer a run mode,
+6. Record all three later user answers explicitly. Do not infer
    background-agent authorization, scheduled-continuation authorization,
    display surface, or fallback execution from invocation text, `.flowpilot/`
    state, host limits, or previous routes. If the user chose Cockpit, open the
@@ -203,7 +203,6 @@ for review.
   native/fallback visible plan sync method, visible plan projection depth, the
   realtime FlowPilot Route Sign chat/UI display gate, and startup PM gate and
   resume notice metadata.
-- `mode.template.json`: run mode and hard-gate policy.
 - `crew_ledger.template.json`: persistent six-agent crew roles, ids, status,
   authority boundaries, memory paths, recovery rules, and terminal archive
   state.

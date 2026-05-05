@@ -1,0 +1,120 @@
+{
+  "artifact_type": "flowpilot_material_intake_packet",
+  "schema_version": 1,
+  "created_at": "<iso-8601-timestamp>",
+  "draft_owner": "<worker_a|worker_b>",
+  "execution_owner": "<worker_a|worker_b>",
+  "required_approver": "human_like_reviewer",
+  "approval_status": "draft",
+  "approval_evidence_path": "<path-or-null>",
+  "user_intent": "<user request and decision this packet must support>",
+  "material_inventory": [
+    {
+      "id": "<material-id>",
+      "source": "<path-url-or-user-provided-reference>",
+      "format": "<filetype-or-medium>",
+      "scope": "<size-range-or-coverage>",
+      "status": "<unread|sampled|read|generated|stale|missing>",
+      "why_it_matters": "<one sentence>"
+    }
+  ],
+  "source_summaries": [
+    {
+      "material_id": "<material-id>",
+      "appears_to_contain": "<specific summary>",
+      "used_for": "<what route or product decision it can support>",
+      "does_not_prove": "<limits and non-claims>"
+    }
+  ],
+  "source_quality": [
+    {
+      "material_id": "<material-id>",
+      "authority": "<primary|secondary|context|lead|unknown>",
+      "freshness": "<current|possibly_stale|historical|unknown>",
+      "completeness": "<complete|partial|sampled|unknown>",
+      "contradiction_risk": "<none|low|medium|high>",
+      "privacy_or_safety_notes": "<notes-or-none>"
+    }
+  ],
+  "local_skill_inventory": {
+    "inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
+    "inventory_owner": "<worker_a|worker_b>",
+    "purpose": "Expose available local skills and host capabilities as candidate resources for PM route design without approving their use.",
+    "candidate_only_until_pm_selected": true,
+    "raw_availability_is_not_route_authority": true,
+    "skills": [
+      {
+        "skill_name": "<local-skill-name>",
+        "skill_path": "<path-to-SKILL.md>",
+        "description_summary": "<short description from the skill header>",
+        "candidate_fit": "<required_candidate|conditional_candidate|unlikely|unknown>",
+        "possible_product_capabilities": [],
+        "hard_gates_or_safety_notes": [],
+        "read_status": "<header_only|skill_md_read|references_deferred>",
+        "use_requires_pm_selection_manifest": true
+      }
+    ],
+    "host_capabilities": [
+      {
+        "capability_id": "<host-capability-id>",
+        "provider": "<tool-plugin-skill-or-host-feature>",
+        "available": "<yes|no|unknown>",
+        "candidate_fit": "<required_candidate|conditional_candidate|unlikely|unknown>",
+        "evidence": "<probe-or-inventory-note>"
+      }
+    ],
+    "deferred_or_private_skills": [
+      {
+        "skill_name": "<skill-name>",
+        "reason": "<private|irrelevant|unsafe|unavailable|not-read-yet>",
+        "risk_if_needed_later": "<risk-or-none>"
+      }
+    ]
+  },
+  "coverage_map": [
+    {
+      "intent_area": "<goal-or-question>",
+      "supporting_material_ids": [
+        "<material-id>"
+      ],
+      "coverage": "<supported|unsupported|ambiguous|conflicting>",
+      "notes": "<brief evidence note>"
+    }
+  ],
+  "research_package_candidates": [
+    {
+      "gap_id": "<gap-id>",
+      "gap_type": "<material_gap|mechanism_gap|source_gap|experiment_gap|protocol_gap|validation_gap|reconciliation_gap>",
+      "question": "<question-that-may-need-a-PM-research-package>",
+      "route_impact": "<blocking|changes-route|can-defer|nonblocking>",
+      "likely_source_or_experiment_needed": "<local-inspection|web-search|browser-check|user-material|FlowGuard-model|bounded-experiment|source-reconciliation|unknown>",
+      "suggested_worker_owner": "<worker_a|worker_b|authorized_non_controller|unknown>",
+      "must_be_decided_by_pm": true
+    }
+  ],
+  "unread_or_deferred_materials": [
+    {
+      "source": "<path-url-or-reference>",
+      "reason": "<why not fully inspected>",
+      "risk_if_skipped": "<risk>"
+    }
+  ],
+  "reviewer_sufficiency_check": {
+    "reviewer_fact_check_required": true,
+    "direct_material_sources_checked": [],
+    "direct_material_samples_checked": [],
+    "packet_matches_checked_sources": "<yes|no|partial>",
+    "worker_report_only": false,
+    "independent_validation_evidence_path": "<path-or-null>",
+    "completion_report_only_allowed": false,
+    "adversarial_hypotheses_tested": [],
+    "concrete_evidence_references": [],
+    "obvious_sources_missing": "<yes|no|unknown>",
+    "large_sources_scoped_honestly": "<yes|no|not_applicable>",
+    "summaries_specific": "<yes|no>",
+    "contradictions_visible": "<yes|no|not_applicable>",
+    "uncertainty_visible": "<yes|no>",
+    "pm_ready": false,
+    "blockers": []
+  }
+}

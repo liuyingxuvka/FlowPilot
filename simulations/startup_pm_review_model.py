@@ -24,11 +24,11 @@ REQUIRED_ROLE_MEMORY_PACKETS = 6
 class State:
     startup_questions_asked: bool = False
     dialog_stopped_for_user_answers: bool = False
-    run_mode_answered: bool = False
     background_agents_answer: str = "unknown"  # unknown | allow | single-agent | pause
     scheduled_continuation_answer: str = "unknown"  # unknown | allow | manual | pause
     display_surface_answer: str = "unknown"  # unknown | cockpit | chat | pause
     explicit_user_answer_recorded: bool = False
+    startup_answer_provenance: str = "none"  # none | explicit_user_reply | inferred | default | naked
     agent_self_recorded_authorization: bool = False
     banner_emitted: bool = False
     cockpit_entry_action_done: bool = False
@@ -117,11 +117,11 @@ def startup_answers_complete(state: State) -> bool:
     return (
         state.startup_questions_asked
         and state.dialog_stopped_for_user_answers
-        and state.run_mode_answered
         and state.background_agents_answer in {"allow", "single-agent"}
         and state.scheduled_continuation_answer in {"allow", "manual"}
         and state.display_surface_answer in {"cockpit", "chat"}
         and state.explicit_user_answer_recorded
+        and state.startup_answer_provenance == "explicit_user_reply"
         and not state.agent_self_recorded_authorization
     )
 
@@ -334,13 +334,10 @@ def work_started(state: State) -> bool:
 
 def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.startup_questions_asked:
-        yield Transition("startup_four_questions_asked", replace(state, startup_questions_asked=True))
+        yield Transition("startup_three_questions_asked", replace(state, startup_questions_asked=True))
         return
     if not state.dialog_stopped_for_user_answers:
         yield Transition("startup_dialog_stopped_for_user_answers", replace(state, dialog_stopped_for_user_answers=True))
-        return
-    if not state.run_mode_answered:
-        yield Transition("run_mode_answer_recorded", replace(state, run_mode_answered=True))
         return
     if state.background_agents_answer == "unknown":
         yield Transition("background_agents_allowed", replace(state, background_agents_answer="allow"))
@@ -355,7 +352,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition("chat_route_sign_requested", replace(state, display_surface_answer="chat"))
         return
     if not state.explicit_user_answer_recorded:
-        yield Transition("explicit_startup_answers_recorded", replace(state, explicit_user_answer_recorded=True))
+        yield Transition(
+            "explicit_startup_answers_recorded",
+            replace(
+                state,
+                explicit_user_answer_recorded=True,
+                startup_answer_provenance="explicit_user_reply",
+            ),
+        )
         return
     if not state.banner_emitted:
         yield Transition("startup_banner_emitted_after_answers", replace(state, banner_emitted=True))
@@ -618,12 +622,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.banner_emitted and not startup_answers_complete(state):
-        failures.append("startup banner emitted before all four explicit startup answers")
+        failures.append("startup banner emitted before all three explicit startup answers")
+    if state.explicit_user_answer_recorded and state.startup_answer_provenance != "explicit_user_reply":
+        failures.append("startup answers were recorded without explicit_user_reply provenance")
+    if state.explicit_user_answer_recorded and (
+        state.background_agents_answer not in {"allow", "single-agent"}
+        or state.scheduled_continuation_answer not in {"allow", "manual"}
+        or state.display_surface_answer not in {"cockpit", "chat"}
+    ):
+        failures.append("startup answers were recorded with illegal enum values")
     if (
         not state.dialog_stopped_for_user_answers
         and (
-            state.run_mode_answered
-            or state.background_agents_answer != "unknown"
+            state.background_agents_answer != "unknown"
             or state.scheduled_continuation_answer != "unknown"
             or state.display_surface_answer != "unknown"
             or state.explicit_user_answer_recorded
@@ -836,11 +847,11 @@ def _ready_base(**changes: object) -> State:
     base = State(
         startup_questions_asked=True,
         dialog_stopped_for_user_answers=True,
-        run_mode_answered=True,
         background_agents_answer="allow",
         scheduled_continuation_answer="allow",
         display_surface_answer="cockpit",
         explicit_user_answer_recorded=True,
+        startup_answer_provenance="explicit_user_reply",
         banner_emitted=True,
         run_directory_created=True,
         current_pointer_written=True,
@@ -895,14 +906,41 @@ def _ready_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
-        "banner_before_four_answers": State(startup_questions_asked=True, run_mode_answered=True, banner_emitted=True),
+        "banner_before_three_answers": State(startup_questions_asked=True, banner_emitted=True),
         "answers_recorded_without_dialog_stop": State(
             startup_questions_asked=True,
-            run_mode_answered=True,
             background_agents_answer="allow",
             scheduled_continuation_answer="allow",
             display_surface_answer="cockpit",
             explicit_user_answer_recorded=True,
+            startup_answer_provenance="explicit_user_reply",
+        ),
+        "answers_recorded_with_inferred_provenance": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="manual",
+            display_surface_answer="chat",
+            explicit_user_answer_recorded=True,
+            startup_answer_provenance="inferred",
+        ),
+        "answers_recorded_with_naked_provenance": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            background_agents_answer="allow",
+            scheduled_continuation_answer="manual",
+            display_surface_answer="chat",
+            explicit_user_answer_recorded=True,
+            startup_answer_provenance="naked",
+        ),
+        "answers_recorded_with_illegal_value": State(
+            startup_questions_asked=True,
+            dialog_stopped_for_user_answers=True,
+            background_agents_answer="assistant-default-long-text",
+            scheduled_continuation_answer="manual",
+            display_surface_answer="chat",
+            explicit_user_answer_recorded=True,
+            startup_answer_provenance="explicit_user_reply",
         ),
         "cockpit_requested_but_not_opened": _ready_base(
             cockpit_entry_action_done=False,

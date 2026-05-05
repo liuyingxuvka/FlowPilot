@@ -1,0 +1,67 @@
+{
+  "schema_version": "flowpilot.flowguard_modeling_request.v1",
+  "request_id": "<request-id>",
+  "route_id": "<route-id>",
+  "node_id": "<node-id-or-null>",
+  "created_at": "<iso-8601-timestamp>",
+  "created_by_role_key": "project_manager",
+  "dispatch_mode": "officer_owned_async",
+  "officer_output_root": ".flowpilot/runs/<run-id>/officer_runs/<request-id>/",
+  "assigned_officer_role_keys": [
+    "<process_flowguard_officer|product_flowguard_officer>"
+  ],
+  "controller_coordination": {
+    "allowed": true,
+    "allowed_scope": [
+      "read-only status reconciliation",
+      "dependency inventory routing",
+      "relaying already-authorized packets",
+      "requesting corrected role evidence"
+    ],
+    "blocked_scope_until_officer_reports": [
+      "implementation protected by this model gate",
+      "route freeze or route advance protected by this model gate",
+      "checkpoint or completion closure protected by this model gate",
+      "claiming model approval from controller command output"
+    ]
+  },
+  "decision_to_make": "<what PM must decide after the report>",
+  "uncertainty": "<what is not known yet>",
+  "modeling_scope": "<process|product|object|combined>",
+  "candidate_options": [
+    {
+      "id": "<option-id>",
+      "summary": "<candidate route, hypothesis, feature, or structure>"
+    }
+  ],
+  "candidate_generation_needed": false,
+  "evidence_sources": [
+    {
+      "path_or_ref": "<path-url-or-observation>",
+      "authority": "<user|repo|runtime|screenshot|sample|unknown>",
+      "freshness": "<known|stale|unknown>",
+      "note": "<why this source matters>"
+    }
+  ],
+  "required_answer_shape": {
+    "modelability_result": "<modelable|needs_evidence|needs_split|blocked>",
+    "must_include": [
+      "model_author_role",
+      "model_runner_role",
+      "model_interpreter_role",
+      "commands_run_by_officer",
+      "model coverage",
+      "blindspots",
+      "failure paths",
+      "risk tiers for PM",
+      "model-derived review agenda",
+      "toolchain or model improvement suggestions",
+      "human walkthrough recommendations",
+      "PM decision options",
+      "confidence boundary without absolute no-risk wording",
+      "recommendation",
+      "next smallest executable action"
+    ]
+  },
+  "current_route_effect_if_blocked": "<add evidence node|split request|record blocker>"
+}

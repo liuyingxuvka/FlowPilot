@@ -1,0 +1,98 @@
+{
+  "schema_version": "flowpilot.node_acceptance_plan.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id>",
+  "route_version": 0,
+  "node_id": "<node-id>",
+  "pm_owned": true,
+  "status": "<draft|approved|blocked|superseded>",
+  "created_at": "<iso-8601-timestamp>",
+  "updated_at": "<iso-8601-timestamp>",
+  "source_paths": {
+    "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
+    "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
+    "route_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
+    "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "route_sign_display_packet": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
+    "route_sign_review": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
+  },
+  "purpose": "Written at node entry after the current-node FlowPilot Route Sign has been refreshed, visibly displayed, and the PM has rechecked this node against the run's highest-achievable product target. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
+  "route_sign_entry_gate": {
+    "required_before_plan_approval": true,
+    "trigger": "<major_node_entry|parent_node_entry|leaf_node_entry|pm_work_brief>",
+    "current_node_in_route_sign": "<node-id>",
+    "chat_mermaid_displayed_when_cockpit_closed": false,
+    "cockpit_displayed_when_used_as_primary_surface": false,
+    "reviewer_confirmed_visible_display": false,
+    "reviewer_confirmed_route_and_node_match": false,
+    "display_packet_path": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
+    "review_path": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
+  },
+  "pm_current_node_high_standard_recheck": {
+    "required_before_plan_approval": true,
+    "product_function_architecture_path": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "highest_achievable_product_target_rechecked": false,
+    "unacceptable_result_bar_rechecked": false,
+    "semantic_fidelity_policy_rechecked": false,
+    "node_contribution_to_target": "<how-this-node-advances-the-strongest-feasible-product-target>",
+    "likely_low_quality_or_placeholder_failure": "<what-this-node-could-degenerate-into-if-held-to-a-low-standard>",
+    "local_semantic_downgrade_risk": "<none|possible|active>",
+    "material_or_evidence_gap": "<gap-or-null>",
+    "pm_decision": "<raise_current_node|add_sibling_or_repair_node|insert_discovery_or_validation|ask_user|block|proceed>",
+    "decision_reason": "<why-this-decision-preserves-the-global-quality-floor>"
+  },
+  "node_structure": {
+    "node_kind": "<leaf|parent|composite>",
+    "has_children": "<true|false>",
+    "child_node_ids": [],
+    "parent_backward_replay_required": "<true-when-has-children-else-false>",
+    "parent_backward_replay_path": ".flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/parent_backward_replay.json",
+    "semantic_importance_used_to_trigger_review": false
+  },
+  "inherited_root_requirements": [
+    {
+      "requirement_id": "<root-requirement-id>",
+      "coverage_in_this_node": "<none|partial|primary>",
+      "reason": "<why-this-node-must-or-need-not-cover-it>"
+    }
+  ],
+  "node_requirements": [
+    {
+      "requirement_id": "<node-requirement-id>",
+      "source": "<route_gate|child_skill_manifest|pm_runway|reviewer_block|implementation_fact>",
+      "risk_level": "<low|medium|high>",
+      "acceptance_statement": "<what must be true before this node can close>",
+      "proof_required": "<automated_test|manual_experiment|screenshot|model_replay|artifact_audit|mixed>",
+      "blocking_on_fail": true
+    }
+  ],
+  "experiment_plan": [
+    {
+      "experiment_id": "<experiment-id>",
+      "source_research_package_id": "<research-package-id-or-null>",
+      "source_research_package_path": "<path-or-null>",
+      "covers_requirements": [],
+      "hypothesis_to_attack": "<how this requirement could falsely appear complete>",
+      "standard_scenario_id": "<scenario-id-or-null>",
+      "fixture_or_setup": "<fixture-setup-or-null>",
+      "steps": [],
+      "expected_observation": "<expected-result>",
+      "actual_observation": "<filled-after-run-or-null>",
+      "evidence_paths": [],
+      "owner_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|authorized_non_controller>",
+      "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+      "worker_report_only_allowed": false,
+      "reviewer_or_officer_direct_check_required": true,
+      "status": "<planned|passed|blocked|superseded>"
+    }
+  ],
+  "advance_gate": {
+    "required_before_chunk_execution": true,
+    "required_before_node_checkpoint": true,
+    "all_required_experiments_passed_or_triaged": false,
+    "parent_backward_replay_passed_when_required": false,
+    "pm_parent_segment_decision_recorded_when_required": false,
+    "risk_triage_path": "<path-or-null>",
+    "approval_path": "<path-or-null>"
+  }
+}

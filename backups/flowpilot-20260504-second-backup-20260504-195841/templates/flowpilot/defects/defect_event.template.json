@@ -1,0 +1,14 @@
+{
+  "schema_version": "flowpilot.defect_event.v1",
+  "event_id": "<event-id>",
+  "run_id": "<run-id>",
+  "defect_id": "<defect-id>",
+  "recorded_at": "<iso-8601-timestamp>",
+  "recorded_by_role": "<role>",
+  "event_type": "<created|pm_triaged|owner_assigned|repair_started|repair_recorded|recheck_requested|recheck_passed|recheck_blocked|closed|deferred|reopened>",
+  "from_status": "<status-or-null>",
+  "to_status": "<status-or-null>",
+  "summary": "<what changed>",
+  "evidence_paths": [],
+  "notes": "<notes-or-null>"
+}

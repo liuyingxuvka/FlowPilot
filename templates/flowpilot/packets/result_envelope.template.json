@@ -16,6 +16,12 @@
   "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
   "result_body_hash": "<sha256-of-result-body>",
   "result_body_hash_algorithm": "sha256",
+  "identity_boundary": {
+    "schema_version": "flowpilot.result_identity_boundary.v1",
+    "marker": "FLOWPILOT_RESULT_IDENTITY_BOUNDARY_V1",
+    "completed_by_role": "<same-as-completed_by_role>",
+    "required": true
+  },
   "next_recipient": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
   "return_to": "controller",
   "next_holder": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",

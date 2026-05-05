@@ -1,0 +1,52 @@
+{
+  "artifact_type": "flowpilot_research_reviewer_report",
+  "schema_version": "flowpilot.research_reviewer_report.v1",
+  "run_id": "<run-id>",
+  "package_id": "<research-package-id>",
+  "created_at": "<iso-8601-timestamp>",
+  "reviewer_role": "human_like_reviewer",
+  "source_research_package": ".flowpilot/runs/<run-id>/research/<research-package-id>/research_package.json",
+  "source_worker_report": ".flowpilot/runs/<run-id>/research/<research-package-id>/worker_report.json",
+  "review_status": "<draft|passed|rework_required|blocked|superseded>",
+  "worker_report_only_allowed": false,
+  "direct_source_check_done": false,
+  "direct_sources_checked": [
+    {
+      "source_id": "<source-id>",
+      "locator": "<path-url-query-command-or-reference>",
+      "checked_at": "<iso-8601-timestamp>",
+      "matches_worker_summary": "<yes|partial|no>",
+      "authority_ok": "<yes|partial|no|unknown>",
+      "freshness_ok": "<yes|partial|no|not-time-sensitive|unknown>",
+      "notes": "<reviewer-observation>"
+    }
+  ],
+  "package_question_assessment": {
+    "question_answered": "<yes|partial|no>",
+    "evidence_sufficient_for_pm_decision": false,
+    "contradictions_visible_and_triaged": false,
+    "source_authority_sufficient": false,
+    "source_freshness_sufficient": false,
+    "tool_or_access_limits_visible": false
+  },
+  "rework_findings": [
+    {
+      "finding_id": "<finding-id>",
+      "severity": "<blocking|important|minor>",
+      "problem": "<what-is-wrong-with-the-worker-output>",
+      "required_worker_action": "<specific-research-or-experiment-action>",
+      "required_reviewer_recheck": true
+    }
+  ],
+  "recheck": {
+    "is_recheck": false,
+    "previous_reviewer_report_path": "<path-or-null>",
+    "prior_blockers_checked": [],
+    "all_prior_blockers_closed": false
+  },
+  "decision": {
+    "passed": false,
+    "decision_reason": "<why-this-can-or-cannot-feed-PM-material-or-route-decisions>",
+    "recommended_pm_action": "<absorb_into_material_understanding|mutate_route|insert_followup_research|ask_user|block>"
+  }
+}

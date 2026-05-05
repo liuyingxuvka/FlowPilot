@@ -14,7 +14,8 @@ user-level:
 - `runs/<run-id>/state.json`
 - `runs/<run-id>/execution_frontier.json`
 - `runs/<run-id>/packet_ledger.json`
-- `mode.json`
+- `runs/<run-id>/route_memory/route_history_index.json`
+- `runs/<run-id>/route_memory/pm_prior_path_context.json`
 - `crew_ledger.json`
 - `crew_memory/*.json`
 - `product_function_architecture.json`
@@ -55,7 +56,6 @@ Markdown files are English summaries for review.
 - active route version;
 - execution frontier path and version;
 - visible Codex plan projection version;
-- run mode;
 - product-function architecture path;
 - root acceptance contract path;
 - standard scenario pack path;
@@ -73,14 +73,40 @@ Markdown files are English summaries for review.
 
 It should not store the whole history.
 
+## Route Memory
+
+`runs/<run-id>/route_memory/route_history_index.json` is a
+Controller-generated index of the current route history. It records the active
+frontier, route version, completed nodes, effective nodes, node history,
+route mutations, superseded nodes, stale evidence ids, review markers,
+research/modeling outputs, generated resource counts, unresolved evidence
+counts, and source paths.
+
+`runs/<run-id>/route_memory/pm_prior_path_context.json` is the PM-facing brief
+built from that index. It records the current route position, completed nodes,
+effective nodes, superseded nodes, stale evidence, prior blocks, passes,
+research or experiment outputs, and future PM decision requirements.
+
+Both files must include:
+
+- `generated_by: "controller"`;
+- `controller_decision_authority: false`;
+- `sealed_packet_or_result_bodies_read: false`;
+- `source_paths` pointing to current-run source-of-truth files.
+
+Protected PM outputs such as route drafts, resume decisions, node acceptance
+plans, route mutations, parent segment decisions, final ledgers, and closure
+decisions must include `prior_path_context_review`. That review cites both
+route-memory files and states which completed, superseded, stale, blocked, or
+experimental history affected the decision.
+
 `startup_activation` is the route-start transaction record. A formal route
 cannot enter child-skill execution, image generation, implementation, or route
 chunks until this block and the matching frontier block show:
 
 - `hard_gate_required: true`;
-- `startup_questions` records explicit user answers for run mode,
-  background-agent permission, scheduled-continuation permission, and display
-  surface;
+- `startup_questions` records explicit user answers for background-agent
+  permission, scheduled-continuation permission, and display surface;
 - `startup_questions.dialog_stopped_for_user_answers: true`;
 - `startup_questions.banner_emitted_after_answers: true`;
 - `.flowpilot/current.json` points at the same run and `.flowpilot/index.json`
@@ -115,14 +141,12 @@ chunks until this block and the matching frontier block show:
 - `status`: `pending`, `answered`, or `blocked`;
 - `asked_before_banner: true`;
 - `dialog_stopped_for_user_answers: true` records that the assistant response
-  ended immediately after asking the four questions and no startup work ran
+  ended immediately after asking the three questions and no startup work ran
   until the user's later reply;
 - `explicit_user_answer_recorded: true` before the PM can open startup;
-- `answer_source`: `user_reply` or `user_reply_after_prompt`; values such as
-  `agent_inferred`, `default`, `prior_route`, or `single_message_invocation`
-  are invalid;
-- `answers.run_mode.answer`: `full-auto`, `autonomous`, `guided`, or
-  `strict-gated`;
+- `provenance`: exactly `explicit_user_reply`; values such as
+  `agent_inferred`, `default`, `prior_route`, `naked`, or
+  `single_message_invocation` are invalid;
 - `answers.background_agents.answer`: `allow` for six live background agents
   or `single-agent` for single-agent six-role continuity;
 - `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or

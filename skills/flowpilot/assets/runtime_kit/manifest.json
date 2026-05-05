@@ -1,0 +1,513 @@
+{
+  "cards": [
+    {
+      "audience": "bootloader",
+      "id": "startup_banner",
+      "issued_by": "router",
+      "kind": "display",
+      "path": "cards/system/startup_banner.md",
+      "source": "system"
+    },
+    {
+      "audience": "controller",
+      "id": "controller.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/controller.md",
+      "source": "system"
+    },
+    {
+      "audience": "controller",
+      "id": "controller.resume_reentry",
+      "issued_by": "router",
+      "kind": "resume",
+      "path": "cards/system/controller_resume_reentry.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/project_manager.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.controller_reset_duty",
+      "issued_by": "router",
+      "kind": "duty",
+      "path": "cards/phases/pm_controller_reset_duty.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.phase_map",
+      "issued_by": "router",
+      "kind": "phase_map",
+      "path": "cards/phases/pm_phase_map.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.startup_intake",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_startup_intake.md",
+      "phase": "startup_intake",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.resume_decision",
+      "issued_by": "router",
+      "kind": "resume",
+      "path": "cards/phases/pm_resume_decision.md",
+      "phase": "resume",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.startup_fact_check",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/startup_fact_check.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.material_scan",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_material_scan.md",
+      "phase": "material_scan",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.material_sufficiency",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/material_sufficiency.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.material_absorb_or_research",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_material_absorb_or_research.md",
+      "phase": "material_absorb_or_research",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.research_package",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_research_package.md",
+      "phase": "research_package",
+      "source": "system"
+    },
+    {
+      "audience": "worker_a",
+      "id": "worker.research_report",
+      "issued_by": "router",
+      "kind": "worker_duty",
+      "path": "cards/roles/worker_research_report.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.research_direct_source_check",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/research_direct_source_check.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.research_absorb_or_mutate",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_research_absorb_or_mutate.md",
+      "phase": "research_absorb_or_mutate",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.material_understanding",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_material_understanding.md",
+      "phase": "material_understanding",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.startup_activation",
+      "issued_by": "router",
+      "kind": "startup_gate",
+      "path": "cards/phases/pm_startup_activation.md",
+      "phase": "startup_activation",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.continuation_capability_binding",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_continuation_capability_binding.md",
+      "phase": "continuation_capability_binding",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.crew_rehydration_freshness",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_crew_rehydration_freshness.md",
+      "phase": "crew_rehydration_freshness",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.dispatch_request",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/dispatch_request.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.worker_result_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/worker_result_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "event": "reviewer_report",
+      "id": "pm.event.reviewer_report",
+      "issued_by": "router",
+      "kind": "event",
+      "path": "cards/events/pm_reviewer_report.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.product_architecture",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_product_architecture.md",
+      "phase": "product_architecture",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.product_architecture_challenge",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/product_architecture_challenge.md",
+      "source": "system"
+    },
+    {
+      "audience": "product_flowguard_officer",
+      "id": "product_officer.product_architecture_modelability",
+      "issued_by": "router",
+      "kind": "officer_gate",
+      "path": "cards/officers/product_architecture_modelability.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.root_contract",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_root_contract.md",
+      "phase": "root_contract",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.root_contract_challenge",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/root_contract_challenge.md",
+      "source": "system"
+    },
+    {
+      "audience": "product_flowguard_officer",
+      "id": "product_officer.root_contract_modelability",
+      "issued_by": "router",
+      "kind": "officer_gate",
+      "path": "cards/officers/root_contract_modelability.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.dependency_policy",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_dependency_policy.md",
+      "phase": "dependency_policy",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.child_skill_selection",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_child_skill_selection.md",
+      "phase": "child_skill_selection",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.child_skill_gate_manifest",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_child_skill_gate_manifest.md",
+      "phase": "child_skill_gate_manifest",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.strict_gate_obligation_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/strict_gate_obligation_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.child_skill_gate_manifest_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/child_skill_gate_manifest_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "process_flowguard_officer",
+      "id": "process_officer.child_skill_conformance_model",
+      "issued_by": "router",
+      "kind": "officer_gate",
+      "path": "cards/officers/child_skill_conformance_model.md",
+      "source": "system"
+    },
+    {
+      "audience": "product_flowguard_officer",
+      "id": "product_officer.child_skill_product_fit",
+      "issued_by": "router",
+      "kind": "officer_gate",
+      "path": "cards/officers/child_skill_product_fit.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.prior_path_context",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_prior_path_context.md",
+      "phase": "prior_path_context",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.route_skeleton",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_route_skeleton.md",
+      "phase": "route_skeleton",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.current_node_loop",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_current_node_loop.md",
+      "phase": "current_node_loop",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "event": "node_started",
+      "id": "pm.event.node_started",
+      "issued_by": "router",
+      "kind": "event",
+      "path": "cards/events/pm_node_started.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.node_acceptance_plan",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_node_acceptance_plan.md",
+      "phase": "node_acceptance_plan",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.node_acceptance_plan_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/node_acceptance_plan_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.current_node_dispatch",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/current_node_dispatch.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.parent_backward_targets",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_parent_backward_targets.md",
+      "phase": "parent_backward_targets",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.parent_backward_replay",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/parent_backward_replay.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.parent_segment_decision",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_parent_segment_decision.md",
+      "phase": "parent_segment_decision",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.review_repair",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_review_repair.md",
+      "phase": "review_repair",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.officer_request_report_loop",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_officer_request_report_loop.md",
+      "phase": "officer_request_report_loop",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "event": "reviewer_blocked",
+      "id": "pm.event.reviewer_blocked",
+      "issued_by": "router",
+      "kind": "event",
+      "path": "cards/events/pm_reviewer_blocked.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.evidence_quality_package",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_evidence_quality_package.md",
+      "phase": "evidence_quality_package",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.evidence_quality_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/evidence_quality_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.final_ledger",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_final_ledger.md",
+      "phase": "final_ledger",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.final_backward_replay",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/final_backward_replay.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.closure",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_closure.md",
+      "phase": "closure",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/human_like_reviewer.md",
+      "source": "system"
+    },
+    {
+      "audience": "process_flowguard_officer",
+      "id": "process_officer.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/process_flowguard_officer.md",
+      "source": "system"
+    },
+    {
+      "audience": "product_flowguard_officer",
+      "id": "product_officer.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/product_flowguard_officer.md",
+      "source": "system"
+    },
+    {
+      "audience": "worker_a",
+      "id": "worker_a.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/worker_a.md",
+      "source": "system"
+    },
+    {
+      "audience": "worker_b",
+      "id": "worker_b.core",
+      "issued_by": "router",
+      "kind": "role_core",
+      "path": "cards/roles/worker_b.md",
+      "source": "system"
+    }
+  ],
+  "controller_policy": {
+    "all_system_cards_from_system": true,
+    "card_delivery_requires_manifest_check": true,
+    "mail_delivery_requires_packet_ledger_check": true,
+    "controller_may_create_project_evidence": false,
+    "controller_may_read_sealed_bodies": false
+  },
+  "schema_version": "flowpilot.prompt_manifest.v1"
+}

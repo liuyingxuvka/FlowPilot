@@ -1,0 +1,180 @@
+{
+  "schema_version": "flowpilot.ten_step_migration_status.v1",
+  "created_at": "2026-05-04",
+  "updated_at": "2026-05-05",
+  "heartbeat_automation_id": null,
+  "heartbeat_policy": {
+    "cadence": "one minute",
+    "scope": "current FlowPilot run continuation binding",
+    "status": "runtime_binding_supported_no_live_automation_in_this_repo_thread",
+    "rule": "A formal run may record either manual resume mode or a verified one-minute host heartbeat binding. Heartbeat wakeups append a tick; if the work chain is broken or unknown, the router re-enters resume recovery instead of continuing from chat memory.",
+    "completion_action": "When PM terminal closure succeeds, the router writes the closure suite and disables the active continuation binding. This repository upgrade task does not keep a live heartbeat automation after completion."
+  },
+  "current_step": 10,
+  "overall_status": "non_ui_runtime_upgrade_verified",
+  "non_ui_upgrade_2026_05_05": {
+    "scope": "User asked to complete the first eight non-UI upgrade items. UI/Cockpit implementation is explicitly left to the user.",
+    "status": "runtime_and_card_updates_completed_full_verified_installed",
+    "implemented_capabilities": [
+      "Continuation binding now records manual resume or verified one-minute heartbeat mode.",
+      "Heartbeat wakeups distinguish alive work chains from broken or unknown chains and re-enter resume recovery when needed.",
+      "PM node acceptance requires a structured high-standard recheck before worker dispatch.",
+      "Final ledger construction rebuilds source-of-truth entries from the frozen root contract replay, effective route nodes, child-skill gates, ledgers, and mutation history.",
+      "Parent backward review failures mutate the route, mark superseded nodes, write stale-evidence records, and force review restart from the new repair node.",
+      "Effective route nodes auto-advance after node completion instead of relying on chat history.",
+      "Terminal backward replay is segmented and every segment requires reviewer review plus PM segment decision before closure.",
+      "If ledgers become dirty after terminal replay but before closure, the route completion chain is invalidated and restarts from PM evidence quality instead of delivering the closure card.",
+      "PM closure writes a terminal closure suite, blocks dirty lifecycle ledgers, and disables continuation binding only after clean closure."
+    ],
+    "known_non_ui_gaps": [
+      "Generalized asynchronous officer packet dispatch is represented by cards and models, but not expanded into a full packet runtime family.",
+      "Old-state import quarantine is still a startup/resume policy surface rather than a full migration importer.",
+      "Final user-report generation remains an artifact expansion after closure; UI-specific evidence remains out of scope for this pass."
+    ]
+  },
+  "steps": [
+    {
+      "step": 1,
+      "title": "Lock new architecture boundary",
+      "status": "completed",
+      "legacy_sections": [2, 4, 5, 17, 24, 34, 45],
+      "done_when": [
+        "FlowPilot remains explicit-activation only.",
+        "The launcher remains small and does not bulk-read references.",
+        "The three-question startup gate cannot proceed to banner or run shell before answers.",
+        "Controller remains relay-only and cannot approve, implement, or read sealed bodies.",
+        "System-card delivery still requires manifest checks."
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Minimal startup hard gate",
+      "status": "completed",
+      "legacy_sections": [6, 7, 16, 23, 31, 32, 42],
+      "evidence": [
+        "Startup fact checks require run authority, display mode, crew freshness, continuation binding, and old-state quarantine boundaries.",
+        "Scheduled continuation must be represented by verified one-minute binding; otherwise the run records manual resume mode."
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Material intake, research, and PM understanding",
+      "status": "completed",
+      "legacy_sections": [8, 9, 19, 22, 27]
+    },
+    {
+      "step": 4,
+      "title": "Product function architecture and root contract",
+      "status": "completed",
+      "legacy_sections": [1, 10, 12, 21, 25, 42],
+      "evidence": [
+        "Root acceptance contract remains frozen before route activation.",
+        "Final ledger replay now proves every frozen root requirement from source-of-truth entries."
+      ]
+    },
+    {
+      "step": 5,
+      "title": "Child skills, capability routing, and dependency policy",
+      "status": "completed",
+      "legacy_sections": [3, 11, 20, 33, 43],
+      "evidence": [
+        "Child-skill selection and gate-manifest cards remain PM-owned and reviewer/officer checked.",
+        "Dependency policy is now a runtime PM card for current-node, reversible, justified dependency handling.",
+        "Officer request/report lifecycle has a focused PM card and updated model coverage; the generalized packet runtime remains a later expansion."
+      ]
+    },
+    {
+      "step": 6,
+      "title": "Multi-node route tree and frontier",
+      "status": "completed",
+      "legacy_sections": [13, 23, 28, 38, 41],
+      "evidence": [
+        "Route activation writes run-scoped route/frontier state.",
+        "Current-node packets are tied to active node and route version.",
+        "Parent nodes with children require parent backward replay and PM segment decision before completion.",
+        "Reviewer blocks rewrite the frontier to a repair node.",
+        "Effective route nodes now auto-advance after completion and reset per-node flags for the next node."
+      ]
+    },
+    {
+      "step": 7,
+      "title": "Full packet/mail system for workers, reviewers, and officers",
+      "status": "completed",
+      "legacy_sections": [2, 18, 24, 25, 26],
+      "evidence": [
+        "Material scan packets use physical packet envelopes and bodies.",
+        "Research packages use physical packet/result envelopes before reviewer direct-source checks.",
+        "Current-node worker packets and results are relayed by Controller through envelope-only ledger actions.",
+        "Officer modelability gates remain role-scoped runtime gates; a PM officer-request/report card and model coverage are present, while generalized async officer packets remain the next expansion."
+      ]
+    },
+    {
+      "step": 8,
+      "title": "Evidence, quality package, and UI/visual evidence",
+      "status": "completed",
+      "legacy_sections": [15, 27, 30, 35, 36],
+      "evidence": [
+        "PM evidence quality package writes evidence, generated-resource, and quality ledgers.",
+        "Stale/unresolved evidence and pending generated resources are rejected.",
+        "UI/visual routes require screenshot evidence and reject reused old assets as current proof.",
+        "Reviewer evidence-quality pass is required before final ledger work."
+      ]
+    },
+    {
+      "step": 9,
+      "title": "Pause, resume, heartbeat, and lifecycle",
+      "status": "completed",
+      "legacy_sections": [29, 32, 40],
+      "evidence": [
+        "Resume re-entry is a router-controlled packet-loop gate.",
+        "Controller loads persisted state but cannot infer progress from chat history or sealed bodies.",
+        "PM resume decision is required before continuation; ambiguous state blocks unsafe continuation.",
+        "One-minute heartbeat binding is recorded when authorized and supported; heartbeat ticks re-enter recovery when work-chain status is broken or unknown.",
+        "Terminal closure disables the continuation binding."
+      ]
+    },
+    {
+      "step": 10,
+      "title": "Final ledger, terminal replay, and completion",
+      "status": "completed",
+      "legacy_sections": [1, 14, 15, 37, 39, 40, 44],
+      "evidence": [
+        "PM final route-wide ledger writer validates clean evidence/resource/residual-risk counts.",
+        "Final ledger entries are rebuilt from source-of-truth artifacts rather than PM summaries.",
+        "Terminal human backward replay map is generated from the PM ledger and split into explicit review segments.",
+        "Every terminal segment requires reviewer review and PM continue decision.",
+        "PM closure writes a terminal closure suite and blocks dirty evidence/resource/final ledgers before closing the run."
+      ]
+    }
+  ],
+  "latest_local_validation": [
+    "python -c \"import flowguard; print(flowguard.SCHEMA_VERSION)\"",
+    "python -m py_compile scripts\\check_install.py simulations\\meta_model.py simulations\\capability_model.py",
+    "python simulations\\run_prompt_isolation_checks.py",
+    "python simulations\\run_flowpilot_resume_checks.py",
+    "python simulations\\run_flowpilot_router_loop_checks.py --json-out simulations\\flowpilot_router_loop_results.json",
+    "python simulations\\run_startup_pm_review_checks.py",
+    "python simulations\\run_meta_checks.py",
+    "python simulations\\run_capability_checks.py",
+    "python scripts\\check_install.py",
+    "python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime",
+    "python scripts\\smoke_autopilot.py",
+    "python scripts\\install_flowpilot.py --sync-repo-owned --json",
+    "python scripts\\audit_local_install_sync.py --json",
+    "python scripts\\install_flowpilot.py --check --json"
+  ],
+  "background_validation_status": "completed",
+  "background_validation_summary": {
+    "prompt_isolation": "passed: 349 states, 348 edges, 54 hazards detected",
+    "resume": "passed: 134 states, 133 edges, 29 hazards detected, 0 violations",
+    "router_loop": "passed after closure-dirty invalidation fix: State Graph ok, 70 sequences, 7446 traces, 0 violations; progress review ok with 114 states",
+    "meta": "passed in background: 578661 states, 598832 edges, zero invariant failures, zero stuck states",
+    "capability": "passed in background: 550011 states, 575470 edges, zero invariant failures, zero stuck states",
+    "full_runtime": "passed in background: packet/router unittest suite 40 tests in 68.237s; smoke_autopilot ok true, no first failure"
+  },
+  "installed_skill_sync": {
+    "status": "source_fresh_after_sync",
+    "command": "python scripts\\install_flowpilot.py --sync-repo-owned --json",
+    "audit": "python scripts\\audit_local_install_sync.py --json and python scripts\\install_flowpilot.py --check --json both passed with flowpilot source_fresh true"
+  }
+}

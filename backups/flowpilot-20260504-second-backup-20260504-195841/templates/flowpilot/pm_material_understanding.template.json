@@ -1,0 +1,76 @@
+{
+  "artifact_type": "flowpilot_pm_material_understanding",
+  "schema_version": 1,
+  "created_at": "<iso-8601-timestamp>",
+  "draft_owner": "project_manager",
+  "execution_owner": "project_manager",
+  "required_approver": "project_manager",
+  "approval_status": "draft",
+  "completion_report_only_allowed": false,
+  "independent_validation_evidence_path": "<path-or-null>",
+  "source_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
+  "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
+  "user_intent_interpretation": "<PM interpretation of the task after reviewed materials>",
+  "source_claim_matrix": [
+    {
+      "claim": "<route-relevant assumption or fact>",
+      "supporting_material_ids": [
+        "<material-id>"
+      ],
+      "confidence": "<high|medium|low|unknown>",
+      "risk_if_wrong": "<route, product, or verification risk>"
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "<unknown>",
+      "route_impact": "<blocking|changes-route|can-defer|nonblocking>",
+      "proposed_resolution": "<research|ask-user|inspect-source|model|defer>"
+    }
+  ],
+  "material_complexity": "<simple|normal|messy/raw>",
+  "route_consequence": "<direct-route|formal-discovery-subtree|required-user-clarification|blocked>",
+  "research_package_decision": {
+    "decision_required_before_product_architecture": true,
+    "research_package_required": "<true|false>",
+    "reason": "<why-existing-reviewed-materials-are-sufficient-or-why-a-package-is-needed>",
+    "package_ids": [],
+    "package_paths": [],
+    "allowed_package_types": [
+      "material_research",
+      "mechanism_discovery",
+      "external_source_search",
+      "bounded_experiment",
+      "source_reconciliation",
+      "validation"
+    ],
+    "worker_execution_required_when_package_exists": true,
+    "reviewer_direct_source_check_required": true,
+    "pm_may_not_use_worker_report_directly": true,
+    "missing_tool_or_web_capability_route": "<not-applicable|use-local-sources|ask-user-for-source|manual-research-needed|block>"
+  },
+  "discovery_subtree": {
+    "required": false,
+    "reason": "<why discovery is or is not required>",
+    "candidate_nodes": [
+      {
+        "id": "<node-id>",
+        "purpose": "<cleanup-analysis-modeling-research-validation-or-reconciliation>",
+        "required_evidence": [
+          "<evidence-path-or-check>"
+        ]
+      }
+    ]
+  },
+  "handoff_to_product_architecture": {
+    "ready": false,
+    "conditions": [
+      "<condition-or-blocker>"
+    ]
+  },
+  "handoff_to_skill_selection": {
+    "candidate_inventory_ready": false,
+    "selection_must_wait_for_product_capability_map": true,
+    "notes": "<candidate skills are execution resources, not product requirements>"
+  }
+}
