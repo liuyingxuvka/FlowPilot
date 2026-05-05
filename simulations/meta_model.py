@@ -85,6 +85,7 @@ class State:
     prior_work_import_packet_written: bool = False
     control_state_written_under_run_root: bool = False
     top_level_control_state_absent_or_quarantined: bool = False
+    preflow_visible_plan_cleared: bool = False
     old_control_state_reused_as_current: bool = False
     showcase_floor_committed: bool = False
     visible_self_interrogation_done: bool = False
@@ -883,6 +884,7 @@ def _route_ready(state: State) -> bool:
         and state.activity_stream_initialized
         and state.activity_stream_latest_event_written
         and state.flowpilot_improvement_live_report_initialized
+        and state.preflow_visible_plan_cleared
         and state.showcase_floor_committed
         and state.visible_self_interrogation_done
         and state.startup_self_interrogation_pm_ratified
@@ -943,6 +945,7 @@ class AutopilotStep:
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
         "top_level_control_state_absent_or_quarantined",
+        "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
         "visible_self_interrogation_done",
@@ -1248,6 +1251,7 @@ class AutopilotStep:
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
         "top_level_control_state_absent_or_quarantined",
+        "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
         "visible_self_interrogation_done",
@@ -1776,6 +1780,16 @@ class AutopilotStep:
                 label="top_level_control_state_absent_or_quarantined",
                 action="verify legacy top-level control state is absent, legacy-only, or quarantined before current work continues",
                 top_level_control_state_absent_or_quarantined=True,
+                active_node="clear_preflow_visible_plan",
+            )
+            return
+
+        if not state.preflow_visible_plan_cleared:
+            yield _step(
+                state,
+                label="preflow_visible_plan_cleared",
+                action="controller replaces any ordinary pre-FlowPilot Codex plan with the waiting-for-PM display projection before PM route work",
+                preflow_visible_plan_cleared=True,
                 active_node="resolve_startup_display_surface",
             )
             return
@@ -5130,6 +5144,8 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
         return InvariantResult.fail("FlowPilot advanced before a fresh current run directory and control-state boundary were established")
     if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not state.startup_display_entry_action_done:
         return InvariantResult.fail("FlowPilot advanced before resolving the user's startup display surface answer")
+    if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not state.preflow_visible_plan_cleared:
+        return InvariantResult.fail("FlowPilot advanced before clearing the ordinary pre-FlowPilot visible plan")
     return InvariantResult.pass_()
 
 

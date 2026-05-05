@@ -73,6 +73,8 @@ class CardFacts:
     identity_boundary: bool
     recipient_role_matches: bool
     required_return: bool
+    envelope_only_return: bool
+    chat_body_suppression: bool
     next_step_source: bool
     next_step_mentions_router: bool
     action_guidance: bool
@@ -144,6 +146,25 @@ def _has_pm_history_context_guidance(card_id: str, role: str, text: str) -> bool
     has_context_pointer = "prior path context" in lower or "route-memory" in lower or "route_memory" in lower
     has_history_scope = "completed" in lower and "superseded" in lower and "stale" in lower
     return has_context_pointer and has_history_scope
+
+
+def _has_envelope_only_return(identity: dict[str, str], text: str) -> bool:
+    lower = f"{identity.get('required_return', '')}\n{text}".lower()
+    return "envelope" in lower and "controller" in lower and "path" in lower and "hash" in lower
+
+
+def _has_chat_body_suppression(identity: dict[str, str], text: str) -> bool:
+    lower = f"{identity.get('required_return', '')}\n{text}".lower()
+    return (
+        "do not include" in lower
+        and "chat" in lower
+        and (
+            "body" in lower
+            or "blockers" in lower
+            or "evidence details" in lower
+            or "result-body content" in lower
+        )
+    )
 
 
 def _manifest_entries(project_root: Path) -> list[dict[str, Any]]:
@@ -231,6 +252,8 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 identity_boundary=bool(identity),
                 recipient_role_matches=identity.get("recipient_role") == expected_role,
                 required_return=bool(identity.get("required_return")),
+                envelope_only_return=_has_envelope_only_return(identity, text),
+                chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 action_guidance=_has_action_guidance(expected_role, text),
@@ -257,6 +280,8 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 identity_boundary=bool(identity),
                 recipient_role_matches=bool(identity.get("recipient_role")),
                 required_return=bool(identity.get("required_return")),
+                envelope_only_return=_has_envelope_only_return(identity, text),
+                chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 action_guidance=_has_action_guidance(role, text),
@@ -276,6 +301,10 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: recipient_role does not match router/manifest audience")
     if not card.required_return:
         failures.append(f"{card.card_id}: missing required_return")
+    if not card.envelope_only_return:
+        failures.append(f"{card.card_id}: missing envelope-only role return rule")
+    if not card.chat_body_suppression:
+        failures.append(f"{card.card_id}: missing chat body suppression rule")
     if not card.next_step_source:
         failures.append(f"{card.card_id}: missing next_step_source")
     if not card.next_step_mentions_router:
@@ -345,6 +374,8 @@ def hazard_cards() -> dict[str, CardFacts]:
         identity_boundary=True,
         recipient_role_matches=True,
         required_return=True,
+        envelope_only_return=True,
+        chat_body_suppression=True,
         next_step_source=True,
         next_step_mentions_router=True,
         action_guidance=True,
@@ -354,6 +385,8 @@ def hazard_cards() -> dict[str, CardFacts]:
         "missing_identity_boundary": replace(good, identity_boundary=False),
         "wrong_recipient_role": replace(good, recipient_role_matches=False),
         "missing_required_return": replace(good, required_return=False),
+        "missing_envelope_only_return": replace(good, envelope_only_return=False),
+        "missing_chat_body_suppression": replace(good, chat_body_suppression=False),
         "missing_next_step_source": replace(good, next_step_source=False, next_step_mentions_router=False),
         "next_step_without_router": replace(good, next_step_mentions_router=False),
         "missing_action_guidance": replace(good, action_guidance=False),

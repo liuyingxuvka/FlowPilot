@@ -2438,6 +2438,59 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - No UI/Cockpit work, release, remote push, or publication action was taken.
 
 
+## flowpilot-startup-hard-gates - Banner, task intake, and fresh role startup
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User observed that a FlowPilot run did not visibly show the startup banner, appeared to plan project-specific UI work before PM route formation, and did not start all six background agents up front.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-05
+
+### Risk Intent
+- Prevent the router from marking the startup banner emitted unless the host receives display text it must show.
+- Prevent PM route planning from using chat context or stale state instead of a router-owned explicit current user request packet.
+- Prevent six-role startup from counting empty slots, old agent ids, or later on-demand subagents as fresh current-task live agents.
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/packet_runtime.py`
+- `skills/flowpilot/assets/runtime_kit/cards/**/*.md`
+- `simulations/prompt_isolation_model.py`
+- `simulations/card_instruction_coverage_model.py`
+- `tests/test_flowpilot_router_runtime.py`
+- `tests/test_flowpilot_packet_runtime.py`
+- `scripts/check_install.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema 1.0.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py scripts\check_install.py simulations\prompt_isolation_model.py simulations\run_prompt_isolation_checks.py simulations\card_instruction_coverage_model.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_packet_runtime.py`.
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime`: 49 tests.
+- OK by background subagent: `python simulations\run_prompt_isolation_checks.py`.
+- OK by background subagent: `python simulations\run_flowpilot_resume_checks.py`.
+- OK by background subagent: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`.
+- OK by background subagent: `python simulations\run_meta_checks.py`.
+- OK by background subagent: `python simulations\run_capability_checks.py`.
+- OK by background subagent: `python simulations\run_startup_pm_review_checks.py`.
+- OK by background subagent: `python simulations\run_release_tooling_checks.py`.
+- OK: `python simulations\run_card_instruction_coverage_checks.py`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `git diff --check`.
+
+### Findings
+- `emit_startup_banner` now returns display text/path and the skill launcher requires the host to show `display_text`; a path or flag alone is not enough.
+- Startup now has a `record_user_request` boot action that requires `provenance: explicit_user_request`; `user_intake` includes that recorded task plus startup answers.
+- `background_agents=allow` now requires six fresh current-run role-agent records before `roles_started` is set; `single-agent` records explicit authorized continuity instead.
+- Parallel peer-agent changes added file-backed, envelope-only role output rules to runtime cards and packet runtime. Those changes align with the same prompt-isolation risk and were preserved.
+- `scripts\smoke_autopilot.py` timed out in a background wrapper run, but every covered child check was rerun separately and passed.
+
+### Skipped Steps
+- No UI/Cockpit implementation, remote push, GitHub release, or publication action was taken.
+
+
 ## flowpilot-controller-route-memory - PM prior path context before route decisions
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -3,7 +3,7 @@ recipient_role: human_like_reviewer
 recipient_identity: FlowPilot human-like reviewer role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: Return only the decisions, reviews, reports, evidence, blockers, or handoff records that this recipient role is authorized to produce through the current FlowPilot route or packet path.
+required_return: Write any role-output body only to a run-scoped packet, result, report, or decision file, then return to Controller only a controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. After completing or blocking this card, return authorized output through Controller; Controller must call flowpilot_router.py for the next action.
 -->
 # Human-Like Reviewer Core Card
@@ -22,6 +22,12 @@ Before pass decisions:
   nonblocking note;
 - block wrong-role, Controller-origin, stale, private, contaminated, or
   unopened evidence.
+
+Write every review body to a run-scoped review/report file. The chat response
+back to Controller must be envelope-only. It may identify the review/report id,
+path, hash, event name, from/to roles, next holder, and body visibility. It
+must not include findings, blockers, evidence details, recommendations,
+commands, or repair instructions that belong in the review body.
 
 For product/UI gates, personally inspect reachable controls, interactions,
 layout fit, density, readability, visual quality, localization, and state

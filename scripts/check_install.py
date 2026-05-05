@@ -405,6 +405,8 @@ def main() -> int:
                         and "allowed_scope:" in card_text
                         and "forbidden_scope:" in card_text
                         and "required_return:" in card_text
+                        and "controller-visible envelope" in card_text
+                        and "Do not include report bodies" in card_text
                         and "next_step_source:" in card_text
                         and "flowpilot_router.py" in card_text
                     )

@@ -24,6 +24,7 @@ REQUIRED_LABELS = (
     "bootstrap_runtime_kit_copied",
     "bootstrap_placeholders_filled",
     "mailbox_initialized_from_copied_kit",
+    "user_request_recorded_from_explicit_user_request",
     "user_intake_template_filled_from_raw_user_request",
     "six_roles_started_from_user_answer",
     "role_core_prompts_injected_from_copied_kit",
@@ -152,7 +153,14 @@ def _state_id(state: model.State) -> str:
         f"answers={state.startup_answers_recorded},{state.startup_answer_values_valid},"
         f"{state.startup_answer_provenance}|bootstrap={state.run_scoped_bootstrap_created},"
         f"{state.stale_top_level_bootstrap_reused}|banner={state.banner_emitted}|"
-        f"kit={state.runtime_kit_copied}|roles={state.roles_started}|"
+        f"visible_banner={state.startup_banner_user_visible}|"
+        f"kit={state.runtime_kit_copied}|"
+        f"user_request={state.user_request_recorded},{state.user_request_provenance}|"
+        f"roles={state.roles_started},{state.fresh_role_agents_started}|"
+        f"role_return={state.role_output_body_file_written},"
+        f"{state.role_output_envelope_only_to_controller},"
+        f"{state.role_chat_response_disclosed_body},"
+        f"{state.controller_used_role_chat_body}|"
         f"ctrl={state.controller_role_confirmed}|material={state.material_review},"
         f"{state.material_accepted_by_pm},{state.research_absorbed_by_pm},"
         f"{state.material_understanding_written}|research={state.pm_research_package_written},"

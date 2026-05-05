@@ -79,6 +79,8 @@
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": false,
@@ -100,6 +102,8 @@
         "card": {
           "action_guidance": false,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": true,
@@ -117,10 +121,58 @@
           "hazard.good: card body lacks role-appropriate action guidance"
         ]
       },
+      "missing_chat_body_suppression": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "chat_body_suppression": false,
+          "envelope_only_return": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing chat body suppression rule"
+        ]
+      },
+      "missing_envelope_only_return": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": false,
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing envelope-only role return rule"
+        ]
+      },
       "missing_identity_boundary": {
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": false,
           "kind": "phase",
           "manifest_registered": true,
@@ -142,6 +194,8 @@
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": true,
@@ -164,6 +218,8 @@
         "card": {
           "action_guidance": true,
           "card_id": "pm.route_skeleton",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": true,
@@ -185,6 +241,8 @@
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": true,
@@ -206,6 +264,8 @@
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": true,
@@ -227,6 +287,8 @@
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
           "manifest_registered": true,

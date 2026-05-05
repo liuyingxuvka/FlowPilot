@@ -82,6 +82,7 @@ class State:
     prior_work_import_packet_written: bool = False
     control_state_written_under_run_root: bool = False
     top_level_control_state_absent_or_quarantined: bool = False
+    preflow_visible_plan_cleared: bool = False
     old_control_state_reused_as_current: bool = False
     showcase_floor_committed: bool = False
     self_interrogation_done: bool = False
@@ -815,6 +816,7 @@ def _run_isolation_ready(state: State) -> bool:
         and prior_work_resolved
         and state.control_state_written_under_run_root
         and state.top_level_control_state_absent_or_quarantined
+        and state.preflow_visible_plan_cleared
         and not state.old_control_state_reused_as_current
     )
 
@@ -1454,6 +1456,7 @@ class CapabilityRouterStep:
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
         "top_level_control_state_absent_or_quarantined",
+        "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
         "self_interrogation_done",
@@ -1781,6 +1784,7 @@ class CapabilityRouterStep:
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
         "top_level_control_state_absent_or_quarantined",
+        "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
         "self_interrogation_done",
@@ -2310,6 +2314,15 @@ class CapabilityRouterStep:
                 label="top_level_control_state_absent_or_quarantined",
                 action="verify legacy top-level control state is absent, legacy-only, or quarantined before capability work continues",
                 top_level_control_state_absent_or_quarantined=True,
+            )
+            return
+
+        if not state.preflow_visible_plan_cleared:
+            yield _step(
+                state,
+                label="preflow_visible_plan_cleared",
+                action="controller replaces any ordinary pre-FlowPilot Codex plan with the waiting-for-PM display projection before capability route work",
+                preflow_visible_plan_cleared=True,
             )
             return
 
@@ -5341,6 +5354,8 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
         return InvariantResult.fail("capability routing advanced before a fresh current run directory and control-state boundary were established")
     if (state.contract_frozen or state.meta_route_checked or state.work_beyond_startup_allowed) and not state.startup_display_entry_action_done:
         return InvariantResult.fail("capability routing advanced before resolving the user's startup display surface answer")
+    if (state.contract_frozen or state.meta_route_checked or state.work_beyond_startup_allowed) and not state.preflow_visible_plan_cleared:
+        return InvariantResult.fail("capability routing advanced before clearing the ordinary pre-FlowPilot visible plan")
     return InvariantResult.pass_()
 
 

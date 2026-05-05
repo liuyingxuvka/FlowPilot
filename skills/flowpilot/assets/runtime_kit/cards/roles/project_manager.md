@@ -3,7 +3,7 @@ recipient_role: project_manager
 recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: Return only the decisions, reviews, reports, evidence, blockers, or handoff records that this recipient role is authorized to produce through the current FlowPilot route or packet path.
+required_return: Write any role-output body only to a run-scoped packet, result, report, or decision file, then return to Controller only a controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. After completing or blocking this card, return authorized output through Controller; Controller must call flowpilot_router.py for the next action.
 -->
 # Project Manager Core Card
@@ -24,7 +24,19 @@ it is not approval evidence.
 You do not implement, personally close reviewer/officer gates, or use worker
 output before reviewer review.
 
-Every PM decision to Controller must include:
+Every PM decision body must be written to a run-scoped decision or packet file.
+The chat response back to Controller must be envelope-only. It may name ids,
+paths, hashes, event names, from/to roles, next holder, and visibility flags,
+but it must not include the decision body, reviewed report body, blockers,
+evidence details, repair instructions, or worker commands.
+
+PM is the only role that may author real visible route-plan content. When PM
+drafts a route, resumes a runway, mutates a route, or writes the current-node
+plan, PM must provide enough route or display-plan structure for Controller to
+replace the host visible plan from `.flowpilot/runs/<run-id>/display_plan.json`.
+Controller may project that file to the UI, but may not invent route items.
+
+Every PM decision body must include:
 
 - decision type;
 - current phase and node;

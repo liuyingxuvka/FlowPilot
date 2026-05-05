@@ -43,6 +43,7 @@ class State:
     startup_answer_provenance: str = "none"  # none | explicit_user_reply | inferred | default | naked
     startup_answers_recorded: bool = False
     banner_emitted: bool = False
+    startup_banner_user_visible: bool = False
     run_shell_created: bool = False
     current_pointer_written: bool = False
     run_index_updated: bool = False
@@ -50,8 +51,11 @@ class State:
     bootloader_generated_prompt_body: bool = False
     placeholders_filled: bool = False
     mailbox_initialized: bool = False
+    user_request_recorded: bool = False
+    user_request_provenance: str = "none"  # none | explicit_user_request | inferred | default
     user_intake_ready: bool = False
     roles_started: bool = False
+    fresh_role_agents_started: bool = False
     role_core_prompts_injected: bool = False
     controller_core_loaded: bool = False
     pm_core_delivered: bool = False
@@ -189,6 +193,10 @@ class State:
     controller_read_forbidden_body: bool = False
     controller_origin_project_evidence: bool = False
     controller_relayed_body_content: bool = False
+    role_output_body_file_written: bool = False
+    role_output_envelope_only_to_controller: bool = False
+    role_chat_response_disclosed_body: bool = False
+    controller_used_role_chat_body: bool = False
     wrong_role_prompt_delivered: bool = False
     wrong_role_body_delivered: bool = False
     pm_used_unreviewed_evidence: bool = False
@@ -241,6 +249,15 @@ def _mail(state: State, **changes: object) -> State:
         ledger_check_requested=False,
         packet_body_identity_boundaries_verified=True,
         result_body_identity_boundaries_verified=True,
+        **changes,
+    )
+
+
+def _role_return(state: State, **changes: object) -> State:
+    return replace(
+        state,
+        role_output_body_file_written=True,
+        role_output_envelope_only_to_controller=True,
         **changes,
     )
 
@@ -324,6 +341,8 @@ def _next_required_bootloader_action(state: State) -> str:
         return "boot"
     if not state.mailbox_initialized:
         return "boot"
+    if not state.user_request_recorded:
+        return "boot"
     if not state.user_intake_ready:
         return "boot"
     if not state.roles_started:
@@ -354,6 +373,7 @@ def _bootloader_fact_count(state: State) -> int:
             state.runtime_kit_copied,
             state.placeholders_filled,
             state.mailbox_initialized,
+            state.user_request_recorded,
             state.user_intake_ready,
             state.roles_started,
             state.role_core_prompts_injected,
@@ -646,7 +666,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.banner_emitted:
         yield Transition(
             "startup_banner_emitted_after_answers",
-            _boot(state, banner_emitted=True),
+            _boot(state, banner_emitted=True, startup_banner_user_visible=True),
         )
         return
     if not state.run_shell_created:
@@ -673,6 +693,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _boot(state, mailbox_initialized=True),
         )
         return
+    if not state.user_request_recorded:
+        yield Transition(
+            "user_request_recorded_from_explicit_user_request",
+            _boot(
+                state,
+                user_request_recorded=True,
+                user_request_provenance="explicit_user_request",
+            ),
+        )
+        return
     if not state.user_intake_ready:
         yield Transition(
             "user_intake_template_filled_from_raw_user_request",
@@ -680,7 +710,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
     if not state.roles_started:
-        yield Transition("six_roles_started_from_user_answer", _boot(state, roles_started=True))
+        yield Transition(
+            "six_roles_started_from_user_answer",
+            _boot(state, roles_started=True, fresh_role_agents_started=True),
+        )
         return
     if not state.role_core_prompts_injected:
         yield Transition(
@@ -718,7 +751,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.pm_controller_reset_decision_returned:
         yield Transition(
             "pm_first_decision_resets_controller",
-            replace(state, pm_controller_reset_decision_returned=True, holder="controller"),
+            _role_return(state, pm_controller_reset_decision_returned=True, holder="controller"),
         )
         return
     if not state.controller_role_confirmed:
@@ -1537,6 +1570,8 @@ def invariant_failures(state: State) -> list[str]:
         state.startup_answers_recorded and state.dialog_stopped_for_answers
     ):
         failures.append("startup banner emitted before explicit answers after a stopped dialog")
+    if state.banner_emitted and not state.startup_banner_user_visible:
+        failures.append("startup banner was marked emitted without user-visible display text")
     if state.run_shell_created and not state.banner_emitted:
         failures.append("run shell created before startup banner")
     if state.runtime_kit_copied and not (
@@ -1545,10 +1580,16 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("runtime kit copied before run shell and pointer/index files")
     if state.bootloader_generated_prompt_body:
         failures.append("bootloader generated prompt or packet body instead of copying the audited runtime kit")
+    if state.user_intake_ready and not (
+        state.user_request_recorded and state.user_request_provenance == "explicit_user_request"
+    ):
+        failures.append("user intake was prepared without an explicit user request packet source")
     if state.roles_started and not (
         state.runtime_kit_copied and state.placeholders_filled and state.mailbox_initialized
     ):
         failures.append("roles started before copied kit, placeholders, and mailbox were ready")
+    if state.roles_started and not state.fresh_role_agents_started:
+        failures.append("roles were marked started without fresh live role-agent evidence")
     if state.user_intake_delivered_to_pm and not (
         state.controller_core_loaded
         and state.pm_core_delivered
@@ -1560,6 +1601,63 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("user intake delivered before Controller and PM bootstrap prompt cards were delivered")
     if state.controller_role_confirmed and not state.pm_controller_reset_decision_returned:
         failures.append("Controller role confirmed before PM returned the reset decision")
+    role_output_exists = any(
+        (
+            state.pm_controller_reset_decision_returned,
+            state.pm_material_scan_packets_issued,
+            state.reviewer_dispatch_allowed,
+            state.worker_scan_results_returned,
+            state.material_review != "unknown",
+            state.pm_research_package_written,
+            state.research_worker_report_returned,
+            state.research_reviewer_passed,
+            state.material_accepted_by_pm,
+            state.material_understanding_written,
+            state.product_architecture_draft_written,
+            state.product_architecture_modelability_passed,
+            state.product_architecture_reviewer_challenged,
+            state.root_contract_draft_written,
+            state.root_contract_reviewer_challenged,
+            state.root_contract_modelability_passed,
+            state.root_contract_frozen_by_pm,
+            state.dependency_policy_recorded,
+            state.capabilities_manifest_written,
+            state.pm_child_skill_selection_written,
+            state.child_skill_gate_manifest_written,
+            state.child_skill_manifest_reviewer_passed,
+            state.child_skill_process_officer_passed,
+            state.child_skill_product_officer_passed,
+            state.child_skill_manifest_pm_approved_for_route,
+            state.route_skeleton_written,
+            state.route_activated_by_pm,
+            state.node_acceptance_plan_written,
+            state.node_acceptance_plan_reviewed,
+            state.pm_node_packet_issued,
+            state.node_dispatch_allowed,
+            state.node_worker_result_returned,
+            state.node_reviewer_reviewed_result,
+            state.pm_node_repair_packet_issued,
+            state.node_repair_result_returned,
+            state.node_repair_review_passed,
+            state.node_completed_by_pm,
+            state.parent_backward_targets_enumerated,
+            state.parent_backward_replay_passed,
+            state.parent_pm_segment_decision_recorded,
+            state.pm_evidence_quality_package_written,
+            state.evidence_quality_reviewer_passed,
+            state.final_ledger_built_by_pm,
+            state.final_backward_replay_passed,
+            state.pm_completion_decision,
+        )
+    )
+    if role_output_exists and not (
+        state.role_output_body_file_written and state.role_output_envelope_only_to_controller
+    ):
+        failures.append("role output reached Controller without file-backed body and envelope-only chat return")
+    if state.role_chat_response_disclosed_body:
+        failures.append("role response disclosed body, blocker, evidence, or repair details in chat")
+    if state.controller_used_role_chat_body:
+        failures.append("Controller used role chat body content instead of treating it as contaminated mail")
     if state.pm_material_scan_card_delivered and not state.controller_role_confirmed:
         failures.append("PM material scan card delivered before Controller reset")
     if state.pm_material_scan_packets_issued and not (
@@ -2014,14 +2112,18 @@ def _ready(**changes: object) -> State:
         startup_answer_provenance="explicit_user_reply",
         startup_answers_recorded=True,
         banner_emitted=True,
+        startup_banner_user_visible=True,
         run_shell_created=True,
         current_pointer_written=True,
         run_index_updated=True,
         runtime_kit_copied=True,
         placeholders_filled=True,
         mailbox_initialized=True,
+        user_request_recorded=True,
+        user_request_provenance="explicit_user_request",
         user_intake_ready=True,
         roles_started=True,
+        fresh_role_agents_started=True,
         role_core_prompts_injected=True,
         controller_core_loaded=True,
         pm_core_delivered=True,
@@ -2040,8 +2142,10 @@ def _ready(**changes: object) -> State:
         system_card_identity_boundaries_verified=True,
         packet_body_identity_boundaries_verified=True,
         result_body_identity_boundaries_verified=True,
-        bootloader_actions=15,
-        router_action_requests=15,
+        role_output_body_file_written=True,
+        role_output_envelope_only_to_controller=True,
+        bootloader_actions=14,
+        router_action_requests=14,
     )
     return replace(base, **changes)
 
@@ -2200,6 +2304,12 @@ def hazard_states() -> dict[str, State]:
             router_action_requests=5,
         ),
         "bootloader_generates_prompts": _ready(bootloader_generated_prompt_body=True),
+        "banner_emitted_without_user_visible_text": _ready(startup_banner_user_visible=False),
+        "user_intake_without_explicit_user_request": _ready(
+            user_request_recorded=False,
+            user_request_provenance="none",
+        ),
+        "roles_started_without_fresh_live_agents": _ready(fresh_role_agents_started=False),
         "roles_before_runtime_kit": State(
             router_loaded=True,
             run_scoped_bootstrap_created=True,
@@ -2538,6 +2648,12 @@ def hazard_states() -> dict[str, State]:
         "controller_reads_body": _ready(controller_read_forbidden_body=True),
         "controller_creates_project_evidence": _ready(controller_origin_project_evidence=True),
         "controller_relays_body_content": _ready(controller_relayed_body_content=True),
+        "role_chat_response_discloses_body": _ready(role_chat_response_disclosed_body=True),
+        "controller_uses_role_chat_body": _ready(controller_used_role_chat_body=True),
+        "role_output_without_file_backed_envelope": _ready(
+            role_output_body_file_written=False,
+            role_output_envelope_only_to_controller=False,
+        ),
         "wrong_role_prompt": _ready(wrong_role_prompt_delivered=True),
         "wrong_role_body": _ready(wrong_role_body_delivered=True),
     }

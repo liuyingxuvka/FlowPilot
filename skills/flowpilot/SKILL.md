@@ -65,6 +65,25 @@ values plus `provenance: explicit_user_reply`. Do not infer, summarize, or
 default the answers yourself. The router, not this skill file, decides the next
 action.
 
+When the router returns `emit_startup_banner`, display the returned `display_text`
+to the user before continuing. A path or state flag alone does not count.
+
+When the router returns `record_user_request`, pass the exact current formal
+FlowPilot task text as `payload.user_request.text` with
+`provenance: explicit_user_request`. Do not summarize the task, derive it from
+old route state, or turn Controller's expectations into user intent. If the
+exact current task text is not available, ask the user for the task and stop.
+Do not show project-specific plans until the PM receives this router-owned
+`user_intake` packet and later writes the route.
+
+When the router returns `start_role_slots` with `requires_host_spawn: true`,
+spawn all six requested role agents before applying the action. Apply the
+action only after the payload contains one current `agent_id` per requested
+role, `spawn_result: spawned_fresh_for_task`,
+`spawned_after_startup_answers: true`, and the current `spawned_for_run_id`.
+Do not treat empty role slots, prior-route agent IDs, or on-demand later
+subagents as successful startup.
+
 ## Controller Boundary
 
 After the router loads Controller core, the main assistant is Controller only.

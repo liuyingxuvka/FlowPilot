@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -24,6 +25,12 @@ STARTUP_ANSWERS = {
 HEARTBEAT_STARTUP_ANSWERS = {
     **STARTUP_ANSWERS,
     "scheduled_continuation": "allow",
+}
+
+USER_REQUEST = {
+    "text": "Use FlowPilot to complete the requested project with PM-owned route control.",
+    "provenance": "explicit_user_request",
+    "source": "activation_turn",
 }
 
 
@@ -87,15 +94,32 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             result = packet_runtime.load_envelope(root, record["result_envelope_path"])
             packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
 
-    def deliver_expected_card(self, root: Path, card_id: str) -> dict:
+    def next_after_display_sync(self, root: Path) -> dict:
         action = router.next_action(root)
+        while action["action_type"] == "sync_display_plan":
+            router.apply_action(root, "sync_display_plan")
+            action = router.next_action(root)
+        return action
+
+    def deliver_expected_card(self, root: Path, card_id: str) -> dict:
+        action = self.next_after_display_sync(root)
         if action["action_type"] == "check_prompt_manifest":
             router.apply_action(root, "check_prompt_manifest")
-            action = router.next_action(root)
+            action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "deliver_system_card")
         self.assertEqual(action["card_id"], card_id)
         router.apply_action(root, "deliver_system_card")
         return action
+
+    def deliver_user_intake_mail(self, root: Path) -> None:
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "check_packet_ledger")
+        self.assertEqual(action["next_mail_id"], "user_intake")
+        router.apply_action(root, "check_packet_ledger")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_mail")
+        self.assertEqual(action["mail_id"], "user_intake")
+        router.apply_action(root, "deliver_mail")
 
     def boot_to_controller(self, root: Path, startup_answers: dict | None = None) -> Path:
         startup_answers = startup_answers or STARTUP_ANSWERS
@@ -104,6 +128,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             action_type = str(action["action_type"])
             if action_type == "record_startup_answers":
                 router.apply_action(root, action_type, {"startup_answers": startup_answers})
+            elif action_type == "record_user_request":
+                router.apply_action(root, action_type, {"user_request": USER_REQUEST})
+            elif action_type == "start_role_slots":
+                router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
             else:
                 router.apply_action(root, action_type)
             if action_type == "load_controller_core":
@@ -111,37 +139,49 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
 
+    def role_agent_payload(self, root: Path, startup_answers: dict | None = None) -> dict:
+        startup_answers = startup_answers or STARTUP_ANSWERS
+        if startup_answers.get("background_agents") == "single-agent":
+            return {}
+        bootstrap = self.bootstrap_state(root)
+        run_id = bootstrap["run_id"]
+        return {
+            "background_agents_capability_status": "available",
+            "role_agents": [
+                {
+                    "role_key": role,
+                    "agent_id": f"agent-{run_id}-{role}",
+                    "spawn_result": "spawned_fresh_for_task",
+                    "spawned_for_run_id": run_id,
+                    "spawned_after_startup_answers": True,
+                }
+                for role in router.CREW_ROLE_KEYS
+            ],
+        }
+
     def bootstrap_state(self, root: Path) -> dict:
         return read_json(router.bootstrap_state_path(root))
 
     def deliver_initial_pm_cards_and_user_intake(self, root: Path) -> None:
-        for _ in range(4):
-            router.apply_action(root, str(router.next_action(root)["action_type"]))
-            router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.deliver_expected_card(root, "pm.core")
+        self.deliver_expected_card(root, "pm.controller_reset_duty")
+        self.deliver_expected_card(root, "pm.phase_map")
+        self.deliver_expected_card(root, "pm.startup_intake")
+        self.deliver_user_intake_mail(root)
 
     def complete_startup_activation(self, root: Path) -> None:
         self.deliver_initial_pm_cards_and_user_intake(root)
         router.record_external_event(root, "pm_first_decision_resets_controller")
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "deliver_system_card")
-        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
-        router.apply_action(root, "deliver_system_card")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
         router.record_external_event(
             root,
             "reviewer_reports_startup_facts",
             {"reviewed_by_role": "human_like_reviewer", "passed": True},
         )
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "deliver_system_card")
-        self.assertEqual(action["card_id"], "pm.startup_activation")
-        router.apply_action(root, "deliver_system_card")
+        self.deliver_expected_card(root, "pm.startup_activation")
         router.record_external_event(root, "pm_approves_startup_activation", {"decision": "approved"})
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "write_display_surface_status")
         router.apply_action(root, "write_display_surface_status")
 
@@ -695,21 +735,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(bootstrap["router_loaded"])
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
         self.assertEqual(root / bootstrap["run_root"], run_root)
-        self.assertEqual(bootstrap["bootloader_actions"], 13)
-        self.assertEqual(bootstrap["router_action_requests"], 13)
+        self.assertEqual(bootstrap["bootloader_actions"], 14)
+        self.assertEqual(bootstrap["router_action_requests"], 14)
         self.assertIsNone(bootstrap["pending_action"])
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
+        self.assertEqual(bootstrap["user_request"], USER_REQUEST)
 
         self.assertTrue((run_root / "runtime_kit" / "manifest.json").exists())
         self.assertTrue((run_root / "packet_ledger.json").exists())
         self.assertTrue((run_root / "execution_frontier.json").exists())
         self.assertEqual(len(list((run_root / "crew_memory").glob("*.json"))), 6)
+        self.assertTrue((run_root / "user_request.json").exists())
         self.assertTrue((run_root / "mailbox" / "outbox" / "user_intake.json").exists())
         self.assertTrue((run_root / "role_core_prompt_delivery.json").exists())
 
         crew = read_json(run_root / "crew_ledger.json")
         self.assertEqual(len(crew["role_slots"]), 6)
         self.assertNotIn("controller", {slot["role_key"] for slot in crew["role_slots"]})
+        self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
+        self.assertTrue(all(slot["agent_id"] for slot in crew["role_slots"]))
+
+    def test_display_plan_is_controller_synced_projection_from_pm_plan(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "sync_display_plan")
+        self.assertEqual(action["native_plan_projection"]["items"][0]["id"], "await_pm_route")
+        result = router.apply_action(root, "sync_display_plan")
+        self.assertEqual(result["host_action"], "replace_visible_plan")
+        waiting_plan = read_json(run_root / "display_plan.json")
+        self.assertEqual(waiting_plan["source_role"], "controller")
+        self.assertEqual(waiting_plan["route_authority"], "none_until_pm_display_plan")
+
+        self.complete_pre_route_gates(root)
+        route_plan = read_json(run_root / "display_plan.json")
+        self.assertEqual(route_plan["source_role"], "project_manager")
+        self.assertEqual(route_plan["source_event"], "pm_writes_route_draft")
+        self.assertEqual(route_plan["items"][0]["id"], "node-001")
+
+        self.activate_route(root)
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "sync_display_plan")
+        self.assertEqual(action["native_plan_projection"]["items"][0]["status"], "in_progress")
+        router.apply_action(root, "sync_display_plan")
+
+        self.deliver_current_node_cards(root)
+        node_plan = read_json(run_root / "display_plan.json")
+        self.assertEqual(node_plan["source_event"], "pm_writes_node_acceptance_plan")
+        self.assertEqual(node_plan["current_node"]["checklist"][0]["id"], "node-001-req")
 
     def test_startup_waits_for_answers_before_banner_or_run_shell(self) -> None:
         root = self.make_project()
@@ -737,6 +811,93 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
         self.assertTrue((root / bootstrap["run_root"] / "bootstrap" / "startup_state.json").exists())
         self.assertFalse((root / bootstrap["run_root"] / "router_state.json").exists())
+
+    def test_startup_banner_action_and_result_are_user_visible(self) -> None:
+        root = self.make_project()
+        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
+        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
+        self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
+        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "emit_startup_banner")
+        self.assertTrue(action["display_required"])
+        self.assertIn("FLOWPILOT PROMPT-ISOLATED STARTUP", action["display_text"])
+        self.assertNotIn("FLOWPILOT_IDENTITY_BOUNDARY_V1", action["display_text"])
+
+        result = router.apply_action(root, "emit_startup_banner")
+        self.assertTrue(result["display_required"])
+        self.assertIn("FLOWPILOT PROMPT-ISOLATED STARTUP", result["display_text"])
+
+    def test_user_intake_requires_explicit_user_request_and_includes_it(self) -> None:
+        root = self.make_project()
+        while True:
+            action = router.next_action(root)
+            action_type = str(action["action_type"])
+            if action_type == "record_startup_answers":
+                router.apply_action(root, action_type, {"startup_answers": STARTUP_ANSWERS})
+            elif action_type == "record_user_request":
+                break
+            else:
+                router.apply_action(root, action_type)
+
+        inferred_request = {**USER_REQUEST, "provenance": "inferred_by_assistant"}
+        with self.assertRaisesRegex(router.RouterError, "provenance=explicit_user_request"):
+            router.apply_action(root, "record_user_request", {"user_request": inferred_request})
+
+        router.apply_action(root, "record_user_request", {"user_request": USER_REQUEST})
+        self.assertEqual(router.next_action(root)["action_type"], "write_user_intake")
+        router.apply_action(root, "write_user_intake")
+
+        run_root = root / self.bootstrap_state(root)["run_root"]
+        body = (run_root / "packets" / "user_intake" / "packet_body.md").read_text(encoding="utf-8")
+        body_payload = json.loads(body[body.index("{") :])
+        self.assertEqual(body_payload["user_request"], USER_REQUEST)
+        self.assertEqual(body_payload["startup_answers"], STARTUP_ANSWERS)
+        self.assertTrue((run_root / "user_request.json").exists())
+
+    def test_background_agents_allow_requires_six_fresh_live_agent_records(self) -> None:
+        root = self.make_project()
+        while True:
+            action = router.next_action(root)
+            action_type = str(action["action_type"])
+            if action_type == "record_startup_answers":
+                router.apply_action(root, action_type, {"startup_answers": STARTUP_ANSWERS})
+            elif action_type == "record_user_request":
+                router.apply_action(root, action_type, {"user_request": USER_REQUEST})
+            elif action_type == "start_role_slots":
+                break
+            else:
+                router.apply_action(root, action_type)
+
+        self.assertTrue(action["requires_host_spawn"])
+        self.assertEqual(len(action["role_spawn_request"]), 6)
+        with self.assertRaisesRegex(router.RouterError, "role_agents"):
+            router.apply_action(root, "start_role_slots")
+
+        payload = self.role_agent_payload(root)
+        payload["role_agents"] = payload["role_agents"][:-1]
+        with self.assertRaisesRegex(router.RouterError, "missing live role agent records"):
+            router.apply_action(root, "start_role_slots", payload)
+
+        payload = self.role_agent_payload(root)
+        payload["role_agents"][0]["spawned_for_run_id"] = "run-old"
+        with self.assertRaisesRegex(router.RouterError, "spawned_for_run_id"):
+            router.apply_action(root, "start_role_slots", payload)
+
+        router.apply_action(root, "start_role_slots", self.role_agent_payload(root))
+        run_root = root / self.bootstrap_state(root)["run_root"]
+        crew = read_json(run_root / "crew_ledger.json")
+        self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
+        self.assertEqual({slot["spawn_result"] for slot in crew["role_slots"]}, {"spawned_fresh_for_task"})
+
+    def test_single_agent_answer_records_authorized_role_continuity_without_live_agents(self) -> None:
+        root = self.make_project()
+        answers = {**STARTUP_ANSWERS, "background_agents": "single-agent"}
+        run_root = self.boot_to_controller(root, startup_answers=answers)
+        crew = read_json(run_root / "crew_ledger.json")
+        self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"single_agent_continuity_authorized"})
+        self.assertEqual({slot["agent_id"] for slot in crew["role_slots"]}, {None})
 
     def test_startup_answer_resume_normalizes_old_stop_boundary_state(self) -> None:
         root = self.make_project()
@@ -850,12 +1011,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        first = router.next_action(root)
+        first = self.next_after_display_sync(root)
         self.assertEqual(first["action_type"], "check_prompt_manifest")
         self.assertEqual(first["next_card_id"], "pm.core")
         router.apply_action(root, "check_prompt_manifest")
 
-        second = router.next_action(root)
+        second = self.next_after_display_sync(root)
         self.assertEqual(second["action_type"], "deliver_system_card")
         self.assertEqual(second["card_id"], "pm.core")
         self.assertEqual(second["from"], "system")
@@ -873,18 +1034,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        for _ in range(4):
-            self.assertEqual(router.next_action(root)["action_type"], "check_prompt_manifest")
-            router.apply_action(root, "check_prompt_manifest")
-            self.assertEqual(router.next_action(root)["action_type"], "deliver_system_card")
-            router.apply_action(root, "deliver_system_card")
+        self.deliver_expected_card(root, "pm.core")
+        self.deliver_expected_card(root, "pm.controller_reset_duty")
+        self.deliver_expected_card(root, "pm.phase_map")
+        self.deliver_expected_card(root, "pm.startup_intake")
 
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "check_packet_ledger")
         self.assertEqual(action["next_mail_id"], "user_intake")
         router.apply_action(root, "check_packet_ledger")
 
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "deliver_mail")
         self.assertEqual(action["mail_id"], "user_intake")
         router.apply_action(root, "deliver_mail")
@@ -909,18 +1069,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_approves_startup_activation", {"decision": "approved"})
 
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         router.record_external_event(root, "pm_first_decision_resets_controller")
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "deliver_system_card")
-        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
-        router.apply_action(root, "deliver_system_card")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "reviewer_reports_startup_facts", {"passed": True})
@@ -931,15 +1087,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.startup_activation")
-        router.apply_action(root, "deliver_system_card")
+        self.deliver_expected_card(root, "pm.startup_activation")
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_approves_startup_activation", {"decision": "blocked"})
         router.record_external_event(root, "pm_approves_startup_activation", {"decision": "approved"})
-        action = router.next_action(root)
+        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "write_display_surface_status")
         router.apply_action(root, "write_display_surface_status")
 
@@ -947,13 +1100,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
         self.assertTrue((run_root / "diagrams" / "current_route_sign.md").exists())
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.material_scan")
-        router.apply_action(root, "deliver_system_card")
+        self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["pm_material_packets_issued"])
+
+    def test_startup_fact_report_accepts_file_backed_envelope_only_payload(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        router.record_external_event(root, "pm_first_decision_resets_controller")
+        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+        report_body = {"reviewed_by_role": "human_like_reviewer", "passed": True}
+        report_text = json.dumps(report_body, indent=2, sort_keys=True)
+        private_report = run_root / "startup" / "reviewer_private_startup_fact_report.json"
+        private_report.parent.mkdir(parents=True, exist_ok=True)
+        private_report.write_text(report_text, encoding="utf-8")
+        report_hash = hashlib.sha256(private_report.read_bytes()).hexdigest()
+        report_path = str(private_report.relative_to(root))
+
+        with self.assertRaisesRegex(router.RouterError, "leaked role body fields"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {
+                    "report_path": report_path,
+                    "report_hash": report_hash,
+                    "controller_visibility": "role_output_envelope_only",
+                    "blockers": [],
+                },
+            )
+
+        router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            {
+                "report_path": report_path,
+                "report_hash": report_hash,
+                "controller_visibility": "role_output_envelope_only",
+            },
+        )
+
+        canonical_report = read_json(run_root / "startup" / "startup_fact_report.json")
+        self.assertEqual(
+            canonical_report["_role_output_envelope"]["controller_visibility"],
+            "role_output_envelope_only",
+        )
+        self.assertFalse(canonical_report["_role_output_envelope"]["chat_response_body_allowed"])
 
     def test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card(self) -> None:
         root = self.make_project()
@@ -1410,7 +1605,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         (run_root / "crew_memory" / "worker_b.json").unlink()
 
         router.record_external_event(root, "heartbeat_or_manual_resume_requested")
-        self.assertEqual(router.next_action(root)["action_type"], "load_resume_state")
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
         self.deliver_expected_card(root, "controller.resume_reentry")
         self.deliver_expected_card(root, "pm.resume_decision")
@@ -1948,11 +2143,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_role_event_recording_does_not_let_controller_infer_body_content(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        for _ in range(4):
-            router.apply_action(root, str(router.next_action(root)["action_type"]))
-            router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.deliver_initial_pm_cards_and_user_intake(root)
 
         result = router.record_external_event(
             root,

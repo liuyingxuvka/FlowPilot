@@ -3,7 +3,7 @@ recipient_role: project_manager
 recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: Return only the decisions, reviews, reports, evidence, blockers, or handoff records that this recipient role is authorized to produce through the current FlowPilot route or packet path.
+required_return: Write any role-output body only to a run-scoped packet, result, report, or decision file, then return to Controller only a controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. After completing or blocking this card, return authorized output through Controller; Controller must call flowpilot_router.py for the next action.
 -->
 # PM Current Node Loop Phase
@@ -27,3 +27,8 @@ evidence decisions, and why the result is not placeholder or report-only work.
 Any packet, completion, repair, or mutation decision must include
 `prior_path_context_review` showing which completed nodes, superseded nodes,
 stale evidence, prior blocks, and experiments were considered.
+
+When writing the current-node plan, include the PM-owned checklist that should
+replace the host visible current-node section. Controller may only sync this
+projection from `display_plan.json`; it may not add or simplify checklist
+items itself.

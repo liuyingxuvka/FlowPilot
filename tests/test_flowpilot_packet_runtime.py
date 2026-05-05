@@ -103,6 +103,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(ledger["packets"][0]["controller_relay_signature_required"])
         self.assertTrue(ledger["packets"][0]["recipient_must_verify_controller_relay_before_body_open"])
         self.assertFalse(ledger["controller_boundary"]["controller_may_read_packet_body"])
+        self.assertTrue(ledger["controller_boundary"]["role_output_body_must_be_file_backed"])
+        self.assertTrue(ledger["controller_boundary"]["role_chat_response_must_be_envelope_only"])
+        self.assertTrue(ledger["controller_boundary"]["role_chat_body_content_contaminates_mail"])
 
     def test_controller_handoff_contains_envelope_only_not_body_content(self) -> None:
         root = self.make_project()
@@ -117,6 +120,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
         self.assertIn("packet_envelope_only", handoff_text)
         self.assertIn("packet_body.md", handoff_text)
+        self.assertIn("This mail is for `worker_a` only", handoff_text)
+        self.assertFalse(handoff["chat_response_body_allowed"])
         self.assertNotIn(body_text, handoff_text)
         self.assertIn("read_packet_body", handoff["controller_forbidden_actions"])
         self.assertTrue(handoff["controller_relay_signature_required"])
@@ -129,9 +134,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
 
         envelope = self.relay_packet(root, envelope)
+        self.assertIn("This mail is for `worker_a` only", envelope["controller_relay"]["recipient_role_reminder"])
+        self.assertFalse(envelope["controller_relay"]["chat_response_body_allowed"])
         body = packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
         self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, body)
         self.assertIn("recipient_role: worker_a", body)
+        self.assertIn("mail_only_reminder", body)
         self.assertIn("worker-only instructions", body)
         with self.assertRaises(packet_runtime.PacketRuntimeError):
             packet_runtime.read_packet_body_for_role(root, envelope, role="controller")
@@ -174,6 +182,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         result_body = result_body_path.read_text(encoding="utf-8")
         self.assertIn(packet_runtime.RESULT_IDENTITY_MARKER, result_body)
         self.assertIn("completed_by_role: worker_a", result_body)
+        self.assertIn("chat response must contain envelope metadata only", result_body)
         self.assertIn("RESULT_BODY_SECRET", result_body)
         self.assertEqual(result["result_body_hash"], hashlib.sha256(result_body_path.read_bytes()).hexdigest())
         self.assertTrue(audit["passed"])

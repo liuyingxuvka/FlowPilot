@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 575470,
+    "edge_count": 575472,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -184,6 +184,7 @@
       "pm_review_release_order_written",
       "pm_runway_synced_to_visible_plan",
       "pm_start_gate_opened_from_fact_report",
+      "preflow_visible_plan_cleared",
       "prior_work_import_packet_written",
       "process_flowguard_officer_spawned_fresh_for_task",
       "product_architecture_officer_adversarial_probe_done",
@@ -286,29 +287,29 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 550011,
+    "state_count": 550013,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "loop": {
-    "edge_count": 575470,
+    "edge_count": 575472,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 550011,
+    "state_count": 550013,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 575470,
+    "edge_count": 575472,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 550011,
+    "state_count": 550013,
     "status": "OK",
     "success_state_count": 4368
   }
