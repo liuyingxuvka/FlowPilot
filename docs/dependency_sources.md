@@ -17,6 +17,7 @@ state.
 | --- | --- |
 | `model-first-function-flow` | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
 | `grill-me` | `https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me` |
+| `autonomous-concept-ui-redesign` | `https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign` |
 | `frontend-design` | `https://github.com/anthropics/skills/tree/main/skills/frontend-design` |
 | `design-iterator` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator` |
 | `design-implementation-reviewer` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-implementation-reviewer` |
