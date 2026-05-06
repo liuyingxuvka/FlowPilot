@@ -406,7 +406,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "flag": "reviewer_worker_result_card_delivered",
         "label": "reviewer_worker_result_review_card_delivered",
         "card_id": "reviewer.worker_result_review",
-        "requires_flag": "current_node_worker_result_returned",
+        "requires_flag": "current_node_result_relayed_to_reviewer",
         "to_role": "human_like_reviewer",
     },
     {
@@ -883,12 +883,12 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     },
     "current_node_reviewer_blocks_result": {
         "flag": "node_review_blocked",
-        "requires_flag": "current_node_result_relayed_to_reviewer",
+        "requires_flag": "reviewer_worker_result_card_delivered",
         "summary": "Reviewer blocked current-node result.",
     },
     "current_node_reviewer_passes_result": {
         "flag": "node_reviewer_passed_result",
-        "requires_flag": "current_node_result_relayed_to_reviewer",
+        "requires_flag": "reviewer_worker_result_card_delivered",
         "summary": "Reviewer passed current-node result.",
     },
     "pm_builds_parent_backward_targets": {
@@ -1656,6 +1656,45 @@ def _should_materialize_control_blocker(
     return False
 
 
+def _skill_observation_reminder(
+    message: str,
+    *,
+    event: str | None = None,
+    action_type: str | None = None,
+    category: str | None = None,
+) -> dict[str, Any]:
+    lowered = message.lower()
+    suggested_kind = "controller_compensation"
+    if "route" in lowered or "frontier" in lowered:
+        suggested_kind = "router_state_gap"
+    elif "ledger" in lowered:
+        suggested_kind = "ledger_gap"
+    elif "display_plan" in lowered or "visible plan" in lowered:
+        suggested_kind = "display_projection_gap"
+    elif "heartbeat" in lowered or "pause" in lowered or "resume" in lowered:
+        suggested_kind = "heartbeat_gap"
+    elif "schema" in lowered or "field" in lowered or "hash" in lowered or "path" in lowered:
+        suggested_kind = "schema_gap"
+    return {
+        "schema_version": "flowpilot.skill_observation_reminder.v1",
+        "should_consider_recording": True,
+        "reason": "router_control_plane_exception",
+        "originating_event": event,
+        "originating_action_type": action_type,
+        "handling_lane": category,
+        "suggested_kind": suggested_kind,
+        "summary": message,
+        "write_path": ".flowpilot/runs/<run_id>/flowpilot_skill_improvement_report.json",
+        "record_only_if": "This reflects a FlowPilot skill/protocol/router weakness, not ordinary project work.",
+        "do_not_include": [
+            "sealed packet bodies",
+            "sealed result bodies",
+            "private role reasoning",
+            "secrets",
+        ],
+    }
+
+
 def _control_blocker_policy(category: str, *, responsible_role: str, event: str | None) -> dict[str, Any]:
     if category == "control_plane_reissue":
         target_role = responsible_role
@@ -1770,6 +1809,12 @@ def _write_control_blocker(
         "controller_history_is_evidence": False,
         "delivery_status": "pending",
         "payload_envelope_public_view": _control_payload_public_view(payload),
+        "skill_observation_reminder": _skill_observation_reminder(
+            error_message,
+            event=event,
+            action_type=action_type,
+            category=category,
+        ),
     }
     write_json(artifact_path, record)
     active = {
@@ -1848,6 +1893,7 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
                 "sealed_body_reads_allowed": False,
                 "controller_history_is_evidence": False,
                 "allowed_resolution_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS),
+                "skill_observation_reminder": record.get("skill_observation_reminder"),
             },
         )
     return make_action(
@@ -3733,19 +3779,53 @@ def _plan_item_status(raw_status: Any, *, active: bool = False) -> str:
     return "pending"
 
 
+def _frontier_completed_node_ids(run_root: Path) -> set[str]:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    completed = frontier.get("completed_nodes") if isinstance(frontier, dict) else []
+    return {str(node_id) for node_id in completed or []}
+
+
+def _route_item_status(
+    run_root: Path,
+    node_id: str,
+    *,
+    active_node_id: str | None,
+    raw_status: Any = None,
+) -> str:
+    if node_id in _frontier_completed_node_ids(run_root):
+        return "completed"
+    if active_node_id and node_id == active_node_id:
+        return "in_progress"
+    status = str(raw_status or "").lower()
+    if status in {"complete", "completed", "done", "passed"}:
+        return "completed"
+    return "pending"
+
+
 def _display_plan_projection(plan: dict[str, Any]) -> dict[str, Any]:
+    current_node_id = plan.get("current_node_id")
+
+    def _projected_status(item: dict[str, Any]) -> str:
+        item_id = str(item.get("id") or item.get("node_id") or "")
+        status = str(item.get("status") or "").lower()
+        if status in {"complete", "completed", "done", "passed"}:
+            return "completed"
+        if item_id == str(current_node_id or ""):
+            return "in_progress"
+        return "pending"
+
     return {
         "title": str(plan.get("title") or "FlowPilot"),
         "items": [
             {
                 "id": str(item.get("id") or item.get("node_id") or f"item-{index:03d}"),
                 "label": str(item.get("label") or item.get("title") or item.get("id") or f"Item {index}"),
-                "status": _plan_item_status(item.get("status")),
+                "status": _projected_status(item),
             }
             for index, item in enumerate(plan.get("items") or [], start=1)
             if isinstance(item, dict)
         ],
-        "current_node_id": plan.get("current_node_id"),
+        "current_node_id": current_node_id,
         "current_node": plan.get("current_node") if isinstance(plan.get("current_node"), dict) else None,
     }
 
@@ -4021,7 +4101,12 @@ def _write_display_plan_from_route(
             {
                 "id": node_id,
                 "label": str(node.get("title") or node.get("label") or node_id),
-                "status": _plan_item_status(node.get("status"), active=node_id == active_node_id),
+                "status": _route_item_status(
+                    run_root,
+                    node_id,
+                    active_node_id=active_node_id,
+                    raw_status=node.get("status"),
+                ),
             }
         )
     if not items:
@@ -4062,7 +4147,12 @@ def _update_display_plan_current_node(
     for item in items:
         if isinstance(item, dict):
             item_id = str(item.get("id") or item.get("node_id") or "")
-            item["status"] = "in_progress" if item_id == node_id else _plan_item_status(item.get("status"))
+            item["status"] = _route_item_status(
+                run_root,
+                item_id,
+                active_node_id=node_id,
+                raw_status=item.get("status"),
+            )
     plan.update(
         {
             "schema_version": DISPLAY_PLAN_SCHEMA,
@@ -4108,7 +4198,12 @@ def _write_display_plan_from_pm_payload(
             {
                 "id": str(item_id),
                 "label": str(item.get("label") or item.get("title") or item_id),
-                "status": _plan_item_status(item.get("status")),
+                "status": _route_item_status(
+                    run_root,
+                    str(item_id),
+                    active_node_id=str(raw_plan.get("current_node_id") or ""),
+                    raw_status=item.get("status"),
+                ),
             }
         )
     plan = {
@@ -5940,6 +6035,17 @@ def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state:
     write_json(run_root / "execution_frontier.json", frontier)
     if next_node_id:
         _reset_flags(run_state, CURRENT_NODE_CYCLE_FLAGS)
+    if route:
+        _write_display_plan_from_route(
+            project_root,
+            run_root,
+            run_state,
+            route_id=str(frontier["active_route_id"]),
+            route_version=int(frontier.get("route_version") or 0),
+            route_payload=route,
+            active_node_id=next_node_id,
+            source_event="pm_completes_current_node_from_reviewed_result",
+        )
 
 
 def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -6482,7 +6588,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
     if not flags.get("current_node_packet_relayed"):
         payload = _latest_event_payload(run_state, "pm_registers_current_node_packet")
         envelope_path = _packet_envelope_path(project_root, run_state, payload)
-        envelope = read_json(envelope_path)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="check_packet_ledger",
@@ -6511,7 +6617,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
     if flags.get("current_node_worker_result_returned") and not flags.get("current_node_result_relayed_to_reviewer"):
         payload = _latest_event_payload(run_state, "worker_current_node_result_returned")
         result_path = _result_envelope_path(project_root, run_state, payload)
-        result = read_json(result_path)
+        result = packet_runtime.load_envelope(project_root, result_path)
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="check_packet_ledger",
@@ -7271,6 +7377,107 @@ def write_role_output_envelope(
     return envelope
 
 
+def _artifact_issue(field: str, message: str, repair_owner: str = "project_manager") -> dict[str, str]:
+    return {"field": field, "message": message, "repair_owner": repair_owner}
+
+
+def _validate_hash_if_present(project_root: Path, payload: dict[str, Any], path_key: str, hash_key: str) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    raw_path = payload.get(path_key)
+    raw_hash = payload.get(hash_key)
+    if not raw_path:
+        issues.append(_artifact_issue(path_key, "missing required path field", "artifact_author"))
+        return issues
+    path = resolve_project_path(project_root, str(raw_path))
+    if not path.exists():
+        issues.append(_artifact_issue(path_key, f"path does not exist: {raw_path}", "artifact_author"))
+        return issues
+    if not raw_hash:
+        issues.append(_artifact_issue(hash_key, "missing required sha256 hash field", "artifact_author"))
+        return issues
+    actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    if actual != str(raw_hash):
+        issues.append(_artifact_issue(hash_key, "hash does not match file content", "artifact_author"))
+    return issues
+
+
+def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str) -> dict[str, Any]:
+    path = resolve_project_path(project_root, artifact_path)
+    payload = read_json(path)
+    issues: list[dict[str, str]] = []
+    if artifact_type == "node_acceptance_plan":
+        required_top = ("schema_version", "run_id", "route_id", "route_version", "node_id", "node_requirements", "experiment_plan", "high_standard_recheck", "prior_path_context_review")
+        for field in required_top:
+            if field not in payload or payload.get(field) in (None, "", []):
+                issues.append(_artifact_issue(field, "missing required field", "project_manager"))
+        high_standard = payload.get("high_standard_recheck") if isinstance(payload.get("high_standard_recheck"), dict) else {}
+        for field in (
+            "ideal_outcome",
+            "unacceptable_outcomes",
+            "higher_standard_opportunities",
+            "semantic_downgrade_risks",
+            "decision",
+            "why_current_plan_meets_highest_reasonable_standard",
+        ):
+            if field not in high_standard or high_standard.get(field) in (None, "", []):
+                issues.append(_artifact_issue(f"high_standard_recheck.{field}", "missing required field", "project_manager"))
+        prior = payload.get("prior_path_context_review") if isinstance(payload.get("prior_path_context_review"), dict) else {}
+        for field in (
+            "reviewed",
+            "source_paths",
+            "completed_nodes_considered",
+            "superseded_nodes_considered",
+            "stale_evidence_considered",
+            "prior_blocks_or_experiments_considered",
+            "impact_on_decision",
+        ):
+            if field not in prior:
+                issues.append(_artifact_issue(f"prior_path_context_review.{field}", "missing required field", "project_manager"))
+    elif artifact_type == "packet_envelope":
+        envelope = packet_runtime.normalize_envelope_aliases(payload)
+        for field in ("schema_version", "packet_id", "from_role", "to_role", "node_id", "body_path", "body_hash", "body_visibility"):
+            if field not in envelope or envelope.get(field) in (None, ""):
+                issues.append(_artifact_issue(field, "missing required packet envelope field", str(envelope.get("from_role") or "project_manager")))
+        if envelope.get("body_visibility") != packet_runtime.SEALED_BODY_VISIBILITY:
+            issues.append(_artifact_issue("body_visibility", "packet body must stay sealed to target role", str(envelope.get("from_role") or "project_manager")))
+        issues.extend(_validate_hash_if_present(project_root, envelope, "body_path", "body_hash"))
+    elif artifact_type == "result_envelope":
+        envelope = packet_runtime.normalize_envelope_aliases(payload)
+        for field in ("schema_version", "packet_id", "completed_by_role", "result_body_path", "result_body_hash", "next_recipient", "body_visibility"):
+            if field not in envelope or envelope.get(field) in (None, ""):
+                issues.append(_artifact_issue(field, "missing required result envelope field", str(envelope.get("completed_by_role") or "worker")))
+        if envelope.get("completed_by_role") == "controller":
+            issues.append(_artifact_issue("completed_by_role", "Controller cannot author current-node results", "worker"))
+        if envelope.get("body_visibility") != packet_runtime.SEALED_BODY_VISIBILITY:
+            issues.append(_artifact_issue("body_visibility", "result body must stay sealed to reviewer/PM recipient", str(envelope.get("completed_by_role") or "worker")))
+        issues.extend(_validate_hash_if_present(project_root, envelope, "result_body_path", "result_body_hash"))
+    elif artifact_type == "role_output_envelope":
+        path_keys = ("body_path", "report_path", "decision_path", "result_body_path", "memo_path", "architecture_path", "contract_path", "manifest_path", "route_path", "draft_path", "plan_path", "package_path", "ledger_path")
+        found = False
+        for path_key in path_keys:
+            if payload.get(path_key):
+                hash_key = path_key[:-5] + "_hash" if path_key.endswith("_path") else f"{path_key}_hash"
+                found = True
+                if payload.get(hash_key):
+                    issues.extend(_validate_hash_if_present(project_root, payload, path_key, hash_key))
+        if not found:
+            issues.append(_artifact_issue("path", "role output envelope must include a known artifact path field", str(payload.get("from_role") or "role")))
+        if not payload.get("from_role"):
+            issues.append(_artifact_issue("from_role", "missing producing role", "role"))
+        if not payload.get("to_role"):
+            issues.append(_artifact_issue("to_role", "missing recipient role", "role"))
+    else:
+        raise RouterError(f"unsupported artifact validation type: {artifact_type}")
+    return {
+        "ok": not issues,
+        "artifact_type": artifact_type,
+        "artifact_path": project_relative(project_root, path),
+        "issue_count": len(issues),
+        "errors": issues,
+        "next_action": None if not issues else f"repair_{artifact_type}",
+    }
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="FlowPilot prompt-isolated router.")
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
@@ -7297,6 +7504,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     envelope_parser.add_argument("--from-role", default="")
     envelope_parser.add_argument("--to-role", default="controller")
     envelope_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    validate_parser = sub.add_parser("validate-artifact", help="Validate a FlowPilot artifact before or during record-event")
+    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "packet_envelope", "result_envelope", "role_output_envelope"])
+    validate_parser.add_argument("--path", required=True)
+    validate_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     state_parser = sub.add_parser("state", help="Print bootstrap and current run router state")
     state_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     return parser.parse_args(argv)
@@ -7327,6 +7538,8 @@ def main(argv: list[str] | None = None) -> int:
                 from_role=args.from_role or None,
                 to_role=args.to_role,
             )
+        elif args.command == "validate-artifact":
+            result = validate_artifact(root, args.type, args.path)
         elif args.command == "state":
             bootstrap = load_bootstrap_state(root, create_if_missing=False)
             run_state, run_root = load_run_state(root, bootstrap)
@@ -7353,6 +7566,14 @@ def main(argv: list[str] | None = None) -> int:
             error["blocker_artifact_path"] = control_blocker.get("blocker_artifact_path")
             error["handling_lane"] = control_blocker.get("handling_lane")
             error["controller_instruction"] = control_blocker.get("controller_instruction")
+            if isinstance(control_blocker.get("skill_observation_reminder"), dict):
+                error["skill_observation_reminder"] = control_blocker["skill_observation_reminder"]
+        if "skill_observation_reminder" not in error and args.command in {"apply", "record-event"}:
+            error["skill_observation_reminder"] = _skill_observation_reminder(
+                str(exc),
+                event=getattr(args, "event", None),
+                action_type=getattr(args, "action_type", None),
+            )
         print(json.dumps(error, indent=2, sort_keys=True))
         return 2
 

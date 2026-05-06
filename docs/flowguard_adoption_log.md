@@ -992,6 +992,110 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
+## flowpilot-runtime-protocol-hardening-20260506 - Harden router/result-review flow, artifact validation, display projection, and live skill issue reminders.
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved a 13-point FlowPilot skill upgrade plan after observed run defects and required FlowGuard simulation before production edits.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-06
+
+### Risk Intent
+- Prevent reviewer pass/block decisions before the worker-result review card is actually delivered.
+- Let safe packet/result envelope aliases pass through one normalized runtime path instead of causing avoidable human reissue loops.
+- Keep completed route nodes visually completed when the frontier advances to the next active node.
+- Add a lightweight, router-triggered reminder for Controller to record current-run FlowPilot skill issues without adding repeated fixed checklist noise.
+- Give PM and worker roles a simple `validate-artifact` preflight so missing fields are found together before returning envelopes or node plans.
+
+### Implementation Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/assets/packet_runtime.py`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md`
+- `skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md`
+- `templates/flowpilot/flowpilot_skill_improvement_observation.template.json`
+- `simulations/flowpilot_router_loop_model.py`
+- `simulations/run_flowpilot_router_loop_checks.py`
+- `simulations/defect_governance_model.py`
+- `simulations/run_defect_governance_checks.py`
+- `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: schema `1.0`.
+- OK: `python -m py_compile skills\flowpilot\assets\packet_runtime.py skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_router_loop_model.py simulations\run_flowpilot_router_loop_checks.py simulations\defect_governance_model.py simulations\run_defect_governance_checks.py tests\test_flowpilot_router_runtime.py`.
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`: no invariant failures, missing labels, stuck states, or nonterminating components.
+- OK: `python simulations\run_defect_governance_checks.py`: new protocol-anomaly reminder hazard detected as expected and safe graph passed.
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k "current_node or display_plan or node_acceptance or control_blocker or validate_artifact"`: 10 passed.
+- OK: `python -m pytest tests\test_flowpilot_barrier_bundle.py tests\test_flowpilot_card_instruction_coverage.py tests\test_flowpilot_router_runtime.py`: 62 passed.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`: installed FlowPilot skill source digest matched repository digest.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- Result-review routing now requires the reviewer worker-result review card after result relay and before reviewer pass/block events.
+- Packet/result envelope aliases are normalized centrally in `packet_runtime.py`, including `packet_body_path`, `packet_body_hash`, `body_path`, `body_hash`, `to_role`, and `next_holder`.
+- Display-plan projection now gives completed node status priority over active-node fallback, so a finished nonterminal node does not remain `in_progress` when the frontier advances.
+- Router control blockers now include `skill_observation_reminder` metadata, and Controller instructions tell it to record a skill issue only when the run exposed a FlowPilot protocol/card/router weakness.
+- `validate-artifact` reports missing node-acceptance, packet-envelope, result-envelope, and role-output envelope fields together instead of forcing one manual repair loop per missing field.
+
+### Counterexamples
+- The router-loop model now rejects reviewer decisions without a delivered worker-result review card.
+- The defect-governance model now rejects protocol anomalies reaching pause or completion without a skill-observation reminder.
+
+### Friction Points
+- During parallel work, previously tested patches disappeared from the tracked diff and had to be reapplied. Future long FlowPilot skill edits should explicitly verify `git diff` and source freshness before install sync, not only rely on earlier command success.
+- Existing unrelated worktree changes were present in `.gitignore`, `scripts/smoke_autopilot.py`, `simulations/run_meta_checks.py`, `simulations/run_capability_checks.py`, and an untracked FlowGuard proof test; this task did not revert or overwrite them.
+
+### Skipped Steps
+- No UI implementation, release, remote push, or publication action was taken.
+- Production conformance replay remains skipped for the abstract router-loop model because no production replay adapter exists in the current allowed scope.
+
+### Next Actions
+- Keep the router-triggered reminder lightweight; do not add a fixed repeated skill-issue checklist unless real runs show missed observations after this change.
+- Add a future dedicated coordination check if parallel agents continue to make tested diffs disappear between validation and install sync.
+
+
+## flowpilot-slow-model-proof-cache-20260506 - Add proof-backed fast reuse for slow FlowGuard meta/capability checks
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to speed up FlowPilot without lowering model quality by avoiding repeated full meta/capability checks when the model inputs and results have not changed.
+- Status: completed_installed
+- Skill decision: used_flowguard
+- Date: 2026-05-06
+
+### Risk Intent
+- Preserve the existing full FlowGuard checks as the default and for forced validation.
+- Allow `--fast` reuse only when the runner file, model file, FlowGuard schema version, and result file match a successful proof.
+- Keep proof files local runtime artifacts rather than tracked source files.
+
+### Implementation Files
+- `simulations/run_meta_checks.py`
+- `simulations/run_capability_checks.py`
+- `scripts/smoke_autopilot.py`
+- `tests/test_flowguard_result_proof.py`
+- `.gitignore`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: `1.0`
+- OK: `python -m py_compile simulations\run_meta_checks.py simulations\run_capability_checks.py scripts\smoke_autopilot.py tests\test_flowguard_result_proof.py`
+- OK: `python -m unittest tests.test_flowguard_result_proof`
+- OK by background subagent: `python simulations\run_meta_checks.py --force`: `598029` states, `618200` edges, progress OK, loop/stuck OK.
+- OK by background subagent: `python simulations\run_capability_checks.py --force`: `557123` states, `582582` edges, progress OK, loop/stuck OK.
+- OK: `python scripts\smoke_autopilot.py --fast`: reused both proof files.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The optimization does not skip first validation. It only reuses a result after a successful full run has written a matching proof.
+- Any change to the model file, runner file, FlowGuard schema version, or result file invalidates the proof and returns to full validation unless another proof is generated.
+
+### Skipped Steps
+- No release, remote push, or publication action was taken.
+
+
 ## flowpilot-startup-banner-action-chat-instruction-20260506 - Put the banner chat-display instruction directly in the router action.
 
 - Project: FlowGuardProjectAutopilot_20260430

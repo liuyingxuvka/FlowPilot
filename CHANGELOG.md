@@ -2,6 +2,41 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.4.0 - 2026-05-06
+
+### Added
+
+- Added router artifact validation for node acceptance plans, packet
+  envelopes, result envelopes, and role-output envelopes so PM and worker roles
+  can repair missing fields in one pass before returning artifacts.
+- Added controller-visible skill-observation reminders on router control
+  blockers and router errors, with expanded observation categories for schema,
+  router-state, ledger, heartbeat, display-projection, and controller
+  compensation gaps.
+- Added proof-backed `--fast` reuse for the slow FlowGuard meta and capability
+  checks. Proof reuse is valid only when the model file, runner file,
+  FlowGuard schema version, and result file still match a successful proof.
+- Added focused tests for proof freshness, artifact validation, envelope alias
+  handling, reviewer result-card gating, and display-plan advancement.
+
+### Changed
+
+- Tightened current-node review flow so reviewer pass/block decisions require
+  the worker-result review card after the worker result is relayed to the
+  reviewer.
+- Normalized safe packet/result envelope aliases in the packet runtime,
+  including `packet_body_path`, `packet_body_hash`, `body_path`, `body_hash`,
+  `to_role`, and `next_holder`.
+- Updated display-plan projection so completed nodes stay completed when the
+  frontier advances to the next active node.
+- Updated smoke checks to support proof-backed fast mode without changing the
+  default full validation path.
+
+### Fixed
+
+- Prevented duplicated local background result snapshots from being published
+  by ignoring `simulations/*.background_latest.json`.
+
 ## 0.3.1 - 2026-05-06
 
 ### Fixed

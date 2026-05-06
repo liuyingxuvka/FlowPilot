@@ -80,3 +80,20 @@ the packet ledger.
 If the next step is unclear, return to the router. If a packet or card is
 missing, contaminated, addressed to the wrong role, or lacks relay evidence,
 stop packet flow and ask PM for a corrected decision.
+
+## Skill-Observation Reminders
+
+When a router action, router error, or control blocker includes
+`skill_observation_reminder`, treat it as a controller-visible reminder to
+record a current-run FlowPilot skill issue if this run exposed one. Record the
+observation in the run's skill-improvement observation area using the
+`flowpilot_skill_improvement_observation` template. Keep it short, current-run
+specific, and free of sealed packet/result body content.
+
+Also record an observation when Controller has to compensate for a FlowPilot
+protocol weakness during the run, such as reissuing a mechanically valid but
+ambiguous envelope, recovering from relay/ledger order ambiguity, correcting a
+display-plan projection mismatch, or working around missing router guidance.
+Do not record ordinary project defects as skill observations unless the issue
+is caused by FlowPilot's cards, router state, templates, ledgers, heartbeat, or
+automation behavior.

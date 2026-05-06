@@ -33,6 +33,7 @@ REQUIRED_LABELS = (
     "worker_result_returned_to_packet_ledger",
     "worker_result_ledger_checked_before_reviewer_relay",
     "worker_result_routed_to_reviewer",
+    "reviewer_worker_result_review_card_delivered_after_result_relay",
     "reviewer_passes_current_node_result",
     "reviewer_blocks_current_node_result",
     "controller_refreshes_route_history_context_for_repair_or_mutation",
@@ -90,6 +91,8 @@ HAZARD_EXPECTED_FAILURES = {
     "packet_registered_before_acceptance_plan_review": "current-node packet registered before PM high-standard gate and reviewed node acceptance plan",
     "worker_dispatched_before_reviewer_dispatch": "worker dispatched before reviewer dispatch",
     "reviewer_pass_without_routed_worker_result": "reviewer decided before worker result was routed to reviewer",
+    "reviewer_result_card_before_result_relay": "reviewer result-review card delivered before worker result relay",
+    "reviewer_decision_without_result_review_card": "reviewer decided before result-review card delivery",
     "worker_result_routed_without_ledger_check": "worker result routed before result was returned and packet-ledger checked",
     "pm_completion_without_reviewer_pass": "PM completed current node before reviewer pass",
     "repair_packet_without_reviewer_block": "repair packet registered before reviewer block",
@@ -160,6 +163,7 @@ def _state_id(state: model.State) -> str:
         f"{state.worker_result_identity_boundary_present},"
         f"{state.worker_result_ledger_checked},"
         f"{state.worker_result_routed_to_reviewer}|"
+        f"review_card={state.reviewer_worker_result_card_delivered}|"
         f"review={state.reviewer_decision},block_seen={state.reviewer_block_seen}|"
         f"repair={state.repair_packet_registered},"
         f"{state.repair_dispatch_allowed},"

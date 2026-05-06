@@ -28,4 +28,11 @@ Write the full result only to the result body file and return only the result
 envelope to Controller. Do not include commands run, files changed, findings,
 blockers, screenshots, or other result-body content in chat.
 
+Before returning a result envelope, verify it includes `completed_by_role:
+worker_a`, `result_body_path`, `result_body_hash`, `next_recipient` (or the
+router-compatible `next_holder` alias), and `body_visibility:
+sealed_target_role_only`. If the router-provided `validate-artifact` command is
+available, run it against the result envelope and fix all reported envelope
+fields before returning. The chat response to Controller stays envelope-only.
+
 Do not approve gates, mutate routes, close nodes, or claim completion.

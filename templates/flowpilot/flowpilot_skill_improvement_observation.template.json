@@ -8,7 +8,7 @@
   "related_defect_id": "<defect-id-or-null>",
   "recorded_at": "<iso-8601-timestamp>",
   "reported_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|controller>",
-  "observation_kind": "<protocol_ambiguity|template_gap|script_or_tooling_gap|model_gap|code_pointer_unclear|review_standard_weak|automation_friction|ui_or_cockpit_gap|other>",
+  "observation_kind": "<protocol_ambiguity|schema_gap|router_state_gap|repair_lane_gap|template_gap|role_prompt_gap|script_or_tooling_gap|model_gap|ledger_gap|heartbeat_gap|display_projection_gap|code_pointer_unclear|review_standard_weak|automation_friction|automation_opportunity|ui_or_cockpit_gap|controller_compensation|other>",
   "summary": "<short description of the FlowPilot skill issue or improvement opportunity>",
   "observed_in_current_run": "<what happened in this run>",
   "temporary_compensation_used": "<how this run continued or compensated, or null>",

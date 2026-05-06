@@ -30,6 +30,8 @@ REQUIRED_LABELS = (
     "fixture_evidence_disclosed_separately",
     "flowpilot_skill_issue_observed",
     "skill_issue_live_report_updated",
+    "controller_protocol_anomaly_observed",
+    "skill_observation_reminder_emitted",
     "pause_requested",
     "heartbeat_lifecycle_reconciled_for_pause",
     "pause_snapshot_written",

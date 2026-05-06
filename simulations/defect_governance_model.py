@@ -33,6 +33,8 @@ class State:
     fixture_evidence_disclosed: bool = False
     flowpilot_skill_issue_observed: bool = False
     skill_issue_live_report_updated: bool = False
+    controller_protocol_anomaly_observed: bool = False
+    skill_observation_reminder_emitted: bool = False
     pause_requested: bool = False
     heartbeat_reconciled: bool = False
     pause_snapshot_written: bool = False
@@ -154,6 +156,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, skill_issue_live_report_updated=True),
         )
         return
+    if not state.controller_protocol_anomaly_observed:
+        yield Transition(
+            "controller_protocol_anomaly_observed",
+            replace(state, controller_protocol_anomaly_observed=True),
+        )
+        return
+    if state.controller_protocol_anomaly_observed and not state.skill_observation_reminder_emitted:
+        yield Transition(
+            "skill_observation_reminder_emitted",
+            replace(state, skill_observation_reminder_emitted=True),
+        )
+        return
     if not state.pause_requested:
         yield Transition("pause_requested", replace(state, pause_requested=True))
         return
@@ -210,6 +224,9 @@ def invariant_failures(state: State) -> list[str]:
     if state.flowpilot_skill_issue_observed and not state.skill_issue_live_report_updated:
         if state.pause_snapshot_written or state.terminal_completion_allowed:
             failures.append("FlowPilot skill issue was not written to live report before pause or completion")
+    if state.controller_protocol_anomaly_observed and not state.skill_observation_reminder_emitted:
+        if state.pause_snapshot_written or state.terminal_completion_allowed:
+            failures.append("controller protocol anomaly reached pause or completion without skill-observation reminder")
     if state.pause_requested and state.pause_snapshot_written and not state.heartbeat_reconciled:
         failures.append("pause snapshot was written before heartbeat lifecycle reconciliation")
     if state.pause_requested and state.terminal_completion_allowed and not state.pause_snapshot_written:
@@ -268,5 +285,17 @@ def hazard_states() -> dict[str, State]:
             heartbeat_reconciled=True,
             terminal_completion_started=True,
             terminal_completion_allowed=True,
+        ),
+        "protocol_anomaly_without_reminder": State(
+            run_started=True,
+            defect_ledger_initialized=True,
+            evidence_ledger_initialized=True,
+            skill_improvement_live_report_initialized=True,
+            flowpilot_skill_issue_observed=True,
+            skill_issue_live_report_updated=True,
+            controller_protocol_anomaly_observed=True,
+            pause_requested=True,
+            heartbeat_reconciled=True,
+            pause_snapshot_written=True,
         ),
     }

@@ -13,11 +13,16 @@ Review a worker result before PM may use it.
 Check:
 
 - packet envelope and result envelope exist;
-- Controller relay signatures are present and valid;
-- body hashes match;
-- result author role matches packet target role;
+- router or packet-runtime validation has accepted required envelope fields,
+  Controller relay signatures, body hashes, result author role, and packet
+  target role;
 - no Controller-origin project evidence closes the gate;
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;
 - output satisfies packet acceptance slice.
 
 Return pass, needs repair, needs more material, or invalid role origin.
+If validation was already performed by the router or packet runtime, do not
+redo mechanical envelope parsing by hand. Focus on the reviewed result's
+quality, acceptance-slice fit, freshness, role origin, and contamination risk.
+When blocking, return only a controller-visible envelope and a safe summary
+category. Keep sealed packet/result body details out of chat.

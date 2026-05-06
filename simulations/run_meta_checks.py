@@ -2,17 +2,76 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 from collections import deque
+from datetime import datetime, timezone
 from pathlib import Path
 
+import flowguard
 import meta_model as model
 
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "results.json"
+PROOF_PATH = ROOT / "results.proof.json"
 GRAPH_STATE_LIMIT = 900_000
 CHECK_STATE_LIMIT = 900_000
+PROOF_SCHEMA = 1
+
+
+def _sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def _file_sha256(path: Path) -> str:
+    return _sha256_bytes(path.read_bytes())
+
+
+def _current_input_fingerprint() -> str:
+    payload = {
+        "flowguard_schema_version": flowguard.SCHEMA_VERSION,
+        "model": _file_sha256(ROOT / "meta_model.py"),
+        "runner": _file_sha256(Path(__file__).resolve()),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return _sha256_bytes(encoded)
+
+
+def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
+    if not PROOF_PATH.exists():
+        return False, "proof missing"
+    if not RESULTS_PATH.exists():
+        return False, "results missing"
+    try:
+        proof = json.loads(PROOF_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return False, "proof is not valid JSON"
+
+    if proof.get("schema") != PROOF_SCHEMA:
+        return False, "proof schema changed"
+    if proof.get("check") != "meta":
+        return False, "proof check changed"
+    if proof.get("ok") is not True:
+        return False, "previous proof was not successful"
+    if proof.get("input_fingerprint") != input_fingerprint:
+        return False, "input fingerprint changed"
+    if proof.get("result_fingerprint") != _file_sha256(RESULTS_PATH):
+        return False, "result fingerprint changed"
+    return True, "valid proof"
+
+
+def _write_proof(*, ok: bool, input_fingerprint: str) -> None:
+    payload = {
+        "schema": PROOF_SCHEMA,
+        "check": "meta",
+        "ok": ok,
+        "input_fingerprint": input_fingerprint,
+        "result_fingerprint": _file_sha256(RESULTS_PATH),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    PROOF_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 REQUIRED_LABELS = (
@@ -718,11 +777,25 @@ def _check_loops(graph: dict) -> dict:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fast", action="store_true", help="reuse a valid result proof when possible")
+    parser.add_argument("--force", action="store_true", help="ignore any existing proof and rerun")
+    args = parser.parse_args(argv)
+
+    input_fingerprint = _current_input_fingerprint()
+    if args.fast and not args.force:
+        valid, reason = _valid_proof(input_fingerprint)
+        if valid:
+            print(f"FlowGuard meta proof reused: {PROOF_PATH}")
+            return 0
+        print(f"FlowGuard meta proof not reused: {reason}")
+
     graph = _build_reachable_graph(max_states=GRAPH_STATE_LIMIT)
     graph_report = _graph_report_from_graph(graph)
     progress_report = _check_progress(graph)
     loop_report = _check_loops(graph)
+    ok = graph_report["ok"] and progress_report["ok"] and loop_report["ok"]
 
     payload = {
         "graph": graph_report,
@@ -730,6 +803,7 @@ def main() -> int:
         "loop": loop_report,
     }
     RESULTS_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    _write_proof(ok=ok, input_fingerprint=input_fingerprint)
 
     print("=== State Graph ===")
     print(json.dumps(graph_report, indent=2, sort_keys=True))
@@ -740,7 +814,7 @@ def main() -> int:
     print("=== Loop/Stuck Review ===")
     print(json.dumps(loop_report, indent=2, sort_keys=True))
 
-    return 0 if graph_report["ok"] and progress_report["ok"] and loop_report["ok"] else 1
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

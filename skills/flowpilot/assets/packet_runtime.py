@@ -271,6 +271,7 @@ def packet_paths(project_root: Path, packet_id: str, run_id: str | None = None) 
 
 
 def packet_paths_from_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
+    envelope = normalize_envelope_aliases(envelope)
     validate_packet_id(str(envelope["packet_id"]))
     packet_body = resolve_project_path(project_root, str(envelope["body_path"]))
     packet_dir = packet_body.parent
@@ -290,6 +291,7 @@ def packet_paths_from_envelope(project_root: Path, envelope: dict[str, Any]) -> 
 
 
 def packet_paths_from_result_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
+    envelope = normalize_envelope_aliases(envelope)
     validate_packet_id(str(envelope["packet_id"]))
     result_body = resolve_project_path(project_root, str(envelope["result_body_path"]))
     packet_dir = result_body.parent
@@ -309,6 +311,7 @@ def packet_paths_from_result_envelope(project_root: Path, envelope: dict[str, An
 
 
 def packet_paths_from_any_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
+    envelope = normalize_envelope_aliases(envelope)
     if "body_path" in envelope:
         return packet_paths_from_envelope(project_root, envelope)
     if "result_body_path" in envelope:
@@ -316,8 +319,54 @@ def packet_paths_from_any_envelope(project_root: Path, envelope: dict[str, Any])
     raise PacketRuntimeError("envelope must contain body_path or result_body_path")
 
 
+def normalize_envelope_aliases(envelope: dict[str, Any]) -> dict[str, Any]:
+    """Return a shallow-normalized packet/result envelope.
+
+    FlowPilot's canonical packet runtime uses `body_path`/`body_hash` for work
+    packets and `result_body_path`/`next_recipient` for results. Older or
+    hand-authored role envelopes sometimes use more explicit aliases. Normalize
+    those mechanical aliases here so the router can stay strict about role
+    authority without bouncing safe field-name mismatches back to humans.
+    """
+
+    normalized = dict(envelope)
+    schema = str(normalized.get("schema_version") or "")
+    is_result = (
+        schema == RESULT_ENVELOPE_SCHEMA
+        or "result_body_path" in normalized
+        or "completed_by_role" in normalized
+    )
+    if is_result:
+        if "result_body_path" not in normalized and normalized.get("body_path"):
+            normalized["result_body_path"] = normalized["body_path"]
+        if "result_body_hash" not in normalized and normalized.get("body_hash"):
+            normalized["result_body_hash"] = normalized["body_hash"]
+        if "next_recipient" not in normalized:
+            for key in ("next_holder", "to_role"):
+                if normalized.get(key):
+                    normalized["next_recipient"] = normalized[key]
+                    break
+        if "next_holder" not in normalized and normalized.get("next_recipient"):
+            normalized["next_holder"] = normalized["next_recipient"]
+        if "to_role" not in normalized and normalized.get("next_recipient"):
+            normalized["to_role"] = normalized["next_recipient"]
+        return normalized
+
+    if "body_path" not in normalized and normalized.get("packet_body_path"):
+        normalized["body_path"] = normalized["packet_body_path"]
+    if "body_hash" not in normalized and normalized.get("packet_body_hash"):
+        normalized["body_hash"] = normalized["packet_body_hash"]
+    if "packet_body_path" not in normalized and normalized.get("body_path"):
+        normalized["packet_body_path"] = normalized["body_path"]
+    if "packet_body_hash" not in normalized and normalized.get("body_hash"):
+        normalized["packet_body_hash"] = normalized["body_hash"]
+    if "next_holder" not in normalized and normalized.get("to_role"):
+        normalized["next_holder"] = normalized["to_role"]
+    return normalized
+
+
 def load_envelope(project_root: Path, envelope_path: str | Path) -> dict[str, Any]:
-    return read_json(resolve_project_path(project_root, str(envelope_path)))
+    return normalize_envelope_aliases(read_json(resolve_project_path(project_root, str(envelope_path))))
 
 
 def verify_body_hash(project_root: Path, body_path: str, expected_hash: str) -> bool:
@@ -526,6 +575,7 @@ def controller_relay_envelope(
     body_was_executed_by_controller: bool = False,
     private_role_to_role_delivery_detected: bool = False,
 ) -> dict[str, Any]:
+    envelope.update(normalize_envelope_aliases(envelope))
     source_role = received_from_role or envelope.get("from_role") or envelope.get("completed_by_role") or "unknown"
     target_role = relayed_to_role or envelope.get("to_role") or envelope.get("next_recipient") or "unknown"
     if envelope.get("controller_return_to_sender", {}).get("contaminated"):
@@ -937,6 +987,7 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
+    envelope.update(normalize_envelope_aliases(envelope))
     verify_controller_relay(envelope, recipient_role=role)
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
@@ -979,6 +1030,7 @@ def write_result(
     next_recipient: str,
     strict_role: bool = True,
 ) -> dict[str, Any]:
+    packet_envelope = normalize_envelope_aliases(packet_envelope)
     if strict_role and completed_by_role != packet_envelope.get("to_role"):
         raise PacketRuntimeError(
             f"completed_by_role {completed_by_role!r} does not match packet to_role {packet_envelope.get('to_role')!r}"
@@ -1072,6 +1124,7 @@ def write_result(
 
 
 def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any], *, role: str) -> str:
+    result_envelope.update(normalize_envelope_aliases(result_envelope))
     verify_controller_relay(result_envelope, recipient_role=role)
     allowed = {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
     if role not in allowed:
@@ -1112,6 +1165,8 @@ def validate_for_reviewer(
     result_envelope: dict[str, Any],
     agent_role_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
+    packet_envelope = normalize_envelope_aliases(packet_envelope)
+    result_envelope = normalize_envelope_aliases(result_envelope)
     blockers: list[str] = []
     packet_body_hash_matches = verify_body_hash(project_root, packet_envelope["body_path"], packet_envelope["body_hash"])
     result_body_hash_matches = verify_body_hash(

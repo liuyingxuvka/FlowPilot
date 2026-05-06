@@ -12,8 +12,9 @@ Risk intent brief:
   evidence closure, and segmented final backward replay.
 - Adversarial branches include packet registration before route activation,
   worker dispatch before reviewer dispatch, reviewer pass before result routing,
-  result relay before packet-ledger checks, officer packet relay without an
-  officer card, repair/recheck bypasses around the reviewer,
+  result relay before packet-ledger checks, reviewer result-review card before
+  result relay, officer packet relay without an officer card, repair/recheck
+  bypasses around the reviewer,
   route mutation without reviewer block or stale markers, PM completion before
   reviewer pass, final ledger without a current route scan/zero unresolved
   items/source-of-truth file, stale/unresolved evidence, pending generated
@@ -23,7 +24,8 @@ Risk intent brief:
 - Hard invariants: current-node packets require active route and fresh frontier;
   reviewer dispatch gates worker work; worker and officer results are
   packet-ledger checked before reviewer/PM relay; repair/recheck returns to the
-  reviewer before PM completion; mutation requires reviewer block and stale
+  reviewer before PM completion; reviewer result decisions require the
+  result-review system card after relay; mutation requires reviewer block and stale
   evidence/frontier markers; same-scope replay reruns after mutation;
   evidence/quality package and reviewer evidence quality pass precede final
   ledger source-of-truth generation; final ledger and segmented replay are
@@ -94,6 +96,7 @@ class State:
     worker_result_identity_boundary_present: bool = False
     worker_result_ledger_checked: bool = False
     worker_result_routed_to_reviewer: bool = False
+    reviewer_worker_result_card_delivered: bool = False
     reviewer_decision: str = "none"  # none | pass | block
     reviewer_block_seen: bool = False
     repair_packet_registered: bool = False
@@ -225,6 +228,7 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         worker_result_identity_boundary_present=False,
         worker_result_ledger_checked=False,
         worker_result_routed_to_reviewer=False,
+        reviewer_worker_result_card_delivered=False,
         reviewer_decision="none",
         repair_packet_registered=False,
         repair_dispatch_allowed=False,
@@ -484,6 +488,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 holder="reviewer",
                 worker_result_routed_to_reviewer=True,
             ),
+        )
+        return
+
+    if not state.reviewer_worker_result_card_delivered:
+        yield Transition(
+            "reviewer_worker_result_review_card_delivered_after_result_relay",
+            replace(state, holder="reviewer", reviewer_worker_result_card_delivered=True),
         )
         return
 
@@ -934,8 +945,12 @@ def invariant_failures(state: State) -> list[str]:
         state.worker_result_returned and state.worker_result_ledger_checked
     ):
         failures.append("worker result routed before result was returned and packet-ledger checked")
+    if state.reviewer_worker_result_card_delivered and not state.worker_result_routed_to_reviewer:
+        failures.append("reviewer result-review card delivered before worker result relay")
     if state.reviewer_decision in {"pass", "block"} and not state.worker_result_routed_to_reviewer:
         failures.append("reviewer decided before worker result was routed to reviewer")
+    if state.reviewer_decision in {"pass", "block"} and not state.reviewer_worker_result_card_delivered:
+        failures.append("reviewer decided before result-review card delivery")
     if state.reviewer_decision == "pass" and not state.worker_result_routed_to_reviewer:
         failures.append("reviewer pass recorded before routed worker result")
     if state.repair_packet_registered and not state.reviewer_block_seen:
@@ -1175,6 +1190,7 @@ def _active_packet_loop(**changes: object) -> State:
         worker_result_identity_boundary_present=True,
         worker_result_ledger_checked=True,
         worker_result_routed_to_reviewer=True,
+        reviewer_worker_result_card_delivered=True,
     )
     return replace(base, **changes)
 
@@ -1338,6 +1354,14 @@ def hazard_states() -> dict[str, State]:
         ),
         "reviewer_pass_without_routed_worker_result": _active_packet_loop(
             worker_result_routed_to_reviewer=False,
+            reviewer_decision="pass",
+        ),
+        "reviewer_result_card_before_result_relay": _active_packet_loop(
+            worker_result_routed_to_reviewer=False,
+            reviewer_worker_result_card_delivered=True,
+        ),
+        "reviewer_decision_without_result_review_card": _active_packet_loop(
+            reviewer_worker_result_card_delivered=False,
             reviewer_decision="pass",
         ),
         "worker_result_routed_without_ledger_check": _active_packet_loop(

@@ -2,6 +2,8 @@
 .flowpilot/
 .flowguard/
 .flowpilot_global_supervisor_last.json
+simulations/*.proof.json
+simulations/*.background_latest.json
 
 # Private/local knowledge records.
 kb/

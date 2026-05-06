@@ -872,6 +872,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": packet_id, "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
@@ -896,6 +897,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_id: str,
         completed_by_role: str = "worker_a",
         completed_by_agent_id: str = "agent-worker-a",
+        deliver_review_card: bool = True,
     ) -> tuple[Path, str, str]:
         run_root = self.boot_to_controller(root)
         self.complete_pre_route_gates(root)
@@ -928,7 +930,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": packet_id, "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
-        packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
+        if deliver_review_card:
+            self.deliver_expected_card(root, "reviewer.worker_result_review")
+            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         return run_root, packet_path, result_path
 
     def apply_until_action(self, root: Path, expected_action_type: str, max_steps: int = 12) -> dict:
@@ -1024,6 +1028,37 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         node_plan = read_json(run_root / "display_plan.json")
         self.assertEqual(node_plan["source_event"], "pm_writes_node_acceptance_plan")
         self.assertEqual(node_plan["current_node"]["checklist"][0]["id"], "node-001-req")
+
+    def test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "nodes": [
+                    {"node_id": "node-001", "title": "First node"},
+                    {"node_id": "node-002", "title": "Second node"},
+                ],
+                **self.prior_path_context_review(root, "Two-node route draft considered current route memory."),
+            },
+        )
+        self.complete_route_checks(root)
+        self.activate_route(root)
+
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-nonterminal")
+
+        display_plan = read_json(run_root / "display_plan.json")
+        statuses = {item["id"]: item["status"] for item in display_plan["items"]}
+        self.assertEqual(statuses["node-001"], "completed")
+        self.assertEqual(statuses["node-002"], "in_progress")
+        self.assertEqual(list(statuses.values()).count("in_progress"), 1)
 
     def test_reviewed_route_activation_uses_pm_draft_without_dummy_fallback(self) -> None:
         root = self.make_project()
@@ -2329,6 +2364,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-002", "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         relayed_result = read_json(root / result_path)
         packet_runtime.read_result_body_for_role(root, relayed_result, role="human_like_reviewer")
 
@@ -2362,6 +2398,116 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_final_ledger_and_terminal_replay(root)
         self.deliver_expected_card(root, "pm.closure")
 
+    def test_current_node_packet_and_result_accept_safe_envelope_aliases(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.deliver_current_node_cards(root)
+
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="node-packet-aliases",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="current node work",
+            metadata={"route_version": 1},
+        )
+        packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        packet_file = root / packet_path
+        packet_envelope = read_json(packet_file)
+        packet_envelope["packet_body_path"] = packet_envelope.pop("body_path")
+        packet_envelope["packet_body_hash"] = packet_envelope.pop("body_hash")
+        packet_file.write_text(json.dumps(packet_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-aliases", "packet_envelope_path": packet_path})
+        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
+        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
+        self.apply_until_action(root, "relay_current_node_packet")
+        relayed_packet = packet_runtime.load_envelope(root, packet_path)
+        self.assertIn("body_path", relayed_packet)
+        packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
+
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=relayed_packet,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-aliases",
+            result_body_text="reviewable result",
+            next_recipient="human_like_reviewer",
+        )
+        result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
+        result_file = root / result_path
+        result_envelope = read_json(result_file)
+        result_envelope["body_path"] = result_envelope.pop("result_body_path")
+        result_envelope["body_hash"] = result_envelope.pop("result_body_hash")
+        result_envelope["to_role"] = result_envelope.pop("next_recipient")
+        result_file.write_text(json.dumps(result_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-aliases", "result_envelope_path": result_path})
+        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
+        relayed_result = packet_runtime.load_envelope(root, result_path)
+        self.assertIn("result_body_path", relayed_result)
+        self.assertEqual(relayed_result["next_recipient"], "human_like_reviewer")
+        packet_runtime.read_result_body_for_role(root, relayed_result, role="human_like_reviewer")
+
+        router.record_external_event(
+            root,
+            "current_node_reviewer_passes_result",
+            self.role_report_envelope(
+                root,
+                "reviews/current_node_result_aliases",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": True,
+                    "agent_role_map": {"agent-worker-aliases": "worker_a"},
+                },
+            ),
+        )
+
+    def test_current_node_result_decision_requires_review_card_after_result_relay(self) -> None:
+        root = self.make_project()
+        _, _, result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-review-card-required",
+            deliver_review_card=False,
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "reviewer_worker_result_card_delivered"):
+            router.record_external_event(
+                root,
+                "current_node_reviewer_passes_result",
+                self.role_report_envelope(
+                    root,
+                    "reviews/current_node_result_before_card",
+                    {
+                        "reviewed_by_role": "human_like_reviewer",
+                        "passed": True,
+                        "agent_role_map": {"agent-worker-a": "worker_a"},
+                    },
+                ),
+            )
+        with self.assertRaisesRegex(router.RouterError, "reviewer_worker_result_card_delivered"):
+            router.record_external_event(root, "current_node_reviewer_blocks_result")
+
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
+        packet_runtime.read_result_body_for_role(root, packet_runtime.load_envelope(root, result_path), role="human_like_reviewer")
+        router.record_external_event(
+            root,
+            "current_node_reviewer_passes_result",
+            self.role_report_envelope(
+                root,
+                "reviews/current_node_result_after_card",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": True,
+                    "agent_role_map": {"agent-worker-a": "worker_a"},
+                },
+            ),
+        )
+
     def test_router_hard_rejection_returns_control_plane_reissue_action(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-control-reissue")
@@ -2389,6 +2535,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         saved = read_json(blocker_path)
         self.assertIn("same-role reissue", saved["controller_instruction"])
         self.assertFalse(saved["pm_decision_required"])
+        self.assertEqual(saved["skill_observation_reminder"]["suggested_kind"], "controller_compensation")
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
@@ -2397,6 +2544,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(action["next_step_contract"]["sealed_body_reads_allowed"])
         self.assertEqual(action["handling_lane"], "control_plane_reissue")
         self.assertIn("sealed", " ".join(action["controller_forbidden_actions"]))
+        self.assertTrue(action["skill_observation_reminder"]["should_consider_recording"])
         router.apply_action(root, "handle_control_blocker")
 
         delivered = read_json(blocker_path)
@@ -2644,6 +2792,39 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 },
             )
 
+    def test_validate_artifact_reports_node_acceptance_missing_fields_together(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        plan_path = root / ".flowpilot" / "partial_node_acceptance_plan.json"
+        plan_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.node_acceptance_plan.v1",
+                    "run_id": "run-test",
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "node_id": "node-001",
+                    "node_requirements": [{"requirement_id": "req-001"}],
+                    "experiment_plan": [],
+                    "high_standard_recheck": {"decision": "proceed"},
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        result = router.validate_artifact(root, "node_acceptance_plan", self.rel(root, plan_path))
+        fields = {issue["field"] for issue in result["errors"]}
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["next_action"], "repair_node_acceptance_plan")
+        self.assertIn("prior_path_context_review", fields)
+        self.assertIn("prior_path_context_review.source_paths", fields)
+        self.assertIn("high_standard_recheck.ideal_outcome", fields)
+        self.assertIn("high_standard_recheck.why_current_plan_meets_highest_reasonable_standard", fields)
+
     def test_evidence_quality_package_blocks_stale_and_missing_visual_evidence(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -2680,6 +2861,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-quality", "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
@@ -2796,6 +2978,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-003", "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(root, "current_node_reviewer_blocks_result")
         router.record_external_event(
@@ -2872,6 +3055,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "parent-node-packet", "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
@@ -2951,6 +3135,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "parent-node-noncontinue", "result_envelope_path": result_path})
         self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
