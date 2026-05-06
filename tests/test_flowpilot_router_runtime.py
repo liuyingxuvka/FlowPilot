@@ -127,6 +127,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             action = router.next_action(root)
         return action
 
+    def assert_payload_contract_mentions(self, contract: dict, *fields: str) -> None:
+        encoded = json.dumps(contract, sort_keys=True)
+        for field in fields:
+            self.assertIn(field, encoded)
+
     def payload_for_action(self, action: dict, payload: dict | None = None) -> dict:
         payload = dict(payload or {})
         if action.get("requires_user_dialog_display_confirmation"):
@@ -322,6 +327,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["controller_must_display_text_before_apply"])
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
         self.assertEqual(action["payload_contract"]["name"], "display_surface_receipt")
+        self.assert_payload_contract_mentions(
+            action["payload_contract"],
+            "display_surface_receipt.schema_version",
+            "display_surface_receipt.actual_surface",
+            "display_surface_receipt.host_display_surface_verified",
+            "flowpilot.display_surface_receipt.v1",
+        )
         router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
 
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
@@ -1261,6 +1273,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["requires_payload"], "startup_answers")
         self.assertEqual(action["payload_contract"]["schema_version"], "flowpilot.payload_contract.v1")
         self.assertIn("startup_answer_interpretation", " ".join(action["payload_contract"]["optional_fields"]))
+        self.assert_payload_contract_mentions(
+            action["payload_contract"],
+            "startup_answer_interpretation.schema_version",
+            "startup_answer_interpretation.raw_user_reply_text",
+            "startup_answer_interpretation.interpreted_by",
+            "startup_answer_interpretation.interpretation_provenance",
+            "startup_answer_interpretation.ambiguity_status",
+            "startup_answer_interpretation.interpreted_answers.background_agents",
+            "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
+            "startup_answer_interpretation.interpreted_answers.display_surface",
+            "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment",
+            "flowpilot.startup_answer_interpretation.v1",
+        )
 
         with self.assertRaises(router.RouterError):
             router.apply_action(root, "emit_startup_banner")
@@ -1358,6 +1383,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.assertTrue(action["requires_host_spawn"])
         self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
+        self.assert_payload_contract_mentions(
+            action["payload_contract"],
+            "role_agents[].role_key",
+            "role_agents[].agent_id",
+            "role_agents[].spawned_for_run_id",
+            "role_agents[].spawned_after_startup_answers",
+            "role_agents[].host_spawn_receipt.source_kind",
+            "exactly one non-duplicate role agent record",
+        )
         self.assertEqual(len(action["role_spawn_request"]), 6)
         with self.assertRaisesRegex(router.RouterError, "role_agents"):
             router.apply_action(root, "start_role_slots")
@@ -2353,6 +2387,22 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "rehydrate_role_agents")
         self.assertTrue(action["requires_host_spawn"])
+        self.assertEqual(action["payload_contract"]["name"], "resume_role_rehydration_receipt")
+        self.assert_payload_contract_mentions(
+            action["payload_contract"],
+            "rehydrated_role_agents[].role_key",
+            "rehydrated_role_agents[].agent_id",
+            "rehydrated_role_agents[].rehydrated_for_run_id",
+            "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
+            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
+            "rehydrated_role_agents[].core_prompt_path",
+            "rehydrated_role_agents[].core_prompt_hash",
+            "rehydrated_role_agents[].memory_packet_path",
+            "rehydrated_role_agents[].memory_packet_hash",
+            "rehydrated_role_agents[].memory_missing_acknowledged",
+            "rehydrated_role_agents[].replacement_seeded_from_common_run_context",
+            "rehydrated_role_agents[].pm_resume_context_delivered",
+        )
         self.assertEqual(action["spawn_policy"], "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision")
         self.assertEqual(len(action["role_rehydration_request"]), 6)
         pm_request = next(item for item in action["role_rehydration_request"] if item["role_key"] == "project_manager")
@@ -2481,6 +2531,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
         self.assertEqual(action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
         self.assertTrue(action["proof_required_before_apply"])
+        self.assertEqual(action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
+        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
+        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
         with self.assertRaisesRegex(router.RouterError, "host_automation_proof"):
             router.apply_action(
                 root,

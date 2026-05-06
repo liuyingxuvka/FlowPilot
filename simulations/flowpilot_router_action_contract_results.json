@@ -1,0 +1,37 @@
+{
+  "adoption_note": {
+    "commands_expected": [
+      "python -m py_compile simulations\\flowpilot_router_action_contract_model.py simulations\\run_router_action_contract_checks.py",
+      "python simulations\\run_router_action_contract_checks.py --json-out simulations\\flowpilot_router_action_contract_results.json"
+    ],
+    "confidence_boundary": "model-level confidence only; pair with router runtime tests from the main thread production-code change",
+    "flowguard_used": true,
+    "workflow_or_risk_modeled": "router action payload_contract exposure for startup answer interpretation nested required fields"
+  },
+  "checks": {
+    "flowguard_explorer": "pass",
+    "hazard_invariants": "pass",
+    "progress": "pass",
+    "safe_graph": "pass",
+    "scenario_outcomes": "pass"
+  },
+  "counts": {
+    "accepted": 2,
+    "edges": 16,
+    "rejected": 3,
+    "states": 17
+  },
+  "missing_labels": [],
+  "ok": true,
+  "risk_boundary": "abstract next_action payload_contract visibility for record_startup_answers; no filesystem replay or production router mutation in this allowed write scope",
+  "scenario_outcomes": {
+    "contract_incomplete_interpretation_required_fields": "rejected:payload_contract_incomplete_interpretation_required_fields",
+    "contract_missing_interpretation_schema_version": "rejected:hidden_schema_version_not_exposed_by_payload_contract",
+    "payload_missing_interpretation_schema_version": "rejected:payload_missing_interpretation_schema_version",
+    "valid_ai_interpreted_startup_answers": "accepted",
+    "valid_explicit_startup_answers": "accepted"
+  },
+  "skipped_checks": {
+    "conformance_replay": "skipped_with_reason: abstract router action-contract model has no production replay adapter in the requested ownership scope"
+  }
+}

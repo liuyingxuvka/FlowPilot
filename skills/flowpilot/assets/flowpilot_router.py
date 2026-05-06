@@ -1489,7 +1489,9 @@ def _payload_contract(
     required_object: str,
     required_fields: list[str],
     optional_fields: list[str] | None = None,
-    allowed_values: dict[str, list[str]] | None = None,
+    allowed_values: dict[str, list[Any]] | None = None,
+    conditional_required_fields: dict[str, list[str]] | None = None,
+    structural_requirements: list[str] | None = None,
     description: str,
     reviewer_check: str | None = None,
 ) -> dict[str, Any]:
@@ -1499,6 +1501,8 @@ def _payload_contract(
         "required_object": required_object,
         "required_fields": required_fields,
         "optional_fields": optional_fields or [],
+        "conditional_required_fields": conditional_required_fields or {},
+        "structural_requirements": structural_requirements or [],
         "allowed_values": allowed_values or {},
         "description": description,
         "controller_may_fill_missing_fields": False,
@@ -1522,6 +1526,33 @@ def _startup_answers_payload_contract() -> dict[str, Any]:
             "startup_answers.provenance": [
                 STARTUP_ANSWER_PROVENANCE,
                 STARTUP_ANSWER_INTERPRETATION_PROVENANCE,
+            ],
+            "startup_answer_interpretation.schema_version": [STARTUP_ANSWER_INTERPRETATION_SCHEMA],
+            "startup_answer_interpretation.interpreted_by": ["controller", "bootloader"],
+            "startup_answer_interpretation.interpretation_provenance": [STARTUP_ANSWER_INTERPRETATION_PROVENANCE],
+            "startup_answer_interpretation.ambiguity_status": ["none"],
+            "startup_answer_interpretation.interpreted_answers.background_agents": sorted(
+                STARTUP_ANSWER_ENUMS["background_agents"]
+            ),
+            "startup_answer_interpretation.interpreted_answers.scheduled_continuation": sorted(
+                STARTUP_ANSWER_ENUMS["scheduled_continuation"]
+            ),
+            "startup_answer_interpretation.interpreted_answers.display_surface": sorted(
+                STARTUP_ANSWER_ENUMS["display_surface"]
+            ),
+            "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment": [True],
+        },
+        conditional_required_fields={
+            "when startup_answers.provenance=ai_interpreted_from_explicit_user_reply": [
+                "startup_answer_interpretation.schema_version",
+                "startup_answer_interpretation.raw_user_reply_text",
+                "startup_answer_interpretation.interpreted_by",
+                "startup_answer_interpretation.interpretation_provenance",
+                "startup_answer_interpretation.ambiguity_status",
+                "startup_answer_interpretation.interpreted_answers.background_agents",
+                "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
+                "startup_answer_interpretation.interpreted_answers.display_surface",
+                "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment",
             ],
         },
         description=(
@@ -1548,7 +1579,18 @@ def _display_surface_receipt_payload_contract() -> dict[str, Any]:
         allowed_values={
             "display_confirmation.provenance": [DISPLAY_CONFIRMATION_PROVENANCE],
             "display_confirmation.rendered_to": [DISPLAY_CONFIRMATION_TARGET],
+            "display_surface_receipt.schema_version": [DISPLAY_SURFACE_RECEIPT_SCHEMA],
             "display_surface_receipt.actual_surface": ["chat_route_sign", "chat_route_sign_fallback", "cockpit"],
+            "display_surface_receipt.host_display_surface_verified": [True],
+        },
+        conditional_required_fields={
+            "when payload.display_surface_receipt is supplied": [
+                "display_surface_receipt.schema_version",
+                "display_surface_receipt.actual_surface",
+            ],
+            "when display_surface_receipt.actual_surface=cockpit": [
+                "display_surface_receipt.host_display_surface_verified",
+            ],
         },
         description=(
             "Confirm the router-provided route sign was displayed in the user dialog. If a native Cockpit or "
@@ -1574,7 +1616,17 @@ def _role_slots_payload_contract() -> dict[str, Any]:
         allowed_values={
             "background_agents_capability_status": ["available"],
             "role_agents[].spawn_result": [ROLE_AGENT_SPAWN_RESULT],
+            "role_agents[].host_spawn_receipt.source_kind": ["host_receipt"],
         },
+        conditional_required_fields={
+            "when role_agents[].host_spawn_receipt is supplied": [
+                "role_agents[].host_spawn_receipt.source_kind",
+                "role_agents[].host_spawn_receipt.spawned_for_run_id",
+                "role_agents[].host_spawn_receipt.role_key",
+                "role_agents[].host_spawn_receipt.agent_id",
+            ],
+        },
+        structural_requirements=["Provide exactly one non-duplicate role agent record for each FlowPilot role key."],
         description="Record one fresh live host role agent per FlowPilot role when background agents were allowed.",
         reviewer_check="Reviewer checks live agent spawn freshness unless each slot carries a host receipt.",
     )
@@ -1595,16 +1647,64 @@ def _heartbeat_payload_contract(run_id: str, automation_id_hint: str) -> dict[st
             "host_automation_proof.heartbeat_bound_to_current_run",
         ],
         allowed_values={
-            "route_heartbeat_interval_minutes": ["1"],
-            "host_automation_verified": ["true"],
+            "route_heartbeat_interval_minutes": [1],
+            "host_automation_verified": [True],
             "host_automation_proof.source_kind": ["host_receipt"],
             "host_automation_proof.run_id": [run_id],
-            "host_automation_proof.host_automation_id": [automation_id_hint],
-            "host_automation_proof.route_heartbeat_interval_minutes": ["1"],
-            "host_automation_proof.heartbeat_bound_to_current_run": ["true"],
+            "host_automation_proof.route_heartbeat_interval_minutes": [1],
+            "host_automation_proof.heartbeat_bound_to_current_run": [True],
         },
         description="Bind the one-minute host heartbeat automation to this exact current run before startup fact review.",
         reviewer_check="Reviewer checks heartbeat host binding when scheduled continuation was requested.",
+    )
+
+
+def _resume_role_rehydration_payload_contract(
+    run_state: dict[str, Any],
+    contexts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    del contexts
+    return _payload_contract(
+        name="resume_role_rehydration_receipt",
+        required_object="payload",
+        required_fields=[
+            "background_agents_capability_status",
+            "rehydrated_role_agents[].role_key",
+            "rehydrated_role_agents[].agent_id",
+            "rehydrated_role_agents[].rehydration_result",
+            "rehydrated_role_agents[].rehydrated_for_run_id",
+            "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
+            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
+            "rehydrated_role_agents[].core_prompt_path",
+            "rehydrated_role_agents[].core_prompt_hash",
+        ],
+        allowed_values={
+            "background_agents_capability_status": ["available"],
+            "rehydrated_role_agents[].role_key": list(CREW_ROLE_KEYS),
+            "rehydrated_role_agents[].rehydration_result": sorted(RESUME_ROLE_AGENT_RESULTS),
+            "rehydrated_role_agents[].rehydrated_for_run_id": [run_state["run_id"]],
+            "rehydrated_role_agents[].spawned_after_resume_state_loaded": [True],
+        },
+        conditional_required_fields={
+            "when role_rehydration_request[].role_memory_status=available": [
+                "rehydrated_role_agents[].memory_packet_path",
+                "rehydrated_role_agents[].memory_packet_hash",
+                "rehydrated_role_agents[].memory_seeded_from_current_run",
+            ],
+            "when role_rehydration_request[].role_memory_status!=available": [
+                "rehydrated_role_agents[].memory_missing_acknowledged",
+                "rehydrated_role_agents[].replacement_seeded_from_common_run_context",
+            ],
+            "when rehydrated_role_agents[].role_key=project_manager": [
+                "rehydrated_role_agents[].pm_resume_context_delivered",
+            ],
+        },
+        structural_requirements=[
+            "Provide exactly one non-duplicate rehydrated role agent record for each FlowPilot role key.",
+            "Each record must match the corresponding role_rehydration_request path/hash fields.",
+        ],
+        description="Restore or replace all six live FlowPilot role agents from current-run memory before PM resume decision.",
+        reviewer_check="PM and reviewer checks use the written crew_rehydration_report before resume decisions.",
     )
 
 
@@ -3005,6 +3105,7 @@ def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, ru
         extra.update(
             {
                 "requires_payload": "rehydrated_role_agents",
+                "payload_contract": _resume_role_rehydration_payload_contract(run_state, contexts),
                 "requires_host_spawn": True,
                 "spawn_policy": "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision",
                 "pm_memory_rehydration_required": True,

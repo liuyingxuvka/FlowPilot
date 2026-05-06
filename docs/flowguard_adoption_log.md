@@ -3753,3 +3753,80 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Extend registered contracts when new task families are introduced instead of allowing ad hoc PM report requirements.
+
+
+## flowpilot-router-action-payload-contracts - Expose nested FlowPilot router action payload contract requirements
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing router protocol change: next_action payload contracts must reveal internal validator-required fields before AI applies actions
+- Status: in_progress
+- Skill decision: use_flowguard
+- Started: 2026-05-06T13:06:00+00:00
+- Ended: 2026-05-06T13:06:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-router-action-payload-contracts - Expose nested FlowPilot router action payload contract requirements
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing router protocol change: next_action payload contracts must reveal internal validator-required fields before AI applies actions
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T13:25:19+00:00
+- Ended: 2026-05-06T13:25:19+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_router_action_contract_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_router_action_contract_checks.py --json-out simulations/flowpilot_router_action_contract_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_startup_control_checks.py`
+- OK (0.000s): `python simulations/run_prompt_isolation_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_resume_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_router_loop_checks.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_router_runtime`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_output_contracts tests.test_flowpilot_packet_runtime`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+
+### Findings
+- Startup answer interpretation failed once because payload_contract exposed the optional receipt object but not its nested schema_version and required fields.
+- Display-surface and resume-role action contracts had similar nested receipt visibility risks; the patch exposes those fields before apply.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Production conformance replay for the abstract action-contract model: no adapter exists; production-facing coverage is provided by router runtime tests and install checks.
+
+### Next Actions
+- When adding router action validators, update next_action payload_contract and add a test that asserts visible contract fields cover validator-required nested fields.
