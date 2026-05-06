@@ -3652,3 +3652,28 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - No new FlowGuard model was created because the production router state machine was not changed; existing meta and capability simulations were rerun against the preserved protocol boundary.
+
+
+## flowpilot-startup-banner-restore-20260506 - Restore large ASCII startup banner
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Startup banner display text is user-visible FlowPilot runtime data.
+- Status: completed
+- Skill decision: skip_with_reason
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)" => 1.0`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_banner_action_and_result_are_user_visible`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The change only replaces the runtime startup banner text with the preserved large FlowPilot ASCII banner.
+- The router display-confirmation path, startup ordering, and heartbeat/control state machines were not changed.
+
+### Skipped Steps
+- No new FlowGuard model was created because no state transition, frontier, heartbeat, packet, or approval flow changed.
