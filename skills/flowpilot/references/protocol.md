@@ -428,6 +428,50 @@ experiment, the plan links an approved research package or requires PM to write
 one before dependent work proceeds. PM-risk items from these plans become
 terminal replay scenarios unless resolved earlier by repair and recheck.
 
+## Current Node Work Authorization
+
+The PM completion runway is a map, not permission to start every downstream
+item. At any moment, the only authorized execution scope is the current
+`active_node` plus the `current_subnode` or `next_gate` recorded in
+`.flowpilot/runs/<run-id>/execution_frontier.json`.
+
+Before the main executor, worker A, worker B, a child-skill route, verification,
+polishing, or review-evidence drafting starts work, the project manager issues a
+current-node work brief. The brief names the authorized node and gates, the
+current-node step plan, expected artifacts, evidence paths, required approvers,
+the visible route-sign display, and any downstream route context marked as
+context only.
+
+Workers and the main executor must treat that brief as the full work boundary.
+They may read the downstream runway for context, but they must not implement,
+generate assets for, verify, polish, or submit future-node work. If future-node
+work appears necessary, the worker stops and asks PM for a formal transition
+decision instead of doing the work speculatively.
+
+Before tools or edits, each worker writes a node-entry declaration in its first
+output or role report. The declaration acknowledges the entered node,
+authorized node, current gates, current-node step plan, current route-sign
+display, downstream context as context-only, and the no-future-node-work rule.
+FlowPilot refreshes and displays the current user flow diagram when a node
+opens, when the PM work brief is issued, and before substantial current-node
+execution starts. If Cockpit is unavailable, the chat Mermaid block is the
+visible display.
+
+Every worker or main-executor submission starts with a scope declaration:
+`submitted_node_id`, `submitted_gate_id`, `authorized_node_id`,
+`authorized_gate_ids`, `future_node_work_performed`, and evidence paths limited
+to current-node work. The human-like reviewer checks this declaration before
+quality review. If the submission belongs to a future node, the reviewer stops
+ordinary review, records an out-of-node submission finding, and sends it to PM.
+
+PM then chooses exactly one path: reject the submission and return work to the
+current active node, or record a formal PM node transition first, refresh
+route/frontier/plan and the user flow diagram, then request a new submission
+under the newly active node.
+
+Future-node work cannot be accepted as current evidence, checkpoint evidence,
+or completion evidence by catching the route up later.
+
 ## FlowPilot Skill Improvement Notes
 
 Each node, repair, review, child-skill closure, parent replay, controlled
@@ -514,6 +558,47 @@ next parent, or PM stop. Repair or route mutation makes affected child evidence
 and parent rollups stale, and the same parent replay reruns before closure.
 Terminal review later consumes these local parent replays as evidence pointers
 but still independently replays the final delivered product.
+
+## PM Review And Modeling Packages
+
+The project manager is also the authorization boundary for review and FlowGuard
+modeling. Reviewers and FlowGuard officers may read the full route as context,
+but they may only review or model the scope explicitly named by PM.
+
+Before any node review, parent backward replay, terminal backward replay,
+anti-rough-finish review, human-like inspection, screenshot QA, or final review
+starts, PM issues a review package. The package names the authorized node and
+gates, review purpose, evidence to inspect, review subnodes to execute, stop
+boundary, and the return-to-PM path for out-of-scope work or missing
+prerequisite evidence.
+
+Review packages are executable review routes, not report-reading requests. The
+human-like reviewer must perform adversarial direct inspection inside the
+authorized review scope: operate the product or command path when available,
+open and maximize or resize relevant UI windows, capture or inspect fresh
+screenshots, exercise clicks and keyboard paths, inspect generated files or
+state, and compare findings with the current node, product model, contract, and
+evidence. Worker reports are pointers only and cannot satisfy review by
+themselves.
+
+Large reviews are split into PM-authorized review subnodes. A node exit review
+typically includes scope check, evidence lineage check, direct artifact or
+product walkthrough, model/verification reconciliation, residual-risk summary,
+and PM decision. A terminal review walks backward from delivered product to root
+acceptance through named route nodes. The reviewer cannot add review subnodes,
+expand to future nodes, or continue reviewing after a scope mismatch unless PM
+issues an updated review package.
+
+Before any FlowGuard model gate starts, PM issues a modeling package. It names
+the authorized model scope, exact PM decision needed, protected node or gate,
+allowed inputs, expected report shape, and blocked downstream actions.
+FlowGuard officers may report counterexamples, missing evidence, route-mutation
+suggestions, and PM decision options, but they do not advance the route, accept
+evidence, or expand modeling scope without PM authorization.
+
+All review and modeling reports return to PM. PM is the only role that accepts
+the report into route evidence, rejects it, expands the package, mutates the
+route, or advances the active node.
 
 ## Universal Adversarial Approval Baseline
 

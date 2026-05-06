@@ -3623,3 +3623,32 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - Production conformance replay adapter for the new abstract startup-control model was not added; runtime tests and existing meta/capability simulations covered executable paths.
+
+
+## flowpilot-main-branch-consolidation-20260506 - Local branch consolidation protocol preservation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Consolidating local branches onto `main` exposed one stale branch with unique protocol-governance content.
+- Status: completed
+- Skill decision: used_flowguard_lightly
+
+### Risk Intent Brief
+- Preserve useful local branch changes without replaying stale branch files over newer router, template, and simulation work.
+- Avoid deleting a local branch before its unique current-node authorization and PM review/modeling package rules were represented on `main`.
+- Keep installed FlowPilot skill content synchronized with the repository after protocol-reference edits.
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)" => 1.0`
+- OK: `python simulations\run_meta_checks.py` completed with `graph.ok: true`, zero invariant failures, and zero missing labels in `simulations/results.json`.
+- OK: `python simulations\run_capability_checks.py` completed with `graph.ok: true`, zero invariant failures, and zero missing labels in `simulations/capability_results.json`.
+
+### Findings
+- `codex/pm-review-modeling-packages` was too stale to merge wholesale, but its still-useful protocol concepts were missing from the current protocol text.
+- `docs/protocol.md` and `skills/flowpilot/references/protocol.md` now carry explicit current-node authorization rules and PM-scoped review/modeling package rules.
+
+### Skipped Steps
+- No new FlowGuard model was created because the production router state machine was not changed; existing meta and capability simulations were rerun against the preserved protocol boundary.
