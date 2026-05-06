@@ -87,8 +87,18 @@ class State:
     reviewer_verified_background_agent_fallback_needed: bool = False
     reviewer_verified_scheduled_continuation_fallback_needed: bool = False
     reviewer_verified_cockpit_fallback_needed: bool = False
+    startup_mechanical_audit_file_backed: bool = False
+    startup_mechanical_audit_proof_file_backed: bool = False
+    startup_mechanical_audit_delivered_to_reviewer: bool = False
+    reviewer_report_references_current_mechanical_audit: bool = False
     startup_reviewer_report_file_backed: bool = False
+    pm_startup_repair_decision_file_backed: bool = False
+    pm_startup_repair_targeted: bool = False
     pm_startup_activation_decision_file_backed: bool = False
+    pm_protocol_dead_end_decision_file_backed: bool = False
+    pm_dead_end_has_no_legal_repair_path: bool = False
+    pending_mail_suspended_after_dead_end: bool = False
+    future_actions_prevented_after_dead_end: bool = False
     controller_direct_reviewer_recheck_requested: bool = False
     controller_inspected_router_hard_checks: bool = False
     controller_free_text_authority_used: bool = False
@@ -99,7 +109,7 @@ class State:
     pm_recorded_background_agent_fallback: bool = False
     pm_recorded_scheduled_continuation_fallback: bool = False
     pm_recorded_cockpit_fallback: bool = False
-    pm_start_gate_decision: str = "pending"  # pending | return_to_worker | open
+    pm_start_gate_decision: str = "pending"  # pending | return_to_worker | protocol_dead_end | open
     reviewer_opened_start_gate: bool = False
     work_beyond_startup_allowed: bool = False
     child_skill_started: bool = False
@@ -321,6 +331,10 @@ def startup_ready_for_pm_open(state: State) -> bool:
         and display_entry_action_matches_answer(state)
         and cleanup_matches_request(state)
         and reviewer_fact_scope_complete(state)
+        and state.startup_mechanical_audit_file_backed
+        and state.startup_mechanical_audit_proof_file_backed
+        and state.startup_mechanical_audit_delivered_to_reviewer
+        and state.reviewer_report_references_current_mechanical_audit
         and state.startup_review_status == "clean"
         and state.startup_reviewer_report_file_backed
         and state.pm_independent_gate_audit_done
@@ -507,6 +521,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.clean_start_requirement == "required" and not state.old_route_cleanup_done:
         yield Transition("old_route_cleanup_verified", replace(state, old_route_cleanup_done=True))
         return
+    if not (
+        state.startup_mechanical_audit_file_backed
+        and state.startup_mechanical_audit_proof_file_backed
+    ):
+        yield Transition(
+            "startup_mechanical_audit_written_before_reviewer_fact_review",
+            replace(
+                state,
+                startup_mechanical_audit_file_backed=True,
+                startup_mechanical_audit_proof_file_backed=True,
+            ),
+        )
+        return
+    if not state.startup_mechanical_audit_delivered_to_reviewer:
+        yield Transition(
+            "startup_mechanical_audit_delivered_to_reviewer",
+            replace(state, startup_mechanical_audit_delivered_to_reviewer=True),
+        )
+        return
     if not reviewer_fact_scope_complete(state):
         reviewer_changes = {
             "reviewer_checked_user_authorization": True,
@@ -543,15 +576,46 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if not state.worker_remediation_done:
             yield Transition(
                 "startup_preflight_reviewer_fact_report_blocked",
-                replace(state, startup_review_status="blocked", startup_reviewer_report_file_backed=True),
+                replace(
+                    state,
+                    startup_review_status="blocked",
+                    startup_reviewer_report_file_backed=True,
+                    reviewer_report_references_current_mechanical_audit=True,
+                ),
             )
         yield Transition(
             "startup_preflight_reviewer_fact_report_clean",
-            replace(state, startup_review_status="clean", startup_reviewer_report_file_backed=True),
+            replace(
+                state,
+                startup_review_status="clean",
+                startup_reviewer_report_file_backed=True,
+                reviewer_report_references_current_mechanical_audit=True,
+            ),
         )
         return
     if state.startup_review_status == "blocked" and state.pm_start_gate_decision == "pending":
-        yield Transition("pm_returns_startup_blockers_to_worker", replace(state, pm_start_gate_decision="return_to_worker"))
+        yield Transition(
+            "pm_returns_startup_blockers_to_worker",
+            replace(
+                state,
+                pm_start_gate_decision="return_to_worker",
+                pm_startup_repair_decision_file_backed=True,
+                pm_startup_repair_targeted=True,
+            ),
+        )
+        yield Transition(
+            "pm_declares_protocol_dead_end_for_unroutable_startup_block",
+            replace(
+                state,
+                pm_start_gate_decision="protocol_dead_end",
+                pm_protocol_dead_end_decision_file_backed=True,
+                pm_dead_end_has_no_legal_repair_path=True,
+                pending_mail_suspended_after_dead_end=True,
+                future_actions_prevented_after_dead_end=True,
+            ),
+        )
+        return
+    if state.pm_start_gate_decision == "protocol_dead_end":
         return
     if state.pm_start_gate_decision == "return_to_worker" and not state.worker_remediation_done:
         yield Transition(
@@ -561,7 +625,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 worker_remediation_done=True,
                 startup_review_status="pending",
                 startup_reviewer_report_file_backed=False,
+                startup_mechanical_audit_file_backed=False,
+                startup_mechanical_audit_proof_file_backed=False,
+                startup_mechanical_audit_delivered_to_reviewer=False,
+                reviewer_report_references_current_mechanical_audit=False,
                 pm_start_gate_decision="pending",
+                pm_startup_repair_decision_file_backed=False,
+                pm_startup_repair_targeted=False,
                 pm_startup_activation_decision_file_backed=False,
                 reviewer_checked_user_authorization=False,
                 reviewer_checked_route_state_frontier=False,
@@ -695,6 +765,30 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer wrote a clean startup report without independently checking required facts")
     if state.startup_review_status in {"blocked", "clean"} and not state.startup_reviewer_report_file_backed:
         failures.append("reviewer startup fact report was accepted without a file-backed report envelope")
+    if state.startup_review_status in {"blocked", "clean"} and not (
+        state.startup_mechanical_audit_file_backed
+        and state.startup_mechanical_audit_proof_file_backed
+        and state.startup_mechanical_audit_delivered_to_reviewer
+        and state.reviewer_report_references_current_mechanical_audit
+    ):
+        failures.append("reviewer startup fact report was accepted without the current prewritten router mechanical audit")
+    if state.pm_start_gate_decision == "return_to_worker" and not (
+        state.pm_startup_repair_decision_file_backed
+        and state.pm_startup_repair_targeted
+    ):
+        failures.append("PM returned startup blockers without a file-backed repair decision targeted to a responsible actor")
+    if state.pm_start_gate_decision == "protocol_dead_end" and not (
+        state.pm_protocol_dead_end_decision_file_backed
+        and state.pm_dead_end_has_no_legal_repair_path
+        and state.pending_mail_suspended_after_dead_end
+        and state.future_actions_prevented_after_dead_end
+    ):
+        failures.append("PM declared a startup protocol dead-end without a complete file-backed emergency stop record")
+    if state.pm_start_gate_decision == "protocol_dead_end" and (
+        state.work_beyond_startup_allowed
+        or work_started(state)
+    ):
+        failures.append("work continued after PM declared a startup protocol dead-end")
     if state.pm_start_gate_decision == "open" and not startup_ready_for_pm_open(state):
         failures.append("PM opened startup without a current clean factual reviewer report, verified startup facts, and independent PM audit")
     if state.pm_start_gate_decision == "open" and state.startup_review_status != "clean":
@@ -928,6 +1022,10 @@ def _ready_base(**changes: object) -> State:
         reviewer_probed_background_agent_capability=True,
         reviewer_probed_scheduled_continuation_capability=True,
         reviewer_probed_cockpit_capability=True,
+        startup_mechanical_audit_file_backed=True,
+        startup_mechanical_audit_proof_file_backed=True,
+        startup_mechanical_audit_delivered_to_reviewer=True,
+        reviewer_report_references_current_mechanical_audit=True,
         startup_review_status="clean",
         startup_reviewer_report_file_backed=True,
         pm_independent_gate_audit_done=True,
@@ -999,6 +1097,30 @@ def hazard_states() -> dict[str, State]:
         ),
         "reviewer_clean_report_not_file_backed": _ready_base(
             startup_reviewer_report_file_backed=False,
+        ),
+        "reviewer_clean_without_startup_mechanical_audit": _ready_base(
+            startup_mechanical_audit_file_backed=False,
+            startup_mechanical_audit_proof_file_backed=False,
+            startup_mechanical_audit_delivered_to_reviewer=False,
+            reviewer_report_references_current_mechanical_audit=False,
+        ),
+        "pm_block_without_repair_target_or_dead_end": _ready_base(
+            startup_review_status="blocked",
+            pm_independent_gate_audit_done=False,
+            pm_startup_activation_decision_file_backed=False,
+            pm_start_gate_decision="return_to_worker",
+            pm_startup_repair_decision_file_backed=False,
+            pm_startup_repair_targeted=False,
+        ),
+        "pm_dead_end_without_emergency_record": _ready_base(
+            startup_review_status="blocked",
+            pm_independent_gate_audit_done=False,
+            pm_startup_activation_decision_file_backed=False,
+            pm_start_gate_decision="protocol_dead_end",
+            pm_protocol_dead_end_decision_file_backed=False,
+            pm_dead_end_has_no_legal_repair_path=False,
+            pending_mail_suspended_after_dead_end=False,
+            future_actions_prevented_after_dead_end=False,
         ),
         "pm_opens_from_inline_activation_decision": _ready_base(
             pm_startup_activation_decision_file_backed=False,

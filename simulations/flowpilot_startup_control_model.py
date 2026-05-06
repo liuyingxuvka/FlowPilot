@@ -6,6 +6,10 @@ Risk intent brief:
 - Protect router apply calls from payload-free actions.
 - Make the reviewer startup fact report a real pass/block gate before work
   beyond startup.
+- Ensure the router writes and exposes startup mechanical audit/proof before
+  reviewer fact reporting.
+- Ensure blocking startup reports are followed by either a targeted PM repair
+  request or a file-backed protocol dead-end stop.
 - Keep router repair packets sealed and addressed to the responsible role while
   Controller sees only envelope metadata.
 - Ensure a formal user stop or cancel signal is terminal for future next
@@ -43,8 +47,12 @@ REQUIRED_LABELS = (
     "reviewer_receipt_blocks_mismatch_against_user_text",
     "router_issues_startup_apply_action_with_payload_contract",
     "controller_applies_startup_action_after_payload_contract",
+    "router_writes_startup_mechanical_audit_for_reviewer",
+    "router_delivers_startup_mechanical_audit_to_reviewer",
     "reviewer_startup_fact_report_blocks",
     "reviewer_startup_fact_report_passes",
+    "pm_requests_startup_repair_for_blocking_report",
+    "pm_declares_protocol_dead_end_for_unroutable_startup_block",
     "pm_allows_work_beyond_startup_from_pass_report",
     "router_issues_next_action_after_startup_pass",
     "next_action_completes_without_router_error",
@@ -68,7 +76,7 @@ class Action:
 
 @dataclass(frozen=True)
 class State:
-    status: str = "new"  # new | awaiting_user | running | blocked | stopped | cancelled | complete
+    status: str = "new"  # new | awaiting_user | running | blocked | protocol_dead_end | stopped | cancelled | complete
     holder: str = "controller"
 
     startup_questions_asked: bool = False
@@ -89,6 +97,16 @@ class State:
 
     startup_fact_report_status: str = "none"  # none | pass | block
     startup_fact_report_file_backed: bool = False
+    startup_mechanical_audit_written: bool = False
+    startup_mechanical_audit_proof_written: bool = False
+    startup_mechanical_audit_delivered_to_reviewer: bool = False
+    startup_fact_report_references_current_audit: bool = False
+    startup_repair_request_file_backed: bool = False
+    startup_repair_request_targeted: bool = False
+    protocol_dead_end_declared: bool = False
+    protocol_dead_end_file_backed: bool = False
+    protocol_dead_end_has_no_repair_path: bool = False
+    protocol_dead_end_pending_mail_suspended: bool = False
     work_beyond_startup_allowed: bool = False
     next_action_issued: bool = False
 
@@ -163,7 +181,7 @@ class StartupControlStep:
 
 
 def is_terminal(state: State) -> bool:
-    return state.status in {"blocked", "stopped", "cancelled", "complete"}
+    return state.status in {"blocked", "protocol_dead_end", "stopped", "cancelled", "complete"}
 
 
 def is_success(state: State) -> bool:
@@ -309,6 +327,36 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
 
+    if not (
+        state.startup_mechanical_audit_written
+        and state.startup_mechanical_audit_proof_written
+    ):
+        return lifecycle + (
+            Transition(
+                "router_writes_startup_mechanical_audit_for_reviewer",
+                "controller",
+                replace(
+                    state,
+                    holder="controller",
+                    startup_mechanical_audit_written=True,
+                    startup_mechanical_audit_proof_written=True,
+                ),
+            ),
+        )
+
+    if not state.startup_mechanical_audit_delivered_to_reviewer:
+        return lifecycle + (
+            Transition(
+                "router_delivers_startup_mechanical_audit_to_reviewer",
+                "human_like_reviewer",
+                replace(
+                    state,
+                    holder="human_like_reviewer",
+                    startup_mechanical_audit_delivered_to_reviewer=True,
+                ),
+            ),
+        )
+
     if state.startup_fact_report_status == "none":
         return lifecycle + (
             Transition(
@@ -316,10 +364,10 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 "project_manager",
                 replace(
                     state,
-                    status="blocked",
                     holder="project_manager",
                     startup_fact_report_status="block",
                     startup_fact_report_file_backed=True,
+                    startup_fact_report_references_current_audit=True,
                 ),
             ),
             Transition(
@@ -330,6 +378,58 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     holder="project_manager",
                     startup_fact_report_status="pass",
                     startup_fact_report_file_backed=True,
+                    startup_fact_report_references_current_audit=True,
+                ),
+            ),
+        )
+
+    if state.startup_fact_report_status == "block":
+        if not state.startup_repair_request_file_backed:
+            return lifecycle + (
+                Transition(
+                    "pm_requests_startup_repair_for_blocking_report",
+                    "router",
+                    replace(
+                        state,
+                        holder="router",
+                        startup_fact_report_status="none",
+                        startup_fact_report_file_backed=False,
+                        startup_fact_report_references_current_audit=False,
+                        startup_mechanical_audit_written=False,
+                        startup_mechanical_audit_proof_written=False,
+                        startup_mechanical_audit_delivered_to_reviewer=False,
+                        startup_repair_request_file_backed=True,
+                        startup_repair_request_targeted=True,
+                    ),
+                ),
+                Transition(
+                    "pm_declares_protocol_dead_end_for_unroutable_startup_block",
+                    "controller",
+                    replace(
+                        state,
+                        status="protocol_dead_end",
+                        holder="controller",
+                        protocol_dead_end_declared=True,
+                        protocol_dead_end_file_backed=True,
+                        protocol_dead_end_has_no_repair_path=True,
+                        protocol_dead_end_pending_mail_suspended=True,
+                        future_actions_prevented=True,
+                    ),
+                ),
+            )
+        return lifecycle + (
+            Transition(
+                "pm_declares_protocol_dead_end_for_unroutable_startup_block",
+                "controller",
+                replace(
+                    state,
+                    status="protocol_dead_end",
+                    holder="controller",
+                    protocol_dead_end_declared=True,
+                    protocol_dead_end_file_backed=True,
+                    protocol_dead_end_has_no_repair_path=True,
+                    protocol_dead_end_pending_mail_suspended=True,
+                    future_actions_prevented=True,
                 ),
             ),
         )
@@ -438,15 +538,53 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer startup fact report was written before startup action apply")
     if state.startup_fact_report_status in {"pass", "block"} and not state.startup_fact_report_file_backed:
         failures.append("reviewer startup fact report was accepted without a file-backed report")
+    if state.startup_fact_report_status in {"pass", "block"} and not (
+        state.startup_mechanical_audit_written
+        and state.startup_mechanical_audit_proof_written
+        and state.startup_mechanical_audit_delivered_to_reviewer
+        and state.startup_fact_report_references_current_audit
+    ):
+        failures.append("reviewer startup fact report was accepted without the current prewritten startup mechanical audit")
     if state.startup_fact_report_status not in {"none", "pass", "block"}:
         failures.append("reviewer startup fact report has an invalid status")
     if state.work_beyond_startup_allowed and not (
         state.startup_fact_report_status == "pass"
         and state.startup_fact_report_file_backed
+        and state.startup_fact_report_references_current_audit
     ):
         failures.append("work beyond startup was allowed without a passing file-backed reviewer fact report")
     if state.startup_fact_report_status == "block" and state.work_beyond_startup_allowed:
         failures.append("reviewer startup fact report blocked but work beyond startup was allowed")
+    if (
+        state.startup_fact_report_status == "block"
+        and state.holder != "project_manager"
+        and state.status not in {"stopped", "cancelled"}
+        and not (
+        (
+            state.startup_repair_request_file_backed
+            and state.startup_repair_request_targeted
+        )
+        or (
+            state.protocol_dead_end_declared
+            and state.protocol_dead_end_file_backed
+            and state.protocol_dead_end_has_no_repair_path
+        )
+        )
+    ):
+        failures.append("blocking startup fact report had no targeted PM repair request or protocol dead-end")
+    if state.protocol_dead_end_declared and not (
+        state.status == "protocol_dead_end"
+        and state.protocol_dead_end_file_backed
+        and state.protocol_dead_end_has_no_repair_path
+        and state.protocol_dead_end_pending_mail_suspended
+        and state.future_actions_prevented
+    ):
+        failures.append("protocol dead-end did not stop startup with a complete file-backed emergency record")
+    if state.protocol_dead_end_declared and (
+        state.work_beyond_startup_allowed
+        or state.next_action_issued
+    ):
+        failures.append("startup control issued further work after protocol dead-end")
     if state.next_action_issued and not state.work_beyond_startup_allowed:
         failures.append("next action was issued before PM allowed work beyond startup")
 
@@ -517,7 +655,7 @@ INVARIANTS = (
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 18
+MAX_SEQUENCE_LENGTH = 24
 
 
 def build_workflow() -> Workflow:
@@ -542,8 +680,12 @@ def _ready_for_apply(**changes: object) -> State:
 def _startup_passed(**changes: object) -> State:
     base = _ready_for_apply(
         startup_action_applied=True,
+        startup_mechanical_audit_written=True,
+        startup_mechanical_audit_proof_written=True,
+        startup_mechanical_audit_delivered_to_reviewer=True,
         startup_fact_report_status="pass",
         startup_fact_report_file_backed=True,
+        startup_fact_report_references_current_audit=True,
         work_beyond_startup_allowed=True,
         next_action_issued=True,
     )
@@ -580,12 +722,44 @@ def hazard_states() -> dict[str, State]:
             receipt_matches_user_text=True,
             startup_fact_report_status="pass",
             startup_fact_report_file_backed=True,
+            startup_fact_report_references_current_audit=True,
+        ),
+        "fact_report_without_mechanical_audit": _ready_for_apply(
+            startup_action_applied=True,
+            startup_fact_report_status="pass",
+            startup_fact_report_file_backed=True,
+            startup_fact_report_references_current_audit=False,
         ),
         "blocking_fact_report_allows_work": _ready_for_apply(
             startup_action_applied=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            startup_mechanical_audit_delivered_to_reviewer=True,
             startup_fact_report_status="block",
             startup_fact_report_file_backed=True,
+            startup_fact_report_references_current_audit=True,
             work_beyond_startup_allowed=True,
+        ),
+        "blocking_fact_report_without_pm_target": _ready_for_apply(
+            startup_action_applied=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            startup_mechanical_audit_delivered_to_reviewer=True,
+            startup_fact_report_status="block",
+            startup_fact_report_file_backed=True,
+            startup_fact_report_references_current_audit=True,
+        ),
+        "protocol_dead_end_without_file_backed_record": _ready_for_apply(
+            status="protocol_dead_end",
+            startup_action_applied=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            startup_mechanical_audit_delivered_to_reviewer=True,
+            startup_fact_report_status="block",
+            startup_fact_report_file_backed=True,
+            startup_fact_report_references_current_audit=True,
+            protocol_dead_end_declared=True,
+            protocol_dead_end_file_backed=False,
         ),
         "next_action_after_stop": _startup_passed(
             status="stopped",

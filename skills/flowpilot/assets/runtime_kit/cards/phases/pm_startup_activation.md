@@ -25,5 +25,16 @@ Before approving, verify that the reviewer report covers:
 - display-surface evidence;
 - old-state and old-asset quarantine.
 
-If the report is clean, approve startup activation through Controller. If it is
-not clean, return a blocker and keep the route in startup.
+If the report is clean, approve startup activation through Controller.
+
+If the report is not clean and there is a legal next repair target, write a
+file-backed `pm_requests_startup_repair` decision. The decision must name the
+exact target role or system, the repair action, the blocking report path, the
+resume event, and the condition that will allow a fresh reviewer report.
+
+If the report is not clean and no existing role, system event, packet, or
+contract can legally carry the repair, write a file-backed
+`pm_declares_startup_protocol_dead_end` decision. This is the emergency stop
+button. Use it only when no legal repair route exists. It must explain why no
+existing path applies, list attempted legal paths, state why continuing is
+unsafe, define resume conditions, and stop all work beyond startup.

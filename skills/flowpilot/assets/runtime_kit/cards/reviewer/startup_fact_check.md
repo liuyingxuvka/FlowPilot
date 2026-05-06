@@ -20,6 +20,9 @@ audit as proof only for mechanical file/state checks. It does not prove that an
 AI honestly captured the user's reply, that live agents are fresh, that a host
 heartbeat is really bound to this run, or that Cockpit/fallback behavior is
 real. Those facts remain reviewer-owned unless the audit cites a host receipt.
+The system-card delivery metadata includes the current mechanical audit hash;
+your report must repeat that hash in
+`external_fact_review.router_mechanical_audit_hash`.
 
 Required checks:
 
@@ -39,6 +42,7 @@ Required checks:
 Your report body must include `external_fact_review` with:
 
 - `used_router_mechanical_audit: true`;
+- `router_mechanical_audit_hash` matching the hash delivered with this card;
 - `self_attested_ai_claims_accepted_as_proof: false`;
 - every id from `startup_mechanical_audit.json` field
   `reviewer_required_external_facts` listed in

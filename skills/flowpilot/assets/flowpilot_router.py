@@ -82,6 +82,8 @@ RUNTIME_FLAG_DEFAULTS = {
     "resume_role_agents_rehydrated": False,
     "crew_rehydration_report_written": False,
     "continuation_binding_recorded": False,
+    "startup_mechanical_audit_written": False,
+    "startup_pending_mail_suspended_after_dead_end": False,
     "startup_display_status_written": False,
     "route_history_index_refreshed": False,
     "pm_prior_path_context_refreshed": False,
@@ -341,7 +343,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "flag": "reviewer_startup_fact_check_card_delivered",
         "label": "reviewer_startup_fact_check_card_delivered",
         "card_id": "reviewer.startup_fact_check",
-        "requires_flag": "controller_role_confirmed",
+        "requires_flag": "startup_mechanical_audit_written",
         "to_role": "human_like_reviewer",
     },
     {
@@ -707,6 +709,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "startup_activation_approved",
         "requires_flag": "pm_startup_activation_card_delivered",
         "summary": "PM approved opening work beyond startup from the reviewer startup fact report.",
+    },
+    "pm_requests_startup_repair": {
+        "flag": "startup_repair_requested",
+        "requires_flag": "pm_startup_activation_card_delivered",
+        "summary": "PM returned a targeted startup repair request instead of opening work beyond startup.",
+    },
+    "pm_declares_startup_protocol_dead_end": {
+        "flag": "startup_protocol_dead_end_declared",
+        "requires_flag": "pm_startup_activation_card_delivered",
+        "summary": "PM declared that the startup block has no legal repair path in the current protocol and stopped the run.",
     },
     "pm_issues_material_and_capability_scan_packets": {
         "flag": "pm_material_packets_issued",
@@ -2419,6 +2431,8 @@ def _terminal_lifecycle_mode(run_state: dict[str, Any]) -> str | None:
         return "cancelled_by_user"
     if status == "stopped_by_user" or flags.get("run_stopped_by_user"):
         return "stopped_by_user"
+    if status == "protocol_dead_end" or flags.get("startup_protocol_dead_end_declared"):
+        return "protocol_dead_end"
     return None
 
 
@@ -2478,6 +2492,64 @@ def _write_run_lifecycle_request(
     write_json(index_path, index)
 
 
+def _write_protocol_dead_end_lifecycle(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    dead_end_path: Path,
+    reason: str | None,
+) -> None:
+    mode = "protocol_dead_end"
+    previous_pending = run_state.get("pending_action")
+    active_blocker = run_state.get("active_control_blocker")
+    write_json(
+        _lifecycle_record_path(run_root),
+        {
+            "schema_version": "flowpilot.run_lifecycle.v1",
+            "run_id": run_state.get("run_id"),
+            "status": mode,
+            "requested_by": "project_manager",
+            "request_event": "pm_declares_startup_protocol_dead_end",
+            "reason": reason,
+            "protocol_dead_end_path": project_relative(project_root, dead_end_path),
+            "previous_pending_action": previous_pending,
+            "active_control_blocker_at_request": active_blocker,
+            "controller_may_continue_route_work": False,
+            "controller_may_spawn_new_role_work": False,
+            "requested_at": utc_now(),
+        },
+    )
+    run_state["status"] = mode
+    run_state["phase"] = "terminal"
+    run_state["holder"] = "controller"
+    run_state["pending_action"] = None
+    append_history(
+        run_state,
+        "run_protocol_dead_end",
+        {"protocol_dead_end_path": project_relative(project_root, dead_end_path)},
+    )
+
+    current_path = project_root / ".flowpilot" / "current.json"
+    current = read_json_if_exists(current_path) or {}
+    if current.get("current_run_id") == run_state.get("run_id"):
+        current["status"] = mode
+        current["updated_at"] = utc_now()
+        write_json(current_path, current)
+
+    index_path = project_root / ".flowpilot" / "index.json"
+    index = read_json_if_exists(index_path) or {}
+    runs = index.get("runs") if isinstance(index.get("runs"), list) else []
+    for item in runs:
+        if isinstance(item, dict) and item.get("run_id") == run_state.get("run_id"):
+            item["status"] = mode
+            item["updated_at"] = utc_now()
+    index["updated_at"] = utc_now()
+    if runs:
+        index["runs"] = runs
+    write_json(index_path, index)
+
+
 def _run_lifecycle_terminal_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     mode = _terminal_lifecycle_mode(run_state)
     if not mode:
@@ -2487,7 +2559,7 @@ def _run_lifecycle_terminal_action(project_root: Path, run_state: dict[str, Any]
         action_type="run_lifecycle_terminal",
         actor="controller",
         label=f"controller_observes_{mode}",
-        summary="This FlowPilot run is stopped or cancelled by the user; no further route work is authorized.",
+        summary="This FlowPilot run is terminal; no further route work is authorized.",
         allowed_reads=[lifecycle_rel, project_relative(project_root, run_state_path(run_root))],
         allowed_writes=[project_relative(project_root, run_state_path(run_root))],
         extra={
@@ -3782,9 +3854,62 @@ def _write_startup_mechanical_audit(
     return audit
 
 
+def _startup_mechanical_audit_context(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any] | None:
+    audit_path = run_root / "startup" / "startup_mechanical_audit.json"
+    if not audit_path.exists():
+        return None
+    audit = read_json_if_exists(audit_path)
+    if audit.get("schema_version") != STARTUP_MECHANICAL_AUDIT_SCHEMA:
+        return None
+    if audit.get("run_id") != run_state.get("run_id"):
+        return None
+    try:
+        proof = _validate_router_owned_check_proof(
+            project_root,
+            run_root,
+            check_name="startup_mechanical_checks",
+            audit_path=audit_path,
+        )
+    except RouterError:
+        return None
+    proof_path = _router_owned_check_proof_path(audit_path)
+    return {
+        "audit": audit,
+        "audit_path": audit_path,
+        "audit_hash": packet_runtime.sha256_file(audit_path),
+        "proof": proof,
+        "proof_path": proof_path,
+        "proof_hash": packet_runtime.sha256_file(proof_path) if proof_path.exists() else None,
+    }
+
+
+def _startup_mechanical_audit_action_extra(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    context = _startup_mechanical_audit_context(project_root, run_root, run_state)
+    if context is None:
+        raise RouterError("startup mechanical audit must be written before reviewer startup fact card delivery")
+    return {
+        "startup_mechanical_audit_path": project_relative(project_root, context["audit_path"]),
+        "startup_mechanical_audit_hash": context["audit_hash"],
+        "router_owned_check_proof_path": project_relative(project_root, context["proof_path"]),
+        "router_owned_check_proof_hash": context["proof_hash"],
+        "reviewer_must_reference_startup_mechanical_audit_hash": True,
+        "router_replacement_scope": "mechanical_only",
+    }
+
+
 def _validate_startup_external_fact_review(
     payload: dict[str, Any],
     requirements: list[dict[str, Any]],
+    *,
+    startup_mechanical_audit_hash: str | None = None,
 ) -> dict[str, Any]:
     if not requirements:
         return {
@@ -3800,6 +3925,8 @@ def _validate_startup_external_fact_review(
         raise RouterError("external_fact_review must be reviewed_by_role=human_like_reviewer")
     if review.get("used_router_mechanical_audit") is not True:
         raise RouterError("external_fact_review must acknowledge the router mechanical audit")
+    if startup_mechanical_audit_hash and review.get("router_mechanical_audit_hash") != startup_mechanical_audit_hash:
+        raise RouterError("external_fact_review must reference the current startup mechanical audit hash")
     if review.get("self_attested_ai_claims_accepted_as_proof") is not False:
         raise RouterError("external_fact_review cannot accept self-attested AI claims as proof")
     checked_ids = review.get("reviewer_checked_requirement_ids")
@@ -3816,6 +3943,7 @@ def _validate_startup_external_fact_review(
     return {
         "reviewed_by_role": "human_like_reviewer",
         "used_router_mechanical_audit": True,
+        "router_mechanical_audit_hash": startup_mechanical_audit_hash,
         "reviewer_required_external_fact_count": len(requirements),
         "reviewer_checked_requirement_ids": sorted(checked),
         "direct_evidence_paths_checked": direct_paths,
@@ -3837,13 +3965,17 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
     blockers = [name for name, ok in computed_checks.items() if not ok]
     if passed and blockers:
         raise RouterError(f"startup facts are not clean: {', '.join(sorted(blockers))}")
-    mechanical_audit = _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
-    external_fact_review = None
-    if passed:
-        external_fact_review = _validate_startup_external_fact_review(
-            payload,
-            mechanical_audit["reviewer_required_external_facts"],
-        )
+    mechanical_context = _startup_mechanical_audit_context(project_root, run_root, run_state)
+    if mechanical_context is None:
+        raise RouterError("startup mechanical audit must be written before reviewer startup fact report")
+    mechanical_audit = mechanical_context["audit"]
+    if mechanical_audit.get("mechanical_checks") != computed_checks:
+        raise RouterError("startup mechanical audit is stale; rewrite it before reviewer startup fact report")
+    external_fact_review = _validate_startup_external_fact_review(
+        payload,
+        mechanical_audit["reviewer_required_external_facts"],
+        startup_mechanical_audit_hash=mechanical_context["audit_hash"],
+    )
     write_json(
         run_root / "startup" / "startup_fact_report.json",
         {
@@ -3855,8 +3987,10 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
             "checks": computed_checks,
             "reviewer_claimed_checks": claimed_checks,
             "reviewer_reported_blockers": payload.get("blockers") if isinstance(payload.get("blockers"), list) else false_claims or blockers,
-            "startup_mechanical_audit_path": project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json"),
-            "router_owned_check_proof_path": mechanical_audit["router_owned_check_proof"]["path"],
+            "startup_mechanical_audit_path": project_relative(project_root, mechanical_context["audit_path"]),
+            "startup_mechanical_audit_hash": mechanical_context["audit_hash"],
+            "router_owned_check_proof_path": project_relative(project_root, mechanical_context["proof_path"]),
+            "router_owned_check_proof_hash": mechanical_context["proof_hash"],
             "reviewer_required_external_facts": mechanical_audit["reviewer_required_external_facts"],
             "external_fact_review": external_fact_review,
             "blocks_pm_startup_activation": not passed,
@@ -3890,6 +4024,111 @@ def _write_startup_activation(project_root: Path, run_root: Path, run_state: dic
             "approved_at": utc_now(),
             **_role_output_envelope_record(payload),
         },
+    )
+
+
+def _write_startup_repair_request(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("decided_by_role") != "project_manager":
+        raise RouterError("startup repair request requires decided_by_role=project_manager")
+    if payload.get("decision") not in {"startup_repair_requested", "repair_requested"}:
+        raise RouterError("startup repair request requires decision=startup_repair_requested")
+    target = str(payload.get("target_role_or_system") or "").strip()
+    allowed_targets = {"flowpilot_router", "human_like_reviewer", "project_manager", "worker_a", "worker_b"}
+    if target not in allowed_targets:
+        raise RouterError(f"startup repair request target_role_or_system must be one of: {', '.join(sorted(allowed_targets))}")
+    repair_action = str(payload.get("repair_action") or "").strip()
+    if not repair_action:
+        raise RouterError("startup repair request requires repair_action")
+    fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
+    if fact_report.get("passed") is True:
+        raise RouterError("startup repair request requires a blocking reviewer startup fact report")
+    record = {
+        "schema_version": "flowpilot.startup_repair_request.v1",
+        "run_id": run_state["run_id"],
+        "decided_by_role": "project_manager",
+        "decision": "startup_repair_requested",
+        "repair_target_kind": payload.get("repair_target_kind") or ("system" if target == "flowpilot_router" else "role"),
+        "target_role_or_system": target,
+        "repair_action": repair_action,
+        "blocked_report_path": payload.get("blocked_report_path") or project_relative(project_root, run_root / "startup" / "startup_fact_report.json"),
+        "resume_event": payload.get("resume_event") or "reviewer_reports_startup_facts",
+        "resume_condition": payload.get("resume_condition") or "targeted startup repair is complete and reviewer writes a fresh startup fact report",
+        "controller_may_invent_repair": False,
+        "recorded_at": utc_now(),
+        **_role_output_envelope_record(payload),
+    }
+    write_json(run_root / "startup" / "startup_repair_request.json", record)
+    for flag in (
+        "startup_fact_reported",
+        "pm_startup_activation_card_delivered",
+        "startup_activation_approved",
+        "startup_mechanical_audit_written",
+        "reviewer_startup_fact_check_card_delivered",
+    ):
+        run_state["flags"][flag] = False
+    run_state["startup_repair_request"] = {
+        "path": project_relative(project_root, run_root / "startup" / "startup_repair_request.json"),
+        "target_role_or_system": target,
+        "repair_action": repair_action,
+        "resume_event": record["resume_event"],
+    }
+
+
+def _write_startup_protocol_dead_end(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("declared_by_role") != "project_manager":
+        raise RouterError("startup protocol dead-end requires declared_by_role=project_manager")
+    if payload.get("decision") != "protocol_dead_end":
+        raise RouterError("startup protocol dead-end requires decision=protocol_dead_end")
+    if payload.get("no_legal_repair_path") is not True:
+        raise RouterError("startup protocol dead-end requires no_legal_repair_path=true")
+    reason = str(payload.get("why_no_existing_path_applies") or "").strip()
+    if not reason:
+        raise RouterError("startup protocol dead-end requires why_no_existing_path_applies")
+    attempted_paths = payload.get("attempted_legal_paths")
+    if not isinstance(attempted_paths, list) or not attempted_paths:
+        raise RouterError("startup protocol dead-end requires attempted_legal_paths")
+    resume_conditions = payload.get("resume_conditions")
+    if not isinstance(resume_conditions, list) or not resume_conditions:
+        raise RouterError("startup protocol dead-end requires resume_conditions")
+    fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
+    if fact_report.get("passed") is True:
+        raise RouterError("startup protocol dead-end requires a blocking reviewer startup fact report")
+    dead_end_path = run_root / "lifecycle" / "startup_protocol_dead_end.json"
+    record = {
+        "schema_version": "flowpilot.startup_protocol_dead_end.v1",
+        "run_id": run_state["run_id"],
+        "declared_by_role": "project_manager",
+        "decision": "protocol_dead_end",
+        "dead_end_type": payload.get("dead_end_type") or "startup_block_has_no_protocol_route",
+        "no_legal_repair_path": True,
+        "why_no_existing_path_applies": reason,
+        "attempted_legal_paths": attempted_paths,
+        "conceptual_repair_direction": payload.get("conceptual_repair_direction"),
+        "unsafe_to_continue_reason": payload.get("unsafe_to_continue_reason") or reason,
+        "blocked_report_path": payload.get("blocked_report_path") or project_relative(project_root, run_root / "startup" / "startup_fact_report.json"),
+        "effects": {
+            "freeze_run": True,
+            "cancel_or_suspend_pending_mail": True,
+            "prevent_work_beyond_startup": True,
+            "heartbeat_should_stop": True,
+            **(payload.get("effects") if isinstance(payload.get("effects"), dict) else {}),
+        },
+        "resume_conditions": resume_conditions,
+        "controller_may_continue_route_work": False,
+        "controller_may_spawn_new_role_work": False,
+        "declared_at": utc_now(),
+        **_role_output_envelope_record(payload),
+    }
+    write_json(dead_end_path, record)
+    run_state["flags"]["startup_pending_mail_suspended_after_dead_end"] = True
+    _write_protocol_dead_end_lifecycle(
+        project_root,
+        run_root,
+        run_state,
+        dead_end_path=dead_end_path,
+        reason=reason,
     )
 
 
@@ -4859,7 +5098,7 @@ def _active_ui_task_catalog(project_root: Path, run_root: Path, run_state: dict[
     current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
     current_run_root = str(current.get("current_run_root") or current.get("active_run_root") or "")
     current_status = str(current.get("status") or run_state.get("status") or "")
-    hidden_statuses = {"completed", "closed", "stopped", "stopped_by_user", "abandoned", "discarded", "stale"}
+    hidden_statuses = {"completed", "closed", "stopped", "stopped_by_user", "protocol_dead_end", "abandoned", "discarded", "stale"}
     current_pointer_matches = current_run_id == run_id and current_run_root == run_root_rel
     active_tasks: list[dict[str, Any]] = []
     if current_pointer_matches and current_status not in hidden_statuses:
@@ -7420,6 +7659,39 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
     )
 
 
+def _next_startup_mechanical_audit_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    flags = run_state["flags"]
+    if not flags.get("controller_role_confirmed"):
+        return None
+    if flags.get("startup_mechanical_audit_written") and _startup_mechanical_audit_context(project_root, run_root, run_state):
+        return None
+    return make_action(
+        action_type="write_startup_mechanical_audit",
+        actor="controller",
+        label="controller_writes_startup_mechanical_audit",
+        summary="Write the router-owned startup mechanical audit and proof before delivering the reviewer startup fact-check card.",
+        allowed_reads=[
+            project_relative(project_root, run_root / "startup_answers.json"),
+            project_relative(project_root, project_root / ".flowpilot" / "current.json"),
+            project_relative(project_root, project_root / ".flowpilot" / "index.json"),
+            project_relative(project_root, run_root / "crew_ledger.json"),
+            project_relative(project_root, _continuation_binding_path(run_root)),
+            project_relative(project_root, run_state_path(run_root)),
+        ],
+        allowed_writes=[
+            project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json"),
+            project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json.proof.json"),
+            project_relative(project_root, run_state_path(run_root)),
+        ],
+        to_role="human_like_reviewer",
+        extra={
+            "postcondition": "startup_mechanical_audit_written",
+            "reviewer_card_waiting_for_audit": "reviewer.startup_fact_check",
+            "router_replacement_scope": "mechanical_only",
+        },
+    )
+
+
 def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
     last_sync = run_state.get("visible_plan_sync") if isinstance(run_state.get("visible_plan_sync"), dict) else {}
@@ -7542,12 +7814,22 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         card = manifest_card(manifest, entry["card_id"])
         delivery_extra = {"postcondition": entry["flag"]}
         delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
+        if entry["card_id"] == "reviewer.startup_fact_check":
+            delivery_extra.update(_startup_mechanical_audit_action_extra(project_root, run_root, run_state))
+        allowed_reads = [project_relative(project_root, run_root / "runtime_kit" / str(card["path"]))]
+        if entry["card_id"] == "reviewer.startup_fact_check":
+            allowed_reads.extend(
+                [
+                    delivery_extra["startup_mechanical_audit_path"],
+                    delivery_extra["router_owned_check_proof_path"],
+                ]
+            )
         return make_action(
             action_type="deliver_system_card",
             actor="controller",
             label=entry["label"],
             summary=f"Deliver system card {entry['card_id']} to {entry['to_role']}.",
-            allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / str(card["path"]))],
+            allowed_reads=allowed_reads,
             allowed_writes=[project_relative(project_root, run_root / "prompt_delivery_ledger.json")],
             card_id=entry["card_id"],
             to_role=entry["to_role"],
@@ -7790,6 +8072,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
     if action is None:
+        action = _next_startup_mechanical_audit_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_startup_display_action(project_root, run_state, run_root)
     if action is None:
         _invalidate_route_completion_if_dirty_before_closure(run_state, run_root)
@@ -7853,6 +8137,20 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["manifest_check_requested"] = True
         run_state["manifest_check_requests"] = int(run_state.get("manifest_check_requests", 0)) + 1
         run_state["manifest_checks"] = int(run_state.get("manifest_checks", 0)) + 1
+    elif action_type == "write_startup_mechanical_audit":
+        computed_checks = _startup_fact_checks(project_root, run_root, run_state)
+        _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
+        context = _startup_mechanical_audit_context(project_root, run_root, run_state)
+        if context is None:
+            raise RouterError("startup mechanical audit was not written with a valid proof")
+        run_state["flags"]["startup_mechanical_audit_written"] = True
+        run_state["startup_mechanical_audit"] = {
+            "path": project_relative(project_root, context["audit_path"]),
+            "sha256": context["audit_hash"],
+            "proof_path": project_relative(project_root, context["proof_path"]),
+            "proof_sha256": context["proof_hash"],
+            "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
+        }
     elif action_type == "deliver_system_card":
         card_id = str(pending["card_id"])
         card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
@@ -7871,6 +8169,16 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "path": card["path"],
             "delivered_at": utc_now(),
         }
+        if card_id == "reviewer.startup_fact_check":
+            delivery.update(
+                {
+                    "startup_mechanical_audit_path": pending.get("startup_mechanical_audit_path"),
+                    "startup_mechanical_audit_hash": pending.get("startup_mechanical_audit_hash"),
+                    "router_owned_check_proof_path": pending.get("router_owned_check_proof_path"),
+                    "router_owned_check_proof_hash": pending.get("router_owned_check_proof_hash"),
+                    "reviewer_must_reference_startup_mechanical_audit_hash": True,
+                }
+            )
         run_state["delivered_cards"].append(delivery)
         run_state["flags"][card_entry["flag"]] = True
         run_state["manifest_check_requested"] = False
@@ -8176,6 +8484,10 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _write_startup_fact_report(project_root, run_root, run_state, payload)
     elif event == "pm_approves_startup_activation":
         _write_startup_activation(project_root, run_root, run_state, payload)
+    elif event == "pm_requests_startup_repair":
+        _write_startup_repair_request(project_root, run_root, run_state, payload)
+    elif event == "pm_declares_startup_protocol_dead_end":
+        _write_startup_protocol_dead_end(project_root, run_root, run_state, payload)
     elif event == "pm_issues_material_and_capability_scan_packets":
         _write_material_scan_packets(project_root, run_root, run_state, payload)
     elif event == "worker_scan_packet_bodies_delivered_after_dispatch":

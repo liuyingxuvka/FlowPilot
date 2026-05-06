@@ -249,7 +249,8 @@
       "required_body_fields": [
         "reviewed_by_role",
         "passed",
-        "external_fact_review"
+        "external_fact_review",
+        "external_fact_review.router_mechanical_audit_hash"
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer",
@@ -271,6 +272,55 @@
       "required_body_values": {
         "approved_by_role": "project_manager",
         "decision": "approved"
+      }
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_startup_repair_request.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.startup_activation",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "required_body_fields": [
+        "decided_by_role",
+        "decision",
+        "target_role_or_system",
+        "repair_action",
+        "blocked_report_path",
+        "resume_event"
+      ],
+      "required_body_values": {
+        "decided_by_role": "project_manager",
+        "decision": "startup_repair_requested"
+      },
+      "allowed_target_role_or_system_values": [
+        "flowpilot_router",
+        "human_like_reviewer",
+        "project_manager",
+        "worker_a",
+        "worker_b"
+      ]
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_startup_protocol_dead_end.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.startup_activation",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "required_body_fields": [
+        "declared_by_role",
+        "decision",
+        "no_legal_repair_path",
+        "why_no_existing_path_applies",
+        "attempted_legal_paths",
+        "unsafe_to_continue_reason",
+        "resume_conditions"
+      ],
+      "required_body_values": {
+        "declared_by_role": "project_manager",
+        "decision": "protocol_dead_end",
+        "no_legal_repair_path": true
       }
     },
     {

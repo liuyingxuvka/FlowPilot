@@ -3830,3 +3830,53 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - When adding router action validators, update next_action payload_contract and add a test that asserts visible contract fields cover validator-required nested fields.
+
+
+## flowpilot-startup-mechanical-audit-dead-end - Prewrite startup audit and add PM protocol dead-end
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing startup gate protocol change: reviewer reports must not be accepted before the router-owned startup mechanical audit exists, and PM startup blocks need either a targeted repair decision or a protocol dead-end emergency stop.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T17:09:00+02:00
+- Ended: 2026-05-06T17:09:00+02:00
+- Duration seconds: not recorded
+- Commands OK: True
+
+### Model Files
+- simulations/startup_pm_review_model.py
+- simulations/flowpilot_startup_control_model.py
+
+### Commands
+- OK: `python simulations\run_startup_pm_review_checks.py`
+- OK: `python simulations\run_flowpilot_startup_control_checks.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\startup_pm_review_model.py simulations\flowpilot_startup_control_model.py simulations\run_startup_pm_review_checks.py simulations\run_flowpilot_startup_control_checks.py`
+- OK: `python -m json.tool skills\flowpilot\assets\runtime_kit\contracts\contract_index.json`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q`
+- OK: `python -m pytest tests -q`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\smoke_autopilot.py --fast`
+
+### Findings
+- The prior startup sequence wrote `startup_mechanical_audit.json` while accepting the reviewer report, so the reviewer could not have relied on a current audit before reporting.
+- PM startup block handling needed explicit protocol outputs: `pm_requests_startup_repair` for targetable repairs and `pm_declares_startup_protocol_dead_end` for the rare no-legal-path stop.
+- Reviewer startup fact reports now must include the current startup mechanical audit hash in `external_fact_review.router_mechanical_audit_hash`.
+
+### Counterexamples
+- `fact_report_without_mechanical_audit` is detected by startup-control model hazards.
+- `blocking_fact_report_without_pm_target` is detected by startup-control model hazards.
+- `protocol_dead_end_without_file_backed_record` is detected by startup-control model hazards.
+
+### Friction Points
+- Full `run_meta_checks.py` and `run_capability_checks.py` forced reruns exceeded the foreground execution window; this change did not edit those model inputs, so their existing valid proofs were reused through `--fast`.
+
+### Skipped Steps
+- Production conformance replay for the abstract startup-control model remains skipped because no adapter exists; production coverage is through router runtime tests and install checks.
+
+### Next Actions
+- If future startup repair paths target worker roles rather than the router or reviewer, add a concrete startup repair packet workflow instead of relying on generic PM prose.

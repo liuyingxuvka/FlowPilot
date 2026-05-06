@@ -190,6 +190,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def deliver_expected_card(self, root: Path, card_id: str) -> dict:
         action = self.next_after_display_sync(root)
+        if action["action_type"] == "write_startup_mechanical_audit":
+            router.apply_action(root, "write_startup_mechanical_audit")
+            action = self.next_after_display_sync(root)
         if action["action_type"] == "check_prompt_manifest":
             router.apply_action(root, "check_prompt_manifest")
             action = self.next_after_display_sync(root)
@@ -820,12 +823,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def startup_fact_report_body(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
+        audit_path = run_root / "startup" / "startup_mechanical_audit.json"
+        audit_hash = hashlib.sha256(audit_path.read_bytes()).hexdigest() if audit_path.exists() else None
         return {
             "reviewed_by_role": "human_like_reviewer",
             "passed": True,
             "external_fact_review": {
                 "reviewed_by_role": "human_like_reviewer",
                 "used_router_mechanical_audit": True,
+                "router_mechanical_audit_hash": audit_hash,
                 "self_attested_ai_claims_accepted_as_proof": False,
                 "reviewer_checked_requirement_ids": [
                     "startup_user_answer_authenticity",
@@ -1685,6 +1691,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
 
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
+        startup_audit = read_json(run_root / "startup" / "startup_mechanical_audit.json")
+        self.assertTrue(startup_audit["mechanical_checks_passed"])
+        self.assertFalse(startup_audit["self_attested_ai_claims_accepted_as_proof"])
+        self.assertEqual(startup_audit["router_replacement_scope"], "mechanical_only")
+        proof_path = root / startup_audit["router_owned_check_proof_path"]
+        self.assertTrue(proof_path.exists())
+        proof = read_json(proof_path)
+        self.assertEqual(proof["source_kind"], "router_computed")
+        self.assertFalse(proof["self_attested_ai_claims_accepted_as_proof"])
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "reviewer_reports_startup_facts", {"passed": True})
@@ -1705,15 +1720,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
         self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
-        startup_audit = read_json(run_root / "startup" / "startup_mechanical_audit.json")
-        self.assertTrue(startup_audit["mechanical_checks_passed"])
-        self.assertFalse(startup_audit["self_attested_ai_claims_accepted_as_proof"])
-        self.assertEqual(startup_audit["router_replacement_scope"], "mechanical_only")
-        proof_path = root / startup_audit["router_owned_check_proof_path"]
-        self.assertTrue(proof_path.exists())
-        proof = read_json(proof_path)
-        self.assertEqual(proof["source_kind"], "router_computed")
-        self.assertFalse(proof["self_attested_ai_claims_accepted_as_proof"])
+        fact_report = read_json(run_root / "startup" / "startup_fact_report.json")
+        self.assertEqual(fact_report["startup_mechanical_audit_hash"], hashlib.sha256((run_root / "startup" / "startup_mechanical_audit.json").read_bytes()).hexdigest())
+        self.assertEqual(
+            fact_report["external_fact_review"]["router_mechanical_audit_hash"],
+            fact_report["startup_mechanical_audit_hash"],
+        )
 
         self.deliver_expected_card(root, "pm.startup_activation")
 
@@ -1761,18 +1773,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
+        block_body = self.startup_fact_report_body(root)
+        block_body.update(
+            {
+                "passed": False,
+                "checks": {"startup_user_answer_authenticity": False},
+                "blockers": ["startup_user_answer_authenticity"],
+            }
+        )
         router.record_external_event(
             root,
             "reviewer_reports_startup_facts",
             self.role_report_envelope(
                 root,
                 "startup/reviewer_startup_fact_block",
-                {
-                    "reviewed_by_role": "human_like_reviewer",
-                    "passed": False,
-                    "checks": {"startup_user_answer_authenticity": False},
-                    "blockers": ["startup_user_answer_authenticity"],
-                },
+                block_body,
             ),
         )
         report = read_json(run_root / "startup" / "startup_fact_report.json")
@@ -1792,6 +1807,83 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                     {"approved_by_role": "project_manager", "decision": "approved"},
                 ),
             )
+
+        router.record_external_event(
+            root,
+            "pm_declares_startup_protocol_dead_end",
+            self.role_decision_envelope(
+                root,
+                "startup/pm_startup_protocol_dead_end",
+                {
+                    "declared_by_role": "project_manager",
+                    "decision": "protocol_dead_end",
+                    "no_legal_repair_path": True,
+                    "why_no_existing_path_applies": "No startup repair event can safely represent this synthetic test block.",
+                    "attempted_legal_paths": ["pm_requests_startup_repair", "reviewer_reports_startup_facts"],
+                    "unsafe_to_continue_reason": "PM cannot open startup from a blocking reviewer report.",
+                    "resume_conditions": ["Add or select a legal startup repair path, then restart startup fact review."],
+                },
+            ),
+        )
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "run_lifecycle_terminal")
+        self.assertEqual(action["run_lifecycle_status"], "protocol_dead_end")
+        lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
+        self.assertEqual(lifecycle["status"], "protocol_dead_end")
+        dead_end = read_json(run_root / "lifecycle" / "startup_protocol_dead_end.json")
+        self.assertTrue(dead_end["effects"]["cancel_or_suspend_pending_mail"])
+
+    def test_pm_startup_repair_request_resets_fact_review_cycle(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        router.record_external_event(root, "pm_first_decision_resets_controller")
+        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+        block_body = self.startup_fact_report_body(root)
+        block_body.update(
+            {
+                "passed": False,
+                "checks": {"startup_user_answer_authenticity": False},
+                "blockers": ["startup_user_answer_authenticity"],
+            }
+        )
+        router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(root, "startup/reviewer_startup_fact_block", block_body),
+        )
+        self.deliver_expected_card(root, "pm.startup_activation")
+
+        router.record_external_event(
+            root,
+            "pm_requests_startup_repair",
+            self.role_decision_envelope(
+                root,
+                "startup/pm_startup_repair_request",
+                {
+                    "decided_by_role": "project_manager",
+                    "decision": "startup_repair_requested",
+                    "repair_target_kind": "system",
+                    "target_role_or_system": "flowpilot_router",
+                    "repair_action": "rewrite_startup_mechanical_audit_and_reissue_reviewer_fact_check",
+                    "blocked_report_path": self.rel(root, run_root / "startup" / "startup_fact_report.json"),
+                    "resume_event": "reviewer_reports_startup_facts",
+                    "resume_condition": "Router rewrites the audit and reviewer files a fresh startup fact report.",
+                },
+            ),
+        )
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_fact_reported"])
+        self.assertFalse(state["flags"]["reviewer_startup_fact_check_card_delivered"])
+        self.assertFalse(state["flags"]["pm_startup_activation_card_delivered"])
+        self.assertTrue((run_root / "startup" / "startup_repair_request.json").exists())
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "write_startup_mechanical_audit")
+        router.apply_action(root, "write_startup_mechanical_audit")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
     def test_cockpit_requested_startup_display_records_chat_fallback_mermaid(self) -> None:
         root = self.make_project()

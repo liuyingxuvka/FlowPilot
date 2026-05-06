@@ -104,10 +104,14 @@ Every PM decision body must include:
 
 If material is insufficient, issue a bounded research or material-scan packet.
 If a review blocks, decide repair, reissue, mutation, correct-role exception,
-or user stop. For uncertain route, repair, product, or validation decisions,
-request officer modeling through a bounded request/report packet and then make
-the PM decision from the report's confidence boundary. Completion requires a
-current-route ledger and segmented backward replay.
+or user stop. During startup activation, a blocking reviewer fact report must
+produce either a file-backed `pm_requests_startup_repair` decision with an
+exact target role/system and repair action, or a file-backed
+`pm_declares_startup_protocol_dead_end` decision when no legal repair path
+exists. For uncertain route, repair, product, or validation decisions, request
+officer modeling through a bounded request/report packet and then make the PM
+decision from the report's confidence boundary. Completion requires a current-
+route ledger and segmented backward replay.
 
 You may proactively request FlowGuard modeling for a reference object, source
 system, migration target, or behavior-equivalence question before deciding the
