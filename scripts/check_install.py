@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib
+import contextlib
+import io
 import json
 import sys
 from pathlib import Path
@@ -215,9 +217,9 @@ REQUIRED_FILES = [
     "simulations/flowpilot_router_action_contract_model.py",
     "simulations/run_router_action_contract_checks.py",
     "simulations/flowpilot_router_action_contract_results.json",
-    "simulations/flowpilot_command_folding_model.py",
-    "simulations/run_command_folding_checks.py",
-    "simulations/flowpilot_command_folding_results.json",
+    "simulations/flowpilot_command_refinement_model.py",
+    "simulations/run_command_refinement_checks.py",
+    "simulations/flowpilot_command_refinement_results.json",
     "simulations/release_tooling_model.py",
     "simulations/run_release_tooling_checks.py",
     "simulations/release_tooling_results.json",
@@ -255,7 +257,7 @@ JSON_FILES = [
     "simulations/flowpilot_router_loop_results.json",
     "simulations/flowpilot_output_contract_results.json",
     "simulations/flowpilot_router_action_contract_results.json",
-    "simulations/flowpilot_command_folding_results.json",
+    "simulations/flowpilot_command_refinement_results.json",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
     "templates/flowpilot/runs/run-001/run.template.json",
@@ -512,6 +514,49 @@ def main() -> int:
                 }
             )
             if not schema_match:
+                result["ok"] = False
+            cli_cases = [
+                ["--root", str(ROOT), "next", "--json"],
+                ["--root", str(ROOT), "run-until-wait", "--new-invocation", "--json"],
+                ["--root", str(ROOT), "apply", "--action-type", "load_router", "--json"],
+                ["--root", str(ROOT), "record-event", "--event", "pm_first_decision_resets_controller", "--json"],
+                ["--root", str(ROOT), "role-output-envelope", "--output-path", "role_outputs/sample.json", "--json"],
+                ["--root", str(ROOT), "validate-artifact", "--type", "role_output_envelope", "--path", "role_outputs/sample.json", "--json"],
+                ["--root", str(ROOT), "state", "--json"],
+            ]
+            cli_parse_errors = []
+            for case in cli_cases:
+                try:
+                    flowpilot_router.parse_args(case)
+                except BaseException as exc:  # argparse raises SystemExit.
+                    cli_parse_errors.append({"case": case, "error": repr(exc)})
+            retired_fold_commands = [
+                "deliver-card-bundle-checked",
+                "relay-checked",
+                "prepare-startup-fact-check",
+                "record-role-output-checked",
+            ]
+            unexpected_retired_commands = []
+            for command in retired_fold_commands:
+                try:
+                    with contextlib.redirect_stderr(io.StringIO()):
+                        flowpilot_router.parse_args(["--root", str(ROOT), command, "--json"])
+                    unexpected_retired_commands.append(command)
+                except SystemExit:
+                    pass
+                except BaseException as exc:
+                    unexpected_retired_commands.append(f"{command}: {exc!r}")
+            cli_ok = not cli_parse_errors and not unexpected_retired_commands
+            result["checks"].append(
+                {
+                    "name": "flowpilot_router_cli_commands_parse",
+                    "ok": cli_ok,
+                    "parse_error_count": len(cli_parse_errors),
+                    "parse_errors": cli_parse_errors,
+                    "unexpected_retired_fold_commands": unexpected_retired_commands,
+                }
+            )
+            if not cli_ok:
                 result["ok"] = False
             packet_body_template = ROOT / "templates/flowpilot/packets/packet_body.template.md"
             result_body_template = ROOT / "templates/flowpilot/packets/result_body.template.md"

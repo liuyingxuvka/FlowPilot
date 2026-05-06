@@ -22,7 +22,7 @@ Do not read FlowPilot reference files, old route state, old screenshots, old UI 
 Fresh formal invocation:
 
 ```powershell
-python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json next --new-invocation
+python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation
 ```
 
 Continue/apply:

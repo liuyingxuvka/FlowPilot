@@ -3955,3 +3955,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-command-refinement-rollback-20260506 - Restore unfolded router baseline and reintroduce only proven startup fold
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Command folding caused FlowPilot startup CLI parsing failure before the three startup questions; user requested returning to a validated unfolded baseline and reintroducing only model-proven folds.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T17:40:00+00:00
+- Ended: 2026-05-06T18:05:00+00:00
+- Duration seconds: 1500
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_command_refinement_model.py
+- simulations/run_command_refinement_checks.py
+- simulations/flowpilot_command_refinement_results.json
+- simulations/flowpilot_router_action_contract_model.py
+- simulations/flowpilot_router_loop_model.py
+- simulations/flowpilot_output_contract_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_command_refinement_checks.py --json-out simulations/flowpilot_command_refinement_results.json`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_run_until_wait_applies_only_safe_startup_action tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_cli_accepts_json_after_subcommand tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_retired_high_risk_fold_commands_are_not_cli_commands`
+- OK: `python scripts/check_install.py`
+- OK: `python simulations/run_router_action_contract_checks.py --json-out simulations/flowpilot_router_action_contract_results.json`
+- OK: `python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json`
+- OK: `python simulations/run_output_contract_checks.py --json-out simulations/flowpilot_output_contract_results.json`
+- OK: temporary formal startup smoke using `run-until-wait --new-invocation`; returned `ask_startup_questions` with `requires_user: true` after one internal `load_router` apply.
+- OK: background full `python simulations/run_meta_checks.py` (`598029` states, `618200` edges, no invariant/stuck/nonterminating findings).
+- OK: background full `python simulations/run_capability_checks.py` (`557123` states, `582582` edges, no invariant/stuck/nonterminating findings).
+- OK: background `python scripts/smoke_autopilot.py --fast`.
+- OK: background `python -m unittest tests.test_flowpilot_router_runtime` (`60` tests).
+
+### Findings
+- The prior `flowpilot_command_folding` model was too broad and abstract. It did not prove concrete CLI/parser binding or helper-name availability.
+- The unsafe aggregate commands were removed from production CLI: `deliver-card-bundle-checked`, `relay-checked`, `prepare-startup-fact-check`, and `record-role-output-checked`.
+- The new command-refinement model treats the original unfolded startup sequence as the baseline oracle and permits only the safe internal `run-until-wait` startup fold.
+- `scripts/check_install.py` now performs real router CLI parse checks and verifies the high-risk retired fold commands are absent.
+
+### Counterexamples
+- Prior startup failure: `relay-checked` added a parser `choices=sorted(RELAY_CHECKED_ACTION_TYPES)` reference without a committed definition, causing `NameError` before startup questions.
+
+### Friction Points
+- FlowGuard abstract models do not replace concrete parser/import/static binding checks; both are needed for router CLI changes.
+
+### Skipped Steps
+- Dedicated conformance replay for card bundles, packet relays, startup fact-card delivery, and role-output preflight remains intentionally skipped; those fold candidates are rejected until separate replay exists.
+
+### Next Actions
+- If future speed work resumes, evaluate one fold candidate at a time against unfolded state snapshots plus FlowGuard refinement before exposing it in the production CLI.

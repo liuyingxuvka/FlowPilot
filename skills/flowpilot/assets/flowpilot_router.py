@@ -95,6 +95,8 @@ RUNTIME_FLAG_DEFAULTS = {
     "current_node_result_relayed_to_reviewer": False,
 }
 
+SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset({"load_router"})
+
 CURRENT_NODE_CYCLE_FLAGS = (
     "pm_node_started_event_delivered",
     "pm_node_acceptance_plan_card_delivered",
@@ -8806,189 +8808,29 @@ def apply_action(project_root: Path, action_type: str, payload: dict[str, Any] |
 def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: bool = False) -> dict[str, Any]:
     if max_steps < 1:
         raise RouterError("run-until-wait requires max_steps >= 1")
-    applied: list[dict[str, Any]] = []
+    applied_actions: list[dict[str, Any]] = []
     start_new = new_invocation
     for _ in range(max_steps):
         action = next_action(project_root, new_invocation=start_new)
         start_new = False
         action_type = str(action.get("action_type") or "")
-        if action_type not in AUTO_APPLY_ACTION_TYPES:
-            return {
-                "ok": True,
-                "applied_count": len(applied),
-                "applied_actions": applied,
-                "stopped_action": action,
-                "stop_reason": "requires_user_host_or_role_boundary",
-            }
-        result = apply_action(project_root, action_type, {})
-        applied.append({"action_type": action_type, "result": result})
-        if result.get("waiting") or result.get("terminal"):
-            return {
-                "ok": True,
-                "applied_count": len(applied),
-                "applied_actions": applied,
-                "stopped_action": None,
-                "stop_reason": "terminal_or_waiting_action_applied",
-            }
-    return {
-        "ok": True,
-        "applied_count": len(applied),
-        "applied_actions": applied,
-        "stopped_action": None,
-        "stop_reason": "max_steps_reached",
-    }
-
-
-def deliver_card_bundle_checked(
-    project_root: Path,
-    *,
-    card_ids: list[str],
-    to_role: str | None = None,
-) -> dict[str, Any]:
-    if not card_ids:
-        raise RouterError("deliver-card-bundle-checked requires at least one card id")
-    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
-    run_state, run_root = load_run_state(project_root, bootstrap)
-    if run_state is None or run_root is None:
-        raise RouterError("run state is missing")
-    pending = run_state.get("pending_action")
-    if isinstance(pending, dict):
-        pending_type = str(pending.get("action_type") or "")
-        if pending_type not in CARD_BUNDLE_PENDING_ACTION_TYPES:
-            raise RouterError(f"card bundle cannot bypass pending action: {pending_type}")
-        pending_card_id = pending.get("card_id") or pending.get("next_card_id")
-        if pending_card_id and str(pending_card_id) != card_ids[0]:
-            raise RouterError(f"card bundle first card must match pending card: {pending_card_id}")
-    expected_action = _next_system_card_action(project_root, run_state, run_root)
-    expected_card_id = None
-    if isinstance(expected_action, dict):
-        expected_card_id = expected_action.get("card_id") or expected_action.get("next_card_id")
-    if expected_card_id and str(expected_card_id) != card_ids[0]:
-        raise RouterError(f"card bundle first card must match next deliverable card: {expected_card_id}")
-    first_role: str | None = None
-    manifest = load_manifest_from_run(run_root)
-    delivered: list[dict[str, Any]] = []
-    skipped: list[dict[str, str]] = []
-    run_state["manifest_check_requested"] = True
-    run_state["manifest_check_requests"] = int(run_state.get("manifest_check_requests", 0)) + 1
-    run_state["manifest_checks"] = int(run_state.get("manifest_checks", 0)) + 1
-    for card_id in card_ids:
-        entry = _system_card_entry(str(card_id))
-        role = str(entry["to_role"])
-        if to_role and role != to_role:
-            raise RouterError(f"card {card_id} targets {role}, not requested role {to_role}")
-        if first_role is None:
-            first_role = role
-        elif role != first_role:
-            raise RouterError("card bundle may include only one target role")
-        if run_state["flags"].get(entry["flag"]):
-            skipped.append({"card_id": str(card_id), "reason": "already_delivered"})
-            continue
-        if not _system_card_entry_deliverable(run_state, run_root, entry):
-            raise RouterError(f"card is not deliverable under current route flags: {card_id}")
-        delivered.append(_record_system_card_delivery(project_root, run_root, run_state, manifest, entry))
-    run_state["manifest_check_requested"] = False
-    run_state["pending_action"] = None
-    append_history(
-        run_state,
-        "controller_delivered_system_card_bundle_checked",
-        {"card_ids": card_ids, "delivered_count": len(delivered), "skipped_count": len(skipped)},
-    )
-    _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_action:deliver_card_bundle_checked")
-    save_run_state(run_root, run_state)
-    return {
-        "ok": True,
-        "applied": "deliver-card-bundle-checked",
-        "to_role": first_role,
-        "delivered_count": len(delivered),
-        "skipped": skipped,
-        "delivery_bundle": delivered,
-        "host_must_deliver_bundle_to_role": True,
-    }
-
-
-def relay_checked(project_root: Path, *, action_type: str) -> dict[str, Any]:
-    if action_type not in RELAY_CHECKED_ACTION_TYPES:
-        raise RouterError(f"unsupported relay-checked action type: {action_type}")
-    applied: list[dict[str, Any]] = []
-    action = next_action(project_root)
-    if action.get("action_type") == "check_packet_ledger":
-        result = apply_action(project_root, "check_packet_ledger", {})
-        applied.append({"action_type": "check_packet_ledger", "result": result})
-        action = next_action(project_root)
-    if action.get("action_type") != action_type:
-        raise RouterError(f"next checked relay action is {action.get('action_type')!r}, not {action_type!r}")
-    result = apply_action(project_root, action_type, {})
-    applied.append({"action_type": action_type, "result": result})
-    return {
-        "ok": True,
-        "applied": "relay-checked",
-        "relay_action_type": action_type,
-        "applied_actions": applied,
-        "host_must_deliver_or_relay_payloads_to_role": True,
-    }
-
-
-def prepare_startup_fact_check(project_root: Path, *, mark_delivered: bool = False) -> dict[str, Any]:
-    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
-    run_state, run_root = load_run_state(project_root, bootstrap)
-    if run_state is None or run_root is None:
-        raise RouterError("run state is missing")
-    if not run_state["flags"].get("controller_role_confirmed_from_pm_reset"):
-        raise RouterError("startup fact check preparation requires PM controller-role confirmation")
-    computed_checks = _startup_fact_checks(project_root, run_root, run_state)
-    _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
-    context = _startup_mechanical_audit_context(project_root, run_root, run_state)
-    if context is None:
-        raise RouterError("startup mechanical audit was not written with a valid proof")
-    run_state["flags"]["startup_mechanical_audit_written"] = True
-    run_state["startup_mechanical_audit"] = {
-        "path": project_relative(project_root, context["audit_path"]),
-        "sha256": context["audit_hash"],
-        "proof_path": project_relative(project_root, context["proof_path"]),
-        "proof_sha256": context["proof_hash"],
-        "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
-    }
-    run_state["pending_action"] = None
-    append_history(
-        run_state,
-        "controller_prepared_startup_fact_check",
-        {"mark_delivered": mark_delivered, "audit_hash": context["audit_hash"]},
-    )
-    _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_action:prepare_startup_fact_check")
-    save_run_state(run_root, run_state)
-    result: dict[str, Any] = {
-        "ok": True,
-        "applied": "prepare-startup-fact-check",
-        "startup_mechanical_audit": run_state["startup_mechanical_audit"],
-        "reviewer_card_id": "reviewer.startup_fact_check",
-    }
-    if mark_delivered:
-        delivery = deliver_card_bundle_checked(
-            project_root,
-            card_ids=["reviewer.startup_fact_check"],
-            to_role="human_like_reviewer",
-        )
-        result["delivery"] = delivery
-    return result
-
-
-def record_role_output_checked(project_root: Path, *, event: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
-    payload = payload or {}
-    try:
-        _load_file_backed_role_payload(project_root, payload)
-    except (RouterError, json.JSONDecodeError, OSError) as exc:
-        return {
-            "ok": False,
-            "event": event,
-            "validation_stage": "file_backed_role_output_preflight",
-            "error": str(exc),
-            "recorded": False,
-            "control_blocker_created": False,
-        }
-    result = record_external_event(project_root, event, payload)
-    result["preflight_checked"] = True
-    return result
+        if action_type not in SAFE_RUN_UNTIL_WAIT_ACTION_TYPES:
+            result = dict(action)
+            result["folded_command"] = "run-until-wait"
+            result["folded_applied_count"] = len(applied_actions)
+            result["folded_applied_actions"] = applied_actions
+            result["folded_stop_reason"] = "requires_user_host_or_role_boundary"
+            return result
+        applied = apply_action(project_root, action_type, {})
+        applied_actions.append({"action_type": action_type, "result": applied})
+        if applied.get("waiting") or applied.get("terminal"):
+            result = dict(applied)
+            result["folded_command"] = "run-until-wait"
+            result["folded_applied_count"] = len(applied_actions)
+            result["folded_applied_actions"] = applied_actions
+            result["folded_stop_reason"] = "terminal_or_waiting_action_applied"
+            return result
+    raise RouterError("run-until-wait reached max_steps before a wait boundary")
 
 
 def write_role_output_envelope(
@@ -9142,32 +8984,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     next_parser = sub.add_parser("next", help="Return the next router-authorized action")
     next_parser.add_argument("--new-invocation", action="store_true", help="Start a fresh formal FlowPilot invocation")
     next_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    run_wait_parser = sub.add_parser("run-until-wait", help="Apply safe internal router actions and return the next wait-boundary action")
+    run_wait_parser.add_argument("--max-steps", type=int, default=50)
+    run_wait_parser.add_argument("--new-invocation", action="store_true", help="Start a fresh formal FlowPilot invocation")
+    run_wait_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     apply_parser = sub.add_parser("apply", help="Apply a pending router action")
     apply_parser.add_argument("--action-type", required=True)
     apply_parser.add_argument("--payload-json", default="")
     apply_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
-    run_wait_parser = sub.add_parser("run-until-wait", help="Apply safe internal router actions until a user, host, or role boundary")
-    run_wait_parser.add_argument("--max-steps", type=int, default=50)
-    run_wait_parser.add_argument("--new-invocation", action="store_true", help="Start a fresh formal FlowPilot invocation before running")
-    run_wait_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
-    card_bundle_parser = sub.add_parser("deliver-card-bundle-checked", help="Manifest-check and record a same-role system-card delivery bundle")
-    card_bundle_parser.add_argument("--card-ids", required=True, help="Comma-separated system card ids in delivery order")
-    card_bundle_parser.add_argument("--to-role", default="")
-    card_bundle_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
-    relay_parser = sub.add_parser("relay-checked", help="Packet-ledger-check and record one mail or packet relay action")
-    relay_parser.add_argument("--action-type", required=True, choices=sorted(RELAY_CHECKED_ACTION_TYPES))
-    relay_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
-    fact_parser = sub.add_parser("prepare-startup-fact-check", help="Write the router-owned startup mechanical audit and optional reviewer card delivery")
-    fact_parser.add_argument("--mark-delivered", action="store_true")
-    fact_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     event_parser = sub.add_parser("record-event", help="Record a PM/reviewer/worker external event")
     event_parser.add_argument("--event", required=True)
     event_parser.add_argument("--payload-json", default="")
     event_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
-    checked_event_parser = sub.add_parser("record-role-output-checked", help="Preflight a file-backed role output envelope before recording an event")
-    checked_event_parser.add_argument("--event", required=True)
-    checked_event_parser.add_argument("--payload-json", default="")
-    checked_event_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     envelope_parser = sub.add_parser("role-output-envelope", help="Write a role output body and return a controller-visible envelope")
     envelope_parser.add_argument("--output-path", required=True)
     envelope_parser.add_argument("--body-json", default="")
@@ -9193,28 +9021,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "next":
             result = next_action(root, new_invocation=bool(getattr(args, "new_invocation", False)))
-        elif args.command == "apply":
-            payload = json.loads(args.payload_json) if args.payload_json else {}
-            result = apply_action(root, args.action_type, payload)
         elif args.command == "run-until-wait":
             result = run_until_wait(
                 root,
                 max_steps=int(args.max_steps),
                 new_invocation=bool(getattr(args, "new_invocation", False)),
             )
-        elif args.command == "deliver-card-bundle-checked":
-            card_ids = [card_id.strip() for card_id in str(args.card_ids).split(",") if card_id.strip()]
-            result = deliver_card_bundle_checked(root, card_ids=card_ids, to_role=args.to_role or None)
-        elif args.command == "relay-checked":
-            result = relay_checked(root, action_type=args.action_type)
+        elif args.command == "apply":
+            payload = json.loads(args.payload_json) if args.payload_json else {}
+            result = apply_action(root, args.action_type, payload)
         elif args.command == "record-event":
             payload = json.loads(args.payload_json) if args.payload_json else {}
             result = record_external_event(root, args.event, payload)
-        elif args.command == "prepare-startup-fact-check":
-            result = prepare_startup_fact_check(root, mark_delivered=bool(args.mark_delivered))
-        elif args.command == "record-role-output-checked":
-            payload = json.loads(args.payload_json) if args.payload_json else {}
-            result = record_role_output_checked(root, event=args.event, payload=payload)
         elif args.command == "role-output-envelope":
             body = json.loads(args.body_json) if args.body_json else None
             result = write_role_output_envelope(

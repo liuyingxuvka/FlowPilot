@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import hashlib
+import contextlib
+import io
 import sys
 import tempfile
 import unittest
@@ -1062,43 +1064,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "load_router")
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
 
-    def test_run_until_wait_applies_safe_startup_actions_only(self) -> None:
+    def test_run_until_wait_applies_only_safe_startup_action(self) -> None:
         root = self.make_project()
         result = router.run_until_wait(root, new_invocation=True)
-        self.assertTrue(result["ok"])
-        self.assertEqual([item["action_type"] for item in result["applied_actions"]], ["load_router"])
-        self.assertEqual(result["stopped_action"]["action_type"], "ask_startup_questions")
-        self.assertEqual(result["stop_reason"], "requires_user_host_or_role_boundary")
-
-    def test_deliver_card_bundle_checked_records_ordered_same_role_cards(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        result = router.deliver_card_bundle_checked(
-            root,
-            card_ids=["pm.core", "pm.output_contract_catalog"],
-            to_role="project_manager",
-        )
-        self.assertTrue(result["ok"])
-        self.assertEqual(result["delivered_count"], 2)
-        state = read_json(router.run_state_path(run_root))
-        self.assertEqual(state["manifest_checks"], 1)
-        self.assertTrue(state["flags"]["pm_core_delivered"])
-        self.assertTrue(state["flags"]["pm_output_contract_catalog_delivered"])
-        self.assertFalse(state.get("manifest_check_requested"))
-
-    def test_deliver_card_bundle_checked_rejects_skipping_next_card(self) -> None:
-        root = self.make_project()
-        self.boot_to_controller(root)
-        with self.assertRaises(router.RouterError):
-            router.deliver_card_bundle_checked(root, card_ids=["pm.output_contract_catalog"], to_role="project_manager")
-
-    def test_record_role_output_checked_preflight_rejects_unbacked_payload_without_blocker(self) -> None:
-        root = self.make_project()
-        result = router.record_role_output_checked(root, event="reviewer_reports_startup_facts", payload={})
-        self.assertFalse(result["ok"])
-        self.assertFalse(result["recorded"])
-        self.assertFalse(result["control_blocker_created"])
-        self.assertEqual(result["validation_stage"], "file_backed_role_output_preflight")
+        self.assertEqual(result["action_type"], "ask_startup_questions")
+        self.assertEqual(result["folded_command"], "run-until-wait")
+        self.assertEqual(result["folded_applied_count"], 1)
+        self.assertEqual([item["action_type"] for item in result["folded_applied_actions"]], ["load_router"])
+        self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
 
     def test_startup_sequence_creates_prompt_isolated_run(self) -> None:
         root = self.make_project()
@@ -1607,11 +1580,68 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(parsed.json)
 
         parsed = router.parse_args(
+            ["--root", "C:/tmp/project", "run-until-wait", "--new-invocation", "--json"]
+        )
+        self.assertEqual(parsed.command, "run-until-wait")
+        self.assertTrue(parsed.new_invocation)
+        self.assertTrue(parsed.json)
+
+        parsed = router.parse_args(
             ["--root", "C:/tmp/project", "apply", "--action-type", "load_router", "--json"]
         )
         self.assertEqual(parsed.command, "apply")
         self.assertEqual(parsed.action_type, "load_router")
         self.assertTrue(parsed.json)
+
+        parsed = router.parse_args(
+            ["--root", "C:/tmp/project", "record-event", "--event", "pm_first_decision_resets_controller", "--json"]
+        )
+        self.assertEqual(parsed.command, "record-event")
+        self.assertEqual(parsed.event, "pm_first_decision_resets_controller")
+        self.assertTrue(parsed.json)
+
+        parsed = router.parse_args(
+            [
+                "--root",
+                "C:/tmp/project",
+                "role-output-envelope",
+                "--output-path",
+                "role_outputs/sample.json",
+                "--json",
+            ]
+        )
+        self.assertEqual(parsed.command, "role-output-envelope")
+        self.assertTrue(parsed.json)
+
+        parsed = router.parse_args(
+            [
+                "--root",
+                "C:/tmp/project",
+                "validate-artifact",
+                "--type",
+                "role_output_envelope",
+                "--path",
+                "role_outputs/sample.json",
+                "--json",
+            ]
+        )
+        self.assertEqual(parsed.command, "validate-artifact")
+        self.assertTrue(parsed.json)
+
+        parsed = router.parse_args(["--root", "C:/tmp/project", "state", "--json"])
+        self.assertEqual(parsed.command, "state")
+        self.assertTrue(parsed.json)
+
+    def test_retired_high_risk_fold_commands_are_not_cli_commands(self) -> None:
+        for command in (
+            "deliver-card-bundle-checked",
+            "relay-checked",
+            "prepare-startup-fact-check",
+            "record-role-output-checked",
+        ):
+            with self.assertRaises(SystemExit):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    router.parse_args(["--root", "C:/tmp/project", command, "--json"])
 
     def test_role_output_envelope_writes_body_and_keeps_controller_visible_payload_sealed(self) -> None:
         root = self.make_project()

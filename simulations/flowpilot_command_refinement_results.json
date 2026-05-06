@@ -1,0 +1,51 @@
+{
+  "checks": {
+    "expected_scenarios": {
+      "failures": [],
+      "ok": true,
+      "results": {
+        "card_bundle_fold": "rejected:multi_card_delivery_requires_dedicated_replay",
+        "packet_relay_fold": "rejected:packet_relay_requires_dedicated_replay",
+        "role_output_preflight_fold": "rejected:role_output_preflight_requires_error_semantics_replay",
+        "startup_fact_card_fold": "rejected:startup_fact_card_crosses_reviewer_delivery_boundary",
+        "startup_safe_fold": "accepted:none",
+        "startup_unfolded": "accepted:none"
+      }
+    },
+    "flowguard_explorer": {
+      "dead_branch_count": 0,
+      "exception_branch_count": 0,
+      "ok": true,
+      "reachability_failure_count": 0,
+      "reachability_failures": [],
+      "summary": "sequences=6 initial_states=1 traces=126",
+      "violation_count": 0
+    },
+    "progress": {
+      "cannot_reach_terminal_count": 0,
+      "ok": true,
+      "samples": [],
+      "stuck_state_count": 0
+    },
+    "safe_graph": {
+      "accepted_scenarios": [
+        "startup_safe_fold",
+        "startup_unfolded"
+      ],
+      "edge_count": 17,
+      "invariant_failure_count": 0,
+      "invariant_failures": [],
+      "missing_labels": [],
+      "ok": true,
+      "rejected_scenarios": [
+        "card_bundle_fold",
+        "packet_relay_fold",
+        "role_output_preflight_fold",
+        "startup_fact_card_fold"
+      ],
+      "state_count": 18
+    }
+  },
+  "model": "flowpilot_command_refinement",
+  "ok": true
+}

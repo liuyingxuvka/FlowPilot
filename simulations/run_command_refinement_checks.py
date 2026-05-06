@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot router command-folding model."""
+"""Run checks for the FlowPilot command-refinement model."""
 
 from __future__ import annotations
 
@@ -9,21 +9,19 @@ from pathlib import Path
 
 from flowguard import Explorer
 
-import flowpilot_command_folding_model as model
+import flowpilot_command_refinement_model as model
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "flowpilot_command_folding_results.json"
+RESULTS_PATH = ROOT / "flowpilot_command_refinement_results.json"
 
 
 def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|"
-        f"safe={state.safe_internal_actions_applied},stop={state.stopped_at_boundary},cross={state.boundary_crossed}|"
-        f"manifest={state.manifest_checked},cards={state.cards_delivered},same_role={state.card_bundle_same_role},next={state.next_card_matched}|"
-        f"ledger={state.ledger_checked},relay={state.relay_recorded}|"
-        f"audit={state.startup_mechanical_audit_written},startup_card={state.startup_fact_card_delivered}|"
-        f"preflight={state.role_output_preflight_checked},file={state.role_output_file_backed},event={state.event_recorded},blocker={state.control_blocker_created}|"
+        f"next={state.next_load_router_seen},load={state.load_router_applied},questions={state.startup_questions_returned}|"
+        f"boundaries=user:{state.user_boundary_crossed},host:{state.host_boundary_crossed},role:{state.role_boundary_crossed}|"
+        f"fold={state.folded_command_enabled},cli={state.cli_binding_verified},runtime={state.runtime_smoke_verified},install={state.install_smoke_verified}|"
         f"router={state.router_decision}:{state.router_rejection_reason}"
     )
 
@@ -73,16 +71,12 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
     rejected = [state for state in terminals if state.status == "rejected"]
     accepted_scenarios = sorted(state.scenario for state in accepted)
     rejected_scenarios = sorted(state.scenario for state in rejected)
-    expected_accepted = sorted(
-        scenario for scenario in model.SCENARIOS if scenario not in model.NEGATIVE_SCENARIOS
-    )
-    expected_rejected = sorted(model.NEGATIVE_SCENARIOS)
     return {
         "ok": (
             not graph["invariant_failures"]
             and not missing_labels
-            and accepted_scenarios == expected_accepted
-            and rejected_scenarios == expected_rejected
+            and accepted_scenarios == sorted((model.STARTUP_UNFOLDED, model.STARTUP_SAFE_FOLD))
+            and rejected_scenarios == sorted(model.NEGATIVE_SCENARIOS)
         ),
         "state_count": len(states),
         "edge_count": graph["edge_count"],
@@ -111,8 +105,8 @@ def _check_expected_scenarios(graph: dict[str, object]) -> dict[str, object]:
             results[scenario] = "missing"
             continue
         results[scenario] = f"{terminal.status}:{terminal.router_rejection_reason}"
-        if scenario in model.NEGATIVE_EXPECTED_REJECTIONS:
-            expected_reason = model.NEGATIVE_EXPECTED_REJECTIONS[scenario]
+        if scenario in model.EXPECTED_REJECTIONS:
+            expected_reason = model.EXPECTED_REJECTIONS[scenario]
             if terminal.status != "rejected" or terminal.router_rejection_reason != expected_reason:
                 failures.append(
                     f"{scenario}: expected rejected:{expected_reason}, got {results[scenario]}"
@@ -188,7 +182,7 @@ def run_checks() -> dict[str, object]:
     }
     return {
         "ok": all(check["ok"] for check in checks.values()),
-        "model": "flowpilot_command_folding",
+        "model": "flowpilot_command_refinement",
         "checks": checks,
     }
 
