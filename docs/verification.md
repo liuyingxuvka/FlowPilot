@@ -7,6 +7,7 @@ Run:
 ```powershell
 python simulations/run_startup_pm_review_checks.py
 python simulations/run_card_instruction_coverage_checks.py
+python simulations/run_command_folding_checks.py
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
@@ -30,6 +31,10 @@ Expected:
 - card instruction coverage checks reject cards that lack role identity,
   `required_return`, `next_step_source`, router-return wording, or
   role-appropriate action guidance.
+- command-folding checks preserve user/host/role stop boundaries while allowing
+  safe internal router steps, card bundles, packet relays, startup fact-check
+  preparation, and role-output preflight to run through checked aggregate
+  commands.
 
 Route-local models under `.flowpilot/task-models/` belong to an adopted target
 project's runtime evidence. They should be checked when present in that target

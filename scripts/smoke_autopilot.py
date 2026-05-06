@@ -32,6 +32,7 @@ def main(argv: list[str] | None = None) -> int:
         [sys.executable, "simulations/run_release_tooling_checks.py"],
         [sys.executable, "simulations/run_startup_pm_review_checks.py"],
         [sys.executable, "simulations/run_barrier_equivalence_checks.py"],
+        [sys.executable, "simulations/run_command_folding_checks.py"],
         meta_check,
         capability_check,
     ]

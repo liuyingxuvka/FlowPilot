@@ -1062,6 +1062,44 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "load_router")
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
 
+    def test_run_until_wait_applies_safe_startup_actions_only(self) -> None:
+        root = self.make_project()
+        result = router.run_until_wait(root, new_invocation=True)
+        self.assertTrue(result["ok"])
+        self.assertEqual([item["action_type"] for item in result["applied_actions"]], ["load_router"])
+        self.assertEqual(result["stopped_action"]["action_type"], "ask_startup_questions")
+        self.assertEqual(result["stop_reason"], "requires_user_host_or_role_boundary")
+
+    def test_deliver_card_bundle_checked_records_ordered_same_role_cards(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        result = router.deliver_card_bundle_checked(
+            root,
+            card_ids=["pm.core", "pm.output_contract_catalog"],
+            to_role="project_manager",
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["delivered_count"], 2)
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["manifest_checks"], 1)
+        self.assertTrue(state["flags"]["pm_core_delivered"])
+        self.assertTrue(state["flags"]["pm_output_contract_catalog_delivered"])
+        self.assertFalse(state.get("manifest_check_requested"))
+
+    def test_deliver_card_bundle_checked_rejects_skipping_next_card(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        with self.assertRaises(router.RouterError):
+            router.deliver_card_bundle_checked(root, card_ids=["pm.output_contract_catalog"], to_role="project_manager")
+
+    def test_record_role_output_checked_preflight_rejects_unbacked_payload_without_blocker(self) -> None:
+        root = self.make_project()
+        result = router.record_role_output_checked(root, event="reviewer_reports_startup_facts", payload={})
+        self.assertFalse(result["ok"])
+        self.assertFalse(result["recorded"])
+        self.assertFalse(result["control_blocker_created"])
+        self.assertEqual(result["validation_stage"], "file_backed_role_output_preflight")
+
     def test_startup_sequence_creates_prompt_isolated_run(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
