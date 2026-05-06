@@ -49,6 +49,26 @@ PM_MINIMUM_COMPLEXITY_REQUIRED_CARD_IDS = frozenset(
         "pm.closure",
     }
 )
+OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
+    {
+        "pm.core",
+        "pm.output_contract_catalog",
+        "pm.material_scan",
+        "pm.research_package",
+        "pm.current_node_loop",
+        "pm.officer_request_report_loop",
+        "pm.event.node_started",
+        "worker_a.core",
+        "worker_b.core",
+        "worker.research_report",
+        "reviewer.core",
+        "reviewer.dispatch_request",
+        "reviewer.current_node_dispatch",
+        "reviewer.worker_result_review",
+        "process_officer.core",
+        "product_officer.core",
+    }
+)
 
 ACTION_TERMS_BY_ROLE: dict[str, tuple[str, ...]] = {
     "bootloader": ("display", "return", "router", "do not infer"),
@@ -95,6 +115,7 @@ class CardFacts:
     action_guidance: bool
     pm_history_context_guidance: bool
     pm_minimum_complexity_guidance: bool
+    output_contract_guidance: bool
 
 
 @dataclass(frozen=True)
@@ -180,6 +201,16 @@ def _has_pm_minimum_complexity_guidance(card_id: str, role: str, text: str) -> b
             or "unused" in lower
         )
     )
+
+
+def _has_output_contract_guidance(card_id: str, text: str) -> bool:
+    if card_id not in OUTPUT_CONTRACT_REQUIRED_CARD_IDS:
+        return True
+    lower = text.lower()
+    has_packet_contract = "output_contract" in lower and ("packet" in lower or "envelope" in lower)
+    if card_id.startswith("pm.") and card_id not in {"pm.core", "pm.output_contract_catalog"}:
+        return has_packet_contract
+    return has_packet_contract and "contract self-check" in lower
 
 
 def _has_envelope_only_return(identity: dict[str, str], text: str) -> bool:
@@ -293,6 +324,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 action_guidance=_has_action_guidance(expected_role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(card_id, expected_role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(card_id, expected_role, text),
+                output_contract_guidance=_has_output_contract_guidance(card_id, text),
             )
         )
 
@@ -322,6 +354,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 action_guidance=_has_action_guidance(role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(f"unmanifested:{rel}", role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(f"unmanifested:{rel}", role, text),
+                output_contract_guidance=_has_output_contract_guidance(f"unmanifested:{rel}", text),
             )
         )
     return tuple(sorted(facts, key=lambda card: card.card_id))
@@ -351,6 +384,8 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: missing PM prior path context guidance")
     if not card.pm_minimum_complexity_guidance:
         failures.append(f"{card.card_id}: missing PM minimum sufficient complexity guidance")
+    if not card.output_contract_guidance:
+        failures.append(f"{card.card_id}: missing output_contract and Contract Self-Check guidance")
     return tuple(failures)
 
 
@@ -419,6 +454,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         action_guidance=True,
         pm_history_context_guidance=True,
         pm_minimum_complexity_guidance=True,
+        output_contract_guidance=True,
     )
     return {
         "missing_identity_boundary": replace(good, identity_boundary=False),
@@ -440,4 +476,9 @@ def hazard_cards() -> dict[str, CardFacts]:
             pm_minimum_complexity_guidance=False,
         ),
         "active_card_unmanifested": replace(good, manifest_registered=False),
+        "missing_output_contract_guidance": replace(
+            good,
+            card_id="pm.output_contract_catalog",
+            output_contract_guidance=False,
+        ),
     }

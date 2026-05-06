@@ -15,9 +15,15 @@ Check:
 - node acceptance plan has passed;
 - packet route version and node id match the active frontier;
 - packet is bounded to the current node;
+- packet envelope includes `output_contract`, the packet body repeats the same
+  `Output Contract`, and the contract matches `to_role`, `packet_type`, node
+  acceptance, required evidence, and reviewer block conditions;
 - body visibility is sealed to the target role;
 - Controller can relay only the envelope and cannot read, execute, edit,
   approve, or close the work;
 - allowed reads/writes and forbidden actions are explicit.
+
+The dispatch report body must include `Contract Self-Check` against the source
+packet `output_contract`; missing or failed contract checks block dispatch.
 
 Return dispatch allowed or a concrete blocker for PM.

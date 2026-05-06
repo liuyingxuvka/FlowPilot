@@ -34,6 +34,14 @@
     },
     {
       "audience": "project_manager",
+      "id": "pm.output_contract_catalog",
+      "issued_by": "router",
+      "kind": "contract_catalog",
+      "path": "cards/phases/pm_output_contract_catalog.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
       "id": "pm.controller_reset_duty",
       "issued_by": "router",
       "kind": "duty",

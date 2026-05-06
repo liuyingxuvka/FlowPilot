@@ -1,8 +1,8 @@
 {
   "actual_card_graph": {
-    "active_card_count": 59,
-    "card_count": 62,
-    "checked_count": 62,
+    "active_card_count": 60,
+    "card_count": 63,
+    "checked_count": 63,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
@@ -27,6 +27,7 @@
       "card_instruction_checked:pm.material_understanding",
       "card_instruction_checked:pm.node_acceptance_plan",
       "card_instruction_checked:pm.officer_request_report_loop",
+      "card_instruction_checked:pm.output_contract_catalog",
       "card_instruction_checked:pm.parent_backward_targets",
       "card_instruction_checked:pm.parent_segment_decision",
       "card_instruction_checked:pm.phase_map",
@@ -73,7 +74,7 @@
     "ok": true,
     "orphan_card_files": [],
     "router_sequence_manifest_errors": [],
-    "state_count": 64,
+    "state_count": 65,
     "status": "complete"
   },
   "hazard_checks": {
@@ -89,6 +90,7 @@
           "manifest_registered": false,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -113,6 +115,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -137,6 +140,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -161,6 +165,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -185,6 +190,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -209,6 +215,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": false,
           "next_step_source": false,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -223,6 +230,31 @@
           "hazard.good: next_step_source does not name flowpilot_router.py"
         ]
       },
+      "missing_output_contract_guidance": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "pm.output_contract_catalog",
+          "chat_body_suppression": true,
+          "envelope_only_return": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": false,
+          "path": "cards/hazard/good.md",
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true
+        },
+        "detected": true,
+        "failures": [
+          "pm.output_contract_catalog: missing output_contract and Contract Self-Check guidance"
+        ]
+      },
       "missing_pm_history_context_guidance": {
         "card": {
           "action_guidance": true,
@@ -234,6 +266,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": false,
           "pm_minimum_complexity_guidance": true,
@@ -258,6 +291,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": false,
@@ -282,6 +316,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -306,6 +341,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": false,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
@@ -330,6 +366,7 @@
           "manifest_registered": true,
           "next_step_mentions_router": true,
           "next_step_source": true,
+          "output_contract_guidance": true,
           "path": "cards/hazard/good.md",
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,

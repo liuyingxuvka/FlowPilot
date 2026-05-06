@@ -18,6 +18,8 @@ Check:
   target role;
 - no Controller-origin project evidence closes the gate;
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;
+- result body includes `Contract Self-Check` against the source packet
+  `output_contract`, and missing or failed self-check blocks pass;
 - output satisfies packet acceptance slice.
 
 Return pass, needs repair, needs more material, or invalid role origin.

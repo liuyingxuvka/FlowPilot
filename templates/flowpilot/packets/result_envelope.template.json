@@ -16,6 +16,21 @@
   "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
   "result_body_hash": "<sha256-of-result-body>",
   "result_body_hash_algorithm": "sha256",
+  "source_output_contract_id": "<packet-envelope-output_contract.contract_id>",
+  "output_contract": {
+    "schema_version": "flowpilot.output_contract.v1",
+    "contract_id": "<same-as-source_output_contract_id>",
+    "selected_by_role": "project_manager",
+    "recipient_role": "<source-packet-envelope-to_role>",
+    "contract_self_check_required": true
+  },
+  "contract_self_check": {
+    "required": true,
+    "source_output_contract_id": "<packet-envelope-output_contract.contract_id>",
+    "result_body_section": "Contract Self-Check",
+    "completed": false,
+    "passed": false
+  },
   "identity_boundary": {
     "schema_version": "flowpilot.result_identity_boundary.v1",
     "marker": "FLOWPILOT_RESULT_IDENTITY_BOUNDARY_V1",

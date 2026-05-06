@@ -291,9 +291,17 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "to_role": "project_manager",
     },
     {
+        "flag": "pm_output_contract_catalog_delivered",
+        "label": "pm_output_contract_catalog_card_delivered",
+        "card_id": "pm.output_contract_catalog",
+        "requires_flag": "pm_core_delivered",
+        "to_role": "project_manager",
+    },
+    {
         "flag": "pm_controller_reset_card_delivered",
         "label": "pm_controller_reset_duty_card_delivered",
         "card_id": "pm.controller_reset_duty",
+        "requires_flag": "pm_output_contract_catalog_delivered",
         "to_role": "project_manager",
     },
     {
@@ -3924,6 +3932,7 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
                 "source": "pm_issues_material_and_capability_scan_packets",
                 **(spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {}),
             },
+            output_contract=spec.get("output_contract") if isinstance(spec.get("output_contract"), dict) else None,
         )
         paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
         records.append(
@@ -4045,6 +4054,7 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
             "source": "research_capability_decision_recorded",
             "research_package_path": project_relative(project_root, package_path),
         },
+        output_contract=payload.get("output_contract") if isinstance(payload.get("output_contract"), dict) else None,
     )
     packet_paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
     write_json(

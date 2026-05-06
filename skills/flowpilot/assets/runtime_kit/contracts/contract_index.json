@@ -1,0 +1,355 @@
+{
+  "schema_version": "flowpilot.output_contract_registry.v1",
+  "authority": "system",
+  "controller_visibility": "contract_metadata_only",
+  "controller_may_invent_or_rewrite_contracts": false,
+  "pm_must_select_contract_before_dispatch": true,
+  "role_must_self_check_before_return": true,
+  "default_forbidden_envelope_body_fields": [
+    "blockers",
+    "checks",
+    "commands",
+    "decision",
+    "evidence",
+    "findings",
+    "passed",
+    "recommendations",
+    "repair_instructions",
+    "report_body",
+    "decision_body",
+    "result_body"
+  ],
+  "selection_rules": [
+    {
+      "task_family": "worker.current_node",
+      "packet_type": "work_packet",
+      "recipient_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "contract_id": "flowpilot.output_contract.worker_current_node_result.v1"
+    },
+    {
+      "task_family": "worker.material_scan",
+      "packet_type": "material_scan",
+      "recipient_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1"
+    },
+    {
+      "task_family": "worker.research",
+      "packet_type": "research",
+      "recipient_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "contract_id": "flowpilot.output_contract.worker_research_result.v1"
+    },
+    {
+      "task_family": "reviewer.review",
+      "packet_type": "review_request",
+      "recipient_roles": [
+        "human_like_reviewer"
+      ],
+      "contract_id": "flowpilot.output_contract.reviewer_review_report.v1"
+    },
+    {
+      "task_family": "officer.model_report",
+      "packet_type": "officer_request",
+      "recipient_roles": [
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "contract_id": "flowpilot.output_contract.officer_model_report.v1"
+    }
+  ],
+  "contracts": [
+    {
+      "contract_id": "flowpilot.output_contract.role_output_envelope.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "role_output_envelope",
+      "recipient_roles": [
+        "project_manager",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer",
+        "worker_a",
+        "worker_b"
+      ],
+      "required_envelope_fields": [
+        "controller_visibility",
+        "chat_response_body_allowed"
+      ],
+      "required_envelope_path_hash_pairs": [
+        "report_path/report_hash",
+        "decision_path/decision_hash",
+        "result_body_path/result_body_hash",
+        "architecture_path/architecture_hash",
+        "contract_path/contract_hash",
+        "manifest_path/manifest_hash",
+        "route_path/route_hash",
+        "draft_path/draft_hash",
+        "plan_path/plan_hash",
+        "package_path/package_hash",
+        "ledger_path/ledger_hash"
+      ],
+      "required_envelope_values": {
+        "controller_visibility": "role_output_envelope_only",
+        "chat_response_body_allowed": false
+      },
+      "forbidden_envelope_body_fields_ref": "default_forbidden_envelope_body_fields",
+      "router_block_conditions": [
+        "missing_known_path_hash_pair",
+        "hash_mismatch",
+        "inline_body_content",
+        "generic_path_or_hash_without_known_key",
+        "controller_visibility_not_envelope_only",
+        "chat_response_body_allowed"
+      ]
+    },
+    {
+      "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "worker.current_node",
+      "packet_types": [
+        "work_packet"
+      ],
+      "recipient_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "expected_return_envelope": "result_envelope",
+      "required_result_body_sections": [
+        "Status",
+        "Evidence",
+        "Open Issues",
+        "Contract Self-Check"
+      ],
+      "required_result_envelope_fields": [
+        "completed_by_role",
+        "completed_by_agent_id",
+        "result_body_path",
+        "result_body_hash",
+        "next_recipient",
+        "body_visibility"
+      ],
+      "required_result_envelope_values": {
+        "next_recipient": "human_like_reviewer",
+        "body_visibility": "sealed_target_role_only"
+      },
+      "contract_self_check_required": true,
+      "reviewer_must_block_missing_or_failed_check": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "worker.material_scan",
+      "packet_types": [
+        "material_scan"
+      ],
+      "recipient_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "expected_return_envelope": "result_envelope",
+      "required_result_body_sections": [
+        "Status",
+        "Evidence",
+        "Open Issues",
+        "Contract Self-Check"
+      ],
+      "required_result_envelope_values": {
+        "next_recipient": "human_like_reviewer",
+        "body_visibility": "sealed_target_role_only"
+      },
+      "required_report_body_fields": [
+        "raw_evidence_pointers",
+        "negative_findings",
+        "contradictions",
+        "answers_decision_question"
+      ],
+      "contract_self_check_required": true,
+      "reviewer_must_block_missing_or_failed_check": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.worker_research_result.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "worker.research",
+      "packet_types": [
+        "research"
+      ],
+      "recipient_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "expected_return_envelope": "result_envelope",
+      "required_result_body_sections": [
+        "Status",
+        "Evidence",
+        "Findings",
+        "Open Issues",
+        "Contract Self-Check"
+      ],
+      "required_report_body_fields": [
+        "raw_evidence_pointers",
+        "negative_findings",
+        "contradictions",
+        "confidence_boundary",
+        "answers_decision_question"
+      ],
+      "contract_self_check_required": true,
+      "reviewer_must_block_missing_or_failed_check": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "reviewer.review",
+      "recipient_roles": [
+        "human_like_reviewer"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "required_body_fields": [
+        "reviewed_by_role",
+        "passed"
+      ],
+      "required_body_values": {
+        "reviewed_by_role": "human_like_reviewer"
+      },
+      "contract_self_check_required": true,
+      "reviewer_must_block_missing_or_failed_check": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.officer_model_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "officer.model_report",
+      "recipient_roles": [
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "required_body_fields": [
+        "modeled_boundary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "confidence_boundary"
+      ],
+      "contract_self_check_required": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.startup_fact_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "reviewer.startup_fact_report",
+      "recipient_roles": [
+        "human_like_reviewer"
+      ],
+      "required_body_fields": [
+        "reviewed_by_role",
+        "passed",
+        "external_fact_review"
+      ],
+      "required_body_values": {
+        "reviewed_by_role": "human_like_reviewer",
+        "external_fact_review.used_router_mechanical_audit": true,
+        "external_fact_review.self_attested_ai_claims_accepted_as_proof": false
+      }
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_startup_activation_approval.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.startup_activation",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "required_body_fields": [
+        "approved_by_role",
+        "decision"
+      ],
+      "required_body_values": {
+        "approved_by_role": "project_manager",
+        "decision": "approved"
+      }
+    },
+    {
+      "contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "reviewer.material_sufficiency",
+      "recipient_roles": [
+        "human_like_reviewer"
+      ],
+      "required_body_fields": [
+        "reviewed_by_role",
+        "direct_material_sources_checked",
+        "packet_matches_checked_sources"
+      ],
+      "required_body_values": {
+        "reviewed_by_role": "human_like_reviewer",
+        "direct_material_sources_checked": true,
+        "packet_matches_checked_sources": true
+      }
+    },
+    {
+      "contract_id": "flowpilot.output_contract.current_node_result_review_pass.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "reviewer.current_node_result_review",
+      "recipient_roles": [
+        "human_like_reviewer"
+      ],
+      "required_body_fields": [
+        "reviewed_by_role",
+        "passed"
+      ],
+      "required_body_values": {
+        "reviewed_by_role": "human_like_reviewer",
+        "passed": true
+      }
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.control_blocker_repair_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "required_body_fields": [
+        "decided_by_role",
+        "blocker_id",
+        "decision"
+      ],
+      "required_body_values": {
+        "decided_by_role": "project_manager"
+      },
+      "allowed_decision_values": [
+        "repair_completed",
+        "repair_not_required",
+        "resolved_by_followup_event",
+        "continue_after_pm_review"
+      ]
+    },
+    {
+      "contract_id": "flowpilot.output_contract.terminal_backward_replay_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "reviewer.terminal_backward_replay",
+      "recipient_roles": [
+        "human_like_reviewer"
+      ],
+      "required_body_fields": [
+        "reviewed_by_role",
+        "passed",
+        "segment_reviews"
+      ],
+      "required_body_values": {
+        "reviewed_by_role": "human_like_reviewer",
+        "passed": true
+      },
+      "segment_review_required_values": {
+        "reviewed_by_role": "human_like_reviewer",
+        "passed": true,
+        "pm_segment_decision": "continue"
+      }
+    }
+  ]
+}

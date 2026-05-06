@@ -14,6 +14,10 @@ Issue only bounded material and capability scan packets. The purpose is to
 discover what information exists and what is missing before product
 understanding or route design.
 
+Each material scan packet must include the registry `output_contract`
+`flowpilot.output_contract.worker_material_scan_result.v1` in both the packet
+envelope and packet body's `Output Contract` section.
+
 The packet must state:
 
 - the material sources to inspect;

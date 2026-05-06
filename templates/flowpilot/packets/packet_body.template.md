@@ -63,6 +63,17 @@ unopened envelope for PM reissue or repair.
 
 - <command-probe-screenshot-model-check-or-review-evidence>
 
+## Output Contract
+
+This packet must include the same `output_contract` object as
+`packet_envelope.json`. The recipient must write a `Contract Self-Check`
+section in the sealed result, report, or decision body before returning an
+envelope.
+
+```json
+<packet-envelope-output_contract>
+```
+
 ## Return Contract
 
 Return a `result_envelope` to the controller. Put detailed commands, files,

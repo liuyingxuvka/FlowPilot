@@ -22,6 +22,11 @@ envelope.
 
 Return only the bounded research result requested by the PM.
 
+Before returning the result envelope, read the source packet's
+`output_contract` and write a `Contract Self-Check` section in the sealed
+result or report body. If required source checks, sections, or evidence are
+missing, return `blocked` or `needs_pm`.
+
 Include:
 
 - raw evidence pointers or experiment outputs;

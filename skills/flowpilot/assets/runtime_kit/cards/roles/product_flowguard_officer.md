@@ -33,6 +33,12 @@ Every report must answer the PM request id, list product scenarios checked,
 identify unmodeled user-visible risks, and state the confidence boundary. Do
 not approve gates or completion directly.
 
+Before returning any report envelope, read the source packet's
+`output_contract` and write a `Contract Self-Check` section in the sealed
+report body. If required scenarios, modeled boundary, risk notes, skipped-check
+reasons, or confidence boundary are missing, return `blocked` or `needs_pm`
+instead of a pass.
+
 Write the full model report only to a run-scoped report body file and return
 only the report envelope to Controller for PM relay. Do not include scenarios,
 risks, recommendations, commands, or confidence details in chat.

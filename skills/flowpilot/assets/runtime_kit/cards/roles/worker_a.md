@@ -28,6 +28,11 @@ Write the full result only to the result body file and return only the result
 envelope to Controller. Do not include commands run, files changed, findings,
 blockers, screenshots, or other result-body content in chat.
 
+Before returning a result envelope, read the source packet's `output_contract`
+and write a `Contract Self-Check` section in the sealed result body. If the
+required sections, evidence, or envelope fields cannot be satisfied, return
+`blocked` or `needs_pm`; do not mark the output complete or passed.
+
 Before returning a result envelope, verify it includes `completed_by_role:
 worker_a`, `result_body_path`, `result_body_hash`, `next_recipient` (or the
 router-compatible `next_holder` alias), and `body_visibility:

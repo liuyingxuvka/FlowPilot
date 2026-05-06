@@ -18,6 +18,12 @@ For each active route node:
 6. perform a PM high-standard recheck against the node acceptance plan;
 7. complete the node only after reviewer pass or repair pass.
 
+Every current-node worker packet must include the registry `output_contract`
+`flowpilot.output_contract.worker_current_node_result.v1` in both the packet
+envelope and packet body's `Output Contract` section. The contract must match
+the active node id, recipient role, acceptance plan, required verification, and
+reviewer block conditions.
+
 If reviewer blocks, enter review repair. If reviewed evidence shows route
 structure is wrong, mutate the route and rerun required checks.
 

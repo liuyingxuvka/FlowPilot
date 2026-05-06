@@ -3677,3 +3677,79 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - No new FlowGuard model was created because no state transition, frontier, heartbeat, packet, or approval flow changed.
+
+
+## flowpilot-output-contract-registry - Add FlowPilot output contract registry and prompt propagation so PM-selected task contracts reach roles and router checks before role output
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing control-plane change affects packet dispatch, report schema, controller envelope boundaries, and repeated repair loops
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-06T12:19:49+00:00
+- Ended: 2026-05-06T12:19:49+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-output-contract-registry - Add FlowPilot PM output contract registry and packet/result propagation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing protocol change: PM task assignment, packet contracts, result self-checks, reviewer gates, and model regression for prompt contract propagation
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T12:52:44+00:00
+- Ended: 2026-05-06T12:52:44+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_output_contract_model.py
+- simulations/card_instruction_coverage_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_output_contract_checks.py --json-out simulations/flowpilot_output_contract_results.json`
+- OK (0.000s): `python simulations/run_card_instruction_coverage_checks.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_resume_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_router_loop_checks.py`
+- OK (0.000s): `python simulations/run_prompt_isolation_checks.py`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_output_contracts tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+
+### Findings
+- Output contract propagation must be represented as registry selection, packet envelope/body repetition, result self-check, reviewer validation, and card delivery ordering.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Conformance replay for the new abstract output-contract model: no production adapter exists for this narrow prompt-contract state model; production coverage is provided by router/runtime tests and card coverage checks.
+
+### Next Actions
+- Extend registered contracts when new task families are introduced instead of allowing ad hoc PM report requirements.

@@ -19,7 +19,7 @@
     {
       "packet_id": "<packet-id>",
       "node_id": "<node-id>",
-      "code": "<missing_packet_controller_relay|missing_result_controller_relay|packet_body_unopened_by_recipient|result_body_unopened_by_recipient|private_delivery_detected|contaminated_packet_without_replacement>",
+      "code": "<missing_packet_controller_relay|missing_result_controller_relay|packet_body_unopened_by_recipient|result_body_unopened_by_recipient|private_delivery_detected|contaminated_packet_without_replacement|missing_output_contract|output_contract_mismatch|missing_contract_self_check|failed_contract_self_check>",
       "detail": "<reviewer finding>"
     }
   ],

@@ -36,6 +36,12 @@ Your report is PM decision support, not a no-risk certificate. Include:
 - PM review-required hotspots;
 - confidence boundary and route recommendations.
 
+Before returning any report envelope, read the source packet's
+`output_contract` and write a `Contract Self-Check` section in the sealed
+report body. If required commands, modeled boundary, invariants, skipped-check
+reasons, or confidence boundary are missing, return `blocked` or `needs_pm`
+instead of a pass.
+
 Write the full model report only to a run-scoped report body file and return
 only the report envelope to Controller for PM relay. Do not include
 counterexample traces, commands, recommendations, or risk details in chat.

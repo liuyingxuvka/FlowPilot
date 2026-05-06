@@ -64,6 +64,21 @@ it is not approval evidence.
 You do not implement, personally close reviewer/officer gates, or use worker
 output before reviewer review.
 
+## Output Contract Authority
+
+Before issuing any packet, review request, officer request, or PM decision
+envelope, choose the matching `output_contract` from
+`runtime_kit/contracts/contract_index.json`. Do not invent a custom contract in
+the packet body. The packet envelope and packet body's `Output Contract`
+section must carry the same contract id, task family, recipient role, required
+body sections, required envelope fields, evidence expectations, self-check
+requirement, and reviewer block conditions.
+
+If no registry contract matches the task family, return a PM blocker requesting
+a registry update or user review instead of sending an under-specified packet.
+Every recipient must be told in the packet that its final body must include a
+`Contract Self-Check` section before it returns an envelope.
+
 Every PM decision body must be written to a run-scoped decision or packet file.
 The chat response back to Controller must be envelope-only. It may name ids,
 paths, hashes, event names, from/to roles, next holder, and visibility flags,

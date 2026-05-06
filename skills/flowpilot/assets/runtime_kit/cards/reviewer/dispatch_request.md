@@ -14,9 +14,15 @@ Check:
 
 - current node and current phase match;
 - packet is bounded and addressed to the right role;
+- packet envelope includes `output_contract`, the packet body repeats the same
+  `Output Contract`, and the contract matches `to_role`, `packet_type`, node
+  acceptance, required evidence, and reviewer block conditions;
 - allowed reads/writes are explicit;
 - forbidden actions prevent route, PM, reviewer, and Controller authority drift;
 - Controller relay and ledger requirements are present;
 - worker receives least necessary context only.
+
+The dispatch report body must include `Contract Self-Check` against the source
+packet `output_contract`; missing or failed contract checks block dispatch.
 
 Return `dispatch_allowed` or a concrete blocker.

@@ -22,6 +22,7 @@ MUTUAL_ROLE_REMINDER_SCHEMA = "flowpilot.mutual_role_reminder.v1"
 CHAIN_AUDIT_SCHEMA = "flowpilot.packet_chain_audit.v1"
 PACKET_LEDGER_SCHEMA = "flowpilot.packet_ledger.v2"
 BARRIER_BUNDLE_SCHEMA = barrier_bundle.BARRIER_BUNDLE_SCHEMA
+OUTPUT_CONTRACT_SCHEMA = "flowpilot.output_contract.v1"
 PACKET_IDENTITY_MARKER = "FLOWPILOT_PACKET_IDENTITY_BOUNDARY_V1"
 RESULT_IDENTITY_MARKER = "FLOWPILOT_RESULT_IDENTITY_BOUNDARY_V1"
 PACKET_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
@@ -78,6 +79,55 @@ RESULT_CONTROLLER_FORBIDDEN_ACTIONS = [
     "recompute_body_hash_to_hide_mismatch",
     "relabel_wrong_role_origin",
 ]
+
+OUTPUT_CONTRACT_REQUIRED_RESULT_SECTIONS = [
+    "Status",
+    "Evidence",
+    "Open Issues",
+    "Contract Self-Check",
+]
+
+OUTPUT_CONTRACT_REQUIRED_RESULT_ENVELOPE_FIELDS = [
+    "completed_by_role",
+    "completed_by_agent_id",
+    "result_body_path",
+    "result_body_hash",
+    "next_recipient",
+    "body_visibility",
+]
+
+OUTPUT_CONTRACT_FORBIDDEN_ENVELOPE_BODY_FIELDS = [
+    "blockers",
+    "checks",
+    "commands",
+    "decision",
+    "evidence",
+    "findings",
+    "passed",
+    "recommendations",
+    "repair_instructions",
+    "report_body",
+    "decision_body",
+    "result_body",
+]
+
+DEFAULT_OUTPUT_CONTRACT_BY_PACKET_TYPE = {
+    "material_scan": "flowpilot.output_contract.worker_material_scan_result.v1",
+    "research": "flowpilot.output_contract.worker_research_result.v1",
+    "work_packet": "flowpilot.output_contract.worker_current_node_result.v1",
+    "review_request": "flowpilot.output_contract.reviewer_review_report.v1",
+    "officer_request": "flowpilot.output_contract.officer_model_report.v1",
+    "pm_decision": "flowpilot.output_contract.pm_decision.v1",
+}
+
+DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE = {
+    "material_scan": "worker.material_scan",
+    "research": "worker.research",
+    "work_packet": "worker.current_node",
+    "review_request": "reviewer.review",
+    "officer_request": "officer.model_report",
+    "pm_decision": "pm.decision",
+}
 
 
 class PacketRuntimeError(ValueError):
@@ -206,6 +256,118 @@ def validate_result_identity_boundary(body_text: str, role: str) -> None:
         raise PacketRuntimeError("result body missing role identity boundary")
     if f"completed_by_role: {role}" not in body_text:
         raise PacketRuntimeError(f"result body identity boundary does not match role {role!r}")
+
+
+def default_output_contract(
+    *,
+    packet_type: str,
+    from_role: str,
+    to_role: str,
+    node_id: str,
+) -> dict[str, Any] | None:
+    if from_role != "project_manager":
+        return None
+    contract_id = DEFAULT_OUTPUT_CONTRACT_BY_PACKET_TYPE.get(packet_type)
+    if not contract_id:
+        return None
+    return {
+        "schema_version": OUTPUT_CONTRACT_SCHEMA,
+        "contract_id": contract_id,
+        "selected_by_role": "project_manager",
+        "recipient_role": to_role,
+        "task_family": DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE.get(packet_type, packet_type),
+        "node_id": node_id,
+        "required_result_body_sections": OUTPUT_CONTRACT_REQUIRED_RESULT_SECTIONS,
+        "required_result_envelope_fields": OUTPUT_CONTRACT_REQUIRED_RESULT_ENVELOPE_FIELDS,
+        "forbidden_envelope_body_fields": OUTPUT_CONTRACT_FORBIDDEN_ENVELOPE_BODY_FIELDS,
+        "contract_self_check_required": True,
+        "reviewer_must_block_missing_or_failed_check": True,
+        "registry_path": "runtime_kit/contracts/contract_index.json",
+    }
+
+
+def normalize_output_contract(
+    output_contract: dict[str, Any] | None,
+    *,
+    packet_type: str,
+    from_role: str,
+    to_role: str,
+    node_id: str,
+) -> dict[str, Any] | None:
+    if output_contract is None:
+        return default_output_contract(
+            packet_type=packet_type,
+            from_role=from_role,
+            to_role=to_role,
+            node_id=node_id,
+        )
+    if not isinstance(output_contract, dict):
+        raise PacketRuntimeError("output_contract must be an object")
+    normalized = dict(output_contract)
+    normalized.setdefault("schema_version", OUTPUT_CONTRACT_SCHEMA)
+    normalized.setdefault("selected_by_role", from_role)
+    normalized.setdefault("recipient_role", to_role)
+    normalized.setdefault("task_family", DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE.get(packet_type, packet_type))
+    normalized.setdefault("node_id", node_id)
+    normalized.setdefault("required_result_body_sections", OUTPUT_CONTRACT_REQUIRED_RESULT_SECTIONS)
+    normalized.setdefault("required_result_envelope_fields", OUTPUT_CONTRACT_REQUIRED_RESULT_ENVELOPE_FIELDS)
+    normalized.setdefault("forbidden_envelope_body_fields", OUTPUT_CONTRACT_FORBIDDEN_ENVELOPE_BODY_FIELDS)
+    normalized.setdefault("contract_self_check_required", True)
+    normalized.setdefault("reviewer_must_block_missing_or_failed_check", True)
+    normalized.setdefault("registry_path", "runtime_kit/contracts/contract_index.json")
+    if normalized.get("schema_version") != OUTPUT_CONTRACT_SCHEMA:
+        raise PacketRuntimeError("output_contract has unsupported schema_version")
+    if not normalized.get("contract_id"):
+        raise PacketRuntimeError("output_contract.contract_id is required")
+    if normalized.get("recipient_role") != to_role:
+        raise PacketRuntimeError("output_contract.recipient_role must match packet to_role")
+    if from_role == "project_manager" and normalized.get("selected_by_role") != "project_manager":
+        raise PacketRuntimeError("PM-authored packets require output_contract.selected_by_role=project_manager")
+    return normalized
+
+
+def output_contract_id(output_contract: dict[str, Any] | None) -> str:
+    if not isinstance(output_contract, dict):
+        return ""
+    return str(output_contract.get("contract_id") or "")
+
+
+def output_contract_section(output_contract: dict[str, Any]) -> str:
+    return (
+        "\n## Output Contract\n\n"
+        "This packet uses the system-selected FlowPilot output contract below. "
+        "The recipient must satisfy it before returning an envelope.\n\n"
+        "```json\n"
+        f"{json.dumps(output_contract, indent=2, sort_keys=True)}\n"
+        "```\n\n"
+        "Before returning, write a `Contract Self-Check` section in the sealed "
+        "result, report, or decision body. If any required field, evidence item, "
+        "or section is missing, return `blocked` or `needs_pm` instead of a pass.\n"
+    )
+
+
+def ensure_packet_output_contract_section(body_text: str, output_contract: dict[str, Any] | None) -> str:
+    if not output_contract or "## Output Contract" in body_text:
+        return body_text
+    return body_text.rstrip() + "\n" + output_contract_section(output_contract)
+
+
+def contract_self_check_metadata(result_body_text: str, output_contract: dict[str, Any] | None) -> dict[str, Any]:
+    required = bool(output_contract and output_contract.get("contract_self_check_required", True))
+    completed = "## Contract Self-Check" in result_body_text
+    lower = result_body_text.lower()
+    passed = completed and (
+        "self_check_decision: satisfied" in lower
+        or "self-check decision: satisfied" in lower
+        or "self_check_decision: pass" in lower
+    )
+    return {
+        "required": required,
+        "source_output_contract_id": output_contract_id(output_contract),
+        "result_body_section": "Contract Self-Check",
+        "completed": completed,
+        "passed": passed,
+    }
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -733,6 +895,7 @@ def create_packet(
     supersedes: list[str] | None = None,
     metadata: dict[str, Any] | None = None,
     barrier_bundle: dict[str, Any] | None = None,
+    output_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     paths = packet_paths(project_root, packet_id, run_id)
     resolved_run_id = str(paths["run_id"])
@@ -740,7 +903,15 @@ def create_packet(
     packet_body_path = paths["packet_body"]
     packet_envelope_path = paths["packet_envelope"]
     controller_status_path = paths["controller_status_packet"]
+    output_contract = normalize_output_contract(
+        output_contract,
+        packet_type=packet_type,
+        from_role=from_role,
+        to_role=to_role,
+        node_id=node_id,
+    )
     body_text = ensure_packet_identity_boundary(body_text, to_role)
+    body_text = ensure_packet_output_contract_section(body_text, output_contract)
     validate_packet_identity_boundary(body_text, to_role)
     write_text_atomic(packet_body_path, body_text)
     body_hash = sha256_file(packet_body_path)
@@ -781,6 +952,13 @@ def create_packet(
         "metadata": metadata or {},
         "created_at": utc_now(),
     }
+    if output_contract is not None:
+        envelope["output_contract"] = output_contract
+        envelope["output_contract_id"] = output_contract_id(output_contract)
+        envelope["metadata"] = {
+            **envelope["metadata"],
+            "output_contract_id": output_contract_id(output_contract),
+        }
     if barrier_bundle is not None:
         envelope["barrier_bundle"] = barrier_bundle
     write_json_atomic(packet_envelope_path, envelope)
@@ -806,6 +984,7 @@ def create_packet(
         "physical_packet_files_written": True,
         "controller_context_body_exclusion_verified": True,
         "packet_body_hash": body_hash,
+        "output_contract_id": output_contract_id(output_contract),
         "packet_body_hash_verified": False,
         "controller_packet_body_access_detected": False,
         "controller_packet_body_execution_detected": False,
@@ -825,6 +1004,7 @@ def create_packet(
             "replacement_for": replacement_for,
             "controller_allowed_actions": envelope["controller_allowed_actions"],
             "controller_forbidden_actions": envelope["controller_forbidden_actions"],
+            "output_contract_id": output_contract_id(output_contract),
         },
         "holder_history": [
             {
@@ -871,6 +1051,9 @@ def create_packet(
     }
     if barrier_bundle is not None:
         record["barrier_bundle"] = barrier_bundle
+    if output_contract is not None:
+        record["output_contract"] = output_contract
+        record["packet_envelope"]["output_contract"] = output_contract
     _upsert_packet_record(project_root, paths["packet_ledger"], resolved_run_id, run_root, record)
     for superseded_id in record["supersedes"]:
         _update_packet_record(
@@ -942,6 +1125,7 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
         envelope_kind = "packet_envelope"
         forbidden_actions = envelope["controller_forbidden_actions"]
         allowed_actions = envelope["controller_allowed_actions"]
+    output_contract = envelope.get("output_contract") if isinstance(envelope.get("output_contract"), dict) else None
     mutual_reminder = mutual_role_reminder(
         source_role=str(from_role),
         target_role=str(to_role),
@@ -963,6 +1147,8 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
         "body_path": body_path,
         "body_hash": body_hash,
         "body_visibility": envelope.get("body_visibility", SEALED_BODY_VISIBILITY),
+        "source_output_contract_id": envelope.get("source_output_contract_id") or output_contract_id(output_contract),
+        "output_contract": output_contract,
         "controller_relay_signature_required": True,
         "recipient_must_verify_controller_relay_before_body_open": True,
         "return_to": envelope.get("return_to", "controller"),
@@ -991,6 +1177,9 @@ def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, r
     verify_controller_relay(envelope, recipient_role=role)
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
+    output_contract = envelope.get("output_contract")
+    if isinstance(output_contract, dict) and output_contract.get("recipient_role") != role:
+        raise PacketRuntimeError("output_contract.recipient_role does not match packet reader role")
     body_path = resolve_project_path(project_root, envelope["body_path"])
     if sha256_file(body_path) != envelope["body_hash"]:
         raise PacketRuntimeError("packet body hash mismatch")
@@ -1043,10 +1232,12 @@ def write_result(
     paths = packet_paths_from_envelope(project_root, packet_envelope)
     result_body_path = paths["result_body"]
     result_envelope_path = paths["result_envelope"]
+    output_contract = packet_envelope.get("output_contract") if isinstance(packet_envelope.get("output_contract"), dict) else None
     result_body_text = ensure_result_identity_boundary(result_body_text, completed_by_role)
     validate_result_identity_boundary(result_body_text, completed_by_role)
     write_text_atomic(result_body_path, result_body_text)
     result_body_hash = sha256_file(result_body_path)
+    contract_self_check = contract_self_check_metadata(result_body_text, output_contract)
     result_envelope = {
         "schema_version": RESULT_ENVELOPE_SCHEMA,
         "packet_id": packet_envelope["packet_id"],
@@ -1063,6 +1254,8 @@ def write_result(
         "result_body_path": project_relative(project_root, result_body_path),
         "result_body_hash": result_body_hash,
         "result_body_hash_algorithm": "sha256",
+        "source_output_contract_id": output_contract_id(output_contract),
+        "contract_self_check": contract_self_check,
         "next_recipient": next_recipient,
         "return_to": "controller",
         "next_holder": next_recipient,
@@ -1084,6 +1277,8 @@ def write_result(
             "required": True,
         },
     }
+    if output_contract is not None:
+        result_envelope["output_contract"] = output_contract
     if isinstance(packet_envelope.get("barrier_bundle"), dict):
         result_envelope["barrier_bundle"] = packet_envelope["barrier_bundle"]
     write_json_atomic(result_envelope_path, result_envelope)
@@ -1103,6 +1298,8 @@ def write_result(
         "result_envelope_path": project_relative(project_root, result_envelope_path),
         "result_body_path": result_envelope["result_body_path"],
         "result_body_hash": result_body_hash,
+        "source_output_contract_id": output_contract_id(output_contract),
+        "contract_self_check": contract_self_check,
         "result_body_hash_verified": False,
         "result_envelope": {
             "packet_type": "result",
@@ -1112,6 +1309,8 @@ def write_result(
             "completed_role_matches_packet_to_role": completed_by_role == packet_envelope["to_role"],
             "completed_agent_id_belongs_to_role": False,
             "next_recipient": next_recipient,
+            "source_output_contract_id": output_contract_id(output_contract),
+            "contract_self_check": contract_self_check,
             "controller_relay_signature_required": True,
             "result_body_identity_boundary_required": True,
             "result_body_identity_boundary_marker": RESULT_IDENTITY_MARKER,
@@ -1119,6 +1318,9 @@ def write_result(
     }
     if isinstance(packet_envelope.get("barrier_bundle"), dict):
         record["barrier_bundle"] = packet_envelope["barrier_bundle"]
+    if output_contract is not None:
+        record["output_contract"] = output_contract
+        record["result_envelope"]["output_contract"] = output_contract
     _upsert_packet_record(project_root, paths["packet_ledger"], str(paths["run_id"]), paths["run_root"], record)
     return result_envelope
 

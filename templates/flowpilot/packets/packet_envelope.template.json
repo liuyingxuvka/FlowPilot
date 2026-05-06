@@ -10,6 +10,32 @@
   "created_at": "<iso-8601-timestamp>",
   "from_role": "project_manager",
   "to_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
+  "output_contract_id": "<packet-envelope-output_contract.contract_id>",
+  "output_contract": {
+    "schema_version": "flowpilot.output_contract.v1",
+    "contract_id": "<system-registry-contract-id>",
+    "selected_by_role": "project_manager",
+    "recipient_role": "<same-as-to_role>",
+    "task_family": "<task-family>",
+    "node_id": "<node-id>",
+    "required_result_body_sections": [
+      "Status",
+      "Evidence",
+      "Open Issues",
+      "Contract Self-Check"
+    ],
+    "required_result_envelope_fields": [
+      "completed_by_role",
+      "completed_by_agent_id",
+      "result_body_path",
+      "result_body_hash",
+      "next_recipient",
+      "body_visibility"
+    ],
+    "contract_self_check_required": true,
+    "reviewer_must_block_missing_or_failed_check": true,
+    "registry_path": "runtime_kit/contracts/contract_index.json"
+  },
   "return_to": "controller",
   "next_holder": "<Controller|WorkerA|WorkerB|Reviewer|ProcessFlowGuardOfficer|ProductFlowGuardOfficer|PM>",
   "body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",

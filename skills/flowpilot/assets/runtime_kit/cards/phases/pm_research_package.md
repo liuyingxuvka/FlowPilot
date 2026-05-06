@@ -20,5 +20,9 @@ Write a bounded research package that names:
 - how the result can affect material understanding, route mutation, user
   questions, or blocking.
 
+Any research worker packet created from the package must include the registry
+`output_contract` `flowpilot.output_contract.worker_research_result.v1` in both
+the packet envelope and packet body's `Output Contract` section.
+
 Do not proceed to product architecture until reviewed research is absorbed or
 the route is explicitly changed or blocked.

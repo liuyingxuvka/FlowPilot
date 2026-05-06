@@ -40,6 +40,12 @@ path, hash, event name, from/to roles, next holder, and body visibility. It
 must not include findings, blockers, evidence details, recommendations,
 commands, or repair instructions that belong in the review body.
 
+Before returning any review envelope, read the source packet's
+`output_contract` and write a `Contract Self-Check` section in the sealed
+review body. Missing packet contracts, contract mismatches, missing required
+sections, failed self-checks, or result envelopes that omit
+`source_output_contract_id` block a pass.
+
 For product/UI gates, personally inspect reachable controls, interactions,
 layout fit, density, readability, visual quality, localization, and state
 coverage. For terminal replay, start from the delivered product and walk

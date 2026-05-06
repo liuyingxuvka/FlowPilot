@@ -14,4 +14,9 @@ PM must issue only packets scoped to the current node. Include node id,
 objective, allowed reads/writes, forbidden actions, acceptance slice, required
 verification, and expected result recipient.
 
+The packet must include the registry `output_contract`
+`flowpilot.output_contract.worker_current_node_result.v1` in both the packet
+envelope and packet body's `Output Contract` section, and the contract must
+match the current node and target worker role.
+
 Do not include downstream route work unless the current node explicitly owns it.

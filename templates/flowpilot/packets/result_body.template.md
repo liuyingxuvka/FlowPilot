@@ -57,6 +57,14 @@ the unopened envelope for PM reissue or repair.
 
 - <issue-or-none>
 
+## Contract Self-Check
+
+- source_output_contract_id: <packet-envelope-output_contract.contract_id>
+- required_sections_present: <true|false>
+- evidence_matches_contract: <true|false>
+- unmet_contract_items: <items-or-none>
+- self_check_decision: <satisfied|blocked|needs_pm>
+
 ## Requested Next Recipient
 
 <human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>

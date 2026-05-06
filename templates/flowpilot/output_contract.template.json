@@ -1,0 +1,40 @@
+{
+  "schema_version": "flowpilot.output_contract.v1",
+  "contract_id": "<system-registry-contract-id>",
+  "selected_by_role": "project_manager",
+  "recipient_role": "<same-as-packet-envelope-to_role>",
+  "task_family": "<worker.current_node|worker.material_scan|worker.research|reviewer.review|officer.model_report|pm.decision>",
+  "packet_type": "<packet-type>",
+  "node_id": "<node-id>",
+  "required_result_body_sections": [
+    "Status",
+    "Evidence",
+    "Open Issues",
+    "Contract Self-Check"
+  ],
+  "required_result_envelope_fields": [
+    "completed_by_role",
+    "completed_by_agent_id",
+    "result_body_path",
+    "result_body_hash",
+    "next_recipient",
+    "body_visibility"
+  ],
+  "forbidden_envelope_body_fields": [
+    "blockers",
+    "checks",
+    "commands",
+    "decision",
+    "evidence",
+    "findings",
+    "passed",
+    "recommendations",
+    "repair_instructions",
+    "report_body",
+    "decision_body",
+    "result_body"
+  ],
+  "contract_self_check_required": true,
+  "reviewer_must_block_missing_or_failed_check": true,
+  "registry_path": "runtime_kit/contracts/contract_index.json"
+}

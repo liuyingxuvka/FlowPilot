@@ -10,6 +10,10 @@ next_step_source: Do not infer the next FlowPilot action from this card, chat hi
 
 Use FlowGuard officers through bounded request and report packets.
 
+Each officer request packet must include the registry `output_contract`
+`flowpilot.output_contract.officer_model_report.v1` in both the packet envelope
+and packet body's `Output Contract` section.
+
 For each modeling need, write a request that states:
 
 - process, product, or joint officer ownership;
