@@ -137,13 +137,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def payload_for_action(self, action: dict, payload: dict | None = None) -> dict:
         payload = dict(payload or {})
         if action.get("requires_user_dialog_display_confirmation"):
-            payload["display_confirmation"] = {
-                "action_type": action["action_type"],
-                "display_kind": action["display_kind"],
-                "display_text_sha256": action["display_text_sha256"],
-                "provenance": "controller_user_dialog_render",
-                "rendered_to": "user_dialog",
-            }
+            payload["display_confirmation"] = action["payload_template"]["display_confirmation"]
         return payload
 
     def heartbeat_binding_payload(self, root: Path, automation_id: str = "codex-test-heartbeat") -> dict:
@@ -331,6 +325,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("```mermaid", action["display_text"])
         self.assertTrue(action["controller_must_display_text_before_apply"])
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
+        self.assertEqual(
+            action["payload_template"]["display_confirmation"]["action_type"],
+            "write_display_surface_status",
+        )
+        self.assertEqual(
+            action["payload_template"]["display_confirmation"]["display_text_sha256"],
+            action["display_text_sha256"],
+        )
         self.assertEqual(action["payload_contract"]["name"], "display_surface_receipt")
         self.assert_payload_contract_mentions(
             action["payload_contract"],
@@ -1109,6 +1111,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "sync_display_plan")
         self.assertEqual(action["display_kind"], "startup_waiting_state")
         self.assertIn("FlowPilot Startup Status", action["display_text"])
+        self.assertEqual(action["payload_template"]["display_confirmation"]["action_type"], "sync_display_plan")
+        self.assertEqual(action["payload_template"]["display_confirmation"]["display_kind"], "startup_waiting_state")
+        self.assertEqual(
+            action["payload_template"]["display_confirmation"]["display_text_sha256"],
+            action["display_text_sha256"],
+        )
         self.assertEqual(action["native_plan_projection"]["items"][0]["id"], "await_pm_route")
         result = router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         self.assertEqual(result["host_action"], "replace_visible_plan")
@@ -1335,6 +1343,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["requires_user_dialog_display_confirmation"])
         self.assertEqual(action["required_render_target"], "user_dialog")
         self.assertEqual(action["requires_payload"], "display_confirmation")
+        self.assertEqual(
+            action["payload_template"],
+            {
+                "display_confirmation": {
+                    "action_type": "emit_startup_banner",
+                    "display_kind": "startup_banner",
+                    "display_text_sha256": action["display_text_sha256"],
+                    "provenance": "controller_user_dialog_render",
+                    "rendered_to": "user_dialog",
+                }
+            },
+        )
+        self.assertIn("display_text exactly", action["payload_template_rule"])
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
         self.assertIn("user dialog", action["controller_display_rule"])
         self.assertIn("```text", action["display_text"])

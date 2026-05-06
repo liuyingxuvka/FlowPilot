@@ -2,6 +2,34 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.4.1 - 2026-05-06
+
+### Added
+
+- Added a command-refinement model and release checks for FlowPilot command
+  folding candidates.
+- Added CLI parsing coverage for all active router subcommands and explicit
+  absence checks for retired high-risk folding commands.
+
+### Changed
+
+- Restored the unfolded router baseline and kept only the narrow
+  `run-until-wait` startup fold that advances through internal router loading
+  before stopping at the startup questions boundary.
+- Updated the FlowPilot launcher guidance and smoke checks to use the safe
+  startup fold instead of broader command-bundling shortcuts.
+
+### Fixed
+
+- Added copyable display-confirmation payload templates to router actions that
+  require user-dialog display evidence, reducing rejected startup/display
+  payload retries.
+- Removed incomplete high-risk command folds that could break startup before
+  FlowPilot reached the three-question pre-banner gate.
+- Prevented retired fold commands such as `deliver-card-bundle-checked`,
+  `relay-checked`, `prepare-startup-fact-check`, and
+  `record-role-output-checked` from remaining exposed as CLI commands.
+
 ## 0.4.0 - 2026-05-06
 
 ### Added

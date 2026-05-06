@@ -4009,3 +4009,79 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If future speed work resumes, evaluate one fold candidate at a time against unfolded state snapshots plus FlowGuard refinement before exposing it in the production CLI.
+
+
+## flowpilot-display-confirmation-template-20260506 - Add copyable display confirmation payload templates to FlowPilot router actions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Router display actions were correctly rejecting payloads, but the action envelope did not provide a copyable payload template to the controller.
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-06T18:27:03+00:00
+- Ended: 2026-05-06T18:27:03+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-display-confirmation-template-20260506 - Add copyable display confirmation payload templates to FlowPilot router actions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Router display actions were correctly rejecting payloads, but the action envelope did not provide a copyable payload template to the controller.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T18:52:42+00:00
+- Ended: 2026-05-06T18:52:42+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_router_action_contract_model.py
+- simulations/flowpilot_router_loop_model.py
+
+### Commands
+- OK (0.000s): `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_router_action_contract_model.py simulations\run_router_action_contract_checks.py tests\test_flowpilot_router_runtime.py`
+- OK (0.000s): `python simulations\run_router_action_contract_checks.py --json-out simulations\flowpilot_router_action_contract_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_router_runtime`
+- OK (0.000s): `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK (0.000s): `python simulations\run_prompt_isolation_checks.py`
+- OK (0.000s): `python scripts\check_install.py`
+- OK (0.000s): `python scripts\smoke_autopilot.py`
+- OK (0.000s): `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- Display actions now expose a copyable payload_template containing display_confirmation.action_type, display_kind, display_text_sha256, provenance, and rendered_to.
+- The router action contract model now accepts valid display confirmation and rejects a template missing display_text_sha256.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- check_public_release.py full validation timed out after 5 minutes because it reruns smoke_autopilot; the same validation commands were run separately and check_public_release.py --skip-validation passed privacy/dependency checks.
+
+### Next Actions
+- none recorded

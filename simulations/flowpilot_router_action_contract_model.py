@@ -14,6 +14,7 @@ Risk intent brief:
   allows the interpretation receipt without listing all required nested fields.
 - Hard invariants: accepted actions must have complete visible contracts,
   interpreted payloads must include every internally required receipt field,
+  display actions must publish a copyable confirmation payload template,
   valid scenarios must be accepted, and negative scenarios must be rejected with
   explicit reasons.
 - Blindspot: this is an abstract action-contract model, not a replay adapter
@@ -30,6 +31,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 VALID_EXPLICIT_STARTUP = "valid_explicit_startup_answers"
 VALID_AI_INTERPRETED_STARTUP = "valid_ai_interpreted_startup_answers"
+VALID_DISPLAY_CONFIRMATION = "valid_display_confirmation_action"
 CONTRACT_MISSING_INTERPRETATION_SCHEMA = (
     "contract_missing_interpretation_schema_version"
 )
@@ -39,16 +41,19 @@ PAYLOAD_MISSING_INTERPRETATION_SCHEMA = (
 CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS = (
     "contract_incomplete_interpretation_required_fields"
 )
+DISPLAY_TEMPLATE_MISSING_HASH = "display_confirmation_template_missing_hash"
 
 NEGATIVE_SCENARIOS = (
     CONTRACT_MISSING_INTERPRETATION_SCHEMA,
     PAYLOAD_MISSING_INTERPRETATION_SCHEMA,
     CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS,
+    DISPLAY_TEMPLATE_MISSING_HASH,
 )
 
 SCENARIOS = (
     VALID_EXPLICIT_STARTUP,
     VALID_AI_INTERPRETED_STARTUP,
+    VALID_DISPLAY_CONFIRMATION,
     *NEGATIVE_SCENARIOS,
 )
 
@@ -77,11 +82,23 @@ INTERPRETATION_REQUIRED_FIELDS = frozenset(
 )
 
 SCHEMA_FIELD = "startup_answer_interpretation.schema_version"
+DISPLAY_HASH_FIELD = "display_confirmation.display_text_sha256"
+
+DISPLAY_CONFIRMATION_REQUIRED_FIELDS = frozenset(
+    {
+        "display_confirmation.action_type",
+        "display_confirmation.display_kind",
+        DISPLAY_HASH_FIELD,
+        "display_confirmation.provenance",
+        "display_confirmation.rendered_to",
+    }
+)
 
 NEGATIVE_EXPECTED_REJECTIONS = {
     CONTRACT_MISSING_INTERPRETATION_SCHEMA: "hidden_schema_version_not_exposed_by_payload_contract",
     PAYLOAD_MISSING_INTERPRETATION_SCHEMA: "payload_missing_interpretation_schema_version",
     CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS: "payload_contract_incomplete_interpretation_required_fields",
+    DISPLAY_TEMPLATE_MISSING_HASH: "display_confirmation_payload_template_missing_required_fields",
 }
 
 
@@ -116,12 +133,15 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
+    action_family: str = "unset"  # startup_answers | display_confirmation
     contract: PayloadContract = field(default_factory=PayloadContract)
     payload_contract_published: bool = False
     payload_built_from_contract: bool = False
     payload_startup_fields: frozenset[str] = field(default_factory=frozenset)
     payload_includes_interpretation: bool = False
     payload_interpretation_fields: frozenset[str] = field(default_factory=frozenset)
+    display_payload_template_fields: frozenset[str] = field(default_factory=frozenset)
+    payload_display_confirmation_fields: frozenset[str] = field(default_factory=frozenset)
     internal_interpretation_required_fields: frozenset[str] = (
         INTERPRETATION_REQUIRED_FIELDS
     )
@@ -198,6 +218,20 @@ def _contract_for(scenario: str) -> PayloadContract:
     return PayloadContract()
 
 
+def _action_family_for(scenario: str) -> str:
+    if scenario in {VALID_DISPLAY_CONFIRMATION, DISPLAY_TEMPLATE_MISSING_HASH}:
+        return "display_confirmation"
+    return "startup_answers"
+
+
+def _display_template_fields_for(scenario: str) -> frozenset[str]:
+    if scenario == DISPLAY_TEMPLATE_MISSING_HASH:
+        return DISPLAY_CONFIRMATION_REQUIRED_FIELDS - frozenset({DISPLAY_HASH_FIELD})
+    if scenario == VALID_DISPLAY_CONFIRMATION:
+        return DISPLAY_CONFIRMATION_REQUIRED_FIELDS
+    return frozenset()
+
+
 def _payload_fields_for(scenario: str, contract: PayloadContract) -> tuple[bool, frozenset[str]]:
     if scenario == VALID_EXPLICIT_STARTUP:
         return False, frozenset()
@@ -249,11 +283,87 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.scenario == "unset":
         for scenario in SCENARIOS:
+            family = _action_family_for(scenario)
+            label = (
+                "router_selects_display_confirmation_action_template"
+                if family == "display_confirmation"
+                else "router_selects_record_startup_answers_action_contract"
+            )
             yield Transition(
-                "router_selects_record_startup_answers_action_contract",
-                replace(state, status="running", scenario=scenario, contract=_contract_for(scenario)),
+                label,
+                replace(
+                    state,
+                    status="running",
+                    scenario=scenario,
+                    action_family=family,
+                    contract=_contract_for(scenario),
+                    display_payload_template_fields=_display_template_fields_for(scenario),
+                ),
             )
         return
+
+    if state.action_family == "display_confirmation":
+        missing_template_fields = (
+            DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.display_payload_template_fields
+        )
+        if not state.payload_contract_published:
+            if missing_template_fields:
+                yield Transition(
+                    "router_rejects_display_confirmation_payload_template_missing_hash",
+                    replace(
+                        state,
+                        status="rejected",
+                        payload_contract_published=True,
+                        router_decision="reject",
+                        router_rejection_reason=(
+                            "display_confirmation_payload_template_missing_required_fields"
+                        ),
+                    ),
+                )
+                return
+            yield Transition(
+                "router_publishes_display_confirmation_payload_template",
+                replace(state, payload_contract_published=True),
+            )
+            return
+
+        if not state.payload_built_from_contract:
+            yield Transition(
+                "controller_submits_display_confirmation_from_payload_template",
+                replace(
+                    state,
+                    payload_built_from_contract=True,
+                    payload_display_confirmation_fields=state.display_payload_template_fields,
+                ),
+            )
+            return
+
+        if not state.validator_checked:
+            missing_payload_fields = (
+                DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.payload_display_confirmation_fields
+            )
+            if missing_payload_fields:
+                yield Transition(
+                    "router_validator_rejects_display_confirmation_missing_required_fields",
+                    replace(
+                        state,
+                        status="rejected",
+                        validator_checked=True,
+                        router_decision="reject",
+                        router_rejection_reason="display_confirmation_missing_required_fields",
+                    ),
+                )
+                return
+            yield Transition(
+                "router_validator_accepts_display_confirmation_payload",
+                replace(
+                    state,
+                    status="accepted",
+                    validator_checked=True,
+                    router_decision="accept",
+                ),
+            )
+            return
 
     if not state.payload_contract_published:
         contract_reason = _contract_rejection_reason(state.contract)
@@ -346,7 +456,7 @@ def is_success(state: State) -> bool:
 
 def accepted_actions_have_complete_visible_contract(state: State, trace) -> InvariantResult:
     del trace
-    if state.status != "accepted":
+    if state.status != "accepted" or state.action_family != "startup_answers":
         return InvariantResult.pass_()
     missing = _missing_contract_fields(state.contract)
     if missing:
@@ -364,7 +474,11 @@ def accepted_actions_have_complete_visible_contract(state: State, trace) -> Inva
 
 def accepted_ai_interpretations_include_schema_version(state: State, trace) -> InvariantResult:
     del trace
-    if state.status != "accepted" or not state.payload_includes_interpretation:
+    if (
+        state.status != "accepted"
+        or state.action_family != "startup_answers"
+        or not state.payload_includes_interpretation
+    ):
         return InvariantResult.pass_()
     if SCHEMA_FIELD not in state.contract.required_nested_fields:
         return InvariantResult.fail(
@@ -379,12 +493,33 @@ def accepted_ai_interpretations_include_schema_version(state: State, trace) -> I
 
 def accepted_ai_interpretations_satisfy_internal_validator(state: State, trace) -> InvariantResult:
     del trace
-    if state.status != "accepted" or not state.payload_includes_interpretation:
+    if (
+        state.status != "accepted"
+        or state.action_family != "startup_answers"
+        or not state.payload_includes_interpretation
+    ):
         return InvariantResult.pass_()
     missing = state.internal_interpretation_required_fields - state.payload_interpretation_fields
     if missing:
         return InvariantResult.fail(
             "router accepted AI interpretation missing internal validator required fields"
+        )
+    return InvariantResult.pass_()
+
+
+def accepted_display_actions_publish_copyable_payload_template(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted" or state.action_family != "display_confirmation":
+        return InvariantResult.pass_()
+    missing_template = DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.display_payload_template_fields
+    if missing_template:
+        return InvariantResult.fail(
+            "router accepted display action without complete display_confirmation payload_template"
+        )
+    missing_payload = DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.payload_display_confirmation_fields
+    if missing_payload:
+        return InvariantResult.fail(
+            "router accepted display action payload missing template-required fields"
         )
     return InvariantResult.pass_()
 
@@ -426,6 +561,11 @@ INVARIANTS = (
         predicate=accepted_ai_interpretations_satisfy_internal_validator,
     ),
     Invariant(
+        name="accepted_display_actions_publish_copyable_payload_template",
+        description="Accepted display actions expose a copyable display_confirmation payload template.",
+        predicate=accepted_display_actions_publish_copyable_payload_template,
+    ),
+    Invariant(
         name="scenarios_end_in_expected_decisions",
         description="Valid scenarios are accepted and negative scenarios are rejected.",
         predicate=scenarios_end_in_expected_decisions,
@@ -441,14 +581,19 @@ EXTERNAL_INPUTS = (Tick(),)
 MAX_SEQUENCE_LENGTH = 5
 REQUIRED_LABELS = (
     "router_selects_record_startup_answers_action_contract",
+    "router_selects_display_confirmation_action_template",
     "router_publishes_complete_payload_contract",
+    "router_publishes_display_confirmation_payload_template",
     "controller_submits_explicit_startup_answers_without_interpretation",
     "controller_submits_ai_interpreted_startup_answers_with_full_receipt",
     "controller_submits_ai_interpreted_startup_answers_without_schema_version",
+    "controller_submits_display_confirmation_from_payload_template",
     "router_validator_accepts_contract_visible_payload",
+    "router_validator_accepts_display_confirmation_payload",
     "router_validator_rejects_payload_missing_interpretation_schema_version",
     "router_rejects_payload_contract_missing_interpretation_schema_version",
     "router_rejects_payload_contract_incomplete_interpretation_required_fields",
+    "router_rejects_display_confirmation_payload_template_missing_hash",
 )
 
 
@@ -473,12 +618,28 @@ def _accepted_base(**changes: object) -> State:
     base = State(
         status="accepted",
         scenario=VALID_AI_INTERPRETED_STARTUP,
+        action_family="startup_answers",
         contract=PayloadContract(),
         payload_contract_published=True,
         payload_built_from_contract=True,
         payload_startup_fields=STARTUP_REQUIRED_FIELDS,
         payload_includes_interpretation=True,
         payload_interpretation_fields=INTERPRETATION_REQUIRED_FIELDS,
+        validator_checked=True,
+        router_decision="accept",
+    )
+    return replace(base, **changes)
+
+
+def _accepted_display_base(**changes: object) -> State:
+    base = State(
+        status="accepted",
+        scenario=VALID_DISPLAY_CONFIRMATION,
+        action_family="display_confirmation",
+        payload_contract_published=True,
+        payload_built_from_contract=True,
+        display_payload_template_fields=DISPLAY_CONFIRMATION_REQUIRED_FIELDS,
+        payload_display_confirmation_fields=DISPLAY_CONFIRMATION_REQUIRED_FIELDS,
         validator_checked=True,
         router_decision="accept",
     )
@@ -505,11 +666,21 @@ def hazard_states() -> dict[str, State]:
         "controller_may_fill_missing_fields": _accepted_base(
             contract=PayloadContract(controller_may_fill_missing_fields=True)
         ),
+        DISPLAY_TEMPLATE_MISSING_HASH: _accepted_display_base(
+            scenario=DISPLAY_TEMPLATE_MISSING_HASH,
+            display_payload_template_fields=DISPLAY_CONFIRMATION_REQUIRED_FIELDS
+            - frozenset({DISPLAY_HASH_FIELD}),
+            payload_display_confirmation_fields=DISPLAY_CONFIRMATION_REQUIRED_FIELDS
+            - frozenset({DISPLAY_HASH_FIELD}),
+        ),
     }
 
 
 __all__ = [
     "EXTERNAL_INPUTS",
+    "DISPLAY_CONFIRMATION_REQUIRED_FIELDS",
+    "DISPLAY_HASH_FIELD",
+    "DISPLAY_TEMPLATE_MISSING_HASH",
     "INTERPRETATION_REQUIRED_FIELDS",
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
@@ -519,6 +690,7 @@ __all__ = [
     "SCENARIOS",
     "SCHEMA_FIELD",
     "STARTUP_REQUIRED_FIELDS",
+    "VALID_DISPLAY_CONFIRMATION",
     "Action",
     "PayloadContract",
     "State",

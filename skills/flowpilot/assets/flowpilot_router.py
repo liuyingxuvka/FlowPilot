@@ -1480,6 +1480,24 @@ def make_action(
         action["to_role"] = to_role
     if extra:
         action.update(extra)
+    if action.get("requires_user_dialog_display_confirmation") and "payload_template" not in action:
+        display_kind = action.get("display_kind")
+        display_text_sha256 = action.get("display_text_sha256")
+        if isinstance(display_kind, str) and isinstance(display_text_sha256, str):
+            action["payload_template"] = {
+                "display_confirmation": {
+                    "action_type": action_type,
+                    "display_kind": display_kind,
+                    "display_text_sha256": display_text_sha256,
+                    "provenance": DISPLAY_CONFIRMATION_PROVENANCE,
+                    "rendered_to": DISPLAY_CONFIRMATION_TARGET,
+                }
+            }
+            action["payload_template_rule"] = (
+                "First paste display_text exactly into the user dialog, then apply "
+                "the action with this payload_template. Generated files, host UI "
+                "updates, and display paths do not satisfy user-dialog display evidence."
+            )
     resolved_recipient = str(action.get("to_role") or actor)
     action.setdefault("why_this_role", summary)
     action["next_step_contract"] = {

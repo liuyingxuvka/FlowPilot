@@ -25,6 +25,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS: (
         "internal required fields absent from payload_contract"
     ),
+    model.DISPLAY_TEMPLATE_MISSING_HASH: (
+        "complete display_confirmation payload_template"
+    ),
     "controller_may_fill_missing_fields": "Controller field guessing",
 }
 
@@ -32,11 +35,14 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|"
+        f"family={state.action_family}|"
         f"published={state.payload_contract_published}|"
         f"payload={state.payload_built_from_contract},"
         f"interpretation={state.payload_includes_interpretation}|"
         f"contract_missing={sorted(model.INTERPRETATION_REQUIRED_FIELDS - state.contract.required_nested_fields)}|"
         f"payload_missing={sorted(state.internal_interpretation_required_fields - state.payload_interpretation_fields)}|"
+        f"display_template_missing={sorted(model.DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.display_payload_template_fields)}|"
+        f"display_payload_missing={sorted(model.DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.payload_display_confirmation_fields)}|"
         f"router={state.router_decision}:{state.router_rejection_reason}"
     )
 
@@ -90,6 +96,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
         [
             model.VALID_EXPLICIT_STARTUP,
             model.VALID_AI_INTERPRETED_STARTUP,
+            model.VALID_DISPLAY_CONFIRMATION,
         ]
     )
     expected_rejected = sorted(model.NEGATIVE_SCENARIOS)
@@ -122,7 +129,11 @@ def _check_expected_scenarios(graph: dict[str, object]) -> dict[str, object]:
     results: dict[str, str] = {}
     failures: list[str] = []
 
-    for scenario in (model.VALID_EXPLICIT_STARTUP, model.VALID_AI_INTERPRETED_STARTUP):
+    for scenario in (
+        model.VALID_EXPLICIT_STARTUP,
+        model.VALID_AI_INTERPRETED_STARTUP,
+        model.VALID_DISPLAY_CONFIRMATION,
+    ):
         terminal = terminal_by_scenario.get(scenario)
         if terminal is None:
             failures.append(f"{scenario}: no terminal state")
@@ -221,13 +232,20 @@ def _check_hazards() -> dict[str, object]:
             "expected_failure": expected,
             "failures": failures,
             "state": {
+                "action_family": state.action_family,
                 "scenario": state.scenario,
                 "status": state.status,
                 "contract_required_nested_fields": sorted(
                     state.contract.required_nested_fields
                 ),
+                "display_payload_template_fields": sorted(
+                    state.display_payload_template_fields
+                ),
                 "payload_interpretation_fields": sorted(
                     state.payload_interpretation_fields
+                ),
+                "payload_display_confirmation_fields": sorted(
+                    state.payload_display_confirmation_fields
                 ),
                 "router_decision": state.router_decision,
             },
@@ -271,7 +289,8 @@ def run_checks() -> dict[str, object]:
         "missing_labels": safe_graph["missing_labels"],
         "risk_boundary": (
             "abstract next_action payload_contract visibility for "
-            "record_startup_answers; no filesystem replay or production router "
+            "record_startup_answers and display_confirmation payload templates; "
+            "no filesystem replay or production router "
             "mutation in this allowed write scope"
         ),
         "skipped_checks": {
@@ -284,7 +303,8 @@ def run_checks() -> dict[str, object]:
             "flowguard_used": True,
             "workflow_or_risk_modeled": (
                 "router action payload_contract exposure for startup answer "
-                "interpretation nested required fields"
+                "interpretation nested required fields and copyable display "
+                "confirmation payload templates"
             ),
             "commands_expected": [
                 "python -m py_compile simulations\\flowpilot_router_action_contract_model.py simulations\\run_router_action_contract_checks.py",
