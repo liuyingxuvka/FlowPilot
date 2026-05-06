@@ -49,3 +49,42 @@ path.
 Do not mark the node complete until repair evidence passes the required review
 and the PM reruns the relevant node, parent, or terminal gate from current
 route evidence.
+
+## Decision Contract For This Task
+
+When resolving a router `control_blocker`, use contract
+`flowpilot.output_contract.pm_control_blocker_repair_decision.v1`.
+
+Write the full PM decision body to the run-scoped decision file requested by
+Controller or router state. Return in chat only a controller-visible envelope
+with the decision path and hash.
+
+Use these exact field names and one of the allowed `decision` values:
+`repair_completed`, `repair_not_required`, `resolved_by_followup_event`, or
+`continue_after_pm_review`.
+
+```json
+{
+  "schema_version": "flowpilot.pm_control_blocker_repair_decision.v1",
+  "run_id": "<current run id>",
+  "decided_by_role": "project_manager",
+  "blocker_id": "<control blocker id>",
+  "decision": "continue_after_pm_review",
+  "prior_path_context_review": {
+    "reviewed": true,
+    "source_paths": []
+  },
+  "repair_action": "<action taken or why none was needed>",
+  "rerun_target": "<event, role, node, or gate to rerun>",
+  "blockers": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
+
+If the responsible role must reissue a malformed control-plane output, name
+that target and event in `rerun_target`. Do not ask Controller to infer or
+patch the rejected body.

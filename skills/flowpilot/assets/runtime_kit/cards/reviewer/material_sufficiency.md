@@ -23,3 +23,41 @@ report must identify:
 
 If evidence is incomplete, report insufficiency and blockers. Do not let PM
 accept the material until a clean sufficiency report exists.
+
+## Report Contract For This Task
+
+Use contract `flowpilot.output_contract.material_sufficiency_report.v1`.
+
+Write the full body to the run-scoped material sufficiency report file requested
+by Controller or router state. Return in chat only a controller-visible
+envelope with the report path and hash.
+
+The body must use these exact field names. Include every required field even
+when the material is insufficient.
+
+```json
+{
+  "schema_version": "flowpilot.material_sufficiency_report.v1",
+  "run_id": "<current run id>",
+  "report_type": "material_sufficiency",
+  "reviewed_by_role": "human_like_reviewer",
+  "sufficient": false,
+  "direct_material_sources_checked": true,
+  "packet_matches_checked_sources": true,
+  "pm_ready": false,
+  "checked_source_paths": [],
+  "findings": [],
+  "blockers": [],
+  "residual_risks": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
+
+If sufficient, set `sufficient: true`, `pm_ready: true`, and `blockers: []`.
+If insufficient, set `sufficient: false`, keep `pm_ready: false`, explain the
+gap in `blockers`, and still include `direct_material_sources_checked`,
+`packet_matches_checked_sources`, and `checked_source_paths`.

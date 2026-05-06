@@ -23,6 +23,10 @@ Write a bounded research package that names:
 Any research worker packet created from the package must include the registry
 `output_contract` `flowpilot.output_contract.worker_research_result.v1` in both
 the packet envelope and packet body's `Output Contract` section.
+The packet body must also include the generated `Report Contract For This Task`
+block, including the required research result sections and the blocked/needs-PM
+return path. Do not rely on the worker to infer the research report format from
+this phase card alone.
 
 Do not proceed to product architecture until reviewed research is absorbed or
 the route is explicitly changed or blocked.

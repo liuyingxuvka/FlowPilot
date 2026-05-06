@@ -19,19 +19,24 @@ REQUIRED_LABELS = (
     "packet_embeds_mismatched_contract",
     "packet_embeds_contract_with_hidden_router_requirement",
     "packet_embeds_contract_with_missing_required_body_field",
+    "packet_omits_report_contract_delivery",
     "packet_embeds_body_field_in_envelope",
     "controller_relays_envelope_only",
     "role_receives_relayed_packet",
+    "final_reporter_receives_report_contract",
+    "final_reporter_missing_report_contract",
     "role_self_check_passes_body_envelope_contract",
     "role_self_check_rejects_missing_contract",
     "role_self_check_rejects_mismatched_contract",
     "role_self_check_rejects_missing_required_body_field",
+    "role_self_check_rejects_missing_report_contract_delivery",
     "role_self_check_rejects_forbidden_envelope_body_field",
     "router_accepts_self_checked_contract",
     "router_rejects_missing_contract",
     "router_rejects_mismatched_contract",
     "router_rejects_hidden_router_requirement_absent_from_contract",
     "router_rejects_missing_required_body_field",
+    "router_rejects_missing_report_contract_delivery",
     "router_rejects_forbidden_envelope_body_field",
 )
 
@@ -40,6 +45,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.MISMATCHED_CONTRACT: "missing or mismatched propagated contract",
     model.HIDDEN_ROUTER_REQUIREMENT: "hidden router requirement absent from contract",
     model.MISSING_REQUIRED_BODY_FIELD: "missing required body field",
+    model.MISSING_REPORT_CONTRACT_DELIVERY: "final reporter received report contract",
     model.FORBIDDEN_ENVELOPE_BODY_FIELD: "forbidden envelope body field",
     "controller_reads_body": "Controller relayed or read packet body content",
     "controller_relays_body_content": "Controller relayed or read packet body content",
@@ -52,6 +58,7 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|family={state.task_family}|"
         f"selected={state.selected_contract_id}|packet={state.packet_contract_id}|"
         f"envelope={state.envelope_contract_id}|body={state.body_contract_id}|"
+        f"report_contract_delivery={state.final_reporter_received_report_contract}|"
         f"role_check={state.role_self_check}:{state.role_self_check_reason}|"
         f"router={state.router_decision}:{state.router_rejection_reason}"
     )
@@ -103,7 +110,7 @@ def _check_safe_graph(graph: dict[str, object]) -> dict[str, object]:
     return {
         "ok": not graph["invariant_failures"]
         and not missing_labels
-        and len(accepted) == 2
+        and len(accepted) == 3
         and len(rejected) == len(model.NEGATIVE_SCENARIOS),
         "state_count": len(states),
         "edge_count": graph["edge_count"],
@@ -142,7 +149,7 @@ def _check_negative_scenarios(graph: dict[str, object]) -> dict[str, object]:
             f"{terminal.status}:{terminal.router_rejection_reason}"
         )
 
-    for scenario in (model.VALID_IMPLEMENTATION, model.VALID_REVIEW):
+    for scenario in (model.VALID_IMPLEMENTATION, model.VALID_REVIEW, model.VALID_FINAL_REPORT):
         terminal = terminal_by_scenario.get(scenario)
         if terminal is None:
             failures.append(f"{scenario}: no terminal state")

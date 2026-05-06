@@ -38,3 +38,67 @@ contract can legally carry the repair, write a file-backed
 button. Use it only when no legal repair route exists. It must explain why no
 existing path applies, list attempted legal paths, state why continuing is
 unsafe, define resume conditions, and stop all work beyond startup.
+
+## Decision Contract For This Task
+
+Return only a controller-visible envelope in chat. Write the full decision body
+to the run-scoped decision file requested by Controller or router state. Use the
+exact field names below.
+
+Approval body:
+
+```json
+{
+  "schema_version": "flowpilot.pm_startup_activation_approval.v1",
+  "run_id": "<current run id>",
+  "approved_by_role": "project_manager",
+  "decision": "approved",
+  "reviewed_report_path": "<startup fact report path>",
+  "blockers": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true
+  }
+}
+```
+
+Repair request body:
+
+```json
+{
+  "schema_version": "flowpilot.pm_startup_repair_request.v1",
+  "run_id": "<current run id>",
+  "decided_by_role": "project_manager",
+  "decision": "startup_repair_requested",
+  "target_role_or_system": "human_like_reviewer",
+  "repair_action": "<specific legal repair action>",
+  "blocked_report_path": "<blocking report path>",
+  "resume_event": "reviewer_reports_startup_facts",
+  "blockers": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true
+  }
+}
+```
+
+Protocol dead-end body:
+
+```json
+{
+  "schema_version": "flowpilot.pm_startup_protocol_dead_end.v1",
+  "run_id": "<current run id>",
+  "declared_by_role": "project_manager",
+  "decision": "protocol_dead_end",
+  "no_legal_repair_path": true,
+  "why_no_existing_path_applies": "<reason>",
+  "attempted_legal_paths": [],
+  "unsafe_to_continue_reason": "<reason>",
+  "resume_conditions": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```

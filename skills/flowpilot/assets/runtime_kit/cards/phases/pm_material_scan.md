@@ -17,6 +17,10 @@ understanding or route design.
 Each material scan packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_material_scan_result.v1` in both the packet
 envelope and packet body's `Output Contract` section.
+The packet body must also include the generated `Report Contract For This Task`
+block, including required result sections, direct evidence expectations,
+blocked/needs-PM behavior, and exact field or section names. Do not rely on the
+worker to infer the material scan report format from this phase card alone.
 
 The packet must state:
 

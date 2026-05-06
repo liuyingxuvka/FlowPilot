@@ -332,7 +332,93 @@ def output_contract_id(output_contract: dict[str, Any] | None) -> str:
     return str(output_contract.get("contract_id") or "")
 
 
+def _contract_value_for_field(output_contract: dict[str, Any], field_path: str) -> Any:
+    values = output_contract.get("required_body_values")
+    if isinstance(values, dict) and field_path in values:
+        return values[field_path]
+    if field_path.endswith("_paths") or field_path.endswith("_ids") or field_path.endswith("_items"):
+        return []
+    if field_path in {"segment_reviews", "commands_run", "hard_invariants", "skipped_checks"}:
+        return []
+    if field_path in {"passed", "pm_ready", "sufficient"}:
+        return False
+    return "<required>"
+
+
+def _set_contract_template_field(target: dict[str, Any], field_path: str, value: Any) -> None:
+    parts = [part for part in field_path.split(".") if part]
+    if not parts:
+        return
+    cursor = target
+    for part in parts[:-1]:
+        existing = cursor.get(part)
+        if not isinstance(existing, dict):
+            existing = {}
+            cursor[part] = existing
+        cursor = existing
+    cursor[parts[-1]] = value
+
+
+def _contract_body_template(output_contract: dict[str, Any]) -> dict[str, Any]:
+    template: dict[str, Any] = {}
+    fields: list[str] = []
+    for key in ("required_body_fields", "required_report_body_fields"):
+        raw = output_contract.get(key)
+        if isinstance(raw, list):
+            fields.extend(str(item) for item in raw if str(item).strip())
+    values = output_contract.get("required_body_values")
+    if isinstance(values, dict):
+        for field_path in values:
+            if field_path not in fields:
+                fields.append(str(field_path))
+    for field_path in fields:
+        _set_contract_template_field(template, field_path, _contract_value_for_field(output_contract, field_path))
+    return template
+
+
+def _contract_list_block(title: str, values: Any) -> str:
+    if not values:
+        return ""
+    if isinstance(values, dict):
+        rendered = json.dumps(values, indent=2, sort_keys=True)
+        return f"{title}:\n\n```json\n{rendered}\n```\n\n"
+    if isinstance(values, list):
+        lines = "\n".join(f"- `{item}`" for item in values)
+        return f"{title}:\n\n{lines}\n\n"
+    return f"{title}: `{values}`\n\n"
+
+
 def output_contract_section(output_contract: dict[str, Any]) -> str:
+    body_template = _contract_body_template(output_contract)
+    body_template_block = ""
+    if body_template:
+        body_template_block = (
+            "Required body JSON skeleton. Keep these exact field names; do not "
+            "replace them with synonyms:\n\n"
+            "```json\n"
+            f"{json.dumps(body_template, indent=2, sort_keys=True)}\n"
+            "```\n\n"
+        )
+    required_sections_block = _contract_list_block(
+        "Required sealed body sections",
+        output_contract.get("required_result_body_sections"),
+    )
+    required_envelope_block = _contract_list_block(
+        "Required return envelope fields",
+        output_contract.get("required_result_envelope_fields"),
+    )
+    required_values_block = _contract_list_block(
+        "Required exact body values",
+        output_contract.get("required_body_values"),
+    )
+    allowed_decisions_block = _contract_list_block(
+        "Allowed decision values",
+        output_contract.get("allowed_decision_values"),
+    )
+    segment_values_block = _contract_list_block(
+        "Required values for each segment review",
+        output_contract.get("segment_review_required_values"),
+    )
     return (
         "\n## Output Contract\n\n"
         "This packet uses the system-selected FlowPilot output contract below. "
@@ -340,6 +426,21 @@ def output_contract_section(output_contract: dict[str, Any]) -> str:
         "```json\n"
         f"{json.dumps(output_contract, indent=2, sort_keys=True)}\n"
         "```\n\n"
+        "## Report Contract For This Task\n\n"
+        "This task packet is the source of truth for the result, report, or "
+        "decision body. Do not rely on role-startup memory, chat history, or "
+        "field-name guesses.\n\n"
+        "- Write the full body only to the sealed run-scoped body path requested by the packet.\n"
+        "- Return in chat only the controller-visible envelope. Do not include body content, findings, blockers, or evidence details in chat.\n"
+        "- Use the exact field names and exact required values from this contract. Do not rename fields with synonyms.\n"
+        "- Include every required field even when the value is `[]`, `false`, or `null`.\n"
+        "- If the work cannot satisfy the contract, return a blocked or needs-PM result body that still includes every required field and a `Contract Self-Check` section.\n\n"
+        f"{required_sections_block}"
+        f"{required_envelope_block}"
+        f"{required_values_block}"
+        f"{allowed_decisions_block}"
+        f"{segment_values_block}"
+        f"{body_template_block}"
         "Before returning, write a `Contract Self-Check` section in the sealed "
         "result, report, or decision body. If any required field, evidence item, "
         "or section is missing, return `blocked` or `needs_pm` instead of a pass.\n"

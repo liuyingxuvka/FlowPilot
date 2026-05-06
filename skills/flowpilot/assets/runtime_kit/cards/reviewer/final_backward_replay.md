@@ -34,3 +34,49 @@ blockers, and rerun target. Do not merge a failed segment into a general pass.
 
 Pass only when completion remains valid after this backward replay. A
 completion report alone is not evidence.
+
+## Report Contract For This Task
+
+Use contract `flowpilot.output_contract.terminal_backward_replay_report.v1`.
+
+Write the full body to the run-scoped terminal backward replay report file
+requested by Controller or router state. Return in chat only a
+controller-visible envelope with the report path and hash.
+
+The body must use these exact field names. Include every required field even
+when the replay blocks completion.
+
+```json
+{
+  "schema_version": "flowpilot.terminal_backward_replay_report.v1",
+  "run_id": "<current run id>",
+  "report_type": "terminal_backward_replay",
+  "reviewed_by_role": "human_like_reviewer",
+  "passed": false,
+  "direct_evidence_paths_checked": [],
+  "segment_reviews": [
+    {
+      "segment_id": "<segment id>",
+      "reviewed_by_role": "human_like_reviewer",
+      "passed": false,
+      "pm_segment_decision": "repair_or_replay_required",
+      "evidence_checked": [],
+      "blockers": [],
+      "rerun_target": "<route node, segment, or ledger target>"
+    }
+  ],
+  "blockers": [],
+  "residual_risks": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
+
+If completion passes, set top-level `passed: true`. Every item in
+`segment_reviews` must then have `reviewed_by_role: "human_like_reviewer"`,
+`passed: true`, and `pm_segment_decision: "continue"`. If any segment fails,
+keep top-level `passed: false`, put the concrete rerun target in that segment,
+and keep the full schema.

@@ -23,6 +23,10 @@ Every current-node worker packet must include the registry `output_contract`
 envelope and packet body's `Output Contract` section. The contract must match
 the active node id, recipient role, acceptance plan, required verification, and
 reviewer block conditions.
+The packet body must also include the generated `Report Contract For This Task`
+block, including required result sections, required return envelope fields,
+blocked/needs-PM behavior, and the rule that field names and section names must
+not be renamed.
 
 If reviewer blocks, enter review repair. If reviewed evidence shows route
 structure is wrong, mutate the route and rerun required checks.

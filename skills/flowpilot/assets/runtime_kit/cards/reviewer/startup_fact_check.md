@@ -49,6 +49,51 @@ Your report body must include `external_fact_review` with:
   `reviewer_checked_requirement_ids`;
 - direct evidence paths you personally checked.
 
+## Report Contract For This Task
+
+Use contract `flowpilot.output_contract.startup_fact_report.v1`.
+
+Write the full body to the run-scoped startup fact report file requested by
+Controller or router state. Return in chat only a controller-visible envelope
+with the report path and hash. Do not include findings, blockers, evidence
+details, or repair instructions in chat.
+
+The body must use these exact field names. Do not rename
+`direct_evidence_paths_checked` to `checked_paths`,
+`direct_evidence_paths_personally_checked`, or any synonym. Include every
+required field even when the value is `[]` or `false`.
+
+```json
+{
+  "schema_version": "flowpilot.startup_fact_report.v1",
+  "run_id": "<current run id>",
+  "report_type": "startup_fact_review",
+  "reviewed_by_role": "human_like_reviewer",
+  "passed": false,
+  "external_fact_review": {
+    "reviewed_by_role": "human_like_reviewer",
+    "direct_evidence_paths_checked": [],
+    "used_router_mechanical_audit": true,
+    "router_mechanical_audit_hash": "<delivered mechanical audit hash>",
+    "self_attested_ai_claims_accepted_as_proof": false
+  },
+  "reviewer_checked_requirement_ids": [],
+  "findings": [],
+  "blockers": [],
+  "residual_risks": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
+
+If every required fact passes, set `passed: true` and keep `blockers: []`.
+If any fact is missing, stale, self-attested, or not personally checked, set
+`passed: false`, describe it in `blockers`, and still include the full shape
+above.
+
 Write the startup fact report only to a run-scoped review/report file. Return
 to Controller only an envelope naming the report id, path, hash, event name,
 from/to roles, next holder, and body visibility. If any required check is

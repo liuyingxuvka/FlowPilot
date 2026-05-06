@@ -13,6 +13,8 @@ Use FlowGuard officers through bounded request and report packets.
 Each officer request packet must include the registry `output_contract`
 `flowpilot.output_contract.officer_model_report.v1` in both the packet envelope
 and packet body's `Output Contract` section.
+The packet body must also include the generated `Report Contract For This Task`
+block so the officer sees the exact report fields before modeling.
 
 For each modeling need, write a request that states:
 
@@ -25,6 +27,26 @@ For each modeling need, write a request that states:
 - evidence paths, source materials, samples, traces, or experiment outputs the
   officer may inspect;
 - how the report can change the route.
+
+The officer report body must include these fields exactly:
+
+```json
+{
+  "schema_version": "flowpilot.officer_model_report.v1",
+  "run_id": "<current run id>",
+  "modeled_boundary": "<scope modeled>",
+  "commands_run": [],
+  "counterexamples_or_absence": "<counterexample summary or explicit absence>",
+  "hard_invariants": [],
+  "skipped_checks": [],
+  "confidence_boundary": "<what this model does and does not prove>",
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
 
 The officer report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.

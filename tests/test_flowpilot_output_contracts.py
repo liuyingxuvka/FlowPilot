@@ -45,6 +45,43 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.worker_current_node_result.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.material_sufficiency_report.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.terminal_backward_replay_report.v1", contract_ids)
+        startup_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.startup_fact_report.v1"
+        )
+        self.assertIn(
+            "external_fact_review.direct_evidence_paths_checked",
+            startup_contract["required_body_fields"],
+        )
+
+    def test_router_delivered_reviewer_cards_include_task_report_contracts(self) -> None:
+        startup_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "reviewer"
+            / "startup_fact_check.md"
+        ).read_text(encoding="utf-8")
+        material_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "reviewer"
+            / "material_sufficiency.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("## Report Contract For This Task", startup_card)
+        self.assertIn("direct_evidence_paths_checked", startup_card)
+        self.assertIn("flowpilot.output_contract.startup_fact_report.v1", startup_card)
+        self.assertIn("## Report Contract For This Task", material_card)
+        self.assertIn("pm_ready", material_card)
 
     def test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result(self) -> None:
         root = self.make_project()
@@ -76,7 +113,11 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertEqual(envelope["output_contract"]["recipient_role"], "worker_a")
         body_text = body_path.read_text(encoding="utf-8")
         self.assertIn("## Output Contract", body_text)
+        self.assertIn("## Report Contract For This Task", body_text)
         self.assertIn(contract["contract_id"], body_text)
+        self.assertIn("Do not rename fields with synonyms", body_text)
+        self.assertIn("Required sealed body sections", body_text)
+        self.assertIn("Required return envelope fields", body_text)
 
         ledger = self.read_json(ledger_path)
         self.assertEqual(ledger["packets"][0]["output_contract_id"], contract["contract_id"])

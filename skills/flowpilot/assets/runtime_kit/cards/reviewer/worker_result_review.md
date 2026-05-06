@@ -31,3 +31,38 @@ Focus your review on the result's quality, acceptance-slice fit, freshness,
 role origin, contamination risk, and any judgement the router cannot recompute.
 When blocking, return only a controller-visible envelope and a safe summary
 category. Keep sealed packet/result body details out of chat.
+
+## Report Contract For This Task
+
+Use contract `flowpilot.output_contract.reviewer_review_report.v1` unless the
+packet or router action provides a more specific reviewer contract.
+
+Write the full body to the run-scoped reviewer report file requested by
+Controller or router state. Return in chat only a controller-visible envelope
+with the report path and hash.
+
+The body must use these exact field names. Include every required field even
+when the worker result is blocked.
+
+```json
+{
+  "schema_version": "flowpilot.reviewer_review_report.v1",
+  "run_id": "<current run id>",
+  "report_type": "worker_result_review",
+  "reviewed_by_role": "human_like_reviewer",
+  "passed": false,
+  "direct_evidence_paths_checked": [],
+  "findings": [],
+  "blockers": [],
+  "residual_risks": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
+
+If the worker result passes, set `passed: true` and keep `blockers: []`. If it
+needs repair, more material, or has invalid role origin, set `passed: false`,
+record the reason in `blockers`, and still include all fields above.

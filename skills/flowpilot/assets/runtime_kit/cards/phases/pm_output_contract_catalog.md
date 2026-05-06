@@ -29,6 +29,26 @@ Contract` section so the recipient sees the requirements before working.
 The recipient's sealed result, report, or decision body must include a
 `Contract Self-Check` section before it returns an envelope.
 
+When assigning any task that expects a result, report, review, model report,
+approval, repair decision, or PM decision, do not write only "submit a report".
+The packet body must include a `Report Contract For This Task` block that tells
+the final reporter exactly how this task's body and chat envelope must be
+written:
+
+- the selected `output_contract.contract_id`;
+- the sealed body file or packet result body target;
+- the exact required body fields, sections, and required values;
+- the exact return envelope fields;
+- the pass path and blocked/needs-PM path;
+- the rule that required fields must still appear when they are `[]`, `false`,
+  or `null`;
+- the rule that field names must not be replaced with synonyms.
+
+If the packet runtime appends this block from the selected registry contract,
+use that generated block. If you are writing a manual PM request, copy the
+matching registry contract into the task packet and include the same
+task-specific report-writing rules before sending it.
+
 Do not invent a custom contract in the packet body. If the registry has no
 contract for the task family, return a PM blocker asking for registry update or
 user review; do not send an under-specified packet.

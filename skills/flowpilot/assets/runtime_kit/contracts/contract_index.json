@@ -212,7 +212,12 @@
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
         "reviewed_by_role",
-        "passed"
+        "passed",
+        "direct_evidence_paths_checked",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "contract_self_check"
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer"
@@ -235,7 +240,8 @@
         "counterexamples_or_absence",
         "hard_invariants",
         "skipped_checks",
-        "confidence_boundary"
+        "confidence_boundary",
+        "contract_self_check"
       ],
       "contract_self_check_required": true
     },
@@ -250,10 +256,20 @@
         "reviewed_by_role",
         "passed",
         "external_fact_review",
-        "external_fact_review.router_mechanical_audit_hash"
+        "external_fact_review.reviewed_by_role",
+        "external_fact_review.direct_evidence_paths_checked",
+        "external_fact_review.used_router_mechanical_audit",
+        "external_fact_review.router_mechanical_audit_hash",
+        "external_fact_review.self_attested_ai_claims_accepted_as_proof",
+        "reviewer_checked_requirement_ids",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "contract_self_check"
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer",
+        "external_fact_review.reviewed_by_role": "human_like_reviewer",
         "external_fact_review.used_router_mechanical_audit": true,
         "external_fact_review.self_attested_ai_claims_accepted_as_proof": false
       }
@@ -333,7 +349,13 @@
       "required_body_fields": [
         "reviewed_by_role",
         "direct_material_sources_checked",
-        "packet_matches_checked_sources"
+        "packet_matches_checked_sources",
+        "pm_ready",
+        "checked_source_paths",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "contract_self_check"
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer",
@@ -350,7 +372,12 @@
       ],
       "required_body_fields": [
         "reviewed_by_role",
-        "passed"
+        "passed",
+        "direct_evidence_paths_checked",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "contract_self_check"
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer",
@@ -389,7 +416,11 @@
       "required_body_fields": [
         "reviewed_by_role",
         "passed",
-        "segment_reviews"
+        "segment_reviews",
+        "direct_evidence_paths_checked",
+        "blockers",
+        "residual_risks",
+        "contract_self_check"
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer",

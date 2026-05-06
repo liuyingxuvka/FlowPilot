@@ -6,15 +6,18 @@ Risk intent brief:
 - Protect packet bodies from Controller relay and from envelope fields that
   smuggle body content.
 - Model-critical state: PM contract selection, packet contract embedding,
-  envelope-only Controller relay, role receive/self-check, and router
-  accept/reject.
+  report-writing contract delivery in the task packet, envelope-only
+  Controller relay, final reporter receipt, role receive/self-check, and
+  router accept/reject.
 - Adversarial branches include a missing packet contract, a mismatched packet
   contract, a hidden router requirement absent from the contract, a missing
-  required body field, and a forbidden body field copied into the envelope.
+  required body field, a missing report-writing contract at the final
+  reporter, and a forbidden body field copied into the envelope.
 - Hard invariants: accepted outputs must carry one system-predefined contract
   end to end, satisfy all required body fields, avoid envelope body fields, pass
-  role self-check, expose all router requirements through the contract, and
-  keep Controller envelope-only.
+  role self-check, expose all router requirements through the contract, deliver
+  the report-writing contract to the final reporter, and keep Controller
+  envelope-only.
 - Blindspot: this is an abstract contract propagation model, not a replay
   adapter for concrete packet files.
 """
@@ -29,10 +32,12 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 VALID_IMPLEMENTATION = "valid_implementation"
 VALID_REVIEW = "valid_review"
+VALID_FINAL_REPORT = "valid_final_report"
 MISSING_CONTRACT = "missing_contract"
 MISMATCHED_CONTRACT = "mismatched_contract"
 HIDDEN_ROUTER_REQUIREMENT = "hidden_router_requirement_absent_from_contract"
 MISSING_REQUIRED_BODY_FIELD = "missing_required_body_field"
+MISSING_REPORT_CONTRACT_DELIVERY = "missing_report_contract_delivery"
 FORBIDDEN_ENVELOPE_BODY_FIELD = "forbidden_envelope_body_field"
 
 NEGATIVE_SCENARIOS = (
@@ -40,12 +45,14 @@ NEGATIVE_SCENARIOS = (
     MISMATCHED_CONTRACT,
     HIDDEN_ROUTER_REQUIREMENT,
     MISSING_REQUIRED_BODY_FIELD,
+    MISSING_REPORT_CONTRACT_DELIVERY,
     FORBIDDEN_ENVELOPE_BODY_FIELD,
 )
 
 SCENARIOS = (
     VALID_IMPLEMENTATION,
     VALID_REVIEW,
+    VALID_FINAL_REPORT,
     *NEGATIVE_SCENARIOS,
 )
 
@@ -96,9 +103,22 @@ REVIEW_CONTRACT = ContractSpec(
     ),
 )
 
+FINAL_REPORT_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.terminal_backward_replay_report.v1",
+    task_family="reviewer.terminal_backward_replay",
+    required_body_fields=frozenset(
+        {
+            "reviewed_by_role",
+            "passed",
+            "segment_reviews",
+        }
+    ),
+)
+
 CONTRACTS_BY_FAMILY = {
     IMPLEMENTATION_CONTRACT.task_family: IMPLEMENTATION_CONTRACT,
     REVIEW_CONTRACT.task_family: REVIEW_CONTRACT,
+    FINAL_REPORT_CONTRACT.task_family: FINAL_REPORT_CONTRACT,
 }
 
 CONTRACTS_BY_ID = {
@@ -110,6 +130,7 @@ NEGATIVE_EXPECTED_REJECTIONS = {
     MISMATCHED_CONTRACT: "mismatched_contract",
     HIDDEN_ROUTER_REQUIREMENT: "hidden_router_requirement_absent_from_contract",
     MISSING_REQUIRED_BODY_FIELD: "missing_required_body_field",
+    MISSING_REPORT_CONTRACT_DELIVERY: "missing_report_contract_delivery",
     FORBIDDEN_ENVELOPE_BODY_FIELD: "forbidden_envelope_body_field",
 }
 
@@ -133,6 +154,7 @@ class State:
     pm_selected_system_contract: bool = False
 
     packet_embedded_contract: bool = False
+    report_contract_delivery_in_packet: bool = False
     packet_contract_id: str = ""
     envelope_contract_id: str = ""
     body_contract_id: str = ""
@@ -145,6 +167,8 @@ class State:
     controller_relayed_body_content: bool = False
 
     role_received_packet: bool = False
+    final_reporter_report_contract_checked: bool = False
+    final_reporter_received_report_contract: bool = False
     role_self_check: str = "none"  # none | pass | fail
     role_self_check_reason: str = "none"
 
@@ -203,6 +227,8 @@ class OutputContractStep:
 
 
 def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
+    if scenario in {VALID_FINAL_REPORT, MISSING_REPORT_CONTRACT_DELIVERY}:
+        return FINAL_REPORT_CONTRACT.task_family, FINAL_REPORT_CONTRACT
     if scenario == VALID_REVIEW:
         return REVIEW_CONTRACT.task_family, REVIEW_CONTRACT
     return IMPLEMENTATION_CONTRACT.task_family, IMPLEMENTATION_CONTRACT
@@ -238,6 +264,10 @@ def _hidden_requirement_for(scenario: str) -> str:
     return ""
 
 
+def _report_contract_delivery_for(scenario: str) -> bool:
+    return scenario != MISSING_REPORT_CONTRACT_DELIVERY
+
+
 def _role_self_check_result(state: State) -> tuple[str, str]:
     selected = CONTRACTS_BY_ID.get(state.selected_contract_id)
     packet = CONTRACTS_BY_ID.get(state.packet_contract_id)
@@ -253,6 +283,8 @@ def _role_self_check_result(state: State) -> tuple[str, str]:
     missing_fields = packet.required_body_fields - state.body_fields
     if missing_fields:
         return "fail", "missing_required_body_field"
+    if not state.final_reporter_received_report_contract:
+        return "fail", "missing_report_contract_delivery"
     forbidden_fields = state.envelope_fields & packet.forbidden_envelope_fields
     if forbidden_fields:
         return "fail", "forbidden_envelope_body_field"
@@ -294,10 +326,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         label = {
             VALID_IMPLEMENTATION: "packet_embeds_selected_contract",
             VALID_REVIEW: "packet_embeds_selected_contract",
+            VALID_FINAL_REPORT: "packet_embeds_selected_contract",
             MISSING_CONTRACT: "packet_omits_selected_contract",
             MISMATCHED_CONTRACT: "packet_embeds_mismatched_contract",
             HIDDEN_ROUTER_REQUIREMENT: "packet_embeds_contract_with_hidden_router_requirement",
             MISSING_REQUIRED_BODY_FIELD: "packet_embeds_contract_with_missing_required_body_field",
+            MISSING_REPORT_CONTRACT_DELIVERY: "packet_omits_report_contract_delivery",
             FORBIDDEN_ENVELOPE_BODY_FIELD: "packet_embeds_body_field_in_envelope",
         }[state.scenario]
         yield Transition(
@@ -305,6 +339,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(
                 state,
                 packet_embedded_contract=True,
+                report_contract_delivery_in_packet=_report_contract_delivery_for(state.scenario),
                 packet_contract_id=packet_id,
                 envelope_contract_id=envelope_id,
                 body_contract_id=body_id,
@@ -326,6 +361,23 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "role_receives_relayed_packet",
             replace(state, role_received_packet=True),
+        )
+        return
+
+    if not state.final_reporter_report_contract_checked:
+        if state.report_contract_delivery_in_packet:
+            yield Transition(
+                "final_reporter_receives_report_contract",
+                replace(
+                    state,
+                    final_reporter_report_contract_checked=True,
+                    final_reporter_received_report_contract=True,
+                ),
+            )
+            return
+        yield Transition(
+            "final_reporter_missing_report_contract",
+            replace(state, final_reporter_report_contract_checked=True),
         )
         return
 
@@ -414,6 +466,8 @@ def accepted_outputs_match_system_contract(state: State, trace) -> InvariantResu
         or state.body_contract_id != spec.contract_id
     ):
         return InvariantResult.fail("router accepted output with missing or mismatched propagated contract")
+    if not state.report_contract_delivery_in_packet:
+        return InvariantResult.fail("router accepted output before report contract was included in the task packet")
     return InvariantResult.pass_()
 
 
@@ -445,6 +499,13 @@ def controller_relay_is_envelope_only(state: State, trace) -> InvariantResult:
         state.controller_read_body or state.controller_relayed_body_content
     ):
         return InvariantResult.fail("Controller relayed or read packet body content")
+    return InvariantResult.pass_()
+
+
+def final_reporter_receives_report_contract(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status == "accepted" and not state.final_reporter_received_report_contract:
+        return InvariantResult.fail("router accepted output before final reporter received report contract")
     return InvariantResult.pass_()
 
 
@@ -506,6 +567,11 @@ INVARIANTS = (
         predicate=controller_relay_is_envelope_only,
     ),
     Invariant(
+        name="final_reporter_receives_report_contract",
+        description="Router acceptance requires the final reporter to receive the task-specific report contract.",
+        predicate=final_reporter_receives_report_contract,
+    ),
+    Invariant(
         name="role_self_check_gates_acceptance",
         description="Router acceptance requires the role body/envelope self-check to pass.",
         predicate=role_self_check_gates_acceptance,
@@ -557,6 +623,7 @@ def _accepted_base(**changes: object) -> State:
         selected_contract_id=spec.contract_id,
         pm_selected_system_contract=True,
         packet_embedded_contract=True,
+        report_contract_delivery_in_packet=True,
         packet_contract_id=spec.contract_id,
         envelope_contract_id=spec.contract_id,
         body_contract_id=spec.contract_id,
@@ -564,6 +631,8 @@ def _accepted_base(**changes: object) -> State:
         body_fields=spec.required_body_fields,
         controller_relayed_envelope_only=True,
         role_received_packet=True,
+        final_reporter_report_contract_checked=True,
+        final_reporter_received_report_contract=True,
         role_self_check="pass",
         router_decision="accept",
     )
@@ -592,6 +661,11 @@ def hazard_states() -> dict[str, State]:
         MISSING_REQUIRED_BODY_FIELD: _accepted_base(
             scenario=MISSING_REQUIRED_BODY_FIELD,
             body_fields=spec.required_body_fields - frozenset({"work_scope"}),
+        ),
+        MISSING_REPORT_CONTRACT_DELIVERY: _accepted_base(
+            scenario=MISSING_REPORT_CONTRACT_DELIVERY,
+            report_contract_delivery_in_packet=False,
+            final_reporter_received_report_contract=False,
         ),
         FORBIDDEN_ENVELOPE_BODY_FIELD: _accepted_base(
             scenario=FORBIDDEN_ENVELOPE_BODY_FIELD,

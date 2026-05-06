@@ -3880,3 +3880,78 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If future startup repair paths target worker roles rather than the router or reviewer, add a concrete startup repair packet workflow instead of relying on generic PM prose.
+
+
+## flowpilot-report-contract-packet-delivery-20260506 - Ensure FlowPilot report contract templates are delivered with each task packet
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowGuard-modeled protocol change for report schema delivery to final reporter before prompt edits
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-06T16:05:49+00:00
+- Ended: 2026-05-06T16:05:49+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-report-contract-packet-delivery-20260506 - Ensure FlowPilot report contract templates are delivered with each task packet
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowGuard-modeled protocol change for report schema delivery to final reporter before prompt edits
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T17:00:00+00:00
+- Ended: 2026-05-06T17:00:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_output_contract_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK (0.000s): `python simulations\run_output_contract_checks.py --json-out simulations\flowpilot_output_contract_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_output_contracts tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime`
+- OK (0.000s): `python simulations\run_meta_checks.py`
+- OK (0.000s): `python simulations\run_capability_checks.py`
+- OK (0.000s): `python scripts\smoke_autopilot.py`
+- OK (0.000s): `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- Output contract model now rejects final reports when the task packet does not deliver the report contract to the final writer.
+- Task packet rendering now includes a generated Report Contract For This Task section with exact fields, allowed values, envelope fields, and blocked/needs-PM handling.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
