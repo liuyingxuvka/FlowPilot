@@ -38,6 +38,7 @@ CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
 CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 PAYLOAD_CONTRACT_SCHEMA = "flowpilot.payload_contract.v1"
+PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
@@ -95,7 +96,18 @@ RUNTIME_FLAG_DEFAULTS = {
     "current_node_result_relayed_to_reviewer": False,
 }
 
-SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset({"load_router"})
+SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
+    {
+        "load_router",
+        "create_run_shell",
+        "write_current_pointer",
+        "update_run_index",
+        "copy_runtime_kit",
+        "fill_runtime_placeholders",
+        "initialize_mailbox",
+        "write_user_intake",
+    }
+)
 
 CURRENT_NODE_CYCLE_FLAGS = (
     "pm_node_started_event_delivered",
@@ -2053,6 +2065,14 @@ def _skill_observation_reminder(
     }
 
 
+def _control_blocker_allowed_resolution_events(category: str, event: str | None) -> list[str]:
+    if category == "control_plane_reissue" and event:
+        return [event]
+    if category in {"pm_repair_decision_required", "fatal_protocol_violation"}:
+        return [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
+    return sorted(EXTERNAL_EVENTS)
+
+
 def _control_blocker_policy(category: str, *, responsible_role: str, event: str | None) -> dict[str, Any]:
     if category == "control_plane_reissue":
         target_role = responsible_role
@@ -2114,7 +2134,7 @@ def _control_blocker_policy(category: str, *, responsible_role: str, event: str 
         "controller_instruction": instruction,
         "controller_allowed_actions": allowed,
         "controller_forbidden_actions": forbidden,
-        "allowed_resolution_events": [event] if event and category == "control_plane_reissue" else sorted(EXTERNAL_EVENTS),
+        "allowed_resolution_events": _control_blocker_allowed_resolution_events(category, event),
     }
 
 
@@ -2153,7 +2173,7 @@ def _write_control_blocker_repair_packet(
             "Inspect this sealed packet, fix the rejected control-plane output, and reissue the router event named "
             "in allowed_resolution_events. Do not ask Controller to infer or patch the body."
         ),
-        "allowed_resolution_events": [event] if event and category == "control_plane_reissue" else sorted(EXTERNAL_EVENTS),
+        "allowed_resolution_events": _control_blocker_allowed_resolution_events(category, event),
         "created_at": utc_now(),
     }
     write_json(packet_path, packet)
@@ -2377,12 +2397,39 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     }
     if decision.get("decision") not in allowed_decisions:
         raise RouterError("control blocker repair decision is not an allowed PM repair decision")
+    prior_path_context_review = decision.get("prior_path_context_review")
+    if not isinstance(prior_path_context_review, dict) or prior_path_context_review.get("reviewed") is not True:
+        raise RouterError("control blocker repair decision requires prior_path_context_review.reviewed=true")
+    source_paths = prior_path_context_review.get("source_paths")
+    if not isinstance(source_paths, list):
+        raise RouterError("control blocker repair decision requires prior_path_context_review.source_paths list")
+    repair_action = str(decision.get("repair_action") or "").strip()
+    if not repair_action:
+        raise RouterError("control blocker repair decision requires repair_action")
+    rerun_target = str(decision.get("rerun_target") or "").strip()
+    if not rerun_target:
+        raise RouterError("control blocker repair decision requires rerun_target")
+    blockers = decision.get("blockers")
+    if not isinstance(blockers, list):
+        raise RouterError("control blocker repair decision requires blockers list")
+    contract_self_check = decision.get("contract_self_check")
+    if not isinstance(contract_self_check, dict):
+        raise RouterError("control blocker repair decision requires contract_self_check")
+    if contract_self_check.get("all_required_fields_present") is not True:
+        raise RouterError("control blocker repair decision requires contract_self_check.all_required_fields_present=true")
+    if contract_self_check.get("exact_field_names_used") is not True:
+        raise RouterError("control blocker repair decision requires contract_self_check.exact_field_names_used=true")
     output = {
         "schema_version": "flowpilot.control_blocker_repair_decision.v1",
         "run_id": run_state["run_id"],
         "blocker_id": blocker_id,
         "decided_by_role": "project_manager",
         "decision": decision["decision"],
+        "prior_path_context_review": prior_path_context_review,
+        "repair_action": repair_action,
+        "rerun_target": rerun_target,
+        "blockers": blockers,
+        "contract_self_check": contract_self_check,
         "recorded_at": utc_now(),
         **_role_output_envelope_record(decision),
     }
@@ -2391,7 +2438,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
 
 
 def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str) -> bool:
-    if record.get("handling_lane") == "pm_repair_decision_required" and event == "pm_records_control_blocker_repair_decision":
+    if record.get("handling_lane") == "pm_repair_decision_required" and event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         return True
     raw_events = record.get("allowed_resolution_events")
     if isinstance(raw_events, list) and raw_events:
@@ -3974,6 +4021,12 @@ def _validate_startup_external_fact_review(
 
 def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
+    canonical_report_path = run_root / "startup" / "startup_fact_report.json"
+    envelope = payload.get("_role_output_envelope")
+    if isinstance(envelope, dict) and envelope.get("body_path"):
+        source_path = resolve_project_path(project_root, str(envelope["body_path"]))
+        if source_path.resolve() == canonical_report_path.resolve():
+            raise RouterError("startup fact source report_path must not be the router canonical startup_fact_report.json")
     if payload.get("reviewed_by_role") != "human_like_reviewer":
         raise RouterError("startup fact report must be reviewed_by_role=human_like_reviewer")
     computed_checks = _startup_fact_checks(project_root, run_root, run_state)
@@ -3997,7 +4050,7 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
         startup_mechanical_audit_hash=mechanical_context["audit_hash"],
     )
     write_json(
-        run_root / "startup" / "startup_fact_report.json",
+        canonical_report_path,
         {
             "schema_version": "flowpilot.startup_fact_report.v1",
             "run_id": run_state["run_id"],
@@ -4985,6 +5038,16 @@ def _route_history_index_path(run_root: Path) -> Path:
 
 def _pm_prior_path_context_path(run_root: Path) -> Path:
     return _route_memory_root(run_root) / "pm_prior_path_context.json"
+
+
+def _route_memory_ready(run_root: Path, run_state: dict[str, Any]) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    return (
+        bool(flags.get("route_history_index_refreshed"))
+        and bool(flags.get("pm_prior_path_context_refreshed"))
+        and _route_history_index_path(run_root).exists()
+        and _pm_prior_path_context_path(run_root).exists()
+    )
 
 
 def _display_plan_path(run_root: Path) -> Path:
@@ -8083,7 +8146,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         return terminal_action
     if run_state.get("pending_action"):
         return run_state["pending_action"]
-    _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
+    if not _route_memory_ready(run_root, run_state):
+        _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
     action = _next_control_blocker_action(project_root, run_state, run_root)
     if action is None:
         action = _next_display_plan_action(project_root, run_state, run_root)
@@ -8449,7 +8513,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
     active_blocker = run_state.get("active_control_blocker")
     repeatable_pm_repair_decision = (
-        event == "pm_records_control_blocker_repair_decision"
+        event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT
         and isinstance(active_blocker, dict)
         and active_blocker.get("delivery_status") == "delivered"
         and active_blocker.get("handling_lane") == "pm_repair_decision_required"
@@ -8747,7 +8811,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _write_terminal_backward_replay(project_root, run_root, run_state, payload)
     elif event == "pm_mutates_route_after_review_block":
         _write_route_mutation(project_root, run_root, run_state, payload)
-    elif event == "pm_records_control_blocker_repair_decision":
+    elif event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         _write_control_blocker_repair_decision(project_root, run_root, run_state, payload)
     elif event == "pm_approves_terminal_closure":
         _write_terminal_closure_suite(project_root, run_root, run_state, payload)
@@ -8832,7 +8896,16 @@ def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: b
         action = next_action(project_root, new_invocation=start_new)
         start_new = False
         action_type = str(action.get("action_type") or "")
-        if action_type not in SAFE_RUN_UNTIL_WAIT_ACTION_TYPES:
+        action_crosses_boundary = (
+            action_type not in SAFE_RUN_UNTIL_WAIT_ACTION_TYPES
+            or bool(action.get("requires_user"))
+            or bool(action.get("requires_payload"))
+            or bool(action.get("requires_user_dialog_display_confirmation"))
+            or bool(action.get("requires_host_spawn"))
+            or bool(action.get("requires_host_automation"))
+            or bool(action.get("card_id"))
+        )
+        if action_crosses_boundary:
             result = dict(action)
             result["folded_command"] = "run-until-wait"
             result["folded_applied_count"] = len(applied_actions)

@@ -651,6 +651,20 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         draft = read_json(run_root / "routes" / "route-001" / "flow.draft.json")
         self.assertEqual(draft["prior_path_context_review"]["source_paths"][0], self.rel(root, context_path))
 
+    def test_controller_next_action_reuses_fresh_route_memory(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        history_path = run_root / "route_memory" / "route_history_index.json"
+        context_path = run_root / "route_memory" / "pm_prior_path_context.json"
+        history_before = read_json(history_path)
+        context_before = read_json(context_path)
+
+        action = router.next_action(root)
+
+        self.assertEqual(action["action_type"], "sync_display_plan")
+        self.assertEqual(read_json(history_path), history_before)
+        self.assertEqual(read_json(context_path), context_before)
+
     def activate_route(self, root: Path, node_id: str = "node-001") -> None:
         router.record_external_event(
             root,
@@ -869,6 +883,25 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             }
         }
 
+    def pm_control_blocker_decision_body(self, blocker_id: str, decision: str = "repair_not_required") -> dict:
+        return {
+            "decided_by_role": "project_manager",
+            "blocker_id": blocker_id,
+            "decision": decision,
+            "prior_path_context_review": {
+                "reviewed": True,
+                "source_paths": [],
+            },
+            "repair_action": "PM reviewed the delivered control blocker and recorded the recovery decision.",
+            "rerun_target": "pm_records_control_blocker_repair_decision",
+            "blockers": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+            },
+        }
+
     def final_ledger_payload(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
         root_contract_path = self.rel(root, run_root / "root_acceptance_contract.json")
@@ -1074,6 +1107,64 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(result["folded_applied_count"], 1)
         self.assertEqual([item["action_type"] for item in result["folded_applied_actions"]], ["load_router"])
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
+
+    def test_run_until_wait_folds_only_internal_bootloader_actions_after_banner(self) -> None:
+        root = self.make_project()
+        result = router.run_until_wait(root, new_invocation=True)
+        router.apply_action(root, "ask_startup_questions")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "record_startup_answers")
+        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "emit_startup_banner")
+        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
+
+        result = router.run_until_wait(root)
+
+        self.assertEqual(result["action_type"], "record_user_request")
+        self.assertEqual(result["folded_command"], "run-until-wait")
+        self.assertEqual(
+            [item["action_type"] for item in result["folded_applied_actions"]],
+            [
+                "create_run_shell",
+                "write_current_pointer",
+                "update_run_index",
+                "copy_runtime_kit",
+                "fill_runtime_placeholders",
+                "initialize_mailbox",
+            ],
+        )
+        self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
+        bootstrap = self.bootstrap_state(root)
+        self.assertTrue(bootstrap["flags"]["run_shell_created"])
+        self.assertTrue(bootstrap["flags"]["mailbox_initialized"])
+        self.assertFalse(bootstrap["flags"].get("user_request_recorded", False))
+        self.assertTrue((root / ".flowpilot" / "current.json").exists())
+        self.assertTrue((self.run_root_for(root) / "packet_ledger.json").exists())
+
+    def test_run_until_wait_folds_user_intake_then_stops_before_role_boundary(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        router.apply_action(root, "ask_startup_questions")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "record_startup_answers")
+        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
+        action = router.next_action(root)
+        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
+        router.run_until_wait(root)
+        router.apply_action(root, "record_user_request", {"user_request": USER_REQUEST})
+
+        result = router.run_until_wait(root)
+
+        self.assertEqual(result["action_type"], "start_role_slots")
+        self.assertTrue(result["requires_host_spawn"])
+        self.assertEqual(
+            [item["action_type"] for item in result["folded_applied_actions"]],
+            ["write_user_intake"],
+        )
+        self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
+        self.assertTrue((self.run_root_for(root) / "mailbox" / "outbox" / "user_intake.json").exists())
+        self.assertFalse(self.bootstrap_state(root)["flags"].get("roles_started", False))
 
     def test_startup_sequence_creates_prompt_isolated_run(self) -> None:
         root = self.make_project()
@@ -2061,6 +2152,32 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "role_output_envelope_only",
         )
         self.assertFalse(canonical_report["_role_output_envelope"]["chat_response_body_allowed"])
+
+    def test_startup_fact_report_rejects_canonical_submission_alias(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        router.record_external_event(root, "pm_first_decision_resets_controller")
+        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+        canonical_report = run_root / "startup" / "startup_fact_report.json"
+        canonical_report.write_text(
+            json.dumps(self.startup_fact_report_body(root), indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        report_hash = hashlib.sha256(canonical_report.read_bytes()).hexdigest()
+
+        with self.assertRaisesRegex(router.RouterError, "canonical startup_fact_report.json"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {
+                    "report_path": self.rel(root, canonical_report),
+                    "report_hash": report_hash,
+                    "controller_visibility": "role_output_envelope_only",
+                },
+            )
 
     def test_router_owned_check_proof_rejects_self_attested_and_stale_audit(self) -> None:
         root = self.make_project()
@@ -3202,11 +3319,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_decision_envelope(
                 root,
                 "control_blocks/wrong_role_pm_repair_decision",
-                {
-                    "decided_by_role": "project_manager",
-                    "blocker_id": blocker["blocker_id"],
-                    "decision": "repair_not_required",
-                },
+                self.pm_control_blocker_decision_body(blocker["blocker_id"]),
             ),
         )
         state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
@@ -3236,11 +3349,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_decision_envelope(
                 root,
                 "control_blocks/first_pm_repair_decision",
-                {
-                    "decided_by_role": "project_manager",
-                    "blocker_id": first["blocker_id"],
-                    "decision": "repair_not_required",
-                },
+                self.pm_control_blocker_decision_body(first["blocker_id"]),
             ),
         )
 
@@ -3262,11 +3371,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_decision_envelope(
                 root,
                 "control_blocks/second_pm_repair_decision",
-                {
-                    "decided_by_role": "project_manager",
-                    "blocker_id": second["blocker_id"],
-                    "decision": "repair_not_required",
-                },
+                self.pm_control_blocker_decision_body(second["blocker_id"]),
             ),
         )
 

@@ -1,0 +1,128 @@
+{
+  "checks": {
+    "current_source_conformance": "pass",
+    "flowguard_explorer": "pass",
+    "hazard_invariants": "pass",
+    "progress": "pass",
+    "safe_graph": "pass"
+  },
+  "counts": {
+    "accepted": 1,
+    "edges": 12,
+    "rejected": 5,
+    "states": 13
+  },
+  "current_source": {
+    "facts": {
+      "pm_control_blocker_allowed_events": [
+        "pm_records_control_blocker_repair_decision"
+      ],
+      "pm_control_blocker_card_events": [
+        "pm_records_control_blocker_repair_decision",
+        "pm_requests_startup_repair"
+      ],
+      "pm_control_blocker_card_fields": [
+        "blocker_id",
+        "blockers",
+        "contract_self_check",
+        "contract_self_check.all_required_fields_present",
+        "contract_self_check.empty_required_arrays_explicit",
+        "contract_self_check.exact_field_names_used",
+        "decided_by_role",
+        "decision",
+        "prior_path_context_review",
+        "prior_path_context_review.reviewed",
+        "prior_path_context_review.source_paths",
+        "repair_action",
+        "rerun_target",
+        "run_id",
+        "schema_version"
+      ],
+      "pm_control_blocker_contract_fields": [
+        "blocker_id",
+        "blockers",
+        "contract_self_check",
+        "decided_by_role",
+        "decision",
+        "prior_path_context_review",
+        "repair_action",
+        "rerun_target"
+      ],
+      "pm_control_blocker_router_fields": [
+        "blocker_id",
+        "blockers",
+        "contract_self_check",
+        "decided_by_role",
+        "decision",
+        "prior_path_context_review",
+        "repair_action",
+        "rerun_target"
+      ],
+      "router_blocks_startup_fact_canonical_alias": true,
+      "router_rewrites_startup_fact_canonical": true,
+      "startup_card_example_paths": [
+        "blockers",
+        "contract_self_check",
+        "contract_self_check.all_required_fields_present",
+        "contract_self_check.empty_required_arrays_explicit",
+        "contract_self_check.exact_field_names_used",
+        "external_fact_review",
+        "external_fact_review.direct_evidence_paths_checked",
+        "external_fact_review.reviewed_by_role",
+        "external_fact_review.reviewer_checked_requirement_ids",
+        "external_fact_review.router_mechanical_audit_hash",
+        "external_fact_review.self_attested_ai_claims_accepted_as_proof",
+        "external_fact_review.used_router_mechanical_audit",
+        "findings",
+        "passed",
+        "report_type",
+        "residual_risks",
+        "reviewed_by_role",
+        "run_id",
+        "schema_version"
+      ],
+      "startup_card_prose_paths": [
+        "external_fact_review.reviewer_checked_requirement_ids"
+      ],
+      "startup_contract_paths": [
+        "blockers",
+        "contract_self_check",
+        "external_fact_review",
+        "external_fact_review.direct_evidence_paths_checked",
+        "external_fact_review.reviewed_by_role",
+        "external_fact_review.reviewer_checked_requirement_ids",
+        "external_fact_review.router_mechanical_audit_hash",
+        "external_fact_review.self_attested_ai_claims_accepted_as_proof",
+        "external_fact_review.used_router_mechanical_audit",
+        "findings",
+        "passed",
+        "residual_risks",
+        "reviewed_by_role"
+      ],
+      "startup_role_may_submit_to_canonical_path": false,
+      "startup_router_validator_paths": [
+        "external_fact_review",
+        "external_fact_review.direct_evidence_paths_checked",
+        "external_fact_review.notes",
+        "external_fact_review.reviewed_by_role",
+        "external_fact_review.reviewer_checked_requirement_ids",
+        "external_fact_review.router_mechanical_audit_hash",
+        "external_fact_review.self_attested_ai_claims_accepted_as_proof",
+        "external_fact_review.used_router_mechanical_audit"
+      ]
+    },
+    "failures": [],
+    "ok": true
+  },
+  "hazards": {
+    "cockpit_missing_host_receipt": "detected",
+    "control_blocker_ambiguous_event": "detected",
+    "control_blocker_weak_decision_contract": "detected",
+    "startup_fact_hash_alias": "detected",
+    "startup_fact_jsonpath_mismatch": "detected"
+  },
+  "ok": true,
+  "skipped_checks": {
+    "production_replay": "skipped_with_reason: this check scans source facts and explores a protocol model; it is not a full runtime transcript replay"
+  }
+}

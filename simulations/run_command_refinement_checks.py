@@ -20,7 +20,9 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|"
         f"next={state.next_load_router_seen},load={state.load_router_applied},questions={state.startup_questions_returned}|"
-        f"boundaries=user:{state.user_boundary_crossed},host:{state.host_boundary_crossed},role:{state.role_boundary_crossed}|"
+        f"bootloader=run:{state.run_shell_created},current:{state.current_pointer_written},index:{state.run_index_updated},kit:{state.runtime_kit_copied},placeholders:{state.runtime_placeholders_filled},mailbox:{state.mailbox_initialized}|"
+        f"intake=request_available:{state.user_request_available},recorded:{state.user_request_recorded},intake:{state.user_intake_written},roles:{state.role_slots_started}|"
+        f"boundaries=user:{state.user_boundary_crossed},host:{state.host_boundary_crossed},role:{state.role_boundary_crossed},card:{state.card_boundary_crossed},packet:{state.packet_boundary_crossed},ledger:{state.ledger_boundary_crossed},final:{state.final_replay_boundary_crossed}|"
         f"fold={state.folded_command_enabled},cli={state.cli_binding_verified},runtime={state.runtime_smoke_verified},install={state.install_smoke_verified}|"
         f"router={state.router_decision}:{state.router_rejection_reason}"
     )
@@ -75,7 +77,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
         "ok": (
             not graph["invariant_failures"]
             and not missing_labels
-            and accepted_scenarios == sorted((model.STARTUP_UNFOLDED, model.STARTUP_SAFE_FOLD))
+            and accepted_scenarios == sorted(model.ACCEPTED_SCENARIOS)
             and rejected_scenarios == sorted(model.NEGATIVE_SCENARIOS)
         ),
         "state_count": len(states),

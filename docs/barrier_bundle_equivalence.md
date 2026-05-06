@@ -50,10 +50,17 @@ The equivalence model is:
 
 The model checks a safe path through all barriers and adversarial states for AI
 discretion, Controller body access, Controller-origin evidence, wrong-role
-approval, missing role slices, missing legacy obligations, missing reviewer or
-officer gates, invalid cache reuse, stale evidence use, route mutation without
+approval, missing role slices, missing legacy obligations, missing PM,
+reviewer, process-officer, product-officer, packet-ledger, or final-replay
+gates, invalid cache reuse, stale evidence use, route mutation without
 stale/frontier markers, and final closure without the complete ledger/replay
 contract.
+
+The model also covers the controller-only `run-until-wait` simplification
+boundary. `run-until-wait` may only apply internal Controller actions until the
+next wait boundary. It is rejected if it loses the Controller-only boundary,
+crosses a user or role wait boundary, applies a PM/reviewer/officer decision,
+skips a packet-ledger check, or skips terminal backward replay.
 
 ## Why This Is Equivalent
 

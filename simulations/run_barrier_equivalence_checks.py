@@ -35,8 +35,16 @@ HAZARD_EXPECTED_FAILURES = {
     "wrong_role_approval": "wrong role approval was used for a bundled gate",
     "missing_required_role_slice": "barrier bundle missing a required role slice",
     "missing_required_obligation": "barrier bundle missing a required legacy obligation",
+    "missing_pm_gate": "PM gate missing from bundled evidence",
     "missing_reviewer_gate": "reviewer gate missing from bundled evidence",
-    "missing_officer_gate": "FlowGuard officer gate missing from bundled evidence",
+    "missing_process_officer_gate": "process FlowGuard officer gate missing from bundled evidence",
+    "missing_product_officer_gate": "product FlowGuard officer gate missing from bundled evidence",
+    "missing_packet_ledger_gate": "packet ledger gate missing from bundled evidence",
+    "run_until_wait_not_controller_only": "run-until-wait lost Controller-only boundary",
+    "run_until_wait_crosses_wait_boundary": "run-until-wait crossed a role or user wait boundary",
+    "run_until_wait_applies_role_decision": "run-until-wait applied a PM, reviewer, or officer decision",
+    "run_until_wait_skips_ledger_check": "run-until-wait skipped a packet ledger check",
+    "run_until_wait_skips_final_replay": "run-until-wait skipped terminal backward replay",
     "cache_reuse_after_input_change": "cache reuse claimed after input hash changed",
     "cache_reuse_after_source_change": "cache reuse claimed after source hash changed",
     "cache_reuse_with_bad_evidence_hash": "cache reuse claimed with invalid evidence hash",
@@ -47,6 +55,7 @@ HAZARD_EXPECTED_FAILURES = {
     "final_closure_without_clean_ledger": "final closure passed without clean final ledger",
     "final_closure_without_terminal_replay": "final closure passed without terminal backward replay",
     "completion_without_all_barriers": "completion recorded before every barrier bundle passed",
+    "completion_without_all_role_slices": "completion recorded before all role slices were covered",
 }
 
 
@@ -54,11 +63,20 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|next={state.next_barrier_index}|"
         f"barriers={state.passed_barrier_mask}|obligations={state.obligation_mask}|"
+        f"roles={state.role_slice_mask}|"
         f"ctrl={state.controller_read_sealed_body},"
         f"{state.controller_originated_evidence},{state.controller_summarized_body}|"
         f"disc={state.ai_discretion_used}|wrong_role={state.wrong_role_approval_used}|"
         f"missing={state.missing_required_role_slice},{state.missing_required_obligation}|"
-        f"reviewer={state.reviewer_gate_missing}|officer={state.officer_gate_missing}|"
+        f"role_gates={state.pm_gate_missing},{state.reviewer_gate_missing},"
+        f"{state.process_officer_gate_missing},{state.product_officer_gate_missing}|"
+        f"ledger={state.packet_ledger_gate_missing}|"
+        f"run_until_wait={state.run_until_wait_used},"
+        f"{state.run_until_wait_controller_only},"
+        f"{state.run_until_wait_crossed_wait_boundary},"
+        f"{state.run_until_wait_applied_role_decision},"
+        f"{state.run_until_wait_skipped_ledger_check},"
+        f"{state.run_until_wait_skipped_final_replay}|"
         f"cache={state.cache_reuse_claimed},{state.input_hash_same},"
         f"{state.source_hash_same},{state.evidence_hash_valid}|"
         f"stale={state.stale_evidence_used}|mutation={state.route_mutation_recorded},"
@@ -110,6 +128,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
     invariant_failures = graph["invariant_failures"]
     complete_states = [state for state in states if model.is_success(state)]
     missing_obligations = []
+    missing_role_slices = []
     if complete_states:
         complete = complete_states[0]
         missing_obligations = [
@@ -117,12 +136,18 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
             for obligation, bit in model.OBLIGATION_BITS.items()
             if not complete.obligation_mask & bit
         ]
+        missing_role_slices = [
+            role
+            for role, bit in model.ROLE_BITS.items()
+            if not complete.role_slice_mask & bit
+        ]
     return {
         "ok": (
             not invariant_failures
             and not missing_labels
             and bool(complete_states)
             and not missing_obligations
+            and not missing_role_slices
         ),
         "state_count": len(states),
         "edge_count": graph["edge_count"],
@@ -131,7 +156,9 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
         "complete_state_count": len(complete_states),
         "blocked_state_count": sum(1 for state in states if state.status == "blocked"),
         "missing_obligations_at_completion": missing_obligations,
+        "missing_role_slices_at_completion": missing_role_slices,
         "legacy_obligation_count": len(model.LEGACY_OBLIGATIONS),
+        "role_slice_count": len(model.ROLE_KEYS),
         "barrier_count": len(model.BARRIER_ORDER),
         "invariant_failures": invariant_failures,
     }

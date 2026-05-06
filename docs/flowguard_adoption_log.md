@@ -4085,3 +4085,128 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-safe-simplification-proof-20260506 - Prove safe-equivalent FlowPilot simplification preserves barrier bundles and controller-only run-until-wait boundaries
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested focused FlowGuard proof that safe simplification preserves role boundaries and rejects skipping PM/reviewer/officer/ledger/final replay gates
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T19:33:47+00:00
+- Ended: 2026-05-06T19:33:47+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/barrier_equivalence_model.py
+- simulations/run_barrier_equivalence_checks.py
+- simulations/barrier_equivalence_results.json
+
+### Commands
+- OK (0.000s): `python -m flowguard schema-version`
+- OK (0.000s): `python -m py_compile simulations/barrier_equivalence_model.py simulations/run_barrier_equivalence_checks.py`
+- OK (0.000s): `python simulations/run_barrier_equivalence_checks.py`
+
+### Findings
+- Barrier equivalence proof now tracks cumulative role-slice coverage and fails completion when PM/reviewer/officer/worker/controller role slices are incomplete.
+- Hazards now detect missing PM, reviewer, process officer, product officer, packet ledger, final replay, and unsafe run-until-wait simplification paths.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Production conformance replay skipped: user restricted scope to model/replay proof and forbade router edits; this update is an abstract barrier/replay proof artifact.
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-protocol-contract-model-20260506 - Model FlowPilot prompt contract and router protocol consistency before fixing startup report/control-blocker/hash issues
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing protocol/schema repair requires model-first validation
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T19:43:25+00:00
+- Ended: 2026-05-06T20:25:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_protocol_contract_conformance_model.py
+- simulations/run_protocol_contract_conformance_checks.py
+- simulations/protocol_contract_conformance_results.json
+
+### Commands
+- OK (0.000s): `python -m py_compile simulations\flowpilot_protocol_contract_conformance_model.py simulations\run_protocol_contract_conformance_checks.py`
+- OK (0.000s): `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_output_contracts`
+
+### Findings
+- Startup fact report role submissions are now kept separate from the router canonical startup fact report, and the router rejects canonical-path aliasing.
+- PM control-blocker repair decisions now use the dedicated `pm_records_control_blocker_repair_decision` event and a stricter output contract.
+- The protocol contract model accepts the fixed source and rejects JSON-path mismatch, ambiguous PM blocker event routing, weak PM repair contracts, startup fact hash aliasing, and missing host-receipt scenarios.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-safe-router-simplification-implementation-20260506 - Implement replay-proven FlowPilot command simplifications and route-memory reuse
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested safe-equivalent speed improvements after prior incomplete folding caused startup failures.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T20:00:00+00:00
+- Ended: 2026-05-06T20:35:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_command_refinement_model.py
+- simulations/run_command_refinement_checks.py
+- simulations/flowpilot_command_refinement_results.json
+- simulations/barrier_equivalence_model.py
+- simulations/run_barrier_equivalence_checks.py
+- simulations/barrier_equivalence_results.json
+
+### Commands
+- OK (0.000s): `python simulations\run_command_refinement_checks.py --json-out simulations\flowpilot_command_refinement_results.json`
+- OK (0.000s): `python simulations\run_barrier_equivalence_checks.py`
+- OK (0.000s): `python simulations\run_meta_checks.py`
+- OK (0.000s): `python simulations\run_capability_checks.py`
+- OK (0.000s): `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK (0.000s): `python simulations\run_output_contract_checks.py --json-out simulations\flowpilot_output_contract_results.json`
+- OK (0.000s): `python simulations\run_router_action_contract_checks.py --json-out simulations\flowpilot_router_action_contract_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_router_runtime`
+- OK (0.000s): `python scripts\check_install.py`
+
+### Findings
+- `run-until-wait` now folds only replay-proven internal startup/bootloader/intake actions and stops before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
+- Command-refinement checks accept startup, post-banner bootloader, and post-user-request intake folds while rejecting card bundles, relay folds, host continuations, role starts, ledger finalization, and final replay.
+- Controller route memory refresh is skipped when the current run already has fresh route history and PM prior-path context files.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded

@@ -53,6 +53,12 @@ reissue a malformed envelope/report without changing project substance.
 mutate, quarantine, stop for the user, or request more evidence.
 `fatal_protocol_violation` means normal route work stays stopped until PM or
 the user records an explicit recovery decision.
+For any `pm_repair_decision_required` router `control_blocker`, use the
+`pm_records_control_blocker_repair_decision` event and contract
+`flowpilot.output_contract.pm_control_blocker_repair_decision.v1`. Do not use
+ordinary phase events such as `pm_requests_startup_repair` to resolve the
+router control blocker unless a later router action explicitly routes that
+separate phase event after the blocker is resolved.
 
 Before any route draft, node plan, repair, route mutation, resume continuation,
 final ledger, or closure decision, read the latest current-run route-memory

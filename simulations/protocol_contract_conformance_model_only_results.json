@@ -1,0 +1,30 @@
+{
+  "checks": {
+    "current_source_conformance": "pass",
+    "flowguard_explorer": "pass",
+    "hazard_invariants": "pass",
+    "progress": "pass",
+    "safe_graph": "pass"
+  },
+  "counts": {
+    "accepted": 1,
+    "edges": 12,
+    "rejected": 5,
+    "states": 13
+  },
+  "current_source": {
+    "ok": true,
+    "skipped": "model-only mode skips current source scan"
+  },
+  "hazards": {
+    "cockpit_missing_host_receipt": "detected",
+    "control_blocker_ambiguous_event": "detected",
+    "control_blocker_weak_decision_contract": "detected",
+    "startup_fact_hash_alias": "detected",
+    "startup_fact_jsonpath_mismatch": "detected"
+  },
+  "ok": true,
+  "skipped_checks": {
+    "production_replay": "skipped_with_reason: this check scans source facts and explores a protocol model; it is not a full runtime transcript replay"
+  }
+}

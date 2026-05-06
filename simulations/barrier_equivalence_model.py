@@ -25,10 +25,17 @@ import barrier_bundle  # noqa: E402
 
 BARRIER_ORDER = barrier_bundle.barrier_ids()
 LEGACY_OBLIGATIONS = barrier_bundle.all_legacy_obligation_ids()
+ROLE_KEYS = barrier_bundle.ROLE_KEYS
+BARRIER_ROLE_SLICES = {
+    item.barrier_id: item.required_role_slices
+    for item in barrier_bundle.BARRIER_DEFINITIONS
+}
 OBLIGATION_BITS = {name: 1 << index for index, name in enumerate(LEGACY_OBLIGATIONS)}
 BARRIER_BITS = {name: 1 << index for index, name in enumerate(BARRIER_ORDER)}
+ROLE_BITS = {name: 1 << index for index, name in enumerate(ROLE_KEYS)}
 ALL_OBLIGATION_MASK = sum(OBLIGATION_BITS.values())
 ALL_BARRIER_MASK = sum(BARRIER_BITS.values())
+ALL_ROLE_MASK = sum(ROLE_BITS.values())
 MAX_SEQUENCE_LENGTH = len(BARRIER_ORDER) + 2
 
 
@@ -48,6 +55,7 @@ class State:
     next_barrier_index: int = 0
     passed_barrier_mask: int = 0
     obligation_mask: int = 0
+    role_slice_mask: int = 0
 
     controller_read_sealed_body: bool = False
     controller_originated_evidence: bool = False
@@ -56,8 +64,17 @@ class State:
     wrong_role_approval_used: bool = False
     missing_required_role_slice: bool = False
     missing_required_obligation: bool = False
+    pm_gate_missing: bool = False
     reviewer_gate_missing: bool = False
-    officer_gate_missing: bool = False
+    process_officer_gate_missing: bool = False
+    product_officer_gate_missing: bool = False
+    packet_ledger_gate_missing: bool = False
+    run_until_wait_used: bool = False
+    run_until_wait_controller_only: bool = True
+    run_until_wait_crossed_wait_boundary: bool = False
+    run_until_wait_applied_role_decision: bool = False
+    run_until_wait_skipped_ledger_check: bool = False
+    run_until_wait_skipped_final_replay: bool = False
     cache_reuse_claimed: bool = False
     input_hash_same: bool = True
     source_hash_same: bool = True
@@ -79,6 +96,13 @@ def _mask_for_obligations(obligations: Iterable[str]) -> int:
     result = 0
     for obligation in obligations:
         result |= OBLIGATION_BITS[obligation]
+    return result
+
+
+def _mask_for_roles(roles: Iterable[str]) -> int:
+    result = 0
+    for role in roles:
+        result |= ROLE_BITS[role]
     return result
 
 
@@ -134,9 +158,12 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
     if state.next_barrier_index < len(BARRIER_ORDER):
         barrier_id = BARRIER_ORDER[state.next_barrier_index]
         required = barrier_bundle.required_obligation_ids(barrier_id)
+        required_roles = BARRIER_ROLE_SLICES[barrier_id]
         new_mask = state.obligation_mask | _mask_for_obligations(required)
+        new_role_mask = state.role_slice_mask | _mask_for_roles(required_roles)
         if barrier_id == "final_closure":
             new_mask |= ALL_OBLIGATION_MASK
+            new_role_mask |= ALL_ROLE_MASK
         return (
             Transition(
                 f"{barrier_id}_barrier_bundle_passed",
@@ -145,6 +172,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     next_barrier_index=state.next_barrier_index + 1,
                     passed_barrier_mask=state.passed_barrier_mask | BARRIER_BITS[barrier_id],
                     obligation_mask=new_mask,
+                    role_slice_mask=new_role_mask,
                 ),
             ),
         )
@@ -172,10 +200,26 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("barrier bundle missing a required role slice")
     if state.missing_required_obligation:
         failures.append("barrier bundle missing a required legacy obligation")
+    if state.pm_gate_missing:
+        failures.append("PM gate missing from bundled evidence")
     if state.reviewer_gate_missing:
         failures.append("reviewer gate missing from bundled evidence")
-    if state.officer_gate_missing:
-        failures.append("FlowGuard officer gate missing from bundled evidence")
+    if state.process_officer_gate_missing:
+        failures.append("process FlowGuard officer gate missing from bundled evidence")
+    if state.product_officer_gate_missing:
+        failures.append("product FlowGuard officer gate missing from bundled evidence")
+    if state.packet_ledger_gate_missing:
+        failures.append("packet ledger gate missing from bundled evidence")
+    if state.run_until_wait_used and not state.run_until_wait_controller_only:
+        failures.append("run-until-wait lost Controller-only boundary")
+    if state.run_until_wait_crossed_wait_boundary:
+        failures.append("run-until-wait crossed a role or user wait boundary")
+    if state.run_until_wait_applied_role_decision:
+        failures.append("run-until-wait applied a PM, reviewer, or officer decision")
+    if state.run_until_wait_skipped_ledger_check:
+        failures.append("run-until-wait skipped a packet ledger check")
+    if state.run_until_wait_skipped_final_replay:
+        failures.append("run-until-wait skipped terminal backward replay")
     if state.cache_reuse_claimed and not state.input_hash_same:
         failures.append("cache reuse claimed after input hash changed")
     if state.cache_reuse_claimed and not state.source_hash_same:
@@ -199,6 +243,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("completion recorded before all legacy obligations were covered")
     if state.status == "complete" and state.passed_barrier_mask != ALL_BARRIER_MASK:
         failures.append("completion recorded before every barrier bundle passed")
+    if state.status == "complete" and state.role_slice_mask != ALL_ROLE_MASK:
+        failures.append("completion recorded before all role slices were covered")
     return failures
 
 
@@ -244,6 +290,7 @@ def _complete_prefix_state() -> State:
         next_barrier_index=len(BARRIER_ORDER),
         passed_barrier_mask=ALL_BARRIER_MASK,
         obligation_mask=ALL_OBLIGATION_MASK,
+        role_slice_mask=ALL_ROLE_MASK,
     )
 
 
@@ -254,6 +301,7 @@ def hazard_states() -> dict[str, State]:
         obligation_mask=ALL_OBLIGATION_MASK ^ OBLIGATION_BITS["packet_ledger_mail_delivery"],
     )
     without_final_barrier = replace(base, passed_barrier_mask=ALL_BARRIER_MASK ^ BARRIER_BITS["final_closure"])
+    without_pm_role = replace(base, role_slice_mask=ALL_ROLE_MASK ^ ROLE_BITS["project_manager"])
     return {
         "ai_discretion_bypass": replace(base, ai_discretion_used=True),
         "controller_reads_sealed_body": replace(base, controller_read_sealed_body=True),
@@ -262,8 +310,36 @@ def hazard_states() -> dict[str, State]:
         "wrong_role_approval": replace(base, wrong_role_approval_used=True),
         "missing_required_role_slice": replace(base, missing_required_role_slice=True),
         "missing_required_obligation": replace(base, missing_required_obligation=True),
+        "missing_pm_gate": replace(base, pm_gate_missing=True),
         "missing_reviewer_gate": replace(base, reviewer_gate_missing=True),
-        "missing_officer_gate": replace(base, officer_gate_missing=True),
+        "missing_process_officer_gate": replace(base, process_officer_gate_missing=True),
+        "missing_product_officer_gate": replace(base, product_officer_gate_missing=True),
+        "missing_packet_ledger_gate": replace(base, packet_ledger_gate_missing=True),
+        "run_until_wait_not_controller_only": replace(
+            base,
+            run_until_wait_used=True,
+            run_until_wait_controller_only=False,
+        ),
+        "run_until_wait_crosses_wait_boundary": replace(
+            base,
+            run_until_wait_used=True,
+            run_until_wait_crossed_wait_boundary=True,
+        ),
+        "run_until_wait_applies_role_decision": replace(
+            base,
+            run_until_wait_used=True,
+            run_until_wait_applied_role_decision=True,
+        ),
+        "run_until_wait_skips_ledger_check": replace(
+            base,
+            run_until_wait_used=True,
+            run_until_wait_skipped_ledger_check=True,
+        ),
+        "run_until_wait_skips_final_replay": replace(
+            base,
+            run_until_wait_used=True,
+            run_until_wait_skipped_final_replay=True,
+        ),
         "cache_reuse_after_input_change": replace(base, cache_reuse_claimed=True, input_hash_same=False),
         "cache_reuse_after_source_change": replace(base, cache_reuse_claimed=True, source_hash_same=False),
         "cache_reuse_with_bad_evidence_hash": replace(base, cache_reuse_claimed=True, evidence_hash_valid=False),
@@ -285,6 +361,7 @@ def hazard_states() -> dict[str, State]:
         "final_closure_without_clean_ledger": replace(base, final_ledger_clean=False),
         "final_closure_without_terminal_replay": replace(base, terminal_backward_replay_passed=False),
         "completion_without_all_barriers": replace(without_final_barrier, status="complete"),
+        "completion_without_all_role_slices": replace(without_pm_role, status="complete"),
     }
 
 

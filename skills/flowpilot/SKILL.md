@@ -30,7 +30,10 @@ Continue/apply:
 ```powershell
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json next
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json apply --action-type <action_type>
+python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait
 ```
+
+After applying a wait-boundary action, prefer `run-until-wait`. It may apply only replay-proven safe internal router actions and must stop again before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
 
 When the router returns startup questions, ask the three questions, apply that pending action so the router records the waiting/stop boundary, and stop immediately. Do not show the banner, create a run, start agents, check heartbeat, open Cockpit, inspect files, plan work, or continue the route in the same response.
 

@@ -53,10 +53,13 @@ Your report body must include `external_fact_review` with:
 
 Use contract `flowpilot.output_contract.startup_fact_report.v1`.
 
-Write the full body to the run-scoped startup fact report file requested by
-Controller or router state. Return in chat only a controller-visible envelope
-with the report path and hash. Do not include findings, blockers, evidence
-details, or repair instructions in chat.
+Write the full raw body to a run-scoped startup fact report submission file
+requested by Controller or router state. Do not write the raw role body to the
+router canonical `startup/startup_fact_report.json`; the router owns and may
+rewrite that canonical file after validating your submission. Return in chat
+only a controller-visible envelope with the submission report path and hash. Do
+not include findings, blockers, evidence details, or repair instructions in
+chat.
 
 The body must use these exact field names. Do not rename
 `direct_evidence_paths_checked` to `checked_paths`,
@@ -75,9 +78,9 @@ required field even when the value is `[]` or `false`.
     "direct_evidence_paths_checked": [],
     "used_router_mechanical_audit": true,
     "router_mechanical_audit_hash": "<delivered mechanical audit hash>",
-    "self_attested_ai_claims_accepted_as_proof": false
+    "self_attested_ai_claims_accepted_as_proof": false,
+    "reviewer_checked_requirement_ids": []
   },
-  "reviewer_checked_requirement_ids": [],
   "findings": [],
   "blockers": [],
   "residual_risks": [],

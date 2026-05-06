@@ -261,7 +261,7 @@
         "external_fact_review.used_router_mechanical_audit",
         "external_fact_review.router_mechanical_audit_hash",
         "external_fact_review.self_attested_ai_claims_accepted_as_proof",
-        "reviewer_checked_requirement_ids",
+        "external_fact_review.reviewer_checked_requirement_ids",
         "findings",
         "blockers",
         "residual_risks",
@@ -394,7 +394,12 @@
       "required_body_fields": [
         "decided_by_role",
         "blocker_id",
-        "decision"
+        "decision",
+        "prior_path_context_review",
+        "repair_action",
+        "rerun_target",
+        "blockers",
+        "contract_self_check"
       ],
       "required_body_values": {
         "decided_by_role": "project_manager"

@@ -54,6 +54,9 @@ route evidence.
 
 When resolving a router `control_blocker`, use contract
 `flowpilot.output_contract.pm_control_blocker_repair_decision.v1`.
+Return it through router event `pm_records_control_blocker_repair_decision`;
+do not use the normal phase repair event as the control-blocker resolution
+event.
 
 Write the full PM decision body to the run-scoped decision file requested by
 Controller or router state. Return in chat only a controller-visible envelope
