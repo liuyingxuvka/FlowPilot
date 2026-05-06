@@ -16,7 +16,8 @@ chat history, old route files, or your own assumptions.
 
 Before approving, verify that the reviewer report covers:
 
-- three explicit startup answers;
+- three startup answers, with reviewer-checked interpretation receipt when
+  natural-language user answers were interpreted into router enum fields;
 - current run pointer and index authority;
 - six current role slots or an explicit fallback path;
 - continuation mode evidence bound to the user's startup answer;

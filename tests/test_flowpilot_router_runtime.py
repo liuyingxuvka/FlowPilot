@@ -27,6 +27,11 @@ HEARTBEAT_STARTUP_ANSWERS = {
     "scheduled_continuation": "allow",
 }
 
+AI_INTERPRETED_STARTUP_ANSWERS = {
+    **STARTUP_ANSWERS,
+    "provenance": "ai_interpreted_from_explicit_user_reply",
+}
+
 USER_REQUEST = {
     "text": "Use FlowPilot to complete the requested project with PM-owned route control.",
     "provenance": "explicit_user_request",
@@ -148,6 +153,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "route_heartbeat_interval_minutes": 1,
                 "heartbeat_bound_to_current_run": True,
             },
+        }
+
+    def startup_answer_interpretation(self, raw_text: str = "Use background agents, manual resume, and chat route signs.") -> dict:
+        return {
+            "schema_version": "flowpilot.startup_answer_interpretation.v1",
+            "raw_user_reply_text": raw_text,
+            "interpreted_by": "controller",
+            "interpretation_provenance": "ai_interpreted_from_explicit_user_reply",
+            "ambiguity_status": "none",
+            "interpreted_answers": {
+                "background_agents": AI_INTERPRETED_STARTUP_ANSWERS["background_agents"],
+                "scheduled_continuation": AI_INTERPRETED_STARTUP_ANSWERS["scheduled_continuation"],
+                "display_surface": AI_INTERPRETED_STARTUP_ANSWERS["display_surface"],
+            },
+            "reviewer_must_check_raw_reply_alignment": True,
         }
 
     def apply_startup_heartbeat_if_requested(self, root: Path) -> dict | None:
@@ -300,6 +320,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("```mermaid", action["display_text"])
         self.assertTrue(action["controller_must_display_text_before_apply"])
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
+        self.assertEqual(action["payload_contract"]["name"], "display_surface_receipt")
         router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
 
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
@@ -1237,6 +1258,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "record_startup_answers")
         self.assertTrue(action["requires_user"])
         self.assertEqual(action["requires_payload"], "startup_answers")
+        self.assertEqual(action["payload_contract"]["schema_version"], "flowpilot.payload_contract.v1")
+        self.assertIn("startup_answer_interpretation", " ".join(action["payload_contract"]["optional_fields"]))
 
         with self.assertRaises(router.RouterError):
             router.apply_action(root, "emit_startup_banner")
@@ -1328,6 +1351,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 router.apply_action(root, action_type, self.payload_for_action(action))
 
         self.assertTrue(action["requires_host_spawn"])
+        self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
         self.assertEqual(len(action["role_spawn_request"]), 6)
         with self.assertRaisesRegex(router.RouterError, "role_agents"):
             router.apply_action(root, "start_role_slots")
@@ -1451,6 +1475,47 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
         bootstrap = self.bootstrap_state(root)
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
+
+    def test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt(self) -> None:
+        root = self.make_project()
+        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
+        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
+        self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
+
+        with self.assertRaisesRegex(router.RouterError, "startup_answer_interpretation"):
+            router.apply_action(root, "record_startup_answers", {"startup_answers": AI_INTERPRETED_STARTUP_ANSWERS})
+
+        ambiguous_receipt = {**self.startup_answer_interpretation(), "ambiguity_status": "ambiguous"}
+        with self.assertRaisesRegex(router.RouterError, "ambiguous startup answers"):
+            router.apply_action(
+                root,
+                "record_startup_answers",
+                {
+                    "startup_answers": AI_INTERPRETED_STARTUP_ANSWERS,
+                    "startup_answer_interpretation": ambiguous_receipt,
+                },
+            )
+
+        router.apply_action(
+            root,
+            "record_startup_answers",
+            {
+                "startup_answers": AI_INTERPRETED_STARTUP_ANSWERS,
+                "startup_answer_interpretation": self.startup_answer_interpretation(),
+            },
+        )
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["startup_answers"], AI_INTERPRETED_STARTUP_ANSWERS)
+        self.assertEqual(bootstrap["startup_answer_interpretation"]["raw_user_reply_text"], "Use background agents, manual resume, and chat route signs.")
+
+        while router.next_action(root)["action_type"] != "record_user_request":
+            action = router.next_action(root)
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+        run_root = self.run_root_for(root)
+        startup_answers = read_json(run_root / "startup_answers.json")
+        self.assertTrue(startup_answers["startup_answer_interpretation_path"].endswith("startup_answer_interpretation.json"))
+        receipt = read_json(root / startup_answers["startup_answer_interpretation_path"])
+        self.assertEqual(receipt["interpreted_answers"]["display_surface"], "chat")
 
     def test_cli_accepts_json_after_subcommand(self) -> None:
         parsed = router.parse_args(["--root", "C:/tmp/project", "next", "--json"])
@@ -1647,6 +1712,46 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["pm_material_packets_issued"])
 
+    def test_reviewer_can_legally_block_startup_facts_without_control_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        router.record_external_event(root, "pm_first_decision_resets_controller")
+        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+        router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
+                    "checks": {"startup_user_answer_authenticity": False},
+                    "blockers": ["startup_user_answer_authenticity"],
+                },
+            ),
+        )
+        report = read_json(run_root / "startup" / "startup_fact_report.json")
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["status"], "block")
+        state = read_json(router.run_state_path(run_root))
+        self.assertIsNone(state["active_control_blocker"])
+
+        self.deliver_expected_card(root, "pm.startup_activation")
+        with self.assertRaisesRegex(router.RouterError, "clean reviewer startup fact report"):
+            router.record_external_event(
+                root,
+                "pm_approves_startup_activation",
+                self.role_decision_envelope(
+                    root,
+                    "startup/pm_startup_activation_after_block",
+                    {"approved_by_role": "project_manager", "decision": "approved"},
+                ),
+            )
+
     def test_cockpit_requested_startup_display_records_chat_fallback_mermaid(self) -> None:
         root = self.make_project()
         cockpit_answers = {**STARTUP_ANSWERS, "display_surface": "cockpit"}
@@ -1663,6 +1768,32 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(display_surface["fallback_is_display_only_not_product_ui_completion"])
         self.assertIn("user-flow-diagram.md", display_surface["standard_route_sign_markdown_path"])
         self.assertIn("```mermaid", (run_root / "diagrams" / "current_route_sign.md").read_text(encoding="utf-8"))
+
+    def test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        pending_before_stop = self.next_after_display_sync(root)
+        self.assertIn(pending_before_stop["action_type"], {"check_prompt_manifest", "create_heartbeat_automation", "deliver_system_card"})
+
+        router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "run_lifecycle_terminal")
+        self.assertEqual(action["run_lifecycle_status"], "stopped_by_user")
+        self.assertFalse(action["controller_may_continue_route_work"])
+        result = router.apply_action(root, "run_lifecycle_terminal")
+        self.assertTrue(result["terminal"])
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["status"], "stopped_by_user")
+        self.assertTrue(state["flags"]["run_stopped_by_user"])
+        self.assertTrue((run_root / "lifecycle" / "run_lifecycle.json").exists())
+        current = read_json(root / ".flowpilot" / "current.json")
+        self.assertEqual(current["status"], "stopped_by_user")
+
+        result = router.record_external_event(root, "user_requests_run_cancel", {"reason": "user switched to cancel"})
+        self.assertTrue(result["ok"])
+        action = router.next_action(root)
+        self.assertEqual(action["run_lifecycle_status"], "cancelled_by_user")
 
     def test_startup_fact_report_accepts_file_backed_envelope_only_payload(self) -> None:
         root = self.make_project()
@@ -2675,6 +2806,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(blocker_path.exists())
         saved = read_json(blocker_path)
         self.assertIn("same-role reissue", saved["controller_instruction"])
+        self.assertNotIn("error_message", saved)
+        self.assertNotIn("source_paths", saved)
+        sealed_packet = root / saved["sealed_repair_packet_path"]
+        self.assertTrue(sealed_packet.exists())
+        self.assertEqual(read_json(sealed_packet)["target_role"], "human_like_reviewer")
         self.assertFalse(saved["pm_decision_required"])
         self.assertEqual(saved["skill_observation_reminder"]["suggested_kind"], "controller_compensation")
 
@@ -2684,6 +2820,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["next_step_contract"]["recipient_role"], "human_like_reviewer")
         self.assertFalse(action["next_step_contract"]["sealed_body_reads_allowed"])
         self.assertEqual(action["handling_lane"], "control_plane_reissue")
+        self.assertIn("sealed_repair_packet_path", action)
+        self.assertNotIn("controller_delivery_body", action)
         self.assertIn("sealed", " ".join(action["controller_forbidden_actions"]))
         self.assertTrue(action["skill_observation_reminder"]["should_consider_recording"])
         router.apply_action(root, "handle_control_blocker")
@@ -2819,13 +2957,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(blocker["target_role"], "project_manager")
         self.assertTrue(blocker["pm_decision_required"])
         saved = read_json(self.control_blocker_path(root, blocker))
-        self.assertIn("PM", saved["controller_instruction"])
+        self.assertIn("project_manager", saved["controller_instruction"])
         self.assertIn("contact the worker directly", " ".join(saved["controller_forbidden_actions"]))
+        self.assertNotIn("error_message", saved)
+        self.assertTrue((root / saved["sealed_repair_packet_path"]).exists())
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["to_role"], "project_manager")
         self.assertEqual(action["handling_lane"], "pm_repair_decision_required")
+        self.assertNotIn("controller_delivery_body", action)
         router.apply_action(root, "handle_control_blocker")
 
         router.record_external_event(

@@ -68,10 +68,11 @@ control-plane fields fixed. Quote only `error_code`, `error_message`,
 `source_paths`, and `blocker_artifact_path`. Do not ask for project-content
 repair.
 
-For `pm_repair_decision_required` or `fatal_protocol_violation`, deliver the
-blocker artifact to Project Manager. Do not contact a worker or reviewer
-directly about project repair unless PM later issues a router-authorized packet
-or decision envelope.
+For `pm_repair_decision_required` or `fatal_protocol_violation`, deliver only
+the public blocker id plus sealed repair packet path/hash to Project Manager.
+Do not read or restate sealed repair details, and do not contact a worker or
+reviewer directly about project repair unless PM later issues a
+router-authorized packet or decision envelope.
 
 If a role or subagent response includes report bodies, blockers, evidence
 details, recommendations, commands, repair instructions, or other content that

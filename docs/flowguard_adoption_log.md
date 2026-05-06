@@ -3576,3 +3576,50 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep host automation creation as a router action with receipt-backed apply payloads instead of treating local continuation files as live heartbeat proof.
+
+
+## flowpilot-startup-control-contracts-20260506 - Startup answer receipts, sealed repair routing, and cancel flow
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Router startup/control-plane changes affect user-answer interpretation, payload contracts, reviewer blocker routing, sealed repair handoff, and lifecycle stop behavior.
+- Status: completed
+- Skill decision: used_flowguard
+
+### Risk Intent Brief
+- Prevent Controller from guessing missing router payload fields or repairing sealed role-owned content.
+- Preserve AI natural-language interpretation while making the interpretation reviewable against the user's original reply.
+- Allow startup reviewer blockers to become PM-routed facts rather than router protocol failures.
+- Ensure user-requested stop/cancel leaves the run in an explicit stopped state instead of a live controller wait state.
+- Keep heartbeat/banner edits from concurrent work intact and avoid treating local files or self-attestation as host proof.
+
+### Planned Checks
+- Add or update FlowGuard startup-control checks before production router changes.
+- Run targeted router unit tests and existing FlowPilot simulation runners after implementation.
+
+### Model Files
+- simulations/flowpilot_startup_control_model.py
+- simulations/run_flowpilot_startup_control_checks.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)" => 1.0`
+- OK: `python -B simulations\run_flowpilot_startup_control_checks.py`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- Startup answers now support AI interpretation only with a raw-reply receipt and reviewer alignment check.
+- Router actions now expose payload contracts for startup answers, role slots, heartbeat binding, and display receipts.
+- Reviewer `passed: false` startup fact reports are legal block reports and do not become control-plane failures.
+- Router repair details are sealed into target-role repair packets; Controller receives only blocker id and packet path/hash.
+- User stop/cancel events now put the run into a terminal lifecycle state and prevent further route work.
+
+### Skipped Steps
+- Production conformance replay adapter for the new abstract startup-control model was not added; runtime tests and existing meta/capability simulations covered executable paths.

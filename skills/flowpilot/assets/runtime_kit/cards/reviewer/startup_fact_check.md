@@ -24,6 +24,9 @@ real. Those facts remain reviewer-owned unless the audit cites a host receipt.
 Required checks:
 
 - all three startup answers are present;
+- if startup answers were AI-interpreted from natural language, the
+  `startup_answer_interpretation` receipt preserves the raw user reply and the
+  interpreted answers match that reply;
 - `.flowpilot/current.json` points to the current run root;
 - `.flowpilot/index.json` includes the current run id;
 - the six FlowPilot role slots are fresh for this run or have explicit
@@ -47,3 +50,5 @@ to Controller only an envelope naming the report id, path, hash, event name,
 from/to roles, next holder, and body visibility. If any required check is
 false, the blocker details stay inside that report body; Controller receives
 only the blocking envelope and must relay it to PM through the packet ledger.
+The router accepts a file-backed reviewer report with `passed: false` as a
+legal startup block; do not fake a pass to reach PM activation.
