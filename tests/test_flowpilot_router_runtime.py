@@ -1297,8 +1297,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("user dialog", action["controller_display_rule"])
         self.assertIn("```text", action["display_text"])
         self.assertIn("███████╗", action["display_text"])
-        self.assertIn("Startup answers are recorded.", action["display_text"])
         self.assertNotIn("FLOWPILOT_IDENTITY_BOUNDARY_V1", action["display_text"])
+        self.assertNotIn("Startup answers are recorded.", action["display_text"])
+        self.assertNotIn("display-only data", action["display_text"])
+        self.assertNotIn("flowpilot_router.py", action["display_text"])
 
         with self.assertRaisesRegex(router.RouterError, "display_confirmation"):
             router.apply_action(root, "emit_startup_banner")
@@ -1309,6 +1311,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(result["dialog_display_confirmation"]["rendered_to"], "user_dialog")
         self.assertFalse(result["generated_files_alone_satisfy_chat_display"])
         self.assertIn("███████╗", result["display_text"])
+        self.assertNotIn("Startup answers are recorded.", result["display_text"])
+        self.assertNotIn("display-only data", result["display_text"])
+        self.assertNotIn("flowpilot_router.py", result["display_text"])
 
     def test_user_intake_requires_explicit_user_request_and_includes_it(self) -> None:
         root = self.make_project()

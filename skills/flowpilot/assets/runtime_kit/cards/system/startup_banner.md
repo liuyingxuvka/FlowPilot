@@ -14,8 +14,3 @@ next_step_source: Do not infer the next FlowPilot action from this card, chat hi
 ██║     ███████╗╚██████╔╝╚███╔███╔╝██║     ██║███████╗╚██████╔╝   ██║
 ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝ ╚═╝     ╚═╝╚══════╝ ╚═════╝    ╚═╝
 ```
-
-Startup answers are recorded.
-
-This banner is display-only data. Do not infer the next action from this file.
-Return to `flowpilot_router.py` and execute only the next JSON action envelope.
