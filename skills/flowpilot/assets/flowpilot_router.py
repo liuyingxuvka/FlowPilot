@@ -2382,8 +2382,21 @@ def _append_user_dialog_display_ledger(project_root: Path, run_root: Path, recor
     write_json(ledger_path, ledger)
 
 
-def _display_plan_chat_markdown(plan_projection: dict[str, Any]) -> str:
-    lines = ["# FlowPilot Route Map", ""]
+def _display_plan_display_kind(plan_projection: dict[str, Any]) -> str:
+    items = plan_projection.get("items") if isinstance(plan_projection.get("items"), list) else []
+    if (
+        len(items) == 1
+        and isinstance(items[0], dict)
+        and items[0].get("id") == "await_pm_route"
+        and plan_projection.get("current_node_id") is None
+    ):
+        return "startup_waiting_state"
+    return "route_map"
+
+
+def _display_plan_chat_markdown(plan_projection: dict[str, Any], *, display_kind: str) -> str:
+    title = "# FlowPilot Startup Status" if display_kind == "startup_waiting_state" else "# FlowPilot Route Map"
+    lines = [title, ""]
     for item in plan_projection.get("items") or []:
         if not isinstance(item, dict):
             continue
@@ -2396,7 +2409,9 @@ def _display_plan_chat_markdown(plan_projection: dict[str, Any]) -> str:
 
 
 def _display_plan_user_dialog_fields(plan_projection: dict[str, Any]) -> dict[str, Any]:
-    display_text = _display_plan_chat_markdown(plan_projection)
+    display_kind = _display_plan_display_kind(plan_projection)
+    display_text = _display_plan_chat_markdown(plan_projection, display_kind=display_kind)
+    display_label = "startup waiting state" if display_kind == "startup_waiting_state" else "route map"
     return _user_dialog_display_gate(
         {
             "display_text": display_text,
@@ -2404,9 +2419,9 @@ def _display_plan_user_dialog_fields(plan_projection: dict[str, Any]) -> dict[st
             "display_required": True,
             "controller_must_display_text_before_apply": True,
             "generated_files_alone_satisfy_chat_display": False,
-            "controller_display_rule": "Paste this exact route map display_text in the user dialog before applying sync_display_plan; display_plan.json or host-plan replacement alone does not satisfy display.",
+            "controller_display_rule": f"Paste this exact {display_label} display_text in the user dialog before applying sync_display_plan; display_plan.json or host-plan replacement alone does not satisfy display.",
         },
-        display_kind="route_map",
+        display_kind=display_kind,
         display_text=display_text,
     )
 
@@ -2995,6 +3010,8 @@ def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state:
     if scheduled_requested and payload.get("host_automation_verified") is not True:
         raise RouterError("scheduled FlowPilot heartbeat requires host_automation_verified=true")
     host_automation_proof = payload.get("host_automation_proof")
+    if scheduled_requested and not isinstance(host_automation_proof, dict):
+        raise RouterError("scheduled FlowPilot heartbeat requires host_automation_proof")
     if host_automation_proof is not None:
         if not isinstance(host_automation_proof, dict):
             raise RouterError("host_automation_proof must be an object")
@@ -3024,6 +3041,20 @@ def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state:
         }
     )
     write_json(binding_path, binding)
+
+
+def _host_heartbeat_binding_ready(run_root: Path, run_state: dict[str, Any]) -> bool:
+    binding = read_json_if_exists(_continuation_binding_path(run_root))
+    return (
+        binding.get("run_id") == run_state.get("run_id")
+        and binding.get("mode") == "scheduled_heartbeat"
+        and binding.get("scheduled_continuation_requested") is True
+        and binding.get("heartbeat_active") is True
+        and binding.get("route_heartbeat_interval_minutes") == 1
+        and bool(binding.get("host_automation_id"))
+        and binding.get("host_automation_verified") is True
+        and _continuation_has_host_bound_automation_receipt(binding, str(run_state.get("run_id") or ""))
+    )
 
 
 def _append_heartbeat_tick(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -6790,6 +6821,65 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
     return None
 
 
+def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    answers = _startup_answers_from_run(run_root)
+    if not _scheduled_continuation_requested(answers):
+        return None
+    if run_state["flags"].get("continuation_binding_recorded") and _host_heartbeat_binding_ready(run_root, run_state):
+        return None
+    automation_id_hint = f"flowpilot-{run_state['run_id']}-heartbeat"
+    automation_name = f"FlowPilot {run_state['run_id']} heartbeat"
+    prompt = (
+        f"Continue the active FlowPilot run {run_state['run_id']} in {project_root} by returning to "
+        "the FlowPilot router loop. Record a heartbeat_or_manual_resume_requested event only if the "
+        "current work chain is broken, paused, or needs resume; otherwise keep the run alive without "
+        "reading sealed packet/result/report bodies."
+    )
+    return make_action(
+        action_type="create_heartbeat_automation",
+        actor="controller",
+        label="host_creates_startup_heartbeat_automation",
+        summary="Create the one-minute Codex heartbeat for the current run, then record its host receipt before startup fact review.",
+        allowed_reads=[
+            ".flowpilot/current.json",
+            project_relative(project_root, run_state_path(run_root)),
+            project_relative(project_root, run_root / "startup_answers.json"),
+            project_relative(project_root, _continuation_binding_path(run_root)),
+        ],
+        allowed_writes=[
+            project_relative(project_root, _continuation_binding_path(run_root)),
+            project_relative(project_root, run_state_path(run_root)),
+        ],
+        extra={
+            "postcondition": "continuation_binding_recorded",
+            "requires_host_automation": True,
+            "host_tool": "codex_app.automation_update",
+            "automation_update_request": {
+                "mode": "create",
+                "kind": "heartbeat",
+                "destination": "thread",
+                "name": automation_name,
+                "prompt": prompt,
+                "rrule": "FREQ=MINUTELY;INTERVAL=1",
+                "status": "ACTIVE",
+            },
+            "expected_payload": {
+                "route_heartbeat_interval_minutes": 1,
+                "host_automation_id": automation_id_hint,
+                "host_automation_verified": True,
+                "host_automation_proof": {
+                    "source_kind": "host_receipt",
+                    "run_id": run_state["run_id"],
+                    "host_automation_id": automation_id_hint,
+                    "route_heartbeat_interval_minutes": 1,
+                    "heartbeat_bound_to_current_run": True,
+                },
+            },
+            "proof_required_before_apply": True,
+        },
+    )
+
+
 def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
     last_sync = run_state.get("visible_plan_sync") if isinstance(run_state.get("visible_plan_sync"), dict) else {}
@@ -7151,6 +7241,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         action = _next_resume_action(project_root, run_state, run_root)
     if action is None:
+        action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_startup_display_action(project_root, run_state, run_root)
     if action is None:
         _invalidate_route_completion_if_dirty_before_closure(run_state, run_root)
@@ -7382,6 +7474,18 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         if not run_state["flags"].get("resume_state_loaded"):
             raise RouterError("resume role rehydration requires load_resume_state first")
         _write_resume_role_rehydration_report(project_root, run_root, run_state, payload or {})
+    elif action_type == "create_heartbeat_automation":
+        _write_host_heartbeat_binding(project_root, run_root, run_state, payload or {})
+        run_state["flags"]["continuation_binding_recorded"] = True
+        run_state["events"].append(
+            {
+                "event": "host_records_heartbeat_binding",
+                "summary": EXTERNAL_EVENTS["host_records_heartbeat_binding"]["summary"],
+                "payload": payload or {},
+                "recorded_at": utc_now(),
+                "source_action": action_type,
+            }
+        )
     elif action_type == "sync_display_plan":
         confirmation = _display_confirmation_for_action(payload, pending)
         sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)

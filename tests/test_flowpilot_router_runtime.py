@@ -134,6 +134,28 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             }
         return payload
 
+    def heartbeat_binding_payload(self, root: Path, automation_id: str = "codex-test-heartbeat") -> dict:
+        run_root = self.run_root_for(root)
+        run_id = read_json(router.run_state_path(run_root))["run_id"]
+        return {
+            "route_heartbeat_interval_minutes": 1,
+            "host_automation_id": automation_id,
+            "host_automation_verified": True,
+            "host_automation_proof": {
+                "source_kind": "host_receipt",
+                "run_id": run_id,
+                "host_automation_id": automation_id,
+                "route_heartbeat_interval_minutes": 1,
+                "heartbeat_bound_to_current_run": True,
+            },
+        }
+
+    def apply_startup_heartbeat_if_requested(self, root: Path) -> dict | None:
+        action = self.next_after_display_sync(root)
+        if action["action_type"] != "create_heartbeat_automation":
+            return None
+        return router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
+
     def handle_pending_control_blocker(self, root: Path) -> bool:
         action = self.next_after_display_sync(root)
         if action["action_type"] != "handle_control_blocker":
@@ -241,6 +263,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         return read_json(router.bootstrap_state_path(root))
 
     def deliver_initial_pm_cards_and_user_intake(self, root: Path) -> None:
+        self.apply_startup_heartbeat_if_requested(root)
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.controller_reset_duty")
         self.deliver_expected_card(root, "pm.phase_map")
@@ -1033,9 +1056,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "sync_display_plan")
+        self.assertEqual(action["display_kind"], "startup_waiting_state")
+        self.assertIn("FlowPilot Startup Status", action["display_text"])
         self.assertEqual(action["native_plan_projection"]["items"][0]["id"], "await_pm_route")
         result = router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         self.assertEqual(result["host_action"], "replace_visible_plan")
+        self.assertEqual(result["display_kind"], "startup_waiting_state")
         waiting_plan = read_json(run_root / "display_plan.json")
         self.assertEqual(waiting_plan["source_role"], "controller")
         self.assertEqual(waiting_plan["route_authority"], "none_until_pm_display_plan")
@@ -1245,7 +1271,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["requires_payload"], "display_confirmation")
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
         self.assertIn("user dialog", action["controller_display_rule"])
-        self.assertIn("FLOWPILOT PROMPT-ISOLATED STARTUP", action["display_text"])
+        self.assertIn("```text", action["display_text"])
+        self.assertIn("FLOWPILOT STARTUP", action["display_text"])
+        self.assertIn("PROMPT-ISOLATED ROUTER MODE", action["display_text"])
         self.assertNotIn("FLOWPILOT_IDENTITY_BOUNDARY_V1", action["display_text"])
 
         with self.assertRaisesRegex(router.RouterError, "display_confirmation"):
@@ -1256,7 +1284,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(result["controller_must_display_text_before_apply"])
         self.assertEqual(result["dialog_display_confirmation"]["rendered_to"], "user_dialog")
         self.assertFalse(result["generated_files_alone_satisfy_chat_display"])
-        self.assertIn("FLOWPILOT PROMPT-ISOLATED STARTUP", result["display_text"])
+        self.assertIn("FLOWPILOT STARTUP", result["display_text"])
 
     def test_user_intake_requires_explicit_user_request_and_includes_it(self) -> None:
         root = self.make_project()
@@ -2322,15 +2350,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_heartbeat_startup_records_one_minute_active_binding_for_resume_reentry(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
-        router.record_external_event(
-            root,
-            "host_records_heartbeat_binding",
-            {
-                "route_heartbeat_interval_minutes": 1,
-                "host_automation_id": "codex-test-heartbeat",
-                "host_automation_verified": True,
-            },
-        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "create_heartbeat_automation")
+        self.assertTrue(action["requires_host_automation"])
+        self.assertEqual(action["automation_update_request"]["kind"], "heartbeat")
+        self.assertEqual(action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
+        self.assertEqual(action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
+        self.assertTrue(action["proof_required_before_apply"])
+        with self.assertRaisesRegex(router.RouterError, "host_automation_proof"):
+            router.apply_action(
+                root,
+                "create_heartbeat_automation",
+                {
+                    "route_heartbeat_interval_minutes": 1,
+                    "host_automation_id": "codex-test-heartbeat",
+                    "host_automation_verified": True,
+                },
+            )
+        router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
         self.complete_startup_activation(root)
 
         binding_path = run_root / "continuation" / "continuation_binding.json"
@@ -2342,6 +2379,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(binding["heartbeat_active"])
         self.assertEqual(binding["host_automation_id"], "codex-test-heartbeat")
         self.assertTrue(binding["host_automation_verified"])
+        self.assertEqual(binding["host_automation_proof"]["source_kind"], "host_receipt")
 
         router.record_external_event(root, "heartbeat_or_manual_resume_requested", {"source": "heartbeat", "work_chain_status": "broken_or_unknown"})
         action = router.next_action(root)

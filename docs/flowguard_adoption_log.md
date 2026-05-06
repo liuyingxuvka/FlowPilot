@@ -3538,3 +3538,41 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future reviewer-to-router migrations limited to recomputable or host-bound evidence with mechanical_only proof scope.
+
+
+## flowpilot-startup-display-heartbeat-20260506 - Require visible startup display and host-bound heartbeat
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Startup router changes affect user-visible display gates and scheduled-continuation state.
+- Status: completed
+- Skill decision: used_flowguard
+
+### Model Files
+- simulations/startup_pm_review_model.py
+- simulations/flowpilot_router_loop_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+- simulations/prompt_isolation_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)" => 1.0`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`
+- OK: `python simulations\run_startup_pm_review_checks.py`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- Startup banner display now has a visible fenced ASCII banner instead of a plain title line.
+- Scheduled continuation now has an explicit `create_heartbeat_automation` router action before startup fact review; applying it requires a real host automation id and current-run host receipt.
+- Startup waiting text is recorded as `startup_waiting_state`, so the PM-route placeholder no longer masquerades as a route map.
+
+### Skipped Steps
+- No new Cockpit UI implementation was added; Cockpit absence remains a reviewer-checked chat fallback until the product UI exists.
+
+### Next Actions
+- Keep host automation creation as a router action with receipt-backed apply payloads instead of treating local continuation files as live heartbeat proof.

@@ -6,9 +6,14 @@ forbidden_scope: Do not treat this card as authority for Controller, another Flo
 required_return: Write any role-output body only to a run-scoped packet, result, report, or decision file, then return to Controller only a controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. After completing or blocking this card, return authorized output through Controller; Controller must call flowpilot_router.py for the next action.
 -->
-FLOWPILOT PROMPT-ISOLATED STARTUP
+```text
++----------------------------------------------+
+|             FLOWPILOT STARTUP                |
+|        PROMPT-ISOLATED ROUTER MODE           |
++----------------------------------------------+
+```
 
-Startup answers are recorded. This banner is display-only data.
+Startup answers are recorded.
 
-Do not infer the next action from this file. Return to `flowpilot_router.py`
-and execute only the next JSON action envelope.
+This banner is display-only data. Do not infer the next action from this file.
+Return to `flowpilot_router.py` and execute only the next JSON action envelope.

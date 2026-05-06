@@ -82,6 +82,8 @@ subagents as successful startup.
 
 When the router returns `rehydrate_role_agents` with `requires_host_spawn: true`, restore or spawn all six role agents before applying it. Give each role its listed core prompt and current-run memory/context; PM must receive the PM resume context. Echo memory/core hashes and resume tick in `rehydrated_role_agents`.
 
+When the router returns `create_heartbeat_automation`, create the requested Codex heartbeat with the router-provided name, prompt, schedule, and thread destination before applying it. Apply only with the real `host_automation_id`, `host_automation_verified: true`, `route_heartbeat_interval_minutes: 1`, and a `host_automation_proof` receipt bound to the current `run_id`; never mark scheduled continuation active from a file, name guess, or self-attested status.
+
 ## Controller Boundary
 
 After the router loads Controller core, the main assistant is Controller only.
