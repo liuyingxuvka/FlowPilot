@@ -1,0 +1,165 @@
+{
+  "confidence_boundary": "abstract proof-source ownership model; pair with router runtime tests and card audits",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=6 initial_states=1 traces=63",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "host_receipt_not_bound_to_current_run": {
+        "detected": true,
+        "expected_failure": "router-only pass used evidence that was not recomputable or host-bound",
+        "failures": [
+          "router-only pass used evidence that was not recomputable or host-bound",
+          "host receipt was accepted without current-run binding"
+        ],
+        "state": {
+          "ai_claim_used_as_proof": false,
+          "fact_kind": "startup_user_intent",
+          "proof_bound_to_current_run": false,
+          "proof_source": "host_receipt",
+          "reviewer_checked": false,
+          "reviewer_gate_replaced": true,
+          "reviewer_passed": false,
+          "reviewer_required": false,
+          "router_audit_file_written": true,
+          "router_only_passed": true,
+          "router_recomputed_or_verified": true,
+          "status": "complete",
+          "step": 4,
+          "work_gate_opened": true
+        }
+      },
+      "live_fact_opened_without_reviewer": {
+        "detected": true,
+        "expected_failure": "live or judgement fact opened work without reviewer pass",
+        "failures": [
+          "live or judgement fact opened work without reviewer pass",
+          "work gate opened without router proof or reviewer pass"
+        ],
+        "state": {
+          "ai_claim_used_as_proof": true,
+          "fact_kind": "live_heartbeat",
+          "proof_bound_to_current_run": false,
+          "proof_source": "self_attested_ai",
+          "reviewer_checked": false,
+          "reviewer_gate_replaced": false,
+          "reviewer_passed": false,
+          "reviewer_required": true,
+          "router_audit_file_written": false,
+          "router_only_passed": false,
+          "router_recomputed_or_verified": false,
+          "status": "complete",
+          "step": 4,
+          "work_gate_opened": true
+        }
+      },
+      "reviewer_required_and_replaced": {
+        "detected": true,
+        "expected_failure": "self-attested AI claim replaced reviewer check",
+        "failures": [
+          "router-only pass used evidence that was not recomputable or host-bound",
+          "self-attested AI claim replaced reviewer check",
+          "gate is both reviewer-required and reviewer-replaced"
+        ],
+        "state": {
+          "ai_claim_used_as_proof": true,
+          "fact_kind": "live_heartbeat",
+          "proof_bound_to_current_run": false,
+          "proof_source": "self_attested_ai",
+          "reviewer_checked": true,
+          "reviewer_gate_replaced": true,
+          "reviewer_passed": true,
+          "reviewer_required": true,
+          "router_audit_file_written": true,
+          "router_only_passed": true,
+          "router_recomputed_or_verified": false,
+          "status": "complete",
+          "step": 4,
+          "work_gate_opened": true
+        }
+      },
+      "router_only_from_self_attested_claim": {
+        "detected": true,
+        "expected_failure": "router-only pass used evidence that was not recomputable or host-bound",
+        "failures": [
+          "router-only pass used evidence that was not recomputable or host-bound",
+          "self-attested AI claim replaced reviewer check",
+          "live or judgement fact opened work without reviewer pass"
+        ],
+        "state": {
+          "ai_claim_used_as_proof": true,
+          "fact_kind": "live_heartbeat",
+          "proof_bound_to_current_run": true,
+          "proof_source": "self_attested_ai",
+          "reviewer_checked": false,
+          "reviewer_gate_replaced": true,
+          "reviewer_passed": false,
+          "reviewer_required": false,
+          "router_audit_file_written": true,
+          "router_only_passed": true,
+          "router_recomputed_or_verified": false,
+          "status": "complete",
+          "step": 4,
+          "work_gate_opened": true
+        }
+      },
+      "trusted_router_pass_without_audit_file": {
+        "detected": true,
+        "expected_failure": "reviewer gate was replaced without a router audit file",
+        "failures": [
+          "reviewer gate was replaced without a router audit file"
+        ],
+        "state": {
+          "ai_claim_used_as_proof": false,
+          "fact_kind": "packet_envelope",
+          "proof_bound_to_current_run": true,
+          "proof_source": "packet_runtime_hash",
+          "reviewer_checked": false,
+          "reviewer_gate_replaced": true,
+          "reviewer_passed": false,
+          "reviewer_required": false,
+          "router_audit_file_written": false,
+          "router_only_passed": true,
+          "router_recomputed_or_verified": true,
+          "status": "complete",
+          "step": 4,
+          "work_gate_opened": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "initial_can_reach_success": true,
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "safe_graph": {
+    "complete_state_count": 3,
+    "edge_count": 10,
+    "invariant_failures": [],
+    "labels": [
+      "gate_opens_from_reviewer_check",
+      "gate_opens_from_router_proof",
+      "reviewer_checks_live_fact",
+      "router_collects_host_receipt",
+      "router_collects_packet_runtime_hash",
+      "router_collects_self_attested_live_fact",
+      "trusted_router_check_writes_audit",
+      "untrusted_fact_routes_to_reviewer"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "reviewer_completion_count": 1,
+    "router_proof_completion_count": 2,
+    "state_count": 11
+  }
+}

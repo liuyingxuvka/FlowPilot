@@ -653,6 +653,17 @@ fact-check evidence is invalid. PM decisions may rely on reviewer reports only
 after those reports identify the factual sources checked and contain no current
 gate blockers.
 
+Router-owned proof is narrower than reviewer approval. The router may replace
+reviewer effort only for mechanical checks backed by
+`flowpilot.router_owned_check_proof.v1`: router-computed state, packet-runtime
+hash checks, or host receipts bound to the current run. Self-attested AI claims,
+payload booleans, default-option claims, and Controller summaries do not count
+as proof. Startup now records `startup/startup_mechanical_audit.json`; reviewer
+startup reports must separately cover any listed
+`reviewer_required_external_facts`. Packet result reviews may rely on the
+router proof only for envelope/hash mechanics, not for result quality or
+acceptance judgement.
+
 The six agents are persistent roles, and the default startup target is six
 live background agents. Live subagent continuity still depends on host and tool
 support, so FlowPilot must not treat missing live agents as an invisible

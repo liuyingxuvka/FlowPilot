@@ -3411,3 +3411,130 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-startup-banner-role-launch-audit-20260506 - Audit why a FlowPilot startup transcript appeared not to launch the startup banner or role-start gate after three answers.
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to diagnose a FlowPilot startup transcript involving the prompt-isolated startup banner and six background role startup.
+- Status: completed
+- Skill decision: use_flowguard_read_only_audit
+- Started: 2026-05-06T06:30:26+00:00
+- Ended: 2026-05-06T06:30:26+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/prompt_isolation_model.py
+- simulations/flowpilot_router_loop_model.py
+
+### Commands
+- OK (0.000s): `flowguard import preflight => schema 1.0`
+- OK (0.000s): `scripts/audit_local_install_sync.py --json => ok true, installed flowpilot source fresh`
+- OK (0.000s): `scripts/check_install.py => ok true`
+- OK (0.000s): `pytest tests/test_flowpilot_router_runtime.py -k startup_or_background_agents => 10 passed`
+- OK (0.000s): `simulations/run_prompt_isolation_checks.py => ok true`
+- OK (0.000s): `simulations/run_flowpilot_router_loop_checks.py => ok true`
+
+### Findings
+- Current run bootstrap records banner_emitted=true and roles_started=true; crew_ledger has six live_agent_started role slots for run-20260506-062138.
+- The startup banner is display-only; actual live role startup is the later start_role_slots envelope requiring host-spawned agent IDs.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- No production behavior edit was made during this read-only audit.
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-proof-router-20260506 - Implement proof-carrying FlowPilot router checks
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing router/reviewer gate change must prevent self-attested AI claims from bypassing review
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-06T07:59:16+00:00
+- Ended: 2026-05-06T07:59:16+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-proof-router-20260506 - Implement proof-carrying FlowPilot router checks
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing router/reviewer gate change must prevent self-attested AI claims from bypassing review
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-06T08:29:10+00:00
+- Ended: 2026-05-06T08:29:10+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/proof_carrying_checks_model.py
+- simulations/run_proof_carrying_checks.py
+
+### Commands
+- OK (0.000s): `python -c import flowguard; print(flowguard.SCHEMA_VERSION) => 1.0`
+- OK (0.000s): `python simulations/run_proof_carrying_checks.py => ok true`
+- OK (0.000s): `python -m py_compile skills/flowpilot/assets/flowpilot_router.py skills/flowpilot/assets/packet_runtime.py simulations/proof_carrying_checks_model.py simulations/run_proof_carrying_checks.py => ok`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_router_runtime => 54 passed`
+- OK (0.000s): `python -m unittest discover -s tests => 111 passed`
+- OK (0.000s): `python simulations/run_meta_checks.py => ok true`
+- OK (0.000s): `python simulations/run_capability_checks.py => ok true`
+- OK (0.000s): `python simulations/run_prompt_isolation_checks.py => ok true`
+- OK (0.000s): `python simulations/run_startup_pm_review_checks.py => ok true`
+- OK (0.000s): `python simulations/run_flowpilot_router_loop_checks.py => ok true`
+- OK (0.000s): `python simulations/run_router_next_recipient_checks.py => ok true`
+- OK (0.000s): `python simulations/run_barrier_equivalence_checks.py => ok true`
+- OK (0.000s): `python simulations/run_card_instruction_coverage_checks.py => ok true`
+- OK (0.000s): `python simulations/run_defect_governance_checks.py => ok true`
+- OK (0.000s): `python simulations/run_user_flow_diagram_checks.py => ok true`
+- OK (0.000s): `python scripts/check_install.py => ok true`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json => ok true source_fresh true`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json => ok true source_fresh true`
+- OK (0.000s): `python scripts/install_flowpilot.py --check --json => ok true source_fresh true`
+
+### Findings
+- Router-owned gates now require proof-carrying audit sidecars and reject self-attested AI claims as proof.
+- Startup mechanical checks are router-computed, while user-authenticity/live-agent/heartbeat/Cockpit external facts remain reviewer-required unless host-bound proof exists.
+- Packet runtime audits are persisted with mechanical-only router proofs; reviewer still owns result quality and acceptance judgement.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Production conformance replay beyond router runtime tests was not added because the changed proof boundary is covered by runtime tests and existing model regressions.
+
+### Next Actions
+- Keep future reviewer-to-router migrations limited to recomputable or host-bound evidence with mechanical_only proof scope.

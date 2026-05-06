@@ -16,7 +16,12 @@ Pass requires:
 - direct source, file, command, screenshot, or state evidence is cited;
 - skipped checks have reasons and are not counted as passes;
 - worker or Controller reports are treated as pointers only;
+- router-owned checks replace reviewer work only when a
+  `router_owned_check_proof` sidecar says the source is router-computed,
+  packet-runtime hash checked, or host-receipt bound to the current run, and
+  only for `mechanical_only` scope;
 - residual blockers, risks, and stale evidence are explicitly listed.
 
 Reject report-only closure, wrong-role approval, or broad claims that bypass the
-gate's concrete obligation.
+gate's concrete obligation. Also reject any attempt to treat payload booleans,
+AI statements, default options, or Controller summaries as proof.

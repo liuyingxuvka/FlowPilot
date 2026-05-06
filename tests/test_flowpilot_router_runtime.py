@@ -44,7 +44,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def next_and_apply(self, root: Path, payload: dict | None = None) -> dict:
         action = self.next_after_display_sync(root)
-        return router.apply_action(root, str(action["action_type"]), payload or {})
+        return router.apply_action(root, str(action["action_type"]), self.payload_for_action(action, payload))
 
     def run_root_for(self, root: Path) -> Path:
         current = read_json(root / ".flowpilot" / "current.json")
@@ -118,9 +118,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def next_after_display_sync(self, root: Path) -> dict:
         action = router.next_action(root)
         while action["action_type"] == "sync_display_plan":
-            router.apply_action(root, "sync_display_plan")
+            router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
             action = router.next_action(root)
         return action
+
+    def payload_for_action(self, action: dict, payload: dict | None = None) -> dict:
+        payload = dict(payload or {})
+        if action.get("requires_user_dialog_display_confirmation"):
+            payload["display_confirmation"] = {
+                "action_type": action["action_type"],
+                "display_kind": action["display_kind"],
+                "display_text_sha256": action["display_text_sha256"],
+                "provenance": "controller_user_dialog_render",
+                "rendered_to": "user_dialog",
+            }
+        return payload
 
     def handle_pending_control_blocker(self, root: Path) -> bool:
         action = self.next_after_display_sync(root)
@@ -161,7 +173,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             elif action_type == "start_role_slots":
                 router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
             else:
-                router.apply_action(root, action_type)
+                router.apply_action(root, action_type, self.payload_for_action(action))
             if action_type == "load_controller_core":
                 break
         current = read_json(root / ".flowpilot" / "current.json")
@@ -246,7 +258,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(
                 root,
                 "startup/reviewer_startup_fact_report",
-                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+                self.startup_fact_report_body(root),
             ),
         )
         self.deliver_expected_card(root, "pm.startup_activation")
@@ -265,7 +277,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("```mermaid", action["display_text"])
         self.assertTrue(action["controller_must_display_text_before_apply"])
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
-        router.apply_action(root, "write_display_surface_status")
+        router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
 
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
         router.apply_action(root, str(router.next_action(root)["action_type"]))
@@ -749,6 +761,29 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def rel(self, root: Path, path: Path) -> str:
         return str(path.relative_to(root)).replace("\\", "/")
 
+    def startup_fact_report_body(self, root: Path) -> dict:
+        run_root = self.run_root_for(root)
+        return {
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": True,
+            "external_fact_review": {
+                "reviewed_by_role": "human_like_reviewer",
+                "used_router_mechanical_audit": True,
+                "self_attested_ai_claims_accepted_as_proof": False,
+                "reviewer_checked_requirement_ids": [
+                    "startup_user_answer_authenticity",
+                    "live_agent_spawn_freshness",
+                    "heartbeat_host_automation_current_run_binding",
+                    "cockpit_or_display_fallback_reality",
+                ],
+                "direct_evidence_paths_checked": [
+                    self.rel(root, run_root / "startup_answers.json"),
+                    self.rel(root, run_root / "crew_ledger.json"),
+                    self.rel(root, run_root / "continuation" / "continuation_binding.json"),
+                ],
+            },
+        }
+
     def prior_path_context_review(self, root: Path, impact: str = "PM considered current route memory before deciding") -> dict:
         run_root = self.run_root_for(root)
         return {
@@ -887,6 +922,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 },
             ),
         )
+        run_root = self.run_root_for(root)
+        runtime_audit_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "reviews" / "current_node_packet_runtime_audit.json"
+        self.assertTrue(runtime_audit_path.exists())
+        runtime_audit = read_json(runtime_audit_path)
+        self.assertTrue(runtime_audit["passed"])
+        self.assertEqual(runtime_audit["router_replacement_scope"], "mechanical_only")
+        self.assertFalse(runtime_audit["self_attested_ai_claims_accepted_as_proof"])
+        runtime_proof = read_json(root / runtime_audit["router_owned_check_proof_path"])
+        self.assertEqual(runtime_proof["source_kind"], "packet_runtime_hash")
+        self.assertEqual(runtime_proof["reviewer_replacement_scope"], "mechanical_only")
         self.complete_parent_backward_replay_if_due(root)
         router.record_external_event(root, "pm_completes_current_node_from_reviewed_result")
 
@@ -989,7 +1034,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "sync_display_plan")
         self.assertEqual(action["native_plan_projection"]["items"][0]["id"], "await_pm_route")
-        result = router.apply_action(root, "sync_display_plan")
+        result = router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         self.assertEqual(result["host_action"], "replace_visible_plan")
         waiting_plan = read_json(run_root / "display_plan.json")
         self.assertEqual(waiting_plan["source_role"], "controller")
@@ -1014,7 +1059,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "sync_display_plan")
         self.assertEqual(action["native_plan_projection"]["items"][0]["status"], "in_progress")
-        router.apply_action(root, "sync_display_plan")
+        router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         active_snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(active_snapshot["route"]["nodes"][0]["id"], "node-001")
         self.assertTrue(active_snapshot["route"]["nodes"][0]["is_active"])
@@ -1195,14 +1240,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["display_required"])
         self.assertEqual(action["display_text_format"], "plain_text")
         self.assertTrue(action["controller_must_display_text_before_apply"])
+        self.assertTrue(action["requires_user_dialog_display_confirmation"])
+        self.assertEqual(action["required_render_target"], "user_dialog")
+        self.assertEqual(action["requires_payload"], "display_confirmation")
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
-        self.assertIn("user chat", action["controller_display_rule"])
+        self.assertIn("user dialog", action["controller_display_rule"])
         self.assertIn("FLOWPILOT PROMPT-ISOLATED STARTUP", action["display_text"])
         self.assertNotIn("FLOWPILOT_IDENTITY_BOUNDARY_V1", action["display_text"])
 
-        result = router.apply_action(root, "emit_startup_banner")
+        with self.assertRaisesRegex(router.RouterError, "display_confirmation"):
+            router.apply_action(root, "emit_startup_banner")
+
+        result = router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
         self.assertTrue(result["display_required"])
         self.assertTrue(result["controller_must_display_text_before_apply"])
+        self.assertEqual(result["dialog_display_confirmation"]["rendered_to"], "user_dialog")
         self.assertFalse(result["generated_files_alone_satisfy_chat_display"])
         self.assertIn("FLOWPILOT PROMPT-ISOLATED STARTUP", result["display_text"])
 
@@ -1216,7 +1268,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             elif action_type == "record_user_request":
                 break
             else:
-                router.apply_action(root, action_type)
+                router.apply_action(root, action_type, self.payload_for_action(action))
 
         inferred_request = {**USER_REQUEST, "provenance": "inferred_by_assistant"}
         with self.assertRaisesRegex(router.RouterError, "provenance=explicit_user_request"):
@@ -1245,7 +1297,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             elif action_type == "start_role_slots":
                 break
             else:
-                router.apply_action(root, action_type)
+                router.apply_action(root, action_type, self.payload_for_action(action))
 
         self.assertTrue(action["requires_host_spawn"])
         self.assertEqual(len(action["role_spawn_request"]), 6)
@@ -1515,10 +1567,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(
                 root,
                 "startup/reviewer_startup_fact_report",
-                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+                self.startup_fact_report_body(root),
             ),
         )
         self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
+        startup_audit = read_json(run_root / "startup" / "startup_mechanical_audit.json")
+        self.assertTrue(startup_audit["mechanical_checks_passed"])
+        self.assertFalse(startup_audit["self_attested_ai_claims_accepted_as_proof"])
+        self.assertEqual(startup_audit["router_replacement_scope"], "mechanical_only")
+        proof_path = root / startup_audit["router_owned_check_proof_path"]
+        self.assertTrue(proof_path.exists())
+        proof = read_json(proof_path)
+        self.assertEqual(proof["source_kind"], "router_computed")
+        self.assertFalse(proof["self_attested_ai_claims_accepted_as_proof"])
 
         self.deliver_expected_card(root, "pm.startup_activation")
 
@@ -1541,7 +1602,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("FlowPilot Route Sign", action["display_text"])
         self.assertIn("```mermaid", action["display_text"])
         self.assertEqual(action["resolved_display_surface"], "chat-requested")
-        router.apply_action(root, "write_display_surface_status")
+        router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
 
         self.assertTrue((run_root / "startup" / "startup_activation.json").exists())
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
@@ -1583,7 +1644,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
-        report_body = {"reviewed_by_role": "human_like_reviewer", "passed": True}
+        report_body = self.startup_fact_report_body(root)
         report_text = json.dumps(report_body, indent=2, sort_keys=True)
         private_report = run_root / "startup" / "reviewer_private_startup_fact_report.json"
         private_report.parent.mkdir(parents=True, exist_ok=True)
@@ -1619,6 +1680,47 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "role_output_envelope_only",
         )
         self.assertFalse(canonical_report["_role_output_envelope"]["chat_response_body_allowed"])
+
+    def test_router_owned_check_proof_rejects_self_attested_and_stale_audit(self) -> None:
+        root = self.make_project()
+        run_root = root / ".flowpilot" / "runs" / "run-proof"
+        audit_path = run_root / "proof" / "audit.json"
+        router.write_json(audit_path, {"schema_version": "test.audit.v1", "run_id": "run-proof", "passed": True})
+
+        with self.assertRaisesRegex(router.RouterError, "unsupported router-owned proof source"):
+            router._write_router_owned_check_proof(
+                root,
+                run_root,
+                check_name="unit_proof_check",
+                audit_path=audit_path,
+                source_kind="self_attested_ai",
+                evidence_paths=[audit_path],
+            )
+
+        router._write_router_owned_check_proof(
+            root,
+            run_root,
+            check_name="unit_proof_check",
+            audit_path=audit_path,
+            source_kind="router_computed",
+            evidence_paths=[audit_path],
+        )
+        proof = router._validate_router_owned_check_proof(
+            root,
+            run_root,
+            check_name="unit_proof_check",
+            audit_path=audit_path,
+        )
+        self.assertFalse(proof["self_attested_ai_claims_accepted_as_proof"])
+
+        router.write_json(audit_path, {"schema_version": "test.audit.v1", "run_id": "run-proof", "passed": False})
+        with self.assertRaisesRegex(router.RouterError, "audit hash is stale"):
+            router._validate_router_owned_check_proof(
+                root,
+                run_root,
+                check_name="unit_proof_check",
+                audit_path=audit_path,
+            )
 
     def test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card(self) -> None:
         root = self.make_project()
@@ -2058,7 +2160,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         run_root = self.boot_to_controller(root)
 
         for _ in range(4):
-            router.apply_action(root, str(router.next_action(root)["action_type"]))
+            action = router.next_action(root)
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
             router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.apply_action(root, str(router.next_action(root)["action_type"]))

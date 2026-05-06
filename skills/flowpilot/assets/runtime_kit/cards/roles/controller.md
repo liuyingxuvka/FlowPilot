@@ -33,11 +33,14 @@ Allowed actions:
   decisions;
 - deliver router `control_blocker` artifacts exactly as instructed by the
   router action envelope;
-- display route signs when the router or PM requires them. When a router action
-  includes `display_text` and `controller_must_display_text_before_apply:
-  true`, paste that exact Markdown Mermaid block in the current chat before
-  applying the action; generated files or display packet paths alone are not
-  visible chat evidence;
+- display route signs and required startup text when the router or PM requires
+  them. When a router action includes `display_text` and
+  `requires_user_dialog_display_confirmation: true`, paste that exact
+  `display_text` in the current user dialog before applying the action, then
+  apply with a `display_confirmation` payload whose `rendered_to` is
+  `user_dialog` and whose `display_text_sha256` matches the router envelope;
+  generated files, host plan replacement, or display packet paths alone are
+  not visible chat evidence;
 - replace the host visible plan only from the router-provided
   `display_plan.json` projection. If no PM display plan exists yet, clear any
   pre-FlowPilot assistant plan to the router's waiting-for-PM placeholder.

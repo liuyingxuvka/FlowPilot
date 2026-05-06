@@ -2,7 +2,7 @@
 
 Date: 2026-05-02
 
-Updated: 2026-05-03
+Updated: 2026-05-06
 
 ## Scope
 
@@ -59,22 +59,30 @@ review or can be satisfied by reading worker/PM summaries.
 
 ## New Baseline
 
+Router-owned checks may replace reviewer effort only when the router writes a
+proof-carrying audit from evidence it can recompute or bind to the current run:
+router-computed state, packet-runtime body/envelope hashes, or explicit host
+receipts. Payload booleans, AI statements, default-option claims, Controller
+summaries, and role reports are not proof. Router proofs replace only
+mechanical checks; live facts, user-intent authenticity without a host receipt,
+source quality, product/visual judgement, and backward replay remain reviewer
+owned.
+
 Reviewer, PM, and FlowGuard officer decisions that cite only worker, PM, or
 other-role summaries are invalid. Reports can point to evidence, but
 role-owned gates must name the direct facts checked, adversarial hypotheses
 tested, and concrete evidence references used for the decision.
 
 Every packet review also requires an explicit envelope-aware role-origin audit.
-The reviewer must compare the PM-authored packet envelope, reviewer dispatch
-approval, physical packet/result files, controller context/body exclusion,
-`packet_envelope.to_role`, packet body hash, assigned worker or
-authorized role, result envelope, `completed_by_role`,
-`completed_by_agent_id`, result body hash, and actual result author evidence
-before any pass. Controller, unknown-origin, wrong-role, cosigned/relabelled
-wrong-role results, body-hash mismatches, stale body reuse, or controller body
-access are blocking findings. Role-origin mismatches are
-`block_invalid_role_origin`, require a controller-boundary warning, and must be
-returned to PM for reissue or repair by the assigned role.
+The router/packet runtime now persists the mechanical packet audit and a
+`flowpilot.router_owned_check_proof.v1` sidecar for hash-backed envelope/body
+checks. The reviewer must still inspect the actual result quality, acceptance
+slice fit, freshness, role origin, and contamination risk before any pass.
+Controller, unknown-origin, wrong-role, cosigned/relabelled wrong-role results,
+body-hash mismatches, stale body reuse, or controller body access are blocking
+findings. Role-origin mismatches are `block_invalid_role_origin`, require a
+controller-boundary warning, and must be returned to PM for reissue or repair by
+the assigned role.
 
 ## Follow-Up Watch Points
 

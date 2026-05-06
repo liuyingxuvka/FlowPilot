@@ -44,6 +44,7 @@ class State:
     startup_answers_recorded: bool = False
     banner_emitted: bool = False
     startup_banner_user_visible: bool = False
+    startup_banner_user_dialog_confirmed: bool = False
     run_shell_created: bool = False
     current_pointer_written: bool = False
     run_index_updated: bool = False
@@ -670,7 +671,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.banner_emitted:
         yield Transition(
             "startup_banner_emitted_after_answers",
-            _boot(state, banner_emitted=True, startup_banner_user_visible=True),
+            _boot(
+                state,
+                banner_emitted=True,
+                startup_banner_user_visible=True,
+                startup_banner_user_dialog_confirmed=True,
+            ),
         )
         return
     if not state.run_shell_created:
@@ -1576,6 +1582,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("startup banner emitted before explicit answers after a stopped dialog")
     if state.banner_emitted and not state.startup_banner_user_visible:
         failures.append("startup banner was marked emitted without user-visible display text")
+    if state.banner_emitted and not state.startup_banner_user_dialog_confirmed:
+        failures.append("startup banner was marked emitted without user dialog display confirmation")
     if state.run_shell_created and not state.banner_emitted:
         failures.append("run shell created before startup banner")
     if state.runtime_kit_copied and not (

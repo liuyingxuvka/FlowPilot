@@ -170,6 +170,7 @@
           "startup_answer_provenance": "inferred",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -355,6 +356,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": false,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -540,6 +542,7 @@
           "startup_answer_provenance": "naked",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -564,7 +567,8 @@
           "startup questions did not atomically record the waiting stop boundary",
           "startup waiting stop boundary did not hold before answers were recorded",
           "startup banner emitted before explicit answers after a stopped dialog",
-          "startup banner was marked emitted without user-visible display text"
+          "startup banner was marked emitted without user-visible display text",
+          "startup banner was marked emitted without user dialog display confirmation"
         ],
         "state": {
           "banner_emitted": true,
@@ -729,6 +733,7 @@
           "startup_answer_provenance": "none",
           "startup_answer_values_valid": false,
           "startup_answers_recorded": false,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -748,7 +753,8 @@
       "banner_emitted_without_user_visible_text": {
         "detected": true,
         "failures": [
-          "startup banner was marked emitted without user-visible display text"
+          "startup banner was marked emitted without user-visible display text",
+          "startup banner was marked emitted without user dialog display confirmation"
         ],
         "state": {
           "banner_emitted": true,
@@ -913,6 +919,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -935,7 +942,8 @@
           "bootloader action ran before router computed a next action",
           "router next-action requests and completed bootloader actions are out of sync",
           "bootloader action was recorded without the matching startup fact",
-          "startup banner was marked emitted without user-visible display text"
+          "startup banner was marked emitted without user-visible display text",
+          "startup banner was marked emitted without user dialog display confirmation"
         ],
         "state": {
           "banner_emitted": true,
@@ -1100,6 +1108,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -1119,6 +1128,7 @@
       "bootloader_generates_prompts": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "bootloader generated prompt or packet body instead of copying the audited runtime kit"
         ],
         "state": {
@@ -1284,6 +1294,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -1303,6 +1314,7 @@
       "capabilities_manifest_without_dependency_policy": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM wrote capabilities manifest before dependency policy"
         ],
         "state": {
@@ -1468,6 +1480,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -1487,6 +1500,7 @@
       "capability_evidence_sync_without_pm_approval": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "capability evidence synced before PM child-skill manifest approval"
         ],
         "state": {
@@ -1652,6 +1666,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -1671,6 +1686,7 @@
       "child_skill_gate_manifest_without_pm_selection": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM wrote child-skill gate manifest before PM-selected child skills"
         ],
         "state": {
@@ -1836,6 +1852,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -1855,6 +1872,7 @@
       "child_skill_pm_approval_without_officers": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM approved child-skill manifest before product officer pass"
         ],
         "state": {
@@ -2020,6 +2038,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -2039,6 +2058,7 @@
       "child_skill_selection_before_capabilities_manifest": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM child-skill selection card delivered before capabilities manifest",
           "PM wrote child-skill selection before card and capabilities manifest"
         ],
@@ -2205,6 +2225,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -2224,6 +2245,7 @@
       "complete_before_closure_cleanup": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM parent segment decision recorded before reading fresh route history context",
@@ -2394,6 +2416,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -2413,6 +2436,7 @@
       "contract_frozen_without_root_modelability": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM wrote root contract draft before card and product architecture challenge",
           "PM froze root contract before draft, reviewer challenge, and modelability pass"
         ],
@@ -2579,6 +2603,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -2598,6 +2623,7 @@
       "controller_creates_project_evidence": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "Controller-origin project evidence was created"
         ],
         "state": {
@@ -2763,6 +2789,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -2782,6 +2809,7 @@
       "controller_direct_free_text_instruction": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "Controller direct free text was treated as authority instead of router-authorized mail"
         ],
         "state": {
@@ -2947,6 +2975,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -2966,6 +2995,7 @@
       "controller_inspects_router_hard_checks": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "Controller inspected router hard-check internals instead of using black-box router actions"
         ],
         "state": {
@@ -3131,6 +3161,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -3150,6 +3181,7 @@
       "controller_reads_body": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "Controller read a packet/result body that was not addressed to Controller"
         ],
         "state": {
@@ -3315,6 +3347,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -3334,6 +3367,7 @@
       "controller_relays_body_content": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "Controller relayed packet/result body content instead of envelope-only metadata"
         ],
         "state": {
@@ -3499,6 +3533,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -3518,6 +3553,7 @@
       "controller_uses_role_chat_body": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "Controller used role chat body content instead of treating it as contaminated mail"
         ],
         "state": {
@@ -3683,6 +3719,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -3702,6 +3739,7 @@
       "dispatch_allowed_without_independent_dispatch_card": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "reviewer allowed current-node dispatch before reviewer.current_node_dispatch card and reviewed node acceptance plan"
@@ -3869,6 +3907,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -3888,6 +3927,7 @@
       "dispatch_card_without_reviewed_acceptance_plan": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM issued node packet before current-node cards and reviewed node acceptance plan",
@@ -4056,6 +4096,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -4075,6 +4116,7 @@
       "final_ledger_before_node_completion": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM final ledger card delivered before PM evidence/quality package card",
           "PM final ledger card delivered before reviewer evidence quality pass",
           "PM built final ledger before node completion, parent backward replay, PM segment decision, evidence quality reviewer pass, and final-ledger phase card",
@@ -4243,6 +4285,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -4262,6 +4305,7 @@
       "final_ledger_before_parent_backward_decision": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM final ledger card delivered before PM evidence/quality package card",
@@ -4432,6 +4476,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -4451,6 +4496,7 @@
       "final_ledger_built_before_reviewer_evidence_quality_pass": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM parent segment decision recorded before reading fresh route history context",
@@ -4622,6 +4668,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -4641,6 +4688,7 @@
       "final_ledger_card_before_evidence_quality_package_card": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM parent segment decision recorded before reading fresh route history context",
@@ -4810,6 +4858,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -4829,6 +4878,7 @@
       "final_ledger_card_before_reviewer_evidence_quality_pass": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM parent segment decision recorded before reading fresh route history context",
@@ -4998,6 +5048,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -5017,6 +5068,7 @@
       "final_ledger_without_prior_path_context": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM parent segment decision recorded before reading fresh route history context",
@@ -5186,6 +5238,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -5205,6 +5258,7 @@
       "mail_delivery_without_ledger_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "mail delivered without a matching packet-ledger check",
           "mail delivered before Controller was instructed to check the packet ledger"
         ],
@@ -5371,6 +5425,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -5390,6 +5445,7 @@
       "material_scan_result_without_ledger_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "worker material scan result reached reviewer before packet-ledger check"
         ],
         "state": {
@@ -5555,6 +5611,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -5574,6 +5631,7 @@
       "material_scan_without_card": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM issued material packets before Controller reset, startup-intake card, and material scan card"
         ],
         "state": {
@@ -5739,6 +5797,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -5758,6 +5817,7 @@
       "material_sufficiency_without_worker_result": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency card delivered before worker material scan results"
         ],
         "state": {
@@ -5923,6 +5983,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -5942,6 +6003,7 @@
       "node_acceptance_plan_without_prior_path_context": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context"
         ],
@@ -6108,6 +6170,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -6127,6 +6190,7 @@
       "node_packet_without_acceptance_plan_review": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM issued node packet before current-node cards and reviewed node acceptance plan"
         ],
@@ -6293,6 +6357,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -6312,6 +6377,7 @@
       "node_packet_without_node_cards": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM issued node packet before current-node cards and reviewed node acceptance plan"
         ],
@@ -6478,6 +6544,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -6497,6 +6564,7 @@
       "node_worker_result_without_ledger_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "current-node worker result reached reviewer before packet-ledger check"
@@ -6664,6 +6732,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -6683,6 +6752,7 @@
       "officer_result_without_ledger_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM material understanding card delivered before material or research absorption",
           "PM wrote material understanding before reviewed material or reviewed research was absorbed",
           "product architecture modelability result reached PM before officer card and packet-ledger check"
@@ -6850,6 +6920,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -6869,6 +6940,7 @@
       "parent_backward_replay_without_targets": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "reviewer parent backward replay card delivered before PM parent targets",
@@ -7037,6 +7109,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -7056,6 +7129,7 @@
       "parent_pm_segment_decision_without_replay": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM parent segment decision card delivered before parent backward replay",
@@ -7225,6 +7299,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -7244,6 +7319,7 @@
       "pm_absorbs_material_without_absorb_card": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "PM absorbed material before sufficiency pass and absorb-or-research card"
         ],
@@ -7410,6 +7486,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -7429,6 +7506,7 @@
       "pm_accepts_unreviewed_worker_result": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "worker material scan result reached reviewer before packet-ledger check",
           "PM absorbed material before sufficiency pass and absorb-or-research card",
           "PM used unreviewed evidence for a route or phase decision"
@@ -7596,6 +7674,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -7615,6 +7694,7 @@
       "product_architecture_before_research_absorbed": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "product architecture card delivered before PM material understanding"
         ],
@@ -7781,6 +7861,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -7800,6 +7881,7 @@
       "prompt_delivery_without_manifest_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "prompt card delivered without a matching manifest check",
           "prompt card delivered before Controller was instructed to check the prompt manifest"
         ],
@@ -7966,6 +8048,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -8153,6 +8236,7 @@
           "startup_answer_provenance": "none",
           "startup_answer_values_valid": false,
           "startup_answers_recorded": false,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -8172,6 +8256,7 @@
       "repair_issued_without_block_event_card": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM issued repair packet before repair phase and reviewer-blocked event cards"
         ],
         "state": {
@@ -8337,6 +8422,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -8356,6 +8442,7 @@
       "repair_recheck_bypasses_reviewer_result": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "repair recheck passed before repair result returned to reviewer"
         ],
         "state": {
@@ -8521,6 +8608,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -8540,6 +8628,7 @@
       "repair_result_without_ledger_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "repair worker result reached reviewer before repair packet and packet-ledger check"
         ],
         "state": {
@@ -8705,6 +8794,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -8724,6 +8814,7 @@
       "research_package_without_required_branch": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "PM research package card delivered before reviewer-required research branch"
         ],
@@ -8890,6 +8981,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -8909,6 +9001,7 @@
       "research_packet_without_reviewer_dispatch": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "research worker packet body delivered before reviewer dispatch approval"
         ],
@@ -9075,6 +9168,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -9094,6 +9188,7 @@
       "research_pass_without_direct_source_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "worker research report card delivered before research capability decision",
           "reviewer passed research before direct-source check"
@@ -9261,6 +9356,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -9280,6 +9376,7 @@
       "research_worker_report_without_capability_decision": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "worker research report card delivered before research capability decision",
           "worker research report reached reviewer before packet, card, and ledger check"
@@ -9447,6 +9544,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -9466,6 +9564,7 @@
       "research_worker_result_without_ledger_check": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "worker research report reached reviewer before packet, card, and ledger check"
         ],
@@ -9632,6 +9731,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -9651,6 +9751,7 @@
       "role_chat_response_discloses_body": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "role response disclosed body, blocker, evidence, or repair details in chat"
         ],
         "state": {
@@ -9816,6 +9917,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -9835,6 +9937,7 @@
       "role_output_without_file_backed_envelope": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "role output reached Controller without file-backed body, verified path/hash, and envelope-only chat return"
         ],
         "state": {
@@ -10000,6 +10103,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -10024,6 +10128,7 @@
           "startup answers were recorded before the waiting stop boundary",
           "startup banner emitted before explicit answers after a stopped dialog",
           "startup banner was marked emitted without user-visible display text",
+          "startup banner was marked emitted without user dialog display confirmation",
           "roles started before copied kit, placeholders, and mailbox were ready",
           "roles were marked started without fresh live role-agent evidence"
         ],
@@ -10190,6 +10295,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -10209,6 +10315,7 @@
       "roles_started_without_fresh_live_agents": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "roles were marked started without fresh live role-agent evidence"
         ],
         "state": {
@@ -10374,6 +10481,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -10393,6 +10501,7 @@
       "root_contract_without_product_architecture_challenge": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "reviewer material sufficiency decision recorded before sufficiency card",
           "PM absorbed material before sufficiency pass and absorb-or-research card",
           "product architecture modelability result reached PM before officer card and packet-ledger check",
@@ -10562,6 +10671,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -10581,6 +10691,7 @@
       "route_activated_without_route_skeleton": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton"
         ],
         "state": {
@@ -10746,6 +10857,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -10765,6 +10877,7 @@
       "route_mutation_without_prior_path_context": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM activated route before route skeleton",
           "PM wrote node acceptance plan before reading fresh route history context",
           "PM mutated route before reading fresh route history context"
@@ -10932,6 +11045,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -10951,6 +11065,7 @@
       "route_skeleton_before_capability_evidence_sync": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM route skeleton card delivered before capability evidence sync",
           "PM route skeleton card delivered before PM read fresh prior path context",
           "PM wrote route skeleton before card and capability evidence sync",
@@ -11119,6 +11234,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -11138,6 +11254,7 @@
       "route_skeleton_before_contract_freeze": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM route skeleton card delivered before capability evidence sync",
           "PM route skeleton card delivered before PM read fresh prior path context",
           "PM wrote route skeleton before card and capability evidence sync",
@@ -11306,6 +11423,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -11325,6 +11443,7 @@
       "route_skeleton_without_prior_path_context": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "PM route skeleton card delivered before PM read fresh prior path context",
           "PM wrote route skeleton before reading fresh route history context"
         ],
@@ -11491,6 +11610,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -11675,6 +11795,7 @@
           "startup_answer_provenance": "none",
           "startup_answer_values_valid": false,
           "startup_answers_recorded": false,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": false,
           "startup_state": "none",
@@ -11697,7 +11818,8 @@
           "bootloader action ran before router computed a next action",
           "router next-action requests and completed bootloader actions are out of sync",
           "bootloader action was recorded without the matching startup fact",
-          "startup banner was marked emitted without user-visible display text"
+          "startup banner was marked emitted without user-visible display text",
+          "startup banner was marked emitted without user dialog display confirmation"
         ],
         "state": {
           "banner_emitted": true,
@@ -11862,6 +11984,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -12050,6 +12173,7 @@
           "startup_answer_provenance": "none",
           "startup_answer_values_valid": false,
           "startup_answers_recorded": false,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -12236,6 +12360,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": false,
           "startup_questions_asked": true,
           "startup_state": "none",
@@ -12255,6 +12380,7 @@
       "user_intake_before_pm_cards": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "user intake delivered before Controller and PM bootstrap prompt cards were delivered"
         ],
         "state": {
@@ -12420,6 +12546,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -12440,6 +12567,7 @@
         "detected": true,
         "failures": [
           "bootloader action was recorded without the matching startup fact",
+          "startup banner was marked emitted without user dialog display confirmation",
           "user intake was prepared without an explicit user request packet source"
         ],
         "state": {
@@ -12605,6 +12733,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -12624,6 +12753,7 @@
       "worker_body_without_dispatch": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "worker packet bodies delivered before reviewer dispatch approval"
         ],
         "state": {
@@ -12789,6 +12919,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -12808,6 +12939,7 @@
       "wrong_role_body": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "packet/result body was delivered to the wrong role"
         ],
         "state": {
@@ -12973,6 +13105,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",
@@ -12992,6 +13125,7 @@
       "wrong_role_prompt": {
         "detected": true,
         "failures": [
+          "startup banner was marked emitted without user dialog display confirmation",
           "system prompt card was delivered to the wrong role"
         ],
         "state": {
@@ -13157,6 +13291,7 @@
           "startup_answer_provenance": "explicit_user_reply",
           "startup_answer_values_valid": true,
           "startup_answers_recorded": true,
+          "startup_banner_user_dialog_confirmed": false,
           "startup_banner_user_visible": true,
           "startup_questions_asked": true,
           "startup_state": "controller_ready",

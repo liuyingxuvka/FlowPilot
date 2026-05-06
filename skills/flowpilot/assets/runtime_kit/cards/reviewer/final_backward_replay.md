@@ -24,6 +24,11 @@ Check backward from the delivered product or final output:
 - any repair made during this replay forces PM ledger rebuild and a fresh
   terminal replay.
 
+Router-built ledgers can prove mechanical coverage only when backed by current
+hashes and run-bound artifacts. They do not prove that the delivered product or
+final output actually satisfies the root contract; that backward replay remains
+your job.
+
 Replay each PM segment separately and return segment status, evidence checked,
 blockers, and rerun target. Do not merge a failed segment into a general pass.
 

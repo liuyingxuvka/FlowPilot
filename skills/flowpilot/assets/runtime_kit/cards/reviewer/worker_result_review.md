@@ -21,8 +21,11 @@ Check:
 - output satisfies packet acceptance slice.
 
 Return pass, needs repair, needs more material, or invalid role origin.
-If validation was already performed by the router or packet runtime, do not
-redo mechanical envelope parsing by hand. Focus on the reviewed result's
-quality, acceptance-slice fit, freshness, role origin, and contamination risk.
+If validation was already performed by the router or packet runtime, skip only
+the mechanical envelope parsing that is backed by a `router_owned_check_proof`
+sidecar. That proof must have `reviewer_replacement_scope: mechanical_only`,
+must reject self-attested AI claims as proof, and must hash the audit artifact.
+Focus your review on the result's quality, acceptance-slice fit, freshness,
+role origin, contamination risk, and any judgement the router cannot recompute.
 When blocking, return only a controller-visible envelope and a safe summary
 category. Keep sealed packet/result body details out of chat.

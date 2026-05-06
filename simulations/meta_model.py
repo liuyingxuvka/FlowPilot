@@ -72,6 +72,7 @@ class State:
     startup_questions_asked: bool = False
     startup_dialog_stopped_for_answers: bool = False
     startup_banner_emitted: bool = False
+    startup_banner_user_dialog_confirmed: bool = False
     startup_background_agents_answered: bool = False
     startup_scheduled_continuation_answered: bool = False
     startup_display_surface_answered: bool = False
@@ -1672,8 +1673,9 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="startup_banner_emitted",
-                action="emit a large ASCII FlowPilot startup banner only after the three startup answers",
+                action="emit the FlowPilot startup banner in the user dialog only after the three startup answers",
                 startup_banner_emitted=True,
+                startup_banner_user_dialog_confirmed=True,
                 active_node="create_run_directory",
             )
             return
@@ -5196,6 +5198,8 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
         return InvariantResult.fail("startup continued after asking questions without stopping for the user's reply")
     if state.startup_banner_emitted and not _startup_questions_complete(state):
         return InvariantResult.fail("startup banner emitted before all three startup answers were recorded")
+    if state.startup_banner_emitted and not state.startup_banner_user_dialog_confirmed:
+        return InvariantResult.fail("startup banner emitted without confirmed user-dialog display")
     if (
         state.startup_background_agents_answered
         and state.startup_scheduled_continuation_answered

@@ -14,6 +14,13 @@ Your job is to check factual startup evidence before the PM opens work beyond
 startup. Do not rely on Controller summaries or PM intent. Inspect the current
 run files and report only factual findings.
 
+The router writes `startup/startup_mechanical_audit.json` and a
+`router_owned_check_proof` sidecar for recomputable startup checks. Treat that
+audit as proof only for mechanical file/state checks. It does not prove that an
+AI honestly captured the user's reply, that live agents are fresh, that a host
+heartbeat is really bound to this run, or that Cockpit/fallback behavior is
+real. Those facts remain reviewer-owned unless the audit cites a host receipt.
+
 Required checks:
 
 - all three startup answers are present;
@@ -25,6 +32,15 @@ Required checks:
   heartbeat or manual-resume evidence for this run;
 - display surface is recorded from the user's startup answer;
 - old top-level control state is absent or quarantined from current authority.
+
+Your report body must include `external_fact_review` with:
+
+- `used_router_mechanical_audit: true`;
+- `self_attested_ai_claims_accepted_as_proof: false`;
+- every id from `startup_mechanical_audit.json` field
+  `reviewer_required_external_facts` listed in
+  `reviewer_checked_requirement_ids`;
+- direct evidence paths you personally checked.
 
 Write the startup fact report only to a run-scoped review/report file. Return
 to Controller only an envelope naming the report id, path, hash, event name,

@@ -36,8 +36,14 @@ DISPLAY_PLAN_SCHEMA = "flowpilot.display_plan.v1"
 ROUTE_STATE_SNAPSHOT_SCHEMA = "flowpilot.route_state_snapshot.v1"
 CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
+DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
+STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
+ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
 STARTUP_ANSWER_PROVENANCE = "explicit_user_reply"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
+DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
+DISPLAY_CONFIRMATION_TARGET = "user_dialog"
+ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
 ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
 ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
 ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
@@ -187,7 +193,7 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "action_type": "emit_startup_banner",
         "flag": "banner_emitted",
         "label": "startup_banner_emitted_after_answers",
-        "summary": "Emit the startup banner as display-only data after explicit answers.",
+        "summary": "Display the startup banner in the user dialog after explicit answers, then record the confirmed display.",
         "actor": "bootloader",
         "card_id": "startup_banner",
     },
@@ -1019,6 +1025,80 @@ def project_relative(project_root: Path, path: Path) -> str:
 def resolve_project_path(project_root: Path, raw_path: str) -> Path:
     path = Path(raw_path)
     return path if path.is_absolute() else project_root / path
+
+
+def _evidence_path_record(project_root: Path, path: Path) -> dict[str, Any]:
+    record: dict[str, Any] = {"path": project_relative(project_root, path), "exists": path.exists()}
+    if path.exists() and path.is_file():
+        record["sha256"] = packet_runtime.sha256_file(path)
+    return record
+
+
+def _router_owned_check_proof_path(audit_path: Path) -> Path:
+    return audit_path.with_name(f"{audit_path.name}.proof.json")
+
+
+def _write_router_owned_check_proof(
+    project_root: Path,
+    run_root: Path,
+    *,
+    check_name: str,
+    audit_path: Path,
+    source_kind: str,
+    evidence_paths: list[Path],
+    reviewer_replacement_scope: str = "mechanical_only",
+) -> dict[str, Any]:
+    if source_kind not in ROUTER_TRUSTED_PROOF_SOURCES:
+        raise RouterError(f"unsupported router-owned proof source: {source_kind}")
+    if not audit_path.exists():
+        raise RouterError(f"router-owned proof requires audit file: {audit_path}")
+    proof_path = _router_owned_check_proof_path(audit_path)
+    proof = {
+        "schema_version": ROUTER_OWNED_CHECK_PROOF_SCHEMA,
+        "run_id": run_root.name,
+        "check_name": check_name,
+        "check_owner": "flowpilot_router",
+        "source_kind": source_kind,
+        "trust_basis": "non_self_attested_recomputed_or_host_bound",
+        "self_attested_ai_claims_accepted_as_proof": False,
+        "reviewer_replacement_scope": reviewer_replacement_scope,
+        "audit_path": project_relative(project_root, audit_path),
+        "audit_sha256": packet_runtime.sha256_file(audit_path),
+        "evidence_paths": [_evidence_path_record(project_root, path) for path in evidence_paths],
+        "created_at": utc_now(),
+    }
+    write_json(proof_path, proof)
+    return {"proof_path": project_relative(project_root, proof_path), "proof": proof}
+
+
+def _validate_router_owned_check_proof(
+    project_root: Path,
+    run_root: Path,
+    *,
+    check_name: str,
+    audit_path: Path,
+) -> dict[str, Any]:
+    proof_path = _router_owned_check_proof_path(audit_path)
+    proof = read_json_if_exists(proof_path)
+    if proof.get("schema_version") != ROUTER_OWNED_CHECK_PROOF_SCHEMA:
+        raise RouterError(f"router-owned proof is missing or has wrong schema: {proof_path}")
+    if proof.get("run_id") != run_root.name:
+        raise RouterError("router-owned proof run_id mismatch")
+    if proof.get("check_name") != check_name:
+        raise RouterError("router-owned proof check_name mismatch")
+    if proof.get("check_owner") != "flowpilot_router":
+        raise RouterError("router-owned proof must be owned by flowpilot_router")
+    if proof.get("source_kind") not in ROUTER_TRUSTED_PROOF_SOURCES:
+        raise RouterError("router-owned proof has untrusted source_kind")
+    if proof.get("self_attested_ai_claims_accepted_as_proof") is not False:
+        raise RouterError("router-owned proof cannot accept self-attested AI claims")
+    if proof.get("reviewer_replacement_scope") != "mechanical_only":
+        raise RouterError("router-owned proof may replace only mechanical reviewer work")
+    if proof.get("audit_path") != project_relative(project_root, audit_path):
+        raise RouterError("router-owned proof audit_path mismatch")
+    if proof.get("audit_sha256") != packet_runtime.sha256_file(audit_path):
+        raise RouterError("router-owned proof audit hash is stale")
+    return proof
 
 
 def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) -> dict[str, Any]:
@@ -2210,6 +2290,127 @@ def _validate_user_request(payload: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _display_text_hash(display_text: str) -> str:
+    return hashlib.sha256(display_text.encode("utf-8")).hexdigest()
+
+
+def _user_dialog_display_gate(
+    fields: dict[str, Any],
+    *,
+    display_kind: str,
+    display_text: str,
+) -> dict[str, Any]:
+    gated = dict(fields)
+    gated.update(
+        {
+            "display_kind": display_kind,
+            "display_text_sha256": _display_text_hash(display_text),
+            "requires_payload": "display_confirmation",
+            "requires_user_dialog_display_confirmation": True,
+            "required_render_target": DISPLAY_CONFIRMATION_TARGET,
+            "display_confirmation_schema": DISPLAY_CONFIRMATION_SCHEMA,
+        }
+    )
+    return gated
+
+
+def _validate_display_confirmation(
+    payload: dict[str, Any],
+    *,
+    action_type: str,
+    display_kind: str,
+    display_text: str,
+) -> dict[str, Any]:
+    confirmation = payload.get("display_confirmation")
+    if not isinstance(confirmation, dict):
+        raise RouterError(
+            f"{action_type} requires payload.display_confirmation before apply; "
+            "render display_text in the user dialog first"
+        )
+    if confirmation.get("provenance") != DISPLAY_CONFIRMATION_PROVENANCE:
+        raise RouterError(
+            f"{action_type} display_confirmation requires provenance={DISPLAY_CONFIRMATION_PROVENANCE}"
+        )
+    if confirmation.get("rendered_to") != DISPLAY_CONFIRMATION_TARGET:
+        raise RouterError(
+            f"{action_type} display_confirmation requires rendered_to={DISPLAY_CONFIRMATION_TARGET}"
+        )
+    if confirmation.get("action_type") != action_type:
+        raise RouterError(f"{action_type} display_confirmation action_type mismatch")
+    if confirmation.get("display_kind") != display_kind:
+        raise RouterError(f"{action_type} display_confirmation display_kind mismatch")
+    expected_hash = _display_text_hash(display_text)
+    if confirmation.get("display_text_sha256") != expected_hash:
+        raise RouterError(f"{action_type} display_confirmation display_text_sha256 mismatch")
+    return {
+        "schema_version": DISPLAY_CONFIRMATION_SCHEMA,
+        "action_type": action_type,
+        "display_kind": display_kind,
+        "rendered_to": DISPLAY_CONFIRMATION_TARGET,
+        "display_text_sha256": expected_hash,
+        "provenance": DISPLAY_CONFIRMATION_PROVENANCE,
+        "confirmed_at": utc_now(),
+    }
+
+
+def _display_confirmation_for_action(payload: dict[str, Any], action: dict[str, Any]) -> dict[str, Any]:
+    payload = payload or {}
+    display_text = action.get("display_text")
+    if not isinstance(display_text, str) or not display_text:
+        raise RouterError("display confirmation requested for action without display_text")
+    display_kind = action.get("display_kind")
+    if not isinstance(display_kind, str) or not display_kind:
+        raise RouterError("display confirmation requested for action without display_kind")
+    return _validate_display_confirmation(
+        payload,
+        action_type=str(action.get("action_type") or ""),
+        display_kind=display_kind,
+        display_text=display_text,
+    )
+
+
+def _append_user_dialog_display_ledger(project_root: Path, run_root: Path, record: dict[str, Any]) -> None:
+    del project_root
+    ledger_path = run_root / "display" / "user_dialog_display_ledger.json"
+    ledger = read_json_if_exists(ledger_path) or {
+        "schema_version": "flowpilot.user_dialog_display_ledger.v1",
+        "run_id": run_root.name,
+        "records": [],
+    }
+    ledger.setdefault("records", []).append(record)
+    ledger["updated_at"] = utc_now()
+    write_json(ledger_path, ledger)
+
+
+def _display_plan_chat_markdown(plan_projection: dict[str, Any]) -> str:
+    lines = ["# FlowPilot Route Map", ""]
+    for item in plan_projection.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        label = str(item.get("label") or item.get("id") or "Route item")
+        status = str(item.get("status") or "pending")
+        lines.append(f"- {label} - {status}")
+    if len(lines) == 2:
+        lines.append("- Waiting for PM route - in_progress")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _display_plan_user_dialog_fields(plan_projection: dict[str, Any]) -> dict[str, Any]:
+    display_text = _display_plan_chat_markdown(plan_projection)
+    return _user_dialog_display_gate(
+        {
+            "display_text": display_text,
+            "display_text_format": "markdown",
+            "display_required": True,
+            "controller_must_display_text_before_apply": True,
+            "generated_files_alone_satisfy_chat_display": False,
+            "controller_display_rule": "Paste this exact route map display_text in the user dialog before applying sync_display_plan; display_plan.json or host-plan replacement alone does not satisfy display.",
+        },
+        display_kind="route_map",
+        display_text=display_text,
+    )
+
+
 def _startup_banner_display() -> dict[str, Any]:
     banner_path = runtime_kit_source() / "cards" / "system" / "startup_banner.md"
     if not banner_path.exists():
@@ -2221,15 +2422,19 @@ def _startup_banner_display() -> dict[str, Any]:
         if end >= 0:
             stripped = stripped[end + 3 :].lstrip()
     display_text = stripped.rstrip() + "\n"
-    return {
-        "display_path": str(banner_path),
-        "display_text": display_text,
-        "display_text_format": "plain_text",
-        "display_required": True,
-        "controller_must_display_text_before_apply": True,
-        "generated_files_alone_satisfy_chat_display": False,
-        "controller_display_rule": "Paste this exact startup banner display_text in the user chat before applying emit_startup_banner or continuing; paths, files, flags, and state records do not count as display.",
-    }
+    return _user_dialog_display_gate(
+        {
+            "display_path": str(banner_path),
+            "display_text": display_text,
+            "display_text_format": "plain_text",
+            "display_required": True,
+            "controller_must_display_text_before_apply": True,
+            "generated_files_alone_satisfy_chat_display": False,
+            "controller_display_rule": "Paste this exact startup banner display_text in the user dialog before applying emit_startup_banner; apply requires display_confirmation.rendered_to=user_dialog with matching display_text_sha256.",
+        },
+        display_kind="startup_banner",
+        display_text=display_text,
+    )
 
 
 def _role_spawn_action_extra(state: dict[str, Any]) -> dict[str, Any]:
@@ -2311,6 +2516,18 @@ def _normalize_role_agent_records(state: dict[str, Any], payload: dict[str, Any]
             raise RouterError(f"{role} must be spawned_after_startup_answers=true")
         if raw.get("spawned_for_run_id") != run_id:
             raise RouterError(f"{role} must be spawned_for_run_id={run_id}")
+        host_spawn_receipt = raw.get("host_spawn_receipt")
+        if host_spawn_receipt is not None:
+            if not isinstance(host_spawn_receipt, dict):
+                raise RouterError(f"{role} host_spawn_receipt must be an object")
+            if host_spawn_receipt.get("source_kind") != "host_receipt":
+                raise RouterError(f"{role} host_spawn_receipt requires source_kind=host_receipt")
+            if host_spawn_receipt.get("spawned_for_run_id") != run_id:
+                raise RouterError(f"{role} host_spawn_receipt spawned_for_run_id mismatch")
+            if host_spawn_receipt.get("role_key") != role:
+                raise RouterError(f"{role} host_spawn_receipt role_key mismatch")
+            if host_spawn_receipt.get("agent_id") != agent_id:
+                raise RouterError(f"{role} host_spawn_receipt agent_id mismatch")
         records_by_role[str(role)] = {
             "role_key": str(role),
             "status": "live_agent_started",
@@ -2318,6 +2535,7 @@ def _normalize_role_agent_records(state: dict[str, Any], payload: dict[str, Any]
             "spawn_result": ROLE_AGENT_SPAWN_RESULT,
             "spawned_for_run_id": run_id,
             "spawned_after_startup_answers": True,
+            **({"host_spawn_receipt": host_spawn_receipt} if isinstance(host_spawn_receipt, dict) else {}),
             "recorded_at": utc_now(),
         }
     missing = [role for role in CREW_ROLE_KEYS if role not in records_by_role]
@@ -2776,6 +2994,20 @@ def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state:
         raise RouterError("scheduled FlowPilot heartbeat requires host_automation_id")
     if scheduled_requested and payload.get("host_automation_verified") is not True:
         raise RouterError("scheduled FlowPilot heartbeat requires host_automation_verified=true")
+    host_automation_proof = payload.get("host_automation_proof")
+    if host_automation_proof is not None:
+        if not isinstance(host_automation_proof, dict):
+            raise RouterError("host_automation_proof must be an object")
+        if host_automation_proof.get("source_kind") != "host_receipt":
+            raise RouterError("host_automation_proof requires source_kind=host_receipt")
+        if host_automation_proof.get("run_id") != run_state["run_id"]:
+            raise RouterError("host_automation_proof run_id must match current run")
+        if host_automation_proof.get("host_automation_id") != payload.get("host_automation_id"):
+            raise RouterError("host_automation_proof host_automation_id mismatch")
+        if int(host_automation_proof.get("route_heartbeat_interval_minutes") or 0) != 1:
+            raise RouterError("host_automation_proof requires one-minute heartbeat interval")
+        if host_automation_proof.get("heartbeat_bound_to_current_run") is not True:
+            raise RouterError("host_automation_proof must bind heartbeat to current run")
     binding.update(
         {
             "schema_version": "flowpilot.continuation_binding.v1",
@@ -2786,6 +3018,7 @@ def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state:
             "heartbeat_active": bool(scheduled_requested),
             "host_automation_id": payload.get("host_automation_id") if scheduled_requested else None,
             "host_automation_verified": bool(scheduled_requested),
+            **({"host_automation_proof": host_automation_proof} if scheduled_requested and isinstance(host_automation_proof, dict) else {}),
             "recorded_by": str(payload.get("recorded_by") or "host"),
             "updated_at": utc_now(),
         }
@@ -2931,6 +3164,174 @@ def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str
     }
 
 
+def _role_slots_have_host_spawn_receipts(role_slots: list[dict[str, Any]], run_id: str) -> bool:
+    for slot in role_slots:
+        receipt = slot.get("host_spawn_receipt") if isinstance(slot, dict) else None
+        if not isinstance(receipt, dict):
+            return False
+        if receipt.get("source_kind") != "host_receipt":
+            return False
+        if receipt.get("spawned_for_run_id") != run_id:
+            return False
+        if receipt.get("role_key") != slot.get("role_key"):
+            return False
+        if receipt.get("agent_id") != slot.get("agent_id"):
+            return False
+    return bool(role_slots)
+
+
+def _continuation_has_host_bound_automation_receipt(continuation_binding: dict[str, Any], run_id: str) -> bool:
+    proof = continuation_binding.get("host_automation_proof")
+    if not isinstance(proof, dict):
+        return False
+    return (
+        proof.get("source_kind") == "host_receipt"
+        and proof.get("run_id") == run_id
+        and proof.get("host_automation_id") == continuation_binding.get("host_automation_id")
+        and proof.get("route_heartbeat_interval_minutes") == 1
+        and proof.get("heartbeat_bound_to_current_run") is True
+    )
+
+
+def _startup_external_fact_requirements(run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    answers = _startup_answers_from_run(run_root)
+    crew = read_json_if_exists(run_root / "crew_ledger.json")
+    role_slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    continuation_binding = read_json_if_exists(_continuation_binding_path(run_root))
+    requirements: list[dict[str, Any]] = [
+        {
+            "id": "startup_user_answer_authenticity",
+            "reason": "Router validates answer enum/provenance, but the payload claim that it came from the user's actual reply is not independently host-bound.",
+            "self_attested_payload_fields": ["startup_answers.provenance"],
+            "reviewer_direct_check_required": True,
+        }
+    ]
+    if answers.get("background_agents") == "allow" and not _role_slots_have_host_spawn_receipts(role_slots, str(run_state.get("run_id") or "")):
+        requirements.append(
+            {
+                "id": "live_agent_spawn_freshness",
+                "reason": "Router validates role-slot shape and run ids, but host spawn freshness needs a receipt or reviewer check.",
+                "self_attested_payload_fields": ["role_agents[].spawn_result", "role_agents[].spawned_after_startup_answers"],
+                "reviewer_direct_check_required": True,
+            }
+        )
+    if _scheduled_continuation_requested(answers) and not _continuation_has_host_bound_automation_receipt(
+        continuation_binding,
+        str(run_state.get("run_id") or ""),
+    ):
+        requirements.append(
+            {
+                "id": "heartbeat_host_automation_current_run_binding",
+                "reason": "Router validates the heartbeat binding fields, but host_automation_verified=true alone is an AI/host payload claim unless backed by a host receipt.",
+                "self_attested_payload_fields": ["host_automation_verified", "host_automation_id"],
+                "reviewer_direct_check_required": True,
+            }
+        )
+    if answers.get("display_surface") == "cockpit":
+        requirements.append(
+            {
+                "id": "cockpit_or_display_fallback_reality",
+                "reason": "Router can record selected display mode and chat fallback, but live Cockpit availability or fallback necessity requires direct review when requested.",
+                "self_attested_payload_fields": ["display_surface"],
+                "reviewer_direct_check_required": True,
+            }
+        )
+    return requirements
+
+
+def _write_startup_mechanical_audit(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    computed_checks: dict[str, bool],
+) -> dict[str, Any]:
+    audit_path = run_root / "startup" / "startup_mechanical_audit.json"
+    proof_path = _router_owned_check_proof_path(audit_path)
+    evidence_paths = [
+        run_root / "startup_answers.json",
+        project_root / ".flowpilot" / "current.json",
+        project_root / ".flowpilot" / "index.json",
+        run_root / "crew_ledger.json",
+        _continuation_binding_path(run_root),
+        run_state_path(run_root),
+    ]
+    audit = {
+        "schema_version": STARTUP_MECHANICAL_AUDIT_SCHEMA,
+        "run_id": run_state["run_id"],
+        "check_owner": "flowpilot_router",
+        "mechanical_checks": computed_checks,
+        "mechanical_checks_passed": all(computed_checks.values()),
+        "router_replacement_scope": "mechanical_only",
+        "self_attested_ai_claims_accepted_as_proof": False,
+        "reviewer_required_external_facts": _startup_external_fact_requirements(run_root, run_state),
+        "router_owned_check_proof_path": project_relative(project_root, proof_path),
+        "source_paths": [_evidence_path_record(project_root, path) for path in evidence_paths],
+        "written_at": utc_now(),
+    }
+    write_json(audit_path, audit)
+    proof_record = _write_router_owned_check_proof(
+        project_root,
+        run_root,
+        check_name="startup_mechanical_checks",
+        audit_path=audit_path,
+        source_kind="router_computed",
+        evidence_paths=evidence_paths,
+    )
+    _validate_router_owned_check_proof(
+        project_root,
+        run_root,
+        check_name="startup_mechanical_checks",
+        audit_path=audit_path,
+    )
+    audit["router_owned_check_proof"] = {
+        "path": proof_record["proof_path"],
+        "schema_version": ROUTER_OWNED_CHECK_PROOF_SCHEMA,
+    }
+    return audit
+
+
+def _validate_startup_external_fact_review(
+    payload: dict[str, Any],
+    requirements: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if not requirements:
+        return {
+            "reviewed_by_role": "human_like_reviewer",
+            "reviewer_required_external_fact_count": 0,
+            "reviewer_checked_requirement_ids": [],
+            "self_attested_ai_claims_accepted_as_proof": False,
+        }
+    review = payload.get("external_fact_review")
+    if not isinstance(review, dict):
+        raise RouterError("startup fact report requires external_fact_review for non-router-checkable facts")
+    if review.get("reviewed_by_role") != "human_like_reviewer":
+        raise RouterError("external_fact_review must be reviewed_by_role=human_like_reviewer")
+    if review.get("used_router_mechanical_audit") is not True:
+        raise RouterError("external_fact_review must acknowledge the router mechanical audit")
+    if review.get("self_attested_ai_claims_accepted_as_proof") is not False:
+        raise RouterError("external_fact_review cannot accept self-attested AI claims as proof")
+    checked_ids = review.get("reviewer_checked_requirement_ids")
+    if not isinstance(checked_ids, list):
+        raise RouterError("external_fact_review requires reviewer_checked_requirement_ids list")
+    checked = {str(item) for item in checked_ids}
+    required = {str(item["id"]) for item in requirements if item.get("id")}
+    missing = sorted(required - checked)
+    if missing:
+        raise RouterError(f"external_fact_review missing required checks: {', '.join(missing)}")
+    direct_paths = review.get("direct_evidence_paths_checked")
+    if not isinstance(direct_paths, list) or not direct_paths:
+        raise RouterError("external_fact_review requires direct_evidence_paths_checked")
+    return {
+        "reviewed_by_role": "human_like_reviewer",
+        "used_router_mechanical_audit": True,
+        "reviewer_required_external_fact_count": len(requirements),
+        "reviewer_checked_requirement_ids": sorted(checked),
+        "direct_evidence_paths_checked": direct_paths,
+        "self_attested_ai_claims_accepted_as_proof": False,
+        "notes": review.get("notes"),
+    }
+
+
 def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("reviewed_by_role") != "human_like_reviewer":
@@ -2945,6 +3346,11 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
     blockers = [name for name, ok in computed_checks.items() if not ok]
     if blockers:
         raise RouterError(f"startup facts are not clean: {', '.join(sorted(blockers))}")
+    mechanical_audit = _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
+    external_fact_review = _validate_startup_external_fact_review(
+        payload,
+        mechanical_audit["reviewer_required_external_facts"],
+    )
     write_json(
         run_root / "startup" / "startup_fact_report.json",
         {
@@ -2953,6 +3359,10 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
             "reviewed_by_role": "human_like_reviewer",
             "passed": True,
             "checks": computed_checks,
+            "startup_mechanical_audit_path": project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json"),
+            "router_owned_check_proof_path": mechanical_audit["router_owned_check_proof"]["path"],
+            "reviewer_required_external_facts": mechanical_audit["reviewer_required_external_facts"],
+            "external_fact_review": external_fact_review,
             "reported_at": utc_now(),
             **_role_output_envelope_record(payload),
         },
@@ -2999,7 +3409,12 @@ def _startup_route_sign_payload(project_root: Path, *, write: bool, mark_chat_di
     )
 
 
-def _write_display_surface_status(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
+def _write_display_surface_status(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    display_confirmation: dict[str, Any],
+) -> None:
     answers = _startup_answers_from_run(run_root)
     requested = str(answers.get("display_surface") or "chat route signs")
     requested_normalized = requested.lower()
@@ -3022,6 +3437,7 @@ def _write_display_surface_status(project_root: Path, run_root: Path, run_state:
             "route_sign_mermaid_sha256": route_sign["mermaid_sha256"],
             "chat_display_required": route_sign["chat_display_required"],
             "chat_displayed_by_controller": True,
+            "user_dialog_display_confirmation": display_confirmation,
             "generated_files_alone_satisfy_chat_display": False,
             "controller_display_rule": "Controller must paste the router-provided display_text Mermaid block in chat before applying this action; generated files alone do not satisfy display.",
             "cockpit_status": "not_started_in_router_runtime",
@@ -3875,6 +4291,7 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
         "native_plan_projection": projection,
         "host_action": "replace_visible_plan",
         "controller_may_invent_route_items": False,
+        **_display_plan_user_dialog_fields(projection),
     }
 
 
@@ -4721,9 +5138,11 @@ def _validate_packet_group_for_reviewer(
 ) -> None:
     audits: list[dict[str, Any]] = []
     blockers: list[str] = []
+    evidence_paths: list[Path] = []
     for record in records:
         packet_path = _packet_envelope_path_from_record(project_root, run_state, record)
         result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+        evidence_paths.extend([packet_path, result_path])
         packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
         result_envelope = packet_runtime.load_envelope(project_root, result_path)
         audit = packet_runtime.validate_for_reviewer(
@@ -4734,18 +5153,37 @@ def _validate_packet_group_for_reviewer(
         )
         audits.append(audit)
         blockers.extend(str(blocker) for blocker in audit.get("blockers") or [])
+    run_root = project_root / str(run_state["run_root"])
+    proof_path = _router_owned_check_proof_path(audit_path)
     write_json(
         audit_path,
         {
             "schema_version": "flowpilot.packet_group_reviewer_audit.v1",
             "run_id": run_state["run_id"],
             "reviewed_by_role": "human_like_reviewer",
+            "router_replacement_scope": "mechanical_only",
+            "self_attested_ai_claims_accepted_as_proof": False,
+            "router_owned_check_proof_path": project_relative(project_root, proof_path),
             "packet_count": len(records),
             "audits": audits,
             "blockers": blockers,
             "passed": not blockers,
             "reviewed_at": utc_now(),
         },
+    )
+    _write_router_owned_check_proof(
+        project_root,
+        run_root,
+        check_name="packet_group_reviewer_audit",
+        audit_path=audit_path,
+        source_kind="packet_runtime_hash",
+        evidence_paths=evidence_paths,
+    )
+    _validate_router_owned_check_proof(
+        project_root,
+        run_root,
+        check_name="packet_group_reviewer_audit",
+        audit_path=audit_path,
     )
     if blockers:
         raise RouterError(f"packet group reviewer audit failed: {blockers}")
@@ -5225,8 +5663,8 @@ def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str
         raise RouterError("current-node reviewer pass must be reviewed_by_role=human_like_reviewer")
     if payload.get("passed") is not True:
         raise RouterError("current-node reviewer pass must explicitly pass")
-    packet_envelope, _ = _current_node_packet_context(project_root, run_state)
-    result_envelope, _ = _current_node_result_context(project_root, run_state)
+    packet_envelope, packet_envelope_path = _current_node_packet_context(project_root, run_state)
+    result_envelope, result_envelope_path = _current_node_result_context(project_root, run_state)
     raw_agent_map = payload.get("agent_role_map")
     agent_role_map = raw_agent_map if isinstance(raw_agent_map, dict) else None
     audit = packet_runtime.validate_for_reviewer(
@@ -5234,6 +5672,49 @@ def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str
         packet_envelope=packet_envelope,
         result_envelope=result_envelope,
         agent_role_map=agent_role_map,
+    )
+    run_root = project_root / str(run_state["run_root"])
+    frontier = _active_frontier(run_root)
+    audit_path = _active_node_root(run_root, frontier) / "reviews" / "current_node_packet_runtime_audit.json"
+    proof_path = _router_owned_check_proof_path(audit_path)
+    packet_body_path = resolve_project_path(project_root, str(packet_envelope.get("body_path") or ""))
+    result_body_path = resolve_project_path(project_root, str(result_envelope.get("result_body_path") or ""))
+    write_json(
+        audit_path,
+        {
+            "schema_version": "flowpilot.current_node_packet_runtime_audit.v1",
+            "run_id": run_state["run_id"],
+            "route_id": str(frontier["active_route_id"]),
+            "route_version": int(frontier.get("route_version") or 0),
+            "node_id": str(frontier["active_node_id"]),
+            "reviewed_by_role": "human_like_reviewer",
+            "router_replacement_scope": "mechanical_only",
+            "self_attested_ai_claims_accepted_as_proof": False,
+            "router_owned_check_proof_path": project_relative(project_root, proof_path),
+            "audit": audit,
+            "passed": bool(audit.get("passed")),
+            "blockers": audit.get("blockers") or [],
+            "reviewed_at": utc_now(),
+        },
+    )
+    _write_router_owned_check_proof(
+        project_root,
+        run_root,
+        check_name="current_node_packet_runtime_audit",
+        audit_path=audit_path,
+        source_kind="packet_runtime_hash",
+        evidence_paths=[
+            packet_envelope_path,
+            result_envelope_path,
+            packet_body_path,
+            result_body_path,
+        ],
+    )
+    _validate_router_owned_check_proof(
+        project_root,
+        run_root,
+        check_name="current_node_packet_runtime_audit",
+        audit_path=audit_path,
     )
     if not audit.get("passed"):
         raise RouterError(f"reviewer pass rejected by packet audit: {audit.get('blockers')}")
@@ -6076,8 +6557,11 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         state["startup_state"] = "answers_complete"
     elif action_type == "emit_startup_banner":
         banner = _startup_banner_display()
+        confirmation = _display_confirmation_for_action(payload, pending)
+        banner["dialog_display_confirmation"] = confirmation
         state["startup_banner_path"] = banner["display_path"]
         state["startup_banner_display"] = banner
+        state["startup_banner_dialog_display_confirmation"] = confirmation
         result_extra.update(banner)
     elif action_type == "create_run_shell":
         run_id = str(payload.get("run_id") or state.get("run_id") or _create_run_id())
@@ -6314,6 +6798,7 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
     allowed_writes = [
         project_relative(project_root, run_state_path(run_root)),
         project_relative(project_root, _route_state_snapshot_path(run_root)),
+        project_relative(project_root, run_root / "display" / "user_dialog_display_ledger.json"),
     ]
     if not sync_payload["display_plan_exists"]:
         allowed_writes.append(project_relative(project_root, _display_plan_path(run_root)))
@@ -6321,7 +6806,7 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
         action_type="sync_display_plan",
         actor="controller",
         label="controller_syncs_display_plan",
-        summary="Replace the host visible plan from the run display_plan.json, or clear it to a waiting-for-PM placeholder before PM writes a route.",
+        summary="Display the route map in the user dialog, then replace the host visible plan from the run display_plan.json or clear it to a waiting-for-PM placeholder.",
         allowed_reads=[
             project_relative(project_root, _display_plan_path(run_root)),
             project_relative(project_root, _route_state_snapshot_path(run_root)),
@@ -6345,6 +6830,18 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
     answers = _startup_answers_from_run(run_root)
     requested_display_surface = str(answers.get("display_surface") or "chat")
     cockpit_requested = requested_display_surface == "cockpit"
+    display_gate = _user_dialog_display_gate(
+        {
+            "display_text": route_sign["markdown"],
+            "display_text_format": "markdown_mermaid",
+            "display_required": True,
+            "controller_must_display_text_before_apply": True,
+            "generated_files_alone_satisfy_chat_display": False,
+            "controller_display_rule": "Paste this exact startup route-sign display_text in the user dialog before applying write_display_surface_status; generated files alone do not satisfy display.",
+        },
+        display_kind="startup_route_sign",
+        display_text=route_sign["markdown"],
+    )
     return make_action(
         action_type="write_display_surface_status",
         actor="controller",
@@ -6361,14 +6858,12 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
             project_relative(project_root, run_root / "diagrams" / "user-flow-diagram.mmd"),
             project_relative(project_root, run_root / "diagrams" / "user-flow-diagram.md"),
             project_relative(project_root, run_root / "diagrams" / "user-flow-diagram-display.json"),
+            project_relative(project_root, run_root / "display" / "user_dialog_display_ledger.json"),
             project_relative(project_root, run_state_path(run_root)),
         ],
         extra={
             "postcondition": "startup_display_status_written",
-            "display_text": route_sign["markdown"],
-            "display_text_format": "markdown_mermaid",
-            "controller_must_display_text_before_apply": True,
-            "generated_files_alone_satisfy_chat_display": False,
+            **display_gate,
             "chat_display_required": route_sign["chat_display_required"],
             "route_sign_mermaid_sha256": route_sign["mermaid_sha256"],
             "requested_display_surface": requested_display_surface,
@@ -6888,12 +7383,14 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             raise RouterError("resume role rehydration requires load_resume_state first")
         _write_resume_role_rehydration_report(project_root, run_root, run_state, payload or {})
     elif action_type == "sync_display_plan":
+        confirmation = _display_confirmation_for_action(payload, pending)
         sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         if not sync_payload["display_plan_exists"]:
             write_json(_display_plan_path(run_root), _waiting_for_pm_display_plan(run_state))
             sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         _write_route_state_snapshot(project_root, run_root, run_state, source_event="sync_display_plan")
         sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+        _append_user_dialog_display_ledger(project_root, run_root, confirmation)
         run_state["visible_plan_sync"] = {
             "display_plan_path": sync_payload["display_plan_path"],
             "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
@@ -6901,9 +7398,12 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "projection_hash": sync_payload["projection_hash"],
             "synced_at": utc_now(),
             "host_action": sync_payload["host_action"],
+            "user_dialog_display_confirmation": confirmation,
         }
     elif action_type == "write_display_surface_status":
-        _write_display_surface_status(project_root, run_root, run_state)
+        confirmation = _display_confirmation_for_action(payload, pending)
+        _write_display_surface_status(project_root, run_root, run_state, confirmation)
+        _append_user_dialog_display_ledger(project_root, run_root, confirmation)
         run_state["flags"]["startup_display_status_written"] = True
     elif action_type == "handle_control_blocker":
         _mark_control_blocker_delivered(project_root, run_root, run_state, pending)
@@ -6918,6 +7418,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     result = {"ok": True, "applied": action_type}
     if action_type == "sync_display_plan":
         result.update(_display_plan_sync_payload(project_root, run_root, run_state))
+        result["user_dialog_display_confirmation"] = run_state["visible_plan_sync"]["user_dialog_display_confirmation"]
     return result
 
 

@@ -20,4 +20,9 @@ Check:
 - completion report-only evidence is not closing a gate that needs direct
   inspection or executable proof.
 
+Router ledgers and router-owned proofs may settle counts, hashes, freshness
+markers, and stale/resource disposition only when the proof is non-self-attested
+and `mechanical_only`. They do not replace your evidence legitimacy and
+route-fit judgement.
+
 Pass only when unresolved evidence count and unresolved resource count are zero.
