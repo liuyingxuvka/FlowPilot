@@ -4210,3 +4210,40 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-protocol-contract-model-20260506 - Model and fix FlowPilot prompt contract and router protocol consistency for startup report/control-blocker/hash issues
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing protocol/schema repair required model-first validation
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T20:09:30+00:00
+- Ended: 2026-05-06T20:09:30+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_protocol_contract_conformance_model.py
+
+### Commands
+- OK (0.000s): `python simulations\\run_protocol_contract_conformance_checks.py --model-only --json-out simulations\\protocol_contract_conformance_model_only_results.json`
+- OK (0.000s): `python simulations\\run_protocol_contract_conformance_checks.py --json-out simulations\\protocol_contract_conformance_results.json`
+- OK (0.000s): `python -m pytest tests\\test_flowpilot_router_runtime.py -q`
+- OK (0.000s): `python scripts\\install_flowpilot.py --sync-repo-owned --json`
+
+### Findings
+- Concrete source scan initially detected startup fact JSONPath mismatch, ambiguous PM control-blocker events, weak PM control-blocker decision contract/router validation, and startup fact canonical path/hash alias risk.
+- After source fixes, protocol_contract_conformance current_source_conformance passed while hazard states remained detected.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Full production transcript replay skipped; this model scans source facts and explores protocol states rather than replaying a saved runtime transcript.
+
+### Next Actions
+- Consider adding a concrete runtime transcript replay adapter for startup/control-blocker envelopes if more historical transcripts are retained.
