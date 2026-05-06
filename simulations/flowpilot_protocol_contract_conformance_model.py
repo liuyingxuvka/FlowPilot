@@ -25,6 +25,8 @@ CONTROL_BLOCKER_AMBIGUOUS_EVENT = "control_blocker_ambiguous_event"
 CONTROL_BLOCKER_WEAK_DECISION_CONTRACT = "control_blocker_weak_decision_contract"
 STARTUP_FACT_HASH_ALIAS = "startup_fact_hash_alias"
 COCKPIT_MISSING_HOST_RECEIPT = "cockpit_missing_host_receipt"
+DISPLAY_FALLBACK_AFTER_PM_ACTIVATION = "display_fallback_after_pm_activation"
+STARTUP_REPAIR_DEDUPES_NEW_REPORT = "startup_repair_dedupes_new_report"
 
 NEGATIVE_SCENARIOS = (
     STARTUP_FACT_JSONPATH_MISMATCH,
@@ -32,6 +34,8 @@ NEGATIVE_SCENARIOS = (
     CONTROL_BLOCKER_WEAK_DECISION_CONTRACT,
     STARTUP_FACT_HASH_ALIAS,
     COCKPIT_MISSING_HOST_RECEIPT,
+    DISPLAY_FALLBACK_AFTER_PM_ACTIVATION,
+    STARTUP_REPAIR_DEDUPES_NEW_REPORT,
 )
 SCENARIOS = (VALID_FIXED_PROTOCOL, *NEGATIVE_SCENARIOS)
 
@@ -93,6 +97,11 @@ class State:
     display_requested_cockpit: bool = False
     display_has_host_receipt: bool = False
     display_has_explicit_fallback: bool = False
+    display_status_available_before_startup_fact_review: bool = True
+
+    startup_repair_request_repeatable_for_new_blocking_report: bool = True
+    startup_repair_request_tracks_cycle_identity: bool = True
+    startup_repair_exact_duplicate_rejected: bool = True
 
     router_decision: str = "none"  # none | accept | reject
     router_rejection_reason: str = "none"
@@ -220,6 +229,21 @@ def _scenario_state(scenario: str) -> State:
             display_has_host_receipt=False,
             display_has_explicit_fallback=False,
         )
+    if scenario == DISPLAY_FALLBACK_AFTER_PM_ACTIVATION:
+        return replace(
+            state,
+            display_requested_cockpit=True,
+            display_has_host_receipt=False,
+            display_has_explicit_fallback=True,
+            display_status_available_before_startup_fact_review=False,
+        )
+    if scenario == STARTUP_REPAIR_DEDUPES_NEW_REPORT:
+        return replace(
+            state,
+            startup_repair_request_repeatable_for_new_blocking_report=False,
+            startup_repair_request_tracks_cycle_identity=False,
+            startup_repair_exact_duplicate_rejected=False,
+        )
     return state
 
 
@@ -285,11 +309,29 @@ def _hash_lifecycle_failures(state: State) -> list[str]:
 
 
 def _display_receipt_failures(state: State) -> list[str]:
+    failures: list[str] = []
     if state.display_requested_cockpit and not (
         state.display_has_host_receipt or state.display_has_explicit_fallback
     ):
-        return ["cockpit requested without host receipt or explicit fallback receipt"]
-    return []
+        failures.append("cockpit requested without host receipt or explicit fallback receipt")
+    if (
+        state.display_requested_cockpit
+        and state.display_has_explicit_fallback
+        and not state.display_status_available_before_startup_fact_review
+    ):
+        failures.append("display fallback receipt is unavailable before startup reviewer fact review")
+    return failures
+
+
+def _startup_repair_cycle_failures(state: State) -> list[str]:
+    failures: list[str] = []
+    if not state.startup_repair_request_repeatable_for_new_blocking_report:
+        failures.append("startup repair event is deduped by a one-shot flag instead of current report and decision identity")
+    if not state.startup_repair_request_tracks_cycle_identity:
+        failures.append("startup repair request does not record repair cycle identity and current blocking report hash")
+    if not state.startup_repair_exact_duplicate_rejected:
+        failures.append("startup repair exact duplicate replay is not rejected or ignored distinctly from a new repair cycle")
+    return failures
 
 
 def protocol_failures(state: State) -> list[str]:
@@ -299,6 +341,7 @@ def protocol_failures(state: State) -> list[str]:
     failures.extend(_control_blocker_contract_failures(state))
     failures.extend(_hash_lifecycle_failures(state))
     failures.extend(_display_receipt_failures(state))
+    failures.extend(_startup_repair_cycle_failures(state))
     return failures
 
 
@@ -530,6 +573,47 @@ def _router_blocks_startup_fact_canonical_alias(router_source: str) -> bool:
     return "canonical startup_fact_report.json" in segment and "report_path" in segment
 
 
+def _display_status_available_before_startup_fact_review(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_next_startup_display_action")
+    if not segment:
+        return False
+    if "startup_activation_approved" in segment:
+        return False
+    compute_segment = _function_segment(router_source, "compute_controller_action")
+    display_index = compute_segment.find("_next_startup_display_action")
+    system_card_index = compute_segment.find("_next_system_card_action")
+    return display_index != -1 and system_card_index != -1 and display_index < system_card_index
+
+
+def _startup_repair_request_repeatable_for_new_blocking_report(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_record_external_event_unchecked")
+    return (
+        "repeatable_startup_repair_request" in segment
+        and "pm_requests_startup_repair" in segment
+        and "startup_fact_reported" in segment
+        and "pm_startup_activation_card_delivered" in segment
+    )
+
+
+def _startup_repair_request_tracks_cycle_identity(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_write_startup_repair_request")
+    return (
+        "startup_repair_cycle" in segment
+        and "blocked_report_hash" in segment
+        and "decision_hash" in segment
+        and "startup_repair_requests.json" in segment
+    )
+
+
+def _startup_repair_exact_duplicate_rejected(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_write_startup_repair_request")
+    return (
+        "last_decision_hash" in segment
+        and "fresh PM decision" in segment
+        and "startup repair request repeats the previous PM decision" in segment
+    )
+
+
 def _startup_role_may_submit_to_canonical_path(card_text: str) -> bool:
     lower = card_text.lower()
     asks_for_startup_fact_report_file = "startup fact report file" in lower
@@ -579,8 +663,19 @@ def collect_source_state(project_root: Path) -> State:
         router_rewrites_startup_fact_canonical=_router_rewrites_startup_fact_canonical(router_source),
         startup_role_may_submit_to_canonical_path=_startup_role_may_submit_to_canonical_path(startup_card_text),
         router_blocks_startup_fact_canonical_alias=_router_blocks_startup_fact_canonical_alias(router_source),
-        display_requested_cockpit=False,
-        display_has_host_receipt=True,
+        display_requested_cockpit=True,
+        display_has_host_receipt=False,
+        display_has_explicit_fallback=True,
+        display_status_available_before_startup_fact_review=_display_status_available_before_startup_fact_review(
+            router_source
+        ),
+        startup_repair_request_repeatable_for_new_blocking_report=_startup_repair_request_repeatable_for_new_blocking_report(
+            router_source
+        ),
+        startup_repair_request_tracks_cycle_identity=_startup_repair_request_tracks_cycle_identity(
+            router_source
+        ),
+        startup_repair_exact_duplicate_rejected=_startup_repair_exact_duplicate_rejected(router_source),
     )
 
 

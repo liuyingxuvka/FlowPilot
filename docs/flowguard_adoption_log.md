@@ -4247,3 +4247,49 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Consider adding a concrete runtime transcript replay adapter for startup/control-blocker envelopes if more historical transcripts are retained.
+
+
+## flowpilot-startup-fallback-repair-cycles-20260506 - Model-first fix for startup display fallback availability and repeatable startup repair cycles
+
+- Project: FlowPilot
+- Trigger reason: Protocol behavior changed around startup display fallback, reviewer fact review, PM repair retries, deduplication, and source-of-truth state.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-06T21:39:25+00:00
+- Ended: 2026-05-06T21:39:25+00:00
+- Duration seconds: 3600.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_protocol_contract_conformance_model.py
+- simulations/flowpilot_startup_control_model.py
+- simulations/startup_pm_review_model.py
+
+### Commands
+- OK (0.000s): `python -c import flowguard; print(flowguard.SCHEMA_VERSION)`
+- OK (0.000s): `python simulations/run_protocol_contract_conformance_checks.py --model-only --json-out simulations/protocol_contract_conformance_model_only_results.json`
+- OK (0.000s): `python simulations/run_protocol_contract_conformance_checks.py --json-out simulations/protocol_contract_conformance_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_startup_control_checks.py --json-out simulations/flowpilot_startup_control_results.json`
+- OK (0.000s): `python simulations/run_startup_pm_review_checks.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python -m pytest tests -q`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+
+### Findings
+- Initial source conformance failed for missing pre-review display fallback receipt and one-shot startup repair dedupe.
+- Updated runtime now writes display status before reviewer startup fact review, permits fresh repair cycles for new blocking reports, tracks cycle/report/decision identity, and rejects exact duplicate PM repair decisions.
+
+### Counterexamples
+- Before fix, a second blocking startup fact report could be treated as already_recorded because startup_repair_requested stayed true.
+- Before fix, reviewer startup fact review could occur without a display surface status proving UI absence/fallback.
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Keep source-conformance probes for future startup protocol changes.

@@ -186,11 +186,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def deliver_expected_card(self, root: Path, card_id: str) -> dict:
         action = self.next_after_display_sync(root)
-        if action["action_type"] == "write_startup_mechanical_audit":
-            router.apply_action(root, "write_startup_mechanical_audit")
-            action = self.next_after_display_sync(root)
-        if action["action_type"] == "check_prompt_manifest":
-            router.apply_action(root, "check_prompt_manifest")
+        while action["action_type"] in {
+            "check_prompt_manifest",
+            "write_startup_mechanical_audit",
+            "write_display_surface_status",
+        }:
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
             action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "deliver_system_card")
         self.assertEqual(action["card_id"], card_id)
@@ -296,6 +297,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_user_intake_mail(root)
 
     def complete_startup_activation(self, root: Path) -> None:
+        run_root = self.run_root_for(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
         router.record_external_event(root, "pm_first_decision_resets_controller")
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
@@ -319,29 +321,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"approved_by_role": "project_manager", "decision": "approved"},
             ),
         )
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "write_display_surface_status")
-        self.assertIn("display_text", action)
-        self.assertIn("```mermaid", action["display_text"])
-        self.assertTrue(action["controller_must_display_text_before_apply"])
-        self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
-        self.assertEqual(
-            action["payload_template"]["display_confirmation"]["action_type"],
-            "write_display_surface_status",
-        )
-        self.assertEqual(
-            action["payload_template"]["display_confirmation"]["display_text_sha256"],
-            action["display_text_sha256"],
-        )
-        self.assertEqual(action["payload_contract"]["name"], "display_surface_receipt")
-        self.assert_payload_contract_mentions(
-            action["payload_contract"],
-            "display_surface_receipt.schema_version",
-            "display_surface_receipt.actual_surface",
-            "display_surface_receipt.host_display_surface_verified",
-            "flowpilot.display_surface_receipt.v1",
-        )
-        router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
+        self.assertTrue((run_root / "display" / "display_surface.json").exists())
 
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
         router.apply_action(root, str(router.next_action(root)["action_type"]))
@@ -1871,6 +1851,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
 
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
+        self.assertTrue((run_root / "display" / "display_surface.json").exists())
         startup_audit = read_json(run_root / "startup" / "startup_mechanical_audit.json")
         self.assertTrue(startup_audit["mechanical_checks_passed"])
         self.assertFalse(startup_audit["self_attested_ai_claims_accepted_as_proof"])
@@ -1923,12 +1904,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"approved_by_role": "project_manager", "decision": "approved"},
             ),
         )
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "write_display_surface_status")
-        self.assertIn("FlowPilot Route Sign", action["display_text"])
-        self.assertIn("```mermaid", action["display_text"])
-        self.assertEqual(action["resolved_display_surface"], "chat-requested")
-        router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
 
         self.assertTrue((run_root / "startup" / "startup_activation.json").exists())
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
@@ -2064,6 +2039,78 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "write_startup_mechanical_audit")
         router.apply_action(root, "write_startup_mechanical_audit")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+    def test_pm_startup_repair_request_can_repeat_for_new_blocking_report(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        router.record_external_event(root, "pm_first_decision_resets_controller")
+        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+        def submit_blocking_report(name: str, blocker: str) -> None:
+            block_body = self.startup_fact_report_body(root)
+            block_body.update(
+                {
+                    "passed": False,
+                    "checks": {blocker: False},
+                    "blockers": [blocker],
+                }
+            )
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                self.role_report_envelope(root, f"startup/{name}", block_body),
+            )
+
+        def repair_decision(name: str, action: str) -> dict:
+            return self.role_decision_envelope(
+                root,
+                f"startup/{name}",
+                {
+                    "decided_by_role": "project_manager",
+                    "decision": "startup_repair_requested",
+                    "repair_target_kind": "system",
+                    "target_role_or_system": "flowpilot_router",
+                    "repair_action": action,
+                    "blocked_report_path": self.rel(root, run_root / "startup" / "startup_fact_report.json"),
+                    "resume_event": "reviewer_reports_startup_facts",
+                    "resume_condition": "Router repair is complete and reviewer writes a fresh startup fact report.",
+                },
+            )
+
+        submit_blocking_report("reviewer_startup_fact_block_1", "startup_user_answer_authenticity")
+        self.deliver_expected_card(root, "pm.startup_activation")
+        first_decision = repair_decision(
+            "pm_startup_repair_request_1",
+            "rewrite_startup_mechanical_audit_and_reissue_reviewer_fact_check",
+        )
+        first_result = router.record_external_event(root, "pm_requests_startup_repair", first_decision)
+        self.assertNotIn("already_recorded", first_result)
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["startup_repair_request"]["startup_repair_cycle"], 1)
+
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+        submit_blocking_report("reviewer_startup_fact_block_2", "cockpit_or_display_fallback_reality")
+        self.deliver_expected_card(root, "pm.startup_activation")
+
+        with self.assertRaisesRegex(router.RouterError, "repeats the previous PM decision"):
+            router.record_external_event(root, "pm_requests_startup_repair", first_decision)
+
+        second_result = router.record_external_event(
+            root,
+            "pm_requests_startup_repair",
+            repair_decision(
+                "pm_startup_repair_request_2",
+                "write_display_surface_receipt_and_reissue_reviewer_fact_check",
+            ),
+        )
+        self.assertNotIn("already_recorded", second_result)
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["startup_repair_request"]["startup_repair_cycle"], 2)
+        ledger = read_json(run_root / "startup" / "startup_repair_requests.json")
+        self.assertEqual(ledger["latest_cycle"], 2)
+        self.assertEqual(len(ledger["entries"]), 2)
 
     def test_cockpit_requested_startup_display_records_chat_fallback_mermaid(self) -> None:
         root = self.make_project()

@@ -8,12 +8,13 @@
   },
   "counts": {
     "accepted": 1,
-    "edges": 12,
-    "rejected": 5,
-    "states": 13
+    "edges": 16,
+    "rejected": 7,
+    "states": 17
   },
   "current_source": {
     "facts": {
+      "display_status_available_before_startup_fact_review": true,
       "pm_control_blocker_allowed_events": [
         "pm_records_control_blocker_repair_decision"
       ],
@@ -99,6 +100,9 @@
         "residual_risks",
         "reviewed_by_role"
       ],
+      "startup_repair_exact_duplicate_rejected": true,
+      "startup_repair_request_repeatable_for_new_blocking_report": true,
+      "startup_repair_request_tracks_cycle_identity": true,
       "startup_role_may_submit_to_canonical_path": false,
       "startup_router_validator_paths": [
         "external_fact_review",
@@ -118,8 +122,10 @@
     "cockpit_missing_host_receipt": "detected",
     "control_blocker_ambiguous_event": "detected",
     "control_blocker_weak_decision_contract": "detected",
+    "display_fallback_after_pm_activation": "detected",
     "startup_fact_hash_alias": "detected",
-    "startup_fact_jsonpath_mismatch": "detected"
+    "startup_fact_jsonpath_mismatch": "detected",
+    "startup_repair_dedupes_new_report": "detected"
   },
   "ok": true,
   "skipped_checks": {

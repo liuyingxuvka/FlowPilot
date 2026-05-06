@@ -4116,22 +4116,73 @@ def _write_startup_repair_request(project_root: Path, run_root: Path, run_state:
     fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
     if fact_report.get("passed") is True:
         raise RouterError("startup repair request requires a blocking reviewer startup fact report")
+    current_blocked_report_path = run_root / "startup" / "startup_fact_report.json"
+    if not current_blocked_report_path.exists():
+        raise RouterError("startup repair request requires the current blocking startup_fact_report.json")
+    requested_blocked_report = payload.get("blocked_report_path") or project_relative(project_root, current_blocked_report_path)
+    requested_blocked_report_path = resolve_project_path(project_root, str(requested_blocked_report))
+    if requested_blocked_report_path.resolve() != current_blocked_report_path.resolve():
+        raise RouterError("startup repair request blocked_report_path must be the current canonical startup_fact_report.json")
+    blocked_report_hash = packet_runtime.sha256_file(current_blocked_report_path)
+    envelope = payload.get("_role_output_envelope") if isinstance(payload.get("_role_output_envelope"), dict) else {}
+    decision_hash = str(envelope.get("body_hash") or "")
+    if not decision_hash:
+        raise RouterError("startup repair request requires a file-backed PM decision hash")
+    previous_request = run_state.get("startup_repair_request") if isinstance(run_state.get("startup_repair_request"), dict) else {}
+    last_decision_hash = str(previous_request.get("decision_hash") or "")
+    if last_decision_hash and decision_hash == last_decision_hash:
+        raise RouterError(
+            "startup repair request repeats the previous PM decision; write a fresh PM decision for the current blocking report"
+        )
+    startup_repair_cycle = int(run_state.get("startup_repair_cycle") or 0) + 1
     record = {
         "schema_version": "flowpilot.startup_repair_request.v1",
         "run_id": run_state["run_id"],
+        "startup_repair_cycle": startup_repair_cycle,
         "decided_by_role": "project_manager",
         "decision": "startup_repair_requested",
         "repair_target_kind": payload.get("repair_target_kind") or ("system" if target == "flowpilot_router" else "role"),
         "target_role_or_system": target,
         "repair_action": repair_action,
-        "blocked_report_path": payload.get("blocked_report_path") or project_relative(project_root, run_root / "startup" / "startup_fact_report.json"),
+        "blocked_report_path": project_relative(project_root, current_blocked_report_path),
+        "blocked_report_hash": blocked_report_hash,
+        "decision_path": envelope.get("body_path"),
+        "decision_hash": decision_hash,
         "resume_event": payload.get("resume_event") or "reviewer_reports_startup_facts",
         "resume_condition": payload.get("resume_condition") or "targeted startup repair is complete and reviewer writes a fresh startup fact report",
         "controller_may_invent_repair": False,
         "recorded_at": utc_now(),
         **_role_output_envelope_record(payload),
     }
+    cycle_path = run_root / "startup" / f"startup_repair_request.cycle-{startup_repair_cycle:03d}.json"
+    write_json(cycle_path, record)
     write_json(run_root / "startup" / "startup_repair_request.json", record)
+    ledger_path = run_root / "startup" / "startup_repair_requests.json"
+    ledger = read_json_if_exists(ledger_path)
+    entries = ledger.get("entries") if isinstance(ledger.get("entries"), list) else []
+    entries.append(
+        {
+            "startup_repair_cycle": startup_repair_cycle,
+            "path": project_relative(project_root, cycle_path),
+            "blocked_report_path": record["blocked_report_path"],
+            "blocked_report_hash": blocked_report_hash,
+            "decision_path": record["decision_path"],
+            "decision_hash": decision_hash,
+            "target_role_or_system": target,
+            "repair_action": repair_action,
+            "recorded_at": record["recorded_at"],
+        }
+    )
+    write_json(
+        ledger_path,
+        {
+            "schema_version": "flowpilot.startup_repair_requests.v1",
+            "run_id": run_state["run_id"],
+            "entries": entries,
+            "latest_cycle": startup_repair_cycle,
+            "updated_at": utc_now(),
+        },
+    )
     for flag in (
         "startup_fact_reported",
         "pm_startup_activation_card_delivered",
@@ -4140,10 +4191,16 @@ def _write_startup_repair_request(project_root: Path, run_root: Path, run_state:
         "reviewer_startup_fact_check_card_delivered",
     ):
         run_state["flags"][flag] = False
+    run_state["startup_repair_cycle"] = startup_repair_cycle
     run_state["startup_repair_request"] = {
         "path": project_relative(project_root, run_root / "startup" / "startup_repair_request.json"),
+        "cycle_path": project_relative(project_root, cycle_path),
+        "ledger_path": project_relative(project_root, ledger_path),
+        "startup_repair_cycle": startup_repair_cycle,
         "target_role_or_system": target,
         "repair_action": repair_action,
+        "blocked_report_hash": blocked_report_hash,
+        "decision_hash": decision_hash,
         "resume_event": record["resume_event"],
     }
 
@@ -7807,7 +7864,7 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
 
 def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     flags = run_state["flags"]
-    if not flags.get("startup_activation_approved"):
+    if not flags.get("controller_role_confirmed"):
         return None
     if flags.get("startup_display_status_written"):
         return None
@@ -7831,10 +7888,9 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
         action_type="write_display_surface_status",
         actor="controller",
         label="controller_writes_startup_display_surface_status",
-        summary="Display the startup FlowPilot Route Sign Mermaid in chat, then write startup display-surface status after PM startup activation.",
+        summary="Display the startup FlowPilot Route Sign Mermaid in chat, then write startup display-surface status before reviewer startup fact review.",
         allowed_reads=[
             project_relative(project_root, run_root / "startup_answers.json"),
-            project_relative(project_root, run_root / "startup" / "startup_activation.json"),
             project_relative(project_root, run_root / "execution_frontier.json"),
         ],
         allowed_writes=[
@@ -8518,7 +8574,15 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         and active_blocker.get("delivery_status") == "delivered"
         and active_blocker.get("handling_lane") == "pm_repair_decision_required"
     )
-    if run_state["flags"].get(flag) and not repeatable_pm_repair_decision:
+    repeatable_startup_repair_request = (
+        event == "pm_requests_startup_repair"
+        and run_state["flags"].get(flag)
+        and run_state["flags"].get("startup_fact_reported")
+        and run_state["flags"].get("pm_startup_activation_card_delivered")
+    )
+    if run_state["flags"].get(flag) and not (
+        repeatable_pm_repair_decision or repeatable_startup_repair_request
+    ):
         resolved = _resolve_delivered_control_blocker(
             project_root,
             run_root,

@@ -25,12 +25,16 @@ REQUIRED_LABELS = (
     "select_control_blocker_weak_decision_contract",
     "select_startup_fact_hash_alias",
     "select_cockpit_missing_host_receipt",
+    "select_display_fallback_after_pm_activation",
+    "select_startup_repair_dedupes_new_report",
     "router_accepts_conformant_protocol",
     "router_rejects_startup_fact_jsonpath_mismatch",
     "router_rejects_control_blocker_ambiguous_event",
     "router_rejects_control_blocker_weak_decision_contract",
     "router_rejects_startup_fact_hash_alias",
     "router_rejects_cockpit_missing_host_receipt",
+    "router_rejects_display_fallback_after_pm_activation",
+    "router_rejects_startup_repair_dedupes_new_report",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -39,6 +43,8 @@ HAZARD_EXPECTED_FAILURES = {
     "control_blocker_weak_decision_contract": "PM control-blocker output contract",
     "startup_fact_hash_alias": "startup fact role submission can alias",
     "cockpit_missing_host_receipt": "cockpit requested without host receipt",
+    "display_fallback_after_pm_activation": "display fallback receipt is unavailable before startup reviewer fact review",
+    "startup_repair_dedupes_new_report": "startup repair event is deduped by a one-shot flag",
 }
 
 
@@ -198,6 +204,10 @@ def _check_current_source() -> dict[str, object]:
             "router_rewrites_startup_fact_canonical": state.router_rewrites_startup_fact_canonical,
             "startup_role_may_submit_to_canonical_path": state.startup_role_may_submit_to_canonical_path,
             "router_blocks_startup_fact_canonical_alias": state.router_blocks_startup_fact_canonical_alias,
+            "display_status_available_before_startup_fact_review": state.display_status_available_before_startup_fact_review,
+            "startup_repair_request_repeatable_for_new_blocking_report": state.startup_repair_request_repeatable_for_new_blocking_report,
+            "startup_repair_request_tracks_cycle_identity": state.startup_repair_request_tracks_cycle_identity,
+            "startup_repair_exact_duplicate_rejected": state.startup_repair_exact_duplicate_rejected,
         },
     }
 
