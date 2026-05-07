@@ -1,0 +1,246 @@
+{
+  "checked_at": "2026-05-07T22:12:58Z",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=16 initial_states=1 traces=272",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "hazards": {
+      "agent_id_role_string": {
+        "detected": true,
+        "expected_failure": "reviewer pass occurred without complete packet/result receipts and agent role authority",
+        "failures": [
+          "reviewer pass occurred without complete packet/result receipts and agent role authority"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": true,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": true,
+          "packet_open_envelope_receipt": true,
+          "packet_open_ledger_receipt": true,
+          "packet_relayed_by_controller": true,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_envelope_exists": true,
+          "result_ledger_absorbed": true,
+          "result_open_envelope_receipt": true,
+          "result_open_ledger_receipt": true,
+          "result_relayed_by_controller": true,
+          "reviewer_dispatch_passed": true,
+          "reviewer_runtime_audit_passed": true,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      },
+      "packet_open_envelope_only": {
+        "detected": true,
+        "expected_failure": "result relay occurred before packet open receipts and result ledger absorption",
+        "failures": [
+          "result relay occurred before packet open receipts and result ledger absorption"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": true,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": true,
+          "packet_open_envelope_receipt": true,
+          "packet_open_ledger_receipt": false,
+          "packet_relayed_by_controller": true,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_envelope_exists": true,
+          "result_ledger_absorbed": true,
+          "result_open_envelope_receipt": false,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": true,
+          "reviewer_dispatch_passed": true,
+          "reviewer_runtime_audit_passed": false,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      },
+      "pm_absorbs_without_packet_group_audit": {
+        "detected": true,
+        "expected_failure": "PM absorbed research before reviewer packet-group runtime audit passed",
+        "failures": [
+          "PM absorbed research before reviewer packet-group runtime audit passed"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": false,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": false,
+          "packet_open_envelope_receipt": false,
+          "packet_open_ledger_receipt": false,
+          "packet_relayed_by_controller": false,
+          "pm_absorbed_reviewed_research": true,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_envelope_exists": false,
+          "result_ledger_absorbed": false,
+          "result_open_envelope_receipt": false,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": false,
+          "reviewer_dispatch_passed": false,
+          "reviewer_runtime_audit_passed": false,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      },
+      "pm_decision_clears_blocker_without_followup": {
+        "detected": true,
+        "expected_failure": "PM repair decision cleared blocker without corrected follow-up re-audit",
+        "failures": [
+          "PM repair decision cleared blocker without corrected follow-up re-audit"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": false,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": false,
+          "packet_open_envelope_receipt": false,
+          "packet_open_ledger_receipt": false,
+          "packet_relayed_by_controller": false,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": true,
+          "result_envelope_exists": false,
+          "result_ledger_absorbed": false,
+          "result_open_envelope_receipt": false,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": false,
+          "reviewer_dispatch_passed": false,
+          "reviewer_runtime_audit_passed": false,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      },
+      "result_open_envelope_only": {
+        "detected": true,
+        "expected_failure": "reviewer pass occurred without complete packet/result receipts and agent role authority",
+        "failures": [
+          "reviewer pass occurred without complete packet/result receipts and agent role authority"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": true,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": true,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": true,
+          "packet_open_envelope_receipt": true,
+          "packet_open_ledger_receipt": true,
+          "packet_relayed_by_controller": true,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_envelope_exists": true,
+          "result_ledger_absorbed": true,
+          "result_open_envelope_receipt": true,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": true,
+          "reviewer_dispatch_passed": true,
+          "reviewer_runtime_audit_passed": true,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      },
+      "result_without_ledger_absorption": {
+        "detected": true,
+        "expected_failure": "result relay occurred before packet open receipts and result ledger absorption",
+        "failures": [
+          "result relay occurred before packet open receipts and result ledger absorption"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": true,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": true,
+          "packet_open_envelope_receipt": true,
+          "packet_open_ledger_receipt": true,
+          "packet_relayed_by_controller": true,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_envelope_exists": true,
+          "result_ledger_absorbed": false,
+          "result_open_envelope_receipt": false,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": true,
+          "reviewer_dispatch_passed": true,
+          "reviewer_runtime_audit_passed": false,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      },
+      "stale_hash_after_body_repair": {
+        "detected": true,
+        "expected_failure": "dispatch passed without envelope/ledger packet body hash identity",
+        "failures": [
+          "dispatch passed without envelope/ledger packet body hash identity"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "dispatch_gate_checked": true,
+          "followup_reaudit_passed": false,
+          "packet_body_hash_identity_synced": false,
+          "packet_open_envelope_receipt": false,
+          "packet_open_ledger_receipt": false,
+          "packet_relayed_by_controller": false,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_envelope_exists": false,
+          "result_ledger_absorbed": false,
+          "result_open_envelope_receipt": false,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": false,
+          "reviewer_dispatch_passed": true,
+          "reviewer_runtime_audit_passed": false,
+          "status": "running",
+          "steps": 0,
+          "worker_result_written": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "model": "flowpilot_packet_lifecycle",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "safe_graph": {
+    "edge_count": 22,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 23,
+    "success_state_count": 2,
+    "terminal_state_count": 2
+  }
+}

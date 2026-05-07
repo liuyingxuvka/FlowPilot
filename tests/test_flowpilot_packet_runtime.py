@@ -242,6 +242,81 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertFalse(audit["packet_ledger_result_body_opened_by_reviewer_or_pm_after_relay_check"])
         self.assertIn("packet_ledger_missing_result_body_open_receipt", audit["blockers"])
 
+    def test_worker_result_requires_packet_ledger_open_receipt_not_envelope_marker_only(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        forged_envelope = dict(envelope)
+        forged_envelope["body_opened_by_role"] = {
+            "role": "worker_a",
+            "opened_at": "2026-05-07T00:00:00Z",
+            "controller_relay_verified": True,
+            "body_hash_verified": True,
+        }
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "packet ledger missing packet body open receipt"):
+            packet_runtime.write_result(
+                root,
+                packet_envelope=forged_envelope,
+                completed_by_role="worker_a",
+                completed_by_agent_id="agent-worker-a-1",
+                result_body_text="forged open marker result",
+                next_recipient="human_like_reviewer",
+            )
+
+    def test_result_ready_for_reviewer_relay_requires_result_ledger_absorption(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a-1",
+            result_body_text="valid result",
+            next_recipient="human_like_reviewer",
+        )
+        ledger_path = root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json"
+        ledger = self.read_json(ledger_path)
+        ledger["packets"][0]["result_body_hash"] = "stale-result-hash"
+        _write_json(ledger_path, ledger)
+
+        audit = packet_runtime.validate_result_ready_for_reviewer_relay(
+            root,
+            packet_envelope=envelope,
+            result_envelope=result,
+            agent_role_map={"agent-worker-a-1": "worker_a"},
+        )
+
+        self.assertFalse(audit["passed"])
+        self.assertFalse(audit["packet_ledger_result_absorbed"])
+        self.assertIn("packet_ledger_missing_result_absorption", audit["blockers"])
+
+    def test_reviewer_audit_rejects_completed_agent_id_role_string(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role="worker_a",
+            completed_by_agent_id="worker_a",
+            result_body_text="valid result with role string as agent id",
+            next_recipient="human_like_reviewer",
+        )
+        result = self.relay_result(root, result)
+        packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
+
+        audit = packet_runtime.validate_for_reviewer(
+            root,
+            packet_envelope=envelope,
+            result_envelope=result,
+            agent_role_map={"worker_a": "worker_a"},
+        )
+
+        self.assertFalse(audit["passed"])
+        self.assertIn("completed_agent_id_is_role_key_not_agent_id", audit["blockers"])
+        self.assertIn("completed_agent_id_not_assigned_to_role", audit["blockers"])
+
     def test_reviewer_blocks_packet_or_result_hash_mismatch(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))

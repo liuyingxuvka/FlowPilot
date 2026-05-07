@@ -2,6 +2,23 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.5.1 - 2026-05-07
+
+### Added
+
+- Added a focused packet lifecycle FlowGuard model for envelope/ledger hash
+  identity, packet/result open receipts, result ledger absorption, agent-id
+  authority, and PM control-blocker follow-up resolution.
+
+### Fixed
+
+- Hardened packet runtime and router gates so forged envelope-only open
+  markers, missing packet-ledger receipts, result envelopes without ledger
+  absorption, role-string `completed_by_agent_id` values, and PM repair
+  decisions without corrected follow-up events cannot advance packet work.
+- Required PM research absorption to reference a passed packet-group runtime
+  audit instead of only the reviewer report file.
+
 ## 0.5.0 - 2026-05-07
 
 ### Added

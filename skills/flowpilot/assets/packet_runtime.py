@@ -129,6 +129,16 @@ DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE = {
     "pm_decision": "pm.decision",
 }
 
+ROLE_KEYS = {
+    "project_manager",
+    "human_like_reviewer",
+    "process_flowguard_officer",
+    "product_flowguard_officer",
+    "worker_a",
+    "worker_b",
+    "controller",
+}
+
 
 class PacketRuntimeError(ValueError):
     """Raised when a physical packet operation violates the control plane."""
@@ -776,6 +786,150 @@ def _update_packet_record(project_root: Path, ledger_path: Path, packet_id: str,
             return
 
 
+def _packet_ledger_record(ledger_path: Path, packet_id: str) -> dict[str, Any] | None:
+    if not ledger_path.exists():
+        return None
+    ledger = read_json(ledger_path)
+    packets = ledger.get("packets")
+    if not isinstance(packets, list):
+        return None
+    for record in packets:
+        if isinstance(record, dict) and record.get("packet_id") == packet_id:
+            return record
+    return None
+
+
+def packet_ledger_record_for_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any] | None:
+    paths = packet_paths_from_any_envelope(project_root, envelope)
+    return _packet_ledger_record(paths["packet_ledger"], str(envelope.get("packet_id") or ""))
+
+
+def _same_project_path(project_root: Path, left: str | None, right: str | None) -> bool:
+    if not left or not right:
+        return False
+    try:
+        return resolve_project_path(project_root, left) == resolve_project_path(project_root, right)
+    except PacketRuntimeError:
+        return False
+
+
+def verify_packet_open_receipt(project_root: Path, packet_envelope: dict[str, Any], *, role: str) -> dict[str, Any]:
+    packet_envelope = normalize_envelope_aliases(packet_envelope)
+    opened = packet_envelope.get("body_opened_by_role")
+    if (
+        not isinstance(opened, dict)
+        or opened.get("role") != role
+        or opened.get("controller_relay_verified") is not True
+        or opened.get("body_hash_verified") is not True
+    ):
+        raise PacketRuntimeError("packet envelope missing verified packet body open receipt")
+    paths = packet_paths_from_envelope(project_root, packet_envelope)
+    record = _packet_ledger_record(paths["packet_ledger"], str(packet_envelope.get("packet_id") or ""))
+    if not isinstance(record, dict):
+        raise PacketRuntimeError("packet ledger record missing for packet body open receipt")
+    if record.get("packet_body_opened_by_role") != role or record.get("packet_body_opened_after_controller_relay_check") is not True:
+        raise PacketRuntimeError("packet ledger missing packet body open receipt")
+    if record.get("packet_body_hash") != packet_envelope.get("body_hash"):
+        raise PacketRuntimeError("packet ledger packet body hash does not match packet envelope")
+    if not _same_project_path(project_root, str(record.get("packet_body_path") or ""), str(packet_envelope.get("body_path") or "")):
+        raise PacketRuntimeError("packet ledger packet body path does not match packet envelope")
+    return record
+
+
+def _completed_agent_id_is_role_key(completed_by_agent_id: Any) -> bool:
+    return str(completed_by_agent_id or "").strip() in ROLE_KEYS
+
+
+def validate_result_ready_for_reviewer_relay(
+    project_root: Path,
+    *,
+    packet_envelope: dict[str, Any],
+    result_envelope: dict[str, Any],
+    agent_role_map: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    packet_envelope = normalize_envelope_aliases(packet_envelope)
+    result_envelope = normalize_envelope_aliases(result_envelope)
+    blockers: list[str] = []
+    expected_role = packet_envelope.get("to_role")
+    completed_by_role = result_envelope.get("completed_by_role")
+    completed_by_agent_id = result_envelope.get("completed_by_agent_id")
+
+    packet_body_hash_matches = verify_body_hash(project_root, packet_envelope["body_path"], packet_envelope["body_hash"])
+    result_body_hash_matches = verify_body_hash(project_root, result_envelope["result_body_path"], result_envelope["result_body_hash"])
+    if not packet_body_hash_matches:
+        blockers.append("packet_body_hash_mismatch")
+    if not result_body_hash_matches:
+        blockers.append("result_body_hash_mismatch")
+    try:
+        verify_controller_relay(packet_envelope, recipient_role=str(expected_role))
+    except PacketRuntimeError:
+        blockers.append("missing_or_invalid_packet_controller_relay")
+
+    result_paths = packet_paths_from_result_envelope(project_root, result_envelope)
+    ledger_record = _packet_ledger_record(result_paths["packet_ledger"], str(result_envelope.get("packet_id") or ""))
+    ledger_record_found = isinstance(ledger_record, dict)
+    ledger_packet_opened = False
+    result_ledger_absorbed = False
+    if ledger_record_found:
+        ledger_packet_opened = (
+            ledger_record.get("packet_body_opened_by_role") == expected_role
+            and ledger_record.get("packet_body_opened_after_controller_relay_check") is True
+            and ledger_record.get("packet_body_hash") == packet_envelope.get("body_hash")
+        )
+        result_ledger_absorbed = (
+            ledger_record.get("result_body_hash") == result_envelope.get("result_body_hash")
+            and _same_project_path(
+                project_root,
+                str(ledger_record.get("result_body_path") or ""),
+                str(result_envelope.get("result_body_path") or ""),
+            )
+            and _same_project_path(
+                project_root,
+                str(ledger_record.get("result_envelope_path") or ""),
+                project_relative(project_root, result_paths["result_envelope"]),
+            )
+        )
+    if not ledger_record_found:
+        blockers.append("packet_ledger_record_missing_for_result_relay")
+    if not ledger_packet_opened:
+        blockers.append("packet_ledger_missing_packet_body_open_receipt")
+    if not result_ledger_absorbed:
+        blockers.append("packet_ledger_missing_result_absorption")
+    if completed_by_role == "controller":
+        blockers.append("controller_origin_artifact")
+    if completed_by_role != expected_role:
+        blockers.append("result_completed_by_wrong_role")
+    if _completed_agent_id_is_role_key(completed_by_agent_id):
+        blockers.append("completed_agent_id_is_role_key_not_agent_id")
+    if (
+        agent_role_map is not None
+        and str(completed_by_agent_id) in agent_role_map
+        and agent_role_map.get(str(completed_by_agent_id)) != completed_by_role
+    ):
+        blockers.append("completed_agent_id_not_assigned_to_role")
+
+    return {
+        "schema_version": "flowpilot.result_ready_for_reviewer_relay_audit.v1",
+        "packet_id": packet_envelope.get("packet_id"),
+        "packet_body_hash_matches_envelope": packet_body_hash_matches,
+        "result_body_hash_matches_envelope": result_body_hash_matches,
+        "packet_ledger_record_found": ledger_record_found,
+        "packet_ledger_packet_body_opened_by_target_after_relay_check": ledger_packet_opened,
+        "packet_ledger_result_absorbed": result_ledger_absorbed,
+        "expected_role": expected_role,
+        "completed_by_role": completed_by_role,
+        "completed_by_agent_id": completed_by_agent_id,
+        "completed_agent_id_belongs_to_role": bool(
+            agent_role_map is None
+            or str(completed_by_agent_id) not in agent_role_map
+            or agent_role_map.get(str(completed_by_agent_id)) == completed_by_role
+        )
+        and not _completed_agent_id_is_role_key(completed_by_agent_id),
+        "blockers": blockers,
+        "passed": not blockers,
+    }
+
+
 def mark_controller_contamination(
     project_root: Path,
     *,
@@ -1327,9 +1481,7 @@ def write_result(
         )
     if strict_role:
         verify_controller_relay(packet_envelope, recipient_role=completed_by_role)
-        opened = packet_envelope.get("body_opened_by_role")
-        if not isinstance(opened, dict) or opened.get("role") != completed_by_role:
-            raise PacketRuntimeError("worker result cannot be written before the assigned role opens the packet body")
+        verify_packet_open_receipt(project_root, packet_envelope, role=completed_by_role)
     paths = packet_paths_from_envelope(project_root, packet_envelope)
     result_body_path = paths["result_body"]
     result_envelope_path = paths["result_envelope"]
@@ -1481,17 +1633,29 @@ def validate_for_reviewer(
     completed_by_role = result_envelope.get("completed_by_role")
     completed_by_agent_id = result_envelope.get("completed_by_agent_id")
     agent_role = (agent_role_map or {}).get(str(completed_by_agent_id))
-    agent_role_matches = agent_role == completed_by_role if agent_role_map is not None else completed_by_role != "controller"
+    agent_role_matches = (
+        agent_role == completed_by_role
+        if agent_role_map is not None and str(completed_by_agent_id) in agent_role_map
+        else completed_by_role != "controller"
+    )
     packet_relay_valid = True
     result_relay_valid = True
-    packet_opened_by_target = packet_envelope.get("body_opened_by_role", {}).get("role") == expected_role
-    result_opened_by_recipient = result_envelope.get("result_body_opened_by_role", {}).get("role") in {
+    packet_open_record = packet_envelope.get("body_opened_by_role")
+    packet_opened_by_target = (
+        isinstance(packet_open_record, dict)
+        and packet_open_record.get("role") == expected_role
+        and packet_open_record.get("controller_relay_verified") is True
+        and packet_open_record.get("body_hash_verified") is True
+    )
+    result_open_record = result_envelope.get("result_body_opened_by_role")
+    result_opened_by_recipient = isinstance(result_open_record, dict) and result_open_record.get("role") in {
         result_envelope.get("next_recipient"),
         "human_like_reviewer",
         "project_manager",
-    }
+    } and result_open_record.get("controller_relay_verified") is True and result_open_record.get("body_hash_verified") is True
     ledger_packet_opened_by_target = False
     ledger_result_opened_by_recipient = False
+    ledger_result_absorbed = False
     ledger_record_found = False
     try:
         paths = packet_paths_from_result_envelope(project_root, result_envelope)
@@ -1516,6 +1680,19 @@ def validate_for_reviewer(
                 ledger_record.get("result_body_opened_by_role")
                 in {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
                 and ledger_record.get("result_body_opened_after_controller_relay_check") is True
+            )
+            ledger_result_absorbed = (
+                ledger_record.get("result_body_hash") == result_envelope.get("result_body_hash")
+                and _same_project_path(
+                    project_root,
+                    str(ledger_record.get("result_body_path") or ""),
+                    str(result_envelope.get("result_body_path") or ""),
+                )
+                and _same_project_path(
+                    project_root,
+                    str(ledger_record.get("result_envelope_path") or ""),
+                    project_relative(project_root, paths["result_envelope"]),
+                )
             )
     except Exception:
         ledger_record_found = False
@@ -1543,12 +1720,17 @@ def validate_for_reviewer(
         blockers.append("packet_ledger_record_missing_for_reviewer_audit")
     if not ledger_packet_opened_by_target:
         blockers.append("packet_ledger_missing_packet_body_open_receipt")
+    if not ledger_result_absorbed:
+        blockers.append("packet_ledger_missing_result_absorption")
     if not ledger_result_opened_by_recipient:
         blockers.append("packet_ledger_missing_result_body_open_receipt")
     if completed_by_role == "controller":
         blockers.append("controller_origin_artifact")
     if completed_by_role != expected_role:
         blockers.append("result_completed_by_wrong_role")
+    if _completed_agent_id_is_role_key(completed_by_agent_id):
+        blockers.append("completed_agent_id_is_role_key_not_agent_id")
+        agent_role_matches = False
     if not agent_role_matches:
         blockers.append("completed_agent_id_not_assigned_to_role")
 
@@ -1565,6 +1747,7 @@ def validate_for_reviewer(
         "result_body_opened_by_reviewer_or_pm_after_relay_check": result_opened_by_recipient,
         "packet_ledger_record_found": ledger_record_found,
         "packet_ledger_packet_body_opened_by_target_after_relay_check": ledger_packet_opened_by_target,
+        "packet_ledger_result_absorbed": ledger_result_absorbed,
         "packet_ledger_result_body_opened_by_reviewer_or_pm_after_relay_check": ledger_result_opened_by_recipient,
         "packet_envelope_to_role_checked": True,
         "packet_body_hash_checked": True,

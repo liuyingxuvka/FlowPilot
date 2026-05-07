@@ -4670,3 +4670,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep the 21-script FlowGuard sweep as the completion gate whenever FlowPilot control-plane behavior changes.
+
+
+## flowpilot-packet-lifecycle-runtime-hardening-20260507 - Model and minimally fix packet lifecycle friction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot dispatch exposed packet envelope, packet ledger, result relay, and PM repair blocker edge cases that old models did not cover
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T18:30:00+02:00
+- Ended: 2026-05-08T00:47:37+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_packet_lifecycle_model.py
+- simulations/run_flowpilot_packet_lifecycle_checks.py
+- skills/flowpilot/assets/packet_control_plane_model.py
+- skills/flowpilot/assets/run_packet_control_plane_checks.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py --json-out simulations\flowpilot_packet_lifecycle_results.json`
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py`
+- OK: all 22 visible `simulations/run_*_checks.py` FlowGuard scripts, including meta and capability checks
+- OK: `python -m py_compile skills\flowpilot\assets\packet_runtime.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime`
+- OK: `python -m unittest discover tests`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\check_public_release.py`
+- OK: `python scripts\smoke_autopilot.py`
+
+### Findings
+- The prior FlowGuard coverage modeled control/card flow but did not strongly represent the physical packet lifecycle boundary. Envelope open markers could diverge from packet-ledger open receipts, result envelopes could be relayed before packet-ledger absorption, and role-key strings could be mistaken for concrete agent ids.
+- The new packet lifecycle model covers envelope/body hash identity, packet body open receipt parity, result ledger absorption before relay or PM absorption, completed_agent_id authority, and PM repair decisions as follow-up records rather than blocker self-resolution.
+- Runtime guards now require packet-ledger body-open receipts before strict result writes, require result-ledger absorption before reviewer relay and PM research absorption, reject role-key strings as completed_by_agent_id, and keep PM repair decisions from resolving active blockers by themselves.
+- All new and existing FlowGuard runners passed after the fix; targeted runtime/router tests and full unittest discovery also passed.
+
+### Counterexamples
+- The new model rejects stale packet hashes, envelope-only open evidence, result relay without result-ledger absorption, PM absorption without reviewer-approved relay evidence, invalid completed_agent_id authority, and PM repair decisions that try to resolve blockers by themselves.
+
+### Friction Points
+- The live friction came from two valid-looking but different evidence planes: envelope-level flags and packet-ledger records. Earlier models did not require them to prove the same body hash and same open event before downstream gates advanced.
+- The slow smoke and public release checks need longer than 300 seconds on this repository; the initial smoke timeout was a timeout budget issue, not a functional failure.
+
+### Skipped Steps
+- None.
+
+### Next Actions
+- Keep packet lifecycle checks in the standard FlowGuard sweep for future FlowPilot packet, router, reviewer, and PM repair changes.

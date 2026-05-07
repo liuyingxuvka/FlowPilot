@@ -2165,6 +2165,7 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
         "wrong role",
         "wrong-role",
         "reviewer pass rejected by packet audit",
+        "current-node result failed pre-relay packet runtime audit",
         "packet group reviewer audit failed",
         "body was not opened",
         "unopened",
@@ -2177,6 +2178,10 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
         "repair decision",
         "packet body hash mismatch",
         "result body hash mismatch",
+        "result_completed_by_wrong_role",
+        "completed_agent_id",
+        "packet_ledger_missing_result_absorption",
+        "packet_ledger_missing_packet_body_open_receipt",
     )
     if any(marker in lowered for marker in pm_markers):
         return "pm_repair_decision_required"
@@ -2238,9 +2243,14 @@ def _should_materialize_control_blocker(
         "requires pm_ready",
         "packet group reviewer audit failed",
         "reviewer pass rejected by packet audit",
+        "current-node result failed pre-relay packet runtime audit",
         "controller-origin",
         "wrong role",
         "wrong-role",
+        "result_completed_by_wrong_role",
+        "completed_agent_id",
+        "packet_ledger_missing_result_absorption",
+        "packet_ledger_missing_packet_body_open_receipt",
         "missing controller relay signature",
         "envelope was not delivered via controller",
         "controller did not sign",
@@ -2608,6 +2618,11 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
         "resolution_status",
         "resolved_by_event",
         "resolved_at",
+        "pm_repair_decision_status",
+        "pm_repair_decision_path",
+        "pm_repair_decision_hash",
+        "pm_repair_rerun_target",
+        "allowed_resolution_events",
     )
     return {field: record.get(field) for field in fields if field in record}
 
@@ -2771,6 +2786,8 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     rerun_target = str(decision.get("rerun_target") or "").strip()
     if not rerun_target:
         raise RouterError("control blocker repair decision requires rerun_target")
+    if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+        raise RouterError("control blocker repair decision rerun_target must name a corrected follow-up event, not the PM decision event")
     blockers = decision.get("blockers")
     if not isinstance(blockers, list):
         raise RouterError("control blocker repair decision requires blockers list")
@@ -2797,6 +2814,24 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     }
     decision_path = run_root / "control_blocks" / f"{blocker_id}.pm_repair_decision.json"
     write_json(decision_path, output)
+    active_path = resolve_project_path(project_root, str(active.get("blocker_artifact_path") or ""))
+    decision_rel = project_relative(project_root, decision_path)
+    decision_hash = hashlib.sha256(decision_path.read_bytes()).hexdigest()
+    if active_path.exists():
+        record = read_json(active_path)
+        record["pm_repair_decision_status"] = "recorded"
+        record["pm_repair_decision_path"] = decision_rel
+        record["pm_repair_decision_hash"] = decision_hash
+        record["pm_repair_rerun_target"] = rerun_target
+        record["allowed_resolution_events"] = [rerun_target]
+        record["resolution_status"] = None
+        write_json(active_path, record)
+    active["pm_repair_decision_status"] = "recorded"
+    active["pm_repair_decision_path"] = decision_rel
+    active["pm_repair_decision_hash"] = decision_hash
+    active["pm_repair_rerun_target"] = rerun_target
+    active["allowed_resolution_events"] = [rerun_target]
+    _sync_control_plane_indexes(project_root, run_root, run_state)
 
 
 def _gate_decision_issue(field: str, message: str, owner: str = "gate_owner") -> dict[str, str]:
@@ -2996,7 +3031,7 @@ def _write_gate_decision(project_root: Path, run_root: Path, run_state: dict[str
 
 def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str) -> bool:
     if record.get("handling_lane") == "pm_repair_decision_required" and event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
-        return True
+        return False
     raw_events = record.get("allowed_resolution_events")
     if isinstance(raw_events, list) and raw_events:
         return event in {str(item) for item in raw_events}
@@ -7129,6 +7164,7 @@ def _relay_result_records(
     controller_agent_id: str,
 ) -> list[str]:
     relayed_ids: list[str] = []
+    agent_role_map = _agent_role_map_from_crew_ledger(project_root / str(run_state["run_root"]))
     for record in records:
         result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
         if not result_path.exists():
@@ -7138,6 +7174,16 @@ def _relay_result_records(
             raise RouterError(f"result envelope must route to {to_role}")
         if result.get("completed_by_role") == "controller":
             raise RouterError("Controller-origin result is invalid")
+        packet_path = _packet_envelope_path_from_record(project_root, run_state, record)
+        packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
+        audit = packet_runtime.validate_result_ready_for_reviewer_relay(
+            project_root,
+            packet_envelope=packet_envelope,
+            result_envelope=result,
+            agent_role_map=agent_role_map,
+        )
+        if not audit.get("passed"):
+            raise RouterError(f"result envelope is not ready for reviewer relay: {audit.get('blockers')}")
         _ensure_barrier_bundles_ready(project_root, node_id=str(result.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
@@ -7151,6 +7197,29 @@ def _relay_result_records(
     return relayed_ids
 
 
+def _agent_role_map_from_crew_ledger(run_root: Path) -> dict[str, str] | None:
+    crew = read_json_if_exists(run_root / "crew_ledger.json")
+    role_slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    agent_role_map: dict[str, str] = {}
+    for slot in role_slots:
+        if not isinstance(slot, dict):
+            continue
+        role_key = slot.get("role_key")
+        agent_id = slot.get("agent_id")
+        if isinstance(role_key, str) and isinstance(agent_id, str) and agent_id.strip():
+            agent_role_map[agent_id.strip()] = role_key
+    return agent_role_map or None
+
+
+def _merge_agent_role_maps(primary: dict[str, str] | None, fallback: dict[str, str] | None) -> dict[str, str] | None:
+    merged: dict[str, str] = {}
+    if isinstance(fallback, dict):
+        merged.update({str(key): str(value) for key, value in fallback.items()})
+    if isinstance(primary, dict):
+        merged.update({str(key): str(value) for key, value in primary.items()})
+    return merged or None
+
+
 def _validate_packet_bodies_opened_by_targets(project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]]) -> None:
     for record in records:
         envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
@@ -7158,9 +7227,15 @@ def _validate_packet_bodies_opened_by_targets(project_root: Path, run_state: dic
         expected_role = envelope.get("to_role")
         if envelope.get("body_opened_by_role", {}).get("role") != expected_role:
             raise RouterError(f"packet {envelope.get('packet_id')} body was not opened by target role after Controller relay")
+        try:
+            packet_runtime.verify_packet_open_receipt(project_root, envelope, role=str(expected_role))
+        except packet_runtime.PacketRuntimeError as exc:
+            raise RouterError(f"packet {envelope.get('packet_id')} ledger open receipt is invalid: {exc}") from exc
 
 
 def _validate_results_exist_for_packets(project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, next_recipient: str) -> None:
+    run_root = project_root / str(run_state["run_root"])
+    agent_role_map = _agent_role_map_from_crew_ledger(run_root)
     for record in records:
         result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
         if not result_path.exists():
@@ -7170,6 +7245,16 @@ def _validate_results_exist_for_packets(project_root: Path, run_state: dict[str,
             raise RouterError(f"result envelope for packet {result.get('packet_id')} must route to {next_recipient}")
         if result.get("completed_by_role") == "controller":
             raise RouterError("Controller-origin result is invalid")
+        packet_path = _packet_envelope_path_from_record(project_root, run_state, record)
+        packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
+        audit = packet_runtime.validate_result_ready_for_reviewer_relay(
+            project_root,
+            packet_envelope=packet_envelope,
+            result_envelope=result,
+            agent_role_map=agent_role_map,
+        )
+        if not audit.get("passed"):
+            raise RouterError(f"result envelope for packet {result.get('packet_id')} failed pre-relay audit: {audit.get('blockers')}")
 
 
 def _validate_packet_group_for_reviewer(
@@ -7180,6 +7265,8 @@ def _validate_packet_group_for_reviewer(
     audit_path: Path,
     agent_role_map: dict[str, str] | None = None,
 ) -> None:
+    trusted_agent_role_map = _agent_role_map_from_crew_ledger(project_root / str(run_state["run_root"]))
+    merged_agent_role_map = _merge_agent_role_maps(trusted_agent_role_map, agent_role_map)
     audits: list[dict[str, Any]] = []
     blockers: list[str] = []
     evidence_paths: list[Path] = []
@@ -7193,7 +7280,7 @@ def _validate_packet_group_for_reviewer(
             project_root,
             packet_envelope=packet_envelope,
             result_envelope=result_envelope,
-            agent_role_map=agent_role_map,
+            agent_role_map=merged_agent_role_map,
         )
         audits.append(audit)
         blockers.extend(str(blocker) for blocker in audit.get("blockers") or [])
@@ -7660,6 +7747,38 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
     return decision
 
 
+def _write_pm_research_absorption(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
+    reviewer_report_path = run_root / "research" / "research_reviewer_report.json"
+    audit_path = run_root / "research" / "research_packet_review_audit.json"
+    if not reviewer_report_path.exists():
+        raise RouterError("PM can absorb research only after reviewer research report exists")
+    if not audit_path.exists():
+        raise RouterError("PM can absorb research only after packet-group reviewer runtime audit exists")
+    audit = read_json(audit_path)
+    if audit.get("passed") is not True:
+        raise RouterError("PM can absorb research only after packet-group reviewer runtime audit passed")
+    packet_ledger_path = run_root / "packet_ledger.json"
+    if not packet_ledger_path.exists():
+        raise RouterError("PM research absorption requires packet_ledger.json")
+    absorption_path = run_root / "research" / "pm_research_absorption.json"
+    write_json(
+        absorption_path,
+        {
+            "schema_version": "flowpilot.pm_research_absorption.v1",
+            "run_id": run_state["run_id"],
+            "absorbed_by_role": "project_manager",
+            "research_reviewer_report_path": project_relative(project_root, reviewer_report_path),
+            "research_reviewer_report_hash": hashlib.sha256(reviewer_report_path.read_bytes()).hexdigest(),
+            "packet_group_reviewer_audit_path": project_relative(project_root, audit_path),
+            "packet_group_reviewer_audit_hash": hashlib.sha256(audit_path.read_bytes()).hexdigest(),
+            "packet_ledger_path": project_relative(project_root, packet_ledger_path),
+            "packet_ledger_hash": hashlib.sha256(packet_ledger_path.read_bytes()).hexdigest(),
+            "packet_group_audit_passed": True,
+            "absorbed_at": utc_now(),
+        },
+    )
+
+
 def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not run_state["flags"].get("node_acceptance_plan_reviewer_passed"):
         raise RouterError("current-node packet requires reviewer-passed node acceptance plan")
@@ -7699,6 +7818,16 @@ def _validate_current_node_result_event(project_root: Path, run_state: dict[str,
         raise RouterError("current-node worker result must route to human_like_reviewer")
     if result.get("completed_by_role") == "controller":
         raise RouterError("Controller-origin current-node result is invalid")
+    packet_envelope, _packet_envelope_path = _current_node_packet_context(project_root, run_state)
+    agent_role_map = _agent_role_map_from_crew_ledger(project_root / str(run_state["run_root"]))
+    audit = packet_runtime.validate_result_ready_for_reviewer_relay(
+        project_root,
+        packet_envelope=packet_envelope,
+        result_envelope=result,
+        agent_role_map=agent_role_map,
+    )
+    if not audit.get("passed"):
+        raise RouterError(f"current-node result failed pre-relay packet runtime audit: {audit.get('blockers')}")
 
 
 def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -7707,17 +7836,19 @@ def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str
         raise RouterError("current-node reviewer pass must be reviewed_by_role=human_like_reviewer")
     if payload.get("passed") is not True:
         raise RouterError("current-node reviewer pass must explicitly pass")
+    run_root = project_root / str(run_state["run_root"])
     packet_envelope, packet_envelope_path = _current_node_packet_context(project_root, run_state)
     result_envelope, result_envelope_path = _current_node_result_context(project_root, run_state)
     raw_agent_map = payload.get("agent_role_map")
-    agent_role_map = raw_agent_map if isinstance(raw_agent_map, dict) else None
+    payload_agent_role_map = raw_agent_map if isinstance(raw_agent_map, dict) else None
+    trusted_agent_role_map = _agent_role_map_from_crew_ledger(run_root)
+    agent_role_map = _merge_agent_role_maps(trusted_agent_role_map, payload_agent_role_map)
     audit = packet_runtime.validate_for_reviewer(
         project_root,
         packet_envelope=packet_envelope,
         result_envelope=result_envelope,
         agent_role_map=agent_role_map,
     )
-    run_root = project_root / str(run_state["run_root"])
     frontier = _active_frontier(run_root)
     audit_path = _active_node_root(run_root, frontier) / "reviews" / "current_node_packet_runtime_audit.json"
     proof_path = _router_owned_check_proof_path(audit_path)
@@ -9823,8 +9954,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
             checked_paths=[run_root / "research" / "research_package.json", run_root / "research" / "worker_research_report.json"],
         )
     elif event == "pm_absorbs_reviewed_research":
-        if not (run_root / "research" / "research_reviewer_report.json").exists():
-            raise RouterError("PM can absorb research only after reviewer research report exists")
+        _write_pm_research_absorption(project_root, run_root, run_state)
     elif event == "pm_writes_material_understanding":
         _write_material_understanding(project_root, run_root, run_state, payload)
     elif event == "pm_writes_product_function_architecture":

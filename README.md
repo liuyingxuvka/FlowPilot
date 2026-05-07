@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.5.0</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.5.1</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -32,7 +32,7 @@ simulations, validation scripts, documentation, and minimal examples.
 
 ## Current Status
 
-- Current source version in this checkout: **v0.5.0**.
+- Current source version in this checkout: **v0.5.1**.
 - Public project name: **FlowPilot**.
 - Skill slug and install name: **`flowpilot`**.
 - License: **MIT**.
@@ -408,7 +408,7 @@ FlowPilot 是一个面向大型 AI Agent 软件项目的 **模型化项目控制
 
 ## 当前状态
 
-- 当前 checkout 的源码版本：**v0.5.0**。
+- 当前 checkout 的源码版本：**v0.5.1**。
 - 公开项目名：**FlowPilot**。
 - 技能 slug 和安装名：**`flowpilot`**。
 - 许可证：**MIT**。
