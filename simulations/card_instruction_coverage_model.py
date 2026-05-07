@@ -20,6 +20,35 @@ from flowguard import FunctionResult, InvariantResult
 
 NEXT_STEP_SOURCE_FIELD = "next_step_source"
 NEXT_STEP_ROUTER_FRAGMENT = "flowpilot_router.py"
+LIVE_CONTEXT_SOURCE_FIELD = "runtime_context"
+LIVE_CONTEXT_HELPER = "_live_card_delivery_context"
+LIVE_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
+LIVE_CONTEXT_REQUIRED_TERMS = (
+    "router delivery envelope",
+    "current run",
+    "current task",
+    "current card",
+    "current phase",
+    "current node",
+    "frontier",
+    "user_request_path",
+    "source paths",
+    "do not continue from memory",
+    "protocol blocker",
+)
+LIVE_CONTEXT_REQUIRED_FIELDS = (
+    "run_id",
+    "card_id",
+    "to_role",
+    "current_task",
+    "current_stage",
+    "current_phase",
+    "current_node_id",
+    "source_paths",
+    "user_request_path",
+    "execution_frontier",
+    "prompt_delivery_ledger",
+)
 PM_HISTORY_CONTEXT_REQUIRED_CARD_IDS = frozenset(
     {
         "pm.prior_path_context",
@@ -112,6 +141,7 @@ class CardFacts:
     chat_body_suppression: bool
     next_step_source: bool
     next_step_mentions_router: bool
+    live_context_guidance: bool
     action_guidance: bool
     pm_history_context_guidance: bool
     pm_minimum_complexity_guidance: bool
@@ -124,6 +154,7 @@ class RouterFacts:
     active_role_by_card: tuple[tuple[str, str], ...]
     external_card_flag_errors: tuple[str, ...]
     sequence_manifest_errors: tuple[str, ...]
+    live_context_errors: tuple[str, ...]
     orphan_card_files: tuple[str, ...]
 
 
@@ -232,6 +263,11 @@ def _has_chat_body_suppression(identity: dict[str, str], text: str) -> bool:
     )
 
 
+def _has_live_context_guidance(identity: dict[str, str], text: str) -> bool:
+    lower = f"{identity.get(LIVE_CONTEXT_SOURCE_FIELD, '')}\n{text}".lower()
+    return all(term in lower for term in LIVE_CONTEXT_REQUIRED_TERMS)
+
+
 def _manifest_entries(project_root: Path) -> list[dict[str, Any]]:
     manifest_path = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "manifest.json"
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -243,6 +279,9 @@ def _manifest_entries(project_root: Path) -> list[dict[str, Any]]:
 
 def collect_router_facts(project_root: Path) -> RouterFacts:
     router = _load_router(project_root)
+    router_source = (
+        project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
+    ).read_text(encoding="utf-8")
     manifest_by_id = {str(card["id"]): card for card in _manifest_entries(project_root)}
     active_roles: dict[str, str] = {}
 
@@ -276,6 +315,15 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
         if requires.endswith("_card_delivered") and requires not in card_delivery_flags:
             external_card_flag_errors.append(f"{event_name} requires unknown delivered-card flag: {requires}")
 
+    live_context_errors: list[str] = []
+    if LIVE_CONTEXT_HELPER not in router_source or LIVE_CONTEXT_SCHEMA not in router_source:
+        live_context_errors.append("router does not build live card delivery context")
+    if '"delivery_context"' not in router_source:
+        live_context_errors.append("system card delivery action/ledger omits delivery_context")
+    for field in LIVE_CONTEXT_REQUIRED_FIELDS:
+        if field not in router_source:
+            live_context_errors.append(f"live card delivery context omits {field}")
+
     runtime_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit"
     manifest_paths = {str(card["path"]).replace("/", "\\") for card in manifest_by_id.values()}
     orphan_files = []
@@ -289,6 +337,7 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
         active_role_by_card=tuple(sorted(active_roles.items())),
         external_card_flag_errors=tuple(external_card_flag_errors),
         sequence_manifest_errors=tuple(sequence_manifest_errors),
+        live_context_errors=tuple(live_context_errors),
         orphan_card_files=tuple(orphan_files),
     )
 
@@ -321,6 +370,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
+                live_context_guidance=_has_live_context_guidance(identity, text),
                 action_guidance=_has_action_guidance(expected_role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(card_id, expected_role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(card_id, expected_role, text),
@@ -351,6 +401,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
+                live_context_guidance=_has_live_context_guidance(identity, text),
                 action_guidance=_has_action_guidance(role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(f"unmanifested:{rel}", role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(f"unmanifested:{rel}", role, text),
@@ -378,6 +429,8 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: missing next_step_source")
     if not card.next_step_mentions_router:
         failures.append(f"{card.card_id}: next_step_source does not name flowpilot_router.py")
+    if not card.live_context_guidance:
+        failures.append(f"{card.card_id}: missing live router delivery context guidance")
     if not card.action_guidance:
         failures.append(f"{card.card_id}: card body lacks role-appropriate action guidance")
     if not card.pm_history_context_guidance:
@@ -393,7 +446,11 @@ def next_safe_states(state: State, cards: tuple[CardFacts, ...], router_facts: R
     if state.status != "checking":
         return
     if state.index == 0:
-        router_failures = tuple(router_facts.sequence_manifest_errors + router_facts.external_card_flag_errors)
+        router_failures = tuple(
+            router_facts.sequence_manifest_errors
+            + router_facts.external_card_flag_errors
+            + router_facts.live_context_errors
+        )
         if router_failures:
             yield Transition("router_instruction_contract_failed", replace(state, status="blocked", failures=router_failures))
             return
@@ -451,6 +508,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         chat_body_suppression=True,
         next_step_source=True,
         next_step_mentions_router=True,
+        live_context_guidance=True,
         action_guidance=True,
         pm_history_context_guidance=True,
         pm_minimum_complexity_guidance=True,
@@ -464,6 +522,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         "missing_chat_body_suppression": replace(good, chat_body_suppression=False),
         "missing_next_step_source": replace(good, next_step_source=False, next_step_mentions_router=False),
         "next_step_without_router": replace(good, next_step_mentions_router=False),
+        "missing_live_context_guidance": replace(good, live_context_guidance=False),
         "missing_action_guidance": replace(good, action_guidance=False),
         "missing_pm_history_context_guidance": replace(
             good,

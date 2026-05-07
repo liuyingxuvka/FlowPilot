@@ -4401,3 +4401,53 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future FlowPilot protocol changes in the concrete protocol conformance model before editing router behavior.
+
+
+## flowpilot-live-card-context-friction-20260507 - Model and fix FlowPilot live role card context friction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Realtime role cards may omit current role/task/output/stage context and cause protocol friction
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T09:30:38+00:00
+- Ended: 2026-05-07T09:30:38+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/card_instruction_coverage_model.py
+- simulations/run_card_instruction_coverage_checks.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python simulations/run_card_instruction_coverage_checks.py`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_router_runtime.py -k "card_instruction_coverage or system_card_delivery_requires_manifest_check"`
+- OK (0.000s): `python -m py_compile simulations/card_instruction_coverage_model.py simulations/run_card_instruction_coverage_checks.py skills/flowpilot/assets/flowpilot_router.py scripts/check_install.py`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python simulations/run_prompt_isolation_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json`
+- OK (0.000s): `python simulations/run_protocol_contract_conformance_checks.py --json-out simulations/protocol_contract_conformance_results.json`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_router_runtime.py tests/test_flowpilot_output_contracts.py tests/test_flowpilot_packet_runtime.py tests/test_flowpilot_card_instruction_coverage.py`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+- OK (0.000s): `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- The previous model verified static card identity but did not require a live router delivery envelope with run/task/card/phase/node/source-path context.
+- Pre-fix model execution exposed missing live card delivery context in the router and system card delivery ledger.
+- Router deliveries now attach delivery_context and persist it in both delivered card state and the prompt delivery ledger.
+- All system cards now instruct roles to treat the router delivery envelope as live authority and return a protocol blocker rather than continuing from memory when missing or stale.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Prompt friction came from separating role instruction text from runtime task/stage/frontier authority; static cards alone could still leave agents relying on memory.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Keep future FlowPilot card/protocol changes covered by both static card guidance checks and runtime delivery-envelope checks.

@@ -1807,13 +1807,27 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(second["from"], "system")
         self.assertEqual(second["issued_by"], "router")
         self.assertEqual(second["delivered_by"], "controller")
+        context = second["delivery_context"]
+        self.assertEqual(context["schema_version"], "flowpilot.live_card_context.v1")
+        self.assertEqual(context["run_id"], run_root.name)
+        self.assertEqual(context["card_id"], "pm.core")
+        self.assertEqual(context["to_role"], "project_manager")
+        self.assertEqual(context["current_task"]["user_request_path"], f"{run_root.relative_to(root).as_posix()}/user_request.json")
+        self.assertFalse(context["current_task"]["controller_summary_is_task_authority"])
+        self.assertIn("current_phase", context["current_stage"])
+        self.assertIn("current_node_id", context["current_stage"])
+        self.assertEqual(context["source_paths"]["execution_frontier"], f"{run_root.relative_to(root).as_posix()}/execution_frontier.json")
+        self.assertEqual(context["source_paths"]["prompt_delivery_ledger"], f"{run_root.relative_to(root).as_posix()}/prompt_delivery_ledger.json")
         router.apply_action(root, "deliver_system_card")
 
         state = read_json(run_root / "router_state.json")
+        prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
         self.assertTrue(state["flags"]["pm_core_delivered"])
         self.assertEqual(state["manifest_checks"], 1)
         self.assertEqual(state["prompt_deliveries"], 1)
         self.assertEqual(state["delivered_cards"][0]["card_id"], "pm.core")
+        self.assertEqual(state["delivered_cards"][0]["delivery_context"]["card_id"], "pm.core")
+        self.assertEqual(prompt_ledger["deliveries"][0]["delivery_context"]["card_id"], "pm.core")
 
     def test_user_intake_mail_requires_packet_ledger_check_after_pm_cards(self) -> None:
         root = self.make_project()

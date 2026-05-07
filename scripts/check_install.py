@@ -453,6 +453,9 @@ def main() -> int:
                         and "Do not include report bodies" in card_text
                         and "next_step_source:" in card_text
                         and "flowpilot_router.py" in card_text
+                        and "runtime_context:" in card_text
+                        and "router delivery envelope" in card_text
+                        and "do not continue from memory" in card_text
                     )
                     if not identity_ok:
                         invalid_identity_cards.append(str(card.get("id") or card_path))

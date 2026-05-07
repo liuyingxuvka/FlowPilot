@@ -37,6 +37,7 @@ ROUTE_STATE_SNAPSHOT_SCHEMA = "flowpilot.route_state_snapshot.v1"
 CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
 CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
+LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
 PAYLOAD_CONTRACT_SCHEMA = "flowpilot.payload_contract.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
@@ -5954,6 +5955,65 @@ def _pm_context_action_extra(project_root: Path, run_root: Path, entry: dict[str
     return extra
 
 
+def _live_card_delivery_context(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    entry: dict[str, Any],
+    card: dict[str, Any],
+) -> dict[str, Any]:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json") or {}
+    card_phase = card.get("phase")
+    current_phase = str(
+        card_phase
+        or frontier.get("phase")
+        or frontier.get("status")
+        or run_state.get("phase")
+        or "unknown"
+    )
+    user_request_path = str(
+        run_state.get("user_request_path")
+        or _optional_source_path(project_root, run_root / "user_request.json")
+        or ""
+    )
+    source_paths = {
+        "router_state": project_relative(project_root, run_state_path(run_root)),
+        "execution_frontier": _optional_source_path(project_root, run_root / "execution_frontier.json"),
+        "prompt_delivery_ledger": _optional_source_path(project_root, run_root / "prompt_delivery_ledger.json"),
+        "packet_ledger": _optional_source_path(project_root, run_root / "packet_ledger.json"),
+        "route_history_index": _optional_source_path(project_root, _route_history_index_path(run_root)),
+        "pm_prior_path_context": _optional_source_path(project_root, _pm_prior_path_context_path(run_root)),
+        "user_request_path": user_request_path or None,
+    }
+    return {
+        "schema_version": LIVE_CARD_CONTEXT_SCHEMA,
+        "run_id": str(run_state.get("run_id") or run_root.name),
+        "card_id": str(entry.get("card_id") or card.get("id") or ""),
+        "to_role": str(entry.get("to_role") or card.get("audience") or ""),
+        "current_task": {
+            "user_request_path": user_request_path or None,
+            "user_intake_packet_id": "user_intake" if (run_root / "mailbox" / "outbox" / "user_intake.json").exists() else None,
+            "task_authority": "router_recorded_user_request_and_user_intake",
+            "controller_summary_is_task_authority": False,
+        },
+        "current_stage": {
+            "current_phase": current_phase,
+            "card_phase": str(card_phase or "") or None,
+            "frontier_status": frontier.get("status"),
+            "current_node_id": frontier.get("active_node_id"),
+            "current_route_id": frontier.get("active_route_id"),
+            "route_version": frontier.get("route_version"),
+        },
+        "source_paths": source_paths,
+        "role_prompt_rule": (
+            "Treat this router delivery envelope as the live context for the "
+            "current run, current task, current card, current phase, and current "
+            "node/frontier. If required context is missing or stale, do not "
+            "continue from memory; return a protocol blocker through Controller."
+        ),
+    }
+
+
 def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload_if_present(project_root, payload)
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="route draft")
@@ -8077,7 +8137,14 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
         if entry["card_id"] == "reviewer.startup_fact_check":
             delivery_extra.update(_startup_mechanical_audit_action_extra(project_root, run_root, run_state))
+        delivery_context = _live_card_delivery_context(project_root, run_root, run_state, entry, card)
+        delivery_extra["delivery_context"] = delivery_context
         allowed_reads = [project_relative(project_root, run_root / "runtime_kit" / str(card["path"]))]
+        allowed_reads.extend(
+            str(path)
+            for path in delivery_context.get("source_paths", {}).values()
+            if isinstance(path, str) and path
+        )
         if entry["card_id"] == "reviewer.startup_fact_check":
             allowed_reads.extend(
                 [
@@ -8427,6 +8494,9 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             raise RouterError("system card delivery requires a current manifest check")
         manifest = load_manifest_from_run(run_root)
         card = manifest_card(manifest, card_id)
+        delivery_context = pending.get("delivery_context")
+        if not isinstance(delivery_context, dict):
+            delivery_context = _live_card_delivery_context(project_root, run_root, run_state, card_entry, card)
         delivery = {
             "card_id": card_id,
             "from": "system",
@@ -8434,6 +8504,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "delivered_by": "controller",
             "to_role": pending["to_role"],
             "path": card["path"],
+            "delivery_context": delivery_context,
             "delivered_at": utc_now(),
         }
         if card_id == "reviewer.startup_fact_check":

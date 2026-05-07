@@ -51,6 +51,7 @@ def explore_actual_cards() -> dict[str, object]:
         "orphan_card_files": list(router_facts.orphan_card_files),
         "router_sequence_manifest_errors": list(router_facts.sequence_manifest_errors),
         "external_card_flag_errors": list(router_facts.external_card_flag_errors),
+        "live_context_errors": list(router_facts.live_context_errors),
     }
 
 
