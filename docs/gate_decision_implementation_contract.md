@@ -40,7 +40,11 @@ Required fields:
     }
   ],
   "reason": "string",
-  "next_action": "continue | local_repair | route_mutation | collect_evidence | reviewer_recheck | stop"
+  "next_action": "continue | local_repair | route_mutation | collect_evidence | reviewer_recheck | stop",
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true
+  }
 }
 ```
 
@@ -140,6 +144,8 @@ the meaning of each field.
 Router/protocol models should check only mechanical conformance: required
 fields, allowed enum values, evidence reference shape, path/hash availability,
 blocking compatibility, routeable next action, and atomic state refresh.
+Runtime recording uses event `role_records_gate_decision` and contract
+`flowpilot.output_contract.gate_decision.v1`.
 
 Reviewer/router scope models should check that semantic sufficiency remains
 owned by PM, reviewer, and FlowGuard officers, while the router stays limited

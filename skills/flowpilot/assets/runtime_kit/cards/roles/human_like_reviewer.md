@@ -52,6 +52,15 @@ review body. Missing packet contracts, contract mismatches, missing required
 sections, failed self-checks, or result envelopes that omit
 `source_output_contract_id` block a pass.
 
+When your review decision passes, blocks, waives, skips, requires local repair,
+requires route mutation, or can affect completion, write a file-backed
+`GateDecision` body using `flowpilot.output_contract.gate_decision.v1`. Use the
+exact fields `gate_decision_version`, `gate_id`, `gate_kind`, `owner_role`,
+`risk_type`, `gate_strength`, `decision`, `blocking`, `required_evidence`,
+`evidence_refs`, `reason`, `next_action`, and `contract_self_check`. Router
+checks only mechanical conformance; your review body owns the semantic reason
+why the evidence is or is not sufficient.
+
 For product/UI gates, personally inspect reachable controls, interactions,
 layout fit, density, readability, visual quality, localization, and state
 coverage. For terminal replay, start from the delivered product and walk

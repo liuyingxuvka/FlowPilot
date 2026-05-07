@@ -39,7 +39,11 @@ CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
 PAYLOAD_CONTRACT_SCHEMA = "flowpilot.payload_contract.v1"
+GATE_DECISION_SCHEMA = "flowpilot.gate_decision.v1"
+GATE_DECISION_RECORD_SCHEMA = "flowpilot.gate_decision_record.v1"
+GATE_DECISION_LEDGER_SCHEMA = "flowpilot.gate_decision_ledger.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
+GATE_DECISION_EVENT = "role_records_gate_decision"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
@@ -64,6 +68,84 @@ STARTUP_ANSWER_ENUMS = {
     "background_agents": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
     "display_surface": {"cockpit", "chat"},
+}
+GATE_DECISION_REQUIRED_FIELDS = (
+    "gate_decision_version",
+    "gate_id",
+    "gate_kind",
+    "owner_role",
+    "risk_type",
+    "gate_strength",
+    "decision",
+    "blocking",
+    "required_evidence",
+    "evidence_refs",
+    "reason",
+    "next_action",
+    "contract_self_check",
+)
+GATE_DECISION_ALLOWED_KINDS = {
+    "quality",
+    "repair",
+    "parent_replay",
+    "resource",
+    "stage_advance",
+    "completion",
+    "other",
+}
+GATE_DECISION_ALLOWED_OWNER_ROLES = {
+    "project_manager",
+    "human_like_reviewer",
+    "process_flowguard_officer",
+    "product_flowguard_officer",
+}
+GATE_DECISION_ALLOWED_RISKS = {
+    "product_state",
+    "visual_quality",
+    "mixed_product_visual",
+    "documentation_only",
+    "composition",
+    "resource",
+    "control_state",
+    "none",
+}
+GATE_DECISION_ALLOWED_STRENGTHS = {
+    "hard",
+    "soft",
+    "advisory",
+    "skip_with_reason",
+}
+GATE_DECISION_ALLOWED_DECISIONS = {
+    "pass",
+    "block",
+    "waive",
+    "skip",
+    "repair_local",
+    "mutate_route",
+}
+GATE_DECISION_ALLOWED_EVIDENCE_KINDS = {
+    "file",
+    "command",
+    "screenshot",
+    "model_result",
+    "reviewer_walkthrough",
+    "state_ref",
+    "none",
+}
+GATE_DECISION_ALLOWED_NEXT_ACTIONS = {
+    "continue",
+    "local_repair",
+    "route_mutation",
+    "collect_evidence",
+    "reviewer_recheck",
+    "stop",
+}
+GATE_DECISION_SEMANTIC_OVERREACH_FIELDS = {
+    "router_approved_semantic_sufficiency",
+    "router_semantic_decision",
+    "router_sufficiency_decision",
+    "semantic_sufficiency_passed_by_router",
+    "controller_approved_gate",
 }
 
 CREW_ROLE_KEYS = (
@@ -1041,6 +1123,10 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "pm_control_blocker_repair_decision_recorded",
         "summary": "PM recorded a repair decision for a router materialized control blocker.",
     },
+    "role_records_gate_decision": {
+        "flag": "gate_decision_recorded",
+        "summary": "A PM, reviewer, or FlowGuard officer recorded a mechanically valid GateDecision.",
+    },
     "pm_completes_current_node_from_reviewed_result": {
         "flag": "node_completed_by_pm",
         "requires_flag": "node_reviewer_passed_result",
@@ -1538,6 +1624,7 @@ def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
         "control_blockers": [],
         "resolved_control_blockers": [],
         "protocol_blockers": [],
+        "gate_decisions": [],
         "active_control_blocker": None,
         "latest_control_blocker_path": None,
         "delivered_cards": [],
@@ -1578,6 +1665,7 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
     state.setdefault("control_blockers", [])
     state.setdefault("resolved_control_blockers", [])
     state.setdefault("protocol_blockers", [])
+    state.setdefault("gate_decisions", [])
     state.setdefault("active_control_blocker", None)
     state.setdefault("latest_control_blocker_path", None)
     state.setdefault("events", [])
@@ -2709,6 +2797,201 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     }
     decision_path = run_root / "control_blocks" / f"{blocker_id}.pm_repair_decision.json"
     write_json(decision_path, output)
+
+
+def _gate_decision_issue(field: str, message: str, owner: str = "gate_owner") -> dict[str, str]:
+    return {"field": field, "message": message, "owner": owner}
+
+
+def _gate_decision_safe_id(raw: str) -> str:
+    chars: list[str] = []
+    for char in raw.strip().lower():
+        if char.isalnum():
+            chars.append(char)
+        elif chars and chars[-1] != "-":
+            chars.append("-")
+    safe = "".join(chars).strip("-")
+    return safe[:96] or "gate-decision"
+
+
+def _gate_decision_issues(project_root: Path, decision: dict[str, Any]) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    if not isinstance(decision, dict):
+        return [_gate_decision_issue("gate_decision", "GateDecision must be a JSON object")]
+    for field in GATE_DECISION_REQUIRED_FIELDS:
+        if field not in decision or decision.get(field) in (None, ""):
+            issues.append(_gate_decision_issue(field, "missing required GateDecision field"))
+    if decision.get("gate_decision_version") != GATE_DECISION_SCHEMA:
+        issues.append(_gate_decision_issue("gate_decision_version", f"must equal {GATE_DECISION_SCHEMA}"))
+    enum_specs = (
+        ("gate_kind", GATE_DECISION_ALLOWED_KINDS),
+        ("owner_role", GATE_DECISION_ALLOWED_OWNER_ROLES),
+        ("risk_type", GATE_DECISION_ALLOWED_RISKS),
+        ("gate_strength", GATE_DECISION_ALLOWED_STRENGTHS),
+        ("decision", GATE_DECISION_ALLOWED_DECISIONS),
+        ("next_action", GATE_DECISION_ALLOWED_NEXT_ACTIONS),
+    )
+    for field, allowed in enum_specs:
+        if field in decision and decision.get(field) not in allowed:
+            issues.append(_gate_decision_issue(field, f"unsupported value: {decision.get(field)}"))
+    leaked_overreach = sorted(GATE_DECISION_SEMANTIC_OVERREACH_FIELDS & set(decision))
+    if leaked_overreach:
+        issues.append(
+            _gate_decision_issue(
+                ",".join(leaked_overreach),
+                "router may record only mechanical GateDecision conformance, not semantic sufficiency",
+                "flowpilot_router",
+            )
+        )
+    if "blocking" in decision and not isinstance(decision.get("blocking"), bool):
+        issues.append(_gate_decision_issue("blocking", "must be a boolean"))
+    required_evidence = decision.get("required_evidence")
+    if not isinstance(required_evidence, list) or any(not isinstance(item, str) for item in required_evidence):
+        issues.append(_gate_decision_issue("required_evidence", "must be a list of strings"))
+    evidence_refs = decision.get("evidence_refs")
+    if not isinstance(evidence_refs, list):
+        issues.append(_gate_decision_issue("evidence_refs", "must be a list of evidence reference objects"))
+        evidence_refs = []
+    reason = str(decision.get("reason") or "").strip()
+    if not reason:
+        issues.append(_gate_decision_issue("reason", "GateDecision requires a concrete reason"))
+    contract_self_check = decision.get("contract_self_check")
+    if contract_self_check is not None:
+        if not isinstance(contract_self_check, dict):
+            issues.append(_gate_decision_issue("contract_self_check", "must be an object when provided"))
+        else:
+            if contract_self_check.get("all_required_fields_present") is not True:
+                issues.append(_gate_decision_issue("contract_self_check.all_required_fields_present", "must be true"))
+            if contract_self_check.get("exact_field_names_used") is not True:
+                issues.append(_gate_decision_issue("contract_self_check.exact_field_names_used", "must be true"))
+    gate_strength = decision.get("gate_strength")
+    gate_decision = decision.get("decision")
+    blocking = decision.get("blocking")
+    next_action = decision.get("next_action")
+    if gate_decision == "pass":
+        if blocking is not False:
+            issues.append(_gate_decision_issue("blocking", "pass decisions must not be blocking"))
+        if next_action != "continue":
+            issues.append(_gate_decision_issue("next_action", "pass decisions must route to continue"))
+        if gate_strength == "hard" and not evidence_refs:
+            issues.append(_gate_decision_issue("evidence_refs", "hard pass decisions require evidence references"))
+    elif gate_decision == "block":
+        if blocking is not True:
+            issues.append(_gate_decision_issue("blocking", "block decisions must be blocking"))
+    elif gate_decision in {"waive", "skip"}:
+        if blocking is not False:
+            issues.append(_gate_decision_issue("blocking", "waive and skip decisions must not be blocking"))
+        if next_action != "continue":
+            issues.append(_gate_decision_issue("next_action", "waive and skip decisions must route to continue"))
+    elif gate_decision == "repair_local":
+        if blocking is not True:
+            issues.append(_gate_decision_issue("blocking", "repair_local decisions must be blocking until repaired"))
+        if next_action not in {"local_repair", "reviewer_recheck", "collect_evidence"}:
+            issues.append(_gate_decision_issue("next_action", "repair_local requires a local repair, recheck, or evidence collection action"))
+    elif gate_decision == "mutate_route":
+        if blocking is not True:
+            issues.append(_gate_decision_issue("blocking", "mutate_route decisions must be blocking until route mutation"))
+        if next_action != "route_mutation":
+            issues.append(_gate_decision_issue("next_action", "mutate_route decisions must route to route_mutation"))
+    if gate_strength == "advisory" and blocking is True:
+        issues.append(_gate_decision_issue("blocking", "advisory gates cannot block"))
+    if gate_strength == "skip_with_reason" and gate_decision not in {"skip", "waive"}:
+        issues.append(_gate_decision_issue("decision", "skip_with_reason gates require skip or waive decision"))
+    for index, evidence in enumerate(evidence_refs):
+        prefix = f"evidence_refs[{index}]"
+        if not isinstance(evidence, dict):
+            issues.append(_gate_decision_issue(prefix, "evidence reference must be an object"))
+            continue
+        kind = evidence.get("kind")
+        if kind not in GATE_DECISION_ALLOWED_EVIDENCE_KINDS:
+            issues.append(_gate_decision_issue(f"{prefix}.kind", f"unsupported evidence kind: {kind}"))
+            continue
+        summary = str(evidence.get("summary") or "").strip()
+        if not summary:
+            issues.append(_gate_decision_issue(f"{prefix}.summary", "evidence reference requires summary"))
+        if kind == "none":
+            continue
+        raw_path = str(evidence.get("path") or "").strip()
+        raw_hash = str(evidence.get("hash") or "").strip()
+        if not raw_path:
+            issues.append(_gate_decision_issue(f"{prefix}.path", "non-none evidence requires path"))
+            continue
+        if not raw_hash:
+            issues.append(_gate_decision_issue(f"{prefix}.hash", "non-none evidence requires hash"))
+            continue
+        evidence_path = resolve_project_path(project_root, raw_path)
+        try:
+            project_relative(project_root, evidence_path)
+        except RouterError:
+            issues.append(_gate_decision_issue(f"{prefix}.path", "evidence path must stay inside the project root"))
+            continue
+        if not evidence_path.exists() or not evidence_path.is_file():
+            issues.append(_gate_decision_issue(f"{prefix}.path", "evidence path is missing"))
+            continue
+        actual_hash = packet_runtime.sha256_file(evidence_path)
+        if raw_hash != actual_hash:
+            issues.append(_gate_decision_issue(f"{prefix}.hash", "evidence hash does not match path content"))
+    return issues
+
+
+def _validate_gate_decision(project_root: Path, decision: dict[str, Any]) -> dict[str, Any]:
+    issues = _gate_decision_issues(project_root, decision)
+    if issues:
+        first = issues[0]
+        raise RouterError(f"GateDecision mechanical validation failed: {first['field']}: {first['message']}")
+    return decision
+
+
+def _gate_decision_record_path(run_root: Path, gate_id: str) -> Path:
+    return run_root / "gate_decisions" / f"{_gate_decision_safe_id(gate_id)}.json"
+
+
+def _gate_decision_summary(project_root: Path, record_path: Path, decision: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "gate_id": str(decision["gate_id"]),
+        "gate_kind": decision["gate_kind"],
+        "owner_role": decision["owner_role"],
+        "risk_type": decision["risk_type"],
+        "gate_strength": decision["gate_strength"],
+        "decision": decision["decision"],
+        "blocking": decision["blocking"],
+        "next_action": decision["next_action"],
+        "decision_path": project_relative(project_root, record_path),
+    }
+
+
+def _write_gate_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    decision = _load_file_backed_role_payload(project_root, payload)
+    _validate_gate_decision(project_root, decision)
+    gate_id = str(decision["gate_id"])
+    record_path = _gate_decision_record_path(run_root, gate_id)
+    record = {
+        "schema_version": GATE_DECISION_RECORD_SCHEMA,
+        "run_id": run_state["run_id"],
+        "recorded_at": utc_now(),
+        "recorded_by_event": GATE_DECISION_EVENT,
+        "gate_decision": decision,
+        **_role_output_envelope_record(decision),
+    }
+    write_json(record_path, record)
+    summary = _gate_decision_summary(project_root, record_path, decision)
+    decisions = run_state.setdefault("gate_decisions", [])
+    if not isinstance(decisions, list):
+        decisions = []
+        run_state["gate_decisions"] = decisions
+    decisions[:] = [item for item in decisions if item.get("gate_id") != gate_id]
+    decisions.append(summary)
+    ledger_path = run_root / "gate_decisions" / "gate_decision_ledger.json"
+    write_json(
+        ledger_path,
+        {
+            "schema_version": GATE_DECISION_LEDGER_SCHEMA,
+            "run_id": run_state["run_id"],
+            "updated_at": utc_now(),
+            "gate_decision_count": len(decisions),
+            "gate_decisions": decisions,
+        },
+    )
 
 
 def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str) -> bool:
@@ -7963,6 +8246,8 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         }
         for entry in entries
     ]
+    gate_decision_ledger_path = run_root / "gate_decisions" / "gate_decision_ledger.json"
+    gate_decisions = list(run_state.get("gate_decisions") or [])
     ledger = {
         "schema_version": "flowpilot.final_route_wide_gate_ledger.v1",
         "run_id": run_state["run_id"],
@@ -7984,6 +8269,9 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             else None,
             "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
             "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+            "gate_decision_ledger": project_relative(project_root, gate_decision_ledger_path)
+            if gate_decision_ledger_path.exists()
+            else None,
         },
         "prior_path_context_review": prior_review,
         "current_route_scanned": True,
@@ -7995,6 +8283,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "product_process_gates_collected": True,
             "generated_resource_lineage_collected": True,
             "final_completion_gates_collected": True,
+            "gate_decisions_collected": True,
         },
         "evidence_integrity": {
             "generated_resource_lineage_resolved": True,
@@ -8014,8 +8303,10 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "unresolved_resource_count": unresolved_resource_count,
             "unresolved_residual_risk_count": unresolved_residual_risk_count,
             "unresolved_count": unresolved_count,
+            "gate_decision_count": len(gate_decisions),
         },
         "entries": entries,
+        "gate_decisions": gate_decisions,
         "root_contract_replay": root_replay,
         "frozen_contract_replay": {
             "status": "replayed",
@@ -9427,6 +9718,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         and active_blocker.get("delivery_status") == "delivered"
         and active_blocker.get("handling_lane") == "pm_repair_decision_required"
     )
+    repeatable_gate_decision = event == GATE_DECISION_EVENT
     repeatable_startup_repair_request = (
         event == "pm_requests_startup_repair"
         and run_state["flags"].get(flag)
@@ -9434,7 +9726,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         and run_state["flags"].get("pm_startup_activation_card_delivered")
     )
     if run_state["flags"].get(flag) and not (
-        repeatable_pm_repair_decision or repeatable_startup_repair_request
+        repeatable_pm_repair_decision or repeatable_gate_decision or repeatable_startup_repair_request
     ):
         resolved = _resolve_delivered_control_blocker(
             project_root,
@@ -9734,6 +10026,8 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _write_route_mutation(project_root, run_root, run_state, payload)
     elif event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         _write_control_blocker_repair_decision(project_root, run_root, run_state, payload)
+    elif event == GATE_DECISION_EVENT:
+        _write_gate_decision(project_root, run_root, run_state, payload)
     elif event == "pm_approves_terminal_closure":
         _write_terminal_closure_suite(project_root, run_root, run_state, payload)
     elif event == "pm_accepts_reviewed_material":
@@ -10175,6 +10469,9 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
             issues.append(_artifact_issue("from_role", "missing producing role", "role"))
         if not payload.get("to_role"):
             issues.append(_artifact_issue("to_role", "missing recipient role", "role"))
+    elif artifact_type == "gate_decision":
+        decision = payload.get("gate_decision") if isinstance(payload.get("gate_decision"), dict) else payload
+        issues.extend(_gate_decision_issues(project_root, decision))
     else:
         raise RouterError(f"unsupported artifact validation type: {artifact_type}")
     return {
@@ -10218,7 +10515,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     envelope_parser.add_argument("--to-role", default="controller")
     envelope_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     validate_parser = sub.add_parser("validate-artifact", help="Validate a FlowPilot artifact before or during record-event")
-    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "packet_envelope", "result_envelope", "role_output_envelope"])
+    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "packet_envelope", "result_envelope", "role_output_envelope", "gate_decision"])
     validate_parser.add_argument("--path", required=True)
     validate_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     reconcile_parser = sub.add_parser("reconcile-run", help="Rebuild derived indexes and live-run views for the current run")

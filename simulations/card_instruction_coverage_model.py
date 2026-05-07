@@ -239,6 +239,19 @@ def _has_output_contract_guidance(card_id: str, text: str) -> bool:
         return True
     lower = text.lower()
     has_packet_contract = "output_contract" in lower and ("packet" in lower or "envelope" in lower)
+    if card_id in {
+        "pm.core",
+        "pm.output_contract_catalog",
+        "reviewer.core",
+        "process_officer.core",
+        "product_officer.core",
+    }:
+        has_gate_decision_contract = (
+            "flowpilot.output_contract.gate_decision.v1" in lower
+            and "gate_decision_version" in lower
+            and "semantic" in lower
+        )
+        return has_packet_contract and "contract self-check" in lower and has_gate_decision_contract
     if card_id.startswith("pm.") and card_id not in {"pm.core", "pm.output_contract_catalog"}:
         return has_packet_contract
     return has_packet_contract and "contract self-check" in lower

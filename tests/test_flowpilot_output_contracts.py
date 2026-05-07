@@ -45,6 +45,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.worker_current_node_result.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.material_sufficiency_report.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.terminal_backward_replay_report.v1", contract_ids)
+        self.assertIn("flowpilot.output_contract.gate_decision.v1", contract_ids)
         startup_contract = next(
             item
             for item in registry["contracts"]
@@ -54,6 +55,30 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "external_fact_review.direct_evidence_paths_checked",
             startup_contract["required_body_fields"],
         )
+        gate_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.gate_decision.v1"
+        )
+        for field in (
+            "gate_decision_version",
+            "gate_id",
+            "gate_kind",
+            "owner_role",
+            "risk_type",
+            "gate_strength",
+            "decision",
+            "blocking",
+            "required_evidence",
+            "evidence_refs",
+            "reason",
+            "next_action",
+            "contract_self_check",
+        ):
+            self.assertIn(field, gate_contract["required_body_fields"])
+        self.assertIn("repair_local", gate_contract["allowed_decision_values"])
+        self.assertIn("mutate_route", gate_contract["allowed_decision_values"])
+        self.assertIn("semantic_sufficiency_fields_not_router_owned", gate_contract["router_mechanical_validation"])
 
     def test_router_delivered_reviewer_cards_include_task_report_contracts(self) -> None:
         startup_card = (
@@ -82,6 +107,30 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.startup_fact_report.v1", startup_card)
         self.assertIn("## Report Contract For This Task", material_card)
         self.assertIn("pm_ready", material_card)
+        pm_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "roles"
+            / "project_manager.md"
+        ).read_text(encoding="utf-8")
+        reviewer_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "roles"
+            / "human_like_reviewer.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("flowpilot.output_contract.gate_decision.v1", pm_card)
+        self.assertIn("gate_decision_version", pm_card)
+        self.assertIn("flowpilot.output_contract.gate_decision.v1", reviewer_card)
+        self.assertIn("semantic reason", reviewer_card)
 
     def test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result(self) -> None:
         root = self.make_project()

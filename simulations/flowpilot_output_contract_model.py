@@ -33,6 +33,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 VALID_IMPLEMENTATION = "valid_implementation"
 VALID_REVIEW = "valid_review"
 VALID_FINAL_REPORT = "valid_final_report"
+VALID_GATE_DECISION = "valid_gate_decision"
 MISSING_CONTRACT = "missing_contract"
 MISMATCHED_CONTRACT = "mismatched_contract"
 HIDDEN_ROUTER_REQUIREMENT = "hidden_router_requirement_absent_from_contract"
@@ -53,6 +54,7 @@ SCENARIOS = (
     VALID_IMPLEMENTATION,
     VALID_REVIEW,
     VALID_FINAL_REPORT,
+    VALID_GATE_DECISION,
     *NEGATIVE_SCENARIOS,
 )
 
@@ -115,10 +117,33 @@ FINAL_REPORT_CONTRACT = ContractSpec(
     ),
 )
 
+GATE_DECISION_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.gate_decision.v1",
+    task_family="gate.decision",
+    required_body_fields=frozenset(
+        {
+            "gate_decision_version",
+            "gate_id",
+            "gate_kind",
+            "owner_role",
+            "risk_type",
+            "gate_strength",
+            "decision",
+            "blocking",
+            "required_evidence",
+            "evidence_refs",
+            "reason",
+            "next_action",
+            "contract_self_check",
+        }
+    ),
+)
+
 CONTRACTS_BY_FAMILY = {
     IMPLEMENTATION_CONTRACT.task_family: IMPLEMENTATION_CONTRACT,
     REVIEW_CONTRACT.task_family: REVIEW_CONTRACT,
     FINAL_REPORT_CONTRACT.task_family: FINAL_REPORT_CONTRACT,
+    GATE_DECISION_CONTRACT.task_family: GATE_DECISION_CONTRACT,
 }
 
 CONTRACTS_BY_ID = {
@@ -229,6 +254,8 @@ class OutputContractStep:
 def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
     if scenario in {VALID_FINAL_REPORT, MISSING_REPORT_CONTRACT_DELIVERY}:
         return FINAL_REPORT_CONTRACT.task_family, FINAL_REPORT_CONTRACT
+    if scenario == VALID_GATE_DECISION:
+        return GATE_DECISION_CONTRACT.task_family, GATE_DECISION_CONTRACT
     if scenario == VALID_REVIEW:
         return REVIEW_CONTRACT.task_family, REVIEW_CONTRACT
     return IMPLEMENTATION_CONTRACT.task_family, IMPLEMENTATION_CONTRACT
@@ -327,6 +354,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             VALID_IMPLEMENTATION: "packet_embeds_selected_contract",
             VALID_REVIEW: "packet_embeds_selected_contract",
             VALID_FINAL_REPORT: "packet_embeds_selected_contract",
+            VALID_GATE_DECISION: "packet_embeds_selected_contract",
             MISSING_CONTRACT: "packet_omits_selected_contract",
             MISMATCHED_CONTRACT: "packet_embeds_mismatched_contract",
             HIDDEN_ROUTER_REQUIREMENT: "packet_embeds_contract_with_hidden_router_requirement",

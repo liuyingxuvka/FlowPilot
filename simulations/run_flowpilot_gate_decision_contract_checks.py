@@ -56,6 +56,7 @@ DOC_REQUIRED_SNIPPETS = (
     "evidence_refs",
     "reason",
     "next_action",
+    "contract_self_check",
     "Router responsibility is mechanical conformance",
     "Reviewer and PM responsibility is semantic sufficiency",
     "product_state",
@@ -70,6 +71,8 @@ DOC_REQUIRED_SNIPPETS = (
     "advance_stage -> refresh(frontier, display, ledger, blocker_index)",
     "Prompt/card instruction models should check",
     "Router/protocol models should check",
+    "role_records_gate_decision",
+    "flowpilot.output_contract.gate_decision.v1",
     "Reviewer/router scope models should check",
     "Control-plane models should check",
 )
@@ -223,7 +226,7 @@ def _doc_audit() -> dict[str, object]:
     missing = [snippet for snippet in DOC_REQUIRED_SNIPPETS if snippet not in text]
     return {
         "ok": not missing,
-        "path": str(CONTRACT_DOC),
+        "path": str(CONTRACT_DOC.relative_to(PROJECT_ROOT)).replace("\\", "/"),
         "missing_snippets": missing,
         "required_snippet_count": len(DOC_REQUIRED_SNIPPETS),
     }

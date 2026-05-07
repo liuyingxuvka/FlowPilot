@@ -86,6 +86,15 @@ a registry update or user review instead of sending an under-specified packet.
 Every recipient must be told in the packet that its final body must include a
 `Contract Self-Check` section before it returns an envelope.
 
+When any PM, reviewer, or FlowGuard officer gate can pass, block, waive, skip,
+repair locally, mutate the route, or affect completion, require a file-backed
+`GateDecision` body under `flowpilot.output_contract.gate_decision.v1`. Use the
+exact fields `gate_decision_version`, `gate_id`, `gate_kind`, `owner_role`,
+`risk_type`, `gate_strength`, `decision`, `blocking`, `required_evidence`,
+`evidence_refs`, `reason`, `next_action`, and `contract_self_check`. Router can
+reject malformed or mechanically contradictory GateDecision records, but PM,
+reviewer, and officers own whether the evidence is semantically sufficient.
+
 Every PM decision body must be written to a run-scoped decision or packet file.
 The chat response back to Controller must be envelope-only. It may name ids,
 paths, hashes, event names, from/to roles, next holder, and visibility flags,

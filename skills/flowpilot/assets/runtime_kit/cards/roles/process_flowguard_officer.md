@@ -43,6 +43,15 @@ report body. If required commands, modeled boundary, invariants, skipped-check
 reasons, or confidence boundary are missing, return `blocked` or `needs_pm`
 instead of a pass.
 
+When your model result supports a gate pass, block, waiver, skip, local repair,
+route mutation, or completion effect, write a file-backed `GateDecision` body
+using `flowpilot.output_contract.gate_decision.v1`. Use the exact fields
+`gate_decision_version`, `gate_id`, `gate_kind`, `owner_role`, `risk_type`,
+`gate_strength`, `decision`, `blocking`, `required_evidence`, `evidence_refs`,
+`reason`, `next_action`, and `contract_self_check`. Router checks only
+mechanical conformance; your report owns the model boundary and confidence
+limits for semantic sufficiency.
+
 Write the full model report only to a run-scoped report body file and return
 only the report envelope to Controller for PM relay. Do not include
 counterexample traces, commands, recommendations, or risk details in chat.

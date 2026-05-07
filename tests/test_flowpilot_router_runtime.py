@@ -895,6 +895,53 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         }
 
+    def gate_decision_body(
+        self,
+        root: Path,
+        *,
+        gate_id: str = "quality-gate-001",
+        owner_role: str = "human_like_reviewer",
+        gate_kind: str = "quality",
+        risk_type: str = "visual_quality",
+        gate_strength: str = "hard",
+        decision: str = "pass",
+        blocking: bool = False,
+        next_action: str = "continue",
+    ) -> dict:
+        run_root = self.run_root_for(root)
+        evidence_path = run_root / "test_evidence" / f"{gate_id}.json"
+        evidence_path.parent.mkdir(parents=True, exist_ok=True)
+        evidence_path.write_text(
+            json.dumps({"gate_id": gate_id, "checked": True}, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        return {
+            "gate_decision_version": "flowpilot.gate_decision.v1",
+            "gate_id": gate_id,
+            "gate_kind": gate_kind,
+            "owner_role": owner_role,
+            "risk_type": risk_type,
+            "gate_strength": gate_strength,
+            "decision": decision,
+            "blocking": blocking,
+            "required_evidence": ["reviewer-owned walkthrough evidence"],
+            "evidence_refs": [
+                {
+                    "kind": "reviewer_walkthrough",
+                    "path": self.rel(root, evidence_path),
+                    "hash": hashlib.sha256(evidence_path.read_bytes()).hexdigest(),
+                    "summary": "Reviewer checked the gate evidence directly.",
+                }
+            ],
+            "reason": "The gate has direct evidence and can advance without router semantic approval.",
+            "next_action": next_action,
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+            },
+        }
+
     def final_ledger_payload(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
         root_contract_path = self.rel(root, run_root / "root_acceptance_contract.json")
@@ -3768,6 +3815,58 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("high_standard_recheck.ideal_outcome", fields)
         self.assertIn("high_standard_recheck.why_current_plan_meets_highest_reasonable_standard", fields)
 
+    def test_gate_decision_event_records_ledger_and_state(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        body = self.gate_decision_body(root)
+        router.record_external_event(
+            root,
+            "role_records_gate_decision",
+            self.role_decision_envelope(root, "gate_decisions/quality_gate_001", body),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["gate_decision_recorded"])
+        self.assertEqual(len(state["gate_decisions"]), 1)
+        self.assertEqual(state["gate_decisions"][0]["gate_id"], "quality-gate-001")
+        self.assertEqual(state["gate_decisions"][0]["decision"], "pass")
+        decision_record = read_json(root / state["gate_decisions"][0]["decision_path"])
+        self.assertEqual(decision_record["schema_version"], "flowpilot.gate_decision_record.v1")
+        self.assertEqual(decision_record["gate_decision"]["owner_role"], "human_like_reviewer")
+        ledger = read_json(run_root / "gate_decisions" / "gate_decision_ledger.json")
+        self.assertEqual(ledger["gate_decision_count"], 1)
+
+    def test_gate_decision_rejects_mechanical_contradictions(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        body = self.gate_decision_body(root, blocking=True)
+
+        with self.assertRaises(router.RouterError):
+            router.record_external_event(
+                root,
+                "role_records_gate_decision",
+                self.role_decision_envelope(root, "gate_decisions/contradictory_pass", body),
+            )
+
+    def test_validate_artifact_reports_gate_decision_issues_together(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        bad = self.gate_decision_body(root)
+        bad.pop("reason")
+        bad["owner_role"] = "controller"
+        bad["blocking"] = True
+        gate_path = root / ".flowpilot" / "bad_gate_decision.json"
+        gate_path.write_text(json.dumps(bad, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        result = router.validate_artifact(root, "gate_decision", self.rel(root, gate_path))
+        fields = {issue["field"] for issue in result["errors"]}
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["next_action"], "repair_gate_decision")
+        self.assertIn("reason", fields)
+        self.assertIn("owner_role", fields)
+        self.assertIn("blocking", fields)
+
     def test_evidence_quality_package_blocks_stale_and_missing_visual_evidence(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -4235,6 +4334,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.activate_route(root)
         self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-final-ledger-sources")
         self.complete_evidence_quality_package(root)
+        router.record_external_event(
+            root,
+            "role_records_gate_decision",
+            self.role_decision_envelope(
+                root,
+                "gate_decisions/final_quality_gate",
+                self.gate_decision_body(root, gate_id="final-quality-gate"),
+            ),
+        )
         self.deliver_expected_card(root, "pm.final_ledger")
         router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
 
@@ -4247,6 +4355,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("route_node", gate_families)
         self.assertIn("child_skill_gate", gate_families)
         self.assertIn("evidence_integrity", gate_families)
+        self.assertEqual(ledger["counts"]["gate_decision_count"], 1)
+        self.assertEqual(ledger["gate_decisions"][0]["gate_id"], "final-quality-gate")
+        self.assertEqual(ledger["source_paths"]["gate_decision_ledger"], self.rel(root, run_root / "gate_decisions" / "gate_decision_ledger.json"))
 
     def test_closure_lifecycle_blocks_when_ledgers_are_dirty_after_terminal_replay(self) -> None:
         root = self.make_project()

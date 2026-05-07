@@ -57,8 +57,8 @@
     ],
     "installed_skill_sync": {
       "status": "source_fresh_after_sync",
-      "installed_skill_path": "C:\\Users\\liu_y\\.codex\\skills\\flowpilot",
-      "source_path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot",
+      "installed_skill_path": "<codex_home>\\skills\\flowpilot",
+      "source_path": "<repo>\\skills\\flowpilot",
       "installed_digest": "bbdc8dec24e55c4633fb114ebf26cd4945e4bb691f8cee991e98c7a36aa2fb88",
       "source_digest": "bbdc8dec24e55c4633fb114ebf26cd4945e4bb691f8cee991e98c7a36aa2fb88"
     },

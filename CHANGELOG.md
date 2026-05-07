@@ -2,6 +2,32 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.5.0 - 2026-05-07
+
+### Added
+
+- Added a first-class GateDecision contract, router event, mechanical
+  validation path, run-state record, and gate-decision ledger for PM,
+  reviewer, and FlowGuard officer gate decisions.
+- Added final-ledger collection of accepted GateDecision records.
+- Added FlowGuard and unit-test coverage for GateDecision prompt fields,
+  router mechanical validation, output-contract propagation, and card
+  instruction coverage.
+
+### Changed
+
+- Updated PM, reviewer, process officer, product officer, and PM output
+  contract catalog cards to require file-backed GateDecision bodies while
+  keeping semantic sufficiency with PM/reviewer/officers instead of the router.
+- Expanded the output-contract model to include valid GateDecision propagation.
+
+### Fixed
+
+- Preserved and released the post-0.4.1 control-plane fixes already in this
+  checkout, including startup repair-cycle handling, startup fact ownership,
+  material dispatch friction handling, live card context delivery, user-visible
+  route signs, and control-blocker repair decision handling.
+
 ## 0.4.1 - 2026-05-06
 
 ### Added

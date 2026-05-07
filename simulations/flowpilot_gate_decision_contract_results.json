@@ -2,8 +2,8 @@
   "doc_audit": {
     "missing_snippets": [],
     "ok": true,
-    "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\docs\\gate_decision_implementation_contract.md",
-    "required_snippet_count": 28
+    "path": "docs/gate_decision_implementation_contract.md",
+    "required_snippet_count": 31
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,

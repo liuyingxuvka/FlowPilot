@@ -79,6 +79,7 @@ GATE_DECISION_REQUIRED_FIELDS = frozenset(
         "evidence_refs",
         "reason",
         "next_action",
+        "contract_self_check",
     }
 )
 
@@ -89,6 +90,7 @@ ROUTER_MECHANICAL_CHECKS = frozenset(
         "blocking_decision_compatible",
         "evidence_refs_have_path_hash_shape",
         "next_action_routeable",
+        "contract_self_check_required",
         "stage_advance_refresh_atomic",
     }
 )

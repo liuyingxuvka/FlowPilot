@@ -63,6 +63,17 @@
         "product_flowguard_officer"
       ],
       "contract_id": "flowpilot.output_contract.officer_model_report.v1"
+    },
+    {
+      "task_family": "gate.decision",
+      "packet_type": "role_decision",
+      "recipient_roles": [
+        "project_manager",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "contract_id": "flowpilot.output_contract.gate_decision.v1"
     }
   ],
   "contracts": [
@@ -407,6 +418,108 @@
         "resolved_by_followup_event",
         "continue_after_pm_review"
       ]
+    },
+    {
+      "contract_id": "flowpilot.output_contract.gate_decision.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "gate.decision",
+      "recipient_roles": [
+        "project_manager",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "required_body_fields": [
+        "gate_decision_version",
+        "gate_id",
+        "gate_kind",
+        "owner_role",
+        "risk_type",
+        "gate_strength",
+        "decision",
+        "blocking",
+        "required_evidence",
+        "evidence_refs",
+        "reason",
+        "next_action",
+        "contract_self_check"
+      ],
+      "required_body_values": {
+        "gate_decision_version": "flowpilot.gate_decision.v1"
+      },
+      "allowed_gate_kind_values": [
+        "quality",
+        "repair",
+        "parent_replay",
+        "resource",
+        "stage_advance",
+        "completion",
+        "other"
+      ],
+      "allowed_owner_role_values": [
+        "project_manager",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "allowed_risk_type_values": [
+        "product_state",
+        "visual_quality",
+        "mixed_product_visual",
+        "documentation_only",
+        "composition",
+        "resource",
+        "control_state",
+        "none"
+      ],
+      "allowed_gate_strength_values": [
+        "hard",
+        "soft",
+        "advisory",
+        "skip_with_reason"
+      ],
+      "allowed_decision_values": [
+        "pass",
+        "block",
+        "waive",
+        "skip",
+        "repair_local",
+        "mutate_route"
+      ],
+      "allowed_evidence_ref_kind_values": [
+        "file",
+        "command",
+        "screenshot",
+        "model_result",
+        "reviewer_walkthrough",
+        "state_ref",
+        "none"
+      ],
+      "allowed_next_action_values": [
+        "continue",
+        "local_repair",
+        "route_mutation",
+        "collect_evidence",
+        "reviewer_recheck",
+        "stop"
+      ],
+      "router_mechanical_validation": [
+        "required_fields_present",
+        "allowed_enum_values",
+        "blocking_matches_decision_and_strength",
+        "non_none_evidence_refs_have_path_hash_summary",
+        "evidence_hash_matches_file_when_path_is_file",
+        "next_action_routeable",
+        "semantic_sufficiency_fields_not_router_owned"
+      ],
+      "semantic_sufficiency_owner": [
+        "project_manager",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "contract_self_check_required": true
     },
     {
       "contract_id": "flowpilot.output_contract.terminal_backward_replay_report.v1",

@@ -20,6 +20,7 @@ Selection rules:
 - research worker packet: `flowpilot.output_contract.worker_research_result.v1`;
 - reviewer dispatch or result review request: `flowpilot.output_contract.reviewer_review_report.v1`;
 - process or product FlowGuard officer request: `flowpilot.output_contract.officer_model_report.v1`;
+- PM, reviewer, process officer, or product officer gate decision: `flowpilot.output_contract.gate_decision.v1`;
 - PM startup, repair, resume, segment, route, or closure decision: the matching `flowpilot.output_contract.pm_*` contract from the registry.
 
 Every PM-authored dispatch packet must include `output_contract` copied from
@@ -49,6 +50,15 @@ If the packet runtime appends this block from the selected registry contract,
 use that generated block. If you are writing a manual PM request, copy the
 matching registry contract into the task packet and include the same
 task-specific report-writing rules before sending it.
+
+When a gate can pass, block, waive, skip, repair locally, mutate the route, or
+affect completion, require a file-backed `GateDecision` body using
+`flowpilot.output_contract.gate_decision.v1`. It must use the exact fields
+`gate_decision_version`, `gate_id`, `gate_kind`, `owner_role`, `risk_type`,
+`gate_strength`, `decision`, `blocking`, `required_evidence`,
+`evidence_refs`, `reason`, `next_action`, and `contract_self_check`. Router
+checks only field shape, enums, evidence path/hash mechanics, and routeable
+next action. Semantic sufficiency stays with PM, reviewer, and officers.
 
 Do not invent a custom contract in the packet body. If the registry has no
 contract for the task family, return a PM blocker asking for registry update or

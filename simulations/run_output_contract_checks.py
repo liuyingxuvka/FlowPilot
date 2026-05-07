@@ -110,7 +110,7 @@ def _check_safe_graph(graph: dict[str, object]) -> dict[str, object]:
     return {
         "ok": not graph["invariant_failures"]
         and not missing_labels
-        and len(accepted) == 3
+        and len(accepted) == 4
         and len(rejected) == len(model.NEGATIVE_SCENARIOS),
         "state_count": len(states),
         "edge_count": graph["edge_count"],
@@ -149,7 +149,12 @@ def _check_negative_scenarios(graph: dict[str, object]) -> dict[str, object]:
             f"{terminal.status}:{terminal.router_rejection_reason}"
         )
 
-    for scenario in (model.VALID_IMPLEMENTATION, model.VALID_REVIEW, model.VALID_FINAL_REPORT):
+    for scenario in (
+        model.VALID_IMPLEMENTATION,
+        model.VALID_REVIEW,
+        model.VALID_FINAL_REPORT,
+        model.VALID_GATE_DECISION,
+    ):
         terminal = terminal_by_scenario.get(scenario)
         if terminal is None:
             failures.append(f"{scenario}: no terminal state")
