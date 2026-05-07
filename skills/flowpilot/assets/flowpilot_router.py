@@ -626,14 +626,14 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "flag": "pm_review_repair_card_delivered",
         "label": "pm_review_repair_phase_card_delivered",
         "card_id": "pm.review_repair",
-        "requires_flag": "node_review_blocked",
+        "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
         "to_role": "project_manager",
     },
     {
         "flag": "pm_reviewer_blocked_event_delivered",
         "label": "pm_reviewer_blocked_event_card_delivered",
         "card_id": "pm.event.reviewer_blocked",
-        "requires_flag": "node_review_blocked",
+        "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
         "to_role": "project_manager",
     },
     {
@@ -748,6 +748,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "reviewer_dispatch_allowed",
         "requires_flag": "reviewer_dispatch_card_delivered",
         "summary": "Reviewer allowed material scan dispatch.",
+    },
+    "reviewer_blocks_material_scan_dispatch": {
+        "flag": "material_scan_dispatch_blocked",
+        "requires_flag": "reviewer_dispatch_card_delivered",
+        "summary": "Reviewer blocked material scan dispatch before worker packet relay.",
     },
     "reviewer_allows_current_node_dispatch": {
         "flag": "current_node_dispatch_allowed",
@@ -3533,6 +3538,17 @@ def _create_empty_execution_frontier(run_id: str) -> dict[str, Any]:
     }
 
 
+def _set_pre_route_frontier_phase(run_root: Path, run_id: str, phase: str) -> None:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json") or _create_empty_execution_frontier(run_id)
+    if frontier.get("active_route_id") or frontier.get("active_node_id"):
+        return
+    frontier["status"] = phase
+    frontier["phase"] = phase
+    frontier["updated_at"] = utc_now()
+    frontier["source"] = "flowpilot_router"
+    write_json(run_root / "execution_frontier.json", frontier)
+
+
 def _create_empty_role_memory(run_id: str, role: str) -> dict[str, Any]:
     return {
         "schema_version": "flowpilot.role_memory.v1",
@@ -4415,6 +4431,26 @@ def _write_display_surface_status(
     )
 
 
+def _material_packet_body_text_from_spec(project_root: Path, spec: dict[str, Any]) -> str:
+    body_text = spec.get("body_text")
+    if isinstance(body_text, str) and body_text.strip():
+        return body_text
+    raw_body_path = spec.get("body_path") or spec.get("packet_body_path")
+    raw_body_hash = spec.get("body_hash") or spec.get("packet_body_hash")
+    if not raw_body_path or not raw_body_hash:
+        raise RouterError("material scan packet requires non-empty body_text or file-backed body_path/body_hash")
+    body_path = resolve_project_path(project_root, str(raw_body_path))
+    if not body_path.exists():
+        raise RouterError(f"material scan packet body path is missing: {raw_body_path}")
+    actual_hash = hashlib.sha256(body_path.read_bytes()).hexdigest()
+    if actual_hash != str(raw_body_hash):
+        raise RouterError("material scan packet body hash mismatch")
+    loaded_text = body_path.read_text(encoding="utf-8")
+    if not loaded_text.strip():
+        raise RouterError("material scan packet body file is empty")
+    return loaded_text
+
+
 def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     packet_specs = payload.get("packets")
     if not isinstance(packet_specs, list) or not packet_specs:
@@ -4427,9 +4463,7 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
         to_role = str(spec.get("to_role") or "worker_a")
         if to_role not in {"worker_a", "worker_b"}:
             raise RouterError("material scan packet must target worker_a or worker_b")
-        body_text = spec.get("body_text")
-        if not isinstance(body_text, str) or not body_text.strip():
-            raise RouterError("material scan packet requires non-empty body_text")
+        body_text = _material_packet_body_text_from_spec(project_root, spec)
         envelope = packet_runtime.create_packet(
             project_root,
             run_id=str(run_state["run_id"]),
@@ -4468,6 +4502,44 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
             "written_at": utc_now(),
         },
     )
+    _set_pre_route_frontier_phase(run_root, str(run_state["run_id"]), "material_scan")
+
+
+def _write_material_dispatch_block_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "human_like_reviewer":
+        raise RouterError("material dispatch block report must be reviewed_by_role=human_like_reviewer")
+    if payload.get("dispatch_allowed") is not False:
+        raise RouterError("material dispatch block report requires dispatch_allowed=false")
+    blockers = payload.get("blockers")
+    if not isinstance(blockers, list) or not blockers:
+        raise RouterError("material dispatch block report requires non-empty blockers")
+    material_index_path = _material_scan_index_path(run_root)
+    if not material_index_path.exists():
+        raise RouterError("material dispatch block report requires material scan packet index")
+    report_path = run_root / "material" / "material_dispatch_block.json"
+    reported_at = utc_now()
+    write_json(
+        report_path,
+        {
+            "schema_version": "flowpilot.material_dispatch_block.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "human_like_reviewer",
+            "dispatch_allowed": False,
+            "source_paths": [project_relative(project_root, material_index_path)],
+            "checks": payload.get("checks") if isinstance(payload.get("checks"), dict) else {},
+            "blockers": blockers,
+            "residual_risks": payload.get("residual_risks") if isinstance(payload.get("residual_risks"), list) else [],
+            "reported_at": reported_at,
+            **_role_output_envelope_record(payload),
+        },
+    )
+    run_state["material_dispatch_block"] = {
+        "path": project_relative(project_root, report_path),
+        "blockers": blockers,
+        "reported_at": reported_at,
+    }
+    run_state["flags"]["reviewer_dispatch_allowed"] = False
 
 
 def _write_material_sufficiency_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, sufficient: bool) -> None:
@@ -5699,7 +5771,14 @@ def _refresh_route_memory(project_root: Path, run_root: Path, run_state: dict[st
     )
     effective_nodes = [str(node.get("node_id")) for node in _effective_route_nodes(route, mutations) if node.get("node_id")]
     route_nodes = _route_node_history(project_root, run_root, route_id or "route-001", route)
-    reviewer_blocks = _event_markers(run_state, {"current_node_reviewer_blocks_result", "reviewer_reports_material_insufficient"})
+    reviewer_blocks = _event_markers(
+        run_state,
+        {
+            "current_node_reviewer_blocks_result",
+            "reviewer_reports_material_insufficient",
+            "reviewer_blocks_material_scan_dispatch",
+        },
+    )
     reviewer_passes = _event_markers(
         run_state,
         {
@@ -8051,7 +8130,12 @@ def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: P
 
 def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     flags = run_state["flags"]
-    if flags.get("pm_material_packets_issued") and flags.get("reviewer_dispatch_allowed") and not flags.get("material_scan_packets_relayed"):
+    if (
+        flags.get("pm_material_packets_issued")
+        and flags.get("reviewer_dispatch_allowed")
+        and not flags.get("material_scan_dispatch_blocked")
+        and not flags.get("material_scan_packets_relayed")
+    ):
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         if not run_state.get("ledger_check_requested"):
             return make_action(
@@ -8683,6 +8767,8 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _write_startup_protocol_dead_end(project_root, run_root, run_state, payload)
     elif event == "pm_issues_material_and_capability_scan_packets":
         _write_material_scan_packets(project_root, run_root, run_state, payload)
+    elif event == "reviewer_blocks_material_scan_dispatch":
+        _write_material_dispatch_block_report(project_root, run_root, run_state, payload)
     elif event == "worker_scan_packet_bodies_delivered_after_dispatch":
         material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         _validate_packet_bodies_opened_by_targets(project_root, run_state, material_index["packets"])
@@ -8942,6 +9028,9 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     if event == "pm_absorbs_reviewed_research":
         run_state["flags"]["material_accepted_by_pm"] = True
     run_state["events"].append(record)
+    if event == "reviewer_allows_material_scan_dispatch":
+        run_state["flags"]["material_scan_dispatch_blocked"] = False
+        run_state["material_dispatch_block"] = None
     if event == "reviewer_reports_material_sufficient":
         run_state["material_review"] = "sufficient"
     elif event == "reviewer_reports_material_insufficient":

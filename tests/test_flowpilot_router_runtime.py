@@ -94,6 +94,25 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ]
         }
 
+    def material_scan_file_backed_payload(self, root: Path) -> dict:
+        run_root = self.run_root_for(root)
+        body_path = run_root / "test_role_outputs" / "material" / "scan_packet_body.md"
+        body_path.parent.mkdir(parents=True, exist_ok=True)
+        body_path.write_text(
+            "Inspect current request, repository state, and available local materials.",
+            encoding="utf-8",
+        )
+        return {
+            "packets": [
+                {
+                    "packet_id": "material-scan-file-backed-001",
+                    "to_role": "worker_a",
+                    "body_path": self.rel(root, body_path),
+                    "body_hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
+                }
+            ]
+        }
+
     def apply_next_packet_action(self, root: Path, expected_action_type: str) -> dict:
         action = self.next_after_display_sync(root)
         if action["action_type"] == "check_packet_ledger":
@@ -2371,6 +2390,62 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "pm_requests_research_after_material_insufficient")
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["pm_research_requested"])
+
+    def test_material_scan_accepts_file_backed_packet_body_and_updates_frontier(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(
+            root,
+            "pm_issues_material_and_capability_scan_packets",
+            self.material_scan_file_backed_payload(root),
+        )
+
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "material_scan")
+        self.assertIsNone(frontier["active_node_id"])
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        packet = packet_runtime.load_envelope(root, material_index["packets"][0]["packet_envelope_path"])
+        self.assertEqual(packet["packet_type"], "material_scan")
+        self.assertFalse(packet["is_current_node"])
+
+    def test_reviewer_blocks_material_scan_dispatch_routes_to_pm_repair(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.deliver_expected_card(root, "reviewer.dispatch_request")
+        router.record_external_event(
+            root,
+            "reviewer_blocks_material_scan_dispatch",
+            self.role_report_envelope(
+                root,
+                "material/reviewer_material_dispatch_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "dispatch_allowed": False,
+                    "checks": {"material_phase_matches_frontier": False},
+                    "blockers": ["frontier and material packet dispatch context do not match"],
+                    "contract_self_check": {
+                        "all_required_fields_present": True,
+                        "exact_field_names_used": True,
+                    },
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["material_scan_dispatch_blocked"])
+        self.assertFalse(state["flags"]["reviewer_dispatch_allowed"])
+        self.assertTrue((run_root / "material" / "material_dispatch_block.json").exists())
+        self.deliver_expected_card(root, "pm.review_repair")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        action = self.next_after_display_sync(root)
+        self.assertNotEqual(action["action_type"], "relay_material_scan_packets")
 
     def test_research_required_blocks_product_architecture_until_absorbed(self) -> None:
         root = self.make_project()

@@ -13,6 +13,10 @@ Review whether the PM packet may be dispatched.
 Check:
 
 - current node and current phase match;
+- for `material_scan` packets, this is pre-route material intake:
+  `is_current_node=false` is expected, `packet_type` must be `material_scan`,
+  and the run frontier/status must be in the material scan phase rather than a
+  current route node;
 - packet is bounded and addressed to the right role;
 - packet envelope includes `output_contract`, the packet body repeats the same
   `Output Contract`, and the contract matches `to_role`, `packet_type`, node
@@ -25,4 +29,6 @@ Check:
 The dispatch report body must include `Contract Self-Check` against the source
 packet `output_contract`; missing or failed contract checks block dispatch.
 
-Return `dispatch_allowed` or a concrete blocker.
+Return `dispatch_allowed` or a concrete blocker. If dispatch is blocked, return
+the file-backed report through event `reviewer_blocks_material_scan_dispatch`;
+do not invent a new event name.

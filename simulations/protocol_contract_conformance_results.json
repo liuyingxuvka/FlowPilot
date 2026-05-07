@@ -8,13 +8,25 @@
   },
   "counts": {
     "accepted": 1,
-    "edges": 16,
-    "rejected": 7,
-    "states": 17
+    "edges": 24,
+    "rejected": 11,
+    "states": 25
   },
   "current_source": {
     "facts": {
       "display_status_available_before_startup_fact_review": true,
+      "material_dispatch_block_event_registered": true,
+      "material_dispatch_block_report_writer": true,
+      "material_dispatch_card_has_pre_route_material_exception": true,
+      "material_dispatch_frontier_phase_synchronized": true,
+      "material_dispatch_pm_block_cards_reachable": true,
+      "material_dispatch_relay_requires_allow_without_block": true,
+      "material_dispatch_route_memory_tracks_block": true,
+      "material_scan_card_requires_file_backed_packet_bodies": true,
+      "material_scan_index_forbids_controller_body_reads": true,
+      "material_scan_packets_mark_pre_route_not_current_node": true,
+      "material_scan_router_accepts_file_backed_packet_specs": true,
+      "material_scan_router_requires_inline_body_text_only": false,
       "pm_control_blocker_allowed_events": [
         "pm_records_control_blocker_repair_decision"
       ],
@@ -59,6 +71,44 @@
         "repair_action",
         "rerun_target"
       ],
+      "role_output_card_path_hash_pairs": [
+        "body_path/body_hash",
+        "decision_path/decision_hash",
+        "report_path/report_hash",
+        "result_body_path/result_body_hash"
+      ],
+      "role_output_cards_forbid_sha256_aliases": true,
+      "role_output_cards_require_top_level_keys": true,
+      "role_output_contract_path_hash_pairs": [
+        "architecture_path/architecture_hash",
+        "contract_path/contract_hash",
+        "decision_path/decision_hash",
+        "draft_path/draft_hash",
+        "ledger_path/ledger_hash",
+        "manifest_path/manifest_hash",
+        "package_path/package_hash",
+        "plan_path/plan_hash",
+        "report_path/report_hash",
+        "result_body_path/result_body_hash",
+        "route_path/route_hash"
+      ],
+      "role_output_router_path_hash_pairs": [
+        "architecture_path/architecture_hash",
+        "body_path/body_hash",
+        "contract_path/contract_hash",
+        "decision_path/decision_hash",
+        "draft_path/draft_hash",
+        "ledger_path/ledger_hash",
+        "manifest_path/manifest_hash",
+        "memo_path/memo_hash",
+        "package_path/package_hash",
+        "plan_path/plan_hash",
+        "report_path/report_hash",
+        "result_body_path/result_body_hash",
+        "route_path/route_hash"
+      ],
+      "role_output_router_rejects_nested_envelope": true,
+      "role_output_router_rejects_sha256_aliases": true,
       "router_blocks_startup_fact_canonical_alias": true,
       "router_rewrites_startup_fact_canonical": true,
       "startup_card_example_paths": [
@@ -118,6 +168,10 @@
     "control_blocker_ambiguous_event": "detected",
     "control_blocker_weak_decision_contract": "detected",
     "display_fallback_after_pm_activation": "detected",
+    "material_dispatch_frontier_phase_mismatch": "detected",
+    "material_dispatch_unknown_block_event": "detected",
+    "material_scan_inline_body_only": "detected",
+    "role_output_envelope_ambiguity": "detected",
     "startup_fact_hash_alias": "detected",
     "startup_fact_jsonpath_mismatch": "detected",
     "startup_repair_dedupes_new_report": "detected"

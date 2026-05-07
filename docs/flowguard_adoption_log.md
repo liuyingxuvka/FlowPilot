@@ -4357,3 +4357,47 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Consider making `smoke_autopilot.py` report per-check progress or default to bounded proof reuse so future validation does not look stalled.
+
+## flowpilot-protocol-friction-model-20260507 - Model-first minimal repair for FlowPilot control-plane protocol friction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowGuard model changes before minimal code fixes for real FlowPilot protocol friction
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T08:32:53+00:00
+- Ended: 2026-05-07T08:32:53+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_protocol_contract_conformance_model.py
+- simulations/run_protocol_contract_conformance_checks.py
+
+### Commands
+- OK (0.000s): `python simulations/run_protocol_contract_conformance_checks.py --json-out simulations/protocol_contract_conformance_results.json`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_router_runtime.py -k material_scan_accepts_file_backed_packet_body`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_router_runtime.py -k reviewer_blocks_material_scan_dispatch_routes_to_pm_repair`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python simulations/run_prompt_isolation_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.background_latest.json`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_router_runtime.py tests/test_flowpilot_output_contracts.py tests/test_flowpilot_packet_runtime.py`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+- OK (0.000s): `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- Extended the protocol model to catch role-output envelope ambiguity, material scan inline-body leakage, missing material dispatch block event, and frontier/phase mismatch.
+- A pre-fix source-conformance run failed as expected and exposed current-source protocol gaps; after minimal router/card/test changes, current_source_conformance passed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Existing checks were green because material dispatch and file-backed material scan protocol were outside their modeled boundary.
+
+### Skipped Steps
+- Full production transcript replay skipped; this pass used source conformance, FlowGuard exploration, router loop regressions, and focused runtime tests.
+
+### Next Actions
+- Keep future FlowPilot protocol changes in the concrete protocol conformance model before editing router behavior.

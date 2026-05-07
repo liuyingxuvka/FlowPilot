@@ -32,3 +32,9 @@ The packet must state:
 
 Do not accept material, write product understanding, or design the route from
 raw worker output. Reviewer sufficiency must happen first.
+
+For each packet, write the packet body to a run-scoped file and return only a
+Controller-visible spec with top-level `body_path` and `body_hash` fields
+together with `packet_id`, `to_role`, optional `node_id`, metadata, and
+`output_contract`. Do not put `body_text`, commands, evidence details, or the
+packet body itself in the Controller-visible event payload.

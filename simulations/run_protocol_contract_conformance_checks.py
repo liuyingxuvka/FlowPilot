@@ -27,6 +27,10 @@ REQUIRED_LABELS = (
     "select_cockpit_missing_host_receipt",
     "select_display_fallback_after_pm_activation",
     "select_startup_repair_dedupes_new_report",
+    "select_role_output_envelope_ambiguity",
+    "select_material_scan_inline_body_only",
+    "select_material_dispatch_unknown_block_event",
+    "select_material_dispatch_frontier_phase_mismatch",
     "router_accepts_conformant_protocol",
     "router_rejects_startup_fact_jsonpath_mismatch",
     "router_rejects_control_blocker_ambiguous_event",
@@ -35,6 +39,10 @@ REQUIRED_LABELS = (
     "router_rejects_cockpit_missing_host_receipt",
     "router_rejects_display_fallback_after_pm_activation",
     "router_rejects_startup_repair_dedupes_new_report",
+    "router_rejects_role_output_envelope_ambiguity",
+    "router_rejects_material_scan_inline_body_only",
+    "router_rejects_material_dispatch_unknown_block_event",
+    "router_rejects_material_dispatch_frontier_phase_mismatch",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -45,6 +53,10 @@ HAZARD_EXPECTED_FAILURES = {
     "cockpit_missing_host_receipt": "cockpit requested without host receipt",
     "display_fallback_after_pm_activation": "display fallback receipt is unavailable before startup reviewer fact review",
     "startup_repair_dedupes_new_report": "startup repair event is deduped by a one-shot flag",
+    "role_output_envelope_ambiguity": "role output guidance omits exact path/hash pairs",
+    "material_scan_inline_body_only": "PM material scan guidance does not require file-backed packet body paths and hashes",
+    "material_dispatch_unknown_block_event": "material dispatch reviewer block event is not registered",
+    "material_dispatch_frontier_phase_mismatch": "material dispatch review can run while execution_frontier still reports startup_intake",
 }
 
 
@@ -208,6 +220,25 @@ def _check_current_source() -> dict[str, object]:
             "startup_repair_request_repeatable_for_new_blocking_report": state.startup_repair_request_repeatable_for_new_blocking_report,
             "startup_repair_request_tracks_cycle_identity": state.startup_repair_request_tracks_cycle_identity,
             "startup_repair_exact_duplicate_rejected": state.startup_repair_exact_duplicate_rejected,
+            "role_output_contract_path_hash_pairs": sorted(state.role_output_contract_path_hash_pairs),
+            "role_output_router_path_hash_pairs": sorted(state.role_output_router_path_hash_pairs),
+            "role_output_card_path_hash_pairs": sorted(state.role_output_card_path_hash_pairs),
+            "role_output_cards_require_top_level_keys": state.role_output_cards_require_top_level_keys,
+            "role_output_cards_forbid_sha256_aliases": state.role_output_cards_forbid_sha256_aliases,
+            "role_output_router_rejects_sha256_aliases": state.role_output_router_rejects_sha256_aliases,
+            "role_output_router_rejects_nested_envelope": state.role_output_router_rejects_nested_envelope,
+            "material_scan_card_requires_file_backed_packet_bodies": state.material_scan_card_requires_file_backed_packet_bodies,
+            "material_scan_router_accepts_file_backed_packet_specs": state.material_scan_router_accepts_file_backed_packet_specs,
+            "material_scan_router_requires_inline_body_text_only": state.material_scan_router_requires_inline_body_text_only,
+            "material_scan_index_forbids_controller_body_reads": state.material_scan_index_forbids_controller_body_reads,
+            "material_dispatch_block_event_registered": state.material_dispatch_block_event_registered,
+            "material_dispatch_block_report_writer": state.material_dispatch_block_report_writer,
+            "material_dispatch_pm_block_cards_reachable": state.material_dispatch_pm_block_cards_reachable,
+            "material_dispatch_route_memory_tracks_block": state.material_dispatch_route_memory_tracks_block,
+            "material_dispatch_relay_requires_allow_without_block": state.material_dispatch_relay_requires_allow_without_block,
+            "material_dispatch_frontier_phase_synchronized": state.material_dispatch_frontier_phase_synchronized,
+            "material_dispatch_card_has_pre_route_material_exception": state.material_dispatch_card_has_pre_route_material_exception,
+            "material_scan_packets_mark_pre_route_not_current_node": state.material_scan_packets_mark_pre_route_not_current_node,
         },
     }
 

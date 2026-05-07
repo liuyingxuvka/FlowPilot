@@ -40,6 +40,11 @@ path, hash, event name, from/to roles, next holder, and body visibility. It
 must not include findings, blockers, evidence details, recommendations,
 commands, or repair instructions that belong in the review body.
 
+Envelope fields must be top-level keys such as `report_path` with
+`report_hash`, `decision_path` with `decision_hash`, or `result_body_path` with
+`result_body_hash`. Do not wrap them in a `role_output_envelope` object. Do not
+use `*_sha256` aliases; the router accepts `*_hash` field names only.
+
 Before returning any review envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 review body. Missing packet contracts, contract mismatches, missing required

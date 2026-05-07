@@ -91,6 +91,11 @@ paths, hashes, event names, from/to roles, next holder, and visibility flags,
 but it must not include the decision body, reviewed report body, blockers,
 evidence details, repair instructions, or worker commands.
 
+Envelope fields must be top-level keys such as `decision_path` with
+`decision_hash`, `report_path` with `report_hash`, or `result_body_path` with
+`result_body_hash`. Do not wrap them in a `role_output_envelope` object. Do not
+use `*_sha256` aliases; the router accepts `*_hash` field names only.
+
 PM is the only role that may author real visible route-plan content. When PM
 drafts a route, resumes a runway, mutates a route, or writes the current-node
 plan, PM must provide enough route or display-plan structure for Controller to
