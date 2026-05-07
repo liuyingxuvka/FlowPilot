@@ -1903,6 +1903,21 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
     )
     if any(marker in lowered for marker in fatal_markers):
         return "fatal_protocol_violation"
+    if (
+        event
+        and (event.startswith("reviewer_") or "reviewer" in event)
+        and any(
+            marker in lowered
+            for marker in (
+                "result_body_not_opened",
+                "packet_body_not_opened",
+                "packet_ledger_missing_packet_body_open_receipt",
+                "packet_ledger_missing_result_body_open_receipt",
+                "body was not opened by target role after controller relay",
+            )
+        )
+    ):
+        return "control_plane_reissue"
     pm_markers = (
         "controller-origin",
         "wrong role",
@@ -2521,6 +2536,7 @@ def _write_run_lifecycle_request(
     mode = "cancelled_by_user" if event == "user_requests_run_cancel" else "stopped_by_user"
     previous_pending = run_state.get("pending_action")
     active_blocker = run_state.get("active_control_blocker")
+    cleanup_receipts = payload.get("cleanup_receipts") if isinstance(payload.get("cleanup_receipts"), list) else []
     record = {
         "schema_version": "flowpilot.run_lifecycle.v1",
         "run_id": run_state.get("run_id"),
@@ -2530,16 +2546,19 @@ def _write_run_lifecycle_request(
         "reason": payload.get("reason"),
         "previous_pending_action": previous_pending,
         "active_control_blocker_at_request": active_blocker,
-        "cleanup_receipts": payload.get("cleanup_receipts") if isinstance(payload.get("cleanup_receipts"), list) else [],
+        "cleanup_receipts": cleanup_receipts,
         "controller_may_continue_route_work": False,
         "controller_may_spawn_new_role_work": False,
         "requested_at": utc_now(),
     }
-    write_json(_lifecycle_record_path(run_root), record)
     run_state["status"] = mode
     run_state["phase"] = "terminal"
     run_state["holder"] = "controller"
     run_state["pending_action"] = None
+    reconciliation = _reconcile_terminal_lifecycle_authorities(project_root, run_root, run_state, mode=mode, event=event)
+    record["cleanup_receipts"] = cleanup_receipts + reconciliation["cleanup_receipts"]
+    record["reconciliation"] = reconciliation
+    write_json(_lifecycle_record_path(run_root), record)
     append_history(run_state, f"run_{mode}", {"event": event, "lifecycle_path": project_relative(project_root, _lifecycle_record_path(run_root))})
 
     current_path = project_root / ".flowpilot" / "current.json"
@@ -2560,6 +2579,131 @@ def _write_run_lifecycle_request(
     if runs:
         index["runs"] = runs
     write_json(index_path, index)
+    _write_route_state_snapshot(project_root, run_root, run_state, source_event=event)
+
+
+def _reconcile_terminal_lifecycle_authorities(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    mode: str,
+    event: str,
+) -> dict[str, Any]:
+    reconciled_at = utc_now()
+    receipts: list[dict[str, Any]] = []
+    source_paths: dict[str, str] = {}
+
+    continuation_path = _continuation_binding_path(run_root)
+    if continuation_path.exists():
+        continuation = read_json(continuation_path)
+        source_paths["continuation_binding"] = project_relative(project_root, continuation_path)
+        previous_heartbeat_active = bool(continuation.get("heartbeat_active"))
+        continuation["heartbeat_active"] = False
+        continuation["lifecycle_status"] = mode
+        continuation["terminal_event"] = event
+        continuation["terminal_reconciled_at"] = reconciled_at
+        continuation["host_automation_cleanup_status"] = (
+            "external_cleanup_may_be_required"
+            if continuation.get("host_automation_id") and previous_heartbeat_active
+            else "not_active"
+        )
+        write_json(continuation_path, continuation)
+        receipts.append(
+            {
+                "authority": "continuation_binding",
+                "path": project_relative(project_root, continuation_path),
+                "previous_heartbeat_active": previous_heartbeat_active,
+                "heartbeat_active": False,
+                "host_automation_cleanup_status": continuation["host_automation_cleanup_status"],
+            }
+        )
+
+    crew_path = run_root / "crew_ledger.json"
+    if crew_path.exists():
+        crew = read_json(crew_path)
+        source_paths["crew_ledger"] = project_relative(project_root, crew_path)
+        role_slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+        live_before = sum(1 for slot in role_slots if isinstance(slot, dict) and str(slot.get("status") or "").startswith("live_"))
+        for slot in role_slots:
+            if isinstance(slot, dict):
+                slot["status"] = "stopped_with_run"
+                slot["live_agent_active"] = False
+                slot["stopped_at"] = reconciled_at
+        crew["lifecycle_status"] = mode
+        crew["terminal_reconciled_at"] = reconciled_at
+        write_json(crew_path, crew)
+        receipts.append(
+            {
+                "authority": "crew_ledger",
+                "path": project_relative(project_root, crew_path),
+                "live_role_slots_before": live_before,
+                "live_role_slots_after": 0,
+            }
+        )
+
+    packet_ledger_path = run_root / "packet_ledger.json"
+    if packet_ledger_path.exists():
+        packet_ledger = read_json(packet_ledger_path)
+        source_paths["packet_ledger"] = project_relative(project_root, packet_ledger_path)
+        previous_status = packet_ledger.get("active_packet_status")
+        previous_holder = packet_ledger.get("active_packet_holder")
+        packet_ledger["active_packet_status"] = mode
+        packet_ledger["active_packet_holder"] = "controller"
+        packet_ledger["terminal_lifecycle"] = {
+            "status": mode,
+            "event": event,
+            "previous_active_packet_status": previous_status,
+            "previous_active_packet_holder": previous_holder,
+            "controller_may_continue_packet_loop": False,
+            "reconciled_at": reconciled_at,
+        }
+        packet_ledger["updated_at"] = reconciled_at
+        write_json(packet_ledger_path, packet_ledger)
+        receipts.append(
+            {
+                "authority": "packet_ledger",
+                "path": project_relative(project_root, packet_ledger_path),
+                "previous_active_packet_status": previous_status,
+                "active_packet_status": mode,
+            }
+        )
+
+    frontier_path = run_root / "execution_frontier.json"
+    if frontier_path.exists():
+        frontier = read_json(frontier_path)
+        source_paths["execution_frontier"] = project_relative(project_root, frontier_path)
+        previous_status = frontier.get("status")
+        frontier["status"] = mode
+        frontier["phase"] = "terminal"
+        frontier["terminal"] = True
+        frontier["terminal_event"] = event
+        frontier["updated_at"] = reconciled_at
+        frontier["source"] = event
+        write_json(frontier_path, frontier)
+        receipts.append(
+            {
+                "authority": "execution_frontier",
+                "path": project_relative(project_root, frontier_path),
+                "previous_status": previous_status,
+                "status": mode,
+            }
+        )
+
+    report = {
+        "schema_version": "flowpilot.terminal_lifecycle_reconciliation.v1",
+        "run_id": run_state.get("run_id"),
+        "status": mode,
+        "event": event,
+        "controller_may_continue_route_work": False,
+        "controller_may_spawn_new_role_work": False,
+        "cleanup_receipts": receipts,
+        "source_paths": source_paths,
+        "reconciled_at": reconciled_at,
+    }
+    write_json(run_root / "lifecycle" / "terminal_reconciliation.json", report)
+    report["reconciliation_path"] = project_relative(project_root, run_root / "lifecycle" / "terminal_reconciliation.json")
+    return report
 
 
 def _write_protocol_dead_end_lifecycle(
@@ -2674,7 +2818,32 @@ def _try_write_control_blocker_for_exception(
             payload=payload,
         )
     except Exception:
-        return None
+        try:
+            fallback = {
+                "schema_version": "flowpilot.control_blocker_materialization_failure.v1",
+                "materialization_failed": True,
+                "source": source,
+                "error_message": error_message,
+                "event": event,
+                "action_type": action_type,
+                "recorded_at": utc_now(),
+            }
+            flowpilot_root = project_root / ".flowpilot"
+            failure_path = flowpilot_root / "control_blocker_materialization_failures.jsonl"
+            failure_path.parent.mkdir(parents=True, exist_ok=True)
+            with failure_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(fallback, sort_keys=True) + "\n")
+            fallback["fallback_diagnostic_path"] = project_relative(project_root, failure_path)
+            return fallback
+        except Exception:
+            return {
+                "schema_version": "flowpilot.control_blocker_materialization_failure.v1",
+                "materialization_failed": True,
+                "source": source,
+                "error_message": error_message,
+                "event": event,
+                "action_type": action_type,
+            }
 
 
 def _next_boot_action(state: dict[str, Any]) -> dict[str, Any] | None:
@@ -4612,17 +4781,24 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
     if worker_owner not in {"worker_a", "worker_b"}:
         raise RouterError("research worker owner must be worker_a or worker_b")
     packet_id = str(payload.get("packet_id") or "research-packet-001")
+    allowed_source_types = list(package.get("allowed_source_types") or [])
+    allowed_sources = payload.get("allowed_sources")
+    if not isinstance(allowed_sources, list) or not allowed_sources:
+        allowed_sources = allowed_source_types
+    stop_conditions = list(package.get("stop_conditions") or [])
+    research_body_payload = {
+        "research_package_path": project_relative(project_root, package_path),
+        "decision_question": package.get("decision_question"),
+        "allowed_source_types": allowed_source_types,
+        "allowed_sources": allowed_sources,
+        "host_capability_decision": package.get("host_capability_decision"),
+        "worker_owner": worker_owner,
+        "reviewer_direct_check_required": bool(package.get("reviewer_direct_check_required")),
+        "stop_conditions": stop_conditions,
+    }
     body_text = payload.get("worker_packet_body")
     if body_text is None:
-        body_text = json.dumps(
-            {
-                "research_package_path": project_relative(project_root, package_path),
-                "decision_question": package.get("decision_question"),
-                "allowed_sources": payload.get("allowed_sources") or [],
-            },
-            indent=2,
-            sort_keys=True,
-        )
+        body_text = json.dumps(research_body_payload, indent=2, sort_keys=True)
     if not isinstance(body_text, str) or not body_text.strip():
         raise RouterError("research capability decision requires non-empty worker packet body")
     envelope = packet_runtime.create_packet(
@@ -4650,7 +4826,13 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
             "run_id": run_state["run_id"],
             "recorded_by_role": "project_manager",
             "research_package_path": project_relative(project_root, package_path),
-            "allowed_sources": payload.get("allowed_sources") or [],
+            "decision_question": package.get("decision_question"),
+            "allowed_source_types": allowed_source_types,
+            "allowed_sources": allowed_sources,
+            "host_capability_decision": package.get("host_capability_decision"),
+            "worker_owner": worker_owner,
+            "reviewer_direct_check_required": bool(package.get("reviewer_direct_check_required")),
+            "stop_conditions": stop_conditions,
             "explicit_user_approval_required": bool(payload.get("explicit_user_approval_required")),
             "explicit_user_approval_recorded": bool(payload.get("explicit_user_approval_recorded")),
             "worker_packet_id": packet_id,
@@ -4667,12 +4849,20 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
             "worker_owner": worker_owner,
             "controller_may_read_packet_body": False,
             "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
+            "packet_body_path": envelope["body_path"],
+            "packet_body_hash": envelope["body_hash"],
+            "body_path": envelope["body_path"],
+            "body_hash": envelope["body_hash"],
             "result_envelope_path": project_relative(project_root, packet_paths["result_envelope"]),
             "packets": [
                 {
                     "packet_id": packet_id,
                     "to_role": worker_owner,
                     "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
+                    "packet_body_path": envelope["body_path"],
+                    "packet_body_hash": envelope["body_hash"],
+                    "body_path": envelope["body_path"],
+                    "body_hash": envelope["body_hash"],
                     "result_envelope_path": project_relative(project_root, packet_paths["result_envelope"]),
                 }
             ],

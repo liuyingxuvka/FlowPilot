@@ -1933,6 +1933,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "diagrams" / "current_route_sign.md").exists())
         self.assertTrue((run_root / "diagrams" / "user-flow-diagram.md").exists())
         self.assertTrue((run_root / "diagrams" / "user-flow-diagram.mmd").exists())
+        route_sign_markdown = (run_root / "diagrams" / "current_route_sign.md").read_text(encoding="utf-8")
+        self.assertIn("```mermaid", route_sign_markdown)
+        self.assertNotIn("Display gate:", route_sign_markdown)
+        self.assertNotIn("Chat evidence:", route_sign_markdown)
         display_surface = read_json(run_root / "display" / "display_surface.json")
         self.assertTrue(display_surface["chat_displayed_by_controller"])
         self.assertEqual(display_surface["selected_surface"], "chat_route_sign")
@@ -2201,7 +2205,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(display_surface["reviewer_fallback_check_required_for_requested_cockpit"])
         self.assertTrue(display_surface["fallback_is_display_only_not_product_ui_completion"])
         self.assertIn("user-flow-diagram.md", display_surface["standard_route_sign_markdown_path"])
-        self.assertIn("```mermaid", (run_root / "diagrams" / "current_route_sign.md").read_text(encoding="utf-8"))
+        route_sign_markdown = (run_root / "diagrams" / "current_route_sign.md").read_text(encoding="utf-8")
+        self.assertIn("```mermaid", route_sign_markdown)
+        self.assertNotIn("Display gate:", route_sign_markdown)
+        self.assertNotIn("Chat evidence:", route_sign_markdown)
 
     def test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work(self) -> None:
         root = self.make_project()
@@ -2221,6 +2228,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(state["status"], "stopped_by_user")
         self.assertTrue(state["flags"]["run_stopped_by_user"])
         self.assertTrue((run_root / "lifecycle" / "run_lifecycle.json").exists())
+        lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
+        self.assertEqual(lifecycle["reconciliation"]["status"], "stopped_by_user")
+        self.assertTrue((run_root / "lifecycle" / "terminal_reconciliation.json").exists())
+        continuation = read_json(run_root / "continuation" / "continuation_binding.json")
+        self.assertFalse(continuation["heartbeat_active"])
+        crew = read_json(run_root / "crew_ledger.json")
+        self.assertTrue(all(slot["status"] == "stopped_with_run" for slot in crew["role_slots"]))
+        packet_ledger = read_json(run_root / "packet_ledger.json")
+        self.assertEqual(packet_ledger["active_packet_status"], "stopped_by_user")
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "stopped_by_user")
+        self.assertTrue(frontier["terminal"])
+        snapshot = read_json(run_root / "route_state_snapshot.json")
+        self.assertEqual(snapshot["state"]["status"], "stopped_by_user")
+        self.assertEqual(snapshot["frontier"]["status"], "stopped_by_user")
+        self.assertEqual(snapshot["packet_ledger"]["active_packet_status"], "stopped_by_user")
+        self.assertEqual(snapshot["active_ui_task_catalog"]["active_tasks"], [])
         current = read_json(root / ".flowpilot" / "current.json")
         self.assertEqual(current["status"], "stopped_by_user")
 
@@ -2512,8 +2536,33 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, "deliver_system_card")
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_writes_research_package", {})
-        router.record_external_event(root, "pm_writes_research_package", {"decision_question": "which source is authoritative?"})
-        router.record_external_event(root, "research_capability_decision_recorded", {"allowed_sources": ["repo"]})
+        router.record_external_event(
+            root,
+            "pm_writes_research_package",
+            {
+                "decision_question": "which source is authoritative?",
+                "allowed_source_types": [
+                    "current_repository_files",
+                    "bounded_local_read_only_experiments",
+                ],
+                "host_capability_decision": "local_sources_first",
+                "worker_owner": "worker_a",
+                "stop_conditions": ["Do not edit production code."],
+            },
+        )
+        router.record_external_event(root, "research_capability_decision_recorded", {})
+        research_package = read_json(run_root / "research" / "research_package.json")
+        self.assertEqual(research_package["allowed_source_types"], ["current_repository_files", "bounded_local_read_only_experiments"])
+        research_decision = read_json(run_root / "research" / "research_capability_decision.json")
+        self.assertEqual(research_decision["allowed_sources"], research_package["allowed_source_types"])
+        self.assertEqual(research_decision["stop_conditions"], ["Do not edit production code."])
+        research_index = read_json(run_root / "research" / "research_packet.json")
+        self.assertIn("packet_body_path", research_index)
+        self.assertIn("packet_body_hash", research_index)
+        self.assertIn("body_path", research_index["packets"][0])
+        research_packet_body = (root / research_index["packet_body_path"]).read_text(encoding="utf-8")
+        self.assertIn("current_repository_files", research_packet_body)
+        self.assertIn("Do not edit production code.", research_packet_body)
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -3557,6 +3606,28 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIsNone(state["active_control_blocker"])
         self.assertEqual(state["resolved_control_blockers"][-1]["blocker_id"], second["blocker_id"])
         self.assertTrue((run_root / "control_blocks" / f"{second['blocker_id']}.pm_repair_decision.json").exists())
+
+    def test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="packet group reviewer audit failed: ['result_body_not_opened_by_reviewer_or_pm_after_relay_check']",
+            event="reviewer_reports_material_insufficient",
+            payload={"report_path": ".flowpilot/runs/test/material/reviewer.json"},
+        )
+
+        self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
+        self.assertEqual(blocker["target_role"], "human_like_reviewer")
+        self.assertFalse(blocker["pm_decision_required"])
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+        self.assertEqual(action["to_role"], "human_like_reviewer")
 
     def test_node_acceptance_plan_requires_pm_high_standard_recheck(self) -> None:
         root = self.make_project()

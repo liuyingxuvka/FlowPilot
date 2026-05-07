@@ -39,7 +39,7 @@ When the router returns startup questions, ask the three questions, apply that p
 
 After the later user reply answers the questions, pass canonical router enum fields. Exact enum replies use `provenance: explicit_user_reply`. Natural-language replies may be interpreted only with `provenance: ai_interpreted_from_explicit_user_reply` plus a `startup_answer_interpretation` receipt preserving the raw reply and `ambiguity_status: none`. If ambiguous, ask the user. The router-owned startup task contract is the authority for activation; reviewer checks only independently observable startup facts requested by the router, not private chat authenticity.
 
-The startup banner and FlowPilot Route Sign are user-facing display text. When the router returns `display_text`, paste that exact text into chat before applying. Generated files, paths, flags, and state records do not count.
+The startup banner and FlowPilot Route Sign are user-facing display text. When the router returns `display_text`, paste that exact text into chat before applying. Do not add display-gate, evidence, source-health, confirmation, or controller/audit metadata to the user-visible body; those details belong in packets, ledgers, and action payloads. Generated files, paths, flags, and state records do not count.
 
 When the router returns `record_user_request`, pass the exact current formal FlowPilot task text as `payload.user_request.text` with `provenance: explicit_user_request`. Do not summarize, derive it from old route state, or turn Controller expectations into user intent. If the exact text is unavailable, ask the user and stop.
 

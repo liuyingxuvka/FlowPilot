@@ -6,6 +6,11 @@ required surface for startup, major route-node entry, parent/module or leaf
 route-node entry, PM current-node work brief, route mutations, review or
 validation returns, completion review, and explicit user requests. A raw
 FlowGuard state graph cannot satisfy this user-facing gate.
+
+The user-visible display text must also be clean. Controller instructions,
+display-gate evidence rules, source/audit metadata, confirmation details, and
+other internal control-plane text belong in display packets or ledgers, not in
+the chat or Cockpit route sign body.
 """
 
 from __future__ import annotations
@@ -46,7 +51,10 @@ class State:
     active_node_highlighted: bool = False
     return_edge_present: bool = False
     display_packet_written: bool = False
+    display_packet_carries_internal_evidence: bool = False
     router_display_text_returned: bool = False
+    user_visible_display_text_clean: bool = False
+    internal_control_text_in_display_text: bool = False
     generated_file_only_display_used: bool = False
     chat_mermaid_displayed: bool = False
     cockpit_route_sign_displayed: bool = False
@@ -116,6 +124,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 english_flowpilot_labels=True,
                 active_node_highlighted=True,
                 display_packet_written=True,
+                display_packet_carries_internal_evidence=True,
+                user_visible_display_text_clean=True,
             ),
         )
         return
@@ -183,6 +193,12 @@ def invariant_failures(state: State) -> list[str]:
     ):
         if not state.router_display_text_returned:
             failures.append("router did not return chat-ready Mermaid display_text before chat display gate")
+        if not state.user_visible_display_text_clean:
+            failures.append("user-facing route sign display_text was not clean")
+        if state.internal_control_text_in_display_text:
+            failures.append("user-facing route sign leaked internal display/evidence instructions")
+        if not state.display_packet_carries_internal_evidence:
+            failures.append("internal route-sign evidence was not preserved outside user-visible text")
         if state.generated_file_only_display_used:
             failures.append("generated route-sign files were treated as chat display evidence")
         if not state.chat_mermaid_displayed:
@@ -216,6 +232,10 @@ def hazard_states() -> dict[str, State]:
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             reviewer_checked_display=True,
             reviewer_checked_route_match=True,
             reviewer_passed=True,
@@ -227,6 +247,10 @@ def hazard_states() -> dict[str, State]:
             display_trigger="startup",
             chat_display_required=True,
             raw_flowguard_graph_used=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             reviewer_checked_display=True,
             reviewer_checked_chat_surface=True,
             reviewer_checked_route_match=True,
@@ -241,6 +265,10 @@ def hazard_states() -> dict[str, State]:
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             chat_mermaid_displayed=True,
             reviewer_checked_display=True,
             reviewer_checked_chat_surface=True,
@@ -255,6 +283,10 @@ def hazard_states() -> dict[str, State]:
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             chat_mermaid_displayed=True,
             reviewer_checked_route_match=True,
             reviewer_passed=True,
@@ -266,6 +298,10 @@ def hazard_states() -> dict[str, State]:
             chat_display_required=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             chat_mermaid_displayed=True,
             reviewer_checked_display=True,
             reviewer_checked_chat_surface=True,
@@ -280,6 +316,10 @@ def hazard_states() -> dict[str, State]:
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             chat_mermaid_displayed=True,
             node_advanced=True,
         ),
@@ -292,6 +332,10 @@ def hazard_states() -> dict[str, State]:
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             reviewer_checked_display=True,
             reviewer_checked_route_match=True,
             reviewer_passed=True,
@@ -306,6 +350,9 @@ def hazard_states() -> dict[str, State]:
             english_flowpilot_labels=True,
             active_node_highlighted=True,
             display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             generated_file_only_display_used=True,
             reviewer_checked_display=True,
             reviewer_checked_chat_surface=True,
@@ -322,8 +369,32 @@ def hazard_states() -> dict[str, State]:
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
             cockpit_route_sign_displayed=True,
             reviewer_checked_display=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+            node_work_started=True,
+        ),
+        "internal_control_text_displayed_to_user": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="startup",
+            chat_display_required=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=False,
+            internal_control_text_in_display_text=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
             reviewer_checked_route_match=True,
             reviewer_passed=True,
             node_work_started=True,

@@ -40,8 +40,10 @@ Allowed actions:
   `display_text` in the current user dialog before applying the action, then
   apply with a `display_confirmation` payload whose `rendered_to` is
   `user_dialog` and whose `display_text_sha256` matches the router envelope;
-  generated files, host plan replacement, or display packet paths alone are
-  not visible chat evidence;
+  do not add display-gate, evidence, source-health, confirmation, or
+  controller/audit metadata to the user-visible body. Generated files, host
+  plan replacement, or display packet paths alone are not visible chat
+  evidence;
 - replace the host visible plan only from the router-provided
   `display_plan.json` projection. If no PM display plan exists yet, clear any
   pre-FlowPilot assistant plan to the router's waiting-for-PM placeholder.

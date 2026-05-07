@@ -209,6 +209,39 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         with self.assertRaises(packet_runtime.PacketRuntimeError):
             packet_runtime.read_result_body_for_role(root, result, role="controller")
 
+    def test_reviewer_audit_requires_ledger_open_receipts_not_envelope_markers_only(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a-1",
+            result_body_text="valid result",
+            next_recipient="human_like_reviewer",
+        )
+        result = self.relay_result(root, result)
+        forged_result = dict(result)
+        forged_result["result_body_opened_by_role"] = {
+            "role": "human_like_reviewer",
+            "opened_at": "2026-05-07T00:00:00Z",
+            "controller_relay_verified": True,
+            "body_hash_verified": True,
+        }
+
+        audit = packet_runtime.validate_for_reviewer(
+            root,
+            packet_envelope=envelope,
+            result_envelope=forged_result,
+            agent_role_map={"agent-worker-a-1": "worker_a"},
+        )
+
+        self.assertFalse(audit["passed"])
+        self.assertTrue(audit["result_body_opened_by_reviewer_or_pm_after_relay_check"])
+        self.assertFalse(audit["packet_ledger_result_body_opened_by_reviewer_or_pm_after_relay_check"])
+        self.assertIn("packet_ledger_missing_result_body_open_receipt", audit["blockers"])
+
     def test_reviewer_blocks_packet_or_result_hash_mismatch(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))

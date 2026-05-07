@@ -1490,6 +1490,35 @@ def validate_for_reviewer(
         "human_like_reviewer",
         "project_manager",
     }
+    ledger_packet_opened_by_target = False
+    ledger_result_opened_by_recipient = False
+    ledger_record_found = False
+    try:
+        paths = packet_paths_from_result_envelope(project_root, result_envelope)
+        ledger = read_json(paths["packet_ledger"])
+        records = ledger.get("packets") if isinstance(ledger.get("packets"), list) else []
+        ledger_record = next(
+            (
+                record
+                for record in records
+                if isinstance(record, dict)
+                and record.get("packet_id") == packet_envelope.get("packet_id") == result_envelope.get("packet_id")
+            ),
+            None,
+        )
+        if isinstance(ledger_record, dict):
+            ledger_record_found = True
+            ledger_packet_opened_by_target = (
+                ledger_record.get("packet_body_opened_by_role") == expected_role
+                and ledger_record.get("packet_body_opened_after_controller_relay_check") is True
+            )
+            ledger_result_opened_by_recipient = (
+                ledger_record.get("result_body_opened_by_role")
+                in {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
+                and ledger_record.get("result_body_opened_after_controller_relay_check") is True
+            )
+    except Exception:
+        ledger_record_found = False
 
     try:
         verify_controller_relay(packet_envelope, recipient_role=str(expected_role))
@@ -1510,6 +1539,12 @@ def validate_for_reviewer(
         blockers.append("packet_body_not_opened_by_target_after_relay_check")
     if not result_opened_by_recipient:
         blockers.append("result_body_not_opened_by_reviewer_or_pm_after_relay_check")
+    if not ledger_record_found:
+        blockers.append("packet_ledger_record_missing_for_reviewer_audit")
+    if not ledger_packet_opened_by_target:
+        blockers.append("packet_ledger_missing_packet_body_open_receipt")
+    if not ledger_result_opened_by_recipient:
+        blockers.append("packet_ledger_missing_result_body_open_receipt")
     if completed_by_role == "controller":
         blockers.append("controller_origin_artifact")
     if completed_by_role != expected_role:
@@ -1528,6 +1563,9 @@ def validate_for_reviewer(
         "result_controller_relay_valid": result_relay_valid,
         "packet_body_opened_by_target_after_relay_check": packet_opened_by_target,
         "result_body_opened_by_reviewer_or_pm_after_relay_check": result_opened_by_recipient,
+        "packet_ledger_record_found": ledger_record_found,
+        "packet_ledger_packet_body_opened_by_target_after_relay_check": ledger_packet_opened_by_target,
+        "packet_ledger_result_body_opened_by_reviewer_or_pm_after_relay_check": ledger_result_opened_by_recipient,
         "packet_envelope_to_role_checked": True,
         "packet_body_hash_checked": True,
         "packet_body_hash_matches_envelope": packet_body_hash_matches,

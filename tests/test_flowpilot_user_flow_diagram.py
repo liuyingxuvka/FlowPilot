@@ -130,8 +130,12 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         )
 
         self.assertTrue(payload["chat_display_required"])
-        self.assertIn("Trigger: `major_node_entry`", payload["markdown"])
-        self.assertIn("mark displayed only after this exact Mermaid block appears", payload["markdown"])
+        self.assertIn("```mermaid", payload["markdown"])
+        self.assertNotIn("Trigger:", payload["markdown"])
+        self.assertNotIn("Source status:", payload["markdown"])
+        self.assertNotIn("Display gate:", payload["markdown"])
+        self.assertNotIn("Chat evidence:", payload["markdown"])
+        self.assertNotIn("mark displayed only after this exact Mermaid block appears", payload["markdown"])
 
     def test_active_run_and_current_node_aliases_resolve_current_route(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")

@@ -847,6 +847,12 @@ appeared in the assistant message. Route mutation, review failure, validation
 failure, or any backtrack to a repair target must add a visible `returns for
 repair` edge before the route sign can be treated as current.
 
+The user-visible route-sign body must stay clean: title plus the simplified
+Mermaid graph. Display-gate rules, chat evidence instructions, source-health
+details, confirmation hashes, generated timestamps, and Controller/audit
+metadata remain in the display packet, review packet, action payload, or ledger,
+not in the text shown to the user.
+
 Raw FlowGuard Mermaid exports are engineering diagnostics. They are disabled by
 default, generated only on explicit request, and must not replace the user flow
 diagram in chat or the Cockpit UI. Route mutation invalidates the previous user
@@ -863,8 +869,8 @@ When `scripts/flowpilot_user_flow_diagram.py` is available, it is the standard
 route-sign hook: generate chat Markdown with
 `--markdown --trigger <trigger> --write` (`major_node_entry` is the preferred
 trigger for ordinary route-node entry; `key_node_change` is a legacy alias),
-paste that exact block into chat when
-required, then record the reviewer gate with
+paste that exact clean user-visible block into chat when required, then record
+the reviewer gate with
 `--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,
 manually compose the same English Mermaid from the active route/frontier and
 record equivalent reviewer evidence.

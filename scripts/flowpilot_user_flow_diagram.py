@@ -447,30 +447,14 @@ def build_chat_markdown(
     source_status: str,
     source_findings: list[str],
 ) -> str:
-    gate_text = (
-        "Chat Mermaid is required because Cockpit UI is not open."
-        if chat_display_required
-        else "Cockpit UI may display this same Mermaid source."
-    )
-    repair_text = "none"
-    if return_path["required"]:
-        repair_text = f"{return_path.get('return_source') or 'review gate'} returns to {return_path.get('repair_target') or active_node or 'current node'}"
-    source_text = source_status
-    if source_findings:
-        source_text = f"{source_status}: {'; '.join(source_findings)}"
+    """Build only the user-visible route sign body.
+
+    Display-gate, evidence, source-health, and confirmation details are
+    internal control-plane data. They stay in the display packet and ledgers.
+    """
     return "\n".join(
         [
             "# FlowPilot Route Sign",
-            "",
-            f"- Trigger: `{trigger}`",
-            f"- Source status: `{source_text}`",
-            f"- Current route: `{active_route or 'unknown'}`",
-            f"- Current node: `{active_node or 'unknown'}`",
-            f"- Current stage: `{current_stage}`",
-            f"- Display gate: {gate_text}",
-            "- Chat evidence: mark displayed only after this exact Mermaid block appears in the assistant message.",
-            f"- Return/repair: `{repair_text}`",
-            f"- Generated at: `{generated_at}`",
             "",
             "```mermaid",
             source,
@@ -604,6 +588,12 @@ def generate(
         "source_health": source_health,
         "same_graph_for_chat_and_ui": True,
         "simplified_flowpilot_english_mermaid": True,
+        "user_visible_display_text": {
+            "clean": True,
+            "content": "title_and_mermaid_only",
+            "contains_internal_display_evidence": False,
+            "internal_evidence_location": "display_packet_and_user_dialog_display_ledger",
+        },
         "raw_flowguard_mermaid": {
             "enabled": False,
             "satisfies_user_route_sign_gate": False,

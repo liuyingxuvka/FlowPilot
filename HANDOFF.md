@@ -413,6 +413,7 @@ python simulations/run_capability_checks.py
 python simulations/run_prompt_isolation_checks.py
 python simulations/run_flowpilot_resume_checks.py
 python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json
+python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

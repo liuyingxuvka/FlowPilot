@@ -4,7 +4,6 @@
       "advance_without_reviewer_gate": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "node advanced before reviewer display gate passed"
         ],
         "state": {
@@ -14,10 +13,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "startup",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": true,
           "node_work_started": false,
           "raw_flowguard_graph_used": false,
@@ -28,14 +29,14 @@
           "reviewer_checked_route_match": false,
           "reviewer_passed": false,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       },
       "chat_required_no_chat": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "Cockpit was closed but node progress happened before Mermaid was shown in chat",
           "reviewer passed a closed-Cockpit case without checking the chat Mermaid"
         ],
@@ -46,10 +47,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "major_node_entry",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": true,
           "raw_flowguard_graph_used": false,
@@ -60,14 +63,14 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       },
       "cockpit_closed_ui_only": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "Cockpit was closed but node progress happened before Mermaid was shown in chat",
           "reviewer passed a closed-Cockpit case without checking the chat Mermaid"
         ],
@@ -78,10 +81,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": true,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "startup",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": true,
           "raw_flowguard_graph_used": false,
@@ -92,14 +97,14 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       },
       "generated_file_only_display": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "generated route-sign files were treated as chat display evidence",
           "Cockpit was closed but node progress happened before Mermaid was shown in chat"
         ],
@@ -110,10 +115,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
+          "display_packet_carries_internal_evidence": true,
           "display_packet_written": true,
           "display_trigger": "startup",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": true,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": true,
           "raw_flowguard_graph_used": false,
@@ -124,8 +131,43 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
+        }
+      },
+      "internal_control_text_displayed_to_user": {
+        "detected": true,
+        "failures": [
+          "user-facing route sign display_text was not clean",
+          "user-facing route sign leaked internal display/evidence instructions"
+        ],
+        "state": {
+          "active_node_highlighted": true,
+          "chat_display_required": true,
+          "chat_mermaid_displayed": true,
+          "cockpit_open": false,
+          "cockpit_route_sign_displayed": false,
+          "current_node_resolved": true,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
+          "display_trigger": "startup",
+          "english_flowpilot_labels": true,
+          "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": true,
+          "node_advanced": false,
+          "node_work_started": true,
+          "raw_flowguard_graph_used": false,
+          "return_edge_present": false,
+          "return_edge_required": false,
+          "reviewer_checked_chat_surface": true,
+          "reviewer_checked_display": true,
+          "reviewer_checked_route_match": true,
+          "reviewer_passed": true,
+          "route_frontier_loaded": true,
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": false
         }
       },
       "major_node_entry_not_classified": {
@@ -140,10 +182,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "major_node_entry",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": true,
           "raw_flowguard_graph_used": false,
@@ -154,15 +198,15 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       },
       "raw_flowguard_substituted": {
         "detected": true,
         "failures": [
           "raw FlowGuard Mermaid was used as the user-facing route sign",
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "Cockpit was closed but node progress happened before Mermaid was shown in chat",
           "chat display gate did not use the simplified English FlowPilot route sign",
           "reviewer passed before checking active route/node match and highlight"
@@ -174,10 +218,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "startup",
           "english_flowpilot_labels": false,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": false,
           "raw_flowguard_graph_used": true,
@@ -188,14 +234,14 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": false
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": false,
+          "user_visible_display_text_clean": true
         }
       },
       "repair_without_return_edge": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "route mutation or failed review was displayed without a return/repair edge"
         ],
         "state": {
@@ -205,10 +251,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "review_failure",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": false,
           "raw_flowguard_graph_used": false,
@@ -219,14 +267,14 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       },
       "reviewer_file_only": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "reviewer passed the route sign without checking the visible display",
           "reviewer passed a closed-Cockpit case without checking the chat Mermaid"
         ],
@@ -237,10 +285,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "startup",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": false,
           "raw_flowguard_graph_used": false,
@@ -251,14 +301,14 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       },
       "stale_active_node": {
         "detected": true,
         "failures": [
-          "router did not return chat-ready Mermaid display_text before chat display gate",
           "reviewer passed before checking active route/node match and highlight"
         ],
         "state": {
@@ -268,10 +318,12 @@
           "cockpit_open": false,
           "cockpit_route_sign_displayed": false,
           "current_node_resolved": true,
-          "display_packet_written": false,
+          "display_packet_carries_internal_evidence": true,
+          "display_packet_written": true,
           "display_trigger": "completion",
           "english_flowpilot_labels": true,
           "generated_file_only_display_used": false,
+          "internal_control_text_in_display_text": false,
           "node_advanced": false,
           "node_work_started": false,
           "raw_flowguard_graph_used": false,
@@ -282,8 +334,9 @@
           "reviewer_checked_route_match": true,
           "reviewer_passed": true,
           "route_frontier_loaded": true,
-          "router_display_text_returned": false,
-          "simplified_mermaid_generated": true
+          "router_display_text_returned": true,
+          "simplified_mermaid_generated": true,
+          "user_visible_display_text_clean": true
         }
       }
     },

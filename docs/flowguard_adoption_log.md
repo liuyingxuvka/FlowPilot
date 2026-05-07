@@ -3,6 +3,55 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-07 - Clean FlowPilot Route Sign Display Text
+
+- Trigger reason: User reported that the FlowPilot Route Sign shown in chat/UI
+  included backend-looking display-gate and chat-evidence instructions.
+- FlowGuard applicability: `use_flowguard`; this changed user-visible display
+  behavior and a display-gate model.
+- Risk intent: detect and prevent user-visible route-sign text from leaking
+  Controller instructions, display-gate evidence rules, source/audit metadata,
+  confirmation details, or other internal control-plane text.
+- Model updated: `simulations/user_flow_diagram_model.py`.
+- Related guardrail added: `simulations/flowpilot_control_plane_friction_model.py`
+  covers adjacent control-plane boundary failures where packet/result receipts,
+  lifecycle authority, or research-scope materialization can appear valid while
+  the durable evidence is missing or stale.
+- Production/template changes:
+  - `scripts/flowpilot_user_flow_diagram.py` and
+    `skills/flowpilot/assets/flowpilot_user_flow_diagram.py` now render a clean
+    user-visible route sign body: title plus Mermaid only.
+  - Internal display evidence remains in the display packet, review packet,
+    display confirmation, and ledgers.
+  - Protocol/card/template text now states that display-gate and audit metadata
+    must not be added to the user-visible body.
+- Key counterexample preserved: `internal_control_text_displayed_to_user`
+  detects a route sign that otherwise satisfies the chat display gate while
+  leaking internal display/evidence instructions.
+- Checks run:
+  - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  - OK: `python -m py_compile scripts\flowpilot_user_flow_diagram.py skills\flowpilot\assets\flowpilot_user_flow_diagram.py skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py simulations\user_flow_diagram_model.py simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py`
+  - OK: `python simulations\run_user_flow_diagram_checks.py`
+  - OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+  - OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime tests.test_flowpilot_user_flow_diagram`
+  - OK: `python scripts\check_install.py`
+  - OK: `python simulations\run_meta_checks.py`
+  - OK: `python simulations\run_capability_checks.py`
+  - OK: `python simulations\run_startup_pm_review_checks.py`
+  - OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+  - OK: `python simulations\run_prompt_isolation_checks.py`
+  - OK: `python simulations\run_router_action_contract_checks.py`
+  - OK: `python scripts\smoke_autopilot.py`
+  - OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+  - OK: `python scripts\install_flowpilot.py --check --json`
+  - OK: `python scripts\audit_local_install_sync.py --json`
+- Finding: the previous model checked that a Mermaid route sign was displayed,
+  but not that the displayed text was free of internal control-plane metadata.
+  The upgraded model now covers that content-boundary failure class.
+- Skipped checks: production conformance replay remains unavailable for this
+  abstract user-flow diagram model; confidence is model and regression-test
+  level plus live generator output inspection.
+
 ## 2026-05-06 - FlowPilot v0.3.1 PM File-Backed Payload Patch
 
 - Trigger: after the `v0.3.0` source release was published, a relevant router
