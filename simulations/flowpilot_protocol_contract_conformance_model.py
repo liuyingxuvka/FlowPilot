@@ -159,8 +159,6 @@ def _valid_state() -> State:
             "external_fact_review",
             "external_fact_review.reviewed_by_role",
             "external_fact_review.direct_evidence_paths_checked",
-            "external_fact_review.used_router_mechanical_audit",
-            "external_fact_review.router_mechanical_audit_hash",
             "external_fact_review.self_attested_ai_claims_accepted_as_proof",
             REVIEWER_IDS_PATH,
             "findings",

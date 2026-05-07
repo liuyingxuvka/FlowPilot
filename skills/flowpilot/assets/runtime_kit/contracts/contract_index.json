@@ -258,8 +258,6 @@
         "external_fact_review",
         "external_fact_review.reviewed_by_role",
         "external_fact_review.direct_evidence_paths_checked",
-        "external_fact_review.used_router_mechanical_audit",
-        "external_fact_review.router_mechanical_audit_hash",
         "external_fact_review.self_attested_ai_claims_accepted_as_proof",
         "external_fact_review.reviewer_checked_requirement_ids",
         "findings",
@@ -270,7 +268,6 @@
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer",
         "external_fact_review.reviewed_by_role": "human_like_reviewer",
-        "external_fact_review.used_router_mechanical_audit": true,
         "external_fact_review.self_attested_ai_claims_accepted_as_proof": false
       }
     },

@@ -17,19 +17,24 @@ run files and report only factual findings.
 The router writes `startup/startup_mechanical_audit.json` and a
 `router_owned_check_proof` sidecar for recomputable startup checks. Treat that
 audit as proof only for mechanical file/state checks. It does not prove that an
-AI honestly captured the user's reply, that live agents are fresh, that a host
-heartbeat is really bound to this run, or that Cockpit/fallback behavior is
-real. Those facts remain reviewer-owned unless the audit cites a host receipt.
-The system-card delivery metadata includes the current mechanical audit hash;
-your report must repeat that hash in
-`external_fact_review.router_mechanical_audit_hash`.
+AI honestly captured facts outside the host-visible run record, that live
+agents are fresh, that a host heartbeat is really bound to this run, or that
+Cockpit/fallback behavior is real. Those facts remain reviewer-owned unless the
+audit cites a host receipt.
+
+Do not try to prove the original chat transcript or the user's private intent.
+The router-accepted startup task contract is the authority for startup answers.
+If a requirement cannot be independently checked from current run files, host
+receipts, tools, or UI, report it as a finding for PM decision instead of
+claiming either proof or a terminal route block.
+The system-card delivery metadata includes any current
+`reviewer_required_external_facts`. Use those ids as your external-review
+checklist. You do not need to prove router-computable hashes, flags, event
+order, or proof-file existence; the router enforces those mechanically.
 
 Required checks:
 
 - all three startup answers are present;
-- if startup answers were AI-interpreted from natural language, the
-  `startup_answer_interpretation` receipt preserves the raw user reply and the
-  interpreted answers match that reply;
 - `.flowpilot/current.json` points to the current run root;
 - `.flowpilot/index.json` includes the current run id;
 - the six FlowPilot role slots are fresh for this run or have explicit
@@ -41,11 +46,8 @@ Required checks:
 
 Your report body must include `external_fact_review` with:
 
-- `used_router_mechanical_audit: true`;
-- `router_mechanical_audit_hash` matching the hash delivered with this card;
 - `self_attested_ai_claims_accepted_as_proof: false`;
-- every id from `startup_mechanical_audit.json` field
-  `reviewer_required_external_facts` listed in
+- every id from the delivered `reviewer_required_external_facts` listed in
   `reviewer_checked_requirement_ids`;
 - direct evidence paths you personally checked.
 
@@ -76,8 +78,6 @@ required field even when the value is `[]` or `false`.
   "external_fact_review": {
     "reviewed_by_role": "human_like_reviewer",
     "direct_evidence_paths_checked": [],
-    "used_router_mechanical_audit": true,
-    "router_mechanical_audit_hash": "<delivered mechanical audit hash>",
     "self_attested_ai_claims_accepted_as_proof": false,
     "reviewer_checked_requirement_ids": []
   },
@@ -101,6 +101,6 @@ Write the startup fact report only to a run-scoped review/report file. Return
 to Controller only an envelope naming the report id, path, hash, event name,
 from/to roles, next holder, and body visibility. If any required check is
 false, the blocker details stay inside that report body; Controller receives
-only the blocking envelope and must relay it to PM through the packet ledger.
+only the findings envelope and must relay it to PM through the packet ledger.
 The router accepts a file-backed reviewer report with `passed: false` as a
-legal startup block; do not fake a pass to reach PM activation.
+legal PM decision input; do not fake a pass to reach PM activation.

@@ -168,7 +168,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "scheduled_continuation": AI_INTERPRETED_STARTUP_ANSWERS["scheduled_continuation"],
                 "display_surface": AI_INTERPRETED_STARTUP_ANSWERS["display_surface"],
             },
-            "reviewer_must_check_raw_reply_alignment": True,
         }
 
     def apply_startup_heartbeat_if_requested(self, root: Path) -> dict | None:
@@ -821,18 +820,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def startup_fact_report_body(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
-        audit_path = run_root / "startup" / "startup_mechanical_audit.json"
-        audit_hash = hashlib.sha256(audit_path.read_bytes()).hexdigest() if audit_path.exists() else None
         return {
             "reviewed_by_role": "human_like_reviewer",
             "passed": True,
             "external_fact_review": {
                 "reviewed_by_role": "human_like_reviewer",
-                "used_router_mechanical_audit": True,
-                "router_mechanical_audit_hash": audit_hash,
                 "self_attested_ai_claims_accepted_as_proof": False,
                 "reviewer_checked_requirement_ids": [
-                    "startup_user_answer_authenticity",
                     "live_agent_spawn_freshness",
                     "heartbeat_host_automation_current_run_binding",
                     "cockpit_or_display_fallback_reality",
@@ -1379,7 +1373,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "startup_answer_interpretation.interpreted_answers.background_agents",
             "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
             "startup_answer_interpretation.interpreted_answers.display_surface",
-            "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment",
             "flowpilot.startup_answer_interpretation.v1",
         )
 
@@ -1883,10 +1876,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
         fact_report = read_json(run_root / "startup" / "startup_fact_report.json")
         self.assertEqual(fact_report["startup_mechanical_audit_hash"], hashlib.sha256((run_root / "startup" / "startup_mechanical_audit.json").read_bytes()).hexdigest())
-        self.assertEqual(
-            fact_report["external_fact_review"]["router_mechanical_audit_hash"],
-            fact_report["startup_mechanical_audit_hash"],
-        )
+        self.assertNotIn("router_mechanical_audit_hash", fact_report["external_fact_review"])
 
         self.deliver_expected_card(root, "pm.startup_activation")
 
@@ -1920,7 +1910,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["pm_material_packets_issued"])
 
-    def test_reviewer_can_legally_block_startup_facts_without_control_blocker(self) -> None:
+    def test_reviewer_startup_findings_go_to_pm_without_control_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
@@ -1947,12 +1937,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         report = read_json(run_root / "startup" / "startup_fact_report.json")
         self.assertFalse(report["passed"])
-        self.assertEqual(report["status"], "block")
+        self.assertEqual(report["status"], "findings")
+        self.assertTrue(report["requires_pm_startup_decision"])
+        self.assertFalse(report["reviewer_directly_blocks_route"])
         state = read_json(router.run_state_path(run_root))
         self.assertIsNone(state["active_control_blocker"])
 
         self.deliver_expected_card(root, "pm.startup_activation")
-        with self.assertRaisesRegex(router.RouterError, "clean reviewer startup fact report"):
+        with self.assertRaisesRegex(router.RouterError, "accepts_startup_findings_with_reason"):
             router.record_external_event(
                 root,
                 "pm_approves_startup_activation",
@@ -1987,6 +1979,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(lifecycle["status"], "protocol_dead_end")
         dead_end = read_json(run_root / "lifecycle" / "startup_protocol_dead_end.json")
         self.assertTrue(dead_end["effects"]["cancel_or_suspend_pending_mail"])
+        self.assertFalse(dead_end["effects"]["heartbeat_should_stop"])
+        self.assertTrue(dead_end["effects"]["heartbeat_should_remain_for_resume_or_user_decision"])
+
+    def test_pm_can_approve_startup_findings_with_file_backed_decision(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        router.record_external_event(root, "pm_first_decision_resets_controller")
+        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.deliver_expected_card(root, "reviewer.startup_fact_check")
+
+        findings_body = self.startup_fact_report_body(root)
+        findings_body.update(
+            {
+                "passed": False,
+                "checks": {"startup_user_answer_authenticity": False},
+                "blockers": ["startup_user_answer_authenticity"],
+            }
+        )
+        router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(root, "startup/reviewer_startup_fact_findings", findings_body),
+        )
+        self.deliver_expected_card(root, "pm.startup_activation")
+
+        router.record_external_event(
+            root,
+            "pm_approves_startup_activation",
+            self.role_decision_envelope(
+                root,
+                "startup/pm_startup_activation_findings_decision",
+                {
+                    "approved_by_role": "project_manager",
+                    "decision": "approved",
+                    "reviewed_report_path": self.rel(root, run_root / "startup" / "startup_fact_report.json"),
+                    "accepts_startup_findings_with_reason": True,
+                    "startup_findings_decision": "unreviewable_requirement_demoted",
+                    "startup_findings_decision_reason": "The router task contract is the startup-answer authority; original chat authenticity is not independently reviewable by this role.",
+                    "demoted_unreviewable_requirement_ids": ["startup_user_answer_authenticity"],
+                },
+            ),
+        )
+        activation = read_json(run_root / "startup" / "startup_activation.json")
+        self.assertEqual(activation["approval_basis"], "pm_file_backed_findings_decision")
+        self.assertEqual(
+            activation["pm_findings_decision"]["startup_findings_decision"],
+            "unreviewable_requirement_demoted",
+        )
 
     def test_pm_startup_repair_request_resets_fact_review_cycle(self) -> None:
         root = self.make_project()

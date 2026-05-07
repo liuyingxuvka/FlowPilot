@@ -13,13 +13,25 @@ import flowpilot_startup_control_model as model
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "apply_without_receipt_review": "startup action was applied before reviewed answer receipt matched user text",
+    "apply_without_task_contract": "startup action was applied before router task contract authority was established",
     "apply_without_payload_contract": "startup action was applied before an action payload contract existed",
     "fact_report_pass_before_apply": "reviewer startup fact report was written before startup action apply",
+    "reviewer_user_authenticity_gate_required": "reviewer was required to prove unreviewable user-chat authenticity",
+    "reviewer_reproves_router_computable_startup_facts": "reviewer was required to re-prove router-computable startup facts",
+    "stage_precondition_error_materialized_as_control_blocker": "normal event precondition failure was materialized as an active control blocker",
+    "startup_fact_without_review_owner": "startup fact requirement had no router, reviewer, or PM decision owner",
+    "unreviewable_startup_finding_without_pm_decision": "reviewer startup findings had no PM repair, waiver/demotion, or protocol dead-end decision",
+    "startup_report_without_aggressive_external_checks": "reviewer startup fact report did not preserve aggressive checks for reviewable external facts",
     "fact_report_without_mechanical_audit": "reviewer startup fact report was accepted without the current prewritten startup mechanical audit",
-    "blocking_fact_report_allows_work": "reviewer startup fact report blocked but work beyond startup was allowed",
-    "blocking_fact_report_without_pm_target": "blocking startup fact report had no targeted PM repair request or protocol dead-end",
+    "reviewer_findings_allow_work_without_pm_decision": "reviewer findings allowed work without a PM repair/waiver/demotion decision",
+    "reviewer_findings_without_pm_decision": "reviewer startup findings had no PM repair, waiver/demotion, or protocol dead-end decision",
     "protocol_dead_end_without_file_backed_record": "protocol dead-end did not stop startup with a complete file-backed emergency record",
+    "material_card_before_startup_activation": "material/product card was delivered before PM allowed work beyond startup",
+    "route_activation_before_startup_activation": "route was activated before startup activation and material scan entry",
+    "product_work_without_active_route": "Controller or outer thread started product work before an active route existed",
+    "next_action_before_active_route": "next action was issued before PM activated a route",
+    "heartbeat_removed_before_pm_closure": "heartbeat was removed before PM closure approval",
+    "completion_before_pm_closure": "startup control completed before route work, PM closure, and heartbeat removal",
     "next_action_after_stop": "formal user stop/cancel did not prevent further next actions",
     "next_action_after_cancel": "formal user stop/cancel did not prevent further next actions",
     "unsealed_repair_packet": "router error repair packet was routed without being sealed",
@@ -33,7 +45,9 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|"
         f"questions={state.startup_questions_asked}|waiting={state.waiting_for_user_text}|"
-        f"user_text={state.user_text_recorded}|lifecycle={state.formal_lifecycle_signal}|"
+        f"user_text={state.user_text_recorded}|contract={state.startup_task_contract_recorded},"
+        f"auth_gate={state.user_authenticity_gate_required},{state.user_authenticity_gate_demoted}|"
+        f"lifecycle={state.formal_lifecycle_signal}|"
         f"future_prevented={state.future_actions_prevented}|"
         f"issued_after_lifecycle={state.action_issued_after_lifecycle_signal}|"
         f"receipt={state.interpretation_receipt_written},"
@@ -41,8 +55,18 @@ def _state_id(state: model.State) -> str:
         f"action={state.pending_action_type},contract={state.payload_contract_exists},"
         f"applied={state.startup_action_applied}|"
         f"fact_report={state.startup_fact_report_status},"
-        f"file={state.startup_fact_report_file_backed}|"
-        f"work={state.work_beyond_startup_allowed}|next={state.next_action_issued}|"
+        f"file={state.startup_fact_report_file_backed},"
+        f"router_owned={state.router_owned_mechanical_facts_enforced},"
+        f"reprove_router={state.reviewer_required_to_reprove_router_owned_facts},"
+        f"owners={state.all_startup_fact_review_owners_assigned},"
+        f"unowned={state.startup_fact_without_review_owner},"
+        f"aggressive={state.reviewer_aggressive_external_checks_preserved},"
+        f"finding_kind={state.reviewer_finding_reason_kind}|"
+        f"work={state.work_beyond_startup_allowed}|material={state.material_scan_card_delivered}|"
+        f"route={state.active_route_exists}|next={state.next_action_issued}|"
+        f"route_done={state.route_work_completed}|closure={state.pm_closure_approved}|"
+        f"heartbeat_removed={state.heartbeat_removed}|"
+        f"stage_precondition_blocker={state.stage_precondition_error_materialized_as_control_blocker}|"
         f"error={state.router_error_seen}|repair="
         f"{state.repair_packet_registered},{state.repair_packet_sealed},"
         f"{state.repair_packet_responsible_role}->{state.repair_packet_recipient},"
@@ -128,7 +152,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
             not graph["invariant_failures"]
             and not missing_labels
             and any(model.is_success(state) for state in states)
-            and any(state.status == "blocked" for state in states)
+            and any(state.status == "protocol_dead_end" for state in states)
             and any(state.status == "stopped" for state in states)
             and any(state.status == "cancelled" for state in states)
             and not stop_cancel_outgoing
@@ -141,6 +165,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
         "missing_labels": missing_labels,
         "complete_state_count": sum(1 for state in states if state.status == "complete"),
         "blocked_state_count": sum(1 for state in states if state.status == "blocked"),
+        "protocol_dead_end_state_count": sum(1 for state in states if state.status == "protocol_dead_end"),
         "stopped_state_count": sum(1 for state in states if state.status == "stopped"),
         "cancelled_state_count": sum(1 for state in states if state.status == "cancelled"),
         "stop_cancel_outgoing_edges": stop_cancel_outgoing,

@@ -77,7 +77,6 @@ INTERPRETATION_REQUIRED_FIELDS = frozenset(
         "startup_answer_interpretation.interpreted_answers.background_agents",
         "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
         "startup_answer_interpretation.interpreted_answers.display_surface",
-        "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment",
     }
 )
 

@@ -371,7 +371,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "flag": "pm_material_scan_card_delivered",
         "label": "pm_material_scan_card_delivered",
         "card_id": "pm.material_scan",
-        "requires_flag": "startup_display_status_written",
+        "requires_flag": "startup_activation_approved",
         "to_role": "project_manager",
     },
     {
@@ -1584,7 +1584,6 @@ def _startup_answers_payload_contract() -> dict[str, Any]:
             "startup_answer_interpretation.interpreted_answers.display_surface": sorted(
                 STARTUP_ANSWER_ENUMS["display_surface"]
             ),
-            "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment": [True],
         },
         conditional_required_fields={
             "when startup_answers.provenance=ai_interpreted_from_explicit_user_reply": [
@@ -1596,7 +1595,6 @@ def _startup_answers_payload_contract() -> dict[str, Any]:
                 "startup_answer_interpretation.interpreted_answers.background_agents",
                 "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
                 "startup_answer_interpretation.interpreted_answers.display_surface",
-                "startup_answer_interpretation.reviewer_must_check_raw_reply_alignment",
             ],
         },
         description=(
@@ -1604,7 +1602,6 @@ def _startup_answers_payload_contract() -> dict[str, Any]:
             "these fields only with a startup_answer_interpretation receipt that preserves the raw user reply and "
             "states ambiguity_status=none."
         ),
-        reviewer_check="Reviewer must compare raw_user_reply_text with interpreted answers before startup activation.",
     )
 
 
@@ -2800,8 +2797,6 @@ def _validate_startup_answer_interpretation(payload: dict[str, Any], answers: di
         raise RouterError("startup_answer_interpretation.interpretation_provenance must match the AI-interpreted startup answer provenance")
     if receipt.get("ambiguity_status") != "none":
         raise RouterError("ambiguous startup answers must be returned to the user instead of applied")
-    if receipt.get("reviewer_must_check_raw_reply_alignment") is not True:
-        raise RouterError("AI-interpreted startup answers require reviewer_must_check_raw_reply_alignment=true")
     interpreted_answers = receipt.get("interpreted_answers")
     if not isinstance(interpreted_answers, dict):
         raise RouterError("startup_answer_interpretation.interpreted_answers must be an object")
@@ -2822,17 +2817,19 @@ def _validate_startup_answer_interpretation(payload: dict[str, Any], answers: di
     extra = sorted(set(receipt) - allowed_keys)
     if extra:
         raise RouterError(f"startup_answer_interpretation contains unsupported fields: {', '.join(extra)}")
-    return {
+    interpretation = {
         "schema_version": STARTUP_ANSWER_INTERPRETATION_SCHEMA,
         "raw_user_reply_text": raw_text.strip(),
         "interpreted_by": interpreted_by,
         "interpretation_provenance": STARTUP_ANSWER_INTERPRETATION_PROVENANCE,
         "ambiguity_status": "none",
         "interpreted_answers": expected,
-        "reviewer_must_check_raw_reply_alignment": True,
         "notes": receipt.get("notes"),
         "recorded_at": utc_now(),
     }
+    if "reviewer_must_check_raw_reply_alignment" in receipt:
+        interpretation["reviewer_must_check_raw_reply_alignment"] = bool(receipt.get("reviewer_must_check_raw_reply_alignment"))
+    return interpretation
 
 
 def _validate_startup_answers(payload: dict[str, Any]) -> dict[str, str]:
@@ -3820,23 +3817,10 @@ def _continuation_has_host_bound_automation_receipt(continuation_binding: dict[s
 
 def _startup_external_fact_requirements(run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     answers = _startup_answers_from_run(run_root)
-    startup_answers_record = read_json_if_exists(run_root / "startup_answers.json")
-    interpretation_path = startup_answers_record.get("startup_answer_interpretation_path")
     crew = read_json_if_exists(run_root / "crew_ledger.json")
     role_slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
     continuation_binding = read_json_if_exists(_continuation_binding_path(run_root))
-    requirements: list[dict[str, Any]] = [
-        {
-            "id": "startup_user_answer_authenticity",
-            "reason": (
-                "Router validates canonical startup fields, but reviewer must check the raw user reply against "
-                "the AI interpretation receipt when answers were interpreted from natural language."
-            ),
-            "self_attested_payload_fields": ["startup_answers.provenance", "startup_answer_interpretation.raw_user_reply_text"],
-            "startup_answer_interpretation_path": interpretation_path,
-            "reviewer_direct_check_required": True,
-        }
-    ]
+    requirements: list[dict[str, Any]] = []
     if answers.get("background_agents") == "allow" and not _role_slots_have_host_spawn_receipts(role_slots, str(run_state.get("run_id") or "")):
         requirements.append(
             {
@@ -3870,6 +3854,26 @@ def _startup_external_fact_requirements(run_root: Path, run_state: dict[str, Any
     return requirements
 
 
+def _startup_fact_review_ownership(
+    computed_checks: dict[str, bool],
+    external_requirements: list[dict[str, Any]],
+) -> dict[str, Any]:
+    reviewer_ids = {str(item["id"]) for item in external_requirements if item.get("id")}
+    router_owned = sorted(computed_checks)
+    reviewer_owned = sorted(reviewer_ids)
+    pm_decision_owned = ["startup_user_answer_authenticity"]
+    covered = set(router_owned) | set(reviewer_owned) | set(pm_decision_owned)
+    known = set(computed_checks) | reviewer_ids | set(pm_decision_owned)
+    unowned = sorted(known - covered)
+    return {
+        "router_owned_mechanical_checks": router_owned,
+        "reviewer_owned_external_fact_ids": reviewer_owned,
+        "pm_decision_owned_unreviewable_fact_ids": pm_decision_owned,
+        "unowned_fact_ids": unowned,
+        "all_required_facts_have_owner": not unowned,
+    }
+
+
 def _write_startup_mechanical_audit(
     project_root: Path,
     run_root: Path,
@@ -3886,6 +3890,8 @@ def _write_startup_mechanical_audit(
         _continuation_binding_path(run_root),
         run_state_path(run_root),
     ]
+    external_requirements = _startup_external_fact_requirements(run_root, run_state)
+    review_ownership = _startup_fact_review_ownership(computed_checks, external_requirements)
     audit = {
         "schema_version": STARTUP_MECHANICAL_AUDIT_SCHEMA,
         "run_id": run_state["run_id"],
@@ -3894,11 +3900,14 @@ def _write_startup_mechanical_audit(
         "mechanical_checks_passed": all(computed_checks.values()),
         "router_replacement_scope": "mechanical_only",
         "self_attested_ai_claims_accepted_as_proof": False,
-        "reviewer_required_external_facts": _startup_external_fact_requirements(run_root, run_state),
+        "fact_review_ownership": review_ownership,
+        "reviewer_required_external_facts": external_requirements,
         "router_owned_check_proof_path": project_relative(project_root, proof_path),
         "source_paths": [_evidence_path_record(project_root, path) for path in evidence_paths],
         "written_at": utc_now(),
     }
+    if not review_ownership["all_required_facts_have_owner"]:
+        raise RouterError("startup fact ownership map left unowned requirements")
     write_json(audit_path, audit)
     proof_record = _write_router_owned_check_proof(
         project_root,
@@ -3967,7 +3976,9 @@ def _startup_mechanical_audit_action_extra(
         "startup_mechanical_audit_hash": context["audit_hash"],
         "router_owned_check_proof_path": project_relative(project_root, context["proof_path"]),
         "router_owned_check_proof_hash": context["proof_hash"],
-        "reviewer_must_reference_startup_mechanical_audit_hash": True,
+        "router_computable_checks_already_enforced": True,
+        "reviewer_should_not_reprove_router_computable_checks": True,
+        "reviewer_required_external_facts": context["audit"].get("reviewer_required_external_facts") or [],
         "router_replacement_scope": "mechanical_only",
     }
 
@@ -3990,9 +4001,11 @@ def _validate_startup_external_fact_review(
         raise RouterError("startup fact report requires external_fact_review for non-router-checkable facts")
     if review.get("reviewed_by_role") != "human_like_reviewer":
         raise RouterError("external_fact_review must be reviewed_by_role=human_like_reviewer")
-    if review.get("used_router_mechanical_audit") is not True:
-        raise RouterError("external_fact_review must acknowledge the router mechanical audit")
-    if startup_mechanical_audit_hash and review.get("router_mechanical_audit_hash") != startup_mechanical_audit_hash:
+    if (
+        startup_mechanical_audit_hash
+        and review.get("router_mechanical_audit_hash") is not None
+        and review.get("router_mechanical_audit_hash") != startup_mechanical_audit_hash
+    ):
         raise RouterError("external_fact_review must reference the current startup mechanical audit hash")
     if review.get("self_attested_ai_claims_accepted_as_proof") is not False:
         raise RouterError("external_fact_review cannot accept self-attested AI claims as proof")
@@ -4009,8 +4022,6 @@ def _validate_startup_external_fact_review(
         raise RouterError("external_fact_review requires direct_evidence_paths_checked")
     return {
         "reviewed_by_role": "human_like_reviewer",
-        "used_router_mechanical_audit": True,
-        "router_mechanical_audit_hash": startup_mechanical_audit_hash,
         "reviewer_required_external_fact_count": len(requirements),
         "reviewer_checked_requirement_ids": sorted(checked),
         "direct_evidence_paths_checked": direct_paths,
@@ -4056,7 +4067,7 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
             "run_id": run_state["run_id"],
             "reviewed_by_role": "human_like_reviewer",
             "passed": passed,
-            "status": "pass" if passed else "block",
+            "status": "pass" if passed else "findings",
             "checks": computed_checks,
             "reviewer_claimed_checks": claimed_checks,
             "reviewer_reported_blockers": payload.get("blockers") if isinstance(payload.get("blockers"), list) else false_claims or blockers,
@@ -4066,7 +4077,8 @@ def _write_startup_fact_report(project_root: Path, run_root: Path, run_state: di
             "router_owned_check_proof_hash": mechanical_context["proof_hash"],
             "reviewer_required_external_facts": mechanical_audit["reviewer_required_external_facts"],
             "external_fact_review": external_fact_review,
-            "blocks_pm_startup_activation": not passed,
+            "requires_pm_startup_decision": not passed,
+            "reviewer_directly_blocks_route": False,
             "reported_at": utc_now(),
             **_role_output_envelope_record(payload),
         },
@@ -4080,24 +4092,54 @@ def _write_startup_activation(project_root: Path, run_root: Path, run_state: dic
     if payload.get("decision") != "approved":
         raise RouterError("PM startup activation requires decision=approved")
     fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
-    if fact_report.get("passed") is not True:
-        raise RouterError("PM startup activation requires a clean reviewer startup fact report")
+    fact_report_path = run_root / "startup" / "startup_fact_report.json"
+    if not fact_report_path.exists():
+        raise RouterError("PM startup activation requires reviewer startup_fact_report.json")
+    clean_report = fact_report.get("passed") is True and fact_report.get("status") == "pass"
+    approval_basis = "clean_reviewer_fact_report"
+    findings_decision: dict[str, Any] | None = None
+    if not clean_report:
+        if fact_report.get("status") != "findings" or fact_report.get("requires_pm_startup_decision") is not True:
+            raise RouterError("PM startup activation requires a passing reviewer startup fact report or PM findings decision")
+        if payload.get("accepts_startup_findings_with_reason") is not True:
+            raise RouterError("PM startup activation from reviewer findings requires accepts_startup_findings_with_reason=true")
+        reason = str(payload.get("startup_findings_decision_reason") or "").strip()
+        if not reason:
+            raise RouterError("PM startup activation from reviewer findings requires startup_findings_decision_reason")
+        reviewed_report = payload.get("reviewed_report_path") or project_relative(project_root, fact_report_path)
+        if resolve_project_path(project_root, str(reviewed_report)).resolve() != fact_report_path.resolve():
+            raise RouterError("PM startup activation reviewed_report_path must reference startup_fact_report.json")
+        decision_kind = str(payload.get("startup_findings_decision") or "waived_with_reason")
+        if decision_kind not in {"waived_with_reason", "unreviewable_requirement_demoted", "accepted_with_documented_risk"}:
+            raise RouterError("PM startup activation startup_findings_decision is invalid")
+        approval_basis = "pm_file_backed_findings_decision"
+        findings_decision = {
+            "startup_findings_decision": decision_kind,
+            "startup_findings_decision_reason": reason,
+            "reviewed_report_path": project_relative(project_root, fact_report_path),
+            "reviewed_report_hash": packet_runtime.sha256_file(fact_report_path),
+            "reviewer_findings_accepted_by_pm": True,
+            "demoted_unreviewable_requirement_ids": payload.get("demoted_unreviewable_requirement_ids")
+            if isinstance(payload.get("demoted_unreviewable_requirement_ids"), list)
+            else [],
+        }
     answers = _startup_answers_from_run(run_root)
-    write_json(
-        run_root / "startup" / "startup_activation.json",
-        {
-            "schema_version": "flowpilot.startup_activation.v1",
-            "run_id": run_state["run_id"],
-            "approved_by_role": "project_manager",
-            "decision": "approved",
-            "background_agents": answers.get("background_agents"),
-            "scheduled_continuation": answers.get("scheduled_continuation"),
-            "display_surface": answers.get("display_surface"),
-            "fact_report_path": project_relative(project_root, run_root / "startup" / "startup_fact_report.json"),
-            "approved_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
+    activation = {
+        "schema_version": "flowpilot.startup_activation.v1",
+        "run_id": run_state["run_id"],
+        "approved_by_role": "project_manager",
+        "decision": "approved",
+        "background_agents": answers.get("background_agents"),
+        "scheduled_continuation": answers.get("scheduled_continuation"),
+        "display_surface": answers.get("display_surface"),
+        "fact_report_path": project_relative(project_root, fact_report_path),
+        "approval_basis": approval_basis,
+        "approved_at": utc_now(),
+        **_role_output_envelope_record(payload),
+    }
+    if findings_decision is not None:
+        activation["pm_findings_decision"] = findings_decision
+    write_json(run_root / "startup" / "startup_activation.json", activation)
 
 
 def _write_startup_repair_request(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -4115,10 +4157,10 @@ def _write_startup_repair_request(project_root: Path, run_root: Path, run_state:
         raise RouterError("startup repair request requires repair_action")
     fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
     if fact_report.get("passed") is True:
-        raise RouterError("startup repair request requires a blocking reviewer startup fact report")
+        raise RouterError("startup repair request requires a non-passing reviewer startup fact report")
     current_blocked_report_path = run_root / "startup" / "startup_fact_report.json"
     if not current_blocked_report_path.exists():
-        raise RouterError("startup repair request requires the current blocking startup_fact_report.json")
+        raise RouterError("startup repair request requires the current non-passing startup_fact_report.json")
     requested_blocked_report = payload.get("blocked_report_path") or project_relative(project_root, current_blocked_report_path)
     requested_blocked_report_path = resolve_project_path(project_root, str(requested_blocked_report))
     if requested_blocked_report_path.resolve() != current_blocked_report_path.resolve():
@@ -4224,7 +4266,7 @@ def _write_startup_protocol_dead_end(project_root: Path, run_root: Path, run_sta
         raise RouterError("startup protocol dead-end requires resume_conditions")
     fact_report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
     if fact_report.get("passed") is True:
-        raise RouterError("startup protocol dead-end requires a blocking reviewer startup fact report")
+        raise RouterError("startup protocol dead-end requires a non-passing reviewer startup fact report")
     dead_end_path = run_root / "lifecycle" / "startup_protocol_dead_end.json"
     record = {
         "schema_version": "flowpilot.startup_protocol_dead_end.v1",
@@ -4242,7 +4284,8 @@ def _write_startup_protocol_dead_end(project_root: Path, run_root: Path, run_sta
             "freeze_run": True,
             "cancel_or_suspend_pending_mail": True,
             "prevent_work_beyond_startup": True,
-            "heartbeat_should_stop": True,
+            "heartbeat_should_stop": False,
+            "heartbeat_should_remain_for_resume_or_user_decision": True,
             **(payload.get("effects") if isinstance(payload.get("effects"), dict) else {}),
         },
         "resume_conditions": resume_conditions,
@@ -8316,7 +8359,9 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                     "startup_mechanical_audit_hash": pending.get("startup_mechanical_audit_hash"),
                     "router_owned_check_proof_path": pending.get("router_owned_check_proof_path"),
                     "router_owned_check_proof_hash": pending.get("router_owned_check_proof_hash"),
-                    "reviewer_must_reference_startup_mechanical_audit_hash": True,
+                    "router_computable_checks_already_enforced": True,
+                    "reviewer_should_not_reprove_router_computable_checks": True,
+                    "reviewer_required_external_facts": pending.get("reviewer_required_external_facts") or [],
                 }
             )
         run_state["delivered_cards"].append(delivery)

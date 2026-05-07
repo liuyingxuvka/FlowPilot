@@ -37,7 +37,7 @@ After applying a wait-boundary action, prefer `run-until-wait`. It may apply onl
 
 When the router returns startup questions, ask the three questions, apply that pending action so the router records the waiting/stop boundary, and stop immediately. Do not show the banner, create a run, start agents, check heartbeat, open Cockpit, inspect files, plan work, or continue the route in the same response.
 
-After the later user reply answers the questions, pass canonical router enum fields. Exact enum replies use `provenance: explicit_user_reply`. Natural-language replies may be interpreted only with `provenance: ai_interpreted_from_explicit_user_reply` plus a `startup_answer_interpretation` receipt preserving the raw reply, `ambiguity_status: none`, and `reviewer_must_check_raw_reply_alignment: true`. If ambiguous, ask the user. Reviewer checks the interpretation before startup activation.
+After the later user reply answers the questions, pass canonical router enum fields. Exact enum replies use `provenance: explicit_user_reply`. Natural-language replies may be interpreted only with `provenance: ai_interpreted_from_explicit_user_reply` plus a `startup_answer_interpretation` receipt preserving the raw reply and `ambiguity_status: none`. If ambiguous, ask the user. The router-owned startup task contract is the authority for activation; reviewer checks only independently observable startup facts requested by the router, not private chat authenticity.
 
 The startup banner and FlowPilot Route Sign are user-facing display text. When the router returns `display_text`, paste that exact text into chat before applying. Generated files, paths, flags, and state records do not count.
 

@@ -10,14 +10,13 @@ next_step_source: Do not infer the next FlowPilot action from this card, chat hi
 
 You are the project manager at the startup activation gate.
 
-You may open work beyond startup only after receiving a clean independent
-startup fact report from the reviewer. Do not approve from Controller status,
-chat history, old route files, or your own assumptions.
+You may open work beyond startup after receiving the reviewer startup fact
+report and making a file-backed PM decision. Do not approve from Controller
+status, chat history, old route files, or your own assumptions.
 
 Before approving, verify that the reviewer report covers:
 
-- three startup answers, with reviewer-checked interpretation receipt when
-  natural-language user answers were interpreted into router enum fields;
+- three startup answers from the router-accepted startup task contract;
 - current run pointer and index authority;
 - six current role slots or an explicit fallback path;
 - continuation mode evidence bound to the user's startup answer;
@@ -27,9 +26,15 @@ Before approving, verify that the reviewer report covers:
 
 If the report is clean, approve startup activation through Controller.
 
+If the report contains findings that are not worth a targeted repair, you may
+still approve only with a file-backed PM findings decision. This decision must
+say whether you are waiving with reason, demoting an unreviewable requirement,
+or accepting a documented risk. Use this sparingly and only when it does not
+change the user's accepted task.
+
 If the report is not clean and there is a legal next repair target, write a
 file-backed `pm_requests_startup_repair` decision. The decision must name the
-exact target role or system, the repair action, the blocking report path, the
+exact target role or system, the repair action, the non-passing report path, the
 resume event, and the condition that will allow a fresh reviewer report.
 
 If the report is not clean and no existing role, system event, packet, or
@@ -54,10 +59,33 @@ Approval body:
   "approved_by_role": "project_manager",
   "decision": "approved",
   "reviewed_report_path": "<startup fact report path>",
+  "accepts_startup_findings_with_reason": false,
   "blockers": [],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true
+  }
+}
+```
+
+Approval body with PM findings decision:
+
+```json
+{
+  "schema_version": "flowpilot.pm_startup_activation_approval.v1",
+  "run_id": "<current run id>",
+  "approved_by_role": "project_manager",
+  "decision": "approved",
+  "reviewed_report_path": "<startup fact report path>",
+  "accepts_startup_findings_with_reason": true,
+  "startup_findings_decision": "waived_with_reason",
+  "startup_findings_decision_reason": "<why PM can open startup despite findings>",
+  "demoted_unreviewable_requirement_ids": [],
+  "blockers": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
   }
 }
 ```
@@ -72,7 +100,7 @@ Repair request body:
   "decision": "startup_repair_requested",
   "target_role_or_system": "human_like_reviewer",
   "repair_action": "<specific legal repair action>",
-  "blocked_report_path": "<blocking report path>",
+  "blocked_report_path": "<non-passing reviewer report path>",
   "resume_event": "reviewer_reports_startup_facts",
   "blockers": [],
   "contract_self_check": {

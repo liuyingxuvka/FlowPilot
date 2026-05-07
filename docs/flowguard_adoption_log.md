@@ -4293,3 +4293,67 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep source-conformance probes for future startup protocol changes.
+
+
+## flowpilot-reviewer-router-fact-owner-boundary-20260507 - Startup reviewer/router fact ownership and PM findings decisions
+
+- Project: FlowPilot
+- Trigger reason: User review found that startup control friction came from over-asking the reviewer to prove facts the reviewer cannot independently observe, while also needing to catch any required fact with no router, reviewer, or PM owner.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-07
+- Ended: 2026-05-07
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_startup_control_model.py`
+- `simulations/flowpilot_protocol_contract_conformance_model.py`
+- `simulations/flowpilot_router_action_contract_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_protocol_contract_conformance_model.py`
+- OK: `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_results.json`
+- OK: `python simulations\run_router_action_contract_checks.py`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py`
+- OK: `python simulations\run_output_contract_checks.py`
+- OK: `python simulations\run_startup_pm_review_checks.py`
+- OK: `python simulations\run_router_next_recipient_checks.py`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `python simulations\run_release_tooling_checks.py`
+- OK: `python simulations\run_barrier_equivalence_checks.py`
+- OK: `python simulations\run_command_refinement_checks.py`
+- OK: `python simulations\run_prompt_isolation_checks.py`
+- OK: `python simulations\run_flowpilot_resume_checks.py`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py`
+- OK: `python -m pytest tests`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\smoke_autopilot.py --fast`
+
+### Findings
+- The startup model now treats router-computable mechanical facts as router-owned and removes reviewer reproof as a safe-path obligation.
+- The model now treats every required startup fact with no router, reviewer, or PM-decision owner as a hazard.
+- Reviewer startup findings now require PM repair, waiver/demotion, or protocol dead-end decision before work can proceed; the reviewer does not directly terminate the route.
+- Normal stage precondition failures such as "event requires prior card delivery" are not materialized as active control blockers.
+- Runtime, startup reviewer card, PM startup activation card, and output-contract metadata were aligned so the reviewer checks independently observable external facts only.
+
+### Counterexamples
+- Before the fix, an unreviewable original-chat authenticity requirement could force reviewer failure without an independent proof source.
+- Before the fix, a missing review-owner category could remain invisible if neither router nor reviewer owned the fact.
+- Before the fix, a normal stage precondition error could be widened into a control blocker and interrupt ordinary routing.
+
+### Friction Points
+- The background validation subagent disconnected before returning results, so final validation was rerun in the main thread.
+- `python scripts\smoke_autopilot.py` without `--fast` timed out twice because it runs slow meta/capability checks sequentially; the explicit individual checks passed and the fast smoke check passed by reusing existing proof files.
+
+### Skipped Steps
+- Full slow meta/capability regeneration was not rerun after the timeout; `--fast` reused existing proof files. The changed files are outside the meta/capability model definitions, and full pytest plus focused startup/protocol models passed.
+
+### Next Actions
+- Consider making `smoke_autopilot.py` report per-check progress or default to bounded proof reuse so future validation does not look stalled.
