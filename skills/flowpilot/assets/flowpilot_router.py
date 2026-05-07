@@ -674,6 +674,73 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
     },
 )
 
+CARD_PHASE_BY_ID = {
+    "pm.product_architecture": "product_architecture",
+    "product_officer.product_architecture_modelability": "product_architecture",
+    "reviewer.product_architecture_challenge": "product_architecture",
+    "pm.root_contract": "root_contract",
+    "reviewer.root_contract_challenge": "root_contract",
+    "product_officer.root_contract_modelability": "root_contract",
+    "pm.dependency_policy": "dependency_policy",
+    "pm.child_skill_selection": "child_skill_selection",
+    "pm.child_skill_gate_manifest": "child_skill_gate_manifest",
+    "reviewer.child_skill_gate_manifest_review": "child_skill_gate_manifest",
+    "process_officer.child_skill_conformance_model": "child_skill_gate_manifest",
+}
+
+CARD_REQUIRED_SOURCE_PATHS = {
+    "pm.product_architecture": {
+        "pm_material_understanding": "pm_material_understanding.json",
+        "pm_material_understanding_payload": "material/pm_material_understanding_payload.json",
+    },
+    "product_officer.product_architecture_modelability": {
+        "product_function_architecture": "product_function_architecture.json",
+    },
+    "reviewer.product_architecture_challenge": {
+        "product_function_architecture": "product_function_architecture.json",
+        "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
+    },
+    "pm.root_contract": {
+        "product_function_architecture": "product_function_architecture.json",
+        "product_architecture_challenge": "reviews/product_architecture_challenge.json",
+        "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
+    },
+    "reviewer.root_contract_challenge": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "standard_scenario_pack": "standard_scenario_pack.json",
+    },
+    "product_officer.root_contract_modelability": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "standard_scenario_pack": "standard_scenario_pack.json",
+    },
+    "pm.dependency_policy": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "product_function_architecture": "product_function_architecture.json",
+    },
+    "pm.child_skill_selection": {
+        "dependency_policy": "dependency_policy.json",
+        "capabilities": "capabilities.json",
+    },
+    "pm.child_skill_gate_manifest": {
+        "capabilities": "capabilities.json",
+        "pm_child_skill_selection": "pm_child_skill_selection.json",
+        "root_acceptance_contract": "root_acceptance_contract.json",
+    },
+    "reviewer.child_skill_gate_manifest_review": {
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "pm_child_skill_selection": "pm_child_skill_selection.json",
+        "capabilities": "capabilities.json",
+    },
+    "process_officer.child_skill_conformance_model": {
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "child_skill_gate_manifest_review": "reviews/child_skill_gate_manifest_review.json",
+        "pm_child_skill_selection": "pm_child_skill_selection.json",
+        "capabilities": "capabilities.json",
+    },
+}
+
+RUN_TERMINAL_STATUSES = {"stopped_by_user", "cancelled_by_user", "protocol_dead_end", "completed", "closed", "stopped"}
+
 MAIL_SEQUENCE: tuple[dict[str, str], ...] = (
     {
         "flag": "user_intake_delivered_to_pm",
@@ -1068,6 +1135,44 @@ def read_json_if_exists(path: Path) -> dict[str, Any]:
     return read_json(path)
 
 
+def _json_sha256(payload: dict[str, Any]) -> str:
+    return hashlib.sha256((json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")).hexdigest()
+
+
+def _without_role_output_envelope(payload: dict[str, Any]) -> dict[str, Any]:
+    body = dict(payload)
+    body.pop("_role_output_envelope", None)
+    return body
+
+
+def _role_output_semantic_hash(path: Path) -> str | None:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return _json_sha256(_without_role_output_envelope(raw))
+
+
+def _role_output_semantic_hashes(path: Path) -> set[str]:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return set()
+    if not isinstance(raw, dict):
+        return set()
+    body = _without_role_output_envelope(raw)
+    canonical_lf = json.dumps(body, indent=2, sort_keys=True) + "\n"
+    variants = {canonical_lf, canonical_lf.replace("\n", "\r\n")}
+    return {hashlib.sha256(variant.encode("utf-8")).hexdigest() for variant in variants}
+
+
+def _role_output_hashes(path: Path) -> tuple[str, str | None]:
+    raw_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    return raw_hash, _role_output_semantic_hash(path)
+
+
 def project_relative(project_root: Path, path: Path) -> str:
     try:
         return path.resolve().relative_to(project_root.resolve()).as_posix()
@@ -1222,13 +1327,18 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
     if not path.exists():
         raise RouterError(f"role body path is missing: {body_path}")
     expected_hash = str(payload[body_hash_key])
-    actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-    if actual_hash != expected_hash:
+    raw_hash, semantic_hash = _role_output_hashes(path)
+    accepted_hashes = {raw_hash}
+    accepted_hashes.update(_role_output_semantic_hashes(path))
+    if expected_hash not in accepted_hashes:
         raise RouterError("role body hash mismatch")
     loaded = read_json(path)
+    replay_hash = semantic_hash or raw_hash
     loaded["_role_output_envelope"] = {
         "body_path": project_relative(project_root, path),
-        "body_hash": actual_hash,
+        "body_hash": replay_hash,
+        "body_raw_sha256": raw_hash,
+        "body_semantic_sha256": semantic_hash,
         "body_path_key": body_path_key,
         "body_hash_key": body_hash_key,
         "controller_visibility": payload.get("controller_visibility") or "role_output_envelope_only",
@@ -1263,6 +1373,48 @@ def _role_output_envelope_record(payload: dict[str, Any]) -> dict[str, Any]:
     if isinstance(envelope, dict):
         return {"_role_output_envelope": envelope}
     return {}
+
+
+def _role_output_snapshot_name(run_root: Path, output_path: Path) -> str:
+    try:
+        relative = output_path.resolve().relative_to(run_root.resolve()).as_posix()
+    except ValueError:
+        relative = output_path.name
+    return relative.replace("/", "__").replace("\\", "__")
+
+
+def _role_output_envelope_record_for_mutable_artifact(
+    project_root: Path,
+    run_root: Path,
+    output_path: Path,
+    payload: dict[str, Any],
+    *,
+    reason: str,
+) -> dict[str, Any]:
+    envelope = payload.get("_role_output_envelope")
+    if not isinstance(envelope, dict):
+        return {}
+    body_path = envelope.get("body_path")
+    if not isinstance(body_path, str):
+        return {"_role_output_envelope": envelope}
+    source_path = resolve_project_path(project_root, body_path)
+    if source_path.resolve() != output_path.resolve():
+        return {"_role_output_envelope": envelope}
+    snapshot_path = run_root / "role_output_snapshots" / f"{_role_output_snapshot_name(run_root, output_path)}.json"
+    write_json(snapshot_path, _without_role_output_envelope(payload))
+    raw_hash, semantic_hash = _role_output_hashes(snapshot_path)
+    snapshot_envelope = dict(envelope)
+    snapshot_envelope.update(
+        {
+            "body_path": project_relative(project_root, snapshot_path),
+            "body_hash": semantic_hash or raw_hash,
+            "body_raw_sha256": raw_hash,
+            "body_semantic_sha256": semantic_hash,
+            "body_snapshot_for_mutable_artifact": project_relative(project_root, output_path),
+            "body_snapshot_reason": reason,
+        }
+    )
+    return {"_role_output_envelope": snapshot_envelope}
 
 
 def new_bootstrap_state(run_id: str | None = None, run_root_rel: str | None = None) -> dict[str, Any]:
@@ -1385,6 +1537,7 @@ def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
         "mail_deliveries": 0,
         "control_blockers": [],
         "resolved_control_blockers": [],
+        "protocol_blockers": [],
         "active_control_blocker": None,
         "latest_control_blocker_path": None,
         "delivered_cards": [],
@@ -1424,6 +1577,7 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
     state.setdefault("delivered_mail", [])
     state.setdefault("control_blockers", [])
     state.setdefault("resolved_control_blockers", [])
+    state.setdefault("protocol_blockers", [])
     state.setdefault("active_control_blocker", None)
     state.setdefault("latest_control_blocker_path", None)
     state.setdefault("events", [])
@@ -2201,6 +2355,35 @@ def _write_control_blocker_repair_packet(
     }
 
 
+def _supersede_prior_control_blockers(
+    run_root: Path,
+    *,
+    blocker_id: str,
+    category: str,
+    event: str | None,
+    action_type: str | None,
+) -> None:
+    control_root = run_root / "control_blocks"
+    if not control_root.exists():
+        return
+    superseded_at = utc_now()
+    for path in sorted(control_root.glob("*.json")):
+        record = read_json_if_exists(path)
+        if record.get("schema_version") != CONTROL_BLOCKER_SCHEMA:
+            continue
+        if record.get("resolution_status") or record.get("blocker_id") == blocker_id:
+            continue
+        if record.get("handling_lane") != category:
+            continue
+        if record.get("originating_event") != event or record.get("originating_action_type") != action_type:
+            continue
+        record["resolution_status"] = "superseded_by_newer_control_blocker"
+        record["superseded_by_blocker_id"] = blocker_id
+        record["resolved_at"] = superseded_at
+        record["resolution_note"] = "A newer router rejection for the same control-plane event replaced this pending repair packet."
+        write_json(path, record)
+
+
 def _write_control_blocker(
     project_root: Path,
     run_root: Path,
@@ -2267,6 +2450,13 @@ def _write_control_blocker(
         ),
     }
     write_json(artifact_path, record)
+    _supersede_prior_control_blockers(
+        run_root,
+        blocker_id=blocker_id,
+        category=category,
+        event=event,
+        action_type=action_type,
+    )
     active = {
         "blocker_id": blocker_id,
         "handling_lane": category,
@@ -2296,6 +2486,7 @@ def _write_control_blocker(
             "originating_action_type": action_type,
         },
     )
+    _sync_control_plane_indexes(project_root, run_root, run_state)
     save_run_state(run_root, run_state)
     return record
 
@@ -2308,6 +2499,70 @@ def _control_blocker_record(project_root: Path, active: dict[str, Any]) -> dict[
     if not path.exists():
         return active
     return read_json(path)
+
+
+def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
+    fields = (
+        "blocker_id",
+        "handling_lane",
+        "blocker_artifact_path",
+        "target_role",
+        "responsible_role_for_reissue",
+        "pm_decision_required",
+        "delivery_status",
+        "sealed_repair_packet_path",
+        "sealed_repair_packet_hash",
+        "originating_event",
+        "originating_action_type",
+        "created_at",
+        "delivered_to_role",
+        "delivered_at",
+        "resolution_status",
+        "resolved_by_event",
+        "resolved_at",
+    )
+    return {field: record.get(field) for field in fields if field in record}
+
+
+def _sync_protocol_blocker_index(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
+    blockers: list[dict[str, Any]] = []
+    blocker_root = run_root / "blockers"
+    if blocker_root.exists():
+        for path in sorted(blocker_root.glob("*.json")):
+            record = read_json_if_exists(path)
+            blockers.append(
+                {
+                    "path": project_relative(project_root, path),
+                    "blocker_id": record.get("blocker_id") or path.stem,
+                    "blocker_type": record.get("blocker_type"),
+                    "status": record.get("status"),
+                    "registered_at": record.get("registered_at") or utc_now(),
+                }
+            )
+    run_state["protocol_blockers"] = blockers
+
+
+def _sync_control_plane_indexes(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
+    summaries: list[dict[str, Any]] = []
+    resolved: list[dict[str, Any]] = []
+    active: dict[str, Any] | None = None
+    control_root = run_root / "control_blocks"
+    if control_root.exists():
+        for path in sorted(control_root.glob("*.json")):
+            record = read_json_if_exists(path)
+            if record.get("schema_version") != CONTROL_BLOCKER_SCHEMA:
+                continue
+            summary = _control_blocker_summary(record)
+            summaries.append(summary)
+            if record.get("resolution_status"):
+                resolved.append(summary)
+            else:
+                active = summary
+    run_state["control_blockers"] = summaries
+    run_state["resolved_control_blockers"] = resolved
+    run_state["active_control_blocker"] = active
+    run_state["latest_control_blocker_path"] = active.get("blocker_artifact_path") if active else None
+    _sync_protocol_blocker_index(project_root, run_root, run_state)
 
 
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
@@ -2395,6 +2650,7 @@ def _mark_control_blocker_delivered(project_root: Path, run_root: Path, run_stat
     )
     ledger["updated_at"] = delivered_at
     write_json(ledger_path, ledger)
+    _sync_control_plane_indexes(project_root, run_root, run_state)
 
 
 def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -2506,6 +2762,7 @@ def _resolve_delivered_control_blocker(
         "router_resolved_control_blocker",
         {"blocker_id": resolved.get("blocker_id"), "resolved_by_event": resolved_by_event},
     )
+    _sync_control_plane_indexes(project_root, run_root, run_state)
     return resolved
 
 
@@ -2599,15 +2856,22 @@ def _reconcile_terminal_lifecycle_authorities(
         continuation = read_json(continuation_path)
         source_paths["continuation_binding"] = project_relative(project_root, continuation_path)
         previous_heartbeat_active = bool(continuation.get("heartbeat_active"))
+        automation_id = str(continuation.get("host_automation_id") or "")
+        automation_path = Path.home() / ".codex" / "automations" / automation_id / "automation.toml" if automation_id else None
+        automation_exists = bool(automation_path and automation_path.exists())
+        if automation_id and not automation_exists:
+            cleanup_status = "missing_verified"
+        elif automation_id and previous_heartbeat_active:
+            cleanup_status = "external_cleanup_may_be_required"
+        else:
+            cleanup_status = "inactive_verified"
         continuation["heartbeat_active"] = False
         continuation["lifecycle_status"] = mode
         continuation["terminal_event"] = event
         continuation["terminal_reconciled_at"] = reconciled_at
-        continuation["host_automation_cleanup_status"] = (
-            "external_cleanup_may_be_required"
-            if continuation.get("host_automation_id") and previous_heartbeat_active
-            else "not_active"
-        )
+        continuation["host_automation_cleanup_status"] = cleanup_status
+        continuation["host_automation_toml_exists"] = automation_exists if automation_id else None
+        continuation["host_automation_checked_path"] = str(automation_path) if automation_path else None
         write_json(continuation_path, continuation)
         receipts.append(
             {
@@ -2616,6 +2880,7 @@ def _reconcile_terminal_lifecycle_authorities(
                 "previous_heartbeat_active": previous_heartbeat_active,
                 "heartbeat_active": False,
                 "host_automation_cleanup_status": continuation["host_automation_cleanup_status"],
+                "host_automation_toml_exists": continuation["host_automation_toml_exists"],
             }
         )
 
@@ -4903,12 +5168,26 @@ def _write_material_understanding(project_root: Path, run_root: Path, run_state:
         raise RouterError("material understanding must be PM-owned")
     if run_state["flags"].get("pm_research_requested") and not run_state["flags"].get("research_result_absorbed_by_pm"):
         raise RouterError("PM material understanding requires reviewed research to be absorbed when research was requested")
+    payload_snapshot_path = run_root / "material" / "pm_material_understanding_payload.json"
+    write_json(
+        payload_snapshot_path,
+        {
+            "schema_version": "flowpilot.pm_material_understanding_payload.v1",
+            "run_id": run_state["run_id"],
+            "payload_body": _without_role_output_envelope(payload),
+            "source_role_output_envelope": _role_output_envelope_record(payload).get("_role_output_envelope"),
+            "written_at": utc_now(),
+        },
+    )
     write_json(
         run_root / "pm_material_understanding.json",
         {
             "schema_version": "flowpilot.pm_material_understanding.v1",
             "run_id": run_state["run_id"],
             "pm_owned": True,
+            "source_paths": {
+                "payload_snapshot": project_relative(project_root, payload_snapshot_path),
+            },
             "source_material_review": run_state.get("material_review"),
             "research_absorbed": bool(run_state["flags"].get("research_result_absorbed_by_pm")),
             "material_summary": payload.get("material_summary") or "",
@@ -5256,6 +5535,7 @@ def _write_child_skill_gate_manifest(project_root: Path, run_root: Path, run_sta
     if selected_skills is None:
         selected_skills = selection.get("selected_skills") or []
     selected_skills = _validate_selected_child_skills(selected_skills)
+    manifest_path = run_root / "child_skill_gate_manifest.json"
     manifest = {
         "schema_version": "flowpilot.child_skill_gate_manifest.v1",
         "run_id": run_state["run_id"],
@@ -5277,9 +5557,42 @@ def _write_child_skill_gate_manifest(project_root: Path, run_root: Path, run_sta
             "product_officer_passed": False,
             "pm_approved_for_route": False,
         },
-        **_role_output_envelope_record(payload),
+        **_role_output_envelope_record_for_mutable_artifact(
+            project_root,
+            run_root,
+            manifest_path,
+            payload,
+            reason="child_skill_gate_manifest_can_be_updated_by_review_gates",
+        ),
     }
-    write_json(run_root / "child_skill_gate_manifest.json", manifest)
+    write_json(manifest_path, manifest)
+
+
+def _sync_child_skill_manifest_review_approval(project_root: Path, run_root: Path) -> None:
+    manifest_path = run_root / "child_skill_gate_manifest.json"
+    review_path = run_root / "reviews" / "child_skill_gate_manifest_review.json"
+    if not manifest_path.exists() or not review_path.exists():
+        return
+    review = read_json(review_path)
+    if review.get("passed") is not True:
+        return
+    manifest = read_json(manifest_path)
+    manifest.update(
+        _role_output_envelope_record_for_mutable_artifact(
+            project_root,
+            run_root,
+            manifest_path,
+            manifest,
+            reason="child_skill_gate_manifest_review_approval_sync",
+        )
+    )
+    approval = manifest.setdefault("approval", {})
+    if approval.get("reviewer_passed") is True:
+        return
+    approval["reviewer_passed"] = True
+    approval["reviewed_at"] = review.get("reported_at") or utc_now()
+    manifest["updated_at"] = utc_now()
+    write_json(manifest_path, manifest)
 
 
 def _approve_child_skill_manifest_for_route(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -5833,6 +6146,131 @@ def _update_display_plan_current_node(
     _mark_display_plan_dirty(run_state)
 
 
+PRE_ROUTE_PHASE_ITEMS = (
+    ("material_understanding", "Material understanding", "pm_material_understanding_card_delivered"),
+    ("product_architecture", "Product architecture", "pm_product_architecture_card_delivered"),
+    ("root_contract", "Root contract", "pm_root_contract_card_delivered"),
+    ("dependency_policy", "Dependency policy", "pm_dependency_policy_card_delivered"),
+    ("child_skill_gate_manifest", "Child-skill gates", "pm_child_skill_gate_manifest_card_delivered"),
+)
+
+
+def _latest_pre_route_phase(run_state: dict[str, Any]) -> str | None:
+    for delivery in reversed(run_state.get("delivered_cards") or []):
+        if not isinstance(delivery, dict):
+            continue
+        phase = CARD_PHASE_BY_ID.get(str(delivery.get("card_id") or ""))
+        if phase:
+            return phase
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    for phase, _label, flag in reversed(PRE_ROUTE_PHASE_ITEMS):
+        if flags.get(flag):
+            return phase
+    return None
+
+
+def _sync_execution_frontier_phase(run_root: Path, run_state: dict[str, Any]) -> None:
+    phase = _latest_pre_route_phase(run_state)
+    if not phase:
+        return
+    frontier_path = run_root / "execution_frontier.json"
+    frontier = read_json_if_exists(frontier_path)
+    if str(frontier.get("status") or run_state.get("status") or "") in RUN_TERMINAL_STATUSES:
+        return
+    frontier["phase"] = phase
+    if not frontier.get("active_route_id"):
+        frontier["status"] = phase
+    frontier["updated_at"] = utc_now()
+    write_json(frontier_path, frontier)
+
+
+def _write_pre_route_phase_display_plan_if_needed(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
+    phase = _latest_pre_route_phase(run_state)
+    if phase is None:
+        return False
+    existing = read_json_if_exists(_display_plan_path(run_root))
+    if existing.get("scope") in {"route", "node"} and existing.get("source_role") == "project_manager":
+        return False
+    phase_order = [item[0] for item in PRE_ROUTE_PHASE_ITEMS]
+    active_index = phase_order.index(phase) if phase in phase_order else 0
+    items = []
+    for index, (item_id, label, _flag) in enumerate(PRE_ROUTE_PHASE_ITEMS):
+        if index < active_index:
+            status = "completed"
+        elif index == active_index:
+            status = "in_progress"
+        else:
+            status = "pending"
+        items.append({"id": item_id, "label": label, "status": status})
+    plan = {
+        "schema_version": DISPLAY_PLAN_SCHEMA,
+        "run_id": run_state["run_id"],
+        "source_role": "controller",
+        "source_event": "derived_pre_route_phase_sync",
+        "scope": "pre_route_phase",
+        "title": "FlowPilot route preparation",
+        "items": items,
+        "current_node_id": None,
+        "route_authority": "none_until_pm_route_draft",
+        "controller_may_invent_route_items": False,
+        "updated_at": utc_now(),
+    }
+    write_json(_display_plan_path(run_root), plan)
+    return True
+
+
+def _reconcile_non_current_running_index_entries(project_root: Path, run_state: dict[str, Any]) -> int:
+    current = read_json_if_exists(project_root / ".flowpilot" / "current.json") or {}
+    index_path = project_root / ".flowpilot" / "index.json"
+    index = read_json_if_exists(index_path) or {}
+    runs = index.get("runs") if isinstance(index.get("runs"), list) else []
+    current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
+    updated = 0
+    now = utc_now()
+    for item in runs:
+        if not isinstance(item, dict):
+            continue
+        if item.get("run_id") == run_state.get("run_id"):
+            item["status"] = run_state.get("status") or item.get("status")
+            item["updated_at"] = now
+        elif item.get("status") == "running" and str(item.get("run_id") or "") != current_run_id:
+            item["status"] = "stale_not_current"
+            item["stale_reason"] = "not_current_pointer"
+            item["updated_at"] = now
+            updated += 1
+    if runs:
+        index["runs"] = runs
+        index["updated_at"] = now
+        write_json(index_path, index)
+    return updated
+
+
+def _sync_derived_run_views(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    reason: str,
+    update_display: bool = True,
+) -> None:
+    _sync_control_plane_indexes(project_root, run_root, run_state)
+    _sync_child_skill_manifest_review_approval(project_root, run_root)
+    _sync_execution_frontier_phase(run_root, run_state)
+    _reconcile_non_current_running_index_entries(project_root, run_state)
+    display_updated = _write_pre_route_phase_display_plan_if_needed(project_root, run_root, run_state) if update_display else False
+    _write_route_state_snapshot(project_root, run_root, run_state, source_event=reason)
+    if display_updated:
+        sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+        run_state["visible_plan_sync"] = {
+            "display_plan_path": sync_payload["display_plan_path"],
+            "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
+            "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
+            "projection_hash": sync_payload["projection_hash"],
+            "synced_at": utc_now(),
+            "host_action": "derived_pre_route_phase_projection",
+        }
+
+
 def _write_display_plan_from_pm_payload(
     project_root: Path,
     run_root: Path,
@@ -6145,6 +6583,27 @@ def _pm_context_action_extra(project_root: Path, run_root: Path, entry: dict[str
     return extra
 
 
+def _card_required_source_paths(project_root: Path, run_root: Path, card_id: str) -> dict[str, str]:
+    source_paths: dict[str, str] = {}
+    for label, relative_path in CARD_REQUIRED_SOURCE_PATHS.get(card_id, {}).items():
+        path = run_root / relative_path
+        if path.exists():
+            source_paths[label] = project_relative(project_root, path)
+    return source_paths
+
+
+def _card_delivery_phase(card_id: str, card: dict[str, Any], frontier: dict[str, Any], run_state: dict[str, Any]) -> tuple[str, str | None]:
+    card_phase = CARD_PHASE_BY_ID.get(card_id) or card.get("phase")
+    current_phase = str(
+        card_phase
+        or frontier.get("phase")
+        or frontier.get("status")
+        or run_state.get("phase")
+        or "unknown"
+    )
+    return current_phase, str(card_phase or "") or None
+
+
 def _live_card_delivery_context(
     project_root: Path,
     run_root: Path,
@@ -6153,14 +6612,8 @@ def _live_card_delivery_context(
     card: dict[str, Any],
 ) -> dict[str, Any]:
     frontier = read_json_if_exists(run_root / "execution_frontier.json") or {}
-    card_phase = card.get("phase")
-    current_phase = str(
-        card_phase
-        or frontier.get("phase")
-        or frontier.get("status")
-        or run_state.get("phase")
-        or "unknown"
-    )
+    card_id = str(entry.get("card_id") or card.get("id") or "")
+    current_phase, card_phase = _card_delivery_phase(card_id, card, frontier, run_state)
     user_request_path = str(
         run_state.get("user_request_path")
         or _optional_source_path(project_root, run_root / "user_request.json")
@@ -6175,10 +6628,11 @@ def _live_card_delivery_context(
         "pm_prior_path_context": _optional_source_path(project_root, _pm_prior_path_context_path(run_root)),
         "user_request_path": user_request_path or None,
     }
+    source_paths.update(_card_required_source_paths(project_root, run_root, card_id))
     return {
         "schema_version": LIVE_CARD_CONTEXT_SCHEMA,
         "run_id": str(run_state.get("run_id") or run_root.name),
-        "card_id": str(entry.get("card_id") or card.get("id") or ""),
+        "card_id": card_id,
         "to_role": str(entry.get("to_role") or card.get("audience") or ""),
         "current_task": {
             "user_request_path": user_request_path or None,
@@ -6188,7 +6642,7 @@ def _live_card_delivery_context(
         },
         "current_stage": {
             "current_phase": current_phase,
-            "card_phase": str(card_phase or "") or None,
+            "card_phase": card_phase,
             "frontier_status": frontier.get("status"),
             "current_node_id": frontier.get("active_node_id"),
             "current_route_id": frontier.get("active_route_id"),
@@ -8905,6 +9359,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     append_history(run_state, str(pending["label"]), {"action_type": action_type})
     run_state["pending_action"] = None
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_controller_action:{action_type}")
+    _sync_derived_run_views(
+        project_root,
+        run_root,
+        run_state,
+        reason=f"after_controller_action:{action_type}",
+        update_display=action_type != "sync_display_plan",
+    )
     save_run_state(run_root, run_state)
     result = {"ok": True, "applied": action_type}
     if action_type == "sync_display_plan":
@@ -8941,6 +9402,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
             append_history(run_state, event, {"heartbeat_tick": tick})
             run_state["pending_action"] = None
             _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
+            _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
             save_run_state(run_root, run_state)
             return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": False}
         _reset_resume_cycle_for_wakeup(run_state)
@@ -8955,6 +9417,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         run_state["events"].append(record)
         append_history(run_state, event, {"heartbeat_tick": tick})
         _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
+        _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
         save_run_state(run_root, run_state)
         return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
     active_blocker = run_state.get("active_control_blocker")
@@ -8983,6 +9446,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         if resolved:
             run_state["pending_action"] = None
             _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_already_recorded_event:{event}")
+            _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_already_recorded_event:{event}")
             save_run_state(run_root, run_state)
             return {
                 "ok": True,
@@ -9148,6 +9612,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
                 run_root / "capabilities.json",
             ],
         )
+        _sync_child_skill_manifest_review_approval(project_root, run_root)
     elif event == "process_officer_passes_child_skill_conformance_model":
         _write_role_gate_report(
             project_root,
@@ -9300,6 +9765,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     _resolve_delivered_control_blocker(project_root, run_root, run_state, resolved_by_event=event)
     run_state["pending_action"] = None
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
+    _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
     save_run_state(run_root, run_state)
     return {"ok": True, "event": event}
 
@@ -9383,6 +9849,178 @@ def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: b
     raise RouterError("run-until-wait reached max_steps before a wait boundary")
 
 
+def _repair_role_output_envelope_hashes(project_root: Path, run_root: Path) -> int:
+    repaired = 0
+    for path in sorted(run_root.rglob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        envelope = payload.get("_role_output_envelope")
+        if not isinstance(envelope, dict):
+            continue
+        body_path = envelope.get("body_path")
+        if not isinstance(body_path, str):
+            continue
+        resolved = resolve_project_path(project_root, body_path)
+        if not resolved.exists():
+            continue
+        raw_hash, semantic_hash = _role_output_hashes(resolved)
+        replay_hash = semantic_hash or raw_hash
+        accepted_hashes = {raw_hash}
+        accepted_hashes.update(_role_output_semantic_hashes(resolved))
+        if envelope.get("body_hash") not in accepted_hashes and resolved.resolve() == path.resolve():
+            payload.update(
+                _role_output_envelope_record_for_mutable_artifact(
+                    project_root,
+                    run_root,
+                    path,
+                    payload,
+                    reason="reconcile_mutable_artifact_role_output_hash",
+                )
+            )
+            write_json(path, payload)
+            repaired += 1
+            continue
+        if (
+            envelope.get("body_hash") == replay_hash
+            and envelope.get("body_raw_sha256") == raw_hash
+            and envelope.get("body_semantic_sha256") == semantic_hash
+        ):
+            continue
+        envelope["body_hash"] = replay_hash
+        envelope["body_raw_sha256"] = raw_hash
+        envelope["body_semantic_sha256"] = semantic_hash
+        payload["_role_output_envelope"] = envelope
+        write_json(path, payload)
+        repaired += 1
+    return repaired
+
+
+def _reconciled_card_delivery_context(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    delivery: dict[str, Any],
+    manifest: dict[str, Any],
+    entries: dict[str, dict[str, str]],
+) -> dict[str, Any] | None:
+    card_id = str(delivery.get("card_id") or "")
+    if card_id not in CARD_PHASE_BY_ID and card_id not in CARD_REQUIRED_SOURCE_PATHS:
+        return None
+    entry = entries.get(card_id)
+    if entry is None:
+        return None
+    card = manifest_card(manifest, card_id)
+    previous = delivery.get("delivery_context") if isinstance(delivery.get("delivery_context"), dict) else {}
+    context = _live_card_delivery_context(project_root, run_root, run_state, entry, card)
+    context["context_reconciled_at"] = utc_now()
+    context["context_reconciled_reason"] = "current_run_state_reconciliation"
+    if isinstance(previous, dict):
+        context["original_current_stage"] = previous.get("current_stage")
+    return context
+
+
+def _repair_prompt_delivery_contexts(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> int:
+    manifest = load_manifest_from_run(run_root)
+    entries = {entry["card_id"]: entry for entry in SYSTEM_CARD_SEQUENCE}
+    repaired = 0
+
+    def repair_list(deliveries: list[Any]) -> int:
+        count = 0
+        for delivery in deliveries:
+            if not isinstance(delivery, dict):
+                continue
+            context = _reconciled_card_delivery_context(project_root, run_root, run_state, delivery, manifest, entries)
+            if context is None:
+                continue
+            if delivery.get("delivery_context") != context:
+                delivery["delivery_context"] = context
+                count += 1
+        return count
+
+    repaired += repair_list(run_state.setdefault("delivered_cards", []))
+    ledger_path = run_root / "prompt_delivery_ledger.json"
+    ledger = read_json_if_exists(ledger_path)
+    deliveries = ledger.get("deliveries") if isinstance(ledger.get("deliveries"), list) else []
+    ledger_repairs = repair_list(deliveries)
+    if ledger_repairs:
+        ledger["deliveries"] = deliveries
+        ledger["updated_at"] = utc_now()
+        write_json(ledger_path, ledger)
+    return repaired + ledger_repairs
+
+
+def _sync_current_and_index_status(project_root: Path, run_state: dict[str, Any]) -> None:
+    now = utc_now()
+    current_path = project_root / ".flowpilot" / "current.json"
+    current = read_json_if_exists(current_path) or {}
+    if current.get("current_run_id") == run_state.get("run_id"):
+        current["status"] = run_state.get("status") or current.get("status")
+        current["updated_at"] = now
+        write_json(current_path, current)
+    index_path = project_root / ".flowpilot" / "index.json"
+    index = read_json_if_exists(index_path) or {}
+    runs = index.get("runs") if isinstance(index.get("runs"), list) else []
+    for item in runs:
+        if isinstance(item, dict) and item.get("run_id") == run_state.get("run_id"):
+            item["status"] = run_state.get("status") or item.get("status")
+            item["updated_at"] = now
+    if runs:
+        index["runs"] = runs
+        index["updated_at"] = now
+        write_json(index_path, index)
+
+
+def reconcile_current_run(project_root: Path) -> dict[str, Any]:
+    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    run_state, run_root = load_run_state(project_root, bootstrap)
+    if run_state is None or run_root is None:
+        raise RouterError("run state is missing")
+    repaired: dict[str, Any] = {
+        "prompt_delivery_contexts": 0,
+        "role_output_envelope_hashes": 0,
+        "terminal_lifecycle": False,
+        "non_current_running_index_entries": 0,
+    }
+    status = str(run_state.get("status") or "")
+    flags = run_state.setdefault("flags", {})
+    if status == "stopped_by_user":
+        flags["run_stopped_by_user"] = True
+    elif status == "cancelled_by_user":
+        flags["run_cancelled_by_user"] = True
+    mode = _terminal_lifecycle_mode(run_state)
+    if mode:
+        run_state["status"] = mode
+        run_state["phase"] = "terminal"
+        run_state["holder"] = "controller"
+        run_state["pending_action"] = None
+        _reconcile_terminal_lifecycle_authorities(
+            project_root,
+            run_root,
+            run_state,
+            mode=mode,
+            event="reconcile_current_run",
+        )
+        _sync_current_and_index_status(project_root, run_state)
+        repaired["terminal_lifecycle"] = True
+    repaired["prompt_delivery_contexts"] = _repair_prompt_delivery_contexts(project_root, run_root, run_state)
+    repaired["role_output_envelope_hashes"] = _repair_role_output_envelope_hashes(project_root, run_root)
+    _refresh_route_memory(project_root, run_root, run_state, trigger="reconcile_current_run")
+    repaired["non_current_running_index_entries"] = _reconcile_non_current_running_index_entries(project_root, run_state)
+    _sync_derived_run_views(project_root, run_root, run_state, reason="reconcile_current_run")
+    append_history(run_state, "router_reconciled_current_run", repaired)
+    save_run_state(run_root, run_state)
+    return {
+        "ok": True,
+        "run_id": run_state.get("run_id"),
+        "run_root": project_relative(project_root, run_root),
+        "repaired": repaired,
+    }
+
+
 def write_role_output_envelope(
     project_root: Path,
     *,
@@ -9410,7 +10048,8 @@ def write_role_output_envelope(
         write_json(path, body)
     elif not path.exists():
         raise RouterError("role output envelope requires body-json, body-file, or an existing output path")
-    body_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    raw_hash, semantic_hash = _role_output_hashes(path)
+    body_hash = semantic_hash or raw_hash
     envelope = {
         "schema_version": ROLE_OUTPUT_ENVELOPE_SCHEMA,
         path_key: project_relative(project_root, path),
@@ -9446,6 +10085,28 @@ def _validate_hash_if_present(project_root: Path, payload: dict[str, Any], path_
     actual = hashlib.sha256(path.read_bytes()).hexdigest()
     if actual != str(raw_hash):
         issues.append(_artifact_issue(hash_key, "hash does not match file content", "artifact_author"))
+    return issues
+
+
+def _validate_role_output_hash_if_present(project_root: Path, payload: dict[str, Any], path_key: str, hash_key: str) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    raw_path = payload.get(path_key)
+    raw_hash = payload.get(hash_key)
+    if not raw_path:
+        issues.append(_artifact_issue(path_key, "missing required path field", "artifact_author"))
+        return issues
+    path = resolve_project_path(project_root, str(raw_path))
+    if not path.exists():
+        issues.append(_artifact_issue(path_key, f"path does not exist: {raw_path}", "artifact_author"))
+        return issues
+    if not raw_hash:
+        issues.append(_artifact_issue(hash_key, "missing required sha256 hash field", "artifact_author"))
+        return issues
+    actual, semantic = _role_output_hashes(path)
+    accepted = {actual}
+    accepted.update(_role_output_semantic_hashes(path))
+    if str(raw_hash) not in accepted:
+        issues.append(_artifact_issue(hash_key, "hash does not match role output content", "artifact_author"))
     return issues
 
 
@@ -9507,7 +10168,7 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
                 hash_key = path_key[:-5] + "_hash" if path_key.endswith("_path") else f"{path_key}_hash"
                 found = True
                 if payload.get(hash_key):
-                    issues.extend(_validate_hash_if_present(project_root, payload, path_key, hash_key))
+                    issues.extend(_validate_role_output_hash_if_present(project_root, payload, path_key, hash_key))
         if not found:
             issues.append(_artifact_issue("path", "role output envelope must include a known artifact path field", str(payload.get("from_role") or "role")))
         if not payload.get("from_role"):
@@ -9560,6 +10221,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "packet_envelope", "result_envelope", "role_output_envelope"])
     validate_parser.add_argument("--path", required=True)
     validate_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    reconcile_parser = sub.add_parser("reconcile-run", help="Rebuild derived indexes and live-run views for the current run")
+    reconcile_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     state_parser = sub.add_parser("state", help="Print bootstrap and current run router state")
     state_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     return parser.parse_args(argv)
@@ -9598,6 +10261,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "validate-artifact":
             result = validate_artifact(root, args.type, args.path)
+        elif args.command == "reconcile-run":
+            result = reconcile_current_run(root)
         elif args.command == "state":
             bootstrap = load_bootstrap_state(root, create_if_missing=False)
             run_state, run_root = load_run_state(root, bootstrap)

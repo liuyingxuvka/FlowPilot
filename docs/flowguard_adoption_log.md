@@ -4500,3 +4500,173 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future FlowPilot card/protocol changes covered by both static card guidance checks and runtime delivery-envelope checks.
+
+
+## flowpilot-control-plane-live-audit-generalization-20260507 - Generalize FlowPilot control-plane friction model for live-run source context and terminal consistency
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Later FlowPilot live-run artifacts exposed model misses after the first optimized model pass
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T15:19:09+00:00
+- Ended: 2026-05-07T15:19:09+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+
+### Commands
+- OK (0.000s): `python -m py_compile simulations/flowpilot_control_plane_friction_model.py simulations/run_flowpilot_control_plane_friction_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit`
+- FAIL (0.000s): `expected-live-findings: python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json`
+
+### Findings
+- Refined live-run audit now catches generic missing required card source paths, stale card current_phase, child-skill manifest/review sync drift, terminal snapshot flag mismatch, terminal automation cleanup proof gaps, and role-output hash replay mismatches.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- The prior model was too point-specific: it caught pm.product_architecture missing context but did not generalize the source-context invariant to later phase cards.
+
+### Skipped Steps
+- Production FlowPilot/router repair intentionally skipped; user asked to optimize the model first.
+
+### Next Actions
+- Discuss which flagged live-run issues should drive production/router repairs next.
+
+
+## flowpilot-gate-policy-audit-20260507 - Model FlowPilot gate-policy friction before runtime changes
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked whether FlowGuard can model and catch unreasonable, useless, or counterproductive FlowPilot process logic before changing FlowPilot code
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T17:24:53+02:00
+- Ended: 2026-05-07T17:24:53+02:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_gate_policy_audit_model.py
+- simulations/run_flowpilot_gate_policy_audit_checks.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python -m py_compile simulations\flowpilot_gate_policy_audit_model.py simulations\run_flowpilot_gate_policy_audit_checks.py`
+- OK (0.000s): `python simulations\run_flowpilot_gate_policy_audit_checks.py --skip-live-source-audit --json-out simulations\flowpilot_gate_policy_audit_abstract_results.json`
+- OK (0.000s): `python simulations\run_flowpilot_gate_policy_audit_checks.py --json-out simulations\flowpilot_gate_policy_audit_results.json`
+
+### Findings
+- The model keeps formal FlowPilot complex-only and preserves the six-role crew once formal FlowPilot starts.
+- Abstract checks catch unsafe gate policies for small-task overactivation, startup side effects before answers, text-only startup false violations, missing quality-risk decisions, visual-quality FlowGuard-only proof, documentation-only Product FlowGuard forcing, advisory records blocking completion, local defects forcing structural mutation, route mutation without stale-evidence invalidation, low-risk parent replay as a hard blocker, unresolved delivery evidence, no-benefit hard gates, and non-transactional state refresh.
+- Live source audit raised three warning-level signals: parent replay lacks an obvious low-risk waiver path, blocking review failure policy lacks an obvious local-defect branch, and existing control-plane live audit results still report state-friction findings.
+
+### Counterexamples
+- All expected hazard states were detected by the model; no safe-graph invariant failures were found.
+
+### Friction Points
+- The useful boundary is not "FlowGuard proves every quality judgment"; it is "FlowGuard proves the process selected the right kind of proof and did not turn low-value checks into hard blockers."
+
+### Skipped Steps
+- Production FlowPilot/runtime/card/router mutation intentionally skipped because the user requested model-first analysis before changing FlowPilot code.
+
+### Next Actions
+- Decide which warning-level live-source findings should become FlowPilot runtime/card changes in a later implementation pass.
+
+
+## flowpilot-gate-decision-contract-20260507 - Make gate-policy advice directly modelable before FlowPilot code changes
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked for a directly implementable GateDecision plan that can pass existing FlowGuard models without modifying FlowPilot runtime code
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T18:15:46+02:00
+- Ended: 2026-05-07T18:15:46+02:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- docs/gate_decision_implementation_contract.md
+- simulations/flowpilot_gate_decision_contract_model.py
+- simulations/run_flowpilot_gate_decision_contract_checks.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python -m py_compile simulations\flowpilot_gate_decision_contract_model.py simulations\run_flowpilot_gate_decision_contract_checks.py`
+- OK (0.000s): `python simulations\run_flowpilot_gate_decision_contract_checks.py --json-out simulations\flowpilot_gate_decision_contract_results.json`
+- OK (245.503s): `python simulations\run_meta_checks.py`
+- OK (281.167s): `python simulations\run_capability_checks.py`
+- OK (background sweep): 19 non-meta/capability FlowGuard model scripts, including card instruction coverage, protocol conformance, router loop, startup, output contract, prompt isolation, proof-carrying, barrier equivalence, defect governance, control-plane friction model-only, gate-policy audit model-only, and GateDecision contract checks
+
+### Findings
+- The GateDecision contract defines a concrete output shape for gate decisions and maps it to prompt/card instructions, router mechanical validation, reviewer/PM semantic sufficiency, and control-plane route-visible state.
+- The new contract model accepted the valid contract, rejected 16 negative contract scenarios, had 35 states and 34 edges, reported no stuck states, and FlowGuard Explorer found no violations or exception branches.
+- The model catches missing prompt fields, missing router fields, router semantic overreach, reviewer semantic gaps, visual-quality FlowGuard-only proof, product/state proof gaps, mixed-risk proof gaps, documentation-only Product FlowGuard forcing, advisory blockers, missing skip reasons, local defect over-escalation, route mutation without stale-evidence invalidation, low-risk parent replay hard blockers, diagnostic resource blockers, unresolved delivery evidence, and split stage refresh.
+
+### Counterexamples
+- All expected negative GateDecision contract scenarios were rejected with explicit failure messages.
+
+### Friction Points
+- This is a model-level and contract-level landing plan. It proves the implementation shape is checkable and compatible with existing models, but it intentionally does not claim current runtime/cards already implement the contract.
+
+### Skipped Steps
+- Production FlowPilot runtime, router, card, and skill edits intentionally skipped because the user requested a model-passing landable plan before code changes.
+- Live source audits that require current production implementation were either skipped by model-only commands or remain separate from this contract validation.
+
+### Next Actions
+- If the user approves implementation later, start with the contract registry and role card instructions, then add router mechanical validation, then harden only the small runtime pieces required for route-visible state and atomic stage advance.
+
+
+## flowpilot-control-plane-friction-fix-20260507 - Implement minimal runtime and protocol fixes after model approval
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved implementation only after the optimized FlowGuard models and existing models accepted the repair plan
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-07T18:26:10+02:00
+- Ended: 2026-05-07T18:26:10+02:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/flowpilot_gate_policy_audit_model.py
+- simulations/flowpilot_gate_decision_contract_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python skills\flowpilot\assets\flowpilot_router.py --root . reconcile-run --json`
+- OK: all 21 visible `simulations/run_*_checks.py` FlowGuard scripts, including the previously untracked `run_flowpilot_gate_decision_contract_checks.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python simulations\run_flowpilot_gate_policy_audit_checks.py --json-out simulations\flowpilot_gate_policy_audit_results.json`
+- OK: `python simulations\run_flowpilot_gate_decision_contract_checks.py --json-out simulations\flowpilot_gate_decision_contract_results.json`
+- OK: `python -m unittest discover tests`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\smoke_autopilot.py`
+
+### Findings
+- Runtime fixes now reconcile non-current running indexes, terminal cleanup evidence, prompt delivery context, control blocker indexes, role-output replay hashes, and child-skill gate review sync.
+- The current live control-plane audit reports zero errors and zero warnings for run `run-20260507-131407`.
+- The gate-policy live source audit reports zero errors and zero warnings after the risk-based parent replay and local-defect repair guidance changes.
+- Full unit discovery passed 133 tests.
+- Local installed `flowpilot` skill digest matches the repository source digest after sync.
+
+### Counterexamples
+- The optimized models still detect their expected negative scenarios, including stale prompt context, unsynced child-skill gate review, terminal cleanup gaps, advisory blockers, route mutation without stale invalidation, and low-risk parent replay as a hard blocker.
+
+### Friction Points
+- The final full sweep found one visible `run_*_checks.py` script not in the initial 20-script checklist. It was added to the execution set and passed before finalization.
+
+### Skipped Steps
+- GitHub push and release publishing were not run; the user asked for the local repository, local installation, and local Git state to be updated.
+
+### Next Actions
+- Keep the 21-script FlowGuard sweep as the completion gate whenever FlowPilot control-plane behavior changes.

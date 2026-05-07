@@ -73,15 +73,17 @@ model-backed autopilot:
 - Every meaningful FlowPilot scope now has two FlowGuard model gates: a
   development-process model and a product-function model.
 - Human-like inspection is now a route mechanism. Blocking inspection findings
-  must be grilled into specific repairable issues, mutate the route into
-  repair nodes, and close only after repair evidence and same-inspector recheck.
-- Every effective route node with children now requires local parent backward
-  human-like replay before closure. The trigger is structural, not a semantic
-  guess about risk, integration, feature status, or downstream dependency. If
-  child-local passes do not compose into the parent goal, FlowPilot
-  structurally mutates the route to rework an existing child, insert an
-  adjacent sibling child, rebuild the child subtree, or bubble impact upward
-  before rerunning the same parent review and recording a PM segment decision.
+  must be grilled into specific repairable issues. Local defects go through a
+  local repair and same-inspector recheck; route-invalidating findings mutate
+  the route into repair nodes and close only after repair evidence and
+  same-inspector recheck.
+- Effective route nodes with children require local parent backward human-like
+  replay when composition risk is high or the PM cannot justify a low-risk
+  waiver from current evidence. If child-local passes do not compose into the
+  parent goal, FlowPilot structurally mutates the route to rework an existing
+  child, insert an adjacent sibling child, rebuild the child subtree, or bubble
+  impact upward before rerunning the same parent review and recording a PM
+  segment decision.
 - Generated UI concept targets require two separate gates: source and
   authenticity. Source proves the asset came from `imagegen` or an
   authoritative user reference; authenticity proves the content is an
@@ -107,11 +109,13 @@ model-backed autopilot:
   overlap/clipping, whitespace, density, crowding, hierarchy, readability,
   responsive/window fit, aesthetics, and concrete design recommendations, or
   block/request more evidence.
-- Blocking review failures now force structural route mutation. The failed
-  child remains as failed/superseded history, affected evidence becomes stale,
-  the route version and execution frontier change, and FlowPilot either resets
-  the existing child, inserts an adjacent repair/regeneration sibling, splits
-  the finding into multiple focused children, or rebuilds/bubbles the subtree.
+- Blocking review failures now route by issue type. A local defect uses local
+  repair with the same reviewer recheck and does not force route mutation. A
+  route-invalidating finding forces structural route mutation: the failed child
+  remains as failed/superseded history, affected evidence becomes stale, the
+  route version and execution frontier change, and FlowPilot either resets the
+  existing child, inserts an adjacent repair/regeneration sibling, splits the
+  finding into multiple focused children, or rebuilds/bubbles the subtree.
 - Pause, restart, and terminal cleanup now require unified lifecycle
   reconciliation across Codex heartbeat automations, local state, execution
   frontier, and heartbeat/manual-resume evidence.

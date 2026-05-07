@@ -1232,11 +1232,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         active_snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(active_snapshot["route"]["nodes"][0]["id"], "node-001")
         self.assertTrue(active_snapshot["route"]["nodes"][0]["is_active"])
-        self.assertEqual(active_snapshot["authority"]["stale_running_index_entries"][0]["run_id"], "run-stale")
-        self.assertEqual(
-            active_snapshot["active_ui_task_catalog"]["hidden_non_current_running_index_entries"][0]["run_id"],
-            "run-stale",
-        )
+        self.assertEqual(active_snapshot["authority"]["stale_running_index_entries"], [])
+        self.assertEqual(active_snapshot["active_ui_task_catalog"]["hidden_non_current_running_index_entries"], [])
+        index_after = read_json(index_path)
+        stale_entry = next(item for item in index_after["runs"] if item["run_id"] == "run-stale")
+        self.assertEqual(stale_entry["status"], "stale_not_current")
+        self.assertEqual(stale_entry["stale_reason"], "not_current_pointer")
 
         self.deliver_current_node_cards(root)
         node_plan = read_json(run_root / "display_plan.json")
@@ -1736,6 +1737,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(parsed.command, "state")
         self.assertTrue(parsed.json)
 
+        parsed = router.parse_args(["--root", "C:/tmp/project", "reconcile-run", "--json"])
+        self.assertEqual(parsed.command, "reconcile-run")
+        self.assertTrue(parsed.json)
+
     def test_retired_high_risk_fold_commands_are_not_cli_commands(self) -> None:
         for command in (
             "deliver-card-bundle-checked",
@@ -1765,6 +1770,37 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(loaded["passed"])
         self.assertEqual(loaded["_role_output_envelope"]["body_path_key"], "report_path")
 
+    def test_role_output_envelope_hash_survives_same_path_envelope_rewrite(self) -> None:
+        root = self.make_project()
+        body_path = root / "role_outputs" / "same_path_report.json"
+        body = {"reviewed_by_role": "human_like_reviewer", "passed": True}
+        router.write_json(body_path, body)
+        raw_hash = hashlib.sha256(body_path.read_bytes()).hexdigest()
+
+        loaded = router._load_file_backed_role_payload(
+            root,
+            {
+                "report_path": self.rel(root, body_path),
+                "report_hash": raw_hash,
+                "controller_visibility": "role_output_envelope_only",
+            },
+        )
+        router.write_json(body_path, loaded)
+
+        reloaded = router._load_file_backed_role_payload(
+            root,
+            {
+                "report_path": self.rel(root, body_path),
+                "report_hash": raw_hash,
+                "controller_visibility": "role_output_envelope_only",
+            },
+        )
+        self.assertTrue(reloaded["passed"])
+        self.assertEqual(
+            reloaded["_role_output_envelope"]["body_hash"],
+            loaded["_role_output_envelope"]["body_hash"],
+        )
+
     def test_pm_material_understanding_accepts_file_backed_memo_payload(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -1788,6 +1824,46 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(memo["material_summary"], "file backed material understanding")
         self.assertEqual(memo["route_consequences"], ["continue route construction"])
         self.assertEqual(memo["_role_output_envelope"]["body_path_key"], "memo_path")
+        self.assertTrue((run_root / "material" / "pm_material_understanding_payload.json").exists())
+
+    def test_phase_card_delivery_context_includes_required_upstream_sources(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "pm.product_architecture")
+        context = action["delivery_context"]
+        self.assertEqual(context["current_stage"]["current_phase"], "product_architecture")
+        source_values = set(context["source_paths"].values())
+        self.assertIn(f"{run_root.relative_to(root).as_posix()}/pm_material_understanding.json", source_values)
+        self.assertIn(f"{run_root.relative_to(root).as_posix()}/material/pm_material_understanding_payload.json", source_values)
+
+        router.apply_action(root, "deliver_system_card")
+        router.record_external_event(
+            root,
+            "pm_writes_product_function_architecture",
+            {
+                "user_task_map": [{"task_id": "task-001", "goal": "complete the requested project"}],
+                "product_capability_map": [{"capability_id": "cap-001", "behavior": "complete requested work"}],
+                "feature_decisions": [{"feature_id": "feature-001", "decision": "must"}],
+                "highest_achievable_product_target": {"product_vision": "professional completion"},
+                "semantic_fidelity_policy": {"silent_downgrade_forbidden": True},
+                "functional_acceptance_matrix": [{"acceptance_id": "root-001"}],
+            },
+        )
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
+        context = action["delivery_context"]
+        self.assertEqual(context["current_stage"]["current_phase"], "product_architecture")
+        self.assertIn(
+            f"{run_root.relative_to(root).as_posix()}/product_function_architecture.json",
+            set(context["source_paths"].values()),
+        )
 
     def test_system_card_delivery_requires_manifest_check(self) -> None:
         root = self.make_project()
@@ -2233,6 +2309,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "lifecycle" / "terminal_reconciliation.json").exists())
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
         self.assertFalse(continuation["heartbeat_active"])
+        self.assertIn(continuation["host_automation_cleanup_status"], {"inactive_verified", "missing_verified"})
         crew = read_json(run_root / "crew_ledger.json")
         self.assertTrue(all(slot["status"] == "stopped_with_run" for slot in crew["role_slots"]))
         packet_ledger = read_json(run_root / "packet_ledger.json")
@@ -2242,6 +2319,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(frontier["terminal"])
         snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(snapshot["state"]["status"], "stopped_by_user")
+        self.assertTrue(snapshot["state"]["flags"]["run_stopped_by_user"])
         self.assertEqual(snapshot["frontier"]["status"], "stopped_by_user")
         self.assertEqual(snapshot["packet_ledger"]["active_packet_status"], "stopped_by_user")
         self.assertEqual(snapshot["active_ui_task_catalog"]["active_tasks"], [])
@@ -2855,6 +2933,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
         )
+        manifest_after_review = read_json(run_root / "child_skill_gate_manifest.json")
+        self.assertTrue(manifest_after_review["approval"]["reviewer_passed"])
+        self.assertFalse(manifest_after_review["approval"]["pm_approved_for_route"])
         self.deliver_expected_card(root, "process_officer.child_skill_conformance_model")
         router.record_external_event(
             root,

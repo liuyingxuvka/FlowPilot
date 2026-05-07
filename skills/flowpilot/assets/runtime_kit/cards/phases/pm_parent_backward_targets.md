@@ -9,11 +9,13 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # PM Parent Backward Targets Phase
 
-If the active node has children, build local parent backward replay targets
-after the reviewer passes the node result and before the parent node can close.
+If the active node has children, assess composition risk from the active route,
+frontier, node acceptance plan, and child evidence pointers.
 
-The trigger is structural: any effective active node with children requires
-this, regardless of semantic importance labels.
+Build local parent backward replay targets when composition risk is high or
+when the PM cannot justify a low-risk waiver from current evidence. For a
+low-risk waiver, write the waiver reason and cited source paths before the
+parent node can close.
 
 Write
 `.flowpilot/runs/<run-id>/routes/<route-id>/parent_backward_targets.json`
