@@ -64,6 +64,7 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_repair_success_only_gate_after_unmaterialized_reissue": "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable",
     "reviewer_recheck_protocol_blocker_unroutable": "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable",
     "repair_transaction_stale_after_success": "repair transaction success left stale active repair transaction or repair recheck pending action",
+    "role_decision_wait_requires_unsatisfied_flag": "await_role_decision exposed an external event whose requires_flag was false",
     "phase_card_missing_required_upstream_source": "delivered phase card was missing required upstream source paths",
     "delivered_card_phase_context_stale": "delivered card current_phase did not match its actual workflow phase",
     "terminal_snapshot_flag_mismatch": "terminal route_state_snapshot flags disagreed with terminal run status",
@@ -104,6 +105,7 @@ def _state_id(state: model.State) -> str:
         f"non_success_route={state.pm_repair_non_success_outcome_routable},"
         f"stale_repair={state.active_repair_transaction_stale},"
         f"{state.repair_recheck_pending_action_stale},"
+        f"expected_wait_bad_requires={state.expected_role_decision_requires_unsatisfied_flag},"
         f"recheck_blocker={state.reviewer_recheck_protocol_blocker_written},"
         f"{state.reviewer_recheck_protocol_blocker_routable}|"
         f"{state.packet_delivered},{state.packet_body_open_receipt}|result={state.result_returned},"

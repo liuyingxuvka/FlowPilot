@@ -11191,6 +11191,49 @@ def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict
     )
 
 
+def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: object) -> dict[str, Any] | None:
+    if not isinstance(pending_action, dict) or pending_action.get("action_type") != "await_role_decision":
+        return None
+    allowed_events = pending_action.get("allowed_external_events")
+    if not isinstance(allowed_events, list) or not allowed_events:
+        return {
+            "reason": "await_role_decision_missing_allowed_external_events",
+            "action_type": pending_action.get("action_type"),
+            "label": pending_action.get("label"),
+        }
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    invalid_events: list[dict[str, Any]] = []
+    normalized_events: list[str] = []
+    for item in allowed_events:
+        if not isinstance(item, str):
+            invalid_events.append({"issue": "non_string_allowed_external_event", "event": repr(item)})
+            continue
+        normalized_events.append(item)
+        meta = EXTERNAL_EVENTS.get(item)
+        if not isinstance(meta, dict):
+            invalid_events.append({"issue": "unknown_external_event", "event": item})
+            continue
+        required_flag = meta.get("requires_flag")
+        if required_flag and not flags.get(required_flag):
+            invalid_events.append(
+                {
+                    "issue": "requires_flag_false",
+                    "event": item,
+                    "requires_flag": required_flag,
+                    "current_value": flags.get(required_flag),
+                }
+            )
+    if not invalid_events:
+        return None
+    return {
+        "reason": "await_role_decision_allowed_event_not_currently_receivable",
+        "action_type": pending_action.get("action_type"),
+        "label": pending_action.get("label"),
+        "allowed_external_events": normalized_events,
+        "invalid_allowed_external_events": invalid_events,
+    }
+
+
 def compute_controller_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any]:
     terminal_action = _run_lifecycle_terminal_action(project_root, run_state, run_root)
     if terminal_action is not None:
@@ -11198,8 +11241,14 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         append_history(run_state, "router_computed_terminal_lifecycle_action", {"action_type": terminal_action["action_type"]})
         save_run_state(run_root, run_state)
         return terminal_action
-    if run_state.get("pending_action"):
-        return run_state["pending_action"]
+    pending_action = run_state.get("pending_action")
+    stale_pending = _pending_role_decision_staleness(run_state, pending_action)
+    if stale_pending:
+        run_state["pending_action"] = None
+        append_history(run_state, "router_cleared_stale_pending_action", stale_pending)
+        save_run_state(run_root, run_state)
+    elif pending_action:
+        return pending_action
     if not _route_memory_ready(run_root, run_state):
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
     action = _next_control_blocker_action(project_root, run_state, run_root)

@@ -18,8 +18,9 @@ Risk intent brief:
   state, stale snapshots treated as active UI state, ambiguous multi-active
   runs under current-json-only authority, product architecture delivery without
   PM material-understanding source paths, protocol blockers written outside
-  router-visible state, stage-advance views left stale, and optimized
-  transactions that skip hash, role, or Controller-boundary checks.
+  router-visible state, stage-advance views left stale, stale role-decision
+  waits that expose external events before their requires_flag is true, and
+  optimized transactions that skip hash, role, or Controller-boundary checks.
 - Hard invariants: package-to-packet fields are preserved; material-scan
   dispatch requires phase, contract, write-target, and canonical-body
   consistency; repair reissues must materialize into packet files, ledger, and
@@ -28,8 +29,9 @@ Risk intent brief:
   reissue; stopped runs reconcile all visible lifecycle authorities; active
   snapshots are fresh; phase cards carry required source context; protocol
   blockers are router-visible; stage-advance views refresh; multi-active
-  visibility has explicit authority; optimized transactions keep hash, role,
-  and envelope-only guarantees.
+  visibility has explicit authority; await_role_decision exposes only currently
+  receivable external events; optimized transactions keep hash, role, and
+  envelope-only guarantees.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -96,6 +98,7 @@ class State:
     pm_repair_non_success_outcome_routable: bool = True
     active_repair_transaction_stale: bool = False
     repair_recheck_pending_action_stale: bool = False
+    expected_role_decision_requires_unsatisfied_flag: bool = False
     reviewer_recheck_protocol_blocker_written: bool = False
     reviewer_recheck_protocol_blocker_routable: bool = True
 
@@ -612,6 +615,15 @@ def repair_success_clears_stale_repair_lane(state: State, trace) -> InvariantRes
     return InvariantResult.pass_()
 
 
+def expected_role_decisions_require_satisfied_flags(state: State, trace) -> InvariantResult:
+    del trace
+    if state.expected_role_decision_requires_unsatisfied_flag:
+        return InvariantResult.fail(
+            "await_role_decision exposed an external event whose requires_flag was false"
+        )
+    return InvariantResult.pass_()
+
+
 def delivered_cards_include_required_phase_sources(state: State, trace) -> InvariantResult:
     del trace
     if state.phase_dependency_cards_delivered and not state.phase_required_sources_complete:
@@ -791,6 +803,11 @@ INVARIANTS = (
         predicate=repair_success_clears_stale_repair_lane,
     ),
     Invariant(
+        name="expected_role_decisions_require_satisfied_flags",
+        description="Role-decision waits expose only external events whose requires_flag is currently true.",
+        predicate=expected_role_decisions_require_satisfied_flags,
+    ),
+    Invariant(
         name="delivered_cards_include_required_phase_sources",
         description="Every delivered phase card carries required upstream source paths for its workflow phase.",
         predicate=delivered_cards_include_required_phase_sources,
@@ -888,6 +905,7 @@ def _safe_base(**changes: object) -> State:
             pm_repair_reissue_dispatch_index_updated=True,
             pm_repair_allowed_success_only=False,
             pm_repair_non_success_outcome_routable=True,
+            expected_role_decision_requires_unsatisfied_flag=False,
             reviewer_recheck_protocol_blocker_written=False,
             reviewer_recheck_protocol_blocker_routable=True,
             packet_delivered=True,
@@ -1049,6 +1067,9 @@ def hazard_states() -> dict[str, State]:
         "repair_transaction_stale_after_success": _safe_base(
             active_repair_transaction_stale=True,
             repair_recheck_pending_action_stale=True,
+        ),
+        "role_decision_wait_requires_unsatisfied_flag": _safe_base(
+            expected_role_decision_requires_unsatisfied_flag=True,
         ),
         "phase_card_missing_required_upstream_source": _safe_base(
             phase_dependency_cards_delivered=True,
@@ -1747,6 +1768,86 @@ def _audit_stale_repair_lane(router_state: object, frontier: object) -> dict[str
     }
 
 
+def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict[str, str]], str | None]:
+    source_path = project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
+    try:
+        source = source_path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+    except OSError as exc:
+        return {}, f"router source unreadable: {exc}"
+    except SyntaxError as exc:
+        return {}, f"router source unparsable: {exc}"
+    for node in tree.body:
+        value: ast.AST | None = None
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "EXTERNAL_EVENTS":
+            value = node.value
+        elif isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "EXTERNAL_EVENTS" for target in node.targets
+        ):
+            value = node.value
+        if value is None:
+            continue
+        try:
+            parsed = ast.literal_eval(value)
+        except (ValueError, SyntaxError) as exc:
+            return {}, f"EXTERNAL_EVENTS is not literal-evaluable: {exc}"
+        if not isinstance(parsed, dict):
+            return {}, "EXTERNAL_EVENTS was not a dict"
+        contracts: dict[str, dict[str, str]] = {}
+        for event, meta in parsed.items():
+            if isinstance(event, str) and isinstance(meta, dict):
+                contracts[event] = {str(key): str(item) for key, item in meta.items() if isinstance(item, str)}
+        return contracts, None
+    return {}, "EXTERNAL_EVENTS definition not found"
+
+
+def _audit_expected_role_decision_event_prereqs(router_state: object, project_root: Path) -> dict[str, object]:
+    if not isinstance(router_state, dict):
+        return {
+            "expected_role_decision_requires_unsatisfied_flag": False,
+            "invalid_expected_events": [],
+            "pending_action": None,
+        }
+    pending = router_state.get("pending_action")
+    if not isinstance(pending, dict) or pending.get("action_type") != "await_role_decision":
+        return {
+            "expected_role_decision_requires_unsatisfied_flag": False,
+            "invalid_expected_events": [],
+            "pending_action": pending if isinstance(pending, dict) else None,
+        }
+    events = [
+        str(item)
+        for item in pending.get("allowed_external_events", [])
+        if isinstance(item, str)
+    ]
+    flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
+    contracts, contract_error = _router_external_event_contracts(project_root)
+    invalid: list[dict[str, object]] = []
+    if contract_error:
+        invalid.append({"issue": "external_event_contract_unreadable", "error": contract_error})
+    for event in events:
+        meta = contracts.get(event)
+        if not isinstance(meta, dict):
+            invalid.append({"event": event, "issue": "unknown_external_event"})
+            continue
+        required_flag = meta.get("requires_flag")
+        if required_flag and not flags.get(required_flag):
+            invalid.append(
+                {
+                    "event": event,
+                    "issue": "requires_flag_false",
+                    "requires_flag": required_flag,
+                    "current_value": flags.get(required_flag),
+                }
+            )
+    return {
+        "expected_role_decision_requires_unsatisfied_flag": bool(invalid),
+        "invalid_expected_events": invalid,
+        "pending_action": pending,
+        "allowed_external_events": events,
+    }
+
+
 def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
     run_prefix = f".flowpilot/runs/{run_id}"
     return {
@@ -2416,6 +2517,16 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="repair_success_clears_stale_repair_lane",
             evidence=stale_repair_lane,
         )
+    stale_expected_wait = _audit_expected_role_decision_event_prereqs(router_state, root)
+    if stale_expected_wait.get("expected_role_decision_requires_unsatisfied_flag"):
+        _add_finding(
+            findings,
+            code="role_decision_wait_requires_unsatisfied_flag",
+            severity="error",
+            summary="await_role_decision exposed an external event whose requires_flag is false in current router state",
+            invariant="expected_role_decisions_require_satisfied_flags",
+            evidence=stale_expected_wait,
+        )
 
     child_skill_gate_synced, child_skill_gate_evidence = _audit_child_skill_gate_sync(run_root)
     child_skill_review_recorded = bool(child_skill_gate_evidence.get("review_passed") is True)
@@ -2544,6 +2655,9 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         ),
         repair_recheck_pending_action_stale=bool(
             stale_repair_lane.get("repair_recheck_pending_action_stale")
+        ),
+        expected_role_decision_requires_unsatisfied_flag=bool(
+            stale_expected_wait.get("expected_role_decision_requires_unsatisfied_flag")
         ),
         reviewer_recheck_protocol_blocker_written=bool(
             pm_repair_liveness.get("reviewer_recheck_protocol_blocker_written")

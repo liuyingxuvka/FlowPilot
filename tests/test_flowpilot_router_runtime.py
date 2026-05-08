@@ -1318,6 +1318,34 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"repair_node_id": "node-001-repair", "reason": "reviewer_block"},
             )
 
+    def test_stale_review_block_route_mutation_wait_is_recomputed_before_pm_triage(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-stale-wait")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"].get("model_miss_triage_closed"))
+        state["pending_action"] = {
+            "schema_version": router.SCHEMA_VERSION,
+            "action_id": "stale-route-mutation-wait",
+            "action_type": "await_role_decision",
+            "actor": "controller",
+            "label": "controller_waits_for_expected_event_pm_mutates_route_after_review_block",
+            "allowed_external_events": ["pm_mutates_route_after_review_block"],
+            "allowed_reads": [self.rel(root, router.run_state_path(run_root))],
+            "allowed_writes": [self.rel(root, router.run_state_path(run_root))],
+        }
+        router.save_run_state(run_root, state)
+
+        action = self.deliver_expected_card(root, "pm.model_miss_triage")
+
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "pm.model_miss_triage")
+        repaired_state = read_json(router.run_state_path(run_root))
+        labels = [entry["label"] for entry in repaired_state["history"]]
+        self.assertIn("router_cleared_stale_pending_action", labels)
+        self.assertIsNone(repaired_state["pending_action"])
+
     def test_model_backed_model_miss_triage_requires_officer_report_refs(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-invalid")

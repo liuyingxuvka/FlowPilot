@@ -1041,6 +1041,60 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
+## flowpilot-stale-pending-action-requires-flag-20260508 - Recompute stale role-decision waits
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run exposed `await_role_decision` for `pm_mutates_route_after_review_block` while its required `model_miss_triage_closed` flag was false.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T18:10:00+00:00
+- Ended: 2026-05-08T19:32:04+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+- simulations/flowpilot_control_plane_friction_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python -m unittest -v tests.test_flowpilot_router_runtime`
+- OK: `python simulations\run_defect_governance_checks.py`
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py --json-out temp`
+- OK: `python simulations\run_router_action_contract_checks.py --json-out temp`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out temp`
+- OK: `python simulations\run_output_contract_checks.py --json-out temp`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\run_flowguard_coverage_sweep.py --timeout-seconds 60`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\smoke_autopilot.py --fast`
+
+### Findings
+- The previous model covered repair/fatal blocker routability but not the generic property that every router-exposed `await_role_decision.allowed_external_events` must be currently receivable.
+- The control-plane friction model now catches `await_role_decision exposed an external event whose requires_flag was false`.
+- Runtime now clears and recomputes stale role-decision pending actions before returning them; the event validators remain strict.
+- Targeted regression proves a stale `pm_mutates_route_after_review_block` wait recomputes to `pm.model_miss_triage` before PM route mutation is accepted.
+
+### Counterexamples
+- `role_decision_wait_requires_unsatisfied_flag`
+
+### Friction Points
+- The live-run audit still reports four existing historical findings for `run-20260508-090520`; none are the new requires-flag wait invariant, and this task did not mutate sealed packet/result/report bodies.
+
+### Skipped Steps
+- No version bump; the change is part of the same 0.5.4 update batch.
+- No direct repair of historical active-run artifacts.
+
+### Next Actions
+- Treat future stale pending-action regressions as a generic router expected-event legality failure, not as PM output confusion.
+
+
 ## flowpilot-model-miss-triage-gate-20260508 - Gate reviewer-block repair through FlowGuard model-miss triage
 
 - Project: FlowGuardProjectAutopilot_20260430
