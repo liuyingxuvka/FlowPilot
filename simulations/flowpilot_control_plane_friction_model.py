@@ -29,6 +29,7 @@ Risk intent brief:
 
 from __future__ import annotations
 
+import ast
 import json
 import hashlib
 from dataclasses import dataclass, replace
@@ -100,6 +101,14 @@ class State:
     frontier_fresh_after_stage_advance: bool = False
     product_stage_view_published: bool = False
     product_stage_view_fresh: bool = False
+    route_draft_written: bool = False
+    route_draft_has_nodes: bool = True
+    route_draft_single_canonical_source: bool = True
+    route_draft_shadow_source_used: bool = False
+    route_process_check_card_delivered: bool = False
+    route_process_check_passed: bool = False
+    route_draft_repaired_after_check: bool = False
+    route_review_flags_reset_after_draft_repair: bool = True
 
     optimized_relay_transaction: bool = False
     optimized_transaction_records_delivery: bool = False
@@ -109,6 +118,9 @@ class State:
     receipt_missing_blocker: bool = False
     control_blocker_lane: str = "none"  # none | control_plane_reissue | pm_repair_decision_required
     control_blocker_target_role: str = "none"  # none | human_like_reviewer | project_manager
+    pm_repair_decision_recorded: bool = False
+    control_blocker_followup_event_matchable: bool = True
+    control_resolution_predicate_normalized: bool = True
 
     stop_requested: bool = False
     current_status_stopped: bool = False
@@ -319,6 +331,27 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.route_draft_written:
+        yield Transition(
+            "pm_writes_route_draft_with_nonempty_nodes",
+            _inc(state, holder="pm", route_draft_written=True, route_draft_has_nodes=True),
+        )
+        return
+
+    if state.route_draft_written and not state.route_process_check_card_delivered:
+        yield Transition(
+            "route_process_check_card_delivered_with_route_draft_context",
+            _inc(state, holder="officer", route_process_check_card_delivered=True),
+        )
+        return
+
+    if state.route_process_check_card_delivered and not state.route_process_check_passed:
+        yield Transition(
+            "process_officer_passes_route_check_after_nonempty_route",
+            _inc(state, holder="controller", route_process_check_passed=True),
+        )
+        return
+
     if not state.stop_requested:
         yield Transition("user_stop_requested", _inc(state, holder="controller", stop_requested=True))
         return
@@ -444,6 +477,22 @@ def control_blocker_indexes_match_artifacts(state: State, trace) -> InvariantRes
     return InvariantResult.pass_()
 
 
+def pm_repair_followup_events_are_matchable(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.control_blocker_lane == "pm_repair_decision_required"
+        and state.pm_repair_decision_recorded
+        and (
+            not state.control_blocker_followup_event_matchable
+            or not state.control_resolution_predicate_normalized
+        )
+    ):
+        return InvariantResult.fail(
+            "PM repair follow-up event could not be matched by normalized router resolution logic"
+        )
+    return InvariantResult.pass_()
+
+
 def delivered_cards_include_required_phase_sources(state: State, trace) -> InvariantResult:
     del trace
     if state.phase_dependency_cards_delivered and not state.phase_required_sources_complete:
@@ -505,6 +554,30 @@ def display_surfaces_track_product_architecture_delivery(state: State, trace) ->
         and not state.product_stage_view_fresh
     ):
         return InvariantResult.fail("route snapshot or display plan remained stale after product architecture delivery")
+    return InvariantResult.pass_()
+
+
+def route_checks_require_nonempty_route_nodes(state: State, trace) -> InvariantResult:
+    del trace
+    if state.route_process_check_card_delivered and not state.route_draft_has_nodes:
+        return InvariantResult.fail("route process check was delivered for an empty route draft")
+    if state.route_process_check_card_delivered and (
+        not state.route_draft_single_canonical_source or state.route_draft_shadow_source_used
+    ):
+        return InvariantResult.fail(
+            "route process check used a shadow route draft instead of the canonical route source"
+        )
+    return InvariantResult.pass_()
+
+
+def route_draft_repair_resets_stale_route_checks(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.route_draft_repaired_after_check
+        and not state.route_review_flags_reset_after_draft_repair
+        and (state.route_process_check_card_delivered or state.route_process_check_passed)
+    ):
+        return InvariantResult.fail("route draft repair left stale route-check flags active")
     return InvariantResult.pass_()
 
 
@@ -574,6 +647,11 @@ INVARIANTS = (
         predicate=control_blocker_indexes_match_artifacts,
     ),
     Invariant(
+        name="pm_repair_followup_events_are_matchable",
+        description="PM repair decisions store follow-up resolution events in a router-matchable form.",
+        predicate=pm_repair_followup_events_are_matchable,
+    ),
+    Invariant(
         name="delivered_cards_include_required_phase_sources",
         description="Every delivered phase card carries required upstream source paths for its workflow phase.",
         predicate=delivered_cards_include_required_phase_sources,
@@ -612,6 +690,16 @@ INVARIANTS = (
         name="display_surfaces_track_product_architecture_delivery",
         description="Route snapshot and display plan refresh after product architecture delivery.",
         predicate=display_surfaces_track_product_architecture_delivery,
+    ),
+    Invariant(
+        name="route_checks_require_nonempty_route_nodes",
+        description="Route process checks cannot be delivered for empty route drafts.",
+        predicate=route_checks_require_nonempty_route_nodes,
+    ),
+    Invariant(
+        name="route_draft_repair_resets_stale_route_checks",
+        description="A repeated route draft before activation resets downstream route-check flags.",
+        predicate=route_draft_repair_resets_stale_route_checks,
     ),
     Invariant(
         name="multi_active_requires_explicit_authority",
@@ -663,6 +751,9 @@ def _safe_base(**changes: object) -> State:
             protocol_blocker_registered_in_router_state=False,
             control_blocker_artifact_status_written=False,
             control_blocker_router_index_matches_artifact=True,
+            pm_repair_decision_recorded=False,
+            control_blocker_followup_event_matchable=True,
+            control_resolution_predicate_normalized=True,
             phase_dependency_cards_delivered=True,
             phase_required_sources_complete=True,
             delivered_card_phase_context_fresh=True,
@@ -678,6 +769,14 @@ def _safe_base(**changes: object) -> State:
             frontier_fresh_after_stage_advance=True,
             product_stage_view_published=True,
             product_stage_view_fresh=True,
+            route_draft_written=True,
+            route_draft_has_nodes=True,
+            route_draft_single_canonical_source=True,
+            route_draft_shadow_source_used=False,
+            route_process_check_card_delivered=True,
+            route_process_check_passed=True,
+            route_draft_repaired_after_check=False,
+            route_review_flags_reset_after_draft_repair=True,
             role_identity_checked=True,
             hash_verified=True,
         ),
@@ -723,6 +822,19 @@ def hazard_states() -> dict[str, State]:
             control_blocker_artifact_status_written=True,
             control_blocker_router_index_matches_artifact=False,
         ),
+        "pm_repair_followup_event_unmatchable": _safe_base(
+            control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            control_blocker_followup_event_matchable=False,
+        ),
+        "pm_repair_followup_event_not_normalized": _safe_base(
+            control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            control_blocker_followup_event_matchable=True,
+            control_resolution_predicate_normalized=False,
+        ),
         "phase_card_missing_required_upstream_source": _safe_base(
             phase_dependency_cards_delivered=True,
             phase_required_sources_complete=False,
@@ -752,6 +864,22 @@ def hazard_states() -> dict[str, State]:
         ),
         "display_view_stale_after_product_architecture_delivery": _safe_base(
             product_stage_view_fresh=False,
+        ),
+        "route_process_check_on_empty_route_draft": _safe_base(
+            route_draft_has_nodes=False,
+            route_process_check_card_delivered=True,
+        ),
+        "route_process_check_on_shadow_route_draft": _safe_base(
+            route_draft_has_nodes=True,
+            route_draft_single_canonical_source=False,
+            route_draft_shadow_source_used=True,
+            route_process_check_card_delivered=True,
+        ),
+        "route_draft_repair_kept_stale_route_checks": _safe_base(
+            route_draft_repaired_after_check=True,
+            route_review_flags_reset_after_draft_repair=False,
+            route_process_check_card_delivered=True,
+            route_process_check_passed=True,
         ),
         "multiple_active_tasks_under_current_json_only": _safe_base(
             multiple_running_index_entries_visible=True,
@@ -881,6 +1009,58 @@ def _router_control_blocker_status_matches(router_state: object, project_root: P
     return not mismatches, mismatches
 
 
+def _resolution_event_name(value: object) -> str | None:
+    if isinstance(value, dict):
+        for key in ("event", "corrected_followup_event", "event_name"):
+            name = str(value.get(key) or "").strip()
+            if name:
+                return name
+        return None
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    parsed: object
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        try:
+            parsed = ast.literal_eval(text)
+        except (ValueError, SyntaxError):
+            return text
+    return _resolution_event_name(parsed) or text
+
+
+def _active_pm_repair_followup_event_matchable(router_state: object) -> tuple[bool, bool, dict[str, object]]:
+    if not isinstance(router_state, dict):
+        return False, True, {}
+    active = router_state.get("active_control_blocker")
+    if not isinstance(active, dict):
+        return False, True, {}
+    recorded = (
+        active.get("handling_lane") == "pm_repair_decision_required"
+        and active.get("pm_repair_decision_status") == "recorded"
+    )
+    if not recorded:
+        return False, True, {}
+    raw_events = active.get("allowed_resolution_events")
+    allowed_names: list[str] = []
+    if isinstance(raw_events, list):
+        allowed_names = [name for item in raw_events if (name := _resolution_event_name(item))]
+    rerun_target_name = _resolution_event_name(active.get("pm_repair_rerun_target"))
+    originating_event = _resolution_event_name(active.get("originating_event"))
+    expected_names = {name for name in (rerun_target_name, originating_event) if name}
+    matchable = bool(allowed_names) and (not expected_names or bool(set(allowed_names) & expected_names))
+    return recorded, matchable, {
+        "blocker_id": active.get("blocker_id"),
+        "allowed_resolution_events": raw_events,
+        "allowed_event_names_after_normalization": allowed_names,
+        "pm_repair_rerun_target_name_after_normalization": rerun_target_name,
+        "originating_event": originating_event,
+    }
+
+
 def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
     run_prefix = f".flowpilot/runs/{run_id}"
     return {
@@ -932,6 +1112,45 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
             f"{run_prefix}/pm_child_skill_selection.json",
             f"{run_prefix}/capabilities.json",
         ),
+        "product_officer.child_skill_product_fit": (
+            f"{run_prefix}/child_skill_gate_manifest.json",
+            f"{run_prefix}/reviews/child_skill_gate_manifest_review.json",
+            f"{run_prefix}/flowguard/child_skill_conformance_model.json",
+            f"{run_prefix}/pm_child_skill_selection.json",
+            f"{run_prefix}/capabilities.json",
+            f"{run_prefix}/root_acceptance_contract.json",
+        ),
+        "pm.prior_path_context": (
+            f"{run_prefix}/child_skill_gate_manifest.json",
+            f"{run_prefix}/child_skill_manifest_pm_approval.json",
+            f"{run_prefix}/capabilities/capability_sync.json",
+        ),
+        "pm.route_skeleton": (
+            f"{run_prefix}/root_acceptance_contract.json",
+            f"{run_prefix}/child_skill_gate_manifest.json",
+            f"{run_prefix}/child_skill_manifest_pm_approval.json",
+            f"{run_prefix}/capabilities/capability_sync.json",
+            f"{run_prefix}/route_memory/pm_prior_path_context.json",
+        ),
+        "process_officer.route_process_check": (
+            f"{run_prefix}/root_acceptance_contract.json",
+            f"{run_prefix}/child_skill_gate_manifest.json",
+            f"{run_prefix}/capabilities/capability_sync.json",
+            f"{run_prefix}/routes/route-001/flow.draft.json",
+        ),
+        "product_officer.route_product_check": (
+            f"{run_prefix}/root_acceptance_contract.json",
+            f"{run_prefix}/child_skill_gate_manifest.json",
+            f"{run_prefix}/flowguard/route_process_check.json",
+            f"{run_prefix}/routes/route-001/flow.draft.json",
+        ),
+        "reviewer.route_challenge": (
+            f"{run_prefix}/root_acceptance_contract.json",
+            f"{run_prefix}/child_skill_gate_manifest.json",
+            f"{run_prefix}/flowguard/route_process_check.json",
+            f"{run_prefix}/flowguard/route_product_check.json",
+            f"{run_prefix}/routes/route-001/flow.draft.json",
+        ),
     }
 
 
@@ -948,6 +1167,12 @@ def _expected_card_phases() -> dict[str, str]:
         "pm.child_skill_gate_manifest": "child_skill_gate_manifest",
         "reviewer.child_skill_gate_manifest_review": "child_skill_gate_manifest",
         "process_officer.child_skill_conformance_model": "child_skill_gate_manifest",
+        "product_officer.child_skill_product_fit": "child_skill_gate_manifest",
+        "pm.prior_path_context": "prior_path_context",
+        "pm.route_skeleton": "route_skeleton",
+        "process_officer.route_process_check": "route_skeleton",
+        "product_officer.route_product_check": "route_skeleton",
+        "reviewer.route_challenge": "route_skeleton",
     }
 
 
@@ -1223,6 +1448,29 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         run_id=run_id,
         project_root=root,
     )
+    route_draft_paths = sorted((run_root / "routes").glob("*/flow.draft.json"))
+    route_draft_written = bool(route_draft_paths)
+    route_draft_node_counts: dict[str, int] = {}
+    route_draft_has_nodes = True
+    for draft_path in route_draft_paths:
+        draft, draft_error = _read_json(draft_path)
+        rel = ".flowpilot/runs/" + run_root.name + "/" + draft_path.relative_to(run_root).as_posix()
+        nodes = draft.get("nodes") if isinstance(draft, dict) else None
+        node_count = len(nodes) if isinstance(nodes, list) else 0
+        route_draft_node_counts[rel] = node_count
+        if draft_error or node_count == 0:
+            route_draft_has_nodes = False
+    route_process_check_delivered = _latest_delivery(prompt_deliveries, "process_officer.route_process_check") is not None
+    route_process_check_passed = bool(flags.get("process_officer_route_check_passed"))
+    if route_process_check_delivered and not route_draft_has_nodes:
+        _add_finding(
+            findings,
+            code="route_process_check_on_empty_route_draft",
+            severity="error",
+            summary="process_officer.route_process_check was delivered while the current route draft had no nodes",
+            invariant="route_checks_require_nonempty_route_nodes",
+            evidence={"route_draft_node_counts": route_draft_node_counts},
+        )
 
     if product_architecture_delivered and pm_material_written and not material_context_present:
         _add_finding(
@@ -1361,6 +1609,19 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             evidence={"mismatches": control_blocker_mismatches},
         )
 
+    pm_repair_recorded, pm_repair_followup_matchable, pm_repair_followup_evidence = (
+        _active_pm_repair_followup_event_matchable(router_state)
+    )
+    if pm_repair_recorded and not pm_repair_followup_matchable:
+        _add_finding(
+            findings,
+            code="pm_repair_followup_event_unmatchable",
+            severity="error",
+            summary="PM repair decision recorded a follow-up event that router resolution logic cannot match",
+            invariant="pm_repair_followup_events_are_matchable",
+            evidence=pm_repair_followup_evidence,
+        )
+
     child_skill_gate_synced, child_skill_gate_evidence = _audit_child_skill_gate_sync(run_root)
     child_skill_review_recorded = bool(child_skill_gate_evidence.get("review_passed") is True)
     if child_skill_review_recorded and not child_skill_gate_synced:
@@ -1440,6 +1701,8 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         protocol_blocker_registered_in_router_state=not bool(unregistered_protocol_blockers),
         control_blocker_artifact_status_written=bool(control_blocker_mismatches),
         control_blocker_router_index_matches_artifact=control_blocker_index_synced,
+        pm_repair_decision_recorded=pm_repair_recorded,
+        control_blocker_followup_event_matchable=pm_repair_followup_matchable,
         phase_dependency_cards_delivered=phase_dependency_cards_delivered,
         phase_required_sources_complete=not bool(phase_missing_sources),
         delivered_card_phase_context_fresh=not bool(phase_stale_contexts),
@@ -1455,6 +1718,10 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         frontier_fresh_after_stage_advance=frontier_fresh,
         product_stage_view_published=bool(snapshot is not None or display_plan is not None),
         product_stage_view_fresh=views_fresh,
+        route_draft_written=route_draft_written,
+        route_draft_has_nodes=route_draft_has_nodes,
+        route_process_check_card_delivered=route_process_check_delivered,
+        route_process_check_passed=route_process_check_passed,
         multiple_running_index_entries_visible=bool(stale_running_entries),
         active_task_authority="explicit_active_set" if stale_running_entries else "current_json_only",
     )

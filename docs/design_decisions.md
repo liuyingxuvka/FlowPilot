@@ -83,6 +83,47 @@ when the impact reaches the root or changes global contracts.
 1. Meta-control model: how the agent drives the project.
 2. Task-local model: how the target software behavior should work.
 
+## Hard Standards and Soft Checks
+
+FlowPilot distinguishes hard protocol boundaries from friction-reduction
+checks. Hard standards protect authority, isolation, write scope, and task
+completion truth. They should remain stable across UI, coding, documentation,
+release, and other task types.
+
+The durable completion fact is task completion. UI surfaces, chat summaries,
+and cockpit route maps are projections of the active route/state/frontier/ledger
+and cannot independently declare work complete. Completion requires PM-owned
+closure, reviewer-gated evidence where applicable, node completion ledger
+updates, and final backward replay. If FlowPilot can complete a route node, the
+node should close; residual human inspection notes belong in the final report
+instead of being modeled as unfinished FlowPilot route work.
+
+The controller/router is envelope-only. It can move packet metadata, receipts,
+hashes, role identities, and state pointers. It cannot read sealed bodies,
+author project evidence, or take over PM/reviewer/worker decisions. If it has
+no legal next action, it writes a PM decision-required blocker and stops the
+chain there.
+
+Project writes require current-node authority. A worker may write only under a
+current-node packet and write grant. Result relay requires packet/result ledger
+absorption and role identity checks. Active route/state/frontier/ledger files
+are the only current authority; shadow drafts, historical runs, stale snapshots,
+and UI projections are not.
+
+Soft checks may be simplified when they only add mechanical friction. Examples
+include exact wording matches for follow-up events, redundant display/source
+fields, evidence-table presentation details, or informational-card
+micro-ordering that does not protect a hard boundary. Such simplification must
+be model-backed: the relevant FlowGuard model should keep the hard-boundary
+counterexamples failing before implementation changes land.
+
+Legal role waits are modeled from event contracts, not from one-off phase
+patches. A state with a satisfied prerequisite and an unsatisfied PM, reviewer,
+worker, officer, or host event is a legal wait; it must not be converted into a
+PM decision-required blocker. A blocker is reserved for true no-next-action
+states where neither a Controller action nor an expected external role event is
+available.
+
 ## `.flowpilot/` as Source of Truth
 
 Chat context can help, but cross-thread recovery must use `.flowpilot/`.

@@ -12,6 +12,7 @@ decides which system card or packet-delivery gate is currently allowed.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import shutil
@@ -177,6 +178,9 @@ RUNTIME_FLAG_DEFAULTS = {
     "research_result_relayed_to_reviewer": False,
     "current_node_packet_relayed": False,
     "current_node_result_relayed_to_reviewer": False,
+    "current_node_write_grant_issued": False,
+    "node_completion_ledger_updated": False,
+    "task_completion_projection_published": False,
 }
 
 SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
@@ -199,6 +203,7 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "reviewer_node_acceptance_plan_card_delivered",
     "node_acceptance_plan_reviewer_passed",
     "current_node_packet_registered",
+    "current_node_write_grant_issued",
     "reviewer_current_node_dispatch_card_delivered",
     "current_node_dispatch_allowed",
     "current_node_packet_relayed",
@@ -214,6 +219,7 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "pm_parent_segment_decision_card_delivered",
     "parent_segment_decision_recorded",
     "node_completed_by_pm",
+    "node_completion_ledger_updated",
 )
 
 ROUTE_COMPLETION_FLAGS = (
@@ -225,6 +231,7 @@ ROUTE_COMPLETION_FLAGS = (
     "final_ledger_built_clean",
     "reviewer_final_backward_replay_card_delivered",
     "final_backward_replay_passed",
+    "task_completion_projection_published",
     "pm_closure_card_delivered",
     "pm_closure_approved",
 )
@@ -768,6 +775,12 @@ CARD_PHASE_BY_ID = {
     "pm.child_skill_gate_manifest": "child_skill_gate_manifest",
     "reviewer.child_skill_gate_manifest_review": "child_skill_gate_manifest",
     "process_officer.child_skill_conformance_model": "child_skill_gate_manifest",
+    "product_officer.child_skill_product_fit": "child_skill_gate_manifest",
+    "pm.prior_path_context": "prior_path_context",
+    "pm.route_skeleton": "route_skeleton",
+    "process_officer.route_process_check": "route_skeleton",
+    "product_officer.route_product_check": "route_skeleton",
+    "reviewer.route_challenge": "route_skeleton",
 }
 
 CARD_REQUIRED_SOURCE_PATHS = {
@@ -818,6 +831,42 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "child_skill_gate_manifest_review": "reviews/child_skill_gate_manifest_review.json",
         "pm_child_skill_selection": "pm_child_skill_selection.json",
         "capabilities": "capabilities.json",
+    },
+    "product_officer.child_skill_product_fit": {
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "child_skill_gate_manifest_review": "reviews/child_skill_gate_manifest_review.json",
+        "child_skill_conformance_model": "flowguard/child_skill_conformance_model.json",
+        "pm_child_skill_selection": "pm_child_skill_selection.json",
+        "capabilities": "capabilities.json",
+        "root_acceptance_contract": "root_acceptance_contract.json",
+    },
+    "pm.prior_path_context": {
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "child_skill_manifest_pm_approval": "child_skill_manifest_pm_approval.json",
+        "capability_sync": "capabilities/capability_sync.json",
+    },
+    "pm.route_skeleton": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "child_skill_manifest_pm_approval": "child_skill_manifest_pm_approval.json",
+        "capability_sync": "capabilities/capability_sync.json",
+        "pm_prior_path_context": "route_memory/pm_prior_path_context.json",
+    },
+    "process_officer.route_process_check": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "capability_sync": "capabilities/capability_sync.json",
+    },
+    "product_officer.route_product_check": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "route_process_check": "flowguard/route_process_check.json",
+    },
+    "reviewer.route_challenge": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "route_process_check": "flowguard/route_process_check.json",
+        "route_product_check": "flowguard/route_product_check.json",
     },
 }
 
@@ -2783,7 +2832,8 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     repair_action = str(decision.get("repair_action") or "").strip()
     if not repair_action:
         raise RouterError("control blocker repair decision requires repair_action")
-    rerun_target = str(decision.get("rerun_target") or "").strip()
+    raw_rerun_target = decision.get("rerun_target")
+    rerun_target = _control_resolution_event_name(raw_rerun_target) or str(raw_rerun_target or "").strip()
     if not rerun_target:
         raise RouterError("control blocker repair decision requires rerun_target")
     if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
@@ -3034,10 +3084,36 @@ def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str)
         return False
     raw_events = record.get("allowed_resolution_events")
     if isinstance(raw_events, list) and raw_events:
-        return event in {str(item) for item in raw_events}
+        allowed_events = {_control_resolution_event_name(item) or str(item) for item in raw_events}
+        return event in allowed_events
     if record.get("handling_lane") == "control_plane_reissue":
         return event == record.get("originating_event")
     return event in EXTERNAL_EVENTS
+
+
+def _control_resolution_event_name(value: Any) -> str | None:
+    if isinstance(value, dict):
+        for key in ("event", "corrected_followup_event", "event_name"):
+            name = str(value.get(key) or "").strip()
+            if name:
+                return name
+        return None
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    if text in EXTERNAL_EVENTS or text == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+        return text
+    parsed: Any = None
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        try:
+            parsed = ast.literal_eval(text)
+        except (ValueError, SyntaxError):
+            return text
+    return _control_resolution_event_name(parsed) or text
 
 
 def _resolve_delivered_control_blocker(
@@ -3058,8 +3134,14 @@ def _resolve_delivered_control_blocker(
         artifact_path = resolve_project_path(project_root, artifact_rel)
         if artifact_path.exists():
             record = read_json(artifact_path)
-    if from_already_recorded_event and record.get("handling_lane") != "control_plane_reissue":
-        return None
+    if from_already_recorded_event:
+        lane = record.get("handling_lane")
+        pm_repair_recorded = (
+            lane == "pm_repair_decision_required"
+            and record.get("pm_repair_decision_status") == "recorded"
+        )
+        if lane != "control_plane_reissue" and not pm_repair_recorded:
+            return None
     if not _control_blocker_allows_resolution_event(record, resolved_by_event):
         return None
     if artifact_path and artifact_path.exists():
@@ -4462,6 +4544,7 @@ def _current_closure_state_clean(run_root: Path) -> bool:
     generated = read_json_if_exists(run_root / "generated_resource_ledger.json")
     final_ledger = read_json_if_exists(run_root / "final_route_wide_gate_ledger.json")
     terminal = read_json_if_exists(run_root / "reviews" / "terminal_backward_replay.json")
+    task_projection = read_json_if_exists(_task_completion_projection_path(run_root))
     return (
         evidence.get("unresolved_count") == 0
         and evidence.get("stale_count") == 0
@@ -4470,6 +4553,7 @@ def _current_closure_state_clean(run_root: Path) -> bool:
         and final_ledger.get("completion_allowed") is True
         and final_ledger.get("counts", {}).get("unresolved_count") == 0
         and terminal.get("passed") is True
+        and task_projection.get("task_status") == "ready_for_pm_terminal_closure"
     )
 
 
@@ -5335,6 +5419,7 @@ def _write_material_sufficiency_report(project_root: Path, run_root: Path, run_s
 
 
 def _write_research_package(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     decision_question = payload.get("decision_question")
     if not decision_question:
         raise RouterError("research package requires decision_question")
@@ -5349,11 +5434,13 @@ def _write_research_package(project_root: Path, run_root: Path, run_state: dict[
         "reviewer_direct_check_required": True,
         "stop_conditions": payload.get("stop_conditions") or [],
         "written_at": utc_now(),
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "research" / "research_package.json", package)
 
 
 def _write_research_capability_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     package_path = run_root / "research" / "research_package.json"
     if not package_path.exists():
         raise RouterError("research capability decision requires research_package.json")
@@ -5420,6 +5507,7 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
             "explicit_user_approval_recorded": bool(payload.get("explicit_user_approval_recorded")),
             "worker_packet_id": packet_id,
             "recorded_at": utc_now(),
+            **_role_output_envelope_record(payload),
         },
     )
     write_json(
@@ -6907,6 +6995,13 @@ def _card_required_source_paths(project_root: Path, run_root: Path, card_id: str
         path = run_root / relative_path
         if path.exists():
             source_paths[label] = project_relative(project_root, path)
+    if card_id in {
+        "process_officer.route_process_check",
+        "product_officer.route_product_check",
+        "reviewer.route_challenge",
+    }:
+        for draft_path in sorted((run_root / "routes").glob("*/flow.draft.json")):
+            source_paths[f"route_draft_{draft_path.parent.name}"] = project_relative(project_root, draft_path)
     return source_paths
 
 
@@ -7017,6 +7112,19 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
         active_node_id=None,
         source_event="pm_writes_route_draft",
     )
+
+
+def _reset_route_review_after_route_draft_repair(run_state: dict[str, Any]) -> None:
+    for flag in (
+        "process_officer_route_check_card_delivered",
+        "process_officer_route_check_passed",
+        "product_officer_route_check_card_delivered",
+        "product_officer_route_check_passed",
+        "reviewer_route_check_card_delivered",
+        "reviewer_route_check_passed",
+        "route_activated_by_pm",
+    ):
+        run_state.setdefault("flags", {})[flag] = False
 
 
 def _current_route_draft_path(run_root: Path) -> Path:
@@ -7382,6 +7490,18 @@ def _active_node_root(run_root: Path, frontier: dict[str, Any]) -> Path:
 
 def _active_node_acceptance_plan_path(run_root: Path, frontier: dict[str, Any]) -> Path:
     return _active_node_root(run_root, frontier) / "node_acceptance_plan.json"
+
+
+def _active_node_write_grant_path(run_root: Path, frontier: dict[str, Any]) -> Path:
+    return _active_node_root(run_root, frontier) / "current_node_write_grant.json"
+
+
+def _active_node_completion_ledger_path(run_root: Path, frontier: dict[str, Any]) -> Path:
+    return _active_node_root(run_root, frontier) / "node_completion_ledger.json"
+
+
+def _task_completion_projection_path(run_root: Path) -> Path:
+    return run_root / "completion" / "task_completion_projection.json"
 
 
 def _resume_decision_path(run_root: Path) -> Path:
@@ -7807,19 +7927,52 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
         raise RouterError("current-node packet cannot assign product work to Controller")
     if envelope.get("body_visibility") != packet_runtime.SEALED_BODY_VISIBILITY:
         raise RouterError("current-node packet body must be sealed to the target role")
+    grant_path = _active_node_write_grant_path(run_root, frontier)
+    write_json(
+        grant_path,
+        {
+            "schema_version": "flowpilot.current_node_write_grant.v1",
+            "run_id": run_state["run_id"],
+            "route_id": str(frontier["active_route_id"]),
+            "route_version": route_version,
+            "node_id": str(frontier["active_node_id"]),
+            "packet_id": str(envelope["packet_id"]),
+            "granted_to_role": str(envelope["to_role"]),
+            "granted_by_role": "project_manager",
+            "grant_scope": "current_node_packet_body_and_result_only",
+            "packet_envelope_path": project_relative(project_root, envelope_path),
+            "packet_envelope_hash": hashlib.sha256(envelope_path.read_bytes()).hexdigest(),
+            "packet_body_path": str(envelope.get("body_path") or ""),
+            "packet_body_hash": str(envelope.get("body_hash") or ""),
+            "controller_may_read_packet_body": False,
+            "controller_may_write_project_artifacts": False,
+            "issued_at": utc_now(),
+        },
+    )
+    run_state["flags"]["current_node_write_grant_issued"] = True
 
 
 def _validate_current_node_result_event(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    run_root = project_root / str(run_state["run_root"])
+    frontier = _active_frontier(run_root)
+    grant_path = _active_node_write_grant_path(run_root, frontier)
+    if not run_state["flags"].get("current_node_write_grant_issued") or not grant_path.exists():
+        raise RouterError("current-node worker result requires a current-node write grant")
+    grant = read_json(grant_path)
     result_path = _result_envelope_path(project_root, run_state, payload)
     if not result_path.exists():
         raise RouterError(f"current-node result envelope is missing: {result_path}")
     result = packet_runtime.load_envelope(project_root, result_path)
+    if str(result.get("packet_id") or "") != str(grant.get("packet_id") or ""):
+        raise RouterError("current-node result packet_id does not match current-node write grant")
+    if str(result.get("completed_by_role") or "") != str(grant.get("granted_to_role") or ""):
+        raise RouterError("wrong role: current-node result completed_by_role does not match current-node write grant")
     if result.get("next_recipient") != "human_like_reviewer":
         raise RouterError("current-node worker result must route to human_like_reviewer")
     if result.get("completed_by_role") == "controller":
         raise RouterError("Controller-origin current-node result is invalid")
     packet_envelope, _packet_envelope_path = _current_node_packet_context(project_root, run_state)
-    agent_role_map = _agent_role_map_from_crew_ledger(project_root / str(run_state["run_root"]))
+    agent_role_map = _agent_role_map_from_crew_ledger(run_root)
     audit = packet_runtime.validate_result_ready_for_reviewer_relay(
         project_root,
         packet_envelope=packet_envelope,
@@ -8055,6 +8208,10 @@ def _write_evidence_quality_package(project_root: Path, run_root: Path, run_stat
         raise RouterError("evidence quality package must be PM-owned")
     if not run_state["flags"].get("node_completed_by_pm"):
         raise RouterError("evidence quality package requires PM-completed current node")
+    frontier = _active_frontier(run_root)
+    node_completion_ledger_path = _active_node_completion_ledger_path(run_root, frontier)
+    if not run_state["flags"].get("node_completion_ledger_updated") or not node_completion_ledger_path.exists():
+        raise RouterError("evidence quality package requires node completion ledger")
     evidence_items = payload.get("evidence_items")
     if evidence_items is None:
         evidence_items = []
@@ -8127,6 +8284,7 @@ def _write_evidence_quality_package(project_root: Path, run_root: Path, run_stat
                 "evidence_ledger": project_relative(project_root, evidence_ledger_path),
                 "generated_resource_ledger": project_relative(project_root, generated_resource_ledger_path),
                 "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
+                "node_completion_ledger": project_relative(project_root, node_completion_ledger_path),
                 "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
                 "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
                 "packet_chain_audit": project_relative(project_root, run_root / "packet_chain_audit.json")
@@ -8222,6 +8380,7 @@ def _build_source_of_truth_final_entries(
                     for path in (
                         node_root / "node_acceptance_plan.json",
                         node_root / "reviews" / "node_acceptance_plan_review.json",
+                        node_root / "node_completion_ledger.json",
                         node_root / "parent_backward_replay.json",
                         node_root / "pm_parent_segment_decision.json",
                     )
@@ -8323,6 +8482,9 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
     frontier = _active_frontier(run_root)
     route_id = str(frontier["active_route_id"])
     route_version = int(frontier.get("route_version") or 0)
+    node_completion_ledger_path = _active_node_completion_ledger_path(run_root, frontier)
+    if not run_state["flags"].get("node_completion_ledger_updated") or not node_completion_ledger_path.exists():
+        raise RouterError("final ledger requires node completion ledger")
     evidence_unresolved_count = int(evidence_ledger.get("unresolved_count", 0) or 0)
     payload_unresolved_count = int(payload.get("unresolved_count", 0) or 0)
     unresolved_count = max(evidence_unresolved_count, payload_unresolved_count)
@@ -8390,6 +8552,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         "source_paths": {
             "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
             "active_flow": project_relative(project_root, route_path),
+            "node_completion_ledger": project_relative(project_root, node_completion_ledger_path),
             "evidence_ledger": project_relative(project_root, run_root / "evidence" / "evidence_ledger.json"),
             "generated_resource_ledger": project_relative(project_root, run_root / "generated_resource_ledger.json"),
             "quality_package": project_relative(project_root, run_root / "quality" / "quality_package.json"),
@@ -8601,6 +8764,49 @@ def _write_terminal_backward_replay(project_root: Path, run_root: Path, run_stat
             **_role_output_envelope_record(payload),
         },
     )
+    _write_task_completion_projection(
+        project_root,
+        run_root,
+        run_state,
+        source_event="reviewer_final_backward_replay_passed",
+    )
+
+
+def _write_task_completion_projection(project_root: Path, run_root: Path, run_state: dict[str, Any], *, source_event: str) -> Path:
+    final_ledger_path = run_root / "final_route_wide_gate_ledger.json"
+    terminal_replay_path = run_root / "reviews" / "terminal_backward_replay.json"
+    frontier_path = run_root / "execution_frontier.json"
+    final_ledger = read_json(final_ledger_path)
+    terminal_replay = read_json(terminal_replay_path)
+    frontier = read_json(frontier_path)
+    if final_ledger.get("completion_allowed") is not True:
+        raise RouterError("task completion projection requires completion_allowed final ledger")
+    if terminal_replay.get("passed") is not True:
+        raise RouterError("task completion projection requires passed terminal backward replay")
+    projection_path = _task_completion_projection_path(run_root)
+    write_json(
+        projection_path,
+        {
+            "schema_version": "flowpilot.task_completion_projection.v1",
+            "run_id": run_state["run_id"],
+            "task_status": "ready_for_pm_terminal_closure",
+            "projection_owner": "controller",
+            "completion_fact_owner": "project_manager",
+            "source_event": source_event,
+            "derived_from": "active_route_state_frontier_and_ledger",
+            "controller_may_declare_completion": False,
+            "ui_or_chat_is_display_only": True,
+            "source_paths": {
+                "execution_frontier": project_relative(project_root, frontier_path),
+                "final_route_wide_gate_ledger": project_relative(project_root, final_ledger_path),
+                "terminal_backward_replay": project_relative(project_root, terminal_replay_path),
+                "latest_node_completion_ledger": str(frontier.get("latest_node_completion_ledger_path") or ""),
+            },
+            "published_at": utc_now(),
+        },
+    )
+    run_state["flags"]["task_completion_projection_published"] = True
+    return projection_path
 
 
 def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -8608,10 +8814,12 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
         raise RouterError("terminal closure must be approved_by_role=project_manager")
     final_ledger_path = run_root / "final_route_wide_gate_ledger.json"
     terminal_replay_path = run_root / "reviews" / "terminal_backward_replay.json"
+    task_projection_path = _task_completion_projection_path(run_root)
     continuation_path = _continuation_binding_path(run_root)
     required_paths = [
         final_ledger_path,
         terminal_replay_path,
+        task_projection_path,
         run_root / "execution_frontier.json",
         run_root / "crew_ledger.json",
         continuation_path,
@@ -8625,6 +8833,9 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
     replay = read_json(terminal_replay_path)
     if replay.get("passed") is not True:
         raise RouterError("terminal closure requires passed terminal backward replay")
+    task_projection = read_json(task_projection_path)
+    if task_projection.get("task_status") != "ready_for_pm_terminal_closure":
+        raise RouterError("terminal closure requires task completion projection")
     if not _current_closure_state_clean(run_root):
         raise RouterError("terminal closure requires current clean evidence/resource/final ledgers")
     continuation = read_json(continuation_path)
@@ -8641,6 +8852,7 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
         "source_paths": {
             "final_route_wide_gate_ledger": project_relative(project_root, final_ledger_path),
             "terminal_backward_replay": project_relative(project_root, terminal_replay_path),
+            "task_completion_projection": project_relative(project_root, task_projection_path),
             "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
             "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
             "continuation_binding": project_relative(project_root, continuation_path),
@@ -8659,6 +8871,52 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
     frontier["closed_at"] = utc_now()
     frontier["source"] = "pm_approves_terminal_closure"
     write_json(run_root / "execution_frontier.json", frontier)
+
+
+def _write_node_completion_ledger(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    frontier: dict[str, Any],
+    *,
+    completed_node_id: str,
+    completed_nodes: list[str],
+    next_node_id: str | None,
+) -> Path:
+    packet_envelope, packet_envelope_path = _current_node_packet_context(project_root, run_state)
+    result_envelope, result_envelope_path = _current_node_result_context(project_root, run_state)
+    audit_path = _active_node_root(run_root, frontier) / "reviews" / "current_node_packet_runtime_audit.json"
+    ledger_path = _active_node_completion_ledger_path(run_root, frontier)
+    write_json(
+        ledger_path,
+        {
+            "schema_version": "flowpilot.node_completion_ledger.v1",
+            "run_id": run_state["run_id"],
+            "route_id": str(frontier["active_route_id"]),
+            "route_version": int(frontier.get("route_version") or 0),
+            "node_id": completed_node_id,
+            "completed_by_role": "project_manager",
+            "reviewer_result_passed": True,
+            "worker_result_packet_id": str(result_envelope.get("packet_id") or ""),
+            "worker_result_completed_by_role": str(result_envelope.get("completed_by_role") or ""),
+            "current_node_packet_id": str(packet_envelope.get("packet_id") or ""),
+            "completed_nodes_after_update": completed_nodes,
+            "next_node_id": next_node_id,
+            "flowpilot_completable_work_closed": True,
+            "human_inspection_notes_belong_in_final_report": True,
+            "source_paths": {
+                "execution_frontier_before_update": project_relative(project_root, run_root / "execution_frontier.json"),
+                "node_acceptance_plan": project_relative(project_root, _active_node_acceptance_plan_path(run_root, frontier)),
+                "current_node_write_grant": project_relative(project_root, _active_node_write_grant_path(run_root, frontier)),
+                "packet_envelope": project_relative(project_root, packet_envelope_path),
+                "result_envelope": project_relative(project_root, result_envelope_path),
+                "current_node_packet_runtime_audit": project_relative(project_root, audit_path),
+            },
+            "completed_at": utc_now(),
+        },
+    )
+    run_state["flags"]["node_completion_ledger_updated"] = True
+    return ledger_path
 
 
 def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -8685,6 +8943,15 @@ def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state:
     route = read_json_if_exists(_active_route_path(run_root, frontier))
     mutations = read_json_if_exists(run_root / "routes" / str(frontier["active_route_id"]) / "mutations.json")
     next_node_id = _next_effective_node_id(route, mutations, completed, active_node_id)
+    completion_ledger_path = _write_node_completion_ledger(
+        project_root,
+        run_root,
+        run_state,
+        frontier,
+        completed_node_id=active_node_id,
+        completed_nodes=completed,
+        next_node_id=next_node_id,
+    )
     frontier.update(
         {
             "schema_version": "flowpilot.execution_frontier.v1",
@@ -8692,6 +8959,7 @@ def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state:
             "status": "current_node_loop" if next_node_id else "node_completed_by_pm",
             "active_node_id": next_node_id or active_node_id,
             "completed_nodes": completed,
+            "latest_node_completion_ledger_path": project_relative(project_root, completion_ledger_path),
             "updated_at": utc_now(),
             "source": "pm_completes_current_node_from_reviewed_result",
         }
@@ -9188,6 +9456,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             continue
         if entry.get("requires_active_node_children") and not _active_node_has_children(run_root, _active_frontier(run_root)):
             continue
+        to_role = _system_card_to_role(run_root, entry)
         if not run_state.get("manifest_check_requested"):
             return make_action(
                 action_type="check_prompt_manifest",
@@ -9196,14 +9465,15 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 summary="Controller must check prompt manifest before delivering the next system card.",
                 allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
                 allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_card_id": entry["card_id"], "to_role": entry["to_role"]},
+                extra={"next_card_id": entry["card_id"], "to_role": to_role},
             )
         card = manifest_card(manifest, entry["card_id"])
         delivery_extra = {"postcondition": entry["flag"]}
         delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
         if entry["card_id"] == "reviewer.startup_fact_check":
             delivery_extra.update(_startup_mechanical_audit_action_extra(project_root, run_root, run_state))
-        delivery_context = _live_card_delivery_context(project_root, run_root, run_state, entry, card)
+        resolved_entry = {**entry, "to_role": to_role}
+        delivery_context = _live_card_delivery_context(project_root, run_root, run_state, resolved_entry, card)
         delivery_extra["delivery_context"] = delivery_context
         allowed_reads = [project_relative(project_root, run_root / "runtime_kit" / str(card["path"]))]
         allowed_reads.extend(
@@ -9222,14 +9492,31 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             action_type="deliver_system_card",
             actor="controller",
             label=entry["label"],
-            summary=f"Deliver system card {entry['card_id']} to {entry['to_role']}.",
+            summary=f"Deliver system card {entry['card_id']} to {to_role}.",
             allowed_reads=allowed_reads,
             allowed_writes=[project_relative(project_root, run_root / "prompt_delivery_ledger.json")],
             card_id=entry["card_id"],
-            to_role=entry["to_role"],
+            to_role=to_role,
             extra=delivery_extra,
         )
     return None
+
+
+def _system_card_to_role(run_root: Path, entry: dict[str, Any]) -> str:
+    default_role = str(entry.get("to_role") or "")
+    if entry.get("card_id") == "worker.research_report":
+        index_path = _research_packet_index_path(run_root)
+        if index_path.exists():
+            try:
+                index = _load_packet_index(index_path, label="research")
+            except RouterError:
+                return default_role
+            packets = index.get("packets")
+            if isinstance(packets, list) and packets:
+                to_role = str(packets[0].get("to_role") or "").strip()
+                if to_role:
+                    return to_role
+    return default_role
 
 
 def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
@@ -9396,6 +9683,16 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
         payload = _latest_event_payload(run_state, "pm_registers_current_node_packet")
         envelope_path = _packet_envelope_path(project_root, run_state, payload)
         envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        frontier = _active_frontier(run_root)
+        grant_path = _active_node_write_grant_path(run_root, frontier)
+        grant_extra: dict[str, Any] = {}
+        relay_allowed_reads = [project_relative(project_root, envelope_path)]
+        if grant_path.exists():
+            relay_allowed_reads.append(project_relative(project_root, grant_path))
+            grant_extra = {
+                "current_node_write_grant_path": project_relative(project_root, grant_path),
+                "current_node_write_grant_hash": hashlib.sha256(grant_path.read_bytes()).hexdigest(),
+            }
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="check_packet_ledger",
@@ -9411,7 +9708,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             actor="controller",
             label="current_node_packet_relayed_after_reviewer_dispatch",
             summary=f"Relay current-node packet {envelope['packet_id']} to {envelope['to_role']} without opening its body.",
-            allowed_reads=[project_relative(project_root, envelope_path)],
+            allowed_reads=relay_allowed_reads,
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
             to_role=str(envelope["to_role"]),
             extra={
@@ -9419,6 +9716,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 "postcondition": "current_node_packet_relayed",
                 "controller_visibility": "packet_envelope_only",
                 "sealed_body_reads_allowed": False,
+                **grant_extra,
             },
         )
     if flags.get("current_node_worker_result_returned") and not flags.get("current_node_result_relayed_to_reviewer"):
@@ -9451,6 +9749,102 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             },
         )
     return None
+
+
+def _expected_role_decision_wait_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    *,
+    label: str,
+    summary: str,
+    allowed_external_events: list[str],
+    to_role: str,
+) -> dict[str, Any]:
+    return make_action(
+        action_type="await_role_decision",
+        actor="controller",
+        label=label,
+        summary=summary,
+        allowed_reads=[project_relative(project_root, run_state_path(run_root))],
+        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+        to_role=to_role,
+        extra={
+            "allowed_external_events": allowed_external_events,
+            "controller_only_mode_active": True,
+            "controller_may_create_project_evidence": False,
+            "expected_wait_is_not_control_blocker": True,
+        },
+    )
+
+
+def _event_wait_role(event: str, meta: dict[str, str]) -> str:
+    del meta
+    if event.startswith("pm_"):
+        return "project_manager"
+    if event.startswith("reviewer_") or event.startswith("current_node_reviewer_"):
+        return "human_like_reviewer"
+    if event.startswith("product_officer_"):
+        return "product_flowguard_officer"
+    if event.startswith("process_officer_"):
+        return "process_flowguard_officer"
+    if event.startswith("worker_"):
+        return "worker_a"
+    if event.startswith("host_"):
+        return "host"
+    if event.startswith("controller_") or event in {"capability_evidence_synced"}:
+        return "controller"
+    if event == "research_capability_decision_recorded":
+        return "project_manager"
+    return "project_manager"
+
+
+def _pending_expected_external_event_groups(run_state: dict[str, Any]) -> list[list[tuple[str, dict[str, str]]]]:
+    flags = run_state["flags"]
+    grouped: dict[str, list[tuple[str, dict[str, str]]]] = {}
+    ordered_requires: list[str] = []
+    for event, meta in EXTERNAL_EVENTS.items():
+        required_flag = meta.get("requires_flag")
+        if not required_flag:
+            continue
+        if required_flag not in grouped:
+            grouped[required_flag] = []
+            ordered_requires.append(required_flag)
+        grouped[required_flag].append((event, meta))
+
+    pending: list[list[tuple[str, dict[str, str]]]] = []
+    for required_flag in ordered_requires:
+        if not flags.get(required_flag):
+            continue
+        group = grouped[required_flag]
+        if any(flags.get(meta["flag"]) for _event, meta in group):
+            continue
+        pending.append(group)
+    return pending
+
+
+def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    pending_groups = _pending_expected_external_event_groups(run_state)
+    if not pending_groups:
+        return None
+    group = pending_groups[0]
+    allowed_events = [event for event, _meta in group]
+    roles = sorted({_event_wait_role(event, meta) for event, meta in group})
+    required_flag = str(group[0][1].get("requires_flag") or "")
+    role_label = roles[0] if len(roles) == 1 else ",".join(roles)
+    safe_event_label = "_or_".join(allowed_events).replace("-", "_")
+    return _expected_role_decision_wait_action(
+        project_root,
+        run_state,
+        run_root,
+        label=f"controller_waits_for_expected_event_{safe_event_label}",
+        summary=(
+            f"Prerequisite {required_flag} is satisfied and no controller action is due. "
+            f"Controller must wait for expected external event(s): {', '.join(allowed_events)}."
+        ),
+        allowed_external_events=allowed_events,
+        to_role=role_label,
+    )
 
 
 def compute_controller_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any]:
@@ -9500,15 +9894,26 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         action = _next_current_node_packet_action(project_root, run_state, run_root)
     if action is None:
-        action = make_action(
-            action_type="await_role_decision",
-            actor="controller",
-            label="controller_waits_for_pm_or_reviewer_event",
-            summary="No system card or mail is due. Controller must wait for a PM/reviewer/worker event and may not infer the next project decision.",
-            allowed_reads=[project_relative(project_root, run_state_path(run_root))],
-            allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-            extra={"allowed_external_events": sorted(EXTERNAL_EVENTS)},
+        action = _next_expected_role_decision_wait_action(project_root, run_state, run_root)
+    if action is None:
+        _write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source="router_no_legal_next_action",
+            error_message=(
+                "Controller has no legal next action; PM repair or routing decision is required before any "
+                "further route, mail, packet, or project work."
+            ),
+            action_type="controller_no_legal_next_action",
+            payload={
+                "path": project_relative(project_root, run_state_path(run_root)),
+                "role": "controller",
+            },
         )
+        action = _next_control_blocker_action(project_root, run_state, run_root)
+        if action is None:
+            raise RouterError("no legal next action control blocker was not materialized")
     run_state["pending_action"] = action
     append_history(run_state, "router_computed_next_controller_action", {"action_type": action["action_type"]})
     save_run_state(run_root, run_state)
@@ -9856,8 +10261,16 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         and run_state["flags"].get("startup_fact_reported")
         and run_state["flags"].get("pm_startup_activation_card_delivered")
     )
+    repeatable_route_draft_repair = (
+        event == "pm_writes_route_draft"
+        and run_state["flags"].get(flag)
+        and not run_state["flags"].get("route_activated_by_pm")
+    )
     if run_state["flags"].get(flag) and not (
-        repeatable_pm_repair_decision or repeatable_gate_decision or repeatable_startup_repair_request
+        repeatable_pm_repair_decision
+        or repeatable_gate_decision
+        or repeatable_startup_repair_request
+        or repeatable_route_draft_repair
     ):
         resolved = _resolve_delivered_control_blocker(
             project_root,
@@ -10070,6 +10483,8 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     elif event == "capability_evidence_synced":
         _sync_capability_evidence(project_root, run_root, run_state, payload)
     elif event == "pm_writes_route_draft":
+        if repeatable_route_draft_repair:
+            _reset_route_review_after_route_draft_repair(run_state)
         _write_route_draft(project_root, run_root, run_state, payload)
     elif event == "process_officer_passes_route_check":
         _write_role_gate_report(

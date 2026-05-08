@@ -4724,3 +4724,53 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep packet lifecycle checks in the standard FlowGuard sweep for future FlowPilot packet, router, reviewer, and PM repair changes.
+
+
+## flowpilot-legal-wait-contract-convergence-20260508 - Model legal waits instead of phase-specific no-next-action patches
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot UI-route work exposed that a normal role wait after reviewer/PM handoff could be misclassified as Controller no-next-action, encouraging Controller route/work takeover
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T06:20:00+02:00
+- Ended: 2026-05-08T08:38:41+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_router_loop_model.py
+- simulations/run_flowpilot_router_loop_checks.py
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+- simulations/flowpilot_packet_lifecycle_model.py
+- simulations/run_flowpilot_packet_lifecycle_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py`
+- OK by background subagent: `python simulations\run_meta_checks.py --fast`
+- OK by background subagent: `python simulations\run_capability_checks.py --fast`
+- OK by background subagent: `python -m unittest tests.test_flowpilot_router_runtime`
+- OK by background subagent: related FlowPilot/router/skill unittest suites
+- OK: `python skills\flowpilot\assets\flowpilot_router.py --json reconcile-run`
+
+### Findings
+- The old router-loop model only represented selected terminal waits. Runtime then revealed a model miss: some valid PM/reviewer waits looked like no-next-action from the Controller's local perspective.
+- Router runtime now derives expected waits from `EXTERNAL_EVENTS.requires_flag` and the corresponding event flags instead of a phase-specific if-list.
+- Router-loop modeling now has `EXPECTED_ROLE_EVENT_CONTRACTS`; each contract names prerequisite state and one or more satisfying role-event states. The model automatically generates a blocker hazard for every reachable unsatisfied legal wait.
+- The current active run's live audit initially reported 2 mutable role-output envelope hash mismatches for `flow.draft.json` / `flow.json`. `reconcile-run` repaired 2 role-output envelope hashes and 36 prompt delivery contexts. The follow-up control-plane live audit reports zero errors and zero warnings.
+
+### Counterexamples
+- The router-loop model still detects true no-next-action without a PM blocker, Controller project work after no-next-action, Controller sealed-body reads, Controller-origin evidence, missing write grants, reviewer decisions before result relay, PM completion before reviewer pass, final ledger gaps, and all generated legal-wait blocker hazards.
+
+### Friction Points
+- The first attempted implementation drifted toward a hand-written wait list. The runtime failure was treated as a model miss, and the fix was moved back into executable modeling before trusting the router change.
+- The repo still has a large `flowpilot_router.py`; this round intentionally did not split it, to avoid mixing protocol convergence with file-structure refactoring.
+
+### Skipped Steps
+- Production replay adapter for the abstract router-loop model remains skipped with an explicit reason: no adapter exists in this repository.
+
+### Next Actions
+- Keep legal waits table/contract driven. Future role-event additions should update the event contract/model and rely on generated legal-wait hazards, not add new phase-specific no-next-action branches.
+- Split `flowpilot_router.py` later as maintenance debt after protocol behavior stabilizes.

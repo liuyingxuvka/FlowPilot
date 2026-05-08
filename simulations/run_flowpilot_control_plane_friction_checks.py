@@ -29,6 +29,9 @@ REQUIRED_LABELS = (
     "router_accepts_reviewer_report",
     "pm_material_understanding_written_to_canonical_files",
     "product_architecture_card_delivered_with_material_context_and_fresh_views",
+    "pm_writes_route_draft_with_nonempty_nodes",
+    "route_process_check_card_delivered_with_route_draft_context",
+    "process_officer_passes_route_check_after_nonempty_route",
     "user_stop_requested",
     "run_lifecycle_reconciled_all_authorities",
     "route_state_snapshot_refreshed_after_lifecycle_change",
@@ -47,6 +50,8 @@ HAZARD_EXPECTED_FAILURES = {
     "product_architecture_delivery_missing_material_context": "product architecture card was delivered without PM material-understanding source paths",
     "protocol_blocker_file_unregistered": "protocol blocker file existed without router-visible blocker registration",
     "control_blocker_index_stale_after_artifact_update": "router control blocker index disagreed with control blocker artifact status",
+    "pm_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
+    "pm_repair_followup_event_not_normalized": "PM repair follow-up event could not be matched by normalized router resolution logic",
     "phase_card_missing_required_upstream_source": "delivered phase card was missing required upstream source paths",
     "delivered_card_phase_context_stale": "delivered card current_phase did not match its actual workflow phase",
     "terminal_snapshot_flag_mismatch": "terminal route_state_snapshot flags disagreed with terminal run status",
@@ -55,6 +60,9 @@ HAZARD_EXPECTED_FAILURES = {
     "role_output_hash_replay_mismatch": "persisted role-output envelope hashes were not replayable against body paths",
     "frontier_stale_after_product_architecture_delivery": "execution frontier remained at material_scan after product architecture delivery",
     "display_view_stale_after_product_architecture_delivery": "route snapshot or display plan remained stale after product architecture delivery",
+    "route_process_check_on_empty_route_draft": "route process check was delivered for an empty route draft",
+    "route_process_check_on_shadow_route_draft": "route process check used a shadow route draft instead of the canonical route source",
+    "route_draft_repair_kept_stale_route_checks": "route draft repair left stale route-check flags active",
     "multiple_active_tasks_under_current_json_only": "multiple active UI tasks were exposed under current_json_only authority",
     "optimized_transaction_without_hash_check": "optimized relay transaction skipped delivery, receipt, result-return, role, or hash evidence",
     "controller_reads_sealed_body": "Controller read sealed packet/result body",
@@ -93,12 +101,18 @@ def _state_id(state: model.State) -> str:
         f"stage_views={state.stage_advanced_after_material_scan},"
         f"{state.frontier_fresh_after_stage_advance},{state.product_stage_view_published},"
         f"{state.product_stage_view_fresh}|"
+        f"route_draft={state.route_draft_written},{state.route_draft_has_nodes},"
+        f"{state.route_draft_single_canonical_source},{state.route_draft_shadow_source_used},"
+        f"{state.route_process_check_card_delivered},{state.route_process_check_passed},"
+        f"{state.route_draft_repaired_after_check},{state.route_review_flags_reset_after_draft_repair}|"
         f"opt={state.optimized_relay_transaction},{state.optimized_transaction_records_delivery},"
         f"{state.optimized_transaction_records_open_receipts},"
         f"{state.optimized_transaction_records_result_return}|"
         f"role_hash={state.role_identity_checked},{state.hash_verified}|"
         f"blocker={state.receipt_missing_blocker},{state.control_blocker_lane},"
-        f"{state.control_blocker_target_role}|stop={state.stop_requested},"
+        f"{state.control_blocker_target_role},{state.pm_repair_decision_recorded},"
+        f"{state.control_blocker_followup_event_matchable},"
+        f"{state.control_resolution_predicate_normalized}|stop={state.stop_requested},"
         f"{state.current_status_stopped},hb={state.continuation_heartbeat_active},"
         f"crew={state.crew_live_agents_active},packet_loop={state.packet_loop_active},"
         f"frontier={state.frontier_terminal}|snapshot={state.snapshot_published_as_active},"

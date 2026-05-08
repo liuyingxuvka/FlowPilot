@@ -51,12 +51,16 @@ class State:
 
     dispatch_gate_checked: bool = False
     packet_body_hash_identity_synced: bool = False
+    packet_body_path_alias_normalized: bool = False
+    result_body_path_alias_normalized: bool = False
     reviewer_dispatch_passed: bool = False
     packet_relayed_by_controller: bool = False
     packet_open_envelope_receipt: bool = False
     packet_open_ledger_receipt: bool = False
+    write_grant_issued: bool = False
 
     worker_result_written: bool = False
+    worker_project_write_performed: bool = False
     result_envelope_exists: bool = False
     result_ledger_absorbed: bool = False
     completed_agent_id_maps_to_role: bool = False
@@ -70,6 +74,7 @@ class State:
 
     control_blocker_active: bool = False
     pm_repair_decision_recorded: bool = False
+    followup_event_already_recorded: bool = False
     followup_reaudit_passed: bool = False
 
 
@@ -143,6 +148,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     followup_reaudit_passed=True,
                     dispatch_gate_checked=True,
                     packet_body_hash_identity_synced=True,
+                    packet_body_path_alias_normalized=True,
+                    result_body_path_alias_normalized=True,
+                ),
+            )
+            yield Transition(
+                "already_recorded_followup_resolves_pm_control_blocker",
+                _inc(
+                    state,
+                    control_blocker_active=False,
+                    followup_event_already_recorded=True,
+                    followup_reaudit_passed=True,
+                    dispatch_gate_checked=True,
+                    packet_body_hash_identity_synced=True,
+                    packet_body_path_alias_normalized=True,
+                    result_body_path_alias_normalized=True,
                 ),
             )
             return
@@ -150,7 +170,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.dispatch_gate_checked:
         yield Transition(
             "dispatch_gate_checks_body_envelope_and_ledger_hash_identity",
-            _inc(state, dispatch_gate_checked=True, packet_body_hash_identity_synced=True),
+            _inc(
+                state,
+                dispatch_gate_checked=True,
+                packet_body_hash_identity_synced=True,
+                packet_body_path_alias_normalized=True,
+                result_body_path_alias_normalized=True,
+            ),
         )
         yield Transition(
             "pm_hash_repair_requires_followup_reaudit",
@@ -173,11 +199,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.write_grant_issued:
+        yield Transition(
+            "write_grant_issued_from_authorized_packet_scope",
+            _inc(state, write_grant_issued=True),
+        )
+        return
+
     if not state.worker_result_written:
         yield Transition(
-            "worker_result_written_after_packet_open_receipts",
+            "worker_result_written_under_write_grant",
             _inc(
                 state,
+                worker_project_write_performed=True,
                 worker_result_written=True,
                 result_envelope_exists=True,
                 result_ledger_absorbed=True,
@@ -230,7 +264,12 @@ def is_success(state: State) -> bool:
 
 def dispatch_requires_hash_identity(state: State, trace) -> InvariantResult:
     del trace
-    if state.reviewer_dispatch_passed and not (state.dispatch_gate_checked and state.packet_body_hash_identity_synced):
+    if state.reviewer_dispatch_passed and not (
+        state.dispatch_gate_checked
+        and state.packet_body_hash_identity_synced
+        and state.packet_body_path_alias_normalized
+        and state.result_body_path_alias_normalized
+    ):
         return InvariantResult.fail("dispatch passed without envelope/ledger packet body hash identity")
     return InvariantResult.pass_()
 
@@ -240,6 +279,7 @@ def result_relay_requires_packet_open_and_result_ledger(state: State, trace) -> 
     if state.result_relayed_by_controller and not (
         state.packet_open_envelope_receipt
         and state.packet_open_ledger_receipt
+        and state.write_grant_issued
         and state.result_envelope_exists
         and state.result_ledger_absorbed
     ):
@@ -258,6 +298,15 @@ def reviewer_pass_requires_complete_runtime_receipts(state: State, trace) -> Inv
         and state.completed_agent_id_maps_to_role
     ):
         return InvariantResult.fail("reviewer pass occurred without complete packet/result receipts and agent role authority")
+    return InvariantResult.pass_()
+
+
+def worker_project_writes_require_write_grant(state: State, trace) -> InvariantResult:
+    del trace
+    if state.worker_project_write_performed and not state.write_grant_issued:
+        return InvariantResult.fail("worker project write occurred before a current-node write grant")
+    if state.worker_result_written and not state.write_grant_issued:
+        return InvariantResult.fail("worker result was written before a current-node write grant")
     return InvariantResult.pass_()
 
 
@@ -290,13 +339,18 @@ INVARIANTS = (
     ),
     Invariant(
         "result_relay_requires_packet_open_and_result_ledger",
-        "Controller may relay result only after packet-open receipts and result ledger absorption.",
+        "Controller may relay result only after packet-open receipts, write grant, and result ledger absorption.",
         result_relay_requires_packet_open_and_result_ledger,
     ),
     Invariant(
         "reviewer_pass_requires_complete_runtime_receipts",
         "Reviewer pass requires complete packet/result runtime receipts and completed-agent authority.",
         reviewer_pass_requires_complete_runtime_receipts,
+    ),
+    Invariant(
+        "worker_project_writes_require_write_grant",
+        "Worker project writes and results require a PM packet-scoped write grant.",
+        worker_project_writes_require_write_grant,
     ),
     Invariant(
         "pm_absorption_requires_reviewer_packet_audit",
@@ -325,10 +379,12 @@ REQUIRED_LABELS = (
     "pm_hash_repair_requires_followup_reaudit",
     "pm_repair_decision_recorded_blocker_still_active",
     "followup_reaudit_resolves_pm_control_blocker",
+    "already_recorded_followup_resolves_pm_control_blocker",
     "reviewer_dispatch_passes_after_hash_identity",
     "controller_relays_packet_envelope_only",
     "packet_runtime_open_records_envelope_and_ledger",
-    "worker_result_written_after_packet_open_receipts",
+    "write_grant_issued_from_authorized_packet_scope",
+    "worker_result_written_under_write_grant",
     "controller_relays_result_after_packet_and_result_ledger_checks",
     "reviewer_runtime_open_records_envelope_and_ledger",
     "reviewer_passes_after_packet_result_and_agent_audit",
@@ -358,6 +414,22 @@ def hazard_states() -> dict[str, State]:
             packet_body_hash_identity_synced=False,
             reviewer_dispatch_passed=True,
         ),
+        "packet_body_alias_not_normalized": State(
+            status="running",
+            dispatch_gate_checked=True,
+            packet_body_hash_identity_synced=True,
+            packet_body_path_alias_normalized=False,
+            result_body_path_alias_normalized=True,
+            reviewer_dispatch_passed=True,
+        ),
+        "result_body_alias_not_normalized": State(
+            status="running",
+            dispatch_gate_checked=True,
+            packet_body_hash_identity_synced=True,
+            packet_body_path_alias_normalized=True,
+            result_body_path_alias_normalized=False,
+            reviewer_dispatch_passed=True,
+        ),
         "packet_open_envelope_only": State(
             status="running",
             dispatch_gate_checked=True,
@@ -378,9 +450,24 @@ def hazard_states() -> dict[str, State]:
             packet_relayed_by_controller=True,
             packet_open_envelope_receipt=True,
             packet_open_ledger_receipt=True,
+            write_grant_issued=True,
             result_envelope_exists=True,
             result_ledger_absorbed=False,
             result_relayed_by_controller=True,
+        ),
+        "worker_write_without_grant": State(
+            status="running",
+            dispatch_gate_checked=True,
+            packet_body_hash_identity_synced=True,
+            packet_body_path_alias_normalized=True,
+            result_body_path_alias_normalized=True,
+            reviewer_dispatch_passed=True,
+            packet_relayed_by_controller=True,
+            packet_open_envelope_receipt=True,
+            packet_open_ledger_receipt=True,
+            write_grant_issued=False,
+            worker_project_write_performed=True,
+            worker_result_written=True,
         ),
         "result_open_envelope_only": State(
             status="running",

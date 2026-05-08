@@ -22,11 +22,17 @@ Risk intent brief:
   current evidence, final replay without a clean ledger or segment decisions,
   Controller body reads, and Controller-origin project evidence.
 - Hard invariants: current-node packets require active route and fresh frontier;
-  reviewer dispatch gates worker work; worker and officer results are
+  controller-only mode fail-closes to PM when no legal next action exists;
+  expected PM/reviewer role-event waits must not be materialized as
+  no-next-action blockers;
+  current-node packets gate write grants; reviewer dispatch gates worker work;
+  worker and officer results are
   packet-ledger checked before reviewer/PM relay; repair/recheck returns to the
   reviewer before PM completion; reviewer result decisions require the
   result-review system card after relay; mutation requires reviewer block and stale
   evidence/frontier markers; same-scope replay reruns after mutation;
+  PM node completion updates the durable completion ledger before parent replay
+  or task completion projection;
   evidence/quality package and reviewer evidence quality pass precede final
   ledger source-of-truth generation; final ledger and segmented replay are
   ordered terminal gates; Controller remains envelope-only.
@@ -62,6 +68,9 @@ class State:
     route_version: int = 0
 
     controller_boundary_confirmed: bool = False
+    controller_only_mode_active: bool = False
+    no_next_action_detected: bool = False
+    pm_decision_required_blocker_written: bool = False
     controller_read_sealed_body: bool = False
     controller_originated_project_evidence: bool = False
     controller_relayed_body_content: bool = False
@@ -89,8 +98,10 @@ class State:
     node_acceptance_plan_written: bool = False
     reviewer_node_acceptance_plan_reviewed: bool = False
     current_node_packet_registered: bool = False
+    write_grant_issued: bool = False
     reviewer_dispatch_allowed: bool = False
     worker_dispatched: bool = False
+    worker_project_write_performed: bool = False
     worker_packet_identity_boundary_present: bool = False
     worker_result_returned: bool = False
     worker_result_identity_boundary_present: bool = False
@@ -108,7 +119,9 @@ class State:
     repair_result_ledger_checked: bool = False
     repair_result_routed_to_reviewer: bool = False
     repair_recheck_passed: bool = False
+    pm_node_completion_card_delivered: bool = False
     pm_node_completed: bool = False
+    node_completion_ledger_updated: bool = False
     parent_backward_targets_enumerated: bool = False
     parent_backward_replay_passed: bool = False
     parent_pm_segment_decision_recorded: bool = False
@@ -123,6 +136,7 @@ class State:
     current_route_scan_done: bool = False
     pm_evidence_quality_package_card_delivered: bool = False
     evidence_quality_package_written: bool = False
+    evidence_quality_review_card_delivered: bool = False
     evidence_quality_reviewer_passed: bool = False
     stale_or_unresolved_evidence_present: bool = False
     pending_generated_resources: bool = False
@@ -139,12 +153,280 @@ class State:
     terminal_replay_parent_segment_passed: bool = False
     terminal_replay_leaf_segment_passed: bool = False
     terminal_replay_pm_segment_decisions_recorded: bool = False
+    final_backward_replay_card_delivered: bool = False
     final_backward_replay_passed: bool = False
+    task_completion_projection_published: bool = False
+    pm_terminal_closure_card_delivered: bool = False
 
 
 class Transition(NamedTuple):
     label: str
     state: State
+
+
+Condition = tuple[str, object]
+ConditionGroup = tuple[Condition, ...]
+
+
+@dataclass(frozen=True)
+class EventContract:
+    """Abstract role-event contract used to distinguish legal waits from dead ends."""
+
+    name: str
+    requires_all: ConditionGroup
+    satisfied_by_any: tuple[ConditionGroup, ...]
+    role: str
+
+
+EXPECTED_ROLE_EVENT_CONTRACTS: tuple[EventContract, ...] = (
+    EventContract(
+        name="officer_result_returned",
+        role="officer",
+        requires_all=(("officer_packet_relayed", True),),
+        satisfied_by_any=(
+            (("officer_result_returned", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_absorbs_officer_result",
+        role="pm",
+        requires_all=(("officer_result_routed_to_pm", True),),
+        satisfied_by_any=(
+            (("pm_absorbed_officer_result", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_opens_current_node_high_standard_gate",
+        role="pm",
+        requires_all=(
+            ("pm_absorbed_officer_result", True),
+            ("pm_prior_path_context_reviewed", True),
+        ),
+        satisfied_by_any=(
+            (("pm_node_high_standard_gate_opened", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_writes_node_acceptance_plan",
+        role="pm",
+        requires_all=(
+            ("pm_node_high_standard_gate_opened", True),
+            ("pm_prior_path_context_reviewed", True),
+        ),
+        satisfied_by_any=(
+            (("node_acceptance_plan_written", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_reviews_node_acceptance_plan",
+        role="reviewer",
+        requires_all=(("node_acceptance_plan_written", True),),
+        satisfied_by_any=(
+            (("reviewer_node_acceptance_plan_reviewed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_registers_current_node_packet",
+        role="pm",
+        requires_all=(("reviewer_node_acceptance_plan_reviewed", True),),
+        satisfied_by_any=(
+            (("current_node_packet_registered", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_allows_current_node_dispatch",
+        role="reviewer",
+        requires_all=(
+            ("current_node_packet_registered", True),
+            ("write_grant_issued", True),
+        ),
+        satisfied_by_any=(
+            (("reviewer_dispatch_allowed", True),),
+        ),
+    ),
+    EventContract(
+        name="worker_current_node_result_returned",
+        role="worker",
+        requires_all=(("worker_dispatched", True),),
+        satisfied_by_any=(
+            (("worker_result_returned", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_current_node_result_decision",
+        role="reviewer",
+        requires_all=(("reviewer_worker_result_card_delivered", True),),
+        satisfied_by_any=(
+            (("reviewer_decision", "pass"),),
+            (("reviewer_decision", "block"),),
+        ),
+    ),
+    EventContract(
+        name="pm_repair_or_route_mutation_decision",
+        role="pm",
+        requires_all=(
+            ("reviewer_decision", "block"),
+            ("pm_prior_path_context_reviewed", True),
+        ),
+        satisfied_by_any=(
+            (("repair_packet_registered", True),),
+            (("route_mutation_count", 1),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_allows_repair_dispatch",
+        role="reviewer",
+        requires_all=(("repair_packet_registered", True),),
+        satisfied_by_any=(
+            (("repair_dispatch_allowed", True),),
+        ),
+    ),
+    EventContract(
+        name="worker_repair_result_returned",
+        role="worker",
+        requires_all=(("repair_worker_dispatched", True),),
+        satisfied_by_any=(
+            (("repair_result_returned", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_rechecks_repair_result",
+        role="reviewer",
+        requires_all=(("repair_result_routed_to_reviewer", True),),
+        satisfied_by_any=(
+            (("repair_recheck_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_completes_current_node",
+        role="pm",
+        requires_all=(
+            ("reviewer_decision", "pass"),
+            ("pm_node_completion_card_delivered", True),
+        ),
+        satisfied_by_any=(
+            (("pm_node_completed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_enumerates_parent_backward_targets",
+        role="pm",
+        requires_all=(("node_completion_ledger_updated", True),),
+        satisfied_by_any=(
+            (("parent_backward_targets_enumerated", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_parent_backward_replay",
+        role="reviewer",
+        requires_all=(("parent_backward_targets_enumerated", True),),
+        satisfied_by_any=(
+            (("parent_backward_replay_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_records_parent_segment_decision",
+        role="pm",
+        requires_all=(
+            ("parent_backward_replay_passed", True),
+            ("pm_prior_path_context_reviewed", True),
+        ),
+        satisfied_by_any=(
+            (("parent_pm_segment_decision_recorded", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_completes_parent_node",
+        role="pm",
+        requires_all=(("parent_pm_segment_decision_recorded", True),),
+        satisfied_by_any=(
+            (("parent_node_completed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_writes_evidence_quality_package",
+        role="pm",
+        requires_all=(("pm_evidence_quality_package_card_delivered", True),),
+        satisfied_by_any=(
+            (("evidence_quality_package_written", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_evidence_quality_review",
+        role="reviewer",
+        requires_all=(("evidence_quality_review_card_delivered", True),),
+        satisfied_by_any=(
+            (("evidence_quality_reviewer_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_generates_final_ledger_source_of_truth",
+        role="pm",
+        requires_all=(("pm_final_ledger_card_delivered", True),),
+        satisfied_by_any=(
+            (("final_ledger_source_of_truth_generated", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_builds_clean_final_ledger",
+        role="pm",
+        requires_all=(
+            ("pm_final_ledger_card_delivered", True),
+            ("final_ledger_source_of_truth_generated", True),
+        ),
+        satisfied_by_any=(
+            (("final_ledger_built", True), ("final_ledger_clean", True)),
+        ),
+    ),
+    EventContract(
+        name="reviewer_terminal_root_segment_replay",
+        role="reviewer",
+        requires_all=(("terminal_replay_map_generated_from_final_ledger", True),),
+        satisfied_by_any=(
+            (("terminal_replay_root_segment_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_terminal_parent_segment_replay",
+        role="reviewer",
+        requires_all=(("terminal_replay_root_segment_passed", True),),
+        satisfied_by_any=(
+            (("terminal_replay_parent_segment_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_terminal_leaf_segment_replay",
+        role="reviewer",
+        requires_all=(("terminal_replay_parent_segment_passed", True),),
+        satisfied_by_any=(
+            (("terminal_replay_leaf_segment_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_records_terminal_segment_decisions",
+        role="pm",
+        requires_all=(("terminal_replay_leaf_segment_passed", True),),
+        satisfied_by_any=(
+            (("terminal_replay_pm_segment_decisions_recorded", True),),
+        ),
+    ),
+    EventContract(
+        name="reviewer_final_backward_replay",
+        role="reviewer",
+        requires_all=(("final_backward_replay_card_delivered", True),),
+        satisfied_by_any=(
+            (("final_backward_replay_passed", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_terminal_closure",
+        role="pm",
+        requires_all=(("pm_terminal_closure_card_delivered", True),),
+        satisfied_by_any=(
+            (("status", "complete"),),
+        ),
+    ),
+)
 
 
 def initial_state() -> State:
@@ -221,8 +503,10 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         node_acceptance_plan_written=False,
         reviewer_node_acceptance_plan_reviewed=False,
         current_node_packet_registered=False,
+        write_grant_issued=False,
         reviewer_dispatch_allowed=False,
         worker_dispatched=False,
+        worker_project_write_performed=False,
         worker_packet_identity_boundary_present=False,
         worker_result_returned=False,
         worker_result_identity_boundary_present=False,
@@ -239,7 +523,9 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         repair_result_ledger_checked=False,
         repair_result_routed_to_reviewer=False,
         repair_recheck_passed=False,
+        pm_node_completion_card_delivered=False,
         pm_node_completed=False,
+        node_completion_ledger_updated=False,
         parent_backward_targets_enumerated=False,
         parent_backward_replay_passed=False,
         parent_pm_segment_decision_recorded=False,
@@ -248,6 +534,7 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         current_route_scan_done=False,
         pm_evidence_quality_package_card_delivered=False,
         evidence_quality_package_written=False,
+        evidence_quality_review_card_delivered=False,
         evidence_quality_reviewer_passed=False,
         stale_or_unresolved_evidence_present=False,
         pending_generated_resources=False,
@@ -264,9 +551,57 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         terminal_replay_parent_segment_passed=False,
         terminal_replay_leaf_segment_passed=False,
         terminal_replay_pm_segment_decisions_recorded=False,
+        final_backward_replay_card_delivered=False,
         final_backward_replay_passed=False,
+        task_completion_projection_published=False,
+        pm_terminal_closure_card_delivered=False,
         **changes,
     )
+
+
+def _condition_matches(state: State, condition: Condition) -> bool:
+    field_name, expected = condition
+    return getattr(state, field_name) == expected
+
+
+def _conditions_match(state: State, conditions: ConditionGroup) -> bool:
+    return all(_condition_matches(state, condition) for condition in conditions)
+
+
+def _event_contract_satisfied(state: State, contract: EventContract) -> bool:
+    return any(
+        _conditions_match(state, conditions)
+        for conditions in contract.satisfied_by_any
+    )
+
+
+def expected_role_event_waits(state: State) -> tuple[str, ...]:
+    return tuple(
+        contract.name
+        for contract in EXPECTED_ROLE_EVENT_CONTRACTS
+        if _conditions_match(state, contract.requires_all)
+        and not _event_contract_satisfied(state, contract)
+    )
+
+
+def expected_wait_hazard_states() -> dict[str, State]:
+    samples: dict[str, State] = {}
+    pending = [initial_state()]
+    seen = {initial_state()}
+    while pending:
+        state = pending.pop(0)
+        if state.status not in {"blocked", "complete"}:
+            for wait_name in expected_role_event_waits(state):
+                hazard_name = f"expected_role_event_wait_{wait_name}_materializes_blocker"
+                samples.setdefault(
+                    hazard_name,
+                    replace(state, pm_decision_required_blocker_written=True),
+                )
+        for transition in next_safe_states(state):
+            if transition.state not in seen:
+                seen.add(transition.state)
+                pending.append(transition.state)
+    return samples
 
 
 def next_safe_states(state: State) -> Iterable[Transition]:
@@ -281,9 +616,22 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 status="running",
                 holder="controller",
                 controller_boundary_confirmed=True,
+                controller_only_mode_active=True,
             ),
         )
         return
+
+    if not state.route_activated and state.route_version == 0:
+        yield Transition(
+            "controller_fail_closes_no_next_action_to_pm_blocker",
+            replace(
+                state,
+                status="blocked",
+                holder="pm",
+                no_next_action_detected=True,
+                pm_decision_required_blocker_written=True,
+            ),
+        )
 
     if state.route_mutation_count and not state.frontier_rewritten_after_mutation:
         yield Transition(
@@ -442,6 +790,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.write_grant_issued:
+        yield Transition(
+            "write_grant_issued_from_current_node_packet",
+            replace(state, holder="pm", write_grant_issued=True),
+        )
+        return
+
     if not state.reviewer_dispatch_allowed:
         yield Transition(
             "reviewer_dispatch_allowed_for_current_node",
@@ -467,6 +822,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(
                 state,
                 holder="controller",
+                worker_project_write_performed=True,
                 worker_result_returned=True,
                 worker_result_identity_boundary_present=True,
             ),
@@ -630,6 +986,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.reviewer_decision != "pass":
         return
 
+    if not state.pm_node_completion_card_delivered:
+        yield Transition(
+            "pm_node_completion_card_delivered_after_reviewer_pass",
+            replace(state, holder="pm", pm_node_completion_card_delivered=True),
+        )
+        return
+
     if not state.pm_node_completed:
         yield Transition(
             "pm_completes_current_node_after_reviewer_pass",
@@ -641,6 +1004,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 pm_prior_path_context_reviewed=False,
                 route_history_context_stale=True,
             ),
+        )
+        return
+
+    if not state.node_completion_ledger_updated:
+        yield Transition(
+            "node_completion_ledger_updated_after_pm_completion",
+            replace(state, holder="controller", node_completion_ledger_updated=True),
         )
         return
 
@@ -733,6 +1103,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 holder="pm",
                 evidence_quality_package_written=True,
                 evidence_quality_prior_context_used=True,
+            ),
+        )
+        return
+
+    if not state.evidence_quality_review_card_delivered:
+        yield Transition(
+            "evidence_quality_review_card_delivered_after_package",
+            replace(
+                state,
+                holder="reviewer",
+                evidence_quality_review_card_delivered=True,
             ),
         )
         return
@@ -858,9 +1239,33 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if not state.final_backward_replay_passed:
+        if not state.final_backward_replay_card_delivered:
+            yield Transition(
+                "final_backward_replay_card_delivered_after_terminal_segments",
+                replace(
+                    state,
+                    holder="reviewer",
+                    final_backward_replay_card_delivered=True,
+                ),
+            )
+            return
         yield Transition(
             "reviewer_final_backward_replay_after_all_segments",
             replace(state, holder="reviewer", final_backward_replay_passed=True),
+        )
+        return
+
+    if not state.task_completion_projection_published:
+        yield Transition(
+            "task_completion_projection_published_from_completion_ledger",
+            replace(state, holder="controller", task_completion_projection_published=True),
+        )
+        return
+
+    if not state.pm_terminal_closure_card_delivered:
+        yield Transition(
+            "pm_terminal_closure_card_delivered_after_completion_projection",
+            replace(state, holder="pm", pm_terminal_closure_card_delivered=True),
         )
         return
 
@@ -879,6 +1284,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Controller originated project evidence")
     if state.controller_relayed_body_content:
         failures.append("Controller relayed packet/result body content instead of envelope-only metadata")
+    if state.no_next_action_detected and not state.pm_decision_required_blocker_written:
+        failures.append("Controller detected no legal next action without writing a PM decision-required blocker")
+    if state.no_next_action_detected and state.controller_originated_project_evidence:
+        failures.append("Controller started project work after no-next-action instead of fail-closing to PM")
+    if expected_role_event_waits(state) and (
+        state.no_next_action_detected or state.pm_decision_required_blocker_written
+    ):
+        failures.append("expected role-event wait incorrectly wrote PM decision-required blocker")
 
     if state.route_activated and not state.controller_boundary_confirmed:
         failures.append("route activated before Controller relay boundary was confirmed")
@@ -931,8 +1344,14 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.reviewer_dispatch_allowed and not state.current_node_packet_registered:
         failures.append("reviewer dispatch allowed before current-node packet registration")
+    if state.write_grant_issued and not state.current_node_packet_registered:
+        failures.append("write grant issued before current-node packet registration")
     if state.worker_dispatched and not state.reviewer_dispatch_allowed:
         failures.append("worker dispatched before reviewer dispatch")
+    if state.worker_dispatched and not state.write_grant_issued:
+        failures.append("worker dispatched before current-node write grant")
+    if state.worker_project_write_performed and not state.write_grant_issued:
+        failures.append("worker project write occurred before current-node write grant")
     if state.worker_dispatched and not state.worker_packet_identity_boundary_present:
         failures.append("worker dispatched without packet recipient identity boundary")
     if state.worker_result_returned and not state.worker_dispatched:
@@ -982,12 +1401,18 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer pass after block recorded without repair recheck")
     if state.pm_node_completed and state.reviewer_decision != "pass":
         failures.append("PM completed current node before reviewer pass")
+    if state.pm_node_completion_card_delivered and state.reviewer_decision != "pass":
+        failures.append("PM node completion card delivered before reviewer pass")
     if state.pm_node_completed and state.reviewer_block_seen and not (
         state.route_mutation_count or state.repair_recheck_passed
     ):
         failures.append("PM completed repaired node before reviewer recheck or route mutation")
+    if state.node_completion_ledger_updated and not state.pm_node_completed:
+        failures.append("node completion ledger updated before PM node completion")
     if state.parent_backward_targets_enumerated and not state.pm_node_completed:
         failures.append("parent backward targets enumerated before current node completion")
+    if state.parent_backward_targets_enumerated and not state.node_completion_ledger_updated:
+        failures.append("parent backward targets enumerated before node completion ledger update")
     if state.parent_backward_replay_passed and not state.parent_backward_targets_enumerated:
         failures.append("parent backward replay passed before parent backward targets")
     if state.parent_pm_segment_decision_recorded and not state.parent_backward_replay_passed:
@@ -1032,8 +1457,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM evidence/quality package written before package card and current route scan")
     if state.evidence_quality_package_written and not state.evidence_quality_prior_context_used:
         failures.append("PM evidence/quality package written before PM read fresh prior path context")
+    if state.evidence_quality_review_card_delivered and not state.evidence_quality_package_written:
+        failures.append("evidence quality review card delivered before PM evidence/quality package")
     if state.evidence_quality_reviewer_passed and not state.evidence_quality_package_written:
         failures.append("reviewer evidence quality pass recorded before PM evidence/quality package")
+    if state.evidence_quality_reviewer_passed and not state.evidence_quality_review_card_delivered:
+        failures.append("reviewer evidence quality pass recorded before evidence quality review card")
     if state.unresolved_count_zero and not state.current_route_scan_done:
         failures.append("zero unresolved final ledger count confirmed before current route scan")
     if state.unresolved_count_zero and state.stale_or_unresolved_evidence_present:
@@ -1104,8 +1533,25 @@ def invariant_failures(state: State) -> list[str]:
         and state.terminal_replay_pm_segment_decisions_recorded
     ):
         failures.append("final backward replay passed before clean ledger, replay map, and PM segment decisions")
+    if (
+        state.final_backward_replay_card_delivered
+        and not state.terminal_replay_pm_segment_decisions_recorded
+    ):
+        failures.append("final backward replay card delivered before terminal replay segment decisions")
+    if state.final_backward_replay_passed and not state.final_backward_replay_card_delivered:
+        failures.append("final backward replay passed before reviewer card delivery")
+    if state.task_completion_projection_published and not (
+        state.node_completion_ledger_updated and state.final_backward_replay_passed
+    ):
+        failures.append("task completion projection published before node completion ledger and final backward replay")
+    if state.pm_terminal_closure_card_delivered and not state.task_completion_projection_published:
+        failures.append("PM terminal closure card delivered before task completion projection")
     if state.status == "complete" and not state.final_backward_replay_passed:
         failures.append("completion recorded before final backward replay")
+    if state.status == "complete" and not state.pm_terminal_closure_card_delivered:
+        failures.append("completion recorded before PM terminal closure card")
+    if state.status == "complete" and not state.task_completion_projection_published:
+        failures.append("completion recorded before task completion projection was derived from completion ledger")
 
     return failures
 
@@ -1122,15 +1568,19 @@ INVARIANTS = (
     Invariant(
         name="flowpilot_router_current_node_packet_loop",
         description=(
-        "The current-node packet loop requires route activation before packet "
+            "The current-node packet loop requires route activation before packet "
             "registration, a PM high-standard gate and reviewed node acceptance "
             "plan before the packet, officer lifecycle flags before officer "
-            "packet relay, reviewer dispatch before worker or repair work, "
+            "packet relay, controller no-next-action states fail-close to PM, "
+            "expected role-event waits never materialize PM blockers, "
+            "current-node packets gate write grants, reviewer dispatch before "
+            "worker or repair work, "
             "packet-ledger checks before worker/officer result relay, reviewer "
             "recheck before repaired completion, reviewer-blocked route mutation "
             "with stale evidence/frontier markers, same-scope replay after "
-            "mutation, parent backward replay plus PM segment decision before "
-            "parent completion, evidence-quality review and resource closure "
+            "mutation, node completion ledger updates before parent backward replay "
+            "or task completion projection, parent backward replay plus PM segment "
+            "decision before parent completion, evidence-quality review and resource closure "
             "before final ledger source of truth, and clean final ledger before "
             "segmented terminal backward replay."
         ),
@@ -1140,7 +1590,7 @@ INVARIANTS = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 70
+MAX_SEQUENCE_LENGTH = 90
 
 
 def build_workflow() -> Workflow:
@@ -1183,8 +1633,10 @@ def _active_packet_loop(**changes: object) -> State:
         node_acceptance_plan_written=True,
         reviewer_node_acceptance_plan_reviewed=True,
         current_node_packet_registered=True,
+        write_grant_issued=True,
         reviewer_dispatch_allowed=True,
         worker_dispatched=True,
+        worker_project_write_performed=True,
         worker_packet_identity_boundary_present=True,
         worker_result_returned=True,
         worker_result_identity_boundary_present=True,
@@ -1224,7 +1676,12 @@ def _mutated(**changes: object) -> State:
 
 
 def _node_completed(**changes: object) -> State:
-    return _reviewer_passed(pm_node_completed=True, **changes)
+    return _reviewer_passed(
+        pm_node_completion_card_delivered=True,
+        pm_node_completed=True,
+        node_completion_ledger_updated=True,
+        **changes,
+    )
 
 
 def _parent_completed(**changes: object) -> State:
@@ -1247,6 +1704,7 @@ def _final_ready(**changes: object) -> State:
         pm_evidence_quality_package_card_delivered=True,
         evidence_quality_package_written=True,
         evidence_quality_prior_context_used=True,
+        evidence_quality_review_card_delivered=True,
         evidence_quality_reviewer_passed=True,
         route_history_context_refreshed=True,
         pm_prior_path_context_reviewed=True,
@@ -1267,7 +1725,7 @@ def _final_ready(**changes: object) -> State:
 
 
 def hazard_states() -> dict[str, State]:
-    return {
+    hazards = {
         "packet_registered_before_route_activation": State(
             status="running",
             controller_boundary_confirmed=True,
@@ -1352,6 +1810,25 @@ def hazard_states() -> dict[str, State]:
             pm_node_high_standard_risks_reviewed=True,
             current_node_packet_registered=True,
         ),
+        "write_grant_before_packet_registration": State(
+            status="running",
+            controller_boundary_confirmed=True,
+            route_version=1,
+            route_activated=True,
+            write_grant_issued=True,
+        ),
+        "worker_dispatched_before_write_grant": _active_packet_loop(
+            write_grant_issued=False,
+            worker_project_write_performed=False,
+            worker_result_returned=False,
+            worker_result_identity_boundary_present=False,
+            worker_result_ledger_checked=False,
+            worker_result_routed_to_reviewer=False,
+            reviewer_worker_result_card_delivered=False,
+        ),
+        "worker_project_write_without_grant": _active_packet_loop(
+            write_grant_issued=False,
+        ),
         "reviewer_pass_without_routed_worker_result": _active_packet_loop(
             worker_result_routed_to_reviewer=False,
             reviewer_decision="pass",
@@ -1371,6 +1848,13 @@ def hazard_states() -> dict[str, State]:
         "pm_completion_without_reviewer_pass": _active_packet_loop(
             reviewer_decision="none",
             pm_node_completed=True,
+        ),
+        "node_completion_ledger_without_pm_completion": _reviewer_passed(
+            node_completion_ledger_updated=True,
+        ),
+        "expected_pm_completion_wait_materializes_blocker": _reviewer_passed(
+            pm_node_completion_card_delivered=True,
+            pm_decision_required_blocker_written=True,
         ),
         "repair_packet_without_reviewer_block": _active_packet_loop(
             repair_packet_registered=True,
@@ -1437,6 +1921,11 @@ def hazard_states() -> dict[str, State]:
             parent_backward_replay_passed=True,
             parent_node_completed=True,
         ),
+        "parent_targets_before_node_completion_ledger": _reviewer_passed(
+            pm_node_completed=True,
+            node_completion_ledger_updated=False,
+            parent_backward_targets_enumerated=True,
+        ),
         "parent_segment_decision_without_prior_path_context": _node_completed(
             parent_backward_targets_enumerated=True,
             parent_backward_replay_passed=True,
@@ -1454,6 +1943,22 @@ def hazard_states() -> dict[str, State]:
             pm_evidence_quality_package_card_delivered=True,
             evidence_quality_package_written=True,
             pm_final_ledger_card_delivered=True,
+        ),
+        "expected_evidence_quality_package_wait_materializes_blocker": _parent_completed(
+            current_route_scan_done=True,
+            pm_evidence_quality_package_card_delivered=True,
+            evidence_quality_package_written=False,
+            evidence_quality_review_card_delivered=False,
+            evidence_quality_reviewer_passed=False,
+            pm_decision_required_blocker_written=True,
+        ),
+        "expected_evidence_quality_review_wait_materializes_blocker": _parent_completed(
+            current_route_scan_done=True,
+            pm_evidence_quality_package_card_delivered=True,
+            evidence_quality_package_written=True,
+            evidence_quality_review_card_delivered=True,
+            evidence_quality_reviewer_passed=False,
+            pm_decision_required_blocker_written=True,
         ),
         "final_ledger_built_before_evidence_quality_reviewer_pass": _parent_completed(
             current_route_scan_done=True,
@@ -1530,6 +2035,19 @@ def hazard_states() -> dict[str, State]:
             route_history_context_refreshed=False,
             pm_prior_path_context_reviewed=False,
             route_history_context_stale=True,
+        ),
+        "expected_final_ledger_wait_materializes_blocker": _parent_completed(
+            current_route_scan_done=True,
+            pm_evidence_quality_package_card_delivered=True,
+            evidence_quality_package_written=True,
+            evidence_quality_review_card_delivered=True,
+            evidence_quality_reviewer_passed=True,
+            unresolved_count_zero=True,
+            pm_final_ledger_card_delivered=True,
+            final_ledger_source_of_truth_generated=False,
+            final_ledger_built=False,
+            final_ledger_clean=False,
+            pm_decision_required_blocker_written=True,
         ),
         "final_ledger_without_prior_path_context": _parent_completed(
             current_route_scan_done=True,
@@ -1645,6 +2163,11 @@ def hazard_states() -> dict[str, State]:
             terminal_replay_pm_segment_decisions_recorded=False,
             final_backward_replay_passed=True,
         ),
+        "expected_final_backward_replay_wait_materializes_blocker": _final_ready(
+            final_backward_replay_card_delivered=True,
+            final_backward_replay_passed=False,
+            pm_decision_required_blocker_written=True,
+        ),
         "controller_reads_sealed_body": State(
             status="running",
             controller_boundary_confirmed=True,
@@ -1655,24 +2178,72 @@ def hazard_states() -> dict[str, State]:
             controller_boundary_confirmed=True,
             controller_originated_project_evidence=True,
         ),
+        "no_next_action_without_pm_blocker": State(
+            status="running",
+            holder="controller",
+            controller_boundary_confirmed=True,
+            controller_only_mode_active=True,
+            no_next_action_detected=True,
+            pm_decision_required_blocker_written=False,
+        ),
+        "true_no_next_action_without_blocker": State(
+            status="running",
+            holder="controller",
+            controller_boundary_confirmed=True,
+            controller_only_mode_active=True,
+            no_next_action_detected=True,
+            pm_decision_required_blocker_written=False,
+        ),
+        "controller_does_project_work_after_no_next_action": State(
+            status="running",
+            holder="controller",
+            controller_boundary_confirmed=True,
+            controller_only_mode_active=True,
+            no_next_action_detected=True,
+            pm_decision_required_blocker_written=True,
+            controller_originated_project_evidence=True,
+        ),
         "controller_relays_body_content": State(
             status="running",
             controller_boundary_confirmed=True,
             controller_relayed_body_content=True,
         ),
+        "task_completion_projection_without_completion_ledger": _final_ready(
+            node_completion_ledger_updated=False,
+            final_backward_replay_passed=True,
+            task_completion_projection_published=True,
+        ),
+        "expected_pm_terminal_closure_wait_materializes_blocker": _final_ready(
+            final_backward_replay_card_delivered=True,
+            final_backward_replay_passed=True,
+            task_completion_projection_published=True,
+            pm_terminal_closure_card_delivered=True,
+            pm_decision_required_blocker_written=True,
+        ),
         "completion_before_final_backward_replay": _final_ready(status="complete"),
+        "completion_without_task_completion_projection": _final_ready(
+            status="complete",
+            final_backward_replay_passed=True,
+            task_completion_projection_published=False,
+        ),
     }
+    hazards.update(expected_wait_hazard_states())
+    return hazards
 
 
 __all__ = [
+    "EXPECTED_ROLE_EVENT_CONTRACTS",
     "EXTERNAL_INPUTS",
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
     "Action",
+    "EventContract",
     "State",
     "Tick",
     "Transition",
     "build_workflow",
+    "expected_role_event_waits",
+    "expected_wait_hazard_states",
     "hazard_states",
     "initial_state",
     "invariant_failures",

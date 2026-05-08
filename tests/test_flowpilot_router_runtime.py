@@ -833,6 +833,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ledger = read_json(final_ledger_path)
         self.assertEqual(terminal_map["status"], "passed")
         self.assertTrue(ledger["completion_allowed"])
+        projection_path = run_root / "completion" / "task_completion_projection.json"
+        self.assertTrue(projection_path.exists())
+        projection = read_json(projection_path)
+        self.assertEqual(projection["task_status"], "ready_for_pm_terminal_closure")
+        self.assertTrue(projection["ui_or_chat_is_display_only"])
 
     def rel(self, root: Path, path: Path) -> str:
         return str(path.relative_to(root)).replace("\\", "/")
@@ -1037,6 +1042,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": packet_id, "packet_envelope_path": packet_path})
+        run_root = self.run_root_for(root)
+        write_grant_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "current_node_write_grant.json"
+        self.assertTrue(write_grant_path.exists())
+        self.assertEqual(read_json(write_grant_path)["packet_id"], packet_id)
         self.deliver_expected_card(root, "reviewer.current_node_dispatch")
         router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
@@ -1079,6 +1088,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(runtime_proof["reviewer_replacement_scope"], "mechanical_only")
         self.complete_parent_backward_replay_if_due(root)
         router.record_external_event(root, "pm_completes_current_node_from_reviewed_result")
+        completion_ledger_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "node_completion_ledger.json"
+        self.assertTrue(completion_ledger_path.exists())
+        completion_ledger = read_json(completion_ledger_path)
+        self.assertTrue(completion_ledger["flowpilot_completable_work_closed"])
+        self.assertTrue(completion_ledger["human_inspection_notes_belong_in_final_report"])
 
     def prepare_current_node_result_for_review(
         self,
@@ -3540,6 +3554,56 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
 
+    def test_no_legal_next_action_materializes_pm_decision_control_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+
+        for flag in list(state["flags"]):
+            state["flags"][flag] = True
+        for terminal_flag in (
+            "run_cancelled_by_user",
+            "run_stopped_by_user",
+            "startup_protocol_dead_end_declared",
+            "resume_reentry_requested",
+        ):
+            state["flags"][terminal_flag] = False
+        state["status"] = "controller_ready"
+        state["phase"] = "route_loop"
+        state["pending_action"] = None
+        state["active_control_blocker"] = None
+        state["latest_control_blocker_path"] = None
+        state["control_blockers"] = []
+        state["resolved_control_blockers"] = []
+        route_memory = run_root / "route_memory"
+        route_memory.mkdir(parents=True, exist_ok=True)
+        router.write_json(route_memory / "route_history_index.json", {"schema_version": "test", "routes": []})
+        router.write_json(route_memory / "pm_prior_path_context.json", {"schema_version": "test", "reviewed": True})
+        router._write_startup_mechanical_audit(root, run_root, state, {})  # type: ignore[attr-defined]
+        router.write_json(state_path, state)
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+        self.assertEqual(action["to_role"], "project_manager")
+        self.assertEqual(action["handling_lane"], "pm_repair_decision_required")
+        self.assertTrue(action["pm_decision_required"])
+        self.assertFalse(action["sealed_body_reads_allowed"])
+        state = read_json(state_path)
+        blocker = state["active_control_blocker"]
+        self.assertEqual(blocker["delivery_status"], "pending")
+        blocker_path = self.control_blocker_path(root, blocker)
+        self.assertTrue(blocker_path.exists())
+        saved = read_json(blocker_path)
+        self.assertEqual(saved["source"], "router_no_legal_next_action")
+        self.assertEqual(saved["originating_action_type"], "controller_no_legal_next_action")
+        self.assertEqual(saved["target_role"], "project_manager")
+        self.assertTrue(saved["pm_decision_required"])
+        self.assertEqual(saved["allowed_resolution_events"], ["pm_records_control_blocker_repair_decision"])
+        self.assertIn("advance route state", " ".join(saved["controller_forbidden_actions"]))
+        self.assertTrue((root / saved["sealed_repair_packet_path"]).exists())
+
     def test_router_hard_rejection_returns_control_plane_reissue_action(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-control-reissue")
@@ -3814,6 +3878,31 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["to_role"], "human_like_reviewer")
+
+    def test_current_node_result_requires_write_grant(self) -> None:
+        root = self.make_project()
+        run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-write-grant-required",
+            record_result_return=False,
+        )
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["current_node_write_grant_issued"] = False
+        grant_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "current_node_write_grant.json"
+        self.assertTrue(grant_path.exists())
+        grant_path.unlink()
+        router.write_json(state_path, state)
+
+        with self.assertRaisesRegex(router.RouterError, "current-node write grant"):
+            router.record_external_event(
+                root,
+                "worker_current_node_result_returned",
+                {
+                    "packet_id": "node-packet-write-grant-required",
+                    "result_envelope_path": result_path,
+                },
+            )
 
     def test_node_acceptance_plan_requires_pm_high_standard_recheck(self) -> None:
         root = self.make_project()

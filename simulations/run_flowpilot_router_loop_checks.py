@@ -14,6 +14,7 @@ import flowpilot_router_loop_model as model
 
 REQUIRED_LABELS = (
     "controller_boundary_confirmed_envelope_only",
+    "controller_fail_closes_no_next_action_to_pm_blocker",
     "pm_activates_route",
     "officer_lifecycle_flags_reconciled_before_model_packet",
     "officer_packet_card_delivered_before_controller_relay",
@@ -28,6 +29,7 @@ REQUIRED_LABELS = (
     "pm_writes_node_acceptance_plan_before_packet",
     "reviewer_reviews_node_acceptance_plan_before_packet",
     "current_node_packet_registered_after_route_activation_and_acceptance_plan",
+    "write_grant_issued_from_current_node_packet",
     "reviewer_dispatch_allowed_for_current_node",
     "worker_dispatched_after_reviewer_dispatch",
     "worker_result_returned_to_packet_ledger",
@@ -50,7 +52,9 @@ REQUIRED_LABELS = (
     "frontier_rewritten_for_mutated_route",
     "pm_activates_mutated_route",
     "reviewer_blocks_mutated_route_result_terminal",
+    "pm_node_completion_card_delivered_after_reviewer_pass",
     "pm_completes_current_node_after_reviewer_pass",
+    "node_completion_ledger_updated_after_pm_completion",
     "pm_enumerates_parent_backward_targets_after_node_completion",
     "reviewer_parent_backward_replay_after_targets",
     "controller_refreshes_route_history_context_for_parent_segment",
@@ -61,6 +65,7 @@ REQUIRED_LABELS = (
     "current_route_scanned_for_final_ledger",
     "pm_evidence_quality_package_card_delivered_before_final_ledger",
     "pm_writes_evidence_quality_package_before_final_ledger",
+    "evidence_quality_review_card_delivered_after_package",
     "reviewer_passes_evidence_quality_before_final_ledger",
     "controller_refreshes_route_history_context_for_final_ledger",
     "pm_reads_prior_path_context_for_final_ledger",
@@ -74,7 +79,10 @@ REQUIRED_LABELS = (
     "reviewer_terminal_parent_segment_replayed",
     "reviewer_terminal_leaf_segment_replayed",
     "pm_records_terminal_segment_decisions",
+    "final_backward_replay_card_delivered_after_terminal_segments",
     "reviewer_final_backward_replay_after_all_segments",
+    "task_completion_projection_published_from_completion_ledger",
+    "pm_terminal_closure_card_delivered_after_completion_projection",
     "completion_recorded_after_final_replay",
 )
 
@@ -133,13 +141,46 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_originates_project_evidence": "Controller originated project evidence",
     "controller_relays_body_content": "Controller relayed packet/result body content instead of envelope-only metadata",
     "completion_before_final_backward_replay": "completion recorded before final backward replay",
+    "completion_without_task_completion_projection": "completion recorded before task completion projection was derived from completion ledger",
+    "controller_does_project_work_after_no_next_action": "Controller started project work after no-next-action instead of fail-closing to PM",
+    "expected_evidence_quality_package_wait_materializes_blocker": "expected role-event wait incorrectly wrote PM decision-required blocker",
+    "expected_evidence_quality_review_wait_materializes_blocker": "expected role-event wait incorrectly wrote PM decision-required blocker",
+    "expected_final_backward_replay_wait_materializes_blocker": "expected role-event wait incorrectly wrote PM decision-required blocker",
+    "expected_final_ledger_wait_materializes_blocker": "expected role-event wait incorrectly wrote PM decision-required blocker",
+    "expected_pm_completion_wait_materializes_blocker": "expected role-event wait incorrectly wrote PM decision-required blocker",
+    "expected_pm_terminal_closure_wait_materializes_blocker": "expected role-event wait incorrectly wrote PM decision-required blocker",
+    "node_completion_ledger_without_pm_completion": "node completion ledger updated before PM node completion",
+    "no_next_action_without_pm_blocker": "Controller detected no legal next action without writing a PM decision-required blocker",
+    "parent_targets_before_node_completion_ledger": "parent backward targets enumerated before node completion ledger update",
+    "task_completion_projection_without_completion_ledger": "task completion projection published before node completion ledger and final backward replay",
+    "worker_dispatched_before_write_grant": "worker dispatched before current-node write grant",
+    "worker_project_write_without_grant": "worker project write occurred before current-node write grant",
+    "write_grant_before_packet_registration": "write grant issued before current-node packet registration",
+    "true_no_next_action_without_blocker": "Controller detected no legal next action without writing a PM decision-required blocker",
 }
+
+
+EXPECTED_ROLE_EVENT_WAIT_FAILURE = "expected role-event wait incorrectly wrote PM decision-required blocker"
+
+
+def _expected_failure_for_hazard(name: str) -> str:
+    if name in HAZARD_EXPECTED_FAILURES:
+        return HAZARD_EXPECTED_FAILURES[name]
+    if (
+        name.startswith("expected_role_event_wait_")
+        and name.endswith("_materializes_blocker")
+    ):
+        return EXPECTED_ROLE_EVENT_WAIT_FAILURE
+    raise KeyError(name)
 
 
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|route={state.route_version},"
         f"active={state.route_activated}|ctrl={state.controller_boundary_confirmed}|"
+        f"ctrl_mode={state.controller_only_mode_active},"
+        f"{state.no_next_action_detected},"
+        f"{state.pm_decision_required_blocker_written}|"
         f"officer={state.officer_packet_card_delivered},"
         f"{state.officer_packet_relayed},"
         f"{state.officer_packet_identity_boundary_present},"
@@ -156,8 +197,9 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_node_high_standard_risks_reviewed}|"
         f"plan={state.node_acceptance_plan_written},"
         f"{state.reviewer_node_acceptance_plan_reviewed}|"
-        f"packet={state.current_node_packet_registered}|"
+        f"packet={state.current_node_packet_registered},grant={state.write_grant_issued}|"
         f"dispatch={state.reviewer_dispatch_allowed},{state.worker_dispatched},"
+        f"write={state.worker_project_write_performed},"
         f"{state.worker_packet_identity_boundary_present}|"
         f"result={state.worker_result_returned},"
         f"{state.worker_result_identity_boundary_present},"
@@ -174,7 +216,8 @@ def _state_id(state: model.State) -> str:
         f"{state.repair_result_ledger_checked},"
         f"{state.repair_result_routed_to_reviewer},"
         f"{state.repair_recheck_passed}|"
-        f"node_done={state.pm_node_completed}|parent="
+        f"node_done={state.pm_node_completion_card_delivered},"
+        f"{state.pm_node_completed},{state.node_completion_ledger_updated}|parent="
         f"{state.parent_backward_targets_enumerated},"
         f"{state.parent_backward_replay_passed},"
         f"{state.parent_pm_segment_decision_recorded},"
@@ -184,6 +227,7 @@ def _state_id(state: model.State) -> str:
         f"same_scope_replay={state.same_scope_replay_rerun_after_mutation}|"
         f"evidence_quality={state.pm_evidence_quality_package_card_delivered},"
         f"{state.evidence_quality_package_written},"
+        f"{state.evidence_quality_review_card_delivered},"
         f"{state.evidence_quality_reviewer_passed}|hazards="
         f"{state.stale_or_unresolved_evidence_present},"
         f"{state.pending_generated_resources},"
@@ -199,7 +243,10 @@ def _state_id(state: model.State) -> str:
         f"{state.terminal_replay_parent_segment_passed},"
         f"{state.terminal_replay_leaf_segment_passed},"
         f"{state.terminal_replay_pm_segment_decisions_recorded}|"
-        f"replay={state.final_backward_replay_passed}"
+        f"replay={state.final_backward_replay_card_delivered},"
+        f"{state.final_backward_replay_passed},"
+        f"projection={state.task_completion_projection_published},"
+        f"closure={state.pm_terminal_closure_card_delivered}"
     )
 
 
@@ -396,7 +443,7 @@ def _check_hazards() -> dict[str, object]:
     ok = True
     for name, state in model.hazard_states().items():
         failures = model.invariant_failures(state)
-        expected = HAZARD_EXPECTED_FAILURES[name]
+        expected = _expected_failure_for_hazard(name)
         detected = any(expected in failure for failure in failures)
         results[name] = {
             "detected": detected,
