@@ -4963,3 +4963,41 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Use coverage sweep to classify future findings before deciding whether to fix runtime, source checks, or model coverage.
+
+## flowpilot-route-display-20260508 - Model and repair FlowPilot route display projection lifecycle
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Route display behavior depends on canonical route/frontier/snapshot state and user-visible display receipts
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T12:49:20+00:00
+- Ended: 2026-05-08T12:49:20+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_route_display_model.py
+- simulations/run_flowpilot_route_display_checks.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_route_display_checks.py --json-out simulations/flowpilot_route_display_results.json`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python -m unittest discover tests`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+
+### Findings
+- Model reproduced stale startup route=unknown Mermaid plus display_plan bullet fallback after route draft; runtime fix now renders canonical Mermaid route sign from flow.json, flow.draft.json, or route_state_snapshot.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- No visual Mermaid screenshot rendering: route sign is text Mermaid and file/live-run conformance plus unit tests covered source correctness.
+
+### Next Actions
+- Push to GitHub only after explicit user approval for remote publication.

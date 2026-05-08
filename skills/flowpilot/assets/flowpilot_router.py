@@ -3953,6 +3953,24 @@ def _display_plan_user_dialog_fields(plan_projection: dict[str, Any]) -> dict[st
     )
 
 
+def _display_route_sign_user_dialog_fields(route_sign: dict[str, Any]) -> dict[str, Any]:
+    display_text = route_sign.get("markdown")
+    if not isinstance(display_text, str) or not display_text.strip():
+        raise RouterError("route-sign display requires non-empty markdown")
+    return _user_dialog_display_gate(
+        {
+            "display_text": display_text,
+            "display_text_format": "markdown_mermaid",
+            "display_required": True,
+            "controller_must_display_text_before_apply": True,
+            "generated_files_alone_satisfy_chat_display": False,
+            "controller_display_rule": "Paste this exact FlowPilot Route Sign Mermaid in the user dialog before applying sync_display_plan; display_plan.json or generated files alone do not satisfy display.",
+        },
+        display_kind="route_map",
+        display_text=display_text,
+    )
+
+
 def _startup_banner_display() -> dict[str, Any]:
     banner_path = runtime_kit_source() / "cards" / "system" / "startup_banner.md"
     if not banner_path.exists():
@@ -5256,16 +5274,50 @@ def _write_startup_protocol_dead_end(project_root: Path, run_root: Path, run_sta
     )
 
 
-def _startup_route_sign_payload(project_root: Path, *, write: bool, mark_chat_displayed: bool) -> dict[str, Any]:
+def _route_sign_payload(
+    project_root: Path,
+    *,
+    write: bool,
+    trigger: str,
+    mark_chat_displayed: bool,
+    cockpit_open: bool = False,
+    mark_ui_displayed: bool = False,
+) -> dict[str, Any]:
     return flowpilot_user_flow_diagram.generate(
         project_root,
         write=write,
-        trigger="startup",
-        cockpit_open=False,
-        display_surface="chat",
+        trigger=trigger,
+        cockpit_open=cockpit_open,
+        display_surface="both" if cockpit_open else "chat",
         mark_chat_displayed=mark_chat_displayed,
-        mark_ui_displayed=False,
+        mark_ui_displayed=mark_ui_displayed,
         reviewer_check=False,
+    )
+
+
+def _startup_route_sign_payload(project_root: Path, *, write: bool, mark_chat_displayed: bool) -> dict[str, Any]:
+    return _route_sign_payload(
+        project_root,
+        write=write,
+        trigger="startup",
+        mark_chat_displayed=mark_chat_displayed,
+    )
+
+
+def _route_map_route_sign_payload(project_root: Path, *, write: bool, mark_chat_displayed: bool) -> dict[str, Any]:
+    return _route_sign_payload(
+        project_root,
+        write=write,
+        trigger="key_node_change",
+        mark_chat_displayed=mark_chat_displayed,
+    )
+
+
+def _route_sign_has_canonical_route(payload: dict[str, Any]) -> bool:
+    return (
+        payload.get("flowpilot_path_status") == "ok"
+        and int(payload.get("route_node_count") or 0) > 0
+        and str(payload.get("route_source_kind") or "none") != "none"
     )
 
 
@@ -6391,6 +6443,20 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
     digest = hashlib.sha256(json.dumps(projection, sort_keys=True).encode("utf-8")).hexdigest()
     snapshot_path = _route_state_snapshot_path(run_root)
     snapshot_digest = hashlib.sha256(snapshot_path.read_bytes()).hexdigest() if snapshot_path.exists() else None
+    route_sign = _route_map_route_sign_payload(project_root, write=False, mark_chat_displayed=False)
+    route_sign_available = _route_sign_has_canonical_route(route_sign)
+    dialog_fields = (
+        _display_route_sign_user_dialog_fields(route_sign)
+        if route_sign_available
+        else _display_plan_user_dialog_fields(projection)
+    )
+    display_degraded_reason = None
+    if not route_sign_available:
+        display_degraded_reason = (
+            "startup_waiting_for_pm_route"
+            if _display_plan_display_kind(projection) == "startup_waiting_state"
+            else "canonical_route_source_unavailable"
+        )
     return {
         "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
         "display_plan_exists": _display_plan_path(run_root).exists(),
@@ -6401,7 +6467,19 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
         "native_plan_projection": projection,
         "host_action": "replace_visible_plan",
         "controller_may_invent_route_items": False,
-        **_display_plan_user_dialog_fields(projection),
+        "route_sign_display_required": route_sign_available,
+        "route_sign_display_degraded_reason": display_degraded_reason,
+        "route_sign_markdown_path": route_sign.get("markdown_preview_path"),
+        "route_sign_mermaid_path": route_sign.get("mermaid_path"),
+        "route_sign_display_packet_path": route_sign.get("display_packet_path"),
+        "route_sign_mermaid_sha256": route_sign.get("mermaid_sha256"),
+        "route_sign_source_kind": route_sign.get("route_source_kind"),
+        "route_sign_node_count": route_sign.get("route_node_count"),
+        "route_sign_checklist_item_count": route_sign.get("route_checklist_item_count"),
+        "route_sign_layout": route_sign.get("route_sign_layout"),
+        "route_sign_source_route_path": route_sign.get("source_route_path"),
+        "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
+        **dialog_fields,
     }
 
 
@@ -9884,7 +9962,11 @@ def _next_startup_mechanical_audit_action(project_root: Path, run_state: dict[st
 def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
     last_sync = run_state.get("visible_plan_sync") if isinstance(run_state.get("visible_plan_sync"), dict) else {}
-    if last_sync.get("projection_hash") == sync_payload["projection_hash"]:
+    route_sign_fresh = (
+        not sync_payload.get("route_sign_display_required")
+        or last_sync.get("route_sign_mermaid_sha256") == sync_payload.get("route_sign_mermaid_sha256")
+    )
+    if last_sync.get("projection_hash") == sync_payload["projection_hash"] and route_sign_fresh:
         return None
     allowed_writes = [
         project_relative(project_root, run_state_path(run_root)),
@@ -9893,16 +9975,39 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
     ]
     if not sync_payload["display_plan_exists"]:
         allowed_writes.append(project_relative(project_root, _display_plan_path(run_root)))
+    if sync_payload.get("route_sign_display_required"):
+        allowed_writes.extend(
+            [
+                project_relative(project_root, run_root / "diagrams" / "user-flow-diagram.mmd"),
+                project_relative(project_root, run_root / "diagrams" / "user-flow-diagram.md"),
+                project_relative(project_root, run_root / "diagrams" / "user-flow-diagram-display.json"),
+            ]
+        )
+    allowed_reads = [
+        project_relative(project_root, project_root / ".flowpilot" / "current.json"),
+        project_relative(project_root, _display_plan_path(run_root)),
+        project_relative(project_root, _route_state_snapshot_path(run_root)),
+        project_relative(project_root, run_state_path(run_root)),
+    ]
+    for raw_path in (
+        sync_payload.get("route_sign_source_frontier_path"),
+        sync_payload.get("route_sign_source_route_path"),
+    ):
+        if isinstance(raw_path, str) and raw_path:
+            path = Path(raw_path)
+            read_path = path if path.is_absolute() else project_root / path
+            try:
+                rel_path = project_relative(project_root, read_path)
+            except RouterError:
+                continue
+            if rel_path not in allowed_reads:
+                allowed_reads.append(rel_path)
     return make_action(
         action_type="sync_display_plan",
         actor="controller",
         label="controller_syncs_display_plan",
         summary="Display the route map in the user dialog, then replace the host visible plan from the run display_plan.json or clear it to a waiting-for-PM placeholder.",
-        allowed_reads=[
-            project_relative(project_root, _display_plan_path(run_root)),
-            project_relative(project_root, _route_state_snapshot_path(run_root)),
-            project_relative(project_root, run_state_path(run_root)),
-        ],
+        allowed_reads=allowed_reads,
         allowed_writes=allowed_writes,
         extra={
             "postcondition": "visible_plan_synced",
@@ -10822,12 +10927,40 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         _write_route_state_snapshot(project_root, run_root, run_state, source_event="sync_display_plan")
         sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+        if sync_payload.get("route_sign_display_required"):
+            route_sign = _route_map_route_sign_payload(project_root, write=True, mark_chat_displayed=True)
+            sync_payload = {
+                **sync_payload,
+                "route_sign_markdown_path": route_sign.get("markdown_preview_path"),
+                "route_sign_mermaid_path": route_sign.get("mermaid_path"),
+                "route_sign_display_packet_path": route_sign.get("display_packet_path"),
+                "route_sign_mermaid_sha256": route_sign.get("mermaid_sha256"),
+                "route_sign_source_kind": route_sign.get("route_source_kind"),
+                "route_sign_node_count": route_sign.get("route_node_count"),
+                "route_sign_checklist_item_count": route_sign.get("route_checklist_item_count"),
+                "route_sign_layout": route_sign.get("route_sign_layout"),
+                "route_sign_source_route_path": route_sign.get("source_route_path"),
+                "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
+            }
         _append_user_dialog_display_ledger(project_root, run_root, confirmation)
         run_state["visible_plan_sync"] = {
             "display_plan_path": sync_payload["display_plan_path"],
             "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
             "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
             "projection_hash": sync_payload["projection_hash"],
+            "display_text_format": sync_payload.get("display_text_format"),
+            "route_sign_display_required": sync_payload.get("route_sign_display_required"),
+            "route_sign_display_degraded_reason": sync_payload.get("route_sign_display_degraded_reason"),
+            "route_sign_markdown_path": sync_payload.get("route_sign_markdown_path"),
+            "route_sign_mermaid_path": sync_payload.get("route_sign_mermaid_path"),
+            "route_sign_display_packet_path": sync_payload.get("route_sign_display_packet_path"),
+            "route_sign_mermaid_sha256": sync_payload.get("route_sign_mermaid_sha256"),
+            "route_sign_source_kind": sync_payload.get("route_sign_source_kind"),
+            "route_sign_node_count": sync_payload.get("route_sign_node_count"),
+            "route_sign_checklist_item_count": sync_payload.get("route_sign_checklist_item_count"),
+            "route_sign_layout": sync_payload.get("route_sign_layout"),
+            "route_sign_source_route_path": sync_payload.get("route_sign_source_route_path"),
+            "route_sign_source_frontier_path": sync_payload.get("route_sign_source_frontier_path"),
             "synced_at": utc_now(),
             "host_action": sync_payload["host_action"],
             "user_dialog_display_confirmation": confirmation,

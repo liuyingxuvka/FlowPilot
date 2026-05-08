@@ -2,6 +2,23 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.5.2 - 2026-05-08
+
+### Added
+
+- Added a FlowGuard route-display lifecycle model covering startup, route draft,
+  activation, node transition, repair return, Cockpit, and chat fallback display
+  paths.
+
+### Fixed
+
+- Updated FlowPilot route-sign generation to read real route nodes from
+  `flow.json`, `flow.draft.json`, or `route_state_snapshot.json`, including
+  `node_id`, `active_route_id`, and `active_node_id` aliases.
+- Changed display-plan sync to keep `display_plan.json` as the host/native plan
+  projection while using the canonical Mermaid route sign as chat fallback once
+  real route data exists.
+
 ## 0.5.1 - 2026-05-07
 
 ### Added

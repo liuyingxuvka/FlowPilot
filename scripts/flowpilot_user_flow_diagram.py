@@ -110,11 +110,32 @@ def _route_mutation_pending(frontier: dict[str, Any]) -> bool:
     return bool(route_mutation.get("pending") or failed_review.get("blocking"))
 
 
+def _snapshot_route(snapshot: dict[str, Any]) -> dict[str, Any]:
+    route = snapshot.get("route") if isinstance(snapshot.get("route"), dict) else {}
+    if not route:
+        return {}
+    nodes = [node for node in route.get("nodes", []) if isinstance(node, dict)]
+    return {
+        "schema_version": "flowpilot.route.snapshot_projection.v1",
+        "route_id": route.get("route_id"),
+        "route_version": route.get("route_version"),
+        "active_node_id": route.get("active_node_id"),
+        "status": "snapshot",
+        "nodes": nodes,
+    }
+
+
+def _node_id(node: dict[str, Any]) -> str:
+    return str(node.get("id") or node.get("node_id") or "")
+
+
 def _active_route(frontier: dict[str, Any], state: dict[str, Any], route: dict[str, Any] | None = None) -> str | None:
     route = route or {}
     value = (
-        frontier.get("active_route")
+        frontier.get("active_route_id")
+        or frontier.get("active_route")
         or frontier.get("route_id")
+        or state.get("active_route_id")
         or state.get("active_route")
         or state.get("route_id")
         or route.get("route_id")
@@ -126,10 +147,13 @@ def _active_node(frontier: dict[str, Any], state: dict[str, Any] | None = None, 
     state = state or {}
     route = route or {}
     value = (
-        frontier.get("active_node")
+        frontier.get("active_node_id")
+        or frontier.get("active_node")
         or frontier.get("current_node")
+        or state.get("active_node_id")
         or state.get("active_node")
         or state.get("current_node")
+        or route.get("active_node_id")
         or route.get("active_node")
         or route.get("current_node")
     )
@@ -142,7 +166,7 @@ def classify_current_stage(frontier: dict[str, Any], route: dict[str, Any]) -> s
     route_status = _normalize(route.get("status"))
     route_mutation = frontier.get("route_mutation") or {}
     route_mutation_pending = _route_mutation_pending(frontier)
-    known_route_nodes = {str(node.get("id")) for node in route.get("nodes", []) if node.get("id")}
+    known_route_nodes = {_node_id(node) for node in route.get("nodes", []) if isinstance(node, dict) and _node_id(node)}
     text = " ".join(
         _normalize(value)
         for value in (
@@ -183,15 +207,15 @@ def _node_label(node: dict[str, Any]) -> str:
     for key in ("display_name", "name", "title", "label"):
         if node.get(key):
             return _shorten(str(node[key]))
-    node_id = str(node.get("id") or "node")
+    node_id = _node_id(node) or "node"
     return _shorten(_title_from_id(node_id))
 
 
 def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[str, Any]]:
-    nodes = [node for node in route.get("nodes", []) if isinstance(node, dict) and node.get("id")]
+    nodes = [node for node in route.get("nodes", []) if isinstance(node, dict) and _node_id(node)]
     mainline = [str(item) for item in frontier.get("current_mainline") or []]
     if mainline:
-        by_id = {str(node.get("id")): node for node in nodes}
+        by_id = {_node_id(node): node for node in nodes}
         ordered = [by_id[node_id] for node_id in mainline if node_id in by_id]
         if ordered:
             return ordered
@@ -203,7 +227,7 @@ def _use_route_node_layout(nodes: list[dict[str, Any]]) -> bool:
 
 
 def _node_status(node: dict[str, Any], active_node: str | None) -> str:
-    node_id = str(node.get("id") or "")
+    node_id = _node_id(node)
     status = _normalize(node.get("status"))
     if node_id == active_node:
         return "active"
@@ -223,7 +247,7 @@ def detect_return_path(
 ) -> dict[str, Any]:
     route_mutation = frontier.get("route_mutation") or {}
     failed_review = route_mutation.get("failed_review") or {}
-    node_ids = [str(node.get("id")) for node in route_nodes if node.get("id")]
+    node_ids = [_node_id(node) for node in route_nodes if _node_id(node)]
     completed_indexes = [
         index
         for index, node in enumerate(route_nodes)
@@ -287,18 +311,19 @@ def _build_route_node_mermaid(
 ) -> str:
     active_route = _active_route(frontier, {}, route) or "unknown route"
     route_version = frontier.get("route_version") or route.get("route_version") or "unknown"
-    node_ids = [str(node.get("id")) for node in nodes]
+    active_node_label = active_node or ("not-started" if nodes else "unknown")
+    node_ids = [_node_id(node) for node in nodes]
     mermaid_ids = {node_id: f"n{index + 1:02d}" for index, node_id in enumerate(node_ids)}
     lines = [
         "flowchart LR",
-        f"  %% FlowPilot realtime route sign. Source: route={active_route}, version={route_version}, node={active_node or 'unknown'}",
+        f"  %% FlowPilot realtime route sign. Source: route={active_route}, version={route_version}, node={active_node_label}",
     ]
     done_ids: list[str] = []
     pending_ids: list[str] = []
     blocked_ids: list[str] = []
     active_ids: list[str] = []
     for node in nodes:
-        node_id = str(node.get("id"))
+        node_id = _node_id(node)
         mermaid_id = mermaid_ids[node_id]
         status = _node_status(node, active_node)
         status_label = {"active": "Now", "done": "Done", "blocked": "Blocked"}.get(status, "Next")
@@ -359,9 +384,10 @@ def _build_stage_mermaid(
 ) -> str:
     active_route = _active_route(frontier, {}, route) or "unknown route"
     route_version = frontier.get("route_version") or route.get("route_version") or "unknown"
+    active_node_label = active_node or "unknown"
     lines = [
         "flowchart LR",
-        f"  %% FlowPilot realtime route sign. Source: route={active_route}, version={route_version}, node={active_node or 'unknown'}",
+        f"  %% FlowPilot realtime route sign. Source: route={active_route}, version={route_version}, node={active_node_label}",
     ]
     for key, label in FALLBACK_STAGES:
         detail = ""
@@ -464,6 +490,61 @@ def build_chat_markdown(
     )
 
 
+def _route_source_summary(route: dict[str, Any]) -> dict[str, int]:
+    nodes = _route_nodes({}, route)
+    checklist_count = 0
+    for node in nodes:
+        checklist = node.get("checklist")
+        if isinstance(checklist, list):
+            checklist_count += len(checklist)
+    return {
+        "node_count": len(nodes),
+        "checklist_item_count": checklist_count,
+    }
+
+
+def _route_source_candidates(routes_root: Path, active_route: str | None, snapshot_route_id: str | None) -> list[Path]:
+    route_ids: list[str] = []
+    for raw in (active_route, snapshot_route_id, "route-001"):
+        if raw and raw not in route_ids:
+            route_ids.append(str(raw))
+    candidates: list[Path] = []
+    for route_id in route_ids:
+        route_dir = routes_root / route_id
+        candidates.extend([route_dir / "flow.json", route_dir / "flow.draft.json"])
+    if routes_root.exists():
+        candidates.extend(sorted(routes_root.glob("*/flow.json")))
+        candidates.extend(sorted(routes_root.glob("*/flow.draft.json")))
+    seen: set[Path] = set()
+    unique: list[Path] = []
+    for path in candidates:
+        if path not in seen:
+            seen.add(path)
+            unique.append(path)
+    return unique
+
+
+def _load_route_source(
+    paths: dict[str, Any],
+    *,
+    active_route: str | None,
+    snapshot: dict[str, Any],
+) -> tuple[dict[str, Any], Path, str]:
+    routes_root = Path(paths["routes_root"])
+    snapshot_path = Path(paths["run_root"]) / "route_state_snapshot.json"
+    snapshot_route = _snapshot_route(snapshot)
+    snapshot_route_id = str(snapshot_route.get("route_id") or "") or None
+    for path in _route_source_candidates(routes_root, active_route, snapshot_route_id):
+        route = _load_json(path)
+        if route.get("nodes"):
+            suffix = "flow_json" if path.name == "flow.json" else "flow_draft"
+            return route, path, suffix
+    if snapshot_route.get("nodes"):
+        return snapshot_route, snapshot_path, "route_state_snapshot"
+    fallback_route_id = active_route or snapshot_route_id or "route-001"
+    return {}, routes_root / fallback_route_id / "flow.json", "none"
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -528,12 +609,23 @@ def generate(
     if source_health["status"] == "ok":
         frontier = _load_json(frontier_path)
         state = _load_json(Path(paths["state_path"]))
+        snapshot = _load_json(Path(paths["run_root"]) / "route_state_snapshot.json")
     else:
         frontier = {}
         state = {}
-    active_route = _active_route(frontier, state)
-    route_path = Path(paths["routes_root"]) / str(active_route or "route-001") / "flow.json"
-    route = _load_json(route_path) if source_health["status"] == "ok" else {}
+        snapshot = {}
+    snapshot_route = _snapshot_route(snapshot)
+    active_route = _active_route(frontier, state, snapshot_route)
+    if source_health["status"] == "ok":
+        route, route_path, route_source_kind = _load_route_source(
+            paths,
+            active_route=active_route,
+            snapshot=snapshot,
+        )
+    else:
+        route = {}
+        route_path = Path(paths["routes_root"]) / str(active_route or "route-001") / "flow.json"
+        route_source_kind = "none"
     current_stage = classify_current_stage(frontier, route)
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     source, route_sign = build_mermaid(
@@ -544,6 +636,7 @@ def generate(
     )
     active_route = _active_route(frontier, state, route)
     active_node = _active_node(frontier, state, route)
+    route_source_summary = _route_source_summary(route)
     chat_display_required = trigger in DISPLAY_TRIGGERS and not cockpit_open
     markdown = build_chat_markdown(
         source,
@@ -605,6 +698,9 @@ def generate(
         "active_node": active_node,
         "route_version_rendered": frontier.get("route_version") or route.get("route_version"),
         "frontier_version_rendered": frontier.get("frontier_version"),
+        "route_source_kind": route_source_kind,
+        "route_node_count": route_source_summary["node_count"],
+        "route_checklist_item_count": route_source_summary["checklist_item_count"],
         "source_route_path": str(route_path),
         "source_frontier_path": str(frontier_path),
         "mermaid_path": str(mmd_path),
@@ -661,6 +757,9 @@ def generate(
         "active_run_root_valid": paths["active_run_root_valid"],
         "display_gate_status": display_packet["display_gate_status"],
         "route_sign_layout": route_sign["layout"],
+        "route_source_kind": route_source_kind,
+        "route_node_count": route_source_summary["node_count"],
+        "route_checklist_item_count": route_source_summary["checklist_item_count"],
         "run_id": paths["run_id"],
         "run_root": str(paths["run_root"]),
         "active_route": active_route,
