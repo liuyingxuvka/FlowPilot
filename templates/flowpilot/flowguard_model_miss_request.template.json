@@ -1,0 +1,42 @@
+{
+  "schema_version": "flowpilot.flowguard_model_miss_request.v1",
+  "run_id": "run-001",
+  "requested_by_role": "project_manager",
+  "assigned_officer_role": "process_flowguard_officer",
+  "defect_or_blocker_id": "defect-001",
+  "reviewer_block_source_path": ".flowpilot/runs/run-001/state.json",
+  "bug_class_definition": "Define the same-class failure family, not only the current error message.",
+  "old_model_miss_question": "Why did the previous FlowGuard model fail to catch this class?",
+  "same_class_search_boundary": [],
+  "model_boundary": {
+    "inputs": [],
+    "state": [],
+    "outputs": [],
+    "hard_invariants": []
+  },
+  "required_report_contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
+  "required_report_fields": [
+    "old_model_miss_reason",
+    "bug_class_definition",
+    "same_class_findings",
+    "coverage_added",
+    "candidate_repairs",
+    "minimal_sufficient_repair_recommendation",
+    "rejected_larger_repairs",
+    "rejected_smaller_repairs",
+    "post_repair_model_checks_required",
+    "residual_blindspots",
+    "contract_self_check"
+  ],
+  "decisions_needed_by_pm": [
+    "whether FlowGuard can model this class",
+    "which same-class issues were found",
+    "which repair is minimal and sufficient",
+    "which post-repair model checks must pass before reviewer recheck"
+  ],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}

@@ -11,6 +11,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 Current state contains a reviewer block.
 
+Enter this phase only after `pm.model_miss_triage` has closed the FlowGuard
+model-miss obligation. For a modelable bug class, the PM decision must cite an
+officer report covering same-class findings and a minimal sufficient repair
+recommendation. For an out-of-scope bug class, the PM decision must record why
+FlowGuard cannot model it.
+
 If the repair phase was entered because Controller delivered a router
 `control_blocker`, read the blocker artifact first. Treat
 `control_plane_reissue` as a malformed control-plane output that should be

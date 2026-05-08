@@ -22,6 +22,9 @@ For each modeling need, write a request that states:
 - process, product, or joint officer ownership;
 - modeling kind: process, product, object/reference-system, migration
   equivalence, experiment-derived behavior, or combined;
+- for model-miss work, the bug class definition, why the old model may have
+  missed it, same-class search boundary, candidate repair comparison boundary,
+  and post-repair model checks the PM needs before reviewer recheck;
 - model boundary, hard invariants, observed/source behavior, expected target
   behavior, and decisions the PM needs;
 - required commands or replay checks;
@@ -51,3 +54,21 @@ The officer report body must include these fields exactly:
 
 The officer report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.
+
+For model-miss reports that support `pm.model_miss_triage`, include these
+additional fields exactly:
+
+```json
+{
+  "old_model_miss_reason": "<why the old model did not catch this bug class>",
+  "bug_class_definition": "<same-class definition>",
+  "same_class_findings": [],
+  "coverage_added": [],
+  "candidate_repairs": [],
+  "minimal_sufficient_repair_recommendation": {},
+  "rejected_larger_repairs": [],
+  "rejected_smaller_repairs": [],
+  "post_repair_model_checks_required": [],
+  "residual_blindspots": []
+}
+```

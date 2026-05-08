@@ -31,3 +31,62 @@ repair.
 
 If repair affects sibling, ancestor, child-skill, or terminal evidence, record
 those stale scopes now so the final ledger cannot count old passes as current.
+
+## Decision Contract For This Task
+
+Use contract `flowpilot.output_contract.pm_parent_segment_decision.v1`.
+
+Return event: `pm_records_parent_segment_decision`.
+
+Write the decision body to a run-scoped decision JSON file and return only a
+role-output envelope with `decision_path` and `decision_hash`. Do not include
+the decision body in chat.
+
+Copy this body shape exactly. Use the current run id and current route-memory
+paths from the router delivery envelope.
+
+```json
+{
+  "schema_version": "flowpilot.parent_segment_decision.v1",
+  "run_id": "<current-run-id>",
+  "decision_owner": "project_manager",
+  "decision": "continue",
+  "prior_path_context_review": {
+    "reviewed": true,
+    "source_paths": [
+      ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
+      ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
+    ],
+    "completed_nodes_considered": [],
+    "superseded_nodes_considered": [],
+    "stale_evidence_considered": [],
+    "prior_blocks_or_experiments_considered": [],
+    "impact_on_decision": "Parent backward replay passed and current route memory does not require mutation.",
+    "controller_summary_used_as_evidence": false
+  },
+  "decision_rationale": "The reviewer passed parent backward replay and the current prior-path context supports continuing.",
+  "same_parent_replay_rerun_plan": null,
+  "stale_evidence_to_mark": [],
+  "superseded_nodes": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true,
+    "current_run_route_memory_paths_cited": true
+  }
+}
+```
+
+Allowed `decision` values:
+
+- `continue`
+- `repair_existing_child`
+- `add_sibling_child`
+- `rebuild_child_subtree`
+- `bubble_to_parent`
+- `pm_stop`
+
+For any decision other than `continue`, fill `decision_rationale`,
+`stale_evidence_to_mark` or `superseded_nodes` when applicable, and
+`same_parent_replay_rerun_plan` because the router will mutate the route and
+require the same parent replay again.

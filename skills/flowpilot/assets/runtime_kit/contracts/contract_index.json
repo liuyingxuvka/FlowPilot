@@ -65,6 +65,23 @@
       "contract_id": "flowpilot.output_contract.officer_model_report.v1"
     },
     {
+      "task_family": "officer.model_miss_report",
+      "packet_type": "officer_request",
+      "recipient_roles": [
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1"
+    },
+    {
+      "task_family": "pm.model_miss_triage",
+      "packet_type": "role_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "contract_id": "flowpilot.output_contract.pm_model_miss_triage_decision.v1"
+    },
+    {
       "task_family": "gate.decision",
       "packet_type": "role_decision",
       "recipient_roles": [
@@ -74,6 +91,30 @@
         "product_flowguard_officer"
       ],
       "contract_id": "flowpilot.output_contract.gate_decision.v1"
+    },
+    {
+      "task_family": "pm.resume_decision",
+      "packet_type": "role_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "contract_id": "flowpilot.output_contract.pm_resume_decision.v1"
+    },
+    {
+      "task_family": "pm.parent_segment_decision",
+      "packet_type": "role_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "contract_id": "flowpilot.output_contract.pm_parent_segment_decision.v1"
+    },
+    {
+      "task_family": "pm.closure",
+      "packet_type": "role_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "contract_id": "flowpilot.output_contract.pm_terminal_closure_decision.v1"
     }
   ],
   "contracts": [
@@ -257,6 +298,91 @@
       "contract_self_check_required": true
     },
     {
+      "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "officer.model_miss_report",
+      "recipient_roles": [
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "required_body_fields": [
+        "old_model_miss_reason",
+        "bug_class_definition",
+        "same_class_findings",
+        "coverage_added",
+        "candidate_repairs",
+        "minimal_sufficient_repair_recommendation",
+        "rejected_larger_repairs",
+        "rejected_smaller_repairs",
+        "post_repair_model_checks_required",
+        "residual_blindspots",
+        "contract_self_check"
+      ],
+      "required_body_values": {},
+      "same_class_scope_required": true,
+      "minimal_sufficient_repair_required": true,
+      "contract_self_check_required": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_model_miss_triage_decision.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.model_miss_triage",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "router_event": "pm_records_model_miss_triage_decision",
+      "required_body_fields": [
+        "decided_by_role",
+        "decision",
+        "defect_or_blocker_id",
+        "reviewer_block_source_path",
+        "model_miss_scope",
+        "flowguard_capability",
+        "same_class_findings_reviewed",
+        "repair_recommendation_reviewed",
+        "selected_next_action",
+        "why_repair_may_start",
+        "blockers",
+        "contract_self_check"
+      ],
+      "required_body_values": {
+        "decided_by_role": "project_manager"
+      },
+      "allowed_decision_values": [
+        "request_officer_model_miss_analysis",
+        "proceed_with_model_backed_repair",
+        "out_of_scope_not_modelable",
+        "needs_evidence_before_modeling",
+        "stop_for_user"
+      ],
+      "conditional_required_fields": {
+        "decision=proceed_with_model_backed_repair": [
+          "flowguard_capability.can_model_bug_class",
+          "officer_report_refs",
+          "same_class_findings_reviewed",
+          "repair_recommendation_reviewed",
+          "candidate_repairs_considered",
+          "minimal_sufficient_repair_recommendation",
+          "post_repair_model_checks_required"
+        ],
+        "decision=out_of_scope_not_modelable": [
+          "flowguard_capability.can_model_bug_class",
+          "flowguard_capability.incapability_reason"
+        ]
+      },
+      "router_mechanical_validation": [
+        "required_fields_present",
+        "allowed_decision_value",
+        "model_backed_repair_requires_officer_report_refs",
+        "model_backed_repair_requires_same_class_and_minimal_repair_review",
+        "out_of_scope_repair_requires_flowguard_incapability_reason",
+        "non_authorizing_decisions_do_not_unlock_review_repair"
+      ],
+      "contract_self_check_required": true
+    },
+    {
       "contract_id": "flowpilot.output_contract.startup_fact_report.v1",
       "schema_version": "flowpilot.output_contract.v1",
       "task_family": "reviewer.startup_fact_report",
@@ -434,6 +560,159 @@
         "blocker",
         "protocol_blocker"
       ]
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_resume_decision.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.resume_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "router_event": "pm_resume_recovery_decision_returned",
+      "required_body_fields": [
+        "decision_owner",
+        "decision",
+        "explicit_recovery_evidence_recorded",
+        "prior_path_context_review.reviewed",
+        "prior_path_context_review.source_paths",
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered",
+        "prior_path_context_review.impact_on_decision",
+        "prior_path_context_review.controller_summary_used_as_evidence",
+        "controller_reminder.controller_only",
+        "controller_reminder.controller_may_read_sealed_bodies",
+        "controller_reminder.controller_may_infer_from_chat_history",
+        "controller_reminder.controller_may_advance_or_close_route"
+      ],
+      "required_body_values": {
+        "decision_owner": "project_manager",
+        "prior_path_context_review.reviewed": true,
+        "prior_path_context_review.controller_summary_used_as_evidence": false,
+        "controller_reminder.controller_only": true,
+        "controller_reminder.controller_may_read_sealed_bodies": false,
+        "controller_reminder.controller_may_infer_from_chat_history": false,
+        "controller_reminder.controller_may_advance_or_close_route": false
+      },
+      "required_prior_path_context_source_paths": [
+        ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
+        ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
+      ],
+      "allowed_decision_values": [
+        "continue_current_packet_loop",
+        "request_sender_reissue",
+        "restore_or_replace_roles_from_memory",
+        "create_repair_or_route_mutation_node",
+        "stop_for_user_or_environment",
+        "close_after_final_ledger_and_terminal_replay"
+      ],
+      "router_mechanical_validation": [
+        "required_fields_present",
+        "allowed_decision_value",
+        "current_run_prior_path_context_source_paths_cited",
+        "controller_summary_not_used_as_evidence",
+        "controller_reminder_forbids_body_reads_chat_inference_and_route_advance",
+        "ambiguous_resume_continue_requires_explicit_recovery_evidence",
+        "terminal_resume_close_requires_final_ledger_and_backward_replay"
+      ],
+      "contract_self_check_required": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_parent_segment_decision.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.parent_segment_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "router_event": "pm_records_parent_segment_decision",
+      "required_body_fields": [
+        "decision_owner",
+        "decision",
+        "prior_path_context_review.reviewed",
+        "prior_path_context_review.source_paths",
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered",
+        "prior_path_context_review.impact_on_decision",
+        "prior_path_context_review.controller_summary_used_as_evidence"
+      ],
+      "required_body_values": {
+        "decision_owner": "project_manager",
+        "prior_path_context_review.reviewed": true,
+        "prior_path_context_review.controller_summary_used_as_evidence": false
+      },
+      "required_prior_path_context_source_paths": [
+        ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
+        ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
+      ],
+      "allowed_decision_values": [
+        "continue",
+        "repair_existing_child",
+        "add_sibling_child",
+        "rebuild_child_subtree",
+        "bubble_to_parent",
+        "pm_stop"
+      ],
+      "router_mechanical_validation": [
+        "required_fields_present",
+        "allowed_decision_value",
+        "current_run_prior_path_context_source_paths_cited",
+        "controller_summary_not_used_as_evidence",
+        "parent_backward_replay_exists",
+        "non_continue_requires_route_mutation_and_same_parent_replay_rerun"
+      ],
+      "contract_self_check_required": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_terminal_closure_decision.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.closure",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "router_event": "pm_approves_terminal_closure",
+      "required_body_fields": [
+        "approved_by_role",
+        "decision",
+        "prior_path_context_review.reviewed",
+        "prior_path_context_review.source_paths",
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered",
+        "prior_path_context_review.impact_on_decision",
+        "prior_path_context_review.controller_summary_used_as_evidence"
+      ],
+      "required_body_values": {
+        "approved_by_role": "project_manager",
+        "decision": "approve_terminal_closure",
+        "prior_path_context_review.reviewed": true,
+        "prior_path_context_review.controller_summary_used_as_evidence": false
+      },
+      "required_prior_path_context_source_paths": [
+        ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
+        ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
+      ],
+      "allowed_decision_values": [
+        "approve_terminal_closure"
+      ],
+      "router_mechanical_validation": [
+        "required_fields_present",
+        "allowed_decision_value",
+        "current_run_prior_path_context_source_paths_cited",
+        "controller_summary_not_used_as_evidence",
+        "clean_final_ledger_exists",
+        "terminal_backward_replay_passed",
+        "task_completion_projection_ready",
+        "lifecycle_ledgers_clean",
+        "continuation_binding_closed_by_router"
+      ],
+      "contract_self_check_required": true
     },
     {
       "contract_id": "flowpilot.output_contract.gate_decision.v1",

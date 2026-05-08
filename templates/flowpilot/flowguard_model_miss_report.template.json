@@ -1,0 +1,35 @@
+{
+  "schema_version": "flowpilot.flowguard_model_miss_report.v1",
+  "run_id": "run-001",
+  "reported_by_role": "process_flowguard_officer",
+  "defect_or_blocker_id": "defect-001",
+  "modeled_boundary": "The bug class and same-class search boundary modeled for PM triage.",
+  "flowguard_capability": {
+    "can_model_bug_class": true,
+    "incapability_reason": null
+  },
+  "old_model_miss_reason": "Explain why previous FlowGuard coverage did not catch this class.",
+  "bug_class_definition": "Define the same-class failure family.",
+  "same_class_findings": [],
+  "coverage_added": [],
+  "candidate_repairs": [],
+  "minimal_sufficient_repair_recommendation": {
+    "repair_id": "repair-001",
+    "why_minimal": "Explain why smaller repairs are insufficient and larger repairs are unnecessary.",
+    "expected_effect": "Explain what this repair changes in the modeled behavior."
+  },
+  "rejected_larger_repairs": [],
+  "rejected_smaller_repairs": [],
+  "post_repair_model_checks_required": [],
+  "residual_blindspots": [],
+  "commands_run": [],
+  "counterexamples_or_absence": "Record counterexamples found or explicitly state none were found within the modeled boundary.",
+  "hard_invariants": [],
+  "skipped_checks": [],
+  "confidence_boundary": "State what this model does and does not prove.",
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true
+  }
+}

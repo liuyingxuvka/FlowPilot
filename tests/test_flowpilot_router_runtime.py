@@ -78,6 +78,97 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "controller_visibility": "role_output_envelope_only",
         }
 
+    def model_miss_officer_report_body(self) -> dict:
+        return {
+            "reported_by_role": "process_flowguard_officer",
+            "old_model_miss_reason": "The old model did not represent reviewer-block repair as a model-miss gate.",
+            "bug_class_definition": "reviewer blockers that can be generalized into FlowGuard-detectable same-class failures",
+            "same_class_findings": [{"finding_id": "same-class-001", "summary": "repair could start before model-miss triage"}],
+            "coverage_added": ["model-miss triage precedes repair decision"],
+            "candidate_repairs": [{"repair_id": "repair-001", "summary": "add PM model-miss triage gate"}],
+            "minimal_sufficient_repair_recommendation": {
+                "repair_id": "repair-001",
+                "why_minimal": "It inserts one gate before existing repair flow without changing worker execution.",
+            },
+            "rejected_larger_repairs": [],
+            "rejected_smaller_repairs": [],
+            "post_repair_model_checks_required": ["run_defect_governance_checks", "run_flowpilot_repair_transaction_checks"],
+            "residual_blindspots": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+            },
+        }
+
+    def model_miss_triage_body(self, root: Path, *, decision: str = "proceed_with_model_backed_repair") -> dict:
+        run_root = self.run_root_for(root)
+        body = {
+            "schema_version": "flowpilot.pm_model_miss_triage_decision.v1",
+            "run_id": read_json(router.run_state_path(run_root))["run_id"],
+            "decided_by_role": "project_manager",
+            "decision": decision,
+            "defect_or_blocker_id": "review-block-001",
+            "reviewer_block_source_path": self.rel(root, router.run_state_path(run_root)),
+            "model_miss_scope": {
+                "bug_class_definition": "reviewer blockers that should become same-class FlowGuard checks",
+                "representative_current_failure": "reviewer blocked current-node result",
+                "same_class_search_boundary": ["router repair path"],
+            },
+            "flowguard_capability": {
+                "can_model_bug_class": decision != "out_of_scope_not_modelable",
+                "incapability_reason": "external system behavior cannot be modeled" if decision == "out_of_scope_not_modelable" else None,
+            },
+            "same_class_findings_reviewed": False,
+            "repair_recommendation_reviewed": False,
+            "selected_next_action": "not authorized yet",
+            "why_repair_may_start": "not authorized yet",
+            "blockers": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+            },
+        }
+        if decision == "proceed_with_model_backed_repair":
+            report = self.role_report_envelope(
+                root,
+                "flowguard/model_miss_report",
+                self.model_miss_officer_report_body(),
+            )
+            body.update(
+                {
+                    "officer_report_refs": [
+                        {
+                            "officer_role": "process_flowguard_officer",
+                            "report_path": report["report_path"],
+                            "report_hash": report["report_hash"],
+                        }
+                    ],
+                    "same_class_findings_reviewed": True,
+                    "repair_recommendation_reviewed": True,
+                    "candidate_repairs_considered": [{"repair_id": "repair-001"}],
+                    "minimal_sufficient_repair_recommendation": {
+                        "repair_id": "repair-001",
+                        "why_minimal": "One PM gate is enough to close the modeled gap.",
+                    },
+                    "post_repair_model_checks_required": [
+                        "run_defect_governance_checks",
+                        "run_flowpilot_repair_transaction_checks",
+                    ],
+                    "selected_next_action": "enter pm.review_repair with model-backed recommendation",
+                    "why_repair_may_start": "Officer report generalized the class and PM selected a minimal repair path.",
+                }
+            )
+        elif decision == "out_of_scope_not_modelable":
+            body.update(
+                {
+                    "selected_next_action": "enter pm.review_repair by non-model route",
+                    "why_repair_may_start": "FlowGuard incapability reason was recorded.",
+                }
+            )
+        return body
+
     def flag(self, root: Path, name: str) -> bool:
         run_root = self.run_root_for(root)
         state = read_json(router.run_state_path(run_root))
@@ -764,7 +855,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
         )
-        self.deliver_expected_card(root, "pm.parent_segment_decision")
+        card_action = self.deliver_expected_card(root, "pm.parent_segment_decision")
+        self.assert_payload_contract_mentions(
+            card_action["payload_contract"],
+            "pm_parent_segment_decision_role_output",
+            "decision_owner",
+            "prior_path_context_review.source_paths",
+            "pm_prior_path_context.json",
+            "route_history_index.json",
+        )
+        wait_action = router.next_action(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+        self.assert_payload_contract_mentions(
+            wait_action["payload_contract"],
+            "pm_parent_segment_decision_role_output",
+            "repair_existing_child",
+            "prior_path_context_review.controller_summary_used_as_evidence",
+        )
         router.record_external_event(
             root,
             "pm_records_parent_segment_decision",
@@ -1158,6 +1265,112 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             if action_type == expected_action_type:
                 return action
         raise AssertionError(f"did not apply {expected_action_type} within {max_steps} router steps")
+
+    def test_reviewer_block_delivers_model_miss_triage_before_review_repair(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-gate")
+
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+
+        card_action = self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.assert_payload_contract_mentions(
+            card_action["payload_contract"],
+            "pm_model_miss_triage_decision_role_output",
+            "proceed_with_model_backed_repair",
+            "officer_report_refs",
+            "minimal_sufficient_repair_recommendation",
+        )
+        self.assertFalse(self.flag(root, "pm_review_repair_card_delivered"))
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        wait_action = router.next_action(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+        self.assertEqual(wait_action["allowed_external_events"], ["pm_records_model_miss_triage_decision"])
+        self.assert_payload_contract_mentions(wait_action["payload_contract"], "same_class_findings_reviewed")
+
+    def test_review_block_route_mutation_requires_closed_model_miss_triage(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-mutation")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+
+        with self.assertRaisesRegex(router.RouterError, "model-miss triage"):
+            router.record_external_event(
+                root,
+                "pm_mutates_route_after_review_block",
+                {"repair_node_id": "node-001-repair", "reason": "reviewer_block"},
+            )
+
+    def test_model_backed_model_miss_triage_requires_officer_report_refs(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-invalid")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+
+        body = self.model_miss_triage_body(root, decision="proceed_with_model_backed_repair")
+        body.pop("officer_report_refs")
+        with self.assertRaisesRegex(router.RouterError, "officer_report_refs"):
+            router.record_external_event(
+                root,
+                "pm_records_model_miss_triage_decision",
+                self.role_decision_envelope(root, "decisions/model_miss_invalid", body),
+            )
+        self.assertFalse(self.flag(root, "model_miss_triage_closed"))
+
+    def test_non_authorizing_model_miss_decision_does_not_unlock_review_repair(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-request")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_request",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+
+        self.assertFalse(self.flag(root, "model_miss_triage_closed"))
+        self.assertFalse(self.flag(root, "pm_review_repair_card_delivered"))
+
+    def test_model_backed_model_miss_triage_unlocks_review_repair(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-valid")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_valid",
+                self.model_miss_triage_body(root, decision="proceed_with_model_backed_repair"),
+            ),
+        )
+
+        self.assertTrue(self.flag(root, "model_miss_triage_closed"))
+        self.deliver_expected_card(root, "pm.review_repair")
+
+    def test_out_of_scope_model_miss_triage_unlocks_review_repair_with_reason(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-out-of-scope")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_out_of_scope",
+                self.model_miss_triage_body(root, decision="out_of_scope_not_modelable"),
+            ),
+        )
+
+        self.assertTrue(self.flag(root, "model_miss_triage_closed"))
+        self.deliver_expected_card(root, "pm.review_repair")
 
     def test_bootloader_action_requires_pending_router_action(self) -> None:
         root = self.make_project()
@@ -3281,13 +3494,104 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "controller.resume_reentry")
         self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
-        self.deliver_expected_card(root, "pm.resume_decision")
+        card_action = self.deliver_expected_card(root, "pm.resume_decision")
+        self.assert_payload_contract_mentions(
+            card_action["payload_contract"],
+            "decision_owner",
+            "decision",
+            "explicit_recovery_evidence_recorded",
+            "prior_path_context_review.reviewed",
+            "prior_path_context_review.source_paths",
+            "prior_path_context_review.completed_nodes_considered",
+            "prior_path_context_review.superseded_nodes_considered",
+            "prior_path_context_review.stale_evidence_considered",
+            "prior_path_context_review.prior_blocks_or_experiments_considered",
+            "prior_path_context_review.impact_on_decision",
+            "prior_path_context_review.controller_summary_used_as_evidence",
+            "controller_reminder.controller_only",
+            "controller_reminder.controller_may_read_sealed_bodies",
+            "controller_reminder.controller_may_infer_from_chat_history",
+            "controller_reminder.controller_may_advance_or_close_route",
+        )
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
+        self.assert_payload_contract_mentions(
+            action["payload_contract"],
+            "pm_resume_decision_role_output",
+            "decision_owner",
+            "prior_path_context_review.source_paths",
+            self.rel(root, run_root / "route_memory" / "pm_prior_path_context.json"),
+            self.rel(root, run_root / "route_memory" / "route_history_index.json"),
+        )
 
-        with self.assertRaises(router.RouterError):
+        with self.assertRaisesRegex(router.RouterError, "file-backed body path"):
             router.record_external_event(root, "pm_resume_recovery_decision_returned", {"decision": "continue_current_packet_loop"})
+        with self.assertRaisesRegex(router.RouterError, "decision_owner=project_manager"):
+            router.record_external_event(
+                root,
+                "pm_resume_recovery_decision_returned",
+                self.role_decision_envelope(
+                    root,
+                    "continuation/pm_resume_decision_missing_owner",
+                    {
+                        "decision": "continue_current_packet_loop",
+                        **self.prior_path_context_review(root, "Bad resume decision missing owner"),
+                        "controller_reminder": {
+                            "controller_only": True,
+                            "controller_may_read_sealed_bodies": False,
+                            "controller_may_infer_from_chat_history": False,
+                            "controller_may_advance_or_close_route": False,
+                        },
+                    },
+                ),
+            )
+        with self.assertRaisesRegex(router.RouterError, "prior_path_context_review.reviewed=true"):
+            bad_review = self.prior_path_context_review(root, "Bad resume decision missing reviewed=true")
+            bad_review["prior_path_context_review"].pop("reviewed")
+            router.record_external_event(
+                root,
+                "pm_resume_recovery_decision_returned",
+                self.role_decision_envelope(
+                    root,
+                    "continuation/pm_resume_decision_missing_reviewed",
+                    {
+                        "decision_owner": "project_manager",
+                        "decision": "continue_current_packet_loop",
+                        **bad_review,
+                        "controller_reminder": {
+                            "controller_only": True,
+                            "controller_may_read_sealed_bodies": False,
+                            "controller_may_infer_from_chat_history": False,
+                            "controller_may_advance_or_close_route": False,
+                        },
+                    },
+                ),
+            )
+        with self.assertRaisesRegex(router.RouterError, "current pm_prior_path_context.json"):
+            bad_sources = self.prior_path_context_review(root, "Bad resume decision missing current PM context path")
+            bad_sources["prior_path_context_review"]["source_paths"] = [
+                self.rel(root, run_root / "route_memory" / "route_history_index.json")
+            ]
+            router.record_external_event(
+                root,
+                "pm_resume_recovery_decision_returned",
+                self.role_decision_envelope(
+                    root,
+                    "continuation/pm_resume_decision_missing_pm_context_path",
+                    {
+                        "decision_owner": "project_manager",
+                        "decision": "continue_current_packet_loop",
+                        **bad_sources,
+                        "controller_reminder": {
+                            "controller_only": True,
+                            "controller_may_read_sealed_bodies": False,
+                            "controller_may_infer_from_chat_history": False,
+                            "controller_may_advance_or_close_route": False,
+                        },
+                    },
+                ),
+            )
 
         router.record_external_event(
             root,
@@ -3940,6 +4244,59 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(state["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
         self.assertEqual(state["active_control_blocker"]["delivery_status"], "delivered")
         self.assertEqual(state["latest_control_blocker_path"], blocker["blocker_artifact_path"])
+
+    def test_already_recorded_event_resolves_fatal_control_blocker_after_pm_repair_decision(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["continuation_binding_recorded"] = True
+        state["events"].append(
+            {
+                "event": "host_records_heartbeat_binding",
+                "summary": "Host recorded the active run heartbeat/manual-resume binding before startup fact review.",
+                "payload": {},
+                "recorded_at": "2026-05-05T00:00:00Z",
+            }
+        )
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="envelope payload leaked role body fields to Controller: passed",
+            event="host_records_heartbeat_binding",
+            payload={"from_role": "host", "passed": True},
+        )
+        self.assertEqual(blocker["handling_lane"], "fatal_protocol_violation")
+
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/fatal_pm_repair_decision",
+                self.pm_control_blocker_decision_body(
+                    blocker["blocker_id"],
+                    rerun_target="host_records_heartbeat_binding",
+                ),
+            ),
+        )
+
+        state = read_json(state_path)
+        self.assertEqual(state["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(state["active_control_blocker"]["pm_repair_decision_status"], "recorded")
+        self.assertIn("host_records_heartbeat_binding", state["active_control_blocker"]["allowed_resolution_events"])
+
+        result = router.record_external_event(root, "host_records_heartbeat_binding")
+
+        self.assertTrue(result["already_recorded"])
+        self.assertTrue(result["control_blocker_resolved"])
+        state = read_json(state_path)
+        self.assertIsNone(state["active_control_blocker"])
+        self.assertIsNone(state["latest_control_blocker_path"])
+        self.assertEqual(len(state["resolved_control_blockers"]), 1)
 
     def test_router_packet_audit_rejection_routes_pm_repair_decision(self) -> None:
         root = self.make_project()
@@ -5027,6 +5384,56 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         card_id = action.get("next_card_id") or action.get("card_id")
         self.assertNotEqual(card_id, "pm.closure")
+
+    def test_pm_terminal_closure_uses_file_backed_contract_and_prior_context(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-terminal-closure")
+        self.complete_evidence_quality_package(root)
+        self.complete_final_ledger_and_terminal_replay(root)
+
+        card_action = self.deliver_expected_card(root, "pm.closure")
+        self.assert_payload_contract_mentions(
+            card_action["payload_contract"],
+            "pm_terminal_closure_decision_role_output",
+            "approved_by_role",
+            "approve_terminal_closure",
+            "prior_path_context_review.source_paths",
+            "pm_prior_path_context.json",
+            "route_history_index.json",
+        )
+        wait_action = router.next_action(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+        self.assert_payload_contract_mentions(
+            wait_action["payload_contract"],
+            "pm_terminal_closure_decision_role_output",
+            "current_ledgers_clean",
+            "prior_path_context_review.controller_summary_used_as_evidence",
+        )
+
+        result = router.record_external_event(
+            root,
+            "pm_approves_terminal_closure",
+            self.role_decision_envelope(
+                root,
+                "closure/pm_terminal_closure_decision",
+                {
+                    "approved_by_role": "project_manager",
+                    "decision": "approve_terminal_closure",
+                    **self.prior_path_context_review(root, "Terminal closure considered clean final ledger and current route memory."),
+                    "final_report": {"status": "complete"},
+                },
+            ),
+        )
+        self.assertTrue(result["ok"])
+        closure = read_json(run_root / "closure" / "terminal_closure_suite.json")
+        self.assertEqual(closure["decision"], "approve_terminal_closure")
+        self.assertEqual(closure["prior_path_context_review"]["reviewed"], True)
+        self.assertEqual(closure["status"], "closed")
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "closed")
 
     def test_manifest_references_existing_system_cards(self) -> None:
         manifest = read_json(ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "manifest.json")

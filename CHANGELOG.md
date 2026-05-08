@@ -16,6 +16,12 @@ All notable changes to FlowPilot will be documented in this file.
 - Required resume role rehydration receipts to record host liveness status,
   liveness decision, bounded wait result, and an explicit
   timeout-not-treated-as-active receipt.
+- Added PM resume, parent-segment, and terminal-closure output contracts,
+  router-delivered payload contracts, and copyable JSON templates so PM
+  decisions cite current route memory without repair retries.
+- Allowed fatal protocol control blockers to absorb PM-recorded corrected
+  follow-up replay while preserving the fatal lane requirement for explicit PM
+  recovery.
 - Aligned smoke validation with the model gate by skipping the current live-run
   audit for control-plane friction checks.
 

@@ -44,3 +44,68 @@ ambiguous.
 Before any continue decision, verify role freshness for the current run. Prior
 run `agent_id` values, old role slots, or unrehydrated memory packets cannot
 approve gates or carry route authority.
+
+## Decision Contract For This Task
+
+Use contract `flowpilot.output_contract.pm_resume_decision.v1`.
+Return it through router event `pm_resume_recovery_decision_returned`.
+Write the decision body to a run-scoped file and return to Controller only a
+role-output envelope with `decision_path`, `decision_hash`,
+`controller_visibility: "role_output_envelope_only"`, and no inline decision
+body.
+
+Use these exact field names. The `decision` value must be one of:
+`continue_current_packet_loop`, `request_sender_reissue`,
+`restore_or_replace_roles_from_memory`, `create_repair_or_route_mutation_node`,
+`stop_for_user_or_environment`, or
+`close_after_final_ledger_and_terminal_replay`.
+
+```json
+{
+  "schema_version": "flowpilot.pm_resume_decision.v1",
+  "run_id": "<current run id>",
+  "decision_owner": "project_manager",
+  "decision": "continue_current_packet_loop",
+  "explicit_recovery_evidence_recorded": true,
+  "prior_path_context_review": {
+    "reviewed": true,
+    "source_paths": [
+      ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
+      ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
+    ],
+    "completed_nodes_considered": [],
+    "superseded_nodes_considered": [],
+    "stale_evidence_considered": [],
+    "prior_blocks_or_experiments_considered": [],
+    "impact_on_decision": "<how current-run completed, superseded, stale, blocked, or experimental history changes this resume decision>",
+    "controller_summary_used_as_evidence": false
+  },
+  "controller_reminder": {
+    "controller_only": true,
+    "controller_may_read_sealed_bodies": false,
+    "controller_may_infer_from_chat_history": false,
+    "controller_may_advance_or_close_route": false,
+    "controller_may_create_project_evidence": false,
+    "controller_may_approve_gates": false,
+    "controller_may_implement": false
+  },
+  "recovery_evidence": {
+    "resume_reentry_path": ".flowpilot/runs/<run-id>/continuation/resume_reentry.json",
+    "crew_rehydration_report_path": ".flowpilot/runs/<run-id>/continuation/crew_rehydration_report.json",
+    "packet_ledger_path": ".flowpilot/runs/<run-id>/packet_ledger.json",
+    "sealed_packet_or_result_bodies_read": false,
+    "chat_history_progress_inference_used": false
+  },
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "current_run_route_memory_paths_cited": true,
+    "empty_required_arrays_explicit": true
+  }
+}
+```
+
+Do not put route-memory source paths only inside nested notes copied from
+`pm_prior_path_context.json`. The top-level
+`prior_path_context_review.source_paths` array must cite both route-memory files
+shown in the template for the current run.

@@ -76,6 +76,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md",
@@ -143,6 +144,8 @@ REQUIRED_FILES = [
     "templates/flowpilot/packets/packet_chain_audit.template.json",
     "templates/flowpilot/flowguard_modeling_request.template.json",
     "templates/flowpilot/flowguard_modeling_report.template.json",
+    "templates/flowpilot/flowguard_model_miss_request.template.json",
+    "templates/flowpilot/flowguard_model_miss_report.template.json",
     "templates/flowpilot/role_approval.template.json",
     "templates/flowpilot/human_review.template.json",
     "templates/flowpilot/review_release_order.template.json",
@@ -230,6 +233,9 @@ REQUIRED_FILES = [
     "simulations/run_protocol_contract_conformance_checks.py",
     "simulations/protocol_contract_conformance_model_only_results.json",
     "simulations/protocol_contract_conformance_results.json",
+    "simulations/flowpilot_repair_transaction_model.py",
+    "simulations/run_flowpilot_repair_transaction_checks.py",
+    "simulations/flowpilot_repair_transaction_results.json",
     "simulations/release_tooling_model.py",
     "simulations/run_release_tooling_checks.py",
     "simulations/release_tooling_results.json",
@@ -299,6 +305,8 @@ JSON_FILES = [
     "templates/flowpilot/packets/packet_chain_audit.template.json",
     "templates/flowpilot/flowguard_modeling_request.template.json",
     "templates/flowpilot/flowguard_modeling_report.template.json",
+    "templates/flowpilot/flowguard_model_miss_request.template.json",
+    "templates/flowpilot/flowguard_model_miss_report.template.json",
     "templates/flowpilot/role_approval.template.json",
     "templates/flowpilot/human_review.template.json",
     "templates/flowpilot/review_release_order.template.json",
@@ -329,6 +337,7 @@ JSON_FILES = [
     "templates/flowpilot/capabilities/capability-evidence.template.json",
     "templates/flowpilot/experiments/experiment-001/experiment.template.json",
     "simulations/defect_governance_results.json",
+    "simulations/flowpilot_repair_transaction_results.json",
 ]
 
 OPTIONAL_RUNTIME_JSON_FILES = [

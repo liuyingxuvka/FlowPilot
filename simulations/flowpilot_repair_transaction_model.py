@@ -47,6 +47,16 @@ class State:
     blocker_has_origin_event: bool = False
     blocker_has_allowed_nonterminal_events: bool = False
 
+    model_miss_triage_recorded: bool = False
+    flowguard_bug_class_modelable: bool = True
+    flowguard_out_of_scope_reason_recorded: bool = False
+    model_miss_officer_request_issued: bool = False
+    model_miss_officer_report_returned: bool = False
+    same_class_findings_recorded: bool = False
+    repair_candidates_compared: bool = False
+    minimal_sufficient_repair_recommended: bool = False
+    pm_selected_repair_after_model_miss: bool = False
+
     pm_repair_decision_recorded: bool = False
     pm_decision_resolves_blocker: bool = False
     repair_transaction_opened: bool = False
@@ -66,6 +76,7 @@ class State:
     canonical_packet_identity_unique: bool = False
     packet_hashes_replayable: bool = False
     result_write_targets_explicit: bool = False
+    post_repair_model_check_passed: bool = False
 
     success_outcome_routable: bool = False
     blocker_outcome_routable: bool = False
@@ -165,6 +176,78 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.model_miss_triage_recorded:
+        yield Transition(
+            "pm_records_model_miss_triage_for_modelable_blocker",
+            _inc(
+                state,
+                holder="pm",
+                model_miss_triage_recorded=True,
+                flowguard_bug_class_modelable=True,
+            ),
+        )
+        yield Transition(
+            "pm_records_flowguard_out_of_scope_reason",
+            _inc(
+                state,
+                holder="pm",
+                model_miss_triage_recorded=True,
+                flowguard_bug_class_modelable=False,
+                flowguard_out_of_scope_reason_recorded=True,
+            ),
+        )
+        return
+
+    if (
+        state.flowguard_bug_class_modelable
+        and not state.model_miss_officer_request_issued
+    ):
+        yield Transition(
+            "pm_issues_model_miss_officer_request",
+            _inc(state, holder="pm", model_miss_officer_request_issued=True),
+        )
+        return
+
+    if (
+        state.flowguard_bug_class_modelable
+        and state.model_miss_officer_request_issued
+        and not state.model_miss_officer_report_returned
+    ):
+        yield Transition(
+            "officer_reports_same_class_findings_and_minimal_repair",
+            _inc(
+                state,
+                holder="flowguard_officer",
+                model_miss_officer_report_returned=True,
+                same_class_findings_recorded=True,
+                repair_candidates_compared=True,
+                minimal_sufficient_repair_recommended=True,
+            ),
+        )
+        return
+
+    if (
+        state.flowguard_bug_class_modelable
+        and state.model_miss_officer_report_returned
+        and not state.pm_selected_repair_after_model_miss
+    ):
+        yield Transition(
+            "pm_selects_model_backed_repair_candidate",
+            _inc(state, holder="pm", pm_selected_repair_after_model_miss=True),
+        )
+        return
+
+    if (
+        not state.flowguard_bug_class_modelable
+        and state.flowguard_out_of_scope_reason_recorded
+        and not state.pm_selected_repair_after_model_miss
+    ):
+        yield Transition(
+            "pm_selects_out_of_scope_repair_candidate",
+            _inc(state, holder="pm", pm_selected_repair_after_model_miss=True),
+        )
+        return
+
     if not state.pm_repair_decision_recorded:
         yield Transition(
             "pm_records_repair_decision_without_resolving_blocker",
@@ -219,6 +302,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 blocker_outcome_routable=True,
                 protocol_outcome_routable=True,
             ),
+        )
+        return
+
+    if (
+        state.flowguard_bug_class_modelable
+        and not state.post_repair_model_check_passed
+    ):
+        yield Transition(
+            "post_repair_model_check_passed_after_committed_generation",
+            _inc(state, holder="flowguard_officer", post_repair_model_check_passed=True),
         )
         return
 
@@ -314,6 +407,39 @@ def pm_decision_cannot_resolve_blocker(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def model_miss_triage_precedes_repair_decision(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pm_repair_decision_recorded and not state.model_miss_triage_recorded:
+        return InvariantResult.fail(
+            "PM repair decision started before closing model-miss triage obligation"
+        )
+    if state.pm_repair_decision_recorded and not state.pm_selected_repair_after_model_miss:
+        return InvariantResult.fail(
+            "PM repair decision started before selecting a model-miss repair path"
+        )
+    return InvariantResult.pass_()
+
+
+def model_backed_repair_requires_officer_report(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pm_selected_repair_after_model_miss and state.flowguard_bug_class_modelable:
+        if not (
+            state.model_miss_officer_report_returned
+            and state.same_class_findings_recorded
+            and state.repair_candidates_compared
+            and state.minimal_sufficient_repair_recommended
+        ):
+            return InvariantResult.fail(
+                "PM selected a model-backed repair before officer same-class findings and minimal repair recommendation"
+            )
+    if state.pm_selected_repair_after_model_miss and not state.flowguard_bug_class_modelable:
+        if not state.flowguard_out_of_scope_reason_recorded:
+            return InvariantResult.fail(
+                "PM out-of-scope repair decision lacked FlowGuard incapability reason"
+            )
+    return InvariantResult.pass_()
+
+
 def repair_decision_requires_transaction(state: State, trace) -> InvariantResult:
     del trace
     if state.replacement_spec_written and not (
@@ -381,6 +507,14 @@ def reviewer_recheck_requires_committed_generation(state: State, trace) -> Invar
         return InvariantResult.fail(
             "reviewer recheck was requested before a committed generation and complete outcome table"
         )
+    if (
+        state.reviewer_recheck_requested
+        and state.flowguard_bug_class_modelable
+        and not state.post_repair_model_check_passed
+    ):
+        return InvariantResult.fail(
+            "reviewer recheck was requested before the repaired FlowGuard model checked the candidate fix"
+        )
     return InvariantResult.pass_()
 
 
@@ -417,6 +551,14 @@ def terminal_state_has_refreshed_authorities(state: State, trace) -> InvariantRe
         )
     if state.status == "complete" and not state.main_flow_resumed_after_success:
         return InvariantResult.fail("repair transaction completed without returning to the main flow")
+    if (
+        state.status == "complete"
+        and state.flowguard_bug_class_modelable
+        and not state.post_repair_model_check_passed
+    ):
+        return InvariantResult.fail(
+            "repair transaction completed before post-repair FlowGuard model check"
+        )
     return InvariantResult.pass_()
 
 
@@ -437,6 +579,16 @@ INVARIANTS = (
         name="pm_decision_cannot_resolve_blocker",
         description="PM repair decisions choose a repair, they do not self-resolve blockers.",
         predicate=pm_decision_cannot_resolve_blocker,
+    ),
+    Invariant(
+        name="model_miss_triage_precedes_repair_decision",
+        description="Repair decisions start only after PM closes the model-miss obligation.",
+        predicate=model_miss_triage_precedes_repair_decision,
+    ),
+    Invariant(
+        name="model_backed_repair_requires_officer_report",
+        description="Modelable blocker repairs require officer same-class findings and minimal repair recommendation.",
+        predicate=model_backed_repair_requires_officer_report,
     ),
     Invariant(
         name="repair_decision_requires_transaction",
@@ -498,6 +650,15 @@ def _safe_base(**changes: object) -> State:
             blocker_registered_in_router=True,
             blocker_has_origin_event=True,
             blocker_has_allowed_nonterminal_events=True,
+            model_miss_triage_recorded=True,
+            flowguard_bug_class_modelable=True,
+            flowguard_out_of_scope_reason_recorded=False,
+            model_miss_officer_request_issued=True,
+            model_miss_officer_report_returned=True,
+            same_class_findings_recorded=True,
+            repair_candidates_compared=True,
+            minimal_sufficient_repair_recommended=True,
+            pm_selected_repair_after_model_miss=True,
             pm_repair_decision_recorded=True,
             repair_transaction_opened=True,
             transaction_id_recorded=True,
@@ -513,6 +674,7 @@ def _safe_base(**changes: object) -> State:
             canonical_packet_identity_unique=True,
             packet_hashes_replayable=True,
             result_write_targets_explicit=True,
+            post_repair_model_check_passed=True,
             success_outcome_routable=True,
             blocker_outcome_routable=True,
             protocol_outcome_routable=True,
@@ -541,6 +703,22 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_decision_self_resolves_blocker": _safe_base(
             pm_decision_resolves_blocker=True,
+        ),
+        "repair_decision_before_model_miss_triage": _safe_base(
+            model_miss_triage_recorded=False,
+        ),
+        "repair_decision_before_model_miss_path_selected": _safe_base(
+            pm_selected_repair_after_model_miss=False,
+        ),
+        "model_backed_repair_without_officer_report": _safe_base(
+            model_miss_officer_report_returned=False,
+            same_class_findings_recorded=False,
+            repair_candidates_compared=False,
+            minimal_sufficient_repair_recommended=False,
+        ),
+        "out_of_scope_repair_without_reason": _safe_base(
+            flowguard_bug_class_modelable=False,
+            flowguard_out_of_scope_reason_recorded=False,
         ),
         "reissue_spec_outside_transaction": _safe_base(
             repair_transaction_opened=False,
@@ -581,6 +759,10 @@ def hazard_states() -> dict[str, State]:
         ),
         "reviewer_recheck_before_commit": _safe_base(
             transaction_committed_atomically=False,
+            reviewer_recheck_requested=True,
+        ),
+        "reviewer_recheck_before_post_repair_model_check": _safe_base(
+            post_repair_model_check_passed=False,
             reviewer_recheck_requested=True,
         ),
         "reviewer_blocker_unroutable": _safe_base(

@@ -46,6 +46,7 @@ GATE_DECISION_SCHEMA = "flowpilot.gate_decision.v1"
 GATE_DECISION_RECORD_SCHEMA = "flowpilot.gate_decision_record.v1"
 GATE_DECISION_LEDGER_SCHEMA = "flowpilot.gate_decision_ledger.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
+PM_MODEL_MISS_TRIAGE_DECISION_EVENT = "pm_records_model_miss_triage_decision"
 GATE_DECISION_EVENT = "role_records_gate_decision"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
@@ -70,6 +71,48 @@ CONTROL_BLOCKER_LANES = {
     "pm_repair_decision_required",
     "fatal_protocol_violation",
 }
+PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES = {
+    "pm_repair_decision_required",
+    "fatal_protocol_violation",
+}
+PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES = {
+    "request_officer_model_miss_analysis",
+    "proceed_with_model_backed_repair",
+    "out_of_scope_not_modelable",
+    "needs_evidence_before_modeling",
+    "stop_for_user",
+}
+PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES = {
+    "proceed_with_model_backed_repair",
+    "out_of_scope_not_modelable",
+}
+PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS = (
+    "decided_by_role",
+    "decision",
+    "defect_or_blocker_id",
+    "reviewer_block_source_path",
+    "model_miss_scope",
+    "flowguard_capability",
+    "same_class_findings_reviewed",
+    "repair_recommendation_reviewed",
+    "selected_next_action",
+    "why_repair_may_start",
+    "blockers",
+    "contract_self_check",
+)
+MODEL_MISS_OFFICER_REPORT_REQUIRED_FIELDS = (
+    "old_model_miss_reason",
+    "bug_class_definition",
+    "same_class_findings",
+    "coverage_added",
+    "candidate_repairs",
+    "minimal_sufficient_repair_recommendation",
+    "rejected_larger_repairs",
+    "rejected_smaller_repairs",
+    "post_repair_model_checks_required",
+    "residual_blindspots",
+    "contract_self_check",
+)
 STARTUP_ANSWER_ENUMS = {
     "background_agents": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
@@ -89,6 +132,58 @@ GATE_DECISION_REQUIRED_FIELDS = (
     "reason",
     "next_action",
     "contract_self_check",
+)
+PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS = (
+    "reviewed",
+    "source_paths",
+    "completed_nodes_considered",
+    "superseded_nodes_considered",
+    "stale_evidence_considered",
+    "prior_blocks_or_experiments_considered",
+    "impact_on_decision",
+    "controller_summary_used_as_evidence",
+)
+PM_RESUME_CONTROLLER_REMINDER_REQUIRED_FIELDS = (
+    "controller_only",
+    "controller_may_read_sealed_bodies",
+    "controller_may_infer_from_chat_history",
+    "controller_may_advance_or_close_route",
+)
+PM_RESUME_DECISION_ALLOWED_VALUES = {
+    "continue_current_packet_loop",
+    "request_sender_reissue",
+    "restore_or_replace_roles_from_memory",
+    "create_repair_or_route_mutation_node",
+    "stop_for_user_or_environment",
+    "close_after_final_ledger_and_terminal_replay",
+}
+PM_RESUME_DECISION_REQUIRED_BODY_FIELDS = (
+    "decision_owner",
+    "decision",
+    "explicit_recovery_evidence_recorded",
+    *(f"prior_path_context_review.{field}" for field in PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS),
+    *(f"controller_reminder.{field}" for field in PM_RESUME_CONTROLLER_REMINDER_REQUIRED_FIELDS),
+)
+PM_PARENT_SEGMENT_DECISION_ALLOWED_VALUES = {
+    "continue",
+    "repair_existing_child",
+    "add_sibling_child",
+    "rebuild_child_subtree",
+    "bubble_to_parent",
+    "pm_stop",
+}
+PM_PARENT_SEGMENT_DECISION_REQUIRED_BODY_FIELDS = (
+    "decision_owner",
+    "decision",
+    *(f"prior_path_context_review.{field}" for field in PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS),
+)
+PM_TERMINAL_CLOSURE_DECISION_ALLOWED_VALUES = {
+    "approve_terminal_closure",
+}
+PM_TERMINAL_CLOSURE_DECISION_REQUIRED_BODY_FIELDS = (
+    "approved_by_role",
+    "decision",
+    *(f"prior_path_context_review.{field}" for field in PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS),
 )
 GATE_DECISION_ALLOWED_KINDS = {
     "quality",
@@ -217,6 +312,10 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "current_node_result_relayed_to_reviewer",
     "node_reviewer_passed_result",
     "node_review_blocked",
+    "pm_model_miss_triage_card_delivered",
+    "model_miss_triage_closed",
+    "pm_review_repair_card_delivered",
+    "pm_reviewer_blocked_event_delivered",
     "pm_parent_backward_targets_card_delivered",
     "parent_backward_targets_built",
     "reviewer_parent_backward_replay_card_delivered",
@@ -260,6 +359,7 @@ PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
     "pm.resume_decision",
     "pm.current_node_loop",
     "pm.node_acceptance_plan",
+    "pm.model_miss_triage",
     "pm.review_repair",
     "pm.parent_segment_decision",
     "pm.evidence_quality_package",
@@ -730,9 +830,17 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "to_role": "project_manager",
     },
     {
+        "flag": "pm_model_miss_triage_card_delivered",
+        "label": "pm_model_miss_triage_phase_card_delivered",
+        "card_id": "pm.model_miss_triage",
+        "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
+        "to_role": "project_manager",
+    },
+    {
         "flag": "pm_review_repair_card_delivered",
         "label": "pm_review_repair_phase_card_delivered",
         "card_id": "pm.review_repair",
+        "requires_flag": "model_miss_triage_closed",
         "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
         "to_role": "project_manager",
     },
@@ -1194,6 +1302,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "route_mutated_by_pm",
         "requires_flag": "node_review_blocked",
         "summary": "PM mutated the route and invalidated affected stale evidence after a reviewer block.",
+    },
+    "pm_records_model_miss_triage_decision": {
+        "flag": "model_miss_triage_closed",
+        "requires_flag": "pm_model_miss_triage_card_delivered",
+        "summary": "PM recorded the model-miss triage decision that precedes normal repair.",
     },
     "pm_records_control_blocker_repair_decision": {
         "flag": "pm_control_blocker_repair_decision_recorded",
@@ -2085,6 +2198,224 @@ def _resume_role_rehydration_payload_contract(
     )
 
 
+def _pm_resume_decision_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
+    pm_context = project_relative(project_root, _pm_prior_path_context_path(run_root))
+    route_history = project_relative(project_root, _route_history_index_path(run_root))
+    return _payload_contract(
+        name="pm_resume_decision_role_output",
+        required_object="role_output_body",
+        required_fields=list(PM_RESUME_DECISION_REQUIRED_BODY_FIELDS),
+        optional_fields=[
+            "recovery_evidence",
+            "role_freshness_verification",
+            "packet_loop_continuation",
+            "decision_rationale",
+            "controller_reminder.controller_may_create_project_evidence",
+            "controller_reminder.controller_may_approve_gates",
+            "controller_reminder.controller_may_implement",
+        ],
+        allowed_values={
+            "decision_owner": ["project_manager"],
+            "decision": sorted(PM_RESUME_DECISION_ALLOWED_VALUES),
+            "prior_path_context_review.reviewed": [True],
+            "prior_path_context_review.source_paths": [[pm_context, route_history]],
+            "prior_path_context_review.controller_summary_used_as_evidence": [False],
+            "controller_reminder.controller_only": [True],
+            "controller_reminder.controller_may_read_sealed_bodies": [False],
+            "controller_reminder.controller_may_infer_from_chat_history": [False],
+            "controller_reminder.controller_may_advance_or_close_route": [False],
+            "controller_reminder.controller_may_create_project_evidence": [False],
+        },
+        conditional_required_fields={
+            "when continuation/resume_reentry.json records ambiguous_state_blocks_controller_execution=true and decision=continue_current_packet_loop": [
+                "explicit_recovery_evidence_recorded=true",
+                "recovery_evidence",
+            ],
+            "when decision=close_after_final_ledger_and_terminal_replay": [
+                "final_ledger_built_clean evidence",
+                "final_backward_replay_passed evidence",
+            ],
+        },
+        structural_requirements=[
+            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
+            "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
+        ],
+        description=(
+            "PM heartbeat/manual-resume recovery decision. This is a role-output body contract, "
+            "not Controller-authored project evidence; Controller may only relay the envelope to the router."
+        ),
+    )
+
+
+def _pm_parent_segment_decision_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
+    pm_context = project_relative(project_root, _pm_prior_path_context_path(run_root))
+    route_history = project_relative(project_root, _route_history_index_path(run_root))
+    return _payload_contract(
+        name="pm_parent_segment_decision_role_output",
+        required_object="role_output_body",
+        required_fields=list(PM_PARENT_SEGMENT_DECISION_REQUIRED_BODY_FIELDS),
+        optional_fields=[
+            "repair_node_id",
+            "superseded_nodes",
+            "stale_evidence_to_mark",
+            "decision_rationale",
+            "same_parent_replay_rerun_plan",
+            "contract_self_check",
+        ],
+        allowed_values={
+            "decision_owner": ["project_manager"],
+            "decision": sorted(PM_PARENT_SEGMENT_DECISION_ALLOWED_VALUES),
+            "prior_path_context_review.reviewed": [True],
+            "prior_path_context_review.source_paths": [[pm_context, route_history]],
+            "prior_path_context_review.controller_summary_used_as_evidence": [False],
+        },
+        conditional_required_fields={
+            "when decision!=continue": [
+                "decision_rationale",
+                "stale_evidence_to_mark or superseded_nodes when affected evidence/nodes exist",
+                "same_parent_replay_rerun_plan",
+            ],
+        },
+        structural_requirements=[
+            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
+            "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
+            "Only decision=continue may close the active parent node; all other decisions require route mutation and same-parent replay rerun.",
+        ],
+        description=(
+            "PM parent-segment decision after reviewer backward replay. This is a role-output body "
+            "contract; Controller may only relay the envelope to the router."
+        ),
+    )
+
+
+def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
+    pm_context = project_relative(project_root, _pm_prior_path_context_path(run_root))
+    route_history = project_relative(project_root, _route_history_index_path(run_root))
+    return _payload_contract(
+        name="pm_terminal_closure_decision_role_output",
+        required_object="role_output_body",
+        required_fields=list(PM_TERMINAL_CLOSURE_DECISION_REQUIRED_BODY_FIELDS),
+        optional_fields=[
+            "final_report",
+            "closure_rationale",
+            "lifecycle_reconciliation",
+            "lifecycle_reconciliation.final_route_wide_gate_ledger_clean",
+            "lifecycle_reconciliation.terminal_backward_replay_passed",
+            "lifecycle_reconciliation.task_completion_projection_ready_for_pm_terminal_closure",
+            "lifecycle_reconciliation.execution_frontier_current",
+            "lifecycle_reconciliation.crew_ledger_current",
+            "lifecycle_reconciliation.continuation_binding_current",
+            "lifecycle_reconciliation.current_ledgers_clean",
+            "contract_self_check",
+        ],
+        allowed_values={
+            "approved_by_role": ["project_manager"],
+            "decision": sorted(PM_TERMINAL_CLOSURE_DECISION_ALLOWED_VALUES),
+            "prior_path_context_review.reviewed": [True],
+            "prior_path_context_review.source_paths": [[pm_context, route_history]],
+            "prior_path_context_review.controller_summary_used_as_evidence": [False],
+            "lifecycle_reconciliation.final_route_wide_gate_ledger_clean": [True],
+            "lifecycle_reconciliation.terminal_backward_replay_passed": [True],
+            "lifecycle_reconciliation.task_completion_projection_ready_for_pm_terminal_closure": [True],
+            "lifecycle_reconciliation.execution_frontier_current": [True],
+            "lifecycle_reconciliation.crew_ledger_current": [True],
+            "lifecycle_reconciliation.continuation_binding_current": [True],
+            "lifecycle_reconciliation.current_ledgers_clean": [True],
+        },
+        structural_requirements=[
+            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
+            "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
+            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean lifecycle ledgers, and continuation binding are present.",
+        ],
+        description=(
+            "PM terminal closure approval. This is a role-output body contract; Controller may only "
+            "relay the envelope to the router and must not infer closure from chat history."
+        ),
+    )
+
+
+def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
+    return _payload_contract(
+        name="pm_model_miss_triage_decision_role_output",
+        required_object="role_output_body",
+        required_fields=list(PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS),
+        optional_fields=[
+            "officer_request_refs",
+            "officer_report_refs",
+            "same_class_findings_summary",
+            "candidate_repairs_considered",
+            "minimal_sufficient_repair_recommendation",
+            "rejected_larger_repairs",
+            "rejected_smaller_repairs",
+            "post_repair_model_checks_required",
+            "decision_rationale",
+        ],
+        allowed_values={
+            "decided_by_role": ["project_manager"],
+            "decision": sorted(PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES),
+            "same_class_findings_reviewed": [True, False],
+            "repair_recommendation_reviewed": [True, False],
+        },
+        conditional_required_fields={
+            "when decision=proceed_with_model_backed_repair": [
+                "flowguard_capability.can_model_bug_class=true",
+                "officer_report_refs[].report_path",
+                "officer_report_refs[].report_hash",
+                "same_class_findings_reviewed=true",
+                "repair_recommendation_reviewed=true",
+                "candidate_repairs_considered",
+                "minimal_sufficient_repair_recommendation",
+                "post_repair_model_checks_required",
+            ],
+            "when decision=out_of_scope_not_modelable": [
+                "flowguard_capability.can_model_bug_class=false",
+                "flowguard_capability.incapability_reason",
+                "selected_next_action",
+                "why_repair_may_start",
+            ],
+        },
+        structural_requirements=[
+            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Do not start pm.review_repair until this decision either authorizes a model-backed repair or records why FlowGuard cannot model the bug class.",
+            "For model-backed repair, officer reports must include old_model_miss_reason, bug_class_definition, same_class_findings, coverage_added, candidate_repairs, minimal_sufficient_repair_recommendation, rejected_larger_repairs, rejected_smaller_repairs, post_repair_model_checks_required, and residual_blindspots.",
+            "PM selects the repair path; officer reports provide model evidence and repair recommendations but do not approve route mutation by themselves.",
+        ],
+        description=(
+            "PM model-miss triage decision for reviewer blockers. This closes the obligation to ask why "
+            "FlowGuard missed the bug class before normal repair planning can start."
+        ),
+    )
+
+
+def _pm_decision_payload_contract_for_card(project_root: Path, run_root: Path, card_id: str) -> dict[str, Any] | None:
+    if card_id == "pm.resume_decision":
+        return _pm_resume_decision_payload_contract(project_root, run_root)
+    if card_id == "pm.model_miss_triage":
+        return _pm_model_miss_triage_payload_contract(project_root, run_root)
+    if card_id == "pm.parent_segment_decision":
+        return _pm_parent_segment_decision_payload_contract(project_root, run_root)
+    if card_id == "pm.closure":
+        return _pm_terminal_closure_payload_contract(project_root, run_root)
+    return None
+
+
+def _role_decision_payload_contract_for_events(
+    project_root: Path, run_root: Path, allowed_events: list[str]
+) -> dict[str, Any] | None:
+    if allowed_events == ["pm_resume_recovery_decision_returned"]:
+        return _pm_resume_decision_payload_contract(project_root, run_root)
+    if allowed_events == [PM_MODEL_MISS_TRIAGE_DECISION_EVENT]:
+        return _pm_model_miss_triage_payload_contract(project_root, run_root)
+    if allowed_events == ["pm_records_parent_segment_decision"]:
+        return _pm_parent_segment_decision_payload_contract(project_root, run_root)
+    if allowed_events == ["pm_approves_terminal_closure"]:
+        return _pm_terminal_closure_payload_contract(project_root, run_root)
+    return None
+
+
 def _json_safe(value: Any) -> Any:
     if isinstance(value, dict):
         return {str(key): _json_safe(item) for key, item in value.items()}
@@ -2379,7 +2710,13 @@ def _should_materialize_control_blocker(
             event.startswith("reviewer_")
             or event.startswith("process_officer_")
             or event.startswith("product_officer_")
-            or event in {"current_node_reviewer_passes_result", "pm_resume_recovery_decision_returned", "pm_records_parent_segment_decision"}
+            or event
+            in {
+                "current_node_reviewer_passes_result",
+                "pm_resume_recovery_decision_returned",
+                PM_MODEL_MISS_TRIAGE_DECISION_EVENT,
+                "pm_records_parent_segment_decision",
+            }
         )
     return False
 
@@ -2426,7 +2763,7 @@ def _skill_observation_reminder(
 def _control_blocker_allowed_resolution_events(category: str, event: str | None) -> list[str]:
     if category == "control_plane_reissue" and event:
         return [event]
-    if category in {"pm_repair_decision_required", "fatal_protocol_violation"}:
+    if category in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES:
         return [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
     return sorted(EXTERNAL_EVENTS)
 
@@ -2855,6 +3192,167 @@ def _mark_control_blocker_delivered(project_root: Path, run_root: Path, run_stat
     _sync_control_plane_indexes(project_root, run_root, run_state)
 
 
+def _validate_model_miss_officer_report_refs(project_root: Path, decision: dict[str, Any]) -> list[dict[str, Any]]:
+    refs = decision.get("officer_report_refs")
+    if not isinstance(refs, list) or not refs:
+        raise RouterError("model-backed repair requires non-empty officer_report_refs")
+    checked: list[dict[str, Any]] = []
+    for index, ref in enumerate(refs):
+        if not isinstance(ref, dict):
+            raise RouterError("officer_report_refs entries must be objects")
+        report_path = str(ref.get("report_path") or ref.get("path") or "").strip()
+        report_hash = str(ref.get("report_hash") or ref.get("hash") or "").strip()
+        if not report_path:
+            raise RouterError("officer_report_refs[].report_path is required")
+        if not report_hash:
+            raise RouterError("officer_report_refs[].report_hash is required")
+        path = resolve_project_path(project_root, report_path)
+        if not path.exists():
+            raise RouterError(f"officer model-miss report path does not exist: {report_path}")
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != report_hash:
+            raise RouterError(f"officer model-miss report hash mismatch for {report_path}")
+        report = read_json(path)
+        missing = [
+            field
+            for field in MODEL_MISS_OFFICER_REPORT_REQUIRED_FIELDS
+            if field not in report or report.get(field) is None
+        ]
+        if missing:
+            raise RouterError(
+                "officer model-miss report is missing required fields: "
+                + ", ".join(missing)
+            )
+        if not isinstance(report.get("same_class_findings"), list):
+            raise RouterError("officer model-miss report requires same_class_findings list")
+        if not isinstance(report.get("candidate_repairs"), list) or not report.get("candidate_repairs"):
+            raise RouterError("officer model-miss report requires non-empty candidate_repairs")
+        if not isinstance(report.get("minimal_sufficient_repair_recommendation"), dict):
+            raise RouterError("officer model-miss report requires minimal_sufficient_repair_recommendation object")
+        contract_self_check = report.get("contract_self_check")
+        if not isinstance(contract_self_check, dict):
+            raise RouterError("officer model-miss report requires contract_self_check")
+        if contract_self_check.get("all_required_fields_present") is not True:
+            raise RouterError("officer model-miss report requires contract_self_check.all_required_fields_present=true")
+        if contract_self_check.get("exact_field_names_used") is not True:
+            raise RouterError("officer model-miss report requires contract_self_check.exact_field_names_used=true")
+        checked.append(
+            {
+                "index": index,
+                "officer_role": ref.get("officer_role") or report.get("reported_by_role"),
+                "report_path": report_path,
+                "report_hash": report_hash,
+                "same_class_finding_count": len(report.get("same_class_findings") or []),
+                "candidate_repair_count": len(report.get("candidate_repairs") or []),
+            }
+        )
+    return checked
+
+
+def _write_model_miss_triage_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> str:
+    decision = _load_file_backed_role_payload(project_root, payload)
+    if decision.get("decided_by_role") != "project_manager":
+        raise RouterError("model-miss triage decision requires decided_by_role=project_manager")
+    if not (
+        run_state["flags"].get("node_review_blocked")
+        or run_state["flags"].get("material_scan_dispatch_blocked")
+    ):
+        raise RouterError("model-miss triage decision requires an active reviewer block")
+    missing = [
+        field
+        for field in PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS
+        if field not in decision or decision.get(field) is None
+    ]
+    if missing:
+        raise RouterError("model-miss triage decision is missing required fields: " + ", ".join(missing))
+    decision_value = str(decision.get("decision") or "").strip()
+    if decision_value not in PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES:
+        raise RouterError("model-miss triage decision is not an allowed value")
+    if not str(decision.get("defect_or_blocker_id") or "").strip():
+        raise RouterError("model-miss triage decision requires defect_or_blocker_id")
+    block_source = str(decision.get("reviewer_block_source_path") or "").strip()
+    if not block_source:
+        raise RouterError("model-miss triage decision requires reviewer_block_source_path")
+    if not resolve_project_path(project_root, block_source).exists():
+        raise RouterError("model-miss triage reviewer_block_source_path must exist")
+    scope = decision.get("model_miss_scope")
+    if not isinstance(scope, dict) or not str(scope.get("bug_class_definition") or "").strip():
+        raise RouterError("model-miss triage decision requires model_miss_scope.bug_class_definition")
+    capability = decision.get("flowguard_capability")
+    if not isinstance(capability, dict) or not isinstance(capability.get("can_model_bug_class"), bool):
+        raise RouterError("model-miss triage decision requires flowguard_capability.can_model_bug_class boolean")
+    blockers = decision.get("blockers")
+    if not isinstance(blockers, list):
+        raise RouterError("model-miss triage decision requires blockers list")
+    contract_self_check = decision.get("contract_self_check")
+    if not isinstance(contract_self_check, dict):
+        raise RouterError("model-miss triage decision requires contract_self_check")
+    if contract_self_check.get("all_required_fields_present") is not True:
+        raise RouterError("model-miss triage decision requires contract_self_check.all_required_fields_present=true")
+    if contract_self_check.get("exact_field_names_used") is not True:
+        raise RouterError("model-miss triage decision requires contract_self_check.exact_field_names_used=true")
+    checked_reports: list[dict[str, Any]] = []
+    if decision_value == "proceed_with_model_backed_repair":
+        if capability.get("can_model_bug_class") is not True:
+            raise RouterError("model-backed repair requires flowguard_capability.can_model_bug_class=true")
+        if decision.get("same_class_findings_reviewed") is not True:
+            raise RouterError("model-backed repair requires same_class_findings_reviewed=true")
+        if decision.get("repair_recommendation_reviewed") is not True:
+            raise RouterError("model-backed repair requires repair_recommendation_reviewed=true")
+        if not decision.get("candidate_repairs_considered"):
+            raise RouterError("model-backed repair requires candidate_repairs_considered")
+        if not isinstance(decision.get("minimal_sufficient_repair_recommendation"), dict):
+            raise RouterError("model-backed repair requires minimal_sufficient_repair_recommendation object")
+        if not decision.get("post_repair_model_checks_required"):
+            raise RouterError("model-backed repair requires post_repair_model_checks_required")
+        checked_reports = _validate_model_miss_officer_report_refs(project_root, decision)
+    elif decision_value == "out_of_scope_not_modelable":
+        if capability.get("can_model_bug_class") is not False:
+            raise RouterError("out-of-scope repair requires flowguard_capability.can_model_bug_class=false")
+        if not str(capability.get("incapability_reason") or "").strip():
+            raise RouterError("out-of-scope repair requires flowguard_capability.incapability_reason")
+    elif decision_value in {"request_officer_model_miss_analysis", "needs_evidence_before_modeling", "stop_for_user"}:
+        if decision.get("same_class_findings_reviewed") is True or decision.get("repair_recommendation_reviewed") is True:
+            raise RouterError("non-authorizing model-miss decision must not claim reviewed repair evidence")
+    if decision_value in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES:
+        if not str(decision.get("selected_next_action") or "").strip():
+            raise RouterError("repair-authorizing model-miss decision requires selected_next_action")
+        if not str(decision.get("why_repair_may_start") or "").strip():
+            raise RouterError("repair-authorizing model-miss decision requires why_repair_may_start")
+    output = {
+        "schema_version": "flowpilot.pm_model_miss_triage_decision.v1",
+        "run_id": run_state["run_id"],
+        "recorded_at": utc_now(),
+        "decision": decision_value,
+        "repair_authorized": decision_value in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES,
+        "checked_officer_reports": checked_reports,
+        **{field: decision.get(field) for field in PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS},
+        **_role_output_envelope_record(decision),
+    }
+    if "officer_report_refs" in decision:
+        output["officer_report_refs"] = decision.get("officer_report_refs")
+    if "minimal_sufficient_repair_recommendation" in decision:
+        output["minimal_sufficient_repair_recommendation"] = decision.get("minimal_sufficient_repair_recommendation")
+    if "post_repair_model_checks_required" in decision:
+        output["post_repair_model_checks_required"] = decision.get("post_repair_model_checks_required")
+    decisions_dir = run_root / "defects" / "model_miss_triage"
+    safe_id = "".join(
+        char if char.isalnum() or char in {"-", "_"} else "-"
+        for char in str(decision.get("defect_or_blocker_id") or "model-miss")
+    ).strip("-") or "model-miss"
+    decision_path = decisions_dir / f"{safe_id}.pm_model_miss_triage_decision.json"
+    write_json(decision_path, output)
+    run_state["model_miss_triage"] = {
+        "decision": decision_value,
+        "repair_authorized": output["repair_authorized"],
+        "decision_path": project_relative(project_root, decision_path),
+        "decision_hash": hashlib.sha256(decision_path.read_bytes()).hexdigest(),
+        "defect_or_blocker_id": decision.get("defect_or_blocker_id"),
+        "checked_officer_reports": checked_reports,
+    }
+    return decision_value
+
+
 def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     decision = _load_file_backed_role_payload(project_root, payload)
     if decision.get("decided_by_role") != "project_manager":
@@ -3193,7 +3691,7 @@ def _write_gate_decision(project_root: Path, run_root: Path, run_state: dict[str
 
 
 def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str) -> bool:
-    if record.get("handling_lane") == "pm_repair_decision_required" and event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+    if record.get("handling_lane") in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES and event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         return False
     raw_events = record.get("allowed_resolution_events")
     if isinstance(raw_events, list) and raw_events:
@@ -3250,7 +3748,7 @@ def _resolve_delivered_control_blocker(
     if from_already_recorded_event:
         lane = record.get("handling_lane")
         pm_repair_recorded = (
-            lane == "pm_repair_decision_required"
+            lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
             and record.get("pm_repair_decision_status") == "recorded"
         )
         if lane != "control_plane_reissue" and not pm_repair_recorded:
@@ -7288,14 +7786,11 @@ def _require_pm_prior_path_context(project_root: Path, run_root: Path, payload: 
         raise RouterError(f"{purpose} must cite current pm_prior_path_context.json")
     if expected_history not in source_paths:
         raise RouterError(f"{purpose} must cite current route_history_index.json")
-    required_lists = (
-        "completed_nodes_considered",
-        "superseded_nodes_considered",
-        "stale_evidence_considered",
-        "prior_blocks_or_experiments_considered",
-        "impact_on_decision",
-    )
-    missing = [field for field in required_lists if field not in review]
+    missing = [
+        field
+        for field in PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS
+        if field not in review and field not in {"reviewed", "source_paths"}
+    ]
     if missing:
         raise RouterError(f"{purpose} prior_path_context_review missing fields: {', '.join(missing)}")
     return {
@@ -8257,15 +8752,7 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
     if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("background_agents_mode") != "single-agent":
         raise RouterError("PM resume decision requires project_manager memory rehydration")
     decision = str(payload.get("decision") or "continue_current_packet_loop")
-    allowed_decisions = {
-        "continue_current_packet_loop",
-        "request_sender_reissue",
-        "restore_or_replace_roles_from_memory",
-        "create_repair_or_route_mutation_node",
-        "stop_for_user_or_environment",
-        "close_after_final_ledger_and_terminal_replay",
-    }
-    if decision not in allowed_decisions:
+    if decision not in PM_RESUME_DECISION_ALLOWED_VALUES:
         raise RouterError(f"unsupported PM resume decision: {decision}")
     reminder = payload.get("controller_reminder")
     if not isinstance(reminder, dict):
@@ -8546,7 +9033,7 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
     if not replay_path.exists():
         raise RouterError("parent segment decision requires parent_backward_replay.json")
     decision = str(payload.get("decision") or "continue")
-    if decision not in {"continue", "repair_existing_child", "add_sibling_child", "rebuild_child_subtree", "bubble_to_parent", "pm_stop"}:
+    if decision not in PM_PARENT_SEGMENT_DECISION_ALLOWED_VALUES:
         raise RouterError(f"unsupported parent segment decision: {decision}")
     record = {
         "schema_version": "flowpilot.parent_segment_decision.v1",
@@ -9529,8 +10016,13 @@ def _write_task_completion_projection(project_root: Path, run_root: Path, run_st
 
 
 def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("approved_by_role", "project_manager") != "project_manager":
         raise RouterError("terminal closure must be approved_by_role=project_manager")
+    decision = str(payload.get("decision") or "")
+    if decision not in PM_TERMINAL_CLOSURE_DECISION_ALLOWED_VALUES:
+        raise RouterError("terminal closure requires decision=approve_terminal_closure")
+    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="terminal closure")
     final_ledger_path = run_root / "final_route_wide_gate_ledger.json"
     terminal_replay_path = run_root / "reviews" / "terminal_backward_replay.json"
     task_projection_path = _task_completion_projection_path(run_root)
@@ -9575,7 +10067,11 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
             "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
             "continuation_binding": project_relative(project_root, continuation_path),
+            "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
+            "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
         },
+        "decision": decision,
+        "prior_path_context_review": prior_review,
         "lifecycle": {
             "heartbeat_active": False,
             "manual_resume_notice_required": False,
@@ -9583,6 +10079,7 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "crew_memory_archived": True,
         },
         "final_report": payload.get("final_report") or {},
+        **_role_output_envelope_record(payload),
     }
     write_json(run_root / "closure" / "terminal_closure_suite.json", closure)
     frontier = _active_frontier(run_root)
@@ -10220,6 +10717,9 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         card = manifest_card(manifest, entry["card_id"])
         delivery_extra = {"postcondition": entry["flag"]}
         delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
+        pm_decision_contract = _pm_decision_payload_contract_for_card(project_root, run_root, entry["card_id"])
+        if pm_decision_contract is not None:
+            delivery_extra["payload_contract"] = pm_decision_contract
         if entry["card_id"] == "reviewer.startup_fact_check":
             delivery_extra.update(_startup_mechanical_audit_action_extra(project_root, run_root, run_state))
         resolved_entry = {**entry, "to_role": to_role}
@@ -10595,7 +11095,16 @@ def _expected_role_decision_wait_action(
     summary: str,
     allowed_external_events: list[str],
     to_role: str,
+    payload_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    extra: dict[str, Any] = {
+        "allowed_external_events": allowed_external_events,
+        "controller_only_mode_active": True,
+        "controller_may_create_project_evidence": False,
+        "expected_wait_is_not_control_blocker": True,
+    }
+    if payload_contract is not None:
+        extra["payload_contract"] = payload_contract
     return make_action(
         action_type="await_role_decision",
         actor="controller",
@@ -10604,12 +11113,7 @@ def _expected_role_decision_wait_action(
         allowed_reads=[project_relative(project_root, run_state_path(run_root))],
         allowed_writes=[project_relative(project_root, run_state_path(run_root))],
         to_role=to_role,
-        extra={
-            "allowed_external_events": allowed_external_events,
-            "controller_only_mode_active": True,
-            "controller_may_create_project_evidence": False,
-            "expected_wait_is_not_control_blocker": True,
-        },
+        extra=extra,
     )
 
 
@@ -10683,6 +11187,7 @@ def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict
         ),
         allowed_external_events=allowed_events,
         to_role=role_label,
+        payload_contract=_role_decision_payload_contract_for_events(project_root, run_root, allowed_events),
     )
 
 
@@ -10722,7 +11227,10 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
                 project_relative(project_root, run_state_path(run_root)),
             ],
             allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-            extra={"allowed_external_events": ["pm_resume_recovery_decision_returned"]},
+            extra={
+                "allowed_external_events": ["pm_resume_recovery_decision_returned"],
+                "payload_contract": _pm_resume_decision_payload_contract(project_root, run_root),
+            },
         )
     if action is None:
         action = _next_mail_action(project_root, run_state, run_root)
@@ -11126,6 +11634,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     flag = meta["flag"]
     required_flag = meta.get("requires_flag")
     parent_segment_decision: str | None = None
+    model_miss_triage_decision: str | None = None
     if required_flag and not run_state["flags"].get(required_flag):
         raise RouterError(f"event {event} requires {required_flag}")
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"before_external_event:{event}")
@@ -11151,7 +11660,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT
         and isinstance(active_blocker, dict)
         and active_blocker.get("delivery_status") == "delivered"
-        and active_blocker.get("handling_lane") == "pm_repair_decision_required"
+        and active_blocker.get("handling_lane") in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
     )
     repeatable_gate_decision = event == GATE_DECISION_EVENT
     repeatable_startup_repair_request = (
@@ -11481,7 +11990,11 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     elif event == "reviewer_final_backward_replay_passed":
         _write_terminal_backward_replay(project_root, run_root, run_state, payload)
     elif event == "pm_mutates_route_after_review_block":
+        if not run_state["flags"].get("model_miss_triage_closed"):
+            raise RouterError("review-block repair or route mutation requires closed model-miss triage first")
         _write_route_mutation(project_root, run_root, run_state, payload)
+    elif event == PM_MODEL_MISS_TRIAGE_DECISION_EVENT:
+        model_miss_triage_decision = _write_model_miss_triage_decision(project_root, run_root, run_state, payload)
     elif event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         _write_control_blocker_repair_decision(project_root, run_root, run_state, payload)
     elif event == GATE_DECISION_EVENT:
@@ -11501,6 +12014,16 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         "recorded_at": utc_now(),
     }
     run_state["flags"][flag] = True
+    if event in {"current_node_reviewer_blocks_result", "reviewer_blocks_material_scan_dispatch"}:
+        run_state["flags"]["pm_model_miss_triage_card_delivered"] = False
+        run_state["flags"]["model_miss_triage_closed"] = False
+        run_state["flags"]["pm_review_repair_card_delivered"] = False
+        run_state["model_miss_triage"] = None
+    if (
+        event == PM_MODEL_MISS_TRIAGE_DECISION_EVENT
+        and model_miss_triage_decision not in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES
+    ):
+        run_state["flags"][flag] = False
     if event == "pm_records_parent_segment_decision" and (parent_segment_decision or "continue") != "continue":
         run_state["flags"][flag] = False
     if event == "pm_absorbs_reviewed_research":

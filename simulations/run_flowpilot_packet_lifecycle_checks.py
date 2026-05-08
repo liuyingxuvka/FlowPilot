@@ -26,6 +26,7 @@ HAZARD_EXPECTED_FAILURES = {
     "agent_id_role_string": "reviewer pass occurred without complete packet/result receipts and agent role authority",
     "worker_write_without_grant": "worker project write occurred before a current-node write grant",
     "pm_decision_clears_blocker_without_followup": "PM repair decision cleared blocker without corrected follow-up re-audit",
+    "fatal_followup_without_pm_decision": "fatal protocol violation follow-up was accepted before PM repair decision",
     "pm_absorbs_without_packet_group_audit": "PM absorbed research before reviewer packet-group runtime audit passed",
 }
 
@@ -45,7 +46,7 @@ def _state_id(state: model.State) -> str:
         f"agent={state.completed_agent_id_maps_to_role}|"
         f"review={state.reviewer_runtime_audit_passed}|"
         f"pm={state.pm_absorbed_reviewed_research},{state.pm_advanced_node}|"
-        f"blocker={state.control_blocker_active},{state.pm_repair_decision_recorded},"
+        f"blocker={state.control_blocker_active},{state.control_blocker_lane},{state.pm_repair_decision_recorded},"
         f"{state.followup_event_already_recorded},{state.followup_reaudit_passed}"
     )
 

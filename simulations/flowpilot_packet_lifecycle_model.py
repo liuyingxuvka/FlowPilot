@@ -73,6 +73,7 @@ class State:
     pm_advanced_node: bool = False
 
     control_blocker_active: bool = False
+    control_blocker_lane: str = "none"  # none | pm_repair_decision_required | fatal_protocol_violation
     pm_repair_decision_recorded: bool = False
     followup_event_already_recorded: bool = False
     followup_reaudit_passed: bool = False
@@ -180,7 +181,20 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         yield Transition(
             "pm_hash_repair_requires_followup_reaudit",
-            _inc(state, control_blocker_active=True, packet_body_hash_identity_synced=False),
+            _inc(
+                state,
+                control_blocker_active=True,
+                control_blocker_lane="pm_repair_decision_required",
+                packet_body_hash_identity_synced=False,
+            ),
+        )
+        yield Transition(
+            "fatal_protocol_violation_requires_pm_repair_decision",
+            _inc(
+                state,
+                control_blocker_active=True,
+                control_blocker_lane="fatal_protocol_violation",
+            ),
         )
         return
 
@@ -331,6 +345,17 @@ def pm_decision_does_not_clear_blocker_without_followup(state: State, trace) -> 
     return InvariantResult.pass_()
 
 
+def fatal_protocol_violation_requires_pm_decision_before_followup(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.control_blocker_lane == "fatal_protocol_violation"
+        and state.followup_reaudit_passed
+        and not state.pm_repair_decision_recorded
+    ):
+        return InvariantResult.fail("fatal protocol violation follow-up was accepted before PM repair decision")
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         "dispatch_requires_hash_identity",
@@ -367,6 +392,11 @@ INVARIANTS = (
         "PM repair decision records intent but cannot clear a blocker without corrected follow-up re-audit.",
         pm_decision_does_not_clear_blocker_without_followup,
     ),
+    Invariant(
+        "fatal_protocol_violation_requires_pm_decision_before_followup",
+        "Fatal protocol violations remain strict: PM repair decision is required before corrected follow-up replay.",
+        fatal_protocol_violation_requires_pm_decision_before_followup,
+    ),
 )
 
 
@@ -377,6 +407,7 @@ MAX_SEQUENCE_LENGTH = 16
 REQUIRED_LABELS = (
     "dispatch_gate_checks_body_envelope_and_ledger_hash_identity",
     "pm_hash_repair_requires_followup_reaudit",
+    "fatal_protocol_violation_requires_pm_repair_decision",
     "pm_repair_decision_recorded_blocker_still_active",
     "followup_reaudit_resolves_pm_control_blocker",
     "already_recorded_followup_resolves_pm_control_blocker",
@@ -503,9 +534,18 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_decision_clears_blocker_without_followup": State(
             status="running",
+            control_blocker_lane="pm_repair_decision_required",
             control_blocker_active=False,
             pm_repair_decision_recorded=True,
             followup_reaudit_passed=False,
+        ),
+        "fatal_followup_without_pm_decision": State(
+            status="running",
+            control_blocker_lane="fatal_protocol_violation",
+            control_blocker_active=False,
+            pm_repair_decision_recorded=False,
+            followup_event_already_recorded=True,
+            followup_reaudit_passed=True,
         ),
         "pm_absorbs_without_packet_group_audit": State(
             status="running",

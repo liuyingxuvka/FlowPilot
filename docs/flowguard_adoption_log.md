@@ -1041,6 +1041,62 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
+## flowpilot-fatal-control-blocker-replay-model-20260508 - Model fatal control blocker PM repair replay
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot run exposed a fatal_protocol_violation control blocker where PM repair decision recording and already-recorded corrected follow-up replay needed router/model review.
+- Status: completed_installed_local_git_pending
+- Skill decision: used_flowguard
+- Started: 2026-05-08T16:03:00+00:00
+- Ended: 2026-05-08T16:10:00+00:00
+- Commands OK: true
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+- simulations/flowpilot_packet_lifecycle_model.py
+- simulations/run_flowpilot_packet_lifecycle_checks.py
+- simulations/card_instruction_coverage_model.py
+
+### Commands
+- OK: `python -m py_compile simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py simulations\flowpilot_packet_lifecycle_model.py simulations\run_flowpilot_packet_lifecycle_checks.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out "$env:TEMP\flowpilot_control_plane_friction_fatal_check.json"`
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py --json-out "$env:TEMP\flowpilot_packet_lifecycle_fatal_check.json"`
+- OK: `python -m py_compile simulations\card_instruction_coverage_model.py simulations\run_card_instruction_coverage_checks.py`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k "already_recorded_event"`
+- OK: `python -m pytest tests\test_flowpilot_output_contracts.py -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out "$env:TEMP\flowpilot_protocol_contract_after_patch.json"`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- Timed out: `python simulations\run_meta_checks.py`
+
+### Findings
+- Live control blocker 0010 is currently recorded and resolved, but router source had a recovery branch gap: already-recorded corrected follow-up replay only treated `pm_repair_decision_required` as PM-repair-recorded, not `fatal_protocol_violation`.
+- Production router now treats both PM-decision-required lanes as eligible for already-recorded follow-up resolution only after `pm_repair_decision_status=recorded`.
+- PM repair decision event recording already accepted fatal blockers; the production patch stayed limited to the already-recorded delivered-blocker resolver plus regression coverage.
+- The model suite now represents fatal protocol violations as PM-decision-required blockers and checks that corrected follow-up replay remains matchable and normalized.
+- FlowCard coverage now checks PM control-blocker cards mention ordinary PM repair lane, fatal lane, PM repair event, output contract, and repair transaction.
+
+### Counterexamples
+- Added synthetic hazards for fatal follow-up without PM decision, fatal repair follow-up event unmatchable, and fatal repair follow-up event not normalized.
+
+### Friction Points
+- Full meta check is heavy and timed out under the interactive 120-second limit; `--fast` reused a valid existing proof because meta inputs were unchanged.
+
+### Skipped Steps
+- GitHub push was intentionally skipped per user instruction.
+- No sealed packet/result/report body was read.
+
+### Next Actions
+- Keep this as a local-only commit unless the user later asks to push to GitHub.
+
+
 ## flowpilot-runtime-protocol-hardening-20260506 - Harden router/result-review flow, artifact validation, display projection, and live skill issue reminders.
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -5046,3 +5102,36 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If future work wants live-run audit to pass, treat it as a separate FlowPilot route repair task with explicit authorization.
+
+
+## flowpilot-pm-resume-decision-contract-audit-20260508 - Audit PM resume decision router rejection and model coverage
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Heartbeat/manual resume PM decision was rejected twice because router JSON requirements were stricter than role-visible contract/template.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T15:20:19+00:00
+- Ended: 2026-05-08T15:20:19+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_resume_checks.py; python simulations/run_router_action_contract_checks.py --json-out temp; python simulations/run_protocol_contract_conformance_checks.py --json-out temp; python -m unittest targeted resume tests`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded

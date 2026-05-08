@@ -58,6 +58,8 @@ HAZARD_EXPECTED_FAILURES = {
     "control_blocker_index_stale_after_artifact_update": "router control blocker index disagreed with control blocker artifact status",
     "pm_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
     "pm_repair_followup_event_not_normalized": "PM repair follow-up event could not be matched by normalized router resolution logic",
+    "fatal_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
+    "fatal_repair_followup_event_not_normalized": "PM repair follow-up event could not be matched by normalized router resolution logic",
     "pm_repair_reissue_specs_not_materialized": "PM repair reissue specs did not materialize into packet runtime files, ledger, and dispatch index",
     "pm_repair_success_only_gate_after_unmaterialized_reissue": "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable",
     "reviewer_recheck_protocol_blocker_unroutable": "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable",

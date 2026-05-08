@@ -47,6 +47,11 @@ from typing import Any, Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
+PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES = frozenset(
+    {"pm_repair_decision_required", "fatal_protocol_violation"}
+)
+
+
 @dataclass(frozen=True)
 class Tick:
     """One control-plane handoff tick."""
@@ -140,7 +145,7 @@ class State:
     optimized_transaction_records_result_return: bool = False
 
     receipt_missing_blocker: bool = False
-    control_blocker_lane: str = "none"  # none | control_plane_reissue | pm_repair_decision_required
+    control_blocker_lane: str = "none"  # none | control_plane_reissue | pm_repair_decision_required | fatal_protocol_violation
     control_blocker_target_role: str = "none"  # none | human_like_reviewer | project_manager
     pm_repair_decision_recorded: bool = False
     control_blocker_followup_event_matchable: bool = True
@@ -539,7 +544,7 @@ def control_blocker_indexes_match_artifacts(state: State, trace) -> InvariantRes
 def pm_repair_followup_events_are_matchable(state: State, trace) -> InvariantResult:
     del trace
     if (
-        state.control_blocker_lane == "pm_repair_decision_required"
+        state.control_blocker_lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
         and state.pm_repair_decision_recorded
         and (
             not state.control_blocker_followup_event_matchable
@@ -557,7 +562,7 @@ def pm_repair_reissue_requires_packet_runtime_materialization(
 ) -> InvariantResult:
     del trace
     if (
-        state.control_blocker_lane == "pm_repair_decision_required"
+        state.control_blocker_lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
         and state.pm_repair_decision_recorded
         and state.pm_repair_reissue_spec_written
         and not (
@@ -583,7 +588,7 @@ def pm_repair_recheck_outcomes_remain_routable(state: State, trace) -> Invariant
         state.pm_repair_reissue_spec_written and not repair_runtime_ready
     ) or state.reviewer_recheck_protocol_blocker_written
     if (
-        state.control_blocker_lane == "pm_repair_decision_required"
+        state.control_blocker_lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
         and state.pm_repair_decision_recorded
         and needs_failure_route
         and (
@@ -995,6 +1000,19 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_repair_followup_event_not_normalized": _safe_base(
             control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            control_blocker_followup_event_matchable=True,
+            control_resolution_predicate_normalized=False,
+        ),
+        "fatal_repair_followup_event_unmatchable": _safe_base(
+            control_blocker_lane="fatal_protocol_violation",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            control_blocker_followup_event_matchable=False,
+        ),
+        "fatal_repair_followup_event_not_normalized": _safe_base(
+            control_blocker_lane="fatal_protocol_violation",
             control_blocker_target_role="project_manager",
             pm_repair_decision_recorded=True,
             control_blocker_followup_event_matchable=True,
@@ -1463,10 +1481,8 @@ def _active_pm_repair_followup_event_matchable(router_state: object) -> tuple[bo
     active = router_state.get("active_control_blocker")
     if not isinstance(active, dict):
         return False, True, {}
-    recorded = (
-        active.get("handling_lane") == "pm_repair_decision_required"
-        and active.get("pm_repair_decision_status") == "recorded"
-    )
+    lane = str(active.get("handling_lane") or "")
+    recorded = lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES and active.get("pm_repair_decision_status") == "recorded"
     if not recorded:
         return False, True, {}
     raw_events = active.get("allowed_resolution_events")
@@ -1479,6 +1495,7 @@ def _active_pm_repair_followup_event_matchable(router_state: object) -> tuple[bo
     matchable = bool(allowed_names) and (not expected_names or bool(set(allowed_names) & expected_names))
     return recorded, matchable, {
         "blocker_id": active.get("blocker_id"),
+        "handling_lane": lane,
         "allowed_resolution_events": raw_events,
         "allowed_event_names_after_normalization": allowed_names,
         "pm_repair_rerun_target_name_after_normalization": rerun_target_name,
@@ -1525,10 +1542,10 @@ def _audit_pm_repair_reissue_liveness(
 ) -> dict[str, object]:
     active = router_state.get("active_control_blocker") if isinstance(router_state, dict) else None
     active = active if isinstance(active, dict) else {}
-    pm_repair_recorded = (
-        active.get("handling_lane") == "pm_repair_decision_required"
-        and active.get("pm_repair_decision_status") == "recorded"
-    )
+    lane = str(active.get("handling_lane") or "")
+    pm_repair_recorded = lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES and active.get(
+        "pm_repair_decision_status"
+    ) == "recorded"
     allowed_names = _resolution_event_names(active.get("allowed_resolution_events"))
     success_names = [name for name in allowed_names if _event_is_success_repair_outcome(name)]
     non_success_names = [
@@ -2327,6 +2344,9 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         _active_pm_repair_followup_event_matchable(router_state)
     )
     pm_repair_liveness = _audit_pm_repair_reissue_liveness(root, run_root, router_state)
+    active_blocker = router_state.get("active_control_blocker") if isinstance(router_state, dict) else None
+    active_blocker = active_blocker if isinstance(active_blocker, dict) else {}
+    active_blocker_lane = str(active_blocker.get("handling_lane") or "none")
     if pm_repair_recorded and not pm_repair_followup_matchable:
         _add_finding(
             findings,
@@ -2497,7 +2517,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         protocol_blocker_registered_in_router_state=not bool(unregistered_protocol_blockers),
         control_blocker_artifact_status_written=bool(control_blocker_mismatches),
         control_blocker_router_index_matches_artifact=control_blocker_index_synced,
-        control_blocker_lane="pm_repair_decision_required" if pm_repair_recorded else "none",
+        control_blocker_lane=active_blocker_lane if pm_repair_recorded else "none",
         control_blocker_target_role="project_manager" if pm_repair_recorded else "none",
         pm_repair_decision_recorded=pm_repair_recorded,
         control_blocker_followup_event_matchable=pm_repair_followup_matchable,

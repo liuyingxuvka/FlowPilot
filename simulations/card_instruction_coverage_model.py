@@ -86,6 +86,9 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
         "pm.research_package",
         "pm.current_node_loop",
         "pm.officer_request_report_loop",
+        "pm.resume_decision",
+        "pm.parent_segment_decision",
+        "pm.closure",
         "pm.event.node_started",
         "worker_a.core",
         "worker_b.core",
@@ -96,6 +99,12 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
         "reviewer.worker_result_review",
         "process_officer.core",
         "product_officer.core",
+    }
+)
+PM_CONTROL_BLOCKER_REPAIR_CARD_IDS = frozenset(
+    {
+        "pm.core",
+        "pm.review_repair",
     }
 )
 
@@ -146,6 +155,7 @@ class CardFacts:
     pm_history_context_guidance: bool
     pm_minimum_complexity_guidance: bool
     output_contract_guidance: bool
+    pm_control_blocker_repair_guidance: bool
 
 
 @dataclass(frozen=True)
@@ -255,6 +265,21 @@ def _has_output_contract_guidance(card_id: str, text: str) -> bool:
     if card_id.startswith("pm.") and card_id not in {"pm.core", "pm.output_contract_catalog"}:
         return has_packet_contract
     return has_packet_contract and "contract self-check" in lower
+
+
+def _has_pm_control_blocker_repair_guidance(card_id: str, role: str, text: str) -> bool:
+    if role != "project_manager" or card_id not in PM_CONTROL_BLOCKER_REPAIR_CARD_IDS:
+        return True
+    lower = text.lower()
+    required_terms = (
+        "control_blocker",
+        "pm_repair_decision_required",
+        "fatal_protocol_violation",
+        "pm_records_control_blocker_repair_decision",
+        "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
+        "repair transaction",
+    )
+    return all(term in lower for term in required_terms)
 
 
 def _has_envelope_only_return(identity: dict[str, str], text: str) -> bool:
@@ -388,6 +413,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 pm_history_context_guidance=_has_pm_history_context_guidance(card_id, expected_role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(card_id, expected_role, text),
                 output_contract_guidance=_has_output_contract_guidance(card_id, text),
+                pm_control_blocker_repair_guidance=_has_pm_control_blocker_repair_guidance(card_id, expected_role, text),
             )
         )
 
@@ -419,6 +445,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 pm_history_context_guidance=_has_pm_history_context_guidance(f"unmanifested:{rel}", role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(f"unmanifested:{rel}", role, text),
                 output_contract_guidance=_has_output_contract_guidance(f"unmanifested:{rel}", text),
+                pm_control_blocker_repair_guidance=_has_pm_control_blocker_repair_guidance(f"unmanifested:{rel}", role, text),
             )
         )
     return tuple(sorted(facts, key=lambda card: card.card_id))
@@ -452,6 +479,8 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: missing PM minimum sufficient complexity guidance")
     if not card.output_contract_guidance:
         failures.append(f"{card.card_id}: missing output_contract and Contract Self-Check guidance")
+    if not card.pm_control_blocker_repair_guidance:
+        failures.append(f"{card.card_id}: missing PM control-blocker repair guidance for fatal and repair-decision lanes")
     return tuple(failures)
 
 
@@ -526,6 +555,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         pm_history_context_guidance=True,
         pm_minimum_complexity_guidance=True,
         output_contract_guidance=True,
+        pm_control_blocker_repair_guidance=True,
     )
     return {
         "missing_identity_boundary": replace(good, identity_boundary=False),
@@ -552,5 +582,10 @@ def hazard_cards() -> dict[str, CardFacts]:
             good,
             card_id="pm.output_contract_catalog",
             output_contract_guidance=False,
+        ),
+        "missing_pm_control_blocker_repair_guidance": replace(
+            good,
+            card_id="pm.review_repair",
+            pm_control_blocker_repair_guidance=False,
         ),
     }

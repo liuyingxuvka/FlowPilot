@@ -46,6 +46,11 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.material_sufficiency_report.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.terminal_backward_replay_report.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.gate_decision.v1", contract_ids)
+        self.assertIn("flowpilot.output_contract.pm_resume_decision.v1", contract_ids)
+        self.assertIn("flowpilot.output_contract.pm_parent_segment_decision.v1", contract_ids)
+        self.assertIn("flowpilot.output_contract.pm_terminal_closure_decision.v1", contract_ids)
+        self.assertIn("flowpilot.output_contract.pm_model_miss_triage_decision.v1", contract_ids)
+        self.assertIn("flowpilot.output_contract.flowguard_model_miss_report.v1", contract_ids)
         startup_contract = next(
             item
             for item in registry["contracts"]
@@ -79,6 +84,105 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("repair_local", gate_contract["allowed_decision_values"])
         self.assertIn("mutate_route", gate_contract["allowed_decision_values"])
         self.assertIn("semantic_sufficiency_fields_not_router_owned", gate_contract["router_mechanical_validation"])
+        resume_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.pm_resume_decision.v1"
+        )
+        for field in (
+            "decision_owner",
+            "decision",
+            "explicit_recovery_evidence_recorded",
+            "prior_path_context_review.reviewed",
+            "prior_path_context_review.source_paths",
+            "prior_path_context_review.completed_nodes_considered",
+            "prior_path_context_review.superseded_nodes_considered",
+            "prior_path_context_review.stale_evidence_considered",
+            "prior_path_context_review.prior_blocks_or_experiments_considered",
+            "prior_path_context_review.impact_on_decision",
+            "prior_path_context_review.controller_summary_used_as_evidence",
+            "controller_reminder.controller_only",
+            "controller_reminder.controller_may_read_sealed_bodies",
+            "controller_reminder.controller_may_infer_from_chat_history",
+            "controller_reminder.controller_may_advance_or_close_route",
+        ):
+            self.assertIn(field, resume_contract["required_body_fields"])
+        self.assertIn("continue_current_packet_loop", resume_contract["allowed_decision_values"])
+        parent_segment_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.pm_parent_segment_decision.v1"
+        )
+        for field in (
+            "decision_owner",
+            "decision",
+            "prior_path_context_review.reviewed",
+            "prior_path_context_review.source_paths",
+            "prior_path_context_review.completed_nodes_considered",
+            "prior_path_context_review.superseded_nodes_considered",
+            "prior_path_context_review.stale_evidence_considered",
+            "prior_path_context_review.prior_blocks_or_experiments_considered",
+            "prior_path_context_review.impact_on_decision",
+            "prior_path_context_review.controller_summary_used_as_evidence",
+        ):
+            self.assertIn(field, parent_segment_contract["required_body_fields"])
+        self.assertIn("repair_existing_child", parent_segment_contract["allowed_decision_values"])
+        closure_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.pm_terminal_closure_decision.v1"
+        )
+        for field in (
+            "approved_by_role",
+            "decision",
+            "prior_path_context_review.reviewed",
+            "prior_path_context_review.source_paths",
+            "prior_path_context_review.completed_nodes_considered",
+            "prior_path_context_review.superseded_nodes_considered",
+            "prior_path_context_review.stale_evidence_considered",
+            "prior_path_context_review.prior_blocks_or_experiments_considered",
+            "prior_path_context_review.impact_on_decision",
+            "prior_path_context_review.controller_summary_used_as_evidence",
+        ):
+            self.assertIn(field, closure_contract["required_body_fields"])
+        self.assertIn("approve_terminal_closure", closure_contract["allowed_decision_values"])
+        model_miss_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.pm_model_miss_triage_decision.v1"
+        )
+        for field in (
+            "decided_by_role",
+            "decision",
+            "defect_or_blocker_id",
+            "model_miss_scope",
+            "flowguard_capability",
+            "same_class_findings_reviewed",
+            "repair_recommendation_reviewed",
+            "selected_next_action",
+            "why_repair_may_start",
+            "contract_self_check",
+        ):
+            self.assertIn(field, model_miss_contract["required_body_fields"])
+        self.assertIn("proceed_with_model_backed_repair", model_miss_contract["allowed_decision_values"])
+        self.assertIn(
+            "model_backed_repair_requires_officer_report_refs",
+            model_miss_contract["router_mechanical_validation"],
+        )
+        officer_model_miss_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.flowguard_model_miss_report.v1"
+        )
+        for field in (
+            "old_model_miss_reason",
+            "bug_class_definition",
+            "same_class_findings",
+            "candidate_repairs",
+            "minimal_sufficient_repair_recommendation",
+            "post_repair_model_checks_required",
+        ):
+            self.assertIn(field, officer_model_miss_contract["required_body_fields"])
 
     def test_router_delivered_reviewer_cards_include_task_report_contracts(self) -> None:
         startup_card = (
@@ -131,6 +235,19 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("gate_decision_version", pm_card)
         self.assertIn("flowpilot.output_contract.gate_decision.v1", reviewer_card)
         self.assertIn("semantic reason", reviewer_card)
+        model_miss_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_model_miss_triage.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("flowpilot.output_contract.pm_model_miss_triage_decision.v1", model_miss_card)
+        self.assertIn("same_class_findings", model_miss_card)
+        self.assertIn("minimal_sufficient_repair_recommendation", model_miss_card)
 
     def test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result(self) -> None:
         root = self.make_project()

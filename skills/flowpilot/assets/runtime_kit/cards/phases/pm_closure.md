@@ -34,3 +34,58 @@ resources, leftover skill invocations, or broad artifacts that never changed
 the delivered product or verification confidence. Close only after they are
 resolved by the final ledger as consumed, superseded, quarantined, or discarded
 with reason.
+
+## Decision Contract For This Task
+
+Use contract `flowpilot.output_contract.pm_terminal_closure_decision.v1`.
+
+Return event: `pm_approves_terminal_closure`.
+
+Write the closure decision body to a run-scoped decision JSON file and return
+only a role-output envelope with `decision_path` and `decision_hash`. Do not
+include the decision body in chat.
+
+Copy this body shape exactly. Use the current run id and current route-memory
+paths from the router delivery envelope.
+
+```json
+{
+  "schema_version": "flowpilot.terminal_closure_decision.v1",
+  "run_id": "<current-run-id>",
+  "approved_by_role": "project_manager",
+  "decision": "approve_terminal_closure",
+  "prior_path_context_review": {
+    "reviewed": true,
+    "source_paths": [
+      ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
+      ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
+    ],
+    "completed_nodes_considered": [],
+    "superseded_nodes_considered": [],
+    "stale_evidence_considered": [],
+    "prior_blocks_or_experiments_considered": [],
+    "impact_on_decision": "Clean final ledger, passed terminal backward replay, and current route memory support terminal closure.",
+    "controller_summary_used_as_evidence": false
+  },
+  "lifecycle_reconciliation": {
+    "final_route_wide_gate_ledger_clean": true,
+    "terminal_backward_replay_passed": true,
+    "task_completion_projection_ready_for_pm_terminal_closure": true,
+    "execution_frontier_current": true,
+    "crew_ledger_current": true,
+    "continuation_binding_current": true,
+    "current_ledgers_clean": true
+  },
+  "final_report": {},
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true,
+    "current_run_route_memory_paths_cited": true
+  }
+}
+```
+
+Allowed `decision` value:
+
+- `approve_terminal_closure`

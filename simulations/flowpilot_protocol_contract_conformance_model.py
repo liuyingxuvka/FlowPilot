@@ -23,6 +23,7 @@ VALID_FIXED_PROTOCOL = "valid_fixed_protocol"
 STARTUP_FACT_JSONPATH_MISMATCH = "startup_fact_jsonpath_mismatch"
 CONTROL_BLOCKER_AMBIGUOUS_EVENT = "control_blocker_ambiguous_event"
 CONTROL_BLOCKER_WEAK_DECISION_CONTRACT = "control_blocker_weak_decision_contract"
+PM_RESUME_DECISION_WEAK_CONTRACT = "pm_resume_decision_weak_contract"
 STARTUP_FACT_HASH_ALIAS = "startup_fact_hash_alias"
 COCKPIT_MISSING_HOST_RECEIPT = "cockpit_missing_host_receipt"
 DISPLAY_FALLBACK_AFTER_PM_ACTIVATION = "display_fallback_after_pm_activation"
@@ -36,6 +37,7 @@ NEGATIVE_SCENARIOS = (
     STARTUP_FACT_JSONPATH_MISMATCH,
     CONTROL_BLOCKER_AMBIGUOUS_EVENT,
     CONTROL_BLOCKER_WEAK_DECISION_CONTRACT,
+    PM_RESUME_DECISION_WEAK_CONTRACT,
     STARTUP_FACT_HASH_ALIAS,
     COCKPIT_MISSING_HOST_RECEIPT,
     DISPLAY_FALLBACK_AFTER_PM_ACTIVATION,
@@ -49,6 +51,7 @@ SCENARIOS = (VALID_FIXED_PROTOCOL, *NEGATIVE_SCENARIOS)
 
 STARTUP_FACT_CONTRACT_ID = "flowpilot.output_contract.startup_fact_report.v1"
 PM_CONTROL_BLOCKER_CONTRACT_ID = "flowpilot.output_contract.pm_control_blocker_repair_decision.v1"
+PM_RESUME_DECISION_CONTRACT_ID = "flowpilot.output_contract.pm_resume_decision.v1"
 REVIEWER_IDS_PATH = "external_fact_review.reviewer_checked_requirement_ids"
 TOP_LEVEL_REVIEWER_IDS_PATH = "reviewer_checked_requirement_ids"
 PM_CONTROL_BLOCKER_EVENT = "pm_records_control_blocker_repair_decision"
@@ -74,6 +77,26 @@ PM_CONTROL_BLOCKER_REQUIRED_FIELDS = frozenset(
         "rerun_target",
         "blockers",
         "contract_self_check",
+    }
+)
+
+PM_RESUME_DECISION_REQUIRED_FIELDS = frozenset(
+    {
+        "decision_owner",
+        "decision",
+        "explicit_recovery_evidence_recorded",
+        "prior_path_context_review.reviewed",
+        "prior_path_context_review.source_paths",
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered",
+        "prior_path_context_review.impact_on_decision",
+        "prior_path_context_review.controller_summary_used_as_evidence",
+        "controller_reminder.controller_only",
+        "controller_reminder.controller_may_read_sealed_bodies",
+        "controller_reminder.controller_may_infer_from_chat_history",
+        "controller_reminder.controller_may_advance_or_close_route",
     }
 )
 
@@ -107,6 +130,10 @@ class State:
     pm_control_blocker_contract_fields: frozenset[str] = field(default_factory=frozenset)
     pm_control_blocker_router_fields: frozenset[str] = field(default_factory=frozenset)
     pm_control_blocker_card_fields: frozenset[str] = field(default_factory=frozenset)
+    pm_resume_contract_fields: frozenset[str] = field(default_factory=frozenset)
+    pm_resume_router_fields: frozenset[str] = field(default_factory=frozenset)
+    pm_resume_card_fields: frozenset[str] = field(default_factory=frozenset)
+    pm_resume_action_contract_fields: frozenset[str] = field(default_factory=frozenset)
 
     router_rewrites_startup_fact_canonical: bool = True
     startup_role_may_submit_to_canonical_path: bool = True
@@ -221,6 +248,10 @@ def _valid_state() -> State:
         pm_control_blocker_contract_fields=PM_CONTROL_BLOCKER_REQUIRED_FIELDS,
         pm_control_blocker_router_fields=PM_CONTROL_BLOCKER_REQUIRED_FIELDS,
         pm_control_blocker_card_fields=PM_CONTROL_BLOCKER_REQUIRED_FIELDS,
+        pm_resume_contract_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
+        pm_resume_router_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
+        pm_resume_card_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
+        pm_resume_action_contract_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
         router_rewrites_startup_fact_canonical=True,
         startup_role_may_submit_to_canonical_path=False,
         router_blocks_startup_fact_canonical_alias=True,
@@ -273,6 +304,14 @@ def _scenario_state(scenario: str) -> State:
             state,
             pm_control_blocker_contract_fields=weak_fields,
             pm_control_blocker_router_fields=weak_fields,
+        )
+    if scenario == PM_RESUME_DECISION_WEAK_CONTRACT:
+        weak_fields = frozenset({"decision_owner", "decision"})
+        return replace(
+            state,
+            pm_resume_contract_fields=weak_fields,
+            pm_resume_card_fields=weak_fields,
+            pm_resume_action_contract_fields=weak_fields,
         )
     if scenario == STARTUP_FACT_HASH_ALIAS:
         return replace(
@@ -382,6 +421,23 @@ def _control_blocker_contract_failures(state: State) -> list[str]:
     return failures
 
 
+def _pm_resume_decision_contract_failures(state: State) -> list[str]:
+    failures: list[str] = []
+    missing_contract = PM_RESUME_DECISION_REQUIRED_FIELDS - state.pm_resume_contract_fields
+    missing_router = PM_RESUME_DECISION_REQUIRED_FIELDS - state.pm_resume_router_fields
+    missing_card = PM_RESUME_DECISION_REQUIRED_FIELDS - state.pm_resume_card_fields
+    missing_action = PM_RESUME_DECISION_REQUIRED_FIELDS - state.pm_resume_action_contract_fields
+    if missing_contract:
+        failures.append("PM resume decision output contract omits required fields: " + ", ".join(sorted(missing_contract)))
+    if missing_router:
+        failures.append("router PM resume decision validator omits required fields: " + ", ".join(sorted(missing_router)))
+    if missing_card:
+        failures.append("PM resume decision card omits required JSON template fields: " + ", ".join(sorted(missing_card)))
+    if missing_action:
+        failures.append("PM resume decision action payload_contract omits required fields: " + ", ".join(sorted(missing_action)))
+    return failures
+
+
 def _hash_lifecycle_failures(state: State) -> list[str]:
     if (
         state.router_rewrites_startup_fact_canonical
@@ -486,6 +542,7 @@ def protocol_failures(state: State) -> list[str]:
     failures.extend(_jsonpath_failures(state))
     failures.extend(_control_blocker_event_failures(state))
     failures.extend(_control_blocker_contract_failures(state))
+    failures.extend(_pm_resume_decision_contract_failures(state))
     failures.extend(_hash_lifecycle_failures(state))
     failures.extend(_display_receipt_failures(state))
     failures.extend(_startup_repair_cycle_failures(state))
@@ -834,6 +891,44 @@ def _pm_control_blocker_router_fields(router_source: str) -> frozenset[str]:
     return frozenset(fields)
 
 
+def _pm_resume_router_fields(router: Any) -> frozenset[str]:
+    return frozenset(str(field) for field in getattr(router, "PM_RESUME_DECISION_REQUIRED_BODY_FIELDS", ()))
+
+
+def _pm_resume_action_contract_fields(router_source: str) -> frozenset[str]:
+    delivery_segment = _function_segment(router_source, "_next_system_card_action")
+    wait_segment = _function_segment(router_source, "compute_controller_action")
+    helper_segment = _function_segment(router_source, "_pm_resume_decision_payload_contract")
+    card_dispatch_segment = _function_segment(router_source, "_pm_decision_payload_contract_for_card")
+    event_dispatch_segment = _function_segment(router_source, "_role_decision_payload_contract_for_events")
+    if "PM_RESUME_DECISION_REQUIRED_BODY_FIELDS" not in helper_segment:
+        return frozenset()
+    wait_has_contract = (
+        '"payload_contract": _pm_resume_decision_payload_contract' in wait_segment
+        or (
+            "_role_decision_payload_contract_for_events" in wait_segment
+            and 'allowed_events == ["pm_resume_recovery_decision_returned"]' in event_dispatch_segment
+            and "_pm_resume_decision_payload_contract" in event_dispatch_segment
+        )
+    )
+    if not wait_has_contract:
+        return frozenset()
+    delivery_has_contract = (
+        (
+            'entry["card_id"] == "pm.resume_decision"' in delivery_segment
+            and 'delivery_extra["payload_contract"] = _pm_resume_decision_payload_contract' in delivery_segment
+        )
+        or (
+            "_pm_decision_payload_contract_for_card" in delivery_segment
+            and 'card_id == "pm.resume_decision"' in card_dispatch_segment
+            and "_pm_resume_decision_payload_contract" in card_dispatch_segment
+        )
+    )
+    if not delivery_has_contract:
+        return frozenset()
+    return PM_RESUME_DECISION_REQUIRED_FIELDS
+
+
 def _pm_control_blocker_card_events(*texts: str) -> frozenset[str]:
     events = set()
     combined = "\n".join(texts)
@@ -930,6 +1025,7 @@ def collect_source_state(project_root: Path) -> State:
     worker_b_core_text = (runtime_root / "cards" / "roles" / "worker_b.md").read_text(encoding="utf-8")
     pm_startup_text = (runtime_root / "cards" / "phases" / "pm_startup_activation.md").read_text(encoding="utf-8")
     pm_repair_text = (runtime_root / "cards" / "phases" / "pm_review_repair.md").read_text(encoding="utf-8")
+    pm_resume_text = (runtime_root / "cards" / "phases" / "pm_resume_decision.md").read_text(encoding="utf-8")
     pm_material_scan_text = (runtime_root / "cards" / "phases" / "pm_material_scan.md").read_text(encoding="utf-8")
     reviewer_dispatch_text = (runtime_root / "cards" / "reviewer" / "dispatch_request.md").read_text(encoding="utf-8")
     role_output_guidance_texts = (
@@ -966,6 +1062,10 @@ def collect_source_state(project_root: Path) -> State:
         pm_control_blocker_contract_fields=_contract_fields(project_root, PM_CONTROL_BLOCKER_CONTRACT_ID),
         pm_control_blocker_router_fields=_pm_control_blocker_router_fields(router_source),
         pm_control_blocker_card_fields=_first_json_block_paths(pm_repair_text),
+        pm_resume_contract_fields=_contract_fields(project_root, PM_RESUME_DECISION_CONTRACT_ID),
+        pm_resume_router_fields=_pm_resume_router_fields(router),
+        pm_resume_card_fields=_first_json_block_paths(pm_resume_text),
+        pm_resume_action_contract_fields=_pm_resume_action_contract_fields(router_source),
         router_rewrites_startup_fact_canonical=_router_rewrites_startup_fact_canonical(router_source),
         startup_role_may_submit_to_canonical_path=_startup_role_may_submit_to_canonical_path(startup_card_text),
         router_blocks_startup_fact_canonical_alias=_router_blocks_startup_fact_canonical_alias(router_source),

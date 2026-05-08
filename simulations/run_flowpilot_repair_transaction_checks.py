@@ -15,10 +15,17 @@ import flowpilot_repair_transaction_model as model
 REQUIRED_LABELS = (
     "reviewer_blocker_detected",
     "router_registers_blocker_with_origin_and_failure_events",
+    "pm_records_model_miss_triage_for_modelable_blocker",
+    "pm_records_flowguard_out_of_scope_reason",
+    "pm_issues_model_miss_officer_request",
+    "officer_reports_same_class_findings_and_minimal_repair",
+    "pm_selects_model_backed_repair_candidate",
+    "pm_selects_out_of_scope_repair_candidate",
     "pm_records_repair_decision_without_resolving_blocker",
     "router_opens_repair_transaction",
     "pm_writes_reissue_spec_inside_transaction",
     "router_atomically_commits_reissue_generation_and_outcome_table",
+    "post_repair_model_check_passed_after_committed_generation",
     "reviewer_recheck_requested_after_committed_generation",
     "reviewer_recheck_allows_dispatch",
     "reviewer_recheck_returns_followup_blocker",
@@ -30,6 +37,10 @@ REQUIRED_LABELS = (
 HAZARD_EXPECTED_FAILURES = {
     "blocker_registered_without_nonterminal_events": "router blocker registration lacked origin or nonterminal repair events",
     "pm_decision_self_resolves_blocker": "PM repair decision resolved the blocker by itself",
+    "repair_decision_before_model_miss_triage": "PM repair decision started before closing model-miss triage obligation",
+    "repair_decision_before_model_miss_path_selected": "PM repair decision started before selecting a model-miss repair path",
+    "model_backed_repair_without_officer_report": "PM selected a model-backed repair before officer same-class findings and minimal repair recommendation",
+    "out_of_scope_repair_without_reason": "PM out-of-scope repair decision lacked FlowGuard incapability reason",
     "reissue_spec_outside_transaction": "PM repair wrote replacement artifacts outside a repair transaction",
     "transaction_commits_packet_files_without_ledger": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
     "transaction_commits_ledger_without_dispatch_index": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
@@ -39,6 +50,7 @@ HAZARD_EXPECTED_FAILURES = {
     "replacement_generation_has_duplicate_identity": "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets",
     "success_only_outcome_table": "repair transaction router outcome table did not route success, blocker, and protocol outcomes",
     "reviewer_recheck_before_commit": "reviewer recheck was requested before a committed generation and complete outcome table",
+    "reviewer_recheck_before_post_repair_model_check": "reviewer recheck was requested before the repaired FlowGuard model checked the candidate fix",
     "reviewer_blocker_unroutable": "reviewer recheck outcome was not accepted by router",
     "reviewer_protocol_blocker_unroutable": "reviewer recheck outcome was not accepted by router",
     "blocked_terminal_without_followup_blocker": "repair transaction blocked without registering a follow-up blocker",
@@ -53,6 +65,14 @@ def _state_id(state: model.State) -> str:
         f"status={state.status}|holder={state.holder}|steps={state.steps}|"
         f"blocker={state.blocker_detected},{state.blocker_registered_in_router},"
         f"{state.blocker_has_origin_event},{state.blocker_has_allowed_nonterminal_events}|"
+        f"model_miss={state.model_miss_triage_recorded},modelable={state.flowguard_bug_class_modelable},"
+        f"out_of_scope={state.flowguard_out_of_scope_reason_recorded},"
+        f"request={state.model_miss_officer_request_issued},"
+        f"report={state.model_miss_officer_report_returned},"
+        f"same_class={state.same_class_findings_recorded},"
+        f"candidates={state.repair_candidates_compared},"
+        f"minimal={state.minimal_sufficient_repair_recommended},"
+        f"pm_selected={state.pm_selected_repair_after_model_miss}|"
         f"pm={state.pm_repair_decision_recorded},self_resolve={state.pm_decision_resolves_blocker}|"
         f"tx={state.repair_transaction_opened},{state.transaction_id_recorded},{state.transaction_plan_kind}|"
         f"stage={state.replacement_spec_written},{state.packet_files_staged},"
@@ -61,7 +81,7 @@ def _state_id(state: model.State) -> str:
         f"partial={state.partial_generation_published}|"
         f"gen={state.replacement_generation_published},{state.old_generation_superseded},"
         f"{state.canonical_packet_identity_unique},{state.packet_hashes_replayable},"
-        f"{state.result_write_targets_explicit}|"
+        f"{state.result_write_targets_explicit},post_model={state.post_repair_model_check_passed}|"
         f"outcomes={state.success_outcome_routable},{state.blocker_outcome_routable},"
         f"{state.protocol_outcome_routable}|"
         f"review={state.reviewer_recheck_requested},{state.reviewer_outcome},"
@@ -182,15 +202,20 @@ def _architecture_candidate() -> dict[str, object]:
     return {
         "name": "repair_transaction_generation_commit",
         "principles": [
+            "PM repair decisions first close the model-miss obligation: FlowGuard-modelable blockers get officer same-class findings and a minimal repair recommendation, while out-of-scope blockers need an explicit incapability reason.",
             "PM repair decisions open a transaction; they never resolve blockers directly.",
             "Replacement packets are committed as one generation across physical files, packet ledger, dispatch index, and router resolution table.",
+            "Committed repair generations pass the repaired FlowGuard model check before reviewer recheck starts.",
             "The router publishes success, blocker, and protocol-blocker outcomes before reviewer recheck starts.",
             "A reviewer failure is a legal terminal blocked state with a router-visible follow-up blocker, not controller no-legal-next-action.",
             "Terminal success or blocked states refresh packet ledger, frontier, and display authorities together.",
         ],
         "minimal_runtime_change_set": [
+            "Add a PM model-miss triage gate before PM repair decision and transaction opening.",
+            "Require officer model-miss reports to include same-class findings, candidate comparison, and a minimal sufficient repair recommendation for modelable blockers.",
             "Add a run-scoped repair_transaction record and transaction_id.",
             "Move packet reissue materialization behind one commit function.",
+            "Run the repaired FlowGuard model against the candidate fix before reviewer recheck.",
             "Replace allowed_resolution_events success-only lists with an outcome table containing success and non-success events.",
             "Require reviewer recheck to consume only committed generation ids.",
             "Refresh router_state, packet_ledger, execution_frontier, and display surfaces in the same commit/finalize path.",
