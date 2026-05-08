@@ -169,6 +169,25 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             )
         return body
 
+    def close_model_miss_triage(
+        self,
+        root: Path,
+        *,
+        decision: str = "proceed_with_model_backed_repair",
+        output_name: str = "decisions/model_miss_valid",
+    ) -> None:
+        if not self.flag(root, "pm_model_miss_triage_card_delivered"):
+            self.deliver_expected_card(root, "pm.model_miss_triage")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                output_name,
+                self.model_miss_triage_body(root, decision=decision),
+            ),
+        )
+
     def flag(self, root: Path, name: str) -> bool:
         run_root = self.run_root_for(root)
         state = read_json(router.run_state_path(run_root))
@@ -1292,7 +1311,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-mutation")
         router.record_external_event(root, "current_node_reviewer_blocks_result")
 
-        with self.assertRaisesRegex(router.RouterError, "model-miss triage"):
+        with self.assertRaisesRegex(router.RouterError, "model[_-]miss"):
             router.record_external_event(
                 root,
                 "pm_mutates_route_after_review_block",
@@ -2970,6 +2989,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(state["flags"]["material_scan_dispatch_blocked"])
         self.assertFalse(state["flags"]["reviewer_dispatch_allowed"])
         self.assertTrue((run_root / "material" / "material_dispatch_block.json").exists())
+        self.close_model_miss_triage(root, output_name="decisions/material_dispatch_model_miss_valid")
         self.deliver_expected_card(root, "pm.review_repair")
         self.deliver_expected_card(root, "pm.event.reviewer_blocked")
         action = self.next_after_display_sync(root)
@@ -5031,6 +5051,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "reviewer.worker_result_review")
         packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.close_model_miss_triage(root, output_name="decisions/route_mutation_model_miss_valid")
         router.record_external_event(
             root,
             "pm_mutates_route_after_review_block",

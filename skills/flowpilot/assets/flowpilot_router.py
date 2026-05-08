@@ -1300,7 +1300,7 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     },
     "pm_mutates_route_after_review_block": {
         "flag": "route_mutated_by_pm",
-        "requires_flag": "node_review_blocked",
+        "requires_flag": "model_miss_triage_closed",
         "summary": "PM mutated the route and invalidated affected stale evidence after a reviewer block.",
     },
     "pm_records_model_miss_triage_decision": {
@@ -11990,6 +11990,8 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     elif event == "reviewer_final_backward_replay_passed":
         _write_terminal_backward_replay(project_root, run_root, run_state, payload)
     elif event == "pm_mutates_route_after_review_block":
+        if not run_state["flags"].get("node_review_blocked"):
+            raise RouterError("review-block route mutation requires an active node_review_blocked state")
         if not run_state["flags"].get("model_miss_triage_closed"):
             raise RouterError("review-block repair or route mutation requires closed model-miss triage first")
         _write_route_mutation(project_root, run_root, run_state, payload)

@@ -2,6 +2,22 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.5.4 - 2026-05-08
+
+### Added
+
+- Added output-contract model coverage for the PM model-miss triage decision
+  and FlowGuard officer model-miss report contracts.
+
+### Changed
+
+- Gated reviewer-block repair behind PM model-miss triage so
+  FlowGuard-modelable bug classes require officer same-class findings, candidate repair
+  comparison, and a minimal sufficient repair recommendation before normal
+  repair starts.
+- Kept PM as the repair owner while making non-modelable cases record an
+  explicit FlowGuard incapability reason before using the ordinary repair path.
+
 ## 0.5.3 - 2026-05-08
 
 ### Added

@@ -34,6 +34,8 @@ VALID_IMPLEMENTATION = "valid_implementation"
 VALID_REVIEW = "valid_review"
 VALID_FINAL_REPORT = "valid_final_report"
 VALID_GATE_DECISION = "valid_gate_decision"
+VALID_MODEL_MISS_TRIAGE = "valid_model_miss_triage"
+VALID_MODEL_MISS_OFFICER_REPORT = "valid_model_miss_officer_report"
 MISSING_CONTRACT = "missing_contract"
 MISMATCHED_CONTRACT = "mismatched_contract"
 HIDDEN_ROUTER_REQUIREMENT = "hidden_router_requirement_absent_from_contract"
@@ -50,11 +52,17 @@ NEGATIVE_SCENARIOS = (
     FORBIDDEN_ENVELOPE_BODY_FIELD,
 )
 
-SCENARIOS = (
+VALID_SCENARIOS = (
     VALID_IMPLEMENTATION,
     VALID_REVIEW,
     VALID_FINAL_REPORT,
     VALID_GATE_DECISION,
+    VALID_MODEL_MISS_TRIAGE,
+    VALID_MODEL_MISS_OFFICER_REPORT,
+)
+
+SCENARIOS = (
+    *VALID_SCENARIOS,
     *NEGATIVE_SCENARIOS,
 )
 
@@ -139,11 +147,54 @@ GATE_DECISION_CONTRACT = ContractSpec(
     ),
 )
 
+MODEL_MISS_TRIAGE_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.pm_model_miss_triage_decision.v1",
+    task_family="pm.model_miss_triage",
+    required_body_fields=frozenset(
+        {
+            "blockers",
+            "contract_self_check",
+            "decided_by_role",
+            "decision",
+            "defect_or_blocker_id",
+            "flowguard_capability",
+            "model_miss_scope",
+            "repair_recommendation_reviewed",
+            "reviewer_block_source_path",
+            "same_class_findings_reviewed",
+            "selected_next_action",
+            "why_repair_may_start",
+        }
+    ),
+)
+
+MODEL_MISS_OFFICER_REPORT_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.flowguard_model_miss_report.v1",
+    task_family="officer.model_miss_report",
+    required_body_fields=frozenset(
+        {
+            "bug_class_definition",
+            "candidate_repairs",
+            "contract_self_check",
+            "coverage_added",
+            "minimal_sufficient_repair_recommendation",
+            "old_model_miss_reason",
+            "post_repair_model_checks_required",
+            "rejected_larger_repairs",
+            "rejected_smaller_repairs",
+            "residual_blindspots",
+            "same_class_findings",
+        }
+    ),
+)
+
 CONTRACTS_BY_FAMILY = {
     IMPLEMENTATION_CONTRACT.task_family: IMPLEMENTATION_CONTRACT,
     REVIEW_CONTRACT.task_family: REVIEW_CONTRACT,
     FINAL_REPORT_CONTRACT.task_family: FINAL_REPORT_CONTRACT,
     GATE_DECISION_CONTRACT.task_family: GATE_DECISION_CONTRACT,
+    MODEL_MISS_TRIAGE_CONTRACT.task_family: MODEL_MISS_TRIAGE_CONTRACT,
+    MODEL_MISS_OFFICER_REPORT_CONTRACT.task_family: MODEL_MISS_OFFICER_REPORT_CONTRACT,
 }
 
 CONTRACTS_BY_ID = {
@@ -256,6 +307,13 @@ def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
         return FINAL_REPORT_CONTRACT.task_family, FINAL_REPORT_CONTRACT
     if scenario == VALID_GATE_DECISION:
         return GATE_DECISION_CONTRACT.task_family, GATE_DECISION_CONTRACT
+    if scenario == VALID_MODEL_MISS_TRIAGE:
+        return MODEL_MISS_TRIAGE_CONTRACT.task_family, MODEL_MISS_TRIAGE_CONTRACT
+    if scenario == VALID_MODEL_MISS_OFFICER_REPORT:
+        return (
+            MODEL_MISS_OFFICER_REPORT_CONTRACT.task_family,
+            MODEL_MISS_OFFICER_REPORT_CONTRACT,
+        )
     if scenario == VALID_REVIEW:
         return REVIEW_CONTRACT.task_family, REVIEW_CONTRACT
     return IMPLEMENTATION_CONTRACT.task_family, IMPLEMENTATION_CONTRACT
@@ -355,6 +413,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             VALID_REVIEW: "packet_embeds_selected_contract",
             VALID_FINAL_REPORT: "packet_embeds_selected_contract",
             VALID_GATE_DECISION: "packet_embeds_selected_contract",
+            VALID_MODEL_MISS_TRIAGE: "packet_embeds_selected_contract",
+            VALID_MODEL_MISS_OFFICER_REPORT: "packet_embeds_selected_contract",
             MISSING_CONTRACT: "packet_omits_selected_contract",
             MISMATCHED_CONTRACT: "packet_embeds_mismatched_contract",
             HIDDEN_ROUTER_REQUIREMENT: "packet_embeds_contract_with_hidden_router_requirement",
@@ -713,6 +773,7 @@ __all__ = [
     "NEGATIVE_EXPECTED_REJECTIONS",
     "NEGATIVE_SCENARIOS",
     "SCENARIOS",
+    "VALID_SCENARIOS",
     "Action",
     "State",
     "Tick",

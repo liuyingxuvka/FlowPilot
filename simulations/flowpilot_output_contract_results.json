@@ -7,10 +7,10 @@
     "safe_graph": "pass"
   },
   "counts": {
-    "accepted": 4,
-    "edges": 70,
+    "accepted": 6,
+    "edges": 84,
     "rejected": 6,
-    "states": 71
+    "states": 85
   },
   "missing_labels": [],
   "negative_scenarios": {
@@ -23,6 +23,8 @@
     "valid_final_report": "accepted",
     "valid_gate_decision": "accepted",
     "valid_implementation": "accepted",
+    "valid_model_miss_officer_report": "accepted",
+    "valid_model_miss_triage": "accepted",
     "valid_review": "accepted"
   },
   "ok": true,

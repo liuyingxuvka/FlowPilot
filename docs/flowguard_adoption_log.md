@@ -1041,6 +1041,61 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
+## flowpilot-model-miss-triage-gate-20260508 - Gate reviewer-block repair through FlowGuard model-miss triage
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Reviewer-block and repair routing changed stateful FlowPilot control flow; PM repair must now close the FlowGuard model-miss obligation before normal repair or route mutation.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T16:20:00+02:00
+- Ended: 2026-05-08T19:00:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/defect_governance_model.py
+- simulations/flowpilot_repair_transaction_model.py
+- simulations/flowpilot_output_contract_model.py
+- simulations/run_defect_governance_checks.py
+- simulations/run_flowpilot_repair_transaction_checks.py
+- simulations/run_output_contract_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python simulations/run_output_contract_checks.py --json-out simulations/flowpilot_output_contract_results.json`
+- OK: `python simulations/run_defect_governance_checks.py`
+- OK: `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_results.json`
+- OK: `python -m unittest tests.test_flowpilot_output_contracts`
+- OK: `python -m unittest -v tests.test_flowpilot_router_runtime`
+- OK: `python scripts/check_install.py`
+- OK: `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 60`
+- OK: `python simulations/run_meta_checks.py --fast`
+- OK: `python simulations/run_capability_checks.py --fast`
+- OK: `python scripts/smoke_autopilot.py --fast`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/check_public_release.py --json --skip-validation`
+
+### Findings
+- Output-contract propagation now covers `pm.model_miss_triage` and `officer.model_miss_report` as first-class valid contract families.
+- Runtime repair after reviewer/material dispatch block now requires PM to record a model-miss triage decision before `pm.review_repair` or `pm_mutates_route_after_review_block` can proceed.
+- Model-backed repair requires officer report references with same-class findings, candidate repair comparison, and a minimal sufficient repair recommendation.
+- Out-of-scope repair is allowed only when PM records why FlowGuard cannot model the bug class.
+
+### Counterexamples
+- Previous unsafe paths are now caught: repair before model-miss triage, model-backed repair without officer findings, out-of-scope repair without incapability reason, and reviewer recheck before post-repair model check.
+
+### Friction Points
+- Full `run_meta_checks.py` and `run_capability_checks.py` recomputation exceeded the 180-second command window, but `--fast` proof reuse passed because the model file, runner file, FlowGuard schema, and result-file fingerprints were unchanged.
+- The read-only coverage sweep still reports historical live-run findings under `.flowpilot/runs/run-20260508-090520`; this task did not mutate that active route state.
+
+### Skipped Steps
+- No direct repair of historical `.flowpilot` live-run artifacts; they are separate route-state issues and not part of this release change.
+- `scripts/check_public_release.py` was run with `--skip-validation` because equivalent validation commands were run directly, including fast smoke.
+
+### Next Actions
+- Treat future reviewer-block repair regressions as model-miss triage failures first, then ordinary repair only after the model-backed or out-of-scope branch is closed.
+
+
 ## flowpilot-fatal-control-blocker-replay-model-20260508 - Model fatal control blocker PM repair replay
 
 - Project: FlowGuardProjectAutopilot_20260430
