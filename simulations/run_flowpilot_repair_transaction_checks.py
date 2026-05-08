@@ -43,6 +43,7 @@ HAZARD_EXPECTED_FAILURES = {
     "reviewer_protocol_blocker_unroutable": "reviewer recheck outcome was not accepted by router",
     "blocked_terminal_without_followup_blocker": "repair transaction blocked without registering a follow-up blocker",
     "complete_terminal_without_authority_refresh": "terminal repair transaction state did not refresh ledger, frontier, and display authorities",
+    "complete_terminal_keeps_stale_repair_lane": "terminal repair transaction left stale active repair transaction or recheck pending action",
     "controller_no_legal_next_after_recheck": "repair transaction reached no legal next action",
 }
 
@@ -67,7 +68,9 @@ def _state_id(state: model.State) -> str:
         f"accepted={state.router_accepted_reviewer_outcome}|"
         f"terminal={state.original_blocker_resolved},{state.followup_blocker_registered},"
         f"{state.packet_ledger_refreshed},{state.frontier_refreshed},"
-        f"{state.display_refreshed},dead={state.no_legal_next_action}"
+        f"{state.display_refreshed},active_tx={state.active_repair_transaction},"
+        f"repair_pending={state.repair_recheck_pending_action},"
+        f"main={state.main_flow_resumed_after_success},dead={state.no_legal_next_action}"
     )
 
 

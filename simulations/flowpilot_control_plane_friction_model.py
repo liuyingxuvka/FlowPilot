@@ -89,6 +89,8 @@ class State:
     pm_repair_reissue_dispatch_index_updated: bool = True
     pm_repair_allowed_success_only: bool = False
     pm_repair_non_success_outcome_routable: bool = True
+    active_repair_transaction_stale: bool = False
+    repair_recheck_pending_action_stale: bool = False
     reviewer_recheck_protocol_blocker_written: bool = False
     reviewer_recheck_protocol_blocker_routable: bool = True
 
@@ -596,6 +598,15 @@ def pm_repair_recheck_outcomes_remain_routable(state: State, trace) -> Invariant
     return InvariantResult.pass_()
 
 
+def repair_success_clears_stale_repair_lane(state: State, trace) -> InvariantResult:
+    del trace
+    if state.active_repair_transaction_stale or state.repair_recheck_pending_action_stale:
+        return InvariantResult.fail(
+            "repair transaction success left stale active repair transaction or repair recheck pending action"
+        )
+    return InvariantResult.pass_()
+
+
 def delivered_cards_include_required_phase_sources(state: State, trace) -> InvariantResult:
     del trace
     if state.phase_dependency_cards_delivered and not state.phase_required_sources_complete:
@@ -768,6 +779,11 @@ INVARIANTS = (
         name="pm_repair_recheck_outcomes_remain_routable",
         description="Reviewer rechecks after PM repair can route blocker or protocol outcomes, not only success.",
         predicate=pm_repair_recheck_outcomes_remain_routable,
+    ),
+    Invariant(
+        name="repair_success_clears_stale_repair_lane",
+        description="Successful repair transactions leave no stale repair/recheck pending lane.",
+        predicate=repair_success_clears_stale_repair_lane,
     ),
     Invariant(
         name="delivered_cards_include_required_phase_sources",
@@ -1012,6 +1028,10 @@ def hazard_states() -> dict[str, State]:
             pm_repair_allowed_success_only=True,
             pm_repair_non_success_outcome_routable=False,
         ),
+        "repair_transaction_stale_after_success": _safe_base(
+            active_repair_transaction_stale=True,
+            repair_recheck_pending_action_stale=True,
+        ),
         "phase_card_missing_required_upstream_source": _safe_base(
             phase_dependency_cards_delivered=True,
             phase_required_sources_complete=False,
@@ -1193,6 +1213,8 @@ def _material_packet_envelope_paths(run_root: Path, material_scan_packets: objec
         for packet in material_scan_packets.get("packets", []):
             if isinstance(packet, dict) and isinstance(packet.get("packet_envelope_path"), str):
                 paths.add(packet["packet_envelope_path"].replace("\\", "/"))
+        if paths:
+            return sorted(paths)
     packet_root = run_root / "packets"
     if packet_root.exists():
         for envelope_path in sorted(packet_root.glob("*/packet_envelope.json")):
@@ -1236,7 +1258,9 @@ def _audit_material_scan_dispatch_integrity(
     router_phase = str(router_state.get("phase") or "") if isinstance(router_state, dict) else ""
     frontier_phase = str(frontier.get("phase") or "") if isinstance(frontier, dict) else ""
     frontier_status = str(frontier.get("status") or "") if isinstance(frontier, dict) else ""
-    phase_context_consistent = (
+    flags = _router_flags(router_state)
+    material_scan_complete = bool(flags.get("material_review_sufficient"))
+    phase_context_consistent = material_scan_complete or (
         router_phase == "material_scan"
         and frontier_phase == "material_scan"
         and frontier_status == "material_scan"
@@ -1335,6 +1359,7 @@ def _audit_material_scan_dispatch_integrity(
             "router_state_phase": router_phase,
             "execution_frontier_phase": frontier_phase,
             "execution_frontier_status": frontier_status,
+            "material_scan_complete": material_scan_complete,
         },
         "packet_details": packet_details,
     }
@@ -1633,6 +1658,75 @@ def _audit_pm_repair_reissue_liveness(
         "reviewer_recheck_protocol_blocker_written": bool(protocol_blockers),
         "reviewer_recheck_protocol_blocker_routable": protocol_blockers_routable,
         "reviewer_recheck_protocol_blockers": protocol_blockers,
+    }
+
+
+def _repair_outcome_event_names(active_repair_transaction: object) -> set[str]:
+    if not isinstance(active_repair_transaction, dict):
+        return set()
+    table = active_repair_transaction.get("outcome_table")
+    if not isinstance(table, dict):
+        return set()
+    names: set[str] = set()
+    for value in table.values():
+        if isinstance(value, dict) and isinstance(value.get("event"), str):
+            names.add(value["event"])
+    return names
+
+
+def _audit_stale_repair_lane(router_state: object, frontier: object) -> dict[str, object]:
+    if not isinstance(router_state, dict):
+        return {
+            "active_repair_transaction_stale": False,
+            "repair_recheck_pending_action_stale": False,
+        }
+    flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
+    active_blocker = router_state.get("active_control_blocker")
+    active_repair = router_state.get("active_repair_transaction")
+    pending = router_state.get("pending_action")
+    frontier_phase = str(frontier.get("phase") or "") if isinstance(frontier, dict) else ""
+    frontier_status = str(frontier.get("status") or "") if isinstance(frontier, dict) else ""
+    main_flow_advanced = (
+        frontier_phase not in {"", "material_scan"}
+        or frontier_status not in {"", "material_scan"}
+        or bool(flags.get("material_review_sufficient"))
+        or bool(flags.get("material_accepted_by_pm"))
+        or bool(flags.get("pm_material_understanding_written"))
+        or bool(flags.get("pm_product_architecture_card_delivered"))
+    )
+    outcome_events = _repair_outcome_event_names(active_repair)
+    pending_events = set()
+    if isinstance(pending, dict):
+        pending_events = {
+            str(item)
+            for item in pending.get("allowed_external_events", [])
+            if isinstance(item, str)
+        }
+    stale_active = bool(active_repair and not isinstance(active_blocker, dict) and main_flow_advanced)
+    stale_pending = bool(
+        isinstance(pending, dict)
+        and pending.get("action_type") == "await_role_decision"
+        and not isinstance(active_blocker, dict)
+        and (
+            pending.get("repair_transaction_id")
+            or pending_events.intersection(outcome_events)
+            or pending_events.intersection(
+                {
+                    "reviewer_blocks_material_scan_dispatch_recheck",
+                    "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+                }
+            )
+        )
+    )
+    return {
+        "active_repair_transaction_stale": stale_active,
+        "repair_recheck_pending_action_stale": stale_pending,
+        "active_repair_transaction": active_repair,
+        "active_control_blocker": active_blocker,
+        "pending_action": pending,
+        "frontier_phase": frontier_phase or None,
+        "frontier_status": frontier_status or None,
+        "main_flow_advanced": main_flow_advanced,
     }
 
 
@@ -2290,6 +2384,18 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="pm_repair_recheck_outcomes_remain_routable",
             evidence=pm_repair_liveness,
         )
+    stale_repair_lane = _audit_stale_repair_lane(router_state, frontier)
+    if stale_repair_lane.get("active_repair_transaction_stale") or stale_repair_lane.get(
+        "repair_recheck_pending_action_stale"
+    ):
+        _add_finding(
+            findings,
+            code="repair_transaction_stale_after_success",
+            severity="error",
+            summary="repair transaction success left stale active repair transaction or repair recheck pending action after the main flow advanced",
+            invariant="repair_success_clears_stale_repair_lane",
+            evidence=stale_repair_lane,
+        )
 
     child_skill_gate_synced, child_skill_gate_evidence = _audit_child_skill_gate_sync(run_root)
     child_skill_review_recorded = bool(child_skill_gate_evidence.get("review_passed") is True)
@@ -2412,6 +2518,12 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         ),
         pm_repair_non_success_outcome_routable=bool(
             pm_repair_liveness.get("non_success_outcome_routable")
+        ),
+        active_repair_transaction_stale=bool(
+            stale_repair_lane.get("active_repair_transaction_stale")
+        ),
+        repair_recheck_pending_action_stale=bool(
+            stale_repair_lane.get("repair_recheck_pending_action_stale")
         ),
         reviewer_recheck_protocol_blocker_written=bool(
             pm_repair_liveness.get("reviewer_recheck_protocol_blocker_written")

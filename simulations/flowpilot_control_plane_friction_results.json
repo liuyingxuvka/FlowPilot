@@ -17,6 +17,7 @@
           "child-skill gate manifest did not sync reviewer pass status"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": false,
           "child_skill_gate_review_recorded": true,
@@ -72,6 +73,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -114,6 +116,7 @@
           "router control blocker index disagreed with control blocker artifact status"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -169,6 +172,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -211,6 +215,7 @@
           "Controller read sealed packet/result body"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -266,6 +271,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -308,6 +314,7 @@
           "delivered card current_phase did not match its actual workflow phase"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -363,6 +370,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -405,6 +413,7 @@
           "route snapshot or display plan remained stale after product architecture delivery"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -460,6 +469,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -502,6 +512,7 @@
           "execution frontier remained at material_scan after product architecture delivery"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -557,6 +568,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -599,6 +611,7 @@
           "material scan dispatch was allowed before reviewer dispatch review"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -654,6 +667,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -696,6 +710,7 @@
           "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -751,6 +766,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -793,6 +809,7 @@
           "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -848,6 +865,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -890,6 +908,7 @@
           "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -945,6 +964,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -987,6 +1007,7 @@
           "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1042,6 +1063,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1084,6 +1106,7 @@
           "missing receipt blocker was not routed as same-role reviewer control-plane reissue"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1139,6 +1162,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": true,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1181,6 +1205,7 @@
           "multiple active UI tasks were exposed under current_json_only authority"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1236,6 +1261,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1278,6 +1304,7 @@
           "optimized relay transaction skipped delivery, receipt, result-return, role, or hash evidence"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1333,6 +1360,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1375,6 +1403,7 @@
           "delivered phase card was missing required upstream source paths"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1430,6 +1459,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1472,6 +1502,7 @@
           "PM repair follow-up event could not be matched by normalized router resolution logic"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1527,6 +1558,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1569,6 +1601,7 @@
           "PM repair follow-up event could not be matched by normalized router resolution logic"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1624,6 +1657,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1666,6 +1700,7 @@
           "PM repair reissue specs did not materialize into packet runtime files, ledger, and dispatch index"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1721,6 +1756,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1764,6 +1800,7 @@
           "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1819,6 +1856,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1861,6 +1899,7 @@
           "product architecture card was delivered without PM material-understanding source paths"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -1916,6 +1955,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -1958,6 +1998,7 @@
           "protocol blocker file existed without router-visible blocker registration"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2013,6 +2054,7 @@
           "protocol_blocker_file_written": true,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2048,13 +2090,14 @@
           "worker_packet_written": true
         }
       },
-      "research_package_scope_dropped": {
+      "repair_transaction_stale_after_success": {
         "detected": true,
-        "expected_failure": "worker research packet was materialized after PM package scope fields were dropped",
+        "expected_failure": "repair transaction success left stale active repair transaction or repair recheck pending action",
         "failures": [
-          "worker research packet was materialized after PM package scope fields were dropped"
+          "repair transaction success left stale active repair transaction or repair recheck pending action"
         ],
         "state": {
+          "active_repair_transaction_stale": true,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2110,6 +2153,106 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": true,
+          "research_capability_decision_recorded": true,
+          "research_package_has_allowed_sources": true,
+          "research_package_has_decision_question": true,
+          "research_package_has_stop_conditions": true,
+          "result_body_open_receipt": true,
+          "result_returned": true,
+          "result_routed_to_reviewer": true,
+          "reviewer_recheck_protocol_blocker_routable": true,
+          "reviewer_recheck_protocol_blocker_written": false,
+          "reviewer_report_accepted": true,
+          "reviewer_report_written": true,
+          "role_identity_checked": true,
+          "role_output_envelopes_recorded": false,
+          "role_output_hashes_replayable": true,
+          "route_draft_has_nodes": true,
+          "route_draft_repaired_after_check": false,
+          "route_draft_shadow_source_used": false,
+          "route_draft_single_canonical_source": true,
+          "route_draft_written": true,
+          "route_process_check_card_delivered": true,
+          "route_process_check_passed": true,
+          "route_review_flags_reset_after_draft_repair": true,
+          "snapshot_fresh_against_frontier_and_ledger": false,
+          "snapshot_published_as_active": false,
+          "stage_advanced_after_material_scan": true,
+          "status": "running",
+          "stop_requested": false,
+          "terminal_continuation_cleanup_recorded": false,
+          "terminal_host_automation_cleanup_proven": true,
+          "terminal_snapshot_flags_consistent": true,
+          "terminal_snapshot_published": false,
+          "worker_packet_preserves_research_fields": true,
+          "worker_packet_written": true
+        }
+      },
+      "research_package_scope_dropped": {
+        "detected": true,
+        "expected_failure": "worker research packet was materialized after PM package scope fields were dropped",
+        "failures": [
+          "worker research packet was materialized after PM package scope fields were dropped"
+        ],
+        "state": {
+          "active_repair_transaction_stale": false,
+          "active_task_authority": "current_json_only",
+          "child_skill_gate_manifest_synced_with_review": true,
+          "child_skill_gate_review_recorded": false,
+          "continuation_heartbeat_active": false,
+          "control_blocker_artifact_status_written": false,
+          "control_blocker_followup_event_matchable": true,
+          "control_blocker_lane": "none",
+          "control_blocker_router_index_matches_artifact": true,
+          "control_blocker_target_role": "none",
+          "control_resolution_predicate_normalized": true,
+          "controller_boundary_confirmed": true,
+          "controller_read_sealed_body": false,
+          "crew_live_agents_active": false,
+          "current_status_stopped": false,
+          "delivered_card_phase_context_fresh": true,
+          "frontier_fresh_after_stage_advance": true,
+          "frontier_terminal": false,
+          "handoff_steps": 0,
+          "hash_verified": true,
+          "holder": "controller",
+          "material_dispatch_allowed": true,
+          "material_dispatch_output_contract_consistent": true,
+          "material_dispatch_phase_context_consistent": true,
+          "material_dispatch_requested": true,
+          "material_dispatch_reviewed": true,
+          "material_dispatch_single_canonical_body": true,
+          "material_dispatch_write_target_explicit": true,
+          "mode": "expanded",
+          "multiple_running_index_entries_visible": false,
+          "optimized_relay_transaction": false,
+          "optimized_transaction_records_delivery": false,
+          "optimized_transaction_records_open_receipts": false,
+          "optimized_transaction_records_result_return": false,
+          "packet_body_open_receipt": true,
+          "packet_delivered": true,
+          "packet_loop_active": false,
+          "phase_dependency_cards_delivered": true,
+          "phase_required_sources_complete": true,
+          "pm_material_understanding_source_available": true,
+          "pm_material_understanding_written": true,
+          "pm_repair_allowed_success_only": false,
+          "pm_repair_decision_recorded": false,
+          "pm_repair_non_success_outcome_routable": true,
+          "pm_repair_reissue_dispatch_index_updated": true,
+          "pm_repair_reissue_packet_files_materialized": true,
+          "pm_repair_reissue_packets_registered_in_ledger": true,
+          "pm_repair_reissue_spec_written": false,
+          "pm_research_package_written": true,
+          "product_architecture_card_delivered": true,
+          "product_architecture_delivery_has_material_context": true,
+          "product_stage_view_fresh": true,
+          "product_stage_view_published": true,
+          "protocol_blocker_file_written": false,
+          "protocol_blocker_registered_in_router_state": false,
+          "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2152,6 +2295,7 @@
           "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2207,6 +2351,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2249,6 +2394,7 @@
           "reviewer report was accepted before delivery, packet-open, result-return, relay, and result-open receipts existed"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2304,6 +2450,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2346,6 +2493,7 @@
           "persisted role-output envelope hashes were not replayable against body paths"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2401,6 +2549,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2443,6 +2592,7 @@
           "route draft repair left stale route-check flags active"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2498,6 +2648,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2540,6 +2691,7 @@
           "route process check was delivered for an empty route draft"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2595,6 +2747,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2637,6 +2790,7 @@
           "route process check used a shadow route draft instead of the canonical route source"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2692,6 +2846,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2734,6 +2889,7 @@
           "active route_state_snapshot is stale against frontier or packet ledger"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2789,6 +2945,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2831,6 +2988,7 @@
           "stopped run left heartbeat, crew, packet loop, or frontier authority active"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2886,6 +3044,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -2928,6 +3087,7 @@
           "stopped run left heartbeat, crew, packet loop, or frontier authority active"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -2983,6 +3143,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -3025,6 +3186,7 @@
           "stopped run left heartbeat, crew, packet loop, or frontier authority active"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -3080,6 +3242,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -3122,6 +3285,7 @@
           "terminal continuation cleanup lacked host automation proof"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -3177,6 +3341,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,
@@ -3219,6 +3384,7 @@
           "terminal route_state_snapshot flags disagreed with terminal run status"
         ],
         "state": {
+          "active_repair_transaction_stale": false,
           "active_task_authority": "current_json_only",
           "child_skill_gate_manifest_synced_with_review": true,
           "child_skill_gate_review_recorded": false,
@@ -3274,6 +3440,7 @@
           "protocol_blocker_file_written": false,
           "protocol_blocker_registered_in_router_state": false,
           "receipt_missing_blocker": false,
+          "repair_recheck_pending_action_stale": false,
           "research_capability_decision_recorded": true,
           "research_package_has_allowed_sources": true,
           "research_package_has_decision_question": true,

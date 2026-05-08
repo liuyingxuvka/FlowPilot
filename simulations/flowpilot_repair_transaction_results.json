@@ -34,6 +34,7 @@
           "repair transaction blocked without registering a follow-up blocker"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -46,6 +47,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": false,
@@ -56,6 +58,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -82,6 +85,7 @@
           "router blocker registration lacked origin or nonterminal repair events"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": false,
           "blocker_has_origin_event": true,
@@ -94,6 +98,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -104,6 +109,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -123,6 +129,57 @@
           "transaction_plan_kind": "packet_reissue"
         }
       },
+      "complete_terminal_keeps_stale_repair_lane": {
+        "detected": true,
+        "expected_failure": "terminal repair transaction left stale active repair transaction or recheck pending action",
+        "failures": [
+          "terminal repair transaction left stale active repair transaction or recheck pending action"
+        ],
+        "state": {
+          "active_repair_transaction": true,
+          "blocker_detected": true,
+          "blocker_has_allowed_nonterminal_events": true,
+          "blocker_has_origin_event": true,
+          "blocker_outcome_routable": true,
+          "blocker_registered_in_router": true,
+          "canonical_packet_identity_unique": true,
+          "dispatch_index_staged": true,
+          "display_refreshed": true,
+          "followup_blocker_registered": false,
+          "frontier_refreshed": true,
+          "holder": "controller",
+          "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": false,
+          "no_legal_next_action": false,
+          "old_generation_superseded": true,
+          "original_blocker_resolved": true,
+          "packet_files_staged": true,
+          "packet_hashes_replayable": true,
+          "packet_ledger_refreshed": true,
+          "partial_generation_published": false,
+          "pm_decision_resolves_blocker": false,
+          "pm_repair_decision_recorded": true,
+          "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": true,
+          "repair_transaction_opened": true,
+          "replacement_generation_published": true,
+          "replacement_spec_written": true,
+          "result_write_targets_explicit": true,
+          "reviewer_can_emit_blocker": true,
+          "reviewer_can_emit_protocol_blocker": true,
+          "reviewer_can_emit_success": true,
+          "reviewer_outcome": "success",
+          "reviewer_recheck_requested": true,
+          "router_accepted_reviewer_outcome": true,
+          "router_resolution_table_staged": true,
+          "status": "complete",
+          "steps": 0,
+          "success_outcome_routable": true,
+          "transaction_committed_atomically": true,
+          "transaction_id_recorded": true,
+          "transaction_plan_kind": "packet_reissue"
+        }
+      },
       "complete_terminal_without_authority_refresh": {
         "detected": true,
         "expected_failure": "terminal repair transaction state did not refresh ledger, frontier, and display authorities",
@@ -130,6 +187,7 @@
           "terminal repair transaction state did not refresh ledger, frontier, and display authorities"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -142,6 +200,7 @@
           "frontier_refreshed": false,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -152,6 +211,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -178,6 +238,7 @@
           "repair transaction reached no legal next action"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -190,6 +251,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": true,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -200,6 +262,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -226,6 +289,7 @@
           "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -238,6 +302,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -248,6 +313,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -274,6 +340,7 @@
           "PM repair decision resolved the blocker by itself"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -286,6 +353,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -296,6 +364,7 @@
           "pm_decision_resolves_blocker": true,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -322,6 +391,7 @@
           "PM repair wrote replacement artifacts outside a repair transaction"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -334,6 +404,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -344,6 +415,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": false,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -370,6 +442,7 @@
           "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -382,6 +455,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -392,6 +466,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -418,6 +493,7 @@
           "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -430,6 +506,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": false,
           "original_blocker_resolved": true,
@@ -440,6 +517,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -468,6 +546,7 @@
           "reviewer recheck outcome was not accepted by router"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -480,6 +559,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -490,6 +570,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -518,6 +599,7 @@
           "reviewer recheck outcome was not accepted by router"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -530,6 +612,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -540,6 +623,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": false,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -566,6 +650,7 @@
           "reviewer recheck was requested before a committed generation and complete outcome table"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -578,6 +663,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -588,6 +674,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -615,6 +702,7 @@
           "reviewer recheck was requested before a committed generation and complete outcome table"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -627,6 +715,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -637,6 +726,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": false,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -663,6 +753,7 @@
           "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -675,6 +766,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -685,6 +777,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -711,6 +804,7 @@
           "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -723,6 +817,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": false,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -733,6 +828,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,
@@ -759,6 +855,7 @@
           "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication"
         ],
         "state": {
+          "active_repair_transaction": false,
           "blocker_detected": true,
           "blocker_has_allowed_nonterminal_events": true,
           "blocker_has_origin_event": true,
@@ -771,6 +868,7 @@
           "frontier_refreshed": true,
           "holder": "controller",
           "ledger_entries_staged": true,
+          "main_flow_resumed_after_success": true,
           "no_legal_next_action": false,
           "old_generation_superseded": true,
           "original_blocker_resolved": true,
@@ -781,6 +879,7 @@
           "pm_decision_resolves_blocker": false,
           "pm_repair_decision_recorded": true,
           "protocol_outcome_routable": true,
+          "repair_recheck_pending_action": false,
           "repair_transaction_opened": true,
           "replacement_generation_published": true,
           "replacement_spec_written": true,

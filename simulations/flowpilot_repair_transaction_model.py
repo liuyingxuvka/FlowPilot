@@ -83,6 +83,9 @@ class State:
     packet_ledger_refreshed: bool = False
     frontier_refreshed: bool = False
     display_refreshed: bool = False
+    active_repair_transaction: bool = False
+    repair_recheck_pending_action: bool = False
+    main_flow_resumed_after_success: bool = False
     no_legal_next_action: bool = False
 
 
@@ -183,6 +186,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 repair_transaction_opened=True,
                 transaction_id_recorded=True,
                 transaction_plan_kind="packet_reissue",
+                active_repair_transaction=True,
             ),
         )
         return
@@ -228,6 +232,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_can_emit_success=True,
                 reviewer_can_emit_blocker=True,
                 reviewer_can_emit_protocol_blocker=True,
+                repair_recheck_pending_action=True,
             ),
         )
         return
@@ -241,6 +246,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_outcome="success",
                 router_accepted_reviewer_outcome=True,
                 original_blocker_resolved=True,
+                repair_recheck_pending_action=False,
             ),
         )
         yield Transition(
@@ -251,6 +257,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_outcome="blocker",
                 router_accepted_reviewer_outcome=True,
                 followup_blocker_registered=True,
+                repair_recheck_pending_action=False,
             ),
         )
         yield Transition(
@@ -261,6 +268,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_outcome="protocol_blocker",
                 router_accepted_reviewer_outcome=True,
                 followup_blocker_registered=True,
+                repair_recheck_pending_action=False,
             ),
         )
         return
@@ -279,6 +287,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 packet_ledger_refreshed=True,
                 frontier_refreshed=True,
                 display_refreshed=True,
+                active_repair_transaction=False,
+                repair_recheck_pending_action=False,
+                main_flow_resumed_after_success=state.original_blocker_resolved,
                 no_legal_next_action=False,
             ),
         )
@@ -398,6 +409,14 @@ def terminal_state_has_refreshed_authorities(state: State, trace) -> InvariantRe
         return InvariantResult.fail("repair transaction completed without resolving the original blocker")
     if state.status == "blocked" and not state.followup_blocker_registered:
         return InvariantResult.fail("repair transaction blocked without registering a follow-up blocker")
+    if state.status in {"complete", "blocked"} and (
+        state.active_repair_transaction or state.repair_recheck_pending_action
+    ):
+        return InvariantResult.fail(
+            "terminal repair transaction left stale active repair transaction or recheck pending action"
+        )
+    if state.status == "complete" and not state.main_flow_resumed_after_success:
+        return InvariantResult.fail("repair transaction completed without returning to the main flow")
     return InvariantResult.pass_()
 
 
@@ -507,6 +526,9 @@ def _safe_base(**changes: object) -> State:
             packet_ledger_refreshed=True,
             frontier_refreshed=True,
             display_refreshed=True,
+            active_repair_transaction=False,
+            repair_recheck_pending_action=False,
+            main_flow_resumed_after_success=True,
         ),
         **changes,
     )
@@ -582,6 +604,12 @@ def hazard_states() -> dict[str, State]:
             packet_ledger_refreshed=False,
             frontier_refreshed=False,
             display_refreshed=False,
+        ),
+        "complete_terminal_keeps_stale_repair_lane": _safe_base(
+            status="complete",
+            active_repair_transaction=True,
+            repair_recheck_pending_action=True,
+            main_flow_resumed_after_success=False,
         ),
         "controller_no_legal_next_after_recheck": _safe_base(
             reviewer_outcome="protocol_blocker",

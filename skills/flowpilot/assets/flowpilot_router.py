@@ -224,6 +224,18 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "node_completion_ledger_updated",
 )
 
+MATERIAL_REPAIR_RECHECK_FLAGS = (
+    "material_scan_dispatch_recheck_blocked",
+    "material_scan_dispatch_recheck_protocol_blocked",
+)
+
+MATERIAL_REPAIR_OUTCOME_EVENTS = {
+    "reviewer_allows_material_scan_dispatch",
+    "worker_scan_results_returned",
+    "reviewer_blocks_material_scan_dispatch_recheck",
+    "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+}
+
 ROUTE_COMPLETION_FLAGS = (
     "pm_evidence_quality_package_card_delivered",
     "evidence_quality_package_written",
@@ -5411,6 +5423,12 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
                 "to_role": to_role,
                 "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
                 "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+                "result_body_path": project_relative(project_root, paths["result_body"]),
+                "result_write_target": {
+                    "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+                    "result_body_path": project_relative(project_root, paths["result_body"]),
+                },
+                "output_contract_id": envelope.get("output_contract_id"),
             }
         )
     write_json(
@@ -6715,6 +6733,7 @@ def _sync_execution_frontier_phase(run_root: Path, run_state: dict[str, Any]) ->
     frontier = read_json_if_exists(frontier_path)
     if str(frontier.get("status") or run_state.get("status") or "") in RUN_TERMINAL_STATUSES:
         return
+    run_state["phase"] = phase
     frontier["phase"] = phase
     if not frontier.get("active_route_id"):
         frontier["status"] = phase
@@ -7579,6 +7598,12 @@ def _commit_material_scan_repair_generation(
                 "is_current_generation": True,
                 "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
                 "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+                "result_body_path": project_relative(project_root, paths["result_body"]),
+                "result_write_target": {
+                    "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+                    "result_body_path": project_relative(project_root, paths["result_body"]),
+                },
+                "output_contract_id": envelope.get("output_contract_id"),
             }
         )
 
@@ -7633,10 +7658,40 @@ def _repair_transaction_outcome_kind(transaction: dict[str, Any], event: str) ->
     table = transaction.get("outcome_table")
     if not isinstance(table, dict):
         return None
-    for kind, outcome in table.items():
+    for kind in ("success", "blocker", "protocol_blocker"):
+        outcome = table.get(kind)
         if isinstance(outcome, dict) and outcome.get("event") == event:
-            return str(kind)
+            return kind
     return None
+
+
+def _clear_successful_repair_lane_state(run_state: dict[str, Any], transaction: dict[str, Any], *, event: str) -> None:
+    rerun_target = str(transaction.get("rerun_target") or "")
+    is_material_repair = event in MATERIAL_REPAIR_OUTCOME_EVENTS or rerun_target in MATERIAL_REPAIR_OUTCOME_EVENTS
+    flags = run_state.get("flags")
+    if isinstance(flags, dict) and is_material_repair:
+        for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
+            flags[flag] = False
+        if event == "reviewer_allows_material_scan_dispatch":
+            flags["material_scan_dispatch_blocked"] = False
+    if is_material_repair:
+        run_state["material_dispatch_block"] = None
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict):
+        outcome_events = set(
+            _repair_outcome_events(
+                transaction.get("outcome_table") if isinstance(transaction.get("outcome_table"), dict) else {}
+            )
+        )
+        pending_events = set(
+            str(item)
+            for item in pending.get("allowed_external_events", [])
+            if isinstance(item, str)
+        )
+        if pending.get("repair_transaction_id") == transaction.get("transaction_id") or (
+            pending_events and pending_events.issubset(outcome_events)
+        ):
+            run_state["pending_action"] = None
 
 
 def _finalize_repair_transaction_outcome(
@@ -7646,13 +7701,13 @@ def _finalize_repair_transaction_outcome(
     *,
     event: str,
     payload: dict[str, Any] | None,
-) -> None:
+) -> dict[str, Any] | None:
     tx_path, transaction = _active_repair_transaction_for_event(run_root, event)
     if tx_path is None or transaction is None:
-        return
+        return None
     outcome_kind = _repair_transaction_outcome_kind(transaction, event)
     if not outcome_kind:
-        return
+        return None
     now = utc_now()
     transaction["reviewer_recheck"] = {
         "outcome": outcome_kind,
@@ -7664,8 +7719,13 @@ def _finalize_repair_transaction_outcome(
         transaction["status"] = "complete"
         transaction["completed_at"] = now
         write_json(tx_path, transaction)
+        _clear_successful_repair_lane_state(run_state, transaction, event=event)
         _write_repair_transaction_index(project_root, run_root, run_state)
-        return
+        return {
+            "transaction_id": transaction.get("transaction_id"),
+            "outcome": outcome_kind,
+            "status": "complete",
+        }
 
     transaction["status"] = "blocked"
     transaction["blocked_at"] = now
@@ -7702,6 +7762,12 @@ def _finalize_repair_transaction_outcome(
     transaction["followup_blocker_path"] = followup.get("blocker_artifact_path")
     write_json(tx_path, transaction)
     _write_repair_transaction_index(project_root, run_root, run_state)
+    return {
+        "transaction_id": transaction.get("transaction_id"),
+        "outcome": outcome_kind,
+        "status": "blocked",
+        "followup_blocker_id": followup.get("blocker_id"),
+    }
 
 
 def _relay_packet_records(
@@ -10368,6 +10434,10 @@ def _pending_expected_external_event_groups(run_state: dict[str, Any]) -> list[l
     for required_flag in ordered_requires:
         if not flags.get(required_flag):
             continue
+        if required_flag == "pm_control_blocker_repair_decision_recorded" and not isinstance(
+            run_state.get("active_control_blocker"), dict
+        ):
+            continue
         group = grouped[required_flag]
         if any(flags.get(meta["flag"]) for _event, meta in group):
             continue
@@ -10864,6 +10934,13 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         or repeatable_startup_repair_request
         or repeatable_route_draft_repair
     ):
+        finalized = _finalize_repair_transaction_outcome(
+            project_root,
+            run_root,
+            run_state,
+            event=event,
+            payload=payload,
+        )
         resolved = _resolve_delivered_control_blocker(
             project_root,
             run_root,
@@ -10871,7 +10948,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
             resolved_by_event=event,
             from_already_recorded_event=True,
         )
-        if resolved:
+        if resolved or finalized:
             run_state["pending_action"] = None
             _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_already_recorded_event:{event}")
             _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_already_recorded_event:{event}")
@@ -10880,8 +10957,9 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
                 "ok": True,
                 "event": event,
                 "already_recorded": True,
-                "control_blocker_resolved": True,
-                "blocker_id": resolved.get("blocker_id"),
+                "control_blocker_resolved": bool(resolved),
+                "blocker_id": resolved.get("blocker_id") if resolved else None,
+                "repair_transaction_finalized": finalized,
             }
         return {"ok": True, "event": event, "already_recorded": True}
     payload = payload or {}
@@ -11195,6 +11273,8 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
         run_state["flags"]["material_scan_dispatch_blocked"] = False
         run_state["material_dispatch_block"] = None
+    else:
+        _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
     if event == "reviewer_reports_material_sufficient":
         run_state["material_review"] = "sufficient"
     elif event == "reviewer_reports_material_insufficient":

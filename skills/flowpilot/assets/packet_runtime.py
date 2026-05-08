@@ -458,8 +458,19 @@ def output_contract_section(output_contract: dict[str, Any]) -> str:
 
 
 def ensure_packet_output_contract_section(body_text: str, output_contract: dict[str, Any] | None) -> str:
-    if not output_contract or "## Output Contract" in body_text:
+    if not output_contract:
         return body_text
+    heading_index = body_text.find("## Output Contract")
+    if heading_index >= 0:
+        fence_start = body_text.find("```json", heading_index)
+        if fence_start >= 0:
+            json_start = body_text.find("\n", fence_start)
+            if json_start >= 0:
+                json_start += 1
+                fence_end = body_text.find("```", json_start)
+                if fence_end >= 0:
+                    canonical = json.dumps(output_contract, indent=2, sort_keys=True)
+                    return body_text[:json_start] + canonical + "\n" + body_text[fence_end:]
     return body_text.rstrip() + "\n" + output_contract_section(output_contract)
 
 
@@ -604,10 +615,8 @@ def normalize_envelope_aliases(envelope: dict[str, Any]) -> dict[str, Any]:
 
     normalized = dict(envelope)
     schema = str(normalized.get("schema_version") or "")
-    is_result = (
-        schema == RESULT_ENVELOPE_SCHEMA
-        or "result_body_path" in normalized
-        or "completed_by_role" in normalized
+    is_result = schema == RESULT_ENVELOPE_SCHEMA or (
+        "completed_by_role" in normalized and "result_body_path" in normalized
     )
     if is_result:
         if "result_body_path" not in normalized and normalized.get("body_path"):
@@ -1012,7 +1021,11 @@ def controller_relay_envelope(
     paths = packet_paths_from_any_envelope(project_root, envelope)
     resolved_envelope_path = resolve_project_path(project_root, str(envelope_path))
     body_visibility = envelope.get("body_visibility", SEALED_BODY_VISIBILITY)
-    envelope_kind = "result_envelope" if "result_body_path" in envelope else "packet_envelope"
+    envelope_kind = (
+        "result_envelope"
+        if envelope.get("schema_version") == RESULT_ENVELOPE_SCHEMA or "completed_by_role" in envelope
+        else "packet_envelope"
+    )
     mutual_reminder = mutual_role_reminder(
         source_role=str(source_role),
         target_role=str(target_role),
@@ -1182,6 +1195,8 @@ def create_packet(
         "body_path": project_relative(project_root, packet_body_path),
         "body_hash": body_hash,
         "body_hash_algorithm": "sha256",
+        "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+        "result_body_path": project_relative(project_root, paths["result_body"]),
         "body_visibility": body_visibility,
         "replacement_for": replacement_for,
         "supersedes": supersedes or ([] if replacement_for is None else [replacement_for]),
@@ -1257,6 +1272,8 @@ def create_packet(
             "next_holder": next_holder or to_role,
             "body_visibility": body_visibility,
             "replacement_for": replacement_for,
+            "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+            "result_body_path": project_relative(project_root, paths["result_body"]),
             "controller_allowed_actions": envelope["controller_allowed_actions"],
             "controller_forbidden_actions": envelope["controller_forbidden_actions"],
             "output_contract_id": output_contract_id(output_contract),
@@ -1363,7 +1380,10 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
     leaked_keys = sorted(body_keys & set(envelope))
     if leaked_keys:
         raise PacketRuntimeError(f"packet envelope contains forbidden body content keys: {leaked_keys!r}")
-    is_result_envelope = "result_body_path" in envelope
+    is_result_envelope = (
+        envelope.get("schema_version") == RESULT_ENVELOPE_SCHEMA
+        or ("completed_by_role" in envelope and "result_body_hash" in envelope)
+    )
     if is_result_envelope:
         from_role = envelope.get("completed_by_role")
         to_role = envelope.get("next_recipient")

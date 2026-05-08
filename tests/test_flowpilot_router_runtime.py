@@ -3993,6 +3993,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         material_index = read_json(run_root / "material" / "material_scan_packets.json")
         self.assertEqual(material_index["current_generation_id"], transaction["packet_generation_id"])
         self.assertEqual(material_index["packets"][0]["packet_id"], "material-scan-001-r1")
+        self.assertIn("result_body_path", material_index["packets"][0])
+        self.assertEqual(
+            material_index["packets"][0]["result_write_target"]["result_body_path"],
+            material_index["packets"][0]["result_body_path"],
+        )
+        packet_envelope = read_json(root / material_index["packets"][0]["packet_envelope_path"])
+        self.assertEqual(packet_envelope["result_body_path"], material_index["packets"][0]["result_body_path"])
+        packet_body = (root / packet_envelope["body_path"]).read_text(encoding="utf-8")
+        self.assertIn('"recipient_role": "worker_a"', packet_body)
+        self.assertIn('"required_result_envelope_fields"', packet_body)
         self.assertTrue((run_root / "packets" / "material-scan-001-r1" / "packet_envelope.json").exists())
         ledger = read_json(run_root / "packet_ledger.json")
         self.assertTrue(any(record.get("packet_id") == "material-scan-001-r1" for record in ledger["packets"]))
@@ -4004,8 +4014,155 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         state = read_json(router.run_state_path(run_root))
         self.assertIsNone(state["active_control_blocker"])
+        self.assertIsNone(state["active_repair_transaction"])
+        self.assertFalse(state["flags"]["material_scan_dispatch_recheck_blocked"])
+        self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
         transaction = read_json(run_root / "control_blocks" / "repair_transactions" / f"{transaction['transaction_id']}.json")
         self.assertEqual(transaction["status"], "complete")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_material_scan_packets")
+
+    def test_material_scan_event_replay_repair_returns_to_material_sufficiency_flow(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.deliver_expected_card(root, "reviewer.dispatch_request")
+        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        material_index = read_json(material_index_path)
+        for record in material_index["packets"]:
+            envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+            packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+            packet_runtime.write_result(
+                root,
+                packet_envelope=envelope,
+                completed_by_role=envelope["to_role"],
+                completed_by_agent_id=envelope["to_role"],
+                result_body_text="material scan result with role-name agent id",
+                next_recipient="human_like_reviewer",
+            )
+        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        with self.assertRaises(router.RouterError) as raised:
+            router.record_external_event(root, "worker_scan_results_returned")
+
+        blocker = raised.exception.control_blocker
+        self.assertIsInstance(blocker, dict)
+        self.assertEqual(blocker["handling_lane"], "pm_repair_decision_required")
+        self.assertIn("completed_agent_id_is_role_key_not_agent_id", str(raised.exception))
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/material_event_replay_pm_repair_decision",
+                self.pm_control_blocker_decision_body(
+                    blocker["blocker_id"],
+                    decision="repair_completed",
+                    rerun_target="worker_scan_results_returned",
+                ),
+            ),
+        )
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["active_repair_transaction"]["plan_kind"], "event_replay")
+
+        material_index = read_json(material_index_path)
+        for record in material_index["packets"]:
+            envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+            packet_runtime.write_result(
+                root,
+                packet_envelope=envelope,
+                completed_by_role=envelope["to_role"],
+                completed_by_agent_id=f"agent-fixed-{envelope['to_role']}",
+                result_body_text="material scan result with corrected agent id",
+                next_recipient="human_like_reviewer",
+            )
+        router.record_external_event(root, "worker_scan_results_returned")
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["worker_scan_results_returned"])
+        self.assertIsNone(state["active_control_blocker"])
+        self.assertIsNone(state["active_repair_transaction"])
+        self.assertIsNone(state["pending_action"])
+        self.assertFalse(state["flags"]["material_scan_dispatch_recheck_blocked"])
+        self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
+        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
+        self.assertIsNone(tx_index["active_transaction"])
+        transaction_path = root / tx_index["transactions"][0]["path"]
+        self.assertEqual(read_json(transaction_path)["status"], "complete")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_material_scan_results_to_reviewer")
+
+    def test_repair_transaction_recheck_blocker_registers_followup_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.deliver_expected_card(root, "reviewer.dispatch_request")
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has no legal next action after material dispatch repair request",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_completed",
+            rerun_target="reviewer_allows_material_scan_dispatch",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "packet_reissue",
+            "replacement_packets": [
+                {
+                    "packet_id": "material-scan-001-r1",
+                    "replacement_for": "material-scan-001",
+                    "to_role": "worker_a",
+                    "body_text": "Reissued material scan packet with a committed repair generation.",
+                }
+            ],
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "control_blocks/material_reissue_pm_repair_decision_block", decision),
+        )
+
+        router.record_external_event(
+            root,
+            "reviewer_blocks_material_scan_dispatch_recheck",
+            self.role_report_envelope(
+                root,
+                "control_blocks/material_reissue_recheck_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "dispatch_allowed": False,
+                    "blockers": ["replacement packet generation needs PM repair"],
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        active = state["active_control_blocker"]
+        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
+        self.assertIsNone(state["active_repair_transaction"])
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertEqual(original["resolution_status"], "repair_transaction_blocker")
+        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
+        self.assertIsNone(tx_index["active_transaction"])
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
 
     def test_repair_transaction_protocol_blocker_registers_followup_blocker(self) -> None:
         root = self.make_project()
@@ -4070,13 +4227,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         active = state["active_control_blocker"]
         self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
         self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
+        self.assertIsNone(state["active_repair_transaction"])
         original = read_json(self.control_blocker_path(root, blocker))
         self.assertEqual(original["resolution_status"], "repair_transaction_protocol_blocker")
         tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
+        self.assertIsNone(tx_index["active_transaction"])
         transaction_path = root / tx_index["transactions"][0]["path"]
         transaction = read_json(transaction_path)
         self.assertEqual(transaction["status"], "blocked")
         self.assertEqual(transaction["followup_blocker_id"], active["blocker_id"])
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
 
     def test_pm_repair_decision_can_repeat_for_new_control_blocker(self) -> None:
         root = self.make_project()
