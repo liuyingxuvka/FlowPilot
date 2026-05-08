@@ -2603,6 +2603,57 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(packet["packet_type"], "material_scan")
         self.assertFalse(packet["is_current_node"])
 
+    def test_material_scan_packet_and_result_relays_combine_ledger_check(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.deliver_expected_card(root, "reviewer.dispatch_request")
+        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
+
+        state_before = read_json(router.run_state_path(run_root))
+        ledger_checks_before = int(state_before.get("ledger_checks", 0))
+        ledger_requests_before = int(state_before.get("ledger_check_requests", 0))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "relay_material_scan_packets")
+        self.assertTrue(action["combined_ledger_check_and_relay"])
+        self.assertTrue(action["ledger_check_receipt_required"])
+        self.assertFalse(action["sealed_body_reads_allowed"])
+
+        router.apply_action(root, "relay_material_scan_packets")
+
+        state_after_packets = read_json(router.run_state_path(run_root))
+        self.assertEqual(state_after_packets["ledger_checks"], ledger_checks_before + 1)
+        self.assertEqual(state_after_packets["ledger_check_requests"], ledger_requests_before + 1)
+        self.assertFalse(state_after_packets.get("ledger_check_requested"))
+        self.assertTrue(state_after_packets["flags"]["material_scan_packets_relayed"])
+
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
+        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        router.record_external_event(root, "worker_scan_results_returned")
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "relay_material_scan_results_to_reviewer")
+        self.assertTrue(action["combined_ledger_check_and_relay"])
+        self.assertTrue(action["ledger_check_receipt_required"])
+        self.assertFalse(action["sealed_body_reads_allowed"])
+
+        router.apply_action(root, "relay_material_scan_results_to_reviewer")
+
+        state_after_results = read_json(router.run_state_path(run_root))
+        self.assertEqual(state_after_results["ledger_checks"], ledger_checks_before + 2)
+        self.assertEqual(state_after_results["ledger_check_requests"], ledger_requests_before + 2)
+        self.assertFalse(state_after_results.get("ledger_check_requested"))
+        self.assertTrue(state_after_results["flags"]["material_scan_results_relayed_to_reviewer"])
+
+        index = read_json(material_index_path)
+        relayed_result = packet_runtime.load_envelope(root, index["packets"][0]["result_envelope_path"])
+        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "human_like_reviewer")
+        self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
+
     def test_material_scan_packet_body_event_requires_packet_ledger_open_receipt(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -2778,7 +2829,20 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "worker_research_report_returned",
                 {"completed_by_role": "worker_a", "answers_decision_question": True},
             )
-        self.apply_next_packet_action(root, "relay_research_packet")
+        state_before_research_relay = read_json(router.run_state_path(run_root))
+        ledger_checks_before_research = int(state_before_research_relay.get("ledger_checks", 0))
+        ledger_requests_before_research = int(state_before_research_relay.get("ledger_check_requests", 0))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "relay_research_packet")
+        self.assertTrue(action["combined_ledger_check_and_relay"])
+        self.assertTrue(action["ledger_check_receipt_required"])
+        self.assertFalse(action["sealed_body_reads_allowed"])
+        router.apply_action(root, "relay_research_packet")
+        state_after_research_packet = read_json(router.run_state_path(run_root))
+        self.assertEqual(state_after_research_packet["ledger_checks"], ledger_checks_before_research + 1)
+        self.assertEqual(state_after_research_packet["ledger_check_requests"], ledger_requests_before_research + 1)
+        self.assertFalse(state_after_research_packet.get("ledger_check_requested"))
+
         research_index_path = run_root / "research" / "research_packet.json"
         self.open_packets_and_write_results(root, research_index_path, result_text="research report result")
         router.record_external_event(
@@ -2786,7 +2850,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "worker_research_report_returned",
             {"completed_by_role": "worker_a", "answers_decision_question": True},
         )
-        self.apply_next_packet_action(root, "relay_research_result_to_reviewer")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "relay_research_result_to_reviewer")
+        self.assertTrue(action["combined_ledger_check_and_relay"])
+        self.assertTrue(action["ledger_check_receipt_required"])
+        self.assertFalse(action["sealed_body_reads_allowed"])
+        router.apply_action(root, "relay_research_result_to_reviewer")
+        state_after_research_result = read_json(router.run_state_path(run_root))
+        self.assertEqual(state_after_research_result["ledger_checks"], ledger_checks_before_research + 2)
+        self.assertEqual(state_after_research_result["ledger_check_requests"], ledger_requests_before_research + 2)
+        self.assertFalse(state_after_research_result.get("ledger_check_requested"))
         self.open_results_for_reviewer(root, research_index_path)
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
@@ -3360,14 +3433,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "await_role_decision")
 
         router.record_external_event(root, "reviewer_allows_current_node_dispatch")
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "check_packet_ledger")
-        router.apply_action(root, "check_packet_ledger")
+        run_root = self.run_root_for(root)
+        state_before = read_json(router.run_state_path(run_root))
+        ledger_checks_before = int(state_before.get("ledger_checks", 0))
+        ledger_requests_before = int(state_before.get("ledger_check_requests", 0))
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "relay_current_node_packet")
+        self.assertTrue(action["combined_ledger_check_and_relay"])
+        self.assertTrue(action["ledger_check_receipt_required"])
         self.assertFalse(action["sealed_body_reads_allowed"])
         router.apply_action(root, "relay_current_node_packet")
 
+        state_after = read_json(router.run_state_path(run_root))
+        self.assertEqual(state_after["ledger_checks"], ledger_checks_before + 1)
+        self.assertEqual(state_after["ledger_check_requests"], ledger_requests_before + 1)
+        self.assertFalse(state_after.get("ledger_check_requested"))
         envelope = read_json(root / packet["body_path"].replace("packet_body.md", "packet_envelope.json"))
         self.assertEqual(envelope["controller_relay"]["relayed_to_role"], "worker_a")
         self.assertFalse(envelope["controller_relay"]["body_was_read_by_controller"])
@@ -3393,8 +3473,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.record_external_event(root, "reviewer_allows_current_node_dispatch")
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_until_action(root, "relay_current_node_packet")
 
         relayed_packet = read_json(root / packet_path)
         packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
@@ -3446,6 +3525,46 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_evidence_quality_package(root)
         self.complete_final_ledger_and_terminal_replay(root)
         self.deliver_expected_card(root, "pm.closure")
+
+    def test_current_node_result_relay_combines_ledger_check_with_relay(self) -> None:
+        root = self.make_project()
+        run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-combined-result-relay",
+            deliver_review_card=False,
+            record_result_return=False,
+        )
+        state_before = read_json(router.run_state_path(run_root))
+        ledger_checks_before = int(state_before.get("ledger_checks", 0))
+        ledger_requests_before = int(state_before.get("ledger_check_requests", 0))
+
+        router.record_external_event(
+            root,
+            "worker_current_node_result_returned",
+            {
+                "packet_id": "node-packet-combined-result-relay",
+                "result_envelope_path": result_path,
+            },
+        )
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "relay_current_node_result_to_reviewer")
+        self.assertTrue(action["combined_ledger_check_and_relay"])
+        self.assertTrue(action["ledger_check_receipt_required"])
+        self.assertFalse(action["sealed_body_reads_allowed"])
+        self.assertTrue(any(path.endswith("packet_ledger.json") for path in action["allowed_reads"]))
+        self.assertTrue(any(path.endswith("packet_ledger.json") for path in action["allowed_writes"]))
+
+        router.apply_action(root, "relay_current_node_result_to_reviewer")
+
+        state_after = read_json(router.run_state_path(run_root))
+        self.assertEqual(state_after["ledger_checks"], ledger_checks_before + 1)
+        self.assertEqual(state_after["ledger_check_requests"], ledger_requests_before + 1)
+        self.assertFalse(state_after.get("ledger_check_requested"))
+        self.assertTrue(state_after["flags"]["current_node_result_relayed_to_reviewer"])
+
+        relayed_result = packet_runtime.load_envelope(root, result_path)
+        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "human_like_reviewer")
+        self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
 
     def test_current_node_packet_and_result_accept_safe_envelope_aliases(self) -> None:
         root = self.make_project()
@@ -4193,8 +4312,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.record_external_event(root, "reviewer_allows_current_node_dispatch")
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_until_action(root, "relay_current_node_packet")
         relayed_packet = read_json(root / packet_path)
         packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
         result = packet_runtime.write_result(
@@ -4310,8 +4428,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         router.record_external_event(root, "reviewer_allows_current_node_dispatch")
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_until_action(root, "relay_current_node_packet")
         relayed_packet = read_json(root / packet_path)
         packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
         result = packet_runtime.write_result(

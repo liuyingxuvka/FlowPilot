@@ -10026,14 +10026,25 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="check_packet_ledger",
+                action_type="relay_material_scan_packets",
                 actor="controller",
-                label="controller_checks_packet_ledger_before_material_scan_relay",
-                summary="Controller must check packet ledger before relaying material scan packet envelopes.",
-                allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+                label="material_scan_packets_relayed_after_reviewer_dispatch_with_ledger_check",
+                summary="Check the packet ledger and relay material scan packet envelopes to workers without opening bodies.",
+                allowed_reads=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, _material_scan_index_path(run_root)),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                ],
+                to_role="worker_a,worker_b",
                 extra={
-                    "next_packet_group": "material_scan",
+                    "postcondition": "material_scan_packets_relayed",
+                    "controller_visibility": "packet_envelopes_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
                     "packet_ids": [record.get("packet_id") for record in index["packets"]],
                 },
             )
@@ -10055,14 +10066,25 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="check_packet_ledger",
+                action_type="relay_material_scan_results_to_reviewer",
                 actor="controller",
-                label="controller_checks_packet_ledger_before_material_result_relay",
-                summary="Controller must check packet ledger before relaying material result envelopes to reviewer.",
-                allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+                label="material_scan_results_relayed_to_reviewer_with_ledger_check",
+                summary="Check the packet ledger and relay material scan result envelopes to reviewer without opening result bodies.",
+                allowed_reads=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, _material_scan_index_path(run_root)),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                ],
+                to_role="human_like_reviewer",
                 extra={
-                    "next_result_group": "material_scan",
+                    "postcondition": "material_scan_results_relayed_to_reviewer",
+                    "controller_visibility": "result_envelopes_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
                     "packet_ids": [record.get("packet_id") for record in index["packets"]],
                 },
             )
@@ -10089,13 +10111,27 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="check_packet_ledger",
+                action_type="relay_research_packet",
                 actor="controller",
-                label="controller_checks_packet_ledger_before_research_packet_relay",
-                summary="Controller must check packet ledger before relaying research packet envelope.",
-                allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_packet_group": "research", "packet_ids": [record.get("packet_id") for record in index["packets"]]},
+                label="research_packet_relayed_to_worker_with_ledger_check",
+                summary="Check the packet ledger and relay research packet envelope to worker without opening the body.",
+                allowed_reads=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, _research_packet_index_path(run_root)),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                ],
+                to_role=str(index["packets"][0].get("to_role") or "worker_a"),
+                extra={
+                    "postcondition": "research_packet_relayed",
+                    "controller_visibility": "packet_envelope_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
+                    "packet_ids": [record.get("packet_id") for record in index["packets"]],
+                },
             )
         return make_action(
             action_type="relay_research_packet",
@@ -10115,13 +10151,27 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="check_packet_ledger",
+                action_type="relay_research_result_to_reviewer",
                 actor="controller",
-                label="controller_checks_packet_ledger_before_research_result_relay",
-                summary="Controller must check packet ledger before relaying research result envelope to reviewer.",
-                allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_result_group": "research", "packet_ids": [record.get("packet_id") for record in index["packets"]]},
+                label="research_result_relayed_to_reviewer_with_ledger_check",
+                summary="Check the packet ledger and relay research result envelope to reviewer without opening the result body.",
+                allowed_reads=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, _research_packet_index_path(run_root)),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                ],
+                to_role="human_like_reviewer",
+                extra={
+                    "postcondition": "research_result_relayed_to_reviewer",
+                    "controller_visibility": "result_envelope_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
+                    "packet_ids": [record.get("packet_id") for record in index["packets"]],
+                },
             )
         return make_action(
             action_type="relay_research_result_to_reviewer",
@@ -10162,13 +10212,31 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             }
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="check_packet_ledger",
+                action_type="relay_current_node_packet",
                 actor="controller",
-                label="controller_checks_packet_ledger_before_current_node_relay",
-                summary="Controller must check packet ledger before relaying the current-node packet envelope.",
-                allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_packet_id": envelope["packet_id"], "to_role": envelope["to_role"]},
+                label="current_node_packet_relayed_after_reviewer_dispatch_with_ledger_check",
+                summary=(
+                    f"Check the packet ledger and relay current-node packet {envelope['packet_id']} "
+                    f"to {envelope['to_role']} without opening its body."
+                ),
+                allowed_reads=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    *relay_allowed_reads,
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                ],
+                to_role=str(envelope["to_role"]),
+                extra={
+                    "packet_id": envelope["packet_id"],
+                    "postcondition": "current_node_packet_relayed",
+                    "controller_visibility": "packet_envelope_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
+                    **grant_extra,
+                },
             )
         return make_action(
             action_type="relay_current_node_packet",
@@ -10192,13 +10260,30 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
         result = packet_runtime.load_envelope(project_root, result_path)
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="check_packet_ledger",
+                action_type="relay_current_node_result_to_reviewer",
                 actor="controller",
-                label="controller_checks_packet_ledger_before_current_node_result_relay",
-                summary="Controller must check packet ledger before relaying worker result envelope to reviewer.",
-                allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_result_packet_id": result["packet_id"], "to_role": "human_like_reviewer"},
+                label="current_node_result_relayed_to_reviewer_with_ledger_check",
+                summary=(
+                    "Check the packet ledger and relay the current-node worker "
+                    "result envelope to reviewer without opening the result body."
+                ),
+                allowed_reads=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, result_path),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                ],
+                to_role="human_like_reviewer",
+                extra={
+                    "packet_id": result["packet_id"],
+                    "postcondition": "current_node_result_relayed_to_reviewer",
+                    "controller_visibility": "result_envelope_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
+                },
             )
         return make_action(
             action_type="relay_current_node_result_to_reviewer",
@@ -10491,6 +10576,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         ledger["updated_at"] = utc_now()
         write_json(run_root / "packet_ledger.json", ledger)
     elif action_type == "relay_material_scan_packets":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("material scan packet relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("material scan packet relay requires a current packet-ledger check")
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
@@ -10498,6 +10590,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["material_scan_packets_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_material_scan_results_to_reviewer":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("material scan result relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("material scan result relay requires a current packet-ledger check")
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
@@ -10505,6 +10604,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["material_scan_results_relayed_to_reviewer"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_research_packet":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("research packet relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("research packet relay requires a current packet-ledger check")
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
@@ -10512,6 +10618,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["research_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_research_result_to_reviewer":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("research result relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("research result relay requires a current packet-ledger check")
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
@@ -10519,6 +10632,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["research_result_relayed_to_reviewer"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_current_node_packet":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("current-node packet relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("current-node packet relay requires a current packet-ledger check")
         envelope, envelope_path = _current_node_packet_context(project_root, run_state)
@@ -10536,8 +10656,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["current_node_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_current_node_result_to_reviewer":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
-            raise RouterError("current-node result relay requires a current packet-ledger check")
+            if not combined_ledger_check:
+                raise RouterError("current-node result relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         result, result_path = _current_node_result_context(project_root, run_state)
         if not run_state["flags"].get("current_node_worker_result_returned"):
             raise RouterError("current-node result relay requires worker result event")
