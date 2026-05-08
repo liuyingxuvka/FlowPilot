@@ -47,6 +47,11 @@
         "prior_path_context_review.reviewed",
         "prior_path_context_review.source_paths",
         "repair_action",
+        "repair_transaction",
+        "repair_transaction.plan_kind",
+        "repair_transaction.replacement_packet_specs_hash",
+        "repair_transaction.replacement_packet_specs_path",
+        "repair_transaction.replacement_packets",
         "rerun_target",
         "run_id",
         "schema_version"
@@ -59,6 +64,7 @@
         "decision",
         "prior_path_context_review",
         "repair_action",
+        "repair_transaction",
         "rerun_target"
       ],
       "pm_control_blocker_router_fields": [
@@ -69,6 +75,7 @@
         "decision",
         "prior_path_context_review",
         "repair_action",
+        "repair_transaction",
         "rerun_target"
       ],
       "role_output_card_path_hash_pairs": [

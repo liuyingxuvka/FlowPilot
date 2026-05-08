@@ -47,6 +47,13 @@ Mutation or repair output must include `prior_path_context_review` showing the
 history considered and why this repair does not repeat a superseded or failed
 path.
 
+Every control-blocker repair must open a repair transaction. Do not treat a
+single `rerun_target` as the repair. For packet reissue, include the replacement
+packet specs in `repair_transaction.replacement_packets` or provide
+`repair_transaction.replacement_packet_specs_path` with its hash. Router will
+commit one new packet generation across packet files, packet ledger, material
+dispatch index, and reviewer outcome table before any recheck can pass.
+
 Do not mark the node complete until repair evidence passes the required review
 and the PM reruns the relevant node, parent, or terminal gate from current
 route evidence.
@@ -79,7 +86,13 @@ Use these exact field names and one of the allowed `decision` values:
     "source_paths": []
   },
   "repair_action": "<action taken or why none was needed>",
-  "rerun_target": "<event, role, node, or gate to rerun>",
+  "rerun_target": "<success event to recheck, such as reviewer_allows_material_scan_dispatch>",
+  "repair_transaction": {
+    "plan_kind": "<event_replay|packet_reissue|route_mutation>",
+    "replacement_packet_specs_path": "<path-or-null>",
+    "replacement_packet_specs_hash": "<sha256-or-null>",
+    "replacement_packets": []
+  },
   "blockers": [],
   "contract_self_check": {
     "all_required_fields_present": true,
@@ -90,5 +103,7 @@ Use these exact field names and one of the allowed `decision` values:
 ```
 
 If the responsible role must reissue a malformed control-plane output, name
-that target and event in `rerun_target`. Do not ask Controller to infer or
-patch the rejected body.
+that target and event in `rerun_target`, and set `repair_transaction.plan_kind`
+to `event_replay`. If the repair creates replacement packets, set
+`repair_transaction.plan_kind` to `packet_reissue`; do not write packet specs as
+loose side files without committing them through the router transaction.

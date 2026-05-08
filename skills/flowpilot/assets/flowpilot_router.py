@@ -37,6 +37,8 @@ DISPLAY_PLAN_SCHEMA = "flowpilot.display_plan.v1"
 ROUTE_STATE_SNAPSHOT_SCHEMA = "flowpilot.route_state_snapshot.v1"
 CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
 CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.v1"
+REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
+REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
 PAYLOAD_CONTRACT_SCHEMA = "flowpilot.payload_contract.v1"
@@ -952,6 +954,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "material_scan_dispatch_blocked",
         "requires_flag": "reviewer_dispatch_card_delivered",
         "summary": "Reviewer blocked material scan dispatch before worker packet relay.",
+    },
+    "reviewer_blocks_material_scan_dispatch_recheck": {
+        "flag": "material_scan_dispatch_recheck_blocked",
+        "requires_flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "Reviewer blocked material scan dispatch during repair transaction recheck.",
+    },
+    "reviewer_protocol_blocker_material_scan_dispatch_recheck": {
+        "flag": "material_scan_dispatch_recheck_protocol_blocked",
+        "requires_flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "Reviewer reported a protocol blocker during material scan repair transaction recheck.",
     },
     "reviewer_allows_current_node_dispatch": {
         "flag": "current_node_dispatch_allowed",
@@ -2671,6 +2683,9 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
         "pm_repair_decision_path",
         "pm_repair_decision_hash",
         "pm_repair_rerun_target",
+        "repair_transaction_id",
+        "repair_transaction_path",
+        "repair_outcome_table",
         "allowed_resolution_events",
     )
     return {field: record.get(field) for field in fields if field in record}
@@ -2715,6 +2730,7 @@ def _sync_control_plane_indexes(project_root: Path, run_root: Path, run_state: d
     run_state["active_control_blocker"] = active
     run_state["latest_control_blocker_path"] = active.get("blocker_artifact_path") if active else None
     _sync_protocol_blocker_index(project_root, run_root, run_state)
+    _write_repair_transaction_index(project_root, run_root, run_state)
 
 
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
@@ -2747,6 +2763,8 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
                 "handling_lane": lane,
                 "pm_decision_required": bool(record.get("pm_decision_required")),
                 "responsible_role_for_reissue": record.get("responsible_role_for_reissue"),
+                "repair_transaction_id": record.get("repair_transaction_id"),
+                "repair_outcome_table": record.get("repair_outcome_table"),
                 "controller_instruction": record.get("controller_instruction"),
                 "controller_allowed_actions": record.get("controller_allowed_actions") or [],
                 "controller_forbidden_actions": record.get("controller_forbidden_actions") or [],
@@ -2764,7 +2782,12 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
         summary="A router control blocker has been delivered. Controller must wait for the target role's corrected event or PM recovery decision.",
         allowed_reads=[artifact_rel, project_relative(project_root, run_state_path(run_root))],
         allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-        extra={"allowed_external_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS), "blocker_artifact_path": artifact_rel},
+        extra={
+            "allowed_external_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS),
+            "blocker_artifact_path": artifact_rel,
+            "repair_transaction_id": record.get("repair_transaction_id"),
+            "repair_outcome_table": record.get("repair_outcome_table"),
+        },
     )
 
 
@@ -2838,6 +2861,12 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         raise RouterError("control blocker repair decision requires rerun_target")
     if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         raise RouterError("control blocker repair decision rerun_target must name a corrected follow-up event, not the PM decision event")
+    repair_transaction_request = decision.get("repair_transaction")
+    if not isinstance(repair_transaction_request, dict):
+        raise RouterError("control blocker repair decision requires repair_transaction")
+    requested_plan_kind = str(repair_transaction_request.get("plan_kind") or "").strip()
+    if requested_plan_kind not in {"event_replay", "packet_reissue", "route_mutation"}:
+        raise RouterError("repair_transaction.plan_kind must be event_replay, packet_reissue, or route_mutation")
     blockers = decision.get("blockers")
     if not isinstance(blockers, list):
         raise RouterError("control blocker repair decision requires blockers list")
@@ -2848,15 +2877,34 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         raise RouterError("control blocker repair decision requires contract_self_check.all_required_fields_present=true")
     if contract_self_check.get("exact_field_names_used") is not True:
         raise RouterError("control blocker repair decision requires contract_self_check.exact_field_names_used=true")
+    outcome_table = _repair_outcome_table(rerun_target)
+    allowed_resolution_events = _repair_outcome_events(outcome_table)
+    transaction_id = _repair_transaction_id(blocker_id)
+    packet_generation_id = f"{transaction_id}-gen-001"
+    packet_specs, packet_spec_source = _repair_packet_specs_from_decision(
+        project_root,
+        run_root,
+        decision,
+        rerun_target=rerun_target,
+    )
+    if packet_specs and requested_plan_kind != "packet_reissue":
+        raise RouterError("repair transaction with replacement packets requires plan_kind=packet_reissue")
+    if requested_plan_kind == "packet_reissue" and not packet_specs:
+        raise RouterError("packet_reissue repair transaction requires replacement packets or a packet spec path")
+    plan_kind = requested_plan_kind
+    if packet_specs and rerun_target != "reviewer_allows_material_scan_dispatch":
+        raise RouterError("repair transaction packet reissue is currently supported only for material scan dispatch")
     output = {
         "schema_version": "flowpilot.control_blocker_repair_decision.v1",
         "run_id": run_state["run_id"],
         "blocker_id": blocker_id,
         "decided_by_role": "project_manager",
         "decision": decision["decision"],
+        "repair_transaction_id": transaction_id,
         "prior_path_context_review": prior_path_context_review,
         "repair_action": repair_action,
         "rerun_target": rerun_target,
+        "outcome_table": outcome_table,
         "blockers": blockers,
         "contract_self_check": contract_self_check,
         "recorded_at": utc_now(),
@@ -2864,6 +2912,38 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     }
     decision_path = run_root / "control_blocks" / f"{blocker_id}.pm_repair_decision.json"
     write_json(decision_path, output)
+    generation_commit: dict[str, Any] | None = None
+    if packet_specs:
+        generation_commit = _commit_material_scan_repair_generation(
+            project_root,
+            run_root,
+            run_state,
+            transaction_id=transaction_id,
+            packet_generation_id=packet_generation_id,
+            packet_specs=packet_specs,
+        )
+        _set_pre_route_frontier_phase(run_root, str(run_state["run_id"]), "material_scan")
+        run_state["phase"] = "material_scan"
+    transaction = {
+        "schema_version": REPAIR_TRANSACTION_SCHEMA,
+        "transaction_id": transaction_id,
+        "run_id": run_state["run_id"],
+        "blocker_id": blocker_id,
+        "originating_event": active.get("originating_event"),
+        "originating_action_type": active.get("originating_action_type"),
+        "status": "committed",
+        "plan_kind": plan_kind,
+        "packet_generation_id": packet_generation_id if generation_commit else None,
+        "packet_spec_source": packet_spec_source,
+        "generation_commit": generation_commit,
+        "pm_repair_decision_path": project_relative(project_root, decision_path),
+        "rerun_target": rerun_target,
+        "outcome_table": outcome_table,
+        "allowed_resolution_events": allowed_resolution_events,
+        "opened_at": output["recorded_at"],
+        "committed_at": utc_now(),
+    }
+    write_json(_repair_transaction_path(run_root, transaction_id), transaction)
     active_path = resolve_project_path(project_root, str(active.get("blocker_artifact_path") or ""))
     decision_rel = project_relative(project_root, decision_path)
     decision_hash = hashlib.sha256(decision_path.read_bytes()).hexdigest()
@@ -2873,14 +2953,20 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         record["pm_repair_decision_path"] = decision_rel
         record["pm_repair_decision_hash"] = decision_hash
         record["pm_repair_rerun_target"] = rerun_target
-        record["allowed_resolution_events"] = [rerun_target]
+        record["repair_transaction_id"] = transaction_id
+        record["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
+        record["repair_outcome_table"] = outcome_table
+        record["allowed_resolution_events"] = allowed_resolution_events
         record["resolution_status"] = None
         write_json(active_path, record)
     active["pm_repair_decision_status"] = "recorded"
     active["pm_repair_decision_path"] = decision_rel
     active["pm_repair_decision_hash"] = decision_hash
     active["pm_repair_rerun_target"] = rerun_target
-    active["allowed_resolution_events"] = [rerun_target]
+    active["repair_transaction_id"] = transaction_id
+    active["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
+    active["repair_outcome_table"] = outcome_table
+    active["allowed_resolution_events"] = allowed_resolution_events
     _sync_control_plane_indexes(project_root, run_root, run_state)
 
 
@@ -5379,6 +5465,52 @@ def _write_material_dispatch_block_report(project_root: Path, run_root: Path, ru
     run_state["flags"]["reviewer_dispatch_allowed"] = False
 
 
+def _write_material_dispatch_recheck_protocol_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "human_like_reviewer":
+        raise RouterError("material dispatch recheck protocol blocker requires reviewed_by_role=human_like_reviewer")
+    blockers = payload.get("blockers")
+    if not isinstance(blockers, list) or not blockers:
+        raise RouterError("material dispatch recheck protocol blocker requires non-empty blockers")
+    tx_path, transaction = _active_repair_transaction_for_event(
+        run_root,
+        "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+    )
+    if tx_path is None or transaction is None:
+        raise RouterError("material dispatch protocol blocker requires an active repair transaction")
+    reported_at = utc_now()
+    report_path = run_root / "control_blocks" / f"{transaction['transaction_id']}.reviewer_protocol_blocker.json"
+    write_json(
+        report_path,
+        {
+            "schema_version": "flowpilot.repair_transaction_protocol_blocker.v1",
+            "run_id": run_state["run_id"],
+            "repair_transaction_id": transaction["transaction_id"],
+            "reviewed_by_role": "human_like_reviewer",
+            "event_name": "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+            "blockers": blockers,
+            "source_paths": payload.get("source_paths") if isinstance(payload.get("source_paths"), list) else [],
+            "residual_risks": payload.get("residual_risks") if isinstance(payload.get("residual_risks"), list) else [],
+            "reported_at": reported_at,
+            **_role_output_envelope_record(payload),
+        },
+    )
+    run_state["material_dispatch_block"] = {
+        "path": project_relative(project_root, report_path),
+        "blockers": blockers,
+        "reported_at": reported_at,
+        "repair_transaction_id": transaction["transaction_id"],
+        "protocol_blocker": True,
+    }
+    run_state["flags"]["reviewer_dispatch_allowed"] = False
+    run_state["flags"]["material_scan_dispatch_blocked"] = True
+
+
 def _write_material_sufficiency_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, sufficient: bool) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("reviewed_by_role") != "human_like_reviewer":
@@ -7235,6 +7367,341 @@ def _material_scan_index_path(run_root: Path) -> Path:
 
 def _research_packet_index_path(run_root: Path) -> Path:
     return run_root / "research" / "research_packet.json"
+
+
+def _repair_transactions_root(run_root: Path) -> Path:
+    return run_root / "control_blocks" / "repair_transactions"
+
+
+def _repair_transaction_index_path(run_root: Path) -> Path:
+    return _repair_transactions_root(run_root) / "repair_transaction_index.json"
+
+
+def _repair_transaction_path(run_root: Path, transaction_id: str) -> Path:
+    return _repair_transactions_root(run_root) / f"{transaction_id}.json"
+
+
+def _repair_transaction_id(blocker_id: str) -> str:
+    safe = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in blocker_id).strip("-")
+    return f"repair-tx-{safe or 'control-blocker'}"
+
+
+def _repair_outcome_table(rerun_target: str) -> dict[str, dict[str, Any]]:
+    if rerun_target == "reviewer_allows_material_scan_dispatch":
+        return {
+            "success": {
+                "event": "reviewer_allows_material_scan_dispatch",
+                "terminal": "complete",
+            },
+            "blocker": {
+                "event": "reviewer_blocks_material_scan_dispatch_recheck",
+                "terminal": "blocked",
+            },
+            "protocol_blocker": {
+                "event": "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+                "terminal": "blocked",
+            },
+        }
+    return {
+        "success": {
+            "event": rerun_target,
+            "terminal": "complete",
+        },
+        "blocker": {
+            "event": rerun_target,
+            "terminal": "blocked",
+            "shares_success_event": True,
+        },
+        "protocol_blocker": {
+            "event": rerun_target,
+            "terminal": "blocked",
+            "shares_success_event": True,
+        },
+    }
+
+
+def _repair_outcome_events(outcome_table: dict[str, Any]) -> list[str]:
+    events: list[str] = []
+    for name in ("success", "blocker", "protocol_blocker"):
+        outcome = outcome_table.get(name)
+        if not isinstance(outcome, dict):
+            continue
+        event = str(outcome.get("event") or "").strip()
+        if event and event not in events:
+            events.append(event)
+    return events
+
+
+def _repair_packet_specs_from_decision(
+    project_root: Path,
+    run_root: Path,
+    decision: dict[str, Any],
+    *,
+    rerun_target: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    transaction = decision.get("repair_transaction") if isinstance(decision.get("repair_transaction"), dict) else {}
+    raw_packets = (
+        transaction.get("replacement_packets")
+        or transaction.get("packets")
+        or decision.get("replacement_packets")
+        or decision.get("packets")
+    )
+    if isinstance(raw_packets, list) and raw_packets:
+        return raw_packets, {
+            "source": "decision_inline",
+            "packet_count": len(raw_packets),
+        }
+
+    raw_path = (
+        transaction.get("replacement_packet_specs_path")
+        or transaction.get("packet_reissue_spec_path")
+        or decision.get("replacement_packet_specs_path")
+        or decision.get("packet_reissue_spec_path")
+    )
+    if not raw_path and rerun_target == "reviewer_allows_material_scan_dispatch":
+        default_path = run_root / "material" / "pm_material_scan_packet_specs_reissue.project_manager.json"
+        if default_path.exists():
+            raw_path = project_relative(project_root, default_path)
+    if not raw_path:
+        return [], None
+
+    spec_path = resolve_project_path(project_root, str(raw_path))
+    if not spec_path.exists():
+        raise RouterError(f"repair transaction packet spec path is missing: {raw_path}")
+    expected_hash = (
+        transaction.get("replacement_packet_specs_hash")
+        or transaction.get("packet_reissue_spec_hash")
+        or decision.get("replacement_packet_specs_hash")
+        or decision.get("packet_reissue_spec_hash")
+    )
+    if expected_hash and packet_runtime.sha256_file(spec_path) != str(expected_hash):
+        raise RouterError("repair transaction packet spec hash mismatch")
+    spec = read_json(spec_path)
+    packets = spec.get("packets")
+    if not isinstance(packets, list) or not packets:
+        raise RouterError("repair transaction packet spec requires non-empty packets")
+    return packets, {
+        "source": "packet_spec_file",
+        "path": project_relative(project_root, spec_path),
+        "sha256": packet_runtime.sha256_file(spec_path),
+        "packet_count": len(packets),
+    }
+
+
+def _write_repair_transaction_index(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
+    root = _repair_transactions_root(run_root)
+    transactions: list[dict[str, Any]] = []
+    active: dict[str, Any] | None = None
+    if root.exists():
+        for path in sorted(root.glob("repair-tx-*.json")):
+            record = read_json_if_exists(path)
+            if record.get("schema_version") != REPAIR_TRANSACTION_SCHEMA:
+                continue
+            summary = {
+                "transaction_id": record.get("transaction_id"),
+                "blocker_id": record.get("blocker_id"),
+                "status": record.get("status"),
+                "plan_kind": record.get("plan_kind"),
+                "packet_generation_id": record.get("packet_generation_id"),
+                "path": project_relative(project_root, path),
+                "outcome_table": record.get("outcome_table"),
+            }
+            transactions.append(summary)
+            if record.get("status") in {"opened", "committed", "awaiting_recheck"}:
+                active = summary
+    index = {
+        "schema_version": REPAIR_TRANSACTION_INDEX_SCHEMA,
+        "run_id": run_state.get("run_id"),
+        "active_transaction": active,
+        "transactions": transactions,
+        "updated_at": utc_now(),
+    }
+    write_json(_repair_transaction_index_path(run_root), index)
+    run_state["repair_transactions"] = transactions
+    run_state["active_repair_transaction"] = active
+
+
+def _commit_material_scan_repair_generation(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    transaction_id: str,
+    packet_generation_id: str,
+    packet_specs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    existing_index = read_json_if_exists(_material_scan_index_path(run_root))
+    superseded_packets = []
+    for record in existing_index.get("packets", []) if isinstance(existing_index.get("packets"), list) else []:
+        if isinstance(record, dict):
+            superseded = dict(record)
+            superseded["is_current_generation"] = False
+            superseded["superseded_by_generation_id"] = packet_generation_id
+            superseded_packets.append(superseded)
+
+    records: list[dict[str, Any]] = []
+    for index, spec in enumerate(packet_specs, start=1):
+        if not isinstance(spec, dict):
+            raise RouterError("each repair transaction packet spec must be an object")
+        packet_id = str(spec.get("packet_id") or f"material-scan-repair-{index:03d}")
+        to_role = str(spec.get("to_role") or "worker_a")
+        if to_role not in {"worker_a", "worker_b"}:
+            raise RouterError("material scan repair packet must target worker_a or worker_b")
+        body_text = _material_packet_body_text_from_spec(project_root, spec)
+        envelope = packet_runtime.create_packet(
+            project_root,
+            run_id=str(run_state["run_id"]),
+            packet_id=packet_id,
+            from_role="project_manager",
+            to_role=to_role,
+            node_id=str(spec.get("node_id") or "material-intake"),
+            body_text=body_text,
+            is_current_node=False,
+            packet_type="material_scan",
+            metadata={
+                "stage": "material_scan",
+                "source": "repair_transaction_commit",
+                "repair_transaction_id": transaction_id,
+                "packet_generation_id": packet_generation_id,
+                "replacement_for": spec.get("replacement_for"),
+                **(spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {}),
+            },
+            output_contract=spec.get("output_contract") if isinstance(spec.get("output_contract"), dict) else None,
+        )
+        paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
+        records.append(
+            {
+                "packet_id": packet_id,
+                "to_role": to_role,
+                "packet_generation_id": packet_generation_id,
+                "repair_transaction_id": transaction_id,
+                "replacement_for": spec.get("replacement_for"),
+                "is_current_generation": True,
+                "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
+                "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+            }
+        )
+
+    write_json(
+        _material_scan_index_path(run_root),
+        {
+            "schema_version": "flowpilot.material_scan_packets.v2",
+            "run_id": run_state["run_id"],
+            "written_by_role": "project_manager",
+            "controller_may_read_packet_body": False,
+            "reviewer_dispatch_required_before_worker": True,
+            "current_generation_id": packet_generation_id,
+            "repair_transaction_id": transaction_id,
+            "packets": records,
+            "superseded_packets": superseded_packets,
+            "written_at": utc_now(),
+        },
+    )
+    run_state["flags"]["material_scan_packets_relayed"] = False
+    run_state["flags"]["worker_packets_delivered"] = False
+    run_state["flags"]["worker_scan_results_returned"] = False
+    run_state["flags"]["material_scan_results_relayed_to_reviewer"] = False
+    run_state["flags"]["material_review_sufficient"] = False
+    run_state["flags"]["material_review_insufficient"] = False
+    run_state["material_review"] = None
+    return {
+        "packet_generation_id": packet_generation_id,
+        "packet_count": len(records),
+        "packets": records,
+        "superseded_packet_count": len(superseded_packets),
+        "dispatch_index_path": project_relative(project_root, _material_scan_index_path(run_root)),
+        "packet_ledger_path": project_relative(project_root, run_root / "packet_ledger.json"),
+    }
+
+
+def _active_repair_transaction_for_event(run_root: Path, event: str) -> tuple[Path, dict[str, Any]] | tuple[None, None]:
+    root = _repair_transactions_root(run_root)
+    if not root.exists():
+        return None, None
+    for path in sorted(root.glob("repair-tx-*.json"), reverse=True):
+        record = read_json_if_exists(path)
+        if record.get("schema_version") != REPAIR_TRANSACTION_SCHEMA:
+            continue
+        if record.get("status") not in {"committed", "awaiting_recheck", "opened"}:
+            continue
+        if event in _repair_outcome_events(record.get("outcome_table") if isinstance(record.get("outcome_table"), dict) else {}):
+            return path, record
+    return None, None
+
+
+def _repair_transaction_outcome_kind(transaction: dict[str, Any], event: str) -> str | None:
+    table = transaction.get("outcome_table")
+    if not isinstance(table, dict):
+        return None
+    for kind, outcome in table.items():
+        if isinstance(outcome, dict) and outcome.get("event") == event:
+            return str(kind)
+    return None
+
+
+def _finalize_repair_transaction_outcome(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    payload: dict[str, Any] | None,
+) -> None:
+    tx_path, transaction = _active_repair_transaction_for_event(run_root, event)
+    if tx_path is None or transaction is None:
+        return
+    outcome_kind = _repair_transaction_outcome_kind(transaction, event)
+    if not outcome_kind:
+        return
+    now = utc_now()
+    transaction["reviewer_recheck"] = {
+        "outcome": outcome_kind,
+        "event": event,
+        "payload_envelope_public_view": _control_payload_public_view(payload),
+        "recorded_at": now,
+    }
+    if outcome_kind == "success":
+        transaction["status"] = "complete"
+        transaction["completed_at"] = now
+        write_json(tx_path, transaction)
+        _write_repair_transaction_index(project_root, run_root, run_state)
+        return
+
+    transaction["status"] = "blocked"
+    transaction["blocked_at"] = now
+    transaction["followup_blocker_required"] = True
+    write_json(tx_path, transaction)
+
+    blocker_id = str(transaction.get("blocker_id") or "")
+    active = run_state.get("active_control_blocker")
+    artifact_rel = str(active.get("blocker_artifact_path") or "") if isinstance(active, dict) else ""
+    if artifact_rel:
+        artifact_path = resolve_project_path(project_root, artifact_rel)
+        if artifact_path.exists():
+            blocker_record = read_json(artifact_path)
+            if blocker_record.get("blocker_id") == blocker_id:
+                blocker_record["resolution_status"] = f"repair_transaction_{outcome_kind}"
+                blocker_record["resolved_by_event"] = event
+                blocker_record["resolved_at"] = now
+                blocker_record["repair_transaction_id"] = transaction.get("transaction_id")
+                write_json(artifact_path, blocker_record)
+
+    followup = _write_control_blocker(
+        project_root,
+        run_root,
+        run_state,
+        source="repair_transaction_recheck",
+        error_message=(
+            f"repair transaction {transaction.get('transaction_id')} ended with reviewer "
+            f"{outcome_kind}; PM repair or routing decision is required before retrying dispatch."
+        ),
+        event=event,
+        payload=payload,
+    )
+    transaction["followup_blocker_id"] = followup.get("blocker_id")
+    transaction["followup_blocker_path"] = followup.get("blocker_artifact_path")
+    write_json(tx_path, transaction)
+    _write_repair_transaction_index(project_root, run_root, run_state)
 
 
 def _relay_packet_records(
@@ -10330,6 +10797,12 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _write_material_scan_packets(project_root, run_root, run_state, payload)
     elif event == "reviewer_blocks_material_scan_dispatch":
         _write_material_dispatch_block_report(project_root, run_root, run_state, payload)
+    elif event == "reviewer_blocks_material_scan_dispatch_recheck":
+        _write_material_dispatch_block_report(project_root, run_root, run_state, payload)
+        _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
+    elif event == "reviewer_protocol_blocker_material_scan_dispatch_recheck":
+        _write_material_dispatch_recheck_protocol_blocker(project_root, run_root, run_state, payload)
+        _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
     elif event == "worker_scan_packet_bodies_delivered_after_dispatch":
         material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         _validate_packet_bodies_opened_by_targets(project_root, run_state, material_index["packets"])
@@ -10594,6 +11067,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         run_state["flags"]["material_accepted_by_pm"] = True
     run_state["events"].append(record)
     if event == "reviewer_allows_material_scan_dispatch":
+        _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
         run_state["flags"]["material_scan_dispatch_blocked"] = False
         run_state["material_dispatch_block"] = None
     if event == "reviewer_reports_material_sufficient":

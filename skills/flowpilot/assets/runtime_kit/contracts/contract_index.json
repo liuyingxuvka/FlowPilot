@@ -406,6 +406,7 @@
         "prior_path_context_review",
         "repair_action",
         "rerun_target",
+        "repair_transaction",
         "blockers",
         "contract_self_check"
       ],
@@ -417,6 +418,21 @@
         "repair_not_required",
         "resolved_by_followup_event",
         "continue_after_pm_review"
+      ],
+      "required_repair_transaction_fields": [
+        "plan_kind"
+      ],
+      "allowed_repair_transaction_plan_kind_values": [
+        "event_replay",
+        "packet_reissue",
+        "route_mutation"
+      ],
+      "outcome_table_owned_by_router": true,
+      "packet_reissue_requires_atomic_generation_commit": true,
+      "reviewer_recheck_outcomes": [
+        "success",
+        "blocker",
+        "protocol_blocker"
       ]
     },
     {

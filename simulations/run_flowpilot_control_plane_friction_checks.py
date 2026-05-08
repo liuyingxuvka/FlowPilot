@@ -19,6 +19,7 @@ REQUIRED_LABELS = (
     "pm_writes_research_package_with_scope_fields",
     "pm_records_research_capability_decision_preserving_package_scope",
     "worker_packet_materialized_with_research_scope",
+    "reviewer_allows_material_scan_dispatch_after_packet_integrity_check",
     "packet_delivered_by_controller",
     "target_records_packet_body_open_receipt",
     "worker_result_returned_to_ledger",
@@ -41,6 +42,11 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "research_package_scope_dropped": "worker research packet was materialized after PM package scope fields were dropped",
+    "material_dispatch_phase_mismatch": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
+    "material_dispatch_output_contract_mismatch": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
+    "material_dispatch_write_target_missing": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
+    "material_dispatch_duplicate_canonical_body": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
+    "material_dispatch_allowed_without_review": "material scan dispatch was allowed before reviewer dispatch review",
     "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, relay, and result-open receipts existed",
     "missing_receipt_blocker_escalated_to_pm": "missing receipt blocker was not routed as same-role reviewer control-plane reissue",
     "stopped_run_with_active_heartbeat": "stopped run left heartbeat, crew, packet loop, or frontier authority active",
@@ -52,6 +58,9 @@ HAZARD_EXPECTED_FAILURES = {
     "control_blocker_index_stale_after_artifact_update": "router control blocker index disagreed with control blocker artifact status",
     "pm_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
     "pm_repair_followup_event_not_normalized": "PM repair follow-up event could not be matched by normalized router resolution logic",
+    "pm_repair_reissue_specs_not_materialized": "PM repair reissue specs did not materialize into packet runtime files, ledger, and dispatch index",
+    "pm_repair_success_only_gate_after_unmaterialized_reissue": "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable",
+    "reviewer_recheck_protocol_blocker_unroutable": "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable",
     "phase_card_missing_required_upstream_source": "delivered phase card was missing required upstream source paths",
     "delivered_card_phase_context_stale": "delivered card current_phase did not match its actual workflow phase",
     "terminal_snapshot_flag_mismatch": "terminal route_state_snapshot flags disagreed with terminal run status",
@@ -78,6 +87,20 @@ def _state_id(state: model.State) -> str:
         f"{state.research_package_has_allowed_sources},"
         f"{state.research_package_has_stop_conditions}|cap={state.research_capability_decision_recorded}|"
         f"packet={state.worker_packet_written},{state.worker_packet_preserves_research_fields},"
+        f"material_dispatch={state.material_dispatch_requested},"
+        f"{state.material_dispatch_reviewed},{state.material_dispatch_allowed},"
+        f"{state.material_dispatch_phase_context_consistent},"
+        f"{state.material_dispatch_output_contract_consistent},"
+        f"{state.material_dispatch_write_target_explicit},"
+        f"{state.material_dispatch_single_canonical_body}|"
+        f"repair_reissue={state.pm_repair_reissue_spec_written},"
+        f"{state.pm_repair_reissue_packet_files_materialized},"
+        f"{state.pm_repair_reissue_packets_registered_in_ledger},"
+        f"{state.pm_repair_reissue_dispatch_index_updated},"
+        f"success_only={state.pm_repair_allowed_success_only},"
+        f"non_success_route={state.pm_repair_non_success_outcome_routable},"
+        f"recheck_blocker={state.reviewer_recheck_protocol_blocker_written},"
+        f"{state.reviewer_recheck_protocol_blocker_routable}|"
         f"{state.packet_delivered},{state.packet_body_open_receipt}|result={state.result_returned},"
         f"{state.result_routed_to_reviewer},{state.result_body_open_receipt}|"
         f"review={state.reviewer_report_written},{state.reviewer_report_accepted}|"

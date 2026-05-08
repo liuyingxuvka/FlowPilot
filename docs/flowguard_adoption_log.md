@@ -4774,3 +4774,192 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Keep legal waits table/contract driven. Future role-event additions should update the event contract/model and rely on generated legal-wait hazards, not add new phase-specific no-next-action branches.
 - Split `flowpilot_router.py` later as maintenance debt after protocol behavior stabilizes.
+
+
+## flowpilot-control-plane-repair-liveness - Strengthen FlowPilot control-plane friction model for PM repair liveness
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Post-runtime model miss: material scan PM repair wrote reissue specs without packet runtime materialization, then router allowed only success event.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T07:39:46+00:00
+- Ended: 2026-05-08T07:39:46+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+
+### Commands
+- OK (0.000s): `python import preflight returned FlowGuard schema 1.0`
+- OK (0.000s): `python -m py_compile simulations/flowpilot_control_plane_friction_model.py simulations/run_flowpilot_control_plane_friction_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit`
+- FAIL (0.000s): `expected-live-findings: python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json`
+
+### Findings
+- Added PM repair reissue liveness invariants requiring replacement packet specs to materialize into physical packet files, packet_ledger, and material dispatch index.
+- Live audit now reports pm_repair_reissue_packets_not_materialized, pm_repair_success_only_gate_blocks_reviewer_recheck_failure, and reviewer_recheck_protocol_blocker_unroutable for run-20260508-064618.
+
+### Counterexamples
+- Hazards detect unmaterialized repair specs, success-only gates after unmaterialized reissue, and unroutable reviewer recheck protocol blockers.
+
+### Friction Points
+- The previous model treated PM repair follow-up as a matchable event-name problem; the real failure was semantic routability when the success event could not legally be emitted.
+
+### Skipped Steps
+- Production router/packet-runtime repair skipped; user asked first to upgrade FlowGuard so the model catches the issue.
+
+### Next Actions
+- Repair FlowPilot runtime so PM repair reissues are materialized/registered and reviewer non-success recheck events are valid router inputs.
+
+
+## flowguard-coverage-sweep-ledger - Add read-only FlowGuard coverage sweep and finding ledger
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Coverage audit showed that model upgrade decisions need a unified sweep runner that classifies abstract/source/live/progress/hazard findings before changing runtime or models.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T08:08:44+00:00
+- Ended: 2026-05-08T08:08:44+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- scripts/run_flowguard_coverage_sweep.py
+- docs/flowguard_coverage_sweep.md
+
+### Commands
+- OK (0.000s): `python import preflight returned FlowGuard schema 1.0`
+- OK (0.000s): `python -m py_compile scripts/run_flowguard_coverage_sweep.py`
+- OK (0.000s): `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 120`
+
+### Findings
+- Added a read-only coverage sweep that executes non-writing runners and reads existing JSON results for runners that write by default.
+- Sweep normalized 22 runners into abstract/source/live/progress/hazards sections and produced 8 current live findings, all classified as modeled_current_live_hit_fix_runtime_or_current_state.
+
+### Counterexamples
+- Current run run-20260508-064618 still surfaces 7 direct control-plane live errors plus one gate-policy pointer to those live audit findings.
+
+### Friction Points
+- Most run_*_checks.py scripts still write result files by default, so the read-only sweep must treat those as existing-result reads until runners gain a no-write mode.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Use the coverage ledger before deciding whether to fix runtime, fix check flow, or expand a model.
+
+
+## flowpilot-repair-transaction-coverage-plan - Model FlowPilot repair transactions before runtime repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to upgrade FlowGuard coverage for repair/reissue/routing failures before changing runtime.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T08:22:26+00:00
+- Ended: 2026-05-08T08:22:26+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_repair_transaction_model.py
+- simulations/run_flowpilot_repair_transaction_checks.py
+- simulations/flowpilot_repair_transaction_results.json
+- scripts/run_flowguard_coverage_sweep.py
+
+### Commands
+- OK (0.000s): `python -m py_compile simulations\flowpilot_repair_transaction_model.py simulations\run_flowpilot_repair_transaction_checks.py scripts\run_flowguard_coverage_sweep.py`
+- OK (0.000s): `python simulations\run_flowpilot_repair_transaction_checks.py --json-out simulations\flowpilot_repair_transaction_results.json`
+- OK (0.000s): `background: python scripts\run_flowguard_coverage_sweep.py --timeout-seconds 180`
+
+### Findings
+- Added a generic repair transaction model covering blocker registration, PM repair decisions, atomic replacement packet generation commit, reviewer recheck routability, and authority refresh.
+- Repair transaction model passes Explorer/progress/safe-graph checks: 606 traces, 0 violations, 0 dead branches, 0 reachability failures, 3 terminal states.
+- Coverage sweep now sees 23 runners and classifies 8 current live findings as modeled_current_live_hit_fix_runtime_or_current_state.
+
+### Counterexamples
+- Existing live run still shows phase/contract/write-target/current-generation/routability failures; the new model treats these as one class of missing atomic repair transaction semantics.
+
+### Friction Points
+- Most existing simulation runners still lack a no-write mode, so the sweep executes only read-only runners and reads existing JSON for writing runners.
+
+### Skipped Steps
+- Runtime repair intentionally skipped until user approves the proposed root architecture fix.
+
+### Next Actions
+- After approval, implement one repair transaction commit/finalize path in FlowPilot runtime and rerun control-plane friction plus coverage sweep.
+
+
+## flowpilot-repair-transaction-runtime-implementation - Implement FlowPilot repair transactions and remove shallow repair gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Runtime stateful repair/reissue/routing logic is changing; FlowGuard model already exposed missing atomic repair transaction semantics.
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-08T08:41:50+00:00
+- Ended: 2026-05-08T08:41:50+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-repair-transaction-runtime-implementation - Implement FlowPilot repair transactions and remove shallow repair gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Runtime stateful repair/reissue/routing logic changed after FlowGuard exposed missing atomic repair transaction semantics.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T09:02:44+00:00
+- Ended: 2026-05-08T09:02:44+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_repair_transaction_model.py
+- simulations/flowpilot_control_plane_friction_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations/flowpilot_control_plane_friction_results.json`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 300`
+- OK (0.000s): `python -m unittest targeted FlowPilot repair/control/packet/output tests`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+
+### Findings
+- Runtime now requires PM repair decisions to open a repair transaction; packet reissue commits files, ledger, dispatch index, outcome table, frontier, and visible indexes together.
+- The old live run still has seven modeled historical findings; new runtime conformance is covered by model and router regression tests rather than mutating that stopped run.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- The full router runtime test module exceeded a five-minute shell timeout, so verification used targeted router tests plus adjacent packet/control/output suites.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Use coverage sweep to classify future findings before deciding whether to fix runtime, source checks, or model coverage.

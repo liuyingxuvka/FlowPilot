@@ -60,6 +60,9 @@ For any `pm_repair_decision_required` router `control_blocker`, use the
 ordinary phase events such as `pm_requests_startup_repair` to resolve the
 router control blocker unless a later router action explicitly routes that
 separate phase event after the blocker is resolved.
+That decision must open a repair transaction. A single rerun event is only the
+success outcome, not the repair itself. Packet reissues must be committed by
+the router as one generation before reviewer recheck.
 
 Before any route draft, node plan, repair, route mutation, resume continuation,
 final ledger, or closure decision, read the latest current-run route-memory

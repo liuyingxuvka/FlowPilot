@@ -5,24 +5,31 @@ Risk intent brief:
 - Preserve Controller's envelope-only boundary while reducing purely
   mechanical handoff steps.
 - Model-critical durable state: research package fields, worker packet
-  materialization, packet/result open receipts, control-blocker routing,
-  stop lifecycle reconciliation, active-task authority, display snapshot
-  freshness, required phase-source context, and live-run artifact registration.
+  materialization, material-scan dispatch integrity, packet/result open
+  receipts, control-blocker routing, stop lifecycle reconciliation,
+  active-task authority, display snapshot freshness, required phase-source
+  context, and live-run artifact registration.
 - Adversarial branches include dropped research scope fields, reviewer reports
   accepted without a result-body receipt, missing-receipt blockers escalated to
-  PM instead of same-role reissue, stopped runs with live heartbeat/crew/packet
+  PM instead of same-role reissue, material-scan packet dispatch with phase,
+  contract, write-target, or canonical-body drift, PM repair reissue specs that
+  never enter the packet runtime, success-only repair gates that cannot accept
+  reviewer recheck blockers, stopped runs with live heartbeat/crew/packet
   state, stale snapshots treated as active UI state, ambiguous multi-active
   runs under current-json-only authority, product architecture delivery without
   PM material-understanding source paths, protocol blockers written outside
   router-visible state, stage-advance views left stale, and optimized
   transactions that skip hash, role, or Controller-boundary checks.
-- Hard invariants: package-to-packet fields are preserved; reviewer decisions
-  require legal open receipts; missing receipt repair is same-role reissue;
-  stopped runs reconcile all visible lifecycle authorities; active snapshots
-  are fresh; phase cards carry required source context; protocol blockers are
-  router-visible; stage-advance views refresh; multi-active visibility has
-  explicit authority; optimized transactions keep hash, role, and envelope-only
-  guarantees.
+- Hard invariants: package-to-packet fields are preserved; material-scan
+  dispatch requires phase, contract, write-target, and canonical-body
+  consistency; repair reissues must materialize into packet files, ledger, and
+  dispatch index; reviewer recheck failures must remain routable; reviewer
+  decisions require legal open receipts; missing receipt repair is same-role
+  reissue; stopped runs reconcile all visible lifecycle authorities; active
+  snapshots are fresh; phase cards carry required source context; protocol
+  blockers are router-visible; stage-advance views refresh; multi-active
+  visibility has explicit authority; optimized transactions keep hash, role,
+  and envelope-only guarantees.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -69,6 +76,21 @@ class State:
     research_capability_decision_recorded: bool = False
     worker_packet_written: bool = False
     worker_packet_preserves_research_fields: bool = False
+    material_dispatch_requested: bool = False
+    material_dispatch_reviewed: bool = False
+    material_dispatch_allowed: bool = False
+    material_dispatch_phase_context_consistent: bool = True
+    material_dispatch_output_contract_consistent: bool = True
+    material_dispatch_write_target_explicit: bool = True
+    material_dispatch_single_canonical_body: bool = True
+    pm_repair_reissue_spec_written: bool = False
+    pm_repair_reissue_packet_files_materialized: bool = True
+    pm_repair_reissue_packets_registered_in_ledger: bool = True
+    pm_repair_reissue_dispatch_index_updated: bool = True
+    pm_repair_allowed_success_only: bool = False
+    pm_repair_non_success_outcome_routable: bool = True
+    reviewer_recheck_protocol_blocker_written: bool = False
+    reviewer_recheck_protocol_blocker_routable: bool = True
 
     packet_delivered: bool = False
     packet_body_open_receipt: bool = False
@@ -239,6 +261,23 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.material_dispatch_reviewed:
+        yield Transition(
+            "reviewer_allows_material_scan_dispatch_after_packet_integrity_check",
+            _inc(
+                state,
+                holder="controller",
+                material_dispatch_requested=True,
+                material_dispatch_reviewed=True,
+                material_dispatch_allowed=True,
+                material_dispatch_phase_context_consistent=True,
+                material_dispatch_output_contract_consistent=True,
+                material_dispatch_write_target_explicit=True,
+                material_dispatch_single_canonical_body=True,
+            ),
+        )
+        return
+
     if state.mode == "optimized":
         if not state.optimized_relay_transaction:
             yield Transition(
@@ -402,6 +441,24 @@ def research_scope_preserved(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def material_scan_dispatch_requires_packet_integrity(state: State, trace) -> InvariantResult:
+    del trace
+    if state.material_dispatch_requested and not (
+        state.material_dispatch_phase_context_consistent
+        and state.material_dispatch_output_contract_consistent
+        and state.material_dispatch_write_target_explicit
+        and state.material_dispatch_single_canonical_body
+    ):
+        return InvariantResult.fail(
+            "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state"
+        )
+    if state.material_dispatch_allowed and not state.material_dispatch_reviewed:
+        return InvariantResult.fail(
+            "material scan dispatch was allowed before reviewer dispatch review"
+        )
+    return InvariantResult.pass_()
+
+
 def reviewer_report_requires_open_receipts(state: State, trace) -> InvariantResult:
     del trace
     if state.reviewer_report_accepted and not (
@@ -489,6 +546,52 @@ def pm_repair_followup_events_are_matchable(state: State, trace) -> InvariantRes
     ):
         return InvariantResult.fail(
             "PM repair follow-up event could not be matched by normalized router resolution logic"
+        )
+    return InvariantResult.pass_()
+
+
+def pm_repair_reissue_requires_packet_runtime_materialization(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    if (
+        state.control_blocker_lane == "pm_repair_decision_required"
+        and state.pm_repair_decision_recorded
+        and state.pm_repair_reissue_spec_written
+        and not (
+            state.pm_repair_reissue_packet_files_materialized
+            and state.pm_repair_reissue_packets_registered_in_ledger
+            and state.pm_repair_reissue_dispatch_index_updated
+        )
+    ):
+        return InvariantResult.fail(
+            "PM repair reissue specs did not materialize into packet runtime files, ledger, and dispatch index"
+        )
+    return InvariantResult.pass_()
+
+
+def pm_repair_recheck_outcomes_remain_routable(state: State, trace) -> InvariantResult:
+    del trace
+    repair_runtime_ready = (
+        state.pm_repair_reissue_packet_files_materialized
+        and state.pm_repair_reissue_packets_registered_in_ledger
+        and state.pm_repair_reissue_dispatch_index_updated
+    )
+    needs_failure_route = (
+        state.pm_repair_reissue_spec_written and not repair_runtime_ready
+    ) or state.reviewer_recheck_protocol_blocker_written
+    if (
+        state.control_blocker_lane == "pm_repair_decision_required"
+        and state.pm_repair_decision_recorded
+        and needs_failure_route
+        and (
+            state.pm_repair_allowed_success_only
+            or not state.pm_repair_non_success_outcome_routable
+            or not state.reviewer_recheck_protocol_blocker_routable
+        )
+    ):
+        return InvariantResult.fail(
+            "PM repair recheck allowed only success while reviewer blocker or protocol outcome was not routable"
         )
     return InvariantResult.pass_()
 
@@ -612,6 +715,11 @@ INVARIANTS = (
         predicate=research_scope_preserved,
     ),
     Invariant(
+        name="material_scan_dispatch_requires_packet_integrity",
+        description="Material-scan dispatch reviews verify phase, output contract, write target, and canonical packet body consistency.",
+        predicate=material_scan_dispatch_requires_packet_integrity,
+    ),
+    Invariant(
         name="reviewer_report_requires_open_receipts",
         description="Reviewer report acceptance requires legal packet/result receipts.",
         predicate=reviewer_report_requires_open_receipts,
@@ -650,6 +758,16 @@ INVARIANTS = (
         name="pm_repair_followup_events_are_matchable",
         description="PM repair decisions store follow-up resolution events in a router-matchable form.",
         predicate=pm_repair_followup_events_are_matchable,
+    ),
+    Invariant(
+        name="pm_repair_reissue_requires_packet_runtime_materialization",
+        description="PM repair reissue specs enter physical packet files, packet ledger, and dispatch index before recheck can proceed.",
+        predicate=pm_repair_reissue_requires_packet_runtime_materialization,
+    ),
+    Invariant(
+        name="pm_repair_recheck_outcomes_remain_routable",
+        description="Reviewer rechecks after PM repair can route blocker or protocol outcomes, not only success.",
+        predicate=pm_repair_recheck_outcomes_remain_routable,
     ),
     Invariant(
         name="delivered_cards_include_required_phase_sources",
@@ -736,6 +854,21 @@ def _safe_base(**changes: object) -> State:
             research_capability_decision_recorded=True,
             worker_packet_written=True,
             worker_packet_preserves_research_fields=True,
+            material_dispatch_requested=True,
+            material_dispatch_reviewed=True,
+            material_dispatch_allowed=True,
+            material_dispatch_phase_context_consistent=True,
+            material_dispatch_output_contract_consistent=True,
+            material_dispatch_write_target_explicit=True,
+            material_dispatch_single_canonical_body=True,
+            pm_repair_reissue_spec_written=False,
+            pm_repair_reissue_packet_files_materialized=True,
+            pm_repair_reissue_packets_registered_in_ledger=True,
+            pm_repair_reissue_dispatch_index_updated=True,
+            pm_repair_allowed_success_only=False,
+            pm_repair_non_success_outcome_routable=True,
+            reviewer_recheck_protocol_blocker_written=False,
+            reviewer_recheck_protocol_blocker_routable=True,
             packet_delivered=True,
             packet_body_open_receipt=True,
             result_returned=True,
@@ -787,6 +920,22 @@ def _safe_base(**changes: object) -> State:
 def hazard_states() -> dict[str, State]:
     return {
         "research_package_scope_dropped": _safe_base(worker_packet_preserves_research_fields=False),
+        "material_dispatch_phase_mismatch": _safe_base(
+            material_dispatch_phase_context_consistent=False,
+        ),
+        "material_dispatch_output_contract_mismatch": _safe_base(
+            material_dispatch_output_contract_consistent=False,
+        ),
+        "material_dispatch_write_target_missing": _safe_base(
+            material_dispatch_write_target_explicit=False,
+        ),
+        "material_dispatch_duplicate_canonical_body": _safe_base(
+            material_dispatch_single_canonical_body=False,
+        ),
+        "material_dispatch_allowed_without_review": _safe_base(
+            material_dispatch_reviewed=False,
+            material_dispatch_allowed=True,
+        ),
         "reviewer_report_without_result_open_receipt": _safe_base(result_body_open_receipt=False),
         "missing_receipt_blocker_escalated_to_pm": _safe_base(
             receipt_missing_blocker=True,
@@ -834,6 +983,34 @@ def hazard_states() -> dict[str, State]:
             pm_repair_decision_recorded=True,
             control_blocker_followup_event_matchable=True,
             control_resolution_predicate_normalized=False,
+        ),
+        "pm_repair_reissue_specs_not_materialized": _safe_base(
+            control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            pm_repair_reissue_spec_written=True,
+            pm_repair_reissue_packet_files_materialized=False,
+            pm_repair_reissue_packets_registered_in_ledger=False,
+            pm_repair_reissue_dispatch_index_updated=False,
+        ),
+        "pm_repair_success_only_gate_after_unmaterialized_reissue": _safe_base(
+            control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            pm_repair_reissue_spec_written=True,
+            pm_repair_reissue_packet_files_materialized=False,
+            pm_repair_allowed_success_only=True,
+            pm_repair_non_success_outcome_routable=False,
+        ),
+        "reviewer_recheck_protocol_blocker_unroutable": _safe_base(
+            control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            pm_repair_reissue_spec_written=True,
+            reviewer_recheck_protocol_blocker_written=True,
+            reviewer_recheck_protocol_blocker_routable=False,
+            pm_repair_allowed_success_only=True,
+            pm_repair_non_success_outcome_routable=False,
         ),
         "phase_card_missing_required_upstream_source": _safe_base(
             phase_dependency_cards_delivered=True,
@@ -938,6 +1115,229 @@ def _delivery_source_values(delivery: dict[str, Any] | None) -> set[str]:
     else:
         values = ()
     return {str(value).replace("\\", "/") for value in values if isinstance(value, str)}
+
+
+def _read_text(path: Path) -> tuple[str, str | None]:
+    try:
+        return path.read_text(encoding="utf-8"), None
+    except FileNotFoundError:
+        return "", f"missing file: {path.as_posix()}"
+    except UnicodeDecodeError as exc:
+        return "", f"invalid UTF-8 in {path.as_posix()}: {exc}"
+
+
+def _packet_body_output_contract(path: Path) -> tuple[dict[str, Any] | None, str | None, str]:
+    text, error = _read_text(path)
+    if error:
+        return None, error, text
+    heading_index = text.find("## Output Contract")
+    search_from = heading_index if heading_index >= 0 else 0
+    fence_start = text.find("```json", search_from)
+    if fence_start < 0:
+        return None, "missing Output Contract JSON fence", text
+    json_start = text.find("\n", fence_start)
+    if json_start < 0:
+        return None, "malformed Output Contract JSON fence", text
+    json_start += 1
+    fence_end = text.find("```", json_start)
+    if fence_end < 0:
+        return None, "unterminated Output Contract JSON fence", text
+    raw_json = text[json_start:fence_end].strip()
+    try:
+        payload = json.loads(raw_json)
+    except json.JSONDecodeError as exc:
+        return None, f"invalid Output Contract JSON: {exc}", text
+    if not isinstance(payload, dict):
+        return None, "Output Contract JSON is not an object", text
+    return payload, None, text
+
+
+def _contract_uniquely_matches_role(contract: object, to_role: str) -> bool:
+    if not isinstance(contract, dict) or not to_role:
+        return False
+    if contract.get("recipient_role") == to_role:
+        return True
+    roles = contract.get("recipient_roles")
+    return isinstance(roles, list) and roles == [to_role]
+
+
+def _ledger_packets_by_id(packet_ledger: object) -> dict[str, dict[str, Any]]:
+    if not isinstance(packet_ledger, dict):
+        return {}
+    packets = packet_ledger.get("packets")
+    if not isinstance(packets, list):
+        return {}
+    return {
+        str(packet.get("packet_id")): packet
+        for packet in packets
+        if isinstance(packet, dict) and packet.get("packet_id")
+    }
+
+
+def _pm_material_packet_specs_by_id(pm_spec: object) -> dict[str, dict[str, Any]]:
+    if not isinstance(pm_spec, dict):
+        return {}
+    packets = pm_spec.get("packets")
+    if not isinstance(packets, list):
+        return {}
+    return {
+        str(packet.get("packet_id")): packet
+        for packet in packets
+        if isinstance(packet, dict) and packet.get("packet_id")
+    }
+
+
+def _material_packet_envelope_paths(run_root: Path, material_scan_packets: object) -> list[str]:
+    paths: set[str] = set()
+    if isinstance(material_scan_packets, dict):
+        for packet in material_scan_packets.get("packets", []):
+            if isinstance(packet, dict) and isinstance(packet.get("packet_envelope_path"), str):
+                paths.add(packet["packet_envelope_path"].replace("\\", "/"))
+    packet_root = run_root / "packets"
+    if packet_root.exists():
+        for envelope_path in sorted(packet_root.glob("*/packet_envelope.json")):
+            envelope, error = _read_json(envelope_path)
+            if error or not isinstance(envelope, dict):
+                continue
+            if envelope.get("packet_type") == "material_scan":
+                paths.add(".flowpilot/runs/" + run_root.name + "/" + envelope_path.relative_to(run_root).as_posix())
+    return sorted(paths)
+
+
+def _audit_material_scan_dispatch_integrity(
+    project_root: Path,
+    run_root: Path,
+    router_state: object,
+    frontier: object,
+) -> dict[str, object]:
+    material_scan_packets, _material_packets_error = _read_json(
+        run_root / "material" / "material_scan_packets.json"
+    )
+    pm_spec, _pm_spec_error = _read_json(
+        run_root / "material" / "pm_material_scan_packet_specs.project_manager.json"
+    )
+    packet_ledger, _packet_ledger_error = _read_json(run_root / "packet_ledger.json")
+    envelope_paths = _material_packet_envelope_paths(run_root, material_scan_packets)
+    requested = bool(envelope_paths) or (
+        isinstance(material_scan_packets, dict)
+        and bool(material_scan_packets.get("reviewer_dispatch_required_before_worker"))
+    )
+    if not requested:
+        return {
+            "requested": False,
+            "reviewed": False,
+            "phase_context_consistent": True,
+            "output_contract_consistent": True,
+            "write_target_explicit": True,
+            "single_canonical_body": True,
+            "packet_details": [],
+        }
+
+    router_phase = str(router_state.get("phase") or "") if isinstance(router_state, dict) else ""
+    frontier_phase = str(frontier.get("phase") or "") if isinstance(frontier, dict) else ""
+    frontier_status = str(frontier.get("status") or "") if isinstance(frontier, dict) else ""
+    phase_context_consistent = (
+        router_phase == "material_scan"
+        and frontier_phase == "material_scan"
+        and frontier_status == "material_scan"
+    )
+    ledger_by_id = _ledger_packets_by_id(packet_ledger)
+    specs_by_id = _pm_material_packet_specs_by_id(pm_spec)
+    contract_ok = True
+    write_target_ok = True
+    canonical_body_ok = True
+    packet_details: list[dict[str, object]] = []
+    for envelope_rel in envelope_paths:
+        envelope_path = project_root / envelope_rel
+        envelope, envelope_error = _read_json(envelope_path)
+        if envelope_error or not isinstance(envelope, dict):
+            contract_ok = False
+            write_target_ok = False
+            canonical_body_ok = False
+            packet_details.append(
+                {
+                    "packet_envelope_path": envelope_rel,
+                    "envelope_error": envelope_error,
+                }
+            )
+            continue
+        packet_id = str(envelope.get("packet_id") or "")
+        to_role = str(envelope.get("to_role") or "")
+        body_rel = str(envelope.get("body_path") or "").replace("\\", "/")
+        body_contract, body_contract_error, body_text = _packet_body_output_contract(project_root / body_rel)
+        envelope_contract = envelope.get("output_contract")
+        contracts_same = isinstance(envelope_contract, dict) and envelope_contract == body_contract
+        role_unique = _contract_uniquely_matches_role(
+            envelope_contract, to_role
+        ) and _contract_uniquely_matches_role(body_contract, to_role)
+        packet_contract_ok = contracts_same and role_unique
+        contract_ok = contract_ok and packet_contract_ok
+
+        ledger_result_body_path = str(
+            ledger_by_id.get(packet_id, {}).get("result_body_path") or ""
+        ).replace("\\", "/")
+        envelope_result_body_path = str(envelope.get("result_body_path") or "").replace("\\", "/")
+        body_mentions_result_path = bool(
+            ledger_result_body_path and ledger_result_body_path in body_text.replace("\\", "/")
+        )
+        packet_write_target_ok = bool(
+            ledger_result_body_path
+            and (
+                envelope_result_body_path == ledger_result_body_path
+                or body_mentions_result_path
+            )
+        )
+        write_target_ok = write_target_ok and packet_write_target_ok
+
+        spec = specs_by_id.get(packet_id, {})
+        spec_body_path = str(spec.get("body_path") or "").replace("\\", "/")
+        spec_body_hash = str(spec.get("body_hash") or "")
+        envelope_body_hash = str(envelope.get("body_hash") or "")
+        packet_canonical_ok = not spec or (
+            spec_body_path == body_rel and spec_body_hash == envelope_body_hash
+        )
+        canonical_body_ok = canonical_body_ok and packet_canonical_ok
+
+        packet_details.append(
+            {
+                "packet_id": packet_id,
+                "to_role": to_role,
+                "packet_envelope_path": envelope_rel,
+                "packet_body_path": body_rel,
+                "body_contract_error": body_contract_error,
+                "contracts_same": contracts_same,
+                "contract_uniquely_matches_to_role": role_unique,
+                "ledger_result_body_path": ledger_result_body_path or None,
+                "envelope_result_body_path": envelope_result_body_path or None,
+                "body_mentions_result_body_path": body_mentions_result_path,
+                "write_target_explicit": packet_write_target_ok,
+                "pm_spec_body_path": spec_body_path or None,
+                "pm_spec_body_hash": spec_body_hash or None,
+                "envelope_body_hash": envelope_body_hash or None,
+                "single_canonical_body": packet_canonical_ok,
+            }
+        )
+
+    reviewed = False
+    if isinstance(router_state, dict):
+        reviewed = _json_contains(router_state, "reviewer_blocks_material_scan_dispatch") or _json_contains(
+            router_state, "reviewer_dispatch_allowed"
+        )
+    reviewed = reviewed or (run_root / "material" / "reviewer_dispatch_report.human_like_reviewer.json").exists()
+    return {
+        "requested": requested,
+        "reviewed": reviewed,
+        "phase_context_consistent": phase_context_consistent,
+        "output_contract_consistent": contract_ok,
+        "write_target_explicit": write_target_ok,
+        "single_canonical_body": canonical_body_ok,
+        "phase_evidence": {
+            "router_state_phase": router_phase,
+            "execution_frontier_phase": frontier_phase,
+            "execution_frontier_status": frontier_status,
+        },
+        "packet_details": packet_details,
+    }
 
 
 def _router_flags(router_state: object) -> dict[str, Any]:
@@ -1058,6 +1458,181 @@ def _active_pm_repair_followup_event_matchable(router_state: object) -> tuple[bo
         "allowed_event_names_after_normalization": allowed_names,
         "pm_repair_rerun_target_name_after_normalization": rerun_target_name,
         "originating_event": originating_event,
+    }
+
+
+def _resolution_event_names(value: object) -> list[str]:
+    if isinstance(value, list):
+        return [name for item in value if (name := _resolution_event_name(item))]
+    name = _resolution_event_name(value)
+    return [name] if name else []
+
+
+def _event_is_non_success_repair_outcome(name: str) -> bool:
+    lowered = name.lower()
+    return any(
+        token in lowered
+        for token in (
+            "block",
+            "protocol",
+            "required",
+            "missing",
+            "reject",
+            "fail",
+            "materialization",
+        )
+    )
+
+
+def _event_is_success_repair_outcome(name: str) -> bool:
+    lowered = name.lower()
+    return "allow" in lowered or "pass" in lowered or "approve" in lowered
+
+
+def _rel_run_path(run_root: Path, path: Path) -> str:
+    return ".flowpilot/runs/" + run_root.name + "/" + path.relative_to(run_root).as_posix()
+
+
+def _audit_pm_repair_reissue_liveness(
+    project_root: Path,
+    run_root: Path,
+    router_state: object,
+) -> dict[str, object]:
+    active = router_state.get("active_control_blocker") if isinstance(router_state, dict) else None
+    active = active if isinstance(active, dict) else {}
+    pm_repair_recorded = (
+        active.get("handling_lane") == "pm_repair_decision_required"
+        and active.get("pm_repair_decision_status") == "recorded"
+    )
+    allowed_names = _resolution_event_names(active.get("allowed_resolution_events"))
+    success_names = [name for name in allowed_names if _event_is_success_repair_outcome(name)]
+    non_success_names = [
+        name for name in allowed_names if _event_is_non_success_repair_outcome(name)
+    ]
+    success_only_allowed = bool(success_names) and not non_success_names
+
+    packet_ledger, _packet_ledger_error = _read_json(run_root / "packet_ledger.json")
+    ledger_by_id = _ledger_packets_by_id(packet_ledger)
+    material_scan_packets, _material_packets_error = _read_json(
+        run_root / "material" / "material_scan_packets.json"
+    )
+    dispatch_packet_ids = (
+        {
+            str(packet.get("packet_id"))
+            for packet in material_scan_packets.get("packets", [])
+            if isinstance(packet, dict) and packet.get("packet_id")
+        }
+        if isinstance(material_scan_packets, dict)
+        else set()
+    )
+
+    spec_paths = sorted((run_root / "material").glob("pm_material_scan_packet_specs_reissue*.json"))
+    packet_details: list[dict[str, object]] = []
+    packet_files_materialized = True
+    packets_registered = True
+    dispatch_index_updated = True
+    for spec_path in spec_paths:
+        spec, spec_error = _read_json(spec_path)
+        spec_rel = _rel_run_path(run_root, spec_path)
+        packets = spec.get("packets") if isinstance(spec, dict) else None
+        if spec_error or not isinstance(packets, list):
+            packet_files_materialized = False
+            packets_registered = False
+            dispatch_index_updated = False
+            packet_details.append(
+                {
+                    "reissue_spec_path": spec_rel,
+                    "read_error": spec_error or "reissue spec did not contain packets list",
+                }
+            )
+            continue
+        for packet in packets:
+            if not isinstance(packet, dict):
+                continue
+            packet_id = str(packet.get("packet_id") or "")
+            if not packet_id:
+                continue
+            envelope_rel = (
+                f".flowpilot/runs/{run_root.name}/packets/{packet_id}/packet_envelope.json"
+            )
+            body_rel = f".flowpilot/runs/{run_root.name}/packets/{packet_id}/packet_body.md"
+            envelope_exists = (project_root / envelope_rel).exists()
+            body_exists = (project_root / body_rel).exists()
+            ledger_registered = packet_id in ledger_by_id
+            dispatch_registered = packet_id in dispatch_packet_ids or _json_contains(
+                material_scan_packets, packet_id
+            )
+            packet_files_materialized = packet_files_materialized and envelope_exists and body_exists
+            packets_registered = packets_registered and ledger_registered
+            dispatch_index_updated = dispatch_index_updated and dispatch_registered
+            packet_details.append(
+                {
+                    "packet_id": packet_id,
+                    "replacement_for": packet.get("replacement_for"),
+                    "reissue_spec_path": spec_rel,
+                    "expected_packet_envelope_path": envelope_rel,
+                    "expected_packet_body_path": body_rel,
+                    "packet_envelope_exists": envelope_exists,
+                    "packet_body_exists": body_exists,
+                    "registered_in_packet_ledger": ledger_registered,
+                    "registered_in_dispatch_index": dispatch_registered,
+                }
+            )
+
+    protocol_blockers: list[dict[str, object]] = []
+    protocol_blockers_routable = True
+    control_blocks_root = run_root / "control_blocks"
+    if control_blocks_root.exists():
+        for blocker_path in sorted(control_blocks_root.glob("*.json")):
+            blocker, error = _read_json(blocker_path)
+            if not isinstance(blocker, dict):
+                continue
+            event_name = str(blocker.get("event_name") or "")
+            schema = str(blocker.get("schema_version") or "")
+            is_recheck_blocker = (
+                "protocol_blocker" in schema
+                or "protocol_blocker" in event_name
+                or blocker.get("can_emit_requested_allowed_event") is False
+            )
+            if not is_recheck_blocker:
+                continue
+            rel_path = _rel_run_path(run_root, blocker_path)
+            routable = (
+                event_name in allowed_names
+                or _json_contains(router_state, event_name)
+                or _json_contains(router_state, rel_path)
+            )
+            protocol_blockers_routable = protocol_blockers_routable and routable
+            protocol_blockers.append(
+                {
+                    "path": rel_path,
+                    "event_name": event_name or None,
+                    "read_error": error,
+                    "requested_allowed_event": blocker.get("requested_allowed_event"),
+                    "can_emit_requested_allowed_event": blocker.get(
+                        "can_emit_requested_allowed_event"
+                    ),
+                    "routable_by_router_state": routable,
+                }
+            )
+
+    runtime_ready = (
+        packet_files_materialized and packets_registered and dispatch_index_updated
+    )
+    return {
+        "pm_repair_recorded": pm_repair_recorded,
+        "reissue_spec_written": bool(spec_paths),
+        "packet_files_materialized": packet_files_materialized,
+        "packets_registered_in_ledger": packets_registered,
+        "dispatch_index_updated": dispatch_index_updated,
+        "runtime_ready": runtime_ready,
+        "allowed_resolution_event_names": allowed_names,
+        "success_only_allowed": success_only_allowed,
+        "non_success_outcome_routable": bool(non_success_names),
+        "packet_details": packet_details,
+        "reviewer_recheck_protocol_blocker_written": bool(protocol_blockers),
+        "reviewer_recheck_protocol_blocker_routable": protocol_blockers_routable,
+        "reviewer_recheck_protocol_blockers": protocol_blockers,
     }
 
 
@@ -1462,6 +2037,51 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             route_draft_has_nodes = False
     route_process_check_delivered = _latest_delivery(prompt_deliveries, "process_officer.route_process_check") is not None
     route_process_check_passed = bool(flags.get("process_officer_route_check_passed"))
+    material_dispatch = _audit_material_scan_dispatch_integrity(
+        project_root=root,
+        run_root=run_root,
+        router_state=router_state,
+        frontier=frontier,
+    )
+    if material_dispatch.get("requested") and not material_dispatch.get("phase_context_consistent"):
+        _add_finding(
+            findings,
+            code="material_dispatch_phase_mismatch",
+            severity="error",
+            summary="material scan dispatch request saw router_state and execution_frontier disagree about the material_scan phase",
+            invariant="material_scan_dispatch_requires_packet_integrity",
+            evidence={
+                "phase_evidence": material_dispatch.get("phase_evidence"),
+                "reviewed": material_dispatch.get("reviewed"),
+            },
+        )
+    if material_dispatch.get("requested") and not material_dispatch.get("output_contract_consistent"):
+        _add_finding(
+            findings,
+            code="material_dispatch_output_contract_mismatch",
+            severity="error",
+            summary="material scan packet envelope and body output contracts were not the same role-specific contract",
+            invariant="material_scan_dispatch_requires_packet_integrity",
+            evidence={"packets": material_dispatch.get("packet_details")},
+        )
+    if material_dispatch.get("requested") and not material_dispatch.get("write_target_explicit"):
+        _add_finding(
+            findings,
+            code="material_dispatch_write_target_missing",
+            severity="error",
+            summary="material scan packet did not expose the worker result_body_path in the envelope or body",
+            invariant="material_scan_dispatch_requires_packet_integrity",
+            evidence={"packets": material_dispatch.get("packet_details")},
+        )
+    if material_dispatch.get("requested") and not material_dispatch.get("single_canonical_body"):
+        _add_finding(
+            findings,
+            code="material_dispatch_duplicate_canonical_body",
+            severity="error",
+            summary="material scan packet had separate PM-spec and physical packet body identities",
+            invariant="material_scan_dispatch_requires_packet_integrity",
+            evidence={"packets": material_dispatch.get("packet_details")},
+        )
     if route_process_check_delivered and not route_draft_has_nodes:
         _add_finding(
             findings,
@@ -1612,6 +2232,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     pm_repair_recorded, pm_repair_followup_matchable, pm_repair_followup_evidence = (
         _active_pm_repair_followup_event_matchable(router_state)
     )
+    pm_repair_liveness = _audit_pm_repair_reissue_liveness(root, run_root, router_state)
     if pm_repair_recorded and not pm_repair_followup_matchable:
         _add_finding(
             findings,
@@ -1620,6 +2241,54 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             summary="PM repair decision recorded a follow-up event that router resolution logic cannot match",
             invariant="pm_repair_followup_events_are_matchable",
             evidence=pm_repair_followup_evidence,
+        )
+    if (
+        pm_repair_liveness.get("pm_repair_recorded")
+        and pm_repair_liveness.get("reissue_spec_written")
+        and not pm_repair_liveness.get("runtime_ready")
+    ):
+        _add_finding(
+            findings,
+            code="pm_repair_reissue_packets_not_materialized",
+            severity="error",
+            summary="PM repair wrote replacement packet specs that were not materialized into packet files, packet_ledger, and material dispatch index",
+            invariant="pm_repair_reissue_requires_packet_runtime_materialization",
+            evidence=pm_repair_liveness,
+        )
+    if (
+        pm_repair_liveness.get("pm_repair_recorded")
+        and (
+            (
+                pm_repair_liveness.get("reissue_spec_written")
+                and not pm_repair_liveness.get("runtime_ready")
+            )
+            or pm_repair_liveness.get("reviewer_recheck_protocol_blocker_written")
+        )
+        and (
+            pm_repair_liveness.get("success_only_allowed")
+            or not pm_repair_liveness.get("non_success_outcome_routable")
+            or not pm_repair_liveness.get("reviewer_recheck_protocol_blocker_routable")
+        )
+    ):
+        _add_finding(
+            findings,
+            code="pm_repair_success_only_gate_blocks_reviewer_recheck_failure",
+            severity="error",
+            summary="PM repair left router accepting only the success event even though reviewer recheck could only produce a blocker or protocol outcome",
+            invariant="pm_repair_recheck_outcomes_remain_routable",
+            evidence=pm_repair_liveness,
+        )
+    if (
+        pm_repair_liveness.get("reviewer_recheck_protocol_blocker_written")
+        and not pm_repair_liveness.get("reviewer_recheck_protocol_blocker_routable")
+    ):
+        _add_finding(
+            findings,
+            code="reviewer_recheck_protocol_blocker_unroutable",
+            severity="error",
+            summary="Reviewer wrote a recheck protocol blocker that was not visible as a routable router resolution event",
+            invariant="pm_repair_recheck_outcomes_remain_routable",
+            evidence=pm_repair_liveness,
         )
 
     child_skill_gate_synced, child_skill_gate_evidence = _audit_child_skill_gate_sync(run_root)
@@ -1695,14 +2364,61 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     projected_state = _safe_base(
         pm_material_understanding_written=pm_material_written,
         pm_material_understanding_source_available=pm_material_source_available,
+        material_dispatch_requested=bool(material_dispatch.get("requested")),
+        material_dispatch_reviewed=bool(material_dispatch.get("reviewed")),
+        material_dispatch_allowed=bool(
+            material_dispatch.get("requested")
+            and material_dispatch.get("phase_context_consistent")
+            and material_dispatch.get("output_contract_consistent")
+            and material_dispatch.get("write_target_explicit")
+            and material_dispatch.get("single_canonical_body")
+        ),
+        material_dispatch_phase_context_consistent=bool(
+            material_dispatch.get("phase_context_consistent")
+        ),
+        material_dispatch_output_contract_consistent=bool(
+            material_dispatch.get("output_contract_consistent")
+        ),
+        material_dispatch_write_target_explicit=bool(
+            material_dispatch.get("write_target_explicit")
+        ),
+        material_dispatch_single_canonical_body=bool(
+            material_dispatch.get("single_canonical_body")
+        ),
         product_architecture_card_delivered=product_architecture_delivered,
         product_architecture_delivery_has_material_context=material_context_present,
         protocol_blocker_file_written=bool(unregistered_protocol_blockers),
         protocol_blocker_registered_in_router_state=not bool(unregistered_protocol_blockers),
         control_blocker_artifact_status_written=bool(control_blocker_mismatches),
         control_blocker_router_index_matches_artifact=control_blocker_index_synced,
+        control_blocker_lane="pm_repair_decision_required" if pm_repair_recorded else "none",
+        control_blocker_target_role="project_manager" if pm_repair_recorded else "none",
         pm_repair_decision_recorded=pm_repair_recorded,
         control_blocker_followup_event_matchable=pm_repair_followup_matchable,
+        pm_repair_reissue_spec_written=bool(
+            pm_repair_liveness.get("reissue_spec_written")
+        ),
+        pm_repair_reissue_packet_files_materialized=bool(
+            pm_repair_liveness.get("packet_files_materialized")
+        ),
+        pm_repair_reissue_packets_registered_in_ledger=bool(
+            pm_repair_liveness.get("packets_registered_in_ledger")
+        ),
+        pm_repair_reissue_dispatch_index_updated=bool(
+            pm_repair_liveness.get("dispatch_index_updated")
+        ),
+        pm_repair_allowed_success_only=bool(
+            pm_repair_liveness.get("success_only_allowed")
+        ),
+        pm_repair_non_success_outcome_routable=bool(
+            pm_repair_liveness.get("non_success_outcome_routable")
+        ),
+        reviewer_recheck_protocol_blocker_written=bool(
+            pm_repair_liveness.get("reviewer_recheck_protocol_blocker_written")
+        ),
+        reviewer_recheck_protocol_blocker_routable=bool(
+            pm_repair_liveness.get("reviewer_recheck_protocol_blocker_routable")
+        ),
         phase_dependency_cards_delivered=phase_dependency_cards_delivered,
         phase_required_sources_complete=not bool(phase_missing_sources),
         delivered_card_phase_context_fresh=not bool(phase_stale_contexts),
