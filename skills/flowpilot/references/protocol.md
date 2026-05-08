@@ -137,9 +137,13 @@ long-form public explanation lives in `docs/protocol.md`.
     wakeups, create the automated continuation: a stable one-minute heartbeat
     launcher. The launcher loads persisted route/frontier state and the packet
     ledger rather than carrying route-specific next-jump instructions in its
-    prompt. On wakeup it loads role memory, resumes or replaces each role from
-    that memory, then asks the project manager for the current `PM_DECISION`
-    and completion-oriented runway. The controller may relay only PM packets,
+    prompt. On every heartbeat or manual mid-run wakeup, it first records
+    `heartbeat_or_manual_resume_requested` to the router, restores the current
+    visible plan from the run, checks the current packet-ledger holder and all
+    six role agents, resumes or replaces each role from current-run memory, then
+    asks the project manager for the current `PM_DECISION` and
+    completion-oriented runway. A `wait_agent` timeout is `timeout_unknown`,
+    never active. The controller may relay only PM packets,
     reviewer dispatch/review decisions, worker results, visible-plan sync, and
     status/control-stop notices.
 26. If the user selected manual resume, record `manual-resume` mode and do not
@@ -685,10 +689,12 @@ Repeat until complete or blocked:
    override the active run.
 2. Rehydrate all six role identities and work memories before PM runway work.
    Stored agent ids may be resumed only when they belong to the same active
-   FlowPilot task-born cohort. A new formal FlowPilot task must create fresh
+   FlowPilot task-born cohort and a bounded host liveness preflight confirms
+   them. A new formal FlowPilot task must create fresh
    live subagents instead of resuming prior-route IDs. If live agents are
-   unavailable, ask for the missing startup/fallback decision before replacing
-   roles from memory. Record resumed, replaced, seeded, blocked, and
+   missing, cancelled, unknown, or timeout-unknown, ask for the missing
+   startup/fallback decision when needed before replacing roles from memory.
+   Record resumed, replaced, seeded, blocked, liveness status, and
    unavailable roles in a crew rehydration report covering project manager,
    reviewer, process FlowGuard officer, product FlowGuard officer, worker A,
    and worker B. Do not lazily rehydrate a role only when it is first needed.

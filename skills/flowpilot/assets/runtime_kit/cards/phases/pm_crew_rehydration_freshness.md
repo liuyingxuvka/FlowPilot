@@ -15,9 +15,14 @@ fresh for the current formal task.
 Accept only:
 
 - live roles spawned for this run after the current startup answers;
+- live continuity confirmed by a host liveness preflight for the current run;
 - same-task role memory packets rehydrated into replacement roles;
 - explicit user-approved single-agent six-role fallback.
 
 Prior-run `agent_id` values are audit history only. If any required role is
 missing, stale, cross-run, or unverifiable, block route work until PM records a
 replacement or fallback decision.
+
+`wait_agent` timeout is not freshness proof. Treat it as `timeout_unknown`;
+Controller must not continue waiting on that old role unless a later bounded
+host liveness check confirms the role is active.

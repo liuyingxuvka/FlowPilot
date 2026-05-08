@@ -2,6 +2,23 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.5.3 - 2026-05-08
+
+### Added
+
+- Added FlowGuard resume-model coverage for router wake recording, visible plan
+  restoration, six-role liveness preflight, and timeout-unknown handling.
+
+### Fixed
+
+- Changed heartbeat and manual mid-run wakeups to always re-enter the router
+  resume path instead of trusting an old `work_chain_status=alive` claim.
+- Required resume role rehydration receipts to record host liveness status,
+  liveness decision, bounded wait result, and an explicit
+  timeout-not-treated-as-active receipt.
+- Aligned smoke validation with the model gate by skipping the current live-run
+  audit for control-plane friction checks.
+
 ## 0.5.2 - 2026-05-08
 
 ### Added

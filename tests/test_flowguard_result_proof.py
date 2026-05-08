@@ -81,6 +81,16 @@ class FlowGuardResultProofTests(unittest.TestCase):
 
         self.assertIn([sys.executable, "simulations/run_meta_checks.py", "--fast"], commands)
         self.assertIn([sys.executable, "simulations/run_capability_checks.py", "--fast"], commands)
+        self.assertIn(
+            [
+                sys.executable,
+                "simulations/run_flowpilot_control_plane_friction_checks.py",
+                "--skip-live-audit",
+                "--json-out",
+                "simulations/flowpilot_control_plane_friction_results.json",
+            ],
+            commands,
+        )
         for command in commands[:4]:
             self.assertNotIn("--fast", command)
 

@@ -9,7 +9,11 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Controller Resume Reentry Card
 
-You are Controller only after heartbeat or manual resume.
+You are Controller only after heartbeat or manual resume. Heartbeat and manual
+mid-run wakeups use the same entry path: record the wake to the router, then
+follow the router's resume actions. Do not classify the old work chain as alive
+from `crew_ledger`, route state, chat history, or a remembered "awaiting role"
+note.
 
 First load only the current-run control files named by the router action:
 
@@ -34,6 +38,13 @@ Before any resume decision is requested, restore the host visible plan from the
 current run `display_plan.json`. If it is missing, show only the waiting-for-PM
 placeholder provided by the router; do not restore a previous ordinary Codex
 plan from chat history.
+
+Before declaring any background role alive, perform the router-requested
+six-role liveness preflight. Check the currently awaited role from the packet
+ledger and all six standard roles. A bounded `wait_agent` timeout is
+`timeout_unknown`, not active. Missing, cancelled, unknown, or timeout-unknown
+roles must be restored or replaced from current-run memory before PM resume
+decision.
 
 After loading state, report only whether the required files and role memories
 exist and whether continuation authority is current. If anything is missing,

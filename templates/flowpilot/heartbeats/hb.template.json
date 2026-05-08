@@ -50,10 +50,13 @@
     "controller_to_subagent_messages_must_include_role_reminder": true,
     "subagent_responses_must_include_role_echo": true,
     "first_actions_after_wakeup": [
+      "record_heartbeat_or_manual_resume_requested_to_router",
       "load_current_pointer_and_active_run",
       "load_state_frontier_route_crew_memory_latest_heartbeat_packet_ledger_and_relay_history",
       "verify_heartbeat_bound_to_current_run_and_thread_or_workspace",
-      "rehydrate_or_restore_required_roles",
+      "restore_visible_plan_from_current_run",
+      "run_six_role_liveness_preflight_and_check_current_awaited_role",
+      "rehydrate_or_restore_required_roles_before_declaring_wait_or_alive",
       "audit_mail_chain_for_controller_relay_signatures_unopened_mail_private_delivery_and_contamination",
       "ask_pm_for_current_pm_decision_or_packet_recovery_decision"
     ],
@@ -61,6 +64,8 @@
       "infer_next_worker_step_from_route_text",
       "complete_unfinished_worker_packet_as_controller",
       "advance_from_prior_worker_status_without_reviewer_decision",
+      "treat_wait_agent_timeout_as_active",
+      "continue_waiting_on_missing_cancelled_or_unknown_agent",
       "rewrite_heartbeat_prompt_with_route_specific_work"
     ]
   },

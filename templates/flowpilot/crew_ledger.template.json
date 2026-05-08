@@ -36,6 +36,14 @@
   },
   "rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/crew_rehydration_report.json",
   "rehydration_report_template": "templates/flowpilot/crew_memory/crew_rehydration_report.template.json",
+  "latest_resume_rehydration_report": "<path-or-null>",
+  "resume_rehydration_history": [],
+  "liveness_observation_policy": {
+    "record_last_liveness_check": true,
+    "host_liveness_status_required_on_resume": true,
+    "wait_agent_timeout_is_timeout_unknown_not_active": true,
+    "missing_cancelled_unknown_requires_replacement": true
+  },
   "created_at": "<iso-8601-timestamp>",
   "updated_at": "<iso-8601-timestamp>",
   "roles": [

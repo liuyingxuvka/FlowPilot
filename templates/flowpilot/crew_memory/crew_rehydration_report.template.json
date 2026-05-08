@@ -20,6 +20,8 @@
   "policy": {
     "role_continuity_required": true,
     "same_task_agent_id_resume_only": true,
+    "six_role_liveness_preflight_required": true,
+    "wait_agent_timeout_is_timeout_unknown_not_active": true,
     "historical_agent_ids_are_audit_history_only": true,
     "replacement_must_be_seeded_from_memory": true,
     "pm_runway_request_blocked_until_passed": true
@@ -33,6 +35,23 @@
     "current_task_agent_freshness_checked": false,
     "historical_agent_ids_compared": false
   },
+  "liveness_preflight": {
+    "checked_at": "<iso-8601-timestamp>",
+    "awaiting_role": "<role-key-or-null>",
+    "roles_checked": [
+      "project_manager",
+      "human_like_reviewer",
+      "process_flowguard_officer",
+      "product_flowguard_officer",
+      "worker_a",
+      "worker_b"
+    ],
+    "timeout_unknown_role_keys": [],
+    "missing_cancelled_or_unknown_role_keys": [],
+    "replacement_role_keys": [],
+    "wait_agent_timeout_treated_as_active": false,
+    "decision": "<all_roles_active|roles_ready_after_replacement|resume_needed|blocked>"
+  },
   "role_results": [
     {
       "role_key": "<role-key>",
@@ -40,6 +59,11 @@
       "memory_path": ".flowpilot/runs/<run-id>/crew_memory/<role-key>.json",
       "previous_agent_id": "<agent-id-or-null>",
       "result": "<resumed_same_task_agent|spawned_fresh_for_task|replaced_from_memory|blocked|not_needed>",
+      "host_liveness_status": "<active|completed|missing|cancelled|timeout_unknown|unknown>",
+      "liveness_decision": "<confirmed_existing_agent|spawned_replacement_from_current_run_memory|blocked>",
+      "resume_agent_attempted": false,
+      "bounded_wait_result": "<not_waited|completed|timeout_unknown>",
+      "wait_agent_timeout_treated_as_active": false,
       "new_agent_id": "<agent-id-or-null>",
       "same_task_agent_id": "<true|false|null>",
       "historical_agent_id_reused": false,

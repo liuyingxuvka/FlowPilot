@@ -249,15 +249,23 @@ Missing reminders are dispatch/review blockers, not cosmetic formatting gaps.
 ## Heartbeat And Manual Resume
 
 Heartbeat and manual resume use the same packet control plane. The waking
-assistant is Controller only. It first resolves `.flowpilot/current.json`,
-loads the active run state/frontier/route, crew ledger, role memory, latest
-heartbeat or manual-resume evidence, `packet_ledger.json`, and controller
-relay history, then restores or replaces the six roles before asking PM for the
-current decision. It must not open `packet_body.md` or `result_body.md`.
+assistant is Controller only. It first records
+`heartbeat_or_manual_resume_requested` to the router, then resolves
+`.flowpilot/current.json`, loads the active run state/frontier/route, crew
+ledger, role memory, latest heartbeat or manual-resume evidence,
+`packet_ledger.json`, visible plan projection, and controller relay history.
+Only after that router re-entry may it run the six-role liveness preflight,
+restore or replace the six roles, and ask PM for the current decision. It must
+not open `packet_body.md` or `result_body.md`.
 
 The heartbeat prompt is a stable launcher. It must not carry route-specific
-next-step instructions and must not be rewritten just because the route or PM
+next-step instructions, must not classify the old work chain as alive from
+stored route/crew state, and must not be rewritten just because the route or PM
 runway changed. Current work comes from persisted state and PM decisions.
+
+`wait_agent` timeout is `timeout_unknown`, not active. Missing, cancelled,
+unknown, or timeout-unknown host role status must enter replacement or recovery
+instead of continuing to wait on the old role.
 
 Resume rules:
 

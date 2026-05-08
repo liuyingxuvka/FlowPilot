@@ -124,10 +124,13 @@ branches, heartbeat behavior, and any task-local behavior models.
 25. If the user allowed scheduled continuation and the host supports real
     wakeups, create the automated continuation: a stable one-minute heartbeat
     launcher. The launcher loads persisted route/frontier state rather than
-    carrying route-specific next-jump instructions in its prompt. On wakeup it
-    loads role memory, resumes or replaces each role from memory, then asks
-    the project manager for a completion-oriented runway from the current
-    position to project completion.
+    carrying route-specific next-jump instructions in its prompt. On every
+    heartbeat or manual mid-run wakeup it first records
+    `heartbeat_or_manual_resume_requested` to the router, restores the visible
+    plan from the current run, checks the packet-ledger holder and all six role
+    agents, resumes or replaces each role from memory, then asks the project
+    manager for a completion-oriented runway from the current position to
+    project completion. A `wait_agent` timeout is `timeout_unknown`, not active.
 26. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 27. Record the controlled-stop notice policy: completed routes emit a
@@ -761,10 +764,11 @@ Each role memory packet
 stores the role charter, authority boundary, frozen contract pointer, current
 route position, latest decisions, open obligations, blockers, evidence paths,
 and "do not redo" notes. On heartbeat or manual resume, FlowPilot may try to
-resume a stored agent id, but if that fails it must either start a replacement
-live agent after authorization or replace the role from the latest memory
-packet after explicit fallback approval. A replacement role started only from a
-generic prompt is not recovered and cannot approve gates.
+resume a stored agent id only after bounded host liveness preflight. Missing,
+cancelled, unknown, or timeout-unknown role status must start a replacement live
+agent after authorization or replace the role from the latest memory packet
+after explicit fallback approval. A replacement role started only from a generic
+prompt is not recovered and cannot approve gates.
 
 Crew identity uses three separate fields. `role_key` is the stable authority
 and routing id. `display_name` is the user-facing chat/UI label. `agent_id` is

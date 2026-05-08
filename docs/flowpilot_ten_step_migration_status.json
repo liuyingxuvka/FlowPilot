@@ -7,7 +7,7 @@
     "cadence": "one minute",
     "scope": "current FlowPilot run continuation binding",
     "status": "runtime_binding_supported_no_live_automation_in_this_repo_thread",
-    "rule": "A formal run may record either manual resume mode or a verified one-minute host heartbeat binding. Heartbeat wakeups append a tick; if the work chain is broken or unknown, the router re-enters resume recovery instead of continuing from chat memory.",
+    "rule": "A formal run may record either manual resume mode or a verified one-minute host heartbeat binding. Heartbeat and manual mid-run wakeups append a tick and always re-enter router resume recovery before any wait, alive, or continue claim.",
     "completion_action": "When PM terminal closure succeeds, the router writes the closure suite and disables the active continuation binding. This repository upgrade task does not keep a live heartbeat automation after completion."
   },
   "current_step": 10,
@@ -17,7 +17,7 @@
     "status": "runtime_and_card_updates_completed_full_verified_installed",
     "implemented_capabilities": [
       "Continuation binding now records manual resume or verified one-minute heartbeat mode.",
-      "Heartbeat wakeups distinguish alive work chains from broken or unknown chains and re-enter resume recovery when needed.",
+      "Heartbeat wakeups now re-enter resume recovery before trusting any alive, broken, or unknown work-chain claim.",
       "PM node acceptance requires a structured high-standard recheck before worker dispatch.",
       "Final ledger construction rebuilds source-of-truth entries from the frozen root contract replay, effective route nodes, child-skill gates, ledgers, and mutation history.",
       "Parent backward review failures mutate the route, mark superseded nodes, write stale-evidence records, and force review restart from the new repair node.",

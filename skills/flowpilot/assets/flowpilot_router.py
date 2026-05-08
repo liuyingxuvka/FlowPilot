@@ -62,6 +62,9 @@ ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
 ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
 ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
 RESUME_ROLE_AGENT_RESULTS = {ROLE_AGENT_REHYDRATION_RESULT, ROLE_AGENT_CONTINUITY_RESULT}
+ROLE_AGENT_HOST_LIVENESS_STATUSES = {"active", "completed", "missing", "cancelled", "timeout_unknown", "unknown"}
+ROLE_AGENT_BOUNDED_WAIT_RESULTS = {"not_waited", "completed", "timeout_unknown"}
+ROLE_AGENT_LIVENESS_DECISIONS = {"confirmed_existing_agent", "spawned_replacement_from_current_run_memory"}
 CONTROL_BLOCKER_LANES = {
     "control_plane_reissue",
     "pm_repair_decision_required",
@@ -2039,6 +2042,11 @@ def _resume_role_rehydration_payload_contract(
             "rehydrated_role_agents[].spawned_after_resume_state_loaded",
             "rehydrated_role_agents[].core_prompt_path",
             "rehydrated_role_agents[].core_prompt_hash",
+            "rehydrated_role_agents[].host_liveness_status",
+            "rehydrated_role_agents[].liveness_decision",
+            "rehydrated_role_agents[].resume_agent_attempted",
+            "rehydrated_role_agents[].bounded_wait_result",
+            "rehydrated_role_agents[].wait_agent_timeout_treated_as_active",
         ],
         allowed_values={
             "background_agents_capability_status": ["available"],
@@ -2046,6 +2054,11 @@ def _resume_role_rehydration_payload_contract(
             "rehydrated_role_agents[].rehydration_result": sorted(RESUME_ROLE_AGENT_RESULTS),
             "rehydrated_role_agents[].rehydrated_for_run_id": [run_state["run_id"]],
             "rehydrated_role_agents[].spawned_after_resume_state_loaded": [True],
+            "rehydrated_role_agents[].host_liveness_status": sorted(ROLE_AGENT_HOST_LIVENESS_STATUSES),
+            "rehydrated_role_agents[].liveness_decision": sorted(ROLE_AGENT_LIVENESS_DECISIONS),
+            "rehydrated_role_agents[].resume_agent_attempted": [True],
+            "rehydrated_role_agents[].bounded_wait_result": sorted(ROLE_AGENT_BOUNDED_WAIT_RESULTS),
+            "rehydrated_role_agents[].wait_agent_timeout_treated_as_active": [False],
         },
         conditional_required_fields={
             "when role_rehydration_request[].role_memory_status=available": [
@@ -2064,6 +2077,8 @@ def _resume_role_rehydration_payload_contract(
         structural_requirements=[
             "Provide exactly one non-duplicate rehydrated role agent record for each FlowPilot role key.",
             "Each record must match the corresponding role_rehydration_request path/hash fields.",
+            "A wait_agent timeout must be recorded as timeout_unknown and must not justify live_agent_continuity_confirmed.",
+            "missing, cancelled, unknown, or timeout_unknown host liveness must spawn a replacement from current-run memory instead of continuing to wait on the old role.",
         ],
         description="Restore or replace all six live FlowPilot role agents from current-run memory before PM resume decision.",
         reviewer_check="PM and reviewer checks use the written crew_rehydration_report before resume decisions.",
@@ -4182,13 +4197,27 @@ def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, ru
     mode = answers.get("background_agents")
     contexts = _resume_role_contexts(project_root, run_root, run_state)
     missing_memory = [item["role_key"] for item in contexts if item["role_memory_status"] != "available"]
+    resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
     extra: dict[str, Any] = {
         "background_agents_mode": mode,
         "role_keys": list(CREW_ROLE_KEYS),
         "resume_tick_id": _latest_resume_tick_id(run_state),
+        "awaiting_role_from_packet_ledger": resume_next.get("next_recipient_role"),
+        "resume_next_recipient_from_packet_ledger": resume_next,
         "role_rehydration_request": contexts,
         "memory_missing_role_keys": missing_memory,
         "crew_rehydration_report_path": project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+        "liveness_preflight_required": True,
+        "liveness_preflight_policy": {
+            "roles_to_check": list(CREW_ROLE_KEYS),
+            "current_waiting_role_source": "packet_ledger.next_recipient_role",
+            "resume_agent_check_required": True,
+            "bounded_wait_allowed": True,
+            "wait_agent_timeout_result": "timeout_unknown",
+            "timeout_unknown_is_active": False,
+            "missing_cancelled_unknown_requires_replacement": True,
+            "heartbeat_and_manual_resume_share_path": True,
+        },
         "controller_visibility": "state_and_envelopes_only",
         "sealed_body_reads_allowed": False,
         "chat_history_progress_inference_allowed": False,
@@ -4232,6 +4261,11 @@ def _normalize_resume_role_agent_records(
                 "rehydration_result": "not_requested_single_agent_continuity",
                 "rehydrated_for_run_id": run_state["run_id"],
                 "rehydrated_after_resume_tick_id": resume_tick_id,
+                "host_liveness_status": "not_applicable_single_agent",
+                "liveness_decision": "single_agent_resume_continuity_authorized",
+                "resume_agent_attempted": False,
+                "bounded_wait_result": "not_applicable",
+                "wait_agent_timeout_treated_as_active": False,
                 "fallback_authorized_by_startup_answer": True,
                 "recorded_at": utc_now(),
             }
@@ -4264,6 +4298,29 @@ def _normalize_resume_role_agent_records(
         result = raw.get("rehydration_result") or raw.get("spawn_result")
         if result not in RESUME_ROLE_AGENT_RESULTS:
             raise RouterError(f"{role} requires resume rehydration result")
+        host_liveness_status = str(raw.get("host_liveness_status") or "")
+        if host_liveness_status not in ROLE_AGENT_HOST_LIVENESS_STATUSES:
+            raise RouterError(f"{role} requires host_liveness_status")
+        liveness_decision = str(raw.get("liveness_decision") or "")
+        if liveness_decision not in ROLE_AGENT_LIVENESS_DECISIONS:
+            raise RouterError(f"{role} requires liveness_decision")
+        if raw.get("resume_agent_attempted") is not True:
+            raise RouterError(f"{role} requires resume_agent_attempted=true")
+        bounded_wait_result = str(raw.get("bounded_wait_result") or "")
+        if bounded_wait_result not in ROLE_AGENT_BOUNDED_WAIT_RESULTS:
+            raise RouterError(f"{role} requires bounded_wait_result")
+        if raw.get("wait_agent_timeout_treated_as_active") is not False:
+            raise RouterError(f"{role} must record wait_agent_timeout_treated_as_active=false")
+        if bounded_wait_result == "timeout_unknown" and result == ROLE_AGENT_CONTINUITY_RESULT:
+            raise RouterError(f"{role} wait_agent timeout_unknown cannot be treated as active continuity")
+        if host_liveness_status in {"missing", "cancelled", "unknown", "timeout_unknown"} and liveness_decision == "confirmed_existing_agent":
+            raise RouterError(f"{role} missing/cancelled/unknown host liveness cannot confirm existing agent")
+        if result == ROLE_AGENT_CONTINUITY_RESULT and not (
+            host_liveness_status == "active" and liveness_decision == "confirmed_existing_agent"
+        ):
+            raise RouterError(f"{role} live continuity requires active host liveness")
+        if result == ROLE_AGENT_REHYDRATION_RESULT and liveness_decision != "spawned_replacement_from_current_run_memory":
+            raise RouterError(f"{role} replacement rehydration requires spawned_replacement_from_current_run_memory")
         if raw.get("rehydrated_for_run_id") != run_state["run_id"]:
             raise RouterError(f"{role} must be rehydrated_for_run_id={run_state['run_id']}")
         if raw.get("rehydrated_after_resume_tick_id") != resume_tick_id:
@@ -4292,6 +4349,11 @@ def _normalize_resume_role_agent_records(
             "status": "live_agent_rehydrated",
             "agent_id": agent_id.strip(),
             "rehydration_result": str(result),
+            "host_liveness_status": host_liveness_status,
+            "liveness_decision": liveness_decision,
+            "resume_agent_attempted": True,
+            "bounded_wait_result": bounded_wait_result,
+            "wait_agent_timeout_treated_as_active": False,
             "rehydrated_for_run_id": run_state["run_id"],
             "rehydrated_after_resume_tick_id": resume_tick_id,
             "spawned_after_resume_state_loaded": True,
@@ -4319,6 +4381,18 @@ def _write_resume_role_rehydration_report(
 ) -> None:
     records = _normalize_resume_role_agent_records(project_root, run_root, run_state, payload)
     memory_complete = all(record.get("role_memory_status") == "available" for record in records)
+    resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
+    timeout_unknown_roles = [record["role_key"] for record in records if record.get("host_liveness_status") == "timeout_unknown" or record.get("bounded_wait_result") == "timeout_unknown"]
+    missing_or_cancelled_roles = [
+        record["role_key"]
+        for record in records
+        if record.get("host_liveness_status") in {"missing", "cancelled", "unknown"}
+    ]
+    replacement_roles = [
+        record["role_key"]
+        for record in records
+        if record.get("liveness_decision") == "spawned_replacement_from_current_run_memory"
+    ]
     report_path = run_root / "continuation" / "crew_rehydration_report.json"
     report = {
         "schema_version": "flowpilot.crew_rehydration_report.v1",
@@ -4337,6 +4411,16 @@ def _write_resume_role_rehydration_report(
             "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
         },
         "all_six_roles_ready": len(records) == len(CREW_ROLE_KEYS),
+        "liveness_preflight": {
+            "checked_at": utc_now(),
+            "awaiting_role": resume_next.get("next_recipient_role"),
+            "roles_checked": [record["role_key"] for record in records],
+            "timeout_unknown_role_keys": timeout_unknown_roles,
+            "missing_cancelled_or_unknown_role_keys": missing_or_cancelled_roles,
+            "replacement_role_keys": replacement_roles,
+            "wait_agent_timeout_treated_as_active": False,
+            "decision": "roles_ready_after_replacement" if replacement_roles else "all_roles_active",
+        },
         "current_run_memory_complete": memory_complete,
         "missing_memory_role_keys": [record["role_key"] for record in records if record.get("role_memory_status") != "available"],
         "pm_memory_rehydrated": any(
@@ -4361,6 +4445,9 @@ def _write_resume_role_rehydration_report(
             "recorded_at": report["recorded_at"],
             "all_six_roles_ready": report["all_six_roles_ready"],
             "current_run_memory_complete": memory_complete,
+            "liveness_decision": report["liveness_preflight"]["decision"],
+            "timeout_unknown_role_keys": timeout_unknown_roles,
+            "missing_cancelled_or_unknown_role_keys": missing_or_cancelled_roles,
         }
     )
     crew.update(
@@ -4528,6 +4615,21 @@ def _continuation_binding_path(run_root: Path) -> Path:
     return run_root / "continuation" / "continuation_binding.json"
 
 
+def _stable_resume_launcher_contract() -> dict[str, Any]:
+    return {
+        "event": "heartbeat_or_manual_resume_requested",
+        "wake_sources": ["heartbeat", "manual_resume"],
+        "resume_action": "load_resume_state",
+        "role_liveness_action": "rehydrate_role_agents",
+        "router_reentry_required_on_every_wake": True,
+        "heartbeat_and_manual_resume_share_path": True,
+        "self_keepalive_allowed": False,
+        "diagnostic_work_chain_status_only": True,
+        "controller_only": True,
+        "sealed_body_reads_allowed": False,
+    }
+
+
 def _write_initial_continuation_binding(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
     answers = _startup_answers_from_run(run_root)
     scheduled_requested = _scheduled_continuation_requested(answers)
@@ -4540,12 +4642,7 @@ def _write_initial_continuation_binding(project_root: Path, run_root: Path, run_
         "heartbeat_active": False,
         "host_automation_id": None,
         "host_automation_verified": False,
-        "stable_launcher": {
-            "event": "heartbeat_or_manual_resume_requested",
-            "resume_action": "load_resume_state",
-            "controller_only": True,
-            "sealed_body_reads_allowed": False,
-        },
+        "stable_launcher": _stable_resume_launcher_contract(),
         "source_paths": {
             "startup_answers": project_relative(project_root, run_root / "startup_answers.json"),
             "router_state": project_relative(project_root, run_state_path(run_root)),
@@ -4593,6 +4690,7 @@ def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state:
             "heartbeat_active": bool(scheduled_requested),
             "host_automation_id": payload.get("host_automation_id") if scheduled_requested else None,
             "host_automation_verified": bool(scheduled_requested),
+            "stable_launcher": _stable_resume_launcher_contract(),
             **({"host_automation_proof": host_automation_proof} if scheduled_requested and isinstance(host_automation_proof, dict) else {}),
             "recorded_by": str(payload.get("recorded_by") or "host"),
             "updated_at": utc_now(),
@@ -4616,14 +4714,20 @@ def _host_heartbeat_binding_ready(run_root: Path, run_state: dict[str, Any]) -> 
 
 
 def _append_heartbeat_tick(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    source = str(payload.get("source") or "heartbeat_or_manual_resume")
     tick = {
         "schema_version": "flowpilot.heartbeat_tick.v1",
         "run_id": run_state["run_id"],
         "tick_id": f"heartbeat-{len(run_state.get('heartbeat_ticks', [])) + 1:04d}",
         "work_chain_status": str(payload.get("work_chain_status") or "broken_or_unknown"),
+        "work_chain_status_trust": "diagnostic_only",
         "recorded_at": utc_now(),
-        "source": str(payload.get("source") or "heartbeat_or_manual_resume"),
-        "resume_requested": str(payload.get("work_chain_status") or "").lower() not in {"alive", "active"},
+        "source": source,
+        "resume_requested": True,
+        "router_reentry_required": True,
+        "self_keepalive_allowed": False,
+        "heartbeat_automation_status": str(payload.get("heartbeat_automation_status") or "unknown"),
+        "heartbeat_automation_status_checked": payload.get("heartbeat_automation_status_checked") is True,
     }
     ticks_path = run_root / "continuation" / "heartbeat_ticks.jsonl"
     ticks_path.parent.mkdir(parents=True, exist_ok=True)
@@ -4634,6 +4738,10 @@ def _append_heartbeat_tick(project_root: Path, run_root: Path, run_state: dict[s
             "tick_id": tick["tick_id"],
             "work_chain_status": tick["work_chain_status"],
             "resume_requested": tick["resume_requested"],
+            "router_reentry_required": tick["router_reentry_required"],
+            "self_keepalive_allowed": tick["self_keepalive_allowed"],
+            "heartbeat_automation_status": tick["heartbeat_automation_status"],
+            "heartbeat_automation_status_checked": tick["heartbeat_automation_status_checked"],
         }
     )
     return tick
@@ -9806,7 +9914,7 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
             action_type="load_resume_state",
             actor="controller",
             label="controller_loads_resume_state_before_role_rehydration",
-            summary="Controller loads current-run state, ledgers, frontier, and crew memory before live role rehydration.",
+            summary="Controller loads current-run state, ledgers, frontier, visible plan, and crew memory before live role rehydration.",
             allowed_reads=[
                 ".flowpilot/current.json",
                 project_relative(project_root, run_state_path(run_root)),
@@ -9831,6 +9939,8 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
                 "controller_visibility": "state_and_envelopes_only",
                 "sealed_body_reads_allowed": False,
                 "chat_history_progress_inference_allowed": False,
+                "wake_recorded_to_router_required": True,
+                "visible_plan_restore_required": True,
                 "role_rehydration_required_before_pm_resume_decision": True,
                 "resume_next_recipient_from_packet_ledger": resume_next,
             },
@@ -9875,10 +9985,12 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
     automation_id_hint = f"flowpilot-{run_state['run_id']}-heartbeat"
     automation_name = f"FlowPilot {run_state['run_id']} heartbeat"
     prompt = (
-        f"Continue the active FlowPilot run {run_state['run_id']} in {project_root} by returning to "
-        "the FlowPilot router loop. Record a heartbeat_or_manual_resume_requested event only if the "
-        "current work chain is broken, paused, or needs resume; otherwise keep the run alive without "
-        "reading sealed packet/result/report bodies."
+        f"Wake the active FlowPilot run {run_state['run_id']} in {project_root} by returning to the "
+        "FlowPilot router loop. Every heartbeat wake must record heartbeat_or_manual_resume_requested "
+        "before any wait or resume claim. Do not self-classify the work chain as alive from old "
+        "crew or route state, and do not use wait_agent timeout as proof of liveness. The router must "
+        "load the current resume state, restore the visible plan, and request six-role liveness "
+        "rehydration before any PM resume decision. Do not read sealed packet/result/report bodies."
     )
     return make_action(
         action_type="create_heartbeat_automation",
@@ -10872,12 +10984,15 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             if not path.exists()
         ]
         crew_memory_files = sorted((run_root / "crew_memory").glob("*.json")) if (run_root / "crew_memory").exists() else []
+        display_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         resume_record = {
             "schema_version": RESUME_EVIDENCE_SCHEMA,
             "run_id": run_state["run_id"],
+            "resume_tick_id": _latest_resume_tick_id(run_state),
             "recorded_at": utc_now(),
             "recorded_by": "controller",
             "stable_launcher": True,
+            "wake_recorded_to_router": True,
             "controller_only": True,
             "loaded_paths": {
                 name: project_relative(project_root, path)
@@ -10894,7 +11009,11 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "controller_may_read_result_body": False,
             "controller_may_infer_route_progress_from_chat_history": False,
             "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
-            "display_plan_projection": _display_plan_sync_payload(project_root, run_root, run_state)["native_plan_projection"],
+            "visible_plan_restore_required": True,
+            "visible_plan_restored_from_run": True,
+            "display_plan_exists": display_payload["display_plan_exists"],
+            "display_plan_projection_hash": display_payload["projection_hash"],
+            "display_plan_projection": display_payload["native_plan_projection"],
             "resume_next_recipient_from_packet_ledger": resume_next,
             "pm_resume_decision_required": True,
             "ambiguous_state_blocks_controller_execution": bool(missing) or len(crew_memory_files) != len(CREW_ROLE_KEYS),
@@ -11012,21 +11131,6 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"before_external_event:{event}")
     if event == "heartbeat_or_manual_resume_requested":
         tick = _append_heartbeat_tick(project_root, run_root, run_state, payload or {})
-        if not tick["resume_requested"]:
-            run_state["events"].append(
-                {
-                    "event": event,
-                    "summary": "Heartbeat tick observed active work chain; resume re-entry was not requested.",
-                    "payload": payload or {},
-                    "recorded_at": utc_now(),
-                }
-            )
-            append_history(run_state, event, {"heartbeat_tick": tick})
-            run_state["pending_action"] = None
-            _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
-            _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
-            save_run_state(run_root, run_state)
-            return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": False}
         _reset_resume_cycle_for_wakeup(run_state)
         run_state["flags"]["resume_reentry_requested"] = True
         run_state["pending_action"] = None

@@ -5001,3 +5001,48 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Push to GitHub only after explicit user approval for remote publication.
+
+## flowpilot-resume-liveness-preflight-20260508 - Harden heartbeat/manual resume liveness re-entry
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Heartbeat/manual mid-run resume changed stateful routing, liveness, timeout, visible-plan, and role-rehydration behavior.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T14:00:00+02:00
+- Ended: 2026-05-08T16:38:19+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_resume_model.py
+- simulations/run_flowpilot_resume_checks.py
+
+### Commands
+- OK: `python simulations/run_flowpilot_resume_checks.py`
+- OK: all `simulations/run_*checks.py`, with `run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations/flowpilot_control_plane_friction_results.json`
+- OK: `python -m py_compile skills/flowpilot/assets/flowpilot_router.py tests/test_flowpilot_router_runtime.py scripts/smoke_autopilot.py tests/test_flowguard_result_proof.py`
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py`
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py tests/test_flowguard_result_proof.py`
+- OK: `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 300`
+- OK: `python scripts/smoke_autopilot.py --fast`
+- OK: `python scripts/check_install.py`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+
+### Findings
+- Resume model now requires heartbeat/manual wake recording to the router, current-run visible-plan restoration, six-role liveness preflight, and timeout_unknown handling before PM resume decision.
+- Runtime now treats `work_chain_status=alive` as diagnostic only; every heartbeat/manual wake enters `load_resume_state`.
+- `rehydrate_role_agents` now requires host liveness status, liveness decision, bounded wait result, and an explicit `wait_agent_timeout_treated_as_active=false` receipt.
+- Smoke validation now uses the same model gate as the adoption log by skipping current live-run audit for control-plane friction.
+
+### Counterexamples
+- The old active live run still reports historical control-plane friction in the coverage sweep. This task did not mutate that run or read sealed packet/result/report bodies; the model gate used `--skip-live-audit`.
+
+### Friction Points
+- Running `install_flowpilot.py --check` in parallel with `--sync-repo-owned` can see the pre-sync installed digest; rerunning the check after sync passes.
+
+### Skipped Steps
+- No repair of `.flowpilot/runs/run-20260508-090520`; doing so would continue or mutate the current FlowPilot route, which was out of scope.
+
+### Next Actions
+- If future work wants live-run audit to pass, treat it as a separate FlowPilot route repair task with explicit authorization.

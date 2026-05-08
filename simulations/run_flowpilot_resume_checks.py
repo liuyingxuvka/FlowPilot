@@ -17,6 +17,7 @@ RESULTS_PATH = Path(__file__).with_name("flowpilot_resume_results.json")
 REQUIRED_LABELS = (
     "stable_heartbeat_launcher_entered",
     "stable_manual_resume_launcher_entered",
+    "resume_wake_recorded_to_router",
     "one_minute_heartbeat_resume_trigger_confirmed",
     "current_pointer_loaded",
     "current_run_root_loaded",
@@ -25,8 +26,12 @@ REQUIRED_LABELS = (
     "packet_ledger_loaded",
     "prompt_ledger_loaded",
     "execution_frontier_loaded",
+    "visible_plan_restored_from_current_run",
     "crew_memory_loaded",
     "controller_relay_boundary_confirmed",
+    "six_role_liveness_checked_all_active",
+    "six_role_liveness_checked_recovery_needed",
+    "six_role_liveness_timeout_unknown_recorded",
     "host_spawn_or_rehydrate_six_resume_roles_requested",
     "crew_roles_restored_from_current_run_memory",
     "crew_roles_replaced_from_current_run_memory",
@@ -64,10 +69,13 @@ def _state_id(state: model.State) -> str:
         f"run={state.run_root_loaded},{state.run_root_matches_pointer}|"
         f"router={state.router_state_loaded}|packet={state.packet_ledger_loaded}|"
         f"prompt={state.prompt_ledger_loaded}|frontier={state.frontier_loaded}|"
+        f"visible_plan={state.visible_plan_restored_from_run}|"
         f"crew={state.crew_memory_loaded},{state.host_role_rehydrate_requested},"
         f"{state.crew_roles_ready},restored={state.crew_restored},"
         f"replaced={state.crew_replaced},memory_injected={state.run_memory_injected_into_roles},"
         f"report={state.crew_rehydration_report_written}|"
+        f"liveness={state.resume_wake_recorded_to_router},"
+        f"{state.all_six_role_liveness_checked},{state.role_liveness_outcome}|"
         f"lifecycle={state.crew_lifecycle_flags_current},"
         f"{state.capability_lifecycle_flags_current},"
         f"{state.officer_lifecycle_flags_current}|"

@@ -273,6 +273,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "role_key": role,
                 "agent_id": f"resume-agent-{request['rehydrated_after_resume_tick_id']}-{role}",
                 "rehydration_result": "rehydrated_from_current_run_memory",
+                "host_liveness_status": "unknown",
+                "liveness_decision": "spawned_replacement_from_current_run_memory",
+                "resume_agent_attempted": True,
+                "bounded_wait_result": "not_waited",
+                "wait_agent_timeout_treated_as_active": False,
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
                 "spawned_after_resume_state_loaded": True,
@@ -3202,6 +3207,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(resume_evidence["controller_may_read_result_body"])
         self.assertFalse(resume_evidence["controller_may_infer_route_progress_from_chat_history"])
         self.assertEqual(resume_evidence["missing_paths"], [])
+        self.assertTrue(resume_evidence["wake_recorded_to_router"])
+        self.assertTrue(resume_evidence["visible_plan_restore_required"])
+        self.assertTrue(resume_evidence["visible_plan_restored_from_run"])
+        self.assertIn("display_plan_projection", resume_evidence)
         self.assertTrue(resume_evidence["role_rehydration_required"])
         self.assertFalse(resume_evidence["roles_restored_or_replaced"])
 
@@ -3218,6 +3227,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "rehydrated_role_agents[].spawned_after_resume_state_loaded",
             "rehydrated_role_agents[].core_prompt_path",
             "rehydrated_role_agents[].core_prompt_hash",
+            "rehydrated_role_agents[].host_liveness_status",
+            "rehydrated_role_agents[].liveness_decision",
+            "rehydrated_role_agents[].resume_agent_attempted",
+            "rehydrated_role_agents[].bounded_wait_result",
+            "rehydrated_role_agents[].wait_agent_timeout_treated_as_active",
             "rehydrated_role_agents[].memory_packet_path",
             "rehydrated_role_agents[].memory_packet_hash",
             "rehydrated_role_agents[].memory_missing_acknowledged",
@@ -3225,6 +3239,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "rehydrated_role_agents[].pm_resume_context_delivered",
         )
         self.assertEqual(action["spawn_policy"], "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision")
+        self.assertTrue(action["liveness_preflight_required"])
+        self.assertFalse(action["liveness_preflight_policy"]["timeout_unknown_is_active"])
+        self.assertEqual(action["liveness_preflight_policy"]["roles_to_check"], list(router.CREW_ROLE_KEYS))
         self.assertEqual(len(action["role_rehydration_request"]), 6)
         pm_request = next(item for item in action["role_rehydration_request"] if item["role_key"] == "project_manager")
         self.assertTrue(pm_request["pm_resume_context_required"])
@@ -3241,9 +3258,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(router.RouterError, "memory packet hash mismatch"):
             router.apply_action(root, "rehydrate_role_agents", payload)
         action = router.next_action(root)
+        payload = self.resume_role_agent_payload(root, action)
+        payload["rehydrated_role_agents"][0].update(
+            {
+                "rehydration_result": "live_agent_continuity_confirmed",
+                "host_liveness_status": "timeout_unknown",
+                "liveness_decision": "confirmed_existing_agent",
+                "bounded_wait_result": "timeout_unknown",
+                "wait_agent_timeout_treated_as_active": True,
+            }
+        )
+        with self.assertRaisesRegex(router.RouterError, "timeout_unknown|wait_agent_timeout_treated_as_active"):
+            router.apply_action(root, "rehydrate_role_agents", payload)
+        action = router.next_action(root)
         router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
         rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
         self.assertTrue(rehydration["all_six_roles_ready"])
+        self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], list(router.CREW_ROLE_KEYS))
+        self.assertFalse(rehydration["liveness_preflight"]["wait_agent_timeout_treated_as_active"])
         self.assertTrue(rehydration["current_run_memory_complete"])
         self.assertTrue(rehydration["pm_memory_rehydrated"])
 
@@ -3342,6 +3374,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(decision["resume_ambiguous"])
         self.assertEqual(decision["decision"], "restore_or_replace_roles_from_memory")
 
+    def test_heartbeat_alive_status_still_enters_router_resume_path(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        result = router.record_external_event(
+            root,
+            "heartbeat_or_manual_resume_requested",
+            {"source": "heartbeat", "work_chain_status": "alive"},
+        )
+
+        self.assertTrue(result["resume_requested"])
+        self.assertTrue(result["heartbeat_tick"]["router_reentry_required"])
+        self.assertFalse(result["heartbeat_tick"]["self_keepalive_allowed"])
+        self.assertEqual(result["heartbeat_tick"]["work_chain_status_trust"], "diagnostic_only")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+
     def test_heartbeat_startup_records_one_minute_active_binding_for_resume_reentry(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
@@ -3349,6 +3398,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "create_heartbeat_automation")
         self.assertTrue(action["requires_host_automation"])
         self.assertEqual(action["automation_update_request"]["kind"], "heartbeat")
+        self.assertNotIn("otherwise keep the run alive", action["automation_update_request"]["prompt"])
+        self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", action["automation_update_request"]["prompt"])
         self.assertEqual(action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
         self.assertEqual(action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
         self.assertTrue(action["proof_required_before_apply"])
