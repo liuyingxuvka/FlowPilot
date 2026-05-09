@@ -13,6 +13,7 @@ ASSETS = ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
+import card_runtime  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
 
@@ -43,6 +44,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     open_packet.add_argument("--envelope-path", required=True)
     open_packet.add_argument("--role", required=True)
     open_packet.add_argument("--agent-id", required=True)
+
+    open_card = sub.add_parser("open-card", help="Open a system-card envelope and write a read receipt.")
+    open_card.add_argument("--envelope-path", required=True)
+    open_card.add_argument("--role", required=True)
+    open_card.add_argument("--agent-id", required=True)
+
+    ack_card = sub.add_parser("ack-card", help="Return an envelope-only card ack referencing read receipts.")
+    ack_card.add_argument("--envelope-path", required=True)
+    ack_card.add_argument("--role", required=True)
+    ack_card.add_argument("--agent-id", required=True)
+    ack_card.add_argument("--receipt-path", action="append", default=[])
+    ack_card.add_argument("--status", choices=("acknowledged", "blocked"), default="acknowledged")
 
     complete_packet = sub.add_parser("complete-packet", help="Complete a packet session and generate a result envelope.")
     complete_packet.add_argument("--session-path", required=True)
@@ -95,6 +108,22 @@ def main(argv: list[str] | None = None) -> int:
             envelope_path=args.envelope_path,
             role=args.role,
             agent_id=args.agent_id,
+        )
+    elif args.command == "open-card":
+        result = card_runtime.open_card(
+            root,
+            envelope_path=args.envelope_path,
+            role=args.role,
+            agent_id=args.agent_id,
+        )
+    elif args.command == "ack-card":
+        result = card_runtime.submit_card_ack(
+            root,
+            envelope_path=args.envelope_path,
+            role=args.role,
+            agent_id=args.agent_id,
+            receipt_paths=args.receipt_path or None,
+            status=args.status,
         )
     elif args.command == "complete-packet":
         result = packet_runtime.complete_role_packet_session(

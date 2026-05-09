@@ -6014,3 +6014,74 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-card-envelope-v2 - Model and implement FlowPilot system-card envelope read receipts and guarded cross-role batch delivery
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot control-plane change involving receipts, resume ticks, agent identity, and batch dependency gates
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-09T16:38:03+00:00
+- Ended: 2026-05-09T16:38:03+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-card-envelope-v2 - Envelope-only system-card delivery with runtime read receipts, ack return events, and role I/O protocol receipts
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot control-flow change touching routing, runtime, ledgers, resume, and recovery gates
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-09T18:33:20+00:00
+- Ended: 2026-05-09T18:33:20+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_card_envelope_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_card_envelope_checks.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_card_runtime.py tests/test_flowpilot_router_runtime.py -q`
+
+### Findings
+- FlowGuard model catches missing read receipt, missing ack return, wrong role/run/agent/hash, old run reuse, controller body read, hidden batch dependency, preload authorization, missing resume role I/O receipt, and read receipt replacing semantic gates
+- Production router now blocks ordinary external role events while a required card return is unresolved; heartbeat/manual resume and stop/cancel remain lifecycle bypasses
+- Cross-role batch is modeled and guarded in FlowGuard, but production batch delivery remains deferred to avoid widening the router sequencing change
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- If batch delivery is implemented later, start from the modeled dependency graph and join-policy invariants before changing production routing

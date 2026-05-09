@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import flowpilot_user_flow_diagram
+import card_runtime
 import packet_runtime
 import role_output_runtime
 
@@ -31,6 +32,11 @@ BOOTSTRAP_STATE_SCHEMA = "flowpilot.bootstrap_state.v1"
 RUN_STATE_SCHEMA = "flowpilot.run_state.v1"
 PROMPT_MANIFEST_SCHEMA = "flowpilot.prompt_manifest.v1"
 PACKET_LEDGER_SCHEMA = packet_runtime.PACKET_LEDGER_SCHEMA
+CARD_LEDGER_SCHEMA = card_runtime.CARD_LEDGER_SCHEMA
+RETURN_EVENT_LEDGER_SCHEMA = card_runtime.RETURN_EVENT_LEDGER_SCHEMA
+ROLE_IO_PROTOCOL_SCHEMA = "flowpilot.role_io_protocol.v1"
+ROLE_IO_PROTOCOL_LEDGER_SCHEMA = "flowpilot.role_io_protocol_ledger.v1"
+ROLE_IO_PROTOCOL_INJECTION_RECEIPT_SCHEMA = "flowpilot.role_io_protocol_injection_receipt.v1"
 RESUME_EVIDENCE_SCHEMA = "flowpilot.resume_reentry.v1"
 ROUTE_HISTORY_INDEX_SCHEMA = "flowpilot.route_history_index.v1"
 PM_PRIOR_PATH_CONTEXT_SCHEMA = "flowpilot.pm_prior_path_context.v1"
@@ -1979,6 +1985,381 @@ def manifest_card(manifest: dict[str, Any], card_id: str) -> dict[str, Any]:
         if isinstance(card, dict) and card.get("id") == card_id:
             return card
     raise RouterError(f"card not found in prompt manifest: {card_id}")
+
+
+def _safe_delivery_component(value: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in value).strip("_") or "item"
+
+
+def _card_ledger_path(run_root: Path) -> Path:
+    return run_root / "card_ledger.json"
+
+
+def _return_event_ledger_path(run_root: Path) -> Path:
+    return run_root / "return_event_ledger.json"
+
+
+def _role_io_protocol_ledger_path(run_root: Path) -> Path:
+    return run_root / "role_io_protocol_ledger.json"
+
+
+def _role_io_protocol_receipt_dir(run_root: Path) -> Path:
+    return run_root / "runtime_receipts" / "role_io_protocol"
+
+
+def _role_io_protocol_payload() -> dict[str, Any]:
+    return {
+        "schema_version": ROLE_IO_PROTOCOL_SCHEMA,
+        "name": "FlowPilot role lifecycle I/O protocol",
+        "scope": "role_lifecycle_base_capability",
+        "ordinary_system_card": False,
+        "rules": [
+            "act only on router/controller envelopes",
+            "open system cards, mail, packets, and bundles through runtime",
+            "write read receipts after runtime open",
+            "write reports, decisions, and results to run-scoped files",
+            "return envelope-only acknowledgements to Controller",
+            "do not send card/body/report body text back to chat",
+            "stop with a protocol blocker on wrong role, hash mismatch, stale run, missing envelope, or missing result target",
+        ],
+    }
+
+
+def _role_io_protocol_hash() -> str:
+    return _json_sha256(_role_io_protocol_payload())
+
+
+def _empty_card_ledger(run_id: str) -> dict[str, Any]:
+    return {
+        "schema_version": CARD_LEDGER_SCHEMA,
+        "run_id": run_id,
+        "deliveries": [],
+        "read_receipts": [],
+        "ack_envelopes": [],
+        "updated_at": utc_now(),
+    }
+
+
+def _empty_return_event_ledger(run_id: str) -> dict[str, Any]:
+    return {
+        "schema_version": RETURN_EVENT_LEDGER_SCHEMA,
+        "run_id": run_id,
+        "pending_returns": [],
+        "completed_returns": [],
+        "updated_at": utc_now(),
+    }
+
+
+def _empty_role_io_protocol_ledger(run_id: str) -> dict[str, Any]:
+    return {
+        "schema_version": ROLE_IO_PROTOCOL_LEDGER_SCHEMA,
+        "run_id": run_id,
+        "protocol": _role_io_protocol_payload(),
+        "protocol_hash": _role_io_protocol_hash(),
+        "injection_receipts": [],
+        "ack_receipts": [],
+        "updated_at": utc_now(),
+    }
+
+
+def _read_card_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
+    ledger = read_json_if_exists(_card_ledger_path(run_root)) or _empty_card_ledger(run_id)
+    ledger.setdefault("schema_version", CARD_LEDGER_SCHEMA)
+    ledger.setdefault("run_id", run_id)
+    ledger.setdefault("deliveries", [])
+    ledger.setdefault("read_receipts", [])
+    ledger.setdefault("ack_envelopes", [])
+    return ledger
+
+
+def _read_return_event_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
+    ledger = read_json_if_exists(_return_event_ledger_path(run_root)) or _empty_return_event_ledger(run_id)
+    ledger.setdefault("schema_version", RETURN_EVENT_LEDGER_SCHEMA)
+    ledger.setdefault("run_id", run_id)
+    ledger.setdefault("pending_returns", [])
+    ledger.setdefault("completed_returns", [])
+    return ledger
+
+
+def _read_role_io_protocol_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
+    ledger = read_json_if_exists(_role_io_protocol_ledger_path(run_root)) or _empty_role_io_protocol_ledger(run_id)
+    ledger.setdefault("schema_version", ROLE_IO_PROTOCOL_LEDGER_SCHEMA)
+    ledger.setdefault("run_id", run_id)
+    ledger.setdefault("protocol", _role_io_protocol_payload())
+    ledger.setdefault("protocol_hash", _role_io_protocol_hash())
+    ledger.setdefault("injection_receipts", [])
+    ledger.setdefault("ack_receipts", [])
+    return ledger
+
+
+def _role_io_receipt_lifecycle_phase(record: dict[str, Any], default_phase: str) -> str:
+    if record.get("liveness_decision") == "spawned_replacement_from_current_run_memory":
+        return "missing_agent_replacement"
+    return default_phase
+
+
+def _append_role_io_protocol_injections(
+    project_root: Path,
+    run_root: Path,
+    run_id: str,
+    role_records: list[dict[str, Any]],
+    *,
+    default_lifecycle_phase: str,
+    resume_tick_id: str,
+    source_action: str,
+) -> list[dict[str, Any]]:
+    ledger = _read_role_io_protocol_ledger(run_root, run_id)
+    protocol_hash = str(ledger.get("protocol_hash") or _role_io_protocol_hash())
+    existing_keys = {
+        (
+            item.get("role_key"),
+            item.get("agent_id"),
+            item.get("resume_tick_id"),
+            item.get("protocol_hash"),
+            item.get("lifecycle_phase"),
+        )
+        for item in ledger.get("injection_receipts", [])
+        if isinstance(item, dict)
+    }
+    receipts: list[dict[str, Any]] = []
+    for record in role_records:
+        role = record.get("role_key")
+        agent_id = record.get("agent_id")
+        if not isinstance(role, str) or not role:
+            continue
+        if not isinstance(agent_id, str) or not agent_id.strip():
+            continue
+        lifecycle_phase = _role_io_receipt_lifecycle_phase(record, default_lifecycle_phase)
+        key = (role, agent_id.strip(), resume_tick_id, protocol_hash, lifecycle_phase)
+        if key in existing_keys:
+            continue
+        injected_at = utc_now()
+        identity_hash = hashlib.sha256(f"{run_id}:{resume_tick_id}:{role}:{agent_id}:{lifecycle_phase}".encode("utf-8")).hexdigest()[:16]
+        receipt_id = _safe_delivery_component(f"{role}-{lifecycle_phase}-{identity_hash}-role-io")
+        receipt_path = _role_io_protocol_receipt_dir(run_root) / f"{receipt_id}.json"
+        receipt = {
+            "schema_version": ROLE_IO_PROTOCOL_INJECTION_RECEIPT_SCHEMA,
+            "receipt_id": receipt_id,
+            "run_id": run_id,
+            "resume_tick_id": resume_tick_id,
+            "role_key": role,
+            "agent_id": agent_id.strip(),
+            "protocol_schema_version": ROLE_IO_PROTOCOL_SCHEMA,
+            "protocol_hash": protocol_hash,
+            "lifecycle_phase": lifecycle_phase,
+            "source_action": source_action,
+            "injected_by": "host_router",
+            "injection_method": "lifecycle_role_io_protocol",
+            "ordinary_system_card_delivery": False,
+            "card_body_visible_to_controller": False,
+            "requires_card_read_receipt_after_envelope": True,
+            "return_to_controller_envelope_only": True,
+            "injected_at": injected_at,
+        }
+        receipt["receipt_hash"] = _json_sha256(receipt)
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        write_json(receipt_path, receipt)
+        summary = {
+            "receipt_id": receipt_id,
+            "receipt_path": project_relative(project_root, receipt_path),
+            "receipt_hash": receipt["receipt_hash"],
+            "run_id": run_id,
+            "resume_tick_id": resume_tick_id,
+            "role_key": role,
+            "agent_id": agent_id.strip(),
+            "protocol_hash": protocol_hash,
+            "lifecycle_phase": lifecycle_phase,
+            "source_action": source_action,
+            "injected_at": injected_at,
+        }
+        ledger.setdefault("injection_receipts", []).append(summary)
+        receipts.append(summary)
+        existing_keys.add(key)
+    ledger["updated_at"] = utc_now()
+    write_json(_role_io_protocol_ledger_path(run_root), ledger)
+    return receipts
+
+
+def _role_io_protocol_receipt_for_agent(
+    run_root: Path,
+    run_id: str,
+    *,
+    role: str,
+    agent_id: str | None,
+    resume_tick_id: str,
+) -> dict[str, Any] | None:
+    if not isinstance(agent_id, str) or not agent_id.strip():
+        return None
+    ledger = _read_role_io_protocol_ledger(run_root, run_id)
+    protocol_hash = str(ledger.get("protocol_hash") or _role_io_protocol_hash())
+    candidates = list(ledger.get("injection_receipts", [])) + list(ledger.get("ack_receipts", []))
+    for item in reversed(candidates):
+        if not isinstance(item, dict):
+            continue
+        if item.get("run_id") != run_id:
+            continue
+        if item.get("role_key") != role or item.get("agent_id") != agent_id:
+            continue
+        if item.get("resume_tick_id") != resume_tick_id:
+            continue
+        if item.get("protocol_hash") != protocol_hash:
+            continue
+        return item
+    return None
+
+
+def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
+    crew = read_json_if_exists(run_root / "crew_ledger.json")
+    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    for slot in slots:
+        if isinstance(slot, dict) and slot.get("role_key") == role:
+            agent_id = slot.get("agent_id")
+            if isinstance(agent_id, str) and agent_id.strip():
+                return agent_id.strip()
+    return None
+
+
+def _next_card_delivery_attempt(run_root: Path, run_id: str, card_id: str) -> tuple[str, str]:
+    ledger = _read_card_ledger(run_root, run_id)
+    deliveries = [
+        item
+        for item in ledger.get("deliveries", [])
+        if isinstance(item, dict) and item.get("card_id") == card_id
+    ]
+    attempt = len(deliveries) + 1
+    safe_card = _safe_delivery_component(card_id)
+    delivery_id = f"{safe_card}-delivery-{attempt:03d}"
+    return delivery_id, f"{delivery_id}-attempt-001"
+
+
+def _card_return_event_for_card(card_id: str) -> str:
+    if card_id.startswith("controller."):
+        return "controller_card_ack"
+    if card_id.startswith("pm."):
+        return "pm_card_ack"
+    if card_id.startswith("reviewer."):
+        return "reviewer_card_ack"
+    if card_id.startswith("worker."):
+        return "worker_card_ack"
+    if card_id.startswith("process_officer."):
+        return "process_officer_card_ack"
+    if card_id.startswith("product_officer."):
+        return "product_officer_card_ack"
+    return "card_ack"
+
+
+def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]:
+    ledger = _read_return_event_ledger(run_root, run_id)
+    pending: list[dict[str, Any]] = []
+    for item in ledger.get("pending_returns", []):
+        if isinstance(item, dict) and item.get("status") in {None, "pending", "awaiting_return", "reminded", "returned"}:
+            pending.append(item)
+    return pending
+
+
+def _pending_card_return_ack_exists(project_root: Path, pending_action: object) -> bool:
+    if not isinstance(pending_action, dict) or pending_action.get("action_type") != "await_card_return_event":
+        return False
+    raw_path = pending_action.get("expected_return_path")
+    return isinstance(raw_path, str) and raw_path and resolve_project_path(project_root, raw_path).exists()
+
+
+CARD_RETURN_EVENT_BYPASS_EVENTS = {
+    "heartbeat_or_manual_resume_requested",
+    "host_records_heartbeat_binding",
+    "user_requests_run_stop",
+    "user_requests_run_cancel",
+}
+
+
+def _pending_card_return_blocker_for_event(run_root: Path, run_id: str, event: str) -> dict[str, Any] | None:
+    if event in CARD_RETURN_EVENT_BYPASS_EVENTS:
+        return None
+    pending_returns = _pending_return_records(run_root, run_id)
+    if not pending_returns:
+        return None
+    return pending_returns[0]
+
+
+def _next_pending_card_return_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
+    if not pending_returns:
+        return None
+    record = pending_returns[0]
+    expected_return_path = str(record.get("expected_return_path") or "")
+    envelope_path = str(record.get("card_envelope_path") or "")
+    if expected_return_path and resolve_project_path(project_root, expected_return_path).exists():
+        return make_action(
+            action_type="check_card_return_event",
+            actor="controller",
+            label=f"controller_checks_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
+            summary=(
+                f"Validate returned {record.get('return_event')} from {record.get('target_role')} "
+                "against runtime card read receipts before Router may continue."
+            ),
+            allowed_reads=[
+                expected_return_path,
+                envelope_path,
+                str(record.get("expected_receipt_path") or ""),
+                project_relative(project_root, _card_ledger_path(run_root)),
+                project_relative(project_root, _return_event_ledger_path(run_root)),
+            ],
+            allowed_writes=[
+                project_relative(project_root, _card_ledger_path(run_root)),
+                project_relative(project_root, _return_event_ledger_path(run_root)),
+                project_relative(project_root, run_state_path(run_root)),
+            ],
+            to_role=str(record.get("target_role") or ""),
+            extra={
+                "return_event": record.get("return_event"),
+                "delivery_id": record.get("delivery_id"),
+                "delivery_attempt_id": record.get("delivery_attempt_id"),
+                "card_id": record.get("card_id"),
+                "expected_return_path": expected_return_path,
+                "card_envelope_path": envelope_path,
+                "expected_receipt_path": record.get("expected_receipt_path"),
+                "controller_visibility": "ack_envelope_and_receipts_only",
+                "sealed_body_reads_allowed": False,
+            },
+        )
+    return make_action(
+        action_type="await_card_return_event",
+        actor="controller",
+        label=f"controller_waits_for_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
+        summary=(
+            f"Controller is waiting for {record.get('target_role')} to return {record.get('return_event')} "
+            "after opening the card through runtime."
+        ),
+        allowed_reads=[
+            envelope_path,
+            project_relative(project_root, _return_event_ledger_path(run_root)),
+            project_relative(project_root, _card_ledger_path(run_root)),
+        ],
+        allowed_writes=[
+            project_relative(project_root, _return_event_ledger_path(run_root)),
+            project_relative(project_root, run_state_path(run_root)),
+        ],
+        to_role=str(record.get("target_role") or ""),
+        extra={
+            "return_event": record.get("return_event"),
+            "delivery_id": record.get("delivery_id"),
+            "delivery_attempt_id": record.get("delivery_attempt_id"),
+            "card_id": record.get("card_id"),
+            "expected_return_path": expected_return_path,
+            "card_envelope_path": envelope_path,
+            "expected_receipt_path": record.get("expected_receipt_path"),
+            "waiting_for_role": record.get("target_role"),
+            "waiting_for_agent_id": record.get("target_agent_id"),
+            "controller_visibility": "pending_return_metadata_only",
+            "sealed_body_reads_allowed": False,
+            "next_recovery_actions": [
+                "role_uses_open-card_then_ack-card",
+                "controller_reminds_role_if_still_live",
+                "router_reissues_envelope_after_resume_or_replacement",
+                "router_records_protocol_blocker_if_ack_is_invalid",
+            ],
+        },
+    )
 
 
 def append_history(state: dict[str, Any], label: str, details: dict[str, Any] | None = None) -> None:
@@ -4865,6 +5246,7 @@ def _resume_role_context(project_root: Path, run_root: Path, run_state: dict[str
         "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
         "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
         "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+        "role_io_protocol_ledger": project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
         "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
         "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
         "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
@@ -5143,6 +5525,7 @@ def _write_resume_role_rehydration_report(
             "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
             "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
             "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+            "role_io_protocol_ledger": project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
             "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
             "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
         },
@@ -5197,6 +5580,15 @@ def _write_resume_role_rehydration_report(
         }
     )
     write_json(crew_path, crew)
+    _append_role_io_protocol_injections(
+        project_root,
+        run_root,
+        str(run_state["run_id"]),
+        records,
+        default_lifecycle_phase="heartbeat_rehydration",
+        resume_tick_id=report["resume_tick_id"],
+        source_action="rehydrate_role_agents",
+    )
     run_state["flags"]["resume_roles_restored"] = True
     run_state["flags"]["resume_role_agents_rehydrated"] = True
     run_state["flags"]["crew_rehydration_report_written"] = True
@@ -10878,10 +11270,21 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         )
     elif action_type == "initialize_mailbox":
         run_root = project_root / str(state["run_root"])
-        for rel in ("mailbox/system_cards", "mailbox/inbox", "mailbox/outbox", "packets"):
+        for rel in (
+            "mailbox/system_cards",
+            "mailbox/inbox",
+            "mailbox/outbox",
+            "mailbox/outbox/card_acks",
+            "runtime_receipts/card_reads",
+            "runtime_receipts/role_io_protocol",
+            "packets",
+        ):
             (run_root / rel).mkdir(parents=True, exist_ok=True)
         write_json(run_root / "packet_ledger.json", _create_empty_packet_ledger(project_root, str(state["run_id"]), run_root))
         write_json(run_root / "prompt_delivery_ledger.json", {"schema_version": "flowpilot.prompt_delivery_ledger.v1", "run_id": state["run_id"], "deliveries": []})
+        write_json(_card_ledger_path(run_root), _empty_card_ledger(str(state["run_id"])))
+        write_json(_return_event_ledger_path(run_root), _empty_return_event_ledger(str(state["run_id"])))
+        write_json(_role_io_protocol_ledger_path(run_root), _empty_role_io_protocol_ledger(str(state["run_id"])))
     elif action_type == "record_user_request":
         run_root = project_root / str(state["run_root"])
         user_request = _validate_user_request(payload)
@@ -10938,6 +11341,15 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         crew_memory_root.mkdir(parents=True, exist_ok=True)
         for role in CREW_ROLE_KEYS:
             write_json(crew_memory_root / f"{role}.json", _create_empty_role_memory(str(state["run_id"]), role))
+        _append_role_io_protocol_injections(
+            project_root,
+            run_root,
+            str(state["run_id"]),
+            role_slots,
+            default_lifecycle_phase="fresh_spawn",
+            resume_tick_id="manual-resume",
+            source_action="start_role_slots",
+        )
     elif action_type == "inject_role_core_prompts":
         run_root = project_root / str(state["run_root"])
         role_cards = {
@@ -11338,7 +11750,86 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         resolved_entry = {**entry, "to_role": to_role}
         delivery_context = _live_card_delivery_context(project_root, run_root, run_state, resolved_entry, card)
         delivery_extra["delivery_context"] = delivery_context
-        allowed_reads = [project_relative(project_root, run_root / "runtime_kit" / str(card["path"]))]
+        run_id = str(run_state["run_id"])
+        delivery_id, delivery_attempt_id = _next_card_delivery_attempt(run_root, run_id, entry["card_id"])
+        safe_delivery_id = _safe_delivery_component(delivery_attempt_id)
+        card_body_path = run_root / "runtime_kit" / str(card["path"])
+        manifest_path = run_root / "runtime_kit" / "manifest.json"
+        if not manifest_path.exists():
+            manifest_path = runtime_kit_source() / "manifest.json"
+        card_hash = hashlib.sha256(card_body_path.read_bytes()).hexdigest()
+        manifest_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        envelope_path = run_root / "mailbox" / "system_cards" / f"{safe_delivery_id}.json"
+        expected_receipt_path = run_root / "runtime_receipts" / "card_reads" / f"{safe_delivery_id}.receipt.json"
+        expected_return_path = run_root / "mailbox" / "outbox" / "card_acks" / f"{safe_delivery_id}.ack.json"
+        return_event = _card_return_event_for_card(entry["card_id"])
+        target_agent_id = _active_agent_id_for_role(run_root, to_role)
+        resume_tick_id = _latest_resume_tick_id(run_state)
+        role_io_receipt = _role_io_protocol_receipt_for_agent(
+            run_root,
+            run_id,
+            role=to_role,
+            agent_id=target_agent_id,
+            resume_tick_id=resume_tick_id,
+        )
+        if target_agent_id and role_io_receipt is None:
+            return make_action(
+                action_type="inject_role_io_protocol",
+                actor="host",
+                label=f"host_injects_role_io_protocol_for_{_safe_delivery_component(to_role)}",
+                summary=(
+                    f"Inject FlowPilot role I/O protocol to {to_role} before delivering "
+                    f"system card {entry['card_id']}."
+                ),
+                allowed_reads=[
+                    project_relative(project_root, run_root / "crew_ledger.json"),
+                    project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
+                    project_relative(project_root, _role_io_protocol_receipt_dir(run_root)),
+                    project_relative(project_root, run_state_path(run_root)),
+                ],
+                to_role=to_role,
+                extra={
+                    "target_agent_id": target_agent_id,
+                    "resume_tick_id": resume_tick_id,
+                    "protocol_schema_version": ROLE_IO_PROTOCOL_SCHEMA,
+                    "protocol_hash": _role_io_protocol_hash(),
+                    "required_before_card_id": entry["card_id"],
+                    "controller_visibility": "role_io_protocol_envelope_only",
+                    "ordinary_system_card_delivery": False,
+                },
+            )
+        delivery_extra.update(
+            {
+                "delivery_mode": "envelope_only_v2",
+                "controller_visibility": "system_card_envelope_only",
+                "sealed_body_reads_allowed": False,
+                "requires_read_receipt": True,
+                "open_method": "open-card",
+                "return_event": return_event,
+                "expected_return_path": project_relative(project_root, expected_return_path),
+                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+                "card_envelope_path": project_relative(project_root, envelope_path),
+                "delivery_id": delivery_id,
+                "delivery_attempt_id": delivery_attempt_id,
+                "body_path": project_relative(project_root, card_body_path),
+                "body_hash": card_hash,
+                "manifest_path": project_relative(project_root, manifest_path),
+                "manifest_hash": manifest_hash,
+                "target_agent_id": target_agent_id,
+                "resume_tick_id": resume_tick_id,
+                "role_io_protocol_hash": _role_io_protocol_hash(),
+                "role_io_protocol_receipt_path": role_io_receipt.get("receipt_path") if isinstance(role_io_receipt, dict) else None,
+                "role_io_protocol_receipt_hash": role_io_receipt.get("receipt_hash") if isinstance(role_io_receipt, dict) else None,
+                "ack_report_required": True,
+                "read_receipt_is_mechanical_only": True,
+            }
+        )
+        allowed_reads = [
+            project_relative(project_root, run_root / "runtime_kit" / "manifest.json"),
+        ]
         allowed_reads.extend(
             str(path)
             for path in delivery_context.get("source_paths", {}).values()
@@ -11355,9 +11846,15 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             action_type="deliver_system_card",
             actor="controller",
             label=entry["label"],
-            summary=f"Deliver system card {entry['card_id']} to {to_role}.",
+            summary=f"Deliver system card envelope {entry['card_id']} to {to_role}; role must open through runtime and return {return_event}.",
             allowed_reads=allowed_reads,
-            allowed_writes=[project_relative(project_root, run_root / "prompt_delivery_ledger.json")],
+            allowed_writes=[
+                project_relative(project_root, envelope_path),
+                project_relative(project_root, expected_return_path),
+                project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+                project_relative(project_root, _card_ledger_path(run_root)),
+                project_relative(project_root, _return_event_ledger_path(run_root)),
+            ],
             card_id=entry["card_id"],
             to_role=to_role,
             extra=delivery_extra,
@@ -11860,6 +12357,17 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         run_state["pending_action"] = None
         append_history(run_state, "router_cleared_stale_pending_action", stale_pending)
         save_run_state(run_root, run_state)
+    elif _pending_card_return_ack_exists(project_root, pending_action):
+        run_state["pending_action"] = None
+        append_history(
+            run_state,
+            "router_cleared_card_return_wait_after_ack_arrived",
+            {
+                "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
+                "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
+            },
+        )
+        save_run_state(run_root, run_state)
     elif pending_action:
         return pending_action
     if not _route_memory_ready(run_root, run_state):
@@ -11879,6 +12387,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         action = _next_startup_display_action(project_root, run_state, run_root)
     if action is None:
         _invalidate_route_completion_if_dirty_before_closure(run_state, run_root)
+        action = _next_pending_card_return_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_system_card_action(project_root, run_state, run_root)
     if action is None and _resume_waits_for_pm_decision(run_state):
         action = make_action(
@@ -11983,6 +12493,37 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "proof_sha256": context["proof_hash"],
             "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
         }
+    elif action_type == "inject_role_io_protocol":
+        role = str(pending.get("to_role") or "")
+        agent_id = str(pending.get("target_agent_id") or "")
+        if role not in CREW_ROLE_KEYS or not agent_id:
+            raise RouterError("role I/O protocol injection requires a live target role and agent")
+        resume_tick_id = str(pending.get("resume_tick_id") or _latest_resume_tick_id(run_state))
+        receipts = _append_role_io_protocol_injections(
+            project_root,
+            run_root,
+            str(run_state["run_id"]),
+            [{"role_key": role, "agent_id": agent_id}],
+            default_lifecycle_phase="router_repair_injection",
+            resume_tick_id=resume_tick_id,
+            source_action="inject_role_io_protocol",
+        )
+        if not receipts:
+            receipt = _role_io_protocol_receipt_for_agent(
+                run_root,
+                str(run_state["run_id"]),
+                role=role,
+                agent_id=agent_id,
+                resume_tick_id=resume_tick_id,
+            )
+            if receipt is None:
+                raise RouterError("role I/O protocol injection did not produce a usable receipt")
+            receipts = [receipt]
+        run_state["role_io_protocol_injections"] = int(run_state.get("role_io_protocol_injections", 0)) + len(receipts)
+        result_extra = {
+            "role_io_protocol_receipts": receipts,
+            "protocol_hash": _role_io_protocol_hash(),
+        }
     elif action_type == "deliver_system_card":
         card_id = str(pending["card_id"])
         card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
@@ -12002,6 +12543,26 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "delivered_by": "controller",
             "to_role": pending["to_role"],
             "path": card["path"],
+            "delivery_mode": pending.get("delivery_mode") or "envelope_only_v2",
+            "controller_visibility": "system_card_envelope_only",
+            "sealed_body_reads_allowed": False,
+            "requires_read_receipt": True,
+            "open_method": pending.get("open_method") or "open-card",
+            "return_event": pending.get("return_event") or _card_return_event_for_card(card_id),
+            "expected_return_path": pending.get("expected_return_path"),
+            "expected_receipt_path": pending.get("expected_receipt_path"),
+            "card_envelope_path": pending.get("card_envelope_path"),
+            "delivery_id": pending.get("delivery_id"),
+            "delivery_attempt_id": pending.get("delivery_attempt_id"),
+            "body_path": pending.get("body_path"),
+            "body_hash": pending.get("body_hash"),
+            "manifest_path": pending.get("manifest_path"),
+            "manifest_hash": pending.get("manifest_hash"),
+            "target_agent_id": pending.get("target_agent_id"),
+            "resume_tick_id": pending.get("resume_tick_id"),
+            "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
+            "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
+            "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
             "delivery_context": delivery_context,
             "delivered_at": utc_now(),
         }
@@ -12017,6 +12578,51 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                     "reviewer_required_external_facts": pending.get("reviewer_required_external_facts") or [],
                 }
             )
+        envelope_path_raw = delivery.get("card_envelope_path")
+        expected_return_path_raw = delivery.get("expected_return_path")
+        expected_receipt_path_raw = delivery.get("expected_receipt_path")
+        if not all(isinstance(item, str) and item for item in (envelope_path_raw, expected_return_path_raw, expected_receipt_path_raw)):
+            raise RouterError("system card envelope delivery requires envelope, receipt, and return paths")
+        envelope_path = resolve_project_path(project_root, str(envelope_path_raw))
+        expected_return_path = resolve_project_path(project_root, str(expected_return_path_raw))
+        expected_receipt_path = resolve_project_path(project_root, str(expected_receipt_path_raw))
+        envelope = {
+            "schema_version": card_runtime.CARD_ENVELOPE_SCHEMA,
+            "run_id": run_state["run_id"],
+            "run_root": project_relative(project_root, run_root),
+            "resume_tick_id": delivery.get("resume_tick_id"),
+            "envelope_id": delivery.get("delivery_attempt_id"),
+            "delivery_id": delivery.get("delivery_id"),
+            "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+            "card_id": card_id,
+            "from": "system",
+            "issued_by": "router",
+            "delivered_by": "controller",
+            "target_role": pending["to_role"],
+            "target_agent_id": delivery.get("target_agent_id"),
+            "body_path": delivery.get("body_path"),
+            "body_hash": delivery.get("body_hash"),
+            "manifest_path": delivery.get("manifest_path"),
+            "manifest_hash": delivery.get("manifest_hash"),
+            "body_visibility": "target_role_runtime_only",
+            "controller_visibility": "system_card_envelope_only",
+            "sealed_body_reads_allowed": False,
+            "requires_read_receipt": True,
+            "open_method": delivery.get("open_method") or "open-card",
+            "return_event": delivery.get("return_event"),
+            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+            "expected_return_path": project_relative(project_root, expected_return_path),
+            "delivery_context": delivery_context,
+            "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
+            "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
+            "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+            "delivered_at": delivery["delivered_at"],
+            "runtime_validates_mechanics_only": True,
+            "semantic_understanding_validated_by_receipt": False,
+        }
+        envelope["envelope_hash"] = card_runtime.stable_json_hash(envelope)
+        write_json(envelope_path, envelope)
+        delivery["card_envelope_hash"] = envelope["envelope_hash"]
         run_state["delivered_cards"].append(delivery)
         run_state["flags"][card_entry["flag"]] = True
         run_state["manifest_check_requested"] = False
@@ -12025,6 +12631,49 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         ledger.setdefault("deliveries", []).append(delivery)
         ledger["updated_at"] = utc_now()
         write_json(run_root / "prompt_delivery_ledger.json", ledger)
+        card_ledger = _read_card_ledger(run_root, str(run_state["run_id"]))
+        card_ledger.setdefault("deliveries", []).append(
+            {
+                "card_id": card_id,
+                "delivery_id": delivery.get("delivery_id"),
+                "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+                "to_role": pending["to_role"],
+                "target_agent_id": delivery.get("target_agent_id"),
+                "card_envelope_path": project_relative(project_root, envelope_path),
+                "card_envelope_hash": envelope["envelope_hash"],
+                "body_hash": delivery.get("body_hash"),
+                "manifest_hash": delivery.get("manifest_hash"),
+                "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
+                "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
+                "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+                "requires_read_receipt": True,
+                "return_event": delivery.get("return_event"),
+                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+                "expected_return_path": project_relative(project_root, expected_return_path),
+                "delivered_at": delivery["delivered_at"],
+            }
+        )
+        card_ledger["updated_at"] = utc_now()
+        write_json(_card_ledger_path(run_root), card_ledger)
+        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+        return_ledger.setdefault("pending_returns", []).append(
+            {
+                "return_event": delivery.get("return_event"),
+                "status": "pending",
+                "card_id": card_id,
+                "delivery_id": delivery.get("delivery_id"),
+                "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+                "target_role": pending["to_role"],
+                "target_agent_id": delivery.get("target_agent_id"),
+                "card_envelope_path": project_relative(project_root, envelope_path),
+                "card_envelope_hash": envelope["envelope_hash"],
+                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+                "expected_return_path": project_relative(project_root, expected_return_path),
+                "sent_at": delivery["delivered_at"],
+            }
+        )
+        return_ledger["updated_at"] = utc_now()
+        write_json(_return_event_ledger_path(run_root), return_ledger)
     elif action_type == "check_packet_ledger":
         run_state["ledger_check_requested"] = True
         run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
@@ -12050,6 +12699,44 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         ledger.setdefault("mail", []).append(delivery)
         ledger["updated_at"] = utc_now()
         write_json(run_root / "packet_ledger.json", ledger)
+    elif action_type == "check_card_return_event":
+        ack_path = str(pending.get("expected_return_path") or "")
+        envelope_path = str(pending.get("card_envelope_path") or "")
+        if not ack_path or not envelope_path:
+            raise RouterError("card return check requires expected_return_path and card_envelope_path")
+        validation = card_runtime.validate_card_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
+        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+        for item in return_ledger.setdefault("pending_returns", []):
+            if (
+                isinstance(item, dict)
+                and item.get("delivery_attempt_id") == pending.get("delivery_attempt_id")
+                and item.get("return_event") == pending.get("return_event")
+            ):
+                item["status"] = "resolved"
+                item["resolved_at"] = utc_now()
+                item["ack_path"] = validation["ack_path"]
+                item["ack_hash"] = validation["ack_hash"]
+                item["receipt_ref_count"] = validation["receipt_ref_count"]
+        return_ledger.setdefault("completed_returns", []).append(
+            {
+                "return_event": pending.get("return_event"),
+                "delivery_id": pending.get("delivery_id"),
+                "delivery_attempt_id": pending.get("delivery_attempt_id"),
+                "card_id": pending.get("card_id"),
+                "target_role": pending.get("to_role"),
+                "ack_path": validation["ack_path"],
+                "ack_hash": validation["ack_hash"],
+                "receipt_ref_count": validation["receipt_ref_count"],
+                "checked_at": utc_now(),
+                "status": "resolved",
+            }
+        )
+        return_ledger["updated_at"] = utc_now()
+        write_json(_return_event_ledger_path(run_root), return_ledger)
+        run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
+        run_state.setdefault("card_return_events", []).append(validation)
+    elif action_type == "await_card_return_event":
+        return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
     elif action_type == "relay_material_scan_packets":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
@@ -12315,8 +13002,6 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     required_flag = meta.get("requires_flag")
     parent_segment_decision: str | None = None
     model_miss_triage_decision: str | None = None
-    if required_flag and not run_state["flags"].get(required_flag):
-        raise RouterError(f"event {event} requires {required_flag}")
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"before_external_event:{event}")
     if event == "heartbeat_or_manual_resume_requested":
         tick = _append_heartbeat_tick(project_root, run_root, run_state, payload or {})
@@ -12335,6 +13020,17 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
         save_run_state(run_root, run_state)
         return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
+    pending_card_return = _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event)
+    if pending_card_return is not None:
+        raise RouterError(
+            "event blocked by unresolved card return: "
+            f"waiting for {pending_card_return.get('return_event')} "
+            f"from {pending_card_return.get('target_role')} "
+            f"for card {pending_card_return.get('card_id')}; "
+            "validate the expected return envelope before recording another role event"
+        )
+    if required_flag and not run_state["flags"].get(required_flag):
+        raise RouterError(f"event {event} requires {required_flag}")
     active_blocker = run_state.get("active_control_blocker")
     repeatable_pm_repair_decision = (
         event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT
