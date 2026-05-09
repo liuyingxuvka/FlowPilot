@@ -32,6 +32,8 @@ ROLE_OUTPUT_ENVELOPE_AMBIGUITY = "role_output_envelope_ambiguity"
 MATERIAL_SCAN_INLINE_BODY_ONLY = "material_scan_inline_body_only"
 MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT = "material_dispatch_unknown_block_event"
 MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH = "material_dispatch_frontier_phase_mismatch"
+REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE = "review_block_events_without_pm_lane"
+REVIEW_BLOCK_REPAIR_EVENT_HARDCODED = "review_block_repair_event_hardcoded"
 
 NEGATIVE_SCENARIOS = (
     STARTUP_FACT_JSONPATH_MISMATCH,
@@ -46,6 +48,8 @@ NEGATIVE_SCENARIOS = (
     MATERIAL_SCAN_INLINE_BODY_ONLY,
     MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT,
     MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH,
+    REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE,
+    REVIEW_BLOCK_REPAIR_EVENT_HARDCODED,
 )
 SCENARIOS = (VALID_FIXED_PROTOCOL, *NEGATIVE_SCENARIOS)
 
@@ -58,6 +62,31 @@ PM_CONTROL_BLOCKER_EVENT = "pm_records_control_blocker_repair_decision"
 PM_STARTUP_REPAIR_EVENT = "pm_requests_startup_repair"
 MATERIAL_DISPATCH_BLOCK_EVENT = "reviewer_blocks_material_scan_dispatch"
 MATERIAL_DISPATCH_BLOCK_FLAG = "material_scan_dispatch_blocked"
+MODEL_MISS_REVIEW_BLOCK_FLAGS = frozenset(
+    {
+        "node_acceptance_plan_review_blocked",
+        "current_node_dispatch_blocked",
+        "node_review_blocked",
+        MATERIAL_DISPATCH_BLOCK_FLAG,
+    }
+)
+MODEL_MISS_REVIEW_BLOCK_EVENTS_BY_FLAG = {
+    "node_acceptance_plan_review_blocked": "reviewer_blocks_node_acceptance_plan",
+    "current_node_dispatch_blocked": "reviewer_blocks_current_node_dispatch",
+    "node_review_blocked": "current_node_reviewer_blocks_result",
+    MATERIAL_DISPATCH_BLOCK_FLAG: MATERIAL_DISPATCH_BLOCK_EVENT,
+}
+CONTROL_RECHECK_REVIEW_BLOCK_FLAGS = frozenset(
+    {
+        "material_scan_dispatch_recheck_blocked",
+        "material_scan_dispatch_recheck_protocol_blocked",
+    }
+)
+DECLARED_REVIEW_BLOCK_FLAGS = MODEL_MISS_REVIEW_BLOCK_FLAGS | CONTROL_RECHECK_REVIEW_BLOCK_FLAGS
+MODEL_MISS_REVIEW_BLOCK_CARD_IDS = frozenset(
+    {"pm.model_miss_triage", "pm.review_repair", "pm.event.reviewer_blocked"}
+)
+PM_REVIEW_BLOCK_REPAIR_EVENT = "pm_mutates_route_after_review_block"
 
 ROLE_OUTPUT_REQUIRED_PAIRS = frozenset(
     {
@@ -166,6 +195,15 @@ class State:
     material_dispatch_pm_block_cards_reachable: bool = True
     material_dispatch_route_memory_tracks_block: bool = True
     material_dispatch_relay_requires_allow_without_block: bool = True
+
+    declared_reviewer_block_flags: frozenset[str] = field(default_factory=lambda: DECLARED_REVIEW_BLOCK_FLAGS)
+    reviewer_block_lane_flags: frozenset[str] = field(default_factory=lambda: DECLARED_REVIEW_BLOCK_FLAGS)
+    model_miss_review_block_event_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
+    model_miss_review_block_card_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
+    model_miss_review_block_cards_aligned: bool = True
+    model_miss_triage_accepts_review_block_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
+    pm_review_block_repair_event_accepts_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
+    pm_review_block_repair_event_routes_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
 
     material_dispatch_frontier_phase_synchronized: bool = True
     material_dispatch_card_has_pre_route_material_exception: bool = True
@@ -369,6 +407,21 @@ def _scenario_state(scenario: str) -> State:
             material_dispatch_frontier_phase_synchronized=False,
             material_dispatch_card_has_pre_route_material_exception=False,
         )
+    if scenario == REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE:
+        old_lane_flags = frozenset({"node_review_blocked", MATERIAL_DISPATCH_BLOCK_FLAG})
+        return replace(
+            state,
+            model_miss_review_block_card_flags=old_lane_flags,
+            model_miss_triage_accepts_review_block_flags=old_lane_flags,
+            pm_review_block_repair_event_accepts_flags=old_lane_flags,
+            pm_review_block_repair_event_routes_flags=old_lane_flags,
+        )
+    if scenario == REVIEW_BLOCK_REPAIR_EVENT_HARDCODED:
+        return replace(
+            state,
+            pm_review_block_repair_event_accepts_flags=frozenset({"node_review_blocked"}),
+            pm_review_block_repair_event_routes_flags=frozenset({"node_review_blocked"}),
+        )
     return state
 
 
@@ -526,6 +579,56 @@ def _material_dispatch_block_failures(state: State) -> list[str]:
     return failures
 
 
+def _missing_extra(actual: frozenset[str], expected: frozenset[str]) -> str:
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    parts: list[str] = []
+    if missing:
+        parts.append("missing " + ", ".join(missing))
+    if extra:
+        parts.append("extra " + ", ".join(extra))
+    return "; ".join(parts) if parts else "sets differ"
+
+
+def _review_block_lane_failures(state: State) -> list[str]:
+    failures: list[str] = []
+    unclassified = state.declared_reviewer_block_flags - state.reviewer_block_lane_flags
+    if unclassified:
+        failures.append(
+            "declared reviewer block flags lack an explicit router lane: "
+            + ", ".join(sorted(unclassified))
+        )
+    if state.model_miss_review_block_event_flags != MODEL_MISS_REVIEW_BLOCK_FLAGS:
+        failures.append(
+            "model-miss reviewer block event taxonomy does not declare expected flags: "
+            + _missing_extra(state.model_miss_review_block_event_flags, MODEL_MISS_REVIEW_BLOCK_FLAGS)
+        )
+    if (
+        not state.model_miss_review_block_cards_aligned
+        or state.model_miss_review_block_card_flags != MODEL_MISS_REVIEW_BLOCK_FLAGS
+    ):
+        failures.append(
+            "PM model-miss cards do not cover all declared model-miss reviewer block flags: "
+            + _missing_extra(state.model_miss_review_block_card_flags, MODEL_MISS_REVIEW_BLOCK_FLAGS)
+        )
+    if state.model_miss_triage_accepts_review_block_flags != MODEL_MISS_REVIEW_BLOCK_FLAGS:
+        failures.append(
+            "PM model-miss triage validator does not accept all declared model-miss reviewer block flags: "
+            + _missing_extra(state.model_miss_triage_accepts_review_block_flags, MODEL_MISS_REVIEW_BLOCK_FLAGS)
+        )
+    if state.pm_review_block_repair_event_accepts_flags != MODEL_MISS_REVIEW_BLOCK_FLAGS:
+        failures.append(
+            "PM review-block repair event does not accept all declared model-miss reviewer block flags: "
+            + _missing_extra(state.pm_review_block_repair_event_accepts_flags, MODEL_MISS_REVIEW_BLOCK_FLAGS)
+        )
+    if state.pm_review_block_repair_event_routes_flags != MODEL_MISS_REVIEW_BLOCK_FLAGS:
+        failures.append(
+            "PM review-block repair event has no writer for all declared model-miss reviewer block flags: "
+            + _missing_extra(state.pm_review_block_repair_event_routes_flags, MODEL_MISS_REVIEW_BLOCK_FLAGS)
+        )
+    return failures
+
+
 def _material_dispatch_frontier_failures(state: State) -> list[str]:
     failures: list[str] = []
     if not state.material_dispatch_frontier_phase_synchronized:
@@ -549,6 +652,7 @@ def protocol_failures(state: State) -> list[str]:
     failures.extend(_role_output_envelope_failures(state))
     failures.extend(_material_scan_packet_failures(state))
     failures.extend(_material_dispatch_block_failures(state))
+    failures.extend(_review_block_lane_failures(state))
     failures.extend(_material_dispatch_frontier_failures(state))
     return failures
 
@@ -816,6 +920,87 @@ def _material_dispatch_relay_requires_allow_without_block(router_source: str) ->
     return "reviewer_dispatch_allowed" in segment and MATERIAL_DISPATCH_BLOCK_FLAG in segment
 
 
+def _declared_reviewer_block_flags(router: Any) -> frozenset[str]:
+    flags: set[str] = set()
+    for event_name, meta in router.EXTERNAL_EVENTS.items():
+        if (
+            event_name.startswith("reviewer_blocks_")
+            or event_name.startswith("reviewer_protocol_blocker_")
+            or event_name == "current_node_reviewer_blocks_result"
+        ):
+            flag = meta.get("flag")
+            if flag:
+                flags.add(str(flag))
+    return frozenset(flags)
+
+
+def _declared_model_miss_review_block_flags(router: Any, router_source: str) -> frozenset[str]:
+    declared = getattr(router, "MODEL_MISS_REVIEW_BLOCK_FLAGS", None)
+    if declared is not None:
+        return frozenset(str(flag) for flag in declared)
+    match = re.search(r"MODEL_MISS_REVIEW_BLOCK_FLAGS\s*=\s*\((.*?)\)", router_source, re.DOTALL)
+    if not match:
+        return frozenset()
+    return frozenset(re.findall(r'"([^"]+)"', match.group(1)))
+
+
+def _model_miss_review_block_event_flags(router: Any) -> frozenset[str]:
+    event_names = getattr(router, "MODEL_MISS_REVIEW_BLOCK_EVENTS", tuple(MODEL_MISS_REVIEW_BLOCK_EVENTS_BY_FLAG.values()))
+    flags: set[str] = set()
+    for event_name in event_names:
+        meta = router.EXTERNAL_EVENTS.get(str(event_name), {})
+        flag = meta.get("flag")
+        if flag:
+            flags.add(str(flag))
+    return frozenset(flags)
+
+
+def _model_miss_review_block_card_flag_sets(router: Any) -> tuple[frozenset[str], bool]:
+    flag_sets: list[frozenset[str]] = []
+    for entry in router.SYSTEM_CARD_SEQUENCE:
+        if entry.get("card_id") in MODEL_MISS_REVIEW_BLOCK_CARD_IDS:
+            flag_sets.append(frozenset(str(flag) for flag in entry.get("requires_any_flag", [])))
+    if not flag_sets:
+        return frozenset(), False
+    union = frozenset().union(*flag_sets)
+    return union, all(flags == flag_sets[0] for flags in flag_sets)
+
+
+def _known_model_miss_flags_in_segment(segment: str, declared_flags: frozenset[str]) -> frozenset[str]:
+    if "_require_single_active_model_miss_review_block" in segment:
+        return declared_flags
+    return frozenset(flag for flag in MODEL_MISS_REVIEW_BLOCK_FLAGS if flag in segment)
+
+
+def _model_miss_triage_accepts_review_block_flags(router_source: str, declared_flags: frozenset[str]) -> frozenset[str]:
+    segment = _function_segment(router_source, "_write_model_miss_triage_decision")
+    return _known_model_miss_flags_in_segment(segment, declared_flags)
+
+
+def _event_handler_branch_segment(source: str, event_name: str) -> str:
+    pattern = rf'^\s+elif event == "{re.escape(event_name)}":(.*?)(?=^\s+elif event == |^\s+record =|\Z)'
+    match = re.search(pattern, source, re.DOTALL | re.MULTILINE)
+    return match.group(0) if match else ""
+
+
+def _pm_review_block_repair_event_accepts_flags(router_source: str, declared_flags: frozenset[str]) -> frozenset[str]:
+    branch = _event_handler_branch_segment(router_source, PM_REVIEW_BLOCK_REPAIR_EVENT)
+    helper = _function_segment(router_source, "_write_pm_review_block_repair")
+    return _known_model_miss_flags_in_segment(branch + "\n" + helper, declared_flags)
+
+
+def _pm_review_block_repair_event_routes_flags(router: Any, router_source: str) -> frozenset[str]:
+    branch = _event_handler_branch_segment(router_source, PM_REVIEW_BLOCK_REPAIR_EVENT)
+    helper = _function_segment(router_source, "_write_pm_review_block_repair")
+    segment = branch + "\n" + helper
+    routed: set[str] = set()
+    if "_write_route_mutation" in segment:
+        routed.update(str(flag) for flag in getattr(router, "MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS", ("node_review_blocked",)))
+    if "_write_material_dispatch_repair" in segment:
+        routed.update(str(flag) for flag in getattr(router, "MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS", (MATERIAL_DISPATCH_BLOCK_FLAG,)))
+    return frozenset(routed)
+
+
 def _material_dispatch_frontier_phase_synchronized(router_source: str) -> bool:
     segment = _function_segment(router_source, "_write_material_scan_packets")
     return "execution_frontier.json" in segment or "_set_pre_route_frontier_phase" in segment
@@ -1041,6 +1226,8 @@ def collect_source_state(project_root: Path) -> State:
         router.EXTERNAL_EVENTS.get(PM_STARTUP_REPAIR_EVENT, {}).get("requires_flag")
         == "pm_startup_activation_card_delivered"
     )
+    declared_model_miss_flags = _declared_model_miss_review_block_flags(router, router_source)
+    model_miss_card_flags, model_miss_cards_aligned = _model_miss_review_block_card_flag_sets(router)
 
     return State(
         status="accepted",
@@ -1113,6 +1300,23 @@ def collect_source_state(project_root: Path) -> State:
         material_dispatch_route_memory_tracks_block=_material_dispatch_route_memory_tracks_block(router_source),
         material_dispatch_relay_requires_allow_without_block=_material_dispatch_relay_requires_allow_without_block(
             router_source
+        ),
+        declared_reviewer_block_flags=_declared_reviewer_block_flags(router),
+        reviewer_block_lane_flags=declared_model_miss_flags | CONTROL_RECHECK_REVIEW_BLOCK_FLAGS,
+        model_miss_review_block_event_flags=_model_miss_review_block_event_flags(router),
+        model_miss_review_block_card_flags=model_miss_card_flags,
+        model_miss_review_block_cards_aligned=model_miss_cards_aligned,
+        model_miss_triage_accepts_review_block_flags=_model_miss_triage_accepts_review_block_flags(
+            router_source,
+            declared_model_miss_flags,
+        ),
+        pm_review_block_repair_event_accepts_flags=_pm_review_block_repair_event_accepts_flags(
+            router_source,
+            declared_model_miss_flags,
+        ),
+        pm_review_block_repair_event_routes_flags=_pm_review_block_repair_event_routes_flags(
+            router,
+            router_source,
         ),
         material_dispatch_frontier_phase_synchronized=_material_dispatch_frontier_phase_synchronized(
             router_source

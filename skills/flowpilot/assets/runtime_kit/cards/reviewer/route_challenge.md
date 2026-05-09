@@ -40,5 +40,10 @@ reviewer core card. Route pass is invalid if that object only repeats the PM
 checklist, lacks failure hypotheses, lacks task-specific challenge actions, or
 downgrades hard requirements into residual risk.
 
+For route standard or complexity disagreements, report the evidence and
+alternative for PM decision instead of becoming a second route owner. Block
+only when the route misses a hard requirement, required proof, role boundary,
+selected child-skill obligation, or other non-waivable gate.
+
 Return pass or block in the private report body. Keep the body out of
 Controller chat.

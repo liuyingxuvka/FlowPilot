@@ -8,9 +8,9 @@
   },
   "counts": {
     "accepted": 1,
-    "edges": 16,
-    "rejected": 7,
-    "states": 17
+    "edges": 30,
+    "rejected": 14,
+    "states": 31
   },
   "current_source": {
     "ok": true,
@@ -21,6 +21,13 @@
     "control_blocker_ambiguous_event": "detected",
     "control_blocker_weak_decision_contract": "detected",
     "display_fallback_after_pm_activation": "detected",
+    "material_dispatch_frontier_phase_mismatch": "detected",
+    "material_dispatch_unknown_block_event": "detected",
+    "material_scan_inline_body_only": "detected",
+    "pm_resume_decision_weak_contract": "detected",
+    "review_block_events_without_pm_lane": "detected",
+    "review_block_repair_event_hardcoded": "detected",
+    "role_output_envelope_ambiguity": "detected",
     "startup_fact_hash_alias": "detected",
     "startup_fact_jsonpath_mismatch": "detected",
     "startup_repair_dedupes_new_report": "detected"

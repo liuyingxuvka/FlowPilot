@@ -11,9 +11,16 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 Review a worker result before PM may use it.
 
+Open the sealed result body through `packet_runtime.py open-result-session`
+with a concrete `--agent-id` before judging substance. This runtime session is
+the reviewer read receipt; do not replace it with an ordinary file read, chat
+summary, or self-attested worker claim.
+
 Check:
 
 - packet envelope and result envelope exist;
+- packet ledger shows the worker opened the packet through the runtime after
+  Controller relay and the result envelope was absorbed into the ledger;
 - router or packet-runtime validation has accepted required envelope fields,
   Controller relay signatures, body hashes, result author role, and packet
   target role;

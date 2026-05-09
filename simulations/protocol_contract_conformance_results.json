@@ -8,12 +8,20 @@
   },
   "counts": {
     "accepted": 1,
-    "edges": 26,
-    "rejected": 12,
-    "states": 27
+    "edges": 30,
+    "rejected": 14,
+    "states": 31
   },
   "current_source": {
     "facts": {
+      "declared_reviewer_block_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "material_scan_dispatch_recheck_blocked",
+        "material_scan_dispatch_recheck_protocol_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
       "display_status_available_before_startup_fact_review": true,
       "material_dispatch_block_event_registered": true,
       "material_dispatch_block_report_writer": true,
@@ -27,6 +35,25 @@
       "material_scan_packets_mark_pre_route_not_current_node": true,
       "material_scan_router_accepts_file_backed_packet_specs": true,
       "material_scan_router_requires_inline_body_text_only": false,
+      "model_miss_review_block_card_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
+      "model_miss_review_block_cards_aligned": true,
+      "model_miss_review_block_event_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
+      "model_miss_triage_accepts_review_block_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
       "pm_control_blocker_allowed_events": [
         "pm_records_control_blocker_repair_decision"
       ],
@@ -164,6 +191,26 @@
         "prior_path_context_review.stale_evidence_considered",
         "prior_path_context_review.superseded_nodes_considered"
       ],
+      "pm_review_block_repair_event_accepts_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
+      "pm_review_block_repair_event_routes_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
+      "reviewer_block_lane_flags": [
+        "current_node_dispatch_blocked",
+        "material_scan_dispatch_blocked",
+        "material_scan_dispatch_recheck_blocked",
+        "material_scan_dispatch_recheck_protocol_blocked",
+        "node_acceptance_plan_review_blocked",
+        "node_review_blocked"
+      ],
       "role_output_card_path_hash_pairs": [
         "body_path/body_hash",
         "decision_path/decision_hash",
@@ -287,6 +334,8 @@
     "material_dispatch_unknown_block_event": "detected",
     "material_scan_inline_body_only": "detected",
     "pm_resume_decision_weak_contract": "detected",
+    "review_block_events_without_pm_lane": "detected",
+    "review_block_repair_event_hardcoded": "detected",
     "role_output_envelope_ambiguity": "detected",
     "startup_fact_hash_alias": "detected",
     "startup_fact_jsonpath_mismatch": "detected",

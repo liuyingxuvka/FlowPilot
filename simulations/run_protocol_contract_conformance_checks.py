@@ -32,6 +32,8 @@ REQUIRED_LABELS = (
     "select_material_scan_inline_body_only",
     "select_material_dispatch_unknown_block_event",
     "select_material_dispatch_frontier_phase_mismatch",
+    "select_review_block_events_without_pm_lane",
+    "select_review_block_repair_event_hardcoded",
     "router_accepts_conformant_protocol",
     "router_rejects_startup_fact_jsonpath_mismatch",
     "router_rejects_control_blocker_ambiguous_event",
@@ -45,6 +47,8 @@ REQUIRED_LABELS = (
     "router_rejects_material_scan_inline_body_only",
     "router_rejects_material_dispatch_unknown_block_event",
     "router_rejects_material_dispatch_frontier_phase_mismatch",
+    "router_rejects_review_block_events_without_pm_lane",
+    "router_rejects_review_block_repair_event_hardcoded",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -60,6 +64,8 @@ HAZARD_EXPECTED_FAILURES = {
     "material_scan_inline_body_only": "PM material scan guidance does not require file-backed packet body paths and hashes",
     "material_dispatch_unknown_block_event": "material dispatch reviewer block event is not registered",
     "material_dispatch_frontier_phase_mismatch": "material dispatch review can run while execution_frontier still reports startup_intake",
+    "review_block_events_without_pm_lane": "PM model-miss cards do not cover all declared model-miss reviewer block flags",
+    "review_block_repair_event_hardcoded": "PM review-block repair event does not accept all declared model-miss reviewer block flags",
 }
 
 
@@ -243,6 +249,14 @@ def _check_current_source() -> dict[str, object]:
             "material_dispatch_pm_block_cards_reachable": state.material_dispatch_pm_block_cards_reachable,
             "material_dispatch_route_memory_tracks_block": state.material_dispatch_route_memory_tracks_block,
             "material_dispatch_relay_requires_allow_without_block": state.material_dispatch_relay_requires_allow_without_block,
+            "declared_reviewer_block_flags": sorted(state.declared_reviewer_block_flags),
+            "reviewer_block_lane_flags": sorted(state.reviewer_block_lane_flags),
+            "model_miss_review_block_event_flags": sorted(state.model_miss_review_block_event_flags),
+            "model_miss_review_block_card_flags": sorted(state.model_miss_review_block_card_flags),
+            "model_miss_review_block_cards_aligned": state.model_miss_review_block_cards_aligned,
+            "model_miss_triage_accepts_review_block_flags": sorted(state.model_miss_triage_accepts_review_block_flags),
+            "pm_review_block_repair_event_accepts_flags": sorted(state.pm_review_block_repair_event_accepts_flags),
+            "pm_review_block_repair_event_routes_flags": sorted(state.pm_review_block_repair_event_routes_flags),
             "material_dispatch_frontier_phase_synchronized": state.material_dispatch_frontier_phase_synchronized,
             "material_dispatch_card_has_pre_route_material_exception": state.material_dispatch_card_has_pre_route_material_exception,
             "material_scan_packets_mark_pre_route_not_current_node": state.material_scan_packets_mark_pre_route_not_current_node,

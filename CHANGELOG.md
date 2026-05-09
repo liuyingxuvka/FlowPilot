@@ -2,6 +2,43 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.6.0 - 2026-05-09
+
+### Added
+
+- Added unified packet runtime session entrypoints so packet recipients can
+  open assigned sealed packet bodies, record minimal open receipts, submit
+  result bodies, and receive runtime-generated result envelopes through one
+  controlled path.
+- Added result review session support so reviewers and PM-authorized result
+  readers can record sealed-result open receipts without exposing result bodies
+  to the Controller.
+- Added regression coverage for runtime-generated packet/result receipts,
+  result ledger absorption, protocol-contract conformance, repair transaction
+  handling, and router recovery from mechanical metadata gaps.
+
+### Changed
+
+- Changed router classification so missing mechanical receipts and role-key
+  agent-id metadata gaps can be reissued to the responsible role instead of
+  escalating to PM repair by default.
+- Updated worker, officer, reviewer, PM, and Controller cards so normal role
+  work uses the runtime session path and returns controller-visible envelopes
+  instead of hand-written packet/result metadata.
+- Kept reviewer quality findings as PM decision-support unless they expose a
+  hard blocker, preserving PM ownership of route choice, waiver, repair, and
+  completion decisions.
+
+### Fixed
+
+- Prevented valid-looking worker results from being blocked solely because the
+  prompt path failed to write runtime receipt metadata.
+- Preserved sealed-body boundaries while reducing audit noise: the runtime now
+  records minimal positive proof of authorized opens rather than persistent
+  access-attempt histories or first-open counters.
+- Hardened protocol and repair models so same-class packet reissue and repair
+  transaction failures are covered before release.
+
 ## 0.5.5 - 2026-05-09
 
 ### Added

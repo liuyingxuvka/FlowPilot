@@ -8,7 +8,13 @@ next_step_source: Do not infer the next FlowPilot action from this card, chat hi
 runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; return a protocol blocker through Controller.
 -->
 ```text
-▛▀▀▀▘▌           ▛▀▀▜ ▌   ▌     ▛▀▀▜ ▌ ▌            ▛▀▀▜ ▀▀▌▀▀
- ▛▀▀       ▌            ▌       ▐ ▌   ▌ ▐  ▛▀▀   ▌ ▌            ▌       ▐         ▌
-  ▌              ▙▄▄▖ ▙▄▄▟ ▝▚▞▘   ▌          ▌ ▙▄▄▖ ▙▄▄▟         ▌
+✦━━━━━━━━━━━━━━━━━━━━✦
+⚑ FlowPilot ⚑
+✦━━━━━━━━━━━━━━━━━━━━✦
+
+- Formal run mode active.
+- Route-controlled execution has started.
+- Packets and ledgers are now in charge.
+
+✦━━━━━━━━━━━━━━━━━━━━✦
 ```

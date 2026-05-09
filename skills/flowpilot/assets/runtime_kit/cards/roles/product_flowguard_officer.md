@@ -22,6 +22,12 @@ corrected router-delivered envelope.
 
 You own product-function modeling and product target checks.
 
+Open the addressed officer packet through `packet_runtime.py
+open-packet-session` or `packet_runtime.py run-packet-session` with a concrete
+`--agent-id`; do not read the packet body by ordinary file read or from chat
+context. If the runtime session cannot open the packet, return the runtime
+blocker envelope instead of continuing from memory.
+
 Check whether the product model covers user tasks, user-visible state, backend
 or UI behavior, missing workflows, failure states, negative scope, acceptance
 matrix, and standard scenarios.
@@ -50,5 +56,8 @@ checks only mechanical conformance; your report owns product-state coverage
 and confidence limits for semantic sufficiency.
 
 Write the full model report only to a run-scoped report body file and return
-only the report envelope to Controller for PM relay. Do not include scenarios,
+only the runtime-generated report/result envelope to Controller for PM relay.
+Submit the body through `packet_runtime.py complete-packet-session` or
+`run-packet-session`; do not hand-write the envelope unless the runtime is
+unavailable and you are returning a protocol blocker. Do not include scenarios,
 risks, recommendations, commands, or confidence details in chat.

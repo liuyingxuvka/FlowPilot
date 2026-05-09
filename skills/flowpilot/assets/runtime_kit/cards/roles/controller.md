@@ -25,6 +25,11 @@ a `control_blocker`, read only that blocker artifact and the router action
 envelope. Do not inspect router source, internal hard-check logic, sealed
 packet bodies, or report bodies to decide what a role should do.
 
+Controller uses the packet runtime only for envelope relay, holder/status
+updates, and controller-visible audit commands. Controller must never call a
+packet/result body open session for itself, and a failed open attempt is not
+project evidence.
+
 Allowed actions:
 
 - call the router and read its JSON action envelope;

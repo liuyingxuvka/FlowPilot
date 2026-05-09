@@ -13,7 +13,10 @@ import flowpilot_repair_transaction_model as model
 
 
 REQUIRED_LABELS = (
-    "reviewer_blocker_detected",
+    "reviewer_blocker_detected_node_acceptance_plan",
+    "reviewer_blocker_detected_current_node_dispatch",
+    "reviewer_blocker_detected_node_result",
+    "reviewer_blocker_detected_material_dispatch",
     "router_registers_blocker_with_origin_and_failure_events",
     "pm_records_model_miss_triage_for_modelable_blocker",
     "pm_records_flowguard_out_of_scope_reason",
@@ -36,6 +39,10 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "blocker_registered_without_nonterminal_events": "router blocker registration lacked origin or nonterminal repair events",
+    "node_acceptance_plan_without_pm_lane": "reviewer block kind node_acceptance_plan has no matching PM repair lane",
+    "current_node_dispatch_missing_model_miss_card_support": "reviewer block kind current_node_dispatch is not accepted end-to-end by PM model-miss repair",
+    "material_dispatch_repair_event_not_accepted": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
+    "material_dispatch_repair_event_not_routed": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
     "pm_decision_self_resolves_blocker": "PM repair decision resolved the blocker by itself",
     "repair_decision_before_model_miss_triage": "PM repair decision started before closing model-miss triage obligation",
     "repair_decision_before_model_miss_path_selected": "PM repair decision started before selecting a model-miss repair path",
@@ -64,7 +71,12 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|steps={state.steps}|"
         f"blocker={state.blocker_detected},{state.blocker_registered_in_router},"
-        f"{state.blocker_has_origin_event},{state.blocker_has_allowed_nonterminal_events}|"
+        f"{state.blocker_has_origin_event},{state.blocker_has_allowed_nonterminal_events},"
+        f"kind={state.blocker_kind},lane={state.blocker_pm_repair_lane},"
+        f"cards={state.pm_model_miss_cards_accept_blocker_kind},"
+        f"triage={state.pm_model_miss_triage_accepts_blocker_kind},"
+        f"repair_accepts={state.pm_review_repair_event_accepts_blocker_kind},"
+        f"repair_routes={state.pm_review_repair_event_routes_blocker_kind}|"
         f"model_miss={state.model_miss_triage_recorded},modelable={state.flowguard_bug_class_modelable},"
         f"out_of_scope={state.flowguard_out_of_scope_reason_recorded},"
         f"request={state.model_miss_officer_request_issued},"

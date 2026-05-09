@@ -26,6 +26,14 @@ You own route decisions, material sufficiency decisions after reviewer reports,
 research/experiment requests, route repair, route mutation, node completion
 decisions, final ledger approval, and completion decisions.
 
+When PM is the addressed packet recipient, open the sealed packet through
+`packet_runtime.py open-packet-session` with a concrete `--agent-id`; do not
+read packet bodies by ordinary file read or from chat context. When PM is
+authorized to inspect a sealed result body, open it through
+`packet_runtime.py open-result-session`. These runtime sessions are PM's read
+receipts. PM may not use them to peek at a worker/officer/reviewer packet that
+is addressed to another role.
+
 ## Minimum Sufficient Complexity
 
 High standards do not mean more nodes, roles, artifacts, abstractions,
@@ -73,6 +81,14 @@ it is not approval evidence.
 
 You do not implement, personally close reviewer/officer gates, or use worker
 output before reviewer review.
+
+Reviewer concerns about standard, simplicity, over-repair, or unnecessary
+complexity are PM decision-support unless they identify an unmet hard
+requirement, missing proof, semantic downgrade, unverifiable acceptance
+surface, role-boundary failure, or protocol violation. For each such concern,
+PM must either absorb it into the plan, repair, mutate, waive with authority,
+or explain why the current plan remains the minimum sufficient path to the
+accepted standard.
 
 ## Output Contract Authority
 

@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,8 @@ CONTROLLER_HANDOFF_SCHEMA = "flowpilot.controller_handoff.v1"
 CONTROLLER_RELAY_SCHEMA = "flowpilot.controller_relay.v1"
 MUTUAL_ROLE_REMINDER_SCHEMA = "flowpilot.mutual_role_reminder.v1"
 CHAIN_AUDIT_SCHEMA = "flowpilot.packet_chain_audit.v1"
+ROLE_PACKET_SESSION_SCHEMA = "flowpilot.role_packet_runtime_session.v1"
+RESULT_REVIEW_SESSION_SCHEMA = "flowpilot.result_review_runtime_session.v1"
 PACKET_LEDGER_SCHEMA = "flowpilot.packet_ledger.v2"
 BARRIER_BUNDLE_SCHEMA = barrier_bundle.BARRIER_BUNDLE_SCHEMA
 OUTPUT_CONTRACT_SCHEMA = "flowpilot.output_contract.v1"
@@ -1661,6 +1664,240 @@ def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any
     return body_text
 
 
+def _require_concrete_agent_id(agent_id: str, *, role: str) -> str:
+    resolved = str(agent_id or "").strip()
+    if not resolved:
+        raise PacketRuntimeError(f"{role} runtime session requires a concrete agent_id")
+    if resolved in ROLE_KEYS:
+        raise PacketRuntimeError("agent_id must be a concrete agent id, not a role key")
+    return resolved
+
+
+def _runtime_sessions_dir(project_root: Path, envelope_path: Path) -> Path:
+    del project_root
+    return envelope_path.parent / "runtime_sessions"
+
+
+def _write_runtime_session(
+    project_root: Path,
+    *,
+    envelope_path: Path,
+    prefix: str,
+    session: dict[str, Any],
+) -> dict[str, Any]:
+    session_id = f"{prefix}-{uuid.uuid4().hex}"
+    session_path = _runtime_sessions_dir(project_root, envelope_path) / f"{session_id}.json"
+    session = dict(session)
+    session["session_id"] = session_id
+    session["session_path"] = project_relative(project_root, session_path)
+    write_json_atomic(session_path, session)
+    return session
+
+
+def begin_role_packet_session(
+    project_root: Path,
+    *,
+    envelope_path: str | Path,
+    role: str,
+    agent_id: str,
+) -> dict[str, Any]:
+    """Open a packet through the role runtime and persist the audit-only session."""
+
+    resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
+    packet_envelope_path = resolve_project_path(project_root, str(envelope_path))
+    envelope = load_envelope(project_root, str(envelope_path))
+    body_text = read_packet_body_for_role(project_root, envelope, role=role)
+    opened_envelope = load_envelope(project_root, str(envelope_path))
+    opened = opened_envelope.get("body_opened_by_role") if isinstance(opened_envelope, dict) else None
+    if not isinstance(opened, dict):
+        raise PacketRuntimeError("packet runtime session could not confirm packet body open receipt")
+    paths = packet_paths_from_envelope(project_root, opened_envelope)
+    session = _write_runtime_session(
+        project_root,
+        envelope_path=packet_envelope_path,
+        prefix="packet-open-session",
+        session={
+            "schema_version": ROLE_PACKET_SESSION_SCHEMA,
+            "runtime_entrypoint": "begin_role_packet_session",
+            "packet_id": opened_envelope.get("packet_id"),
+            "run_id": opened_envelope.get("run_id", str(paths["run_id"])),
+            "node_id": opened_envelope.get("node_id"),
+            "role": role,
+            "agent_id": resolved_agent_id,
+            "packet_envelope_path": project_relative(project_root, paths["packet_envelope"]),
+            "packet_body_path": opened_envelope.get("body_path"),
+            "packet_body_hash": opened_envelope.get("body_hash"),
+            "packet_body_opened_by_role": opened,
+            "controller_relay_verified": opened.get("controller_relay_verified") is True,
+            "body_hash_verified": opened.get("body_hash_verified") is True,
+            "output_contract_id": output_contract_id(
+                opened_envelope.get("output_contract") if isinstance(opened_envelope.get("output_contract"), dict) else None
+            ),
+            "controller_visibility": "session_metadata_only",
+            "controller_may_read_body": False,
+            "sealed_body_returned_to_role": True,
+            "body_text_persisted_in_session": False,
+            "created_at": utc_now(),
+        },
+    )
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        str(opened_envelope.get("packet_id") or ""),
+        {
+            "packet_runtime_session_id": session["session_id"],
+            "packet_runtime_session_path": session["session_path"],
+            "packet_runtime_session_entrypoint": "begin_role_packet_session",
+            "packet_body_opened_by_agent_id": resolved_agent_id,
+            "packet_body_opened_by_runtime_session": True,
+        },
+    )
+    returned = dict(session)
+    returned["body_text"] = body_text
+    return returned
+
+
+def _load_role_packet_session(project_root: Path, session_path: str | Path) -> dict[str, Any]:
+    resolved_path = resolve_project_path(project_root, str(session_path))
+    session = read_json(resolved_path)
+    if session.get("schema_version") != ROLE_PACKET_SESSION_SCHEMA:
+        raise PacketRuntimeError("runtime session is not a role packet session")
+    if session.get("session_path") and resolve_project_path(project_root, str(session["session_path"])) != resolved_path:
+        raise PacketRuntimeError("runtime session path does not match session record")
+    return session
+
+
+def complete_role_packet_session(
+    project_root: Path,
+    *,
+    session_path: str | Path,
+    result_body_text: str,
+    next_recipient: str,
+) -> dict[str, Any]:
+    session = _load_role_packet_session(project_root, session_path)
+    role = str(session.get("role") or "")
+    agent_id = _require_concrete_agent_id(str(session.get("agent_id") or ""), role=role)
+    envelope = load_envelope(project_root, str(session["packet_envelope_path"]))
+    if envelope.get("packet_id") != session.get("packet_id") or envelope.get("to_role") != role:
+        raise PacketRuntimeError("runtime session does not match the current packet envelope")
+    verify_packet_open_receipt(project_root, envelope, role=role)
+    result = write_result(
+        project_root,
+        packet_envelope=envelope,
+        completed_by_role=role,
+        completed_by_agent_id=agent_id,
+        result_body_text=result_body_text,
+        next_recipient=next_recipient,
+        strict_role=True,
+    )
+    paths = packet_paths_from_result_envelope(project_root, result)
+    result.update(
+        {
+            "source_packet_runtime_session_id": session["session_id"],
+            "source_packet_runtime_session_path": session["session_path"],
+            "result_generated_by_runtime_session": True,
+            "runtime_entrypoint": "complete_role_packet_session",
+        }
+    )
+    write_json_atomic(paths["result_envelope"], result)
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        str(result.get("packet_id") or ""),
+        {
+            "result_runtime_session_id": session["session_id"],
+            "result_runtime_session_path": session["session_path"],
+            "result_generated_by_runtime_session": True,
+            "result_runtime_entrypoint": "complete_role_packet_session",
+            "completed_by_agent_id": agent_id,
+        },
+    )
+    return result
+
+
+def run_role_packet_session(
+    project_root: Path,
+    *,
+    envelope_path: str | Path,
+    role: str,
+    agent_id: str,
+    result_body_text: str,
+    next_recipient: str,
+) -> dict[str, Any]:
+    session = begin_role_packet_session(project_root, envelope_path=envelope_path, role=role, agent_id=agent_id)
+    result = complete_role_packet_session(
+        project_root,
+        session_path=session["session_path"],
+        result_body_text=result_body_text,
+        next_recipient=next_recipient,
+    )
+    return {
+        "schema_version": "flowpilot.role_packet_runtime_run.v1",
+        "session_path": session["session_path"],
+        "session_id": session["session_id"],
+        "result_envelope": result,
+    }
+
+
+def begin_result_review_session(
+    project_root: Path,
+    *,
+    result_envelope_path: str | Path,
+    role: str,
+    agent_id: str,
+) -> dict[str, Any]:
+    resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
+    resolved_result_path = resolve_project_path(project_root, str(result_envelope_path))
+    result = load_envelope(project_root, str(result_envelope_path))
+    body_text = read_result_body_for_role(project_root, result, role=role)
+    opened_result = load_envelope(project_root, str(result_envelope_path))
+    opened = opened_result.get("result_body_opened_by_role") if isinstance(opened_result, dict) else None
+    if not isinstance(opened, dict):
+        raise PacketRuntimeError("result review runtime session could not confirm result body open receipt")
+    paths = packet_paths_from_result_envelope(project_root, opened_result)
+    session = _write_runtime_session(
+        project_root,
+        envelope_path=resolved_result_path,
+        prefix="result-open-session",
+        session={
+            "schema_version": RESULT_REVIEW_SESSION_SCHEMA,
+            "runtime_entrypoint": "begin_result_review_session",
+            "packet_id": opened_result.get("packet_id"),
+            "run_id": opened_result.get("run_id", str(paths["run_id"])),
+            "node_id": opened_result.get("node_id"),
+            "role": role,
+            "agent_id": resolved_agent_id,
+            "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+            "result_body_path": opened_result.get("result_body_path"),
+            "result_body_hash": opened_result.get("result_body_hash"),
+            "result_body_opened_by_role": opened,
+            "source_packet_runtime_session_id": opened_result.get("source_packet_runtime_session_id"),
+            "controller_relay_verified": opened.get("controller_relay_verified") is True,
+            "body_hash_verified": opened.get("body_hash_verified") is True,
+            "controller_visibility": "session_metadata_only",
+            "controller_may_read_body": False,
+            "sealed_body_returned_to_role": True,
+            "body_text_persisted_in_session": False,
+            "created_at": utc_now(),
+        },
+    )
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        str(opened_result.get("packet_id") or ""),
+        {
+            "result_review_runtime_session_id": session["session_id"],
+            "result_review_runtime_session_path": session["session_path"],
+            "result_review_runtime_session_entrypoint": "begin_result_review_session",
+            "result_body_opened_by_agent_id": resolved_agent_id,
+            "result_body_opened_by_runtime_session": True,
+        },
+    )
+    returned = dict(session)
+    returned["body_text"] = body_text
+    return returned
+
+
 def validate_for_reviewer(
     project_root: Path,
     *,
@@ -2056,6 +2293,34 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     read_packet.add_argument("--envelope-path", required=True)
     read_packet.add_argument("--role", required=True)
 
+    open_packet_session = subparsers.add_parser(
+        "open-packet-session",
+        help="Target role opens a packet through the runtime session entrypoint",
+    )
+    open_packet_session.add_argument("--envelope-path", required=True)
+    open_packet_session.add_argument("--role", required=True)
+    open_packet_session.add_argument("--agent-id", required=True)
+
+    complete_packet_session = subparsers.add_parser(
+        "complete-packet-session",
+        help="Complete a previously opened role packet session and generate the result envelope",
+    )
+    complete_packet_session.add_argument("--session-path", required=True)
+    complete_packet_session.add_argument("--result-body-text", default="")
+    complete_packet_session.add_argument("--result-body-file", default="")
+    complete_packet_session.add_argument("--next-recipient", required=True)
+
+    run_packet_session = subparsers.add_parser(
+        "run-packet-session",
+        help="Open a packet session and complete it in one runtime call",
+    )
+    run_packet_session.add_argument("--envelope-path", required=True)
+    run_packet_session.add_argument("--role", required=True)
+    run_packet_session.add_argument("--agent-id", required=True)
+    run_packet_session.add_argument("--result-body-text", default="")
+    run_packet_session.add_argument("--result-body-file", default="")
+    run_packet_session.add_argument("--next-recipient", required=True)
+
     complete = subparsers.add_parser("complete", help="Write result_envelope.json and result_body.md")
     complete.add_argument("--envelope-path", required=True)
     complete.add_argument("--completed-by-role", required=True)
@@ -2073,6 +2338,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     read_result = subparsers.add_parser("read-result", help="Reviewer/PM verifies relay and opens result body")
     read_result.add_argument("--result-envelope-path", required=True)
     read_result.add_argument("--role", required=True)
+
+    open_result_session = subparsers.add_parser(
+        "open-result-session",
+        help="Reviewer/PM opens a result body through the runtime session entrypoint",
+    )
+    open_result_session.add_argument("--result-envelope-path", required=True)
+    open_result_session.add_argument("--role", required=True)
+    open_result_session.add_argument("--agent-id", required=True)
 
     audit_chain = subparsers.add_parser("audit-chain", help="Reviewer audits packet mail chain for a run or node")
     audit_chain.add_argument("--run-id", default="")
@@ -2150,6 +2423,35 @@ def main(argv: list[str] | None = None) -> int:
         envelope = load_envelope(root, args.envelope_path)
         print(read_packet_body_for_role(root, envelope, role=args.role))
         return 0
+    if args.command == "open-packet-session":
+        session = begin_role_packet_session(
+            root,
+            envelope_path=args.envelope_path,
+            role=args.role,
+            agent_id=args.agent_id,
+        )
+        print(json.dumps(session, indent=2, sort_keys=True))
+        return 0
+    if args.command == "complete-packet-session":
+        result = complete_role_packet_session(
+            root,
+            session_path=args.session_path,
+            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
+            next_recipient=args.next_recipient,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "run-packet-session":
+        output = run_role_packet_session(
+            root,
+            envelope_path=args.envelope_path,
+            role=args.role,
+            agent_id=args.agent_id,
+            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
+            next_recipient=args.next_recipient,
+        )
+        print(json.dumps(output, indent=2, sort_keys=True))
+        return 0
     if args.command == "complete":
         envelope = load_envelope(root, args.envelope_path)
         result = write_result(
@@ -2173,6 +2475,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "read-result":
         result = load_envelope(root, args.result_envelope_path)
         print(read_result_body_for_role(root, result, role=args.role))
+        return 0
+    if args.command == "open-result-session":
+        session = begin_result_review_session(
+            root,
+            result_envelope_path=args.result_envelope_path,
+            role=args.role,
+            agent_id=args.agent_id,
+        )
+        print(json.dumps(session, indent=2, sort_keys=True))
         return 0
     if args.command == "audit-chain":
         audit = audit_packet_chain(root, run_id=args.run_id or None, node_id=args.node_id or None)

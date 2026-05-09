@@ -28,11 +28,22 @@ Check:
   standard id;
 - skipped checks are marked blocked, waived with authority, or not applicable;
 - worker reports alone cannot approve the node.
+- PM's `high_standard_recheck` and minimum sufficient complexity rationale are
+  concrete enough for PM to decide from, including ideal outcome,
+  unacceptable outcomes, semantic downgrade risks, simpler equivalent paths,
+  and any justified extra complexity.
 
 The report body must include `independent_challenge` from the human-like
 reviewer core card. Pass is invalid if it only checks the PM checklist and does
 not challenge implicit commitments, missing failure paths, or unverifiable
 acceptance surfaces exposed by this node.
+
+Do not act as a second PM when you disagree with PM's standard or complexity
+judgement. Record higher-standard opportunities, simpler equivalent paths,
+possible over-repair, or unnecessary complexity as PM-decision recommendations.
+Block only when the concern exposes an unmet hard requirement, missing proof,
+semantic downgrade, unverifiable acceptance surface, role-boundary failure, or
+protocol violation.
 
 Return pass only after independent inspection. A failed plan goes back to PM
 for repair before packet dispatch.

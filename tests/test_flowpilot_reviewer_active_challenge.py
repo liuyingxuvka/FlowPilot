@@ -91,6 +91,57 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
             self.assertIn("independent_challenge.failure_hypotheses", fields, contract["contract_id"])
             self.assertIn("independent_challenge.challenge_actions", fields, contract["contract_id"])
 
+    def test_reviewer_standard_challenge_stays_pm_decision_support(self) -> None:
+        reviewer_core = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "roles"
+            / "human_like_reviewer.md"
+        ).read_text(encoding="utf-8")
+        pm_core = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "roles"
+            / "project_manager.md"
+        ).read_text(encoding="utf-8")
+        node_review = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "reviewer"
+            / "node_acceptance_plan_review.md"
+        ).read_text(encoding="utf-8")
+        route_review = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "reviewer"
+            / "route_challenge.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("You are not a second Project Manager", reviewer_core)
+        self.assertIn("PM owns final route choice", reviewer_core)
+        self.assertIn("decision-support", reviewer_core)
+        self.assertIn("PM decision-support", pm_core)
+        self.assertIn("minimum sufficient path", pm_core)
+        self.assertIn("high_standard_recheck", node_review)
+        self.assertIn("PM-decision recommendations", node_review)
+        self.assertIn("second route owner", route_review)
+
 
 if __name__ == "__main__":
     unittest.main()

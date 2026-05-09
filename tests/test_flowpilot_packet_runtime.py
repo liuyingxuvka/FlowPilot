@@ -209,6 +209,120 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         with self.assertRaises(packet_runtime.PacketRuntimeError):
             packet_runtime.read_result_body_for_role(root, result, role="controller")
 
+    def test_role_packet_session_opens_packet_and_generates_result_envelope(self) -> None:
+        root = self.make_project()
+        self.relay_packet(root, self.issue_packet(root, body_text="SESSION_PACKET_SECRET"))
+
+        session = packet_runtime.begin_role_packet_session(
+            root,
+            envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+        )
+
+        self.assertIn("SESSION_PACKET_SECRET", session["body_text"])
+        session_record = self.read_json(root / session["session_path"])
+        self.assertEqual(session_record["schema_version"], packet_runtime.ROLE_PACKET_SESSION_SCHEMA)
+        self.assertEqual(session_record["role"], "worker_a")
+        self.assertEqual(session_record["agent_id"], "agent-worker-a-1")
+        self.assertFalse(session_record["body_text_persisted_in_session"])
+        self.assertNotIn("body_text", session_record)
+
+        ledger_path = root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json"
+        ledger = self.read_json(ledger_path)
+        packet_record = ledger["packets"][0]
+        self.assertEqual(packet_record["packet_runtime_session_id"], session["session_id"])
+        self.assertEqual(packet_record["packet_body_opened_by_agent_id"], "agent-worker-a-1")
+        self.assertTrue(packet_record["packet_body_opened_by_runtime_session"])
+
+        result = packet_runtime.complete_role_packet_session(
+            root,
+            session_path=session["session_path"],
+            result_body_text="SESSION_RESULT_SECRET commands, files, screenshots, and findings",
+            next_recipient="human_like_reviewer",
+        )
+
+        self.assertEqual(result["completed_by_role"], "worker_a")
+        self.assertEqual(result["completed_by_agent_id"], "agent-worker-a-1")
+        self.assertEqual(result["source_packet_runtime_session_id"], session["session_id"])
+        self.assertTrue(result["result_generated_by_runtime_session"])
+        result_file = self.read_json(self.result_envelope_path(root))
+        self.assertEqual(result_file["source_packet_runtime_session_id"], session["session_id"])
+
+        opened_envelope = packet_runtime.load_envelope(
+            root,
+            ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+        )
+        audit = packet_runtime.validate_result_ready_for_reviewer_relay(
+            root,
+            packet_envelope=opened_envelope,
+            result_envelope=result,
+            agent_role_map={"agent-worker-a-1": "worker_a"},
+        )
+        self.assertTrue(audit["passed"])
+
+        ledger = self.read_json(ledger_path)
+        packet_record = ledger["packets"][0]
+        self.assertEqual(packet_record["result_runtime_session_id"], session["session_id"])
+        self.assertTrue(packet_record["result_generated_by_runtime_session"])
+        self.assertEqual(packet_record["completed_by_agent_id"], "agent-worker-a-1")
+
+    def test_result_review_session_records_reviewer_receipt_without_persisting_body(self) -> None:
+        root = self.make_project()
+        self.relay_packet(root, self.issue_packet(root))
+        worker_session = packet_runtime.begin_role_packet_session(
+            root,
+            envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+        )
+        result = packet_runtime.complete_role_packet_session(
+            root,
+            session_path=worker_session["session_path"],
+            result_body_text="REVIEW_SESSION_RESULT_SECRET commands, files, screenshots, and findings",
+            next_recipient="human_like_reviewer",
+        )
+        result = self.relay_result(root, result)
+
+        review_session = packet_runtime.begin_result_review_session(
+            root,
+            result_envelope_path=".flowpilot/runs/run-test/packets/packet-001/result_envelope.json",
+            role="human_like_reviewer",
+            agent_id="agent-reviewer-1",
+        )
+
+        self.assertIn("REVIEW_SESSION_RESULT_SECRET", review_session["body_text"])
+        session_record = self.read_json(root / review_session["session_path"])
+        self.assertEqual(session_record["schema_version"], packet_runtime.RESULT_REVIEW_SESSION_SCHEMA)
+        self.assertEqual(session_record["role"], "human_like_reviewer")
+        self.assertEqual(session_record["agent_id"], "agent-reviewer-1")
+        self.assertEqual(session_record["source_packet_runtime_session_id"], worker_session["session_id"])
+        self.assertFalse(session_record["body_text_persisted_in_session"])
+        self.assertNotIn("body_text", session_record)
+
+        relayed_result = packet_runtime.load_envelope(
+            root,
+            ".flowpilot/runs/run-test/packets/packet-001/result_envelope.json",
+        )
+        opened_envelope = packet_runtime.load_envelope(
+            root,
+            ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+        )
+        audit = packet_runtime.validate_for_reviewer(
+            root,
+            packet_envelope=opened_envelope,
+            result_envelope=relayed_result,
+            agent_role_map={"agent-worker-a-1": "worker_a"},
+        )
+        self.assertTrue(audit["passed"])
+
+        ledger_path = root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json"
+        ledger = self.read_json(ledger_path)
+        packet_record = ledger["packets"][0]
+        self.assertEqual(packet_record["result_review_runtime_session_id"], review_session["session_id"])
+        self.assertEqual(packet_record["result_body_opened_by_agent_id"], "agent-reviewer-1")
+        self.assertTrue(packet_record["result_body_opened_by_runtime_session"])
+
     def test_reviewer_audit_requires_ledger_open_receipts_not_envelope_markers_only(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))

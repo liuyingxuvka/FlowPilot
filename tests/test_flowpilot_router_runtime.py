@@ -817,7 +817,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
 
-    def deliver_current_node_cards(self, root: Path) -> None:
+    def write_current_node_acceptance_plan(self, root: Path) -> None:
         self.deliver_expected_card(root, "pm.current_node_loop")
         self.deliver_expected_card(root, "pm.event.node_started")
         self.deliver_expected_card(root, "pm.node_acceptance_plan")
@@ -844,6 +844,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "experiment_plan": [],
             },
         )
+
+    def deliver_current_node_cards(self, root: Path) -> None:
+        self.write_current_node_acceptance_plan(root)
         self.deliver_expected_card(root, "reviewer.node_acceptance_plan_review")
         router.record_external_event(
             root,
@@ -1346,6 +1349,107 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("router_cleared_stale_pending_action", labels)
         self.assertIsNone(repaired_state["pending_action"])
 
+    def test_node_acceptance_plan_block_enters_model_miss_repair_path(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.write_current_node_acceptance_plan(root)
+        self.deliver_expected_card(root, "reviewer.node_acceptance_plan_review")
+
+        router.record_external_event(
+            root,
+            "reviewer_blocks_node_acceptance_plan",
+            self.role_report_envelope(
+                root,
+                "reviews/node_acceptance_plan_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
+                    "blockers": ["acceptance evidence path is not router-authorized"],
+                },
+            ),
+        )
+
+        self.assertTrue(self.flag(root, "node_acceptance_plan_review_blocked"))
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.close_model_miss_triage(root, output_name="decisions/node_acceptance_model_miss_valid")
+        self.deliver_expected_card(root, "pm.review_repair")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            {
+                "repair_node_id": "node-001-acceptance-repair",
+                "reason": "node_acceptance_plan_review_block",
+                **self.prior_path_context_review(root, "Route mutation considered the node acceptance-plan reviewer block."),
+            },
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["node_acceptance_plan_review_blocked"])
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "route_mutated_repair_pending")
+        self.assertEqual(frontier["active_node_id"], "node-001-acceptance-repair")
+
+    def test_current_node_dispatch_block_enters_model_miss_repair_path(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.deliver_current_node_cards(root)
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="node-packet-dispatch-block",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="current node work",
+            metadata={"route_version": 1},
+        )
+        packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        router.record_external_event(
+            root,
+            "pm_registers_current_node_packet",
+            {"packet_id": "node-packet-dispatch-block", "packet_envelope_path": packet_path},
+        )
+        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
+
+        router.record_external_event(
+            root,
+            "reviewer_blocks_current_node_dispatch",
+            self.role_report_envelope(
+                root,
+                "reviews/current_node_dispatch_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "dispatch_allowed": False,
+                    "blockers": ["packet source path is not router-authorized"],
+                },
+            ),
+        )
+
+        self.assertTrue(self.flag(root, "current_node_dispatch_blocked"))
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.close_model_miss_triage(root, output_name="decisions/current_node_dispatch_model_miss_valid")
+        self.deliver_expected_card(root, "pm.review_repair")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            {
+                "repair_node_id": "node-001-dispatch-repair",
+                "reason": "current_node_dispatch_review_block",
+                **self.prior_path_context_review(root, "Route mutation considered the current-node dispatch reviewer block."),
+            },
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["current_node_dispatch_blocked"])
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "route_mutated_repair_pending")
+        self.assertEqual(frontier["active_node_id"], "node-001-dispatch-repair")
+
     def test_model_backed_model_miss_triage_requires_officer_report_refs(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-invalid")
@@ -1797,8 +1901,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
         self.assertIn("user dialog", action["controller_display_rule"])
         self.assertIn("```text", action["display_text"])
-        self.assertIn("▛▀▀▀▘▌", action["display_text"])
-        self.assertIn("▙▄▄▖ ▙▄▄▟", action["display_text"])
+        self.assertIn("FlowPilot", action["display_text"])
+        self.assertIn("Packets and ledgers are now in charge.", action["display_text"])
         self.assertNotIn("████", action["display_text"])
         self.assertNotIn("FLOWPILOT_IDENTITY_BOUNDARY_V1", action["display_text"])
         self.assertNotIn("Startup answers are recorded.", action["display_text"])
@@ -1813,8 +1917,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(result["controller_must_display_text_before_apply"])
         self.assertEqual(result["dialog_display_confirmation"]["rendered_to"], "user_dialog")
         self.assertFalse(result["generated_files_alone_satisfy_chat_display"])
-        self.assertIn("▛▀▀▀▘▌", result["display_text"])
-        self.assertIn("▙▄▄▖ ▙▄▄▟", result["display_text"])
+        self.assertIn("FlowPilot", result["display_text"])
+        self.assertIn("Route-controlled execution has started.", result["display_text"])
         self.assertNotIn("████", result["display_text"])
         self.assertNotIn("Startup answers are recorded.", result["display_text"])
         self.assertNotIn("display-only data", result["display_text"])
@@ -2964,8 +3068,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_record["packet_body_opened_after_controller_relay_check"] = False
         router.write_json(ledger_path, ledger)
 
-        with self.assertRaisesRegex(router.RouterError, "ledger open receipt"):
+        with self.assertRaisesRegex(router.RouterError, "ledger open receipt") as raised:
             router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        blocker = raised.exception.control_blocker
+        self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
+        self.assertEqual(blocker["target_role"], "worker_a")
+        self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
+        self.assertFalse(blocker["pm_decision_required"])
 
     def test_material_scan_results_event_requires_result_ledger_absorption(self) -> None:
         root = self.make_project()
@@ -2989,8 +3098,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_record["result_body_hash"] = "stale-result-hash"
         router.write_json(ledger_path, ledger)
 
-        with self.assertRaisesRegex(router.RouterError, "packet_ledger_missing_result_absorption"):
+        with self.assertRaisesRegex(router.RouterError, "packet_ledger_missing_result_absorption") as raised:
             router.record_external_event(root, "worker_scan_results_returned")
+        blocker = raised.exception.control_blocker
+        self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
+        self.assertEqual(blocker["target_role"], "worker_a")
+        self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
+        self.assertFalse(blocker["pm_decision_required"])
 
     def test_reviewer_blocks_material_scan_dispatch_routes_to_pm_repair(self) -> None:
         root = self.make_project()
@@ -3028,6 +3142,56 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "pm.event.reviewer_blocked")
         action = self.next_after_display_sync(root)
         self.assertNotEqual(action["action_type"], "relay_material_scan_packets")
+
+    def test_material_scan_dispatch_repair_reopens_reviewer_dispatch(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.deliver_expected_card(root, "reviewer.dispatch_request")
+        router.record_external_event(
+            root,
+            "reviewer_blocks_material_scan_dispatch",
+            self.role_report_envelope(
+                root,
+                "material/reviewer_material_dispatch_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "dispatch_allowed": False,
+                    "checks": {"material_phase_matches_frontier": False},
+                    "blockers": ["frontier and material packet dispatch context do not match"],
+                    "contract_self_check": {
+                        "all_required_fields_present": True,
+                        "exact_field_names_used": True,
+                    },
+                },
+            ),
+        )
+        self.close_model_miss_triage(root, output_name="decisions/material_dispatch_model_miss_valid")
+        self.deliver_expected_card(root, "pm.review_repair")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+
+        repair_body = {
+            "decided_by_role": "project_manager",
+            "repair_action": "Reissue the material dispatch review with a router-visible packet source path.",
+            **self.prior_path_context_review(root, "PM considered material dispatch block before reopening reviewer dispatch."),
+        }
+        router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            self.role_decision_envelope(root, "decisions/material_dispatch_repair", repair_body),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["material_scan_dispatch_blocked"])
+        self.assertFalse(state["flags"]["reviewer_dispatch_allowed"])
+        self.assertFalse(state["flags"]["reviewer_dispatch_card_delivered"])
+        self.assertTrue((run_root / "material" / "material_dispatch_repair.json").exists())
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "check_prompt_manifest")
+        self.assertEqual(action["next_card_id"], "reviewer.dispatch_request")
 
     def test_research_required_blocks_product_architecture_until_absorbed(self) -> None:
         root = self.make_project()
@@ -4594,7 +4758,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
 
-    def test_material_scan_event_replay_repair_returns_to_material_sufficiency_flow(self) -> None:
+    def test_material_scan_mechanical_agent_id_gap_reissues_to_worker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -4623,24 +4787,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         blocker = raised.exception.control_blocker
         self.assertIsInstance(blocker, dict)
-        self.assertEqual(blocker["handling_lane"], "pm_repair_decision_required")
+        self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
+        self.assertEqual(blocker["target_role"], "worker_a")
+        self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
+        self.assertFalse(blocker["pm_decision_required"])
         self.assertIn("completed_agent_id_is_role_key_not_agent_id", str(raised.exception))
         self.assertTrue(self.handle_pending_control_blocker(root))
-        router.record_external_event(
-            root,
-            "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(
-                root,
-                "control_blocks/material_event_replay_pm_repair_decision",
-                self.pm_control_blocker_decision_body(
-                    blocker["blocker_id"],
-                    decision="repair_completed",
-                    rerun_target="worker_scan_results_returned",
-                ),
-            ),
-        )
         state = read_json(router.run_state_path(run_root))
-        self.assertEqual(state["active_repair_transaction"]["plan_kind"], "event_replay")
+        self.assertIsNone(state["active_repair_transaction"])
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["to_role"], "worker_a")
+        self.assertIn("worker_scan_results_returned", action["allowed_external_events"])
 
         material_index = read_json(material_index_path)
         for record in material_index["packets"]:
@@ -4662,10 +4820,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIsNone(state["pending_action"])
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_blocked"])
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
-        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
-        self.assertIsNone(tx_index["active_transaction"])
-        transaction_path = root / tx_index["transactions"][0]["path"]
-        self.assertEqual(read_json(transaction_path)["status"], "complete")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_results_to_reviewer")
 
@@ -5690,6 +5844,27 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
         self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_current_node_dispatch"]["flag"], "current_node_dispatch_blocked")
         self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_node_acceptance_plan"]["flag"], "node_acceptance_plan_review_blocked")
+
+    def test_model_miss_review_block_flags_stay_in_sync(self) -> None:
+        expected_flags = set(router.MODEL_MISS_REVIEW_BLOCK_FLAGS)
+        event_flags = {
+            router.EXTERNAL_EVENTS[event_name]["flag"]
+            for event_name in router.MODEL_MISS_REVIEW_BLOCK_EVENTS
+        }
+        card_flags_by_id = {
+            entry["card_id"]: set(entry.get("requires_any_flag", []))
+            for entry in router.SYSTEM_CARD_SEQUENCE
+            if entry.get("card_id") in {"pm.model_miss_triage", "pm.review_repair", "pm.event.reviewer_blocked"}
+        }
+        repair_writer_flags = set(router.MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS) | set(
+            router.MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS
+        )
+
+        self.assertEqual(event_flags, expected_flags)
+        self.assertEqual(repair_writer_flags, expected_flags)
+        self.assertEqual(set(card_flags_by_id), {"pm.model_miss_triage", "pm.review_repair", "pm.event.reviewer_blocked"})
+        for card_flags in card_flags_by_id.values():
+            self.assertEqual(card_flags, expected_flags)
 
     def test_skill_entrypoint_remains_small_router_launcher(self) -> None:
         skill_text = (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8")

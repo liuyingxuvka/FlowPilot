@@ -5761,3 +5761,89 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Wait for user approval before syncing this repository source into the local installed FlowPilot skill, bumping version metadata, committing/tagging, or pushing to GitHub.
+
+## flowpilot-reviewer-pm-authority-boundary-20260509 - Keep reviewer challenge advisory to PM except hard blockers
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that reviewer standard/simplicity concerns should inform PM rather than make the reviewer a second PM.
+- Status: source_updated_not_synced
+- Skill decision: used_flowguard with existing reviewer active-challenge and planning-quality models.
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- OK: `python -m unittest tests.test_flowpilot_reviewer_active_challenge tests.test_flowpilot_card_instruction_coverage`.
+- OK: `python simulations\run_flowpilot_reviewer_active_challenge_checks.py --json-out simulations\flowpilot_reviewer_active_challenge_results.json`.
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`.
+
+### Findings
+- The prompt change is deliberately small: reviewer findings about higher standards, simpler equivalent paths, over-repair, or unnecessary complexity are PM decision-support unless they expose hard blockers.
+- PM remains final owner of route choice, repair strategy, waiver, mutation, and completion decisions.
+- Existing models still pass and continue to reject checklist-only reviewer passes, hard-issue downgrades, and simple-task overburdening.
+
+### Skipped Steps
+- No installed-skill sync, git stage/commit, version bump, tag, or GitHub push was performed per user instruction.
+
+## flowpilot-runtime-session-receipt-friction-20260509 - Unify runtime receipts without heavy access history
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User reported repeated FlowPilot router friction when workers produced valid-looking results without using the runtime packet open path, causing mechanical receipt gaps to escalate to PM repair.
+- Status: source_updated_not_synced
+- Skill decision: used_flowguard because the change affects role boundaries, packet/result body access, ledger receipts, router blocker classification, and recovery routing.
+
+### Model Boundary
+- Added a unified runtime-session path for packet recipients and result reviewers so normal work automatically records minimal open receipts and result absorption.
+- Classified missing mechanical receipts as same-role control-plane reissue instead of PM repair by default.
+- Deliberately trimmed the proposed access-attempt history, first-open ownership, and open counters after design review; the retained audit proof is minimal receipt metadata plus existing role/hash/relay checks.
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- OK: `python -m py_compile skills\flowpilot\assets\packet_runtime.py skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_packet_lifecycle_model.py simulations\run_flowpilot_packet_lifecycle_checks.py`.
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime`.
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py --no-write`.
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py`.
+- OK: targeted router regression for packet-open receipt, result absorption, and mechanical agent-id reissue cases.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit`.
+- OK: `python simulations\run_protocol_contract_conformance_checks.py`.
+- OK: full `tests.test_flowpilot_router_runtime` regression completed with 101 tests passing.
+
+### Findings
+- The normal worker/officer path now has one runtime entry for opening the assigned packet and submitting the result, so the runtime, not the worker prompt text, owns receipt and envelope metadata.
+- The reviewer/PM result-read path uses the same runtime pattern for sealed result bodies without exposing body content to Controller.
+- Router recovery now separates mechanical metadata gaps from content/authority failures: missing receipts can go back to the responsible role, while wrong role, stale packet, hash mismatch, unresolved ambiguity, or Controller-origin contamination remain PM/reviewer-level blockers.
+- The over-heavy access-history branch was removed because role/hash/relay checks already block the important unsafe reads; logging every attempt would add friction and audit noise without enough safety gain.
+
+### Skipped Steps
+- No local installed-skill sync, git stage/commit, version bump, tag, or GitHub push was performed per user instruction.
+
+## flowpilot-0.6.0-release-sync-20260509 - Publish runtime session and router friction release
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved synchronizing the FlowPilot source, local installed skill, local gate checks, and GitHub release with a new version.
+- Status: release_prepared_for_publish
+- Skill decision: used_flowguard release discipline because publication changes the visible version, installed skill source, public repository state, release tag, and downstream runtime entrypoint.
+
+### Version Decision
+- Bumped FlowPilot from `0.5.5` to `0.6.0`.
+- Chosen bump: minor, because the release adds a unified runtime session path and changes router recovery behavior for mechanical receipt gaps.
+
+### Commands
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json` synchronized repository `skills/flowpilot` to the local Codex skills install directory.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py`.
+- OK: `python simulations\run_release_tooling_checks.py`.
+- OK: `python simulations\run_protocol_contract_conformance_checks.py`.
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py`.
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py`.
+- OK: `python scripts\smoke_autopilot.py --fast`.
+- OK: `python -m pytest tests -q --import-mode=importlib` returned `176 passed, 19 subtests passed`.
+- OK: `python scripts\check_public_release.py --json --skip-validation` passed privacy, dependency-source, host-capability, and release-boundary checks; the only warning was the expected dirty worktree before commit.
+- OK: GitHub repository ruleset `Protect default branch` is active for `~DEFAULT_BRANCH` with deletion and non-fast-forward protection.
+
+### Findings
+- Repository source, visible README version, and changelog now agree on `v0.6.0`.
+- Local installed FlowPilot skill is source-fresh against the repository copy.
+- Public release scope remains FlowPilot repository only; companion skills are dependency references, not publication targets.
+- Branch protection is implemented through a GitHub ruleset rather than the legacy branch protection endpoint.
+
+### Next Actions
+- Commit, tag `v0.6.0`, push `main` and the tag, create the GitHub Release, then rerun clean public release checks.

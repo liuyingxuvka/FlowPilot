@@ -26,6 +26,14 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
+MODEL_MISS_REVIEW_BLOCK_LANES = {
+    "node_acceptance_plan": "route_mutation",
+    "current_node_dispatch": "route_mutation",
+    "node_result": "route_mutation",
+    "material_dispatch": "material_dispatch_recheck",
+}
+
+
 @dataclass(frozen=True)
 class Tick:
     """One repair-control transition."""
@@ -43,9 +51,15 @@ class State:
     steps: int = 0
 
     blocker_detected: bool = False
+    blocker_kind: str = "none"
+    blocker_pm_repair_lane: str = "none"
     blocker_registered_in_router: bool = False
     blocker_has_origin_event: bool = False
     blocker_has_allowed_nonterminal_events: bool = False
+    pm_model_miss_cards_accept_blocker_kind: bool = False
+    pm_model_miss_triage_accepts_blocker_kind: bool = False
+    pm_review_repair_event_accepts_blocker_kind: bool = False
+    pm_review_repair_event_routes_blocker_kind: bool = False
 
     model_miss_triage_recorded: bool = False
     flowguard_bug_class_modelable: bool = True
@@ -158,10 +172,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if not state.blocker_detected:
-        yield Transition(
-            "reviewer_blocker_detected",
-            _inc(state, blocker_detected=True, holder="controller"),
-        )
+        for blocker_kind, lane in MODEL_MISS_REVIEW_BLOCK_LANES.items():
+            yield Transition(
+                f"reviewer_blocker_detected_{blocker_kind}",
+                _inc(
+                    state,
+                    blocker_detected=True,
+                    blocker_kind=blocker_kind,
+                    blocker_pm_repair_lane=lane,
+                    holder="controller",
+                ),
+            )
         return
 
     if not state.blocker_registered_in_router:
@@ -172,6 +193,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 blocker_registered_in_router=True,
                 blocker_has_origin_event=True,
                 blocker_has_allowed_nonterminal_events=True,
+                pm_model_miss_cards_accept_blocker_kind=True,
+                pm_model_miss_triage_accepts_blocker_kind=True,
+                pm_review_repair_event_accepts_blocker_kind=True,
+                pm_review_repair_event_routes_blocker_kind=True,
             ),
         )
         return
@@ -400,6 +425,28 @@ def blocker_registration_is_routable(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def model_miss_block_kind_has_end_to_end_repair_lane(state: State, trace) -> InvariantResult:
+    del trace
+    if state.blocker_detected and state.blocker_kind not in MODEL_MISS_REVIEW_BLOCK_LANES:
+        return InvariantResult.fail(
+            f"reviewer block kind {state.blocker_kind} is not classified into a PM repair lane"
+        )
+    if state.blocker_detected and state.blocker_pm_repair_lane != MODEL_MISS_REVIEW_BLOCK_LANES.get(state.blocker_kind):
+        return InvariantResult.fail(
+            f"reviewer block kind {state.blocker_kind} has no matching PM repair lane"
+        )
+    if state.blocker_registered_in_router and not (
+        state.pm_model_miss_cards_accept_blocker_kind
+        and state.pm_model_miss_triage_accepts_blocker_kind
+        and state.pm_review_repair_event_accepts_blocker_kind
+        and state.pm_review_repair_event_routes_blocker_kind
+    ):
+        return InvariantResult.fail(
+            f"reviewer block kind {state.blocker_kind} is not accepted end-to-end by PM model-miss repair"
+        )
+    return InvariantResult.pass_()
+
+
 def pm_decision_cannot_resolve_blocker(state: State, trace) -> InvariantResult:
     del trace
     if state.pm_repair_decision_recorded and state.pm_decision_resolves_blocker:
@@ -576,6 +623,11 @@ INVARIANTS = (
         predicate=blocker_registration_is_routable,
     ),
     Invariant(
+        name="model_miss_block_kind_has_end_to_end_repair_lane",
+        description="Every model-miss reviewer block kind is carried through cards, triage, repair event, and writer dispatch.",
+        predicate=model_miss_block_kind_has_end_to_end_repair_lane,
+    ),
+    Invariant(
         name="pm_decision_cannot_resolve_blocker",
         description="PM repair decisions choose a repair, they do not self-resolve blockers.",
         predicate=pm_decision_cannot_resolve_blocker,
@@ -647,9 +699,15 @@ def _safe_base(**changes: object) -> State:
         State(
             status="running",
             blocker_detected=True,
+            blocker_kind="node_result",
+            blocker_pm_repair_lane="route_mutation",
             blocker_registered_in_router=True,
             blocker_has_origin_event=True,
             blocker_has_allowed_nonterminal_events=True,
+            pm_model_miss_cards_accept_blocker_kind=True,
+            pm_model_miss_triage_accepts_blocker_kind=True,
+            pm_review_repair_event_accepts_blocker_kind=True,
+            pm_review_repair_event_routes_blocker_kind=True,
             model_miss_triage_recorded=True,
             flowguard_bug_class_modelable=True,
             flowguard_out_of_scope_reason_recorded=False,
@@ -700,6 +758,25 @@ def hazard_states() -> dict[str, State]:
     return {
         "blocker_registered_without_nonterminal_events": _safe_base(
             blocker_has_allowed_nonterminal_events=False,
+        ),
+        "node_acceptance_plan_without_pm_lane": _safe_base(
+            blocker_kind="node_acceptance_plan",
+            blocker_pm_repair_lane="none",
+        ),
+        "current_node_dispatch_missing_model_miss_card_support": _safe_base(
+            blocker_kind="current_node_dispatch",
+            blocker_pm_repair_lane="route_mutation",
+            pm_model_miss_cards_accept_blocker_kind=False,
+        ),
+        "material_dispatch_repair_event_not_accepted": _safe_base(
+            blocker_kind="material_dispatch",
+            blocker_pm_repair_lane="material_dispatch_recheck",
+            pm_review_repair_event_accepts_blocker_kind=False,
+        ),
+        "material_dispatch_repair_event_not_routed": _safe_base(
+            blocker_kind="material_dispatch",
+            blocker_pm_repair_lane="material_dispatch_recheck",
+            pm_review_repair_event_routes_blocker_kind=False,
         ),
         "pm_decision_self_resolves_blocker": _safe_base(
             pm_decision_resolves_blocker=True,

@@ -21,12 +21,21 @@ path/hash metadata. If the envelope is missing, mismatched, or contains inline
 body fields, return `unauthorized_direct_message` and wait for a corrected
 router-delivered envelope.
 
-Execute only the current packet body addressed to Worker A. Do not use the full
-route, downstream plan, old screenshots, old assets, or private role context
-unless the packet explicitly includes it.
+Execute only the current packet body addressed to Worker A. Open it through
+`packet_runtime.py open-packet-session` or `packet_runtime.py run-packet-session`
+with a concrete `--agent-id`; do not read the packet body by ordinary file read
+or from chat context. The runtime session verifies Controller relay, target
+role, body hash, and output contract, then writes the packet-open receipt.
+If the runtime session cannot open the packet, return the runtime blocker
+envelope instead of continuing from memory. Do not use the full route,
+downstream plan, old screenshots, old assets, or private role context unless
+the packet explicitly includes it.
 
-Write the full result only to the result body file and return only the result
-envelope to Controller. Do not include commands run, files changed, findings,
+Write the full result as the body text/file submitted to
+`packet_runtime.py complete-packet-session` or `run-packet-session`, and return
+only the runtime-generated result envelope to Controller. Do not hand-write the
+result envelope unless the runtime is unavailable and you are returning a
+protocol blocker. Do not include commands run, files changed, findings,
 blockers, screenshots, or other result-body content in chat.
 
 Before returning a result envelope, read the source packet's `output_contract`
@@ -34,11 +43,12 @@ and write a `Contract Self-Check` section in the sealed result body. If the
 required sections, evidence, or envelope fields cannot be satisfied, return
 `blocked` or `needs_pm`; do not mark the output complete or passed.
 
-Before returning a result envelope, verify it includes `completed_by_role:
-worker_a`, `result_body_path`, `result_body_hash`, `next_recipient` (or the
-router-compatible `next_holder` alias), and `body_visibility:
-sealed_target_role_only`. If the router-provided `validate-artifact` command is
-available, run it against the result envelope and fix all reported envelope
-fields before returning. The chat response to Controller stays envelope-only.
+The runtime-generated result envelope must show `completed_by_role: worker_a`,
+a concrete `completed_by_agent_id`, `result_body_path`, `result_body_hash`,
+`next_recipient`, `body_visibility: sealed_target_role_only`, and the source
+runtime session id. If the router-provided `validate-artifact` command is
+available, run it against the result envelope and fix only mechanical envelope
+issues by rerunning the runtime session command. The chat response to Controller
+stays envelope-only.
 
 Do not approve gates, mutate routes, close nodes, or claim completion.

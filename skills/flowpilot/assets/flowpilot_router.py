@@ -334,6 +334,30 @@ MATERIAL_REPAIR_RECHECK_FLAGS = (
     "material_scan_dispatch_recheck_protocol_blocked",
 )
 
+MODEL_MISS_REVIEW_BLOCK_FLAGS = (
+    "node_acceptance_plan_review_blocked",
+    "current_node_dispatch_blocked",
+    "node_review_blocked",
+    "material_scan_dispatch_blocked",
+)
+
+MODEL_MISS_REVIEW_BLOCK_EVENTS = (
+    "reviewer_blocks_node_acceptance_plan",
+    "reviewer_blocks_current_node_dispatch",
+    "current_node_reviewer_blocks_result",
+    "reviewer_blocks_material_scan_dispatch",
+)
+
+MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS = (
+    "node_acceptance_plan_review_blocked",
+    "current_node_dispatch_blocked",
+    "node_review_blocked",
+)
+
+MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS = (
+    "material_scan_dispatch_blocked",
+)
+
 MATERIAL_REPAIR_OUTCOME_EVENTS = {
     "reviewer_allows_material_scan_dispatch",
     "worker_scan_results_returned",
@@ -836,7 +860,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "flag": "pm_model_miss_triage_card_delivered",
         "label": "pm_model_miss_triage_phase_card_delivered",
         "card_id": "pm.model_miss_triage",
-        "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
+        "requires_any_flag": list(MODEL_MISS_REVIEW_BLOCK_FLAGS),
         "to_role": "project_manager",
     },
     {
@@ -844,14 +868,14 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "label": "pm_review_repair_phase_card_delivered",
         "card_id": "pm.review_repair",
         "requires_flag": "model_miss_triage_closed",
-        "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
+        "requires_any_flag": list(MODEL_MISS_REVIEW_BLOCK_FLAGS),
         "to_role": "project_manager",
     },
     {
         "flag": "pm_reviewer_blocked_event_delivered",
         "label": "pm_reviewer_blocked_event_card_delivered",
         "card_id": "pm.event.reviewer_blocked",
-        "requires_any_flag": ["node_review_blocked", "material_scan_dispatch_blocked"],
+        "requires_any_flag": list(MODEL_MISS_REVIEW_BLOCK_FLAGS),
         "to_role": "project_manager",
     },
     {
@@ -1368,6 +1392,26 @@ class RouterError(ValueError):
     def __init__(self, message: str, *, control_blocker: dict[str, Any] | None = None):
         super().__init__(message)
         self.control_blocker = control_blocker
+
+
+def _active_model_miss_review_block_flags(run_state: dict[str, Any]) -> tuple[str, ...]:
+    flags = run_state.get("flags", {})
+    return tuple(flag for flag in MODEL_MISS_REVIEW_BLOCK_FLAGS if flags.get(flag))
+
+
+def _require_single_active_model_miss_review_block(run_state: dict[str, Any], purpose: str) -> str:
+    active_flags = _active_model_miss_review_block_flags(run_state)
+    if not active_flags:
+        raise RouterError(
+            f"{purpose} requires an active model-miss reviewer block state "
+            f"({', '.join(MODEL_MISS_REVIEW_BLOCK_FLAGS)})"
+        )
+    if len(active_flags) != 1:
+        raise RouterError(
+            f"{purpose} requires exactly one active model-miss reviewer block state; "
+            f"active flags: {', '.join(active_flags)}"
+        )
+    return active_flags[0]
 
 
 def utc_now() -> str:
@@ -2577,30 +2621,15 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
     )
     if any(marker in lowered for marker in fatal_markers):
         return "fatal_protocol_violation"
-    if (
-        event
-        and (event.startswith("reviewer_") or "reviewer" in event)
-        and any(
-            marker in lowered
-            for marker in (
-                "result_body_not_opened",
-                "packet_body_not_opened",
-                "packet_ledger_missing_packet_body_open_receipt",
-                "packet_ledger_missing_result_body_open_receipt",
-                "body was not opened by target role after controller relay",
-            )
-        )
-    ):
-        return "control_plane_reissue"
-    pm_markers = (
+    semantic_pm_markers = (
         "controller-origin",
+        "controller_origin_artifact",
         "wrong role",
         "wrong-role",
-        "reviewer pass rejected by packet audit",
-        "current-node result failed pre-relay packet runtime audit",
-        "packet group reviewer audit failed",
-        "body was not opened",
-        "unopened",
+        "result_completed_by_wrong_role",
+        "completed_agent_id_not_assigned_to_role",
+        "packet body hash mismatch",
+        "result body hash mismatch",
         "stale",
         "unresolved",
         "final ledger",
@@ -2608,12 +2637,27 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
         "parent segment",
         "ambiguous",
         "repair decision",
-        "packet body hash mismatch",
-        "result body hash mismatch",
-        "result_completed_by_wrong_role",
-        "completed_agent_id",
-        "packet_ledger_missing_result_absorption",
+    )
+    if any(marker in lowered for marker in semantic_pm_markers):
+        return "pm_repair_decision_required"
+    mechanical_reissue_markers = (
+        "result_body_not_opened",
+        "packet_body_not_opened",
+        "packet body was not opened by target role after controller relay",
+        "body was not opened by target role after controller relay",
+        "ledger open receipt is invalid",
         "packet_ledger_missing_packet_body_open_receipt",
+        "packet_ledger_missing_result_absorption",
+        "packet_ledger_missing_result_body_open_receipt",
+        "result body was not opened",
+        "completed_agent_id_is_role_key_not_agent_id",
+    )
+    if any(marker in lowered for marker in mechanical_reissue_markers):
+        return "control_plane_reissue"
+    pm_markers = (
+        "reviewer pass rejected by packet audit",
+        "current-node result failed pre-relay packet runtime audit",
+        "packet group reviewer audit failed",
     )
     if any(marker in lowered for marker in pm_markers):
         return "pm_repair_decision_required"
@@ -2683,6 +2727,11 @@ def _should_materialize_control_blocker(
         "completed_agent_id",
         "packet_ledger_missing_result_absorption",
         "packet_ledger_missing_packet_body_open_receipt",
+        "packet_ledger_missing_result_body_open_receipt",
+        "ledger open receipt is invalid",
+        "packet ledger missing packet body open receipt",
+        "packet ledger missing result absorption",
+        "packet ledger missing result body open receipt",
         "missing controller relay signature",
         "envelope was not delivered via controller",
         "controller did not sign",
@@ -3118,9 +3167,9 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
     artifact_rel = str(record.get("blocker_artifact_path") or active.get("blocker_artifact_path") or "")
     if not artifact_rel:
         return None
+    lane = str(record.get("handling_lane") or active.get("handling_lane") or "pm_repair_decision_required")
+    target_role = str(record.get("target_role") or active.get("target_role") or "project_manager")
     if record.get("delivery_status") != "delivered":
-        lane = str(record.get("handling_lane") or active.get("handling_lane") or "pm_repair_decision_required")
-        target_role = str(record.get("target_role") or active.get("target_role") or "project_manager")
         return make_action(
             action_type="handle_control_blocker",
             actor="controller",
@@ -3159,9 +3208,12 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
         summary="A router control blocker has been delivered. Controller must wait for the target role's corrected event or PM recovery decision.",
         allowed_reads=[artifact_rel, project_relative(project_root, run_state_path(run_root))],
         allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+        to_role=target_role,
         extra={
             "allowed_external_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS),
             "blocker_artifact_path": artifact_rel,
+            "target_role": target_role,
+            "handling_lane": lane,
             "repair_transaction_id": record.get("repair_transaction_id"),
             "repair_outcome_table": record.get("repair_outcome_table"),
         },
@@ -3266,11 +3318,7 @@ def _write_model_miss_triage_decision(project_root: Path, run_root: Path, run_st
     decision = _load_file_backed_role_payload(project_root, payload)
     if decision.get("decided_by_role") != "project_manager":
         raise RouterError("model-miss triage decision requires decided_by_role=project_manager")
-    if not (
-        run_state["flags"].get("node_review_blocked")
-        or run_state["flags"].get("material_scan_dispatch_blocked")
-    ):
-        raise RouterError("model-miss triage decision requires an active reviewer block")
+    _require_single_active_model_miss_review_block(run_state, "model-miss triage decision")
     missing = [
         field
         for field in PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS
@@ -8694,11 +8742,14 @@ def _validate_packet_bodies_opened_by_targets(project_root: Path, run_state: dic
         envelope = packet_runtime.load_envelope(project_root, envelope_path)
         expected_role = envelope.get("to_role")
         if envelope.get("body_opened_by_role", {}).get("role") != expected_role:
-            raise RouterError(f"packet {envelope.get('packet_id')} body was not opened by target role after Controller relay")
+            raise RouterError(
+                f"packet {envelope.get('packet_id')} for role={expected_role} body was not opened by target role "
+                "after Controller relay"
+            )
         try:
             packet_runtime.verify_packet_open_receipt(project_root, envelope, role=str(expected_role))
         except packet_runtime.PacketRuntimeError as exc:
-            raise RouterError(f"packet {envelope.get('packet_id')} ledger open receipt is invalid: {exc}") from exc
+            raise RouterError(f"packet {envelope.get('packet_id')} for role={expected_role} ledger open receipt is invalid: {exc}") from exc
 
 
 def _validate_results_exist_for_packets(project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, next_recipient: str) -> None:
@@ -8722,7 +8773,10 @@ def _validate_results_exist_for_packets(project_root: Path, run_state: dict[str,
             agent_role_map=agent_role_map,
         )
         if not audit.get("passed"):
-            raise RouterError(f"result envelope for packet {result.get('packet_id')} failed pre-relay audit: {audit.get('blockers')}")
+            raise RouterError(
+                f"result envelope for packet {result.get('packet_id')} for role={audit.get('expected_role')} "
+                f"failed pre-relay audit: {audit.get('blockers')}"
+            )
 
 
 def _validate_packet_group_for_reviewer(
@@ -9578,6 +9632,59 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         source_event="pm_mutates_route_after_review_block",
     )
     _reset_flags(run_state, CURRENT_NODE_CYCLE_FLAGS + ROUTE_COMPLETION_FLAGS)
+
+
+def _write_material_dispatch_repair(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    decision = _load_file_backed_role_payload(project_root, payload)
+    if decision.get("decided_by_role") != "project_manager":
+        raise RouterError("material dispatch repair requires decided_by_role=project_manager")
+    prior_review = _require_pm_prior_path_context(project_root, run_root, decision, purpose="material dispatch repair")
+    repair_action = str(decision.get("repair_action") or decision.get("selected_next_action") or "").strip()
+    if not repair_action:
+        raise RouterError("material dispatch repair requires repair_action or selected_next_action")
+    block = run_state.get("material_dispatch_block")
+    block_path = block.get("path") if isinstance(block, dict) else None
+    repair_path = run_root / "material" / "material_dispatch_repair.json"
+    write_json(
+        repair_path,
+        {
+            "schema_version": "flowpilot.material_dispatch_repair.v1",
+            "run_id": run_state["run_id"],
+            "decided_by_role": "project_manager",
+            "repair_action": repair_action,
+            "source_block_path": block_path,
+            "prior_path_context_review": prior_review,
+            "recorded_at": utc_now(),
+            **_role_output_envelope_record(decision),
+        },
+    )
+    run_state["material_dispatch_block"] = {
+        "path": block_path,
+        "repair_path": project_relative(project_root, repair_path),
+        "repair_recorded_at": utc_now(),
+        "status": "repair_ready_for_reviewer_recheck",
+    }
+    run_state["flags"]["material_scan_dispatch_blocked"] = False
+    run_state["flags"]["reviewer_dispatch_allowed"] = False
+    run_state["flags"]["reviewer_dispatch_card_delivered"] = False
+    for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
+        run_state["flags"][flag] = False
+
+
+def _write_pm_review_block_repair(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    active_block_flag = _require_single_active_model_miss_review_block(run_state, "review-block repair")
+    if active_block_flag in MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS:
+        _write_material_dispatch_repair(project_root, run_root, run_state, payload)
+        return
+    if active_block_flag in MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS:
+        _write_route_mutation(project_root, run_root, run_state, payload)
+        return
+    raise RouterError(f"review-block repair has no writer for active block flag {active_block_flag}")
 
 
 def _write_evidence_quality_package(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -12289,11 +12396,9 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     elif event == "reviewer_final_backward_replay_passed":
         _write_terminal_backward_replay(project_root, run_root, run_state, payload)
     elif event == "pm_mutates_route_after_review_block":
-        if not run_state["flags"].get("node_review_blocked"):
-            raise RouterError("review-block route mutation requires an active node_review_blocked state")
         if not run_state["flags"].get("model_miss_triage_closed"):
             raise RouterError("review-block repair or route mutation requires closed model-miss triage first")
-        _write_route_mutation(project_root, run_root, run_state, payload)
+        _write_pm_review_block_repair(project_root, run_root, run_state, payload)
     elif event == PM_MODEL_MISS_TRIAGE_DECISION_EVENT:
         model_miss_triage_decision = _write_model_miss_triage_decision(project_root, run_root, run_state, payload)
     elif event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
@@ -12320,12 +12425,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         payload,
     ):
         run_state["flags"][flag] = False
-    if event in {
-        "current_node_reviewer_blocks_result",
-        "reviewer_blocks_material_scan_dispatch",
-        "reviewer_blocks_current_node_dispatch",
-        "reviewer_blocks_node_acceptance_plan",
-    }:
+    if event in MODEL_MISS_REVIEW_BLOCK_EVENTS:
         run_state["flags"]["pm_model_miss_triage_card_delivered"] = False
         run_state["flags"]["model_miss_triage_closed"] = False
         run_state["flags"]["pm_review_repair_card_delivered"] = False
