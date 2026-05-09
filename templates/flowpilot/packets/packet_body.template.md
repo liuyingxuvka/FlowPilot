@@ -64,10 +64,16 @@ unopened envelope for PM reissue or repair.
 For packets addressed to `human_like_reviewer`, the PM must provide the user
 hard requirements, frozen contract or current gate ids, task family, quality
 level, relevant skill standards, artifact/evidence paths, and PM-known risks.
-This context is the minimum checklist only. The reviewer must still return an
+This context is the minimum checklist only. Artifact/evidence paths, required
+verification rows, and delivered `source_paths` are starting points, not the
+outer boundary of the review. The reviewer must independently decide whether
+more in-run evidence, host-visible proof, UI inspection, screenshots, source
+checks, command probes, contradiction checks, or freshness checks are needed to
+validate or falsify the claim under review. The reviewer must still return an
 `independent_challenge` object with scope restatement, explicit and implicit
 commitments, failure hypotheses, task-specific challenge actions, blocker
-triage, nonblocking findings, pass-or-block decision, reroute request, and any
+triage, nonblocking findings, pass-or-block decision, reroute request, PM
+decision-support recommendations for higher standards where useful, and any
 waivers. If the packet is not addressed to `human_like_reviewer`, write `not
 applicable`.
 

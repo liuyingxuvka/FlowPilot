@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=96",
+    "summary": "sequences=3 initial_states=1 traces=114",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -85,11 +85,33 @@
           "reviewer pass lacks direct evidence or an approved waiver"
         ]
       },
+      "no_evidence_discovery_or_waiver": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks independent evidence discovery or a reasoned waiver",
+        "failures": [
+          "reviewer pass lacks independent evidence discovery or a reasoned waiver"
+        ]
+      },
       "no_failure_hypotheses": {
         "detected": true,
         "expected_failure": "reviewer pass lacks active failure hypotheses",
         "failures": [
           "reviewer pass lacks active failure hypotheses"
+        ]
+      },
+      "pm_improvement_signal_dropped": {
+        "detected": true,
+        "expected_failure": "reviewer dropped a higher-standard PM decision-support recommendation",
+        "failures": [
+          "reviewer dropped a higher-standard PM decision-support recommendation"
+        ]
+      },
+      "review_package_treated_as_boundary": {
+        "detected": true,
+        "expected_failure": "reviewer treated delivered evidence as the review boundary",
+        "failures": [
+          "reviewer treated delivered evidence as the review boundary",
+          "reviewer pass lacks independent evidence discovery or a reasoned waiver"
         ]
       },
       "simple_review_overburdened": {
@@ -123,11 +145,11 @@
       "valid_simple_review",
       "valid_ui_review"
     ],
-    "edge_count": 32,
+    "edge_count": 38,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 12,
-    "state_count": 33
+    "rejected_state_count": 15,
+    "state_count": 39
   }
 }

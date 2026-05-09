@@ -20,8 +20,11 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
 
         hazards = result["hazard_checks"]["hazards"]
         self.assertTrue(hazards[model.CHECKLIST_ONLY_PASS]["detected"])
+        self.assertTrue(hazards[model.REVIEW_PACKAGE_TREATED_AS_BOUNDARY]["detected"])
+        self.assertTrue(hazards[model.NO_EVIDENCE_DISCOVERY_OR_WAIVER]["detected"])
         self.assertTrue(hazards[model.NO_FAILURE_HYPOTHESES]["detected"])
         self.assertTrue(hazards[model.HARD_ISSUE_DOWNGRADED_TO_RESIDUAL]["detected"])
+        self.assertTrue(hazards[model.PM_IMPROVEMENT_SIGNAL_DROPPED]["detected"])
         self.assertTrue(hazards[model.SIMPLE_REVIEW_OVERBURDENED]["detected"])
 
     def test_runtime_cards_templates_and_contracts_expose_independent_challenge(self) -> None:
@@ -62,6 +65,8 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
                 / "contract_index.json"
             ).read_text(encoding="utf-8")
         )
+        reviewer_core_flat = " ".join(reviewer_core.split())
+        packet_template_flat = " ".join(packet_template.split())
 
         for text in (
             "Reviewer Independent Challenge Gate",
@@ -72,9 +77,18 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
             "reroute_request",
         ):
             self.assertIn(text, reviewer_core)
+        for text in (
+            "known starting evidence, not a review boundary",
+            "router delivery `source_paths`",
+            "Treat self-attested AI claims as claims",
+            "higher-standard recommendation",
+        ):
+            self.assertIn(text, reviewer_core_flat)
 
         self.assertIn("independent_challenge", worker_review_card)
         self.assertIn("Reviewer Independent Challenge Context", packet_template)
+        self.assertIn("starting points, not the outer boundary", packet_template_flat)
+        self.assertIn("PM decision-support recommendations", packet_template_flat)
         self.assertIn("independent_challenge", human_review_template)
         self.assertIn("challenge_actions", human_review_template["independent_challenge"])
 

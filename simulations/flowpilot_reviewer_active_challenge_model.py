@@ -5,15 +5,17 @@ Risk intent brief:
   challenge beyond the PM checklist.
 - Protected harms: reviewer pass-through of low-standard PM packets, visible
   or exposed commitments being treated as decoration, hard failures being
-  downgraded to residual notes, and simple reviews being overloaded with
-  irrelevant heavyweight probes.
+  downgraded to residual notes, known evidence packages being treated as the
+  full review boundary, PM losing useful higher-standard recommendations, and
+  simple reviews being overloaded with irrelevant heavyweight probes.
 - Modeled state and side effects: reviewer scope restatement, explicit and
   implicit commitment extraction, failure-hypothesis generation, task-specific
-  challenge actions, direct evidence or waiver handling, blocker triage, and
-  PM reroute/repair requests.
+  challenge actions, direct evidence discovery or waiver handling, blocker
+  triage, and PM reroute/repair/recommendation requests.
 - Hard invariants: a pass requires a complete independent challenge report;
   hard requirement or core-commitment failures must block; challenge actions
-  must fit the current task family; uncheckable surfaces need a waiver or
+  must fit the current task family; known evidence must be treated as a
+  starting point rather than a boundary; uncheckable surfaces need a waiver or
   blocker; simple tasks must stay lightweight.
 - Blindspot: this model checks the reviewer process contract shape. It does
   not judge domain quality directly; production cards and tests must bind the
@@ -34,6 +36,8 @@ VALID_DOCUMENT_REVIEW = "valid_document_review"
 VALID_SIMPLE_REVIEW = "valid_simple_review"
 
 CHECKLIST_ONLY_PASS = "checklist_only_pass"
+REVIEW_PACKAGE_TREATED_AS_BOUNDARY = "review_package_treated_as_boundary"
+NO_EVIDENCE_DISCOVERY_OR_WAIVER = "no_evidence_discovery_or_waiver"
 MISSING_SCOPE_RESTATEMENT = "missing_scope_restatement"
 MISSING_IMPLICIT_COMMITMENTS = "missing_implicit_commitments"
 NO_FAILURE_HYPOTHESES = "no_failure_hypotheses"
@@ -44,6 +48,7 @@ HARD_ISSUE_DOWNGRADED_TO_RESIDUAL = "hard_issue_downgraded_to_residual"
 CORE_COMMITMENT_UNVERIFIED = "core_commitment_unverified"
 UNCHECKABLE_WITHOUT_WAIVER = "uncheckable_without_waiver"
 MISSING_REROUTE_REQUEST_FOR_BLOCKER = "missing_reroute_request_for_blocker"
+PM_IMPROVEMENT_SIGNAL_DROPPED = "pm_improvement_signal_dropped"
 SIMPLE_REVIEW_OVERBURDENED = "simple_review_overburdened"
 
 VALID_SCENARIOS = (
@@ -54,6 +59,8 @@ VALID_SCENARIOS = (
 )
 NEGATIVE_SCENARIOS = (
     CHECKLIST_ONLY_PASS,
+    REVIEW_PACKAGE_TREATED_AS_BOUNDARY,
+    NO_EVIDENCE_DISCOVERY_OR_WAIVER,
     MISSING_SCOPE_RESTATEMENT,
     MISSING_IMPLICIT_COMMITMENTS,
     NO_FAILURE_HYPOTHESES,
@@ -64,6 +71,7 @@ NEGATIVE_SCENARIOS = (
     CORE_COMMITMENT_UNVERIFIED,
     UNCHECKABLE_WITHOUT_WAIVER,
     MISSING_REROUTE_REQUEST_FOR_BLOCKER,
+    PM_IMPROVEMENT_SIGNAL_DROPPED,
     SIMPLE_REVIEW_OVERBURDENED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -87,6 +95,8 @@ class State:
 
     pm_review_context_present: bool = False
     pm_checklist_treated_as_floor: bool = False
+    known_evidence_treated_as_starting_points: bool = False
+    evidence_discovery_or_reasoned_waiver_performed: bool = False
 
     scope_restatement_written: bool = False
     explicit_commitments_extracted: bool = False
@@ -104,6 +114,8 @@ class State:
     uncheckable_surface_present: bool = False
     waiver_or_blocker_for_uncheckable: bool = False
     reroute_request_recorded_when_needed: bool = True
+    higher_standard_opportunity_found: bool = False
+    pm_decision_support_recommendation_recorded: bool = True
 
     reviewer_passed: bool = False
     reviewer_blocked: bool = False
@@ -162,6 +174,8 @@ def _valid_review_state(scenario: str, task_family: str) -> State:
         task_family=task_family,
         pm_review_context_present=True,
         pm_checklist_treated_as_floor=True,
+        known_evidence_treated_as_starting_points=True,
+        evidence_discovery_or_reasoned_waiver_performed=True,
         scope_restatement_written=True,
         explicit_commitments_extracted=True,
         implicit_commitments_extracted=True,
@@ -202,6 +216,14 @@ def _scenario_state(scenario: str) -> State:
             core_commitments_verified_or_blocked=False,
             report_schema_complete=False,
         )
+    if scenario == REVIEW_PACKAGE_TREATED_AS_BOUNDARY:
+        return replace(
+            state,
+            known_evidence_treated_as_starting_points=False,
+            evidence_discovery_or_reasoned_waiver_performed=False,
+        )
+    if scenario == NO_EVIDENCE_DISCOVERY_OR_WAIVER:
+        return replace(state, evidence_discovery_or_reasoned_waiver_performed=False)
     if scenario == MISSING_SCOPE_RESTATEMENT:
         return replace(state, scope_restatement_written=False)
     if scenario == MISSING_IMPLICIT_COMMITMENTS:
@@ -244,6 +266,12 @@ def _scenario_state(scenario: str) -> State:
             reviewer_blocked=True,
             reroute_request_recorded_when_needed=False,
         )
+    if scenario == PM_IMPROVEMENT_SIGNAL_DROPPED:
+        return replace(
+            state,
+            higher_standard_opportunity_found=True,
+            pm_decision_support_recommendation_recorded=False,
+        )
     if scenario == SIMPLE_REVIEW_OVERBURDENED:
         return replace(
             _valid_review_state(scenario, "simple_review"),
@@ -259,6 +287,10 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         failures.append("reviewer passed without PM review context")
     if state.reviewer_passed and not state.pm_checklist_treated_as_floor:
         failures.append("reviewer treated PM checklist as the full review instead of the floor")
+    if state.reviewer_passed and not state.known_evidence_treated_as_starting_points:
+        failures.append("reviewer treated delivered evidence as the review boundary")
+    if state.reviewer_passed and not state.evidence_discovery_or_reasoned_waiver_performed:
+        failures.append("reviewer pass lacks independent evidence discovery or a reasoned waiver")
     if state.reviewer_passed and not state.scope_restatement_written:
         failures.append("reviewer pass lacks scope restatement")
     if state.reviewer_passed and not state.explicit_commitments_extracted:
@@ -290,6 +322,8 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         failures.append("reviewer found an uncheckable surface without waiver or blocker")
     if state.reviewer_blocked and state.hard_issue_found and not state.reroute_request_recorded_when_needed:
         failures.append("reviewer blocker lacks PM reroute or repair request")
+    if state.higher_standard_opportunity_found and not state.pm_decision_support_recommendation_recorded:
+        failures.append("reviewer dropped a higher-standard PM decision-support recommendation")
     if state.task_family == "simple_review" and state.simple_review_overburdened:
         failures.append("simple review was overburdened with irrelevant heavyweight challenge work")
     if state.status in {"accepted", "rejected"} and not (state.reviewer_passed or state.reviewer_blocked):
@@ -354,7 +388,23 @@ def challenge_actions_fit_scope(state: State, trace) -> InvariantResult:
     if state.status != "accepted":
         return InvariantResult.pass_()
     for failure in reviewer_challenge_failures(state):
-        if "task family" in failure or "direct evidence" in failure or "uncheckable" in failure:
+        if (
+            "task family" in failure
+            or "direct evidence" in failure
+            or "evidence discovery" in failure
+            or "review boundary" in failure
+            or "uncheckable" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
+def higher_standard_signals_reach_pm(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in reviewer_challenge_failures(state):
+        if "higher-standard PM decision-support recommendation" in failure:
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()
 
@@ -394,6 +444,11 @@ INVARIANTS = (
         name="simple_reviews_stay_lightweight",
         description="Simple reviews must not be burdened by irrelevant heavyweight challenge work.",
         predicate=simple_reviews_stay_lightweight,
+    ),
+    Invariant(
+        name="higher_standard_signals_reach_pm",
+        description="Reviewer higher-standard findings must reach PM as decision-support.",
+        predicate=higher_standard_signals_reach_pm,
     ),
 )
 

@@ -53,10 +53,21 @@ not replace PM's judgement on standard, scope, or route tradeoffs.
 ## Reviewer Independent Challenge Gate
 
 The PM review package is the minimum checklist, not the boundary of your
-review. For every review report, approval, block, waiver, or reroute request,
-perform an independent challenge based on the user request, frozen contract,
-current artifact, task family, quality level, route state, and delivered
-evidence.
+review. The package evidence and router delivery `source_paths` are known
+starting evidence, not a review boundary. When a claim needs corroboration,
+contradiction search, freshness checking, or direct product/host validation,
+seek the relevant in-run files, receipts, logs, source state, UI/host-visible
+proof, screenshots, commands, or other task-specific probes inside your
+authorized scope. Treat self-attested AI claims as claims until corroborated by
+direct evidence or an approved waiver.
+
+For every review report, approval, block, waiver, or reroute request, perform
+an independent challenge based on the user request, frozen contract, current
+artifact, task family, quality level, route state, and delivered evidence.
+Report hard blockers, evidence gaps, and quality concerns. When you find a
+higher-standard opportunity, simpler path, missing design obligation,
+over-repair risk, or useful quality improvement, give PM a clear
+higher-standard recommendation as decision-support unless it is a hard blocker.
 
 Every review body must include an `independent_challenge` object with these
 exact fields:

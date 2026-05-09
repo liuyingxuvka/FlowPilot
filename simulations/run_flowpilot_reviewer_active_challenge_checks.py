@@ -23,6 +23,8 @@ REQUIRED_LABELS = tuple(
 
 HAZARD_EXPECTED_FAILURES = {
     model.CHECKLIST_ONLY_PASS: "reviewer treated PM checklist as the full review instead of the floor",
+    model.REVIEW_PACKAGE_TREATED_AS_BOUNDARY: "reviewer treated delivered evidence as the review boundary",
+    model.NO_EVIDENCE_DISCOVERY_OR_WAIVER: "reviewer pass lacks independent evidence discovery or a reasoned waiver",
     model.MISSING_SCOPE_RESTATEMENT: "reviewer pass lacks scope restatement",
     model.MISSING_IMPLICIT_COMMITMENTS: "reviewer pass lacks implicit commitment extraction",
     model.NO_FAILURE_HYPOTHESES: "reviewer pass lacks active failure hypotheses",
@@ -33,6 +35,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.CORE_COMMITMENT_UNVERIFIED: "reviewer pass leaves core commitments unverified and unblocked",
     model.UNCHECKABLE_WITHOUT_WAIVER: "reviewer found an uncheckable surface without waiver or blocker",
     model.MISSING_REROUTE_REQUEST_FOR_BLOCKER: "reviewer blocker lacks PM reroute or repair request",
+    model.PM_IMPROVEMENT_SIGNAL_DROPPED: "reviewer dropped a higher-standard PM decision-support recommendation",
     model.SIMPLE_REVIEW_OVERBURDENED: "simple review was overburdened with irrelevant heavyweight challenge work",
 }
 
