@@ -5815,6 +5815,76 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - No local installed-skill sync, git stage/commit, version bump, tag, or GitHub push was performed per user instruction.
 
+## flowpilot-0.6.1-release-sync-20260509 - Publish role-output runtime and quality-pack release
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved synchronizing the repository source, local installed FlowPilot skill, local git state, remote GitHub branch, tag, and GitHub Release after the role-output runtime and quality-pack catalog work.
+- Status: release_verified_pending_publish
+- Skill decision: used FlowGuard-backed release discipline because the work publishes behavior-bearing runtime, router, role-card, contract, and model changes to downstream users.
+
+### Version Decision
+- Reused `0.6.1` because the local source already declares `0.6.1` and neither the local tag set nor the remote GitHub tag set contains `v0.6.1`.
+- No `0.6.2` bump is required unless release validation finds a patch-only correction that should be separated from the already documented `0.6.1` changes.
+
+### Release Boundary
+- Publish the FlowPilot source package only; no binary application bundle is part of this release.
+- Preserve all existing user/peer-agent repository changes in the release scope instead of reverting unrelated dirty work.
+- Synchronize the repository-owned `flowpilot` skill into the local Codex installed-skill directory before final git publication.
+
+### Commands
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json` synchronized repository `skills/flowpilot` to the local Codex skills install directory.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_public_release.py --json --skip-validation` passed with only the expected dirty-worktree warning before commit.
+
+### Planned Checks
+- Runtime/router/contract targeted unit tests for role-output runtime, packet runtime, and compact role-output envelope acceptance.
+- FlowGuard simulation checks for role-output runtime, output contracts, protocol conformance, release tooling, packet lifecycle, repair transactions, and install checks.
+- Public release privacy and dependency-source checks after staging and again after commit/tag when the worktree is clean.
+- GitHub ruleset/branch-protection verification before final reporting.
+
+### Verification Progress
+- OK: `python -m py_compile skills\flowpilot\assets\role_output_runtime.py skills\flowpilot\assets\flowpilot_router.py scripts\flowpilot_runtime.py scripts\flowpilot_outputs.py simulations\flowpilot_role_output_runtime_model.py simulations\flowpilot_protocol_contract_conformance_model.py`.
+- OK: `python -m pytest tests\test_flowpilot_output_contracts.py tests\test_flowpilot_role_output_runtime.py -q` returned `10 passed`.
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py -q` returned `18 passed`.
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "role_output_envelope or missing_open_receipt or pm_resume_recovery_decision or control_blocker"` returned `9 passed, 92 deselected`.
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py`.
+- OK: `python simulations\run_output_contract_checks.py`.
+- OK: `python simulations\run_protocol_contract_conformance_checks.py`.
+- OK: `python simulations\run_release_tooling_checks.py`.
+- OK: `python scripts\check_install.py --json`.
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py`.
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py`.
+- OK: `python simulations\run_card_instruction_coverage_checks.py`.
+- OK: `python scripts\smoke_autopilot.py --fast`.
+- OK: all `simulations\run_*_checks.py` runners exited 0 under the release-safe profile; `run_meta_checks.py` and `run_capability_checks.py` used `--fast`, and live-run friction checks used `--skip-live-audit`.
+- OK: background full `python -m pytest tests -q --import-mode=importlib` returned `182 passed, 19 subtests passed`.
+- Fixed release tooling after clean public preflight found that the default
+  smoke command exhausted memory in full meta/capability graph exploration;
+  `check_public_release.py` now invokes `scripts\smoke_autopilot.py --fast`,
+  matching the release-safe proof-reuse path already validated above.
+
+### Continuation Verification
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py -q -k "role_output_envelope or missing_open_receipt or pm_resume_recovery_decision or control_blocker"` returned `9 passed, 92 deselected`.
+- OK: `python -m pytest tests/test_flowpilot_packet_runtime.py -q` returned `18 passed`.
+- OK: `python -m pytest tests/test_flowpilot_output_contracts.py tests/test_flowpilot_role_output_runtime.py -q` returned `10 passed`.
+- OK: `python simulations/run_flowpilot_role_output_runtime_checks.py`.
+- OK: `python simulations/run_output_contract_checks.py`.
+- OK: `python simulations/run_card_instruction_coverage_checks.py`.
+- OK: `python simulations/run_protocol_contract_conformance_checks.py` after updating the model oracle from legacy top-level role-output path/hash fields to compact `body_ref` and `runtime_receipt_ref` references.
+- OK: `python simulations/run_flowpilot_repair_transaction_checks.py`.
+- OK: `python simulations/run_flowpilot_packet_lifecycle_checks.py`.
+- OK: `python simulations/run_prompt_isolation_checks.py`.
+- OK: `python simulations/run_router_action_contract_checks.py`.
+- OK: `python scripts/check_install.py --json`.
+- OK: background `python simulations/run_meta_checks.py --fast` and `python simulations/run_capability_checks.py --fast` reused valid proofs.
+- OK with live-audit caveats: background scan of `simulations/run_*_checks.py` passed all model/source checks except the two expected live environment checks below.
+
+### Continuation Findings
+- The protocol conformance model previously assumed role-output envelopes must expose top-level `report_path`/`decision_path`/`result_body_path` pairs. That was a model miss for the new lower-friction design; the required new pair is now `body_ref.path/body_ref.hash` plus `runtime_receipt_ref.path/runtime_receipt_ref.hash`, while legacy top-level pairs remain compatibility inputs.
+- `run_flowpilot_control_plane_friction_checks.py` still reports live-run warnings for `.flowpilot/runs/run-20260509-102855`: stale active repair transaction state, unproven terminal heartbeat cleanup, and a stale persisted role-output hash from the current run artifact. This check is live-state audit evidence, not a failure of the new source model.
+- `run_flowpilot_cross_plane_friction_checks.py` still reports installed FlowPilot skill source drift because the repository copy was intentionally not synchronized to the local installed skill per user instruction.
+- `python -m pytest tests -q` was attempted as a full unit regression but timed out after five minutes, so it is not claimed as passed. Targeted runtime/router/contract tests above were used as the practical verification boundary for this change.
+
 ## flowpilot-0.6.0-release-sync-20260509 - Publish runtime session and router friction release
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -5847,3 +5917,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Commit, tag `v0.6.0`, push `main` and the tag, create the GitHub Release, then rerun clean public release checks.
+
+## flowpilot-0.6.1-background-role-policy-20260509 - Require explicit strongest background role policy
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A concurrent desired router change introduced explicit model and reasoning-effort policy requirements for FlowPilot background role agents after the `0.6.0` release was created.
+- Status: source_updated_for_patch_release
+- Skill decision: used_flowguard because the change affects startup and resume role authority records, background-agent capability evidence, and PM/reviewer trust in live role-agent records.
+
+### Version Decision
+- Bumped FlowPilot from `0.6.0` to `0.6.1`.
+- Chosen bump: patch, because the release hardens role-agent policy metadata without changing the public package shape or replacing the `0.6.0` runtime session feature.
+
+### Model Boundary
+- Startup live-role spawn records now require `model_policy=strongest_available` and `reasoning_effort_policy=highest_available`.
+- Resume/rehydration role records use the same required policy fields.
+- Router action payloads expose the policy so role-spawn and role-resume evidence cannot silently rely on foreground/controller model inheritance.
+
+### Planned Checks
+- Install sync audit after repository-to-local skill sync.
+- Router/runtime unit and pytest regression.
+- Public release privacy/dependency check before GitHub publication.
+
+## flowpilot-role-output-runtime-20260509 - Generalize report/decision clock-in runtime
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to reduce friction from hand-written high-density PM/reviewer/officer role outputs while preserving Controller/body boundaries and existing packet mail.
+- Status: source_updated_not_synced
+- Skill decision: used_flowguard because the change affects role-output contracts, router validation, receipts, ledgers, Controller visibility, and recovery routing.
+
+### Model Boundary
+- Added a role-output runtime model covering runtime receipt, required fields, explicit empty arrays, wrong-role submission, stale body hash, envelope body leakage, Controller body reads, and runtime overreach into semantic approval.
+- Kept packet mail and packet result runtime separate; role-output runtime applies to formal file-backed decisions/reports/GateDecision bodies that return to Controller as envelopes.
+- Mechanical gaps are modeled as same-role reissue candidates, while wrong role/body leakage/Controller body read remain PM-reviewable boundary failures.
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- OK baseline before production edits: `python simulations\run_output_contract_checks.py`, `python simulations\run_protocol_contract_conformance_checks.py`, `python simulations\run_flowpilot_packet_lifecycle_checks.py --no-write`, `python simulations\run_flowpilot_repair_transaction_checks.py`, `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit`, and `python simulations\run_flowpilot_cross_plane_friction_checks.py --skip-live-audit`.
+- OK: `python simulations\run_meta_checks.py --fast` and `python simulations\run_capability_checks.py --fast` reused valid proofs.
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py --model-only`.
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\role_output_runtime.py scripts\check_install.py tests\test_flowpilot_role_output_runtime.py tests\test_flowpilot_output_contracts.py`.
+- OK: `python -m pytest tests\test_flowpilot_role_output_runtime.py tests\test_flowpilot_output_contracts.py -q`.
+- OK: `python scripts\check_install.py --json`.
+- OK: targeted router regression `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "role_output_envelope or pm_resume or control_blocker or gate_decision"`.
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py -q`.
+- OK: `python -m pytest tests\test_flowpilot_card_instruction_coverage.py -q`.
+
+### Findings
+- `role_output_runtime.py` now prepares contract skeletons, validates required fields/fixed choices/explicit arrays, writes receipts and a role-output ledger, and returns only controller-visible envelopes.
+- Router now verifies runtime receipts when a role-output envelope claims runtime validation, without allowing Controller-visible payloads to contain report/decision body fields.
+- Core role cards now tell PM/reviewer/officers/workers when to use `role_output_runtime.py` versus `packet_runtime.py`, keeping packet results separate from standalone formal role outputs.
+
+### Skipped Steps
+- No local installed-skill sync, git stage/commit, version bump, tag, or GitHub push was performed per user instruction.

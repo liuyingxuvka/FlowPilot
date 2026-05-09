@@ -46,6 +46,11 @@ ledger and all six standard roles. A bounded `wait_agent` timeout is
 roles must be restored or replaced from current-run memory before PM resume
 decision.
 
+Whenever this resume path restores, rehydrates, replaces, or otherwise opens a
+live background role agent, request the strongest available host model and the
+highest available reasoning effort explicitly. Do not let resumed background
+roles inherit the foreground/Controller model by omission.
+
 After loading state, report only whether the required files and role memories
 exist and whether continuation authority is current. If anything is missing,
 stale, contaminated, or ambiguous, block packet flow and ask PM for a recovery

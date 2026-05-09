@@ -213,14 +213,17 @@
       ],
       "role_output_card_path_hash_pairs": [
         "body_path/body_hash",
+        "body_ref.path/body_ref.hash",
         "decision_path/decision_hash",
         "report_path/report_hash",
-        "result_body_path/result_body_hash"
+        "result_body_path/result_body_hash",
+        "runtime_receipt_ref.path/runtime_receipt_ref.hash"
       ],
       "role_output_cards_forbid_sha256_aliases": true,
-      "role_output_cards_require_top_level_keys": true,
+      "role_output_cards_require_compact_refs": true,
       "role_output_contract_path_hash_pairs": [
         "architecture_path/architecture_hash",
+        "body_ref.path/body_ref.hash",
         "contract_path/contract_hash",
         "decision_path/decision_hash",
         "draft_path/draft_hash",
@@ -230,11 +233,13 @@
         "plan_path/plan_hash",
         "report_path/report_hash",
         "result_body_path/result_body_hash",
-        "route_path/route_hash"
+        "route_path/route_hash",
+        "runtime_receipt_ref.path/runtime_receipt_ref.hash"
       ],
       "role_output_router_path_hash_pairs": [
         "architecture_path/architecture_hash",
         "body_path/body_hash",
+        "body_ref.path/body_ref.hash",
         "contract_path/contract_hash",
         "decision_path/decision_hash",
         "draft_path/draft_hash",
@@ -245,7 +250,8 @@
         "plan_path/plan_hash",
         "report_path/report_hash",
         "result_body_path/result_body_hash",
-        "route_path/route_hash"
+        "route_path/route_hash",
+        "runtime_receipt_ref.path/runtime_receipt_ref.hash"
       ],
       "role_output_router_rejects_nested_envelope": true,
       "role_output_router_rejects_sha256_aliases": true,

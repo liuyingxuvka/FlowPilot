@@ -79,7 +79,17 @@ event.
 
 Write the full PM decision body to the run-scoped decision file requested by
 Controller or router state. Return in chat only a controller-visible envelope
-with the decision path and hash.
+with compact `body_ref` and `runtime_receipt_ref` metadata. Legacy decision
+path/hash envelopes are accepted only for compatibility.
+
+Preferred path: use `flowpilot_runtime.py prepare-output --output-type
+pm_control_blocker_repair_decision --role project_manager --agent-id
+<agent-id>` and then `flowpilot_runtime.py submit-output`. The lower-level
+`role_output_runtime.py` commands are compatibility entrypoints. The runtime
+writes the mechanical skeleton, explicit empty arrays, generic quality-pack
+checklist rows when declared, body hash, receipt, and role-output ledger
+record. PM still owns the repair action, rerun target, transaction choice,
+quarantine/stop decision, and semantic reasoning.
 
 Use these exact field names and one of the allowed `decision` values:
 `repair_completed`, `repair_not_required`, `resolved_by_followup_event`, or

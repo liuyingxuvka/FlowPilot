@@ -19,6 +19,12 @@ Accept only:
 - same-task role memory packets rehydrated into replacement roles;
 - explicit user-approved single-agent six-role fallback.
 
+For any live background role agent, whether it is first spawned, restored,
+rehydrated, or replaced during heartbeat/manual resume, require an explicit
+strongest-available host model request and highest-available reasoning-effort
+request. Foreground/Controller model inheritance is not sufficient background
+role setup.
+
 Prior-run `agent_id` values are audit history only. If any required role is
 missing, stale, cross-run, or unverifiable, block route work until PM records a
 replacement or fallback decision.

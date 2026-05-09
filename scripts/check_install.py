@@ -39,9 +39,11 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/barrier_bundle.py",
     "skills/flowpilot/assets/flowpilot_router.py",
     "skills/flowpilot/assets/packet_runtime.py",
+    "skills/flowpilot/assets/role_output_runtime.py",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
     "skills/flowpilot/assets/runtime_kit/README.md",
     "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json",
+    "skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json",
     "skills/flowpilot/assets/runtime_kit/cards/system/startup_banner.md",
     "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
     "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
@@ -245,6 +247,9 @@ REQUIRED_FILES = [
     "simulations/flowpilot_repair_transaction_model.py",
     "simulations/run_flowpilot_repair_transaction_checks.py",
     "simulations/flowpilot_repair_transaction_results.json",
+    "simulations/flowpilot_role_output_runtime_model.py",
+    "simulations/run_flowpilot_role_output_runtime_checks.py",
+    "simulations/flowpilot_role_output_runtime_results.json",
     "simulations/release_tooling_model.py",
     "simulations/run_release_tooling_checks.py",
     "simulations/release_tooling_results.json",
@@ -255,6 +260,8 @@ REQUIRED_FILES = [
     "scripts/flowpilot_defects.py",
     "scripts/flowpilot_lifecycle.py",
     "scripts/flowpilot_packets.py",
+    "scripts/flowpilot_outputs.py",
+    "scripts/flowpilot_runtime.py",
     "scripts/flowpilot_user_flow_diagram.py",
     "scripts/smoke_autopilot.py",
     "skills/flowpilot/assets/flowpilot_paths.py",
@@ -265,6 +272,7 @@ REQUIRED_FILES = [
     "tests/test_flowpilot_output_contracts.py",
     "tests/test_flowpilot_planning_quality.py",
     "tests/test_flowpilot_reviewer_active_challenge.py",
+    "tests/test_flowpilot_role_output_runtime.py",
 ]
 
 JSON_FILES = [
@@ -274,6 +282,7 @@ JSON_FILES = [
     "docs/flowpilot_ten_step_migration_status.json",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
     "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json",
+    "skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json",
     "simulations/release_tooling_results.json",
     "simulations/barrier_equivalence_results.json",
     "simulations/router_next_recipient_results.json",
@@ -292,6 +301,7 @@ JSON_FILES = [
     "simulations/flowpilot_reviewer_active_challenge_results.json",
     "simulations/protocol_contract_conformance_model_only_results.json",
     "simulations/protocol_contract_conformance_results.json",
+    "simulations/flowpilot_role_output_runtime_results.json",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
     "templates/flowpilot/runs/run-001/run.template.json",
@@ -538,9 +548,13 @@ def main() -> int:
     assets_path = ROOT / "skills" / "flowpilot" / "assets"
     if assets_path.exists():
         sys.path.insert(0, str(assets_path))
+        scripts_path = ROOT / "scripts"
+        sys.path.insert(0, str(scripts_path))
         try:
             flowpilot_router = importlib.import_module("flowpilot_router")
             packet_runtime = importlib.import_module("packet_runtime")
+            role_output_runtime = importlib.import_module("role_output_runtime")
+            flowpilot_runtime = importlib.import_module("flowpilot_runtime")
             schema_match = (
                 getattr(flowpilot_router, "PACKET_LEDGER_SCHEMA", None)
                 == getattr(packet_runtime, "PACKET_LEDGER_SCHEMA", None)
@@ -554,6 +568,22 @@ def main() -> int:
                 }
             )
             if not schema_match:
+                result["ok"] = False
+            role_output_runtime_ok = bool(
+                getattr(role_output_runtime, "ROLE_OUTPUT_RUNTIME_SCHEMA", None)
+                and "pm_resume_recovery_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
+                and "gate_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
+                and hasattr(role_output_runtime, "quality_pack_checks_for_run")
+            )
+            result["checks"].append(
+                {
+                    "name": "flowpilot_role_output_runtime_available",
+                    "ok": role_output_runtime_ok,
+                    "runtime_schema": getattr(role_output_runtime, "ROLE_OUTPUT_RUNTIME_SCHEMA", None),
+                    "supported_output_types": sorted(getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())),
+                }
+            )
+            if not role_output_runtime_ok:
                 result["ok"] = False
             cli_cases = [
                 ["--root", str(ROOT), "next", "--json"],
@@ -597,6 +627,104 @@ def main() -> int:
                 }
             )
             if not cli_ok:
+                result["ok"] = False
+            role_output_cli_cases = [
+                [
+                    "--root",
+                    str(ROOT),
+                    "prepare-output",
+                    "--output-type",
+                    "pm_resume_recovery_decision",
+                    "--role",
+                    "project_manager",
+                    "--agent-id",
+                    "agent-pm-check",
+                ],
+                [
+                    "--root",
+                    str(ROOT),
+                    "submit-output",
+                    "--output-type",
+                    "gate_decision",
+                    "--role",
+                    "human_like_reviewer",
+                    "--agent-id",
+                    "agent-reviewer-check",
+                    "--body-json",
+                    "{}",
+                ],
+                ["--root", str(ROOT), "verify-envelope", "--envelope-file", "role_outputs/sample.json"],
+            ]
+            role_output_cli_parse_errors = []
+            for case in role_output_cli_cases:
+                try:
+                    role_output_runtime.parse_args(case)
+                except BaseException as exc:
+                    role_output_cli_parse_errors.append({"case": case, "error": repr(exc)})
+            role_output_cli_ok = not role_output_cli_parse_errors
+            result["checks"].append(
+                {
+                    "name": "flowpilot_role_output_runtime_cli_commands_parse",
+                    "ok": role_output_cli_ok,
+                    "parse_error_count": len(role_output_cli_parse_errors),
+                    "parse_errors": role_output_cli_parse_errors,
+                }
+            )
+            if not role_output_cli_ok:
+                result["ok"] = False
+            unified_cli_cases = [
+                [
+                    "--root",
+                    str(ROOT),
+                    "prepare-output",
+                    "--output-type",
+                    "pm_resume_recovery_decision",
+                    "--role",
+                    "project_manager",
+                    "--agent-id",
+                    "agent-pm-check",
+                ],
+                [
+                    "--root",
+                    str(ROOT),
+                    "open-packet",
+                    "--envelope-path",
+                    ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+                    "--role",
+                    "worker_a",
+                    "--agent-id",
+                    "agent-worker-check",
+                ],
+                [
+                    "--root",
+                    str(ROOT),
+                    "submit-output",
+                    "--output-type",
+                    "gate_decision",
+                    "--role",
+                    "human_like_reviewer",
+                    "--agent-id",
+                    "agent-reviewer-check",
+                    "--body-json",
+                    "{}",
+                ],
+            ]
+            unified_cli_parse_errors = []
+            for case in unified_cli_cases:
+                try:
+                    flowpilot_runtime.parse_args(case)
+                except BaseException as exc:
+                    unified_cli_parse_errors.append({"case": case, "error": repr(exc)})
+            unified_cli_ok = not unified_cli_parse_errors
+            result["checks"].append(
+                {
+                    "name": "flowpilot_unified_runtime_cli_commands_parse",
+                    "ok": unified_cli_ok,
+                    "parse_error_count": len(unified_cli_parse_errors),
+                    "parse_errors": unified_cli_parse_errors,
+                }
+            )
+            if not unified_cli_ok:
                 result["ok"] = False
             packet_body_template = ROOT / "templates/flowpilot/packets/packet_body.template.md"
             result_body_template = ROOT / "templates/flowpilot/packets/result_body.template.md"

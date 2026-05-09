@@ -21,21 +21,22 @@ missing, mismatched, or contains inline body fields, return
 `unauthorized_direct_message` and wait for a corrected router-delivered
 envelope.
 
-Open the addressed research packet through `packet_runtime.py
-open-packet-session` or `packet_runtime.py run-packet-session` with a concrete
-`--agent-id`; do not read the packet body by ordinary file read or from chat
-context. Return only the bounded research result requested by the PM.
+Open the addressed research packet through the unified runtime
+(`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
+a concrete `--agent-id`; do not read the packet body by ordinary file read or
+from chat context. The lower-level `packet_runtime.py open-packet-session` and
+`packet_runtime.py run-packet-session` commands remain compatibility
+entrypoints. Return only the bounded research result requested by the PM.
 
 Before returning the result envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 result or report body. If required source checks, sections, or evidence are
 missing, return `blocked` or `needs_pm`.
 
-Submit the full research body through `packet_runtime.py
-complete-packet-session` or `run-packet-session` and return only the
-runtime-generated result envelope to Controller. Do not hand-write the result
-envelope unless the runtime is unavailable and you are returning a protocol
-blocker.
+Submit the full research body through `flowpilot_runtime.py complete-packet` or
+`flowpilot_runtime.py run-packet` and return only the runtime-generated result
+envelope to Controller. Do not hand-write the result envelope unless the
+runtime is unavailable and you are returning a protocol blocker.
 
 Include:
 

@@ -11,10 +11,11 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 Review a worker result before PM may use it.
 
-Open the sealed result body through `packet_runtime.py open-result-session`
-with a concrete `--agent-id` before judging substance. This runtime session is
-the reviewer read receipt; do not replace it with an ordinary file read, chat
-summary, or self-attested worker claim.
+Open the sealed result body through `flowpilot_runtime.py open-result` with a
+concrete `--agent-id` before judging substance. The lower-level
+`packet_runtime.py open-result-session` command remains a compatibility
+entrypoint. This runtime session is the reviewer read receipt; do not replace
+it with an ordinary file read, chat summary, or self-attested worker claim.
 
 Check:
 

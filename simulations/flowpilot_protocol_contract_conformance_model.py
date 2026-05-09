@@ -90,9 +90,8 @@ PM_REVIEW_BLOCK_REPAIR_EVENT = "pm_mutates_route_after_review_block"
 
 ROLE_OUTPUT_REQUIRED_PAIRS = frozenset(
     {
-        "report_path/report_hash",
-        "decision_path/decision_hash",
-        "result_body_path/result_body_hash",
+        "body_ref.path/body_ref.hash",
+        "runtime_receipt_ref.path/runtime_receipt_ref.hash",
     }
 )
 
@@ -180,7 +179,7 @@ class State:
     role_output_contract_path_hash_pairs: frozenset[str] = field(default_factory=frozenset)
     role_output_router_path_hash_pairs: frozenset[str] = field(default_factory=frozenset)
     role_output_card_path_hash_pairs: frozenset[str] = field(default_factory=frozenset)
-    role_output_cards_require_top_level_keys: bool = True
+    role_output_cards_require_compact_refs: bool = True
     role_output_cards_forbid_sha256_aliases: bool = True
     role_output_router_rejects_sha256_aliases: bool = True
     role_output_router_rejects_nested_envelope: bool = True
@@ -299,7 +298,7 @@ def _valid_state() -> State:
         role_output_contract_path_hash_pairs=ROLE_OUTPUT_REQUIRED_PAIRS,
         role_output_router_path_hash_pairs=ROLE_OUTPUT_REQUIRED_PAIRS,
         role_output_card_path_hash_pairs=ROLE_OUTPUT_REQUIRED_PAIRS,
-        role_output_cards_require_top_level_keys=True,
+        role_output_cards_require_compact_refs=True,
         role_output_cards_forbid_sha256_aliases=True,
         role_output_router_rejects_sha256_aliases=True,
         role_output_router_rejects_nested_envelope=True,
@@ -383,7 +382,7 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             state,
             role_output_card_path_hash_pairs=frozenset({"report_path/report_hash"}),
-            role_output_cards_require_top_level_keys=False,
+            role_output_cards_require_compact_refs=False,
             role_output_cards_forbid_sha256_aliases=False,
         )
     if scenario == MATERIAL_SCAN_INLINE_BODY_ONLY:
@@ -540,8 +539,8 @@ def _role_output_envelope_failures(state: State) -> list[str]:
         failures.append("router role output loader omits required path/hash pairs: " + ", ".join(sorted(missing_router)))
     if missing_cards:
         failures.append("role output guidance omits exact path/hash pairs: " + ", ".join(sorted(missing_cards)))
-    if not state.role_output_cards_require_top_level_keys:
-        failures.append("role output guidance does not require top-level path/hash envelope keys")
+    if not state.role_output_cards_require_compact_refs:
+        failures.append("role output guidance does not require compact body_ref/runtime_receipt_ref envelope refs")
     if not state.role_output_cards_forbid_sha256_aliases:
         failures.append("role output guidance does not forbid *_sha256 hash aliases")
     if not state.role_output_router_rejects_sha256_aliases:
@@ -820,29 +819,56 @@ def _path_hash_pairs_from_keys(path_keys: frozenset[str], hash_keys: frozenset[s
 
 def _router_role_output_path_hash_pairs(router_source: str) -> frozenset[str]:
     segment = _function_segment(router_source, "_load_file_backed_role_payload")
-    return _path_hash_pairs_from_keys(
+    pairs = set(_path_hash_pairs_from_keys(
         _tuple_assignment_values(segment, "path_keys"),
         _tuple_assignment_values(segment, "hash_keys"),
-    )
+    ))
+    if "body_ref" in segment and "validate_envelope_runtime_receipt" in segment:
+        pairs.add("body_ref.path/body_ref.hash")
+    if "runtime_receipt_ref" in segment and "validate_envelope_runtime_receipt" in segment:
+        pairs.add("runtime_receipt_ref.path/runtime_receipt_ref.hash")
+    return frozenset(pairs)
 
 
 def _role_output_card_path_hash_pairs(*texts: str) -> frozenset[str]:
     combined = "\n".join(texts)
     pairs: set[str] = set()
     for path_key, hash_key in (
+        ("body_ref.path", "body_ref.hash"),
+        ("runtime_receipt_ref.path", "runtime_receipt_ref.hash"),
         ("body_path", "body_hash"),
         ("report_path", "report_hash"),
         ("decision_path", "decision_hash"),
         ("result_body_path", "result_body_hash"),
     ):
-        if path_key in combined and hash_key in combined:
+        dotted_pair_present = path_key in combined and hash_key in combined
+        compact_pair_present = (
+            path_key.startswith("body_ref")
+            and "body_ref" in combined
+            and ("path/hash" in combined or ("path" in combined and "hash" in combined))
+        ) or (
+            path_key.startswith("runtime_receipt_ref")
+            and "runtime_receipt_ref" in combined
+            and ("path/hash" in combined or ("path" in combined and "hash" in combined))
+        )
+        if dotted_pair_present or compact_pair_present:
             pairs.add(f"{path_key}/{hash_key}")
     return frozenset(pairs)
 
 
-def _role_output_cards_require_top_level_keys(*texts: str) -> bool:
+def _role_output_cards_require_compact_refs(*texts: str) -> bool:
     combined = "\n".join(texts).lower()
-    return "top-level" in combined and "role_output_envelope" in combined and "do not wrap" in combined
+    names_envelope = (
+        "role_output_envelope" in combined
+        or "role-output envelope" in combined
+        or "role output envelope" in combined
+    )
+    return (
+        names_envelope
+        and "body_ref" in combined
+        and "runtime_receipt_ref" in combined
+        and ("path/hash" in combined or ("path" in combined and "hash" in combined))
+    )
 
 
 def _role_output_cards_forbid_sha256_aliases(*texts: str) -> bool:
@@ -1272,7 +1298,7 @@ def collect_source_state(project_root: Path) -> State:
         role_output_contract_path_hash_pairs=_contract_role_output_path_hash_pairs(project_root),
         role_output_router_path_hash_pairs=_router_role_output_path_hash_pairs(router_source),
         role_output_card_path_hash_pairs=_role_output_card_path_hash_pairs(*role_output_guidance_texts),
-        role_output_cards_require_top_level_keys=_role_output_cards_require_top_level_keys(
+        role_output_cards_require_compact_refs=_role_output_cards_require_compact_refs(
             *role_output_guidance_texts
         ),
         role_output_cards_forbid_sha256_aliases=_role_output_cards_forbid_sha256_aliases(

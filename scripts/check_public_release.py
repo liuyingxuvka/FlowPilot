@@ -49,7 +49,7 @@ SECRET_PATTERNS = (
 VALIDATION_COMMANDS = (
     [sys.executable, "simulations/run_release_tooling_checks.py"],
     [sys.executable, "scripts/check_install.py"],
-    [sys.executable, "scripts/smoke_autopilot.py"],
+    [sys.executable, "scripts/smoke_autopilot.py", "--fast"],
 )
 
 

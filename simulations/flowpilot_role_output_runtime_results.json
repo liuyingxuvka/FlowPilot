@@ -1,0 +1,46 @@
+{
+  "checks": {
+    "current_source": "pass",
+    "flowguard_explorer": "pass",
+    "hazard_invariants": "pass",
+    "progress": "pass",
+    "safe_graph": "pass"
+  },
+  "counts": {
+    "accepted": 3,
+    "edges": 78,
+    "rejected": 10,
+    "states": 79
+  },
+  "ok": true,
+  "skipped_checks": {
+    "semantic_sufficiency": "skipped_with_reason: role_output_runtime is a mechanical submission runtime; PM/reviewer/officer gates own semantics"
+  },
+  "source": {
+    "facts": {
+      "contract_ids_present": [
+        "flowpilot.output_contract.gate_decision.v1",
+        "flowpilot.output_contract.officer_model_report.v1",
+        "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
+        "flowpilot.output_contract.pm_resume_decision.v1",
+        "flowpilot.output_contract.reviewer_review_report.v1"
+      ],
+      "quality_pack_catalog_path_exists": true,
+      "runtime_output_types": [
+        "gate_decision",
+        "material_sufficiency_report",
+        "officer_model_report",
+        "pm_control_blocker_repair_decision",
+        "pm_resume_recovery_decision",
+        "reviewer_review_report",
+        "startup_fact_report",
+        "terminal_backward_replay_report"
+      ],
+      "runtime_path_exists": true,
+      "unified_wrapper_path_exists": true,
+      "wrapper_path_exists": true
+    },
+    "failures": [],
+    "ok": true
+  }
+}

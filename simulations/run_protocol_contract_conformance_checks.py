@@ -236,7 +236,7 @@ def _check_current_source() -> dict[str, object]:
             "role_output_contract_path_hash_pairs": sorted(state.role_output_contract_path_hash_pairs),
             "role_output_router_path_hash_pairs": sorted(state.role_output_router_path_hash_pairs),
             "role_output_card_path_hash_pairs": sorted(state.role_output_card_path_hash_pairs),
-            "role_output_cards_require_top_level_keys": state.role_output_cards_require_top_level_keys,
+            "role_output_cards_require_compact_refs": state.role_output_cards_require_compact_refs,
             "role_output_cards_forbid_sha256_aliases": state.role_output_cards_forbid_sha256_aliases,
             "role_output_router_rejects_sha256_aliases": state.role_output_router_rejects_sha256_aliases,
             "role_output_router_rejects_nested_envelope": state.role_output_router_rejects_nested_envelope,

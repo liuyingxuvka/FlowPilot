@@ -131,10 +131,14 @@
         "worker_b"
       ],
       "required_envelope_fields": [
+        "body_ref",
+        "runtime_receipt_ref",
         "controller_visibility",
         "chat_response_body_allowed"
       ],
       "required_envelope_path_hash_pairs": [
+        "body_ref.path/body_ref.hash",
+        "runtime_receipt_ref.path/runtime_receipt_ref.hash",
         "report_path/report_hash",
         "decision_path/decision_hash",
         "result_body_path/result_body_hash",
@@ -155,6 +159,7 @@
       "router_block_conditions": [
         "missing_known_path_hash_pair",
         "hash_mismatch",
+        "runtime_receipt_ref_hash_mismatch",
         "inline_body_content",
         "generic_path_or_hash_without_known_key",
         "controller_visibility_not_envelope_only",

@@ -2,6 +2,48 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.6.1 - 2026-05-09
+
+### Changed
+
+- Required startup and resume background role-agent records to carry an
+  explicit strongest-available model policy and highest-available reasoning
+  effort policy instead of relying on foreground/controller model inheritance.
+- Added router action payload guidance for startup live-role spawn, heartbeat
+  resume rehydration, manual resume rehydration, and missing-role replacement
+  so background role intelligence policy is visible in the control plane.
+- Added a generic role-output runtime for formal PM decisions, reviewer
+  reports, officer reports, and GateDecision bodies. It generates contract
+  skeletons, validates mechanical fields, writes receipts and role-output
+  ledger entries, and returns controller-visible envelopes without exposing
+  body content.
+- Added a compact role-output envelope shape using `body_ref` and
+  `runtime_receipt_ref` so roles no longer hand-author derived path/hash and
+  receipt metadata.
+- Added a repository CLI wrapper, `scripts/flowpilot_runtime.py`, that provides
+  one entry point for packet open/complete flows and formal role-output
+  prepare/submit/verify flows.
+- Added a data-only quality-pack catalog and generic `quality_pack_checks`
+  runtime rows so route-declared quality obligations are recorded without
+  making the report runtime judge UI, desktop, localization, or other
+  pack-specific semantics.
+
+### Fixed
+
+- Hardened role spawn and resume normalization so missing or downgraded
+  background role model/reasoning policy is rejected before PM startup or
+  resume decisions can depend on that role record.
+- Reduced friction from missing hand-written report fields by moving fixed
+  fields, explicit empty arrays, hashes, and runtime receipt metadata into the
+  role-output runtime while keeping semantic judgement with the owning role and
+  downstream gates.
+- Updated router, output-contract, and protocol-conformance checks to accept
+  compact role-output envelopes while preserving compatibility with legacy
+  top-level role-output path/hash pairs.
+- Changed the public release preflight to use the fast smoke path so the
+  release gate reuses valid FlowGuard meta/capability proofs instead of
+  exhausting memory on full graph exploration during publication.
+
 ## 0.6.0 - 2026-05-09
 
 ### Added

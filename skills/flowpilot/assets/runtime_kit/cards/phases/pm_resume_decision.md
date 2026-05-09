@@ -50,9 +50,19 @@ approve gates or carry route authority.
 Use contract `flowpilot.output_contract.pm_resume_decision.v1`.
 Return it through router event `pm_resume_recovery_decision_returned`.
 Write the decision body to a run-scoped file and return to Controller only a
-role-output envelope with `decision_path`, `decision_hash`,
-`controller_visibility: "role_output_envelope_only"`, and no inline decision
-body.
+runtime-generated role-output envelope with `body_ref`,
+`runtime_receipt_ref`, `controller_visibility:
+"role_output_envelope_only"`, and no inline decision body. Legacy
+`decision_path`/`decision_hash` envelopes are accepted only for compatibility.
+
+Preferred path: run `flowpilot_runtime.py prepare-output --output-type
+pm_resume_recovery_decision --role project_manager --agent-id <agent-id>` to
+get the skeleton, then run `flowpilot_runtime.py submit-output` with the
+completed decision body. The lower-level `role_output_runtime.py` commands are
+compatibility entrypoints. The runtime fills the mechanical fixed fields,
+explicit empty arrays, quality-pack checklist rows when declared, hash,
+receipt, and ledger entry. PM still writes the decision, impact, evidence
+rationale, and semantic recovery judgement.
 
 Use these exact field names. The `decision` value must be one of:
 `continue_current_packet_loop`, `request_sender_reissue`,

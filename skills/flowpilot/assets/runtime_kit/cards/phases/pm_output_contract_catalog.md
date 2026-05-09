@@ -51,6 +51,17 @@ use that generated block. If you are writing a manual PM request, copy the
 matching registry contract into the task packet and include the same
 task-specific report-writing rules before sending it.
 
+For formal file-backed role outputs that are not packet result envelopes, use
+`flowpilot_runtime.py prepare-output` and `flowpilot_runtime.py submit-output`
+with the matching `output_type`. The lower-level `role_output_runtime.py`
+entrypoints remain compatibility commands. The runtime generates the contract
+skeleton, fills mechanical fixed fields, explicit empty arrays, and generic
+quality-pack checklist rows when route quality packs are declared, validates
+exact field names and allowed values, writes the body hash, records a receipt
+and role-output ledger entry, and returns only the compact controller-visible
+envelope with `body_ref` and `runtime_receipt_ref`. It does not judge semantic
+sufficiency or pack-specific UI/desktop/localization quality.
+
 When a gate can pass, block, waive, skip, repair locally, mutate the route, or
 affect completion, require a file-backed `GateDecision` body using
 `flowpilot.output_contract.gate_decision.v1`. It must use the exact fields

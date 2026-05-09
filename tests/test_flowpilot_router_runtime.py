@@ -366,6 +366,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {
                     "role_key": role,
                     "agent_id": f"agent-{run_id}-{role}",
+                    "model_policy": "strongest_available",
+                    "reasoning_effort_policy": "highest_available",
                     "spawn_result": "spawned_fresh_for_task",
                     "spawned_for_run_id": run_id,
                     "spawned_after_startup_answers": True,
@@ -382,6 +384,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             record = {
                 "role_key": role,
                 "agent_id": f"resume-agent-{request['rehydrated_after_resume_tick_id']}-{role}",
+                "model_policy": "strongest_available",
+                "reasoning_effort_policy": "highest_available",
                 "rehydration_result": "rehydrated_from_current_run_memory",
                 "host_liveness_status": "unknown",
                 "liveness_decision": "spawned_replacement_from_current_run_memory",
@@ -1971,10 +1975,26 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             action["payload_contract"],
             "role_agents[].role_key",
             "role_agents[].agent_id",
+            "role_agents[].model_policy",
+            "role_agents[].reasoning_effort_policy",
             "role_agents[].spawned_for_run_id",
             "role_agents[].spawned_after_startup_answers",
             "role_agents[].host_spawn_receipt.source_kind",
             "exactly one non-duplicate role agent record",
+        )
+        self.assertEqual(action["background_role_agent_model_policy"]["model_policy"], "strongest_available")
+        self.assertEqual(
+            action["background_role_agent_model_policy"]["reasoning_effort_policy"],
+            "highest_available",
+        )
+        self.assertFalse(action["background_role_agent_model_policy"]["inherit_foreground_model_allowed"])
+        self.assertEqual(
+            {item["model_policy"] for item in action["role_spawn_request"]},
+            {"strongest_available"},
+        )
+        self.assertEqual(
+            {item["reasoning_effort_policy"] for item in action["role_spawn_request"]},
+            {"highest_available"},
         )
         self.assertEqual(len(action["role_spawn_request"]), 6)
         with self.assertRaisesRegex(router.RouterError, "role_agents"):
@@ -1995,6 +2015,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         crew = read_json(run_root / "crew_ledger.json")
         self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
         self.assertEqual({slot["spawn_result"] for slot in crew["role_slots"]}, {"spawned_fresh_for_task"})
+        self.assertEqual({slot["model_policy"] for slot in crew["role_slots"]}, {"strongest_available"})
+        self.assertEqual({slot["reasoning_effort_policy"] for slot in crew["role_slots"]}, {"highest_available"})
 
     def test_single_agent_answer_records_authorized_role_continuity_without_live_agents(self) -> None:
         root = self.make_project()
@@ -3653,6 +3675,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             action["payload_contract"],
             "rehydrated_role_agents[].role_key",
             "rehydrated_role_agents[].agent_id",
+            "rehydrated_role_agents[].model_policy",
+            "rehydrated_role_agents[].reasoning_effort_policy",
             "rehydrated_role_agents[].rehydrated_for_run_id",
             "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
             "rehydrated_role_agents[].spawned_after_resume_state_loaded",
@@ -3668,6 +3692,20 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "rehydrated_role_agents[].memory_missing_acknowledged",
             "rehydrated_role_agents[].replacement_seeded_from_common_run_context",
             "rehydrated_role_agents[].pm_resume_context_delivered",
+        )
+        self.assertEqual(action["background_role_agent_model_policy"]["model_policy"], "strongest_available")
+        self.assertEqual(
+            action["background_role_agent_model_policy"]["reasoning_effort_policy"],
+            "highest_available",
+        )
+        self.assertFalse(action["background_role_agent_model_policy"]["inherit_foreground_model_allowed"])
+        self.assertEqual(
+            {item["model_policy"] for item in action["role_rehydration_request"]},
+            {"strongest_available"},
+        )
+        self.assertEqual(
+            {item["reasoning_effort_policy"] for item in action["role_rehydration_request"]},
+            {"highest_available"},
         )
         self.assertEqual(action["spawn_policy"], "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision")
         self.assertTrue(action["liveness_preflight_required"])

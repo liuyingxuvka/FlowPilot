@@ -42,8 +42,11 @@ Use contract `flowpilot.output_contract.pm_terminal_closure_decision.v1`.
 Return event: `pm_approves_terminal_closure`.
 
 Write the closure decision body to a run-scoped decision JSON file and return
-only a role-output envelope with `decision_path` and `decision_hash`. Do not
-include the decision body in chat.
+only a runtime-generated role-output envelope with `body_ref` and
+`runtime_receipt_ref`. Do not include the decision body in chat. Use
+`flowpilot_runtime.py prepare-output` and `flowpilot_runtime.py submit-output`
+for new submissions; legacy `decision_path`/`decision_hash` envelopes are
+compatibility inputs only.
 
 Copy this body shape exactly. Use the current run id and current route-memory
 paths from the router delivery envelope.

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.6.0</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.6.1</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -32,7 +32,7 @@ simulations, validation scripts, documentation, and minimal examples.
 
 ## Current Status
 
-- Current source version in this checkout: **v0.6.0**.
+- Current source version in this checkout: **v0.6.1**.
 - Public project name: **FlowPilot**.
 - Skill slug and install name: **`flowpilot`**.
 - License: **MIT**.
@@ -148,6 +148,17 @@ The CLI wrapper exposes the packet lifecycle:
 
 ```powershell
 python scripts/flowpilot_packets.py --help
+```
+
+Formal PM decisions, reviewer reports, officer reports, and GateDecision bodies
+use the role-output runtime before they return to Controller as envelope-only
+payloads:
+
+- `skills/flowpilot/assets/role_output_runtime.py`
+- `scripts/flowpilot_outputs.py`
+
+```powershell
+python scripts/flowpilot_outputs.py --help
 ```
 
 Packet mail is intentionally strict because large AI-agent projects often fail
@@ -357,6 +368,7 @@ tag, push, package, upload, or publish companion skill repositories.
 | `skills/flowpilot/assets/flowpilot_router.py` | Router bootloader and action envelope driver. |
 | `skills/flowpilot/assets/runtime_kit/` | Manifest and role/phase/reviewer/officer cards. |
 | `skills/flowpilot/assets/packet_runtime.py` | Physical packet envelope/body runtime. |
+| `skills/flowpilot/assets/role_output_runtime.py` | Formal role-output skeleton, validation, receipt, and envelope runtime. |
 | `templates/flowpilot/` | Reusable `.flowpilot/` state, route, packet, evidence, lifecycle, and ledger templates. |
 | `simulations/` | FlowGuard models and regression check scripts. |
 | `scripts/` | Install, validation, packet, lifecycle, release, and smoke helpers. |
@@ -408,7 +420,7 @@ FlowPilot 是一个面向大型 AI Agent 软件项目的 **模型化项目控制
 
 ## 当前状态
 
-- 当前 checkout 的源码版本：**v0.6.0**。
+- 当前 checkout 的源码版本：**v0.6.1**。
 - 公开项目名：**FlowPilot**。
 - 技能 slug 和安装名：**`flowpilot`**。
 - 许可证：**MIT**。
@@ -507,6 +519,16 @@ CLI 包装器可以查看整个 packet 生命周期：
 
 ```powershell
 python scripts/flowpilot_packets.py --help
+```
+
+PM decision、reviewer report、officer report 和 GateDecision 这类正式角色
+输出在返回 Controller 前使用 role-output runtime：
+
+- `skills/flowpilot/assets/role_output_runtime.py`
+- `scripts/flowpilot_outputs.py`
+
+```powershell
+python scripts/flowpilot_outputs.py --help
 ```
 
 packet mail 故意严格，因为大型 AI Agent 项目常见失败方式就是非正式权威坍缩：同一个 Agent 发明计划、执行计划、审查结果、接受薄弱证据，然后关闭项目。FlowPilot 让交接边界可以被检查。
@@ -691,6 +713,7 @@ release tooling 的权限故意只限本仓库。它不会 commit、tag、push�
 | `skills/flowpilot/assets/flowpilot_router.py` | Router bootloader 和 action envelope driver。 |
 | `skills/flowpilot/assets/runtime_kit/` | Manifest 和角色/阶段/reviewer/officer cards。 |
 | `skills/flowpilot/assets/packet_runtime.py` | 真实 packet envelope/body runtime。 |
+| `skills/flowpilot/assets/role_output_runtime.py` | 正式角色输出的骨架、校验、receipt、ledger 和 envelope runtime。 |
 | `templates/flowpilot/` | 可复用 `.flowpilot/` state、route、packet、evidence、lifecycle 和 ledger templates。 |
 | `simulations/` | FlowGuard 模型和回归检查脚本。 |
 | `scripts/` | 安装、验证、packet、lifecycle、release 和 smoke helpers。 |

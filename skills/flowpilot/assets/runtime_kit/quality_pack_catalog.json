@@ -1,0 +1,71 @@
+{
+  "schema_version": "flowpilot.quality_pack_catalog.v1",
+  "authority": "system",
+  "runtime_semantics": "role_output_runtime validates generic checklist coverage only; reviewer, officer, and PM gates own quality-pack substance.",
+  "quality_packs": [
+    {
+      "pack_id": "ui_visual_interaction_quality_pack",
+      "default_profiles": [
+        "interactive_software_ui_product"
+      ],
+      "summary": "Screenshots, interaction coverage, visual fit, layout, and accessible user workflow evidence for UI work."
+    },
+    {
+      "pack_id": "desktop_packaging_quality_pack",
+      "default_profiles": [
+        "interactive_software_ui_product",
+        "release_delivery"
+      ],
+      "summary": "Desktop startup, app icon, tray/taskbar, packaging, launch, and host integration evidence."
+    },
+    {
+      "pack_id": "generated_resource_lineage_pack",
+      "default_profiles": [
+        "interactive_software_ui_product",
+        "release_delivery"
+      ],
+      "summary": "Generated images, icons, screenshots, design resources, source, consumption, supersession, or discard status."
+    },
+    {
+      "pack_id": "localization_quality_pack",
+      "default_profiles": [
+        "interactive_software_ui_product",
+        "research_writing",
+        "release_delivery"
+      ],
+      "summary": "Declared language coverage, user-visible bilingual text, fallback, and review evidence."
+    },
+    {
+      "pack_id": "realtime_state_mapping_pack",
+      "default_profiles": [
+        "interactive_software_ui_product",
+        "long_running_multi_role"
+      ],
+      "summary": "Visible route, state, frontier, task tab, ledger, and realtime update mapping evidence."
+    },
+    {
+      "pack_id": "research_source_quality_pack",
+      "default_profiles": [
+        "research_writing"
+      ],
+      "summary": "Source authority, direct-source checks, contradiction handling, freshness, and citation evidence."
+    },
+    {
+      "pack_id": "privacy_boundary_pack",
+      "default_profiles": [
+        "software_engineering",
+        "release_delivery",
+        "long_running_multi_role"
+      ],
+      "summary": "Private data, sealed body, secret, local path, account, and public-boundary evidence."
+    },
+    {
+      "pack_id": "recovery_resume_quality_pack",
+      "default_profiles": [
+        "long_running_multi_role",
+        "debug_repair"
+      ],
+      "summary": "Resume, stale evidence, superseded node, prior blocker, and continuation authority evidence."
+    }
+  ]
+}

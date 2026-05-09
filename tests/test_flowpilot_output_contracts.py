@@ -233,8 +233,10 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("flowpilot.output_contract.gate_decision.v1", pm_card)
         self.assertIn("gate_decision_version", pm_card)
+        self.assertIn("role_output_runtime.py", pm_card)
         self.assertIn("flowpilot.output_contract.gate_decision.v1", reviewer_card)
         self.assertIn("semantic reason", reviewer_card)
+        self.assertIn("role_output_runtime.py", reviewer_card)
         model_miss_card = (
             ROOT
             / "skills"

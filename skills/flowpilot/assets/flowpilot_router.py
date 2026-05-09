@@ -23,6 +23,7 @@ from typing import Any
 
 import flowpilot_user_flow_diagram
 import packet_runtime
+import role_output_runtime
 
 
 SCHEMA_VERSION = "flowpilot.router.v1"
@@ -62,6 +63,9 @@ ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_
 ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
 ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
 ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
+BACKGROUND_ROLE_MODEL_POLICY = "strongest_available"
+BACKGROUND_ROLE_REASONING_EFFORT_POLICY = "highest_available"
+BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT = "xhigh"
 RESUME_ROLE_AGENT_RESULTS = {ROLE_AGENT_REHYDRATION_RESULT, ROLE_AGENT_CONTINUITY_RESULT}
 ROLE_AGENT_HOST_LIVENESS_STATUSES = {"active", "completed", "missing", "cancelled", "timeout_unknown", "unknown"}
 ROLE_AGENT_BOUNDED_WAIT_RESULTS = {"not_waited", "completed", "timeout_unknown"}
@@ -1627,17 +1631,26 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
         "ledger_hash",
     )
     body_path_key = next((key for key in path_keys if payload.get(key)), None)
+    body_ref = payload.get("body_ref") if isinstance(payload.get("body_ref"), dict) else None
+    if not body_path_key and body_ref and body_ref.get("path"):
+        body_path_key = str(body_ref.get("path_key") or "body_ref.path")
     if not body_path_key:
         if "path" in payload or "hash" in payload:
             raise RouterError(
-                "role event envelope must use body_path/report_path/decision_path/result_body_path "
-                "and body_hash/report_hash/decision_hash/result_body_hash"
+                "role event envelope must use body_ref.path/body_ref.hash or a known "
+                "body_path/report_path/decision_path/result_body_path path/hash pair"
             )
         raise RouterError("role event requires a file-backed body path")
     body_hash_key = next((key for key in hash_keys if payload.get(key)), None)
+    if not body_hash_key and body_ref and body_ref.get("hash"):
+        body_hash_key = str(body_ref.get("hash_key") or "body_ref.hash")
     if not body_hash_key:
         raise RouterError("role event requires a body/report/decision hash")
-    body_path = payload[body_path_key]
+    body_path = (
+        body_ref["path"]
+        if body_ref and body_ref.get("path") and not payload.get(body_path_key)
+        else payload[body_path_key]
+    )
     forbidden_controller_visible_body_keys = {
         "blockers",
         "checks",
@@ -1655,10 +1668,18 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
     leaked_keys = sorted(forbidden_controller_visible_body_keys & set(payload))
     if leaked_keys:
         raise RouterError(f"envelope payload leaked role body fields to Controller: {', '.join(leaked_keys)}")
+    try:
+        runtime_receipt = role_output_runtime.validate_envelope_runtime_receipt(project_root, payload)
+    except role_output_runtime.RoleOutputRuntimeError as exc:
+        raise RouterError(str(exc)) from exc
     path = resolve_project_path(project_root, str(body_path))
     if not path.exists():
         raise RouterError(f"role body path is missing: {body_path}")
-    expected_hash = str(payload[body_hash_key])
+    expected_hash = str(
+        body_ref["hash"]
+        if body_ref and body_ref.get("hash") and not payload.get(body_hash_key)
+        else payload[body_hash_key]
+    )
     raw_hash, semantic_hash = _role_output_hashes(path)
     accepted_hashes = {raw_hash}
     accepted_hashes.update(_role_output_semantic_hashes(path))
@@ -1676,6 +1697,17 @@ def _load_file_backed_role_payload(project_root: Path, payload: dict[str, Any]) 
         "controller_visibility": payload.get("controller_visibility") or "role_output_envelope_only",
         "chat_response_body_allowed": False,
     }
+    if isinstance(runtime_receipt, dict):
+        receipt_ref = payload.get("runtime_receipt_ref") if isinstance(payload.get("runtime_receipt_ref"), dict) else {}
+        loaded["_role_output_envelope"]["role_output_runtime_receipt_path"] = (
+            receipt_ref.get("path") or payload.get("role_output_runtime_receipt_path")
+        )
+        loaded["_role_output_envelope"]["role_output_runtime_receipt_hash"] = (
+            receipt_ref.get("hash") or payload.get("role_output_runtime_receipt_hash")
+        )
+        loaded["_role_output_envelope"]["role_output_runtime_validated"] = True
+        loaded["_role_output_envelope"]["output_type"] = runtime_receipt.get("output_type")
+        loaded["_role_output_envelope"]["output_contract_id"] = runtime_receipt.get("output_contract_id")
     return loaded
 
 
@@ -1695,7 +1727,10 @@ def _load_file_backed_role_payload_if_present(project_root: Path, payload: dict[
         "package_path",
         "ledger_path",
     }
-    if isinstance(payload, dict) and any(payload.get(key) for key in path_keys):
+    if isinstance(payload, dict) and (
+        any(payload.get(key) for key in path_keys)
+        or (isinstance(payload.get("body_ref"), dict) and payload["body_ref"].get("path"))
+    ):
         return _load_file_backed_role_payload(project_root, payload)
     return payload
 
@@ -2143,6 +2178,8 @@ def _role_slots_payload_contract() -> dict[str, Any]:
             "background_agents_capability_status",
             "role_agents[].role_key",
             "role_agents[].agent_id",
+            "role_agents[].model_policy",
+            "role_agents[].reasoning_effort_policy",
             "role_agents[].spawn_result",
             "role_agents[].spawned_for_run_id",
             "role_agents[].spawned_after_startup_answers",
@@ -2150,6 +2187,8 @@ def _role_slots_payload_contract() -> dict[str, Any]:
         optional_fields=["role_agents[].host_spawn_receipt"],
         allowed_values={
             "background_agents_capability_status": ["available"],
+            "role_agents[].model_policy": [BACKGROUND_ROLE_MODEL_POLICY],
+            "role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
             "role_agents[].spawn_result": [ROLE_AGENT_SPAWN_RESULT],
             "role_agents[].host_spawn_receipt.source_kind": ["host_receipt"],
         },
@@ -2161,8 +2200,11 @@ def _role_slots_payload_contract() -> dict[str, Any]:
                 "role_agents[].host_spawn_receipt.agent_id",
             ],
         },
-        structural_requirements=["Provide exactly one non-duplicate role agent record for each FlowPilot role key."],
-        description="Record one fresh live host role agent per FlowPilot role when background agents were allowed.",
+        structural_requirements=[
+            "Provide exactly one non-duplicate role agent record for each FlowPilot role key.",
+            "Each live role agent must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
+        ],
+        description="Record one fresh live host role agent per FlowPilot role when background agents were allowed, using the strongest available background role intelligence policy.",
         reviewer_check="Reviewer checks live agent spawn freshness unless each slot carries a host receipt.",
     )
 
@@ -2206,6 +2248,8 @@ def _resume_role_rehydration_payload_contract(
             "background_agents_capability_status",
             "rehydrated_role_agents[].role_key",
             "rehydrated_role_agents[].agent_id",
+            "rehydrated_role_agents[].model_policy",
+            "rehydrated_role_agents[].reasoning_effort_policy",
             "rehydrated_role_agents[].rehydration_result",
             "rehydrated_role_agents[].rehydrated_for_run_id",
             "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
@@ -2221,6 +2265,8 @@ def _resume_role_rehydration_payload_contract(
         allowed_values={
             "background_agents_capability_status": ["available"],
             "rehydrated_role_agents[].role_key": list(CREW_ROLE_KEYS),
+            "rehydrated_role_agents[].model_policy": [BACKGROUND_ROLE_MODEL_POLICY],
+            "rehydrated_role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
             "rehydrated_role_agents[].rehydration_result": sorted(RESUME_ROLE_AGENT_RESULTS),
             "rehydrated_role_agents[].rehydrated_for_run_id": [run_state["run_id"]],
             "rehydrated_role_agents[].spawned_after_resume_state_loaded": [True],
@@ -2247,10 +2293,11 @@ def _resume_role_rehydration_payload_contract(
         structural_requirements=[
             "Provide exactly one non-duplicate rehydrated role agent record for each FlowPilot role key.",
             "Each record must match the corresponding role_rehydration_request path/hash fields.",
+            "Each restored or replacement live role agent must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
             "A wait_agent timeout must be recorded as timeout_unknown and must not justify live_agent_continuity_confirmed.",
             "missing, cancelled, unknown, or timeout_unknown host liveness must spawn a replacement from current-run memory instead of continuing to wait on the old role.",
         ],
-        description="Restore or replace all six live FlowPilot role agents from current-run memory before PM resume decision.",
+        description="Restore or replace all six live FlowPilot role agents from current-run memory before PM resume decision, using the strongest available background role intelligence policy.",
         reviewer_check="PM and reviewer checks use the written crew_rehydration_report before resume decisions.",
     )
 
@@ -2621,6 +2668,8 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
     )
     if any(marker in lowered for marker in fatal_markers):
         return "fatal_protocol_violation"
+    if "role output runtime envelope body hash is stale" in lowered:
+        return "control_plane_reissue"
     semantic_pm_markers = (
         "controller-origin",
         "controller_origin_artifact",
@@ -2651,6 +2700,14 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
         "packet_ledger_missing_result_body_open_receipt",
         "result body was not opened",
         "completed_agent_id_is_role_key_not_agent_id",
+        "role output runtime envelope claims validation but has no receipt",
+        "role output runtime receipt requires both path and hash",
+        "role output runtime receipt path is missing",
+        "role output runtime receipt hash mismatch",
+        "role output runtime envelope missing output path/hash pair",
+        "role output runtime envelope body hash is stale",
+        "missing_quality_pack_check",
+        "quality_pack_checks",
     )
     if any(marker in lowered for marker in mechanical_reissue_markers):
         return "control_plane_reissue"
@@ -2743,6 +2800,10 @@ def _should_materialize_control_blocker(
         "packet body hash mismatch",
         "result body hash mismatch",
         "controller relay envelope hash mismatch",
+        "role output runtime receipt",
+        "body_ref",
+        "runtime_receipt_ref",
+        "quality_pack_checks",
     )
     if any(marker in lowered for marker in material_markers):
         return True
@@ -2766,6 +2827,8 @@ def _should_materialize_control_blocker(
             "decision_hash",
             "result_body_path",
             "result_body_hash",
+            "body_ref",
+            "runtime_receipt_ref",
         )
     ):
         return event is not None and (
@@ -4644,6 +4707,18 @@ def _role_spawn_action_extra(state: dict[str, Any]) -> dict[str, Any]:
     extra: dict[str, Any] = {
         "background_agents_mode": mode,
         "role_keys": list(CREW_ROLE_KEYS),
+        "background_role_agent_model_policy": {
+            "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+            "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
+            "preferred_reasoning_effort": BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT,
+            "inherit_foreground_model_allowed": False,
+            "applies_to": [
+                "startup_live_role_spawn",
+                "heartbeat_resume_rehydration",
+                "manual_resume_rehydration",
+                "missing_role_replacement",
+            ],
+        },
     }
     if mode == "allow":
         extra.update(
@@ -4655,6 +4730,10 @@ def _role_spawn_action_extra(state: dict[str, Any]) -> dict[str, Any]:
                 "role_spawn_request": [
                     {
                         "role_key": role,
+                        "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+                        "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
+                        "preferred_reasoning_effort": BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT,
+                        "inherit_foreground_model_allowed": False,
                         "spawn_result": ROLE_AGENT_SPAWN_RESULT,
                         "spawned_for_run_id": state.get("run_id"),
                         "spawned_after_startup_answers": True,
@@ -4712,6 +4791,10 @@ def _normalize_role_agent_records(state: dict[str, Any], payload: dict[str, Any]
         agent_id = raw.get("agent_id")
         if not isinstance(agent_id, str) or not agent_id.strip():
             raise RouterError(f"{role} requires a non-empty current agent_id")
+        if raw.get("model_policy") != BACKGROUND_ROLE_MODEL_POLICY:
+            raise RouterError(f"{role} requires model_policy={BACKGROUND_ROLE_MODEL_POLICY}")
+        if raw.get("reasoning_effort_policy") != BACKGROUND_ROLE_REASONING_EFFORT_POLICY:
+            raise RouterError(f"{role} requires reasoning_effort_policy={BACKGROUND_ROLE_REASONING_EFFORT_POLICY}")
         if raw.get("spawn_result") != ROLE_AGENT_SPAWN_RESULT:
             raise RouterError(f"{role} requires spawn_result=spawned_fresh_for_task")
         if raw.get("spawned_after_startup_answers") is not True:
@@ -4734,6 +4817,8 @@ def _normalize_role_agent_records(state: dict[str, Any], payload: dict[str, Any]
             "role_key": str(role),
             "status": "live_agent_started",
             "agent_id": agent_id.strip(),
+            "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+            "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
             "spawn_result": ROLE_AGENT_SPAWN_RESULT,
             "spawned_for_run_id": run_id,
             "spawned_after_startup_answers": True,
@@ -4785,6 +4870,10 @@ def _resume_role_context(project_root: Path, run_root: Path, run_state: dict[str
         "role_key": role,
         "required_rehydration_result": ROLE_AGENT_REHYDRATION_RESULT,
         "allowed_rehydration_results": sorted(RESUME_ROLE_AGENT_RESULTS),
+        "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+        "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
+        "preferred_reasoning_effort": BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT,
+        "inherit_foreground_model_allowed": False,
         "rehydrated_for_run_id": run_state["run_id"],
         "rehydrated_after_resume_tick_id": _latest_resume_tick_id(run_state),
         "spawned_after_resume_state_loaded": True,
@@ -4831,6 +4920,17 @@ def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, ru
         "awaiting_role_from_packet_ledger": resume_next.get("next_recipient_role"),
         "resume_next_recipient_from_packet_ledger": resume_next,
         "role_rehydration_request": contexts,
+        "background_role_agent_model_policy": {
+            "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+            "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
+            "preferred_reasoning_effort": BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT,
+            "inherit_foreground_model_allowed": False,
+            "applies_to": [
+                "heartbeat_resume_rehydration",
+                "manual_resume_rehydration",
+                "missing_role_replacement",
+            ],
+        },
         "memory_missing_role_keys": missing_memory,
         "crew_rehydration_report_path": project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
         "liveness_preflight_required": True,
@@ -4921,6 +5021,10 @@ def _normalize_resume_role_agent_records(
         agent_id = raw.get("agent_id")
         if not isinstance(agent_id, str) or not agent_id.strip():
             raise RouterError(f"{role} requires a non-empty live resume agent_id")
+        if raw.get("model_policy") != BACKGROUND_ROLE_MODEL_POLICY:
+            raise RouterError(f"{role} requires model_policy={BACKGROUND_ROLE_MODEL_POLICY}")
+        if raw.get("reasoning_effort_policy") != BACKGROUND_ROLE_REASONING_EFFORT_POLICY:
+            raise RouterError(f"{role} requires reasoning_effort_policy={BACKGROUND_ROLE_REASONING_EFFORT_POLICY}")
         result = raw.get("rehydration_result") or raw.get("spawn_result")
         if result not in RESUME_ROLE_AGENT_RESULTS:
             raise RouterError(f"{role} requires resume rehydration result")
@@ -4974,6 +5078,8 @@ def _normalize_resume_role_agent_records(
             "role_key": str(role),
             "status": "live_agent_rehydrated",
             "agent_id": agent_id.strip(),
+            "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+            "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
             "rehydration_result": str(result),
             "host_liveness_status": host_liveness_status,
             "liveness_decision": liveness_decision,
@@ -5439,6 +5545,8 @@ def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str
         and slot.get("status") == "live_agent_started"
         and isinstance(slot.get("agent_id"), str)
         and bool(str(slot.get("agent_id")).strip())
+        and slot.get("model_policy") == BACKGROUND_ROLE_MODEL_POLICY
+        and slot.get("reasoning_effort_policy") == BACKGROUND_ROLE_REASONING_EFFORT_POLICY
         and slot.get("spawn_result") == ROLE_AGENT_SPAWN_RESULT
         and slot.get("spawned_for_run_id") == run_state.get("run_id")
         and slot.get("spawned_after_startup_answers") is True
@@ -5528,8 +5636,13 @@ def _startup_external_fact_requirements(run_root: Path, run_state: dict[str, Any
         requirements.append(
             {
                 "id": "live_agent_spawn_freshness",
-                "reason": "Router validates role-slot shape and run ids, but host spawn freshness needs a receipt or reviewer check.",
-                "self_attested_payload_fields": ["role_agents[].spawn_result", "role_agents[].spawned_after_startup_answers"],
+                "reason": "Router validates role-slot shape, run ids, and requested background role intelligence policy, but host spawn freshness and actual model selection need a receipt or reviewer check.",
+                "self_attested_payload_fields": [
+                    "role_agents[].model_policy",
+                    "role_agents[].reasoning_effort_policy",
+                    "role_agents[].spawn_result",
+                    "role_agents[].spawned_after_startup_answers",
+                ],
                 "reviewer_direct_check_required": True,
             }
         )
@@ -10802,7 +10915,10 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         "before any wait or resume claim. Do not self-classify the work chain as alive from old "
         "crew or route state, and do not use wait_agent timeout as proof of liveness. The router must "
         "load the current resume state, restore the visible plan, and request six-role liveness "
-        "rehydration before any PM resume decision. Do not read sealed packet/result/report bodies."
+        "rehydration before any PM resume decision. Any restored or replacement background role "
+        "agent must be explicitly requested with the strongest available host model and highest "
+        "available reasoning effort; do not rely on foreground model inheritance. Do not read "
+        "sealed packet/result/report bodies."
     )
     return make_action(
         action_type="create_heartbeat_automation",
@@ -13077,6 +13193,14 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
     elif artifact_type == "role_output_envelope":
         path_keys = ("body_path", "report_path", "decision_path", "result_body_path", "memo_path", "architecture_path", "contract_path", "manifest_path", "route_path", "draft_path", "plan_path", "package_path", "ledger_path")
         found = False
+        body_ref = payload.get("body_ref") if isinstance(payload.get("body_ref"), dict) else None
+        if body_ref and body_ref.get("path"):
+            found = True
+            if body_ref.get("hash"):
+                ref_payload = {"body_path": body_ref.get("path"), "body_hash": body_ref.get("hash")}
+                issues.extend(_validate_role_output_hash_if_present(project_root, ref_payload, "body_path", "body_hash"))
+            else:
+                issues.append(_artifact_issue("body_ref.hash", "role output envelope body_ref requires hash", str(payload.get("from_role") or "role")))
         for path_key in path_keys:
             if payload.get(path_key):
                 hash_key = path_key[:-5] + "_hash" if path_key.endswith("_path") else f"{path_key}_hash"
@@ -13089,6 +13213,10 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
             issues.append(_artifact_issue("from_role", "missing producing role", "role"))
         if not payload.get("to_role"):
             issues.append(_artifact_issue("to_role", "missing recipient role", "role"))
+        try:
+            role_output_runtime.validate_envelope_runtime_receipt(project_root, payload)
+        except role_output_runtime.RoleOutputRuntimeError as exc:
+            issues.append(_artifact_issue("role_output_runtime_receipt", str(exc), str(payload.get("from_role") or "role")))
     elif artifact_type == "gate_decision":
         decision = payload.get("gate_decision") if isinstance(payload.get("gate_decision"), dict) else payload
         issues.extend(_gate_decision_issues(project_root, decision))
