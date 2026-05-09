@@ -528,14 +528,14 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "action_type": "start_role_slots",
         "flag": "roles_started",
         "label": "six_roles_started_from_user_answer",
-        "summary": "Start the six current-task roles according to the user's background-agent answer.",
+        "summary": "Start the six current-task roles and record same-action role core prompt delivery according to the user's background-agent answer.",
         "actor": "bootloader",
     },
     {
         "action_type": "inject_role_core_prompts",
         "flag": "role_core_prompts_injected",
         "label": "role_core_prompts_injected_from_copied_kit",
-        "summary": "Deliver each role only its role core card from the copied runtime kit.",
+        "summary": "Legacy recovery: deliver each role only its role core card from the copied runtime kit when an older bootstrap state still lacks the delivery receipt.",
         "actor": "bootloader",
     },
     {
@@ -547,7 +547,14 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
     },
 )
 
-SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
+SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
+    {
+        "flag": "reviewer_startup_fact_check_card_delivered",
+        "label": "reviewer_startup_fact_check_card_delivered",
+        "card_id": "reviewer.startup_fact_check",
+        "requires_all_flags": ["startup_mechanical_audit_written", "startup_display_status_written"],
+        "to_role": "human_like_reviewer",
+    },
     {
         "flag": "pm_core_delivered",
         "label": "pm_core_card_delivered",
@@ -600,13 +607,6 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
         "card_id": "pm.resume_decision",
         "requires_flag": "pm_crew_rehydration_freshness_card_delivered",
         "to_role": "project_manager",
-    },
-    {
-        "flag": "reviewer_startup_fact_check_card_delivered",
-        "label": "reviewer_startup_fact_check_card_delivered",
-        "card_id": "reviewer.startup_fact_check",
-        "requires_flag": "startup_mechanical_audit_written",
-        "to_role": "human_like_reviewer",
     },
     {
         "flag": "pm_startup_activation_card_delivered",
@@ -950,6 +950,13 @@ CARD_PHASE_BY_ID = {
 }
 
 CARD_REQUIRED_SOURCE_PATHS = {
+    "reviewer.startup_fact_check": {
+        "startup_answers": "startup_answers.json",
+        "startup_mechanical_audit": "startup/startup_mechanical_audit.json",
+        "startup_mechanical_audit_proof": "startup/startup_mechanical_audit.json.proof.json",
+        "display_surface": "display/display_surface.json",
+        "continuation_binding": "continuation/continuation_binding.json",
+    },
     "pm.product_architecture": {
         "pm_material_understanding": "pm_material_understanding.json",
         "pm_material_understanding_payload": "material/pm_material_understanding_payload.json",
@@ -5300,6 +5307,27 @@ def _path_hash(path: Path) -> str | None:
     return packet_runtime.sha256_file(path)
 
 
+def _role_core_prompt_delivery_payload(project_root: Path, run_root: Path, run_id: str, *, source_action: str) -> dict[str, Any]:
+    role_cards: dict[str, str] = {}
+    role_card_hashes: dict[str, str] = {}
+    for role in ROLE_CARD_KEYS:
+        card_path = _role_core_prompt_path(run_root, role)
+        if not card_path.exists():
+            raise RouterError(f"role core prompt card is missing for {role}")
+        role_cards[role] = card_path.relative_to(run_root).as_posix()
+        role_card_hashes[role] = packet_runtime.sha256_file(card_path)
+    return {
+        "schema_version": "flowpilot.role_core_prompt_delivery.v1",
+        "run_id": run_id,
+        "source": "copied_runtime_kit",
+        "source_action": source_action,
+        "delivery_mode": "same_action_with_role_start" if source_action == "start_role_slots" else "legacy_recovery_action",
+        "role_cards": role_cards,
+        "role_card_hashes": role_card_hashes,
+        "delivered_at": utc_now(),
+    }
+
+
 def _resume_role_context(project_root: Path, run_root: Path, run_state: dict[str, Any], role: str) -> dict[str, Any]:
     memory_path = _role_memory_path(run_root, role)
     core_path = _role_core_prompt_path(run_root, role)
@@ -6383,11 +6411,17 @@ def _startup_mechanical_audit_action_extra(
     context = _startup_mechanical_audit_context(project_root, run_root, run_state)
     if context is None:
         raise RouterError("startup mechanical audit must be written before reviewer startup fact card delivery")
+    display_path = run_root / "display" / "display_surface.json"
+    if not display_path.exists():
+        raise RouterError("startup display-surface status must be written before reviewer startup fact card delivery")
     return {
         "startup_mechanical_audit_path": project_relative(project_root, context["audit_path"]),
         "startup_mechanical_audit_hash": context["audit_hash"],
         "router_owned_check_proof_path": project_relative(project_root, context["proof_path"]),
         "router_owned_check_proof_hash": context["proof_hash"],
+        "startup_display_surface_path": project_relative(project_root, display_path),
+        "startup_display_surface_hash": packet_runtime.sha256_file(display_path),
+        "reviewer_has_direct_display_evidence": True,
         "router_computable_checks_already_enforced": True,
         "reviewer_should_not_reprove_router_computable_checks": True,
         "reviewer_required_external_facts": context["audit"].get("reviewer_required_external_facts") or [],
@@ -8708,7 +8742,7 @@ def _require_pm_prior_path_context(project_root: Path, run_root: Path, payload: 
     }
 
 
-def _pm_context_action_extra(project_root: Path, run_root: Path, entry: dict[str, str]) -> dict[str, Any]:
+def _pm_context_action_extra(project_root: Path, run_root: Path, entry: dict[str, Any]) -> dict[str, Any]:
     if entry.get("to_role") != "project_manager":
         return {}
     context_path = _pm_prior_path_context_path(run_root)
@@ -11412,22 +11446,36 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
             resume_tick_id="manual-resume",
             source_action="start_role_slots",
         )
-    elif action_type == "inject_role_core_prompts":
-        run_root = project_root / str(state["run_root"])
-        role_cards = {
-            role: f"runtime_kit/cards/roles/{role}.md"
-            for role in ROLE_CARD_KEYS
-            if (run_root / "runtime_kit" / "cards" / "roles" / f"{role}.md").exists()
-        }
         write_json(
             run_root / "role_core_prompt_delivery.json",
+            _role_core_prompt_delivery_payload(
+                project_root,
+                run_root,
+                str(state["run_id"]),
+                source_action="start_role_slots",
+            ),
+        )
+        state.setdefault("flags", {})["role_core_prompts_injected"] = True
+        append_history(
+            state,
+            "role_core_prompts_delivered_during_start_role_slots",
             {
-                "schema_version": "flowpilot.role_core_prompt_delivery.v1",
-                "run_id": state["run_id"],
-                "source": "copied_runtime_kit",
-                "role_cards": role_cards,
-                "delivered_at": utc_now(),
+                "action_type": "start_role_slots",
+                "postcondition": "role_core_prompts_injected",
+                "delivery_mode": "same_action_with_role_start",
             },
+        )
+        result_extra["coalesced_postconditions"] = ["roles_started", "role_core_prompts_injected"]
+    elif action_type == "inject_role_core_prompts":
+        run_root = project_root / str(state["run_root"])
+        write_json(
+            run_root / "role_core_prompt_delivery.json",
+            _role_core_prompt_delivery_payload(
+                project_root,
+                run_root,
+                str(state["run_id"]),
+                source_action="inject_role_core_prompts",
+            ),
         )
     elif action_type == "load_controller_core":
         run_root = project_root / str(state["run_root"])
@@ -11618,8 +11666,6 @@ def _next_startup_mechanical_audit_action(project_root: Path, run_state: dict[st
     flags = run_state["flags"]
     if not flags.get("controller_role_confirmed"):
         return None
-    if not flags.get("user_intake_delivered_to_pm"):
-        return None
     if flags.get("startup_mechanical_audit_written") and _startup_mechanical_audit_context(project_root, run_root, run_state):
         return None
     allowed_reads = [
@@ -11714,8 +11760,6 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
     flags = run_state["flags"]
     if not flags.get("controller_role_confirmed"):
         return None
-    if not flags.get("user_intake_delivered_to_pm"):
-        return None
     if flags.get("startup_display_status_written"):
         return None
     route_sign = _startup_route_sign_payload(project_root, write=False, mark_chat_displayed=False)
@@ -11784,6 +11828,9 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             continue
         required_flag = entry.get("requires_flag")
         if required_flag and not flags.get(required_flag):
+            continue
+        required_all = entry.get("requires_all_flags")
+        if required_all and not all(flags.get(flag) for flag in required_all):
             continue
         required_any = entry.get("requires_any_flag")
         if required_any and not any(flags.get(flag) for flag in required_any):
@@ -12415,6 +12462,194 @@ def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: 
     }
 
 
+def _commit_system_card_delivery_artifact(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    pending: dict[str, Any],
+) -> dict[str, Any]:
+    card_id = str(pending["card_id"])
+    card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
+    if card_entry is None:
+        raise RouterError(f"unknown system card in pending action: {card_id}")
+    if not run_state.get("manifest_check_requested"):
+        raise RouterError("system card delivery requires a current manifest check")
+    manifest = load_manifest_from_run(run_root)
+    card = manifest_card(manifest, card_id)
+    delivery_context = pending.get("delivery_context")
+    if not isinstance(delivery_context, dict):
+        delivery_context = _live_card_delivery_context(project_root, run_root, run_state, card_entry, card)
+    delivery = {
+        "card_id": card_id,
+        "from": "system",
+        "issued_by": "router",
+        "delivered_by": "controller",
+        "to_role": pending["to_role"],
+        "path": card["path"],
+        "delivery_mode": pending.get("delivery_mode") or "envelope_only_v2",
+        "controller_visibility": "system_card_envelope_only",
+        "sealed_body_reads_allowed": False,
+        "requires_read_receipt": True,
+        "open_method": pending.get("open_method") or "open-card",
+        "return_event": pending.get("return_event") or _card_return_event_for_card(card_id),
+        "expected_return_path": pending.get("expected_return_path"),
+        "expected_receipt_path": pending.get("expected_receipt_path"),
+        "card_envelope_path": pending.get("card_envelope_path"),
+        "delivery_id": pending.get("delivery_id"),
+        "delivery_attempt_id": pending.get("delivery_attempt_id"),
+        "body_path": pending.get("body_path"),
+        "body_hash": pending.get("body_hash"),
+        "manifest_path": pending.get("manifest_path"),
+        "manifest_hash": pending.get("manifest_hash"),
+        "target_agent_id": pending.get("target_agent_id"),
+        "resume_tick_id": pending.get("resume_tick_id"),
+        "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
+        "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
+        "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
+        "delivery_context": delivery_context,
+        "delivered_at": utc_now(),
+    }
+    if card_id == "reviewer.startup_fact_check":
+        delivery.update(
+            {
+                "startup_mechanical_audit_path": pending.get("startup_mechanical_audit_path"),
+                "startup_mechanical_audit_hash": pending.get("startup_mechanical_audit_hash"),
+                "router_owned_check_proof_path": pending.get("router_owned_check_proof_path"),
+                "router_owned_check_proof_hash": pending.get("router_owned_check_proof_hash"),
+                "router_computable_checks_already_enforced": True,
+                "reviewer_should_not_reprove_router_computable_checks": True,
+                "reviewer_required_external_facts": pending.get("reviewer_required_external_facts") or [],
+            }
+        )
+    envelope_path_raw = delivery.get("card_envelope_path")
+    expected_return_path_raw = delivery.get("expected_return_path")
+    expected_receipt_path_raw = delivery.get("expected_receipt_path")
+    if not all(isinstance(item, str) and item for item in (envelope_path_raw, expected_return_path_raw, expected_receipt_path_raw)):
+        raise RouterError("system card envelope delivery requires envelope, receipt, and return paths")
+    envelope_path = resolve_project_path(project_root, str(envelope_path_raw))
+    expected_return_path = resolve_project_path(project_root, str(expected_return_path_raw))
+    expected_receipt_path = resolve_project_path(project_root, str(expected_receipt_path_raw))
+    envelope = {
+        "schema_version": card_runtime.CARD_ENVELOPE_SCHEMA,
+        "run_id": run_state["run_id"],
+        "run_root": project_relative(project_root, run_root),
+        "resume_tick_id": delivery.get("resume_tick_id"),
+        "envelope_id": delivery.get("delivery_attempt_id"),
+        "delivery_id": delivery.get("delivery_id"),
+        "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+        "card_id": card_id,
+        "from": "system",
+        "issued_by": "router",
+        "delivered_by": "controller",
+        "target_role": pending["to_role"],
+        "target_agent_id": delivery.get("target_agent_id"),
+        "body_path": delivery.get("body_path"),
+        "body_hash": delivery.get("body_hash"),
+        "manifest_path": delivery.get("manifest_path"),
+        "manifest_hash": delivery.get("manifest_hash"),
+        "body_visibility": "target_role_runtime_only",
+        "resource_lifecycle": "committed_artifact",
+        "artifact_committed": True,
+        "relay_allowed": True,
+        "apply_required": False,
+        "controller_visibility": "system_card_envelope_only",
+        "sealed_body_reads_allowed": False,
+        "requires_read_receipt": True,
+        "open_method": delivery.get("open_method") or "open-card",
+        "return_event": delivery.get("return_event"),
+        "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+        "expected_return_path": project_relative(project_root, expected_return_path),
+        "delivery_context": delivery_context,
+        "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
+        "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
+        "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+        "delivered_at": delivery["delivered_at"],
+        "runtime_validates_mechanics_only": True,
+        "semantic_understanding_validated_by_receipt": False,
+    }
+    envelope["envelope_hash"] = card_runtime.stable_json_hash(envelope)
+    write_json(envelope_path, envelope)
+    delivery["card_envelope_hash"] = envelope["envelope_hash"]
+    delivery["resource_lifecycle"] = "committed_artifact"
+    delivery["artifact_committed"] = True
+    delivery["relay_allowed"] = True
+    delivery["apply_required"] = False
+    run_state["delivered_cards"].append(delivery)
+    run_state["flags"][card_entry["flag"]] = True
+    run_state["manifest_check_requested"] = False
+    run_state["prompt_deliveries"] = int(run_state.get("prompt_deliveries", 0)) + 1
+    ledger = read_json_if_exists(run_root / "prompt_delivery_ledger.json") or {"schema_version": "flowpilot.prompt_delivery_ledger.v1", "deliveries": []}
+    ledger.setdefault("deliveries", []).append(delivery)
+    ledger["updated_at"] = utc_now()
+    write_json(run_root / "prompt_delivery_ledger.json", ledger)
+    card_ledger = _read_card_ledger(run_root, str(run_state["run_id"]))
+    card_ledger.setdefault("deliveries", []).append(
+        {
+            "card_id": card_id,
+            "delivery_id": delivery.get("delivery_id"),
+            "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+            "to_role": pending["to_role"],
+            "target_agent_id": delivery.get("target_agent_id"),
+            "card_envelope_path": project_relative(project_root, envelope_path),
+            "card_envelope_hash": envelope["envelope_hash"],
+            "resource_lifecycle": "committed_artifact",
+            "artifact_committed": True,
+            "relay_allowed": True,
+            "apply_required": False,
+            "body_hash": delivery.get("body_hash"),
+            "manifest_hash": delivery.get("manifest_hash"),
+            "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
+            "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
+            "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+            "requires_read_receipt": True,
+            "return_event": delivery.get("return_event"),
+            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+            "expected_return_path": project_relative(project_root, expected_return_path),
+            "delivered_at": delivery["delivered_at"],
+        }
+    )
+    card_ledger["updated_at"] = utc_now()
+    write_json(_card_ledger_path(run_root), card_ledger)
+    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+    return_ledger.setdefault("pending_returns", []).append(
+        {
+            "return_event": delivery.get("return_event"),
+            "status": "pending",
+            "card_id": card_id,
+            "delivery_id": delivery.get("delivery_id"),
+            "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+            "target_role": pending["to_role"],
+            "target_agent_id": delivery.get("target_agent_id"),
+            "card_envelope_path": project_relative(project_root, envelope_path),
+            "card_envelope_hash": envelope["envelope_hash"],
+            "resource_lifecycle": "committed_artifact",
+            "artifact_committed": True,
+            "relay_allowed": True,
+            "apply_required": False,
+            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+            "expected_return_path": project_relative(project_root, expected_return_path),
+            "sent_at": delivery["delivered_at"],
+        }
+    )
+    return_ledger["updated_at"] = utc_now()
+    write_json(_return_event_ledger_path(run_root), return_ledger)
+    return {
+        "ok": True,
+        "applied": "commit_system_card_delivery_artifact",
+        "resource_lifecycle": "committed_artifact",
+        "artifact_committed": True,
+        "artifact_exists": True,
+        "artifact_hash_verified": True,
+        "ledger_recorded": True,
+        "return_wait_recorded": True,
+        "relay_allowed": True,
+        "apply_required": False,
+        "card_envelope_path": project_relative(project_root, envelope_path),
+        "expected_return_path": project_relative(project_root, expected_return_path),
+        "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+    }
+
+
 def _pending_return_record_for_action(run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
     delivery_attempt_id = action.get("delivery_attempt_id")
     for record in _pending_return_records(run_root, run_id):
@@ -12456,13 +12691,27 @@ def _auto_commit_system_card_delivery_action(
             "planned_artifacts_exposed_to_controller": False,
         },
     )
+    commit_result = _commit_system_card_delivery_artifact(project_root, run_state, run_root, planned)
+    append_history(
+        run_state,
+        "router_committed_system_card_delivery_artifact",
+        {
+            "card_id": planned.get("card_id"),
+            "card_envelope_path": commit_result.get("card_envelope_path"),
+            "relay_allowed": commit_result.get("relay_allowed"),
+        },
+    )
+    run_state["pending_action"] = None
+    _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_internal_commit:deliver_system_card")
+    _sync_derived_run_views(
+        project_root,
+        run_root,
+        run_state,
+        reason="after_router_internal_commit:deliver_system_card",
+        update_display=True,
+    )
     save_run_state(run_root, run_state)
-    apply_result = apply_controller_action(project_root, "deliver_system_card", {})
-    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
-    reloaded_state, reloaded_run_root = load_run_state(project_root, bootstrap)
-    if reloaded_state is None or reloaded_run_root is None:
-        raise RouterError("system card auto-commit lost run state")
-    record = _pending_return_record_for_action(reloaded_run_root, str(reloaded_state["run_id"]), planned)
+    record = _pending_return_record_for_action(run_root, str(run_state["run_id"]), planned)
     if record is None:
         raise RouterError("system card auto-commit did not establish a pending return record")
     committed_extra = _committed_card_artifact_extra(project_root, record, relay_allowed_if_ready=True)
@@ -12477,7 +12726,7 @@ def _auto_commit_system_card_delivery_action(
         ),
         "allowed_writes": [],
         "auto_committed_by_router": True,
-        "auto_commit_result": apply_result,
+        "auto_commit_result": commit_result,
         "next_after_relay": "await_card_return_event",
     }
     committed["next_step_contract"] = {
@@ -12487,9 +12736,9 @@ def _auto_commit_system_card_delivery_action(
         "relay_allowed": True,
         "apply_required": False,
     }
-    reloaded_state["pending_action"] = committed
+    run_state["pending_action"] = committed
     append_history(
-        reloaded_state,
+        run_state,
         "router_returned_committed_system_card_relay_action",
         {
             "card_id": committed.get("card_id"),
@@ -12497,7 +12746,7 @@ def _auto_commit_system_card_delivery_action(
             "relay_allowed": committed.get("relay_allowed"),
         },
     )
-    save_run_state(reloaded_run_root, reloaded_state)
+    save_run_state(run_root, run_state)
     return committed
 
 
@@ -12537,11 +12786,11 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
     action = _next_control_blocker_action(project_root, run_state, run_root)
     if action is None:
+        action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_display_plan_action(project_root, run_state, run_root)
     if action is None:
         action = _next_resume_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
     if action is None:
         action = _next_controller_boundary_confirmation_action(project_root, run_state, run_root)
     if action is None:
@@ -12691,219 +12940,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "protocol_hash": _role_io_protocol_hash(),
         })
     elif action_type == "deliver_system_card":
-        if pending.get("artifact_committed") is True and pending.get("apply_required") is False:
-            wait_action = _next_pending_card_return_action(project_root, run_state, run_root)
-            if wait_action is None:
-                raise RouterError("committed system card delivery has no pending return wait")
-            append_history(
-                run_state,
-                "controller_acknowledged_committed_system_card_relay_action",
-                {
-                    "card_id": pending.get("card_id"),
-                    "card_envelope_path": pending.get("card_envelope_path"),
-                    "relay_allowed": pending.get("relay_allowed"),
-                },
-            )
-            run_state["pending_action"] = wait_action
-            _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_controller_action:{action_type}")
-            _sync_derived_run_views(
-                project_root,
-                run_root,
-                run_state,
-                reason=f"after_controller_action:{action_type}",
-                update_display=True,
-            )
-            save_run_state(run_root, run_state)
-            return {
-                "ok": True,
-                "applied": action_type,
-                "waiting": True,
-                "expected_return_path": pending.get("expected_return_path"),
-                "card_envelope_path": pending.get("card_envelope_path"),
-                "resource_lifecycle": pending.get("resource_lifecycle"),
-                "artifact_committed": True,
-                "relay_allowed": True,
-            }
-        card_id = str(pending["card_id"])
-        card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
-        if card_entry is None:
-            raise RouterError(f"unknown system card in pending action: {card_id}")
-        if not run_state.get("manifest_check_requested"):
-            raise RouterError("system card delivery requires a current manifest check")
-        manifest = load_manifest_from_run(run_root)
-        card = manifest_card(manifest, card_id)
-        delivery_context = pending.get("delivery_context")
-        if not isinstance(delivery_context, dict):
-            delivery_context = _live_card_delivery_context(project_root, run_root, run_state, card_entry, card)
-        delivery = {
-            "card_id": card_id,
-            "from": "system",
-            "issued_by": "router",
-            "delivered_by": "controller",
-            "to_role": pending["to_role"],
-            "path": card["path"],
-            "delivery_mode": pending.get("delivery_mode") or "envelope_only_v2",
-            "controller_visibility": "system_card_envelope_only",
-            "sealed_body_reads_allowed": False,
-            "requires_read_receipt": True,
-            "open_method": pending.get("open_method") or "open-card",
-            "return_event": pending.get("return_event") or _card_return_event_for_card(card_id),
-            "expected_return_path": pending.get("expected_return_path"),
-            "expected_receipt_path": pending.get("expected_receipt_path"),
-            "card_envelope_path": pending.get("card_envelope_path"),
-            "delivery_id": pending.get("delivery_id"),
-            "delivery_attempt_id": pending.get("delivery_attempt_id"),
-            "body_path": pending.get("body_path"),
-            "body_hash": pending.get("body_hash"),
-            "manifest_path": pending.get("manifest_path"),
-            "manifest_hash": pending.get("manifest_hash"),
-            "target_agent_id": pending.get("target_agent_id"),
-            "resume_tick_id": pending.get("resume_tick_id"),
-            "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
-            "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
-            "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
-            "delivery_context": delivery_context,
-            "delivered_at": utc_now(),
-        }
-        if card_id == "reviewer.startup_fact_check":
-            delivery.update(
-                {
-                    "startup_mechanical_audit_path": pending.get("startup_mechanical_audit_path"),
-                    "startup_mechanical_audit_hash": pending.get("startup_mechanical_audit_hash"),
-                    "router_owned_check_proof_path": pending.get("router_owned_check_proof_path"),
-                    "router_owned_check_proof_hash": pending.get("router_owned_check_proof_hash"),
-                    "router_computable_checks_already_enforced": True,
-                    "reviewer_should_not_reprove_router_computable_checks": True,
-                    "reviewer_required_external_facts": pending.get("reviewer_required_external_facts") or [],
-                }
-            )
-        envelope_path_raw = delivery.get("card_envelope_path")
-        expected_return_path_raw = delivery.get("expected_return_path")
-        expected_receipt_path_raw = delivery.get("expected_receipt_path")
-        if not all(isinstance(item, str) and item for item in (envelope_path_raw, expected_return_path_raw, expected_receipt_path_raw)):
-            raise RouterError("system card envelope delivery requires envelope, receipt, and return paths")
-        envelope_path = resolve_project_path(project_root, str(envelope_path_raw))
-        expected_return_path = resolve_project_path(project_root, str(expected_return_path_raw))
-        expected_receipt_path = resolve_project_path(project_root, str(expected_receipt_path_raw))
-        envelope = {
-            "schema_version": card_runtime.CARD_ENVELOPE_SCHEMA,
-            "run_id": run_state["run_id"],
-            "run_root": project_relative(project_root, run_root),
-            "resume_tick_id": delivery.get("resume_tick_id"),
-            "envelope_id": delivery.get("delivery_attempt_id"),
-            "delivery_id": delivery.get("delivery_id"),
-            "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-            "card_id": card_id,
-            "from": "system",
-            "issued_by": "router",
-            "delivered_by": "controller",
-            "target_role": pending["to_role"],
-            "target_agent_id": delivery.get("target_agent_id"),
-            "body_path": delivery.get("body_path"),
-            "body_hash": delivery.get("body_hash"),
-            "manifest_path": delivery.get("manifest_path"),
-            "manifest_hash": delivery.get("manifest_hash"),
-            "body_visibility": "target_role_runtime_only",
-            "resource_lifecycle": "committed_artifact",
-            "artifact_committed": True,
-            "relay_allowed": True,
-            "apply_required": False,
-            "controller_visibility": "system_card_envelope_only",
-            "sealed_body_reads_allowed": False,
-            "requires_read_receipt": True,
-            "open_method": delivery.get("open_method") or "open-card",
-            "return_event": delivery.get("return_event"),
-            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-            "expected_return_path": project_relative(project_root, expected_return_path),
-            "delivery_context": delivery_context,
-            "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
-            "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
-            "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
-            "delivered_at": delivery["delivered_at"],
-            "runtime_validates_mechanics_only": True,
-            "semantic_understanding_validated_by_receipt": False,
-        }
-        envelope["envelope_hash"] = card_runtime.stable_json_hash(envelope)
-        write_json(envelope_path, envelope)
-        delivery["card_envelope_hash"] = envelope["envelope_hash"]
-        delivery["resource_lifecycle"] = "committed_artifact"
-        delivery["artifact_committed"] = True
-        delivery["relay_allowed"] = True
-        delivery["apply_required"] = False
-        run_state["delivered_cards"].append(delivery)
-        run_state["flags"][card_entry["flag"]] = True
-        run_state["manifest_check_requested"] = False
-        run_state["prompt_deliveries"] = int(run_state.get("prompt_deliveries", 0)) + 1
-        ledger = read_json_if_exists(run_root / "prompt_delivery_ledger.json") or {"schema_version": "flowpilot.prompt_delivery_ledger.v1", "deliveries": []}
-        ledger.setdefault("deliveries", []).append(delivery)
-        ledger["updated_at"] = utc_now()
-        write_json(run_root / "prompt_delivery_ledger.json", ledger)
-        card_ledger = _read_card_ledger(run_root, str(run_state["run_id"]))
-        card_ledger.setdefault("deliveries", []).append(
-            {
-                "card_id": card_id,
-                "delivery_id": delivery.get("delivery_id"),
-                "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-                "to_role": pending["to_role"],
-                "target_agent_id": delivery.get("target_agent_id"),
-                "card_envelope_path": project_relative(project_root, envelope_path),
-                "card_envelope_hash": envelope["envelope_hash"],
-                "resource_lifecycle": "committed_artifact",
-                "artifact_committed": True,
-                "relay_allowed": True,
-                "apply_required": False,
-                "body_hash": delivery.get("body_hash"),
-                "manifest_hash": delivery.get("manifest_hash"),
-                "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
-                "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
-                "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
-                "requires_read_receipt": True,
-                "return_event": delivery.get("return_event"),
-                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-                "expected_return_path": project_relative(project_root, expected_return_path),
-                "delivered_at": delivery["delivered_at"],
-            }
-        )
-        card_ledger["updated_at"] = utc_now()
-        write_json(_card_ledger_path(run_root), card_ledger)
-        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
-        return_ledger.setdefault("pending_returns", []).append(
-            {
-                "return_event": delivery.get("return_event"),
-                "status": "pending",
-                "card_id": card_id,
-                "delivery_id": delivery.get("delivery_id"),
-                "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-                "target_role": pending["to_role"],
-                "target_agent_id": delivery.get("target_agent_id"),
-                "card_envelope_path": project_relative(project_root, envelope_path),
-                "card_envelope_hash": envelope["envelope_hash"],
-                "resource_lifecycle": "committed_artifact",
-                "artifact_committed": True,
-                "relay_allowed": True,
-                "apply_required": False,
-                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-                "expected_return_path": project_relative(project_root, expected_return_path),
-                "sent_at": delivery["delivered_at"],
-            }
-        )
-        return_ledger["updated_at"] = utc_now()
-        write_json(_return_event_ledger_path(run_root), return_ledger)
-        result_extra.update(
-            {
-                "resource_lifecycle": "committed_artifact",
-                "artifact_committed": True,
-                "artifact_exists": True,
-                "artifact_hash_verified": True,
-                "ledger_recorded": True,
-                "return_wait_recorded": True,
-                "relay_allowed": True,
-                "apply_required": False,
-                "card_envelope_path": project_relative(project_root, envelope_path),
-                "expected_return_path": project_relative(project_root, expected_return_path),
-                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-            }
-        )
+        raise RouterError("deliver_system_card is relay-only; Router commits the card envelope internally and Controller must only relay it")
     elif action_type == "check_packet_ledger":
         run_state["ledger_check_requested"] = True
         run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1

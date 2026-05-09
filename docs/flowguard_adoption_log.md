@@ -1086,6 +1086,61 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - none recorded
 
+
+## flowpilot-startup-optimization - Compress startup with reviewer-first PM-prep parallelism
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot startup was too slow; user requested model-first optimization before runtime changes
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-09T20:19:04+00:00
+- Ended: 2026-05-09T20:59:42+00:00
+- Commands OK: True
+
+### Model Files
+- docs/flowpilot_startup_optimization_plan.md
+- simulations/flowpilot_startup_optimization_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_flowpilot_startup_optimization_checks.py --json-out simulations/flowpilot_startup_optimization_results.json`
+- OK: `python simulations/run_flowpilot_startup_control_checks.py --json-out simulations/flowpilot_startup_control_results.json`
+- OK: `python simulations/run_flowpilot_card_envelope_checks.py --json-out simulations/flowpilot_card_envelope_results.json`
+- OK: `python simulations/run_command_refinement_checks.py`
+- OK: `python simulations/run_card_instruction_coverage_checks.py`
+- OK: `python simulations/run_meta_checks.py`
+- OK: `python simulations/run_capability_checks.py`
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py tests/test_flowpilot_card_runtime.py -q`
+- OK: `python scripts/check_install.py`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+
+### Findings
+- Startup optimization was modeled before runtime changes; the model detects missing role-core receipts, delayed or stale heartbeat binding, reviewer-after-PM ordering, missing display evidence, reviewer re-proof of router-owned facts, and premature PM activation.
+- Bootloader role startup now writes role-core delivery evidence in the same action as six-role startup, keeping the legacy role-core injection action only as recovery for older bootstrap states.
+- Scheduled heartbeat is requested before display sync and startup review work once the run and role ledger exist.
+- Reviewer startup fact-check delivery now happens before PM startup prep cards; PM prep can proceed after reviewer card ack while the reviewer report is pending, but PM startup activation still waits for reviewer facts.
+- Reviewer startup delivery context includes direct display-surface evidence and router-owned mechanical proof, with explicit no-reproof guidance.
+
+### Counterexamples
+- Missing core prompt/hash receipts are rejected by `roles_ready_without_core_receipts`.
+- Reviewer dispatch before early heartbeat is rejected by `heartbeat_after_reviewer_dispatch`.
+- PM prep before reviewer dispatch is rejected by `pm_prep_before_reviewer`.
+- PM activation before reviewer/PM prep join is rejected by `pm_activation_before_join`.
+- Missing display evidence is rejected by `reviewer_without_display_receipt`.
+
+### Friction Points
+- Running local install sync, check, and audit in parallel can race: check/audit may read stale installed skill digests while sync is still overwriting. Run sync first, then check and audit.
+- Full router runtime tests are long in a shared workspace; background execution with log polling avoids blocking other foreground verification.
+
+### Skipped Steps
+- No remote GitHub sync or push was performed by request.
+- Same-role multi-card body bundling was intentionally kept out of this pass because command-refinement still rejects generic `card_bundle_fold` without dedicated replay semantics.
+
+### Next Actions
+- Consider a separate modeled replay feature for same-role multi-card batch envelopes only if per-card receipts, return joins, and replay semantics are added explicitly.
+
 ## flowpilot-node5-acceptance-handoff-20260508 - Final acceptance hardening and handoff package
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -6159,3 +6214,36 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep the same planned-vs-committed resource lifecycle boundary if other pending action families are migrated later.
+
+
+## flowpilot-remove-public-system-card-apply - Remove public apply compatibility for committed FlowPilot system-card relay actions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested eliminating long-term compatibility that lets Controller apply deliver_system_card after Router commits the envelope
+- Status: in_progress
+- Skill decision: use_flowguard
+- Started: 2026-05-09T20:11:52+00:00
+- Ended: 2026-05-09T20:11:52+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded

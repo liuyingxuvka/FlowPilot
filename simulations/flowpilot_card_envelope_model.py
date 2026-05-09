@@ -15,10 +15,11 @@ Risk intent brief:
   receipt, missing ack/report envelope, ack/report without receipt references,
   wrong role, old run, old agent after replacement, hash mismatch, receipt
   before delivery, Controller relaying a pre-apply planned artifact path as if
-  it were a committed envelope, missing resume I/O acknowledgement,
-  preload-only authorization, bundle receipt replacing per-card receipts,
-  hidden dependency parallelization, Controller body reads, Controller batch
-  mutation, and dead-end waiting after an interruption.
+  it were a committed envelope, public Controller apply of a relay-only
+  system-card action, missing resume I/O acknowledgement, preload-only
+  authorization, bundle receipt replacing per-card receipts, hidden dependency
+  parallelization, Controller body reads, Controller batch mutation, and
+  dead-end waiting after an interruption.
 - Hard invariants: Controller never reads card bodies; Router advancement
   requires current-run/current-role/current-agent/current-hash runtime receipts
   referenced by a current ack/report envelope; cross-role parallel delivery is
@@ -71,6 +72,7 @@ class State:
     post_apply_envelope_issued: bool = False
     controller_relayed_preapply_artifact: bool = False
     runtime_open_blocked_not_committed: bool = False
+    public_system_card_apply_used: bool = False
 
     card_envelope_issued: bool = False
     card_delivery_recorded: bool = False
@@ -446,6 +448,8 @@ def controller_must_stay_envelope_only(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("pre-apply system-card planning action was marked relay-allowed")
     if state.controller_relayed_preapply_artifact or state.runtime_open_blocked_not_committed:
         return InvariantResult.fail("Controller relayed planned system-card action before committed envelope artifact existed")
+    if state.public_system_card_apply_used:
+        return InvariantResult.fail("public Controller apply attempted to deliver a relay-only system-card action")
     if state.controller_relayed_card_envelope and not (
         state.committed_artifact_exists
         and state.committed_artifact_hash_verified
@@ -682,6 +686,7 @@ def target_v2_state() -> State:
         committed_artifact_exists=True,
         committed_artifact_hash_verified=True,
         post_apply_envelope_issued=True,
+        public_system_card_apply_used=False,
         card_envelope_issued=True,
         card_delivery_recorded=True,
         card_hash_matches_manifest=True,
@@ -771,6 +776,10 @@ def hazard_states() -> dict[str, State]:
         "preapply_planned_action_marked_relay_allowed": replace(
             safe,
             planned_action_relay_allowed=True,
+        ),
+        "public_apply_deliver_system_card_used": replace(
+            safe,
+            public_system_card_apply_used=True,
         ),
         "missing_read_receipt": replace(
             safe,
