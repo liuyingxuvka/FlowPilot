@@ -2400,6 +2400,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(second["from"], "system")
         self.assertEqual(second["issued_by"], "router")
         self.assertEqual(second["delivered_by"], "controller")
+        self.assertEqual(second["resource_lifecycle"], "committed_artifact")
+        self.assertTrue(second["artifact_committed"])
+        self.assertTrue(second["artifact_exists"])
+        self.assertTrue(second["artifact_hash_verified"])
+        self.assertTrue(second["ledger_recorded"])
+        self.assertTrue(second["return_wait_recorded"])
+        self.assertTrue(second["relay_allowed"])
+        self.assertFalse(second["apply_required"])
+        self.assertTrue(second["auto_committed_by_router"])
+        self.assertEqual(second["next_step_contract"]["resource_lifecycle"], "committed_artifact")
+        self.assertTrue(second["next_step_contract"]["artifact_committed"])
+        self.assertTrue(second["next_step_contract"]["relay_allowed"])
+        self.assertFalse(second["next_step_contract"]["apply_required"])
+        self.assertTrue((root / second["card_envelope_path"]).exists())
+        pre_apply_state = read_json(run_root / "router_state.json")
+        pre_apply_prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
+        self.assertEqual(pre_apply_state["prompt_deliveries"], 1)
+        self.assertEqual(pre_apply_prompt_ledger["deliveries"][0]["card_id"], "pm.core")
         context = second["delivery_context"]
         self.assertEqual(context["schema_version"], "flowpilot.live_card_context.v1")
         self.assertEqual(context["run_id"], run_root.name)
@@ -2453,6 +2471,45 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             agent_id=str(second["target_agent_id"]),
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
+        check_action = self.next_after_display_sync(root)
+        self.assertEqual(check_action["action_type"], "check_card_return_event")
+        router.apply_action(root, "check_card_return_event")
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
+
+    def test_committed_system_card_relay_can_resolve_without_apply_roundtrip(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        router.apply_action(root, "confirm_controller_core_boundary")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "check_prompt_manifest")
+        router.apply_action(root, "check_prompt_manifest")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "pm.core")
+        self.assertTrue(action["artifact_committed"])
+        self.assertTrue(action["relay_allowed"])
+        self.assertFalse(action["apply_required"])
+
+        open_result = card_runtime.open_card(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role="project_manager",
+            agent_id=str(action["target_agent_id"]),
+        )
+        card_runtime.submit_card_ack(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role="project_manager",
+            agent_id=str(action["target_agent_id"]),
+            receipt_paths=[str(open_result["read_receipt_path"])],
+        )
+
         check_action = self.next_after_display_sync(root)
         self.assertEqual(check_action["action_type"], "check_card_return_event")
         router.apply_action(root, "check_card_return_event")

@@ -14,10 +14,11 @@ Risk intent brief:
 - Adversarial branches include legacy delivery treated as read, missing read
   receipt, missing ack/report envelope, ack/report without receipt references,
   wrong role, old run, old agent after replacement, hash mismatch, receipt
-  before delivery, missing resume I/O acknowledgement, preload-only
-  authorization, bundle receipt replacing per-card receipts, hidden dependency
-  parallelization, Controller body reads, Controller batch mutation, and
-  dead-end waiting after an interruption.
+  before delivery, Controller relaying a pre-apply planned artifact path as if
+  it were a committed envelope, missing resume I/O acknowledgement,
+  preload-only authorization, bundle receipt replacing per-card receipts,
+  hidden dependency parallelization, Controller body reads, Controller batch
+  mutation, and dead-end waiting after an interruption.
 - Hard invariants: Controller never reads card bodies; Router advancement
   requires current-run/current-role/current-agent/current-hash runtime receipts
   referenced by a current ack/report envelope; cross-role parallel delivery is
@@ -60,6 +61,16 @@ class State:
     role_io_protocol_injected: bool = False
     role_io_ack_current_tick: bool = False
     role_io_ack_current_agent: bool = False
+
+    internal_delivery_action_exposed: bool = False
+    planned_artifact_paths_exposed: bool = False
+    planned_action_relay_allowed: bool = False
+    router_auto_committed_internal_action: bool = False
+    committed_artifact_exists: bool = False
+    committed_artifact_hash_verified: bool = False
+    post_apply_envelope_issued: bool = False
+    controller_relayed_preapply_artifact: bool = False
+    runtime_open_blocked_not_committed: bool = False
 
     card_envelope_issued: bool = False
     card_delivery_recorded: bool = False
@@ -212,11 +223,27 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.internal_delivery_action_exposed:
+        yield Transition(
+            "router_computes_internal_card_delivery_action_without_relay_permission",
+            _inc(
+                state,
+                internal_delivery_action_exposed=True,
+                planned_artifact_paths_exposed=True,
+                planned_action_relay_allowed=False,
+            ),
+        )
+        return
+
     if not state.card_envelope_issued:
         yield Transition(
             "router_issues_card_envelope_with_manifest_hash_and_return_event",
             _inc(
                 state,
+                router_auto_committed_internal_action=True,
+                committed_artifact_exists=True,
+                committed_artifact_hash_verified=True,
+                post_apply_envelope_issued=True,
                 card_envelope_issued=True,
                 card_delivery_recorded=True,
                 card_hash_matches_manifest=True,
@@ -415,6 +442,17 @@ def controller_must_stay_envelope_only(state: State, trace) -> InvariantResult:
     del trace
     if state.controller_read_card_body:
         return InvariantResult.fail("Controller read a system-card body")
+    if state.planned_action_relay_allowed:
+        return InvariantResult.fail("pre-apply system-card planning action was marked relay-allowed")
+    if state.controller_relayed_preapply_artifact or state.runtime_open_blocked_not_committed:
+        return InvariantResult.fail("Controller relayed planned system-card action before committed envelope artifact existed")
+    if state.controller_relayed_card_envelope and not (
+        state.committed_artifact_exists
+        and state.committed_artifact_hash_verified
+        and state.card_delivery_recorded
+        and state.pending_return_recorded
+    ):
+        return InvariantResult.fail("Controller relayed card envelope before artifact, hash, ledger, and return wait were committed")
     if state.controller_relayed_card_envelope and not state.controller_envelope_only:
         return InvariantResult.fail("Controller relayed a card without envelope-only proof")
     if state.controller_mutated_batch or state.controller_skipped_envelope:
@@ -428,6 +466,12 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
         state.return_event_declared and state.expected_return_path_recorded and state.pending_return_recorded
     ):
         return InvariantResult.fail("card envelope lacked a Router-owned expected return event")
+    if state.card_envelope_issued and not (
+        state.router_auto_committed_internal_action
+        and state.committed_artifact_exists
+        and state.post_apply_envelope_issued
+    ):
+        return InvariantResult.fail("system card envelope was issued without an internal auto-commit artifact lifecycle")
     if state.legacy_delivery_treated_as_read:
         return InvariantResult.fail("legacy prompt delivery record was treated as a v2 read receipt")
     if state.required_card_coverage_passed and not (_receipt_valid(state) and _ack_valid(state)):
@@ -594,6 +638,7 @@ REQUIRED_LABELS = (
     "legacy_prompt_delivery_shape_recorded_without_v2_receipt",
     "legacy_delivery_stops_before_v2_authorization",
     "role_io_protocol_injected_and_acknowledged_for_current_tick",
+    "router_computes_internal_card_delivery_action_without_relay_permission",
     "router_issues_card_envelope_with_manifest_hash_and_return_event",
     "controller_relays_card_envelope_only",
     "router_detects_missing_expected_return_and_waits",
@@ -630,6 +675,13 @@ def target_v2_state() -> State:
         role_io_protocol_injected=True,
         role_io_ack_current_tick=True,
         role_io_ack_current_agent=True,
+        internal_delivery_action_exposed=True,
+        planned_artifact_paths_exposed=True,
+        planned_action_relay_allowed=False,
+        router_auto_committed_internal_action=True,
+        committed_artifact_exists=True,
+        committed_artifact_hash_verified=True,
+        post_apply_envelope_issued=True,
         card_envelope_issued=True,
         card_delivery_recorded=True,
         card_hash_matches_manifest=True,
@@ -705,6 +757,21 @@ def hazard_states() -> dict[str, State]:
     safe = target_v2_state()
     return {
         "legacy_delivery_treated_as_read": legacy_expected_bad_state(),
+        "preapply_pending_relayed_as_committed_artifact": replace(
+            safe,
+            router_auto_committed_internal_action=False,
+            committed_artifact_exists=False,
+            committed_artifact_hash_verified=False,
+            post_apply_envelope_issued=False,
+            card_delivery_recorded=False,
+            pending_return_recorded=False,
+            controller_relayed_preapply_artifact=True,
+            runtime_open_blocked_not_committed=True,
+        ),
+        "preapply_planned_action_marked_relay_allowed": replace(
+            safe,
+            planned_action_relay_allowed=True,
+        ),
         "missing_read_receipt": replace(
             safe,
             card_read_receipt_written=False,

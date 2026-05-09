@@ -19,6 +19,8 @@ RESULTS_PATH = ROOT / "flowpilot_card_envelope_results.json"
 
 HAZARD_EXPECTED_FAILURES = {
     "legacy_delivery_treated_as_read": "legacy prompt delivery record was treated as a v2 read receipt",
+    "preapply_pending_relayed_as_committed_artifact": "Controller relayed planned system-card action before committed envelope artifact existed",
+    "preapply_planned_action_marked_relay_allowed": "pre-apply system-card planning action was marked relay-allowed",
     "missing_read_receipt": "required system card coverage passed without valid read receipt and ack/report envelope",
     "missing_ack_report": "required system card coverage passed without valid read receipt and ack/report envelope",
     "ack_without_receipt_refs": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
@@ -51,6 +53,11 @@ def _state_id(state: model.State) -> str:
         f"legacy={state.legacy_prompt_delivery_recorded},{state.legacy_delivery_treated_as_read}|"
         f"io={state.resume_tick_active},{state.role_io_protocol_injected},"
         f"{state.role_io_ack_current_tick},{state.role_io_ack_current_agent}|"
+        f"lifecycle={state.internal_delivery_action_exposed},{state.planned_artifact_paths_exposed},"
+        f"{state.planned_action_relay_allowed},{state.router_auto_committed_internal_action},"
+        f"{state.committed_artifact_exists},{state.committed_artifact_hash_verified},"
+        f"{state.post_apply_envelope_issued},{state.controller_relayed_preapply_artifact},"
+        f"{state.runtime_open_blocked_not_committed}|"
         f"delivery={state.card_envelope_issued},{state.card_delivery_recorded},"
         f"{state.return_event_declared},{state.pending_return_recorded}|"
         f"controller={state.controller_relayed_card_envelope},{state.controller_envelope_only},"

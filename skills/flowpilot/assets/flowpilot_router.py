@@ -2258,7 +2258,10 @@ def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]
 
 
 def _pending_card_return_ack_exists(project_root: Path, pending_action: object) -> bool:
-    if not isinstance(pending_action, dict) or pending_action.get("action_type") != "await_card_return_event":
+    if not isinstance(pending_action, dict) or pending_action.get("action_type") not in {
+        "await_card_return_event",
+        "deliver_system_card",
+    }:
         return False
     raw_path = pending_action.get("expected_return_path")
     return isinstance(raw_path, str) and raw_path and resolve_project_path(project_root, raw_path).exists()
@@ -2281,6 +2284,45 @@ def _pending_card_return_blocker_for_event(run_root: Path, run_id: str, event: s
     return pending_returns[0]
 
 
+def _committed_card_artifact_extra(
+    project_root: Path,
+    record: dict[str, Any],
+    *,
+    relay_allowed_if_ready: bool,
+) -> dict[str, Any]:
+    envelope_path = str(record.get("card_envelope_path") or "")
+    expected_return_path = str(record.get("expected_return_path") or "")
+    expected_receipt_path = str(record.get("expected_receipt_path") or "")
+    artifact_exists = False
+    artifact_hash_verified = False
+    if envelope_path:
+        resolved = resolve_project_path(project_root, envelope_path)
+        artifact_exists = resolved.exists() and resolved.is_file()
+        if artifact_exists:
+            try:
+                envelope = read_json(resolved)
+            except Exception:
+                envelope = {}
+            recorded_hash = str(record.get("card_envelope_hash") or "")
+            artifact_hash_verified = bool(recorded_hash) and envelope.get("envelope_hash") == recorded_hash
+    artifact_committed = bool(
+        artifact_exists
+        and artifact_hash_verified
+        and expected_return_path
+        and expected_receipt_path
+    )
+    return {
+        "resource_lifecycle": "committed_artifact" if artifact_committed else "missing_committed_artifact",
+        "artifact_committed": artifact_committed,
+        "artifact_exists": artifact_exists,
+        "artifact_hash_verified": artifact_hash_verified,
+        "ledger_recorded": True,
+        "return_wait_recorded": bool(expected_return_path),
+        "relay_allowed": bool(relay_allowed_if_ready and artifact_committed),
+        "apply_required": False,
+    }
+
+
 def _next_pending_card_return_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
     if not pending_returns:
@@ -2288,6 +2330,11 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
     record = pending_returns[0]
     expected_return_path = str(record.get("expected_return_path") or "")
     envelope_path = str(record.get("card_envelope_path") or "")
+    committed_extra = _committed_card_artifact_extra(
+        project_root,
+        record,
+        relay_allowed_if_ready=False,
+    )
     if expected_return_path and resolve_project_path(project_root, expected_return_path).exists():
         return make_action(
             action_type="check_card_return_event",
@@ -2320,15 +2367,21 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
                 "expected_receipt_path": record.get("expected_receipt_path"),
                 "controller_visibility": "ack_envelope_and_receipts_only",
                 "sealed_body_reads_allowed": False,
+                **committed_extra,
             },
         )
+    committed_extra = _committed_card_artifact_extra(
+        project_root,
+        record,
+        relay_allowed_if_ready=True,
+    )
     return make_action(
         action_type="await_card_return_event",
         actor="controller",
         label=f"controller_waits_for_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
         summary=(
-            f"Controller is waiting for {record.get('target_role')} to return {record.get('return_event')} "
-            "after opening the card through runtime."
+            f"Relay the committed system-card envelope to {record.get('target_role')} if needed, then wait "
+            f"for {record.get('return_event')} after the role opens the card through runtime."
         ),
         allowed_reads=[
             envelope_path,
@@ -2352,6 +2405,7 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
             "waiting_for_agent_id": record.get("target_agent_id"),
             "controller_visibility": "pending_return_metadata_only",
             "sealed_body_reads_allowed": False,
+            **committed_extra,
             "next_recovery_actions": [
                 "role_uses_open-card_then_ack-card",
                 "controller_reminds_role_if_still_live",
@@ -2406,6 +2460,10 @@ def make_action(
         action["to_role"] = to_role
     if extra:
         action.update(extra)
+    action.setdefault("resource_lifecycle", "pending_action")
+    action.setdefault("artifact_committed", False)
+    action.setdefault("relay_allowed", False)
+    action.setdefault("apply_required", True)
     if action.get("requires_user_dialog_display_confirmation") and "payload_template" not in action:
         display_kind = action.get("display_kind")
         display_text_sha256 = action.get("display_text_sha256")
@@ -2435,6 +2493,10 @@ def make_action(
         "controller_may_contact_unlisted_role": False,
         "controller_may_create_project_evidence": False,
         "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
+        "resource_lifecycle": action.get("resource_lifecycle"),
+        "artifact_committed": bool(action.get("artifact_committed", False)),
+        "relay_allowed": bool(action.get("relay_allowed", False)),
+        "apply_required": bool(action.get("apply_required", True)),
         "allowed_external_events": action.get("allowed_external_events", []),
         "postcondition": action.get("postcondition"),
     }
@@ -11804,6 +11866,10 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         delivery_extra.update(
             {
                 "delivery_mode": "envelope_only_v2",
+                "resource_lifecycle": "planned_internal_action",
+                "artifact_committed": False,
+                "relay_allowed": False,
+                "apply_required": True,
                 "controller_visibility": "system_card_envelope_only",
                 "sealed_body_reads_allowed": False,
                 "requires_read_receipt": True,
@@ -11825,6 +11891,11 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 "role_io_protocol_receipt_hash": role_io_receipt.get("receipt_hash") if isinstance(role_io_receipt, dict) else None,
                 "ack_report_required": True,
                 "read_receipt_is_mechanical_only": True,
+                "planned_artifacts": {
+                    "card_envelope_path": project_relative(project_root, envelope_path),
+                    "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+                    "expected_return_path": project_relative(project_root, expected_return_path),
+                },
             }
         )
         allowed_reads = [
@@ -12344,6 +12415,92 @@ def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: 
     }
 
 
+def _pending_return_record_for_action(run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
+    delivery_attempt_id = action.get("delivery_attempt_id")
+    for record in _pending_return_records(run_root, run_id):
+        if (
+            isinstance(record, dict)
+            and record.get("delivery_attempt_id") == delivery_attempt_id
+            and record.get("card_id") == action.get("card_id")
+        ):
+            return record
+    return None
+
+
+def _auto_commit_system_card_delivery_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    planned = dict(action)
+    planned["resource_lifecycle"] = "planned_internal_action"
+    planned["artifact_committed"] = False
+    planned["relay_allowed"] = False
+    planned["apply_required"] = True
+    planned.setdefault(
+        "planned_artifacts",
+        {
+            "card_envelope_path": planned.get("card_envelope_path"),
+            "expected_receipt_path": planned.get("expected_receipt_path"),
+            "expected_return_path": planned.get("expected_return_path"),
+        },
+    )
+    run_state["pending_action"] = planned
+    append_history(
+        run_state,
+        "router_auto_commits_internal_system_card_delivery",
+        {
+            "action_type": planned.get("action_type"),
+            "card_id": planned.get("card_id"),
+            "planned_artifacts_exposed_to_controller": False,
+        },
+    )
+    save_run_state(run_root, run_state)
+    apply_result = apply_controller_action(project_root, "deliver_system_card", {})
+    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    reloaded_state, reloaded_run_root = load_run_state(project_root, bootstrap)
+    if reloaded_state is None or reloaded_run_root is None:
+        raise RouterError("system card auto-commit lost run state")
+    record = _pending_return_record_for_action(reloaded_run_root, str(reloaded_state["run_id"]), planned)
+    if record is None:
+        raise RouterError("system card auto-commit did not establish a pending return record")
+    committed_extra = _committed_card_artifact_extra(project_root, record, relay_allowed_if_ready=True)
+    if not committed_extra["relay_allowed"]:
+        raise RouterError("system card auto-commit did not produce a relay-ready committed artifact")
+    committed = {
+        **planned,
+        **committed_extra,
+        "summary": (
+            f"Relay committed system card envelope {planned.get('card_id')} to {planned.get('to_role')}; "
+            f"the role must open it through runtime and return {planned.get('return_event')}."
+        ),
+        "allowed_writes": [],
+        "auto_committed_by_router": True,
+        "auto_commit_result": apply_result,
+        "next_after_relay": "await_card_return_event",
+    }
+    committed["next_step_contract"] = {
+        **committed.get("next_step_contract", {}),
+        "resource_lifecycle": committed["resource_lifecycle"],
+        "artifact_committed": True,
+        "relay_allowed": True,
+        "apply_required": False,
+    }
+    reloaded_state["pending_action"] = committed
+    append_history(
+        reloaded_state,
+        "router_returned_committed_system_card_relay_action",
+        {
+            "card_id": committed.get("card_id"),
+            "card_envelope_path": committed.get("card_envelope_path"),
+            "relay_allowed": committed.get("relay_allowed"),
+        },
+    )
+    save_run_state(reloaded_run_root, reloaded_state)
+    return committed
+
+
 def compute_controller_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any]:
     terminal_action = _run_lifecycle_terminal_action(project_root, run_state, run_root)
     if terminal_action is not None:
@@ -12369,6 +12526,12 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         )
         save_run_state(run_root, run_state)
     elif pending_action:
+        if (
+            isinstance(pending_action, dict)
+            and pending_action.get("action_type") == "deliver_system_card"
+            and pending_action.get("artifact_committed") is not True
+        ):
+            return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, pending_action)
         return pending_action
     if not _route_memory_ready(run_root, run_state):
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
@@ -12390,6 +12553,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         action = _next_pending_card_return_action(project_root, run_state, run_root)
     if action is None:
         action = _next_system_card_action(project_root, run_state, run_root)
+    if isinstance(action, dict) and action.get("action_type") == "deliver_system_card":
+        return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, action)
     if action is None and _resume_waits_for_pm_decision(run_state):
         action = make_action(
             action_type="await_role_decision",
@@ -12459,6 +12624,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     if run_state is None or run_root is None:
         raise RouterError("run state is missing")
     pending = _ensure_pending(run_state, action_type)
+    result_extra: dict[str, Any] = {}
     if action_type == "check_prompt_manifest":
         run_state["manifest_check_requested"] = True
         run_state["manifest_check_requests"] = int(run_state.get("manifest_check_requests", 0)) + 1
@@ -12520,11 +12686,44 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 raise RouterError("role I/O protocol injection did not produce a usable receipt")
             receipts = [receipt]
         run_state["role_io_protocol_injections"] = int(run_state.get("role_io_protocol_injections", 0)) + len(receipts)
-        result_extra = {
+        result_extra.update({
             "role_io_protocol_receipts": receipts,
             "protocol_hash": _role_io_protocol_hash(),
-        }
+        })
     elif action_type == "deliver_system_card":
+        if pending.get("artifact_committed") is True and pending.get("apply_required") is False:
+            wait_action = _next_pending_card_return_action(project_root, run_state, run_root)
+            if wait_action is None:
+                raise RouterError("committed system card delivery has no pending return wait")
+            append_history(
+                run_state,
+                "controller_acknowledged_committed_system_card_relay_action",
+                {
+                    "card_id": pending.get("card_id"),
+                    "card_envelope_path": pending.get("card_envelope_path"),
+                    "relay_allowed": pending.get("relay_allowed"),
+                },
+            )
+            run_state["pending_action"] = wait_action
+            _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_controller_action:{action_type}")
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason=f"after_controller_action:{action_type}",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+            return {
+                "ok": True,
+                "applied": action_type,
+                "waiting": True,
+                "expected_return_path": pending.get("expected_return_path"),
+                "card_envelope_path": pending.get("card_envelope_path"),
+                "resource_lifecycle": pending.get("resource_lifecycle"),
+                "artifact_committed": True,
+                "relay_allowed": True,
+            }
         card_id = str(pending["card_id"])
         card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
         if card_entry is None:
@@ -12605,6 +12804,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "manifest_path": delivery.get("manifest_path"),
             "manifest_hash": delivery.get("manifest_hash"),
             "body_visibility": "target_role_runtime_only",
+            "resource_lifecycle": "committed_artifact",
+            "artifact_committed": True,
+            "relay_allowed": True,
+            "apply_required": False,
             "controller_visibility": "system_card_envelope_only",
             "sealed_body_reads_allowed": False,
             "requires_read_receipt": True,
@@ -12623,6 +12826,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         envelope["envelope_hash"] = card_runtime.stable_json_hash(envelope)
         write_json(envelope_path, envelope)
         delivery["card_envelope_hash"] = envelope["envelope_hash"]
+        delivery["resource_lifecycle"] = "committed_artifact"
+        delivery["artifact_committed"] = True
+        delivery["relay_allowed"] = True
+        delivery["apply_required"] = False
         run_state["delivered_cards"].append(delivery)
         run_state["flags"][card_entry["flag"]] = True
         run_state["manifest_check_requested"] = False
@@ -12641,6 +12848,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "target_agent_id": delivery.get("target_agent_id"),
                 "card_envelope_path": project_relative(project_root, envelope_path),
                 "card_envelope_hash": envelope["envelope_hash"],
+                "resource_lifecycle": "committed_artifact",
+                "artifact_committed": True,
+                "relay_allowed": True,
+                "apply_required": False,
                 "body_hash": delivery.get("body_hash"),
                 "manifest_hash": delivery.get("manifest_hash"),
                 "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
@@ -12667,6 +12878,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "target_agent_id": delivery.get("target_agent_id"),
                 "card_envelope_path": project_relative(project_root, envelope_path),
                 "card_envelope_hash": envelope["envelope_hash"],
+                "resource_lifecycle": "committed_artifact",
+                "artifact_committed": True,
+                "relay_allowed": True,
+                "apply_required": False,
                 "expected_receipt_path": project_relative(project_root, expected_receipt_path),
                 "expected_return_path": project_relative(project_root, expected_return_path),
                 "sent_at": delivery["delivered_at"],
@@ -12674,6 +12889,21 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         )
         return_ledger["updated_at"] = utc_now()
         write_json(_return_event_ledger_path(run_root), return_ledger)
+        result_extra.update(
+            {
+                "resource_lifecycle": "committed_artifact",
+                "artifact_committed": True,
+                "artifact_exists": True,
+                "artifact_hash_verified": True,
+                "ledger_recorded": True,
+                "return_wait_recorded": True,
+                "relay_allowed": True,
+                "apply_required": False,
+                "card_envelope_path": project_relative(project_root, envelope_path),
+                "expected_return_path": project_relative(project_root, expected_return_path),
+                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+            }
+        )
     elif action_type == "check_packet_ledger":
         run_state["ledger_check_requested"] = True
         run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
@@ -12984,6 +13214,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     )
     save_run_state(run_root, run_state)
     result = {"ok": True, "applied": action_type}
+    result.update(result_extra)
     if action_type == "sync_display_plan":
         result.update(_display_plan_sync_payload(project_root, run_root, run_state))
         result["user_dialog_display_confirmation"] = run_state["visible_plan_sync"]["user_dialog_display_confirmation"]

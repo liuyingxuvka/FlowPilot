@@ -6085,3 +6085,77 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If batch delivery is implemented later, start from the modeled dependency graph and join-policy invariants before changing production routing
+
+
+## flowpilot-preapply-artifact-lifecycle - Prevent FlowPilot pre-apply pending actions from being relayed as committed artifacts
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot run exposed deliver_system_card pending action path before envelope artifact existed
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-09T19:25:50+00:00
+- Ended: 2026-05-09T19:25:50+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-preapply-artifact-lifecycle - Prevent FlowPilot pre-apply pending actions from being relayed as committed artifacts
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot run exposed deliver_system_card pending action path before envelope artifact existed
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-09T19:48:48+00:00
+- Ended: 2026-05-09T19:48:48+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_card_envelope_model.py
+
+### Commands
+- OK (0.000s): `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`
+- OK (0.000s): `python simulations\run_meta_checks.py`
+- OK (0.000s): `python simulations\run_capability_checks.py`
+- OK (0.000s): `python -m pytest tests\test_flowpilot_router_runtime.py tests\test_flowpilot_card_runtime.py -q`
+- OK (0.000s): `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\install_flowpilot.py --check --json`
+- OK (0.000s): `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- FlowGuard now models planned versus committed card artifacts and detects pre-apply artifact relay.
+- Router auto-commits internal system-card delivery before returning a relay-ready action, so Controller only sees committed envelopes as relayable.
+- Production regression test verifies envelope file existence, hash verification, ledgers, return wait, and relay_allowed before Controller relay.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Keep the same planned-vs-committed resource lifecycle boundary if other pending action families are migrated later.
