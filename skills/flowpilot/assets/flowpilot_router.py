@@ -53,6 +53,7 @@ DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
 ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
+CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA = "flowpilot.controller_boundary_confirmation.v1"
 STARTUP_ANSWER_PROVENANCE = "explicit_user_reply"
 STARTUP_ANSWER_INTERPRETATION_PROVENANCE = "ai_interpreted_from_explicit_user_reply"
 STARTUP_ANSWER_INTERPRETATION_SCHEMA = "flowpilot.startup_answer_interpretation.v1"
@@ -271,6 +272,9 @@ RUNTIME_FLAG_DEFAULTS = {
     "resume_role_agents_rehydrated": False,
     "crew_rehydration_report_written": False,
     "continuation_binding_recorded": False,
+    "controller_boundary_confirmation_written": False,
+    "controller_role_confirmed_from_router_core": False,
+    "controller_boundary_recovery_requested": False,
     "startup_mechanical_audit_written": False,
     "startup_pending_mail_suspended_after_dead_end": False,
     "startup_display_status_written": False,
@@ -553,9 +557,9 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, str], ...] = (
     },
     {
         "flag": "pm_controller_reset_card_delivered",
-        "label": "pm_controller_reset_duty_card_delivered",
+        "label": "pm_controller_reset_recovery_card_delivered",
         "card_id": "pm.controller_reset_duty",
-        "requires_flag": "pm_output_contract_catalog_delivered",
+        "requires_flag": "controller_boundary_recovery_requested",
         "to_role": "project_manager",
     },
     {
@@ -1048,13 +1052,13 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     },
     "pm_first_decision_resets_controller": {
         "flag": "pm_controller_reset_decision_returned",
-        "requires_flag": "user_intake_delivered_to_pm",
-        "summary": "PM reminded Controller that it is only a relay and status-flow controller.",
+        "requires_flag": "pm_controller_reset_card_delivered",
+        "summary": "Recovery-only PM reminder that Controller is only a relay and status-flow controller.",
     },
     "controller_role_confirmed_from_pm_reset": {
         "flag": "controller_role_confirmed",
         "requires_flag": "pm_controller_reset_decision_returned",
-        "summary": "Controller acknowledged PM reset and remains relay-only.",
+        "summary": "Controller acknowledged a recovery-only PM reset and remains relay-only.",
     },
     "heartbeat_or_manual_resume_requested": {
         "flag": "resume_reentry_requested",
@@ -5568,7 +5572,9 @@ def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str
         project_root / ".flowpilot" / "execution_frontier.json",
         project_root / ".flowpilot" / "routes",
     ]
+    boundary_context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
     return {
+        "controller_boundary_confirmed": boundary_context is not None or _legacy_pm_reset_boundary_confirmed(run_state),
         "startup_answers_complete": required_answer_ids.issubset({key for key, value in answers.items() if value}),
         "current_pointer_matches_run": current.get("current_run_id") == run_state.get("run_id")
         and current.get("current_run_root") == run_state.get("run_root"),
@@ -5594,6 +5600,139 @@ def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str
         else continuation_binding.get("mode") == "manual_resume",
         "display_surface_recorded": bool(answers.get("display_surface")),
         "old_state_quarantined": not any(path.exists() for path in old_control_paths),
+    }
+
+
+def _controller_boundary_confirmation_path(run_root: Path) -> Path:
+    return run_root / "startup" / "controller_boundary_confirmation.json"
+
+
+def _run_manifest_path(run_root: Path) -> Path:
+    manifest_path = run_root / "runtime_kit" / "manifest.json"
+    if manifest_path.exists():
+        return manifest_path
+    return runtime_kit_source() / "manifest.json"
+
+
+def _controller_boundary_sources(run_root: Path) -> dict[str, Any]:
+    manifest_path = _run_manifest_path(run_root)
+    manifest = read_json(manifest_path)
+    if manifest.get("schema_version") != PROMPT_MANIFEST_SCHEMA:
+        raise RouterError("invalid prompt manifest schema")
+    controller_core = manifest_card(manifest, "controller.core")
+    card_path = manifest_path.parent / str(controller_core["path"])
+    if not card_path.exists():
+        raise RouterError("controller.core card path is missing")
+    policy = manifest.get("controller_policy")
+    if not isinstance(policy, dict):
+        raise RouterError("prompt manifest controller_policy must be an object")
+    return {
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "manifest_hash": packet_runtime.sha256_file(manifest_path),
+        "controller_core_card": controller_core,
+        "controller_core_path": card_path,
+        "controller_core_hash": packet_runtime.sha256_file(card_path),
+        "controller_policy": policy,
+        "controller_policy_hash": _json_sha256(policy),
+    }
+
+
+def _controller_boundary_constraints() -> dict[str, Any]:
+    return {
+        "relay_and_record_only": True,
+        "next_step_source": "flowpilot_router.py",
+        "controller_may_create_project_evidence": False,
+        "controller_may_read_sealed_bodies": False,
+        "controller_may_implement": False,
+        "controller_may_approve_gate": False,
+        "controller_may_mutate_route": False,
+        "controller_may_close_node": False,
+    }
+
+
+def _legacy_pm_reset_boundary_confirmed(run_state: dict[str, Any]) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    return bool(
+        flags.get("controller_role_confirmed")
+        and flags.get("pm_controller_reset_card_delivered")
+        and flags.get("pm_controller_reset_decision_returned")
+    )
+
+
+def _write_controller_boundary_confirmation(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    if not run_state.get("flags", {}).get("controller_core_loaded"):
+        raise RouterError("controller core must be loaded before Controller boundary confirmation")
+    sources = _controller_boundary_sources(run_root)
+    confirmation_path = _controller_boundary_confirmation_path(run_root)
+    confirmation = {
+        "schema_version": CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA,
+        "run_id": run_state["run_id"],
+        "event": "controller_role_confirmed_from_router_core",
+        "confirmed_by_role": "controller",
+        "confirmation_source": "router_delivered_controller_core",
+        "controller_core_card_id": "controller.core",
+        "controller_core_path": project_relative(project_root, sources["controller_core_path"]),
+        "controller_core_sha256": sources["controller_core_hash"],
+        "manifest_path": project_relative(project_root, sources["manifest_path"]),
+        "manifest_sha256": sources["manifest_hash"],
+        "controller_policy": sources["controller_policy"],
+        "controller_policy_sha256": sources["controller_policy_hash"],
+        "boundary_constraints": _controller_boundary_constraints(),
+        "sealed_body_reads_allowed": False,
+        "router_owned_confirmation": True,
+        "confirmed_at": utc_now(),
+    }
+    write_json(confirmation_path, confirmation)
+    confirmation_hash = packet_runtime.sha256_file(confirmation_path)
+    return {
+        "path": project_relative(project_root, confirmation_path),
+        "sha256": confirmation_hash,
+        "controller_core_path": confirmation["controller_core_path"],
+        "controller_core_sha256": confirmation["controller_core_sha256"],
+        "controller_policy_sha256": confirmation["controller_policy_sha256"],
+    }
+
+
+def _controller_boundary_confirmation_context(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any] | None:
+    confirmation_path = _controller_boundary_confirmation_path(run_root)
+    if not confirmation_path.exists():
+        return None
+    confirmation = read_json_if_exists(confirmation_path)
+    if confirmation.get("schema_version") != CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA:
+        return None
+    if confirmation.get("run_id") != run_state.get("run_id"):
+        return None
+    if confirmation.get("event") != "controller_role_confirmed_from_router_core":
+        return None
+    if confirmation.get("confirmed_by_role") != "controller":
+        return None
+    if confirmation.get("router_owned_confirmation") is not True:
+        return None
+    constraints = confirmation.get("boundary_constraints")
+    if constraints != _controller_boundary_constraints():
+        return None
+    sources = _controller_boundary_sources(run_root)
+    if confirmation.get("controller_core_sha256") != sources["controller_core_hash"]:
+        return None
+    if confirmation.get("manifest_sha256") != sources["manifest_hash"]:
+        return None
+    if confirmation.get("controller_policy_sha256") != sources["controller_policy_hash"]:
+        return None
+    if confirmation.get("sealed_body_reads_allowed") is not False:
+        return None
+    return {
+        "path": confirmation_path,
+        "sha256": packet_runtime.sha256_file(confirmation_path),
+        "confirmation": confirmation,
     }
 
 
@@ -5706,6 +5845,9 @@ def _write_startup_mechanical_audit(
         _continuation_binding_path(run_root),
         run_state_path(run_root),
     ]
+    boundary_path = _controller_boundary_confirmation_path(run_root)
+    if boundary_path.exists():
+        evidence_paths.append(boundary_path)
     external_requirements = _startup_external_fact_requirements(run_root, run_state)
     review_ownership = _startup_fact_review_ownership(computed_checks, external_requirements)
     audit = {
@@ -10966,25 +11108,63 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
     )
 
 
+def _next_controller_boundary_confirmation_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    flags = run_state["flags"]
+    if not flags.get("controller_core_loaded"):
+        return None
+    if flags.get("controller_role_confirmed") and _controller_boundary_confirmation_context(project_root, run_root, run_state) is not None:
+        return None
+    if _legacy_pm_reset_boundary_confirmed(run_state):
+        return None
+    sources = _controller_boundary_sources(run_root)
+    return make_action(
+        action_type="confirm_controller_core_boundary",
+        actor="controller",
+        label="controller_role_confirmed_from_router_core",
+        summary="Controller records a router-owned confirmation that controller.core is the active boundary authority.",
+        allowed_reads=[
+            project_relative(project_root, sources["manifest_path"]),
+            project_relative(project_root, sources["controller_core_path"]),
+        ],
+        allowed_writes=[
+            project_relative(project_root, _controller_boundary_confirmation_path(run_root)),
+            project_relative(project_root, run_state_path(run_root)),
+        ],
+        extra={
+            "postcondition": "controller_role_confirmed",
+            "controller_boundary_confirmation_schema": CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA,
+            "controller_core_card_id": "controller.core",
+            "sealed_body_reads_allowed": False,
+            "controller_may_create_project_evidence": False,
+        },
+    )
+
+
 def _next_startup_mechanical_audit_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     flags = run_state["flags"]
     if not flags.get("controller_role_confirmed"):
         return None
+    if not flags.get("user_intake_delivered_to_pm"):
+        return None
     if flags.get("startup_mechanical_audit_written") and _startup_mechanical_audit_context(project_root, run_root, run_state):
         return None
+    allowed_reads = [
+        project_relative(project_root, run_root / "startup_answers.json"),
+        project_relative(project_root, project_root / ".flowpilot" / "current.json"),
+        project_relative(project_root, project_root / ".flowpilot" / "index.json"),
+        project_relative(project_root, run_root / "crew_ledger.json"),
+        project_relative(project_root, _continuation_binding_path(run_root)),
+        project_relative(project_root, run_state_path(run_root)),
+    ]
+    boundary_path = _controller_boundary_confirmation_path(run_root)
+    if boundary_path.exists():
+        allowed_reads.append(project_relative(project_root, boundary_path))
     return make_action(
         action_type="write_startup_mechanical_audit",
         actor="controller",
         label="controller_writes_startup_mechanical_audit",
         summary="Write the router-owned startup mechanical audit and proof before delivering the reviewer startup fact-check card.",
-        allowed_reads=[
-            project_relative(project_root, run_root / "startup_answers.json"),
-            project_relative(project_root, project_root / ".flowpilot" / "current.json"),
-            project_relative(project_root, project_root / ".flowpilot" / "index.json"),
-            project_relative(project_root, run_root / "crew_ledger.json"),
-            project_relative(project_root, _continuation_binding_path(run_root)),
-            project_relative(project_root, run_state_path(run_root)),
-        ],
+        allowed_reads=allowed_reads,
         allowed_writes=[
             project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json"),
             project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json.proof.json"),
@@ -11059,6 +11239,8 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
 def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     flags = run_state["flags"]
     if not flags.get("controller_role_confirmed"):
+        return None
+    if not flags.get("user_intake_delivered_to_pm"):
         return None
     if flags.get("startup_display_status_written"):
         return None
@@ -11690,6 +11872,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
     if action is None:
+        action = _next_controller_boundary_confirmation_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_startup_mechanical_audit_action(project_root, run_state, run_root)
     if action is None:
         action = _next_startup_display_action(project_root, run_state, run_root)
@@ -11769,6 +11953,22 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["manifest_check_requested"] = True
         run_state["manifest_check_requests"] = int(run_state.get("manifest_check_requests", 0)) + 1
         run_state["manifest_checks"] = int(run_state.get("manifest_checks", 0)) + 1
+    elif action_type == "confirm_controller_core_boundary":
+        confirmation = _write_controller_boundary_confirmation(project_root, run_root, run_state)
+        if _controller_boundary_confirmation_context(project_root, run_root, run_state) is None:
+            raise RouterError("controller boundary confirmation was not written with current controller.core evidence")
+        run_state["flags"]["controller_role_confirmed"] = True
+        run_state["flags"]["controller_role_confirmed_from_router_core"] = True
+        run_state["flags"]["controller_boundary_confirmation_written"] = True
+        run_state["controller_boundary_confirmation"] = confirmation
+        run_state["events"].append(
+            {
+                "event": "controller_role_confirmed_from_router_core",
+                "summary": "Controller confirmed the Router-delivered controller.core boundary.",
+                "payload": confirmation,
+                "recorded_at": utc_now(),
+            }
+        )
     elif action_type == "write_startup_mechanical_audit":
         computed_checks = _startup_fact_checks(project_root, run_root, run_state)
         _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)

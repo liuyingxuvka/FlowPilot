@@ -3,7 +3,7 @@
 This model checks the proposed FlowPilot rewrite where the main assistant is a
 small bootloader and then a packet Controller. The model intentionally does not
 cover implementation quality. It covers prompt visibility, mailbox routing,
-PM/Controller role reset, phase/event prompt delivery, reviewer dispatch, and
+Router-owned Controller boundary confirmation, phase/event prompt delivery, reviewer dispatch, and
 PM decisions from reviewed evidence.
 """
 
@@ -59,6 +59,8 @@ class State:
     fresh_role_agents_started: bool = False
     role_core_prompts_injected: bool = False
     controller_core_loaded: bool = False
+    controller_boundary_confirmation_written: bool = False
+    controller_boundary_policy_hash_recorded: bool = False
     pm_core_delivered: bool = False
     pm_controller_reset_card_delivered: bool = False
     pm_phase_map_delivered: bool = False
@@ -397,9 +399,10 @@ def _next_required_channel(state: State) -> str:
     if state.status == "complete":
         return "none"
     if state.controller_core_loaded:
+        if not state.controller_role_confirmed:
+            return "none"
         if not (
             state.pm_core_delivered
-            and state.pm_controller_reset_card_delivered
             and state.pm_phase_map_delivered
             and state.pm_startup_intake_card_delivered
         ):
@@ -734,14 +737,22 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.controller_core_loaded:
         yield Transition("controller_core_loaded", _boot(state, controller_core_loaded=True))
         return
+    if not state.controller_role_confirmed:
+        yield Transition(
+            "controller_role_confirmed_from_router_core",
+            replace(
+                state,
+                controller_role_confirmed=True,
+                controller_boundary_confirmation_written=True,
+                controller_boundary_policy_hash_recorded=True,
+                role_output_body_file_written=True,
+                role_output_envelope_only_to_controller=True,
+                role_output_path_hash_verified=True,
+            ),
+        )
+        return
     if not state.pm_core_delivered:
         yield Transition("pm_core_card_delivered", _prompt(state, pm_core_delivered=True))
-        return
-    if not state.pm_controller_reset_card_delivered:
-        yield Transition(
-            "pm_controller_reset_duty_card_delivered",
-            _prompt(state, pm_controller_reset_card_delivered=True),
-        )
         return
     if not state.pm_phase_map_delivered:
         yield Transition("pm_phase_map_card_delivered", _prompt(state, pm_phase_map_delivered=True))
@@ -756,18 +767,6 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "user_intake_delivered_to_pm",
             _mail(state, user_intake_delivered_to_pm=True, holder="pm"),
-        )
-        return
-    if not state.pm_controller_reset_decision_returned:
-        yield Transition(
-            "pm_first_decision_resets_controller",
-            _role_return(state, pm_controller_reset_decision_returned=True, holder="controller"),
-        )
-        return
-    if not state.controller_role_confirmed:
-        yield Transition(
-            "controller_role_confirmed_from_pm_reset",
-            replace(state, controller_role_confirmed=True),
         )
         return
     if not state.pm_material_scan_card_delivered:
@@ -1605,14 +1604,17 @@ def invariant_failures(state: State) -> list[str]:
     if state.user_intake_delivered_to_pm and not (
         state.controller_core_loaded
         and state.pm_core_delivered
-        and state.pm_controller_reset_card_delivered
         and state.pm_phase_map_delivered
         and state.pm_startup_intake_card_delivered
         and state.user_intake_ready
     ):
         failures.append("user intake delivered before Controller and PM bootstrap prompt cards were delivered")
-    if state.controller_role_confirmed and not state.pm_controller_reset_decision_returned:
-        failures.append("Controller role confirmed before PM returned the reset decision")
+    if state.controller_role_confirmed and not (
+        state.controller_core_loaded
+        and state.controller_boundary_confirmation_written
+        and state.controller_boundary_policy_hash_recorded
+    ):
+        failures.append("Controller role confirmed without Router-owned controller.core boundary confirmation")
     role_output_exists = any(
         (
             state.pm_controller_reset_decision_returned,
@@ -1677,14 +1679,14 @@ def invariant_failures(state: State) -> list[str]:
     if state.controller_inspected_router_internal_hard_checks:
         failures.append("Controller inspected router hard-check internals instead of using black-box router actions")
     if state.pm_material_scan_card_delivered and not state.controller_role_confirmed:
-        failures.append("PM material scan card delivered before Controller reset")
+        failures.append("PM material scan card delivered before Controller boundary confirmation")
     if state.pm_material_scan_packets_issued and not (
         state.controller_role_confirmed
         and state.pm_startup_intake_card_delivered
         and state.pm_material_scan_card_delivered
     ):
         failures.append(
-            "PM issued material packets before Controller reset, startup-intake card, and material scan card"
+            "PM issued material packets before Controller boundary confirmation, startup-intake card, and material scan card"
         )
     if state.reviewer_dispatch_allowed and not state.reviewer_dispatch_card_delivered:
         failures.append("reviewer allowed material scan dispatch before dispatch card")
@@ -2144,16 +2146,16 @@ def _ready(**changes: object) -> State:
         fresh_role_agents_started=True,
         role_core_prompts_injected=True,
         controller_core_loaded=True,
+        controller_boundary_confirmation_written=True,
+        controller_boundary_policy_hash_recorded=True,
         pm_core_delivered=True,
-        pm_controller_reset_card_delivered=True,
         pm_phase_map_delivered=True,
         pm_startup_intake_card_delivered=True,
         user_intake_delivered_to_pm=True,
-        pm_controller_reset_decision_returned=True,
         controller_role_confirmed=True,
-        prompt_deliveries=4,
-        manifest_check_requests=4,
-        manifest_checks=4,
+        prompt_deliveries=3,
+        manifest_check_requests=3,
+        manifest_checks=3,
         mail_deliveries=1,
         ledger_check_requests=1,
         ledger_checks=1,
@@ -2339,7 +2341,7 @@ def hazard_states() -> dict[str, State]:
             banner_emitted=True,
             roles_started=True,
         ),
-        "user_intake_before_pm_cards": _ready(pm_controller_reset_card_delivered=False),
+        "user_intake_before_pm_cards": _ready(pm_phase_map_delivered=False),
         "material_scan_without_card": _ready(pm_material_scan_packets_issued=True),
         "worker_body_without_dispatch": _ready(
             pm_material_scan_card_delivered=True,
@@ -2662,7 +2664,7 @@ def hazard_states() -> dict[str, State]:
             final_backward_replay_passed=True,
             pm_completion_decision=True,
         ),
-        "prompt_delivery_without_manifest_check": _ready(prompt_deliveries=5, manifest_checks=4),
+        "prompt_delivery_without_manifest_check": _ready(prompt_deliveries=4, manifest_checks=3),
         "mail_delivery_without_ledger_check": _ready(mail_deliveries=2, ledger_checks=1),
         "controller_reads_body": _ready(controller_read_forbidden_body=True),
         "controller_creates_project_evidence": _ready(controller_origin_project_evidence=True),

@@ -315,6 +315,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def deliver_expected_card(self, root: Path, card_id: str) -> dict:
         action = self.next_after_display_sync(root)
         while action["action_type"] in {
+            "confirm_controller_core_boundary",
             "check_prompt_manifest",
             "write_startup_mechanical_audit",
             "write_display_surface_status",
@@ -428,7 +429,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.apply_startup_heartbeat_if_requested(root)
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
-        self.deliver_expected_card(root, "pm.controller_reset_duty")
         self.deliver_expected_card(root, "pm.phase_map")
         self.deliver_expected_card(root, "pm.startup_intake")
         self.deliver_user_intake_mail(root)
@@ -436,8 +436,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def complete_startup_activation(self, root: Path) -> None:
         run_root = self.run_root_for(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
         router.record_external_event(
             root,
@@ -2354,6 +2352,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         run_root = self.boot_to_controller(root)
 
         first = self.next_after_display_sync(root)
+        self.assertEqual(first["action_type"], "confirm_controller_core_boundary")
+        self.assertEqual(first["next_step_contract"]["recipient_role"], "controller")
+        router.apply_action(root, "confirm_controller_core_boundary")
+
+        first = self.next_after_display_sync(root)
         self.assertEqual(first["action_type"], "check_prompt_manifest")
         self.assertEqual(first["next_card_id"], "pm.core")
         self.assertTrue(first["next_step_contract"]["controller_has_explicit_next"])
@@ -2395,7 +2398,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
-        self.deliver_expected_card(root, "pm.controller_reset_duty")
         self.deliver_expected_card(root, "pm.phase_map")
         self.deliver_expected_card(root, "pm.startup_intake")
 
@@ -2429,12 +2431,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_approves_startup_activation", {"decision": "approved"})
 
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "await_role_decision")
+        with self.assertRaises(router.RouterError):
+            router.record_external_event(root, "pm_first_decision_resets_controller")
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        boundary = read_json(run_root / "startup" / "controller_boundary_confirmation.json")
+        self.assertEqual(boundary["event"], "controller_role_confirmed_from_router_core")
+        self.assertFalse(boundary["sealed_body_reads_allowed"])
 
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
@@ -2511,8 +2514,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         block_body = self.startup_fact_report_body(root)
@@ -2583,8 +2584,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         findings_body = self.startup_fact_report_body(root)
@@ -2630,8 +2629,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         block_body = self.startup_fact_report_body(root)
@@ -2682,8 +2679,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         def submit_blocking_report(name: str, blocker: str) -> None:
@@ -2774,7 +2769,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         pending_before_stop = self.next_after_display_sync(root)
-        self.assertIn(pending_before_stop["action_type"], {"check_prompt_manifest", "create_heartbeat_automation", "deliver_system_card"})
+        self.assertIn(
+            pending_before_stop["action_type"],
+            {"confirm_controller_core_boundary", "check_prompt_manifest", "create_heartbeat_automation", "deliver_system_card"},
+        )
 
         router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
         action = router.next_action(root)
@@ -2819,8 +2817,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         report_body = self.startup_fact_report_body(root)
@@ -2864,8 +2860,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.deliver_initial_pm_cards_and_user_intake(root)
-        router.record_external_event(root, "pm_first_decision_resets_controller")
-        router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
         canonical_report = run_root / "startup" / "startup_fact_report.json"
@@ -5573,21 +5567,20 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         decision = read_json(run_root / "routes" / "route-001" / "nodes" / "parent-001" / "pm_parent_segment_decision.json")
         self.assertTrue(decision["same_parent_replay_rerun_required"])
 
-    def test_role_event_recording_does_not_let_controller_infer_body_content(self) -> None:
+    def test_controller_boundary_confirmation_records_envelope_only_event(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
 
-        result = router.record_external_event(
-            root,
-            "pm_first_decision_resets_controller",
-            {"decision_id": "pm-decision-001"},
-        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        result = router.apply_action(root, "confirm_controller_core_boundary")
 
         self.assertTrue(result["ok"])
         state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
-        self.assertTrue(state["flags"]["pm_controller_reset_decision_returned"])
-        self.assertEqual(state["events"][0]["payload"], {"decision_id": "pm-decision-001"})
+        self.assertTrue(state["flags"]["controller_role_confirmed"])
+        self.assertEqual(state["events"][0]["event"], "controller_role_confirmed_from_router_core")
+        self.assertIn("path", state["events"][0]["payload"])
+        self.assertIn("sha256", state["events"][0]["payload"])
 
     def test_material_insufficient_event_records_insufficient_state(self) -> None:
         root = self.make_project()

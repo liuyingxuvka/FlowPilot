@@ -5971,3 +5971,46 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - No local installed-skill sync, git stage/commit, version bump, tag, or GitHub push was performed per user instruction.
+
+
+## flowpilot-router-owned-controller-confirmation - Remove normal startup PM controller reset and use router-owned controller core confirmation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot startup control-plane gate ordering changes
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-09T15:30:47+00:00
+- Ended: 2026-05-09T15:30:47+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_optimization_proposal_model.py
+- simulations/prompt_isolation_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_optimization_proposal_checks.py --json-out simulations/flowpilot_optimization_proposal_results.json`
+- OK (0.000s): `python simulations/run_prompt_isolation_checks.py`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python simulations/run_capability_checks.py`
+- OK (0.000s): `python simulations/run_flowpilot_startup_control_checks.py --json-out simulations/flowpilot_startup_control_results.json`
+- OK (0.000s): `python simulations/run_startup_pm_review_checks.py --json-out simulations/startup_pm_review_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_router_runtime`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_output_contracts`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python scripts/smoke_autopilot.py`
+
+### Findings
+- Normal startup no longer requires PM reset; Router-owned controller.core confirmation remains hash-backed and reviewer/PM startup gates remain.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Initial smoke_autopilot run timed out at six minutes while model checks were still running; rerun with longer timeout passed.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded

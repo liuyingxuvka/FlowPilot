@@ -7,11 +7,21 @@ required_return: Write any role-output body only to a run-scoped packet, result,
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. After completing or blocking this card, return authorized output through Controller; Controller must call flowpilot_router.py for the next action.
 runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; return a protocol blocker through Controller.
 -->
-# PM Controller Reset Duty
+# PM Controller Boundary Recovery Duty
 
-First PM response after receiving `user_intake` must reset Controller.
+Use this card only for Controller boundary recovery.
 
-Tell Controller:
+Normal startup does not use this card. In normal startup, Router delivers
+`controller.core`, Controller records
+`controller_role_confirmed_from_router_core`, Router writes the startup
+mechanical audit, Reviewer fact-checks startup facts, and PM decides startup
+activation.
+
+Use this recovery duty only when Router or PM has explicit evidence that
+Controller's boundary is polluted, untrusted after resume, or affected by a
+control-plane anomaly.
+
+When recovery is required, tell Controller:
 
 - you are only Controller;
 - relay and record only;
@@ -21,5 +31,6 @@ Tell Controller:
 - do not read sealed bodies;
 - do not implement, approve, mutate, or close gates.
 
-If this reset is not sent, no material scan, worker dispatch, route design, or
-implementation may begin.
+If this recovery reset is required but not sent, no material scan, worker
+dispatch, route design, or implementation may begin until Router records a
+trusted Controller boundary again.
