@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-05-08T14:19:08Z",
+  "checked_at": "2026-05-09T06:11:33Z",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=16 initial_states=1 traces=377",
+    "summary": "sequences=16 initial_states=1 traces=618",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -22,6 +22,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -48,6 +49,42 @@
           "write_grant_issued": false
         }
       },
+      "fatal_followup_without_pm_decision": {
+        "detected": true,
+        "expected_failure": "fatal protocol violation follow-up was accepted before PM repair decision",
+        "failures": [
+          "fatal protocol violation follow-up was accepted before PM repair decision"
+        ],
+        "state": {
+          "completed_agent_id_maps_to_role": false,
+          "control_blocker_active": false,
+          "control_blocker_lane": "fatal_protocol_violation",
+          "dispatch_gate_checked": false,
+          "followup_event_already_recorded": true,
+          "followup_reaudit_passed": true,
+          "packet_body_hash_identity_synced": false,
+          "packet_body_path_alias_normalized": false,
+          "packet_open_envelope_receipt": false,
+          "packet_open_ledger_receipt": false,
+          "packet_relayed_by_controller": false,
+          "pm_absorbed_reviewed_research": false,
+          "pm_advanced_node": false,
+          "pm_repair_decision_recorded": false,
+          "result_body_path_alias_normalized": false,
+          "result_envelope_exists": false,
+          "result_ledger_absorbed": false,
+          "result_open_envelope_receipt": false,
+          "result_open_ledger_receipt": false,
+          "result_relayed_by_controller": false,
+          "reviewer_dispatch_passed": false,
+          "reviewer_runtime_audit_passed": false,
+          "status": "running",
+          "steps": 0,
+          "worker_project_write_performed": false,
+          "worker_result_written": false,
+          "write_grant_issued": false
+        }
+      },
       "packet_body_alias_not_normalized": {
         "detected": true,
         "expected_failure": "dispatch passed without envelope/ledger packet body hash identity",
@@ -57,6 +94,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -93,6 +131,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -128,6 +167,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": false,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -163,6 +203,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "pm_repair_decision_required",
           "dispatch_gate_checked": false,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -198,6 +239,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -235,6 +277,7 @@
         "state": {
           "completed_agent_id_maps_to_role": true,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -271,6 +314,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -306,6 +350,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -341,6 +386,7 @@
         "state": {
           "completed_agent_id_maps_to_role": false,
           "control_blocker_active": false,
+          "control_blocker_lane": "none",
           "dispatch_gate_checked": true,
           "followup_event_already_recorded": false,
           "followup_reaudit_passed": false,
@@ -380,13 +426,13 @@
     "stuck_state_samples": []
   },
   "safe_graph": {
-    "edge_count": 35,
+    "edge_count": 59,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 36,
-    "success_state_count": 3,
-    "terminal_state_count": 3
+    "state_count": 60,
+    "success_state_count": 5,
+    "terminal_state_count": 5
   }
 }

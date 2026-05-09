@@ -2884,6 +2884,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet = packet_runtime.load_envelope(root, material_index["packets"][0]["packet_envelope_path"])
         self.assertEqual(packet["packet_type"], "material_scan")
         self.assertFalse(packet["is_current_node"])
+        self.assertEqual(packet["expected_result_body_path"], material_index["packets"][0]["result_body_path"])
+        self.assertEqual(packet["write_target_path"], material_index["packets"][0]["result_body_path"])
+        self.assertEqual(packet["result_write_target"]["result_body_path"], material_index["packets"][0]["result_body_path"])
+        self.assertEqual(packet["output_contract"]["expected_result_body_path"], material_index["packets"][0]["result_body_path"])
+        packet_body = (root / packet["body_path"]).read_text(encoding="utf-8")
+        self.assertIn(material_index["packets"][0]["result_body_path"], packet_body)
 
     def test_material_scan_packet_and_result_relays_combine_ledger_check(self) -> None:
         root = self.make_project()
@@ -3945,6 +3951,99 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_evidence_quality_package(root)
         self.complete_final_ledger_and_terminal_replay(root)
         self.deliver_expected_card(root, "pm.closure")
+
+    def test_node_completion_idempotency_is_scoped_to_active_node(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        router.record_external_event(
+            root,
+            "pm_activates_reviewed_route",
+            {
+                "route_id": "route-001",
+                "active_node_id": "node-001",
+                "route_version": 1,
+                "route": {
+                    "schema_version": "flowpilot.route.v1",
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "active_node_id": "node-001",
+                    "nodes": [
+                        {"node_id": "node-001", "status": "active", "title": "First node"},
+                        {"node_id": "node-002", "status": "pending", "title": "Second node"},
+                    ],
+                },
+            },
+        )
+
+        def complete_active_node(node_id: str, packet_id: str, agent_id: str) -> dict:
+            self.deliver_current_node_cards(root)
+            packet = packet_runtime.create_packet(
+                root,
+                packet_id=packet_id,
+                from_role="project_manager",
+                to_role="worker_a",
+                node_id=node_id,
+                body_text=f"{node_id} work",
+                metadata={"route_version": 1},
+            )
+            packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+            router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": packet_id, "packet_envelope_path": packet_path})
+            self.deliver_expected_card(root, "reviewer.current_node_dispatch")
+            router.record_external_event(root, "reviewer_allows_current_node_dispatch")
+            self.apply_until_action(root, "relay_current_node_packet")
+            packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
+            result = packet_runtime.write_result(
+                root,
+                packet_envelope=read_json(root / packet_path),
+                completed_by_role="worker_a",
+                completed_by_agent_id=agent_id,
+                result_body_text=f"{node_id} result",
+                next_recipient="human_like_reviewer",
+            )
+            result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
+            router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": packet_id, "result_envelope_path": result_path})
+            self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+            self.deliver_expected_card(root, "reviewer.worker_result_review")
+            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
+            router.record_external_event(
+                root,
+                "current_node_reviewer_passes_result",
+                self.role_report_envelope(
+                    root,
+                    f"reviews/current_node_result_{node_id}",
+                    {
+                        "reviewed_by_role": "human_like_reviewer",
+                        "passed": True,
+                        "agent_role_map": {agent_id: "worker_a"},
+                    },
+                ),
+            )
+            self.complete_parent_backward_replay_if_due(root)
+            return router.record_external_event(root, "pm_completes_current_node_from_reviewed_result", {"node_id": node_id})
+
+        first_result = complete_active_node("node-001", "node-packet-first", "agent-worker-first")
+        self.assertNotIn("already_recorded", first_result)
+        first_ledger_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "node_completion_ledger.json"
+        self.assertTrue(first_ledger_path.exists())
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["active_node_id"], "node-002")
+        self.assertIn("node-001", frontier["completed_nodes"])
+        self.assertFalse(read_json(router.run_state_path(run_root))["flags"]["node_completed_by_pm"])
+
+        stale_state = read_json(router.run_state_path(run_root))
+        stale_state["flags"]["node_completed_by_pm"] = True
+        stale_state["flags"]["node_completion_ledger_updated"] = False
+        router.run_state_path(run_root).write_text(json.dumps(stale_state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        second_result = complete_active_node("node-002", "node-packet-second", "agent-worker-second")
+        self.assertNotIn("already_recorded", second_result)
+        second_ledger_path = run_root / "routes" / "route-001" / "nodes" / "node-002" / "node_completion_ledger.json"
+        self.assertTrue(second_ledger_path.exists())
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["active_node_id"], "node-002")
+        self.assertEqual(frontier["status"], "node_completed_by_pm")
+        self.assertIn("node-002", frontier["completed_nodes"])
 
     def test_current_node_result_relay_combines_ledger_check_with_relay(self) -> None:
         root = self.make_project()
@@ -5483,6 +5582,83 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(closure["status"], "closed")
         frontier = read_json(run_root / "execution_frontier.json")
         self.assertEqual(frontier["status"], "closed")
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["status"], "closed")
+        self.assertTrue(state["flags"]["terminal_closure_approved"])
+        lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
+        self.assertEqual(lifecycle["status"], "closed")
+        snapshot = read_json(run_root / "route_state_snapshot.json")
+        completed_nodes = {node["id"]: node for node in snapshot["route"]["nodes"] if node["id"] in frontier["completed_nodes"]}
+        self.assertTrue(completed_nodes)
+        self.assertTrue(all(node["status"] == "completed" for node in completed_nodes.values()))
+        self.assertTrue(
+            all(
+                item["status"] == "completed"
+                for node in completed_nodes.values()
+                for item in node["checklist"]
+            )
+        )
+        self.assertEqual(snapshot["active_ui_task_catalog"]["active_tasks"], [])
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "run_lifecycle_terminal")
+        self.assertEqual(action["run_lifecycle_status"], "closed")
+
+    def test_reconcile_recovers_legacy_terminal_closure_state(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-legacy-terminal-closure")
+        self.complete_evidence_quality_package(root)
+        self.complete_final_ledger_and_terminal_replay(root)
+        self.deliver_expected_card(root, "pm.closure")
+        router.record_external_event(
+            root,
+            "pm_approves_terminal_closure",
+            self.role_decision_envelope(
+                root,
+                "closure/pm_legacy_terminal_closure_decision",
+                {
+                    "approved_by_role": "project_manager",
+                    "decision": "approve_terminal_closure",
+                    **self.prior_path_context_review(root, "Terminal closure considered clean final ledger and current route memory."),
+                    "final_report": {"status": "complete"},
+                },
+            ),
+        )
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["status"] = "active"
+        state["phase"] = "route_execution"
+        state["flags"].pop("terminal_closure_approved", None)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="router_no_legal_next_action",
+            error_message="Controller has no legal next action after legacy terminal closure.",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        (run_root / "lifecycle" / "run_lifecycle.json").unlink()
+
+        result = router.reconcile_current_run(root)
+        self.assertTrue(result["repaired"]["terminal_closure_status_recovered"])
+        self.assertTrue(result["repaired"]["terminal_lifecycle"])
+        self.assertTrue(result["repaired"]["terminal_lifecycle_record_written"])
+        lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
+        self.assertEqual(lifecycle["status"], "closed")
+        self.assertEqual(lifecycle["request_event"], "reconcile_current_run")
+        state = read_json(state_path)
+        self.assertEqual(state["status"], "closed")
+        self.assertIsNone(state["active_control_blocker"])
+        blocker_record = read_json(self.control_blocker_path(root, blocker))
+        self.assertEqual(blocker_record["resolution_status"], "superseded_by_terminal_lifecycle")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "run_lifecycle_terminal")
+        self.assertEqual(action["run_lifecycle_status"], "closed")
 
     def test_manifest_references_existing_system_cards(self) -> None:
         manifest = read_json(ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "manifest.json")
@@ -5510,6 +5686,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("reviewer.research_direct_source_check", card_ids)
         self.assertIn("product_officer.root_contract_modelability", card_ids)
         self.assertIn("reviewer.worker_result_review", card_ids)
+
+    def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
+        self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_current_node_dispatch"]["flag"], "current_node_dispatch_blocked")
+        self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_node_acceptance_plan"]["flag"], "node_acceptance_plan_review_blocked")
 
     def test_skill_entrypoint_remains_small_router_launcher(self) -> None:
         skill_text = (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8")

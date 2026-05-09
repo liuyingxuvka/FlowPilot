@@ -3,6 +3,52 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## flowpilot-terminal-closure-router-loop-20260508 - Stop routing after PM terminal closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The live run reached PM terminal closure, but `router_state.status` stayed non-terminal, so the router attempted heartbeat/control-plane continuation and emitted repeated no-legal-next-action blockers.
+- Status: completed-with-residual-live-audit-finding
+- Skill decision: used_flowguard
+- Started: 2026-05-08T21:25:00+00:00
+- Ended: 2026-05-08T21:42:00+00:00
+- Commands OK: partial
+
+### Model Files
+- simulations/flowpilot_router_loop_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+- simulations/flowpilot_control_plane_friction_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema 1.0
+- OK: `python -m py_compile C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_terminal_closure_uses_file_backed_contract_and_prior_context tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_reconcile_recovers_legacy_terminal_closure_state`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- OK: `python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py --root "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430" --json reconcile-run`
+- OK: `python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py --root "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430" --json run-until-wait` returned `run_lifecycle_terminal` with status `closed`.
+- Partial: `python simulations\run_flowpilot_control_plane_friction_checks.py` passed graph/progress checks but the live-run audit still reports historical material-scan packet contract/write-target issues.
+- Partial: `python scripts\audit_local_install_sync.py --json` passed installed/source freshness but still reports untracked `flowpilot_cockpit` in the main tree from the active UI work.
+
+### Findings
+- `_write_terminal_closure_suite` must promote the run itself to terminal status, not only write `closure/terminal_closure_suite.json` and `execution_frontier.status=closed`.
+- Terminal lifecycle reconciliation now writes `run_lifecycle.json`, syncs `.flowpilot/current.json` and `.flowpilot/index.json`, archives active control blockers as `superseded_by_terminal_lifecycle`, and prevents follow-up heartbeat/control-plane actions after closure.
+- `reconcile_current_run` now recovers legacy runs where closure/frontier were closed but router state was still non-terminal.
+
+### Counterexamples
+- Legacy closed run with `router_state.status=active` and an active no-legal-next-action blocker: old router kept asking PM for a repair decision; repaired reconcile clears the active blocker and `next_action` returns `run_lifecycle_terminal`.
+
+### Friction Points
+- The live-run control-plane audit is stricter than this repair scope and still sees early material-scan packet envelopes without role-specific output contracts/result write targets. That should be handled as a separate route-protocol cleanup if needed.
+
+### Skipped Steps
+- No sealed packet, result, report, or repair-packet bodies were read by Controller.
+- The historical material-scan packet contract findings were not repaired in this terminal-closure patch.
+
+### Next Actions
+- Treat any future live-run audit cleanup for material-scan packets as a separate, explicit repair task.
+
 ## 2026-05-07 - Clean FlowPilot Route Sign Display Text
 
 - Trigger reason: User reported that the FlowPilot Route Sign shown in chat/UI
@@ -1039,6 +1085,136 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+## flowpilot-node5-acceptance-handoff-20260508 - Final acceptance hardening and handoff package
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Node 5 route-closure hardening required route-wide acceptance evidence, no-reuse/resource audit, boundary checks, backward replay, and user handoff artifacts.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T20:33:00+00:00
+- Ended: 2026-05-08T20:48:45+00:00
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python scripts\launch_flowpilot_cockpit.py --root . --run-id run-20260508-090520 --smoke`
+- OK: `python -m compileall -q flowpilot_cockpit scripts tests`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_current_node_packet_relay_requires_reviewer_dispatch`
+- OK: `python simulations/run_meta_checks.py`
+- OK: `python simulations/run_capability_checks.py`
+
+### Findings
+- Node 5 evidence artifacts map all frozen root requirements and selected scenarios to current-run public evidence, reviewed gates, explicit unavailable states, or non-closure notes.
+- Support and release URLs remain intentionally unconfigured in the current-run cockpit config; the handoff records this as an explicit unavailable external state rather than a passed live-navigation check.
+- Worker output does not claim terminal closure; reviewer and PM/controller final gates remain separate protocol steps.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- The run-level evidence ledger still records an older active node, so Node 5 uses direct current-run public Node 4 evidence plus the ledger instead of treating the ledger as the only source.
+
+### Skipped Steps
+- No release, publish, deploy, route closure, or PM approval action was performed.
+- Sealed packet and result bodies were not used as evidence artifacts.
+
+### Next Actions
+- Human-like reviewer should review the Node 5 worker result and evidence package before PM/controller terminal closure decisions.
+
+
+## flowpilot-node4-cockpit-validation-20260508 - Validate and iterate native cockpit Node 4 evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Node 4 validation could change desktop cockpit behavior, source mapping, tray lifecycle, geometry, and sealed-body privacy boundaries.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-08T19:46:00+00:00
+- Ended: 2026-05-08T20:03:00+00:00
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python scripts\launch_flowpilot_cockpit.py --root . --run-id run-20260508-090520 --smoke`
+- OK: `python -m compileall -q flowpilot_cockpit scripts tests`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_current_node_packet_relay_requires_reviewer_dispatch`
+- OK: `python simulations/run_meta_checks.py`
+- OK: `python simulations/run_capability_checks.py`
+
+### Findings
+- Node 4 evidence files were written under the run-scoped Node 4 evidence directory, including screenshot matrix, interaction probes, source-to-UI replay, sealed-boundary review, design iteration record, and geometry/text/icon check.
+- The Windows tray callback path initially produced pointer conversion/access errors during minimize/restore; `flowpilot_cockpit/icons.py` now uses pointer-sized Win32 callback signatures for the tray subclass.
+- The initial graph view was too crowded at the captured Windows desktop scale; `flowpilot_cockpit/app.py` now performs a one-time initial fit, uses compact graph controls, narrows fixed panes, and keeps dense checklist text in the details pane instead of on the route canvas.
+
+### Counterexamples
+- The first rendered screenshot exposed graph clipping/crowding even though the non-interactive smoke check passed.
+- The tray lifecycle probe exposed a real callback interop problem not covered by the smoke check alone.
+
+### Friction Points
+- Full desktop captures were stronger evidence than window-bbox captures because Windows desktop scaling made bbox captures crop the native window.
+
+### Skipped Steps
+- Support and release URL opening remain partial because the current run has no configured support or release URLs. The UI exposes safe unavailable states instead of faking link success.
+- Stale/unavailable screenshots use explicitly qualified in-process negative fixtures; current-run source files were not damaged to force those states.
+
+### Next Actions
+- Reviewer should inspect the Node 4 evidence files and screenshots directly, especially the explicitly partial support/update and stale/unavailable qualifications.
+
+## flowpilot-node-completion-idempotency-20260508 - Scope node completion idempotency to the active frontier node
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot run could not advance from node 003 to node 004 because `pm_completes_current_node_from_reviewed_result` reused a global `node_completed_by_pm` flag across nodes.
+- Status: blocked-after-repair-validation
+- Skill decision: used_flowguard
+- Started: 2026-05-08T19:00:00+00:00
+- Ended: 2026-05-08T19:40:00+00:00
+- Commands OK: partial
+
+### Model Files
+- simulations/flowpilot_router_loop_model.py
+- simulations/run_flowpilot_router_loop_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)`, schema 1.0
+- OK: `python -m py_compile C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_node_completion_idempotency_is_scoped_to_active_node`
+- OK: targeted adjacent router runtime tests for current-node completion, evidence quality, final ledger, and parent completion
+- OK: `python simulations\run_flowpilot_router_loop_checks.py`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- Partial: `python scripts\audit_local_install_sync.py --json` passed installed/source freshness but failed `legacy_cockpit_source_absent_from_main_tree` because the active UI task has untracked `flowpilot_cockpit` work products in the main tree.
+
+### Findings
+- The runtime reset logic cleared current-node cycle flags inside `_mark_frontier_node_completed`, but the generic event recorder then set `node_completed_by_pm` back to true after the frontier advanced.
+- A repeated node-completion event must be allowed when the active frontier node is not in `completed_nodes`, its own completion ledger is missing, or `node_completion_ledger_updated` is false.
+- The current-node cycle reset also omitted `pm_current_node_card_delivered`, so a second active node could skip the `pm.current_node_loop` card.
+- The installed skill router and repo-owned router were kept hash-identical after the repair.
+
+### Counterexamples
+- Two-node route: complete node 001, leave stale `node_completed_by_pm=true`, then complete node 002. Old behavior returns `already_recorded`; repaired behavior writes node 002's completion ledger.
+
+### Friction Points
+- Current live run then reached node 004 and relayed its packet to `worker_a`, but the host could not find the old `worker_a` agent and spawning a replacement failed with the host agent thread limit.
+- Controller cannot complete worker-owned packet work or let Worker B impersonate Worker A without violating the packet/write-grant role boundary.
+
+### Skipped Steps
+- No sealed packet or result bodies were read by Controller.
+- No cleanup of untracked `flowpilot_cockpit` artifacts was performed because those appear to be active worker output.
+
+### Follow-up Update
+- After explicit user approval, the old role sessions were closed to free host capacity. Five fresh roles were started and initialized from current-run memory: PM, reviewer, process officer, product officer, and Worker A.
+- The sixth fresh role, Worker B, still failed to spawn with the host agent thread limit. The old Worker B was confirmed unreachable after close.
+- Node 004 remains blocked at the router `rehydrate_role_agents` action because the router requires six live role records and Controller must not invent a Worker B agent id.
+
+### Next Actions
+- Use a host context that allows six live subagents, or add an explicit protocol fallback for five-live-role continuation when the missing role is not the active packet holder. Do not continue by faking Worker B liveness.
 
 
 ## flowpilot-stale-pending-action-requires-flag-20260508 - Recompute stale role-decision waits
@@ -5244,3 +5420,165 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+## flowpilot-cross-plane-friction-20260509 - Formalize runtime/control-plane model coverage
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Postmortem found same-class friction across route/frontier/ledger/lifecycle/Cockpit/install planes that prior single-plane models did not catch.
+- Status: completed_model_and_strategy_only
+- Skill decision: used_flowguard
+- Started: 2026-05-09T00:00:00+02:00
+- Ended: 2026-05-09T00:00:00+02:00
+- Commands OK: partial; the new model checks passed, but the broader smoke run hit a pre-existing capability_model regression.
+
+### Model Files
+- simulations/flowpilot_cross_plane_friction_model.py
+- simulations/run_flowpilot_cross_plane_friction_checks.py
+- simulations/flowpilot_cross_plane_friction_results.json
+- simulations/flowpilot_cross_plane_friction_live_results.json
+- simulations/flowpilot_control_plane_friction_live_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python -m py_compile simulations\flowpilot_cross_plane_friction_model.py simulations\run_flowpilot_cross_plane_friction_checks.py scripts\smoke_autopilot.py scripts\run_flowguard_coverage_sweep.py scripts\check_install.py`
+- OK: `python simulations\run_flowpilot_cross_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_cross_plane_friction_results.json`
+- EXPECTED_FINDINGS: `python simulations\run_flowpilot_cross_plane_friction_checks.py --live-root . --run-id run-20260508-090520 --json-out simulations\flowpilot_cross_plane_friction_live_results.json`
+- EXPECTED_FINDINGS: `python simulations\run_flowpilot_control_plane_friction_checks.py --live-root . --json-out simulations\flowpilot_control_plane_friction_live_results.json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\run_flowguard_coverage_sweep.py --timeout-seconds 120 --json-out simulations\flowguard_coverage_sweep_cross_plane_latest.json`
+- FAILED_EXISTING: `python scripts\smoke_autopilot.py --fast` stopped in `simulations/capability_model.py` because `_step()` received duplicate `child_skill_manifest_only_evidence_rejected`.
+
+### Findings
+- The new cross-plane model detects 21 same-class negative scenarios, including terminal authority mismatch, completed-node projection drift, Cockpit active-tab drift, reviewer event taxonomy gaps, source-layout policy conflict, active-node completion idempotency drift, and six-role liveness proof gaps.
+- Live scan of `run-20260508-090520` found 9 current cross-plane findings: material dispatch write target missing; missing canonical `lifecycle/run_lifecycle.json`; completed frontier nodes displayed pending/current in `route_state_snapshot`; completed checklist items left pending in snapshot; selected/current state conflated with completed state; Cockpit checklist projection mismatch; Cockpit closed run exposed as active tab; reviewer block event taxonomy gap for `reviewer_blocks_current_node_dispatch` and `reviewer_blocks_node_acceptance_plan`; install audit still treating `flowpilot_cockpit` as legacy-absent source.
+- Existing control-plane model still separately finds material dispatch output contract mismatch and material dispatch write target missing on the repaired material-scan packets.
+- Coverage sweep now classifies `flowpilot_cross_plane_friction` as `coverage_strong` and records 11 live findings across cross-plane and existing control-plane models.
+
+### Counterexamples
+- The abstract safe strategy state passes all invariants, but the current live run intentionally fails the live audit until production repair is authorized.
+- Broad smoke regression is blocked by a capability-model duplicate-keyword issue that was already present in the modified worktree; this task did not repair it.
+
+### Friction Points
+- The previous model set was too fragmented: route display, packet lifecycle, terminal lifecycle, event taxonomy, and install-layout policy were modeled separately, so cross-plane inconsistency was not a required invariant.
+- Live audit must distinguish internal reconciliation events from external reviewer blocker events; the first draft over-reported `reconcile_current_run` and was narrowed to reviewer block/unknown external events only.
+
+### Skipped Steps
+- No production runtime or Cockpit repair was applied; the user requested model upgrade, issue scan, and minimal repair strategy first.
+- No sealed packet/result/report/decision bodies were opened by the new cross-plane live audit; it reads metadata and envelopes only.
+
+### Next Actions
+- After user approval, implement the six minimal repair slices: canonical terminal lifecycle transaction; material packet envelope contract/write-target normalization; frontier-based route snapshot projection; Cockpit adapter completion/active-tab projection; reviewer blocker event taxonomy closure; source-layout/install-audit alignment.
+- Before final release, separately repair or rebase the existing `capability_model.py` duplicate-keyword regression so `scripts/smoke_autopilot.py --fast` can pass again.
+
+## flowpilot-skill-standard-fidelity-model-upgrade-20260509 - Upgrade capability model for child-skill quality dilution and UI review gaps
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Retrospective found that the FlowPilot Cockpit UI run passed formal gates while child-skill standards, concept comparison, visual polish, interaction reachability, palette defaults, execution reports, and review strictness were diluted.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-09T08:05:40+02:00
+- Ended: 2026-05-09T08:05:40+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/capability_model.py
+- simulations/run_capability_checks.py
+- simulations/capability_results.json
+- simulations/capability_results.proof.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python -m py_compile simulations\capability_model.py simulations\run_capability_checks.py`
+- OK: `python simulations\run_capability_checks.py --force`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python scripts\smoke_autopilot.py --fast`
+
+### Findings
+- The prior capability model checked that UI gates existed, but did not require original child-skill standards to be extracted, promoted into node contracts, and bound to non-manifest execution evidence.
+- The prior UI route model did not force selected concept binding, palette/default-or-override rationale, frontend-design execution reporting, complete visible-affordance interaction matrices, concept-vs-implementation deviation tables, required iteration budgets, or structural redesign consideration before loop closure.
+- The upgraded model raises UI child-skill iteration obligations to 20 default rounds and 40 maximum rounds while keeping the existing low state-space branch bound for abstract loop exploration.
+
+### Counterexamples
+- Added hazard regression cases for standard inheritance loss, manifest-only gate evidence, missing child-skill execution reports, missing palette rationale, missing selected-concept binding, incomplete interaction matrix, missing deviation table, underfilled iteration budget, and missing structural redesign consideration.
+- `python simulations\run_capability_checks.py --force` covered 607187 states, 632646 edges, zero invariant failures, zero missing labels, zero stuck states, and all 9 hazard cases matched the expected rejecting invariant.
+- `python simulations\run_meta_checks.py` covered 598029 states and 618200 edges with zero invariant failures, zero missing labels, and zero stuck states.
+
+### Friction Points
+- The first hazard-regression implementation used a generic successful baseline state, which selected a backend success state and failed to exercise UI-only hazards. The runner now chooses a UI success baseline when the hazard mutates UI fields.
+- The previous `capability_model.py` duplicate-keyword blocker was resolved while integrating the new child-skill evidence reset fields.
+- The broader smoke suite now reuses both meta and capability proofs successfully after this repair.
+
+### Skipped Steps
+- No product UI code was modified; this task upgraded the FlowGuard capability model and checker only.
+- No release or publish action was performed.
+
+### Next Actions
+- Use the new hazard-regression pattern for future same-class FlowGuard model upgrades instead of relying only on reachable-state graph closure.
+- When repairing the Cockpit UI implementation later, require the route packet and reviewer reports to cite these new model fields rather than treating them as optional evidence.
+
+## flowpilot-runtime-cross-plane-repair-20260509 - Repair approved runtime friction after sealed-run audit
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User authorized opening previously sealed run artifacts in review mode, then approved production repairs for the first five cross-plane findings plus the capability checker crash while excluding formal Cockpit source-layout alignment.
+- Status: completed_approved_scope
+- Skill decision: used_flowguard
+- Started: 2026-05-09T08:08:00+02:00
+- Ended: 2026-05-09T08:13:02+02:00
+- Commands OK: True for approved scope; one live cross-plane finding remains intentionally excluded by user direction.
+
+### Model Files
+- simulations/capability_model.py
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/flowpilot_control_plane_friction_results.json
+- simulations/flowpilot_control_plane_friction_live_results.json
+- simulations/flowpilot_cross_plane_friction_results.json
+- simulations/flowpilot_cross_plane_friction_live_results.json
+- simulations/flowpilot_packet_lifecycle_results.json
+- simulations/protocol_contract_conformance_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/packet_runtime.py
+- flowpilot_cockpit/source_adapter.py
+- tests/test_flowpilot_router_runtime.py
+- tests/test_flowpilot_cockpit_source_adapter.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: sealed run audit inspected 327 JSON artifacts under `.flowpilot/runs/run-20260508-090520`, including 210 packet/result/report/decision/audit/ledger related records.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py flowpilot_cockpit\source_adapter.py simulations\flowpilot_control_plane_friction_model.py`
+- OK: targeted pytest covered material packet write-targets, terminal snapshot projection, legacy lifecycle recovery, reviewer block taxonomy, and Cockpit adapter projection.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_live_results.json`
+- OK: `python simulations\run_flowpilot_cross_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_cross_plane_friction_results.json`
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- EXPECTED_EXCLUDED: `python simulations\run_flowpilot_cross_plane_friction_checks.py --json-out simulations\flowpilot_cross_plane_friction_live_results.json` reports only `install_audit_layout_policy_conflict`, because the user explicitly excluded formalizing the current experimental Cockpit source layout.
+
+### Findings
+- The sealed artifact review confirmed the work route was actually complete: node completion ledgers closed the FlowPilot-completable work, and human inspection items belonged in the final report instead of remaining route nodes.
+- The material-scan packet family lacked explicit result write targets in legacy packet contracts even though result envelopes existed; new packet creation now writes result envelope/body targets, and reconciliation backfills legacy material envelopes, indexes, and ledgers without opening sealed bodies.
+- Terminal authorities existed but the canonical `lifecycle/run_lifecycle.json` could be missing; reconciliation now writes the missing terminal lifecycle record and refreshes current/index/snapshot state.
+- `route_state_snapshot` could show completed frontier nodes as pending/current; snapshot projection now derives completed status and checklist completion from `execution_frontier` and separates UI selection state from completion/current execution state.
+- Reviewer block events for current-node dispatch and node-acceptance-plan review were real external protocol events but absent from the router event taxonomy; they are now registered and write block reports.
+- The installed FlowPilot skill now matches repository source digest after sync.
+
+### Counterexamples
+- The prior `capability_model.py` merge path could pass the same child-skill evidence reset field twice into `_step()`. The checker now merges route and reset deltas before calling `_step()`, and the smoke suite no longer hits the duplicate-keyword crash.
+- The live cross-plane audit still flags `install_audit_layout_policy_conflict`. This is not an approved-scope failure in this task because the current Cockpit source was explicitly kept experimental and not promoted to a formal install-audited source package.
+
+### Friction Points
+- Running install sync and install check at the same time can create a false drift report while the sync is still in progress; rerun the check after sync finishes.
+- A runtime migration should mutate envelopes/indexes/ledgers and write an explicit migration report, not rewrite sealed packet bodies.
+
+### Skipped Steps
+- Did not promote or package the current experimental Cockpit as formal FlowPilot source.
+- Did not push to GitHub.
+- Did not delete or rewrite sealed bodies; sealed bodies were opened only in this review/audit phase as authorized by the user.
+
+### Next Actions
+- When the user approves a full Cockpit rebuild, decide whether the new Cockpit becomes a first-class install-audited source package or remains generated/ignored; then update the install audit policy accordingly.

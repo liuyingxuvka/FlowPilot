@@ -297,15 +297,18 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
 )
 
 CURRENT_NODE_CYCLE_FLAGS = (
+    "pm_current_node_card_delivered",
     "pm_node_started_event_delivered",
     "pm_node_acceptance_plan_card_delivered",
     "node_acceptance_plan_written",
     "reviewer_node_acceptance_plan_card_delivered",
     "node_acceptance_plan_reviewer_passed",
+    "node_acceptance_plan_review_blocked",
     "current_node_packet_registered",
     "current_node_write_grant_issued",
     "reviewer_current_node_dispatch_card_delivered",
     "current_node_dispatch_allowed",
+    "current_node_dispatch_blocked",
     "current_node_packet_relayed",
     "current_node_worker_result_returned",
     "reviewer_worker_result_card_delivered",
@@ -1272,6 +1275,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "node_acceptance_plan_reviewer_passed",
         "requires_flag": "reviewer_node_acceptance_plan_card_delivered",
         "summary": "Reviewer passed the active node acceptance plan.",
+    },
+    "reviewer_blocks_node_acceptance_plan": {
+        "flag": "node_acceptance_plan_review_blocked",
+        "requires_flag": "reviewer_node_acceptance_plan_card_delivered",
+        "summary": "Reviewer blocked the active node acceptance plan before worker packet registration.",
+    },
+    "reviewer_blocks_current_node_dispatch": {
+        "flag": "current_node_dispatch_blocked",
+        "requires_flag": "reviewer_current_node_dispatch_card_delivered",
+        "summary": "Reviewer blocked current-node worker dispatch before packet relay.",
     },
     "current_node_reviewer_blocks_result": {
         "flag": "node_review_blocked",
@@ -3786,11 +3799,67 @@ def _terminal_lifecycle_mode(run_state: dict[str, Any]) -> str | None:
         return "stopped_by_user"
     if status == "protocol_dead_end" or flags.get("startup_protocol_dead_end_declared"):
         return "protocol_dead_end"
+    if status in {"closed", "completed"} or flags.get("terminal_closure_approved"):
+        return "closed"
     return None
 
 
 def _lifecycle_record_path(run_root: Path) -> Path:
     return run_root / "lifecycle" / "run_lifecycle.json"
+
+
+def _terminal_closure_suite_is_closed(run_root: Path) -> bool:
+    closure = read_json_if_exists(run_root / "closure" / "terminal_closure_suite.json")
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    if not isinstance(closure, dict) or not isinstance(frontier, dict):
+        return False
+    return closure.get("status") == "closed" and frontier.get("status") == "closed"
+
+
+def _clear_active_control_blocker_for_terminal_lifecycle(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    mode: str,
+    event: str,
+    cleared_at: str,
+) -> dict[str, Any] | None:
+    active = run_state.get("active_control_blocker")
+    if not isinstance(active, dict):
+        return None
+    blocker_id = str(active.get("blocker_id") or "")
+    if not blocker_id:
+        run_state["active_control_blocker"] = None
+        run_state["latest_control_blocker_path"] = None
+        return {"authority": "control_blocker", "status": "cleared_missing_blocker_id"}
+    resolved = dict(active)
+    resolved["resolution_status"] = "superseded_by_terminal_lifecycle"
+    resolved["resolved_by_event"] = event
+    resolved["resolved_at"] = cleared_at
+    resolved["terminal_lifecycle_status"] = mode
+    existing = run_state.get("resolved_control_blockers")
+    if not isinstance(existing, list):
+        existing = []
+        run_state["resolved_control_blockers"] = existing
+    if not any(isinstance(item, dict) and item.get("blocker_id") == blocker_id for item in existing):
+        existing.append(resolved)
+    artifact_path = resolve_project_path(project_root, str(active.get("blocker_artifact_path") or ""))
+    if artifact_path.exists():
+        record = read_json(artifact_path)
+        record["resolution_status"] = "superseded_by_terminal_lifecycle"
+        record["resolved_by_event"] = event
+        record["resolved_at"] = cleared_at
+        record["terminal_lifecycle_status"] = mode
+        write_json(artifact_path, record)
+    run_state["active_control_blocker"] = None
+    run_state["latest_control_blocker_path"] = None
+    _sync_control_plane_indexes(project_root, run_root, run_state)
+    return {
+        "authority": "control_blocker",
+        "blocker_id": blocker_id,
+        "resolution_status": "superseded_by_terminal_lifecycle",
+    }
 
 
 def _write_run_lifecycle_request(
@@ -3965,6 +4034,17 @@ def _reconcile_terminal_lifecycle_authorities(
                 "status": mode,
             }
         )
+
+    blocker_receipt = _clear_active_control_blocker_for_terminal_lifecycle(
+        project_root,
+        run_root,
+        run_state,
+        mode=mode,
+        event=event,
+        cleared_at=reconciled_at,
+    )
+    if blocker_receipt:
+        receipts.append(blocker_receipt)
 
     report = {
         "schema_version": "flowpilot.terminal_lifecycle_reconciliation.v1",
@@ -6498,6 +6578,42 @@ def _write_role_gate_report(
     )
 
 
+def _write_role_block_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    expected_role: str,
+    path: Path,
+    schema_version: str,
+    checked_paths: list[Path],
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != expected_role:
+        raise RouterError(f"block report must be reviewed_by_role={expected_role}")
+    if payload.get("passed") is True:
+        raise RouterError("block report cannot pass")
+    missing = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing:
+        raise RouterError(f"block report is missing source paths: {', '.join(missing)}")
+    write_json(
+        path,
+        {
+            "schema_version": schema_version,
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": expected_role,
+            "passed": False,
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
+            "blocking_findings": payload.get("blocking_findings") or payload.get("findings") or [],
+            "repair_recommendation": payload.get("repair_recommendation"),
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+
+
 def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload_if_present(project_root, payload)
     if payload.get("pm_owned", True) is not True:
@@ -7096,16 +7212,28 @@ def _active_ui_task_catalog(project_root: Path, run_root: Path, run_state: dict[
     run_root_rel = project_relative(project_root, run_root)
     current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
     current_run_root = str(current.get("current_run_root") or current.get("active_run_root") or "")
-    current_status = str(current.get("status") or run_state.get("status") or "")
-    hidden_statuses = {"completed", "closed", "stopped", "stopped_by_user", "protocol_dead_end", "abandoned", "discarded", "stale"}
+    run_status = str(run_state.get("status") or "")
+    current_status = str(current.get("status") or "")
+    hidden_statuses = {
+        "completed",
+        "closed",
+        "stopped",
+        "stopped_by_user",
+        "cancelled_by_user",
+        "protocol_dead_end",
+        "abandoned",
+        "discarded",
+        "stale",
+    }
+    effective_status = run_status if run_status in hidden_statuses else current_status or run_status
     current_pointer_matches = current_run_id == run_id and current_run_root == run_root_rel
     active_tasks: list[dict[str, Any]] = []
-    if current_pointer_matches and current_status not in hidden_statuses:
+    if current_pointer_matches and effective_status not in hidden_statuses:
         active_tasks.append(
             {
                 "run_id": run_id,
                 "run_root": run_root_rel,
-                "status": current_status or "running",
+                "status": effective_status or "running",
                 "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
                 "route_state_snapshot_path": project_relative(project_root, _route_state_snapshot_path(run_root)),
                 "close_tab_behavior": "return_to_dialog_route_display",
@@ -7146,7 +7274,7 @@ def _route_node_checklist(node: dict[str, Any], *, node_complete: bool = False) 
         if isinstance(raw, dict):
             item_id = str(raw.get("id") or raw.get("gate_id") or raw.get("label") or f"check-{index:03d}")
             label = str(raw.get("label") or raw.get("title") or raw.get("gate") or item_id)
-            status = _plan_item_status(raw.get("status"), active=False)
+            status = "completed" if node_complete else _plan_item_status(raw.get("status"), active=False)
         else:
             item_id = str(raw)
             label = item_id.replace("_", " ")
@@ -7190,6 +7318,9 @@ def _build_route_state_snapshot(
     if not active_route_id:
         active_route_id = str(route.get("route_id") or "")
     active_node_id = str(frontier.get("active_node_id") or route.get("active_node_id") or "")
+    completed_nodes = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    frontier_status = str(frontier.get("status") or "")
+    frontier_terminal = bool(frontier.get("terminal")) or frontier_status in RUN_TERMINAL_STATUSES
     run_id = str(run_state.get("run_id") or "")
     current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
     current_run_root = str(current.get("current_run_root") or current.get("active_run_root") or "")
@@ -7208,15 +7339,24 @@ def _build_route_state_snapshot(
     nodes: list[dict[str, Any]] = []
     for position, node in enumerate(_iter_route_nodes(route), start=1):
         node_id = str(node.get("node_id") or node.get("id") or f"node-{position:03d}")
-        status = _plan_item_status(node.get("status"), active=node_id == active_node_id)
+        is_frontier_current = node_id == active_node_id
+        node_complete = node_id in completed_nodes
+        status = "completed" if node_complete else _plan_item_status(
+            node.get("status"),
+            active=is_frontier_current and not frontier_terminal,
+        )
         node_complete = status == "completed"
         nodes.append(
             {
                 "id": node_id,
                 "label": str(node.get("title") or node.get("label") or node_id),
                 "status": status,
-                "is_active": node_id == active_node_id,
+                "is_active": is_frontier_current and not node_complete and not frontier_terminal,
+                "is_frontier_current": is_frontier_current,
+                "is_selected": False,
                 "is_complete": node_complete,
+                "completion_source": "execution_frontier.completed_nodes" if node_id in completed_nodes else "route_status",
+                "selection_source": "ui_overlay_only",
                 "checklist": _route_node_checklist(node, node_complete=node_complete),
                 "children": node.get("children") if isinstance(node.get("children"), list) else [],
             }
@@ -7240,6 +7380,10 @@ def _build_route_state_snapshot(
             "route_id": active_route_id or route.get("route_id"),
             "route_version": route.get("route_version") or frontier.get("route_version"),
             "active_node_id": active_node_id or None,
+            "completed_nodes": sorted(completed_nodes),
+            "terminal": frontier_terminal,
+            "selected_node_id": None,
+            "selection_state_is_ui_overlay_only": True,
             "nodes": nodes,
         },
         "frontier": {
@@ -7645,6 +7789,8 @@ def _refresh_route_memory(project_root: Path, run_root: Path, run_state: dict[st
         run_state,
         {
             "current_node_reviewer_blocks_result",
+            "reviewer_blocks_current_node_dispatch",
+            "reviewer_blocks_node_acceptance_plan",
             "reviewer_reports_material_insufficient",
             "reviewer_blocks_material_scan_dispatch",
         },
@@ -8712,6 +8858,32 @@ def _active_node_write_grant_path(run_root: Path, frontier: dict[str, Any]) -> P
 
 def _active_node_completion_ledger_path(run_root: Path, frontier: dict[str, Any]) -> Path:
     return _active_node_root(run_root, frontier) / "node_completion_ledger.json"
+
+
+def _active_node_completion_write_missing(
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any] | None,
+) -> bool:
+    frontier = _active_frontier(run_root)
+    active_node_id = str(frontier.get("active_node_id") or "")
+    if not active_node_id:
+        return False
+    requested_node_id = str((payload or {}).get("node_id") or active_node_id)
+    if requested_node_id != active_node_id:
+        return False
+    completed_nodes = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    return (
+        active_node_id not in completed_nodes
+        or not _active_node_completion_ledger_path(run_root, frontier).exists()
+        or not run_state["flags"].get("node_completion_ledger_updated")
+    )
+
+
+def _node_completion_event_advanced_to_next_node(run_root: Path, payload: dict[str, Any]) -> bool:
+    del payload
+    frontier = _active_frontier(run_root)
+    return frontier.get("status") == "current_node_loop"
 
 
 def _task_completion_projection_path(run_root: Path) -> Path:
@@ -10082,11 +10254,47 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
         **_role_output_envelope_record(payload),
     }
     write_json(run_root / "closure" / "terminal_closure_suite.json", closure)
+    run_state["status"] = "closed"
+    run_state["phase"] = "terminal"
+    run_state["holder"] = "controller"
+    run_state["pending_action"] = None
+    run_state.setdefault("flags", {})["terminal_closure_approved"] = True
     frontier = _active_frontier(run_root)
     frontier["status"] = "closed"
+    frontier["phase"] = "terminal"
+    frontier["terminal"] = True
+    frontier["terminal_event"] = "pm_approves_terminal_closure"
     frontier["closed_at"] = utc_now()
     frontier["source"] = "pm_approves_terminal_closure"
     write_json(run_root / "execution_frontier.json", frontier)
+    reconciliation = _reconcile_terminal_lifecycle_authorities(
+        project_root,
+        run_root,
+        run_state,
+        mode="closed",
+        event="pm_approves_terminal_closure",
+    )
+    write_json(
+        _lifecycle_record_path(run_root),
+        {
+            "schema_version": "flowpilot.run_lifecycle.v1",
+            "run_id": run_state.get("run_id"),
+            "status": "closed",
+            "request_event": "pm_approves_terminal_closure",
+            "reason": "terminal_completion",
+            "controller_may_continue_route_work": False,
+            "controller_may_spawn_new_role_work": False,
+            "reconciliation": reconciliation,
+            "closed_at": closure["closed_at"],
+        },
+    )
+    append_history(
+        run_state,
+        "run_closed",
+        {"event": "pm_approves_terminal_closure", "lifecycle_path": project_relative(project_root, _lifecycle_record_path(run_root))},
+    )
+    _sync_current_and_index_status(project_root, run_state)
+    _write_route_state_snapshot(project_root, run_root, run_state, source_event="pm_approves_terminal_closure")
 
 
 def _write_node_completion_ledger(
@@ -11723,11 +11931,17 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         and run_state["flags"].get(flag)
         and not run_state["flags"].get("route_activated_by_pm")
     )
+    repeatable_current_node_completion = (
+        event == "pm_completes_current_node_from_reviewed_result"
+        and run_state["flags"].get(flag)
+        and _active_node_completion_write_missing(run_root, run_state, payload)
+    )
     if run_state["flags"].get(flag) and not (
         repeatable_pm_repair_decision
         or repeatable_gate_decision
         or repeatable_startup_repair_request
         or repeatable_route_draft_repair
+        or repeatable_current_node_completion
     ):
         finalized = _finalize_repair_transaction_outcome(
             project_root,
@@ -11783,6 +11997,42 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
                 run_root / "execution_frontier.json",
             ],
         )
+    elif event == "reviewer_blocks_node_acceptance_plan":
+        frontier = _active_frontier(run_root)
+        _write_role_block_report(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            expected_role="human_like_reviewer",
+            path=_active_node_root(run_root, frontier) / "reviews" / "node_acceptance_plan_block.json",
+            schema_version="flowpilot.node_acceptance_plan_block.v1",
+            checked_paths=[
+                _active_node_acceptance_plan_path(run_root, frontier),
+                run_root / "execution_frontier.json",
+            ],
+        )
+        run_state["flags"]["node_acceptance_plan_reviewer_passed"] = False
+    elif event == "reviewer_blocks_current_node_dispatch":
+        frontier = _active_frontier(run_root)
+        packet_id = str(frontier.get("active_packet_id") or run_state.get("current_node_packet_id") or "")
+        checked_paths = [
+            _active_node_acceptance_plan_path(run_root, frontier),
+            run_root / "execution_frontier.json",
+        ]
+        if packet_id:
+            checked_paths.append(run_root / "packets" / packet_id / "packet_envelope.json")
+        _write_role_block_report(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            expected_role="human_like_reviewer",
+            path=_active_node_root(run_root, frontier) / "reviews" / "current_node_dispatch_block.json",
+            schema_version="flowpilot.current_node_dispatch_block.v1",
+            checked_paths=checked_paths,
+        )
+        run_state["flags"]["current_node_dispatch_allowed"] = False
     elif event == "reviewer_reports_startup_facts":
         _write_startup_fact_report(project_root, run_root, run_state, payload)
     elif event == "pm_approves_startup_activation":
@@ -12065,7 +12315,17 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         "recorded_at": utc_now(),
     }
     run_state["flags"][flag] = True
-    if event in {"current_node_reviewer_blocks_result", "reviewer_blocks_material_scan_dispatch"}:
+    if event == "pm_completes_current_node_from_reviewed_result" and _node_completion_event_advanced_to_next_node(
+        run_root,
+        payload,
+    ):
+        run_state["flags"][flag] = False
+    if event in {
+        "current_node_reviewer_blocks_result",
+        "reviewer_blocks_material_scan_dispatch",
+        "reviewer_blocks_current_node_dispatch",
+        "reviewer_blocks_node_acceptance_plan",
+    }:
         run_state["flags"]["pm_model_miss_triage_card_delivered"] = False
         run_state["flags"]["model_miss_triage_closed"] = False
         run_state["flags"]["pm_review_repair_card_delivered"] = False
@@ -12303,6 +12563,200 @@ def _sync_current_and_index_status(project_root: Path, run_state: dict[str, Any]
         write_json(index_path, index)
 
 
+def _repair_legacy_material_packet_contracts(project_root: Path, run_root: Path) -> int:
+    index_path = _material_scan_index_path(run_root)
+    index = read_json_if_exists(index_path)
+    ledger_path = run_root / "packet_ledger.json"
+    ledger = read_json_if_exists(ledger_path)
+    if not isinstance(index, dict) and not isinstance(ledger, dict):
+        return 0
+
+    run_id = str(
+        (index.get("run_id") if isinstance(index, dict) else None)
+        or (ledger.get("run_id") if isinstance(ledger, dict) else None)
+        or run_root.name
+    )
+    ledger_packets = ledger.get("packets") if isinstance(ledger, dict) and isinstance(ledger.get("packets"), list) else []
+    ledger_by_id = {
+        str(packet.get("packet_id")): packet
+        for packet in ledger_packets
+        if isinstance(packet, dict) and packet.get("packet_id")
+    }
+
+    records_by_id: dict[str, dict[str, Any]] = {}
+    if isinstance(index, dict):
+        for list_name in ("packets", "superseded_packets"):
+            for record in index.get(list_name, []) if isinstance(index.get(list_name), list) else []:
+                if isinstance(record, dict) and record.get("packet_id"):
+                    records_by_id[str(record["packet_id"])] = record
+    for packet in ledger_packets:
+        if not isinstance(packet, dict):
+            continue
+        packet_id = str(packet.get("packet_id") or "")
+        packet_type = str(packet.get("packet_type") or packet.get("packet_envelope", {}).get("packet_type") or "")
+        if packet_id and (packet_type == "material_scan" or packet_id.startswith("material-scan")):
+            records_by_id.setdefault(packet_id, {})
+
+    changed_index = False
+    changed_ledger = False
+    repaired: list[dict[str, Any]] = []
+    repaired_at = utc_now()
+
+    for packet_id, record in sorted(records_by_id.items()):
+        paths = packet_runtime.packet_paths(project_root, packet_id, run_id)
+        ledger_record = ledger_by_id.get(packet_id, {})
+        result_body_rel = str(
+            record.get("result_body_path")
+            or ledger_record.get("result_body_path")
+            or project_relative(project_root, paths["result_body"])
+        )
+        result_envelope_rel = str(
+            record.get("result_envelope_path")
+            or ledger_record.get("result_envelope_path")
+            or project_relative(project_root, paths["result_envelope"])
+        )
+        envelope_rel = str(
+            record.get("packet_envelope_path")
+            or ledger_record.get("packet_envelope_path")
+            or project_relative(project_root, paths["packet_envelope"])
+        )
+        envelope_path = resolve_project_path(project_root, envelope_rel)
+        envelope = read_json_if_exists(envelope_path)
+        if not isinstance(envelope, dict):
+            continue
+
+        envelope_changed = False
+        for key, value in (
+            ("result_body_path", result_body_rel),
+            ("expected_result_body_path", result_body_rel),
+            ("write_target_path", result_body_rel),
+            ("result_envelope_path", result_envelope_rel),
+            ("expected_result_envelope_path", result_envelope_rel),
+        ):
+            if envelope.get(key) != value:
+                envelope[key] = value
+                envelope_changed = True
+        target = {"result_envelope_path": result_envelope_rel, "result_body_path": result_body_rel}
+        if envelope.get("result_write_target") != target:
+            envelope["result_write_target"] = target
+            envelope_changed = True
+
+        metadata = envelope.get("metadata") if isinstance(envelope.get("metadata"), dict) else {}
+        metadata_updates = {
+            "expected_result_body_path": result_body_rel,
+            "expected_result_envelope_path": result_envelope_rel,
+            "write_target_path": result_body_rel,
+        }
+        for key, value in metadata_updates.items():
+            if metadata.get(key) != value:
+                metadata[key] = value
+                envelope_changed = True
+        if metadata:
+            envelope["metadata"] = metadata
+
+        output_contract = envelope.get("output_contract") if isinstance(envelope.get("output_contract"), dict) else None
+        if isinstance(output_contract, dict):
+            contract = dict(output_contract)
+            for key, value in metadata_updates.items():
+                if contract.get(key) != value:
+                    contract[key] = value
+                    envelope_changed = True
+            if contract != output_contract:
+                envelope["output_contract"] = contract
+
+        replacement_for = record.get("replacement_for") or metadata.get("replacement_for") or ledger_record.get("replacement_for")
+        if replacement_for and not envelope.get("replacement_for"):
+            envelope["replacement_for"] = replacement_for
+            envelope_changed = True
+        if replacement_for and not envelope.get("supersedes"):
+            envelope["supersedes"] = [replacement_for]
+            envelope_changed = True
+
+        if envelope_changed:
+            envelope["legacy_material_packet_contract_migration"] = {
+                "schema_version": "flowpilot.legacy_material_packet_contract_migration.v1",
+                "sealed_packet_body_not_read": True,
+                "sealed_packet_body_not_rewritten": True,
+                "envelope_result_write_target_backfilled": True,
+                "body_hash_preserved": True,
+                "migrated_at": repaired_at,
+            }
+            write_json(envelope_path, envelope)
+            repaired.append(
+                {
+                    "packet_id": packet_id,
+                    "packet_envelope_path": project_relative(project_root, envelope_path),
+                    "result_body_path": result_body_rel,
+                    "result_envelope_path": result_envelope_rel,
+                    "sealed_packet_body_not_read": True,
+                    "sealed_packet_body_not_rewritten": True,
+                }
+            )
+
+        if record:
+            for key, value in (
+                ("packet_envelope_path", project_relative(project_root, envelope_path)),
+                ("result_body_path", result_body_rel),
+                ("result_envelope_path", result_envelope_rel),
+                ("expected_result_body_path", result_body_rel),
+                ("write_target_path", result_body_rel),
+            ):
+                if record.get(key) != value:
+                    record[key] = value
+                    changed_index = True
+            target = {"result_envelope_path": result_envelope_rel, "result_body_path": result_body_rel}
+            if record.get("result_write_target") != target:
+                record["result_write_target"] = target
+                changed_index = True
+
+        if ledger_record:
+            for key, value in (
+                ("result_body_path", result_body_rel),
+                ("result_envelope_path", result_envelope_rel),
+                ("expected_result_body_path", result_body_rel),
+                ("write_target_path", result_body_rel),
+            ):
+                if ledger_record.get(key) != value:
+                    ledger_record[key] = value
+                    changed_ledger = True
+            if ledger_record.get("result_write_target") != target:
+                ledger_record["result_write_target"] = target
+                changed_ledger = True
+            packet_envelope = ledger_record.get("packet_envelope") if isinstance(ledger_record.get("packet_envelope"), dict) else {}
+            for key, value in (
+                ("result_body_path", result_body_rel),
+                ("result_envelope_path", result_envelope_rel),
+                ("expected_result_body_path", result_body_rel),
+                ("write_target_path", result_body_rel),
+            ):
+                if packet_envelope.get(key) != value:
+                    packet_envelope[key] = value
+                    changed_ledger = True
+            if packet_envelope:
+                ledger_record["packet_envelope"] = packet_envelope
+
+    if changed_index and isinstance(index, dict):
+        index["updated_at"] = repaired_at
+        write_json(index_path, index)
+    if changed_ledger and isinstance(ledger, dict):
+        ledger["updated_at"] = repaired_at
+        write_json(ledger_path, ledger)
+    if repaired:
+        write_json(
+            run_root / "material" / "legacy_material_packet_migration.json",
+            {
+                "schema_version": "flowpilot.legacy_material_packet_contract_migration.v1",
+                "run_id": run_id,
+                "packet_count": len(repaired),
+                "packets": repaired,
+                "sealed_packet_bodies_read": False,
+                "sealed_packet_bodies_rewritten": False,
+                "migrated_at": repaired_at,
+            },
+        )
+    return len(repaired)
+
+
 def reconcile_current_run(project_root: Path) -> dict[str, Any]:
     bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
     run_state, run_root = load_run_state(project_root, bootstrap)
@@ -12312,6 +12766,9 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
         "prompt_delivery_contexts": 0,
         "role_output_envelope_hashes": 0,
         "terminal_lifecycle": False,
+        "terminal_lifecycle_record_written": False,
+        "terminal_closure_status_recovered": False,
+        "legacy_material_packet_contracts": 0,
         "non_current_running_index_entries": 0,
     }
     status = str(run_state.get("status") or "")
@@ -12320,23 +12777,51 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
         flags["run_stopped_by_user"] = True
     elif status == "cancelled_by_user":
         flags["run_cancelled_by_user"] = True
+    elif status not in RUN_TERMINAL_STATUSES and _terminal_closure_suite_is_closed(run_root):
+        run_state["status"] = "closed"
+        flags["terminal_closure_approved"] = True
+        status = "closed"
+        repaired["terminal_closure_status_recovered"] = True
     mode = _terminal_lifecycle_mode(run_state)
     if mode:
         run_state["status"] = mode
         run_state["phase"] = "terminal"
         run_state["holder"] = "controller"
         run_state["pending_action"] = None
-        _reconcile_terminal_lifecycle_authorities(
+        reconciliation = _reconcile_terminal_lifecycle_authorities(
             project_root,
             run_root,
             run_state,
             mode=mode,
             event="reconcile_current_run",
         )
+        lifecycle_path = _lifecycle_record_path(run_root)
+        if not lifecycle_path.exists():
+            write_json(
+                lifecycle_path,
+                {
+                    "schema_version": "flowpilot.run_lifecycle.v1",
+                    "run_id": run_state.get("run_id"),
+                    "status": mode,
+                    "request_event": "reconcile_current_run",
+                    "reason": "terminal_lifecycle_reconciled_from_existing_authorities",
+                    "controller_may_continue_route_work": False,
+                    "controller_may_spawn_new_role_work": False,
+                    "reconciliation": reconciliation,
+                    "reconciled_at": utc_now(),
+                },
+            )
+            append_history(
+                run_state,
+                "run_lifecycle_record_written_by_reconcile",
+                {"lifecycle_path": project_relative(project_root, lifecycle_path), "status": mode},
+            )
+            repaired["terminal_lifecycle_record_written"] = True
         _sync_current_and_index_status(project_root, run_state)
         repaired["terminal_lifecycle"] = True
     repaired["prompt_delivery_contexts"] = _repair_prompt_delivery_contexts(project_root, run_root, run_state)
     repaired["role_output_envelope_hashes"] = _repair_role_output_envelope_hashes(project_root, run_root)
+    repaired["legacy_material_packet_contracts"] = _repair_legacy_material_packet_contracts(project_root, run_root)
     _refresh_route_memory(project_root, run_root, run_state, trigger="reconcile_current_run")
     repaired["non_current_running_index_entries"] = _reconcile_non_current_running_index_entries(project_root, run_state)
     _sync_derived_run_views(project_root, run_root, run_state, reason="reconcile_current_run")

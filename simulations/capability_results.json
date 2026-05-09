@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 582582,
+    "edge_count": 632646,
     "invariant_failures": [],
     "labels": [
       "activity_stream_initialized",
@@ -40,19 +40,24 @@
       "child_skill_evidence_plan_written",
       "child_skill_exact_source_verified",
       "child_skill_execution_evidence_audited",
+      "child_skill_execution_reports_written",
       "child_skill_focused_interrogation_completed",
       "child_skill_gate_approvers_assigned",
       "child_skill_gate_authority_records_written",
+      "child_skill_gate_evidence_obligations_bound",
       "child_skill_initial_gate_manifest_extracted",
       "child_skill_iteration_loop_closed",
       "child_skill_manifest_independent_validation_done",
+      "child_skill_manifest_only_evidence_rejected",
       "child_skill_manifest_pm_approved_for_route",
       "child_skill_manifest_process_officer_approved",
       "child_skill_manifest_product_officer_approved",
       "child_skill_manifest_reviewer_reviewed",
       "child_skill_node_gate_manifest_refined",
+      "child_skill_original_standards_extracted",
       "child_skill_requirements_mapped",
       "child_skill_route_design_discovery_started",
+      "child_skill_standards_promoted_to_node_contract",
       "child_skill_subroute_projected",
       "child_skill_substitutes_rejected",
       "classified_backend_task",
@@ -264,7 +269,9 @@
       "ui_concept_personal_visual_review_done",
       "ui_concept_target_ready",
       "ui_concept_target_visible",
+      "ui_concept_vs_implementation_deviation_table_written",
       "ui_divergence_review_done",
+      "ui_frontend_design_execution_report_written",
       "ui_frontend_design_plan_done",
       "ui_geometry_qa_done",
       "ui_implementation_aesthetic_review_failed",
@@ -272,10 +279,19 @@
       "ui_implemented",
       "ui_inspected",
       "ui_interaction_reachability_checked",
+      "ui_iteration_budget_recorded",
+      "ui_iteration_budget_satisfied",
       "ui_layout_overlap_density_checked",
+      "ui_major_visual_deviation_triaged",
+      "ui_palette_contract_written",
+      "ui_palette_default_or_override_rationale_recorded",
       "ui_reviewer_design_recommendations_recorded",
       "ui_reviewer_personal_walkthrough_done",
       "ui_screenshot_qa_done",
+      "ui_selected_concept_bound_to_review_packet",
+      "ui_structural_redesign_route_considered",
+      "ui_visible_affordance_interaction_matrix_complete",
+      "ui_visible_affordance_interaction_matrix_written",
       "ui_visual_iteration_loop_closed",
       "ui_visual_iteration_needed",
       "visible_self_interrogation_completed",
@@ -292,29 +308,196 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 557123,
+    "state_count": 607187,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
+  "hazard": {
+    "case_count": 9,
+    "cases": [
+      {
+        "expected_fragment": "standard inheritance",
+        "failure_count": 4,
+        "failure_samples": [
+          {
+            "invariant": "implementation_requires_flowguard_gates",
+            "reason": "implementation started before capability route was ready"
+          },
+          {
+            "invariant": "child_skill_fidelity_before_capability_work",
+            "reason": "capability work started before PM-owned child-skill gate manifest extraction, approver assignment, reviewer/officer/PM approvals, focused child-skill grill-me, exact source, substitute rejection, original standard extraction, standard promotion into node contract, evidence-obligation binding, invocation policy, requirement mapping, evidence plan, visible child-skill mini-route, conformance model, and strict gate-obligation review model"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "completed before showcase, heartbeat, and FlowGuard capability gates"
+          },
+          {
+            "invariant": "actor_authority_gates_require_correct_role",
+            "reason": "current child-skill gates were role-approved before authority records, original standard inheritance, non-manifest evidence obligations, execution reports, evidence audit, output match, domain quality, and loop closure"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "child_skill_standards_not_promoted"
+      },
+      {
+        "expected_fragment": "manifest-only evidence",
+        "failure_count": 3,
+        "failure_samples": [
+          {
+            "invariant": "child_skill_fidelity_before_capability_work",
+            "reason": "child skill completion verified before original skill standards were promoted, manifest-only evidence was rejected, execution reports were written, evidence audit, output match, domain quality, iteration closure, and required role approvals for current child-skill gates"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "completed before child-skill standard inheritance, execution reports, manifest-only evidence rejection, conformance audit, and quality loop closure"
+          },
+          {
+            "invariant": "actor_authority_gates_require_correct_role",
+            "reason": "current child-skill gates were role-approved before authority records, original standard inheritance, non-manifest evidence obligations, execution reports, evidence audit, output match, domain quality, and loop closure"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "manifest_only_child_skill_gate_evidence"
+      },
+      {
+        "expected_fragment": "execution reports",
+        "failure_count": 3,
+        "failure_samples": [
+          {
+            "invariant": "child_skill_fidelity_before_capability_work",
+            "reason": "child skill completion verified before original skill standards were promoted, manifest-only evidence was rejected, execution reports were written, evidence audit, output match, domain quality, iteration closure, and required role approvals for current child-skill gates"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "completed before child-skill standard inheritance, execution reports, manifest-only evidence rejection, conformance audit, and quality loop closure"
+          },
+          {
+            "invariant": "actor_authority_gates_require_correct_role",
+            "reason": "current child-skill gates were role-approved before authority records, original standard inheritance, non-manifest evidence obligations, execution reports, evidence audit, output match, domain quality, and loop closure"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "missing_child_skill_execution_reports"
+      },
+      {
+        "expected_fragment": "palette",
+        "failure_count": 2,
+        "failure_samples": [
+          {
+            "invariant": "ui_route_requires_ui_capabilities",
+            "reason": "UI implemented before inspect, concept target visibility, palette contract/default-or-override rationale, selected-concept binding, aesthetic review, frontend design report, and iteration budget gates"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "UI route completed before visual skill-standard verification gates"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "ui_palette_override_not_rationalized"
+      },
+      {
+        "expected_fragment": "selected-concept",
+        "failure_count": 2,
+        "failure_samples": [
+          {
+            "invariant": "ui_route_requires_ui_capabilities",
+            "reason": "UI implemented before inspect, concept target visibility, palette contract/default-or-override rationale, selected-concept binding, aesthetic review, frontend design report, and iteration budget gates"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "UI route completed before visual skill-standard verification gates"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "ui_selected_concept_not_bound_to_review"
+      },
+      {
+        "expected_fragment": "interaction matrix",
+        "failure_count": 2,
+        "failure_samples": [
+          {
+            "invariant": "ui_route_requires_ui_capabilities",
+            "reason": "interaction reachability passed before every visible affordance had a complete tested interaction matrix"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "UI route completed before visual skill-standard verification gates"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "ui_interaction_matrix_incomplete"
+      },
+      {
+        "expected_fragment": "deviation table",
+        "failure_count": 2,
+        "failure_samples": [
+          {
+            "invariant": "ui_route_requires_ui_capabilities",
+            "reason": "UI child-skill comparison reviewed before selected concept binding, palette rationale, pre-implementation UI evidence, rendered QA, complete interaction matrix, aesthetic verdict, and concept-vs-implementation deviation table"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "UI route completed before visual skill-standard verification gates"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "ui_concept_deviation_table_missing"
+      },
+      {
+        "expected_fragment": "iteration budget",
+        "failure_count": 2,
+        "failure_samples": [
+          {
+            "invariant": "ui_route_requires_ui_capabilities",
+            "reason": "UI child-skill loop closed before source skill standards, palette rationale, selected concept binding, frontend-design execution report, complete interaction matrix, deviation table, required iteration budget, major-deviation triage, structural redesign consideration, rendered QA, aesthetic verdict, and comparison evidence"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "UI route completed before visual skill-standard verification gates"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "ui_iteration_budget_underfilled"
+      },
+      {
+        "expected_fragment": "structural redesign",
+        "failure_count": 2,
+        "failure_samples": [
+          {
+            "invariant": "ui_route_requires_ui_capabilities",
+            "reason": "UI child-skill loop closed before source skill standards, palette rationale, selected concept binding, frontend-design execution report, complete interaction matrix, deviation table, required iteration budget, major-deviation triage, structural redesign consideration, rendered QA, aesthetic verdict, and comparison evidence"
+          },
+          {
+            "invariant": "final_completion_requires_right_verification",
+            "reason": "UI route completed before visual skill-standard verification gates"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "ui_structural_redesign_not_considered"
+      }
+    ],
+    "ok": true,
+    "status": "OK"
+  },
   "loop": {
-    "edge_count": 582582,
+    "edge_count": 632646,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 557123,
+    "state_count": 607187,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 582582,
+    "edge_count": 632646,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 557123,
+    "state_count": 607187,
     "status": "OK",
     "success_state_count": 4368
   }

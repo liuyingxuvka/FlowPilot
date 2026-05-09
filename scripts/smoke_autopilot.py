@@ -30,6 +30,13 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_control_plane_friction_results.json",
     ]
+    cross_plane_friction_check = [
+        sys.executable,
+        "simulations/run_flowpilot_cross_plane_friction_checks.py",
+        "--skip-live-audit",
+        "--json-out",
+        "simulations/flowpilot_cross_plane_friction_results.json",
+    ]
     if args.fast:
         meta_check.append("--fast")
         capability_check.append("--fast")
@@ -41,6 +48,7 @@ def main(argv: list[str] | None = None) -> int:
         [sys.executable, "simulations/run_barrier_equivalence_checks.py"],
         [sys.executable, "simulations/run_command_refinement_checks.py"],
         control_plane_friction_check,
+        cross_plane_friction_check,
         meta_check,
         capability_check,
     ]

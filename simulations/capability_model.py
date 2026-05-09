@@ -20,8 +20,8 @@ TARGET_PARENT_NODES = 1
 MAX_STANDARD_EXPANSIONS = 1
 MAX_QUALITY_ROUTE_RAISES = 1
 MAX_QUALITY_REWORKS = 1
-DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS = 10
-MAX_UI_CHILD_SKILL_ITERATION_ROUNDS = 20
+DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS = 20
+MAX_UI_CHILD_SKILL_ITERATION_ROUNDS = 40
 # State-space bound for exploring repeat UI loop branches. This is not a
 # runtime limit; the child UI skill owns the actual iteration standard.
 MAX_UI_VISUAL_ITERATIONS = 2
@@ -203,6 +203,9 @@ class State:
     child_skill_contracts_loaded: bool = False
     child_skill_exact_source_verified: bool = False
     child_skill_substitutes_rejected: bool = False
+    child_skill_original_standards_extracted: bool = False
+    child_skill_standards_promoted_to_node_contract: bool = False
+    child_skill_gate_evidence_obligations_bound: bool = False
     flowpilot_invocation_policy_mapped: bool = False
     child_skill_requirements_mapped: bool = False
     child_skill_evidence_plan_written: bool = False
@@ -216,6 +219,8 @@ class State:
     child_skill_conformance_model_checked: bool = False
     child_skill_conformance_model_process_officer_approved: bool = False
     strict_gate_obligation_review_model_checked: bool = False
+    child_skill_manifest_only_evidence_rejected: bool = False
+    child_skill_execution_reports_written: bool = False
     child_skill_execution_evidence_audited: bool = False
     child_skill_evidence_matches_outputs: bool = False
     child_skill_domain_quality_checked: bool = False
@@ -290,7 +295,11 @@ class State:
     ui_concept_design_recommendations_recorded: bool = False
     ui_concept_aesthetic_review_done: bool = False
     ui_concept_aesthetic_reasons_recorded: bool = False
+    ui_palette_contract_written: bool = False
+    ui_palette_default_or_override_rationale_recorded: bool = False
+    ui_selected_concept_bound_to_review_packet: bool = False
     ui_frontend_design_plan_done: bool = False
+    ui_frontend_design_execution_report_written: bool = False
     visual_asset_scope: str = "unknown"  # unknown | none | required
     visual_asset_style_review_done: bool = False
     visual_asset_personal_visual_review_done: bool = False
@@ -301,12 +310,20 @@ class State:
     ui_screenshot_qa_done: bool = False
     ui_geometry_qa_done: bool = False
     ui_reviewer_personal_walkthrough_done: bool = False
+    ui_visible_affordance_interaction_matrix_written: bool = False
+    ui_visible_affordance_interaction_matrix_complete: bool = False
     ui_interaction_reachability_checked: bool = False
     ui_layout_overlap_density_checked: bool = False
     ui_reviewer_design_recommendations_recorded: bool = False
     ui_implementation_aesthetic_review_done: bool = False
     ui_implementation_aesthetic_reasons_recorded: bool = False
+    ui_concept_vs_implementation_deviation_table_written: bool = False
     ui_divergence_review_done: bool = False
+    ui_iteration_budget_recorded: bool = False
+    ui_iteration_rounds_required: int = 0
+    ui_iteration_rounds_completed: int = 0
+    ui_major_visual_deviation_triaged: bool = False
+    ui_structural_redesign_route_considered: bool = False
     ui_visual_iteration_loop_closed: bool = False
     ui_visual_iterations: int = 0
 
@@ -448,6 +465,13 @@ def _step(state: State, *, label: str, action: str, **changes) -> FunctionResult
     )
 
 
+def _merged_changes(*groups: dict[str, object]) -> dict[str, object]:
+    merged: dict[str, object] = {}
+    for group in groups:
+        merged.update(group)
+    return merged
+
+
 def _reset_quality_gates() -> dict[str, object]:
     return {
         "quality_package_done": False,
@@ -578,6 +602,8 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "node_acceptance_risk_experiments_mapped": False,
             "child_skill_node_gate_manifest_refined": False,
             "child_skill_gate_authority_records_written": False,
+            "child_skill_manifest_only_evidence_rejected": False,
+            "child_skill_execution_reports_written": False,
             "current_child_skill_gate_independent_validation_done": False,
             "child_skill_current_gates_role_approved": False,
             "child_node_sidecar_scan_done": False,
@@ -621,16 +647,23 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "child_skill_focused_interrogation_scope_id": "",
         "child_skill_exact_source_verified": False,
         "child_skill_substitutes_rejected": False,
+        "child_skill_original_standards_extracted": False,
+        "child_skill_standards_promoted_to_node_contract": False,
+        "child_skill_gate_evidence_obligations_bound": False,
         "flowpilot_invocation_policy_mapped": False,
         "child_skill_requirements_mapped": False,
         "child_skill_evidence_plan_written": False,
         "child_skill_subroute_projected": False,
         "non_ui_implemented": False,
+        "ui_palette_contract_written": False,
+        "ui_palette_default_or_override_rationale_recorded": False,
+        "ui_selected_concept_bound_to_review_packet": False,
         "ui_concept_target_ready": False,
         "ui_concept_target_visible": False,
         "ui_concept_personal_visual_review_done": False,
         "ui_concept_design_recommendations_recorded": False,
         "ui_frontend_design_plan_done": False,
+        "ui_frontend_design_execution_report_written": False,
         "visual_asset_scope": "unknown",
         "visual_asset_style_review_done": False,
         "visual_asset_personal_visual_review_done": False,
@@ -639,12 +672,20 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "ui_screenshot_qa_done": False,
         "ui_geometry_qa_done": False,
         "ui_reviewer_personal_walkthrough_done": False,
+        "ui_visible_affordance_interaction_matrix_written": False,
+        "ui_visible_affordance_interaction_matrix_complete": False,
         "ui_interaction_reachability_checked": False,
         "ui_layout_overlap_density_checked": False,
         "ui_reviewer_design_recommendations_recorded": False,
         "ui_implementation_aesthetic_review_done": False,
         "ui_implementation_aesthetic_reasons_recorded": False,
+        "ui_concept_vs_implementation_deviation_table_written": False,
         "ui_divergence_review_done": False,
+        "ui_iteration_budget_recorded": False,
+        "ui_iteration_rounds_required": 0,
+        "ui_iteration_rounds_completed": 0,
+        "ui_major_visual_deviation_triaged": False,
+        "ui_structural_redesign_route_considered": False,
         "ui_visual_iteration_loop_closed": False,
         "ui_concept_aesthetic_review_done": False,
         "ui_concept_aesthetic_reasons_recorded": False,
@@ -984,6 +1025,9 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.child_skill_contracts_loaded
         and state.child_skill_exact_source_verified
         and state.child_skill_substitutes_rejected
+        and state.child_skill_original_standards_extracted
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_gate_evidence_obligations_bound
         and state.flowpilot_invocation_policy_mapped
         and state.child_skill_requirements_mapped
         and state.child_skill_evidence_plan_written
@@ -1050,6 +1094,9 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.child_skill_contracts_loaded
         and state.child_skill_exact_source_verified
         and state.child_skill_substitutes_rejected
+        and state.child_skill_original_standards_extracted
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_gate_evidence_obligations_bound
         and state.flowpilot_invocation_policy_mapped
         and state.child_skill_requirements_mapped
         and state.child_skill_evidence_plan_written
@@ -1110,6 +1157,9 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.child_skill_contracts_loaded
         and state.child_skill_exact_source_verified
         and state.child_skill_substitutes_rejected
+        and state.child_skill_original_standards_extracted
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_gate_evidence_obligations_bound
         and state.flowpilot_invocation_policy_mapped
         and state.child_skill_requirements_mapped
         and state.child_skill_evidence_plan_written
@@ -1582,6 +1632,9 @@ class CapabilityRouterStep:
         "child_skill_contracts_loaded",
         "child_skill_exact_source_verified",
         "child_skill_substitutes_rejected",
+        "child_skill_original_standards_extracted",
+        "child_skill_standards_promoted_to_node_contract",
+        "child_skill_gate_evidence_obligations_bound",
         "flowpilot_invocation_policy_mapped",
         "child_skill_requirements_mapped",
         "child_skill_evidence_plan_written",
@@ -1595,6 +1648,8 @@ class CapabilityRouterStep:
         "child_skill_conformance_model_checked",
         "child_skill_conformance_model_process_officer_approved",
         "strict_gate_obligation_review_model_checked",
+        "child_skill_manifest_only_evidence_rejected",
+        "child_skill_execution_reports_written",
         "child_skill_execution_evidence_audited",
         "child_skill_evidence_matches_outputs",
         "child_skill_domain_quality_checked",
@@ -1670,7 +1725,11 @@ class CapabilityRouterStep:
         "ui_concept_design_recommendations_recorded",
         "ui_concept_aesthetic_review_done",
         "ui_concept_aesthetic_reasons_recorded",
+        "ui_palette_contract_written",
+        "ui_palette_default_or_override_rationale_recorded",
+        "ui_selected_concept_bound_to_review_packet",
         "visual_asset_scope",
+        "ui_frontend_design_execution_report_written",
         "visual_asset_style_review_done",
         "visual_asset_personal_visual_review_done",
         "visual_asset_design_recommendations_recorded",
@@ -1679,11 +1738,19 @@ class CapabilityRouterStep:
         "ui_screenshot_qa_done",
         "ui_geometry_qa_done",
         "ui_reviewer_personal_walkthrough_done",
+        "ui_visible_affordance_interaction_matrix_written",
+        "ui_visible_affordance_interaction_matrix_complete",
         "ui_interaction_reachability_checked",
         "ui_layout_overlap_density_checked",
         "ui_reviewer_design_recommendations_recorded",
         "ui_implementation_aesthetic_review_done",
         "ui_implementation_aesthetic_reasons_recorded",
+        "ui_concept_vs_implementation_deviation_table_written",
+        "ui_iteration_budget_recorded",
+        "ui_iteration_rounds_required",
+        "ui_iteration_rounds_completed",
+        "ui_major_visual_deviation_triaged",
+        "ui_structural_redesign_route_considered",
         "ui_visual_iteration_loop_closed",
         "ui_visual_iterations",
         "quality_package_done",
@@ -1915,6 +1982,9 @@ class CapabilityRouterStep:
         "child_skill_contracts_loaded",
         "child_skill_exact_source_verified",
         "child_skill_substitutes_rejected",
+        "child_skill_original_standards_extracted",
+        "child_skill_standards_promoted_to_node_contract",
+        "child_skill_gate_evidence_obligations_bound",
         "flowpilot_invocation_policy_mapped",
         "child_skill_requirements_mapped",
         "child_skill_evidence_plan_written",
@@ -1928,6 +1998,8 @@ class CapabilityRouterStep:
         "child_skill_conformance_model_checked",
         "child_skill_conformance_model_process_officer_approved",
         "strict_gate_obligation_review_model_checked",
+        "child_skill_manifest_only_evidence_rejected",
+        "child_skill_execution_reports_written",
         "child_skill_execution_evidence_audited",
         "child_skill_evidence_matches_outputs",
         "child_skill_domain_quality_checked",
@@ -1996,7 +2068,11 @@ class CapabilityRouterStep:
         "ui_concept_design_recommendations_recorded",
         "ui_concept_aesthetic_review_done",
         "ui_concept_aesthetic_reasons_recorded",
+        "ui_palette_contract_written",
+        "ui_palette_default_or_override_rationale_recorded",
+        "ui_selected_concept_bound_to_review_packet",
         "ui_frontend_design_plan_done",
+        "ui_frontend_design_execution_report_written",
         "visual_asset_scope",
         "visual_asset_style_review_done",
         "visual_asset_personal_visual_review_done",
@@ -2007,12 +2083,20 @@ class CapabilityRouterStep:
         "ui_screenshot_qa_done",
         "ui_geometry_qa_done",
         "ui_reviewer_personal_walkthrough_done",
+        "ui_visible_affordance_interaction_matrix_written",
+        "ui_visible_affordance_interaction_matrix_complete",
         "ui_interaction_reachability_checked",
         "ui_layout_overlap_density_checked",
         "ui_reviewer_design_recommendations_recorded",
         "ui_implementation_aesthetic_review_done",
         "ui_implementation_aesthetic_reasons_recorded",
+        "ui_concept_vs_implementation_deviation_table_written",
         "ui_divergence_review_done",
+        "ui_iteration_budget_recorded",
+        "ui_iteration_rounds_required",
+        "ui_iteration_rounds_completed",
+        "ui_major_visual_deviation_triaged",
+        "ui_structural_redesign_route_considered",
         "ui_visual_iteration_loop_closed",
         "ui_visual_iterations",
         "non_ui_implemented",
@@ -3101,6 +3185,33 @@ class CapabilityRouterStep:
             )
             return
 
+        if not state.child_skill_original_standards_extracted:
+            yield _step(
+                state,
+                label="child_skill_original_standards_extracted",
+                action="extract the invoked skills' original standards, defaults, iteration budgets, review obligations, and waiver rules before PM packaging",
+                child_skill_original_standards_extracted=True,
+            )
+            return
+
+        if not state.child_skill_standards_promoted_to_node_contract:
+            yield _step(
+                state,
+                label="child_skill_standards_promoted_to_node_contract",
+                action="promote extracted child-skill standards into the current node contract so PM packages cannot silently lower them",
+                child_skill_standards_promoted_to_node_contract=True,
+            )
+            return
+
+        if not state.child_skill_gate_evidence_obligations_bound:
+            yield _step(
+                state,
+                label="child_skill_gate_evidence_obligations_bound",
+                action="bind every child-skill gate to concrete execution artifacts, reviewer-owned checks, and non-manifest evidence obligations",
+                child_skill_gate_evidence_obligations_bound=True,
+            )
+            return
+
         if not state.flowpilot_invocation_policy_mapped:
             yield _step(
                 state,
@@ -3557,13 +3668,13 @@ class CapabilityRouterStep:
 
             reset_changes = _reset_execution_quality_gates()
             route_changes = _capability_structural_repair_changes(state)
+            repair_changes = _merged_changes(route_changes, reset_changes)
             if state.capability_backward_issue_strategy == "existing_child":
                 yield _step(
                     state,
                     label="capability_route_updated_to_rework_child_node",
                     action="mutate the capability route back to the affected existing child node and invalidate the parent rollup",
-                    **route_changes,
-                    **reset_changes,
+                    **repair_changes,
                 )
                 return
             if state.capability_backward_issue_strategy == "add_sibling":
@@ -3572,8 +3683,7 @@ class CapabilityRouterStep:
                     label="capability_route_updated_to_add_sibling_child_node",
                     action="mutate the capability route to add an adjacent sibling child node before parent closure",
                     capability_new_sibling_nodes=state.capability_new_sibling_nodes + 1,
-                    **route_changes,
-                    **reset_changes,
+                    **repair_changes,
                 )
                 return
             yield _step(
@@ -3581,8 +3691,7 @@ class CapabilityRouterStep:
                 label="capability_route_updated_to_rebuild_child_subtree",
                 action="mutate the capability route to rebuild the child subtree from the capability product model",
                 capability_subtree_rebuilds=state.capability_subtree_rebuilds + 1,
-                **route_changes,
-                **reset_changes,
+                **repair_changes,
             )
             return
 
@@ -3980,6 +4089,9 @@ class CapabilityRouterStep:
                     child_skill_focused_interrogation_scope_id="",
                     child_skill_exact_source_verified=False,
                     child_skill_substitutes_rejected=False,
+                    child_skill_original_standards_extracted=False,
+                    child_skill_standards_promoted_to_node_contract=False,
+                    child_skill_gate_evidence_obligations_bound=False,
                     flowpilot_invocation_policy_mapped=False,
                     child_skill_requirements_mapped=False,
                     child_skill_evidence_plan_written=False,
@@ -4013,6 +4125,22 @@ class CapabilityRouterStep:
                     action="implement non-UI project chunk",
                     non_ui_implemented=True,
                     role_memory_refreshed_after_work=False,
+                )
+                return
+            if not state.child_skill_manifest_only_evidence_rejected:
+                yield _step(
+                    state,
+                    label="child_skill_manifest_only_evidence_rejected",
+                    action="reject manifest-only child-skill evidence and require execution artifacts, logs, screenshots, diffs, or reviewer-owned observations",
+                    child_skill_manifest_only_evidence_rejected=True,
+                )
+                return
+            if not state.child_skill_execution_reports_written:
+                yield _step(
+                    state,
+                    label="child_skill_execution_reports_written",
+                    action="write per-invoked-skill execution reports covering required steps, iteration budget, deviations, waivers, and reviewer findings",
+                    child_skill_execution_reports_written=True,
                 )
                 return
             if not state.child_skill_execution_evidence_audited:
@@ -4390,6 +4518,9 @@ class CapabilityRouterStep:
                         child_skill_focused_interrogation_scope_id="",
                         child_skill_exact_source_verified=False,
                         child_skill_substitutes_rejected=False,
+                        child_skill_original_standards_extracted=False,
+                        child_skill_standards_promoted_to_node_contract=False,
+                        child_skill_gate_evidence_obligations_bound=False,
                         flowpilot_invocation_policy_mapped=False,
                         child_skill_requirements_mapped=False,
                         child_skill_evidence_plan_written=False,
@@ -4542,6 +4673,22 @@ class CapabilityRouterStep:
                     ui_concept_done=True,
                 )
                 return
+            if not state.ui_palette_contract_written:
+                yield _step(
+                    state,
+                    label="ui_palette_contract_written",
+                    action="extract UI skill color, background, accent, theme-default, and override rules into the design contract",
+                    ui_palette_contract_written=True,
+                )
+                return
+            if not state.ui_palette_default_or_override_rationale_recorded:
+                yield _step(
+                    state,
+                    label="ui_palette_default_or_override_rationale_recorded",
+                    action="record the default palette/background decision or the explicit user-backed override rationale before concept review continues",
+                    ui_palette_default_or_override_rationale_recorded=True,
+                )
+                return
             if not state.ui_concept_target_ready:
                 yield _step(
                     state,
@@ -4556,6 +4703,14 @@ class CapabilityRouterStep:
                     label="ui_concept_target_visible",
                     action="show the source UI skill's target/reference decision or record its waiver before implementation planning",
                     ui_concept_target_visible=True,
+                )
+                return
+            if not state.ui_selected_concept_bound_to_review_packet:
+                yield _step(
+                    state,
+                    label="ui_selected_concept_bound_to_review_packet",
+                    action="bind the selected concept image, icon direction, palette contract, and reference target into the reviewer packet",
+                    ui_selected_concept_bound_to_review_packet=True,
                 )
                 return
             if not state.ui_concept_personal_visual_review_done:
@@ -4589,11 +4744,18 @@ class CapabilityRouterStep:
                         action="human-like reviewer rejects the concept aesthetics with concrete ugly/weak reasons and sends it back for concept regeneration",
                         ui_concept_target_ready=False,
                         ui_concept_target_visible=False,
+                        ui_selected_concept_bound_to_review_packet=False,
                         ui_concept_personal_visual_review_done=False,
                         ui_concept_design_recommendations_recorded=False,
                         ui_concept_aesthetic_review_done=False,
                         ui_concept_aesthetic_reasons_recorded=False,
                         ui_frontend_design_plan_done=False,
+                        ui_frontend_design_execution_report_written=False,
+                        ui_iteration_budget_recorded=False,
+                        ui_iteration_rounds_required=0,
+                        ui_iteration_rounds_completed=0,
+                        ui_major_visual_deviation_triaged=False,
+                        ui_structural_redesign_route_considered=False,
                         visual_asset_scope="unknown",
                         visual_asset_style_review_done=False,
                         visual_asset_personal_visual_review_done=False,
@@ -4609,6 +4771,24 @@ class CapabilityRouterStep:
                     label="ui_frontend_design_plan_done",
                     action="autonomous UI pipeline briefs frontend-design for implementation planning",
                     ui_frontend_design_plan_done=True,
+                )
+                return
+            if not state.ui_frontend_design_execution_report_written:
+                yield _step(
+                    state,
+                    label="ui_frontend_design_execution_report_written",
+                    action="write the frontend-design execution report with selected concept, palette contract, layout rules, interaction map, and deviations",
+                    ui_frontend_design_execution_report_written=True,
+                )
+                return
+            if not state.ui_iteration_budget_recorded:
+                yield _step(
+                    state,
+                    label="ui_iteration_budget_recorded",
+                    action="record UI child-skill iteration budget from source skill defaults and PM risk level before implementation starts",
+                    ui_iteration_budget_recorded=True,
+                    ui_iteration_rounds_required=DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS,
+                    ui_iteration_rounds_completed=0,
                 )
                 return
             if state.visual_asset_scope == "unknown":
@@ -4715,6 +4895,22 @@ class CapabilityRouterStep:
                     ui_reviewer_personal_walkthrough_done=True,
                 )
                 return
+            if not state.ui_visible_affordance_interaction_matrix_written:
+                yield _step(
+                    state,
+                    label="ui_visible_affordance_interaction_matrix_written",
+                    action="enumerate every visible button, tab, nav item, window control, tray action, language toggle, and route control into an interaction matrix",
+                    ui_visible_affordance_interaction_matrix_written=True,
+                )
+                return
+            if not state.ui_visible_affordance_interaction_matrix_complete:
+                yield _step(
+                    state,
+                    label="ui_visible_affordance_interaction_matrix_complete",
+                    action="verify every visible interactive affordance has an expected response, tested result, and repair decision before reachability passes",
+                    ui_visible_affordance_interaction_matrix_complete=True,
+                )
+                return
             if not state.ui_interaction_reachability_checked:
                 yield _step(
                     state,
@@ -4756,13 +4952,27 @@ class CapabilityRouterStep:
                         ui_screenshot_qa_done=False,
                         ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
+                        ui_visible_affordance_interaction_matrix_written=False,
+                        ui_visible_affordance_interaction_matrix_complete=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
                         ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
+                        ui_concept_vs_implementation_deviation_table_written=False,
+                        ui_iteration_rounds_completed=0,
+                        ui_major_visual_deviation_triaged=False,
+                        ui_structural_redesign_route_considered=False,
                         ui_visual_iterations=state.ui_visual_iterations + 1,
                     )
+                return
+            if not state.ui_concept_vs_implementation_deviation_table_written:
+                yield _step(
+                    state,
+                    label="ui_concept_vs_implementation_deviation_table_written",
+                    action="write concept-vs-implementation deviation table covering palette, typography, layout, controls, icon direction, animation, density, and interaction gaps",
+                    ui_concept_vs_implementation_deviation_table_written=True,
+                )
                 return
             if not state.ui_divergence_review_done:
                 yield _step(
@@ -4770,6 +4980,34 @@ class CapabilityRouterStep:
                     label="ui_divergence_review_done",
                     action="record the source UI skill's divergence or comparison decision",
                     ui_divergence_review_done=True,
+                )
+                return
+            if not state.ui_major_visual_deviation_triaged:
+                yield _step(
+                    state,
+                    label="ui_major_visual_deviation_triaged",
+                    action="classify concept divergence, inert controls, style collapse, palette override, and missing skill-loop evidence as pass, repair, or structural blocker",
+                    ui_major_visual_deviation_triaged=True,
+                )
+                return
+            if not state.ui_structural_redesign_route_considered:
+                yield _step(
+                    state,
+                    label="ui_structural_redesign_route_considered",
+                    action="record whether UI deviations require a structural redesign route instead of cosmetic iteration closure",
+                    ui_structural_redesign_route_considered=True,
+                )
+                return
+            if (
+                state.ui_iteration_budget_recorded
+                and state.ui_iteration_rounds_completed
+                < state.ui_iteration_rounds_required
+            ):
+                yield _step(
+                    state,
+                    label="ui_iteration_budget_satisfied",
+                    action="complete the required UI child-skill design/review/repair iteration budget before closing the visual loop",
+                    ui_iteration_rounds_completed=state.ui_iteration_rounds_required,
                 )
                 return
             if not state.ui_visual_iteration_loop_closed:
@@ -4780,11 +5018,18 @@ class CapabilityRouterStep:
                         action="rerun UI child-skill work after its loop decision changes required evidence",
                         ui_concept_target_ready=False,
                         ui_concept_target_visible=False,
+                        ui_selected_concept_bound_to_review_packet=False,
                         ui_concept_personal_visual_review_done=False,
                         ui_concept_design_recommendations_recorded=False,
                         ui_concept_aesthetic_review_done=False,
                         ui_concept_aesthetic_reasons_recorded=False,
                         ui_frontend_design_plan_done=False,
+                        ui_frontend_design_execution_report_written=False,
+                        ui_iteration_budget_recorded=False,
+                        ui_iteration_rounds_required=0,
+                        ui_iteration_rounds_completed=0,
+                        ui_major_visual_deviation_triaged=False,
+                        ui_structural_redesign_route_considered=False,
                         visual_asset_scope="unknown",
                         visual_asset_style_review_done=False,
                         visual_asset_personal_visual_review_done=False,
@@ -4795,12 +5040,17 @@ class CapabilityRouterStep:
                         ui_screenshot_qa_done=False,
                         ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
+                        ui_visible_affordance_interaction_matrix_written=False,
+                        ui_visible_affordance_interaction_matrix_complete=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
                         ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
+                        ui_concept_vs_implementation_deviation_table_written=False,
                         ui_divergence_review_done=False,
+                        child_skill_manifest_only_evidence_rejected=False,
+                        child_skill_execution_reports_written=False,
                         child_skill_execution_evidence_audited=False,
                         child_skill_evidence_matches_outputs=False,
                         child_skill_domain_quality_checked=False,
@@ -4813,6 +5063,22 @@ class CapabilityRouterStep:
                     label="ui_visual_iteration_loop_closed",
                     action="record the source UI skill's loop-closure decision",
                     ui_visual_iteration_loop_closed=True,
+                )
+                return
+            if not state.child_skill_manifest_only_evidence_rejected:
+                yield _step(
+                    state,
+                    label="child_skill_manifest_only_evidence_rejected",
+                    action="reject manifest-only UI child-skill evidence and require execution artifacts, screenshots, interaction matrix, deviation table, or reviewer-owned observations",
+                    child_skill_manifest_only_evidence_rejected=True,
+                )
+                return
+            if not state.child_skill_execution_reports_written:
+                yield _step(
+                    state,
+                    label="child_skill_execution_reports_written",
+                    action="write per-invoked-UI-skill execution reports covering required steps, palette decisions, iteration budget, deviations, waivers, and reviewer findings",
+                    child_skill_execution_reports_written=True,
                 )
                 return
             if not state.child_skill_execution_evidence_audited:
@@ -4897,12 +5163,18 @@ class CapabilityRouterStep:
                         ui_screenshot_qa_done=False,
                         ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
+                        ui_visible_affordance_interaction_matrix_written=False,
+                        ui_visible_affordance_interaction_matrix_complete=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
                         ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
+                        ui_concept_vs_implementation_deviation_table_written=False,
                         ui_divergence_review_done=False,
+                        ui_iteration_rounds_completed=0,
+                        ui_major_visual_deviation_triaged=False,
+                        ui_structural_redesign_route_considered=False,
                         ui_visual_iteration_loop_closed=False,
                         child_skill_execution_evidence_audited=False,
                         child_skill_evidence_matches_outputs=False,
@@ -5224,6 +5496,9 @@ class CapabilityRouterStep:
                         meta_route_checked=False,
                         meta_route_process_officer_approved=False,
                         subagent_status="none",
+                        ui_palette_contract_written=False,
+                        ui_palette_default_or_override_rationale_recorded=False,
+                        ui_selected_concept_bound_to_review_packet=False,
                         ui_concept_target_ready=False,
                         ui_concept_target_visible=False,
                         ui_concept_personal_visual_review_done=False,
@@ -5231,6 +5506,7 @@ class CapabilityRouterStep:
                         ui_concept_aesthetic_review_done=False,
                         ui_concept_aesthetic_reasons_recorded=False,
                         ui_frontend_design_plan_done=False,
+                        ui_frontend_design_execution_report_written=False,
                         visual_asset_scope="unknown",
                         visual_asset_style_review_done=False,
                         visual_asset_personal_visual_review_done=False,
@@ -5241,12 +5517,20 @@ class CapabilityRouterStep:
                         ui_screenshot_qa_done=False,
                         ui_geometry_qa_done=False,
                         ui_reviewer_personal_walkthrough_done=False,
+                        ui_visible_affordance_interaction_matrix_written=False,
+                        ui_visible_affordance_interaction_matrix_complete=False,
                         ui_interaction_reachability_checked=False,
                         ui_layout_overlap_density_checked=False,
                         ui_reviewer_design_recommendations_recorded=False,
                         ui_implementation_aesthetic_review_done=False,
                         ui_implementation_aesthetic_reasons_recorded=False,
+                        ui_concept_vs_implementation_deviation_table_written=False,
                         ui_divergence_review_done=False,
+                        ui_iteration_budget_recorded=False,
+                        ui_iteration_rounds_required=0,
+                        ui_iteration_rounds_completed=0,
+                        ui_major_visual_deviation_triaged=False,
+                        ui_structural_redesign_route_considered=False,
                         ui_visual_iteration_loop_closed=False,
                         ui_visual_iterations=0,
                         final_verification_done=False,
@@ -5693,6 +5977,9 @@ def child_skill_fidelity_before_capability_work(
         and state.child_skill_contracts_loaded
         and state.child_skill_exact_source_verified
         and state.child_skill_substitutes_rejected
+        and state.child_skill_original_standards_extracted
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_gate_evidence_obligations_bound
         and state.flowpilot_invocation_policy_mapped
         and state.child_skill_requirements_mapped
         and state.child_skill_evidence_plan_written
@@ -5701,7 +5988,7 @@ def child_skill_fidelity_before_capability_work(
         and state.strict_gate_obligation_review_model_checked
     ):
         return InvariantResult.fail(
-            "capability work started before PM-owned child-skill gate manifest extraction, approver assignment, reviewer/officer/PM approvals, focused child-skill grill-me, exact source, substitute rejection, invocation policy, requirement mapping, evidence plan, visible child-skill mini-route, conformance model, and strict gate-obligation review model"
+            "capability work started before PM-owned child-skill gate manifest extraction, approver assignment, reviewer/officer/PM approvals, focused child-skill grill-me, exact source, substitute rejection, original standard extraction, standard promotion into node contract, evidence-obligation binding, invocation policy, requirement mapping, evidence plan, visible child-skill mini-route, conformance model, and strict gate-obligation review model"
         )
     node_child_skill_work_started = (
         state.child_node_sidecar_scan_done
@@ -5755,6 +6042,12 @@ def child_skill_fidelity_before_capability_work(
             "completion closure started before capability backward composite review with neutral observation and PM segment decision"
         )
     if state.child_skill_completion_verified and not (
+        state.child_skill_manifest_only_evidence_rejected
+        and state.child_skill_execution_reports_written
+        and state.child_skill_gate_evidence_obligations_bound
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_original_standards_extracted
+        and
         state.child_skill_execution_evidence_audited
         and state.child_skill_evidence_matches_outputs
         and state.child_skill_domain_quality_checked
@@ -5762,16 +6055,22 @@ def child_skill_fidelity_before_capability_work(
         and state.child_skill_current_gates_role_approved
     ):
         return InvariantResult.fail(
-            "child skill completion verified before evidence audit, output match, domain quality, iteration closure, and required role approvals for current child-skill gates"
+            "child skill completion verified before original skill standards were promoted, manifest-only evidence was rejected, execution reports were written, evidence audit, output match, domain quality, iteration closure, and required role approvals for current child-skill gates"
         )
     if state.final_verification_done and not (
+        state.child_skill_manifest_only_evidence_rejected
+        and state.child_skill_execution_reports_written
+        and state.child_skill_gate_evidence_obligations_bound
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_original_standards_extracted
+        and
         state.child_skill_execution_evidence_audited
         and state.child_skill_evidence_matches_outputs
         and state.child_skill_domain_quality_checked
         and state.child_skill_iteration_loop_closed
     ):
         return InvariantResult.fail(
-            "final verification started before child-skill evidence audit, output match, domain quality, and iteration closure"
+            "final verification started before child-skill standard inheritance, execution reports, manifest-only evidence rejection, evidence audit, output match, domain quality, and iteration closure"
         )
     if state.final_verification_done and not state.validation_matrix_defined:
         return InvariantResult.fail("final verification started before validation matrix")
@@ -5801,10 +6100,15 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
+        and state.ui_selected_concept_bound_to_review_packet
         and state.ui_frontend_design_plan_done
+        and state.ui_frontend_design_execution_report_written
+        and state.ui_iteration_budget_recorded
     ):
         return InvariantResult.fail(
-            "UI implemented before inspect/concept target visibility/aesthetic/frontend design gates"
+            "UI implemented before inspect, concept target visibility, palette contract/default-or-override rationale, selected-concept binding, aesthetic review, frontend design report, and iteration budget gates"
         )
     if state.ui_frontend_design_plan_done and not (
         state.ui_concept_target_ready
@@ -5813,19 +6117,29 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
+        and state.ui_selected_concept_bound_to_review_packet
     ):
         return InvariantResult.fail(
-            "frontend design planning started before concept aesthetic verdict and reasons"
+            "frontend design planning started before concept aesthetic verdict, selected-concept binding, palette contract, default-or-override rationale, and reasons"
         )
     if state.ui_concept_aesthetic_review_done and not (
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
+        and state.ui_selected_concept_bound_to_review_packet
         and state.ui_concept_personal_visual_review_done
         and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_reasons_recorded
     ):
         return InvariantResult.fail(
-            "concept aesthetic review completed without reviewer personal visual review, recommendations, and concrete reasons"
+            "concept aesthetic review completed without palette contract, default-or-override rationale, selected-concept binding, reviewer personal visual review, recommendations, and concrete reasons"
+        )
+    if state.ui_palette_default_or_override_rationale_recorded and not state.ui_palette_contract_written:
+        return InvariantResult.fail(
+            "UI palette/default-or-override rationale was recorded before the source skill palette contract"
         )
     if state.ui_implemented and state.visual_asset_scope == "unknown":
         return InvariantResult.fail("UI implemented before visual asset scope decision")
@@ -5850,6 +6164,7 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
         and state.ui_frontend_design_plan_done
+        and state.ui_frontend_design_execution_report_written
     ):
         return InvariantResult.fail("visual asset style review ran before UI style and concept aesthetic gates")
     if state.visual_asset_aesthetic_review_done and not (
@@ -5872,48 +6187,78 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
         return InvariantResult.fail(
             "geometry QA ran before UI implementation and screenshot QA evidence"
         )
+    if state.ui_interaction_reachability_checked and not (
+        state.ui_reviewer_personal_walkthrough_done
+        and state.ui_visible_affordance_interaction_matrix_written
+        and state.ui_visible_affordance_interaction_matrix_complete
+    ):
+        return InvariantResult.fail(
+            "interaction reachability passed before every visible affordance had a complete tested interaction matrix"
+        )
     if state.ui_implementation_aesthetic_review_done and not (
         state.ui_screenshot_qa_done
         and state.ui_geometry_qa_done
         and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_visible_affordance_interaction_matrix_written
+        and state.ui_visible_affordance_interaction_matrix_complete
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
         and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_reasons_recorded
     ):
         return InvariantResult.fail(
-            "rendered UI aesthetic review completed without reviewer personal walkthrough, reachability, layout/density checks, recommendations, screenshot QA, and concrete reasons"
+            "rendered UI aesthetic review completed without reviewer personal walkthrough, complete visible-affordance interaction matrix, reachability, layout/density checks, recommendations, screenshot QA, and concrete reasons"
         )
     if state.ui_divergence_review_done and not (
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_selected_concept_bound_to_review_packet
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
         and state.ui_screenshot_qa_done
         and state.ui_geometry_qa_done
         and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_visible_affordance_interaction_matrix_written
+        and state.ui_visible_affordance_interaction_matrix_complete
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
         and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_review_done
         and state.ui_implementation_aesthetic_reasons_recorded
+        and state.ui_concept_vs_implementation_deviation_table_written
     ):
         return InvariantResult.fail(
-            "UI child-skill comparison reviewed before pre-implementation UI evidence, rendered QA, and aesthetic verdict"
+            "UI child-skill comparison reviewed before selected concept binding, palette rationale, pre-implementation UI evidence, rendered QA, complete interaction matrix, aesthetic verdict, and concept-vs-implementation deviation table"
         )
     if state.ui_visual_iteration_loop_closed and not (
         state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_selected_concept_bound_to_review_packet
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
+        and state.ui_frontend_design_execution_report_written
         and state.ui_screenshot_qa_done
         and state.ui_geometry_qa_done
         and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_visible_affordance_interaction_matrix_written
+        and state.ui_visible_affordance_interaction_matrix_complete
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
         and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_review_done
         and state.ui_implementation_aesthetic_reasons_recorded
+        and state.ui_concept_vs_implementation_deviation_table_written
         and state.ui_divergence_review_done
+        and state.ui_iteration_budget_recorded
+        and DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS
+        <= state.ui_iteration_rounds_required
+        <= MAX_UI_CHILD_SKILL_ITERATION_ROUNDS
+        and state.ui_iteration_rounds_completed >= state.ui_iteration_rounds_required
+        and state.ui_major_visual_deviation_triaged
+        and state.ui_structural_redesign_route_considered
     ):
         return InvariantResult.fail(
-            "UI child-skill loop closed before pre-implementation UI evidence, rendered QA, aesthetic verdict, and comparison evidence"
+            "UI child-skill loop closed before source skill standards, palette rationale, selected concept binding, frontend-design execution report, complete interaction matrix, deviation table, required iteration budget, major-deviation triage, structural redesign consideration, rendered QA, aesthetic verdict, and comparison evidence"
         )
     if state.final_verification_done and not (
         state.child_skill_execution_evidence_audited
@@ -5925,20 +6270,34 @@ def ui_route_requires_ui_capabilities(state: State, trace) -> InvariantResult:
     if state.final_verification_done and state.task_kind == "ui" and not (
         state.ui_screenshot_qa_done
         and state.ui_geometry_qa_done
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
+        and state.ui_selected_concept_bound_to_review_packet
+        and state.ui_frontend_design_execution_report_written
         and state.ui_concept_personal_visual_review_done
         and state.ui_concept_design_recommendations_recorded
         and state.ui_concept_aesthetic_review_done
         and state.ui_concept_aesthetic_reasons_recorded
         and state.ui_reviewer_personal_walkthrough_done
+        and state.ui_visible_affordance_interaction_matrix_written
+        and state.ui_visible_affordance_interaction_matrix_complete
         and state.ui_interaction_reachability_checked
         and state.ui_layout_overlap_density_checked
         and state.ui_reviewer_design_recommendations_recorded
         and state.ui_implementation_aesthetic_review_done
         and state.ui_implementation_aesthetic_reasons_recorded
+        and state.ui_concept_vs_implementation_deviation_table_written
         and state.ui_divergence_review_done
+        and state.ui_iteration_budget_recorded
+        and DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS
+        <= state.ui_iteration_rounds_required
+        <= MAX_UI_CHILD_SKILL_ITERATION_ROUNDS
+        and state.ui_iteration_rounds_completed >= state.ui_iteration_rounds_required
+        and state.ui_major_visual_deviation_triaged
+        and state.ui_structural_redesign_route_considered
         and state.ui_visual_iteration_loop_closed
     ):
-        return InvariantResult.fail("UI final verification before aesthetic/screenshot/divergence/iteration-loop gates")
+        return InvariantResult.fail("UI final verification before palette/selected-concept/frontend report, complete interaction matrix, deviation table, required iteration budget, major-deviation triage, structural redesign consideration, aesthetic/screenshot/divergence/iteration-loop gates")
     if state.final_verification_done and state.visual_asset_scope == "required":
         if not (
             state.visual_asset_style_review_done
@@ -6050,12 +6409,24 @@ def backend_route_does_not_run_ui_gates(state: State, trace) -> InvariantResult:
         or state.ui_concept_done
         or state.ui_concept_target_ready
         or state.ui_concept_target_visible
+        or state.ui_palette_contract_written
+        or state.ui_palette_default_or_override_rationale_recorded
+        or state.ui_selected_concept_bound_to_review_packet
         or state.ui_frontend_design_plan_done
+        or state.ui_frontend_design_execution_report_written
         or state.visual_asset_scope == "required"
         or state.visual_asset_style_review_done
         or state.ui_implemented
         or state.ui_screenshot_qa_done
+        or state.ui_visible_affordance_interaction_matrix_written
+        or state.ui_visible_affordance_interaction_matrix_complete
+        or state.ui_concept_vs_implementation_deviation_table_written
         or state.ui_divergence_review_done
+        or state.ui_iteration_budget_recorded
+        or state.ui_iteration_rounds_required > 0
+        or state.ui_iteration_rounds_completed > 0
+        or state.ui_major_visual_deviation_triaged
+        or state.ui_structural_redesign_route_considered
         or state.ui_visual_iteration_loop_closed
         or state.ui_visual_iterations > 0
     ):
@@ -6203,12 +6574,17 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
             "completed before continuation lifecycle state was written back to execution frontier"
         )
     if not (
-        state.child_skill_execution_evidence_audited
+        state.child_skill_original_standards_extracted
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_gate_evidence_obligations_bound
+        and state.child_skill_manifest_only_evidence_rejected
+        and state.child_skill_execution_reports_written
+        and state.child_skill_execution_evidence_audited
         and state.child_skill_evidence_matches_outputs
         and state.child_skill_domain_quality_checked
         and state.child_skill_iteration_loop_closed
     ):
-        return InvariantResult.fail("completed before child-skill conformance audit and quality loop closure")
+        return InvariantResult.fail("completed before child-skill standard inheritance, execution reports, manifest-only evidence rejection, conformance audit, and quality loop closure")
     if not (
         state.quality_package_done
         and state.quality_candidate_registry_checked
@@ -6285,11 +6661,25 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
         state.ui_implemented
         and state.ui_concept_target_ready
         and state.ui_concept_target_visible
+        and state.ui_palette_contract_written
+        and state.ui_palette_default_or_override_rationale_recorded
+        and state.ui_selected_concept_bound_to_review_packet
+        and state.ui_frontend_design_execution_report_written
         and state.ui_screenshot_qa_done
+        and state.ui_visible_affordance_interaction_matrix_written
+        and state.ui_visible_affordance_interaction_matrix_complete
+        and state.ui_concept_vs_implementation_deviation_table_written
         and state.ui_divergence_review_done
+        and state.ui_iteration_budget_recorded
+        and DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS
+        <= state.ui_iteration_rounds_required
+        <= MAX_UI_CHILD_SKILL_ITERATION_ROUNDS
+        and state.ui_iteration_rounds_completed >= state.ui_iteration_rounds_required
+        and state.ui_major_visual_deviation_triaged
+        and state.ui_structural_redesign_route_considered
         and state.ui_visual_iteration_loop_closed
     ):
-        return InvariantResult.fail("UI route completed before visual verification gates")
+        return InvariantResult.fail("UI route completed before visual skill-standard verification gates")
     if state.task_kind == "ui" and state.visual_asset_scope == "required":
         if not state.visual_asset_style_review_done:
             return InvariantResult.fail(
@@ -6577,13 +6967,18 @@ def actor_authority_gates_require_correct_role(
     if state.child_skill_current_gates_role_approved and not (
         state.child_skill_gate_authority_records_written
         and state.current_child_skill_gate_independent_validation_done
+        and state.child_skill_original_standards_extracted
+        and state.child_skill_standards_promoted_to_node_contract
+        and state.child_skill_gate_evidence_obligations_bound
+        and state.child_skill_manifest_only_evidence_rejected
+        and state.child_skill_execution_reports_written
         and state.child_skill_execution_evidence_audited
         and state.child_skill_evidence_matches_outputs
         and state.child_skill_domain_quality_checked
         and state.child_skill_iteration_loop_closed
     ):
         return InvariantResult.fail(
-            "current child-skill gates were role-approved before authority records, evidence audit, output match, domain quality, and loop closure"
+            "current child-skill gates were role-approved before authority records, original standard inheritance, non-manifest evidence obligations, execution reports, evidence audit, output match, domain quality, and loop closure"
         )
     if (
         state.child_skill_conformance_model_process_officer_approved
@@ -6917,6 +7312,55 @@ INVARIANTS = (
 )
 
 
+HAZARD_CASES = (
+    (
+        "child_skill_standards_not_promoted",
+        {"child_skill_standards_promoted_to_node_contract": False},
+        "standard inheritance",
+    ),
+    (
+        "manifest_only_child_skill_gate_evidence",
+        {"child_skill_manifest_only_evidence_rejected": False},
+        "manifest-only evidence",
+    ),
+    (
+        "missing_child_skill_execution_reports",
+        {"child_skill_execution_reports_written": False},
+        "execution reports",
+    ),
+    (
+        "ui_palette_override_not_rationalized",
+        {"ui_palette_default_or_override_rationale_recorded": False},
+        "palette",
+    ),
+    (
+        "ui_selected_concept_not_bound_to_review",
+        {"ui_selected_concept_bound_to_review_packet": False},
+        "selected-concept",
+    ),
+    (
+        "ui_interaction_matrix_incomplete",
+        {"ui_visible_affordance_interaction_matrix_complete": False},
+        "interaction matrix",
+    ),
+    (
+        "ui_concept_deviation_table_missing",
+        {"ui_concept_vs_implementation_deviation_table_written": False},
+        "deviation table",
+    ),
+    (
+        "ui_iteration_budget_underfilled",
+        {"ui_iteration_rounds_completed": DEFAULT_UI_CHILD_SKILL_ITERATION_ROUNDS - 1},
+        "iteration budget",
+    ),
+    (
+        "ui_structural_redesign_not_considered",
+        {"ui_structural_redesign_route_considered": False},
+        "structural redesign",
+    ),
+)
+
+
 EXTERNAL_INPUTS = (Tick(),)
 MAX_SEQUENCE_LENGTH = 140
 
@@ -6946,6 +7390,7 @@ def is_success(state: State) -> bool:
 
 __all__ = [
     "EXTERNAL_INPUTS",
+    "HAZARD_CASES",
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
     "State",

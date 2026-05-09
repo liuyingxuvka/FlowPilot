@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from dataclasses import replace
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
@@ -169,6 +170,9 @@ REQUIRED_LABELS = (
     "child_skill_contracts_loaded",
     "child_skill_exact_source_verified",
     "child_skill_substitutes_rejected",
+    "child_skill_original_standards_extracted",
+    "child_skill_standards_promoted_to_node_contract",
+    "child_skill_gate_evidence_obligations_bound",
     "flowpilot_invocation_policy_mapped",
     "child_skill_requirements_mapped",
     "child_skill_evidence_plan_written",
@@ -244,7 +248,12 @@ REQUIRED_LABELS = (
     "ui_concept_design_recommendations_recorded",
     "ui_concept_aesthetic_review_passed",
     "ui_concept_aesthetic_review_failed",
+    "ui_palette_contract_written",
+    "ui_palette_default_or_override_rationale_recorded",
+    "ui_selected_concept_bound_to_review_packet",
     "ui_frontend_design_plan_done",
+    "ui_frontend_design_execution_report_written",
+    "ui_iteration_budget_recorded",
     "visual_asset_not_required",
     "visual_asset_required",
     "visual_asset_style_review_done",
@@ -256,15 +265,23 @@ REQUIRED_LABELS = (
     "ui_screenshot_qa_done",
     "ui_geometry_qa_done",
     "ui_reviewer_personal_walkthrough_done",
+    "ui_visible_affordance_interaction_matrix_written",
+    "ui_visible_affordance_interaction_matrix_complete",
     "ui_interaction_reachability_checked",
     "ui_layout_overlap_density_checked",
     "ui_reviewer_design_recommendations_recorded",
     "ui_implementation_aesthetic_review_passed",
     "ui_implementation_aesthetic_review_failed",
+    "ui_concept_vs_implementation_deviation_table_written",
     "ui_divergence_review_done",
+    "ui_major_visual_deviation_triaged",
+    "ui_structural_redesign_route_considered",
+    "ui_iteration_budget_satisfied",
     "ui_visual_iteration_needed",
     "ui_visual_iteration_loop_closed",
     "child_skill_execution_evidence_audited",
+    "child_skill_manifest_only_evidence_rejected",
+    "child_skill_execution_reports_written",
     "child_skill_evidence_matches_outputs",
     "child_skill_domain_quality_checked",
     "child_skill_iteration_loop_closed",
@@ -443,6 +460,9 @@ def _state_id(state: model.State) -> str:
         f"child_skill={state.child_skill_contracts_loaded},"
         f"{state.child_skill_exact_source_verified},"
         f"{state.child_skill_substitutes_rejected},"
+        f"{state.child_skill_original_standards_extracted},"
+        f"{state.child_skill_standards_promoted_to_node_contract},"
+        f"{state.child_skill_gate_evidence_obligations_bound},"
         f"{state.flowpilot_invocation_policy_mapped},"
         f"{state.child_skill_requirements_mapped},"
         f"{state.child_skill_evidence_plan_written},"
@@ -453,6 +473,8 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_conformance_model_checked},"
         f"{state.child_skill_conformance_model_process_officer_approved},"
         f"strict_gate={state.strict_gate_obligation_review_model_checked},"
+        f"{state.child_skill_manifest_only_evidence_rejected},"
+        f"{state.child_skill_execution_reports_written},"
         f"{state.child_skill_execution_evidence_audited},"
         f"{state.child_skill_evidence_matches_outputs},"
         f"{state.child_skill_domain_quality_checked},"
@@ -573,7 +595,11 @@ def _state_id(state: model.State) -> str:
         f"{state.ui_concept_design_recommendations_recorded},"
         f"{state.ui_concept_aesthetic_review_done},"
         f"{state.ui_concept_aesthetic_reasons_recorded},"
+        f"{state.ui_palette_contract_written},"
+        f"{state.ui_palette_default_or_override_rationale_recorded},"
+        f"{state.ui_selected_concept_bound_to_review_packet},"
         f"{state.ui_frontend_design_plan_done},"
+        f"{state.ui_frontend_design_execution_report_written},"
         f"asset={state.visual_asset_scope},{state.visual_asset_style_review_done},"
         f"{state.visual_asset_personal_visual_review_done},"
         f"{state.visual_asset_design_recommendations_recorded},"
@@ -582,12 +608,20 @@ def _state_id(state: model.State) -> str:
         f"{state.ui_implemented},{state.ui_screenshot_qa_done},"
         f"{state.ui_geometry_qa_done},"
         f"{state.ui_reviewer_personal_walkthrough_done},"
+        f"{state.ui_visible_affordance_interaction_matrix_written},"
+        f"{state.ui_visible_affordance_interaction_matrix_complete},"
         f"{state.ui_interaction_reachability_checked},"
         f"{state.ui_layout_overlap_density_checked},"
         f"{state.ui_reviewer_design_recommendations_recorded},"
         f"{state.ui_implementation_aesthetic_review_done},"
         f"{state.ui_implementation_aesthetic_reasons_recorded},"
+        f"{state.ui_concept_vs_implementation_deviation_table_written},"
         f"{state.ui_divergence_review_done},"
+        f"{state.ui_iteration_budget_recorded},"
+        f"{state.ui_iteration_rounds_required},"
+        f"{state.ui_iteration_rounds_completed},"
+        f"{state.ui_major_visual_deviation_triaged},"
+        f"{state.ui_structural_redesign_route_considered},"
         f"{state.ui_visual_iteration_loop_closed},{state.ui_visual_iterations}|"
         f"nonui={state.non_ui_implemented}|final={state.final_verification_done}|"
         f"complete_user_flow={state.completion_visible_user_flow_diagram_emitted}|"
@@ -824,6 +858,79 @@ def _check_loops(graph: dict) -> dict:
     }
 
 
+def _check_hazard_cases(graph: dict) -> dict:
+    default_success_state = next(
+        (state for state in graph["states"] if model.is_success(state)),
+        None,
+    )
+    ui_success_state = next(
+        (
+            state
+            for state in graph["states"]
+            if model.is_success(state) and state.task_kind == "ui"
+        ),
+        None,
+    )
+    if default_success_state is None:
+        return {
+            "ok": False,
+            "status": "VIOLATION",
+            "reason": "no success state available for hazard mutation checks",
+            "cases": [],
+        }
+
+    cases = []
+    ok = True
+    for name, changes, expected_fragment in model.HAZARD_CASES:
+        needs_ui_baseline = any(key.startswith("ui_") for key in changes)
+        success_state = ui_success_state if needs_ui_baseline else default_success_state
+        if success_state is None:
+            ok = False
+            cases.append(
+                {
+                    "name": name,
+                    "expected_fragment": expected_fragment,
+                    "matched_expected_failure": False,
+                    "failure_count": 0,
+                    "failure_samples": [],
+                    "reason": "no UI success state available for UI hazard case",
+                }
+            )
+            continue
+        hazard_state = replace(success_state, **changes)
+        failures = [
+            {
+                "invariant": invariant.name,
+                "reason": result.message,
+            }
+            for invariant in model.INVARIANTS
+            for result in [invariant.predicate(hazard_state, None)]
+            if not result.ok
+        ]
+        matched = any(
+            expected_fragment.lower() in failure["reason"].lower()
+            for failure in failures
+        )
+        if not matched:
+            ok = False
+        cases.append(
+            {
+                "name": name,
+                "expected_fragment": expected_fragment,
+                "matched_expected_failure": matched,
+                "failure_count": len(failures),
+                "failure_samples": failures[:5],
+            }
+        )
+
+    return {
+        "ok": ok,
+        "status": "OK" if ok else "VIOLATION",
+        "case_count": len(cases),
+        "cases": cases,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fast", action="store_true", help="reuse a valid result proof when possible")
@@ -842,10 +949,17 @@ def main(argv: list[str] | None = None) -> int:
     graph_report = _graph_report_from_graph(graph)
     progress_report = _check_progress(graph)
     loop_report = _check_loops(graph)
-    ok = graph_report["ok"] and progress_report["ok"] and loop_report["ok"]
+    hazard_report = _check_hazard_cases(graph)
+    ok = (
+        graph_report["ok"]
+        and progress_report["ok"]
+        and loop_report["ok"]
+        and hazard_report["ok"]
+    )
 
     payload = {
         "graph": graph_report,
+        "hazard": hazard_report,
         "progress": progress_report,
         "loop": loop_report,
     }
@@ -860,6 +974,9 @@ def main(argv: list[str] | None = None) -> int:
     print()
     print("=== Loop/Stuck Review ===")
     print(json.dumps(loop_report, indent=2, sort_keys=True))
+    print()
+    print("=== Hazard Regression Review ===")
+    print(json.dumps(hazard_report, indent=2, sort_keys=True))
 
     return 0 if ok else 1
 

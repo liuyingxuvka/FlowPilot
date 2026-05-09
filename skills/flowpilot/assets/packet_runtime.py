@@ -1171,6 +1171,8 @@ def create_packet(
     packet_body_path = paths["packet_body"]
     packet_envelope_path = paths["packet_envelope"]
     controller_status_path = paths["controller_status_packet"]
+    result_envelope_rel = project_relative(project_root, paths["result_envelope"])
+    result_body_rel = project_relative(project_root, paths["result_body"])
     output_contract = normalize_output_contract(
         output_contract,
         packet_type=packet_type,
@@ -1178,6 +1180,11 @@ def create_packet(
         to_role=to_role,
         node_id=node_id,
     )
+    if output_contract is not None:
+        output_contract = dict(output_contract)
+        output_contract.setdefault("expected_result_envelope_path", result_envelope_rel)
+        output_contract.setdefault("expected_result_body_path", result_body_rel)
+        output_contract.setdefault("write_target_path", result_body_rel)
     body_text = ensure_packet_identity_boundary(body_text, to_role)
     body_text = ensure_packet_output_contract_section(body_text, output_contract)
     validate_packet_identity_boundary(body_text, to_role)
@@ -1195,8 +1202,15 @@ def create_packet(
         "body_path": project_relative(project_root, packet_body_path),
         "body_hash": body_hash,
         "body_hash_algorithm": "sha256",
-        "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
-        "result_body_path": project_relative(project_root, paths["result_body"]),
+        "result_envelope_path": result_envelope_rel,
+        "result_body_path": result_body_rel,
+        "expected_result_envelope_path": result_envelope_rel,
+        "expected_result_body_path": result_body_rel,
+        "write_target_path": result_body_rel,
+        "result_write_target": {
+            "result_envelope_path": result_envelope_rel,
+            "result_body_path": result_body_rel,
+        },
         "body_visibility": body_visibility,
         "replacement_for": replacement_for,
         "supersedes": supersedes or ([] if replacement_for is None else [replacement_for]),
@@ -1272,8 +1286,15 @@ def create_packet(
             "next_holder": next_holder or to_role,
             "body_visibility": body_visibility,
             "replacement_for": replacement_for,
-            "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
-            "result_body_path": project_relative(project_root, paths["result_body"]),
+            "result_envelope_path": result_envelope_rel,
+            "result_body_path": result_body_rel,
+            "expected_result_envelope_path": result_envelope_rel,
+            "expected_result_body_path": result_body_rel,
+            "write_target_path": result_body_rel,
+            "result_write_target": {
+                "result_envelope_path": result_envelope_rel,
+                "result_body_path": result_body_rel,
+            },
             "controller_allowed_actions": envelope["controller_allowed_actions"],
             "controller_forbidden_actions": envelope["controller_forbidden_actions"],
             "output_contract_id": output_contract_id(output_contract),
@@ -1291,8 +1312,15 @@ def create_packet(
         "active_packet_holder": "controller",
         "reviewer_dispatch_decision": "pending",
         "assigned_worker_role": to_role,
-        "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
-        "result_body_path": project_relative(project_root, paths["result_body"]),
+        "result_envelope_path": result_envelope_rel,
+        "result_body_path": result_body_rel,
+        "expected_result_envelope_path": result_envelope_rel,
+        "expected_result_body_path": result_body_rel,
+        "write_target_path": result_body_rel,
+        "result_write_target": {
+            "result_envelope_path": result_envelope_rel,
+            "result_body_path": result_body_rel,
+        },
         "result_body_hash": None,
         "result_body_hash_verified": False,
         "role_origin_audit": {
