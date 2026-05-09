@@ -6247,3 +6247,44 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-remove-public-system-card-apply - Remove public apply compatibility for committed FlowPilot system-card relay actions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested eliminating long-term compatibility that lets Controller apply deliver_system_card after Router commits the envelope
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-09T21:07:03+00:00
+- Ended: 2026-05-09T21:07:03+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_card_envelope_model.py
+
+### Commands
+- OK (0.000s): `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`
+- OK (0.000s): `python simulations\run_meta_checks.py`
+- OK (0.000s): `python simulations\run_capability_checks.py`
+- OK (0.000s): `python -m pytest tests\test_flowpilot_router_runtime.py tests\test_flowpilot_card_runtime.py -q`
+- OK (0.000s): `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\install_flowpilot.py --check --json`
+- OK (0.000s): `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- FlowGuard now includes a public-system-card-apply hazard and detects attempts to treat relay-only delivery as an applyable Controller action.
+- Router commits system-card artifacts through an internal helper instead of calling apply_controller_action(deliver_system_card).
+- The public deliver_system_card apply branch now rejects the action; tests use runtime open plus ack to advance.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Keep deliver_system_card as relay metadata only; do not reintroduce public apply compatibility.
