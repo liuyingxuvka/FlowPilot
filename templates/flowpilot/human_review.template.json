@@ -30,6 +30,35 @@
     "concrete_evidence_references": [],
     "risk_or_blindspot_triage": []
   },
+  "independent_challenge": {
+    "required_for_every_reviewer_gate": true,
+    "scope_restatement": "<reviewed artifact, route slice, evidence set, decision, and out-of-scope boundary>",
+    "explicit_and_implicit_commitments": {
+      "explicit": [],
+      "implicit": []
+    },
+    "failure_hypotheses": [],
+    "challenge_actions": [
+      {
+        "action": "<task-specific probe, source inspection, command, walkthrough, counterexample, or waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed result>"
+      }
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [],
+    "pass_or_block": "<pass|block|request_more_evidence|reroute_required>",
+    "reroute_request": "<pm repair, route mutation, reissue, replay, or null>",
+    "challenge_waivers": [
+      {
+        "surface": "<uncheckable surface>",
+        "authority": "<pm|user|contract|not_approved>",
+        "reason": "<why it cannot be checked now>",
+        "alternate_evidence": [],
+        "downstream_handling": "<block|reroute|required_later_gate|accepted_exception>"
+      }
+    ]
+  },
   "role_origin_audit": {
     "required_for_every_packet_review": true,
     "packet_id": "<packet-id-or-null>",

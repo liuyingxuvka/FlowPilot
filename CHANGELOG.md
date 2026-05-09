@@ -2,6 +2,39 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.5.5 - 2026-05-09
+
+### Added
+
+- Added FlowGuard planning-quality model coverage for planning profiles,
+  Skill Standard Contracts, skill-standard route/work-packet projection, and
+  reviewer hard-blindspot blocking.
+- Added FlowGuard reviewer active-challenge model coverage for checklist-only
+  review passes, generic challenge actions, missing evidence or waiver,
+  hard-issue residual downgrades, unverified core commitments, and blockers
+  without reroute requests.
+- Added required reviewer `independent_challenge` report fields so reviewer
+  pass decisions include scope restatement, explicit and implicit commitments,
+  failure hypotheses, task-specific challenge actions, findings, pass/block
+  status, reroute requests, and waivers.
+
+### Changed
+
+- Updated PM planning, child-skill manifest, node-acceptance, packet, and
+  result templates so compiled skill standards are projected into routes,
+  work packets, reviewer gates, artifacts, and result matrices.
+- Updated reviewer cards so PM packets are treated as the review floor rather
+  than the review boundary.
+- Registered the planning-quality and reviewer active-challenge runners in
+  install, smoke, output-contract, card-coverage, and coverage-sweep checks.
+
+### Fixed
+
+- Repaired FlowPilot runtime cross-plane drift from the post-0.5.4 local
+  source so repository and installed-skill audits can converge after sync.
+- Fixed the FlowGuard coverage sweep to recognize result files declared with
+  `Path(__file__).resolve().with_name(...)`.
+
 ## 0.5.4 - 2026-05-08
 
 ### Added

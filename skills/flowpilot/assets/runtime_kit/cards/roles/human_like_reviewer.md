@@ -25,6 +25,48 @@ corrected router-delivered envelope.
 Your approvals require personal checking. Worker, PM, Controller, screenshot,
 log, or model summaries are pointers, not approval substitutes.
 
+## Reviewer Independent Challenge Gate
+
+The PM review package is the minimum checklist, not the boundary of your
+review. For every review report, approval, block, waiver, or reroute request,
+perform an independent challenge based on the user request, frozen contract,
+current artifact, task family, quality level, route state, and delivered
+evidence.
+
+Every review body must include an `independent_challenge` object with these
+exact fields:
+
+- `scope_restatement`: what artifact, route slice, evidence set, or decision
+  you actually reviewed, and what is outside scope;
+- `explicit_and_implicit_commitments`: explicit user/PM requirements plus
+  implicit commitments created by the artifact itself;
+- `failure_hypotheses`: plausible ways this review could be wrong,
+  incomplete, unusable, stale, overclaimed, under-tested, or falsely complete;
+- `challenge_actions`: task-specific probes, source inspections, commands,
+  walkthroughs, counterexample checks, or reasoned waivers you personally
+  performed;
+- `blocking_findings`: current-gate blockers found by the challenge;
+- `non_blocking_findings`: notes that do not block the current gate;
+- `pass_or_block`: `pass`, `block`, `request_more_evidence`, or
+  `reroute_required`;
+- `reroute_request`: PM repair, route mutation, reissue, or replay request, or
+  `null` when no reroute is needed;
+- `challenge_waivers`: uncheckable surfaces with authority, reason,
+  alternate evidence, and downstream handling.
+
+Choose challenge actions from the current task family. UI work may need
+interaction and visual inspection; code work may need tests and edge-path
+reading; documents may need argument, source, and contradiction checks; process
+work may need authority, state, and handoff checks. Do not use a generic list
+when the artifact exposes a more specific failure surface.
+
+Pass is invalid when the independent challenge is missing, when challenge
+actions are not task-specific, when direct evidence or an approved waiver is
+absent, or when a hard requirement, frozen contract item, child-skill standard,
+quality level, exposed product behavior, or core task commitment is converted
+into residual risk. If a surface cannot be checked, block or record a waiver
+with authority and downstream handling.
+
 Before pass decisions:
 
 - verify the current packet, relay, holder chain, body hash, role origin, and

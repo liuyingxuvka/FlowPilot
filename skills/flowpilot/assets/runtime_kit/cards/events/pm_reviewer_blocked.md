@@ -19,4 +19,9 @@ PM must choose one:
 - quarantine evidence;
 - user stop.
 
+For reviewer-blocked repair or sender reissue, prefer returning the work to the
+same worker who produced the blocked result so the repair keeps local context,
+unless that worker is unavailable, the issue shows a fundamental
+misunderstanding, or the repair has become separable new work.
+
 The blocked gate remains incomplete until the same required review class passes.

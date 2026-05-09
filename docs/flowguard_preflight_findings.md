@@ -46,6 +46,14 @@ skill. The current model boundary covers:
 - display-surface startup behavior for Cockpit or chat route signs;
 - reviewer factual checks before PM start-gate release;
 - child-skill fidelity gates and capability routing;
+- planning-quality gates for PM planning profiles, child-skill standard
+  contracts, route/node/work-packet projection, reviewer hard-blindspot
+  blocking, and simple-task over-templating;
+- reviewer active-challenge gates that require each human-like reviewer report
+  to go beyond the PM checklist with scope restatement, explicit and implicit
+  commitments, failure hypotheses, task-specific challenge actions, direct
+  evidence or approved waiver, blocker triage, and PM reroute/repair request
+  when hard issues are found;
 - terminal closure, final route-wide gate ledgers, and residual-risk review.
 
 ## Latest Validation

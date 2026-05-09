@@ -55,6 +55,26 @@ when the replay blocks completion.
   "reviewed_by_role": "human_like_reviewer",
   "passed": false,
   "direct_evidence_paths_checked": [],
+  "independent_challenge": {
+    "scope_restatement": "<delivered product/result, replay map, route ledger, and out-of-scope boundary>",
+    "explicit_and_implicit_commitments": {
+      "explicit": [],
+      "implicit": []
+    },
+    "failure_hypotheses": [],
+    "challenge_actions": [
+      {
+        "action": "<backward replay probe, source inspection, contradiction check, or waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed result>"
+      }
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [],
+    "pass_or_block": "block",
+    "reroute_request": "<PM segment repair, route mutation, replay target, or null>",
+    "challenge_waivers": []
+  },
   "segment_reviews": [
     {
       "segment_id": "<segment id>",

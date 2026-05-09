@@ -19,6 +19,13 @@ For each active route node:
 6. perform a PM high-standard recheck against the node acceptance plan;
 7. complete the node only after reviewer pass or repair pass.
 
+Before assigning a worker packet, consider worker balance and packet shape. For
+light or single-scope work, choose either `worker_a` or `worker_b` while keeping
+worker opportunities roughly balanced across the current run. For heavy work
+that naturally splits into disjoint scopes, create bounded separate packets for
+`worker_a` and `worker_b` so they can run in parallel without overlapping files,
+evidence duties, or review ownership.
+
 Every current-node worker packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_current_node_result.v1` in both the packet
 envelope and packet body's `Output Contract` section. The contract must match

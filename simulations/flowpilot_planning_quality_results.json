@@ -1,0 +1,127 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=84",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "artifactless_major_node": {
+        "detected": true,
+        "expected_failure": "major route node lacks a concrete acceptance artifact",
+        "failures": [
+          "major route node lacks a concrete acceptance artifact"
+        ]
+      },
+      "loop_verify_artifact_not_inherited": {
+        "detected": true,
+        "expected_failure": "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
+        "failures": [
+          "LOOP/VERIFY/ARTIFACT standards were not inherited into execution"
+        ]
+      },
+      "node_plan_missing_projection": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks skill-standard projection",
+        "failures": [
+          "node acceptance plan lacks skill-standard projection"
+        ]
+      },
+      "overmerged_complex_implementation_node": {
+        "detected": true,
+        "expected_failure": "route complexity does not match selected planning profile",
+        "failures": [
+          "route complexity does not match selected planning profile",
+          "complex implementation work was overmerged into one unverifiable node"
+        ]
+      },
+      "profile_without_convergence_loop": {
+        "detected": true,
+        "expected_failure": "interactive UI route lacks required convergence loop",
+        "failures": [
+          "interactive UI route lacks required convergence loop"
+        ]
+      },
+      "reviewer_passes_hard_blindspot": {
+        "detected": true,
+        "expected_failure": "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate",
+        "failures": [
+          "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate"
+        ]
+      },
+      "simple_task_overtemplated": {
+        "detected": true,
+        "expected_failure": "simple task was over-templated instead of using a justified lightweight profile",
+        "failures": [
+          "Skill Standard Contract lacks source paths",
+          "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
+          "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
+          "node acceptance plan lacks skill-standard projection",
+          "work packet or result matrix lacks skill-standard projection",
+          "reviewer gate is not bound to skill-standard projection",
+          "simple task was over-templated instead of using a justified lightweight profile"
+        ]
+      },
+      "skill_contract_missing_fields": {
+        "detected": true,
+        "expected_failure": "Skill Standard Contract omits required fields",
+        "failures": [
+          "Skill Standard Contract omits required fields"
+        ]
+      },
+      "skill_contract_not_mapped": {
+        "detected": true,
+        "expected_failure": "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
+        "failures": [
+          "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations"
+        ]
+      },
+      "skill_selected_no_contract": {
+        "detected": true,
+        "expected_failure": "selected child skill lacks a compiled Skill Standard Contract",
+        "failures": [
+          "selected child skill lacks a compiled Skill Standard Contract"
+        ]
+      },
+      "ui_without_planning_profile": {
+        "detected": true,
+        "expected_failure": "complex task route lacks a selected planning profile",
+        "failures": [
+          "complex task route lacks a selected planning profile"
+        ]
+      },
+      "work_packet_missing_projection": {
+        "detected": true,
+        "expected_failure": "work packet or result matrix lacks skill-standard projection",
+        "failures": [
+          "work packet or result matrix lacks skill-standard projection"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_simple_route",
+      "valid_ui_route"
+    ],
+    "edge_count": 28,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 12,
+    "state_count": 29
+  }
+}

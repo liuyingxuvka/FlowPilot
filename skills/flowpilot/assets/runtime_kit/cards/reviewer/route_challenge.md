@@ -20,9 +20,25 @@ reports as pointers, not as your own inspection.
 Check:
 
 - the active route draft is the same draft the officers checked;
-- route nodes and checklists are not over-simplified;
+- the selected planning profile matches the task type and stated quality level;
+- route nodes and checklists are not over-simplified, overmerged, or too coarse
+  to produce stage-level acceptance artifacts;
+- necessary convergence loops are present for the chosen profile, especially
+  concept-to-implementation visual comparison, interaction validation, realtime
+  state mapping, desktop integration, or release validation when those are
+  root requirements or child-skill obligations;
+- child-skill hard standards are compiled and projected into route nodes, work
+  packets, reviewer/officer gates, and expected artifacts;
 - required human inspection, repair, parent replay, and final-report duties are present;
+- user hard requirements, frozen contract items, required child-skill gates,
+  and selected-profile convergence duties are not downgraded into residual
+  blindspots. Any such blindspot is a hard block, not a pass-with-note;
 - FlowPilot can tell Controller the next role at each major boundary.
+
+The report body must include `independent_challenge` from the human-like
+reviewer core card. Route pass is invalid if that object only repeats the PM
+checklist, lacks failure hypotheses, lacks task-specific challenge actions, or
+downgrades hard requirements into residual risk.
 
 Return pass or block in the private report body. Keep the body out of
 Controller chat.

@@ -82,6 +82,26 @@ required field even when the value is `[]` or `false`.
     "self_attested_ai_claims_accepted_as_proof": false,
     "reviewer_checked_requirement_ids": []
   },
+  "independent_challenge": {
+    "scope_restatement": "<startup facts, run state, host capabilities, and out-of-scope boundary>",
+    "explicit_and_implicit_commitments": {
+      "explicit": [],
+      "implicit": []
+    },
+    "failure_hypotheses": [],
+    "challenge_actions": [
+      {
+        "action": "<state inspection, host capability probe, contradiction check, or waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed result>"
+      }
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [],
+    "pass_or_block": "block",
+    "reroute_request": "<startup repair, PM decision, or null>",
+    "challenge_waivers": []
+  },
   "findings": [],
   "blockers": [],
   "residual_risks": [],

@@ -59,6 +59,21 @@ model-backed autopilot:
   the local skill inventory and classifies candidate skills as required,
   conditional, deferred, or rejected; child-skill discovery may proceed only
   from PM-selected skills, never from raw local availability.
+- PM route drafting now begins with a planning profile. The PM classifies the
+  task as interactive UI/product work, software engineering, research writing,
+  release delivery, debug/simple repair, or long-running multi-role work before
+  drafting nodes. The route must then show profile-appropriate convergence
+  loops, horizontal modules, node artifacts, and a self-check that the route is
+  not too coarse for the user's stated quality level.
+- Selected child skills now require a Skill Standard Contract instead of a
+  manifest-only gate list. PM extracts `MUST`, `DEFAULT`, `FORBID`, `VERIFY`,
+  `LOOP`, `ARTIFACT`, and `WAIVER` standards with source paths, then maps each
+  non-waived standard into route nodes, work packets, reviewer/officer gates,
+  and expected artifacts.
+- Node acceptance plans and work packets now inherit the Skill Standard
+  Contract projection. Worker/officer results must return a Skill Standard
+  Result Matrix for inherited standard ids, and reviewers block missing rows,
+  manifest-only evidence, or unapproved waivers.
 - UI projects now default to the experimental
   `autonomous-concept-ui-redesign` child skill, which now owns the concept-led
   product/design front half internally and composes `frontend-design`,
@@ -163,6 +178,16 @@ model-backed autopilot:
   material intake, product architecture, child-skill manifests, FlowGuard model
   gates, implementation/human review, composite backward review, final product
   replay, and the final route-wide ledger.
+- Human-like reviewer reports now have a concrete Reviewer Independent
+  Challenge Gate. The PM review package is only the minimum checklist.
+  Reviewer report bodies must include `independent_challenge` with scope
+  restatement, explicit and implicit commitments, failure hypotheses,
+  task-specific challenge actions, blocking and nonblocking findings,
+  pass-or-block decision, reroute request, and waivers. A pass is invalid if
+  this object is missing, if the actions are generic instead of task-specific,
+  if direct evidence or approved waiver is absent, or if a hard requirement,
+  frozen contract item, child-skill standard, quality level, exposed product
+  behavior, or core commitment is downgraded into residual risk.
 - Terminal completion now requires a PM-owned dynamic route-wide gate ledger
   rebuilt from the current route, not the initial route. The ledger resolves
   effective and superseded nodes, child-skill gates, human-review gates,
@@ -418,6 +443,7 @@ python simulations/run_prompt_isolation_checks.py
 python simulations/run_flowpilot_resume_checks.py
 python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json
 python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json
+python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

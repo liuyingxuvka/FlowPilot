@@ -39,6 +39,8 @@ ABSTRACT_STRONG = {
 SPECIALIZED = {
     "card_instruction_coverage",
     "defect_governance",
+    "flowpilot_planning_quality",
+    "flowpilot_reviewer_active_challenge",
     "release_tooling",
     "startup_pm_review",
     "user_flow_diagram",
@@ -73,6 +75,9 @@ def _declared_result_path(path: Path, text: str) -> Path | None:
     if match:
         return path.parent / match.group(1)
     match = re.search(r'RESULTS_PATH\s*=\s*Path\(__file__\)\.with_name\("([^"]+)"\)', text)
+    if match:
+        return path.parent / match.group(1)
+    match = re.search(r'RESULTS_PATH\s*=\s*Path\(__file__\)\.resolve\(\)\.with_name\("([^"]+)"\)', text)
     if match:
         return path.parent / match.group(1)
     return None

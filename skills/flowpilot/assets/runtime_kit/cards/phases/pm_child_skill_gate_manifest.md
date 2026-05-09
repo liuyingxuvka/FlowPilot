@@ -15,6 +15,14 @@ Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 
 - selected skills and supported capabilities;
 - references loaded now or deferred with reason;
+- a `skill_standard_contracts` section for every selected or conditional skill.
+  PM must extract the child skill's hard standards into structured entries:
+  `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`, `ARTIFACT`, and `WAIVER`.
+  Cite source paths and distinguish default policy from user overrides;
+- for every required standard, map it to route node ids, work packet slices,
+  reviewer or officer gate ids, and expected artifact paths. A skill can be
+  selected only after its standards have a route/work/review projection or a
+  PM-owned waiver with reason and approver;
 - required gates;
 - required approver for each gate;
 - controller self-approval forbidden;

@@ -232,6 +232,12 @@ REQUIRED_FILES = [
     "simulations/flowpilot_command_refinement_model.py",
     "simulations/run_command_refinement_checks.py",
     "simulations/flowpilot_command_refinement_results.json",
+    "simulations/flowpilot_planning_quality_model.py",
+    "simulations/run_flowpilot_planning_quality_checks.py",
+    "simulations/flowpilot_planning_quality_results.json",
+    "simulations/flowpilot_reviewer_active_challenge_model.py",
+    "simulations/run_flowpilot_reviewer_active_challenge_checks.py",
+    "simulations/flowpilot_reviewer_active_challenge_results.json",
     "simulations/flowpilot_protocol_contract_conformance_model.py",
     "simulations/run_protocol_contract_conformance_checks.py",
     "simulations/protocol_contract_conformance_model_only_results.json",
@@ -257,6 +263,8 @@ REQUIRED_FILES = [
     "tests/test_flowpilot_barrier_bundle.py",
     "tests/test_flowpilot_card_instruction_coverage.py",
     "tests/test_flowpilot_output_contracts.py",
+    "tests/test_flowpilot_planning_quality.py",
+    "tests/test_flowpilot_reviewer_active_challenge.py",
 ]
 
 JSON_FILES = [
@@ -280,6 +288,8 @@ JSON_FILES = [
     "simulations/flowpilot_router_action_contract_results.json",
     "simulations/flowpilot_packet_lifecycle_results.json",
     "simulations/flowpilot_command_refinement_results.json",
+    "simulations/flowpilot_planning_quality_results.json",
+    "simulations/flowpilot_reviewer_active_challenge_results.json",
     "simulations/protocol_contract_conformance_model_only_results.json",
     "simulations/protocol_contract_conformance_results.json",
     "templates/flowpilot/current.template.json",
@@ -617,6 +627,63 @@ def main() -> int:
                 }
             )
             if not (packet_identity_ok and result_identity_ok):
+                result["ok"] = False
+            contract_index_path = ROOT / "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json"
+            reviewer_core_path = ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md"
+            human_review_template_path = ROOT / "templates/flowpilot/human_review.template.json"
+            contract_index = json.loads(contract_index_path.read_text(encoding="utf-8")) if contract_index_path.exists() else {}
+            reviewer_core_text = reviewer_core_path.read_text(encoding="utf-8") if reviewer_core_path.exists() else ""
+            human_review_template_json = (
+                json.loads(human_review_template_path.read_text(encoding="utf-8"))
+                if human_review_template_path.exists()
+                else {}
+            )
+            challenge_required_fields = {
+                "independent_challenge",
+                "independent_challenge.scope_restatement",
+                "independent_challenge.explicit_and_implicit_commitments",
+                "independent_challenge.failure_hypotheses",
+                "independent_challenge.challenge_actions",
+                "independent_challenge.blocking_findings",
+                "independent_challenge.non_blocking_findings",
+                "independent_challenge.pass_or_block",
+                "independent_challenge.reroute_request",
+                "independent_challenge.challenge_waivers",
+            }
+            reviewer_contract_failures = []
+            for contract in contract_index.get("contracts", []):
+                if not (
+                    isinstance(contract, dict)
+                    and "human_like_reviewer" in contract.get("recipient_roles", [])
+                    and str(contract.get("task_family", "")).startswith("reviewer.")
+                ):
+                    continue
+                fields = set(contract.get("required_body_fields", []))
+                missing = sorted(challenge_required_fields - fields)
+                if missing or contract.get("reviewer_independent_challenge_required") is not True:
+                    reviewer_contract_failures.append(
+                        {
+                            "contract_id": contract.get("contract_id"),
+                            "missing_fields": missing,
+                            "required_flag": contract.get("reviewer_independent_challenge_required"),
+                        }
+                    )
+            active_challenge_ok = (
+                not reviewer_contract_failures
+                and "Reviewer Independent Challenge Gate" in reviewer_core_text
+                and "PM review package is the minimum checklist" in reviewer_core_text
+                and isinstance(human_review_template_json.get("independent_challenge"), dict)
+                and "challenge_actions" in human_review_template_json.get("independent_challenge", {})
+                and "Reviewer Independent Challenge Context" in packet_template_text
+            )
+            result["checks"].append(
+                {
+                    "name": "flowpilot_reviewer_independent_challenge_contract_valid",
+                    "ok": active_challenge_ok,
+                    "reviewer_contract_failures": reviewer_contract_failures,
+                }
+            )
+            if not active_challenge_ok:
                 result["ok"] = False
         except Exception as exc:  # pragma: no cover - diagnostic script
             result["ok"] = False

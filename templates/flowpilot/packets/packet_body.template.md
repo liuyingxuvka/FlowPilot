@@ -59,6 +59,30 @@ unopened envelope for PM reissue or repair.
 
 - <bounded acceptance condition for this packet only>
 
+## Reviewer Independent Challenge Context
+
+For packets addressed to `human_like_reviewer`, the PM must provide the user
+hard requirements, frozen contract or current gate ids, task family, quality
+level, relevant skill standards, artifact/evidence paths, and PM-known risks.
+This context is the minimum checklist only. The reviewer must still return an
+`independent_challenge` object with scope restatement, explicit and implicit
+commitments, failure hypotheses, task-specific challenge actions, blocker
+triage, nonblocking findings, pass-or-block decision, reroute request, and any
+waivers. If the packet is not addressed to `human_like_reviewer`, write `not
+applicable`.
+
+## Inherited Skill Standards
+
+If the node acceptance plan declares inherited child-skill standards for this
+packet, copy the exact standard ids here. Each id must include category
+`MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`, `ARTIFACT`, or `WAIVER`, the
+source skill path, expected artifact path, and reviewer/officer gate id.
+The recipient must return a matching `Skill Standard Result Matrix` row for
+every inherited id. If no child-skill standards apply, write `none` and cite
+the node acceptance plan field that makes them not applicable.
+
+- <standard-id-or-none>
+
 ## Required Verification Or Evidence
 
 - <command-probe-screenshot-model-check-or-review-evidence>

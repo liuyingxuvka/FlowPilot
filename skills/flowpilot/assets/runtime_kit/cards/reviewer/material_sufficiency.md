@@ -47,6 +47,26 @@ when the material is insufficient.
   "packet_matches_checked_sources": true,
   "pm_ready": false,
   "checked_source_paths": [],
+  "independent_challenge": {
+    "scope_restatement": "<reviewed material/research package and out-of-scope boundary>",
+    "explicit_and_implicit_commitments": {
+      "explicit": [],
+      "implicit": []
+    },
+    "failure_hypotheses": [],
+    "challenge_actions": [
+      {
+        "action": "<source inspection, contradiction check, freshness check, or waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed result>"
+      }
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [],
+    "pass_or_block": "block",
+    "reroute_request": "<follow-up research, PM route mutation, or null>",
+    "challenge_waivers": []
+  },
   "findings": [],
   "blockers": [],
   "residual_risks": [],

@@ -16,6 +16,11 @@ Check:
 - selected skills follow product needs and frozen contract;
 - raw inventory is not used as authority;
 - skipped references or skipped steps have reasons;
+- every selected or conditional skill has a compiled Skill Standard Contract
+  with `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`, `ARTIFACT`, and `WAIVER`
+  entries or explicit not-applicable reasons;
+- each non-waived standard has source paths and is mapped to route node ids,
+  work packet slices, reviewer/officer gates, and expected artifact paths;
 - each child-skill gate has a real approver;
 - Controller is not an approver;
 - evidence expectations are concrete enough for route work;

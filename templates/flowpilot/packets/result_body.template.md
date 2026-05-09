@@ -57,6 +57,16 @@ the unopened envelope for PM reissue or repair.
 
 - <issue-or-none>
 
+## Skill Standard Result Matrix
+
+For every inherited child-skill standard id declared in the source packet,
+include one row. Use `none` only when the source packet's `Inherited Skill
+Standards` section says no child-skill standards apply.
+
+| standard_id | status | evidence_path | waiver_reason | note |
+| --- | --- | --- | --- | --- |
+| <standard-id-or-none> | <done|not_applicable|waived|blocked> | <path-or-null> | <reason-or-null> | <short-note> |
+
 ## Contract Self-Check
 
 - source_output_contract_id: <packet-envelope-output_contract.contract_id>

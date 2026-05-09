@@ -38,6 +38,11 @@ when the blocker cannot be closed by the smaller repair, when evidence has
 become stale, or when the route structure itself is wrong. Record why the
 smaller repair was insufficient.
 
+For reviewer-blocked repair or reissue work, prefer returning the packet to the
+same worker who produced the blocked result so the repair keeps local context,
+unless that worker is unavailable, the issue shows a fundamental
+misunderstanding, or the repair has become separable new work.
+
 Allowed PM decisions:
 
 - request sender reissue;

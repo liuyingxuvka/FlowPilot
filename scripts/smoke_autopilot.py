@@ -47,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
         [sys.executable, "simulations/run_startup_pm_review_checks.py"],
         [sys.executable, "simulations/run_barrier_equivalence_checks.py"],
         [sys.executable, "simulations/run_command_refinement_checks.py"],
+        [sys.executable, "simulations/run_flowpilot_reviewer_active_challenge_checks.py"],
         control_plane_friction_check,
         cross_plane_friction_check,
         meta_check,

@@ -21,13 +21,13 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Commands
 - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema 1.0
-- OK: `python -m py_compile C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m py_compile <installed-flowpilot-skill>\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
 - OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_terminal_closure_uses_file_backed_contract_and_prior_context tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_reconcile_recovers_legacy_terminal_closure_state`
 - OK: `python simulations\run_flowpilot_router_loop_checks.py`
 - OK: `python simulations\run_meta_checks.py`
 - OK: `python simulations\run_capability_checks.py`
-- OK: `python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py --root "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430" --json reconcile-run`
-- OK: `python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py --root "C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430" --json run-until-wait` returned `run_lifecycle_terminal` with status `closed`.
+- OK: `python <installed-flowpilot-skill>\assets\flowpilot_router.py --root "<repo-root>" --json reconcile-run`
+- OK: `python <installed-flowpilot-skill>\assets\flowpilot_router.py --root "<repo-root>" --json run-until-wait` returned `run_lifecycle_terminal` with status `closed`.
 - Partial: `python simulations\run_flowpilot_control_plane_friction_checks.py` passed graph/progress checks but the live-run audit still reports historical material-scan packet contract/write-target issues.
 - Partial: `python scripts\audit_local_install_sync.py --json` passed installed/source freshness but still reports untracked `flowpilot_cockpit` in the main tree from the active UI work.
 
@@ -1183,7 +1183,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Commands
 - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)`, schema 1.0
-- OK: `python -m py_compile C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m py_compile <installed-flowpilot-skill>\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
 - OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_node_completion_idempotency_is_scoped_to_active_node`
 - OK: targeted adjacent router runtime tests for current-node completion, evidence quality, final ledger, and parent completion
 - OK: `python simulations\run_flowpilot_router_loop_checks.py`
@@ -5582,3 +5582,182 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - When the user approves a full Cockpit rebuild, decide whether the new Cockpit becomes a first-class install-audited source package or remains generated/ignored; then update the install audit policy accordingly.
+
+## flowpilot-planning-quality-contract-20260509 - Add PM profile and skill-standard projection gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved a minimal FlowPilot process upgrade after a Cockpit UI run exposed PM route coarseness, child-skill standard dilution, and reviewer residual-blindspot pass-through.
+- Status: optimized_not_synced
+- Skill decision: used_flowguard
+- Started: 2026-05-09T08:20:00+02:00
+- Ended: 2026-05-09T08:57:05+02:00
+- Commands OK: True for modeling, targeted runtime tests, and install/smoke checks; full router-runtime pytest was intentionally replaced by scoped router tests after a broad timeout.
+
+### Model Files
+- simulations/flowpilot_planning_quality_model.py
+- simulations/run_flowpilot_planning_quality_checks.py
+- simulations/flowpilot_planning_quality_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/child_skill_gate_manifest_review.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md
+- templates/flowpilot/child_skill_gate_manifest.template.json
+- templates/flowpilot/node_acceptance_plan.template.json
+- templates/flowpilot/packets/packet_body.template.md
+- templates/flowpilot/packets/result_body.template.md
+- skills/flowpilot/assets/runtime_kit/contracts/contract_index.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python -m py_compile simulations\flowpilot_planning_quality_model.py simulations\run_flowpilot_planning_quality_checks.py`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`
+- OK: `python -m py_compile simulations\flowpilot_planning_quality_model.py simulations\run_flowpilot_planning_quality_checks.py scripts\check_install.py`
+- OK: `python -m pytest tests\test_flowpilot_planning_quality.py tests\test_flowpilot_output_contracts.py tests\test_flowpilot_card_instruction_coverage.py`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `python simulations\run_output_contract_checks.py`
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_planning_quality.py tests\test_flowpilot_output_contracts.py -q`
+- OK: scoped router runtime tests for route skeleton, node acceptance artifact validation, packet relay, reviewer packet audit, and safe envelope aliases.
+- TIMEOUT_REPLACED: `python -m pytest tests\test_flowpilot_planning_quality.py tests\test_flowpilot_output_contracts.py tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_router_runtime.py` exceeded the 300s limit because it included the full router runtime suite. It was replaced with the targeted tests above.
+
+### Findings
+- The planning-quality model accepts only the valid high-fidelity UI route and valid simple-repair route shapes.
+- It rejects the same-class hazards from the Cockpit miss: no planning profile, missing convergence loop, selected skill without a Skill Standard Contract, missing MUST/DEFAULT/FORBID/VERIFY/LOOP/ARTIFACT/WAIVER fields, unmapped skill standards, missing LOOP/VERIFY/ARTIFACT inheritance, missing node/work-packet projection, reviewer hard-blindspot pass, overmerged complex implementation nodes, artifactless major nodes, and simple-task over-templating.
+- Runtime cards now make PM route profiles, Skill Standard Contracts, node/work packet projection, reviewer hard-block rules, and Skill Standard Result Matrix reporting explicit.
+
+### Counterexamples
+- The first model draft rejected hazards but mislabeled every negative rejection as `reject_valid_ui_route` or `reject_valid_simple_route`. The scenario field is now preserved in hazard states, so required reachability labels prove each same-class failure is rejected separately.
+
+### Skipped Steps
+- No Cockpit UI repair or rerun was performed; the user explicitly asked to optimize FlowPilot flow first.
+- No local installed-skill sync, version bump, git commit/tag, or GitHub push/release was performed, per the user's later instruction to stop before synchronization.
+
+### Next Actions
+- Wait for user approval before syncing the repository source into the local installed FlowPilot skill, bumping the patch version, committing/tagging, or pushing to GitHub.
+
+## flowpilot-worker-dispatch-guidance-20260509 - Add lightweight PM worker packet balance guidance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified that PM worker assignment had no lightweight prompt-level guidance, causing worker selection to behave like free choice with a `worker_a` default bias in some packet paths.
+- Status: optimized_not_synced
+- Skill decision: used_flowguard_lightweight
+- Started: 2026-05-09T09:05:00+02:00
+- Ended: 2026-05-09T09:21:39+02:00
+- Commands OK: True for import preflight, targeted card tests, card coverage, install check, and existing FlowGuard meta/capability proof reuse.
+
+### Model Files
+- Existing FlowGuard meta and capability proof files reused because this change edits PM card guidance only and does not change router state transitions or capability model source.
+
+### Runtime Files
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md
+- skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md
+- tests/test_flowpilot_card_instruction_coverage.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python "<codex-skills>\model-first-function-flow\assets\toolchain_preflight.py" --json`
+- OK: `python -m pytest tests\test_flowpilot_card_instruction_coverage.py -q`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `git diff --check` reported only CRLF warnings.
+
+### Findings
+- PM worker-packet cards now tell PM to choose either `worker_a` or `worker_b` for light/single-scope work while keeping opportunities roughly balanced across the current run.
+- Heavy naturally separable work is now prompt-routed toward bounded disjoint packets for both workers when parallel work can avoid overlapping files, evidence duties, or review ownership.
+- Reviewer-blocked repair and sender reissue now prefer returning work to the same worker that produced the blocked result, preserving local context unless the worker is unavailable, the issue shows a fundamental misunderstanding, or the repair has become separable new work.
+- The guidance intentionally avoids "do not default to worker_a" language so it does not bias PM into mechanically choosing `worker_b`.
+
+### Skipped Steps
+- No router scheduling algorithm, worker load ledger, busy lease, or automatic reassignment logic was added.
+- No local installed-skill sync, version bump, git commit/tag, or GitHub push/release was performed per user instruction.
+
+### Next Actions
+- Wait for user approval before any local install sync, version bump, commit/tag, or GitHub publication.
+
+## flowpilot-reviewer-active-challenge-20260509 - Require reviewer independent challenge gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved a FlowPilot process upgrade after review discussion showed that reviewers could pass low-standard PM packets without actively looking for task-specific failures such as inert UI controls, rough rendering, or hidden implementation gaps.
+- Status: optimized_not_synced
+- Skill decision: used_flowguard
+- Started: 2026-05-09T08:58:00+02:00
+- Ended: 2026-05-09T09:21:51+02:00
+- Commands OK: True for the new reviewer active-challenge model, production card/template/contract checks, full FlowGuard runner sweep, full meta/capability regressions, and scoped test suite.
+
+### Model Files
+- simulations/flowpilot_reviewer_active_challenge_model.py
+- simulations/run_flowpilot_reviewer_active_challenge_checks.py
+- simulations/flowpilot_reviewer_active_challenge_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/material_sufficiency.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/dispatch_request.md
+- skills/flowpilot/assets/runtime_kit/contracts/contract_index.json
+- templates/flowpilot/human_review.template.json
+- templates/flowpilot/research_reviewer_report.template.json
+- templates/flowpilot/packets/packet_body.template.md
+- scripts/check_install.py
+- scripts/run_flowguard_coverage_sweep.py
+- scripts/smoke_autopilot.py
+- simulations/flowpilot_output_contract_model.py
+- tests/test_flowpilot_reviewer_active_challenge.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`
+- OK: `python -m py_compile simulations\flowpilot_reviewer_active_challenge_model.py simulations\run_flowpilot_reviewer_active_challenge_checks.py tests\test_flowpilot_reviewer_active_challenge.py`
+- OK: `python simulations\run_flowpilot_reviewer_active_challenge_checks.py --json-out simulations\flowpilot_reviewer_active_challenge_results.json`
+- OK: `python -m pytest tests\test_flowpilot_reviewer_active_challenge.py -q`
+- OK: `python -m pytest tests\test_flowpilot_planning_quality.py tests\test_flowpilot_output_contracts.py tests\test_flowpilot_card_instruction_coverage.py -q`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_output_contract_checks.py --json-out simulations\flowpilot_output_contract_results.json`
+- OK: `python -m py_compile scripts\check_install.py scripts\smoke_autopilot.py simulations\flowpilot_output_contract_model.py simulations\flowpilot_reviewer_active_challenge_model.py simulations\run_flowpilot_reviewer_active_challenge_checks.py`
+- OK: all 28 `simulations/run_*_checks.py` runners completed successfully in the FlowGuard sweep.
+- OK: `python -m pytest tests -q --import-mode=importlib` returned `168 passed, 14 subtests passed`.
+- OK: `python simulations\run_meta_checks.py --force`
+- OK: `python simulations\run_capability_checks.py --force`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python -m py_compile scripts\run_flowguard_coverage_sweep.py`
+- OK_WITH_PENDING_SYNC_FINDING: `python scripts\run_flowguard_coverage_sweep.py --timeout-seconds 120` parsed all 28 runners and reported one live finding, `installed_skill_source_drift`, because the user explicitly asked not to sync the changed repository source into the local installed FlowPilot skill yet.
+- OK: `git diff --check` reported no whitespace errors; Git only warned about future LF-to-CRLF normalization on Windows.
+- EXPECTED_SCOPE_NOTE: broad `python -m pytest -q` still collects duplicate backup test modules under `backups/`, so the validated project test command uses `tests --import-mode=importlib`.
+
+### Findings
+- The new model accepts valid UI/code/document/simple review paths and rejects same-class hazards where a reviewer relies only on the PM checklist, misses scope restatement, omits explicit or implicit commitments, lacks failure hypotheses, uses generic challenge actions, lacks direct evidence or waiver, downgrades hard issues into residual risk, leaves core commitments unverified, fails to reroute blockers, or overburdens simple tasks.
+- Reviewer role guidance now says the PM package is a minimum floor rather than the review boundary.
+- Reviewer reports now require an `independent_challenge` section with scope, commitments, failure hypotheses, task-specific challenge actions, blocking/non-blocking findings, pass/block decision, reroute request, and waivers.
+- Reviewer contract templates and install checks now enforce the new challenge fields, so a reviewer pass without active challenge evidence is structurally invalid.
+- The coverage sweep now recognizes result files declared with `Path(__file__).resolve().with_name(...)`, so the planning-quality and reviewer active-challenge runners are included in the read-only sweep instead of being misclassified as unparsed.
+
+### Counterexamples
+- A checklist-only pass can no longer satisfy the modeled reviewer gate.
+- A reviewer can no longer pass a user hard requirement, frozen contract, selected child-skill standard, quality-level requirement, exposed product behavior, or core commitment by moving it to residual risk.
+- A reviewer that cannot directly inspect a required artifact must either provide an approved waiver or block/reroute; silence is modeled as a failure.
+
+### Skipped Steps
+- No Cockpit UI repair was performed; the user asked to fix the FlowPilot review process first.
+- No local installed-skill sync, local Git commit, version bump, tag, or GitHub push/release was performed, per the user's instruction to decide those synchronization steps later.
+
+### Next Actions
+- Wait for user approval before syncing this repository source into the local installed FlowPilot skill, bumping version metadata, committing/tagging, or pushing to GitHub.

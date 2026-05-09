@@ -21,6 +21,11 @@ Check:
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;
 - result body includes `Contract Self-Check` against the source packet
   `output_contract`, and missing or failed self-check blocks pass;
+- when the source packet declares inherited skill-standard ids, the result body
+  includes `Skill Standard Result Matrix` rows for every inherited id, with
+  status `done`, `not_applicable`, `waived`, or `blocked`, evidence path or
+  waiver reason, and the worker's explanation. Missing rows, manifest-only
+  evidence, or unapproved waivers block pass;
 - output satisfies packet acceptance slice.
 
 Return pass, needs repair, needs more material, or invalid role origin.
@@ -53,6 +58,26 @@ when the worker result is blocked.
   "reviewed_by_role": "human_like_reviewer",
   "passed": false,
   "direct_evidence_paths_checked": [],
+  "independent_challenge": {
+    "scope_restatement": "<reviewed artifact, route slice, evidence, and out-of-scope boundary>",
+    "explicit_and_implicit_commitments": {
+      "explicit": [],
+      "implicit": []
+    },
+    "failure_hypotheses": [],
+    "challenge_actions": [
+      {
+        "action": "<task-specific probe, source inspection, command, walkthrough, counterexample, or waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed result>"
+      }
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [],
+    "pass_or_block": "block",
+    "reroute_request": "<pm repair, route mutation, reissue, replay, or null>",
+    "challenge_waivers": []
+  },
   "findings": [],
   "blockers": [],
   "residual_risks": [],

@@ -1,0 +1,133 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=96",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "checklist_only_pass": {
+        "detected": true,
+        "expected_failure": "reviewer treated PM checklist as the full review instead of the floor",
+        "failures": [
+          "reviewer treated PM checklist as the full review instead of the floor",
+          "reviewer pass lacks scope restatement",
+          "reviewer pass lacks explicit commitment extraction",
+          "reviewer pass lacks implicit commitment extraction",
+          "reviewer pass lacks active failure hypotheses",
+          "reviewer pass lacks recorded challenge actions",
+          "reviewer challenge actions do not fit the task family",
+          "reviewer pass lacks executed challenge actions or a blocker",
+          "reviewer pass lacks direct evidence or an approved waiver",
+          "reviewer pass leaves core commitments unverified and unblocked",
+          "reviewer pass lacks independent challenge report fields"
+        ]
+      },
+      "core_commitment_unverified": {
+        "detected": true,
+        "expected_failure": "reviewer pass leaves core commitments unverified and unblocked",
+        "failures": [
+          "reviewer pass leaves core commitments unverified and unblocked"
+        ]
+      },
+      "generic_actions_not_task_specific": {
+        "detected": true,
+        "expected_failure": "reviewer challenge actions do not fit the task family",
+        "failures": [
+          "reviewer challenge actions do not fit the task family"
+        ]
+      },
+      "hard_issue_downgraded_to_residual": {
+        "detected": true,
+        "expected_failure": "reviewer did not block a hard requirement or core commitment failure",
+        "failures": [
+          "reviewer did not block a hard requirement or core commitment failure"
+        ]
+      },
+      "missing_implicit_commitments": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks implicit commitment extraction",
+        "failures": [
+          "reviewer pass lacks implicit commitment extraction"
+        ]
+      },
+      "missing_reroute_request_for_blocker": {
+        "detected": true,
+        "expected_failure": "reviewer blocker lacks PM reroute or repair request",
+        "failures": [
+          "reviewer blocker lacks PM reroute or repair request"
+        ]
+      },
+      "missing_scope_restatement": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks scope restatement",
+        "failures": [
+          "reviewer pass lacks scope restatement"
+        ]
+      },
+      "no_challenge_actions": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks recorded challenge actions",
+        "failures": [
+          "reviewer pass lacks recorded challenge actions",
+          "reviewer pass lacks executed challenge actions or a blocker"
+        ]
+      },
+      "no_direct_evidence_or_waiver": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks direct evidence or an approved waiver",
+        "failures": [
+          "reviewer pass lacks direct evidence or an approved waiver"
+        ]
+      },
+      "no_failure_hypotheses": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks active failure hypotheses",
+        "failures": [
+          "reviewer pass lacks active failure hypotheses"
+        ]
+      },
+      "simple_review_overburdened": {
+        "detected": true,
+        "expected_failure": "simple review was overburdened with irrelevant heavyweight challenge work",
+        "failures": [
+          "simple review was overburdened with irrelevant heavyweight challenge work"
+        ]
+      },
+      "uncheckable_without_waiver": {
+        "detected": true,
+        "expected_failure": "reviewer found an uncheckable surface without waiver or blocker",
+        "failures": [
+          "reviewer found an uncheckable surface without waiver or blocker"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_code_review",
+      "valid_document_review",
+      "valid_simple_review",
+      "valid_ui_review"
+    ],
+    "edge_count": 32,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 12,
+    "state_count": 33
+  }
+}

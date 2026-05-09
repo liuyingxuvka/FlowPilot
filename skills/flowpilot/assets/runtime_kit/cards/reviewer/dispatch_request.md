@@ -29,6 +29,9 @@ Check:
 
 The dispatch report body must include `Contract Self-Check` against the source
 packet `output_contract`; missing or failed contract checks block dispatch.
+The report body must also include `independent_challenge` from the human-like
+reviewer core card, including task-specific failure hypotheses for how this
+packet could be too broad, under-specified, wrong-role, stale, or unverifiable.
 
 Return `dispatch_allowed` or a concrete blocker. If dispatch is blocked, return
 the file-backed report through event `reviewer_blocks_material_scan_dispatch`;

@@ -106,6 +106,10 @@ REVIEW_CONTRACT = ContractSpec(
     task_family="reviewer.review",
     required_body_fields=frozenset(
         {
+            "independent_challenge",
+            "independent_challenge.challenge_actions",
+            "independent_challenge.failure_hypotheses",
+            "independent_challenge.scope_restatement",
             "review_scope",
             "reviewer_decision",
             "source_evidence_refs",
@@ -118,6 +122,10 @@ FINAL_REPORT_CONTRACT = ContractSpec(
     task_family="reviewer.terminal_backward_replay",
     required_body_fields=frozenset(
         {
+            "independent_challenge",
+            "independent_challenge.challenge_actions",
+            "independent_challenge.failure_hypotheses",
+            "independent_challenge.scope_restatement",
             "reviewed_by_role",
             "passed",
             "segment_reviews",

@@ -15,6 +15,13 @@ Issue only bounded material and capability scan packets. The purpose is to
 discover what information exists and what is missing before product
 understanding or route design.
 
+Before assigning a worker packet, consider worker balance and packet shape. For
+light or single-scope work, choose either `worker_a` or `worker_b` while keeping
+worker opportunities roughly balanced across the current run. For heavy work
+that naturally splits into disjoint scopes, create bounded separate packets for
+`worker_a` and `worker_b` so they can run in parallel without overlapping files,
+evidence duties, or review ownership.
+
 Each material scan packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_material_scan_result.v1` in both the packet
 envelope and packet body's `Output Contract` section.

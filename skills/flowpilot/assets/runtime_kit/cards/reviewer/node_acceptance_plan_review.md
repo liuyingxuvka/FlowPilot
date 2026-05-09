@@ -19,8 +19,20 @@ Check:
 - node requirements are concrete and testable;
 - the plan states whether parent backward replay is structurally required;
 - every inherited gate obligation has a required role and evidence path;
+- every inherited child-skill standard relevant to the node is listed in
+  `skill_standard_projection` with source skill, source path, category,
+  artifact expectation, reviewer/officer gate, and status. Missing `LOOP`,
+  `VERIFY`, or `ARTIFACT` projection for a selected child skill blocks pass;
+- every worker/officer packet that can be issued from the plan has a matching
+  `work_packet_projection` and requires a result matrix row for each inherited
+  standard id;
 - skipped checks are marked blocked, waived with authority, or not applicable;
 - worker reports alone cannot approve the node.
+
+The report body must include `independent_challenge` from the human-like
+reviewer core card. Pass is invalid if it only checks the PM checklist and does
+not challenge implicit commitments, missing failure paths, or unverifiable
+acceptance surfaces exposed by this node.
 
 Return pass only after independent inspection. A failed plan goes back to PM
 for repair before packet dispatch.

@@ -21,6 +21,27 @@
       "notes": "<reviewer-observation>"
     }
   ],
+  "independent_challenge": {
+    "required_for_every_reviewer_gate": true,
+    "scope_restatement": "<research package, worker report, decision question, and out-of-scope boundary>",
+    "explicit_and_implicit_commitments": {
+      "explicit": [],
+      "implicit": []
+    },
+    "failure_hypotheses": [],
+    "challenge_actions": [
+      {
+        "action": "<direct source check, contradiction check, freshness probe, or waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed result>"
+      }
+    ],
+    "blocking_findings": [],
+    "non_blocking_findings": [],
+    "pass_or_block": "<pass|block|request_more_evidence|reroute_required>",
+    "reroute_request": "<follow-up research, PM route mutation, or null>",
+    "challenge_waivers": []
+  },
   "package_question_assessment": {
     "question_answered": "<yes|partial|no>",
     "evidence_sufficient_for_pm_decision": false,

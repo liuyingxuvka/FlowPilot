@@ -13,6 +13,7 @@
     "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
     "route_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
     "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "child_skill_gate_manifest": ".flowpilot/runs/<run-id>/child_skill_gate_manifest.json",
     "route_sign_display_packet": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-display.json",
     "route_sign_review": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
   },
@@ -67,6 +68,38 @@
       "requirement_id": "<root-requirement-id>",
       "coverage_in_this_node": "<none|partial|primary>",
       "reason": "<why-this-node-must-or-need-not-cover-it>"
+    }
+  ],
+  "skill_standard_projection": {
+    "required_for_selected_child_skills": true,
+    "all_relevant_standards_projected": false,
+    "standards": [
+      {
+        "standard_id": "<standard-id>",
+        "source_skill": "<skill-name>",
+        "source_path": "<path-to-skill-or-reference>",
+        "category": "<MUST|DEFAULT|FORBID|VERIFY|LOOP|ARTIFACT|WAIVER>",
+        "applies_to_this_node": true,
+        "status_for_this_node": "<complete_here|complete_later|not_applicable|waived|blocked>",
+        "required_artifact_path": "<path-or-null>",
+        "required_reviewer_or_officer_gate_id": "<gate-id-or-null>",
+        "waiver_reason": "<reason-or-null>"
+      }
+    ]
+  },
+  "work_packet_projection": [
+    {
+      "packet_id_or_slice": "<packet-id-or-slice>",
+      "recipient_role": "<worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+      "inherited_standard_ids": [],
+      "result_matrix_required": true,
+      "result_matrix_required_fields": [
+        "standard_id",
+        "status",
+        "evidence_path",
+        "waiver_reason",
+        "note"
+      ]
     }
   ],
   "node_requirements": [

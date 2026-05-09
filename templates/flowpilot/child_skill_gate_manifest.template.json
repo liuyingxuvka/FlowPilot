@@ -19,6 +19,30 @@
       "supported_capabilities": [],
       "references_loaded_now": [],
       "references_deferred_with_reason": [],
+      "skill_standard_contract": {
+        "contract_id": "<skill-name>-standard-contract",
+        "source_skill_path": "<path-to-SKILL.md>",
+        "source_reference_paths": [],
+        "compiled_by_role": "project_manager",
+        "standards": [
+          {
+            "standard_id": "<standard-id>",
+            "category": "<MUST|DEFAULT|FORBID|VERIFY|LOOP|ARTIFACT|WAIVER>",
+            "statement": "<extracted hard standard>",
+            "default_policy_or_user_override": "<default|user_override|not_applicable>",
+            "route_node_ids": [],
+            "work_packet_slices": [],
+            "reviewer_or_officer_gate_ids": [],
+            "expected_artifact_paths": [],
+            "waiver": {
+              "status": "<not_waived|waived|not_applicable>",
+              "approved_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|null>",
+              "reason": "<reason-or-null>"
+            }
+          }
+        ],
+        "all_required_standards_projected": false
+      },
       "gates": [
         {
           "gate_id": "<gate-id>",

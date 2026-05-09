@@ -20,6 +20,15 @@ route-memory prior path context. The plan must state:
 - prior path context files read and how completed, superseded, stale, blocked,
   or experimental history affects this node;
 - concrete node requirements and proof obligations;
+- inherited `skill_standard_projection`: every child-skill standard relevant
+  to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
+  `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
+  required artifact path, required reviewer/officer gate, and whether it is
+  completed here, completed later, not applicable, or waived by PM authority;
+- `work_packet_projection`: the exact inherited standard ids that must be
+  copied into each worker/officer packet and the result-matrix rows the
+  recipient must return. Do not issue a work packet if this projection is
+  missing for a selected child skill;
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
 - whether the node has children and therefore requires parent backward replay;

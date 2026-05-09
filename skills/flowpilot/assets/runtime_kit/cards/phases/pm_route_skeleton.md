@@ -20,6 +20,13 @@ old route files, or Controller summaries.
 Route requirements:
 
 - fresh current run only;
+- select a `planning_profile` before drafting. At minimum classify the task as
+  one of `interactive_software_ui_product`, `software_engineering`,
+  `research_writing`, `release_delivery`, `debug_repair`,
+  `simple_repair`, or `long_running_multi_role`. Record why the profile fits
+  the user's quality level and why a lighter profile would lose required proof
+  strength. For a small task, use `simple_repair` with an explicit waiver
+  instead of importing heavyweight UI/product loops;
 - Minimum Sufficient Complexity: choose the smallest route structure that can
   satisfy the frozen contract with the required proof strength;
 - large nodes expanded horizontally;
@@ -41,6 +48,17 @@ checks pass.
 Return `prior_path_context_review` with the route-memory source paths and how
 prior completed, superseded, stale, blocked, or experimental work affects this
 route draft.
+
+Also return `planning_profile_review` with:
+
+- selected profile and task-class rationale;
+- required horizontal modules inserted for this profile, such as skill-standard
+  compilation, concept convergence, interaction validation, realtime-state
+  mapping, desktop integration, release delivery, or user-facing final report;
+- route nodes that own those modules;
+- evidence artifacts expected from each major node;
+- explicit self-check that the route is not too coarse for the user's stated
+  quality level.
 
 Also return a complexity review. If a node could have been merged with an
 adjacent node, record why separation is still necessary. If two routes produce
