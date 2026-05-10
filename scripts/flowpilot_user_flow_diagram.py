@@ -211,6 +211,25 @@ def _node_label(node: dict[str, Any]) -> str:
     return _shorten(_title_from_id(node_id))
 
 
+def _node_topology(node: dict[str, Any]) -> dict[str, Any]:
+    topology = node.get("route_topology") if isinstance(node.get("route_topology"), dict) else {}
+    strategy = str(node.get("topology_strategy") or topology.get("topology_strategy") or "").strip()
+    superseded = node.get("supersedes_node_ids")
+    if superseded is None:
+        superseded = topology.get("superseded_nodes")
+    return {
+        "topology_strategy": strategy,
+        "repair_of_node_id": node.get("repair_of_node_id") or topology.get("repair_of_node_id"),
+        "repair_return_to_node_id": node.get("repair_return_to_node_id") or topology.get("repair_return_to_node_id"),
+        "superseded_nodes": [str(item) for item in (superseded or [])],
+        "continue_after_node_id": node.get("continue_after_node_id") or topology.get("continue_after_node_id"),
+    }
+
+
+def _is_mutation_node(node: dict[str, Any]) -> bool:
+    return bool(node.get("created_by_mutation") or _node_topology(node)["topology_strategy"])
+
+
 def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[str, Any]]:
     nodes = [node for node in route.get("nodes", []) if isinstance(node, dict) and _node_id(node)]
     mainline = [str(item) for item in frontier.get("current_mainline") or []]
@@ -218,6 +237,14 @@ def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[s
         by_id = {_node_id(node): node for node in nodes}
         ordered = [by_id[node_id] for node_id in mainline if node_id in by_id]
         if ordered:
+            included = {_node_id(node) for node in ordered}
+            active_node = str(_active_node(frontier, route=route) or "")
+            ordered.extend(
+                node
+                for node in nodes
+                if _node_id(node) not in included
+                and (_node_id(node) == active_node or _is_mutation_node(node))
+            )
             return ordered
     return nodes
 
@@ -233,6 +260,8 @@ def _node_status(node: dict[str, Any], active_node: str | None) -> str:
         return "active"
     if status in {"complete", "completed", "done"}:
         return "done"
+    if status in {"superseded", "stale"}:
+        return "superseded"
     if status in {"blocked", "failed"}:
         return "blocked"
     return "pending"
@@ -322,11 +351,17 @@ def _build_route_node_mermaid(
     pending_ids: list[str] = []
     blocked_ids: list[str] = []
     active_ids: list[str] = []
+    superseded_ids: list[str] = []
     for node in nodes:
         node_id = _node_id(node)
         mermaid_id = mermaid_ids[node_id]
         status = _node_status(node, active_node)
-        status_label = {"active": "Now", "done": "Done", "blocked": "Blocked"}.get(status, "Next")
+        status_label = {
+            "active": "Now",
+            "done": "Done",
+            "blocked": "Blocked",
+            "superseded": "Superseded",
+        }.get(status, "Next")
         label = f"{_node_label(node)}<br/>{status_label}: {_escape_label(node_id)}"
         lines.append(f'  {mermaid_id}["{_escape_label(label)}"]')
         if status == "active":
@@ -335,13 +370,72 @@ def _build_route_node_mermaid(
             done_ids.append(mermaid_id)
         elif status == "blocked":
             blocked_ids.append(mermaid_id)
+        elif status == "superseded":
+            superseded_ids.append(mermaid_id)
         else:
             pending_ids.append(mermaid_id)
 
-    for left, right in zip(node_ids, node_ids[1:]):
-        lines.append(f"  {mermaid_ids[left]} --> {mermaid_ids[right]}")
+    def add_edge(edge: str, seen: set[str]) -> None:
+        if edge not in seen:
+            lines.append(edge)
+            seen.add(edge)
 
-    if return_path["edge_present"]:
+    edge_lines: set[str] = set()
+    topology_by_id = {node_id: _node_topology(node) for node_id, node in zip(node_ids, nodes)}
+    replacement_by_superseded: dict[str, str] = {}
+    for node_id, topology in topology_by_id.items():
+        if topology["topology_strategy"] == "supersede_original":
+            for superseded_node in topology["superseded_nodes"]:
+                replacement_by_superseded[str(superseded_node)] = node_id
+
+    mainline_ids: list[str] = []
+    for node in nodes:
+        node_id = _node_id(node)
+        if not node_id:
+            continue
+        topology = topology_by_id.get(node_id, {})
+        strategy = topology.get("topology_strategy")
+        if _node_status(node, active_node) == "superseded":
+            replacement = replacement_by_superseded.get(node_id)
+            if replacement in mermaid_ids and replacement not in mainline_ids:
+                mainline_ids.append(replacement)
+            continue
+        if strategy in {"return_to_original", "branch_then_continue"}:
+            continue
+        if node_id not in mainline_ids:
+            mainline_ids.append(node_id)
+
+    for left, right in zip(mainline_ids, mainline_ids[1:]):
+        add_edge(f"  {mermaid_ids[left]} --> {mermaid_ids[right]}", edge_lines)
+
+    topology_edge_present = False
+    for node_id, topology in topology_by_id.items():
+        strategy = topology.get("topology_strategy")
+        if strategy == "return_to_original":
+            repair_of = str(topology.get("repair_of_node_id") or "")
+            return_to = str(topology.get("repair_return_to_node_id") or repair_of)
+            if repair_of in mermaid_ids:
+                add_edge(f"  {mermaid_ids[repair_of]} --> {mermaid_ids[node_id]}", edge_lines)
+                topology_edge_present = True
+            if return_to in mermaid_ids:
+                add_edge(f'  {mermaid_ids[node_id]} -- "returns for repair" --> {mermaid_ids[return_to]}', edge_lines)
+                topology_edge_present = True
+        elif strategy == "supersede_original":
+            for superseded_node in topology.get("superseded_nodes") or []:
+                if superseded_node in mermaid_ids:
+                    add_edge(f'  {mermaid_ids[superseded_node]} -. "superseded by" .-> {mermaid_ids[node_id]}', edge_lines)
+                    topology_edge_present = True
+        elif strategy == "branch_then_continue":
+            repair_of = str(topology.get("repair_of_node_id") or "")
+            continue_after = str(topology.get("continue_after_node_id") or "")
+            if repair_of in mermaid_ids:
+                add_edge(f"  {mermaid_ids[repair_of]} --> {mermaid_ids[node_id]}", edge_lines)
+                topology_edge_present = True
+            if continue_after in mermaid_ids:
+                add_edge(f"  {mermaid_ids[node_id]} --> {mermaid_ids[continue_after]}", edge_lines)
+                topology_edge_present = True
+
+    if return_path["edge_present"] and not topology_edge_present:
         if return_path["return_source"] == "review_gate":
             lines.append('  reviewGate["Review / validation gate"]')
             source = "reviewGate"
@@ -352,8 +446,8 @@ def _build_route_node_mermaid(
 
     if str(frontier.get("next_node") or "") == "complete":
         lines.append(f'  done["Completion"]')
-        if node_ids:
-            lines.append(f"  {mermaid_ids[node_ids[-1]]} --> done")
+        if mainline_ids:
+            lines.append(f"  {mermaid_ids[mainline_ids[-1]]} --> done")
     lines.extend(
         [
             "",
@@ -361,12 +455,14 @@ def _build_route_node_mermaid(
             "  classDef done fill:#ecfdf5,stroke:#10b981,color:#064e3b;",
             "  classDef pending fill:#f8fafc,stroke:#cbd5e1,color:#334155;",
             "  classDef blocked fill:#fef2f2,stroke:#ef4444,color:#7f1d1d;",
+            "  classDef superseded fill:#f1f5f9,stroke:#94a3b8,stroke-dasharray: 4 3,color:#64748b;",
         ]
     )
     for class_line in (
         _class_line(done_ids, "done"),
         _class_line(pending_ids, "pending"),
         _class_line(blocked_ids, "blocked"),
+        _class_line(superseded_ids, "superseded"),
         _class_line(active_ids, "active"),
     ):
         if class_line:

@@ -384,6 +384,90 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIn('returns for repair', payload["mermaid"])
         self.assertIn("node-004-desktop-implementation", payload["markdown"])
 
+    def test_mutation_repair_node_is_not_rendered_as_final_mainline_append(self) -> None:
+        root = self.make_project(active_node="node-004-desktop-implementation-repair")
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        route_path = run_root / "routes" / "route-001" / "flow.json"
+        route = json.loads(route_path.read_text(encoding="utf-8"))
+        route["active_node_id"] = "node-004-desktop-implementation-repair"
+        route["nodes"].append(
+            {
+                "node_id": "node-004-desktop-implementation-repair",
+                "title": "Implementation repair",
+                "status": "active",
+                "created_by_mutation": True,
+                "topology_strategy": "return_to_original",
+                "repair_of_node_id": "node-004-desktop-implementation",
+                "repair_return_to_node_id": "node-004-desktop-implementation",
+            }
+        )
+        route_path.write_text(json.dumps(route, indent=2), encoding="utf-8")
+        frontier_path = run_root / "execution_frontier.json"
+        frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
+        frontier["active_node"] = "node-004-desktop-implementation-repair"
+        frontier["active_node_id"] = "node-004-desktop-implementation-repair"
+        frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
+
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="major_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        self.assertIn("Now: node-004-desktop-implementation-repair", payload["mermaid"])
+        self.assertIn('returns for repair', payload["mermaid"])
+        self.assertIn("n04 --> n07", payload["mermaid"])
+        self.assertNotIn("n06 --> n07", payload["mermaid"])
+
+    def test_supersede_replacement_marks_old_node_without_forcing_return_edge(self) -> None:
+        root = self.make_project(active_node="node-004-desktop-implementation-v2")
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        route_path = run_root / "routes" / "route-001" / "flow.json"
+        route = json.loads(route_path.read_text(encoding="utf-8"))
+        route["active_node_id"] = "node-004-desktop-implementation-v2"
+        for node in route["nodes"]:
+            if node["id"] == "node-004-desktop-implementation":
+                node["status"] = "superseded"
+                node["superseded_by"] = "node-004-desktop-implementation-v2"
+        route["nodes"].append(
+            {
+                "node_id": "node-004-desktop-implementation-v2",
+                "title": "Replacement implementation",
+                "status": "active",
+                "created_by_mutation": True,
+                "topology_strategy": "supersede_original",
+                "repair_of_node_id": "node-004-desktop-implementation",
+                "supersedes_node_ids": ["node-004-desktop-implementation"],
+            }
+        )
+        route_path.write_text(json.dumps(route, indent=2), encoding="utf-8")
+        frontier_path = run_root / "execution_frontier.json"
+        frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
+        frontier["active_node"] = "node-004-desktop-implementation-v2"
+        frontier["active_node_id"] = "node-004-desktop-implementation-v2"
+        frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
+
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="major_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        self.assertIn("Now: node-004-desktop-implementation-v2", payload["mermaid"])
+        self.assertIn("Superseded: node-004-desktop-implementation", payload["mermaid"])
+        self.assertIn("superseded by", payload["mermaid"])
+        self.assertNotIn("returns for repair", payload["mermaid"])
+
     def test_reviewer_blocks_closed_cockpit_without_chat_display(self) -> None:
         root = self.make_project(active_node="node-006-final-verification")
         payload = route_sign.generate(

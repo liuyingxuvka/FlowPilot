@@ -325,6 +325,54 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             result = packet_runtime.load_envelope(root, record["result_envelope_path"])
             packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
 
+    def pm_role_work_request_payload(
+        self,
+        root: Path,
+        *,
+        request_id: str = "model-miss-followup-001",
+        to_role: str = "product_flowguard_officer",
+        request_kind: str = "model_miss",
+        request_mode: str = "blocking",
+        output_contract_id: str = "flowpilot.output_contract.flowguard_model_miss_report.v1",
+        body_text: str = "Analyze why the FlowGuard model missed this bug class and recommend a minimal repair.",
+    ) -> dict:
+        run_root = self.run_root_for(root)
+        body_path = run_root / "test_role_outputs" / "pm_role_work" / f"{request_id}.md"
+        body_path.parent.mkdir(parents=True, exist_ok=True)
+        body_path.write_text(body_text, encoding="utf-8")
+        return {
+            "requested_by_role": "project_manager",
+            "request_id": request_id,
+            "to_role": to_role,
+            "request_mode": request_mode,
+            "request_kind": request_kind,
+            "output_contract_id": output_contract_id,
+            "packet_body_path": self.rel(root, body_path),
+            "packet_body_hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
+        }
+
+    def open_role_work_packet_and_write_result(
+        self,
+        root: Path,
+        *,
+        request_id: str = "model-miss-followup-001",
+        result_text: str = "Status\n\nComplete\n\nFindings\n\nModel miss analyzed.\n\nContract Self-Check\n\nPassed.",
+    ) -> str:
+        run_root = self.run_root_for(root)
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        record = next(item for item in index["requests"] if item["request_id"] == request_id)
+        envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+        packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role=envelope["to_role"],
+            completed_by_agent_id=f"{envelope['to_role']}-agent",
+            result_body_text=result_text,
+            next_recipient="project_manager",
+        )
+        return result["result_body_path"].replace("result_body.md", "result_envelope.json")
+
     def next_after_display_sync(self, root: Path) -> dict:
         action = router.next_action(root)
         while action["action_type"] == "sync_display_plan":
@@ -567,6 +615,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def deliver_initial_pm_cards_and_user_intake(self, root: Path) -> None:
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
+        self.deliver_expected_card(root, "pm.role_work_request")
         self.deliver_expected_card(root, "pm.phase_map")
         self.deliver_expected_card(root, "pm.startup_intake")
         self.deliver_user_intake_mail(root)
@@ -1510,7 +1559,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "pm.event.reviewer_blocked")
         wait_action = router.next_action(root)
         self.assertEqual(wait_action["action_type"], "await_role_decision")
-        self.assertEqual(wait_action["allowed_external_events"], ["pm_records_model_miss_triage_decision"])
+        self.assertIn("pm_records_model_miss_triage_decision", wait_action["allowed_external_events"])
+        self.assertIn("pm_registers_role_work_request", wait_action["allowed_external_events"])
         self.assert_payload_contract_mentions(wait_action["payload_contract"], "same_class_findings_reviewed")
 
     def test_review_block_route_mutation_requires_closed_model_miss_triage(self) -> None:
@@ -1594,8 +1644,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["node_acceptance_plan_review_blocked"])
         frontier = read_json(run_root / "execution_frontier.json")
-        self.assertEqual(frontier["status"], "route_mutated_repair_pending")
-        self.assertEqual(frontier["active_node_id"], "node-001-acceptance-repair")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        self.assertEqual(frontier["active_node_id"], "node-001")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-acceptance-repair")
 
     def test_current_node_dispatch_block_enters_model_miss_repair_path(self) -> None:
         root = self.make_project()
@@ -1653,8 +1704,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["current_node_dispatch_blocked"])
         frontier = read_json(run_root / "execution_frontier.json")
-        self.assertEqual(frontier["status"], "route_mutated_repair_pending")
-        self.assertEqual(frontier["active_node_id"], "node-001-dispatch-repair")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        self.assertEqual(frontier["active_node_id"], "node-001")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-dispatch-repair")
 
     def test_model_backed_model_miss_triage_requires_officer_report_refs(self) -> None:
         root = self.make_project()
@@ -1690,6 +1742,99 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.assertFalse(self.flag(root, "model_miss_triage_closed"))
         self.assertFalse(self.flag(root, "pm_review_repair_card_delivered"))
+        state = read_json(router.run_state_path(self.run_root_for(root)))
+        self.assertTrue(state["flags"]["model_miss_triage_followup_request_pending"])
+        self.assertEqual(
+            state["model_miss_triage_followup_request"]["required_output_contract_id"],
+            "flowpilot.output_contract.flowguard_model_miss_report.v1",
+        )
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        wait = self.next_after_display_sync(root)
+        self.assertEqual(wait["action_type"], "await_role_decision")
+        self.assertEqual(wait["allowed_external_events"], ["pm_registers_role_work_request"])
+
+    def test_pm_model_miss_followup_uses_generic_role_work_request_channel(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-request")
+        run_root = self.run_root_for(root)
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_role_work_request",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+
+        router.record_external_event(root, "pm_registers_role_work_request", self.pm_role_work_request_payload(root))
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        self.assertEqual(index["active_request_id"], "model-miss-followup-001")
+        self.assertEqual(index["requests"][0]["to_role"], "product_flowguard_officer")
+        self.assertEqual(index["requests"][0]["status"], "open")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        self.assertEqual(action["request_id"], "model-miss-followup-001")
+        router.apply_action(root, "relay_pm_role_work_request_packet")
+
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        self.assertEqual(index["requests"][0]["status"], "packet_relayed")
+        result_path = self.open_role_work_packet_and_write_result(root)
+        router.record_external_event(
+            root,
+            "role_work_result_returned",
+            {
+                "request_id": "model-miss-followup-001",
+                "packet_id": "pm-role-work-model-miss-followup-001",
+                "result_envelope_path": result_path,
+            },
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_result_to_pm")
+        router.apply_action(root, "relay_pm_role_work_result_to_pm")
+        router.record_external_event(
+            root,
+            "pm_records_role_work_result_decision",
+            {
+                "decided_by_role": "project_manager",
+                "request_id": "model-miss-followup-001",
+                "decision": "absorbed",
+                "decision_reason": "PM reviewed the officer model-miss result.",
+            },
+        )
+
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        self.assertEqual(index["requests"][0]["status"], "absorbed")
+        self.assertIsNone(index["active_request_id"])
+
+    def test_pm_role_work_request_requires_valid_recipient_and_contract(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-invalid")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_role_work_invalid",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+
+        bad_contract = self.pm_role_work_request_payload(root, request_id="bad-contract")
+        bad_contract.pop("output_contract_id")
+        with self.assertRaisesRegex(router.RouterError, "output_contract_id"):
+            router.record_external_event(root, "pm_registers_role_work_request", bad_contract)
+
+        bad_role = self.pm_role_work_request_payload(root, request_id="bad-role", to_role="controller")
+        with self.assertRaisesRegex(router.RouterError, "other than PM or Controller"):
+            router.record_external_event(root, "pm_registers_role_work_request", bad_role)
 
     def test_model_backed_model_miss_triage_unlocks_review_repair(self) -> None:
         root = self.make_project()
@@ -2171,7 +2316,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertIn("pm_writes_route_draft", action["allowed_external_events"])
 
-    def test_route_mutation_requires_return_target_and_resets_route_hard_gates(self) -> None:
+    def test_route_mutation_requires_topology_and_resets_route_hard_gates(self) -> None:
         root = self.make_project()
         run_root, _packet_path, _result_path = self.prepare_current_node_result_for_review(
             root,
@@ -2179,7 +2324,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         router.record_external_event(root, "current_node_reviewer_blocks_result")
         self.close_model_miss_triage(root, output_name="decisions/route_hard_gate_mutation_triage")
-        with self.assertRaisesRegex(router.RouterError, "repair_return_to_node_id"):
+        with self.assertRaisesRegex(router.RouterError, "topology_strategy"):
             router.record_external_event(
                 root,
                 "pm_mutates_route_after_review_block",
@@ -2204,10 +2349,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["route_activated_by_pm"])
-        self.assertFalse(state["flags"]["route_draft_written_by_pm"])
+        self.assertTrue(state["flags"]["route_draft_written_by_pm"])
         self.assertFalse(state["flags"]["process_officer_route_check_passed"])
         mutation = read_json(run_root / "routes" / "route-001" / "mutations.json")["items"][-1]
         self.assertEqual(mutation["repair_return_policy"]["repair_return_to_node_id"], "node-001")
+        self.assertEqual(mutation["route_topology"]["topology_strategy"], "return_to_original")
 
     def test_startup_waits_for_answers_before_banner_or_run_shell(self) -> None:
         root = self.make_project()
@@ -2912,7 +3058,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "check_prompt_manifest")
         self.assertTrue(action["bundle_candidate"])
-        expected_card_ids = ["pm.core", "pm.output_contract_catalog", "pm.phase_map", "pm.startup_intake"]
+        expected_card_ids = [
+            "pm.core",
+            "pm.output_contract_catalog",
+            "pm.role_work_request",
+            "pm.phase_map",
+            "pm.startup_intake",
+        ]
         self.assertEqual(action["bundle_card_ids"], expected_card_ids)
         router.apply_action(root, "check_prompt_manifest")
 
@@ -2929,7 +3081,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(envelope["schema_version"], card_runtime.CARD_BUNDLE_ENVELOPE_SCHEMA)
         self.assertEqual(envelope["card_ids"], expected_card_ids)
         self.assertEqual(envelope["card_return_event"], "pm_card_bundle_ack")
-        self.assertEqual(len(envelope["cards"]), 4)
+        self.assertEqual(len(envelope["cards"]), 5)
 
         self.ack_system_card_bundle_action(root, action)
 
@@ -2937,7 +3089,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         for card_id in expected_card_ids:
             entry = next(entry for entry in router.SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id)
             self.assertTrue(state["flags"][entry["flag"]])
-        self.assertEqual(state["prompt_deliveries"], 5)
+        self.assertEqual(state["prompt_deliveries"], 6)
         return_ledger = read_json(run_root / "return_event_ledger.json")
         bundle_records = [
             item for item in return_ledger["pending_returns"]
@@ -3052,6 +3204,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_startup_fact_check_card(root)
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
+        self.deliver_expected_card(root, "pm.role_work_request")
         self.deliver_expected_card(root, "pm.phase_map")
         self.deliver_expected_card(root, "pm.startup_intake")
 
@@ -4957,6 +5110,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "pm_completes_current_node_from_reviewed_result")
 
         current = read_json(root / ".flowpilot" / "current.json")
+        run_root = root / current["current_run_root"]
         frontier = read_json(root / current["current_run_root"] / "execution_frontier.json")
         self.assertEqual(frontier["status"], "node_completed_by_pm")
         self.assertIn("node-001", frontier["completed_nodes"])
@@ -6218,9 +6372,29 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
 
         current = read_json(root / ".flowpilot" / "current.json")
+        run_root = root / current["current_run_root"]
         frontier = read_json(root / current["current_run_root"] / "execution_frontier.json")
-        self.assertEqual(frontier["status"], "route_mutated_repair_pending")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        self.assertEqual(frontier["active_node_id"], "node-001")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-repair")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_route_version"], 2)
+        self.assertEqual(read_json(run_root / "routes" / "route-001" / "flow.json")["active_node_id"], "node-001")
+        draft = read_json(run_root / "routes" / "route-001" / "flow.draft.json")
+        self.assertEqual(draft["candidate_activation_status"], "pending_route_recheck")
+        self.assertEqual(draft["route_topology"]["topology_strategy"], "return_to_original")
+        self.assertIn("node-001-repair", {node.get("node_id") for node in draft["nodes"]})
+        self.assertTrue(self.flag(root, "route_draft_written_by_pm"))
+
+        self.complete_route_checks(root)
+        router.record_external_event(
+            root,
+            "pm_activates_reviewed_route",
+            {"route_id": "route-001", "active_node_id": "node-001-repair"},
+        )
+        frontier = read_json(root / current["current_run_root"] / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "current_node_loop")
         self.assertEqual(frontier["active_node_id"], "node-001-repair")
+        self.assertEqual(frontier["route_version"], 2)
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "reviewer_final_backward_replay_passed")
@@ -6298,10 +6472,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         mutations = read_json(run_root / "routes" / "route-001" / "mutations.json")
         self.assertEqual([item["route_version"] for item in mutations["items"]], [2, 3])
         frontier = read_json(run_root / "execution_frontier.json")
-        self.assertEqual(frontier["route_version"], 3)
-        self.assertEqual(frontier["active_node_id"], "node-001-repair-v3")
+        self.assertEqual(frontier["route_version"], 1)
+        self.assertEqual(frontier["active_node_id"], "node-001")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-repair-v3")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_route_version"], 3)
         processed = state["external_event_idempotency"]["processed"]["pm_mutates_route_after_review_block"]
         self.assertEqual(len(processed), 2)
+
+    def test_route_mutation_supersede_strategy_does_not_require_return_to_original(self) -> None:
+        root = self.make_project()
+        run_root, _packet_path, _result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-supersede-route-mutation",
+        )
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.close_model_miss_triage(root, output_name="decisions/supersede_route_mutation_triage")
+
+        router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            {
+                "repair_node_id": "node-001-v2",
+                "topology_strategy": "supersede_original",
+                "superseded_nodes": ["node-001"],
+                "reason": "replace invalid original node",
+                "stale_evidence": ["node-packet-supersede-route-mutation"],
+                **self.prior_path_context_review(root, "Supersede route mutation considered the blocked original node."),
+            },
+        )
+
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        self.assertEqual(frontier["active_node_id"], "node-001")
+        self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-v2")
+        draft = read_json(run_root / "routes" / "route-001" / "flow.draft.json")
+        old_node = next(node for node in draft["nodes"] if node.get("node_id") == "node-001")
+        replacement = next(node for node in draft["nodes"] if node.get("node_id") == "node-001-v2")
+        self.assertEqual(old_node["status"], "superseded")
+        self.assertEqual(replacement["topology_strategy"], "supersede_original")
+        self.assertIsNone(replacement["repair_return_to_node_id"])
+
+        self.complete_route_checks(root)
+        router.record_external_event(root, "pm_activates_reviewed_route", {"route_id": "route-001", "active_node_id": "node-001-v2"})
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["active_node_id"], "node-001-v2")
+        self.assertEqual(frontier["route_version"], 2)
+        active_route = read_json(run_root / "routes" / "route-001" / "flow.json")
+        active_old_node = next(node for node in active_route["nodes"] if node.get("node_id") == "node-001")
+        self.assertEqual(active_old_node["status"], "superseded")
 
     def test_parent_node_requires_backward_replay_before_completion(self) -> None:
         root = self.make_project()
@@ -6482,8 +6701,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
 
         frontier = read_json(run_root / "execution_frontier.json")
-        self.assertEqual(frontier["status"], "route_mutated_repair_pending")
-        self.assertNotEqual(frontier["active_node_id"], "parent-001")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        self.assertEqual(frontier["active_node_id"], "parent-001")
+        self.assertNotEqual(frontier["pending_route_mutation"]["candidate_node_id"], "parent-001")
         decision = read_json(run_root / "routes" / "route-001" / "nodes" / "parent-001" / "pm_parent_segment_decision.json")
         self.assertTrue(decision["same_parent_replay_rerun_required"])
 
@@ -6814,6 +7034,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("controller.resume_reentry", card_ids)
         self.assertIn("pm.crew_rehydration_freshness", card_ids)
         self.assertIn("pm.resume_decision", card_ids)
+        self.assertIn("pm.role_work_request", card_ids)
         self.assertIn("pm.material_understanding", card_ids)
         self.assertIn("pm.research_package", card_ids)
         self.assertIn("pm.product_architecture", card_ids)

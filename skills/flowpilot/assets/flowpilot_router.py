@@ -56,6 +56,9 @@ GATE_DECISION_LEDGER_SCHEMA = "flowpilot.gate_decision_ledger.v1"
 PM_SUGGESTION_LEDGER_ENTRY_SCHEMA = "flowpilot.pm_suggestion_item.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
 PM_MODEL_MISS_TRIAGE_DECISION_EVENT = "pm_records_model_miss_triage_decision"
+PM_ROLE_WORK_REQUEST_EVENT = "pm_registers_role_work_request"
+ROLE_WORK_RESULT_RETURNED_EVENT = "role_work_result_returned"
+PM_ROLE_WORK_RESULT_DECISION_EVENT = "pm_records_role_work_result_decision"
 GATE_DECISION_EVENT = "role_records_gate_decision"
 EVENT_IDEMPOTENCY_LEDGER_SCHEMA = "flowpilot.external_event_idempotency.v1"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
@@ -153,6 +156,35 @@ MODEL_MISS_OFFICER_REPORT_REQUIRED_FIELDS = (
     "residual_blindspots",
     "contract_self_check",
 )
+PM_ROLE_WORK_REQUEST_INDEX_SCHEMA = "flowpilot.pm_role_work_request_index.v1"
+PM_ROLE_WORK_REQUEST_SCHEMA = "flowpilot.pm_role_work_request.v1"
+PM_ROLE_WORK_RESULT_DECISION_SCHEMA = "flowpilot.pm_role_work_result_decision.v1"
+PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES = {
+    "human_like_reviewer",
+    "process_flowguard_officer",
+    "product_flowguard_officer",
+    "worker_a",
+    "worker_b",
+}
+PM_ROLE_WORK_REQUEST_MODES = {"blocking", "advisory"}
+PM_ROLE_WORK_REQUEST_KINDS = {
+    "model_miss",
+    "evidence",
+    "review",
+    "implementation",
+    "research",
+    "model_update",
+    "model_check",
+    "other",
+}
+PM_ROLE_WORK_OPEN_STATUSES = {
+    "open",
+    "packet_created",
+    "packet_relayed",
+    "result_returned",
+    "result_relayed_to_pm",
+}
+PM_ROLE_WORK_TERMINAL_DECISIONS = {"absorbed", "canceled", "superseded"}
 STARTUP_ANSWER_ENUMS = {
     "background_agents": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
@@ -346,6 +378,13 @@ RUNTIME_FLAG_DEFAULTS = {
     "current_node_write_grant_issued": False,
     "node_completion_ledger_updated": False,
     "task_completion_projection_published": False,
+    "pm_role_work_request_registered": False,
+    "pm_role_work_request_packet_relayed": False,
+    "pm_role_work_result_returned": False,
+    "pm_role_work_result_relayed_to_pm": False,
+    "pm_role_work_result_absorbed": False,
+    "model_miss_triage_followup_request_pending": False,
+    "model_miss_triage_controlled_stop_recorded": False,
 }
 
 SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
@@ -455,6 +494,21 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
         "family": "transaction",
         "dedupe_fields": ("control_blocker_id", "repair_transaction_id"),
         "retry_group_fields": ("event", "control_blocker_id"),
+    },
+    PM_ROLE_WORK_REQUEST_EVENT: {
+        "family": "pm_role_work_request",
+        "dedupe_fields": ("request_id",),
+        "retry_group_fields": ("event", "request_id"),
+    },
+    ROLE_WORK_RESULT_RETURNED_EVENT: {
+        "family": "pm_role_work_result",
+        "dedupe_fields": ("request_id", "packet_id", "result_hash"),
+        "retry_group_fields": ("event", "request_id"),
+    },
+    PM_ROLE_WORK_RESULT_DECISION_EVENT: {
+        "family": "pm_role_work_result_decision",
+        "dedupe_fields": ("request_id", "decision"),
+        "retry_group_fields": ("event", "request_id"),
     },
     GATE_DECISION_EVENT: {
         "family": "gate",
@@ -651,6 +705,13 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "label": "pm_output_contract_catalog_card_delivered",
         "card_id": "pm.output_contract_catalog",
         "requires_flag": "pm_core_delivered",
+        "to_role": "project_manager",
+    },
+    {
+        "flag": "pm_role_work_request_card_delivered",
+        "label": "pm_role_work_request_card_delivered",
+        "card_id": "pm.role_work_request",
+        "requires_flag": "pm_output_contract_catalog_delivered",
         "to_role": "project_manager",
     },
     {
@@ -1461,6 +1522,18 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "requires_flag": "pm_model_miss_triage_card_delivered",
         "summary": "PM recorded the model-miss triage decision that precedes normal repair.",
     },
+    "pm_registers_role_work_request": {
+        "flag": "pm_role_work_request_registered",
+        "summary": "PM registered a bounded role-work request through the generic always-available PM channel.",
+    },
+    "role_work_result_returned": {
+        "flag": "pm_role_work_result_returned",
+        "summary": "The requested role returned a result envelope for a PM role-work request.",
+    },
+    "pm_records_role_work_result_decision": {
+        "flag": "pm_role_work_result_absorbed",
+        "summary": "PM recorded whether a role-work result was absorbed, canceled, or superseded.",
+    },
     "pm_records_control_blocker_repair_decision": {
         "flag": "pm_control_blocker_repair_decision_recorded",
         "summary": "PM recorded a repair decision for a router materialized control blocker.",
@@ -1962,14 +2035,27 @@ def _currently_allowed_external_events(run_state: dict[str, Any]) -> list[str]:
     if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
         raw_allowed = pending_action.get("allowed_external_events")
         if isinstance(raw_allowed, list) and all(isinstance(item, str) for item in raw_allowed):
-            return list(raw_allowed)
+            allowed = list(raw_allowed)
+            to_role = str(pending_action.get("to_role") or "")
+            if "project_manager" in {part.strip() for part in to_role.split(",")} and PM_ROLE_WORK_REQUEST_EVENT not in allowed:
+                allowed.append(PM_ROLE_WORK_REQUEST_EVENT)
+            return allowed
     groups = _pending_expected_external_event_groups(run_state)
     if groups:
-        return [event for event, _meta in groups[0]]
+        allowed = [event for event, _meta in groups[0]]
+        if any(_event_wait_role(event, meta) == "project_manager" for event, meta in groups[0]):
+            allowed.append(PM_ROLE_WORK_REQUEST_EVENT)
+        return allowed
     return []
 
 
 def _record_event_expected_role(event: str, run_state: dict[str, Any]) -> str:
+    if event == ROLE_WORK_RESULT_RETURNED_EVENT:
+        summary = run_state.get("pm_role_work_requests") if isinstance(run_state.get("pm_role_work_requests"), dict) else {}
+        active_to_role = str(summary.get("active_to_role") or "").strip()
+        if active_to_role:
+            return active_to_role
+        return ",".join(sorted(PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES))
     pending_action = run_state.get("pending_action")
     if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
         raw_allowed = pending_action.get("allowed_external_events")
@@ -2227,6 +2313,38 @@ def _current_node_completion_identity_scope(run_root: Path, run_state: dict[str,
     }
 
 
+def _pm_role_work_request_identity_scope(payload_view: dict[str, Any]) -> dict[str, str]:
+    return {
+        "event": PM_ROLE_WORK_REQUEST_EVENT,
+        "request_id": str(payload_view.get("request_id") or "missing-request-id"),
+    }
+
+
+def _role_work_result_identity_scope(payload_view: dict[str, Any]) -> dict[str, str]:
+    result_hash = str(
+        payload_view.get("result_hash")
+        or payload_view.get("result_body_hash")
+        or payload_view.get("body_hash")
+        or ""
+    )
+    if not result_hash:
+        result_hash = _payload_body_hash(payload_view)
+    return {
+        "event": ROLE_WORK_RESULT_RETURNED_EVENT,
+        "request_id": str(payload_view.get("request_id") or "missing-request-id"),
+        "packet_id": str(payload_view.get("packet_id") or "missing-packet-id"),
+        "result_hash": result_hash,
+    }
+
+
+def _pm_role_work_result_decision_identity_scope(payload_view: dict[str, Any]) -> dict[str, str]:
+    return {
+        "event": PM_ROLE_WORK_RESULT_DECISION_EVENT,
+        "request_id": str(payload_view.get("request_id") or "missing-request-id"),
+        "decision": str(payload_view.get("decision") or "missing-decision"),
+    }
+
+
 def _scoped_event_identity(
     project_root: Path,
     run_root: Path,
@@ -2250,6 +2368,12 @@ def _scoped_event_identity(
         scope = _route_draft_identity_scope(payload_view)
     elif event == "pm_completes_current_node_from_reviewed_result":
         scope = _current_node_completion_identity_scope(run_root, run_state, payload_view)
+    elif event == PM_ROLE_WORK_REQUEST_EVENT:
+        scope = _pm_role_work_request_identity_scope(payload_view)
+    elif event == ROLE_WORK_RESULT_RETURNED_EVENT:
+        scope = _role_work_result_identity_scope(payload_view)
+    elif event == PM_ROLE_WORK_RESULT_DECISION_EVENT:
+        scope = _pm_role_work_result_decision_identity_scope(payload_view)
     else:
         return None
     key_fields = tuple(str(field) for field in policy.get("dedupe_fields", ()))
@@ -4705,6 +4829,49 @@ def _write_model_miss_triage_decision(project_root: Path, run_root: Path, run_st
         "defect_or_blocker_id": decision.get("defect_or_blocker_id"),
         "checked_officer_reports": checked_reports,
     }
+    run_state["flags"]["model_miss_triage_followup_request_pending"] = False
+    if decision_value == "request_officer_model_miss_analysis":
+        run_state["model_miss_triage_followup_request"] = {
+            "schema_version": "flowpilot.model_miss_triage_followup_request.v1",
+            "status": "awaiting_pm_role_work_request",
+            "source_decision_path": project_relative(project_root, decision_path),
+            "source_decision_hash": hashlib.sha256(decision_path.read_bytes()).hexdigest(),
+            "required_request_kind": "model_miss",
+            "required_output_contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
+            "suggested_to_roles": ["process_flowguard_officer", "product_flowguard_officer"],
+            "required_event": PM_ROLE_WORK_REQUEST_EVENT,
+            "reason": "model_miss_triage_followup_request",
+            "created_at": utc_now(),
+        }
+        run_state["flags"]["model_miss_triage_followup_request_pending"] = True
+    elif decision_value == "needs_evidence_before_modeling":
+        run_state["model_miss_evidence_followup_request"] = {
+            "schema_version": "flowpilot.model_miss_evidence_followup_request.v1",
+            "status": "awaiting_pm_role_work_request",
+            "source_decision_path": project_relative(project_root, decision_path),
+            "source_decision_hash": hashlib.sha256(decision_path.read_bytes()).hexdigest(),
+            "required_request_kind": "evidence",
+            "required_output_contract_id": None,
+            "suggested_to_roles": sorted(PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES),
+            "required_event": PM_ROLE_WORK_REQUEST_EVENT,
+            "reason": "model_miss_evidence_followup_request",
+            "created_at": utc_now(),
+        }
+        run_state["flags"]["model_miss_triage_followup_request_pending"] = True
+    elif decision_value == "stop_for_user":
+        run_state["model_miss_triage_controlled_stop"] = {
+            "schema_version": "flowpilot.model_miss_triage_controlled_stop.v1",
+            "status": "waiting_for_user",
+            "source_decision_path": project_relative(project_root, decision_path),
+            "source_decision_hash": hashlib.sha256(decision_path.read_bytes()).hexdigest(),
+            "reason": "model_miss_triage_controlled_stop",
+            "created_at": utc_now(),
+        }
+        run_state["flags"]["model_miss_triage_controlled_stop_recorded"] = True
+    elif decision_value in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES:
+        run_state["model_miss_triage_followup_request"] = None
+        run_state["model_miss_evidence_followup_request"] = None
+        run_state["model_miss_triage_controlled_stop"] = None
     return decision_value
 
 
@@ -8000,6 +8167,223 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
     )
 
 
+def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    if not isinstance(payload, dict):
+        raise RouterError("PM role-work request payload must be an object")
+    if not _pm_role_work_channel_open(run_state):
+        raise RouterError("PM role-work request requires an open PM decision context")
+    requested_by_role = str(payload.get("requested_by_role") or payload.get("from_role") or "").strip()
+    if requested_by_role != "project_manager":
+        raise RouterError("PM role-work request requires requested_by_role=project_manager")
+    request_id = str(payload.get("request_id") or "").strip()
+    if not request_id:
+        raise RouterError("PM role-work request requires request_id")
+    to_role = str(payload.get("to_role") or payload.get("recipient_role") or "").strip()
+    if to_role not in PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES:
+        raise RouterError("PM role-work request must target a FlowPilot role other than PM or Controller")
+    request_mode = str(payload.get("request_mode") or payload.get("mode") or "").strip()
+    if request_mode not in PM_ROLE_WORK_REQUEST_MODES:
+        raise RouterError("PM role-work request requires request_mode=blocking or advisory")
+    request_kind = str(payload.get("request_kind") or payload.get("kind") or "").strip()
+    if request_kind not in PM_ROLE_WORK_REQUEST_KINDS:
+        raise RouterError("PM role-work request has unsupported request_kind")
+    output_contract = payload.get("output_contract") if isinstance(payload.get("output_contract"), dict) else {}
+    output_contract_id = str(
+        payload.get("output_contract_id")
+        or output_contract.get("contract_id")
+        or ""
+    ).strip()
+    if not output_contract_id:
+        raise RouterError("PM role-work request requires output_contract_id")
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    existing = _pm_role_work_request_record(index, request_id)
+    if isinstance(existing, dict) and existing.get("status") in PM_ROLE_WORK_OPEN_STATUSES:
+        raise RouterError(f"PM role-work request_id is already open: {request_id}")
+    body_text, body_ref = _pm_role_work_request_body_text(project_root, payload)
+    _validate_pm_role_work_request_against_followup(
+        run_state,
+        request_id=request_id,
+        to_role=to_role,
+        request_kind=request_kind,
+        output_contract_id=output_contract_id,
+    )
+    node_id = str(payload.get("node_id") or "pm-role-work").strip() or "pm-role-work"
+    packet_id = str(payload.get("packet_id") or f"pm-role-work-{_safe_packet_id_component(request_id)}")
+    packet_type = _pm_role_work_packet_type_from_contract(
+        run_root,
+        contract_id=output_contract_id,
+        to_role=to_role,
+        request_kind=request_kind,
+    )
+    selected_contract = dict(output_contract) if output_contract else _pm_role_work_output_contract(
+        run_root,
+        contract_id=output_contract_id,
+        to_role=to_role,
+        packet_type=packet_type,
+        node_id=node_id,
+    )
+    if output_contract:
+        selected_contract.setdefault("contract_id", output_contract_id)
+        selected_contract.setdefault("selected_by_role", "project_manager")
+        selected_contract.setdefault("recipient_role", to_role)
+        selected_contract.setdefault("node_id", node_id)
+        selected_contract.setdefault("packet_type", packet_type)
+    envelope = packet_runtime.create_packet(
+        project_root,
+        run_id=str(run_state["run_id"]),
+        packet_id=packet_id,
+        from_role="project_manager",
+        to_role=to_role,
+        node_id=node_id,
+        body_text=body_text,
+        is_current_node=False,
+        packet_type=packet_type,
+        metadata={
+            "source": PM_ROLE_WORK_REQUEST_EVENT,
+            "request_id": request_id,
+            "request_kind": request_kind,
+            "request_mode": request_mode,
+            "pm_role_work_request": True,
+        },
+        output_contract=selected_contract,
+    )
+    paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
+    record = {
+        "schema_version": PM_ROLE_WORK_REQUEST_SCHEMA,
+        "request_id": request_id,
+        "requested_by_role": "project_manager",
+        "to_role": to_role,
+        "request_mode": request_mode,
+        "request_kind": request_kind,
+        "status": "open",
+        "packet_id": packet_id,
+        "packet_type": packet_type,
+        "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
+        "packet_body_path": envelope["body_path"],
+        "packet_body_hash": envelope["body_hash"],
+        "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+        "result_body_path": project_relative(project_root, paths["result_body"]),
+        "output_contract_id": envelope.get("output_contract_id") or output_contract_id,
+        "controller_may_read_packet_body": False,
+        "body_source": body_ref,
+        "registered_at": utc_now(),
+    }
+    if isinstance(existing, dict):
+        existing.update(record)
+    else:
+        index.setdefault("requests", []).append(record)
+    index["active_request_id"] = request_id
+    _write_pm_role_work_request_index(run_root, index)
+    run_state["pm_role_work_requests"] = {
+        "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
+        "active_request_id": request_id,
+        "active_packet_id": packet_id,
+        "active_to_role": to_role,
+        "active_request_mode": request_mode,
+    }
+
+
+def _write_role_work_result_returned(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    if not isinstance(payload, dict):
+        raise RouterError("role-work result payload must be an object")
+    request_id = str(payload.get("request_id") or "").strip()
+    if not request_id:
+        raise RouterError("role-work result requires request_id")
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    record = _pm_role_work_request_record(index, request_id)
+    if not isinstance(record, dict):
+        raise RouterError(f"role-work result references unknown request_id: {request_id}")
+    if record.get("status") != "packet_relayed":
+        raise RouterError("role-work result requires Controller-relayed request packet")
+    packet_id = str(payload.get("packet_id") or record.get("packet_id") or "").strip()
+    if packet_id != str(record.get("packet_id") or ""):
+        raise RouterError("role-work result packet_id must match request packet")
+    result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+    raw_result_path = payload.get("result_envelope_path")
+    if raw_result_path:
+        supplied = resolve_project_path(project_root, str(raw_result_path))
+        if supplied.resolve() != result_path.resolve():
+            raise RouterError("role-work result_envelope_path must match request record")
+    if not result_path.exists():
+        raise RouterError(f"role-work result envelope is missing: {result_path}")
+    result_hash = payload.get("result_envelope_hash")
+    if result_hash and packet_runtime.sha256_file(result_path) != str(result_hash):
+        raise RouterError("role-work result envelope hash mismatch")
+    result = packet_runtime.load_envelope(project_root, result_path)
+    if result.get("packet_id") != packet_id:
+        raise RouterError("role-work result envelope packet_id mismatch")
+    if result.get("completed_by_role") != record.get("to_role"):
+        raise RouterError("role-work result was completed by the wrong role")
+    if result.get("next_recipient") != "project_manager":
+        raise RouterError("role-work result must route next_recipient=project_manager")
+    packet_path = _packet_envelope_path_from_record(project_root, run_state, record)
+    packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
+    audit = packet_runtime.validate_result_ready_for_reviewer_relay(
+        project_root,
+        packet_envelope=packet_envelope,
+        result_envelope=result,
+        agent_role_map=_agent_role_map_from_crew_ledger(run_root),
+    )
+    if not audit.get("passed"):
+        raise RouterError(f"role-work result is not ready for PM relay: {audit.get('blockers')}")
+    record["status"] = "result_returned"
+    record["result_envelope_path"] = project_relative(project_root, result_path)
+    record["result_envelope_hash"] = packet_runtime.sha256_file(result_path)
+    record["result_body_path"] = result.get("result_body_path")
+    record["result_body_hash"] = result.get("result_body_hash")
+    record["result_returned_at"] = utc_now()
+    index["active_request_id"] = request_id
+    _write_pm_role_work_request_index(run_root, index)
+
+
+def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> str:
+    decision_payload = _load_file_backed_role_payload_if_present(project_root, payload)
+    request_id = str(decision_payload.get("request_id") or "").strip()
+    if not request_id:
+        raise RouterError("PM role-work result decision requires request_id")
+    decided_by_role = str(
+        decision_payload.get("decided_by_role")
+        or decision_payload.get("recorded_by_role")
+        or ""
+    ).strip()
+    if decided_by_role != "project_manager":
+        raise RouterError("PM role-work result decision requires decided_by_role=project_manager")
+    decision = str(decision_payload.get("decision") or "").strip()
+    if decision not in PM_ROLE_WORK_TERMINAL_DECISIONS:
+        raise RouterError("PM role-work result decision must be absorbed, canceled, or superseded")
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    record = _pm_role_work_request_record(index, request_id)
+    if not isinstance(record, dict):
+        raise RouterError(f"PM role-work result decision references unknown request_id: {request_id}")
+    if decision == "absorbed" and record.get("status") != "result_relayed_to_pm":
+        raise RouterError("PM may absorb role-work result only after Controller relays the result to PM")
+    if decision in {"canceled", "superseded"} and record.get("status") not in PM_ROLE_WORK_OPEN_STATUSES:
+        raise RouterError("PM role-work result decision can cancel or supersede only an unresolved request")
+    decision_record = {
+        "schema_version": PM_ROLE_WORK_RESULT_DECISION_SCHEMA,
+        "request_id": request_id,
+        "decided_by_role": "project_manager",
+        "decision": decision,
+        "decision_reason": decision_payload.get("decision_reason") or "",
+        "recorded_at": utc_now(),
+        **_role_output_envelope_record(decision_payload),
+    }
+    decisions_dir = run_root / "pm_work_requests" / "decisions"
+    decision_path = decisions_dir / f"{_safe_packet_id_component(request_id)}.{decision}.json"
+    write_json(decision_path, decision_record)
+    record["status"] = decision
+    record["pm_result_decision"] = {
+        "decision": decision,
+        "decision_path": project_relative(project_root, decision_path),
+        "decision_hash": packet_runtime.sha256_file(decision_path),
+        "recorded_at": decision_record["recorded_at"],
+    }
+    if index.get("active_request_id") == request_id:
+        index["active_request_id"] = None
+    _write_pm_role_work_request_index(run_root, index)
+    return decision
+
+
 def _write_worker_research_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not run_state["flags"].get("research_packet_relayed"):
         raise RouterError("research report requires Controller-relayed research packet")
@@ -8723,7 +9107,7 @@ def _route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
     nodes = route.get("nodes")
     if not isinstance(nodes, list):
         return []
-    return [node for node in nodes if isinstance(node, dict) and node.get("node_id")]
+    return [node for node in nodes if isinstance(node, dict) and (node.get("node_id") or node.get("id"))]
 
 
 def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> list[dict[str, Any]]:
@@ -8735,7 +9119,7 @@ def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> 
     }
     effective = []
     for node in _route_nodes(route):
-        node_id = str(node["node_id"])
+        node_id = str(node.get("node_id") or node.get("id"))
         if node_id in superseded or node.get("status") in {"superseded", "stale", "failed"}:
             continue
         effective.append(node)
@@ -8743,7 +9127,7 @@ def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> 
 
 
 def _next_effective_node_id(route: dict[str, Any], mutations: dict[str, Any], completed_nodes: list[str], current_node_id: str) -> str | None:
-    effective_ids = [str(node["node_id"]) for node in _effective_route_nodes(route, mutations)]
+    effective_ids = [str(node.get("node_id") or node.get("id")) for node in _effective_route_nodes(route, mutations)]
     if not effective_ids:
         return None
     try:
@@ -10000,6 +10384,221 @@ def _material_scan_index_path(run_root: Path) -> Path:
 
 def _research_packet_index_path(run_root: Path) -> Path:
     return run_root / "research" / "research_packet.json"
+
+
+def _pm_role_work_request_index_path(run_root: Path) -> Path:
+    return run_root / "pm_work_requests" / "index.json"
+
+
+def _empty_pm_role_work_request_index(run_state: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": PM_ROLE_WORK_REQUEST_INDEX_SCHEMA,
+        "run_id": run_state["run_id"],
+        "controller_visibility": "packet_and_result_envelopes_only",
+        "controller_may_read_packet_body": False,
+        "controller_may_read_result_body": False,
+        "active_request_id": None,
+        "requests": [],
+        "written_at": utc_now(),
+        "updated_at": utc_now(),
+    }
+
+
+def _load_pm_role_work_request_index(run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    path = _pm_role_work_request_index_path(run_root)
+    if not path.exists():
+        return _empty_pm_role_work_request_index(run_state)
+    index = read_json(path)
+    if index.get("schema_version") != PM_ROLE_WORK_REQUEST_INDEX_SCHEMA:
+        raise RouterError("PM role-work request index has unsupported schema")
+    if not isinstance(index.get("requests"), list):
+        raise RouterError("PM role-work request index requires requests list")
+    index.setdefault("active_request_id", None)
+    return index
+
+
+def _write_pm_role_work_request_index(run_root: Path, index: dict[str, Any]) -> None:
+    index["updated_at"] = utc_now()
+    write_json(_pm_role_work_request_index_path(run_root), index)
+
+
+def _pm_role_work_request_record(index: dict[str, Any], request_id: str) -> dict[str, Any] | None:
+    for record in index.get("requests", []):
+        if isinstance(record, dict) and record.get("request_id") == request_id:
+            return record
+    return None
+
+
+def _active_pm_role_work_request(index: dict[str, Any]) -> dict[str, Any] | None:
+    active_id = str(index.get("active_request_id") or "").strip()
+    if active_id:
+        active = _pm_role_work_request_record(index, active_id)
+        if isinstance(active, dict) and active.get("status") in PM_ROLE_WORK_OPEN_STATUSES:
+            return active
+    for record in reversed(index.get("requests", [])):
+        if isinstance(record, dict) and record.get("status") in PM_ROLE_WORK_OPEN_STATUSES:
+            return record
+    return None
+
+
+def _unresolved_pm_role_work_requests(run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    return [
+        record
+        for record in index.get("requests", [])
+        if isinstance(record, dict) and record.get("status") in PM_ROLE_WORK_OPEN_STATUSES
+    ]
+
+
+def _safe_packet_id_component(value: str) -> str:
+    safe = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in value).strip("-")
+    return safe[:80] or "request"
+
+
+def _pm_role_work_request_body_text(project_root: Path, payload: dict[str, Any]) -> tuple[str, dict[str, str]]:
+    path_pairs = (
+        ("packet_body_path", "packet_body_hash"),
+        ("request_body_path", "request_body_hash"),
+        ("body_path", "body_hash"),
+    )
+    for path_key, hash_key in path_pairs:
+        raw_path = payload.get(path_key)
+        raw_hash = payload.get(hash_key)
+        if not raw_path:
+            continue
+        if not raw_hash:
+            raise RouterError(f"PM role-work request {path_key} requires matching {hash_key}")
+        path = resolve_project_path(project_root, str(raw_path))
+        if not path.exists():
+            raise RouterError(f"PM role-work request body path is missing: {raw_path}")
+        actual_hash = packet_runtime.sha256_file(path)
+        if actual_hash != str(raw_hash):
+            raise RouterError("PM role-work request body hash mismatch")
+        body_text = path.read_text(encoding="utf-8")
+        if not body_text.strip():
+            raise RouterError("PM role-work request body file is empty")
+        return body_text, {path_key: project_relative(project_root, path), hash_key: actual_hash}
+    if isinstance(payload.get("body_text"), str) and payload["body_text"].strip():
+        raise RouterError(
+            "PM role-work request body must be file-backed; use packet_body_path/packet_body_hash "
+            "so Controller does not receive the role-work body inline"
+        )
+    raise RouterError("PM role-work request requires file-backed packet_body_path/packet_body_hash")
+
+
+def _pm_role_work_packet_type_from_contract(
+    run_root: Path,
+    *,
+    contract_id: str,
+    to_role: str,
+    request_kind: str,
+) -> str:
+    registry = read_json_if_exists(run_root / "runtime_kit" / "contracts" / "contract_index.json")
+    if not registry:
+        registry = read_json(runtime_kit_source() / "contracts" / "contract_index.json")
+    for rule in registry.get("selection_rules", []):
+        if not isinstance(rule, dict) or rule.get("contract_id") != contract_id:
+            continue
+        roles = rule.get("recipient_roles")
+        if isinstance(roles, list) and to_role not in roles:
+            continue
+        packet_type = str(rule.get("packet_type") or "").strip()
+        if packet_type:
+            return packet_type
+    if to_role in {"process_flowguard_officer", "product_flowguard_officer"}:
+        return "officer_request"
+    if to_role == "human_like_reviewer":
+        return "review_request"
+    if request_kind in {"implementation", "model_update"}:
+        return "work_packet"
+    return "research"
+
+
+def _pm_role_work_output_contract(
+    run_root: Path,
+    *,
+    contract_id: str,
+    to_role: str,
+    packet_type: str,
+    node_id: str,
+) -> dict[str, Any]:
+    registry_path = run_root / "runtime_kit" / "contracts" / "contract_index.json"
+    registry = read_json_if_exists(registry_path)
+    if not registry:
+        registry_path = runtime_kit_source() / "contracts" / "contract_index.json"
+        registry = read_json(registry_path)
+    for contract in registry.get("contracts", []):
+        if not isinstance(contract, dict) or contract.get("contract_id") != contract_id:
+            continue
+        roles = contract.get("recipient_roles")
+        if isinstance(roles, list) and to_role not in roles:
+            raise RouterError(f"output contract {contract_id} does not allow recipient role {to_role}")
+        selected = dict(contract)
+        selected["selected_by_role"] = "project_manager"
+        selected["recipient_role"] = to_role
+        selected["node_id"] = node_id
+        selected["packet_type"] = packet_type
+        selected["registry_path"] = "runtime_kit/contracts/contract_index.json"
+        return selected
+    raise RouterError(f"PM role-work request output_contract_id is not in the registry: {contract_id}")
+
+
+def _pm_role_work_channel_open(run_state: dict[str, Any]) -> bool:
+    if run_state.get("flags", {}).get("model_miss_triage_followup_request_pending"):
+        return True
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict) and pending.get("action_type") == "await_role_decision":
+        to_role = str(pending.get("to_role") or "")
+        if "project_manager" in {part.strip() for part in to_role.split(",")}:
+            return True
+        allowed = pending.get("allowed_external_events")
+        if isinstance(allowed, list) and any(str(item).startswith("pm_") for item in allowed):
+            return True
+    for group in _pending_expected_external_event_groups(run_state):
+        roles = {_event_wait_role(event, meta) for event, meta in group}
+        if "project_manager" in roles:
+            return True
+    return False
+
+
+def _model_miss_followup_expectation(run_state: dict[str, Any]) -> dict[str, Any] | None:
+    followup = run_state.get("model_miss_triage_followup_request")
+    if isinstance(followup, dict) and followup.get("status") == "awaiting_pm_role_work_request":
+        return followup
+    followup = run_state.get("model_miss_evidence_followup_request")
+    if isinstance(followup, dict) and followup.get("status") == "awaiting_pm_role_work_request":
+        return followup
+    return None
+
+
+def _validate_pm_role_work_request_against_followup(
+    run_state: dict[str, Any],
+    *,
+    request_id: str,
+    to_role: str,
+    request_kind: str,
+    output_contract_id: str,
+) -> None:
+    followup = _model_miss_followup_expectation(run_state)
+    if followup is None:
+        return
+    required_kind = str(followup.get("required_request_kind") or "").strip()
+    if required_kind and request_kind != required_kind:
+        raise RouterError(f"PM role-work request must use request_kind={required_kind} for the pending model-miss follow-up")
+    required_contract = str(followup.get("required_output_contract_id") or "").strip()
+    if required_contract and output_contract_id != required_contract:
+        raise RouterError(f"PM role-work request must use output_contract_id={required_contract} for the pending model-miss follow-up")
+    allowed_roles = followup.get("suggested_to_roles")
+    if isinstance(allowed_roles, list) and allowed_roles and to_role not in allowed_roles:
+        raise RouterError("PM role-work request targets a role outside the pending model-miss follow-up roles")
+    followup["status"] = "request_registered"
+    followup["request_id"] = request_id
+    followup["registered_at"] = utc_now()
+    if run_state.get("model_miss_triage_followup_request") is followup:
+        run_state["model_miss_triage_followup_request"] = followup
+    if run_state.get("model_miss_evidence_followup_request") is followup:
+        run_state["model_miss_evidence_followup_request"] = followup
+    run_state["flags"]["model_miss_triage_followup_request_pending"] = False
 
 
 def _repair_transactions_root(run_root: Path) -> Path:
@@ -11287,18 +11886,66 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="route mutation")
     frontier = read_json_if_exists(run_root / "execution_frontier.json")
     route_id = str(payload.get("route_id") or frontier.get("active_route_id") or "route-001")
-    active_node_id = str(payload.get("active_node_id") or payload.get("repair_node_id") or frontier.get("active_node_id") or "node-001")
+    current_active_node_id = str(frontier.get("active_node_id") or "node-001")
+    active_node_id = str(payload.get("active_node_id") or payload.get("repair_node_id") or current_active_node_id)
     repair_return_to_node_id = str(
         payload.get("repair_return_to_node_id")
         or payload.get("mainline_return_node_id")
         or payload.get("return_to_node_id")
         or ""
     ).strip()
-    if not repair_return_to_node_id:
-        raise RouterError("route mutation requires repair_return_to_node_id")
+    repair_of_node_id = str(
+        payload.get("repair_of_node_id")
+        or payload.get("affected_node_id")
+        or payload.get("original_node_id")
+        or current_active_node_id
+    ).strip()
+    continue_after_node_id = str(
+        payload.get("continue_after_node_id")
+        or payload.get("mainline_continue_node_id")
+        or payload.get("replacement_continues_to_node_id")
+        or ""
+    ).strip()
     route_version = int(payload.get("route_version") or int(frontier.get("route_version") or 1) + 1)
     superseded_nodes = [str(item) for item in (payload.get("superseded_nodes") or [])]
     stale_evidence = [str(item) for item in (payload.get("stale_evidence") or [])]
+    topology_strategy = str(
+        payload.get("topology_strategy")
+        or payload.get("mutation_topology")
+        or payload.get("mutation_strategy")
+        or ""
+    ).strip()
+    if not topology_strategy:
+        if repair_return_to_node_id:
+            topology_strategy = "return_to_original"
+        elif superseded_nodes:
+            topology_strategy = "supersede_original"
+        elif continue_after_node_id:
+            topology_strategy = "branch_then_continue"
+    if topology_strategy not in {"return_to_original", "supersede_original", "branch_then_continue"}:
+        raise RouterError("route mutation requires topology_strategy=return_to_original, supersede_original, or branch_then_continue")
+    if not repair_of_node_id:
+        raise RouterError("route mutation requires repair_of_node_id")
+    if topology_strategy == "return_to_original" and not repair_return_to_node_id:
+        raise RouterError("return_to_original route mutation requires repair_return_to_node_id")
+    if topology_strategy == "supersede_original":
+        if not superseded_nodes:
+            raise RouterError("supersede_original route mutation requires superseded_nodes")
+        if repair_return_to_node_id:
+            raise RouterError("supersede_original route mutation must not force repair_return_to_node_id")
+    if topology_strategy == "branch_then_continue" and not continue_after_node_id:
+        raise RouterError("branch_then_continue route mutation requires continue_after_node_id")
+    route_topology = {
+        "topology_strategy": topology_strategy,
+        "inserted_node_id": active_node_id,
+        "repair_of_node_id": repair_of_node_id,
+        "repair_return_to_node_id": repair_return_to_node_id or None,
+        "superseded_nodes": superseded_nodes,
+        "continue_after_node_id": continue_after_node_id or None,
+        "process_officer_recheck_required": True,
+        "route_activation_recheck_required": True,
+        "display_current_route_on_node_entry_only": True,
+    }
     mutation_record = {
         "schema_version": "flowpilot.route_mutation.v1",
         "run_id": run_state["run_id"],
@@ -11309,9 +11956,15 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         "stale_evidence": stale_evidence,
         "superseded_nodes": superseded_nodes,
         "prior_path_context_review": prior_review,
+        "topology_strategy": topology_strategy,
+        "route_topology": route_topology,
         "repair_return_policy": {
             "repair_node_id": active_node_id,
-            "repair_return_to_node_id": repair_return_to_node_id,
+            "repair_of_node_id": repair_of_node_id,
+            "repair_return_to_node_id": repair_return_to_node_id or None,
+            "superseded_nodes": superseded_nodes,
+            "continue_after_node_id": continue_after_node_id or None,
+            "topology_strategy": topology_strategy,
             "process_officer_recheck_required": True,
             "route_activation_recheck_required": True,
         },
@@ -11332,27 +11985,45 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
     route = read_json_if_exists(route_path)
     route.setdefault("schema_version", "flowpilot.route.v1")
     route.setdefault("route_id", route_id)
-    route["route_version"] = route_version
-    nodes = route.setdefault("nodes", [])
+    draft_route = dict(route)
+    draft_route["schema_version"] = "flowpilot.route_draft.v1"
+    draft_route["route_id"] = route_id
+    draft_route["route_version"] = route_version
+    draft_route["source"] = "pm_mutates_route_after_review_block"
+    draft_route["candidate_activation_required"] = True
+    draft_route["candidate_activation_status"] = "pending_route_recheck"
+    draft_route["active_node_id"] = active_node_id
+    draft_route["route_topology"] = route_topology
+    draft_route["route_mutation_source_path"] = project_relative(project_root, mutation_path)
+    draft_route["updated_at"] = utc_now()
+    nodes = [
+        dict(node)
+        for node in draft_route.get("nodes", [])
+        if isinstance(node, dict)
+    ]
     for node in nodes:
-        if isinstance(node, dict) and str(node.get("node_id")) in superseded_nodes:
+        if isinstance(node, dict) and str(node.get("node_id") or node.get("id")) in superseded_nodes:
             node["status"] = "superseded"
             node["superseded_by"] = active_node_id
             node["superseded_at"] = utc_now()
-    if not any(isinstance(node, dict) and str(node.get("node_id")) == active_node_id for node in nodes):
+    if not any(isinstance(node, dict) and str(node.get("node_id") or node.get("id")) == active_node_id for node in nodes):
         nodes.append(
             {
                 "node_id": active_node_id,
-                "status": "active",
+                "status": "pending_activation",
                 "title": str(payload.get("repair_node_title") or "Repair node"),
                 "created_by_mutation": True,
                 "mutation_reason": mutation_record["reason"],
-                "repair_return_to_node_id": repair_return_to_node_id,
+                "topology_strategy": topology_strategy,
+                "repair_of_node_id": repair_of_node_id,
+                "repair_return_to_node_id": repair_return_to_node_id or None,
+                "supersedes_node_ids": superseded_nodes,
+                "continue_after_node_id": continue_after_node_id or None,
+                "route_topology": route_topology,
             }
         )
-    route["active_node_id"] = active_node_id
-    route["updated_at"] = utc_now()
-    write_json(route_path, route)
+    draft_route["nodes"] = nodes
+    write_json(run_root / "routes" / route_id / "flow.draft.json", draft_route)
     stale_ledger_path = run_root / "evidence" / "stale_evidence_ledger.json"
     stale_ledger = read_json_if_exists(stale_ledger_path) or {"schema_version": "flowpilot.stale_evidence_ledger.v1", "items": []}
     for evidence_id in stale_evidence:
@@ -11371,27 +12042,25 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         {
             "schema_version": "flowpilot.execution_frontier.v1",
             "run_id": run_state["run_id"],
-            "status": "route_mutated_repair_pending",
+            "status": "route_mutation_pending_recheck",
             "active_route_id": route_id,
-            "active_node_id": active_node_id,
-            "route_version": route_version,
+            "active_node_id": current_active_node_id,
             "latest_mutation_path": project_relative(project_root, mutation_path),
+            "pending_route_mutation": {
+                "candidate_node_id": active_node_id,
+                "candidate_route_version": route_version,
+                "candidate_route_draft_path": project_relative(project_root, run_root / "routes" / route_id / "flow.draft.json"),
+                "topology_strategy": topology_strategy,
+                "display_current_route_on_node_entry_only": True,
+            },
             "updated_at": utc_now(),
             "source": "pm_mutates_route_after_review_block",
         }
     )
     write_json(run_root / "execution_frontier.json", frontier)
-    _write_display_plan_from_route(
-        project_root,
-        run_root,
-        run_state,
-        route_id=route_id,
-        route_version=route_version,
-        route_payload=route,
-        active_node_id=active_node_id,
-        source_event="pm_mutates_route_after_review_block",
-    )
     _reset_route_hard_gate_approvals_for_recheck(run_state)
+    run_state.setdefault("flags", {})["pm_route_skeleton_card_delivered"] = True
+    run_state.setdefault("flags", {})["route_draft_written_by_pm"] = True
     _reset_flags(run_state, CURRENT_NODE_CYCLE_FLAGS + ROUTE_COMPLETION_FLAGS)
 
 
@@ -12101,6 +12770,10 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
     if not pm_suggestion_status["clean"]:
         first_issue = pm_suggestion_status["issues"][0]["message"] if pm_suggestion_status["issues"] else "unknown issue"
         raise RouterError(f"terminal closure requires clean PM suggestion ledger: {first_issue}")
+    unresolved_role_work = _unresolved_pm_role_work_requests(run_root, run_state)
+    if unresolved_role_work:
+        request_ids = ", ".join(str(item.get("request_id")) for item in unresolved_role_work[:5])
+        raise RouterError(f"terminal closure requires all PM role-work requests resolved first: {request_ids}")
     if not _current_closure_state_clean(run_root):
         raise RouterError("terminal closure requires current clean evidence/resource/final ledgers")
     continuation = read_json(continuation_path)
@@ -13500,6 +14173,219 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
     return None
 
 
+def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    active = _active_pm_role_work_request(index)
+    if not isinstance(active, dict):
+        return None
+    index_path = _pm_role_work_request_index_path(run_root)
+    packet_ids = [active.get("packet_id")]
+    if active.get("status") == "open":
+        allowed_reads = [
+            project_relative(project_root, run_root / "packet_ledger.json"),
+            project_relative(project_root, index_path),
+            str(active.get("packet_envelope_path")),
+        ]
+        if not run_state.get("ledger_check_requested"):
+            return make_action(
+                action_type="relay_pm_role_work_request_packet",
+                actor="controller",
+                label="pm_role_work_request_packet_relayed_with_ledger_check",
+                summary="Check the packet ledger and relay the PM role-work request packet without opening the sealed body.",
+                allowed_reads=allowed_reads,
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, index_path),
+                ],
+                to_role=str(active.get("to_role") or ""),
+                extra={
+                    "request_id": active.get("request_id"),
+                    "packet_id": active.get("packet_id"),
+                    "postcondition": "pm_role_work_request_packet_relayed",
+                    "controller_visibility": "packet_envelope_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
+                    "packet_ids": packet_ids,
+                    "pm_work_requests": project_relative(project_root, index_path),
+                },
+            )
+        return make_action(
+            action_type="relay_pm_role_work_request_packet",
+            actor="controller",
+            label="pm_role_work_request_packet_relayed",
+            summary="Relay the PM role-work request packet without opening the sealed body.",
+            allowed_reads=[project_relative(project_root, index_path), str(active.get("packet_envelope_path"))],
+            allowed_writes=[
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, index_path),
+            ],
+            to_role=str(active.get("to_role") or ""),
+            extra={
+                "request_id": active.get("request_id"),
+                "packet_id": active.get("packet_id"),
+                "postcondition": "pm_role_work_request_packet_relayed",
+                "controller_visibility": "packet_envelope_only",
+                "sealed_body_reads_allowed": False,
+                "pm_work_requests": project_relative(project_root, index_path),
+            },
+        )
+    if active.get("status") == "result_returned":
+        allowed_reads = [
+            project_relative(project_root, run_root / "packet_ledger.json"),
+            project_relative(project_root, index_path),
+            str(active.get("result_envelope_path")),
+        ]
+        if not run_state.get("ledger_check_requested"):
+            return make_action(
+                action_type="relay_pm_role_work_result_to_pm",
+                actor="controller",
+                label="pm_role_work_result_relayed_to_pm_with_ledger_check",
+                summary="Check the packet ledger and relay the role-work result envelope back to PM without opening the sealed result body.",
+                allowed_reads=allowed_reads,
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, index_path),
+                ],
+                to_role="project_manager",
+                extra={
+                    "request_id": active.get("request_id"),
+                    "packet_id": active.get("packet_id"),
+                    "postcondition": "pm_role_work_result_relayed_to_pm",
+                    "controller_visibility": "result_envelope_only",
+                    "sealed_body_reads_allowed": False,
+                    "combined_ledger_check_and_relay": True,
+                    "ledger_check_receipt_required": True,
+                    "packet_ids": packet_ids,
+                    "pm_work_requests": project_relative(project_root, index_path),
+                },
+            )
+        return make_action(
+            action_type="relay_pm_role_work_result_to_pm",
+            actor="controller",
+            label="pm_role_work_result_relayed_to_pm",
+            summary="Relay the role-work result envelope back to PM without opening the sealed result body.",
+            allowed_reads=[project_relative(project_root, index_path), str(active.get("result_envelope_path"))],
+            allowed_writes=[
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, index_path),
+            ],
+            to_role="project_manager",
+            extra={
+                "request_id": active.get("request_id"),
+                "packet_id": active.get("packet_id"),
+                "postcondition": "pm_role_work_result_relayed_to_pm",
+                "controller_visibility": "result_envelope_only",
+                "sealed_body_reads_allowed": False,
+                "pm_work_requests": project_relative(project_root, index_path),
+            },
+        )
+    if active.get("status") == "packet_relayed":
+        return _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
+            label="controller_waits_for_role_work_result_returned",
+            summary="Controller has relayed the PM role-work packet and must wait for the target role to return its result envelope.",
+            allowed_external_events=[ROLE_WORK_RESULT_RETURNED_EVENT],
+            to_role=str(active.get("to_role") or ""),
+            payload_contract={
+                "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                "name": "role_work_result_returned_envelope",
+                "required_fields": ["request_id", "packet_id", "result_envelope_path"],
+                "expected_request_id": active.get("request_id"),
+                "expected_packet_id": active.get("packet_id"),
+                "expected_next_recipient": "project_manager",
+            },
+        )
+    if active.get("status") == "result_relayed_to_pm":
+        return _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
+            label="controller_waits_for_pm_role_work_result_decision",
+            summary="Controller relayed the role-work result to PM and must wait for PM to absorb, cancel, or supersede it.",
+            allowed_external_events=[PM_ROLE_WORK_RESULT_DECISION_EVENT],
+            to_role="project_manager",
+            payload_contract={
+                "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                "name": "pm_role_work_result_decision",
+                "required_fields": ["decided_by_role", "request_id", "decision"],
+                "allowed_values": {
+                    "decided_by_role": ["project_manager"],
+                    "decision": sorted(PM_ROLE_WORK_TERMINAL_DECISIONS),
+                },
+                "expected_request_id": active.get("request_id"),
+            },
+        )
+    return None
+
+
+def _next_model_miss_followup_request_wait_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    followup = _model_miss_followup_expectation(run_state)
+    if followup is None:
+        return None
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    if _active_pm_role_work_request(index) is not None:
+        return None
+    kind = str(followup.get("required_request_kind") or "model_miss")
+    return _expected_role_decision_wait_action(
+        project_root,
+        run_state,
+        run_root,
+        label=f"pm_{kind}_triage_waits_for_generic_role_work_request",
+        summary=(
+            "PM chose to gather more information before repair. Controller must wait for PM to register "
+            "a generic role-work request; Controller may not reopen the same model-miss decision loop."
+        ),
+        allowed_external_events=[PM_ROLE_WORK_REQUEST_EVENT],
+        to_role="project_manager",
+        payload_contract={
+            "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+            "name": "pm_role_work_request",
+            "required_fields": [
+                "requested_by_role",
+                "request_id",
+                "to_role",
+                "request_mode",
+                "request_kind",
+                "output_contract_id",
+                "packet_body_path",
+                "packet_body_hash",
+            ],
+            "allowed_values": {
+                "requested_by_role": ["project_manager"],
+                "to_role": sorted(PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES),
+                "request_mode": sorted(PM_ROLE_WORK_REQUEST_MODES),
+                "request_kind": sorted(PM_ROLE_WORK_REQUEST_KINDS),
+            },
+            "pending_followup": followup,
+        },
+    )
+
+
+def _next_model_miss_controlled_stop_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    stop = run_state.get("model_miss_triage_controlled_stop")
+    if not isinstance(stop, dict) or stop.get("status") != "waiting_for_user":
+        return None
+    return make_action(
+        action_type="await_user_after_model_miss_stop",
+        actor="controller",
+        label="model_miss_triage_controlled_stop",
+        summary="PM stopped the model-miss triage path for user input; Controller must wait and must not loop the same PM event.",
+        allowed_reads=[project_relative(project_root, run_state_path(run_root))],
+        allowed_writes=[],
+        to_role="user",
+        extra={
+            "requires_user": True,
+            "apply_required": False,
+            "model_miss_triage_controlled_stop": stop,
+        },
+    )
+
+
 def _expected_role_decision_wait_action(
     project_root: Path,
     run_state: dict[str, Any],
@@ -13511,12 +14397,18 @@ def _expected_role_decision_wait_action(
     to_role: str,
     payload_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    allowed_events = list(allowed_external_events)
+    if to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
+        allowed_events.append(PM_ROLE_WORK_REQUEST_EVENT)
     extra: dict[str, Any] = {
-        "allowed_external_events": allowed_external_events,
+        "allowed_external_events": allowed_events,
         "controller_only_mode_active": True,
         "controller_may_create_project_evidence": False,
         "expected_wait_is_not_control_blocker": True,
     }
+    if to_role == "project_manager":
+        extra["pm_work_request_channel_available"] = True
+        extra["pm_role_work_request_event"] = PM_ROLE_WORK_REQUEST_EVENT
     if payload_contract is not None:
         extra["payload_contract"] = payload_contract
     return make_action(
@@ -14397,6 +15289,12 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         action = _next_current_node_packet_action(project_root, run_state, run_root)
     if action is None:
+        action = _next_pm_role_work_request_action(project_root, run_state, run_root)
+    if action is None:
+        action = _next_model_miss_followup_request_wait_action(project_root, run_state, run_root)
+    if action is None:
+        action = _next_model_miss_controlled_stop_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_expected_role_decision_wait_action(project_root, run_state, run_root)
     if action is None:
         _write_control_blocker(
@@ -14670,6 +15568,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
     elif action_type == "await_card_bundle_return_event":
         return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
+    elif action_type == "await_user_after_model_miss_stop":
+        return {"ok": True, "applied": action_type, "waiting": True, "waiting_for": "user"}
     elif action_type == "relay_material_scan_packets":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
@@ -14726,6 +15626,58 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         _relay_result_records(project_root, run_state, index["packets"], to_role="human_like_reviewer", controller_agent_id="controller")
         run_state["flags"]["research_result_relayed_to_reviewer"] = True
         run_state["ledger_check_requested"] = False
+    elif action_type == "relay_pm_role_work_request_packet":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("PM role-work request relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
+        index = _load_pm_role_work_request_index(run_root, run_state)
+        active = _active_pm_role_work_request(index)
+        if not isinstance(active, dict) or active.get("status") != "open":
+            raise RouterError("PM role-work request relay requires an open active request")
+        _relay_packet_records(project_root, run_state, [active], controller_agent_id="controller")
+        active["status"] = "packet_relayed"
+        active["packet_relayed_at"] = utc_now()
+        index["active_request_id"] = active.get("request_id")
+        _write_pm_role_work_request_index(run_root, index)
+        run_state["flags"]["pm_role_work_request_packet_relayed"] = True
+        run_state["ledger_check_requested"] = False
+        run_state["pm_role_work_requests"] = {
+            "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
+            "active_request_id": active.get("request_id"),
+            "active_packet_id": active.get("packet_id"),
+            "active_to_role": active.get("to_role"),
+            "active_request_mode": active.get("request_mode"),
+        }
+    elif action_type == "relay_pm_role_work_result_to_pm":
+        combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
+        if not run_state.get("ledger_check_requested"):
+            if not combined_ledger_check:
+                raise RouterError("PM role-work result relay requires a current packet-ledger check")
+            run_state["ledger_check_requested"] = True
+            run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+            run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
+        index = _load_pm_role_work_request_index(run_root, run_state)
+        active = _active_pm_role_work_request(index)
+        if not isinstance(active, dict) or active.get("status") != "result_returned":
+            raise RouterError("PM role-work result relay requires an active returned result")
+        _relay_result_records(project_root, run_state, [active], to_role="project_manager", controller_agent_id="controller")
+        active["status"] = "result_relayed_to_pm"
+        active["result_relayed_to_pm_at"] = utc_now()
+        index["active_request_id"] = active.get("request_id")
+        _write_pm_role_work_request_index(run_root, index)
+        run_state["flags"]["pm_role_work_result_relayed_to_pm"] = True
+        run_state["ledger_check_requested"] = False
+        run_state["pm_role_work_requests"] = {
+            "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
+            "active_request_id": active.get("request_id"),
+            "active_packet_id": active.get("packet_id"),
+            "active_to_role": active.get("to_role"),
+            "active_request_mode": active.get("request_mode"),
+        }
     elif action_type == "relay_current_node_packet":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
@@ -15020,6 +15972,9 @@ def _record_external_event_unchecked(
         and run_state["flags"].get(flag)
         and _active_node_completion_write_missing(run_root, run_state, payload)
     )
+    repeatable_pm_role_work_request = event == PM_ROLE_WORK_REQUEST_EVENT
+    repeatable_role_work_result = event == ROLE_WORK_RESULT_RETURNED_EVENT
+    repeatable_pm_role_work_result_decision = event == PM_ROLE_WORK_RESULT_DECISION_EVENT
     scoped_event_has_active_repair_context = bool(
         scoped_identity
         and event == "pm_mutates_route_after_review_block"
@@ -15031,6 +15986,9 @@ def _record_external_event_unchecked(
         or repeatable_startup_repair_request
         or repeatable_route_draft_repair
         or repeatable_current_node_completion
+        or repeatable_pm_role_work_request
+        or repeatable_role_work_result
+        or repeatable_pm_role_work_result_decision
     ):
         return _already_recorded_external_event_result(
             project_root,
@@ -15134,6 +16092,12 @@ def _record_external_event_unchecked(
         _write_research_package(project_root, run_root, run_state, payload)
     elif event == "research_capability_decision_recorded":
         _write_research_capability_decision(project_root, run_root, run_state, payload)
+    elif event == PM_ROLE_WORK_REQUEST_EVENT:
+        _write_pm_role_work_request(project_root, run_root, run_state, payload)
+    elif event == ROLE_WORK_RESULT_RETURNED_EVENT:
+        _write_role_work_result_returned(project_root, run_root, run_state, payload)
+    elif event == PM_ROLE_WORK_RESULT_DECISION_EVENT:
+        _write_pm_role_work_result_decision(project_root, run_root, run_state, payload)
     elif event == "worker_research_report_returned":
         _write_worker_research_report(project_root, run_root, run_state, payload)
     elif event == "reviewer_passes_research_direct_source_check":
@@ -15381,6 +16345,11 @@ def _record_external_event_unchecked(
         run_state["flags"]["model_miss_triage_closed"] = False
         run_state["flags"]["pm_review_repair_card_delivered"] = False
         run_state["model_miss_triage"] = None
+        run_state["model_miss_triage_followup_request"] = None
+        run_state["model_miss_evidence_followup_request"] = None
+        run_state["model_miss_triage_controlled_stop"] = None
+        run_state["flags"]["model_miss_triage_followup_request_pending"] = False
+        run_state["flags"]["model_miss_triage_controlled_stop_recorded"] = False
     if (
         event == PM_MODEL_MISS_TRIAGE_DECISION_EVENT
         and model_miss_triage_decision not in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES
