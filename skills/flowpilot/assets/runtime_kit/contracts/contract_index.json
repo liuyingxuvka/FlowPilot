@@ -93,6 +93,18 @@
       "contract_id": "flowpilot.output_contract.gate_decision.v1"
     },
     {
+      "task_family": "pm.role_work_request",
+      "packet_type": "pm_role_work_request",
+      "recipient_roles": [
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer",
+        "worker_a",
+        "worker_b"
+      ],
+      "contract_id": "flowpilot.output_contract.pm_role_work_result.v1"
+    },
+    {
       "task_family": "pm.resume_decision",
       "packet_type": "role_decision",
       "recipient_roles": [
@@ -204,6 +216,35 @@
       },
       "contract_self_check_required": true,
       "reviewer_must_block_missing_or_failed_check": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_role_work_result.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.role_work_request",
+      "packet_types": [
+        "pm_role_work_request"
+      ],
+      "recipient_roles": [
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer",
+        "worker_a",
+        "worker_b"
+      ],
+      "expected_return_envelope": "result_envelope",
+      "required_result_body_sections": [
+        "Status",
+        "Work Performed",
+        "Findings",
+        "PM Suggestion Items",
+        "Contract Self-Check"
+      ],
+      "required_result_envelope_values": {
+        "next_recipient": "project_manager",
+        "body_visibility": "sealed_target_role_only"
+      },
+      "contract_self_check_required": true,
+      "pm_must_absorb_cancel_or_supersede": true
     },
     {
       "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",

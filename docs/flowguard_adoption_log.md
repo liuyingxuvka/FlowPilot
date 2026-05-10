@@ -6577,6 +6577,48 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - User will coordinate local install, git, and remote synchronization later.
 
 
+## flowpilot-decision-liveness-model-miss-20260510 - Accepted PM decisions must open a next channel
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Runtime model miss where a legal PM model-miss triage decision could be accepted without opening the officer/evidence/user-stop channel it requested.
+- Status: analysis completed; production router repair not started in this side conversation.
+- Skill decision: use_flowguard
+- Date: 2026-05-10
+- Commands OK: model checks passed; static router audit intentionally reported current findings.
+
+### Model Files
+- simulations/flowpilot_decision_liveness_model.py
+- simulations/run_flowpilot_decision_liveness_checks.py
+- simulations/flowpilot_decision_liveness_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema version 1.0
+- OK: `python -m py_compile simulations\flowpilot_decision_liveness_model.py simulations\run_flowpilot_decision_liveness_checks.py`
+- FINDINGS: `python simulations\run_flowpilot_decision_liveness_checks.py --json-out simulations\flowpilot_decision_liveness_results.json`
+- OK: `git diff --check -- simulations\flowpilot_decision_liveness_model.py simulations\run_flowpilot_decision_liveness_checks.py simulations\flowpilot_decision_liveness_results.json`
+
+### Findings
+- The safe decision-liveness model has no invariant failures, no missing labels, no stuck states, no nonterminating components, and zero FlowGuard Explorer violations.
+- Hazard checks catch accepted nonterminal PM decisions looping back to the same PM event, model-backed repair without officer report review, officer report relay without ledger check, and repair packet opening before triage closure.
+- Static router/runtime-kit audit found 3 legal non-authorizing model-miss triage decisions without concrete next-channel implementation: `request_officer_model_miss_analysis`, `needs_evidence_before_modeling`, and `stop_for_user`.
+- The current run contains 1 matching live occurrence for `request_officer_model_miss_analysis`.
+
+### Counterexamples
+- `request_officer_decision_dead_ends_on_same_pm_event`
+- `needs_evidence_decision_dead_ends_on_same_pm_event`
+- `stop_for_user_decision_dead_ends_on_same_pm_event`
+- `model_backed_repair_without_officer_report`
+- `officer_report_routed_without_ledger_check`
+- `repair_packet_opened_after_unclosed_triage`
+
+### Skipped Steps
+- Production router changes skipped because the user asked for model upgrade, findings, and minimal repair plan first.
+- Full production conformance replay skipped; this side task added model exploration plus static router/runtime-kit audit, not a full external-event replay adapter.
+
+### Next Actions
+- Discuss the minimal router repair plan before changing production route code.
+
+
 ## flowpilot-global-system-card-bundles-20260510 - Bundle same-role read-only system cards globally
 
 - Project: FlowGuardProjectAutopilot_20260430

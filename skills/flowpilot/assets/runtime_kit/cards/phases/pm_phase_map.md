@@ -28,3 +28,7 @@ FlowPilot proceeds through these phases:
 At each phase, act only from the current phase card, current event cards, and
 reviewed mail. If the needed material is missing, request a bounded packet.
 If the route no longer fits reviewed facts, request route mutation.
+When PM owns a decision and needs another FlowPilot role to gather evidence,
+run or update a model, review, research, or implement a bounded slice first,
+use the generic `pm_registers_role_work_request` channel rather than a
+phase-specific workaround.

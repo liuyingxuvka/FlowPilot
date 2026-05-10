@@ -40,6 +40,14 @@ Allowed PM decisions:
 - request evidence before modeling;
 - stop for user.
 
+When choosing `request_officer_model_miss_analysis` or
+`needs_evidence_before_modeling`, do not wait for a special-purpose router
+path. Register the follow-up work through the generic PM role-work channel:
+`pm_registers_role_work_request`. Select a concrete target role, request mode,
+request kind, output contract, and sealed file-backed request body. Controller
+will relay the packet and result envelopes only; PM must later record
+`pm_records_role_work_result_decision` after the result returns.
+
 ## Decision Contract For This Task
 
 Use contract `flowpilot.output_contract.pm_model_miss_triage_decision.v1`.

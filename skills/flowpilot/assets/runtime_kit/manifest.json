@@ -42,6 +42,15 @@
     },
     {
       "audience": "project_manager",
+      "id": "pm.role_work_request",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_role_work_request.md",
+      "phase": "role_work_request",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
       "id": "pm.controller_reset_duty",
       "issued_by": "router",
       "kind": "duty",
