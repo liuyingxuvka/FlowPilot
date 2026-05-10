@@ -588,9 +588,9 @@ child-to-parent closure. Authorized workers may draft evidence or
 implementation output, but their self-approval is invalid.
 
 Every packet has a mandatory role-origin audit. Before a reviewer passes any
-packet result, the reviewer checks the PM-authored packet, the reviewer
-dispatch approval, the assigned worker or authorized role, and the actual
-result author. If the actual author is the controller, unknown, or different
+packet result, the reviewer checks the PM-authored packet, router direct-dispatch
+evidence, the assigned worker or authorized role, and the actual result author.
+If the actual author is the controller, unknown, or different
 from the assigned role, the reviewer must return
 `block_invalid_role_origin`, record the controller-boundary warning, and send
 the packet back to PM for reissue, repair by the assigned role, quarantine,
@@ -947,10 +947,10 @@ complete.
 Heartbeat and manual resume also load `packet_ledger.json`. If no current
 packet is active, the controller asks PM for `PM_DECISION`. If PM issues or
 reissues a packet envelope/body pair, the decision must include
-`controller_reminder`, and the envelope goes to the reviewer for dispatch
-approval before any worker sees the body. If a worker result envelope is
+`controller_reminder`, and the envelope must pass router direct-dispatch
+preflight before any worker sees the body. If a worker result envelope is
 already present, the controller sends that `RESULT_ENVELOPE` to reviewer. If
-the holder, worker identity, prior reviewer dispatch, envelope/body hash, or
+the holder, worker identity, prior router direct-dispatch preflight, envelope/body hash, or
 worker-result state is ambiguous, the controller blocks and asks PM for
 recovery, reissue, reassignment, quarantine, or route mutation. It does not
 read bodies, infer missing worker work, or finish the packet itself.

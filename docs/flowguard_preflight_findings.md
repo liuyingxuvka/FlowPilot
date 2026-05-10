@@ -22,8 +22,9 @@ Current source and runtime checks must preserve these boundaries:
   stale body reuse are control-plane blockers;
 - heartbeat/manual resume must load current-run state, execution frontier,
   packet ledger, and role memory before deciding what can proceed;
-- reviewer dispatch remains mandatory before existing or fresh worker output is
-  used as accepted evidence;
+- router direct-dispatch validation is mandatory before PM-authored work
+  packets reach a worker, and reviewer result review remains mandatory before
+  existing or fresh worker output is used as accepted evidence;
 - Cockpit UI unavailability is a startup display-surface fallback, not proof
   that route execution is blocked. If the user requested Cockpit and the UI
   cannot open, PM records the fallback and the reviewer independently verifies

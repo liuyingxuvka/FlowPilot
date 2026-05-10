@@ -4374,14 +4374,14 @@ class AutopilotStep:
                     label="heartbeat_pm_controller_reminder_checked",
                     action="controller requires PM_DECISION to include controller_reminder before dispatching any packet",
                     heartbeat_pm_controller_reminder_checked=True,
-                    active_node="check_reviewer_dispatch_policy",
+                    active_node="check_router_direct_dispatch_policy",
                 )
                 return
             if not state.heartbeat_reviewer_dispatch_policy_checked:
                 yield _step(
                     state,
                     label="heartbeat_reviewer_dispatch_policy_checked",
-                    action="controller confirms NODE_PACKET dispatch requires reviewer approval and ambiguous worker state blocks controller execution",
+                    action="controller confirms NODE_PACKET dispatch requires router direct-dispatch preflight and ambiguous worker state blocks controller execution",
                     heartbeat_reviewer_dispatch_policy_checked=True,
                     active_node="await_pm_resume_decision",
                 )
@@ -4887,7 +4887,7 @@ class AutopilotStep:
                 yield _step(
                     state,
                     label="packet_role_origin_audit_done",
-                    action="human-like reviewer verifies every packet's PM author, reviewer dispatch, assigned worker, and actual result author after envelope/body integrity passes",
+                    action="human-like reviewer verifies every packet's PM author, router direct-dispatch evidence, assigned worker, and actual result author after envelope/body integrity passes",
                     packet_role_origin_audit_done=True,
                     packet_result_author_verified=True,
                     packet_result_author_matches_assignment=True,
@@ -5445,7 +5445,7 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             and state.pm_node_decision_recorded
         ):
             return InvariantResult.fail(
-                "chunk started before heartbeat loaded packet ledger, rehydrated roles, checked PM controller reminder/reviewer dispatch policy, and synced a sufficiently deep PM runway"
+                "chunk started before heartbeat loaded packet ledger, rehydrated roles, checked PM controller reminder/router direct-dispatch policy, and synced a sufficiently deep PM runway"
             )
         if not state.pm_review_hold_instruction_written:
             return InvariantResult.fail(

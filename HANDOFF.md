@@ -217,10 +217,10 @@ model-backed autopilot:
   extra reset path or registry layer.
 - Heartbeat/manual-resume now re-enters the packet-gated controller loop. The
   stable launcher loads the active run and packet ledger, restores roles, asks
-  PM for `PM_DECISION` with `controller_reminder`, requires reviewer dispatch
-  before worker execution, routes existing worker results to reviewer, and
-  blocks ambiguous worker state for PM recovery rather than letting Controller
-  infer or finish work.
+  PM for `PM_DECISION` with `controller_reminder`, runs router direct-dispatch
+  preflight before worker execution, routes existing worker results to reviewer,
+  and blocks ambiguous worker state for PM recovery rather than letting
+  Controller infer or finish work.
 - Material scan, research, and current-node execution now use physical
   packet/result envelopes. Controller may relay envelope metadata only; workers
   open packet bodies, reviewers open result bodies, and PM may complete a node
@@ -387,9 +387,9 @@ FlowGuard caught and fixed these design issues:
   progress from chat history; ambiguous resume state blocks for PM recovery.
 - `flowpilot_router.py` now drives the current-node packet loop through the
   physical `packet_runtime` envelope/body system. It requires route activation,
-  current-node packet registration, reviewer dispatch approval, packet ledger
-  checks, Controller envelope-only relay, worker result relay to reviewer, and
-  reviewer packet audit before PM node completion.
+  current-node packet registration, router direct-dispatch preflight, packet
+  ledger checks, Controller envelope-only relay, worker result relay to
+  reviewer, and reviewer packet audit before PM node completion.
 - Route activation and review-block repair now write run-scoped route/frontier
   state. `execution_frontier.json` tracks the active node, completed nodes, and
   route-mutation repair state; mutation records are written before new repair

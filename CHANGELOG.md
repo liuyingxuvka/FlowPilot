@@ -2,6 +2,32 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.7.0 - 2026-05-10
+
+### Added
+
+- Added installer dependency bootstrap output so FlowPilot explains required,
+  optional, and host-capability dependencies before reporting install status.
+- Added public GitHub FlowGuard installation support behind
+  `--install-flowguard`, with post-install import verification.
+- Added `skills/flowpilot/DEPENDENCIES.md` and a short skill-level dependency
+  bootstrap reminder so direct skill-directory installs still expose required
+  dependencies.
+- Extended the release-tooling FlowGuard model to catch missing dependency
+  notices, unauthorized FlowGuard installs, optional companion auto-installs,
+  and required-dependency readiness without FlowGuard verification.
+
+### Changed
+
+- Moved PM-authored material-scan and current-node work packet dispatch from
+  reviewer pre-approval to router direct-dispatch preflight; reviewers now
+  stay on worker-result, stage-gate, and PM-decision review.
+- Promoted `grill-me` from optional companion to required FlowPilot dependency.
+- Updated the recommended install path to
+  `python scripts\install_flowpilot.py --install-missing --install-flowguard`.
+- Updated public release checks to validate GitHub-backed Python package
+  dependencies such as FlowGuard.
+
 ## 0.6.1 - 2026-05-09
 
 ### Changed

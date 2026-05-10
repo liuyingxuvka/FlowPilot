@@ -2,8 +2,10 @@
 
 FlowPilot requires:
 
-- real `flowguard` Python package;
+- real `flowguard` Python package from
+  `https://github.com/liuyingxuvka/FlowGuard`;
 - installed/readable `model-first-function-flow` skill;
+- installed/readable `grill-me` skill;
 - this `flowpilot` skill;
 - installer-readable dependency metadata in `flowpilot.dependencies.json`;
 - writable project workspace for `.flowpilot/`;
@@ -40,14 +42,17 @@ or bypass the dependency check.
 For Codex-compatible hosts, the standard installer entry is:
 
 ```powershell
-python scripts/install_flowpilot.py --install-missing
+python scripts/install_flowpilot.py --install-missing --install-flowguard
 python scripts/check_install.py
 ```
 
 The installer:
 
+- prints the required and optional dependency tiers before reporting status;
 - installs or checks `skills/flowpilot/`;
 - checks the real `flowguard` Python package;
+- installs missing FlowGuard from its public GitHub source only when
+  `--install-flowguard` explicitly authorizes Python environment changes;
 - checks required and optional companion Codex skills from
   `flowpilot.dependencies.json`;
 - reports host-specific capabilities such as `raster_image_generation`;
@@ -85,6 +90,17 @@ state as ready.
 
 Use `--include-optional` only when the user wants the installer to fetch
 optional companion skills as well as required dependencies.
+
+If FlowGuard is missing and `--install-flowguard` is not present, the installer
+must report the exact command needed instead of describing FlowPilot as ready.
+The public FlowGuard source install path is:
+
+```powershell
+git clone https://github.com/liuyingxuvka/FlowGuard.git
+cd FlowGuard
+python -m pip install -e .
+python -m flowguard schema-version
+```
 
 Host-specific capabilities are not hard-coded by skill name. Codex may satisfy
 `raster_image_generation` with the built-in `imagegen` skill. Another host may

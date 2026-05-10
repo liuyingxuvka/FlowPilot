@@ -326,7 +326,8 @@
     "controller_may_finish_worker_packet": false,
     "controller_may_read_worker_body": false,
     "controller_may_read_result_body": false,
-    "reviewer_dispatch_required_before_worker": true,
+    "router_direct_dispatch_required_before_worker": true,
+    "reviewer_dispatch_required_before_worker": false,
     "ambiguous_worker_state_blocks_controller_execution": true,
     "pm_reissue_or_repair_required_when_ambiguous": true,
     "internal_loop_continues_when_pm_stop_for_user_false": true

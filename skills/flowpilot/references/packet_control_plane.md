@@ -10,8 +10,9 @@ preventing controller/worker over-execution.
   worker.
 - PM: owns global route, frozen acceptance floor, node packet creation, repair,
   route mutation, and completion decisions.
-- Reviewer: owns dispatch approval and result review. Reviewer `block` is a
-  hard stop for PM advancement.
+- Reviewer: owns result review, gate challenge, and PM-decision challenge.
+  Reviewer `block` is a hard stop for PM advancement, but PM-authored worker
+  packets are not sent to reviewer for pre-dispatch approval.
 - Workers: execute only the current packet body addressed to their role and
   return a result envelope/body pair.
 - Simulators/officers: stress-test process and product models; they do not
@@ -42,7 +43,7 @@ Only evidence from the role authorized for the current packet can close that
 packet's gate. Controller-origin implementation, review, PM approval, route
 completion, screenshot, generated data, or dependency-install evidence is
 invalid unless the PM packet explicitly assigned that administrative action to
-the controller and the reviewer approved dispatch.
+the controller and the router direct-dispatch preflight allowed that assignment.
 
 Packets and results use an envelope/body split. The controller may read only
 `packet_envelope` and `result_envelope`, update holder/status, relay envelopes,
@@ -73,21 +74,25 @@ The split must be physical in real runs. Use
 `.flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json`,
 `packet_body.md`, `result_envelope.json`, and `result_body.md`. The runtime
 computes hashes from those files and builds controller handoffs from envelope
-fields only. Missing physical files or body text in controller context blocks
-dispatch before review content inspection.
+fields only. Missing physical files, missing output contracts, out-of-run
+result paths, or body text in controller context blocks dispatch before the
+target role receives the packet.
 
-The reviewer checks role origin and body integrity on every packet, not only
-when a mismatch is obvious. The audit compares the PM packet envelope,
-reviewer dispatch, `packet_envelope.to_role`, packet body hash, assigned
-worker or authorized role, result envelope, `completed_by_role`,
-`completed_by_agent_id`, result body hash, and actual result author. A pass is
-allowed only when the actual result author matches the assigned role, the
-agent id belongs to that role, and the referenced bodies match their hashes and
-are not stale after route mutation. If the result came from Controller, from
-an unknown actor, or from a different role, the reviewer must block, issue the
-controller-boundary warning, and require PM to reissue or repair the packet
-through the assigned role. Wrong-role completion cannot be cosigned,
-relabelled, or accepted as "good enough."
+Before dispatch, the router checks the PM packet envelope, body hash, ledger
+identity, target role, controller no-read/no-execute declarations, output
+contract, and run-scoped result paths. The reviewer then checks role origin and
+body integrity on every result, not only when a mismatch is obvious. The result
+audit compares the PM packet envelope, router direct-dispatch evidence,
+`packet_envelope.to_role`, packet body hash, assigned worker or authorized role,
+result envelope, `completed_by_role`, `completed_by_agent_id`, result body hash,
+and actual result author. A pass is allowed only when the actual result author
+matches the assigned role, the agent id belongs to that role, and the
+referenced bodies match their hashes and are not stale after route mutation. If
+the result came from Controller, from an unknown actor, or from a different
+role, the reviewer must block, issue the controller-boundary warning, and
+require PM to reissue or repair the packet through the assigned role.
+Wrong-role completion cannot be cosigned, relabelled, or accepted as "good
+enough."
 
 At every subnode and every major-node closure, reviewer also audits the full
 mail chain for that node: controller relay signatures, recipient pre-open
@@ -192,7 +197,7 @@ REVIEW_DECISION:
     contaminated_or_rejected_packets_have_sender_replacements:
     unopened_or_missing_mail_sent_to_pm:
     pm_packet_author_verified:
-    reviewer_dispatch_authority_checked:
+    router_direct_dispatch_preflight_checked:
     packet_envelope_to_role_checked:
     packet_body_hash_checked:
     result_envelope_completed_by_role_checked:
@@ -276,16 +281,16 @@ Resume rules:
   present, ask PM for restart, repair node, or sender reissue instead of
   continuing.
 - If PM issues or reissues `PACKET_ENVELOPE` and `PACKET_BODY`, require
-  `controller_reminder`, sign the controller relay, then send only the envelope
-  to the target role or reviewer dispatch path before any worker sees the body.
+  `controller_reminder`, verify router direct-dispatch preflight, sign the
+  controller relay, then send only the envelope to the target role.
 - If the packet is already with a worker, resume that exact packet only when
-  controller relay signature, recipient body-open record, reviewer dispatch,
-  and worker identity are clear.
+  controller relay signature, recipient body-open record, router direct-dispatch
+  preflight evidence, and worker identity are clear.
 - If a worker result envelope exists, send the `RESULT_ENVELOPE` to reviewer.
   Reviewer and PM may read the result body from their authorized review or
   decision position. Reviewer pass goes to PM; reviewer block goes to PM for
   repair, mutation, user block, or stop.
-- If holder, worker identity, reviewer dispatch, or worker-result state is
+- If holder, worker identity, router direct-dispatch evidence, or worker-result state is
   ambiguous, block and ask PM for recovery/reissue/reassignment. Controller
   must not infer missing worker work or finish the packet.
 - If PM says `stop_for_user: false`, the controller continues the internal
@@ -303,7 +308,7 @@ Flow Status:
   packet_id:
   holder: PM | Reviewer | WorkerA | WorkerB | Controller | User
   pm_authorization:
-  reviewer_dispatch:
+  router_direct_dispatch:
   worker_status:
   reviewer_result:
   next_expected_event:

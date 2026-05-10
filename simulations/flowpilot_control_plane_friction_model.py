@@ -305,7 +305,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.material_dispatch_reviewed:
         yield Transition(
-            "reviewer_allows_material_scan_dispatch_after_packet_integrity_check",
+            "router_direct_material_scan_dispatch_after_packet_integrity_check",
             _inc(
                 state,
                 holder="controller",
@@ -606,7 +606,7 @@ def material_scan_dispatch_requires_packet_integrity(state: State, trace) -> Inv
         )
     if state.material_dispatch_allowed and not state.material_dispatch_reviewed:
         return InvariantResult.fail(
-            "material scan dispatch was allowed before reviewer dispatch review"
+            "material scan dispatch was allowed before router direct-dispatch preflight"
         )
     return InvariantResult.pass_()
 
@@ -1238,7 +1238,7 @@ def hazard_states() -> dict[str, State]:
         "material_dispatch_duplicate_canonical_body": _safe_base(
             material_dispatch_single_canonical_body=False,
         ),
-        "material_dispatch_allowed_without_review": _safe_base(
+        "material_dispatch_allowed_without_preflight": _safe_base(
             material_dispatch_reviewed=False,
             material_dispatch_allowed=True,
         ),
@@ -1631,7 +1631,7 @@ def _audit_material_scan_dispatch_integrity(
     envelope_paths = _material_packet_envelope_paths(run_root, material_scan_packets)
     requested = bool(envelope_paths) or (
         isinstance(material_scan_packets, dict)
-        and bool(material_scan_packets.get("reviewer_dispatch_required_before_worker"))
+        and bool(material_scan_packets.get("router_direct_dispatch_required_before_worker"))
     )
     if not requested:
         return {

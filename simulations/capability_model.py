@@ -4296,7 +4296,7 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="packet_role_origin_audit_done",
-                    action="human-like reviewer verifies every backend packet's PM author, reviewer dispatch, assigned worker, and actual result author after envelope/body integrity passes",
+                    action="human-like reviewer verifies every backend packet's PM author, router direct-dispatch evidence, assigned worker, and actual result author after envelope/body integrity passes",
                     packet_role_origin_audit_done=True,
                     packet_result_author_verified=True,
                     packet_result_author_matches_assignment=True,
@@ -5250,7 +5250,7 @@ class CapabilityRouterStep:
                 yield _step(
                     state,
                     label="packet_role_origin_audit_done",
-                    action="human-like reviewer verifies every UI packet's PM author, reviewer dispatch, assigned worker, and actual result author after envelope/body integrity passes",
+                    action="human-like reviewer verifies every UI packet's PM author, router direct-dispatch evidence, assigned worker, and actual result author after envelope/body integrity passes",
                     packet_role_origin_audit_done=True,
                     packet_result_author_verified=True,
                     packet_result_author_matches_assignment=True,
@@ -5750,7 +5750,7 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             and state.child_skill_gate_authority_records_written
         ):
             return InvariantResult.fail(
-                "implementation started before continuation loaded packet ledger, rehydrated roles, checked PM controller reminder/reviewer dispatch policy, synced the PM runway, wrote node acceptance plan/risk experiments, and wrote node-level child-skill gate authority records"
+                "implementation started before continuation loaded packet ledger, rehydrated roles, checked PM controller reminder/router direct-dispatch policy, synced the PM runway, wrote node acceptance plan/risk experiments, and wrote node-level child-skill gate authority records"
             )
         if not (
             state.quality_package_done

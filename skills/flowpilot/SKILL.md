@@ -13,6 +13,23 @@ Use FlowPilot only after an explicit user request in the current thread. If the 
 
 Do not infer activation from task size, repository type, UI work, heartbeat language, or `.flowpilot/`.
 
+## Dependency Bootstrap
+
+Before a formal FlowPilot run, verify the required dependencies:
+
+- real `flowguard` Python package from `https://github.com/liuyingxuvka/FlowGuard`;
+- installed/readable `model-first-function-flow` skill;
+- installed/readable `grill-me` skill;
+- this `flowpilot` skill.
+
+If this skill was installed from the full repository, prefer:
+
+```powershell
+python scripts\install_flowpilot.py --install-missing --install-flowguard
+```
+
+If only the skill directory is available, read `DEPENDENCIES.md` in this skill folder and ask before making heavy/global environment changes. Optional UI/design companions are not required for non-UI runs.
+
 ## Required Launcher Behavior
 
 On activation, the assistant is only the FlowPilot bootloader until the router hands control to Controller. The bootloader must run the router, read only its JSON action envelope, execute exactly that pending action, record the result through the router, and return to the router for the next action.

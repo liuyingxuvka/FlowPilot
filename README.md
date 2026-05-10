@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.6.1</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.7.0</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -32,7 +32,7 @@ simulations, validation scripts, documentation, and minimal examples.
 
 ## Current Status
 
-- Current source version in this checkout: **v0.6.1**.
+- Current source version in this checkout: **v0.7.0**.
 - Public project name: **FlowPilot**.
 - Skill slug and install name: **`flowpilot`**.
 - License: **MIT**.
@@ -257,10 +257,10 @@ The dependency manifest is `flowpilot.dependencies.json`.
 
 | Name | Required? | Role in FlowPilot | Source |
 | --- | --- | --- | --- |
-| **flowguard** | Required | Python package for finite-state models and checks. | Active Python environment |
+| **flowguard** | Required | Python package for finite-state models and checks. | [liuyingxuvka/FlowGuard](https://github.com/liuyingxuvka/FlowGuard) |
 | **flowpilot** | Required | This Codex skill. | [FlowPilot skill source](https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot) |
 | **model-first-function-flow** | Required | Decides when behavior/state/process work needs FlowGuard and guides model-first work. | [FlowGuard skill source](https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow) |
-| **grill-me** | Optional companion | Supplies the self-interrogation discipline that FlowPilot adapts into startup and focused route gates. | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me) |
+| **grill-me** | Required | Supplies the self-interrogation discipline that FlowPilot adapts into startup and focused route gates. | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me) |
 | **autonomous-concept-ui-redesign** | Optional companion | Experimental UI route that composes concept framing, frontend work, iteration, deviation review, geometry QA, screenshot QA, and final verdict. | [liuyingxuvka/autonomous-concept-ui-redesign-skill](https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill) |
 | **frontend-design** | Optional companion | UI implementation and polish when a UI route selects it. | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
 | **design-iterator** | Optional companion | Screenshot-analyze-fix UI iteration loops. | [ratacat/claude-skills](https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator) |
@@ -292,24 +292,36 @@ smaller model is enough. FlowPilot is project-scale control.
 
 ## Quick Start
 
-From this checkout, verify the required environment:
+From this checkout, install and verify the required environment:
 
 ```powershell
-python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
-python scripts\install_flowpilot.py --check
+python scripts\install_flowpilot.py --install-missing --install-flowguard
 python scripts\check_install.py
 ```
 
-Install missing required Codex skills declared by the manifest:
+The installer explains the dependency tiers before it acts. Missing required
+Codex skills are installed when possible. Missing FlowGuard is installed from
+the public [FlowGuard repository](https://github.com/liuyingxuvka/FlowGuard)
+only when `--install-flowguard` is present; otherwise the installer reports the
+exact command to run and FlowPilot is not considered ready.
+
+The full required set is:
+
+- `flowguard`
+- `model-first-function-flow`
+- `grill-me`
+- `flowpilot`
+
+To check without changing anything:
 
 ```powershell
-python scripts\install_flowpilot.py --install-missing
+python scripts\install_flowpilot.py --check
 ```
 
 Install optional companion skills too only when you explicitly want them:
 
 ```powershell
-python scripts\install_flowpilot.py --install-missing --include-optional
+python scripts\install_flowpilot.py --install-missing --install-flowguard --include-optional
 ```
 
 Refresh repository-owned installed skill copies from this checkout:
@@ -420,7 +432,7 @@ FlowPilot 是一个面向大型 AI Agent 软件项目的 **模型化项目控制
 
 ## 当前状态
 
-- 当前 checkout 的源码版本：**v0.6.1**。
+- 当前 checkout 的源码版本：**v0.7.0**。
 - 公开项目名：**FlowPilot**。
 - 技能 slug 和安装名：**`flowpilot`**。
 - 许可证：**MIT**。
@@ -612,10 +624,10 @@ FlowPilot 是编排器。它应该把领域工作路由到正确技能，而不�
 
 | 名称 | 是否必需 | 在 FlowPilot 中的作用 | 来源 |
 | --- | --- | --- | --- |
-| **flowguard** | 必需 | 有限状态建模和检查的 Python 包。 | 当前 Python 环境 |
+| **flowguard** | 必需 | 有限状态建模和检查的 Python 包。 | [liuyingxuvka/FlowGuard](https://github.com/liuyingxuvka/FlowGuard) |
 | **flowpilot** | 必需 | 本 Codex 技能。 | [FlowPilot skill source](https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot) |
 | **model-first-function-flow** | 必需 | 判断行为/状态/流程工作是否需要 FlowGuard，并指导 model-first 工作。 | [FlowGuard skill source](https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow) |
-| **grill-me** | 可选伴随 | 提供自我盘问纪律，FlowPilot 将其适配为 startup 和 focused route gates。 | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me) |
+| **grill-me** | 必需 | 提供自我盘问纪律，FlowPilot 将其适配为 startup 和 focused route gates。 | [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/productivity/grill-me) |
 | **autonomous-concept-ui-redesign** | 可选伴随 | 实验性 UI 路线，组合概念框定、frontend work、iteration、deviation review、geometry QA、screenshot QA 和 final verdict。 | [liuyingxuvka/autonomous-concept-ui-redesign-skill](https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill) |
 | **frontend-design** | 可选伴随 | UI 路线选择它时负责 UI 实现和 polish。 | [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/frontend-design) |
 | **design-iterator** | 可选伴随 | 截图分析和修复的 UI 迭代循环。 | [ratacat/claude-skills](https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator) |
@@ -640,24 +652,35 @@ FlowPilot 是编排器。它应该把领域工作路由到正确技能，而不�
 
 ## 快速开始
 
-在这个 checkout 中先验证必需环境：
+在这个 checkout 中安装并验证必需环境：
 
 ```powershell
-python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
-python scripts\install_flowpilot.py --check
+python scripts\install_flowpilot.py --install-missing --install-flowguard
 python scripts\check_install.py
 ```
 
-安装 manifest 声明的缺失必需 Codex skills：
+安装器会先说明依赖分层，再执行动作。缺失的必需 Codex skill 会尽量自动安装。
+缺失的 FlowGuard 只会在提供 `--install-flowguard` 时从公开
+[FlowGuard 仓库](https://github.com/liuyingxuvka/FlowGuard)安装；否则安装器会
+给出明确命令，并且不会把 FlowPilot 标成 ready。
+
+完整必需集合是：
+
+- `flowguard`
+- `model-first-function-flow`
+- `grill-me`
+- `flowpilot`
+
+只检查、不改动环境：
 
 ```powershell
-python scripts\install_flowpilot.py --install-missing
+python scripts\install_flowpilot.py --check
 ```
 
 只有明确需要可选伴随技能时，才一起安装：
 
 ```powershell
-python scripts\install_flowpilot.py --install-missing --include-optional
+python scripts\install_flowpilot.py --install-missing --install-flowguard --include-optional
 ```
 
 从当前 checkout 刷新仓库拥有的已安装技能副本：

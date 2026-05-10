@@ -37,6 +37,7 @@ REQUIRED_FILES = [
     "docs/flowpilot_ten_step_migration_status.json",
     "flowpilot.dependencies.json",
     "skills/flowpilot/SKILL.md",
+    "skills/flowpilot/DEPENDENCIES.md",
     "skills/flowpilot/assets/barrier_bundle.py",
     "skills/flowpilot/assets/flowpilot_router.py",
     "skills/flowpilot/assets/packet_runtime.py",
@@ -437,6 +438,30 @@ def main() -> int:
         )
         if not small_router_launcher:
             result["ok"] = False
+
+    try:
+        dependencies = json.loads((ROOT / "flowpilot.dependencies.json").read_text(encoding="utf-8"))
+        by_name = {item.get("name"): item for item in dependencies.get("dependencies", [])}
+        bootstrap_ok = (
+            by_name.get("flowguard", {}).get("required") is True
+            and by_name.get("flowguard", {}).get("source", {}).get("kind") == "github_python_package"
+            and by_name.get("flowguard", {}).get("install", {}).get("requires_explicit_flag")
+            == "--install-flowguard"
+            and by_name.get("model-first-function-flow", {}).get("required") is True
+            and by_name.get("grill-me", {}).get("required") is True
+            and "Dependency Bootstrap" in (ROOT / "skills/flowpilot/SKILL.md").read_text(encoding="utf-8")
+            and (ROOT / "skills/flowpilot/DEPENDENCIES.md").exists()
+        )
+        result["checks"].append(
+            {"name": "flowpilot_dependency_bootstrap_contract", "ok": bootstrap_ok}
+        )
+        if not bootstrap_ok:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {"name": "flowpilot_dependency_bootstrap_contract", "ok": False, "error": repr(exc)}
+        )
 
     router_path = ROOT / "skills/flowpilot/assets/flowpilot_router.py"
     runtime_mode_template = ROOT / "templates/flowpilot/mode.template.json"

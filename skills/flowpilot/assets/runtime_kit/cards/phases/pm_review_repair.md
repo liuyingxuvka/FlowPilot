@@ -130,7 +130,7 @@ Use these exact field names and one of the allowed `decision` values:
     "source_paths": []
   },
   "repair_action": "<action taken or why none was needed>",
-  "rerun_target": "<success event to recheck, such as reviewer_allows_material_scan_dispatch>",
+  "rerun_target": "<success event to recheck, such as router_direct_material_scan_dispatch_recheck_passed>",
   "repair_transaction": {
     "plan_kind": "<event_replay|packet_reissue|route_mutation>",
     "replacement_packet_specs_path": "<path-or-null>",

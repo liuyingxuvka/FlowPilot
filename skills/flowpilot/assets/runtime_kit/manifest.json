@@ -189,14 +189,6 @@
     },
     {
       "audience": "human_like_reviewer",
-      "id": "reviewer.dispatch_request",
-      "issued_by": "router",
-      "kind": "reviewer_gate",
-      "path": "cards/reviewer/dispatch_request.md",
-      "source": "system"
-    },
-    {
-      "audience": "human_like_reviewer",
       "id": "reviewer.worker_result_review",
       "issued_by": "router",
       "kind": "reviewer_gate",
@@ -396,14 +388,6 @@
       "issued_by": "router",
       "kind": "reviewer_gate",
       "path": "cards/reviewer/node_acceptance_plan_review.md",
-      "source": "system"
-    },
-    {
-      "audience": "human_like_reviewer",
-      "id": "reviewer.current_node_dispatch",
-      "issued_by": "router",
-      "kind": "reviewer_gate",
-      "path": "cards/reviewer/current_node_dispatch.md",
       "source": "system"
     },
     {

@@ -84,8 +84,8 @@ Wakeup sequence:
    the addressed role. The recipient must verify the controller signature before
    opening the body. Include `ROLE_REMINDER`.
 8. If a worker already has an unfinished packet, resume that exact packet only
-   when controller relay signature, holder chain, prior reviewer dispatch, body
-   open record, and worker identity are clear. If unclear, ask PM for
+   when controller relay signature, holder chain, prior router direct-dispatch
+   preflight, body open record, and worker identity are clear. If unclear, ask PM for
    repair/reissue/quarantine; Controller must not finish it.
 9. If a worker result exists, sign and route only the `RESULT_ENVELOPE` to
    reviewer. Controller must not read or execute packet/result bodies. If
@@ -94,7 +94,7 @@ Wakeup sequence:
    repair, restart, reissue, or route mutation.
 10. Continue the internal packet loop only when PM says `stop_for_user: false`;
    otherwise write the controlled stop notice.
-11. If the holder, worker identity, prior reviewer dispatch, relay signature,
+11. If the holder, worker identity, prior router direct-dispatch preflight, relay signature,
    body-open record, or worker result is ambiguous after wakeup, block and ask
    PM for recovery/reissue/reassignment. Controller must not infer the missing
    work or finish it.

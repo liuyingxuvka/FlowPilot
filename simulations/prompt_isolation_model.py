@@ -3,7 +3,7 @@
 This model checks the proposed FlowPilot rewrite where the main assistant is a
 small bootloader and then a packet Controller. The model intentionally does not
 cover implementation quality. It covers prompt visibility, mailbox routing,
-Router-owned Controller boundary confirmation, phase/event prompt delivery, reviewer dispatch, and
+Router-owned Controller boundary confirmation, phase/event prompt delivery, router direct dispatch, and
 PM decisions from reviewed evidence.
 """
 
@@ -411,8 +411,8 @@ def _next_required_channel(state: State) -> str:
             return "mail"
     if state.controller_role_confirmed and not state.pm_material_scan_card_delivered:
         return "prompt"
-    if state.pm_material_scan_packets_issued and not state.reviewer_dispatch_card_delivered:
-        return "prompt"
+    if state.pm_material_scan_packets_issued and not state.reviewer_dispatch_allowed:
+        return "mail"
     if state.reviewer_dispatch_allowed and not state.worker_packets_delivered:
         return "mail"
     if state.worker_packets_delivered and not state.worker_scan_results_returned:
@@ -438,11 +438,8 @@ def _next_required_channel(state: State) -> str:
         and not state.research_worker_report_card_delivered
     ):
         return "prompt"
-    if (
-        state.research_worker_report_card_delivered
-        and not state.research_reviewer_dispatch_card_delivered
-    ):
-        return "prompt"
+    if state.research_worker_report_card_delivered and not state.research_dispatch_allowed:
+        return "mail"
     if state.research_dispatch_allowed and not state.research_worker_packet_delivered:
         return "mail"
     if (
@@ -552,11 +549,8 @@ def _next_required_channel(state: State) -> str:
         and not state.reviewer_node_acceptance_plan_review_card_delivered
     ):
         return "prompt"
-    if (
-        state.pm_node_packet_issued
-        and not state.reviewer_current_node_dispatch_card_delivered
-    ):
-        return "prompt"
+    if state.pm_node_packet_issued and not state.node_dispatch_allowed:
+        return "mail"
     if state.node_dispatch_allowed and not state.node_worker_body_delivered:
         return "mail"
     if state.node_worker_body_delivered and not state.node_worker_result_returned:
@@ -781,15 +775,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, pm_material_scan_packets_issued=True, holder="controller"),
         )
         return
-    if not state.reviewer_dispatch_card_delivered:
-        yield Transition(
-            "reviewer_dispatch_request_card_delivered",
-            _prompt(state, reviewer_dispatch_card_delivered=True, holder="reviewer"),
-        )
-        return
     if not state.reviewer_dispatch_allowed:
         yield Transition(
-            "reviewer_allows_material_scan_dispatch",
+            "router_direct_material_scan_dispatch_preflight_passed",
             replace(state, reviewer_dispatch_allowed=True, holder="controller"),
         )
         return
@@ -867,22 +855,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _prompt(state, research_worker_report_card_delivered=True, holder="worker"),
         )
         return
-    if (
-        state.material_review == "research_required"
-        and not state.research_reviewer_dispatch_card_delivered
-    ):
-        yield Transition(
-            "research_reviewer_dispatch_card_delivered",
-            _prompt(
-                state,
-                research_reviewer_dispatch_card_delivered=True,
-                holder="reviewer",
-            ),
-        )
-        return
     if state.material_review == "research_required" and not state.research_dispatch_allowed:
         yield Transition(
-            "reviewer_allows_research_dispatch",
+            "router_direct_research_dispatch_preflight_passed",
             replace(state, research_dispatch_allowed=True, holder="controller"),
         )
         return
@@ -1299,20 +1274,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.pm_node_packet_issued:
         yield Transition("pm_issues_current_node_packet", replace(state, pm_node_packet_issued=True, holder="controller"))
         return
-    if not state.reviewer_current_node_dispatch_card_delivered:
-        yield Transition(
-            "reviewer_current_node_dispatch_card_delivered",
-            _prompt(
-                state,
-                reviewer_current_node_dispatch_card_delivered=True,
-                phase="reviewer.current_node_dispatch",
-                holder="reviewer",
-            ),
-        )
-        return
     if not state.node_dispatch_allowed:
         yield Transition(
-            "reviewer_allows_current_node_dispatch_from_reviewed_acceptance_plan",
+            "router_direct_current_node_dispatch_from_reviewed_acceptance_plan",
             replace(state, node_dispatch_allowed=True),
         )
         return
@@ -1688,10 +1652,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append(
             "PM issued material packets before Controller boundary confirmation, startup-intake card, and material scan card"
         )
-    if state.reviewer_dispatch_allowed and not state.reviewer_dispatch_card_delivered:
-        failures.append("reviewer allowed material scan dispatch before dispatch card")
     if state.worker_packets_delivered and not state.reviewer_dispatch_allowed:
-        failures.append("worker packet bodies delivered before reviewer dispatch approval")
+        failures.append("worker packet bodies delivered before router direct dispatch approval")
     if state.worker_scan_results_returned and not (
         state.worker_packets_delivered and state.material_scan_result_ledger_checked
     ):
@@ -1724,15 +1686,10 @@ def invariant_failures(state: State) -> list[str]:
         and not state.research_capability_decision_recorded
     ):
         failures.append("worker research report card delivered before research capability decision")
-    if (
-        state.research_reviewer_dispatch_card_delivered
-        and not state.research_worker_report_card_delivered
-    ):
-        failures.append("research reviewer dispatch card delivered before worker research card")
-    if state.research_dispatch_allowed and not state.research_reviewer_dispatch_card_delivered:
-        failures.append("reviewer allowed research dispatch before research dispatch card")
+    if state.research_dispatch_allowed and not state.research_worker_report_card_delivered:
+        failures.append("research direct dispatch preflight passed before worker research card")
     if state.research_worker_packet_delivered and not state.research_dispatch_allowed:
-        failures.append("research worker packet body delivered before reviewer dispatch approval")
+        failures.append("research worker packet body delivered before router direct dispatch approval")
     if state.research_worker_report_returned and not (
         state.research_worker_report_card_delivered
         and state.research_worker_packet_delivered
@@ -1942,19 +1899,13 @@ def invariant_failures(state: State) -> list[str]:
         and state.node_acceptance_plan_reviewed
     ):
         failures.append("PM issued node packet before current-node cards and reviewed node acceptance plan")
-    if (
-        state.reviewer_current_node_dispatch_card_delivered
-        and not (state.pm_node_packet_issued and state.node_acceptance_plan_reviewed)
-    ):
-        failures.append("reviewer.current_node_dispatch card delivered before packet and reviewed node acceptance plan")
     if state.node_dispatch_allowed and not (
-        state.reviewer_current_node_dispatch_card_delivered
-        and state.pm_node_packet_issued
+        state.pm_node_packet_issued
         and state.node_acceptance_plan_reviewed
     ):
-        failures.append("reviewer allowed current-node dispatch before reviewer.current_node_dispatch card and reviewed node acceptance plan")
+        failures.append("router direct current-node dispatch passed before packet and reviewed node acceptance plan")
     if state.node_worker_body_delivered and not state.node_dispatch_allowed:
-        failures.append("current-node worker body delivered before reviewer dispatch")
+        failures.append("current-node worker body delivered before router direct dispatch")
     if state.node_worker_result_returned and not (
         state.node_worker_body_delivered and state.node_worker_result_ledger_checked
     ):
@@ -2175,7 +2126,6 @@ def _root_contract_ready(**changes: object) -> State:
     return _ready(
         pm_material_scan_card_delivered=True,
         pm_material_scan_packets_issued=True,
-        reviewer_dispatch_card_delivered=True,
         reviewer_dispatch_allowed=True,
         worker_packets_delivered=True,
         worker_scan_results_returned=True,
@@ -2238,7 +2188,6 @@ def _node_completed_ready(**changes: object) -> State:
         reviewer_node_acceptance_plan_review_card_delivered=True,
         node_acceptance_plan_reviewed=True,
         pm_node_packet_issued=True,
-        reviewer_current_node_dispatch_card_delivered=True,
         node_dispatch_allowed=True,
         node_worker_body_delivered=True,
         node_worker_result_returned=True,
@@ -2352,7 +2301,6 @@ def hazard_states() -> dict[str, State]:
         "material_scan_result_without_ledger_check": _ready(
             pm_material_scan_card_delivered=True,
             pm_material_scan_packets_issued=True,
-            reviewer_dispatch_card_delivered=True,
             reviewer_dispatch_allowed=True,
             worker_packets_delivered=True,
             worker_scan_results_returned=True,
@@ -2401,7 +2349,6 @@ def hazard_states() -> dict[str, State]:
             pm_research_package_written=True,
             research_capability_decision_recorded=True,
             research_worker_report_card_delivered=True,
-            research_reviewer_dispatch_card_delivered=True,
             research_dispatch_allowed=True,
             research_worker_packet_delivered=True,
             research_worker_report_returned=True,
@@ -2410,7 +2357,6 @@ def hazard_states() -> dict[str, State]:
         "research_pass_without_direct_source_check": _ready(
             material_review="research_required",
             research_worker_report_card_delivered=True,
-            research_reviewer_dispatch_card_delivered=True,
             research_dispatch_allowed=True,
             research_worker_packet_delivered=True,
             research_worker_report_returned=True,
@@ -2503,16 +2449,16 @@ def hazard_states() -> dict[str, State]:
             pm_node_started_event_delivered=True,
             pm_node_packet_issued=True,
         ),
-        "dispatch_card_without_reviewed_acceptance_plan": _step5_ready(
+        "direct_dispatch_without_reviewed_acceptance_plan": _step5_ready(
             route_activated_by_pm=True,
             pm_current_node_card_delivered=True,
             pm_node_started_event_delivered=True,
             pm_node_acceptance_plan_card_delivered=True,
             node_acceptance_plan_written=True,
             pm_node_packet_issued=True,
-            reviewer_current_node_dispatch_card_delivered=True,
+            node_dispatch_allowed=True,
         ),
-        "dispatch_allowed_without_independent_dispatch_card": _step5_ready(
+        "direct_dispatch_without_packet": _step5_ready(
             route_activated_by_pm=True,
             pm_current_node_card_delivered=True,
             pm_node_started_event_delivered=True,
@@ -2520,7 +2466,7 @@ def hazard_states() -> dict[str, State]:
             node_acceptance_plan_written=True,
             reviewer_node_acceptance_plan_review_card_delivered=True,
             node_acceptance_plan_reviewed=True,
-            pm_node_packet_issued=True,
+            pm_node_packet_issued=False,
             node_dispatch_allowed=True,
         ),
         "node_worker_result_without_ledger_check": _step5_ready(
@@ -2532,7 +2478,6 @@ def hazard_states() -> dict[str, State]:
             reviewer_node_acceptance_plan_review_card_delivered=True,
             node_acceptance_plan_reviewed=True,
             pm_node_packet_issued=True,
-            reviewer_current_node_dispatch_card_delivered=True,
             node_dispatch_allowed=True,
             node_worker_body_delivered=True,
             node_worker_result_returned=True,
@@ -2573,7 +2518,6 @@ def hazard_states() -> dict[str, State]:
             reviewer_node_acceptance_plan_review_card_delivered=True,
             node_acceptance_plan_reviewed=True,
             pm_node_packet_issued=True,
-            reviewer_current_node_dispatch_card_delivered=True,
             node_dispatch_allowed=True,
             node_worker_body_delivered=True,
             node_worker_result_returned=True,

@@ -8,6 +8,7 @@ import importlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import urllib.parse
@@ -149,8 +150,40 @@ def check_python_package(dependency: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def dependency_policy_summary(manifest: dict[str, Any]) -> dict[str, Any]:
+    required: list[str] = []
+    optional: list[str] = []
+    python_required: list[str] = []
+    required_skills: list[str] = []
+    optional_skills: list[str] = []
+    for dependency in manifest.get("dependencies", []):
+        name = dependency.get("name", "unknown")
+        if dependency.get("required", True):
+            required.append(name)
+            if dependency.get("type") == "python_package":
+                python_required.append(name)
+            if dependency.get("type") == "codex_skill":
+                required_skills.append(name)
+        else:
+            optional.append(name)
+            if dependency.get("type") == "codex_skill":
+                optional_skills.append(name)
+    return {
+        "required": required,
+        "required_python_packages": python_required,
+        "required_codex_skills": required_skills,
+        "optional": optional,
+        "optional_codex_skills": optional_skills,
+        "policy": (
+            "Missing required Codex skills are installed with --install-missing. "
+            "Missing FlowGuard is installed only when --install-flowguard explicitly authorizes Python environment changes. "
+            "Optional UI companions are skipped unless --include-optional is used."
+        ),
+    }
+
+
 def source_is_complete(source: dict[str, Any]) -> bool:
-    if source.get("kind") != "github":
+    if source.get("kind") not in {"github", "github_python_package"}:
         return True
     if source.get("repo") and source.get("ref") and source.get("path"):
         return True
@@ -161,8 +194,12 @@ def parse_github_source(source: dict[str, Any]) -> tuple[str, str, str]:
     repo = source.get("repo", "").strip()
     ref = source.get("ref", "").strip()
     path = source.get("path", "").strip().strip("/")
+    if path == ".":
+        path = ""
     if repo and ref and path:
         return repo, ref, path
+    if repo and ref and source.get("path", "").strip() in {"", ".", "./"}:
+        return repo, ref, ""
 
     url = source.get("url", "").strip()
     parsed = urllib.parse.urlparse(url)
@@ -172,6 +209,8 @@ def parse_github_source(source: dict[str, Any]) -> tuple[str, str, str]:
     repo = f"{parts[0]}/{parts[1]}"
     ref = parts[3]
     path = "/".join(parts[4:])
+    if path == ".":
+        path = ""
     return repo, ref, path
 
 
@@ -189,10 +228,70 @@ def download_github_skill(source: dict[str, Any], destination: Path) -> None:
         roots = [child for child in extract_root.iterdir() if child.is_dir()]
         if not roots:
             raise FileNotFoundError("GitHub archive did not contain a repository root")
-        source_path = roots[0] / subpath
+        source_path = roots[0] / subpath if subpath else roots[0]
         if not (source_path / "SKILL.md").exists():
             raise FileNotFoundError(f"GitHub source did not contain {subpath}/SKILL.md")
         shutil.copytree(source_path, destination)
+
+
+def install_python_package(
+    dependency: dict[str, Any],
+    *,
+    dry_run: bool,
+) -> dict[str, Any]:
+    source = dependency.get("source", {})
+    mode = dependency.get("install", {}).get("mode")
+    result: dict[str, Any] = {
+        "name": dependency["name"],
+        "action": "none",
+        "ok": True,
+        "type": "python_package",
+    }
+    if mode != "github_python_package" and source.get("kind") != "github_python_package":
+        result["ok"] = False
+        result["action"] = "not_installable"
+        return result
+    if not source_is_complete(source):
+        result["ok"] = False
+        result["action"] = "missing_github_source"
+        return result
+
+    repo, ref, subpath = parse_github_source(source)
+    result["action"] = "install_github_python_package"
+    result["source"] = f"https://github.com/{repo}"
+    result["ref"] = ref
+    result["path"] = subpath or "."
+    result["command"] = f"{sys.executable} -m pip install <downloaded {repo}@{ref}>"
+    if dry_run:
+        result["dry_run"] = True
+        return result
+
+    archive_url = f"https://github.com/{repo}/archive/{urllib.parse.quote(ref, safe='')}.zip"
+    with tempfile.TemporaryDirectory(prefix="flowpilot-python-package-") as tmp_name:
+        tmp = Path(tmp_name)
+        archive_path = tmp / "source.zip"
+        with urllib.request.urlopen(archive_url, timeout=30) as response:
+            archive_path.write_bytes(response.read())
+        extract_root = tmp / "extract"
+        with zipfile.ZipFile(archive_path) as archive:
+            archive.extractall(extract_root)
+        roots = [child for child in extract_root.iterdir() if child.is_dir()]
+        if not roots:
+            raise FileNotFoundError("GitHub archive did not contain a repository root")
+        package_path = roots[0] / subpath if subpath else roots[0]
+        if not (package_path / "pyproject.toml").exists():
+            raise FileNotFoundError(f"GitHub source did not contain {subpath or '.'}/pyproject.toml")
+        completed = subprocess.run(
+            [sys.executable, "-m", "pip", "install", str(package_path)],
+            text=True,
+            capture_output=True,
+        )
+    result["returncode"] = completed.returncode
+    result["stdout_tail"] = completed.stdout[-2000:]
+    result["stderr_tail"] = completed.stderr[-2000:]
+    if completed.returncode != 0:
+        result["ok"] = False
+    return result
 
 
 def copy_repo_skill(dependency: dict[str, Any], destination: Path) -> None:
@@ -342,6 +441,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Check only. This is the default.")
     parser.add_argument("--install-missing", action="store_true", help="Install missing auto-installable skills.")
+    parser.add_argument(
+        "--install-flowguard",
+        action="store_true",
+        help="With --install-missing, install the required FlowGuard Python package from its public GitHub source if missing.",
+    )
     parser.add_argument("--include-optional", action="store_true", help="With --install-missing, also install optional companion skills.")
     parser.add_argument(
         "--sync-repo-owned",
@@ -362,6 +466,7 @@ def main() -> int:
         "ok": True,
         "skills_root": str(root),
         "manifest": str(MANIFEST_PATH),
+        "dependency_policy": dependency_policy_summary(manifest),
         "dependencies": [],
         "host_capabilities": [],
         "install_actions": [],
@@ -410,6 +515,48 @@ def main() -> int:
         required = bool(status.get("required", True))
 
         install_cfg = dependency.get("install", {})
+        if dependency.get("type") == "python_package":
+            should_install_python = (
+                args.install_missing
+                and args.install_flowguard
+                and bool(install_cfg.get("auto_install_missing"))
+                and required
+            )
+            if not should_install_python:
+                if required:
+                    result["ok"] = False
+                    result["install_actions"].append(
+                        {
+                            "name": dependency["name"],
+                            "type": "python_package",
+                            "action": "requires_install_flowguard",
+                            "ok": False,
+                            "command": "python scripts\\install_flowpilot.py --install-missing --install-flowguard",
+                            "detail": "Required Python package is missing; use --install-flowguard to authorize installing FlowGuard from its public GitHub source.",
+                        }
+                    )
+                continue
+            try:
+                action = install_python_package(dependency, dry_run=args.dry_run)
+            except Exception as exc:  # pragma: no cover - diagnostic script
+                action = {
+                    "name": dependency["name"],
+                    "type": "python_package",
+                    "action": "install_github_python_package",
+                    "ok": False,
+                    "error": repr(exc),
+                }
+            result["install_actions"].append(action)
+            if not action.get("ok"):
+                result["ok"] = False
+                continue
+            if not args.dry_run:
+                post_status = dependency_status(root, dependency)
+                result["dependencies"].append({**post_status, "after_install": True})
+                if not post_status.get("ok"):
+                    result["ok"] = False
+            continue
+
         should_install = (
             args.install_missing
             and bool(install_cfg.get("auto_install_missing"))
@@ -423,6 +570,14 @@ def main() -> int:
         result["install_actions"].append(action)
         if not action.get("ok"):
             result["ok"] = False
+            continue
+        if action.get("action") == "skip_existing" and required:
+            result["ok"] = False
+            action["ok"] = False
+            action["detail"] = (
+                "Existing required skill was present but did not pass checks; use --force "
+                "or --sync-repo-owned when refreshing from a trusted checkout."
+            )
             continue
         if not args.dry_run:
             post_status = dependency_status(root, dependency)
@@ -441,6 +596,13 @@ def main() -> int:
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
+        policy = result["dependency_policy"]
+        print("FlowPilot dependency bootstrap:")
+        print("- required: " + ", ".join(policy["required"]))
+        print("- optional: " + (", ".join(policy["optional"]) if policy["optional"] else "none"))
+        print("- missing required Codex skills are installed with --install-missing")
+        print("- missing FlowGuard installs only with --install-flowguard")
+        print("- optional UI companions install only with --include-optional")
         print(f"FlowPilot install check: {'ok' if result['ok'] else 'needs attention'}")
         print(f"Codex skills directory: {root}")
         for item in result["dependencies"]:

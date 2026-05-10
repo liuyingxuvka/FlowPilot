@@ -65,16 +65,12 @@ MATERIAL_DISPATCH_BLOCK_FLAG = "material_scan_dispatch_blocked"
 MODEL_MISS_REVIEW_BLOCK_FLAGS = frozenset(
     {
         "node_acceptance_plan_review_blocked",
-        "current_node_dispatch_blocked",
         "node_review_blocked",
-        MATERIAL_DISPATCH_BLOCK_FLAG,
     }
 )
 MODEL_MISS_REVIEW_BLOCK_EVENTS_BY_FLAG = {
     "node_acceptance_plan_review_blocked": "reviewer_blocks_node_acceptance_plan",
-    "current_node_dispatch_blocked": "reviewer_blocks_current_node_dispatch",
     "node_review_blocked": "current_node_reviewer_blocks_result",
-    MATERIAL_DISPATCH_BLOCK_FLAG: MATERIAL_DISPATCH_BLOCK_EVENT,
 }
 CONTROL_RECHECK_REVIEW_BLOCK_FLAGS = frozenset(
     {
@@ -193,7 +189,7 @@ class State:
     material_dispatch_block_report_writer: bool = True
     material_dispatch_pm_block_cards_reachable: bool = True
     material_dispatch_route_memory_tracks_block: bool = True
-    material_dispatch_relay_requires_allow_without_block: bool = True
+    material_dispatch_direct_preflight_required: bool = True
 
     declared_reviewer_block_flags: frozenset[str] = field(default_factory=lambda: DECLARED_REVIEW_BLOCK_FLAGS)
     reviewer_block_lane_flags: frozenset[str] = field(default_factory=lambda: DECLARED_REVIEW_BLOCK_FLAGS)
@@ -310,7 +306,7 @@ def _valid_state() -> State:
         material_dispatch_block_report_writer=True,
         material_dispatch_pm_block_cards_reachable=True,
         material_dispatch_route_memory_tracks_block=True,
-        material_dispatch_relay_requires_allow_without_block=True,
+        material_dispatch_direct_preflight_required=True,
         material_dispatch_frontier_phase_synchronized=True,
         material_dispatch_card_has_pre_route_material_exception=True,
         material_scan_packets_mark_pre_route_not_current_node=True,
@@ -407,7 +403,7 @@ def _scenario_state(scenario: str) -> State:
             material_dispatch_card_has_pre_route_material_exception=False,
         )
     if scenario == REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE:
-        old_lane_flags = frozenset({"node_review_blocked", MATERIAL_DISPATCH_BLOCK_FLAG})
+        old_lane_flags = frozenset({"node_review_blocked"})
         return replace(
             state,
             model_miss_review_block_card_flags=old_lane_flags,
@@ -570,11 +566,11 @@ def _material_dispatch_block_failures(state: State) -> list[str]:
     if not state.material_dispatch_block_report_writer:
         failures.append("material dispatch reviewer block event has no file-backed report writer")
     if not state.material_dispatch_pm_block_cards_reachable:
-        failures.append("material dispatch reviewer block cannot route to PM block/repair cards")
+        failures.append("material dispatch router block cannot route to PM control-blocker repair")
     if not state.material_dispatch_route_memory_tracks_block:
         failures.append("material dispatch reviewer block is missing from route-memory reviewer block markers")
-    if not state.material_dispatch_relay_requires_allow_without_block:
-        failures.append("material scan packet relay is not blocked when reviewer blocks dispatch")
+    if not state.material_dispatch_direct_preflight_required:
+        failures.append("material scan packet relay does not require router direct-dispatch preflight")
     return failures
 
 
@@ -926,11 +922,19 @@ def _material_dispatch_block_report_writer(router_source: str) -> bool:
 
 
 def _material_dispatch_pm_block_cards_reachable(router_source: str) -> bool:
-    sequence_prefix = router_source.split("EXTERNAL_EVENTS", 1)[0]
+    control_blocker_segment = (
+        _function_segment(router_source, "_control_blocker_allowed_resolution_events")
+        + "\n"
+        + _function_segment(router_source, "_repair_outcome_table")
+        + "\n"
+        + _function_segment(router_source, "_write_control_blocker_repair_decision")
+    )
     return (
-        MATERIAL_DISPATCH_BLOCK_FLAG in sequence_prefix
-        and "pm.review_repair" in sequence_prefix
-        and "pm.event.reviewer_blocked" in sequence_prefix
+        PM_CONTROL_BLOCKER_EVENT in router_source
+        and "PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT" in control_blocker_segment
+        and "router_direct_material_scan_dispatch_recheck_passed" in control_blocker_segment
+        and "router_direct_material_scan_dispatch_recheck_blocked" in control_blocker_segment
+        and "router_protocol_blocker_material_scan_dispatch_recheck" in control_blocker_segment
     )
 
 
@@ -939,16 +943,21 @@ def _material_dispatch_route_memory_tracks_block(router_source: str) -> bool:
     return MATERIAL_DISPATCH_BLOCK_EVENT in segment
 
 
-def _material_dispatch_relay_requires_allow_without_block(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_next_material_packet_action")
-    if MATERIAL_DISPATCH_BLOCK_FLAG not in router_source:
-        return False
-    return "reviewer_dispatch_allowed" in segment and MATERIAL_DISPATCH_BLOCK_FLAG in segment
+def _material_dispatch_direct_preflight_required(router_source: str) -> bool:
+    next_segment = _function_segment(router_source, "_next_material_packet_action")
+    relay_segment = _function_segment(router_source, "_relay_packet_records")
+    return (
+        "validate_packet_ready_for_direct_relay" in relay_segment
+        and "reviewer_dispatch_allowed" not in next_segment
+        and MATERIAL_DISPATCH_BLOCK_FLAG not in next_segment
+    )
 
 
 def _declared_reviewer_block_flags(router: Any) -> frozenset[str]:
     flags: set[str] = set()
     for event_name, meta in router.EXTERNAL_EVENTS.items():
+        if bool(meta.get("legacy")):
+            continue
         if (
             event_name.startswith("reviewer_blocks_")
             or event_name.startswith("reviewer_protocol_blocker_")
@@ -1024,7 +1033,7 @@ def _pm_review_block_repair_event_routes_flags(router: Any, router_source: str) 
         routed.update(str(flag) for flag in getattr(router, "MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS", ("node_review_blocked",)))
     if "_write_material_dispatch_repair" in segment:
         routed.update(str(flag) for flag in getattr(router, "MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS", (MATERIAL_DISPATCH_BLOCK_FLAG,)))
-    return frozenset(routed)
+    return frozenset(routed) & MODEL_MISS_REVIEW_BLOCK_FLAGS
 
 
 def _material_dispatch_frontier_phase_synchronized(router_source: str) -> bool:
@@ -1324,7 +1333,7 @@ def collect_source_state(project_root: Path) -> State:
         material_dispatch_block_report_writer=_material_dispatch_block_report_writer(router_source),
         material_dispatch_pm_block_cards_reachable=_material_dispatch_pm_block_cards_reachable(router_source),
         material_dispatch_route_memory_tracks_block=_material_dispatch_route_memory_tracks_block(router_source),
-        material_dispatch_relay_requires_allow_without_block=_material_dispatch_relay_requires_allow_without_block(
+        material_dispatch_direct_preflight_required=_material_dispatch_direct_preflight_required(
             router_source
         ),
         declared_reviewer_block_flags=_declared_reviewer_block_flags(router),

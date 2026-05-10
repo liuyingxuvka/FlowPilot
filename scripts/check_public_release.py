@@ -169,7 +169,7 @@ def scan_tracked_privacy(checks: list[dict[str, Any]]) -> None:
 
 
 def source_is_complete(source: dict[str, Any]) -> bool:
-    if source.get("kind") != "github":
+    if source.get("kind") not in {"github", "github_python_package"}:
         return True
     return bool(
         (source.get("repo") and source.get("ref") and source.get("path"))
@@ -181,21 +181,34 @@ def parse_github_source(source: dict[str, Any]) -> tuple[str, str, str]:
     repo = source.get("repo", "").strip()
     ref = source.get("ref", "").strip()
     path = source.get("path", "").strip().strip("/")
+    if path == ".":
+        path = ""
     if repo and ref and path:
         return repo, ref, path
+    if repo and ref and source.get("path", "").strip() in {"", ".", "./"}:
+        return repo, ref, ""
 
     url = source.get("url", "").strip()
     parsed = urllib.parse.urlparse(url)
     parts = [part for part in parsed.path.split("/") if part]
     if parsed.netloc.lower() != "github.com" or len(parts) < 5 or parts[2] != "tree":
         raise ValueError("GitHub source must provide repo/ref/path or a github.com tree URL")
-    return f"{parts[0]}/{parts[1]}", parts[3], "/".join(parts[4:])
+    path = "/".join(parts[4:])
+    if path == ".":
+        path = ""
+    return f"{parts[0]}/{parts[1]}", parts[3], path
+
+
+def github_raw_url(source: dict[str, Any], filename: str) -> str:
+    repo, ref, path = parse_github_source(source)
+    parts = [part for part in path.split("/") if part]
+    parts.append(filename)
+    quoted_path = "/".join(urllib.parse.quote(part) for part in parts)
+    return f"https://raw.githubusercontent.com/{repo}/{urllib.parse.quote(ref, safe='')}/{quoted_path}"
 
 
 def github_skill_raw_url(source: dict[str, Any]) -> str:
-    repo, ref, path = parse_github_source(source)
-    quoted_path = "/".join(urllib.parse.quote(part) for part in path.split("/"))
-    return f"https://raw.githubusercontent.com/{repo}/{urllib.parse.quote(ref, safe='')}/{quoted_path}/SKILL.md"
+    return github_raw_url(source, "SKILL.md")
 
 
 def check_url(url: str, timeout: int = 15) -> tuple[bool, str]:
@@ -256,6 +269,31 @@ def validate_manifest(
                 add_check(
                     checks,
                     name=f"dependency_skill_url:{name}",
+                    ok=ok,
+                    url=raw_url,
+                    detail=detail,
+                )
+        elif source_kind == "github_python_package":
+            complete = source_is_complete(source)
+            missing_is_blocker = dependency.get("release_check", {}).get("missing_source_is_blocker", False)
+            add_check(
+                checks,
+                name=f"dependency_github_python_source:{name}",
+                ok=complete or not missing_is_blocker,
+                severity="error" if missing_is_blocker else "warning",
+                source=source,
+            )
+            if complete and not skip_url_check:
+                probe = dependency.get("release_check", {}).get("raw_probe", "pyproject.toml")
+                try:
+                    raw_url = github_raw_url(source, probe)
+                except Exception as exc:
+                    add_check(checks, name=f"dependency_url_parse:{name}", ok=False, error=repr(exc))
+                    continue
+                ok, detail = check_url(raw_url)
+                add_check(
+                    checks,
+                    name=f"dependency_python_package_url:{name}",
                     ok=ok,
                     url=raw_url,
                     detail=detail,

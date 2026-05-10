@@ -248,7 +248,7 @@ def _check_current_source() -> dict[str, object]:
             "material_dispatch_block_report_writer": state.material_dispatch_block_report_writer,
             "material_dispatch_pm_block_cards_reachable": state.material_dispatch_pm_block_cards_reachable,
             "material_dispatch_route_memory_tracks_block": state.material_dispatch_route_memory_tracks_block,
-            "material_dispatch_relay_requires_allow_without_block": state.material_dispatch_relay_requires_allow_without_block,
+            "material_dispatch_direct_preflight_required": state.material_dispatch_direct_preflight_required,
             "declared_reviewer_block_flags": sorted(state.declared_reviewer_block_flags),
             "reviewer_block_lane_flags": sorted(state.reviewer_block_lane_flags),
             "model_miss_review_block_event_flags": sorted(state.model_miss_review_block_event_flags),

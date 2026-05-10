@@ -69,8 +69,8 @@ Markdown files are English summaries for review.
 - next action;
 - startup activation hard-gate status.
 - packet control-plane status: active packet id, holder, PM decision path,
-  reviewer dispatch path, worker result path, review decision path, and next
-  legal controller relay action.
+  router direct-dispatch path, worker result path, review decision path, and
+  next legal controller relay action.
 
 It should not store the whole history.
 
@@ -470,9 +470,9 @@ The frontier records:
   hard-stop conditions, checkpoint cadence, plan replacement status, and any
   PM stop signal;
 - packet control-plane status, including active packet id, holder, PM
-  controller reminder presence, reviewer dispatch evidence, worker identity,
-  worker result, review decision, ambiguity block, and whether the internal
-  packet loop can continue without stopping for the user;
+  controller reminder presence, router direct-dispatch evidence, worker
+  identity, worker result, review decision, ambiguity block, and whether the
+  internal packet loop can continue without stopping for the user;
 - PM-owned child-skill selection status: local skill inventory path, selection
   manifest path, required/conditional/deferred/rejected decisions, and proof
   that raw local availability did not create route work;
@@ -540,7 +540,7 @@ no-progress evidence.
 
 `packet_ledger.json` is the run-local source of truth for the packet-gated
 controller loop. It records the active packet id, packet holder, PM decision
-evidence, reviewer dispatch evidence, assigned worker, packet envelope/body
+evidence, router direct-dispatch evidence, assigned worker, packet envelope/body
 paths and hashes, result envelope/body paths and hashes, review decision
 evidence, next legal controller relay action, and whether ambiguous worker
 state blocks controller execution. It also records controller relay signatures,
@@ -587,7 +587,7 @@ node, repair node, or sender reissue decision.
 
 Each packet entry also contains a mandatory envelope-aware
 `role_origin_audit`. The reviewer must fill it before any pass decision by
-comparing the PM-authored packet envelope, reviewer dispatch evidence,
+comparing the PM-authored packet envelope, router direct-dispatch evidence,
 `packet_envelope.to_role`, assigned worker or authorized role,
 `result_envelope.completed_by_role`, `completed_by_agent_id`, and actual
 result author evidence. Packet and result body hashes must match their
@@ -604,9 +604,9 @@ Heartbeat and manual resume load the packet ledger before asking PM for the
 current decision and must audit the mail chain without opening bodies. The
 controller may not mint packets, finish worker packets, or advance from
 controller-origin evidence. If PM issues a packet, the ledger must show
-`controller_reminder`, controller relay signature, recipient body-open record,
-and reviewer dispatch before worker execution. If a worker result exists, the
-next action is controller-relayed reviewer review. If packet holder, relay
+`controller_reminder`, router direct-dispatch preflight, controller relay
+signature, and recipient body-open record before worker execution. If a worker
+result exists, the next action is controller-relayed reviewer review. If packet holder, relay
 signature, body-open record, or worker-result state is ambiguous, the next
 action is PM recovery/reissue, not controller execution.
 

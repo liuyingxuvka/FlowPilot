@@ -50,12 +50,22 @@
       "required": true,
       "import_name": "flowguard",
       "source": {
-        "kind": "python_environment"
+        "kind": "github_python_package",
+        "repo": "liuyingxuvka/FlowGuard",
+        "ref": "main",
+        "path": ".",
+        "url": "https://github.com/liuyingxuvka/FlowGuard"
       },
       "install": {
-        "mode": "manual_or_environment",
-        "auto_install_missing": false,
-        "notes": "FlowPilot requires the real FlowGuard package. Do not install a fake local substitute."
+        "mode": "github_python_package",
+        "auto_install_missing": true,
+        "requires_explicit_flag": "--install-flowguard",
+        "verification_command": "python -m flowguard schema-version",
+        "notes": "FlowPilot requires the real FlowGuard package from https://github.com/liuyingxuvka/FlowGuard. Do not install a fake local substitute."
+      },
+      "release_check": {
+        "missing_source_is_blocker": true,
+        "raw_probe": "pyproject.toml"
       },
       "checks": [
         {
@@ -95,8 +105,8 @@
     {
       "name": "grill-me",
       "type": "codex_skill",
-      "required": false,
-      "companion": true,
+      "required": true,
+      "companion": false,
       "install_name": "grill-me",
       "source": {
         "kind": "github",

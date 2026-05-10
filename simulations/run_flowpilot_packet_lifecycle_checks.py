@@ -17,9 +17,9 @@ ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_packet_lifecycle_results.json"
 
 HAZARD_EXPECTED_FAILURES = {
-    "stale_hash_after_body_repair": "dispatch passed without envelope/ledger packet body hash identity",
-    "packet_body_alias_not_normalized": "dispatch passed without envelope/ledger packet body hash identity",
-    "result_body_alias_not_normalized": "dispatch passed without envelope/ledger packet body hash identity",
+    "stale_hash_after_body_repair": "direct dispatch passed without envelope/ledger packet body hash identity",
+    "packet_body_alias_not_normalized": "direct dispatch passed without envelope/ledger packet body hash identity",
+    "result_body_alias_not_normalized": "direct dispatch passed without envelope/ledger packet body hash identity",
     "packet_open_envelope_only": "result relay occurred before packet open receipts and result ledger absorption",
     "result_without_ledger_absorption": "result relay occurred before packet open receipts and result ledger absorption",
     "result_open_envelope_only": "reviewer pass occurred without complete packet/result receipts and agent role authority",
@@ -36,7 +36,7 @@ def _state_id(state: model.State) -> str:
         f"status={state.status}|steps={state.steps}|"
         f"dispatch={state.dispatch_gate_checked},{state.packet_body_hash_identity_synced},"
         f"{state.packet_body_path_alias_normalized},{state.result_body_path_alias_normalized},"
-        f"{state.reviewer_dispatch_passed}|packet={state.packet_relayed_by_controller},"
+        f"{state.router_direct_dispatch_passed}|packet={state.packet_relayed_by_controller},"
         f"{state.packet_open_envelope_receipt},{state.packet_open_ledger_receipt}|"
         f"grant={state.write_grant_issued}|"
         f"result={state.worker_result_written},{state.result_envelope_exists},"

@@ -762,15 +762,15 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("mail delivered before packet ledger was loaded")
 
     if state.fresh_worker_packet_sent and not state.reviewer_dispatch_allowed:
-        failures.append("worker packet sent before reviewer dispatch approval")
+        failures.append("worker packet sent before router direct dispatch approval")
     if state.existing_worker_result_routed_to_reviewer and not (
         state.existing_worker_result_found and state.reviewer_dispatch_allowed
     ):
-        failures.append("existing worker result routed without reviewer dispatch")
+        failures.append("existing worker result routed without router direct dispatch")
     if state.worker_result_routed_to_reviewer and not (
         state.fresh_worker_packet_sent and state.reviewer_dispatch_allowed
     ):
-        failures.append("fresh worker result routed without worker packet and reviewer dispatch")
+        failures.append("fresh worker result routed without worker packet and router direct dispatch")
     if state.reviewer_result_passed and not (
         state.existing_worker_result_routed_to_reviewer or state.worker_result_routed_to_reviewer
     ):

@@ -6976,3 +6976,128 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep the public-link banner text in sync across runtime card and both startup banner templates when future banner copy changes.
+
+
+## flowpilot-direct-packet-dispatch-20260510 - Move PM packet dispatch gating into router preflight
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested finishing the change that removes reviewer pre-dispatch approval for PM background work packets and relies on router/runtime mechanical validation before relay.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-10T18:20:00+00:00
+- Ended: 2026-05-10T19:30:00+00:00
+- Commands OK: True
+
+### Model Files
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+- `simulations/flowpilot_protocol_contract_conformance_model.py`
+- `simulations/flowpilot_router_loop_model.py`
+- `simulations/flowpilot_control_plane_friction_model.py`
+- `simulations/flowpilot_repair_transaction_model.py`
+- `simulations/flowpilot_gate_decision_contract_model.py`
+- `simulations/flowpilot_gate_policy_audit_model.py`
+- `simulations/flowpilot_route_hard_gate_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema 1.0.
+- OK: `python simulations\run_meta_checks.py --fast`.
+- OK: `python simulations\run_capability_checks.py --fast`.
+- OK: `python simulations\run_flowpilot_resume_checks.py`.
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`.
+- OK: `python simulations\run_router_next_recipient_checks.py --json-out simulations\router_next_recipient_results.json`.
+- OK: `python simulations\run_router_action_contract_checks.py --json-out simulations\flowpilot_router_action_contract_results.json`.
+- OK: `python simulations\run_card_instruction_coverage_checks.py`.
+- OK: `python simulations\run_prompt_isolation_checks.py --json-out simulations\prompt_isolation_results.json`.
+- OK: `python skills\flowpilot\assets\run_packet_control_plane_checks.py --json-out skills\flowpilot\assets\packet_control_plane_results.json`.
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`.
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`.
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py --json-out simulations\flowpilot_repair_transaction_results.json`.
+- OK: focused router runtime direct-dispatch and repair-transaction unittest subset, 13 tests.
+- OK: `python -m py_compile` on changed router, packet runtime, simulations, runners, and focused test module.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\smoke_autopilot.py --fast`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python simulations\run_flowpilot_gate_decision_contract_checks.py --json-out simulations\flowpilot_gate_decision_contract_results.json`.
+- OK: `python simulations\run_flowpilot_gate_policy_audit_checks.py --json-out simulations\flowpilot_gate_policy_audit_results.json`.
+- OK: `python simulations\run_flowpilot_route_hard_gate_checks.py --json-out simulations\flowpilot_route_hard_gate_results.json`.
+
+### Findings
+- PM material-scan and current-node packets now proceed through router direct-dispatch preflight and packet ledger checks instead of reviewer dispatch cards.
+- Reviewer dispatch cards remain as unmanifested legacy files only; reviewer responsibility is shifted to result quality, stage gates, and PM decision review.
+- Router/runtime direct relay checks cover required envelope fields, sealed body visibility, body hash replay, allowed background role, output-contract recipient match, scoped result paths, ledger identity, and Controller no-body-read boundaries.
+- Legacy material dispatch reviewer-block state is no longer part of model-miss reviewer-block repair; router material-dispatch hard blockers route through control-blocker repair and direct recheck outcomes.
+- Local installed `flowpilot` was stale before sync and matched the repository digest after `install_flowpilot.py --sync-repo-owned`.
+
+### Counterexamples
+- material packet relay without router direct-dispatch preflight
+- current-node worker dispatch before router direct-dispatch approval
+- packet body hash mismatch
+- missing output contract
+- output contract recipient mismatch
+- Controller sealed-body read
+- material dispatch router block without PM control-blocker repair path
+
+### Friction Points
+- The full unfiltered `tests\test_flowpilot_router_runtime.py` pytest run exceeded the tool timeout, so focused runtime tests plus FlowGuard model checks were used.
+- Full meta/capability checks were too slow in parallel; valid proof files were reused with `--fast`.
+- An existing live run under `.flowpilot/runs/run-20260510-162511` still has role-output hash replay warnings; this was not a source conformance blocker.
+
+### Skipped Steps
+- No GitHub push or remote release.
+- No destructive cleanup of legacy reviewer dispatch card files because install checks still require the files to exist for legacy/compatibility coverage.
+
+### Next Actions
+- If future work fully retires legacy run compatibility, remove the orphan reviewer dispatch card files and update install checks in the same change.
+
+
+## flowpilot-0.7.0-installer-bootstrap-20260510 - Add required dependency bootstrap and public FlowGuard install guard
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested that FlowPilot installers tell other AIs which sub-skills are required, auto-install missing required pieces when authorized, keep UI companions optional, model the installer flow with FlowGuard, bump the version, and publish to GitHub.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-10T18:45:00+00:00
+- Ended: 2026-05-10T19:35:00+00:00
+- Commands OK: True
+
+### Model Files
+- `simulations/release_tooling_model.py`
+- `simulations/run_release_tooling_checks.py`
+- `simulations/release_tooling_results.json`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema 1.0.
+- OK: `python -m py_compile scripts\install_flowpilot.py scripts\check_public_release.py scripts\check_install.py simulations\release_tooling_model.py simulations\run_release_tooling_checks.py tests\test_flowpilot_installer_dependencies.py`.
+- OK: `python simulations\run_release_tooling_checks.py`.
+- OK: `python -m pytest tests\test_flowpilot_installer_dependencies.py -q`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_public_release.py --json`, with expected warning that the worktree was dirty before commit.
+- OK: `python scripts\smoke_autopilot.py --fast`.
+- OK: `python -m pytest tests\test_flowguard_result_proof.py -q`.
+
+### Findings
+- The dependency manifest now makes `flowguard`, `model-first-function-flow`, and `grill-me` required; UI-oriented companion skills remain optional.
+- The installer prints required/optional tiers before actions, installs required Codex skills with `--install-missing`, and installs FlowGuard from `https://github.com/liuyingxuvka/FlowGuard` only when `--install-flowguard` explicitly authorizes Python environment changes.
+- `skills/flowpilot/DEPENDENCIES.md` and `SKILL.md` now give installing AIs a small startup reminder before FlowPilot runs.
+- Public release checks now understand `github_python_package` dependencies and probe FlowGuard's `pyproject.toml`.
+
+### Counterexamples
+- FlowGuard install attempted without public source plus explicit authorization.
+- Required dependencies marked ready before FlowGuard verification.
+- Optional companion skill installation without `--include-optional`.
+- Release prepared before dependency notice and tier declaration.
+
+### Friction Points
+- The local installed `flowpilot` skill was stale before sync; `install_flowpilot.py --sync-repo-owned --json` refreshed it and subsequent checks reported `source_fresh: true`.
+
+### Skipped Steps
+- OpenSpec was considered, but this repository has no initialized OpenSpec change directory, so no OpenSpec proposal was created.
+- No companion skill repository was modified, packaged, tagged, or published.
+
+### Next Actions
+- Keep future dependency additions in `flowpilot.dependencies.json`, `skills/flowpilot/DEPENDENCIES.md`, README install commands, and `simulations/release_tooling_model.py` in sync.

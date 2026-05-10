@@ -47,7 +47,7 @@
       "verify recipient opened packet/result bodies only after relay check",
       "verify no private role-to-role packet/result delivery",
       "verify contaminated, rejected, or unopened mail was sent to PM for restart, repair node, or sender reissue",
-      "verify reviewer dispatch approval",
+      "verify router direct-dispatch preflight approval",
       "verify packet envelope to_role",
       "verify packet body hash against packet envelope",
       "verify result envelope completed_by_role",

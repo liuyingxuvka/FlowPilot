@@ -9,7 +9,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 @dataclass(frozen=True)
 class NodeCase:
     case_id: str
-    reviewer_dispatch: str
+    dispatch_expectation: str
     result_origin: str
 
 
@@ -38,6 +38,9 @@ class NodePacket:
     recipient_open_records_ledger: bool = True
     body_hash_identity_matches_ledger: bool = True
     private_delivery_detected: bool = False
+    output_contract_present: bool = True
+    output_contract_recipient_matches: bool = True
+    result_paths_run_scoped: bool = True
 
 
 @dataclass(frozen=True)
@@ -137,10 +140,14 @@ class State:
     chat_mermaid_displays: tuple[str, ...] = ()
     packet_envelope_checks: tuple[str, ...] = ()
     packet_body_hash_checks: tuple[str, ...] = ()
+    output_contract_checks: tuple[str, ...] = ()
+    result_path_scope_checks: tuple[str, ...] = ()
     wrong_delivery_blocks: tuple[str, ...] = ()
     packet_body_hash_blocks: tuple[str, ...] = ()
     packet_body_hash_identity_blocks: tuple[str, ...] = ()
     stale_packet_body_blocks: tuple[str, ...] = ()
+    output_contract_blocks: tuple[str, ...] = ()
+    result_path_scope_blocks: tuple[str, ...] = ()
     dispatches: tuple[str, ...] = ()
     worker_results: tuple[str, ...] = ()
     controller_artifacts: tuple[str, ...] = ()
@@ -192,6 +199,9 @@ def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> 
         recipient_open_records_ledger=not packet_id.startswith("packet_open_envelope_only"),
         body_hash_identity_matches_ledger=not packet_id.startswith("body_hash_identity_stale"),
         private_delivery_detected=packet_id.startswith("private_delivery"),
+        output_contract_present=not packet_id.startswith("missing_output_contract"),
+        output_contract_recipient_matches=not packet_id.startswith("contract_recipient_mismatch"),
+        result_paths_run_scoped=not packet_id.startswith("result_path_escape"),
     )
 
 
@@ -264,6 +274,8 @@ class HeartbeatResumeLoad:
                 controller_relay_signatures=state.controller_relay_signatures + (packet_id,),
                 packet_envelope_checks=state.packet_envelope_checks + (packet_id,),
                 packet_body_hash_checks=state.packet_body_hash_checks + (packet_id,),
+                output_contract_checks=state.output_contract_checks + (packet_id,),
+                result_path_scope_checks=state.result_path_scope_checks + (packet_id,),
                 dispatches=state.dispatches + (packet_id,),
                 packet_body_open_events=state.packet_body_open_events + (packet_id,),
                 packet_body_open_envelope_records=state.packet_body_open_envelope_records + (packet_id,),
@@ -447,7 +459,7 @@ class ControllerEnvelopeRelay:
         "chat_mermaid_displays",
     )
     input_description = "PM packet envelope"
-    output_description = "envelope relayed for reviewer dispatch or blocked controller boundary violation"
+    output_description = "envelope relayed after router direct-dispatch preflight or blocked controller boundary violation"
     idempotency = "Envelope relay is keyed by packet ID."
 
     def apply(self, input_obj: NodePacket, state: State) -> Iterable[FunctionResult]:
@@ -569,33 +581,32 @@ class ControllerEnvelopeRelay:
         yield FunctionResult(input_obj, new_state, label)
 
 
-class ReviewerDispatch:
-    name = "ReviewerDispatch"
+class RouterDirectDispatch:
+    name = "RouterDirectDispatch"
     accepted_input_type = (NodePacket, NodeResult)
     reads = ("packets", "controller_envelope_reads")
     writes = (
         "packet_envelope_checks",
         "packet_body_hash_checks",
-        "recipient_pre_open_checks",
-        "packet_body_open_events",
-        "packet_body_open_envelope_records",
-        "packet_body_open_ledger_records",
+        "output_contract_checks",
+        "result_path_scope_checks",
         "wrong_delivery_blocks",
         "packet_body_hash_blocks",
         "packet_body_hash_identity_blocks",
         "stale_packet_body_blocks",
-        "unopened_packet_blocks",
+        "output_contract_blocks",
+        "result_path_scope_blocks",
         "dispatches",
         "review_blocks",
         "pm_repair_requirements",
     )
     input_description = "PM packet envelope"
-    output_description = "ApprovedPacket or DispatchBlocked"
-    idempotency = "Dispatch approval is keyed by packet ID."
+    output_description = "directly dispatched packet or router preflight block"
+    idempotency = "Router direct dispatch is keyed by packet ID."
 
     def apply(self, input_obj: NodePacket, state: State) -> Iterable[FunctionResult]:
         if not isinstance(input_obj, NodePacket):
-            yield FunctionResult(input_obj, state, "reviewer_dispatch_pass_through")
+            yield FunctionResult(input_obj, state, "router_direct_dispatch_pass_through")
             return
         packet_envelope_checks = (
             state.packet_envelope_checks
@@ -607,10 +618,22 @@ class ReviewerDispatch:
             if input_obj.packet_id in state.packet_body_hash_checks
             else state.packet_body_hash_checks + (input_obj.packet_id,)
         )
+        output_contract_checks = (
+            state.output_contract_checks
+            if input_obj.packet_id in state.output_contract_checks
+            else state.output_contract_checks + (input_obj.packet_id,)
+        )
+        result_path_scope_checks = (
+            state.result_path_scope_checks
+            if input_obj.packet_id in state.result_path_scope_checks
+            else state.result_path_scope_checks + (input_obj.packet_id,)
+        )
         checked_state = replace(
             state,
             packet_envelope_checks=packet_envelope_checks,
             packet_body_hash_checks=packet_body_hash_checks,
+            output_contract_checks=output_contract_checks,
+            result_path_scope_checks=result_path_scope_checks,
         )
         if input_obj.packet_id not in state.controller_relay_signatures:
             new_state = replace(
@@ -624,74 +647,12 @@ class ReviewerDispatch:
                 "missing_controller_relay_signature_blocked",
             )
             return
-        recipient_pre_open_checks = (
-            checked_state.recipient_pre_open_checks
-            if input_obj.packet_id in checked_state.recipient_pre_open_checks
-            else checked_state.recipient_pre_open_checks + (input_obj.packet_id,)
-        )
-        if not input_obj.recipient_opens_body_after_relay_check:
-            new_state = replace(
-                checked_state,
-                recipient_pre_open_checks=recipient_pre_open_checks,
-                unopened_packet_blocks=checked_state.unopened_packet_blocks + (input_obj.packet_id,),
-                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
-                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
-            )
-            yield FunctionResult(
-                DispatchBlocked(input_obj.packet_id, "packet_body_unopened_after_controller_relay"),
-                new_state,
-                "unopened_letter_sent_to_pm_for_restart_or_repair",
-            )
-            return
-        packet_body_open_events = (
-            checked_state.packet_body_open_events
-            if input_obj.packet_id in checked_state.packet_body_open_events
-            else checked_state.packet_body_open_events + (input_obj.packet_id,)
-        )
-        packet_body_open_envelope_records = checked_state.packet_body_open_envelope_records
-        if input_obj.recipient_open_records_envelope and input_obj.packet_id not in packet_body_open_envelope_records:
-            packet_body_open_envelope_records = packet_body_open_envelope_records + (input_obj.packet_id,)
-        packet_body_open_ledger_records = checked_state.packet_body_open_ledger_records
-        if input_obj.recipient_open_records_ledger and input_obj.packet_id not in packet_body_open_ledger_records:
-            packet_body_open_ledger_records = packet_body_open_ledger_records + (input_obj.packet_id,)
-        checked_state = replace(
-            checked_state,
-            recipient_pre_open_checks=recipient_pre_open_checks,
-            packet_body_open_events=packet_body_open_events,
-            packet_body_open_envelope_records=packet_body_open_envelope_records,
-            packet_body_open_ledger_records=packet_body_open_ledger_records,
-        )
-        if not input_obj.recipient_open_records_envelope:
-            new_state = replace(
-                checked_state,
-                unopened_packet_blocks=checked_state.unopened_packet_blocks + (input_obj.packet_id,),
-                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
-                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
-            )
-            yield FunctionResult(
-                DispatchBlocked(input_obj.packet_id, "packet_body_open_envelope_receipt_missing"),
-                new_state,
-                "packet_body_open_envelope_receipt_missing_blocked",
-            )
-            return
-        if not input_obj.recipient_open_records_ledger:
-            new_state = replace(
-                checked_state,
-                unopened_packet_blocks=checked_state.unopened_packet_blocks + (input_obj.packet_id,),
-                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
-                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
-            )
-            yield FunctionResult(
-                DispatchBlocked(input_obj.packet_id, "packet_body_open_ledger_receipt_missing"),
-                new_state,
-                "packet_body_open_ledger_receipt_missing_blocked",
-            )
-            return
         if input_obj.delivered_to_role != input_obj.to_role:
             new_state = replace(
                 checked_state,
                 wrong_delivery_blocks=checked_state.wrong_delivery_blocks + (input_obj.packet_id,),
                 review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "packet_delivered_to_wrong_role"),
@@ -704,6 +665,7 @@ class ReviewerDispatch:
                 checked_state,
                 packet_body_hash_blocks=checked_state.packet_body_hash_blocks + (input_obj.packet_id,),
                 review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "body_hash_mismatch"),
@@ -716,6 +678,7 @@ class ReviewerDispatch:
                 checked_state,
                 packet_body_hash_identity_blocks=checked_state.packet_body_hash_identity_blocks + (input_obj.packet_id,),
                 review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "packet_body_envelope_ledger_hash_identity_mismatch"),
@@ -728,6 +691,7 @@ class ReviewerDispatch:
                 checked_state,
                 stale_packet_body_blocks=checked_state.stale_packet_body_blocks + (input_obj.packet_id,),
                 review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "stale_packet_body_reused_after_route_mutation"),
@@ -735,26 +699,71 @@ class ReviewerDispatch:
                 "stale_packet_body_reused_after_route_mutation_blocked",
             )
             return
-
-        # The case id encodes the abstract reviewer dispatch decision for finite exploration.
-        if input_obj.packet_id.startswith("dispatch_block"):
-            new_state = replace(checked_state, review_blocks=checked_state.review_blocks + (input_obj.packet_id,))
-            yield FunctionResult(DispatchBlocked(input_obj.packet_id, "reviewer_dispatch_block"), new_state, "reviewer_dispatch_blocked")
+        if not input_obj.output_contract_present:
+            new_state = replace(
+                checked_state,
+                output_contract_blocks=checked_state.output_contract_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "missing_output_contract"),
+                new_state,
+                "missing_output_contract_blocked",
+            )
+            return
+        if not input_obj.output_contract_recipient_matches:
+            new_state = replace(
+                checked_state,
+                output_contract_blocks=checked_state.output_contract_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "output_contract_recipient_mismatch"),
+                new_state,
+                "output_contract_recipient_mismatch_blocked",
+            )
+            return
+        if not input_obj.result_paths_run_scoped:
+            new_state = replace(
+                checked_state,
+                result_path_scope_blocks=checked_state.result_path_scope_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "result_path_escape"),
+                new_state,
+                "result_path_escape_blocked",
+            )
             return
         new_state = (
             checked_state
             if input_obj.packet_id in checked_state.dispatches
             else replace(checked_state, dispatches=checked_state.dispatches + (input_obj.packet_id,))
         )
-        yield FunctionResult(ApprovedPacket(input_obj.packet_id, input_obj.to_role), new_state, "reviewer_dispatch_approved")
+        yield FunctionResult(ApprovedPacket(input_obj.packet_id, input_obj.to_role), new_state, "router_direct_dispatch_approved")
 
 
 class WorkerOrControllerResult:
     name = "WorkerOrControllerResult"
     accepted_input_type = (ApprovedPacket, NodeResult)
     reads = ("dispatches",)
-    writes = ("worker_results", "controller_artifacts", "result_envelopes", "result_ledger_records")
-    input_description = "dispatch-approved packet"
+    writes = (
+        "recipient_pre_open_checks",
+        "packet_body_open_events",
+        "packet_body_open_envelope_records",
+        "packet_body_open_ledger_records",
+        "unopened_packet_blocks",
+        "worker_results",
+        "controller_artifacts",
+        "result_envelopes",
+        "result_ledger_records",
+        "review_blocks",
+        "pm_repair_requirements",
+    )
+    input_description = "directly dispatched packet"
     output_description = "node result with origin"
     idempotency = "Node result is keyed by packet ID."
 
@@ -762,12 +771,75 @@ class WorkerOrControllerResult:
         if not isinstance(input_obj, ApprovedPacket):
             yield FunctionResult(input_obj, state, "worker_result_pass_through")
             return
-        if input_obj.packet_id.startswith("controller_origin"):
+        recipient_pre_open_checks = (
+            state.recipient_pre_open_checks
+            if input_obj.packet_id in state.recipient_pre_open_checks
+            else state.recipient_pre_open_checks + (input_obj.packet_id,)
+        )
+        if input_obj.packet_id.startswith("unopened_packet"):
             new_state = replace(
                 state,
-                controller_artifacts=state.controller_artifacts + (input_obj.packet_id,),
-                result_envelopes=state.result_envelopes + (input_obj.packet_id,),
-                result_ledger_records=state.result_ledger_records + (input_obj.packet_id,),
+                recipient_pre_open_checks=recipient_pre_open_checks,
+                unopened_packet_blocks=state.unopened_packet_blocks + (input_obj.packet_id,),
+                review_blocks=state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "packet_body_unopened_after_controller_relay"),
+                new_state,
+                "unopened_letter_sent_to_pm_for_restart_or_repair",
+            )
+            return
+        packet_body_open_events = (
+            state.packet_body_open_events
+            if input_obj.packet_id in state.packet_body_open_events
+            else state.packet_body_open_events + (input_obj.packet_id,)
+        )
+        packet_body_open_envelope_records = state.packet_body_open_envelope_records
+        if not input_obj.packet_id.startswith("packet_open_ledger_only") and input_obj.packet_id not in packet_body_open_envelope_records:
+            packet_body_open_envelope_records = packet_body_open_envelope_records + (input_obj.packet_id,)
+        packet_body_open_ledger_records = state.packet_body_open_ledger_records
+        if not input_obj.packet_id.startswith("packet_open_envelope_only") and input_obj.packet_id not in packet_body_open_ledger_records:
+            packet_body_open_ledger_records = packet_body_open_ledger_records + (input_obj.packet_id,)
+        checked_state = replace(
+            state,
+            recipient_pre_open_checks=recipient_pre_open_checks,
+            packet_body_open_events=packet_body_open_events,
+            packet_body_open_envelope_records=packet_body_open_envelope_records,
+            packet_body_open_ledger_records=packet_body_open_ledger_records,
+        )
+        if input_obj.packet_id.startswith("packet_open_ledger_only"):
+            new_state = replace(
+                checked_state,
+                unopened_packet_blocks=checked_state.unopened_packet_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "packet_body_open_envelope_receipt_missing"),
+                new_state,
+                "packet_body_open_envelope_receipt_missing_blocked",
+            )
+            return
+        if input_obj.packet_id.startswith("packet_open_envelope_only"):
+            new_state = replace(
+                checked_state,
+                unopened_packet_blocks=checked_state.unopened_packet_blocks + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, "packet_body_open_ledger_receipt_missing"),
+                new_state,
+                "packet_body_open_ledger_receipt_missing_blocked",
+            )
+            return
+        if input_obj.packet_id.startswith("controller_origin"):
+            new_state = replace(
+                checked_state,
+                controller_artifacts=checked_state.controller_artifacts + (input_obj.packet_id,),
+                result_envelopes=checked_state.result_envelopes + (input_obj.packet_id,),
+                result_ledger_records=checked_state.result_ledger_records + (input_obj.packet_id,),
             )
             yield FunctionResult(
                 NodeResult(input_obj.packet_id, "controller", "agent-controller"),
@@ -789,13 +861,13 @@ class WorkerOrControllerResult:
             input_obj.packet_id.startswith("agent_id_role_string")
             or input_obj.packet_id.startswith("invalid_agent_id")
         )
-        result_ledger_records = state.result_ledger_records
+        result_ledger_records = checked_state.result_ledger_records
         if result_ledger_present and input_obj.packet_id not in result_ledger_records:
             result_ledger_records = result_ledger_records + (input_obj.packet_id,)
         new_state = replace(
-            state,
-            worker_results=state.worker_results + (input_obj.packet_id,),
-            result_envelopes=state.result_envelopes + (input_obj.packet_id,),
+            checked_state,
+            worker_results=checked_state.worker_results + (input_obj.packet_id,),
+            result_envelopes=checked_state.result_envelopes + (input_obj.packet_id,),
             result_ledger_records=result_ledger_records,
         )
         yield FunctionResult(
@@ -1336,12 +1408,17 @@ def dispatch_requires_packet_envelope_and_hash_checks(state: State, trace) -> In
     missing_hash = set(state.dispatches) - set(state.packet_body_hash_checks)
     if missing_hash:
         return InvariantResult.fail(f"dispatch without packet body hash check: {sorted(missing_hash)!r}")
-    missing_open_envelope = set(state.dispatches) - set(state.packet_body_open_envelope_records)
-    if missing_open_envelope:
-        return InvariantResult.fail(f"dispatch without packet body-open envelope receipt: {sorted(missing_open_envelope)!r}")
-    missing_open_ledger = set(state.dispatches) - set(state.packet_body_open_ledger_records)
-    if missing_open_ledger:
-        return InvariantResult.fail(f"dispatch without packet body-open ledger receipt: {sorted(missing_open_ledger)!r}")
+    return InvariantResult.pass_()
+
+
+def dispatch_requires_output_contract_and_run_scoped_result_paths(state: State, trace) -> InvariantResult:
+    del trace
+    missing_contract = set(state.dispatches) - set(state.output_contract_checks)
+    if missing_contract:
+        return InvariantResult.fail(f"dispatch without output contract check: {sorted(missing_contract)!r}")
+    missing_result_path_scope = set(state.dispatches) - set(state.result_path_scope_checks)
+    if missing_result_path_scope:
+        return InvariantResult.fail(f"dispatch without run-scoped result path check: {sorted(missing_result_path_scope)!r}")
     return InvariantResult.pass_()
 
 
@@ -1353,6 +1430,8 @@ def packet_integrity_blocks_never_advance(state: State, trace) -> InvariantResul
         | set(state.packet_body_hash_blocks)
         | set(state.packet_body_hash_identity_blocks)
         | set(state.stale_packet_body_blocks)
+        | set(state.output_contract_blocks)
+        | set(state.result_path_scope_blocks)
         | missing_files
     )
     unsafe = blocked & (set(state.dispatches) | set(state.worker_results) | set(state.review_passes) | set(state.advances))
@@ -1437,7 +1516,7 @@ def result_requires_dispatch(state: State, trace) -> InvariantResult:
     result_ids = set(state.worker_results) | set(state.controller_artifacts)
     missing = result_ids - set(state.dispatches)
     if missing:
-        return InvariantResult.fail(f"result without reviewer dispatch: {sorted(missing)!r}")
+        return InvariantResult.fail(f"result without router direct dispatch: {sorted(missing)!r}")
     return InvariantResult.pass_()
 
 
@@ -1446,6 +1525,15 @@ def dispatch_requires_controller_reminder(state: State, trace) -> InvariantResul
     missing = set(state.dispatches) - set(state.reminder_checked)
     if missing:
         return InvariantResult.fail(f"dispatch without controller reminder check: {sorted(missing)!r}")
+    return InvariantResult.pass_()
+
+
+def packet_open_blocks_never_produce_result_or_advance(state: State, trace) -> InvariantResult:
+    del trace
+    blocked = set(state.unopened_packet_blocks)
+    unsafe = blocked & (set(state.worker_results) | set(state.controller_artifacts) | set(state.review_passes) | set(state.advances))
+    if unsafe:
+        return InvariantResult.fail(f"packet open blocker produced result or advanced: {sorted(unsafe)!r}")
     return InvariantResult.pass_()
 
 
@@ -1551,12 +1639,17 @@ INVARIANTS = (
     ),
     Invariant(
         "dispatch_requires_packet_envelope_and_hash_checks",
-        "Reviewer dispatch requires packet envelope and packet body hash checks.",
+        "Router direct dispatch requires packet envelope and packet body hash checks.",
         dispatch_requires_packet_envelope_and_hash_checks,
     ),
     Invariant(
+        "dispatch_requires_output_contract_and_run_scoped_result_paths",
+        "Router direct dispatch requires an output contract and run-scoped result paths.",
+        dispatch_requires_output_contract_and_run_scoped_result_paths,
+    ),
+    Invariant(
         "packet_integrity_blocks_never_advance",
-        "Wrong delivery, packet body hash mismatch, or stale packet body cannot advance.",
+        "Wrong delivery, packet body hash mismatch, stale body, bad contract, or unsafe result path cannot advance.",
         packet_integrity_blocks_never_advance,
     ),
     Invariant(
@@ -1581,13 +1674,18 @@ INVARIANTS = (
     ),
     Invariant(
         "result_requires_dispatch",
-        "No role result exists without reviewer dispatch approval.",
+        "No role result exists without router direct dispatch approval.",
         result_requires_dispatch,
     ),
     Invariant(
         "dispatch_requires_controller_reminder",
-        "Reviewer dispatch cannot occur unless the PM reminder to the controller is present.",
+        "Router direct dispatch cannot occur unless the PM reminder to the controller is present.",
         dispatch_requires_controller_reminder,
+    ),
+    Invariant(
+        "packet_open_blocks_never_produce_result_or_advance",
+        "Packet-open failures cannot produce a result or advance.",
+        packet_open_blocks_never_produce_result_or_advance,
     ),
     Invariant(
         "heartbeat_resume_packet_requires_pm_request",
@@ -1629,6 +1727,9 @@ EXTERNAL_INPUTS = (
     NodeCase("body_hash_mismatch_packet", "block", "worker"),
     NodeCase("body_hash_identity_stale_packet", "block", "worker"),
     NodeCase("stale_packet_body_packet", "block", "worker"),
+    NodeCase("missing_output_contract_packet", "block", "worker"),
+    NodeCase("contract_recipient_mismatch_packet", "block", "worker"),
+    NodeCase("result_path_escape_packet", "block", "worker"),
     NodeCase("controller_origin_packet", "pass", "controller"),
     NodeCase("result_wrong_role_packet", "block", "worker_b"),
     NodeCase("agent_id_role_string_packet", "block", "worker"),
@@ -1641,7 +1742,6 @@ EXTERNAL_INPUTS = (
     NodeCase("result_open_ledger_only_packet", "block", "worker"),
     NodeCase("result_body_hash_mismatch_packet", "block", "worker"),
     NodeCase("stale_result_body_packet", "block", "worker"),
-    NodeCase("dispatch_block_packet", "block", "none"),
     NodeCase("missing_reminder_packet", "pass", "worker"),
     HeartbeatCase("heartbeat_valid_packet"),
     HeartbeatCase("heartbeat_missing_state"),
@@ -1671,7 +1771,7 @@ def build_workflow() -> Workflow:
             ControllerReminderCheck(),
             ControllerEnvelopeOnlyHandoff(),
             ControllerEnvelopeRelay(),
-            ReviewerDispatch(),
+            RouterDirectDispatch(),
             WorkerOrControllerResult(),
             ControllerResultRelay(),
             ReviewerResultEnvelopeCheck(),

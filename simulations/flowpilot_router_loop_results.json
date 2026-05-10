@@ -7730,9 +7730,9 @@
       },
       "repair_worker_dispatched_before_reviewer_dispatch": {
         "detected": true,
-        "expected_failure": "repair worker dispatched before reviewer repair dispatch",
+        "expected_failure": "repair worker dispatched before router direct repair dispatch",
         "failures": [
-          "repair worker dispatched before reviewer repair dispatch",
+          "repair worker dispatched before router direct repair dispatch",
           "repair worker dispatched without packet recipient identity boundary"
         ],
         "state": {
@@ -9228,12 +9228,12 @@
       },
       "worker_dispatched_before_reviewer_dispatch": {
         "detected": true,
-        "expected_failure": "worker dispatched before reviewer dispatch",
+        "expected_failure": "worker dispatched before router direct dispatch",
         "failures": [
           "node acceptance plan written before PM read fresh prior path context",
           "node acceptance plan written before PM high-standard gate",
           "current-node packet registered before PM high-standard gate and reviewed node acceptance plan",
-          "worker dispatched before reviewer dispatch",
+          "worker dispatched before router direct dispatch",
           "worker dispatched before current-node write grant",
           "worker dispatched without packet recipient identity boundary"
         ],
@@ -9796,11 +9796,9 @@
       "repair_result_ledger_checked_before_reviewer_relay",
       "repair_result_returned_to_packet_ledger",
       "repair_result_routed_to_reviewer_after_ledger_check",
-      "repair_worker_dispatched_after_reviewer_dispatch",
-      "reviewer_allows_repair_dispatch_after_block",
+      "repair_worker_dispatched_after_router_direct_dispatch",
       "reviewer_blocks_current_node_result",
       "reviewer_blocks_mutated_route_result_terminal",
-      "reviewer_dispatch_allowed_for_current_node",
       "reviewer_final_backward_replay_after_all_segments",
       "reviewer_parent_backward_replay_after_targets",
       "reviewer_passes_current_node_after_repair_recheck",
@@ -9814,9 +9812,11 @@
       "reviewer_terminal_root_segment_replayed",
       "reviewer_worker_result_review_card_delivered_after_result_relay",
       "route_mutation_after_reviewer_block_marks_stale_evidence_and_frontier",
+      "router_direct_dispatch_allowed_for_current_node",
+      "router_direct_repair_dispatch_after_block",
       "task_completion_projection_published_from_completion_ledger",
       "terminal_replay_map_generated_from_final_ledger",
-      "worker_dispatched_after_reviewer_dispatch",
+      "worker_dispatched_after_router_direct_dispatch",
       "worker_result_ledger_checked_before_reviewer_relay",
       "worker_result_returned_to_packet_ledger",
       "worker_result_routed_to_reviewer",

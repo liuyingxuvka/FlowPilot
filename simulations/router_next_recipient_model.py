@@ -462,7 +462,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.packet_owner not in {"none", "worker_a", "worker_b"}:
         failures.append("worker packet owner is not a known worker role")
     if state.packet_owner != "none" and state.step >= 12 and not state.reviewer_dispatch_allowed:
-        failures.append("worker packet relayed before reviewer dispatch approval")
+        failures.append("worker packet relayed before router direct dispatch approval")
     if state.rejection_lane == "control_plane_reissue":
         if state.reissue_target == "unknown":
             failures.append("control-plane reissue has no target role")

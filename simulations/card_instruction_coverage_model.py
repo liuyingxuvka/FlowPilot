@@ -94,8 +94,6 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
         "worker_b.core",
         "worker.research_report",
         "reviewer.core",
-        "reviewer.dispatch_request",
-        "reviewer.current_node_dispatch",
         "reviewer.worker_result_review",
         "process_officer.core",
         "product_officer.core",
@@ -376,6 +374,8 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
     card_delivery_flags = {str(item["flag"]) for item in router.SYSTEM_CARD_SEQUENCE}
     external_card_flag_errors: list[str] = []
     for event_name, event in sorted(router.EXTERNAL_EVENTS.items()):
+        if bool(event.get("legacy")):
+            continue
         requires = str(event.get("requires_flag", ""))
         if requires.endswith("_card_delivered") and requires not in card_delivery_flags:
             external_card_flag_errors.append(f"{event_name} requires unknown delivered-card flag: {requires}")

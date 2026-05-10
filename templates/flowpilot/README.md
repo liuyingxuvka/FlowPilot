@@ -135,7 +135,8 @@ for review.
    syncing the visible Codex plan or advancing work. Each heartbeat/manual
    resume first reloads the packet ledger, asks PM for the current
    `PM_DECISION` or recovery packet, requires `controller_reminder`, and sends
-   any packet envelope through reviewer dispatch before a worker sees the body.
+   any PM-authored worker packet envelope only after router direct-dispatch
+   preflight passes.
    The controller replaces the current visible plan projection from the PM
    runway but does not read or execute worker bodies itself. If the host exposes a native
    plan/task-list tool such as Codex `update_plan`, call it with that runway

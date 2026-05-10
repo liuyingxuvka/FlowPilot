@@ -83,6 +83,40 @@ RESULT_CONTROLLER_FORBIDDEN_ACTIONS = [
     "relabel_wrong_role_origin",
 ]
 
+DIRECT_DISPATCH_PACKET_REQUIRED_FIELDS = [
+    "schema_version",
+    "packet_id",
+    "packet_type",
+    "from_role",
+    "to_role",
+    "node_id",
+    "body_path",
+    "body_hash",
+    "body_visibility",
+    "result_envelope_path",
+    "result_body_path",
+    "controller_allowed_actions",
+    "controller_forbidden_actions",
+    "body_access",
+]
+
+DIRECT_DISPATCH_REQUIRED_FORBIDDEN_ACTIONS = {
+    "read_packet_body",
+    "edit_packet_body",
+    "execute_packet_body",
+    "change_to_role",
+    "rewrite_body_hash",
+}
+
+DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS = {
+    "read_packet_body",
+    "edit_packet_body",
+    "execute_packet_body",
+    "implement_worker_scope",
+    "approve_gate",
+    "close_node",
+}
+
 OUTPUT_CONTRACT_REQUIRED_RESULT_SECTIONS = [
     "Status",
     "Evidence",
@@ -692,7 +726,8 @@ def _empty_packet_ledger(project_root: Path, run_id: str, run_root: Path) -> dic
             "controller_relay_signature_required": True,
             "contaminated_mail_requires_sender_reissue": True,
             "pm_controller_reminder_required": True,
-            "reviewer_dispatch_required_before_worker": True,
+            "router_direct_dispatch_required_before_worker": True,
+            "reviewer_dispatch_required_before_worker": False,
             "role_reminder_required_in_controller_messages": True,
             "role_echo_required_in_subagent_responses": True,
             "role_output_body_must_be_file_backed": True,
@@ -860,6 +895,176 @@ def verify_packet_open_receipt(project_root: Path, packet_envelope: dict[str, An
     if not _same_project_path(project_root, str(record.get("packet_body_path") or ""), str(packet_envelope.get("body_path") or "")):
         raise PacketRuntimeError("packet ledger packet body path does not match packet envelope")
     return record
+
+
+def _path_is_inside(parent: Path, child: Path) -> bool:
+    try:
+        child.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _direct_dispatch_result_paths_run_scoped(project_root: Path, envelope: dict[str, Any], packet_dir: Path) -> bool:
+    path_keys = (
+        "result_envelope_path",
+        "result_body_path",
+        "expected_result_envelope_path",
+        "expected_result_body_path",
+        "write_target_path",
+    )
+    for key in path_keys:
+        raw = envelope.get(key)
+        if raw and not _path_is_inside(packet_dir, resolve_project_path(project_root, str(raw))):
+            return False
+    write_target = envelope.get("result_write_target")
+    if isinstance(write_target, dict):
+        for key in ("result_envelope_path", "result_body_path"):
+            raw = write_target.get(key)
+            if raw and not _path_is_inside(packet_dir, resolve_project_path(project_root, str(raw))):
+                return False
+    return True
+
+
+def validate_packet_ready_for_direct_relay(
+    project_root: Path,
+    *,
+    packet_envelope: dict[str, Any],
+    envelope_path: str | Path | None = None,
+    allowed_target_roles: set[str] | list[str] | tuple[str, ...] | None = None,
+) -> dict[str, Any]:
+    envelope = normalize_envelope_aliases(packet_envelope)
+    blockers: list[str] = []
+    missing_fields = [field for field in DIRECT_DISPATCH_PACKET_REQUIRED_FIELDS if field not in envelope or envelope.get(field) in (None, "")]
+    if missing_fields:
+        blockers.append("packet_envelope_missing_required_fields")
+    if envelope.get("schema_version") != PACKET_ENVELOPE_SCHEMA:
+        blockers.append("packet_envelope_schema_mismatch")
+
+    packet_id = str(envelope.get("packet_id") or "")
+    try:
+        validate_packet_id(packet_id)
+    except PacketRuntimeError:
+        blockers.append("packet_id_invalid")
+
+    to_role = str(envelope.get("to_role") or "")
+    from_role = str(envelope.get("from_role") or "")
+    packet_type = str(envelope.get("packet_type") or "work_packet")
+    if allowed_target_roles is not None and to_role not in {str(role) for role in allowed_target_roles}:
+        blockers.append("packet_delivered_to_wrong_role")
+    if envelope.get("body_visibility") != SEALED_BODY_VISIBILITY:
+        blockers.append("packet_body_visibility_not_sealed")
+
+    body_access = envelope.get("body_access")
+    if not isinstance(body_access, dict):
+        blockers.append("packet_body_access_missing")
+    else:
+        if body_access.get("controller_can_read_body") is not False:
+            blockers.append("controller_can_read_packet_body")
+        if body_access.get("controller_can_execute_body") is not False:
+            blockers.append("controller_can_execute_packet_body")
+        if body_access.get("body_hash_required") is not True:
+            blockers.append("packet_body_hash_not_required")
+
+    allowed_actions = set(envelope.get("controller_allowed_actions") or [])
+    forbidden_actions = set(envelope.get("controller_forbidden_actions") or [])
+    if DIRECT_DISPATCH_REQUIRED_FORBIDDEN_ACTIONS - forbidden_actions:
+        blockers.append("controller_forbidden_actions_incomplete")
+    if allowed_actions & DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS:
+        blockers.append("controller_allowed_actions_violate_body_boundary")
+
+    packet_body_hash_matches = False
+    ledger_record_found = False
+    ledger_identity_matches = False
+    output_contract_present = False
+    output_contract_valid = False
+    result_paths_run_scoped = False
+    paths: dict[str, Any] = {}
+
+    try:
+        paths = packet_paths_from_envelope(project_root, envelope)
+        project_relative(project_root, paths["packet_envelope"])
+        project_relative(project_root, paths["packet_body"])
+        packet_body_hash_matches = verify_body_hash(project_root, str(envelope["body_path"]), str(envelope["body_hash"]))
+        if not packet_body_hash_matches:
+            blockers.append("body_hash_mismatch")
+    except (KeyError, PacketRuntimeError, OSError):
+        blockers.append("packet_body_path_or_hash_invalid")
+
+    if paths:
+        try:
+            result_paths_run_scoped = _direct_dispatch_result_paths_run_scoped(project_root, envelope, paths["packet_dir"])
+        except PacketRuntimeError:
+            result_paths_run_scoped = False
+        if not result_paths_run_scoped:
+            blockers.append("result_path_escape")
+
+        ledger_record = _packet_ledger_record(paths["packet_ledger"], packet_id)
+        ledger_record_found = isinstance(ledger_record, dict)
+        if not ledger_record_found:
+            blockers.append("packet_ledger_record_missing")
+        else:
+            ledger_identity_matches = (
+                ledger_record.get("packet_body_hash") == envelope.get("body_hash")
+                and _same_project_path(project_root, str(ledger_record.get("packet_body_path") or ""), str(envelope.get("body_path") or ""))
+                and ledger_record.get("physical_packet_files_written") is True
+            )
+            if envelope_path is not None:
+                ledger_identity_matches = ledger_identity_matches and _same_project_path(
+                    project_root,
+                    str(ledger_record.get("packet_envelope_path") or ""),
+                    project_relative(project_root, resolve_project_path(project_root, str(envelope_path))),
+                )
+            if not ledger_identity_matches:
+                blockers.append("packet_body_envelope_ledger_hash_identity_mismatch")
+
+    output_contract = envelope.get("output_contract")
+    output_contract_present = isinstance(output_contract, dict)
+    if from_role == "project_manager" and not output_contract_present:
+        blockers.append("missing_output_contract")
+    if output_contract_present:
+        if output_contract.get("recipient_role") != to_role:
+            blockers.append("output_contract_recipient_mismatch")
+        if from_role == "project_manager" and output_contract.get("selected_by_role") != "project_manager":
+            blockers.append("output_contract_selected_by_role_mismatch")
+        try:
+            normalized_contract = normalize_output_contract(
+                output_contract,
+                packet_type=packet_type,
+                from_role=from_role,
+                to_role=to_role,
+                node_id=str(envelope.get("node_id") or ""),
+            )
+            output_contract_valid = True
+            for contract_key, envelope_key in (
+                ("expected_result_envelope_path", "result_envelope_path"),
+                ("expected_result_body_path", "result_body_path"),
+                ("write_target_path", "write_target_path"),
+            ):
+                contract_path = normalized_contract.get(contract_key) if isinstance(normalized_contract, dict) else None
+                envelope_target = envelope.get(envelope_key)
+                if contract_path and envelope_target and not _same_project_path(project_root, str(contract_path), str(envelope_target)):
+                    blockers.append("output_contract_result_path_mismatch")
+                    break
+        except PacketRuntimeError:
+            blockers.append("output_contract_invalid")
+
+    return {
+        "schema_version": "flowpilot.packet_ready_for_direct_relay_audit.v1",
+        "packet_id": envelope.get("packet_id"),
+        "from_role": from_role,
+        "to_role": to_role,
+        "packet_envelope_checked": True,
+        "packet_body_hash_matches_envelope": packet_body_hash_matches,
+        "packet_ledger_record_found": ledger_record_found,
+        "packet_ledger_identity_matches_envelope": ledger_identity_matches,
+        "output_contract_present": output_contract_present,
+        "output_contract_valid": output_contract_valid,
+        "result_paths_run_scoped": result_paths_run_scoped,
+        "controller_body_boundary_checked": True,
+        "blockers": blockers,
+        "passed": not blockers,
+    }
 
 
 def _completed_agent_id_is_role_key(completed_by_agent_id: Any) -> bool:
@@ -1043,6 +1248,15 @@ def controller_relay_envelope(
         if envelope.get("schema_version") == RESULT_ENVELOPE_SCHEMA or "completed_by_role" in envelope
         else "packet_envelope"
     )
+    if envelope_kind == "packet_envelope" and envelope.get("packet_type") != "user_intake":
+        audit = validate_packet_ready_for_direct_relay(
+            project_root,
+            packet_envelope=envelope,
+            envelope_path=envelope_path,
+            allowed_target_roles={str(target_role)},
+        )
+        if not audit.get("passed"):
+            raise PacketRuntimeError(f"packet envelope is not ready for direct relay: {audit.get('blockers')}")
     mutual_reminder = mutual_role_reminder(
         source_role=str(source_role),
         target_role=str(target_role),
@@ -1384,7 +1598,8 @@ def create_packet(
         ],
         "active_packet_status": "packet-with-controller",
         "active_packet_holder": "controller",
-        "reviewer_dispatch_decision": "pending",
+        "router_direct_dispatch_decision": "pending",
+        "reviewer_dispatch_decision": "not_required",
         "assigned_worker_role": to_role,
         "result_envelope_path": result_envelope_rel,
         "result_body_path": result_body_rel,

@@ -650,10 +650,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "pm.material_scan")
 
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         run_root = self.run_root_for(root)
         material_index_path = run_root / "material" / "material_scan_packets.json"
@@ -1431,8 +1427,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         write_grant_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "current_node_write_grant.json"
         self.assertTrue(write_grant_path.exists())
         self.assertEqual(read_json(write_grant_path)["packet_id"], packet_id)
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
         result = packet_runtime.write_result(
@@ -1504,8 +1498,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": packet_id, "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
         result = packet_runtime.write_result(
@@ -1727,7 +1719,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         repair_record = read_json(run_root / "routes" / "route-001" / "nodes" / "node-001" / "repairs" / "node_acceptance_plan_revision.json")
         self.assertTrue(repair_record["stale_blocked_plan_is_context_only"])
 
-    def test_current_node_dispatch_block_enters_model_miss_repair_path(self) -> None:
+    def test_current_node_direct_relay_blocks_missing_output_contract(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_pre_route_gates(root)
@@ -1748,44 +1740,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "pm_registers_current_node_packet",
             {"packet_id": "node-packet-dispatch-block", "packet_envelope_path": packet_path},
         )
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
+        envelope_path = root / packet_path
+        envelope = read_json(envelope_path)
+        envelope.pop("output_contract", None)
+        envelope.pop("output_contract_id", None)
+        router.write_json(envelope_path, envelope)
 
-        router.record_external_event(
-            root,
-            "reviewer_blocks_current_node_dispatch",
-            self.role_report_envelope(
-                root,
-                "reviews/current_node_dispatch_block",
-                {
-                    "reviewed_by_role": "human_like_reviewer",
-                    "dispatch_allowed": False,
-                    "blockers": ["packet source path is not router-authorized"],
-                },
-            ),
-        )
-
-        self.assertTrue(self.flag(root, "current_node_dispatch_blocked"))
-        self.deliver_expected_card(root, "pm.model_miss_triage")
-        self.close_model_miss_triage(root, output_name="decisions/current_node_dispatch_model_miss_valid")
-        self.deliver_expected_card(root, "pm.review_repair")
-        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
-        router.record_external_event(
-            root,
-            "pm_mutates_route_after_review_block",
-            {
-                "repair_node_id": "node-001-dispatch-repair",
-                "repair_return_to_node_id": "node-001",
-                "reason": "current_node_dispatch_review_block",
-                **self.prior_path_context_review(root, "Route mutation considered the current-node dispatch reviewer block."),
-            },
-        )
-
+        with self.assertRaisesRegex(router.RouterError, "missing_output_contract"):
+            self.apply_until_action(root, "relay_current_node_packet")
         state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"]["current_node_dispatch_blocked"])
-        frontier = read_json(run_root / "execution_frontier.json")
-        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
-        self.assertEqual(frontier["active_node_id"], "node-001")
-        self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-dispatch-repair")
+        self.assertFalse(state["flags"]["current_node_packet_relayed"])
 
     def test_model_backed_model_miss_triage_requires_officer_report_refs(self) -> None:
         root = self.make_project()
@@ -3978,11 +3942,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "worker_scan_results_returned")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "reviewer.dispatch_request")
-        self.ack_system_card_action(root, action)
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
@@ -4089,8 +4048,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
 
         state_before = read_json(router.run_state_path(run_root))
         ledger_checks_before = int(state_before.get("ledger_checks", 0))
@@ -4140,8 +4097,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         material_index_path = run_root / "material" / "material_scan_packets.json"
         index = read_json(material_index_path)
@@ -4170,8 +4125,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         material_index_path = run_root / "material" / "material_scan_packets.json"
         self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
@@ -4193,92 +4146,37 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
         self.assertFalse(blocker["pm_decision_required"])
 
-    def test_reviewer_blocks_material_scan_dispatch_routes_to_pm_repair(self) -> None:
+    def test_material_scan_direct_relay_blocks_body_hash_mismatch(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(
-            root,
-            "reviewer_blocks_material_scan_dispatch",
-            self.role_report_envelope(
-                root,
-                "material/reviewer_material_dispatch_block",
-                {
-                    "reviewed_by_role": "human_like_reviewer",
-                    "dispatch_allowed": False,
-                    "checks": {"material_phase_matches_frontier": False},
-                    "blockers": ["frontier and material packet dispatch context do not match"],
-                    "contract_self_check": {
-                        "all_required_fields_present": True,
-                        "exact_field_names_used": True,
-                    },
-                },
-            ),
-        )
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        envelope = read_json(root / material_index["packets"][0]["packet_envelope_path"])
+        body_path = root / envelope["body_path"]
+        body_path.write_text(body_path.read_text(encoding="utf-8") + "\nTampered after packet creation.\n", encoding="utf-8")
 
-        state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["material_scan_dispatch_blocked"])
-        self.assertFalse(state["flags"]["reviewer_dispatch_allowed"])
-        self.assertTrue((run_root / "material" / "material_dispatch_block.json").exists())
-        self.close_model_miss_triage(root, output_name="decisions/material_dispatch_model_miss_valid")
-        self.deliver_expected_card(root, "pm.review_repair")
-        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
-        action = self.next_after_display_sync(root)
-        self.assertNotEqual(action["action_type"], "relay_material_scan_packets")
+        with self.assertRaisesRegex(router.RouterError, "body_hash_mismatch"):
+            self.apply_next_packet_action(root, "relay_material_scan_packets")
 
-    def test_material_scan_dispatch_repair_reopens_reviewer_dispatch(self) -> None:
+    def test_material_scan_direct_relay_blocks_missing_output_contract(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(
-            root,
-            "reviewer_blocks_material_scan_dispatch",
-            self.role_report_envelope(
-                root,
-                "material/reviewer_material_dispatch_block",
-                {
-                    "reviewed_by_role": "human_like_reviewer",
-                    "dispatch_allowed": False,
-                    "checks": {"material_phase_matches_frontier": False},
-                    "blockers": ["frontier and material packet dispatch context do not match"],
-                    "contract_self_check": {
-                        "all_required_fields_present": True,
-                        "exact_field_names_used": True,
-                    },
-                },
-            ),
-        )
-        self.close_model_miss_triage(root, output_name="decisions/material_dispatch_model_miss_valid")
-        self.deliver_expected_card(root, "pm.review_repair")
-        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        envelope_path = root / material_index["packets"][0]["packet_envelope_path"]
+        envelope = read_json(envelope_path)
+        envelope.pop("output_contract", None)
+        envelope.pop("output_contract_id", None)
+        router.write_json(envelope_path, envelope)
 
-        repair_body = {
-            "decided_by_role": "project_manager",
-            "repair_action": "Reissue the material dispatch review with a router-visible packet source path.",
-            **self.prior_path_context_review(root, "PM considered material dispatch block before reopening reviewer dispatch."),
-        }
-        router.record_external_event(
-            root,
-            "pm_mutates_route_after_review_block",
-            self.role_decision_envelope(root, "decisions/material_dispatch_repair", repair_body),
-        )
-
-        state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"]["material_scan_dispatch_blocked"])
-        self.assertFalse(state["flags"]["reviewer_dispatch_allowed"])
-        self.assertFalse(state["flags"]["reviewer_dispatch_card_delivered"])
-        self.assertTrue((run_root / "material" / "material_dispatch_repair.json").exists())
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "check_prompt_manifest")
-        self.assertEqual(action["next_card_id"], "reviewer.dispatch_request")
+        with self.assertRaisesRegex(router.RouterError, "missing_output_contract"):
+            self.apply_next_packet_action(root, "relay_material_scan_packets")
 
     def test_research_required_blocks_product_architecture_until_absorbed(self) -> None:
         root = self.make_project()
@@ -4287,8 +4185,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         material_index_path = run_root / "material" / "material_scan_packets.json"
         self.open_packets_and_write_results(root, material_index_path, result_text="research needed")
@@ -5060,7 +4956,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(resume_evidence["loaded_paths"]["continuation_binding"], self.rel(root, binding_path))
         self.assertEqual(resume_evidence["resume_next_recipient_from_packet_ledger"]["source"], "packet_ledger")
 
-    def test_current_node_packet_relay_requires_reviewer_dispatch(self) -> None:
+    def test_current_node_packet_relay_uses_router_direct_dispatch(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_pre_route_gates(root)
@@ -5105,18 +5001,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(resume_next["controller_next_action"], "relay_packet_envelope_to_recorded_recipient")
         self.assertEqual(resume_next["next_recipient_role"], "worker_a")
 
-        action = router.next_action(root)
-        if action["action_type"] == "check_prompt_manifest":
-            self.assertEqual(action["next_card_id"], "reviewer.current_node_dispatch")
-            router.apply_action(root, "check_prompt_manifest")
-            action = router.next_action(root)
-            self.assertEqual(action["action_type"], "deliver_system_card")
-            self.ack_system_card_action(root, action)
-
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "await_role_decision")
-
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         run_root = self.run_root_for(root)
         state_before = read_json(router.run_state_path(run_root))
         ledger_checks_before = int(state_before.get("ledger_checks", 0))
@@ -5154,8 +5038,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-002", "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
 
         relayed_packet = read_json(root / packet_path)
@@ -5247,8 +5129,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             )
             packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
             router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": packet_id, "packet_envelope_path": packet_path})
-            self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-            router.record_external_event(root, "reviewer_allows_current_node_dispatch")
             self.apply_until_action(root, "relay_current_node_packet")
             packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
             result = packet_runtime.write_result(
@@ -5367,8 +5247,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_file.write_text(json.dumps(packet_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-aliases", "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         relayed_packet = packet_runtime.load_envelope(root, packet_path)
         self.assertIn("body_path", relayed_packet)
@@ -5770,7 +5648,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -5786,7 +5663,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
             decision="repair_completed",
-            rerun_target="reviewer_allows_material_scan_dispatch",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
         )
         decision["repair_transaction"] = {
             "plan_kind": "packet_reissue",
@@ -5811,9 +5688,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(
             set(active["allowed_resolution_events"]),
             {
-                "reviewer_allows_material_scan_dispatch",
-                "reviewer_blocks_material_scan_dispatch_recheck",
-                "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+                "router_direct_material_scan_dispatch_recheck_passed",
+                "router_direct_material_scan_dispatch_recheck_blocked",
+                "router_protocol_blocker_material_scan_dispatch_recheck",
             },
         )
         transaction = read_json(root / active["repair_transaction_path"])
@@ -5840,8 +5717,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(set(action["allowed_external_events"]), set(active["allowed_resolution_events"]))
-
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
+        router.record_external_event(root, "router_direct_material_scan_dispatch_recheck_passed")
         state = read_json(router.run_state_path(run_root))
         self.assertIsNone(state["active_control_blocker"])
         self.assertIsNone(state["active_repair_transaction"])
@@ -5859,8 +5735,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         material_index_path = run_root / "material" / "material_scan_packets.json"
         material_index = read_json(material_index_path)
@@ -5924,7 +5798,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -5939,7 +5812,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
             decision="repair_completed",
-            rerun_target="reviewer_allows_material_scan_dispatch",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
         )
         decision["repair_transaction"] = {
             "plan_kind": "packet_reissue",
@@ -5960,12 +5833,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         router.record_external_event(
             root,
-            "reviewer_blocks_material_scan_dispatch_recheck",
+            "router_direct_material_scan_dispatch_recheck_blocked",
             self.role_report_envelope(
                 root,
                 "control_blocks/material_reissue_recheck_block",
                 {
-                    "reviewed_by_role": "human_like_reviewer",
+                    "checked_by_role": "controller",
                     "dispatch_allowed": False,
                     "blockers": ["replacement packet generation needs PM repair"],
                 },
@@ -5991,7 +5864,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -6006,7 +5878,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
             decision="repair_completed",
-            rerun_target="reviewer_allows_material_scan_dispatch",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
         )
         decision["repair_transaction"] = {
             "plan_kind": "packet_reissue",
@@ -6027,12 +5899,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         router.record_external_event(
             root,
-            "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+            "router_protocol_blocker_material_scan_dispatch_recheck",
             self.role_report_envelope(
                 root,
                 "control_blocks/material_reissue_protocol_blocker",
                 {
-                    "reviewed_by_role": "human_like_reviewer",
+                    "checked_by_role": "controller",
                     "blockers": ["replacement packet generation is not reviewable"],
                     "source_paths": [],
                     "contract_self_check": {
@@ -6313,8 +6185,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-quality", "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         relayed_packet = read_json(root / packet_path)
         packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
@@ -6428,8 +6298,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-003", "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         relayed_packet = read_json(root / packet_path)
         packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
@@ -6651,8 +6519,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "parent-node-packet", "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
         result = packet_runtime.write_result(
@@ -6731,8 +6597,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "parent-node-noncontinue", "packet_envelope_path": packet_path})
-        self.deliver_expected_card(root, "reviewer.current_node_dispatch")
-        router.record_external_event(root, "reviewer_allows_current_node_dispatch")
         self.apply_until_action(root, "relay_current_node_packet")
         packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
         result = packet_runtime.write_result(
@@ -6819,8 +6683,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         router.apply_action(root, str(router.next_action(root)["action_type"]))
-        self.deliver_expected_card(root, "reviewer.dispatch_request")
-        router.record_external_event(root, "reviewer_allows_material_scan_dispatch")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         run_root = self.run_root_for(root)
         material_index_path = run_root / "material" / "material_scan_packets.json"

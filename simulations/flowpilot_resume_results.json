@@ -525,7 +525,7 @@
         "failures": [
           "mail delivered without verified packet recipient identity boundary",
           "worker result routed without verified completed-by identity boundary",
-          "existing worker result routed without reviewer dispatch"
+          "existing worker result routed without router direct dispatch"
         ],
         "state": {
           "all_roles_current_run_bound": true,
@@ -3189,7 +3189,7 @@
         "detected": true,
         "failures": [
           "mail delivered without verified packet recipient identity boundary",
-          "worker packet sent before reviewer dispatch approval"
+          "worker packet sent before router direct dispatch approval"
         ],
         "state": {
           "all_roles_current_run_bound": true,

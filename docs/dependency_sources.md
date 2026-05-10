@@ -4,6 +4,7 @@
 
 - Python package: `flowguard`
 - Codex skill: `model-first-function-flow`
+- Codex skill: `grill-me`
 - Codex skill: `flowpilot`
 - Dependency manifest: `flowpilot.dependencies.json`
 
@@ -26,10 +27,18 @@ state.
 ## FlowGuard Source
 
 FlowPilot requires the real `flowguard` package in the active Python
-environment. The package source can be local or remote, but the runtime import
-must succeed before model-backed work begins.
+environment. The public source is:
 
-Agents may document or override the source with:
+```text
+https://github.com/liuyingxuvka/FlowGuard
+```
+
+The installer may install FlowGuard from that public source only when
+`--install-flowguard` explicitly authorizes Python environment changes. Without
+that flag, a missing FlowGuard import is a blocker and the installer reports the
+command to run.
+
+Agents may document or override local source context with:
 
 ```text
 FLOWGUARD_REPO_URL
@@ -57,16 +66,17 @@ truth. The manifest distinguishes:
 
 - `github` for FlowPilot itself and required or companion skills that can be
   installed from an explicit public repository path;
-- `python_environment` for the real `flowguard` package;
+- `github_python_package` for the real `flowguard` Python package when
+  installed from the public FlowGuard source;
 - `host_capabilities` for host-specific tools whose names differ across AI
   agents.
 
-`scripts/install_flowpilot.py --install-missing` installs missing
-auto-installable required skills only when the manifest has a complete source.
-Optional companion skills are warning-only by default; pass
-`--include-optional` when the user explicitly wants the installer to fetch
-missing companions. The installer skips existing local skills by default and
-does not publish or mutate companion skill repositories.
+`scripts/install_flowpilot.py --install-missing --install-flowguard` installs
+missing auto-installable required skills and, when needed, installs FlowGuard
+from its public GitHub source. Optional companion skills are warning-only by
+default; pass `--include-optional` when the user explicitly wants the installer
+to fetch missing companions. The installer skips existing local skills by
+default and does not publish or mutate companion skill repositories.
 
 Use `scripts/install_flowpilot.py --sync-repo-owned` to refresh stale or
 missing repository-owned Codex skills from the current checkout when a

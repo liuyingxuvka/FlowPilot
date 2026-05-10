@@ -5,13 +5,13 @@ Risk intent brief:
 - Protect sealed packet/result bodies and project evidence from Controller
   reads or authorship.
 - Model-critical durable state: PM route activation, current-node packet
-  registration, PM high-standard gate, reviewer dispatch, worker
+  registration, PM high-standard gate, router direct dispatch, worker
   dispatch/result routing, reviewer pass/block, route mutation, stale
   evidence/frontier marking, node completion, final route-wide ledger
   source-of-truth generation, same-scope replay, generated-resource and visual
   evidence closure, and segmented final backward replay.
 - Adversarial branches include packet registration before route activation,
-  worker dispatch before reviewer dispatch, reviewer pass before result routing,
+  worker dispatch before router direct dispatch, reviewer pass before result routing,
   result relay before packet-ledger checks, reviewer result-review card before
   result relay, officer packet relay without an officer card, repair/recheck
   bypasses around the reviewer,
@@ -25,7 +25,7 @@ Risk intent brief:
   controller-only mode fail-closes to PM when no legal next action exists;
   expected PM/reviewer role-event waits must not be materialized as
   no-next-action blockers;
-  current-node packets gate write grants; reviewer dispatch gates worker work;
+  current-node packets gate write grants; router direct dispatch gates worker work;
   worker and officer results are
   packet-ledger checked before reviewer/PM relay; repair/recheck returns to the
   reviewer before PM completion; reviewer result decisions require the
@@ -799,14 +799,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.reviewer_dispatch_allowed:
         yield Transition(
-            "reviewer_dispatch_allowed_for_current_node",
+            "router_direct_dispatch_allowed_for_current_node",
             replace(state, holder="reviewer", reviewer_dispatch_allowed=True),
         )
         return
 
     if not state.worker_dispatched:
         yield Transition(
-            "worker_dispatched_after_reviewer_dispatch",
+            "worker_dispatched_after_router_direct_dispatch",
             replace(
                 state,
                 holder="worker",
@@ -927,14 +927,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
         if not state.repair_dispatch_allowed:
             yield Transition(
-                "reviewer_allows_repair_dispatch_after_block",
+                "router_direct_repair_dispatch_after_block",
                 replace(state, holder="reviewer", repair_dispatch_allowed=True),
             )
             return
 
         if not state.repair_worker_dispatched:
             yield Transition(
-                "repair_worker_dispatched_after_reviewer_dispatch",
+                "repair_worker_dispatched_after_router_direct_dispatch",
                 replace(
                     state,
                     holder="worker",
@@ -1343,11 +1343,11 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("current-node packet registered against stale mutation frontier")
 
     if state.reviewer_dispatch_allowed and not state.current_node_packet_registered:
-        failures.append("reviewer dispatch allowed before current-node packet registration")
+        failures.append("router direct dispatch allowed before current-node packet registration")
     if state.write_grant_issued and not state.current_node_packet_registered:
         failures.append("write grant issued before current-node packet registration")
     if state.worker_dispatched and not state.reviewer_dispatch_allowed:
-        failures.append("worker dispatched before reviewer dispatch")
+        failures.append("worker dispatched before router direct dispatch")
     if state.worker_dispatched and not state.write_grant_issued:
         failures.append("worker dispatched before current-node write grant")
     if state.worker_project_write_performed and not state.write_grant_issued:
@@ -1377,7 +1377,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.repair_dispatch_allowed and not state.repair_packet_registered:
         failures.append("reviewer allowed repair dispatch before repair packet")
     if state.repair_worker_dispatched and not state.repair_dispatch_allowed:
-        failures.append("repair worker dispatched before reviewer repair dispatch")
+        failures.append("repair worker dispatched before router direct repair dispatch")
     if state.repair_worker_dispatched and not state.repair_packet_identity_boundary_present:
         failures.append("repair worker dispatched without packet recipient identity boundary")
     if state.repair_result_returned and not state.repair_worker_dispatched:
@@ -1573,7 +1573,7 @@ INVARIANTS = (
             "plan before the packet, officer lifecycle flags before officer "
             "packet relay, controller no-next-action states fail-close to PM, "
             "expected role-event waits never materialize PM blockers, "
-            "current-node packets gate write grants, reviewer dispatch before "
+            "current-node packets gate write grants, router direct dispatch before "
             "worker or repair work, "
             "packet-ledger checks before worker/officer result relay, reviewer "
             "recheck before repaired completion, reviewer-blocked route mutation "

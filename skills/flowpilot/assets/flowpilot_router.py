@@ -411,9 +411,6 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "node_acceptance_plan_review_blocked",
     "current_node_packet_registered",
     "current_node_write_grant_issued",
-    "reviewer_current_node_dispatch_card_delivered",
-    "current_node_dispatch_allowed",
-    "current_node_dispatch_blocked",
     "current_node_packet_relayed",
     "current_node_worker_result_returned",
     "reviewer_worker_result_card_delivered",
@@ -441,33 +438,28 @@ MATERIAL_REPAIR_RECHECK_FLAGS = (
 
 MODEL_MISS_REVIEW_BLOCK_FLAGS = (
     "node_acceptance_plan_review_blocked",
-    "current_node_dispatch_blocked",
     "node_review_blocked",
-    "material_scan_dispatch_blocked",
 )
 
 MODEL_MISS_REVIEW_BLOCK_EVENTS = (
     "reviewer_blocks_node_acceptance_plan",
-    "reviewer_blocks_current_node_dispatch",
     "current_node_reviewer_blocks_result",
-    "reviewer_blocks_material_scan_dispatch",
 )
 
 MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS = (
     "node_acceptance_plan_review_blocked",
-    "current_node_dispatch_blocked",
     "node_review_blocked",
 )
 
-MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS = (
-    "material_scan_dispatch_blocked",
-)
+# Material dispatch blockers are now router/control-blocker repair outcomes, not
+# PM model-miss reviewer-block repair inputs.
+MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS: tuple[str, ...] = ()
 
 MATERIAL_REPAIR_OUTCOME_EVENTS = {
-    "reviewer_allows_material_scan_dispatch",
+    "router_direct_material_scan_dispatch_recheck_passed",
     "worker_scan_results_returned",
-    "reviewer_blocks_material_scan_dispatch_recheck",
-    "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+    "router_direct_material_scan_dispatch_recheck_blocked",
+    "router_protocol_blocker_material_scan_dispatch_recheck",
 }
 
 ROUTE_COMPLETION_FLAGS = (
@@ -770,13 +762,6 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "project_manager",
     },
     {
-        "flag": "reviewer_dispatch_card_delivered",
-        "label": "reviewer_dispatch_request_card_delivered",
-        "card_id": "reviewer.dispatch_request",
-        "requires_any_flag": ["pm_material_packets_issued"],
-        "to_role": "human_like_reviewer",
-    },
-    {
         "flag": "reviewer_material_sufficiency_card_delivered",
         "label": "reviewer_material_sufficiency_card_delivered",
         "card_id": "reviewer.material_sufficiency",
@@ -984,13 +969,6 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "label": "reviewer_node_acceptance_plan_review_card_delivered",
         "card_id": "reviewer.node_acceptance_plan_review",
         "requires_flag": "node_acceptance_plan_written",
-        "to_role": "human_like_reviewer",
-    },
-    {
-        "flag": "reviewer_current_node_dispatch_card_delivered",
-        "label": "reviewer_current_node_dispatch_card_delivered",
-        "card_id": "reviewer.current_node_dispatch",
-        "requires_flag": "current_node_packet_registered",
         "to_role": "human_like_reviewer",
     },
     {
@@ -1261,37 +1239,45 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "pm_registers_current_node_packet": {
         "flag": "current_node_packet_registered",
         "requires_flag": "node_acceptance_plan_reviewer_passed",
-        "summary": "PM registered a current-node packet envelope for reviewer dispatch.",
+        "summary": "PM registered a current-node packet envelope for router direct dispatch.",
+    },
+    "router_direct_material_scan_dispatch_recheck_passed": {
+        "flag": "material_scan_direct_dispatch_recheck_passed",
+        "requires_flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "Router direct-dispatch repair recheck passed for material scan packets.",
     },
     "reviewer_allows_material_scan_dispatch": {
         "flag": "reviewer_dispatch_allowed",
         "requires_flag": "reviewer_dispatch_card_delivered",
-        "summary": "Reviewer allowed material scan dispatch.",
+        "legacy": True,
+        "summary": "Legacy reviewer dispatch approval event retained for old run records only.",
     },
     "reviewer_blocks_material_scan_dispatch": {
         "flag": "material_scan_dispatch_blocked",
         "requires_flag": "reviewer_dispatch_card_delivered",
-        "summary": "Reviewer blocked material scan dispatch before worker packet relay.",
+        "legacy": True,
+        "summary": "Legacy reviewer dispatch block event retained for old run records only.",
     },
-    "reviewer_blocks_material_scan_dispatch_recheck": {
+    "router_direct_material_scan_dispatch_recheck_blocked": {
         "flag": "material_scan_dispatch_recheck_blocked",
         "requires_flag": "pm_control_blocker_repair_decision_recorded",
-        "summary": "Reviewer blocked material scan dispatch during repair transaction recheck.",
+        "summary": "Router direct-dispatch repair recheck blocked material scan packets.",
     },
-    "reviewer_protocol_blocker_material_scan_dispatch_recheck": {
+    "router_protocol_blocker_material_scan_dispatch_recheck": {
         "flag": "material_scan_dispatch_recheck_protocol_blocked",
         "requires_flag": "pm_control_blocker_repair_decision_recorded",
-        "summary": "Reviewer reported a protocol blocker during material scan repair transaction recheck.",
+        "summary": "Router direct-dispatch repair recheck found a protocol blocker.",
     },
     "reviewer_allows_current_node_dispatch": {
         "flag": "current_node_dispatch_allowed",
         "requires_flag": "reviewer_current_node_dispatch_card_delivered",
-        "summary": "Reviewer allowed current-node worker dispatch.",
+        "legacy": True,
+        "summary": "Legacy current-node reviewer dispatch approval event retained for old run records only.",
     },
     "worker_scan_packet_bodies_delivered_after_dispatch": {
         "flag": "worker_packets_delivered",
         "requires_flag": "material_scan_packets_relayed",
-        "summary": "Worker packet bodies were delivered after reviewer dispatch.",
+        "summary": "Worker packet bodies were delivered after router direct dispatch.",
     },
     "worker_scan_results_returned": {
         "flag": "worker_scan_results_returned",
@@ -1491,7 +1477,8 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "reviewer_blocks_current_node_dispatch": {
         "flag": "current_node_dispatch_blocked",
         "requires_flag": "reviewer_current_node_dispatch_card_delivered",
-        "summary": "Reviewer blocked current-node worker dispatch before packet relay.",
+        "legacy": True,
+        "summary": "Legacy current-node reviewer dispatch block event retained for old run records only.",
     },
     "current_node_reviewer_blocks_result": {
         "flag": "node_review_blocked",
@@ -4945,7 +4932,10 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     if requested_plan_kind == "packet_reissue" and not packet_specs:
         raise RouterError("packet_reissue repair transaction requires replacement packets or a packet spec path")
     plan_kind = requested_plan_kind
-    if packet_specs and rerun_target != "reviewer_allows_material_scan_dispatch":
+    if packet_specs and rerun_target not in {
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "reviewer_allows_material_scan_dispatch",
+    }:
         raise RouterError("repair transaction packet reissue is currently supported only for material scan dispatch")
     output = {
         "schema_version": "flowpilot.control_blocker_repair_decision.v1",
@@ -6653,7 +6643,8 @@ def _create_empty_packet_ledger(project_root: Path, run_id: str, run_root: Path)
             "controller_may_read_packet_body": False,
             "controller_may_read_result_body": False,
             "controller_may_create_project_evidence": False,
-            "reviewer_dispatch_required_before_worker": True,
+            "router_direct_dispatch_required_before_worker": True,
+            "reviewer_dispatch_required_before_worker": False,
         },
         "mail": [],
         "packets": [],
@@ -7919,7 +7910,8 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
             "run_id": run_state["run_id"],
             "written_by_role": "project_manager",
             "controller_may_read_packet_body": False,
-            "reviewer_dispatch_required_before_worker": True,
+            "router_direct_dispatch_required_before_worker": True,
+            "reviewer_dispatch_required_before_worker": False,
             "packets": records,
             "written_at": utc_now(),
         },
@@ -7929,8 +7921,9 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
 
 def _write_material_dispatch_block_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "human_like_reviewer":
-        raise RouterError("material dispatch block report must be reviewed_by_role=human_like_reviewer")
+    checked_by_role = str(payload.get("checked_by_role") or payload.get("reviewed_by_role") or "").strip()
+    if checked_by_role not in {"controller", "router", "human_like_reviewer"}:
+        raise RouterError("material dispatch block report requires checked_by_role=controller/router or reviewed_by_role=human_like_reviewer")
     if payload.get("dispatch_allowed") is not False:
         raise RouterError("material dispatch block report requires dispatch_allowed=false")
     blockers = payload.get("blockers")
@@ -7946,7 +7939,7 @@ def _write_material_dispatch_block_report(project_root: Path, run_root: Path, ru
         {
             "schema_version": "flowpilot.material_dispatch_block.v1",
             "run_id": run_state["run_id"],
-            "reviewed_by_role": "human_like_reviewer",
+            "checked_by_role": checked_by_role,
             "dispatch_allowed": False,
             "source_paths": [project_relative(project_root, material_index_path)],
             "checks": payload.get("checks") if isinstance(payload.get("checks"), dict) else {},
@@ -7969,16 +7962,19 @@ def _write_material_dispatch_recheck_protocol_blocker(
     run_root: Path,
     run_state: dict[str, Any],
     payload: dict[str, Any],
+    *,
+    event_name: str = "router_protocol_blocker_material_scan_dispatch_recheck",
 ) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "human_like_reviewer":
-        raise RouterError("material dispatch recheck protocol blocker requires reviewed_by_role=human_like_reviewer")
+    checked_by_role = str(payload.get("checked_by_role") or payload.get("reviewed_by_role") or "").strip()
+    if checked_by_role not in {"controller", "router", "human_like_reviewer"}:
+        raise RouterError("material dispatch recheck protocol blocker requires checked_by_role=controller/router or reviewed_by_role=human_like_reviewer")
     blockers = payload.get("blockers")
     if not isinstance(blockers, list) or not blockers:
         raise RouterError("material dispatch recheck protocol blocker requires non-empty blockers")
     tx_path, transaction = _active_repair_transaction_for_event(
         run_root,
-        "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+        event_name,
     )
     if tx_path is None or transaction is None:
         raise RouterError("material dispatch protocol blocker requires an active repair transaction")
@@ -7990,8 +7986,8 @@ def _write_material_dispatch_recheck_protocol_blocker(
             "schema_version": "flowpilot.repair_transaction_protocol_blocker.v1",
             "run_id": run_state["run_id"],
             "repair_transaction_id": transaction["transaction_id"],
-            "reviewed_by_role": "human_like_reviewer",
-            "event_name": "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+            "checked_by_role": checked_by_role,
+            "event_name": event_name,
             "blockers": blockers,
             "source_paths": payload.get("source_paths") if isinstance(payload.get("source_paths"), list) else [],
             "residual_risks": payload.get("residual_risks") if isinstance(payload.get("residual_risks"), list) else [],
@@ -8007,7 +8003,6 @@ def _write_material_dispatch_recheck_protocol_blocker(
         "protocol_blocker": True,
     }
     run_state["flags"]["reviewer_dispatch_allowed"] = False
-    run_state["flags"]["material_scan_dispatch_blocked"] = True
 
 
 def _write_material_sufficiency_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, sufficient: bool) -> None:
@@ -10625,18 +10620,21 @@ def _repair_transaction_id(blocker_id: str) -> str:
 
 
 def _repair_outcome_table(rerun_target: str) -> dict[str, dict[str, Any]]:
-    if rerun_target == "reviewer_allows_material_scan_dispatch":
+    if rerun_target in {
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "reviewer_allows_material_scan_dispatch",
+    }:
         return {
             "success": {
-                "event": "reviewer_allows_material_scan_dispatch",
+                "event": "router_direct_material_scan_dispatch_recheck_passed",
                 "terminal": "complete",
             },
             "blocker": {
-                "event": "reviewer_blocks_material_scan_dispatch_recheck",
+                "event": "router_direct_material_scan_dispatch_recheck_blocked",
                 "terminal": "blocked",
             },
             "protocol_blocker": {
-                "event": "reviewer_protocol_blocker_material_scan_dispatch_recheck",
+                "event": "router_protocol_blocker_material_scan_dispatch_recheck",
                 "terminal": "blocked",
             },
         }
@@ -10696,7 +10694,10 @@ def _repair_packet_specs_from_decision(
         or decision.get("replacement_packet_specs_path")
         or decision.get("packet_reissue_spec_path")
     )
-    if not raw_path and rerun_target == "reviewer_allows_material_scan_dispatch":
+    if not raw_path and rerun_target in {
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "reviewer_allows_material_scan_dispatch",
+    }:
         default_path = run_root / "material" / "pm_material_scan_packet_specs_reissue.project_manager.json"
         if default_path.exists():
             raw_path = project_relative(project_root, default_path)
@@ -10833,7 +10834,8 @@ def _commit_material_scan_repair_generation(
             "run_id": run_state["run_id"],
             "written_by_role": "project_manager",
             "controller_may_read_packet_body": False,
-            "reviewer_dispatch_required_before_worker": True,
+            "router_direct_dispatch_required_before_worker": True,
+            "reviewer_dispatch_required_before_worker": False,
             "current_generation_id": packet_generation_id,
             "repair_transaction_id": transaction_id,
             "packets": records,
@@ -10891,7 +10893,7 @@ def _clear_successful_repair_lane_state(run_state: dict[str, Any], transaction: 
     if isinstance(flags, dict) and is_material_repair:
         for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
             flags[flag] = False
-        if event == "reviewer_allows_material_scan_dispatch":
+        if event in {"router_direct_material_scan_dispatch_recheck_passed", "reviewer_allows_material_scan_dispatch"}:
             flags["material_scan_dispatch_blocked"] = False
     if is_material_repair:
         run_state["material_dispatch_block"] = None
@@ -11002,6 +11004,13 @@ def _relay_packet_records(
         if not envelope_path.exists():
             raise RouterError(f"packet envelope is missing: {envelope_path}")
         envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        audit = packet_runtime.validate_packet_ready_for_direct_relay(
+            project_root,
+            packet_envelope=envelope,
+            envelope_path=envelope_path,
+        )
+        if not audit.get("passed"):
+            raise RouterError(f"packet envelope is not ready for direct relay: {audit.get('blockers')}")
         _ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
@@ -13953,8 +13962,6 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
     flags = run_state["flags"]
     if (
         flags.get("pm_material_packets_issued")
-        and flags.get("reviewer_dispatch_allowed")
-        and not flags.get("material_scan_dispatch_blocked")
         and not flags.get("material_scan_packets_relayed")
     ):
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
@@ -13962,8 +13969,8 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
             return make_action(
                 action_type="relay_material_scan_packets",
                 actor="controller",
-                label="material_scan_packets_relayed_after_reviewer_dispatch_with_ledger_check",
-                summary="Check the packet ledger and relay material scan packet envelopes to workers without opening bodies.",
+                label="material_scan_packets_relayed_after_router_direct_preflight_with_ledger_check",
+                summary="Check the packet ledger and directly relay material scan packet envelopes to workers without opening bodies.",
                 allowed_reads=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, _material_scan_index_path(run_root)),
@@ -13985,8 +13992,8 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
         return make_action(
             action_type="relay_material_scan_packets",
             actor="controller",
-            label="material_scan_packets_relayed_after_reviewer_dispatch",
-            summary="Relay material scan packet envelopes to workers without opening bodies.",
+            label="material_scan_packets_relayed_after_router_direct_preflight",
+            summary="Directly relay material scan packet envelopes to workers without opening bodies.",
             allowed_reads=[project_relative(project_root, _material_scan_index_path(run_root))],
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
             to_role="worker_a,worker_b",
@@ -14128,8 +14135,6 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
     flags = run_state["flags"]
     if not flags.get("current_node_packet_registered"):
         return None
-    if not flags.get("current_node_dispatch_allowed"):
-        return None
     if not flags.get("current_node_packet_relayed"):
         payload = _latest_event_payload(run_state, "pm_registers_current_node_packet")
         envelope_path = _packet_envelope_path(project_root, run_state, payload)
@@ -14148,7 +14153,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             return make_action(
                 action_type="relay_current_node_packet",
                 actor="controller",
-                label="current_node_packet_relayed_after_reviewer_dispatch_with_ledger_check",
+                label="current_node_packet_relayed_after_router_direct_preflight_with_ledger_check",
                 summary=(
                     f"Check the packet ledger and relay current-node packet {envelope['packet_id']} "
                     f"to {envelope['to_role']} without opening its body."
@@ -14175,8 +14180,8 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
         return make_action(
             action_type="relay_current_node_packet",
             actor="controller",
-            label="current_node_packet_relayed_after_reviewer_dispatch",
-            summary=f"Relay current-node packet {envelope['packet_id']} to {envelope['to_role']} without opening its body.",
+            label="current_node_packet_relayed_after_router_direct_preflight",
+            summary=f"Directly relay current-node packet {envelope['packet_id']} to {envelope['to_role']} without opening its body.",
             allowed_reads=relay_allowed_reads,
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
             to_role=str(envelope["to_role"]),
@@ -15771,8 +15776,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         if not run_state.get("ledger_check_requested"):
             raise RouterError("current-node packet relay requires a current packet-ledger check")
         envelope, envelope_path = _current_node_packet_context(project_root, run_state)
-        if not run_state["flags"].get("current_node_dispatch_allowed"):
-            raise RouterError("current-node packet relay requires reviewer dispatch allowance")
+        audit = packet_runtime.validate_packet_ready_for_direct_relay(
+            project_root,
+            packet_envelope=envelope,
+            envelope_path=envelope_path,
+        )
+        if not audit.get("passed"):
+            raise RouterError(f"current-node packet envelope is not ready for direct relay: {audit.get('blockers')}")
         _ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get("node_id") or ""))
         packet_runtime.controller_relay_envelope(
             project_root,
@@ -16157,11 +16167,11 @@ def _record_external_event_unchecked(
         _write_material_scan_packets(project_root, run_root, run_state, payload)
     elif event == "reviewer_blocks_material_scan_dispatch":
         _write_material_dispatch_block_report(project_root, run_root, run_state, payload)
-    elif event == "reviewer_blocks_material_scan_dispatch_recheck":
+    elif event in {"reviewer_blocks_material_scan_dispatch_recheck", "router_direct_material_scan_dispatch_recheck_blocked"}:
         _write_material_dispatch_block_report(project_root, run_root, run_state, payload)
         _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
-    elif event == "reviewer_protocol_blocker_material_scan_dispatch_recheck":
-        _write_material_dispatch_recheck_protocol_blocker(project_root, run_root, run_state, payload)
+    elif event in {"reviewer_protocol_blocker_material_scan_dispatch_recheck", "router_protocol_blocker_material_scan_dispatch_recheck"}:
+        _write_material_dispatch_recheck_protocol_blocker(project_root, run_root, run_state, payload, event_name=event)
         _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
     elif event == "worker_scan_packet_bodies_delivered_after_dispatch":
         material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
@@ -16446,7 +16456,7 @@ def _record_external_event_unchecked(
         run_state["flags"]["material_accepted_by_pm"] = True
     run_state["events"].append(record)
     _mark_scoped_event_recorded(run_state, scoped_identity)
-    if event == "reviewer_allows_material_scan_dispatch":
+    if event in {"router_direct_material_scan_dispatch_recheck_passed", "reviewer_allows_material_scan_dispatch"}:
         _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
         run_state["flags"]["material_scan_dispatch_blocked"] = False
         run_state["material_dispatch_block"] = None
@@ -17083,6 +17093,14 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
         if envelope.get("body_visibility") != packet_runtime.SEALED_BODY_VISIBILITY:
             issues.append(_artifact_issue("body_visibility", "packet body must stay sealed to target role", str(envelope.get("from_role") or "project_manager")))
         issues.extend(_validate_hash_if_present(project_root, envelope, "body_path", "body_hash"))
+        if envelope.get("packet_type") != "user_intake":
+            audit = packet_runtime.validate_packet_ready_for_direct_relay(
+                project_root,
+                packet_envelope=envelope,
+                envelope_path=path,
+            )
+            for blocker in audit.get("blockers") or []:
+                issues.append(_artifact_issue("direct_dispatch_preflight", str(blocker), str(envelope.get("from_role") or "project_manager")))
     elif artifact_type == "result_envelope":
         envelope = packet_runtime.normalize_envelope_aliases(payload)
         for field in ("schema_version", "packet_id", "completed_by_role", "result_body_path", "result_body_hash", "next_recipient", "body_visibility"):

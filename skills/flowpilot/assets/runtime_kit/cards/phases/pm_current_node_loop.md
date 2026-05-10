@@ -21,7 +21,7 @@ For each active route node:
 1. receive the node-started event card;
 2. read the latest route-memory prior path context and active frontier;
 3. issue a bounded packet for the current node only;
-4. wait for reviewer dispatch before worker delivery;
+4. wait for router direct-dispatch preflight before worker delivery;
 5. wait for worker result and reviewer result review;
 6. perform a PM high-standard recheck against the node acceptance plan;
 7. complete the node only after reviewer pass or repair pass.

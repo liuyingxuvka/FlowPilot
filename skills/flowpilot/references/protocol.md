@@ -57,7 +57,8 @@ long-form public explanation lives in `docs/protocol.md`.
    The main assistant becomes the controller for packet flow, not the default
    implementation worker.
 10. Before PM product-function synthesis or route decisions, require a
-    PM-authored material-intake packet envelope/body pair and reviewer dispatch approval.
+    PM-authored material-intake packet envelope/body pair that passes router
+    direct-dispatch preflight.
     The authorized worker writes
     `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,
@@ -65,7 +66,7 @@ long-form public explanation lives in `docs/protocol.md`.
     deferred materials. Local skills are candidate resources only until PM
     selection. Controller-origin material intake is invalid unless a PM packet
     explicitly assigns that administrative task to the controller and the
-    reviewer approves dispatch.
+    router direct-dispatch preflight allows that assignment.
 11. The human-like reviewer approves or blocks material sufficiency. The packet
     is PM-ready only when obvious sources are not missing, large materials are
     sampled or scoped honestly, summaries are specific, contradictions and
@@ -143,9 +144,9 @@ long-form public explanation lives in `docs/protocol.md`.
     six role agents, resumes or replaces each role from current-run memory, then
     asks the project manager for the current `PM_DECISION` and
     completion-oriented runway. A `wait_agent` timeout is `timeout_unknown`,
-    never active. The controller may relay only PM packets,
-    reviewer dispatch/review decisions, worker results, visible-plan sync, and
-    status/control-stop notices.
+    never active. The controller may relay only PM packets after router
+    direct-dispatch preflight, reviewer result-review decisions, worker
+    results, visible-plan sync, and status/control-stop notices.
 26. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 27. Record the controlled-stop notice policy: completed routes emit a
@@ -237,7 +238,8 @@ long-form public explanation lives in `docs/protocol.md`.
     state/frontier/crew/continuation evidence is a shadow route and must be
     quarantined or superseded before continuing.
 38. Start only the first packet-gated chunk whose continuation mode is known.
-    The PM writes a physical packet envelope/body pair, the reviewer approves dispatch,
+    The PM writes a physical packet envelope/body pair, the router runs
+    direct-dispatch preflight,
     the worker receives only that envelope plus the body file addressed to its role,
     and the worker returns a physical result envelope/body pair before stopping for the
     next packet. The controller relays result envelope -> reviewer -> PM ->
@@ -256,9 +258,9 @@ long-form public explanation lives in `docs/protocol.md`.
     cosmetic omissions.
     On heartbeat or manual resume, the controller reloads the packet ledger and
     resumes from the packet holder. If a worker result is already present, it
-    goes to reviewer. If holder, dispatch evidence, worker identity, or result
-    state is unclear, the controller asks PM for recovery/reissue/reassignment
-    and must not finish the packet itself.
+    goes to reviewer. If holder, router direct-dispatch evidence, worker
+    identity, or result state is unclear, the controller asks PM for
+    recovery/reissue/reassignment and must not finish the packet itself.
 39. Start only the first chunk whose continuation mode is known. Automated
     routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
@@ -286,7 +288,7 @@ answer set is complete.
 
 Before PM product-function architecture, contract freeze, route generation, or
 capability routing, the PM writes a material-intake packet envelope/body pair,
-the reviewer approves dispatch, and an authorized worker writes
+the router direct-dispatch preflight passes, and an authorized worker writes
 `.flowpilot/runs/<run-id>/material_intake_packet.json`. It inventories user-provided and
 repository-local materials, summarizes what each source appears to contain,
 classifies authority, freshness, completeness, contradictions, privacy/safety
@@ -294,7 +296,7 @@ notes, inventories locally installed skills and host capabilities as
 candidate-only resources, maps coverage to user intent, and names unread or
 deferred materials. Controller-origin material intake cannot close the gate
 unless the PM packet explicitly assigns that administrative action and the
-reviewer approves dispatch.
+router direct-dispatch preflight allows it.
 
 The human-like reviewer approves material sufficiency before the project
 manager uses the packet. The reviewer must open or sample the actual materials

@@ -1,8 +1,10 @@
 """FlowGuard release-tooling model for FlowPilot-only publication.
 
-The model isolates the installer and release-preflight contract. FlowPilot may
-install its own skill folder and missing dependencies, but release tooling has
-no authority to package or publish companion skill repositories.
+Risk intent: the installer must make FlowPilot's dependency tiers visible,
+install or block on missing required dependencies, keep optional UI companions
+opt-in, and avoid silently mutating the Python environment without explicit
+FlowGuard install authorization. Release tooling still has no authority to
+package or publish companion skill repositories.
 """
 
 from __future__ import annotations
@@ -20,6 +22,18 @@ class State:
     release_checker_written: bool = False
     host_capability_declared: bool = False
     host_provider_hardcoded_universal: bool = False
+    dependency_bootstrap_notice_emitted: bool = False
+    dependency_tiers_declared: bool = False
+    required_skill_install_policy_declared: bool = False
+    optional_skill_policy_declared: bool = False
+    flowguard_public_source_declared: bool = False
+    flowguard_install_authorized: bool = False
+    flowguard_install_attempted: bool = False
+    flowguard_install_verified: bool = False
+    optional_install_requested: bool = False
+    optional_dependencies_installed: bool = False
+    optional_dependencies_skipped_without_include: bool = False
+    required_dependencies_ready: bool = False
     dependency_sources_checked: bool = False
     dependency_sources_ready: bool = False
     dependency_sources_reported_missing: bool = False
@@ -70,6 +84,49 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, host_capability_declared=True),
         )
         return
+    if not state.dependency_bootstrap_notice_emitted:
+        yield Transition(
+            "dependency_bootstrap_notice_emitted",
+            replace(state, dependency_bootstrap_notice_emitted=True),
+        )
+        return
+    if not state.dependency_tiers_declared:
+        yield Transition(
+            "dependency_tiers_declared",
+            replace(state, dependency_tiers_declared=True),
+        )
+        return
+    if not state.required_skill_install_policy_declared:
+        yield Transition(
+            "required_skill_install_policy_declared",
+            replace(state, required_skill_install_policy_declared=True),
+        )
+        return
+    if not state.optional_skill_policy_declared:
+        yield Transition(
+            "optional_skill_policy_declared",
+            replace(
+                state,
+                optional_skill_policy_declared=True,
+                optional_dependencies_skipped_without_include=True,
+            ),
+        )
+        yield Transition(
+            "optional_skill_install_requested",
+            replace(
+                state,
+                optional_skill_policy_declared=True,
+                optional_install_requested=True,
+                optional_dependencies_installed=True,
+            ),
+        )
+        return
+    if not state.flowguard_public_source_declared:
+        yield Transition(
+            "flowguard_public_source_declared",
+            replace(state, flowguard_public_source_declared=True),
+        )
+        return
     if not state.dependency_sources_checked:
         yield Transition(
             "dependency_sources_checked_ready",
@@ -108,16 +165,34 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, duplicate_installed_skill_names_checked=True),
         )
         return
+    if not state.missing_dependencies_installed:
+        yield Transition(
+            "required_skill_dependencies_installed_without_overwrite",
+            replace(state, missing_dependencies_installed=True),
+        )
+        return
+    if not state.flowguard_install_authorized:
+        yield Transition(
+            "flowguard_install_authorized",
+            replace(state, flowguard_install_authorized=True),
+        )
+        return
+    if not state.flowguard_install_attempted:
+        yield Transition(
+            "flowguard_install_attempted_from_public_source",
+            replace(state, flowguard_install_attempted=True),
+        )
+        return
+    if not state.flowguard_install_verified:
+        yield Transition(
+            "flowguard_install_verified",
+            replace(state, flowguard_install_verified=True, required_dependencies_ready=True),
+        )
+        return
     if not state.cockpit_source_tracked:
         yield Transition(
             "cockpit_source_tracked",
             replace(state, cockpit_source_tracked=True),
-        )
-        return
-    if not state.missing_dependencies_installed:
-        yield Transition(
-            "missing_dependencies_installed_without_overwrite",
-            replace(state, missing_dependencies_installed=True),
         )
         return
     if not state.privacy_scan_done:
@@ -149,15 +224,36 @@ def invariant_failures(state: State) -> list[str]:
     if state.missing_dependencies_installed and not (
         state.manifest_written
         and state.installer_written
+        and state.dependency_bootstrap_notice_emitted
+        and state.dependency_tiers_declared
+        and state.required_skill_install_policy_declared
         and state.dependency_sources_checked
     ):
         failures.append("dependencies were installed before manifest and source checks")
+    if state.flowguard_install_attempted and not (
+        state.flowguard_public_source_declared and state.flowguard_install_authorized
+    ):
+        failures.append("FlowGuard install was attempted before public source and explicit authorization")
+    if state.flowguard_install_verified and not state.flowguard_install_attempted:
+        failures.append("FlowGuard was marked verified before install or import check")
+    if state.optional_dependencies_installed and not state.optional_install_requested:
+        failures.append("optional dependencies were installed without explicit optional request")
+    if state.required_dependencies_ready and not (
+        state.missing_dependencies_installed and state.flowguard_install_verified
+    ):
+        failures.append("required dependencies were marked ready before required skills and FlowGuard passed")
     if state.flowpilot_release_prepared and not (
         state.manifest_written
         and state.release_checker_written
         and state.host_capability_declared
+        and state.dependency_bootstrap_notice_emitted
+        and state.dependency_tiers_declared
+        and state.required_skill_install_policy_declared
+        and state.optional_skill_policy_declared
+        and state.flowguard_public_source_declared
         and state.dependency_sources_checked
         and state.dependency_sources_ready
+        and state.required_dependencies_ready
         and state.flowpilot_install_checked
         and state.repo_owned_skill_sync_checked
         and state.duplicate_installed_skill_names_checked
@@ -194,10 +290,63 @@ def hazard_states() -> dict[str, State]:
             dependency_sources_checked=True,
             existing_skill_overwritten=True,
         ),
+        "flowguard_install_without_authorization": State(
+            manifest_written=True,
+            installer_written=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            flowguard_public_source_declared=True,
+            flowguard_install_attempted=True,
+        ),
+        "flowguard_ready_without_verification": State(
+            manifest_written=True,
+            installer_written=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            flowguard_public_source_declared=True,
+            flowguard_install_authorized=True,
+            required_dependencies_ready=True,
+        ),
+        "optional_install_without_request": State(
+            manifest_written=True,
+            installer_written=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            optional_skill_policy_declared=True,
+            optional_dependencies_installed=True,
+        ),
+        "release_without_dependency_notice": State(
+            manifest_written=True,
+            installer_written=True,
+            release_checker_written=True,
+            host_capability_declared=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            optional_skill_policy_declared=True,
+            flowguard_public_source_declared=True,
+            dependency_sources_checked=True,
+            dependency_sources_ready=True,
+            required_dependencies_ready=True,
+            flowpilot_install_checked=True,
+            repo_owned_skill_sync_checked=True,
+            duplicate_installed_skill_names_checked=True,
+            cockpit_source_tracked=True,
+            privacy_scan_done=True,
+            validation_done=True,
+            validation_passed=True,
+            flowpilot_release_prepared=True,
+        ),
         "publish_with_missing_dependency_source": State(
             manifest_written=True,
             installer_written=True,
             release_checker_written=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            optional_skill_policy_declared=True,
+            flowguard_public_source_declared=True,
             dependency_sources_checked=True,
             dependency_sources_reported_missing=True,
             flowpilot_release_prepared=True,
@@ -207,8 +356,15 @@ def hazard_states() -> dict[str, State]:
             manifest_written=True,
             installer_written=True,
             release_checker_written=True,
+            host_capability_declared=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            optional_skill_policy_declared=True,
+            flowguard_public_source_declared=True,
             dependency_sources_checked=True,
             dependency_sources_ready=True,
+            required_dependencies_ready=True,
             flowpilot_install_checked=True,
             repo_owned_skill_sync_checked=True,
             duplicate_installed_skill_names_checked=True,
@@ -221,8 +377,15 @@ def hazard_states() -> dict[str, State]:
             manifest_written=True,
             installer_written=True,
             release_checker_written=True,
+            host_capability_declared=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            optional_skill_policy_declared=True,
+            flowguard_public_source_declared=True,
             dependency_sources_checked=True,
             dependency_sources_ready=True,
+            required_dependencies_ready=True,
             flowpilot_install_checked=True,
             repo_owned_skill_sync_checked=True,
             duplicate_installed_skill_names_checked=True,
@@ -237,8 +400,15 @@ def hazard_states() -> dict[str, State]:
             manifest_written=True,
             installer_written=True,
             release_checker_written=True,
+            host_capability_declared=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            optional_skill_policy_declared=True,
+            flowguard_public_source_declared=True,
             dependency_sources_checked=True,
             dependency_sources_ready=True,
+            required_dependencies_ready=True,
             flowpilot_install_checked=True,
             repo_owned_skill_sync_checked=True,
             duplicate_installed_skill_names_checked=True,
@@ -253,8 +423,15 @@ def hazard_states() -> dict[str, State]:
             manifest_written=True,
             installer_written=True,
             release_checker_written=True,
+            host_capability_declared=True,
+            dependency_bootstrap_notice_emitted=True,
+            dependency_tiers_declared=True,
+            required_skill_install_policy_declared=True,
+            optional_skill_policy_declared=True,
+            flowguard_public_source_declared=True,
             dependency_sources_checked=True,
             dependency_sources_ready=True,
+            required_dependencies_ready=True,
             flowpilot_install_checked=True,
             repo_owned_skill_sync_checked=True,
             duplicate_installed_skill_names_checked=True,
