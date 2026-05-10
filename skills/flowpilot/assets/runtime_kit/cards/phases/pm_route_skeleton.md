@@ -34,6 +34,31 @@ Route requirements:
   the user's quality level and why a lighter profile would lose required proof
   strength. For a small task, use `simple_repair` with an explicit waiver
   instead of importing heavyweight UI/product loops;
+- if the selected profile is `research_writing`, treat the final paper,
+  report, proposal, review, white paper, or slide/report deck as a
+  document-as-product, not ordinary text generation. The route must include or
+  explicitly waive modules for material and source intake, document type,
+  audience and evaluation standard, research question or central theme,
+  thesis/argument structure, chapter or section outline, and an evidence
+  matrix that maps important claims to sources, data, figures, case material,
+  experiments, or explicit assumptions;
+- for `research_writing`, the route must record an
+  `evidence_generation_strategy`: no experiment needed, source or literature
+  synthesis, real data analysis, simulation or synthetic experiment, case
+  study, user-provided data/materials required, or external data/materials
+  required. If experiment, simulation, or data analysis is used, the route must
+  require the research question it answers, source/data/parameter provenance,
+  method and assumptions, real-versus-simulated-versus-synthetic labeling,
+  reproducible artifacts when practical, and conclusions bounded by the
+  evidence actually produced. Fake experiment claims, unlabelled synthetic
+  data, and conclusions that exceed the evidence are forbidden;
+- for `research_writing`, the route must include or explicitly waive section
+  drafting and integration, argument review for unsupported claims, circular
+  logic, contradiction, and conclusion overreach, citation and source review,
+  rendered document QA for PDF, DOCX, HTML, PPT, figures, tables, captions,
+  pagination, references, and visual professionalism, and a final reader-style
+  backward review from the completed document to the original request and
+  acceptance standard;
 - Minimum Sufficient Complexity: choose the smallest route structure that can
   satisfy the frozen contract with the required proof strength;
 - use the Product FlowGuard Officer's product behavior model as route input:

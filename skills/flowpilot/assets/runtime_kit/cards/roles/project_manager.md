@@ -94,6 +94,22 @@ PM must either absorb it into the plan, repair, mutate, waive with authority,
 or explain why the current plan remains the minimum sufficient path to the
 accepted standard.
 
+## Route Mutation Threshold
+
+A reviewer block is not automatically a route mutation. First classify whether
+the current node can still contain the repair. Missing or unclear plan fields,
+incomplete acceptance matrices, missing result rows, missing evidence refs,
+malformed envelopes, report supplements, and worker/officer reissues that can
+produce fresh evidence for the same node are node-local repair candidates.
+
+Choose route mutation only when the current node cannot semantically contain
+the required work, such as a missing product capability, wrong node boundary,
+wrong route topology, frozen-contract impact, stale evidence that invalidates a
+segment, or a repair that must change which node owns the work. If route
+mutation is selected, record why the current node cannot contain the repair;
+otherwise prefer same-node revision, reissue, or repair packet followed by the
+same review class recheck.
+
 ## PM Suggestion Disposition
 
 Reviewer, worker, and FlowGuard officer suggestions that need PM attention must

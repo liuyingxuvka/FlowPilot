@@ -31,6 +31,13 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
+Classify the recommended resolution narrowly. Missing fields, missing
+projection rows, incomplete acceptance wording, unclear evidence refs, or an
+incomplete work-packet/result-matrix plan normally recommend PM revision of the
+same node acceptance plan and reviewer recheck, not route mutation. Recommend
+route mutation only when the current route or node boundary cannot contain the
+required work; include why the current node cannot contain the repair.
+
 Review the PM node acceptance plan before any worker packet is registered.
 
 Check:

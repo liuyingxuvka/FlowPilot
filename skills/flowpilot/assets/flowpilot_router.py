@@ -405,6 +405,7 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "pm_node_started_event_delivered",
     "pm_node_acceptance_plan_card_delivered",
     "node_acceptance_plan_written",
+    "node_acceptance_plan_revised_by_pm",
     "reviewer_node_acceptance_plan_card_delivered",
     "node_acceptance_plan_reviewer_passed",
     "node_acceptance_plan_review_blocked",
@@ -1471,6 +1472,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "node_acceptance_plan_written",
         "requires_flag": "pm_node_acceptance_plan_card_delivered",
         "summary": "PM wrote the active node acceptance plan before packet dispatch.",
+    },
+    "pm_revises_node_acceptance_plan": {
+        "flag": "node_acceptance_plan_revised_by_pm",
+        "requires_flag": "model_miss_triage_closed",
+        "summary": "PM revised the active node acceptance plan as same-node repair after reviewer block.",
     },
     "reviewer_passes_node_acceptance_plan": {
         "flag": "node_acceptance_plan_reviewer_passed",
@@ -11386,7 +11392,14 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
     )
 
 
-def _write_node_acceptance_plan(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+def _write_node_acceptance_plan(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    source_event: str = "pm_writes_node_acceptance_plan",
+) -> None:
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="node acceptance plan")
     if payload.get("pm_owned", True) is not True:
         raise RouterError("node acceptance plan must be PM-owned")
@@ -11474,6 +11487,7 @@ def _write_node_acceptance_plan(project_root: Path, run_root: Path, run_state: d
             "reviewer_or_officer_direct_check_required": True,
         },
         "written_by_role": "project_manager",
+        "source_event": source_event,
     }
     write_json(_active_node_acceptance_plan_path(run_root, frontier), plan)
     _update_display_plan_current_node(
@@ -11491,8 +11505,52 @@ def _write_node_acceptance_plan(project_root: Path, run_root: Path, run_state: d
             for index, item in enumerate(node_requirements, start=1)
             if isinstance(item, dict)
         ],
-        source_event="pm_writes_node_acceptance_plan",
+        source_event=source_event,
     )
+
+
+def _write_pm_revised_node_acceptance_plan(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    if not run_state["flags"].get("node_acceptance_plan_review_blocked"):
+        raise RouterError("same-node node acceptance-plan repair requires active node_acceptance_plan_review_blocked flag")
+    frontier = _active_frontier(run_root)
+    node_root = _active_node_root(run_root, frontier)
+    block_path = node_root / "reviews" / "node_acceptance_plan_block.json"
+    if not block_path.exists():
+        raise RouterError("same-node node acceptance-plan repair requires reviewer block report")
+    _write_node_acceptance_plan(
+        project_root,
+        run_root,
+        run_state,
+        payload,
+        source_event="pm_revises_node_acceptance_plan",
+    )
+    revised_plan_path = _active_node_acceptance_plan_path(run_root, frontier)
+    repair_record_path = node_root / "repairs" / "node_acceptance_plan_revision.json"
+    write_json(
+        repair_record_path,
+        {
+            "schema_version": "flowpilot.node_acceptance_plan_revision.v1",
+            "run_id": run_state["run_id"],
+            "route_id": str(frontier["active_route_id"]),
+            "route_version": int(frontier.get("route_version") or 0),
+            "node_id": str(frontier["active_node_id"]),
+            "repair_scope": "same_node_plan_revision",
+            "source_block_path": project_relative(project_root, block_path),
+            "revised_plan_path": project_relative(project_root, revised_plan_path),
+            "stale_blocked_plan_is_context_only": True,
+            "reviewer_recheck_required": True,
+            "recorded_at": utc_now(),
+            "recorded_by": "project_manager",
+        },
+    )
+    run_state["flags"]["node_acceptance_plan_review_blocked"] = False
+    run_state["flags"]["node_acceptance_plan_reviewer_passed"] = False
+    run_state["flags"]["reviewer_node_acceptance_plan_card_delivered"] = False
 
 
 def _write_parent_backward_targets(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -11915,6 +11973,11 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         or payload.get("mutation_strategy")
         or ""
     ).strip()
+    current_node_incapability_reason = str(
+        payload.get("why_current_node_cannot_contain_repair")
+        or payload.get("current_node_cannot_contain_repair_reason")
+        or ""
+    ).strip()
     if not topology_strategy:
         if repair_return_to_node_id:
             topology_strategy = "return_to_original"
@@ -11953,6 +12016,7 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         "route_version": route_version,
         "active_node_id": active_node_id,
         "reason": payload.get("reason") or "reviewer_block",
+        "current_node_cannot_contain_repair_reason": current_node_incapability_reason or None,
         "stale_evidence": stale_evidence,
         "superseded_nodes": superseded_nodes,
         "prior_path_context_review": prior_review,
@@ -16027,6 +16091,8 @@ def _record_external_event_unchecked(
         _write_host_heartbeat_binding(project_root, run_root, run_state, payload)
     elif event == "pm_writes_node_acceptance_plan":
         _write_node_acceptance_plan(project_root, run_root, run_state, payload)
+    elif event == "pm_revises_node_acceptance_plan":
+        _write_pm_revised_node_acceptance_plan(project_root, run_root, run_state, payload)
     elif event == "reviewer_passes_node_acceptance_plan":
         frontier = _active_frontier(run_root)
         _write_role_gate_report(
@@ -16058,6 +16124,7 @@ def _record_external_event_unchecked(
             ],
         )
         run_state["flags"]["node_acceptance_plan_reviewer_passed"] = False
+        run_state["flags"]["node_acceptance_plan_revised_by_pm"] = False
     elif event == "reviewer_blocks_current_node_dispatch":
         frontier = _active_frontier(run_root)
         packet_id = str(frontier.get("active_packet_id") or run_state.get("current_node_packet_id") or "")

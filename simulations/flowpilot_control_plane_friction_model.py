@@ -23,7 +23,10 @@ Risk intent brief:
   optimized transactions that skip hash, role, or Controller-boundary checks.
   Long-running role-work waits are included: Controller can see only a
   metadata-only controller_status_packet progress surface, never sealed packet
-  or result bodies.
+  or result bodies. Reviewer-block repair routing is included: PM can repair
+  node-local defects by revising or reissuing fresh same-node artifacts, while
+  route mutation is reserved for defects the current node cannot semantically
+  contain.
 - Hard invariants: package-to-packet fields are preserved; material-scan
   dispatch requires phase, contract, write-target, and canonical-body
   consistency; repair reissues must materialize into packet files, ledger, and
@@ -36,7 +39,11 @@ Risk intent brief:
   receivable external events; optimized transactions keep hash, role, and
   envelope-only guarantees; long-running waits expose exactly one status
   packet, progress is runtime-written numeric metadata, and status messages do
-  not carry findings, evidence, recommendations, or body summaries.
+  not carry findings, evidence, recommendations, or body summaries; node-local
+  reviewer blocks remain routable without a route mutation, use fresh repair
+  evidence, and require the same review class to recheck before continuation;
+  route mutations record why the current node cannot contain the repair and
+  reopen route checks.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -146,6 +153,16 @@ class State:
     route_process_check_passed: bool = False
     route_draft_repaired_after_check: bool = False
     route_review_flags_reset_after_draft_repair: bool = True
+
+    review_block_observed: bool = False
+    review_block_scope: str = "none"  # none | node_local | route_invalidating
+    pm_selected_same_node_repair: bool = False
+    same_node_repair_path_routable: bool = True
+    fresh_repair_evidence_written: bool = False
+    stale_blocked_evidence_reused_as_pass: bool = False
+    same_review_class_rechecked_repair: bool = False
+    pm_selected_route_mutation: bool = False
+    current_node_cannot_contain_repair_reason_present: bool = False
 
     optimized_relay_transaction: bool = False
     optimized_transaction_records_delivery: bool = False
@@ -415,6 +432,87 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _inc(state, holder="controller", route_process_check_passed=True),
         )
         return
+
+    if state.route_process_check_passed and state.review_block_scope == "none":
+        yield Transition(
+            "reviewer_block_classified_as_node_local",
+            _inc(
+                state,
+                holder="project_manager",
+                review_block_observed=True,
+                review_block_scope="node_local",
+            ),
+        )
+        yield Transition(
+            "reviewer_block_classified_as_route_invalidating",
+            _inc(
+                state,
+                holder="project_manager",
+                review_block_observed=True,
+                review_block_scope="route_invalidating",
+            ),
+        )
+        return
+
+    if state.review_block_scope == "node_local":
+        if not state.pm_selected_same_node_repair:
+            yield Transition(
+                "pm_selects_same_node_repair_for_node_local_block",
+                _inc(
+                    state,
+                    holder="project_manager",
+                    pm_selected_same_node_repair=True,
+                    same_node_repair_path_routable=True,
+                ),
+            )
+            return
+        if not state.fresh_repair_evidence_written:
+            yield Transition(
+                "same_node_repair_writes_fresh_plan_or_result",
+                _inc(
+                    state,
+                    holder="project_manager",
+                    fresh_repair_evidence_written=True,
+                    stale_blocked_evidence_reused_as_pass=False,
+                ),
+            )
+            return
+        if not state.same_review_class_rechecked_repair:
+            yield Transition(
+                "same_reviewer_rechecks_repair_before_continue",
+                _inc(
+                    state,
+                    holder="reviewer",
+                    same_review_class_rechecked_repair=True,
+                ),
+            )
+            return
+
+    if state.review_block_scope == "route_invalidating":
+        if not state.pm_selected_route_mutation:
+            yield Transition(
+                "pm_selects_route_mutation_for_route_invalidating_block",
+                _inc(
+                    state,
+                    holder="project_manager",
+                    pm_selected_route_mutation=True,
+                    current_node_cannot_contain_repair_reason_present=True,
+                ),
+            )
+            return
+        if not state.route_draft_repaired_after_check:
+            yield Transition(
+                "route_mutation_resets_route_checks_for_reapproval",
+                _inc(
+                    state,
+                    holder="controller",
+                    route_process_check_card_delivered=False,
+                    route_process_check_passed=False,
+                    route_draft_repaired_after_check=True,
+                    route_review_flags_reset_after_draft_repair=True,
+                ),
+            )
+            return
 
     if not state.role_work_wait_pending:
         yield Transition(
@@ -756,6 +854,52 @@ def route_draft_repair_resets_stale_route_checks(state: State, trace) -> Invaria
     return InvariantResult.pass_()
 
 
+def node_local_blocks_remain_same_node_routable(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.review_block_scope == "node_local"
+        and state.pm_selected_route_mutation
+        and not state.current_node_cannot_contain_repair_reason_present
+    ):
+        return InvariantResult.fail(
+            "node-local reviewer block was escalated to route mutation without a current-node-incapability reason"
+        )
+    if state.pm_selected_same_node_repair and not state.same_node_repair_path_routable:
+        return InvariantResult.fail("same-node reviewer-block repair had no router-routable follow-up path")
+    return InvariantResult.pass_()
+
+
+def route_invalidating_blocks_require_route_mutation(state: State, trace) -> InvariantResult:
+    del trace
+    if state.review_block_scope == "route_invalidating" and state.pm_selected_same_node_repair:
+        return InvariantResult.fail("route-invalidating reviewer block was handled as same-node repair")
+    if state.pm_selected_route_mutation and not state.current_node_cannot_contain_repair_reason_present:
+        return InvariantResult.fail("route mutation lacked why the current node cannot contain the repair")
+    if state.pm_selected_route_mutation and state.role_work_wait_pending and not (
+        state.route_draft_repaired_after_check
+        and state.route_process_check_card_delivered
+        and state.route_process_check_passed
+    ):
+        return InvariantResult.fail("route mutation continued without resetting and rerunning route checks")
+    return InvariantResult.pass_()
+
+
+def same_node_repair_requires_fresh_evidence_and_recheck(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pm_selected_same_node_repair and state.stale_blocked_evidence_reused_as_pass:
+        return InvariantResult.fail("same-node repair reused stale blocked evidence as passing evidence")
+    if state.same_review_class_rechecked_repair and not state.fresh_repair_evidence_written:
+        return InvariantResult.fail("same-node repair was rechecked before fresh repair evidence existed")
+    if (
+        state.pm_selected_same_node_repair
+        and state.fresh_repair_evidence_written
+        and state.role_work_wait_pending
+        and not state.same_review_class_rechecked_repair
+    ):
+        return InvariantResult.fail("same-node repair continued without same-review-class recheck")
+    return InvariantResult.pass_()
+
+
 def multi_active_requires_explicit_authority(state: State, trace) -> InvariantResult:
     del trace
     if state.multiple_running_index_entries_visible and state.active_task_authority == "current_json_only":
@@ -944,6 +1088,21 @@ INVARIANTS = (
         name="route_draft_repair_resets_stale_route_checks",
         description="A repeated route draft before activation resets downstream route-check flags.",
         predicate=route_draft_repair_resets_stale_route_checks,
+    ),
+    Invariant(
+        name="node_local_blocks_remain_same_node_routable",
+        description="Node-local reviewer blocks can be repaired without route mutation and have a router-visible recheck path.",
+        predicate=node_local_blocks_remain_same_node_routable,
+    ),
+    Invariant(
+        name="route_invalidating_blocks_require_route_mutation",
+        description="Route-invalidating reviewer blocks use route mutation with a current-node-incapability reason and fresh route checks.",
+        predicate=route_invalidating_blocks_require_route_mutation,
+    ),
+    Invariant(
+        name="same_node_repair_requires_fresh_evidence_and_recheck",
+        description="Same-node repairs cannot reuse stale blocked evidence and must pass the same review class before continuation.",
+        predicate=same_node_repair_requires_fresh_evidence_and_recheck,
     ),
     Invariant(
         name="multi_active_requires_explicit_authority",
@@ -1224,6 +1383,52 @@ def hazard_states() -> dict[str, State]:
             route_review_flags_reset_after_draft_repair=False,
             route_process_check_card_delivered=True,
             route_process_check_passed=True,
+        ),
+        "node_local_block_route_mutated_without_reason": _safe_base(
+            review_block_observed=True,
+            review_block_scope="node_local",
+            pm_selected_route_mutation=True,
+            current_node_cannot_contain_repair_reason_present=False,
+        ),
+        "same_node_repair_path_unroutable": _safe_base(
+            review_block_observed=True,
+            review_block_scope="node_local",
+            pm_selected_same_node_repair=True,
+            same_node_repair_path_routable=False,
+        ),
+        "route_invalidating_block_handled_as_same_node_repair": _safe_base(
+            review_block_observed=True,
+            review_block_scope="route_invalidating",
+            pm_selected_same_node_repair=True,
+        ),
+        "same_node_repair_reuses_stale_blocked_evidence": _safe_base(
+            review_block_observed=True,
+            review_block_scope="node_local",
+            pm_selected_same_node_repair=True,
+            fresh_repair_evidence_written=False,
+            stale_blocked_evidence_reused_as_pass=True,
+        ),
+        "same_node_repair_without_reviewer_recheck": _safe_base(
+            review_block_observed=True,
+            review_block_scope="node_local",
+            pm_selected_same_node_repair=True,
+            fresh_repair_evidence_written=True,
+            same_review_class_rechecked_repair=False,
+            role_work_wait_pending=True,
+        ),
+        "route_mutation_without_current_node_incapability_reason": _safe_base(
+            review_block_observed=True,
+            review_block_scope="route_invalidating",
+            pm_selected_route_mutation=True,
+            current_node_cannot_contain_repair_reason_present=False,
+        ),
+        "route_mutation_continues_without_route_recheck": _safe_base(
+            review_block_observed=True,
+            review_block_scope="route_invalidating",
+            pm_selected_route_mutation=True,
+            current_node_cannot_contain_repair_reason_present=True,
+            route_draft_repaired_after_check=False,
+            role_work_wait_pending=True,
         ),
         "multiple_active_tasks_under_current_json_only": _safe_base(
             multiple_running_index_entries_visible=True,
@@ -2873,7 +3078,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 32
+MAX_SEQUENCE_LENGTH = 40
 
 
 __all__ = [

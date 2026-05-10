@@ -6873,3 +6873,62 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep unrelated concurrent worktree changes separate from this local progress-status commit.
+
+
+## flowpilot-node-local-review-repair - Prefer same-node repair before route mutation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a FlowGuard-first optimization so reviewer blocks do not automatically create repair route nodes when PM can repair the current node or request fresh supplements.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-10T15:30:00+00:00
+- Ended: 2026-05-10T16:11:00+00:00
+- Duration seconds: 2460.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+- simulations/flowpilot_control_plane_friction_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`.
+- OK: `python -m py_compile simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py`.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out %TEMP%\flowpilot_friction_check_*.json`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_node_acceptance_plan_block_can_be_revised_on_same_node`.
+- OK: `python -m unittest` focused reviewer-block and route-mutation subset, 6 tests.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`.
+- OK: `python simulations\run_flowpilot_router_loop_checks.py`.
+- OK: `python simulations\run_meta_checks.py` in background; 598029 states, 618200 edges.
+- OK: `python simulations\run_capability_checks.py` in background; 607187 states, 632646 edges.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py`.
+
+### Findings
+- Added a route-mutation threshold model: node-local blocks can be repaired by fresh same-node plan/result/report evidence and same review-class recheck.
+- Added hazards for node-local block forced into route mutation, route-invalidating block handled locally, stale blocked evidence reuse, missing reviewer recheck, missing route-mutation reason, and missing route recheck.
+- Runtime now accepts `pm_revises_node_acceptance_plan` after model-miss triage, clears the active node-plan block, records stale blocked plan as context-only, and reroutes the same reviewer node acceptance-plan gate.
+- PM/reviewer prompts now place the guidance only at three decision points: PM core, PM review-repair, and reviewer node acceptance-plan review.
+
+### Counterexamples
+- node_local_block_route_mutated_without_reason
+- same_node_repair_path_unroutable
+- route_invalidating_block_handled_as_same_node_repair
+- same_node_repair_reuses_stale_blocked_evidence
+- same_node_repair_without_reviewer_recheck
+- route_mutation_without_current_node_incapability_reason
+- route_mutation_continues_without_route_recheck
+
+### Friction Points
+- Full meta and capability model checks are large but completed successfully in background; no fast proof fallback was needed.
+- Existing concurrent worktree changes were preserved and included in local validation context.
+
+### Skipped Steps
+- No GitHub push or remote release per user instruction.
+- No full unfiltered router runtime suite; focused reviewer-block/route-mutation tests and model checks were run instead.
+
+### Next Actions
+- If route mutation remains too easy in future PM outputs, promote `why_current_node_cannot_contain_repair` from prompt guidance into a stricter payload contract.

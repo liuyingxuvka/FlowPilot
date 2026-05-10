@@ -45,6 +45,14 @@ when the blocker cannot be closed by the smaller repair, when evidence has
 become stale, or when the route structure itself is wrong. Record why the
 smaller repair was insufficient.
 
+Do not create a repair node merely to repair wording, missing plan fields,
+missing projection rows, result-matrix gaps, evidence-reference gaps, or a
+supplementable worker/officer report. Those are same-node repair candidates:
+PM may revise the current plan, ask the original role to issue a fresh
+supplement or replacement result using the old artifact as context, and return
+the repaired artifact to the same reviewer gate. The old blocked artifact may
+explain context, but it is stale and must not become passing evidence.
+
 For reviewer-blocked repair or reissue work, prefer returning the packet to the
 same worker who produced the blocked result so the repair keeps local context,
 unless that worker is unavailable, the issue shows a fundamental
@@ -52,6 +60,7 @@ misunderstanding, or the repair has become separable new work.
 
 Allowed PM decisions:
 
+- revise the current PM-owned plan and return it for recheck;
 - request sender reissue;
 - issue a repair packet to the correct role;
 - mutate route and invalidate stale evidence;
@@ -65,7 +74,8 @@ For route mutation, include `repair_return_to_node_id`, identifying the
 mainline node the repair is meant to rejoin. Router treats mutation as a fresh
 route-check boundary: old Process/Product/Reviewer route approvals become
 stale and the changed route must pass route checks again before execution
-continues.
+continues. Also include `why_current_node_cannot_contain_repair` when the
+repair phase chooses route mutation instead of same-node repair.
 
 Mutation or repair output must include `prior_path_context_review` showing the
 history considered and why this repair does not repeat a superseded or failed

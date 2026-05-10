@@ -33,6 +33,13 @@ REQUIRED_LABELS = (
     "pm_writes_route_draft_with_nonempty_nodes",
     "route_process_check_card_delivered_with_route_draft_context",
     "process_officer_passes_route_check_after_nonempty_route",
+    "reviewer_block_classified_as_node_local",
+    "reviewer_block_classified_as_route_invalidating",
+    "pm_selects_same_node_repair_for_node_local_block",
+    "same_node_repair_writes_fresh_plan_or_result",
+    "same_reviewer_rechecks_repair_before_continue",
+    "pm_selects_route_mutation_for_route_invalidating_block",
+    "route_mutation_resets_route_checks_for_reapproval",
     "controller_waits_for_role_work_with_status_packet_read",
     "target_role_updates_progress_status_via_runtime",
     "user_stop_requested",
@@ -78,6 +85,13 @@ HAZARD_EXPECTED_FAILURES = {
     "route_process_check_on_empty_route_draft": "route process check was delivered for an empty route draft",
     "route_process_check_on_shadow_route_draft": "route process check used a shadow route draft instead of the canonical route source",
     "route_draft_repair_kept_stale_route_checks": "route draft repair left stale route-check flags active",
+    "node_local_block_route_mutated_without_reason": "node-local reviewer block was escalated to route mutation without a current-node-incapability reason",
+    "same_node_repair_path_unroutable": "same-node reviewer-block repair had no router-routable follow-up path",
+    "route_invalidating_block_handled_as_same_node_repair": "route-invalidating reviewer block was handled as same-node repair",
+    "same_node_repair_reuses_stale_blocked_evidence": "same-node repair reused stale blocked evidence as passing evidence",
+    "same_node_repair_without_reviewer_recheck": "same-node repair continued without same-review-class recheck",
+    "route_mutation_without_current_node_incapability_reason": "route mutation lacked why the current node cannot contain the repair",
+    "route_mutation_continues_without_route_recheck": "route mutation continued without resetting and rerunning route checks",
     "multiple_active_tasks_under_current_json_only": "multiple active UI tasks were exposed under current_json_only authority",
     "role_work_wait_without_status_packet_read": "role-work wait did not expose matching controller status packet",
     "role_work_status_grants_packet_dir": "role-work progress visibility grant exposed more than controller status packet",
@@ -142,6 +156,12 @@ def _state_id(state: model.State) -> str:
         f"{state.route_draft_single_canonical_source},{state.route_draft_shadow_source_used},"
         f"{state.route_process_check_card_delivered},{state.route_process_check_passed},"
         f"{state.route_draft_repaired_after_check},{state.route_review_flags_reset_after_draft_repair}|"
+        f"review_block={state.review_block_observed},{state.review_block_scope},"
+        f"same_node_repair={state.pm_selected_same_node_repair},{state.same_node_repair_path_routable},"
+        f"{state.fresh_repair_evidence_written},{state.stale_blocked_evidence_reused_as_pass},"
+        f"{state.same_review_class_rechecked_repair}|"
+        f"route_mutation_threshold={state.pm_selected_route_mutation},"
+        f"{state.current_node_cannot_contain_repair_reason_present}|"
         f"opt={state.optimized_relay_transaction},{state.optimized_transaction_records_delivery},"
         f"{state.optimized_transaction_records_open_receipts},"
         f"{state.optimized_transaction_records_result_return}|"
