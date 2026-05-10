@@ -1,8 +1,8 @@
 {
   "actual_card_graph": {
-    "active_card_count": 61,
-    "card_count": 64,
-    "checked_count": 64,
+    "active_card_count": 62,
+    "card_count": 65,
+    "checked_count": 65,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
@@ -38,6 +38,7 @@
       "card_instruction_checked:pm.research_package",
       "card_instruction_checked:pm.resume_decision",
       "card_instruction_checked:pm.review_repair",
+      "card_instruction_checked:pm.role_work_request",
       "card_instruction_checked:pm.root_contract",
       "card_instruction_checked:pm.route_skeleton",
       "card_instruction_checked:pm.startup_activation",
@@ -76,7 +77,7 @@
     "ok": true,
     "orphan_card_files": [],
     "router_sequence_manifest_errors": [],
-    "state_count": 66,
+    "state_count": 67,
     "status": "complete"
   },
   "hazard_checks": {

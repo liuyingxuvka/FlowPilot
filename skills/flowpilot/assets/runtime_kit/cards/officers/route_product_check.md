@@ -10,6 +10,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 # Route Product Check
 
+## Role Capability Reminder
+
+- When more evidence, worker work, reviewer review, or PM choice is needed, return a structured blocker or PM suggestion for PM to route.
+- Do not approve routes or make PM decisions; your report is model evidence and repair/risk advice for PM.
+
+
 Review the PM route draft as the product FlowGuard officer after the process
 officer has passed the route process check.
 

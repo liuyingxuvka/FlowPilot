@@ -9,6 +9,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Reviewer Child Skill Gate Manifest Review
 
+## Role Capability Reminder
+
+- Do not contact workers or officers directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
+- Classify findings as hard blockers for this gate, future requirements, or nonblocking notes; only hard current-gate failures should block this gate.
+
+
 ## Decision-Support Findings
 
 For every outcome, consider `independent_challenge.non_blocking_findings`.

@@ -257,6 +257,7 @@ REQUIRED_FILES = [
     "simulations/release_tooling_model.py",
     "simulations/run_release_tooling_checks.py",
     "simulations/release_tooling_results.json",
+    "scripts/check_runtime_card_capability_reminders.py",
     "scripts/install_flowpilot.py",
     "scripts/audit_local_install_sync.py",
     "scripts/check_public_release.py",
@@ -549,6 +550,32 @@ def main() -> int:
                     "error": repr(exc),
                 }
             )
+
+    try:
+        import check_runtime_card_capability_reminders
+
+        reminder_check = check_runtime_card_capability_reminders.check(ROOT)
+        reminders_ok = bool(reminder_check.get("ok"))
+        result["checks"].append(
+            {
+                "name": "flowpilot_runtime_card_capability_reminders",
+                "ok": reminders_ok,
+                "checked_cards": reminder_check.get("checked_cards"),
+                "issue_count": reminder_check.get("issue_count"),
+                "issues": reminder_check.get("issues"),
+            }
+        )
+        if not reminders_ok:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {
+                "name": "flowpilot_runtime_card_capability_reminders",
+                "ok": False,
+                "error": repr(exc),
+            }
+        )
 
     assets_path = ROOT / "skills" / "flowpilot" / "assets"
     if assets_path.exists():

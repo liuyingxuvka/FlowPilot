@@ -9,6 +9,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # PM Research Package Phase
 
+## Role Capability Reminder
+
+- If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
+- Treat the router's current `allowed_external_events` as the active authority for what this card may return.
+
+
 Use this card only after the reviewer reports material insufficient.
 
 Write a bounded research package that names:

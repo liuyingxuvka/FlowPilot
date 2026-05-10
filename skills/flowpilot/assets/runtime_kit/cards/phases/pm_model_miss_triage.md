@@ -9,6 +9,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # PM Model-Miss Triage Phase
 
+## Role Capability Reminder
+
+- Treat the router's current `allowed_external_events` as the active authority for what this card may return.
+- Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+
+
 Current state contains a reviewer block. Before normal repair planning, close
 the model-miss obligation: ask why the existing FlowGuard model did not catch
 this bug class.

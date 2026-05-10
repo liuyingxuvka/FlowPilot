@@ -9,6 +9,13 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # PM Node Acceptance Plan Phase
 
+## Role Capability Reminder
+
+- If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
+- Treat the router's current `allowed_external_events` as the active authority for what this card may return.
+- Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+
+
 Before issuing a current-node work packet, write the active node acceptance
 plan.
 

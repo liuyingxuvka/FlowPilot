@@ -9,6 +9,13 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # PM Current Node Loop Phase
 
+## Role Capability Reminder
+
+- If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
+- Treat the router's current `allowed_external_events` as the active authority for what this card may return.
+- For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
+
+
 For each active route node:
 
 1. receive the node-started event card;

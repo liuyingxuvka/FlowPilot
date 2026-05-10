@@ -9,6 +9,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Product FlowGuard Officer Root Contract Modelability
 
+## Role Capability Reminder
+
+- When more evidence, worker work, reviewer review, or PM choice is needed, return a structured blocker or PM suggestion for PM to route.
+- Do not approve routes or make PM decisions; your report is model evidence and repair/risk advice for PM.
+
+
 Assess the frozen root acceptance contract and scenario pack.
 
 Report:

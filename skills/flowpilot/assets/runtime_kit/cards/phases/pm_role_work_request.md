@@ -19,6 +19,13 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 # PM Role-Work Request Channel
 
+## Role Capability Reminder
+
+- Treat the router's current `allowed_external_events` as the active authority for what this card may return.
+- For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
+- Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+
+
 This is the generic channel for PM to ask another FlowPilot role to do bounded
 work while PM owns a decision.
 
