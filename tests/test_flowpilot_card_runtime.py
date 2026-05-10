@@ -62,6 +62,56 @@ def make_envelope(root: Path, run_root: Path, body_path: Path) -> Path:
     return envelope_path
 
 
+def make_bundle_envelope(root: Path, run_root: Path, body_path: Path) -> Path:
+    second_body = run_root / "runtime_kit" / "cards" / "system" / "pm_phase_map.md"
+    second_body.write_text("PM phase map card body", encoding="utf-8")
+    envelope_path = run_root / "mailbox" / "system_card_bundles" / "pm_startup_bundle.json"
+    ack_path = run_root / "mailbox" / "outbox" / "card_bundle_acks" / "pm_startup_bundle.ack.json"
+    first_receipt = run_root / "runtime_receipts" / "card_reads" / "pm_core.receipt.json"
+    second_receipt = run_root / "runtime_receipts" / "card_reads" / "pm_phase_map.receipt.json"
+    envelope = {
+        "schema_version": card_runtime.CARD_BUNDLE_ENVELOPE_SCHEMA,
+        "run_id": run_root.name,
+        "run_root": run_root.relative_to(root).as_posix(),
+        "resume_tick_id": "manual-resume",
+        "bundle_id": "pm-startup-bundle-001",
+        "target_role": "project_manager",
+        "target_agent_id": "pm-agent-1",
+        "cards": [
+            {
+                "card_id": "pm.core",
+                "delivery_id": "pm-core-delivery-001",
+                "delivery_attempt_id": "pm-core-delivery-001-attempt-001",
+                "body_path": body_path.relative_to(root).as_posix(),
+                "body_hash": card_runtime.sha256_file(body_path),
+                "manifest_hash": "manifest-hash",
+                "expected_receipt_path": first_receipt.relative_to(root).as_posix(),
+                "card_return_event": "pm_card_ack",
+            },
+            {
+                "card_id": "pm.phase_map",
+                "delivery_id": "pm-phase-map-delivery-001",
+                "delivery_attempt_id": "pm-phase-map-delivery-001-attempt-001",
+                "body_path": second_body.relative_to(root).as_posix(),
+                "body_hash": card_runtime.sha256_file(second_body),
+                "manifest_hash": "manifest-hash",
+                "expected_receipt_path": second_receipt.relative_to(root).as_posix(),
+                "card_return_event": "pm_card_ack",
+            },
+        ],
+        "controller_visibility": "system_card_bundle_envelope_only",
+        "sealed_body_reads_allowed": False,
+        "requires_read_receipt": True,
+        "open_method": "open-card-bundle",
+        "card_return_event": "pm_card_bundle_ack",
+        "expected_return_path": ack_path.relative_to(root).as_posix(),
+        "delivered_at": card_runtime.utc_now(),
+    }
+    envelope["bundle_hash"] = card_runtime.stable_json_hash(envelope)
+    write_json(envelope_path, envelope)
+    return envelope_path
+
+
 def test_card_runtime_opens_card_and_submits_ack() -> None:
     root, run_root, body_path = make_project()
     envelope_path = make_envelope(root, run_root, body_path)
@@ -90,6 +140,38 @@ def test_card_runtime_opens_card_and_submits_ack() -> None:
     assert validation["ok"] is True
     assert validation["card_return_event"] == "pm_card_ack"
     assert validation["receipt_ref_count"] == 1
+
+
+def test_card_runtime_opens_bundle_and_submits_one_ack_with_per_card_receipts() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_bundle_envelope(root, run_root, body_path)
+
+    opened = card_runtime.open_card_bundle(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+    )
+    assert [card["card_id"] for card in opened["cards"]] == ["pm.core", "pm.phase_map"]
+    assert opened["read_receipt_paths"]
+
+    ack = card_runtime.submit_card_bundle_ack(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+        receipt_paths=opened["read_receipt_paths"],
+    )
+    assert ack["ack_envelope"]["contains_card_body"] is False
+    assert ack["ack_envelope"]["card_return_event"] == "pm_card_bundle_ack"
+    assert ack["ack_envelope"]["member_card_ids"] == ["pm.core", "pm.phase_map"]
+    validation = card_runtime.validate_card_bundle_ack(
+        root,
+        ack_path=ack["ack_path"],
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+    )
+    assert validation["ok"] is True
+    assert validation["receipt_ref_count"] == 2
 
 
 def test_card_runtime_rejects_wrong_role_and_ack_without_receipt() -> None:

@@ -4,8 +4,8 @@ Risk intent brief:
 - Treat the original multi-command router loop as the baseline oracle before
   reintroducing any aggregate command.
 - Only allow a production fold when it is behaviorally equivalent to the
-  unfolded baseline and does not cross user, host, role, card-delivery, packet
-  relay, ledger, final replay, or role-output boundaries.
+  unfolded baseline and does not cross user, host, role, unsafe card-delivery,
+  packet relay, ledger, final replay, or role-output boundaries.
 - Model-critical state: startup next/apply/next order, post-banner bootloader
   writes, post-user-request intake writes, wait-boundary return, candidate fold
   classification, runtime binding checks, and high-risk fold rejection.
@@ -13,8 +13,10 @@ Risk intent brief:
   before returning `ask_startup_questions`; accepted bootloader paths must stop
   before `record_user_request`; accepted intake paths must stop before
   `start_role_slots`; enabled folds must have binding and CLI smoke evidence;
-  high-risk card, relay, ledger, final replay, host, startup fact-card, and
-  role-output folds remain rejected until they get their own conformance replay.
+  generic card, relay, ledger, final replay, host, startup fact-card, and
+  role-output folds remain rejected until they get their own conformance replay;
+  the only card-delivery fold allowed here is the guarded same-role system-card
+  bundle backed by the dedicated card-envelope replay model.
 - Blindspot: this model checks command-refinement policy, not concrete Python
   name binding. The package also needs static undefined-name checks and CLI
   smoke tests.
@@ -34,6 +36,7 @@ POST_BANNER_BOOTLOADER_UNFOLDED = "post_banner_bootloader_unfolded"
 POST_BANNER_BOOTLOADER_SAFE_FOLD = "post_banner_bootloader_safe_fold"
 POST_USER_REQUEST_INTAKE_UNFOLDED = "post_user_request_intake_unfolded"
 POST_USER_REQUEST_INTAKE_SAFE_FOLD = "post_user_request_intake_safe_fold"
+GUARDED_SAME_ROLE_CARD_BUNDLE_FOLD = "guarded_same_role_card_bundle_fold"
 CARD_BUNDLE_FOLD = "card_bundle_fold"
 PACKET_RELAY_FOLD = "packet_relay_fold"
 USER_REQUEST_RECORDING_FOLD = "user_request_recording_fold"
@@ -63,6 +66,7 @@ SCENARIOS = (
     POST_BANNER_BOOTLOADER_SAFE_FOLD,
     POST_USER_REQUEST_INTAKE_UNFOLDED,
     POST_USER_REQUEST_INTAKE_SAFE_FOLD,
+    GUARDED_SAME_ROLE_CARD_BUNDLE_FOLD,
     *NEGATIVE_SCENARIOS,
 )
 
@@ -73,6 +77,7 @@ ACCEPTED_SCENARIOS = (
     POST_BANNER_BOOTLOADER_SAFE_FOLD,
     POST_USER_REQUEST_INTAKE_UNFOLDED,
     POST_USER_REQUEST_INTAKE_SAFE_FOLD,
+    GUARDED_SAME_ROLE_CARD_BUNDLE_FOLD,
 )
 
 EXPECTED_REJECTIONS = {
@@ -127,6 +132,14 @@ class State:
     runtime_smoke_verified: bool = False
     install_smoke_required: bool = True
     install_smoke_verified: bool = False
+    same_role_bundle_dedicated_replay_verified: bool = False
+    same_role_bundle_recovery_replay_verified: bool = False
+    same_role_bundle_same_run_role_agent_tick: bool = False
+    same_role_bundle_manifest_batch_checked: bool = False
+    same_role_bundle_dependencies_safe: bool = False
+    same_role_bundle_member_receipts_joined: bool = False
+    same_role_bundle_ack_joined: bool = False
+    same_role_bundle_stops_before_role_output: bool = False
     high_risk_fold_rejected: bool = False
     router_decision: str = "none"
     router_rejection_reason: str = "none"
@@ -333,6 +346,49 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if state.scenario == GUARDED_SAME_ROLE_CARD_BUNDLE_FOLD:
+        if not state.same_role_bundle_dedicated_replay_verified:
+            yield Transition(
+                "same_role_card_bundle_verifies_dedicated_replay_model",
+                replace(
+                    state,
+                    same_role_bundle_dedicated_replay_verified=True,
+                    same_role_bundle_recovery_replay_verified=True,
+                ),
+            )
+            return
+        if not state.cli_binding_verified:
+            yield Transition("same_role_card_bundle_verifies_cli_binding", replace(state, cli_binding_verified=True))
+            return
+        if not state.runtime_smoke_verified:
+            yield Transition(
+                "same_role_card_bundle_verifies_runtime_smoke",
+                replace(state, runtime_smoke_verified=True),
+            )
+            return
+        if not state.install_smoke_verified:
+            yield Transition(
+                "same_role_card_bundle_requires_install_smoke",
+                replace(state, install_smoke_verified=True),
+            )
+            return
+        yield Transition(
+            "same_role_card_bundle_accepts_guarded_global_fold",
+            replace(
+                state,
+                same_role_bundle_same_run_role_agent_tick=True,
+                same_role_bundle_manifest_batch_checked=True,
+                same_role_bundle_dependencies_safe=True,
+                same_role_bundle_member_receipts_joined=True,
+                same_role_bundle_ack_joined=True,
+                same_role_bundle_stops_before_role_output=True,
+                folded_command_enabled=True,
+                status="accepted",
+                router_decision="accept",
+            ),
+        )
+        return
+
     if state.scenario in EXPECTED_REJECTIONS:
         yield Transition(
             f"{state.scenario}_rejected_pending_dedicated_replay",
@@ -403,6 +459,25 @@ def accepted_intake_matches_unfolded_baseline(state: State, _trace) -> Invariant
     return InvariantResult.pass_()
 
 
+def accepted_same_role_card_bundle_has_replay_and_stops_before_output(state: State, _trace) -> InvariantResult:
+    if state.status == "accepted" and state.scenario == GUARDED_SAME_ROLE_CARD_BUNDLE_FOLD:
+        if not state.same_role_bundle_dedicated_replay_verified:
+            return InvariantResult.fail("guarded same-role card bundle lacks dedicated replay verification")
+        if not state.same_role_bundle_recovery_replay_verified:
+            return InvariantResult.fail("guarded same-role card bundle lacks incomplete-ack recovery replay")
+        if not (
+            state.same_role_bundle_same_run_role_agent_tick
+            and state.same_role_bundle_manifest_batch_checked
+            and state.same_role_bundle_dependencies_safe
+            and state.same_role_bundle_member_receipts_joined
+            and state.same_role_bundle_ack_joined
+        ):
+            return InvariantResult.fail("guarded same-role card bundle lacks eligibility or join proof")
+        if not state.same_role_bundle_stops_before_role_output:
+            return InvariantResult.fail("guarded same-role card bundle crossed a role-output boundary")
+    return InvariantResult.pass_()
+
+
 def accepted_folds_do_not_cross_wait_or_external_boundaries(state: State, _trace) -> InvariantResult:
     if state.status != "accepted":
         return InvariantResult.pass_()
@@ -435,6 +510,7 @@ def only_safe_startup_fold_is_production_enabled(state: State, _trace) -> Invari
         STARTUP_SAFE_FOLD,
         POST_BANNER_BOOTLOADER_SAFE_FOLD,
         POST_USER_REQUEST_INTAKE_SAFE_FOLD,
+        GUARDED_SAME_ROLE_CARD_BUNDLE_FOLD,
     }:
         return InvariantResult.fail(f"high-risk fold was production-enabled: {state.scenario}")
     return InvariantResult.pass_()
@@ -467,6 +543,11 @@ INVARIANTS = (
         name="accepted_intake_matches_unfolded_baseline",
         description="Accepted post-user-request intake paths write user intake, then wait before start_role_slots.",
         predicate=accepted_intake_matches_unfolded_baseline,
+    ),
+    Invariant(
+        name="accepted_same_role_card_bundle_has_replay_and_stops_before_output",
+        description="Accepted same-role card bundles require dedicated replay, eligibility proof, receipt/ACK joins, and a role-output stop.",
+        predicate=accepted_same_role_card_bundle_has_replay_and_stops_before_output,
     ),
     Invariant(
         name="accepted_folds_do_not_cross_wait_or_external_boundaries",
@@ -521,6 +602,11 @@ REQUIRED_LABELS = (
     "intake_safe_fold_verifies_runtime_smoke",
     "intake_safe_fold_requires_install_smoke",
     "intake_safe_fold_writes_user_intake_then_waits_for_role_slots",
+    "same_role_card_bundle_verifies_dedicated_replay_model",
+    "same_role_card_bundle_verifies_cli_binding",
+    "same_role_card_bundle_verifies_runtime_smoke",
+    "same_role_card_bundle_requires_install_smoke",
+    "same_role_card_bundle_accepts_guarded_global_fold",
     "card_bundle_fold_rejected_pending_dedicated_replay",
     "packet_relay_fold_rejected_pending_dedicated_replay",
     "user_request_recording_fold_rejected_pending_dedicated_replay",

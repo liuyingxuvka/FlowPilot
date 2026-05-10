@@ -6577,6 +6577,55 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - User will coordinate local install, git, and remote synchronization later.
 
 
+## flowpilot-global-system-card-bundles-20260510 - Bundle same-role read-only system cards globally
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot router/runtime change. Startup-only card delivery folding was generalized into guarded same-role read-only system-card bundling, and incomplete bundle ACK handling was required to recover back to the mainline instead of merely stopping.
+- Status: completed_installed
+- Skill decision: use_flowguard
+- Date: 2026-05-10
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_card_envelope_model.py
+- simulations/flowpilot_command_refinement_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --no-write`
+- OK: `python simulations\run_command_refinement_checks.py --json-out $env:TEMP\flowpilot_command_refinement_results.json`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py`
+- OK: `python simulations\run_command_refinement_checks.py`
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py`
+- OK: focused router-runtime bundle and regression tests around system-card delivery, PM startup cards, and user-intake mail flow
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests`
+- OK: `python -m pytest tests`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- Router folding is now based on the global guarded condition, not a startup-only special case: same role, same run, same resume tick, fixed manifest order, no intermediate external wait, no payload artifact requirement, and no recipient change.
+- The bundle protocol preserves the sealed-card boundary: the Controller commits bundle envelopes and role receipts without reading sealed card bodies.
+- Bundle ACK validation requires one valid per-card receipt for every bundled card before the pending return can resolve.
+- If a bundle ACK is incomplete, the router records `bundle_ack_incomplete`, lists `missing_card_ids`, keeps the pending return unresolved, returns a same-role recovery wait, and rechecks a changed ACK before resuming the route.
+- The command-refinement model rejects generic card-bundle folding and accepts only guarded same-role folding with replay coverage and incomplete-ACK recovery coverage.
+
+### Counterexamples
+- The card-envelope model rejects advancing a same-role bundle without joined receipts, bundling across role or payload boundaries, resolving an incomplete ACK, omitting the same-role recovery wait, or advancing after incomplete ACK without a corrected complete ACK.
+- The command-refinement model rejects a generic `card_bundle_fold` without the guarded replay and recovery evidence.
+
+### Friction Points
+- Existing router tests that manually assumed single-card PM startup delivery had to use the delivery helper so the tests assert the requested card was delivered even when earlier same-role cards are validly bundled.
+- Local install sync must run before install check and audit; running them concurrently can race against the installed skill overwrite.
+
+### Skipped Steps
+- Remote GitHub push skipped per user instruction.
+
+### Next Actions
+- None for this scoped optimization. Future FlowGuard models for recoverable protocol failures should include the repair-and-resume path, not only the detection-and-block path.
+
+
 ## flowpilot-pm-suggestion-impact-triage-20260510 - Add PM impact triage reminder for suggestions
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -40,6 +40,15 @@ HAZARD_EXPECTED_FAILURES = {
     "receipt_before_delivery": "card read receipt did not match current run, role, agent, hash, delivery, and I/O ack",
     "resume_without_role_io_ack": "card read receipt did not match current run, role, agent, hash, delivery, and I/O ack",
     "bundle_receipt_without_per_card_refs": "bundle receipt replaced independent per-card receipts",
+    "same_role_bundle_cross_role_or_run": "same-role system-card bundle crossed run, role, agent, or resume-tick boundary",
+    "same_role_bundle_missing_manifest_batch": "same-role system-card bundle crossed run, role, agent, or resume-tick boundary",
+    "same_role_bundle_unsafe_dependency": "same-role system-card bundle included an unsafe dependency or external boundary",
+    "same_role_bundle_hides_external_boundary": "same-role system-card bundle included an unsafe dependency or external boundary",
+    "same_role_bundle_missing_per_card_receipts": "same-role system-card bundle advanced without per-card receipt and bundle ACK join",
+    "same_role_bundle_missing_ack_join": "same-role system-card bundle advanced without per-card receipt and bundle ACK join",
+    "same_role_bundle_check_apply_optional": "same-role bundle return check was not an explicit apply-required router action",
+    "same_role_bundle_incomplete_ack_missing_recovery_wait": "incomplete same-role bundle ACK did not return a same-role recovery wait",
+    "same_role_bundle_incomplete_ack_advanced_without_complete_ack": "same-role bundle advanced after incomplete ACK without a completed recovery ACK",
     "preload_receipt_authorizes_work": "preload-only receipt was used as work authorization",
     "cross_role_batch_missing_dependency_graph": "cross-role batch lacked explicit dependency graph, return events, join policy, or independence proof",
     "cross_role_batch_missing_card_return_events": "cross-role batch lacked explicit dependency graph, return events, join policy, or independence proof",
@@ -74,6 +83,12 @@ def _state_id(state: model.State) -> str:
         f"wait={state.await_expected_return},{state.recovery_action_available},"
         f"{state.return_reminder_issued},{state.redelivery_attempt_issued}|"
         f"coverage={state.required_card_coverage_checked},{state.required_card_coverage_passed}|"
+        f"same_bundle={state.same_role_bundle_used},{state.same_role_bundle_same_run_role_agent_tick},"
+        f"{state.same_role_bundle_manifest_batch_checked},{state.same_role_bundle_dependencies_safe},"
+        f"{state.same_role_bundle_no_external_boundary_hidden},{state.same_role_bundle_per_card_receipts_joined},"
+        f"{state.same_role_bundle_ack_joined},{state.same_role_bundle_check_apply_required},"
+        f"{state.same_role_bundle_incomplete_ack_detected},{state.same_role_bundle_recovery_wait_returned},"
+        f"{state.same_role_bundle_recovered_after_complete_ack}|"
         f"batch={state.cross_role_batch_used},{state.batch_dependency_graph_declared},"
         f"{state.batch_card_return_events_declared},{state.batch_join_policy_declared},"
         f"{state.all_required_batch_receipts_joined},{state.all_required_batch_ack_reports_joined}|"
@@ -191,7 +206,7 @@ def _scenario_report() -> dict[str, object]:
         },
         "target_v2_card_return_event_loop": {
             "ok": not target_failures,
-            "interpretation": "envelope, runtime receipt, ack/report envelope, receipt coverage, cross-role join, and PM gate all hold",
+            "interpretation": "envelope, runtime receipt, ack/report envelope, receipt coverage, guarded same-role bundle, cross-role join, and PM gate all hold",
             "failures": target_failures,
         },
     }

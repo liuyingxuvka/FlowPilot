@@ -9,24 +9,28 @@ Risk intent brief:
 - Model-critical durable state: role I/O protocol acknowledgement for the
   current resume tick, card envelope identity, card manifest hash, target role
   and agent identity, read receipt timing, expected card-return event records,
-  ack/report envelope identity, batch dependency graph, cross-role parallel
-  delivery joins, and legacy prompt-delivery compatibility.
+  ack/report envelope identity, same-role system-card bundle eligibility,
+  batch dependency graph, cross-role parallel delivery joins, and legacy
+  prompt-delivery compatibility.
 - Adversarial branches include legacy delivery treated as read, missing read
   receipt, missing ack/report envelope, ack/report without receipt references,
   wrong role, old run, old agent after replacement, hash mismatch, receipt
   before delivery, Controller relaying a pre-apply planned artifact path as if
   it were a committed envelope, public Controller apply of a relay-only
   system-card action, missing resume I/O acknowledgement, preload-only
-  authorization, bundle receipt replacing per-card receipts, hidden dependency
-  parallelization, Controller body reads, Controller batch mutation, and
-  dead-end waiting after an interruption.
+  authorization, bundle receipt replacing per-card receipts, same-role bundle
+  crossing run/role/agent/resume boundaries, unsafe bundle dependencies,
+  hidden dependency parallelization, Controller body reads, Controller batch
+  mutation, and dead-end waiting after an interruption.
 - Hard invariants: Controller never reads card bodies; Router advancement
   requires current-run/current-role/current-agent/current-hash runtime receipts
-  referenced by a current ack/report envelope; cross-role parallel delivery is
-  allowed only with Router-authored dependency and join metadata; role I/O
-  protocol acknowledgement is required after heartbeat/manual resume or
-  replacement; read receipts are mechanical proof only and never replace
-  PM/reviewer/officer judgement.
+  referenced by a current ack/report envelope; same-role card bundles are
+  allowed only when every member card keeps manifest/hash/delivery/receipt
+  evidence and the bundle does not hide an external boundary; cross-role
+  parallel delivery is allowed only with Router-authored dependency and join
+  metadata; role I/O protocol acknowledgement is required after
+  heartbeat/manual resume or replacement; read receipts are mechanical proof
+  only and never replace PM/reviewer/officer judgement.
 - Blindspot: this is a focused protocol model. It does not judge whether a
   role understood a card after opening it.
 """
@@ -119,6 +123,23 @@ class State:
     bundle_receipt_used: bool = False
     per_card_receipts_referenced: bool = False
 
+    same_role_bundle_used: bool = False
+    same_role_bundle_same_run_role_agent_tick: bool = False
+    same_role_bundle_manifest_batch_checked: bool = False
+    same_role_bundle_dependencies_safe: bool = False
+    same_role_bundle_no_external_boundary_hidden: bool = False
+    same_role_bundle_member_delivery_records_kept: bool = False
+    same_role_bundle_member_return_events_declared: bool = False
+    same_role_bundle_pending_return_recorded: bool = False
+    same_role_bundle_incomplete_ack_detected: bool = False
+    same_role_bundle_missing_receipts_listed: bool = False
+    same_role_bundle_pending_kept_after_incomplete: bool = False
+    same_role_bundle_recovery_wait_returned: bool = False
+    same_role_bundle_recovered_after_complete_ack: bool = False
+    same_role_bundle_per_card_receipts_joined: bool = False
+    same_role_bundle_ack_joined: bool = False
+    same_role_bundle_check_apply_required: bool = False
+
     cross_role_batch_used: bool = False
     batch_dependency_graph_declared: bool = False
     batch_join_policy_declared: bool = False
@@ -177,6 +198,7 @@ class CardEnvelopeStep:
         "card_read_receipts",
         "pending_return_ledger",
         "ack_report_envelopes",
+        "same_role_bundle_eligibility",
         "batch_dependency_graph",
         "batch_join_policy",
         "pm_decision_gate",
@@ -188,6 +210,7 @@ class CardEnvelopeStep:
         "pending_return_record",
         "ack_report_envelope",
         "receipt_coverage_check",
+        "same_role_bundle_ack_join",
         "batch_join_receipt",
         "resume_recovery_decision",
         "router_advance_decision",
@@ -354,6 +377,70 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 required_card_coverage_checked=True,
                 required_card_coverage_passed=True,
                 check_card_return_apply_required=True,
+            ),
+        )
+        return
+
+    if not state.same_role_bundle_used:
+        yield Transition(
+            "router_issues_guarded_same_role_system_card_bundle",
+            _inc(
+                state,
+                same_role_bundle_used=True,
+                same_role_bundle_same_run_role_agent_tick=True,
+                same_role_bundle_manifest_batch_checked=True,
+                same_role_bundle_dependencies_safe=True,
+                same_role_bundle_no_external_boundary_hidden=True,
+                same_role_bundle_member_delivery_records_kept=True,
+                same_role_bundle_member_return_events_declared=True,
+                same_role_bundle_pending_return_recorded=True,
+            ),
+        )
+        return
+
+    if not (
+        state.same_role_bundle_incomplete_ack_detected
+        or state.same_role_bundle_per_card_receipts_joined
+        or state.same_role_bundle_ack_joined
+    ):
+        yield Transition(
+            "router_records_incomplete_same_role_bundle_ack_and_waits_for_missing_receipts",
+            _inc(
+                state,
+                same_role_bundle_incomplete_ack_detected=True,
+                same_role_bundle_missing_receipts_listed=True,
+                same_role_bundle_pending_kept_after_incomplete=True,
+            ),
+        )
+        yield Transition(
+            "role_returns_same_role_bundle_ack_and_router_joins_per_card_receipts",
+            _inc(
+                state,
+                same_role_bundle_per_card_receipts_joined=True,
+                same_role_bundle_ack_joined=True,
+                same_role_bundle_check_apply_required=True,
+                per_card_receipts_referenced=True,
+            ),
+        )
+        return
+
+    if state.same_role_bundle_incomplete_ack_detected and not state.same_role_bundle_recovery_wait_returned:
+        yield Transition(
+            "router_returns_same_role_bundle_recovery_wait_for_same_role",
+            _inc(state, same_role_bundle_recovery_wait_returned=True),
+        )
+        return
+
+    if not (state.same_role_bundle_per_card_receipts_joined and state.same_role_bundle_ack_joined):
+        yield Transition(
+            "role_completes_same_role_bundle_ack_and_router_joins_per_card_receipts",
+            _inc(
+                state,
+                same_role_bundle_per_card_receipts_joined=True,
+                same_role_bundle_ack_joined=True,
+                same_role_bundle_check_apply_required=True,
+                same_role_bundle_recovered_after_complete_ack=state.same_role_bundle_incomplete_ack_detected,
+                per_card_receipts_referenced=True,
             ),
         )
         return
@@ -525,6 +612,49 @@ def ack_report_must_reference_receipts(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def same_role_bundle_requires_global_safe_segment(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.same_role_bundle_used:
+        return InvariantResult.pass_()
+    if not (
+        state.same_role_bundle_same_run_role_agent_tick
+        and state.same_role_bundle_manifest_batch_checked
+        and state.same_role_bundle_member_delivery_records_kept
+        and state.same_role_bundle_member_return_events_declared
+        and state.same_role_bundle_pending_return_recorded
+    ):
+        return InvariantResult.fail(
+            "same-role system-card bundle crossed run, role, agent, or resume-tick boundary"
+        )
+    if not (
+        state.same_role_bundle_dependencies_safe
+        and state.same_role_bundle_no_external_boundary_hidden
+    ):
+        return InvariantResult.fail(
+            "same-role system-card bundle included an unsafe dependency or external boundary"
+        )
+    if state.same_role_bundle_ack_joined and not state.same_role_bundle_check_apply_required:
+        return InvariantResult.fail("same-role bundle return check was not an explicit apply-required router action")
+    if state.same_role_bundle_incomplete_ack_detected and not (
+        state.same_role_bundle_missing_receipts_listed
+        and state.same_role_bundle_pending_kept_after_incomplete
+    ):
+        return InvariantResult.fail("incomplete same-role bundle ACK did not list missing receipts and keep pending return")
+    if state.router_advanced and state.same_role_bundle_incomplete_ack_detected and not state.same_role_bundle_recovery_wait_returned:
+        return InvariantResult.fail("incomplete same-role bundle ACK did not return a same-role recovery wait")
+    if state.router_advanced and state.same_role_bundle_incomplete_ack_detected and not state.same_role_bundle_recovered_after_complete_ack:
+        return InvariantResult.fail("same-role bundle advanced after incomplete ACK without a completed recovery ACK")
+    if state.router_advanced and not (
+        state.same_role_bundle_per_card_receipts_joined
+        and state.same_role_bundle_ack_joined
+        and state.per_card_receipts_referenced
+    ):
+        return InvariantResult.fail(
+            "same-role system-card bundle advanced without per-card receipt and bundle ACK join"
+        )
+    return InvariantResult.pass_()
+
+
 def pending_return_wait_has_recovery_path(state: State, trace) -> InvariantResult:
     del trace
     if state.status == "passed" and state.await_expected_return and not state.ack_report_returned and not (
@@ -638,6 +768,11 @@ INVARIANTS = (
         bundle_receipt_cannot_replace_single_card_receipts,
     ),
     Invariant(
+        "same_role_bundle_requires_global_safe_segment",
+        "Same-role system-card bundles must keep per-card evidence and cannot hide external boundaries.",
+        same_role_bundle_requires_global_safe_segment,
+    ),
+    Invariant(
         "cross_role_batch_requires_dependency_graph_and_join",
         "Cross-role parallel batch delivery requires explicit Router dependency graph and receipt join.",
         cross_role_batch_requires_dependency_graph_and_join,
@@ -656,7 +791,7 @@ INVARIANTS = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 15
+MAX_SEQUENCE_LENGTH = 19
 
 REQUIRED_LABELS = (
     "legacy_prompt_delivery_shape_recorded_without_v2_receipt",
@@ -672,6 +807,11 @@ REQUIRED_LABELS = (
     "role_runtime_open_card_writes_current_receipt",
     "role_returns_card_ack_envelope_referencing_read_receipts",
     "router_checks_ack_report_and_required_card_receipt_coverage",
+    "router_issues_guarded_same_role_system_card_bundle",
+    "router_records_incomplete_same_role_bundle_ack_and_waits_for_missing_receipts",
+    "router_returns_same_role_bundle_recovery_wait_for_same_role",
+    "role_returns_same_role_bundle_ack_and_router_joins_per_card_receipts",
+    "role_completes_same_role_bundle_ack_and_router_joins_per_card_receipts",
     "router_issues_guarded_cross_role_parallel_batch",
     "router_detects_missing_cross_role_batch_returns_and_waits",
     "roles_return_parallel_batch_acks_and_router_joins_required_receipts",
@@ -742,6 +882,22 @@ def target_v2_state() -> State:
         redelivery_attempt_issued=True,
         stale_delivery_superseded=True,
         per_card_receipts_referenced=True,
+        same_role_bundle_used=True,
+        same_role_bundle_same_run_role_agent_tick=True,
+        same_role_bundle_manifest_batch_checked=True,
+        same_role_bundle_dependencies_safe=True,
+        same_role_bundle_no_external_boundary_hidden=True,
+        same_role_bundle_member_delivery_records_kept=True,
+        same_role_bundle_member_return_events_declared=True,
+        same_role_bundle_pending_return_recorded=True,
+        same_role_bundle_incomplete_ack_detected=True,
+        same_role_bundle_missing_receipts_listed=True,
+        same_role_bundle_pending_kept_after_incomplete=True,
+        same_role_bundle_recovery_wait_returned=True,
+        same_role_bundle_recovered_after_complete_ack=True,
+        same_role_bundle_per_card_receipts_joined=True,
+        same_role_bundle_ack_joined=True,
+        same_role_bundle_check_apply_required=True,
         cross_role_batch_used=True,
         batch_dependency_graph_declared=True,
         batch_join_policy_declared=True,
@@ -876,6 +1032,52 @@ def hazard_states() -> dict[str, State]:
             safe,
             bundle_receipt_used=True,
             per_card_receipts_referenced=False,
+        ),
+        "same_role_bundle_cross_role_or_run": replace(
+            safe,
+            same_role_bundle_same_run_role_agent_tick=False,
+        ),
+        "same_role_bundle_missing_manifest_batch": replace(
+            safe,
+            same_role_bundle_manifest_batch_checked=False,
+        ),
+        "same_role_bundle_unsafe_dependency": replace(
+            safe,
+            same_role_bundle_dependencies_safe=False,
+        ),
+        "same_role_bundle_hides_external_boundary": replace(
+            safe,
+            same_role_bundle_no_external_boundary_hidden=False,
+        ),
+        "same_role_bundle_missing_per_card_receipts": replace(
+            safe,
+            same_role_bundle_per_card_receipts_joined=False,
+            same_role_bundle_ack_joined=True,
+            per_card_receipts_referenced=False,
+        ),
+        "same_role_bundle_missing_ack_join": replace(
+            safe,
+            same_role_bundle_ack_joined=False,
+            same_role_bundle_per_card_receipts_joined=True,
+        ),
+        "same_role_bundle_check_apply_optional": replace(
+            safe,
+            same_role_bundle_check_apply_required=False,
+        ),
+        "same_role_bundle_incomplete_ack_missing_recovery_wait": replace(
+            safe,
+            same_role_bundle_incomplete_ack_detected=True,
+            same_role_bundle_missing_receipts_listed=True,
+            same_role_bundle_pending_kept_after_incomplete=True,
+            same_role_bundle_recovery_wait_returned=False,
+        ),
+        "same_role_bundle_incomplete_ack_advanced_without_complete_ack": replace(
+            safe,
+            same_role_bundle_incomplete_ack_detected=True,
+            same_role_bundle_missing_receipts_listed=True,
+            same_role_bundle_pending_kept_after_incomplete=True,
+            same_role_bundle_recovery_wait_returned=True,
+            same_role_bundle_recovered_after_complete_ack=False,
         ),
         "preload_receipt_authorizes_work": replace(
             safe,

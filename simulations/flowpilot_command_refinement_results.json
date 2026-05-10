@@ -6,6 +6,7 @@
       "results": {
         "card_bundle_fold": "rejected:multi_card_delivery_requires_dedicated_replay",
         "final_replay_fold": "rejected:final_replay_boundary_requires_dedicated_replay",
+        "guarded_same_role_card_bundle_fold": "accepted:none",
         "host_continuation_fold": "rejected:host_boundary_requires_dedicated_replay",
         "ledger_finalization_fold": "rejected:ledger_boundary_requires_dedicated_replay",
         "packet_relay_fold": "rejected:packet_relay_requires_dedicated_replay",
@@ -27,7 +28,7 @@
       "ok": true,
       "reachability_failure_count": 0,
       "reachability_failures": [],
-      "summary": "sequences=8 initial_states=1 traces=540",
+      "summary": "sequences=8 initial_states=1 traces=576",
       "violation_count": 0
     },
     "progress": {
@@ -38,6 +39,7 @@
     },
     "safe_graph": {
       "accepted_scenarios": [
+        "guarded_same_role_card_bundle_fold",
         "post_banner_bootloader_safe_fold",
         "post_banner_bootloader_unfolded",
         "post_user_request_intake_safe_fold",
@@ -45,7 +47,7 @@
         "startup_safe_fold",
         "startup_unfolded"
       ],
-      "edge_count": 46,
+      "edge_count": 52,
       "invariant_failure_count": 0,
       "invariant_failures": [],
       "missing_labels": [],
@@ -61,7 +63,7 @@
         "startup_fact_card_fold",
         "user_request_recording_fold"
       ],
-      "state_count": 47
+      "state_count": 53
     }
   },
   "model": "flowpilot_command_refinement",

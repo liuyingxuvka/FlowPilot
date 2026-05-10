@@ -387,6 +387,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         return True
 
     def deliver_expected_card(self, root: Path, card_id: str) -> dict:
+        run_root = self.run_root_for(root)
+        card_entry = next((entry for entry in router.SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
+        if card_entry is not None:
+            state = read_json(router.run_state_path(run_root))
+            if state.get("flags", {}).get(card_entry["flag"]):
+                for delivery in reversed(state.get("delivered_cards", [])):
+                    if isinstance(delivery, dict) and delivery.get("card_id") == card_id:
+                        return delivery
         action = self.next_after_display_sync(root)
         while action["action_type"] in {
             "confirm_controller_core_boundary",
@@ -396,12 +404,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         }:
             router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
             action = self.next_after_display_sync(root)
+        if action["action_type"] == "deliver_system_card_bundle":
+            self.assertIn(card_id, action["card_ids"])
+            self.ack_system_card_bundle_action(root, action)
+            state = read_json(router.run_state_path(self.run_root_for(root)))
+            for delivery in reversed(state.get("delivered_cards", [])):
+                if isinstance(delivery, dict) and delivery.get("card_id") == card_id:
+                    return delivery
+            return action
         self.assertEqual(action["action_type"], "deliver_system_card")
         self.assertEqual(action["card_id"], card_id)
         self.ack_system_card_action(root, action)
         return action
 
     def ack_system_card_action(self, root: Path, action: dict) -> None:
+        if action.get("action_type") == "deliver_system_card_bundle":
+            self.ack_system_card_bundle_action(root, action)
+            return
         role = str(action["to_role"])
         agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or f"{role}-agent"
         open_result = card_runtime.open_card(
@@ -421,6 +440,27 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(check_action["action_type"], "check_card_return_event")
         self.assertTrue(check_action["apply_required"])
         router.apply_action(root, "check_card_return_event")
+
+    def ack_system_card_bundle_action(self, root: Path, action: dict) -> None:
+        role = str(action["to_role"])
+        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or f"{role}-agent"
+        open_result = card_runtime.open_card_bundle(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+        )
+        card_runtime.submit_card_bundle_ack(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+            receipt_paths=[str(path) for path in open_result["read_receipt_paths"]],
+        )
+        check_action = self.next_after_display_sync(root)
+        self.assertEqual(check_action["action_type"], "check_card_bundle_return_event")
+        self.assertTrue(check_action["apply_required"])
+        router.apply_action(root, "check_card_bundle_return_event")
 
     def deliver_user_intake_mail(self, root: Path) -> None:
         action = self.next_after_display_sync(root)
@@ -705,15 +745,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.prior_path_context")
-        self.ack_system_card_action(root, action)
-
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.route_skeleton")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
         router.record_external_event(
             root,
             "pm_writes_route_draft",
@@ -2870,6 +2903,148 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
 
+    def test_initial_pm_system_cards_are_delivered_as_same_role_bundle(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.deliver_startup_fact_check_card(root)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "check_prompt_manifest")
+        self.assertTrue(action["bundle_candidate"])
+        expected_card_ids = ["pm.core", "pm.output_contract_catalog", "pm.phase_map", "pm.startup_intake"]
+        self.assertEqual(action["bundle_card_ids"], expected_card_ids)
+        router.apply_action(root, "check_prompt_manifest")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
+        self.assertEqual(action["card_ids"], expected_card_ids)
+        self.assertEqual(action["to_role"], "project_manager")
+        self.assertEqual(action["controller_visibility"], "system_card_bundle_envelope_only")
+        self.assertTrue(action["artifact_committed"])
+        self.assertTrue(action["relay_allowed"])
+        self.assertFalse(action["apply_required"])
+        self.assertTrue((root / action["card_bundle_envelope_path"]).exists())
+        envelope = read_json(root / action["card_bundle_envelope_path"])
+        self.assertEqual(envelope["schema_version"], card_runtime.CARD_BUNDLE_ENVELOPE_SCHEMA)
+        self.assertEqual(envelope["card_ids"], expected_card_ids)
+        self.assertEqual(envelope["card_return_event"], "pm_card_bundle_ack")
+        self.assertEqual(len(envelope["cards"]), 4)
+
+        self.ack_system_card_bundle_action(root, action)
+
+        state = read_json(run_root / "router_state.json")
+        for card_id in expected_card_ids:
+            entry = next(entry for entry in router.SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id)
+            self.assertTrue(state["flags"][entry["flag"]])
+        self.assertEqual(state["prompt_deliveries"], 5)
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_records = [
+            item for item in return_ledger["pending_returns"]
+            if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
+        ]
+        self.assertEqual(bundle_records[0]["status"], "resolved")
+        next_action = self.next_after_display_sync(root)
+        self.assertEqual(next_action["action_type"], "check_packet_ledger")
+        self.assertEqual(next_action["next_mail_id"], "user_intake")
+
+    def test_incomplete_system_card_bundle_ack_waits_for_missing_receipts_then_recovers(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.deliver_startup_fact_check_card(root)
+        manifest_action = self.next_after_display_sync(root)
+        self.assertEqual(manifest_action["action_type"], "check_prompt_manifest")
+        router.apply_action(root, "check_prompt_manifest")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
+        role = str(action["to_role"])
+        agent_id = str(action["target_agent_id"])
+        opened = card_runtime.open_card_bundle(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+        )
+        envelope_path = root / action["card_bundle_envelope_path"]
+        envelope = read_json(envelope_path)
+        first_three_receipts = opened["read_receipt_paths"][:-1]
+        receipt_refs = []
+        for receipt_path in first_three_receipts:
+            receipt = read_json(root / receipt_path)
+            receipt_refs.append(
+                {
+                    "receipt_path": receipt_path,
+                    "receipt_hash": receipt["receipt_hash"],
+                    "card_id": receipt["card_id"],
+                    "delivery_id": receipt["delivery_id"],
+                    "delivery_attempt_id": receipt["delivery_attempt_id"],
+                    "card_hash": receipt["card_hash"],
+                    "opened_at": receipt["opened_at"],
+                }
+            )
+        incomplete_ack = {
+            "schema_version": card_runtime.CARD_BUNDLE_ACK_ENVELOPE_SCHEMA,
+            "run_id": envelope["run_id"],
+            "resume_tick_id": envelope["resume_tick_id"],
+            "role_key": role,
+            "agent_id": agent_id,
+            "card_return_event": envelope["card_return_event"],
+            "status": "acknowledged",
+            "card_bundle_id": envelope["bundle_id"],
+            "card_bundle_envelope_path": action["card_bundle_envelope_path"],
+            "card_bundle_envelope_hash": card_runtime.stable_json_hash(envelope),
+            "acknowledged_bundle": envelope["bundle_id"],
+            "acknowledged_envelopes": [envelope["bundle_id"]],
+            "member_card_ids": envelope["card_ids"][:-1],
+            "receipt_refs": receipt_refs,
+            "body_visibility": "ack_envelope_only",
+            "contains_card_body": False,
+            "runtime_validates_mechanics_only": True,
+            "semantic_understanding_validated": False,
+            "returned_at": card_runtime.utc_now(),
+        }
+        incomplete_ack["ack_hash"] = card_runtime.stable_json_hash(incomplete_ack)
+        router.write_json(root / action["expected_return_path"], incomplete_ack)
+
+        check_action = self.next_after_display_sync(root)
+        self.assertEqual(check_action["action_type"], "check_card_bundle_return_event")
+        result = router.apply_action(root, "check_card_bundle_return_event")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["status"], "bundle_ack_incomplete")
+        self.assertEqual(result["missing_card_ids"], [opened["cards"][-1]["card_id"]])
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_pending = [
+            item for item in return_ledger["pending_returns"]
+            if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
+        ][0]
+        self.assertEqual(bundle_pending["status"], "bundle_ack_incomplete")
+        self.assertEqual(bundle_pending["missing_card_ids"], [opened["cards"][-1]["card_id"]])
+
+        wait_action = self.next_after_display_sync(root)
+        self.assertEqual(wait_action["action_type"], "await_card_bundle_return_event")
+        self.assertTrue(wait_action["bundle_ack_incomplete"])
+        self.assertEqual(wait_action["missing_card_ids"], [opened["cards"][-1]["card_id"]])
+
+        card_runtime.submit_card_bundle_ack(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+            receipt_paths=[str(path) for path in opened["read_receipt_paths"]],
+        )
+        check_action = self.next_after_display_sync(root)
+        self.assertEqual(check_action["action_type"], "check_card_bundle_return_event")
+        router.apply_action(root, "check_card_bundle_return_event")
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_pending = [
+            item for item in return_ledger["pending_returns"]
+            if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
+        ][0]
+        self.assertEqual(bundle_pending["status"], "resolved")
+        next_action = self.next_after_display_sync(root)
+        self.assertEqual(next_action["action_type"], "check_packet_ledger")
+
     def test_user_intake_mail_requires_packet_ledger_check_after_pm_cards(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -4142,15 +4317,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.record_external_event(root, "pm_writes_route_draft", {"nodes": [{"node_id": "node-001"}]})
         self.complete_child_skill_gates(root)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.prior_path_context")
-        self.ack_system_card_action(root, action)
-
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.route_skeleton")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_activates_reviewed_route")
         router.record_external_event(

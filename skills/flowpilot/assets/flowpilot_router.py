@@ -2880,6 +2880,22 @@ def _card_return_event_for_card(card_id: str) -> str:
     return "card_ack"
 
 
+def _card_bundle_return_event_for_role(role: str) -> str:
+    if role == "controller":
+        return "controller_card_bundle_ack"
+    if role == "project_manager":
+        return "pm_card_bundle_ack"
+    if role == "human_like_reviewer":
+        return "reviewer_card_bundle_ack"
+    if role.startswith("worker"):
+        return "worker_card_bundle_ack"
+    if role == "process_flowguard_officer":
+        return "process_officer_card_bundle_ack"
+    if role == "product_flowguard_officer":
+        return "product_officer_card_bundle_ack"
+    return "card_bundle_ack"
+
+
 CARD_RETURN_EVENT_NAMES = frozenset(
     {
         "controller_card_ack",
@@ -2889,6 +2905,13 @@ CARD_RETURN_EVENT_NAMES = frozenset(
         "process_officer_card_ack",
         "product_officer_card_ack",
         "card_ack",
+        "controller_card_bundle_ack",
+        "pm_card_bundle_ack",
+        "reviewer_card_bundle_ack",
+        "worker_card_bundle_ack",
+        "process_officer_card_bundle_ack",
+        "product_officer_card_bundle_ack",
+        "card_bundle_ack",
     }
 )
 
@@ -2901,7 +2924,7 @@ def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]
     ledger = _read_return_event_ledger(run_root, run_id)
     pending: list[dict[str, Any]] = []
     for item in ledger.get("pending_returns", []):
-        if isinstance(item, dict) and item.get("status") in {None, "pending", "awaiting_return", "reminded", "returned"}:
+        if isinstance(item, dict) and item.get("status") in {None, "pending", "awaiting_return", "reminded", "returned", "bundle_ack_incomplete"}:
             pending.append(item)
     return pending
 
@@ -2909,7 +2932,9 @@ def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]
 def _pending_card_return_ack_exists(project_root: Path, pending_action: object) -> bool:
     if not isinstance(pending_action, dict) or pending_action.get("action_type") not in {
         "await_card_return_event",
+        "await_card_bundle_return_event",
         "deliver_system_card",
+        "deliver_system_card_bundle",
     }:
         return False
     raw_path = pending_action.get("expected_return_path")
@@ -2977,6 +3002,113 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
     if not pending_returns:
         return None
     record = pending_returns[0]
+    if record.get("return_kind") == "system_card_bundle":
+        expected_return_path = str(record.get("expected_return_path") or "")
+        envelope_path = str(record.get("card_bundle_envelope_path") or "")
+        committed_extra = _committed_card_bundle_artifact_extra(
+            project_root,
+            record,
+            relay_allowed_if_ready=False,
+        )
+        current_ack_hash: str | None = None
+        if expected_return_path and resolve_project_path(project_root, expected_return_path).exists():
+            try:
+                current_ack = read_json(resolve_project_path(project_root, expected_return_path))
+                current_ack_hash = str(current_ack.get("ack_hash") or card_runtime.stable_json_hash(current_ack))
+            except Exception:
+                current_ack_hash = None
+        ack_is_unchanged_incomplete = bool(
+            record.get("status") == "bundle_ack_incomplete"
+            and current_ack_hash
+            and current_ack_hash == record.get("incomplete_ack_hash")
+        )
+        if expected_return_path and resolve_project_path(project_root, expected_return_path).exists() and not ack_is_unchanged_incomplete:
+            return make_action(
+                action_type="check_card_bundle_return_event",
+                actor="controller",
+                label=f"controller_checks_card_bundle_return_{_safe_delivery_component(str(record.get('card_bundle_id') or 'pending'))}",
+                summary=(
+                    f"Validate returned {record.get('card_return_event')} from {record.get('target_role')} "
+                    "against all bundled runtime card read receipts before Router may continue."
+                ),
+                allowed_reads=[
+                    expected_return_path,
+                    envelope_path,
+                    *[str(path) for path in record.get("expected_receipt_paths") or []],
+                    project_relative(project_root, _card_ledger_path(run_root)),
+                    project_relative(project_root, _return_event_ledger_path(run_root)),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, _card_ledger_path(run_root)),
+                    project_relative(project_root, _return_event_ledger_path(run_root)),
+                    project_relative(project_root, run_state_path(run_root)),
+                ],
+                card_id=(record.get("card_ids") or [""])[0] if isinstance(record.get("card_ids"), list) else None,
+                to_role=str(record.get("target_role") or ""),
+                extra={
+                    "card_return_event": record.get("card_return_event"),
+                    "card_bundle_id": record.get("card_bundle_id"),
+                    "card_ids": record.get("card_ids") or [],
+                    "delivery_attempt_ids": record.get("delivery_attempt_ids") or [],
+                    "expected_return_path": expected_return_path,
+                    "card_bundle_envelope_path": envelope_path,
+                    "expected_receipt_paths": record.get("expected_receipt_paths") or [],
+                    "controller_visibility": "ack_envelope_and_receipts_only",
+                    "sealed_body_reads_allowed": False,
+                    **committed_extra,
+                    "apply_required": True,
+                },
+            )
+        status_hint = " after an incomplete bundle ACK" if ack_is_unchanged_incomplete else ""
+        committed_extra = _committed_card_bundle_artifact_extra(
+            project_root,
+            record,
+            relay_allowed_if_ready=True,
+        )
+        return make_action(
+            action_type="await_card_bundle_return_event",
+            actor="controller",
+            label=f"controller_waits_for_card_bundle_return_{_safe_delivery_component(str(record.get('card_bundle_id') or 'pending'))}",
+            summary=(
+                f"Relay the committed system-card bundle to {record.get('target_role')} if needed, then wait{status_hint} "
+                f"for {record.get('card_return_event')} after the role opens every bundled card through runtime."
+            ),
+            allowed_reads=[
+                envelope_path,
+                project_relative(project_root, _return_event_ledger_path(run_root)),
+                project_relative(project_root, _card_ledger_path(run_root)),
+            ],
+            allowed_writes=[
+                project_relative(project_root, _return_event_ledger_path(run_root)),
+                project_relative(project_root, run_state_path(run_root)),
+            ],
+            card_id=(record.get("card_ids") or [""])[0] if isinstance(record.get("card_ids"), list) else None,
+            to_role=str(record.get("target_role") or ""),
+            extra={
+                "card_return_event": record.get("card_return_event"),
+                "card_bundle_id": record.get("card_bundle_id"),
+                "card_ids": record.get("card_ids") or [],
+                "delivery_attempt_ids": record.get("delivery_attempt_ids") or [],
+                "expected_return_path": expected_return_path,
+                "card_bundle_envelope_path": envelope_path,
+                "expected_receipt_paths": record.get("expected_receipt_paths") or [],
+                "bundle_ack_incomplete": ack_is_unchanged_incomplete,
+                "missing_card_ids": record.get("missing_card_ids") or [],
+                "incomplete_ack_path": record.get("incomplete_ack_path"),
+                "incomplete_ack_hash": record.get("incomplete_ack_hash"),
+                "waiting_for_role": record.get("target_role"),
+                "waiting_for_agent_id": record.get("target_agent_id"),
+                "controller_visibility": "pending_return_metadata_only",
+                "sealed_body_reads_allowed": False,
+                **committed_extra,
+                "next_recovery_actions": [
+                    "role_uses_open-card-bundle_then_ack-card-bundle",
+                    "controller_reminds_role_if_still_live",
+                    "router_reissues_bundle_after_resume_or_replacement",
+                    "router_records_protocol_blocker_if_bundle_ack_is_invalid",
+                ],
+            },
+        )
     expected_return_path = str(record.get("expected_return_path") or "")
     envelope_path = str(record.get("card_envelope_path") or "")
     committed_extra = _committed_card_artifact_extra(
@@ -12888,6 +13020,152 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
     return None
 
 
+def _system_card_bundle_candidate_actions(project_root: Path, run_state: dict[str, Any], run_root: Path) -> list[dict[str, Any]]:
+    probe_state = dict(run_state)
+    probe_state["flags"] = dict(run_state.get("flags") or {})
+    probe_state["manifest_check_requested"] = True
+    actions: list[dict[str, Any]] = []
+    target_role: str | None = None
+    target_agent_id: str | None = None
+    resume_tick_id: str | None = None
+    for _entry in SYSTEM_CARD_SEQUENCE:
+        action = _next_system_card_action(project_root, probe_state, run_root)
+        if not isinstance(action, dict) or action.get("action_type") != "deliver_system_card":
+            break
+        if action.get("payload_contract"):
+            break
+        role = str(action.get("to_role") or "")
+        agent_id = str(action.get("target_agent_id") or "")
+        tick_id = str(action.get("resume_tick_id") or "")
+        if target_role is None:
+            target_role = role
+            target_agent_id = agent_id
+            resume_tick_id = tick_id
+        elif role != target_role or agent_id != target_agent_id or tick_id != resume_tick_id:
+            break
+        actions.append(action)
+        postcondition = action.get("postcondition")
+        if not isinstance(postcondition, str) or not postcondition:
+            break
+        probe_state["flags"][postcondition] = True
+        probe_state["manifest_check_requested"] = True
+    return actions if len(actions) >= 2 else []
+
+
+def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    actions = _system_card_bundle_candidate_actions(project_root, run_state, run_root)
+    if len(actions) < 2:
+        return None
+    first = actions[0]
+    role = str(first.get("to_role") or "")
+    card_ids = [str(action.get("card_id") or "") for action in actions]
+    if not run_state.get("manifest_check_requested"):
+        return make_action(
+            action_type="check_prompt_manifest",
+            actor="controller",
+            label="controller_instructed_to_check_prompt_manifest",
+            summary="Controller must check prompt manifest before delivering the next same-role system-card bundle.",
+            allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
+            allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+            extra={
+                "next_card_id": card_ids[0],
+                "bundle_candidate": True,
+                "bundle_card_ids": card_ids,
+                "to_role": role,
+            },
+        )
+    first_attempt = str(first.get("delivery_attempt_id") or card_ids[0])
+    last_attempt = str(actions[-1].get("delivery_attempt_id") or card_ids[-1])
+    bundle_id = f"{_safe_delivery_component(first_attempt)}--to--{_safe_delivery_component(last_attempt)}"
+    bundle_envelope_path = run_root / "mailbox" / "system_card_bundles" / f"{bundle_id}.json"
+    expected_return_path = run_root / "mailbox" / "outbox" / "card_bundle_acks" / f"{bundle_id}.ack.json"
+    expected_receipt_paths = [str(action.get("expected_receipt_path") or "") for action in actions]
+    allowed_reads: list[str] = []
+    for action in actions:
+        for raw_path in action.get("allowed_reads") or []:
+            if isinstance(raw_path, str) and raw_path and raw_path not in allowed_reads:
+                allowed_reads.append(raw_path)
+    cards: list[dict[str, Any]] = []
+    for action in actions:
+        member = {
+            "card_id": action.get("card_id"),
+            "label": action.get("label"),
+            "postcondition": action.get("postcondition"),
+            "delivery_id": action.get("delivery_id"),
+            "delivery_attempt_id": action.get("delivery_attempt_id"),
+            "body_path": action.get("body_path"),
+            "body_hash": action.get("body_hash"),
+            "manifest_path": action.get("manifest_path"),
+            "manifest_hash": action.get("manifest_hash"),
+            "expected_receipt_path": action.get("expected_receipt_path"),
+            "card_return_event": action.get("card_return_event"),
+            "delivery_context": action.get("delivery_context"),
+        }
+        for key in (
+            "pm_context_paths",
+            "pm_prior_path_context_required_for_decision",
+            "controller_history_is_evidence",
+        ):
+            if key in action:
+                member[key] = action[key]
+        cards.append(member)
+    card_return_event = _card_bundle_return_event_for_role(role)
+    return make_action(
+        action_type="deliver_system_card_bundle",
+        actor="controller",
+        label=f"same_role_system_card_bundle_delivered_{_safe_delivery_component(card_ids[0])}_to_{_safe_delivery_component(card_ids[-1])}",
+        summary=(
+            f"Deliver one committed system-card bundle with {len(card_ids)} cards to {role}; "
+            f"the role must open it through runtime and return {card_return_event}."
+        ),
+        allowed_reads=allowed_reads,
+        allowed_writes=[
+            project_relative(project_root, bundle_envelope_path),
+            project_relative(project_root, expected_return_path),
+            project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+            project_relative(project_root, _card_ledger_path(run_root)),
+            project_relative(project_root, _return_event_ledger_path(run_root)),
+        ],
+        card_id=card_ids[0],
+        to_role=role,
+        extra={
+            "card_ids": card_ids,
+            "postconditions": [str(action.get("postcondition") or "") for action in actions],
+            "delivery_mode": "same_role_system_card_bundle_v1",
+            "resource_lifecycle": "planned_internal_action",
+            "artifact_committed": False,
+            "relay_allowed": False,
+            "apply_required": True,
+            "controller_visibility": "system_card_bundle_envelope_only",
+            "sealed_body_reads_allowed": False,
+            "requires_read_receipt": True,
+            "open_method": "open-card-bundle",
+            "card_return_event": card_return_event,
+            "expected_return_path": project_relative(project_root, expected_return_path),
+            "expected_receipt_paths": expected_receipt_paths,
+            "card_bundle_id": bundle_id,
+            "card_bundle_envelope_path": project_relative(project_root, bundle_envelope_path),
+            "target_agent_id": first.get("target_agent_id"),
+            "resume_tick_id": first.get("resume_tick_id"),
+            "role_io_protocol_hash": first.get("role_io_protocol_hash"),
+            "role_io_protocol_receipt_path": first.get("role_io_protocol_receipt_path"),
+            "role_io_protocol_receipt_hash": first.get("role_io_protocol_receipt_hash"),
+            "ack_report_required": True,
+            "read_receipt_is_mechanical_only": True,
+            "same_role_bundle": True,
+            "manifest_batch_checked": True,
+            "bundle_does_not_cross_role_or_agent": True,
+            "bundle_stops_before_role_output": True,
+            "cards": cards,
+            "planned_artifacts": {
+                "card_bundle_envelope_path": project_relative(project_root, bundle_envelope_path),
+                "expected_receipt_paths": expected_receipt_paths,
+                "expected_return_path": project_relative(project_root, expected_return_path),
+            },
+        },
+    )
+
+
 def _system_card_to_role(run_root: Path, entry: dict[str, Any]) -> str:
     default_role = str(entry.get("to_role") or "")
     if entry.get("card_id") == "worker.research_report":
@@ -13558,6 +13836,236 @@ def _commit_system_card_delivery_artifact(
     }
 
 
+def _commit_system_card_bundle_delivery_artifact(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    pending: dict[str, Any],
+) -> dict[str, Any]:
+    if not run_state.get("manifest_check_requested"):
+        raise RouterError("system card bundle delivery requires a current manifest check")
+    cards = pending.get("cards")
+    if not isinstance(cards, list) or len(cards) < 2:
+        raise RouterError("system card bundle delivery requires at least two member cards")
+    role = str(pending.get("to_role") or "")
+    bundle_id = str(pending.get("card_bundle_id") or "")
+    bundle_path_raw = str(pending.get("card_bundle_envelope_path") or "")
+    expected_return_path_raw = str(pending.get("expected_return_path") or "")
+    expected_receipt_paths = pending.get("expected_receipt_paths")
+    if not bundle_id or not bundle_path_raw or not expected_return_path_raw:
+        raise RouterError("system card bundle delivery requires bundle id, envelope path, and return path")
+    if not isinstance(expected_receipt_paths, list) or len(expected_receipt_paths) != len(cards):
+        raise RouterError("system card bundle delivery requires one expected receipt path per member")
+    bundle_path = resolve_project_path(project_root, bundle_path_raw)
+    expected_return_path = resolve_project_path(project_root, expected_return_path_raw)
+    manifest = load_manifest_from_run(run_root)
+    delivered_at = utc_now()
+    envelope_cards: list[dict[str, Any]] = []
+    deliveries: list[dict[str, Any]] = []
+    for index, member in enumerate(cards):
+        if not isinstance(member, dict):
+            raise RouterError("system card bundle member must be an object")
+        card_id = str(member.get("card_id") or "")
+        card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
+        if card_entry is None:
+            raise RouterError(f"unknown system card in bundle: {card_id}")
+        card = manifest_card(manifest, card_id)
+        delivery_context = member.get("delivery_context")
+        if not isinstance(delivery_context, dict):
+            delivery_context = _live_card_delivery_context(project_root, run_root, run_state, card_entry, card)
+        expected_receipt_path = resolve_project_path(project_root, str(expected_receipt_paths[index]))
+        body_path_raw = str(member.get("body_path") or "")
+        body_hash = str(member.get("body_hash") or "")
+        if not body_path_raw or not body_hash:
+            raise RouterError(f"system card bundle member {card_id} missing body path or hash")
+        envelope_card = {
+            "card_id": card_id,
+            "path": card["path"],
+            "delivery_id": member.get("delivery_id"),
+            "delivery_attempt_id": member.get("delivery_attempt_id"),
+            "body_path": body_path_raw,
+            "body_hash": body_hash,
+            "manifest_path": member.get("manifest_path"),
+            "manifest_hash": member.get("manifest_hash"),
+            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+            "card_return_event": member.get("card_return_event") or _card_return_event_for_card(card_id),
+            "delivery_context": delivery_context,
+        }
+        envelope_cards.append(envelope_card)
+        deliveries.append(
+            {
+                "card_id": card_id,
+                "from": "system",
+                "issued_by": "router",
+                "delivered_by": "controller",
+                "to_role": role,
+                "path": card["path"],
+                "delivery_mode": "same_role_system_card_bundle_v1",
+                "controller_visibility": "system_card_bundle_envelope_only",
+                "sealed_body_reads_allowed": False,
+                "requires_read_receipt": True,
+                "open_method": "open-card-bundle",
+                "card_return_event": envelope_card["card_return_event"],
+                "bundle_return_event": pending.get("card_return_event"),
+                "expected_return_path": expected_return_path_raw,
+                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+                "card_bundle_id": bundle_id,
+                "card_bundle_envelope_path": bundle_path_raw,
+                "card_envelope_path": bundle_path_raw,
+                "delivery_id": member.get("delivery_id"),
+                "delivery_attempt_id": member.get("delivery_attempt_id"),
+                "body_path": body_path_raw,
+                "body_hash": body_hash,
+                "manifest_path": member.get("manifest_path"),
+                "manifest_hash": member.get("manifest_hash"),
+                "target_agent_id": pending.get("target_agent_id"),
+                "resume_tick_id": pending.get("resume_tick_id"),
+                "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
+                "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
+                "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
+                "delivery_context": delivery_context,
+                "delivered_at": delivered_at,
+            }
+        )
+        for key in (
+            "pm_context_paths",
+            "pm_prior_path_context_required_for_decision",
+            "controller_history_is_evidence",
+        ):
+            if key in member:
+                deliveries[-1][key] = member[key]
+    envelope = {
+        "schema_version": card_runtime.CARD_BUNDLE_ENVELOPE_SCHEMA,
+        "run_id": run_state["run_id"],
+        "run_root": project_relative(project_root, run_root),
+        "resume_tick_id": pending.get("resume_tick_id"),
+        "bundle_id": bundle_id,
+        "from": "system",
+        "issued_by": "router",
+        "delivered_by": "controller",
+        "target_role": role,
+        "target_agent_id": pending.get("target_agent_id"),
+        "cards": envelope_cards,
+        "card_ids": [card["card_id"] for card in envelope_cards],
+        "body_visibility": "target_role_runtime_only",
+        "resource_lifecycle": "committed_artifact",
+        "artifact_committed": True,
+        "relay_allowed": True,
+        "apply_required": False,
+        "controller_visibility": "system_card_bundle_envelope_only",
+        "sealed_body_reads_allowed": False,
+        "requires_read_receipt": True,
+        "open_method": "open-card-bundle",
+        "card_return_event": pending.get("card_return_event"),
+        "expected_receipt_paths": [card["expected_receipt_path"] for card in envelope_cards],
+        "expected_return_path": project_relative(project_root, expected_return_path),
+        "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
+        "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
+        "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
+        "delivered_at": delivered_at,
+        "runtime_validates_mechanics_only": True,
+        "semantic_understanding_validated_by_receipt": False,
+        "same_role_bundle": True,
+        "manifest_batch_checked": True,
+    }
+    envelope["bundle_hash"] = card_runtime.stable_json_hash(envelope)
+    write_json(bundle_path, envelope)
+    run_state.setdefault("delivered_cards", [])
+    ledger = read_json_if_exists(run_root / "prompt_delivery_ledger.json") or {
+        "schema_version": "flowpilot.prompt_delivery_ledger.v1",
+        "run_id": run_state["run_id"],
+        "deliveries": [],
+    }
+    card_ledger = _read_card_ledger(run_root, str(run_state["run_id"]))
+    for delivery in deliveries:
+        delivery["card_bundle_envelope_hash"] = envelope["bundle_hash"]
+        delivery["card_envelope_hash"] = envelope["bundle_hash"]
+        delivery["resource_lifecycle"] = "committed_artifact"
+        delivery["artifact_committed"] = True
+        delivery["relay_allowed"] = True
+        delivery["apply_required"] = False
+        run_state["delivered_cards"].append(delivery)
+        card_entry = next(entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == delivery["card_id"])
+        run_state["flags"][card_entry["flag"]] = True
+        ledger.setdefault("deliveries", []).append(delivery)
+        card_ledger.setdefault("deliveries", []).append(
+            {
+                "card_id": delivery.get("card_id"),
+                "card_bundle_id": bundle_id,
+                "delivery_id": delivery.get("delivery_id"),
+                "delivery_attempt_id": delivery.get("delivery_attempt_id"),
+                "to_role": role,
+                "target_agent_id": delivery.get("target_agent_id"),
+                "card_bundle_envelope_path": bundle_path_raw,
+                "card_envelope_path": bundle_path_raw,
+                "card_bundle_envelope_hash": envelope["bundle_hash"],
+                "card_envelope_hash": envelope["bundle_hash"],
+                "resource_lifecycle": "committed_artifact",
+                "artifact_committed": True,
+                "relay_allowed": True,
+                "apply_required": False,
+                "body_hash": delivery.get("body_hash"),
+                "manifest_hash": delivery.get("manifest_hash"),
+                "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
+                "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
+                "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+                "requires_read_receipt": True,
+                "card_return_event": delivery.get("card_return_event"),
+                "bundle_return_event": pending.get("card_return_event"),
+                "expected_receipt_path": delivery.get("expected_receipt_path"),
+                "expected_return_path": expected_return_path_raw,
+                "delivered_at": delivered_at,
+            }
+        )
+    run_state["manifest_check_requested"] = False
+    run_state["prompt_deliveries"] = int(run_state.get("prompt_deliveries", 0)) + len(deliveries)
+    ledger["updated_at"] = utc_now()
+    write_json(run_root / "prompt_delivery_ledger.json", ledger)
+    card_ledger["updated_at"] = utc_now()
+    write_json(_card_ledger_path(run_root), card_ledger)
+    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+    return_ledger.setdefault("pending_returns", []).append(
+        {
+            "return_kind": "system_card_bundle",
+            "card_return_event": pending.get("card_return_event"),
+            "status": "pending",
+            "card_bundle_id": bundle_id,
+            "card_ids": [delivery.get("card_id") for delivery in deliveries],
+            "delivery_attempt_ids": [delivery.get("delivery_attempt_id") for delivery in deliveries],
+            "target_role": role,
+            "target_agent_id": pending.get("target_agent_id"),
+            "card_bundle_envelope_path": bundle_path_raw,
+            "card_bundle_envelope_hash": envelope["bundle_hash"],
+            "resource_lifecycle": "committed_artifact",
+            "artifact_committed": True,
+            "relay_allowed": True,
+            "apply_required": False,
+            "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
+            "expected_return_path": expected_return_path_raw,
+            "sent_at": delivered_at,
+        }
+    )
+    return_ledger["updated_at"] = utc_now()
+    write_json(_return_event_ledger_path(run_root), return_ledger)
+    return {
+        "ok": True,
+        "applied": "commit_system_card_bundle_delivery_artifact",
+        "resource_lifecycle": "committed_artifact",
+        "artifact_committed": True,
+        "artifact_exists": True,
+        "artifact_hash_verified": True,
+        "ledger_recorded": True,
+        "return_wait_recorded": True,
+        "relay_allowed": True,
+        "apply_required": False,
+        "card_bundle_id": bundle_id,
+        "card_bundle_envelope_path": bundle_path_raw,
+        "card_bundle_envelope_hash": envelope["bundle_hash"],
+        "expected_return_path": expected_return_path_raw,
+        "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
+    }
+
+
 def _pending_return_record_for_action(run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
     delivery_attempt_id = action.get("delivery_attempt_id")
     for record in _pending_return_records(run_root, run_id):
@@ -13568,6 +14076,58 @@ def _pending_return_record_for_action(run_root: Path, run_id: str, action: dict[
         ):
             return record
     return None
+
+
+def _pending_bundle_return_record_for_action(run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
+    bundle_id = action.get("card_bundle_id")
+    for record in _pending_return_records(run_root, run_id):
+        if (
+            isinstance(record, dict)
+            and record.get("return_kind") == "system_card_bundle"
+            and record.get("card_bundle_id") == bundle_id
+        ):
+            return record
+    return None
+
+
+def _committed_card_bundle_artifact_extra(
+    project_root: Path,
+    record: dict[str, Any],
+    *,
+    relay_allowed_if_ready: bool,
+) -> dict[str, Any]:
+    envelope_path = str(record.get("card_bundle_envelope_path") or "")
+    expected_return_path = str(record.get("expected_return_path") or "")
+    expected_receipt_paths = record.get("expected_receipt_paths")
+    artifact_exists = False
+    artifact_hash_verified = False
+    if envelope_path:
+        resolved = resolve_project_path(project_root, envelope_path)
+        artifact_exists = resolved.exists() and resolved.is_file()
+        if artifact_exists:
+            try:
+                envelope = read_json(resolved)
+            except Exception:
+                envelope = {}
+            recorded_hash = str(record.get("card_bundle_envelope_hash") or "")
+            artifact_hash_verified = bool(recorded_hash) and envelope.get("bundle_hash") == recorded_hash
+    artifact_committed = bool(
+        artifact_exists
+        and artifact_hash_verified
+        and expected_return_path
+        and isinstance(expected_receipt_paths, list)
+        and expected_receipt_paths
+    )
+    return {
+        "resource_lifecycle": "committed_artifact" if artifact_committed else "missing_committed_artifact",
+        "artifact_committed": artifact_committed,
+        "artifact_exists": artifact_exists,
+        "artifact_hash_verified": artifact_hash_verified,
+        "ledger_recorded": True,
+        "return_wait_recorded": bool(expected_return_path),
+        "relay_allowed": bool(relay_allowed_if_ready and artifact_committed),
+        "apply_required": False,
+    }
 
 
 def _auto_commit_system_card_delivery_action(
@@ -13658,6 +14218,96 @@ def _auto_commit_system_card_delivery_action(
     return committed
 
 
+def _auto_commit_system_card_bundle_delivery_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    planned = dict(action)
+    planned["resource_lifecycle"] = "planned_internal_action"
+    planned["artifact_committed"] = False
+    planned["relay_allowed"] = False
+    planned["apply_required"] = True
+    planned.setdefault(
+        "planned_artifacts",
+        {
+            "card_bundle_envelope_path": planned.get("card_bundle_envelope_path"),
+            "expected_receipt_paths": planned.get("expected_receipt_paths"),
+            "expected_return_path": planned.get("expected_return_path"),
+        },
+    )
+    run_state["pending_action"] = planned
+    append_history(
+        run_state,
+        "router_auto_commits_internal_system_card_bundle_delivery",
+        {
+            "action_type": planned.get("action_type"),
+            "card_ids": planned.get("card_ids"),
+            "planned_artifacts_exposed_to_controller": False,
+        },
+    )
+    commit_result = _commit_system_card_bundle_delivery_artifact(project_root, run_state, run_root, planned)
+    append_history(
+        run_state,
+        "router_committed_system_card_bundle_delivery_artifact",
+        {
+            "card_bundle_id": planned.get("card_bundle_id"),
+            "card_bundle_envelope_path": commit_result.get("card_bundle_envelope_path"),
+            "relay_allowed": commit_result.get("relay_allowed"),
+        },
+    )
+    run_state["pending_action"] = None
+    _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_internal_commit:deliver_system_card_bundle")
+    _sync_derived_run_views(
+        project_root,
+        run_root,
+        run_state,
+        reason="after_router_internal_commit:deliver_system_card_bundle",
+        update_display=True,
+    )
+    save_run_state(run_root, run_state)
+    record = _pending_bundle_return_record_for_action(run_root, str(run_state["run_id"]), planned)
+    if record is None:
+        raise RouterError("system card bundle auto-commit did not establish a pending return record")
+    committed_extra = _committed_card_bundle_artifact_extra(project_root, record, relay_allowed_if_ready=True)
+    if not committed_extra["relay_allowed"]:
+        raise RouterError("system card bundle auto-commit did not produce a relay-ready committed artifact")
+    committed = {
+        **planned,
+        **committed_extra,
+        "card_bundle_envelope_hash": record.get("card_bundle_envelope_hash"),
+        "summary": (
+            f"Relay committed system-card bundle {planned.get('card_bundle_id')} to {planned.get('to_role')}; "
+            f"the role must open it through runtime and return {planned.get('card_return_event')}."
+        ),
+        "allowed_writes": [],
+        "auto_committed_by_router": True,
+        "auto_commit_result": commit_result,
+        "next_after_relay": "await_card_bundle_return_event",
+    }
+    committed["next_step_contract"] = {
+        **committed.get("next_step_contract", {}),
+        "resource_lifecycle": committed["resource_lifecycle"],
+        "artifact_committed": True,
+        "relay_allowed": True,
+        "apply_required": False,
+    }
+    run_state["pending_action"] = committed
+    append_history(
+        run_state,
+        "router_returned_committed_system_card_bundle_relay_action",
+        {
+            "card_bundle_id": committed.get("card_bundle_id"),
+            "card_ids": committed.get("card_ids"),
+            "card_bundle_envelope_path": committed.get("card_bundle_envelope_path"),
+            "relay_allowed": committed.get("relay_allowed"),
+        },
+    )
+    save_run_state(run_root, run_state)
+    return committed
+
+
 def compute_controller_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any]:
     terminal_action = _run_lifecycle_terminal_action(project_root, run_state, run_root)
     if terminal_action is not None:
@@ -13689,6 +14339,12 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
             and pending_action.get("artifact_committed") is not True
         ):
             return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, pending_action)
+        if (
+            isinstance(pending_action, dict)
+            and pending_action.get("action_type") == "deliver_system_card_bundle"
+            and pending_action.get("artifact_committed") is not True
+        ):
+            return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, pending_action)
         return pending_action
     if not _route_memory_ready(run_root, run_state):
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
@@ -13709,9 +14365,13 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         _invalidate_route_completion_if_dirty_before_closure(run_state, run_root)
         action = _next_pending_card_return_action(project_root, run_state, run_root)
     if action is None:
+        action = _next_system_card_bundle_action(project_root, run_state, run_root)
+    if action is None:
         action = _next_system_card_action(project_root, run_state, run_root)
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card":
         return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, action)
+    if isinstance(action, dict) and action.get("action_type") == "deliver_system_card_bundle":
+        return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, action)
     if action is None and _resume_waits_for_pm_decision(run_state):
         action = make_action(
             action_type="await_role_decision",
@@ -13849,6 +14509,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         })
     elif action_type == "deliver_system_card":
         raise RouterError("deliver_system_card is relay-only; Router commits the card envelope internally and Controller must only relay it")
+    elif action_type == "deliver_system_card_bundle":
+        raise RouterError("deliver_system_card_bundle is relay-only; Router commits the card bundle envelope internally and Controller must only relay it")
     elif action_type == "check_packet_ledger":
         run_state["ledger_check_requested"] = True
         run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
@@ -13910,7 +14572,103 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         write_json(_return_event_ledger_path(run_root), return_ledger)
         run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
         run_state.setdefault("card_return_events", []).append(validation)
+    elif action_type == "check_card_bundle_return_event":
+        ack_path = str(pending.get("expected_return_path") or "")
+        envelope_path = str(pending.get("card_bundle_envelope_path") or "")
+        if not ack_path or not envelope_path:
+            raise RouterError("card bundle return check requires expected_return_path and card_bundle_envelope_path")
+        try:
+            validation = card_runtime.validate_card_bundle_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
+        except card_runtime.CardRuntimeError:
+            inspection = card_runtime.inspect_card_bundle_ack_incomplete(project_root, ack_path=ack_path, envelope_path=envelope_path)
+            if not inspection.get("incomplete"):
+                raise
+            return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+            incomplete_record = {
+                "return_kind": "system_card_bundle",
+                "card_return_event": pending.get("card_return_event"),
+                "card_bundle_id": pending.get("card_bundle_id"),
+                "card_ids": pending.get("card_ids") or [],
+                "target_role": pending.get("to_role"),
+                "ack_path": inspection["ack_path"],
+                "ack_hash": inspection["ack_hash"],
+                "missing_card_ids": inspection["missing_card_ids"],
+                "checked_at": utc_now(),
+                "status": "bundle_ack_incomplete",
+                "recovery": "same_role_must_resubmit_bundle_ack_with_all_member_receipts",
+            }
+            for item in return_ledger.setdefault("pending_returns", []):
+                if (
+                    isinstance(item, dict)
+                    and item.get("return_kind") == "system_card_bundle"
+                    and item.get("card_bundle_id") == pending.get("card_bundle_id")
+                    and item.get("card_return_event") == pending.get("card_return_event")
+                ):
+                    item["status"] = "bundle_ack_incomplete"
+                    item["missing_card_ids"] = list(inspection["missing_card_ids"])
+                    item["incomplete_ack_path"] = inspection["ack_path"]
+                    item["incomplete_ack_hash"] = inspection["ack_hash"]
+                    item["incomplete_checked_at"] = incomplete_record["checked_at"]
+                    item["recovery"] = incomplete_record["recovery"]
+            return_ledger.setdefault("incomplete_returns", []).append(incomplete_record)
+            return_ledger["updated_at"] = utc_now()
+            write_json(_return_event_ledger_path(run_root), return_ledger)
+            run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
+            run_state.setdefault("card_return_events", []).append(incomplete_record)
+            append_history(run_state, "bundle_ack_incomplete", incomplete_record)
+            run_state["pending_action"] = None
+            _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_action:bundle_ack_incomplete")
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason="after_controller_action:bundle_ack_incomplete",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+            return {
+                "ok": False,
+                "applied": action_type,
+                "waiting": True,
+                "status": "bundle_ack_incomplete",
+                "missing_card_ids": inspection["missing_card_ids"],
+                "expected_return_path": ack_path,
+                "waiting_for_role": pending.get("to_role"),
+            }
+        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+        for item in return_ledger.setdefault("pending_returns", []):
+            if (
+                isinstance(item, dict)
+                and item.get("return_kind") == "system_card_bundle"
+                and item.get("card_bundle_id") == pending.get("card_bundle_id")
+                and item.get("card_return_event") == pending.get("card_return_event")
+            ):
+                item["status"] = "resolved"
+                item["resolved_at"] = utc_now()
+                item["ack_path"] = validation["ack_path"]
+                item["ack_hash"] = validation["ack_hash"]
+                item["receipt_ref_count"] = validation["receipt_ref_count"]
+        return_ledger.setdefault("completed_returns", []).append(
+            {
+                "return_kind": "system_card_bundle",
+                "card_return_event": pending.get("card_return_event"),
+                "card_bundle_id": pending.get("card_bundle_id"),
+                "card_ids": validation["member_card_ids"],
+                "target_role": pending.get("to_role"),
+                "ack_path": validation["ack_path"],
+                "ack_hash": validation["ack_hash"],
+                "receipt_ref_count": validation["receipt_ref_count"],
+                "checked_at": utc_now(),
+                "status": "resolved",
+            }
+        )
+        return_ledger["updated_at"] = utc_now()
+        write_json(_return_event_ledger_path(run_root), return_ledger)
+        run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
+        run_state.setdefault("card_return_events", []).append(validation)
     elif action_type == "await_card_return_event":
+        return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
+    elif action_type == "await_card_bundle_return_event":
         return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
     elif action_type == "relay_material_scan_packets":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
