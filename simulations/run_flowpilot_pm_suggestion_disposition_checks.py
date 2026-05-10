@@ -37,6 +37,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.DUPLICATE_SKILL_MAINTENANCE_SYSTEM: "FlowPilot maintenance suggestion did not link to existing skill-improvement report",
     model.NO_SUGGESTION_HEAVY_REPORT: "no-suggestion case wrote a heavy empty report",
     model.REPAIR_WITHOUT_REVIEWER_RECHECK: "current-gate blocker repair closed without same review-class recheck",
+    model.ROUTE_CHANGE_WITHOUT_IMPACT_TRIAGE: "PM suggestion disposition lacks impact triage",
 }
 
 

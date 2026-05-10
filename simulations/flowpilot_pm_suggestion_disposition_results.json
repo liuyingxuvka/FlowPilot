@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=114",
+    "summary": "sequences=3 initial_states=1 traces=120",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -89,6 +89,13 @@
           "reviewer blocked a gate without minimum-standard failure"
         ]
       },
+      "route_change_without_impact_triage": {
+        "detected": true,
+        "expected_failure": "PM suggestion disposition lacks impact triage",
+        "failures": [
+          "PM suggestion disposition lacks impact triage"
+        ]
+      },
       "waive_without_authority": {
         "detected": true,
         "expected_failure": "PM waived a suggestion without authority and reason",
@@ -125,11 +132,11 @@
       "valid_skill_maintenance_recorded",
       "valid_worker_note_rejected"
     ],
-    "edge_count": 38,
+    "edge_count": 40,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 13,
-    "state_count": 39
+    "rejected_state_count": 14,
+    "state_count": 41
   }
 }

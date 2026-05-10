@@ -860,6 +860,9 @@ Each entry uses `flowpilot.pm_suggestion_item.v1` and records:
 - authority basis, including whether a reviewer found a minimum-standard
   failure, a FlowGuard officer reported a formal model-gate blocker, or a
   worker/officer note is advisory only;
+- impact triage: local minor change, current-node adjustment, route or
+  acceptance change, or product behavior/state change, plus whether PM
+  considered Process/Product FlowGuard and why;
 - PM disposition: `adopt_now`, `repair_or_reissue`, `mutate_route`,
   `defer_to_named_node`, `reject_with_reason`, `waive_with_authority`,
   `stop_for_user`, or `record_for_flowpilot_maintenance`;

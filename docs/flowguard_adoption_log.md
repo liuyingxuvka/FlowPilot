@@ -6577,6 +6577,43 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - User will coordinate local install, git, and remote synchronization later.
 
 
+## flowpilot-pm-suggestion-impact-triage-20260510 - Add PM impact triage reminder for suggestions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot protocol prompt/template change. PM suggestion disposition now reminds PM to distinguish harmless local changes from product, route, acceptance, state/data-flow, evidence-freshness, or completion-risk changes before adoption.
+- Status: completed
+- Skill decision: use_flowguard
+- Date: 2026-05-10
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_pm_suggestion_disposition_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_pm_suggestion_disposition_model.py simulations\run_flowpilot_pm_suggestion_disposition_checks.py tests\test_flowpilot_card_instruction_coverage.py`
+- OK: `python simulations\run_flowpilot_pm_suggestion_disposition_checks.py --json-out simulations\flowpilot_pm_suggestion_disposition_results.json`
+- OK: `python -m pytest tests\test_flowpilot_card_instruction_coverage.py::FlowPilotCardInstructionCoverageTests::test_pm_suggestion_disposition_guidance_is_unified_but_role_scoped tests\test_flowpilot_output_contracts.py::FlowPilotOutputContractTests::test_contract_registry_declares_pm_selection_and_self_check_policy tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_final_ledger_rejects_dirty_pm_suggestion_ledger tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_dirty_pm_suggestion_ledger_invalidates_terminal_closure_card -q -p no:cacheprovider`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- PM core guidance now says to do a lightweight impact triage before disposing suggestions.
+- The PM suggestion ledger template now includes `impact_triage` with impact level, FlowGuard consideration, FlowGuard decision, and PM reason.
+- The suggestion-disposition FlowGuard model now rejects a route-change suggestion that lacks impact triage, while still allowing no-suggestion and harmless local-change paths to stay lightweight.
+
+### Counterexamples
+- The new hazard `route_change_without_impact_triage` is rejected with `PM suggestion disposition lacks impact triage`.
+
+### Skipped Steps
+- No remote GitHub push, per user instruction.
+
+### Next Actions
+- None for this small prompt/template reinforcement unless later runtime work chooses to hard-enforce `impact_triage` in concrete router ledger validation.
+
+
 ## flowpilot-route-hard-gates-20260510 - Enforce product-model-first route hard gates
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -109,9 +110,22 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             "defer_to_named_node",
             "reject_with_reason",
             "waive_with_authority",
+            "impact triage",
+            "smallest sufficient process/product",
+            "flowguard modeling path",
             "no pending dispositions",
         ):
             self.assertIn(required, pm_card)
+
+        suggestion_template = json.loads(
+            (
+                ROOT / "templates/flowpilot/pm_suggestion_ledger_entry.template.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertIn("impact_triage", suggestion_template)
+        self.assertIn("impact_level", suggestion_template["impact_triage"])
+        self.assertIn("flowguard_considered", suggestion_template["impact_triage"])
+        self.assertIn("flowguard_decision", suggestion_template["impact_triage"])
 
         worker_cards = [
             ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",

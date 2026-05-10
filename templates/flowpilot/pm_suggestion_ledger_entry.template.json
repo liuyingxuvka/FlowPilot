@@ -21,6 +21,12 @@
     "worker_or_officer_advisory_only": true,
     "reason": "<why-this-classification-is-allowed-for-this-role>"
   },
+  "impact_triage": {
+    "impact_level": "<local_minor|current_node_adjustment|route_or_acceptance_change|product_behavior_or_state_change>",
+    "flowguard_considered": true,
+    "flowguard_decision": "<not_needed|process_model_needed|product_model_needed|both_needed>",
+    "reason": "<short PM reason for using or not using FlowGuard before adoption>"
+  },
   "evidence_refs": [
     {
       "kind": "<file|command|screenshot|model_result|reviewer_walkthrough|state_ref|envelope|none>",

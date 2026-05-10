@@ -11,14 +11,15 @@ Risk intent brief:
   route mutation with stale evidence, sealed-body leakage into ledgers, duplicate
   skill-maintenance systems, and heavy empty reports for no-suggestion cases.
 - Modeled state and side effects: suggestion source, classification, evidence
-  reference, PM disposition, closure state, route-mutation effects, reviewer
-  recheck, downstream binding, maintenance-report linkage, and sealed-body
-  exclusion.
+  reference, impact triage, PM disposition, closure state, route-mutation
+  effects, reviewer recheck, downstream binding, maintenance-report linkage,
+  and sealed-body exclusion.
 - Hard invariants: current-gate blockers cannot close until repaired/rechecked,
   waived, routed, or stopped; reviewer blockers require minimum-standard basis;
   worker suggestions cannot block before PM classification; deferred items need
-  named targets; rejection/waiver/mutation need rationale and authority; skill
-  maintenance remains nonblocking; ledgers carry references only.
+  named targets; impact-bearing suggestions require PM to record FlowGuard
+  consideration before adoption; rejection/waiver/mutation need rationale and
+  authority; skill maintenance remains nonblocking; ledgers carry references only.
 - Blindspot: this model checks abstract control-flow and authority semantics.
   Runtime tests must still verify concrete templates, cards, and ledger files.
 """
@@ -51,6 +52,7 @@ LEDGER_LEAKS_SEALED_BODY = "ledger_leaks_sealed_body"
 DUPLICATE_SKILL_MAINTENANCE_SYSTEM = "duplicate_skill_maintenance_system"
 NO_SUGGESTION_HEAVY_REPORT = "no_suggestion_heavy_report"
 REPAIR_WITHOUT_REVIEWER_RECHECK = "repair_without_reviewer_recheck"
+ROUTE_CHANGE_WITHOUT_IMPACT_TRIAGE = "route_change_without_impact_triage"
 
 VALID_SCENARIOS = (
     VALID_REVIEWER_BLOCKER_REPAIRED,
@@ -75,6 +77,7 @@ NEGATIVE_SCENARIOS = (
     DUPLICATE_SKILL_MAINTENANCE_SYSTEM,
     NO_SUGGESTION_HEAVY_REPORT,
     REPAIR_WITHOUT_REVIEWER_RECHECK,
+    ROUTE_CHANGE_WITHOUT_IMPACT_TRIAGE,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -91,6 +94,18 @@ CLASS_FUTURE_ROUTE_CANDIDATE = "future_route_candidate"
 CLASS_NONBLOCKING_NOTE = "nonblocking_note"
 CLASS_FLOWPILOT_SKILL_IMPROVEMENT = "flowpilot_skill_improvement"
 CLASS_NONE = "none"
+
+IMPACT_LOCAL_MINOR = "local_minor"
+IMPACT_CURRENT_NODE_ADJUSTMENT = "current_node_adjustment"
+IMPACT_ROUTE_OR_ACCEPTANCE_CHANGE = "route_or_acceptance_change"
+IMPACT_PRODUCT_BEHAVIOR_OR_STATE_CHANGE = "product_behavior_or_state_change"
+IMPACT_NONE = "none"
+
+FLOWGUARD_NOT_NEEDED = "not_needed"
+FLOWGUARD_PROCESS_MODEL_NEEDED = "process_model_needed"
+FLOWGUARD_PRODUCT_MODEL_NEEDED = "product_model_needed"
+FLOWGUARD_BOTH_NEEDED = "both_needed"
+FLOWGUARD_DECISION_NONE = "none"
 
 DISPOSITION_ADOPT_NOW = "adopt_now"
 DISPOSITION_REPAIR_OR_REISSUE = "repair_or_reissue"
@@ -129,6 +144,12 @@ class State:
     reviewer_minimum_standard_failure: bool = False
     officer_formal_model_gate: bool = False
     worker_or_officer_advisory_only: bool = False
+
+    impact_triage_recorded: bool = False
+    impact_level: str = IMPACT_NONE
+    flowguard_considered: bool = False
+    flowguard_decision: str = FLOWGUARD_DECISION_NONE
+    impact_triage_reason_recorded: bool = False
 
     pm_disposition: str = DISPOSITION_NONE
     pm_disposition_recorded: bool = False
@@ -205,6 +226,11 @@ def _base_state(scenario: str) -> State:
         suggestion_logged=True,
         evidence_refs_recorded=True,
         classification=CLASS_NONBLOCKING_NOTE,
+        impact_triage_recorded=True,
+        impact_level=IMPACT_LOCAL_MINOR,
+        flowguard_considered=True,
+        flowguard_decision=FLOWGUARD_NOT_NEEDED,
+        impact_triage_reason_recorded=True,
         pm_disposition=DISPOSITION_REJECT_WITH_REASON,
         pm_disposition_recorded=True,
         pm_reason_recorded=True,
@@ -243,6 +269,8 @@ def _scenario_state(scenario: str) -> State:
             source_role=SOURCE_PROCESS_OFFICER,
             classification=CLASS_CURRENT_GATE_BLOCKER,
             officer_formal_model_gate=True,
+            impact_level=IMPACT_ROUTE_OR_ACCEPTANCE_CHANGE,
+            flowguard_decision=FLOWGUARD_PROCESS_MODEL_NEEDED,
             pm_disposition=DISPOSITION_MUTATE_ROUTE,
             gate_closed=False,
             route_mutated=True,
@@ -362,6 +390,23 @@ def _scenario_state(scenario: str) -> State:
             blocker_resolved=True,
             same_review_class_recheck_done=False,
         )
+    if scenario == ROUTE_CHANGE_WITHOUT_IMPACT_TRIAGE:
+        return replace(
+            _base_state(scenario),
+            source_role=SOURCE_PROCESS_OFFICER,
+            classification=CLASS_CURRENT_GATE_BLOCKER,
+            officer_formal_model_gate=True,
+            impact_triage_recorded=False,
+            impact_level=IMPACT_ROUTE_OR_ACCEPTANCE_CHANGE,
+            flowguard_considered=False,
+            flowguard_decision=FLOWGUARD_DECISION_NONE,
+            impact_triage_reason_recorded=False,
+            pm_disposition=DISPOSITION_MUTATE_ROUTE,
+            gate_closed=False,
+            route_mutated=True,
+            route_version_impact_recorded=True,
+            stale_evidence_handled=True,
+        )
     return _base_state(scenario)
 
 
@@ -379,6 +424,14 @@ def suggestion_failures(state: State) -> list[str]:
         failures.append("suggestion lacks evidence references")
     if state.sealed_body_content_in_ledger:
         failures.append("suggestion ledger contains sealed body content")
+    if not state.impact_triage_recorded:
+        failures.append("PM suggestion disposition lacks impact triage")
+    elif not (
+        state.flowguard_considered
+        and state.flowguard_decision != FLOWGUARD_DECISION_NONE
+        and state.impact_triage_reason_recorded
+    ):
+        failures.append("PM impact triage lacks FlowGuard consideration, decision, or reason")
     if not state.pm_disposition_recorded or state.pm_disposition == DISPOSITION_NONE:
         failures.append("PM closed or advanced without disposing the suggestion")
 
@@ -548,6 +601,8 @@ def pm_dispositions_are_traceable(state: State, trace) -> InvariantResult:
             or "without a reason" in failure
             or "without authority" in failure
             or "stale-evidence" in failure
+            or "impact triage" in failure
+            or "FlowGuard consideration" in failure
         ):
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()

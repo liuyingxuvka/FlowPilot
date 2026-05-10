@@ -109,6 +109,16 @@ semantic downgrade, unverifiable acceptance surface, role-boundary failure, or
 protocol violation. A worker item is advisory until PM classifies it. A
 FlowGuard officer item blocks only when it comes from a formal model gate.
 
+Before choosing a disposition, run a lightweight impact triage. Harmless local
+wording, layout, cleanup, or nonblocking quality suggestions may be handled
+directly with a PM reason. Suggestions that change product behavior, route
+structure, acceptance criteria, state/data flow, evidence freshness, or
+completion risk require PM to consider the smallest sufficient Process/Product
+FlowGuard modeling path before adoption. Do not model harmless local changes
+only for ceremony, but do not adopt behavior-bearing or route-invalidating
+changes without recording why FlowGuard was not needed or which officer model
+is needed.
+
 Disposition each item as `adopt_now`, `repair_or_reissue`, `mutate_route`,
 `defer_to_named_node`, `reject_with_reason`, `waive_with_authority`,
 `stop_for_user`, or `record_for_flowpilot_maintenance`. Current-gate blockers

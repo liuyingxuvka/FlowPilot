@@ -1159,6 +1159,16 @@ mutation, or stopped for the user before gate closure. Deferrals must name a
 downstream node or gate. Rejections and waivers require PM reasons. Ledger
 entries may cite sealed packet/result envelopes and evidence paths, but they
 must not copy sealed body content.
+
+Each PM suggestion ledger entry includes a small `impact_triage` reminder so PM
+does not treat all suggestions the same. Minor local wording, layout, cleanup,
+or nonblocking quality suggestions can be disposed directly with a reason.
+Suggestions that change product behavior, route structure, acceptance criteria,
+state/data flow, evidence freshness, or completion risk require PM to consider
+the smallest sufficient Process/Product FlowGuard modeling path before
+adoption. This is a PM judgement prompt, not a blanket rule to model harmless
+local changes.
+
 Final route-wide ledger construction and terminal closure require a clean PM
 suggestion ledger: no pending PM dispositions, no open current-gate blockers,
 and no malformed authority basis.
