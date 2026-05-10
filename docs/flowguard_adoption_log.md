@@ -7101,3 +7101,76 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future dependency additions in `flowpilot.dependencies.json`, `skills/flowpilot/DEPENDENCIES.md`, README install commands, and `simulations/release_tooling_model.py` in sync.
+
+
+## route-visible-committed-only-20260510 - Keep FlowPilot user-visible route projection committed-route only
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Route visibility protocol affects user commitments, route state, display sync, and draft/committed source-of-truth boundaries
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-10T20:02:21+00:00
+- Ended: 2026-05-10T20:02:21+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## route-visible-committed-only-20260510 - Keep FlowPilot user-visible route projection committed-route only
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Route visibility protocol affects user commitments, route state, display sync, and draft/committed source-of-truth boundaries
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-10T20:25:23+00:00
+- Ended: 2026-05-10T20:25:23+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_route_display_model.py
+
+### Commands
+- OK (0.000s): `python simulations\\run_flowpilot_route_display_checks.py --json-out simulations\\flowpilot_route_display_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_display_plan_is_controller_synced_projection_from_pm_plan tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_reviewed_route_activation_uses_pm_draft_without_dummy_fallback tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_check_results_require_router_delivered_check_cards tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress`
+- OK (0.000s): `python -m py_compile skills\\flowpilot\\assets\\flowpilot_router.py skills\\flowpilot\\assets\\flowpilot_user_flow_diagram.py scripts\\flowpilot_user_flow_diagram.py simulations\\flowpilot_route_display_model.py simulations\\run_flowpilot_route_display_checks.py`
+- OK (0.000s): `python simulations\\run_meta_checks.py`
+- OK (0.000s): `python simulations\\run_capability_checks.py`
+- OK (0.000s): `python scripts\\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\\audit_local_install_sync.py --json`
+- OK (0.000s): `python scripts\\check_install.py`
+
+### Findings
+- FlowGuard route-display model now detects draft or repair candidate projection, draft display-plan writes, draft-backed snapshots, draft-backed route signs, and previous committed visible route overwrite.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Remote GitHub sync intentionally skipped; only local repo and installed local skill were updated.

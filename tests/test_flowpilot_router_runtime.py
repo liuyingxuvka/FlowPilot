@@ -2055,9 +2055,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.complete_pre_route_gates(root)
         route_plan = read_json(run_root / "display_plan.json")
-        self.assertEqual(route_plan["source_role"], "project_manager")
-        self.assertEqual(route_plan["source_event"], "pm_writes_route_draft")
-        self.assertEqual(route_plan["items"][0]["id"], "node-001")
+        self.assertNotEqual(route_plan.get("source_event"), "pm_writes_route_draft")
+        self.assertNotEqual(route_plan.get("scope"), "route")
+        self.assertNotEqual(route_plan["items"][0]["id"], "node-001")
+        draft_visibility = read_json(router.run_state_path(run_root))["draft_route_visibility"]
+        self.assertFalse(draft_visibility["user_visible"])
+        self.assertEqual(draft_visibility["reason"], "draft_routes_are_internal_until_pm_activates_reviewed_flow_json")
 
         index_path = root / ".flowpilot" / "index.json"
         index = read_json(index_path)
@@ -2071,7 +2074,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["display_kind"], "route_map")
         self.assertEqual(action["display_text_format"], "markdown_mermaid")
         self.assertTrue(action["route_sign_display_required"])
-        self.assertIn(action["route_sign_source_kind"], {"flow_json", "flow_draft", "route_state_snapshot"})
+        self.assertIn(action["route_sign_source_kind"], {"flow_json", "route_state_snapshot"})
+        self.assertNotEqual(action["route_sign_source_kind"], "flow_draft")
         self.assertIn("# FlowPilot Route Sign", action["display_text"])
         self.assertIn("```mermaid", action["display_text"])
         self.assertIn("route=route-001", action["display_text"])

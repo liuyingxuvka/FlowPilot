@@ -171,7 +171,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(payload["active_node"], "node-004-desktop-implementation")
         self.assertIn("node-004-desktop-implementation", payload["mermaid"])
 
-    def test_draft_route_with_node_id_aliases_renders_real_route_nodes(self) -> None:
+    def test_draft_route_with_node_id_aliases_is_not_user_visible_by_default(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-draft-"))
         run_root = root / ".flowpilot" / "runs" / "run-test"
         nodes = [
@@ -205,17 +205,26 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             reviewer_check=False,
         )
 
-        self.assertEqual(payload["route_source_kind"], "flow_draft")
-        self.assertEqual(payload["route_node_count"], 5)
-        self.assertEqual(payload["route_checklist_item_count"], 10)
-        self.assertEqual(payload["route_sign_layout"], "route_nodes")
-        self.assertEqual(payload["active_route"], "route-001")
-        self.assertEqual(payload["active_node"], "node-002")
-        self.assertIn("route=route-001", payload["mermaid"])
-        self.assertIn("node=node-002", payload["mermaid"])
-        self.assertIn("Now: node-002", payload["mermaid"])
-        self.assertNotIn("route=unknown", payload["mermaid"])
-        self.assertNotIn("node=unknown", payload["mermaid"])
+        self.assertEqual(payload["route_source_kind"], "none")
+        self.assertEqual(payload["route_node_count"], 0)
+        self.assertEqual(payload["route_checklist_item_count"], 0)
+        self.assertNotEqual(payload["route_sign_layout"], "route_nodes")
+
+        diagnostic_payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="key_node_change",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+            include_drafts=True,
+        )
+        self.assertEqual(diagnostic_payload["route_source_kind"], "flow_draft")
+        self.assertEqual(diagnostic_payload["route_node_count"], 5)
+        self.assertEqual(diagnostic_payload["route_checklist_item_count"], 10)
+        self.assertEqual(diagnostic_payload["route_sign_layout"], "route_nodes")
 
     def test_route_state_snapshot_fallback_renders_real_route_nodes(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-snapshot-"))
@@ -232,6 +241,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
         _write_json(run_root / "state.json", {})
         _write_json(run_root / "execution_frontier.json", {"frontier_version": 4})
+        _write_json(run_root / "routes" / "route-001" / "flow.json", {"route_id": "route-001", "route_version": 8, "nodes": []})
         _write_json(
             run_root / "route_state_snapshot.json",
             {"route": {"route_id": "route-001", "route_version": 8, "active_node_id": "node-003", "nodes": nodes}},

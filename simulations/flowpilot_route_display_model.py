@@ -1,22 +1,22 @@
-"""FlowGuard model for FlowPilot route display projection lifecycle.
+"""FlowGuard model for FlowPilot committed-route display lifecycle.
 
 Risk intent brief:
-- Prevent FlowPilot from showing a stale startup ``route=unknown`` sign or a
-  compressed display-plan bullet list after the PM has authored a real route.
-- Protect the canonical route/frontier/snapshot authority boundary: Controller
-  may display derived route signs, but it may not invent route nodes from chat
-  history or expose sealed packet/result body content.
-- Critical durable state: route draft or active route, execution frontier,
-  route_state_snapshot, display_plan, user-flow-diagram Markdown/Mermaid,
-  Cockpit route-map source, and user_dialog_display_ledger.
-- Adversarial branches include draft-only routes without flow.json, node_id/id
-  alias drift, active_route_id/active_node_id alias drift, bullet-list chat
-  fallback after route draft, stale startup Mermaid, generated files without a
-  visible receipt, Cockpit/chat source drift, checklist loss, status conflation,
-  and accidental internal evidence/source-field display.
-- Hard invariant: once a route source exists, every user-visible route map must
-  be derived from the canonical route/frontier/snapshot source and rendered as
-  a Mermaid route sign unless a degraded Mermaid source is explicitly recorded.
+- Prevent FlowPilot from presenting ``flow.draft.json`` as a user-visible route
+  commitment in chat or Cockpit.
+- Protect the canonical source-of-truth boundary: drafts and repair candidates
+  are internal review artifacts, while the user-visible route map may only read
+  the last committed ``flow.json`` or a snapshot explicitly built from it.
+- Critical durable state: draft route, route check results, committed route,
+  execution frontier, route_state_snapshot, display_plan, route-sign files,
+  Cockpit/chat receipts, and the previous committed visible route.
+- Adversarial branches include draft-only routes with no ``flow.json``,
+  draft-backed display plans, draft-backed snapshots, draft-backed route signs,
+  repair candidates shown before recheck, previous committed routes overwritten
+  by drafts, Cockpit/chat source drift, checklist loss, status conflation, and
+  accidental internal evidence/source-field display.
+- Hard invariant: user-visible route maps are committed-route only. A draft may
+  be reviewed internally, but it must not advance the visible route generation,
+  replace the visible display plan, or become the Cockpit/chat route source.
 - Blindspot: this is a display-control model. It does not render or visually
   inspect Mermaid; runtime tests and live conformance cover concrete files.
 """
@@ -30,12 +30,13 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 SCENARIOS = (
-    "startup no route",
-    "PM writes route draft",
-    "PM activates reviewed route",
+    "startup no committed route",
+    "PM writes internal route draft",
+    "route draft is reviewed without user-visible projection",
+    "PM activates reviewed route as flow.json",
     "major node entry/current node starts",
     "current node completes and moves to next",
-    "route mutation or review-failure repair return",
+    "route mutation or review-failure repair candidate remains internal",
     "Cockpit unavailable, chat fallback required",
     "Cockpit available, same graph source used by UI and chat fallback",
 )
@@ -58,9 +59,15 @@ class State:
     steps: int = 0
 
     startup_displayed: bool = False
-    route_phase: str = "startup"  # startup | draft | active | node_entry | node_complete | repair_return
+    route_phase: str = "startup"  # startup | draft | review | committed | node_entry | node_complete | repair_return
+    draft_route_exists: bool = False
+    draft_review_passed: bool = False
+    repair_candidate_exists: bool = False
+    committed_route_exists: bool = False
+    previous_committed_visible_route_exists: bool = False
     route_source_exists: bool = False
-    route_source_kind: str = "none"  # none | draft | active | snapshot
+    route_source_kind: str = "none"  # none | flow_json | snapshot_from_flow_json
+    visible_source_kind: str = "none"  # none | waiting | flow_json | snapshot_from_flow_json | flow_draft | repair_candidate
     route_source_is_canonical: bool = True
     controller_invented_nodes: bool = False
     route_node_aliases_supported: bool = False
@@ -72,8 +79,12 @@ class State:
     route_statuses_distinct: bool = True
     display_plan_preserved_native_projection: bool = True
     display_plan_only_source: bool = False
+    draft_wrote_visible_display_plan: bool = False
+    route_state_snapshot_backed_by_draft: bool = False
 
     route_generation: int = 0
+    draft_generation: int = 0
+    committed_generation: int = 0
     diagram_generation: int = 0
     visible_generation: int = 0
     diagram_written: bool = False
@@ -111,26 +122,70 @@ def _inc(state: State, **changes: object) -> State:
     return replace(state, steps=state.steps + 1, status="running", **changes)
 
 
-def _route_dirty(state: State, *, phase: str, source_kind: str, cockpit_available: bool | None = None) -> State:
+def _draft_written(state: State, *, repair: bool = False) -> State:
     return _inc(
         state,
-        route_phase=phase,
-        route_source_exists=True,
-        route_source_kind=source_kind,
+        route_phase="repair_return" if repair else "draft",
+        draft_route_exists=True,
+        repair_candidate_exists=repair,
+        route_source_exists=state.committed_route_exists,
+        route_source_kind=state.route_source_kind,
         route_source_is_canonical=True,
         route_node_aliases_supported=True,
         frontier_aliases_supported=True,
-        draft_route_fallback_supported=True,
+        draft_route_fallback_supported=False,
         snapshot_fallback_supported=True,
         route_nodes_real=True,
         route_checklists_preserved=True,
         route_statuses_distinct=True,
-        route_generation=state.route_generation + 1,
+        draft_generation=state.draft_generation + 1,
+        route_generation=state.route_generation,
+        diagram_generation=state.diagram_generation,
+        visible_generation=state.visible_generation,
+        visible_source_kind=state.visible_source_kind,
+        chat_display_kind=state.chat_display_kind,
+        cockpit_display_kind=state.cockpit_display_kind,
+        user_dialog_display_ledger_recorded=state.user_dialog_display_ledger_recorded,
+        cockpit_receipt_recorded=state.cockpit_receipt_recorded,
+        generated_files_only=False,
+        cockpit_available=state.cockpit_available,
+    )
+
+
+def _committed_route_dirty(
+    state: State,
+    *,
+    phase: str,
+    source_kind: str,
+    cockpit_available: bool | None = None,
+) -> State:
+    committed_generation = state.committed_generation + 1
+    return _inc(
+        state,
+        route_phase=phase,
+        draft_route_exists=False,
+        draft_review_passed=False,
+        repair_candidate_exists=False,
+        committed_route_exists=True,
+        previous_committed_visible_route_exists=True,
+        route_source_exists=True,
+        route_source_kind=source_kind,
+        visible_source_kind=state.visible_source_kind,
+        route_source_is_canonical=True,
+        route_node_aliases_supported=True,
+        frontier_aliases_supported=True,
+        draft_route_fallback_supported=False,
+        snapshot_fallback_supported=True,
+        route_nodes_real=True,
+        route_checklists_preserved=True,
+        route_statuses_distinct=True,
+        route_generation=committed_generation,
+        committed_generation=committed_generation,
         diagram_generation=state.diagram_generation,
         visible_generation=state.visible_generation,
         mermaid_source_available=False,
-        mermaid_route_unknown=True,
-        mermaid_node_unknown=True,
+        mermaid_route_unknown=False,
+        mermaid_node_unknown=False,
         mermaid_uses_route_nodes=False,
         mermaid_uses_canonical_source=False,
         chat_display_kind="none",
@@ -190,15 +245,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.route_phase == "startup" and not state.startup_displayed:
         yield Transition(
-            "startup_no_route_displays_stage_mermaid_with_ledger",
+            "startup_no_committed_route_displays_waiting_state_with_ledger",
             _inc(
                 state,
                 startup_displayed=True,
-                diagram_written=True,
-                mermaid_source_available=True,
-                mermaid_route_unknown=True,
-                mermaid_node_unknown=True,
-                chat_display_kind="mermaid",
+                diagram_written=False,
+                mermaid_source_available=False,
+                mermaid_route_unknown=False,
+                mermaid_node_unknown=False,
+                visible_source_kind="waiting",
+                chat_display_kind="degraded",
+                mermaid_degraded_reason_recorded=True,
                 user_dialog_display_ledger_recorded=True,
                 visible_generation=0,
             ),
@@ -207,18 +264,32 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.route_phase == "startup":
         yield Transition(
-            "pm_writes_route_draft_with_real_nodes_and_checklists",
-            _route_dirty(state, phase="draft", source_kind="draft", cockpit_available=False),
+            "pm_writes_internal_route_draft_without_visible_projection",
+            _draft_written(state, repair=False),
         )
         return
 
-    if state.route_source_exists and state.diagram_generation < state.route_generation:
+    if state.route_phase == "draft":
         yield Transition(
-            "router_refreshes_mermaid_from_canonical_route_source",
+            "process_product_reviewer_checks_draft_without_visible_projection",
+            _inc(state, route_phase="review", draft_review_passed=True),
+        )
+        return
+
+    if state.route_phase == "review":
+        yield Transition(
+            "pm_activates_reviewed_route_as_committed_flow_json",
+            _committed_route_dirty(state, phase="committed", source_kind="flow_json"),
+        )
+        return
+
+    if state.committed_route_exists and state.diagram_generation < state.committed_generation:
+        yield Transition(
+            "router_refreshes_mermaid_from_committed_route_source",
             _inc(
                 state,
                 diagram_written=True,
-                diagram_generation=state.route_generation,
+                diagram_generation=state.committed_generation,
                 mermaid_source_available=True,
                 mermaid_route_unknown=False,
                 mermaid_node_unknown=False,
@@ -229,16 +300,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.route_source_exists and state.visible_generation < state.route_generation:
+    if state.committed_route_exists and state.visible_generation < state.committed_generation:
         yield Transition(
-            "chat_fallback_displays_mermaid_route_sign_and_records_ledger",
+            "committed_route_synced_to_user_visible_surface",
             _inc(
                 state,
                 chat_fallback_required=True,
                 chat_display_kind="mermaid",
+                visible_source_kind=state.route_source_kind,
                 user_dialog_display_ledger_recorded=True,
                 generated_files_only=False,
-                visible_generation=state.route_generation,
+                visible_generation=state.committed_generation,
             ),
         )
         yield Transition(
@@ -249,53 +321,58 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 cockpit_display_kind="route_map",
                 cockpit_receipt_recorded=True,
                 chat_display_kind="mermaid",
+                visible_source_kind=state.route_source_kind,
                 user_dialog_display_ledger_recorded=True,
                 same_graph_source_for_chat_and_cockpit=True,
                 generated_files_only=False,
-                visible_generation=state.route_generation,
+                visible_generation=state.committed_generation,
             ),
         )
         return
 
-    if state.route_phase == "draft":
-        yield Transition(
-            "pm_activates_reviewed_route_and_marks_display_dirty",
-            _route_dirty(state, phase="active", source_kind="active"),
-        )
-        return
-
-    if state.route_phase == "active":
-        yield Transition(
-            "major_node_entry_marks_route_sign_dirty",
-            _route_dirty(state, phase="node_entry", source_kind="snapshot"),
-        )
-        return
-
-    if state.route_phase == "node_entry":
-        yield Transition(
-            "current_node_completion_moves_to_next_and_marks_display_dirty",
-            _route_dirty(state, phase="node_complete", source_kind="snapshot"),
-        )
-        return
-
-    if state.route_phase == "node_complete":
-        yield Transition(
-            "route_mutation_or_review_failure_return_marks_display_dirty",
-            _route_dirty(state, phase="repair_return", source_kind="snapshot"),
-        )
-        return
-
-    if state.route_phase == "repair_return":
+    if (
+        state.route_phase == "committed"
+        and state.committed_generation >= 4
+        and state.visible_generation == state.committed_generation
+    ):
         yield Transition(
             "route_display_projection_lifecycle_complete",
             replace(state, status="complete", steps=state.steps + 1),
         )
         return
 
+    if state.route_phase == "committed":
+        yield Transition(
+            "major_node_entry_marks_route_sign_dirty",
+            _committed_route_dirty(state, phase="node_entry", source_kind="snapshot_from_flow_json"),
+        )
+        return
+
+    if state.route_phase == "node_entry":
+        yield Transition(
+            "current_node_completion_moves_to_next_and_marks_display_dirty",
+            _committed_route_dirty(state, phase="node_complete", source_kind="snapshot_from_flow_json"),
+        )
+        return
+
+    if state.route_phase == "node_complete":
+        yield Transition(
+            "route_mutation_or_review_failure_repair_candidate_stays_internal",
+            _draft_written(state, repair=True),
+        )
+        return
+
+    if state.route_phase == "repair_return" and state.repair_candidate_exists:
+        yield Transition(
+            "pm_activates_reviewed_repair_as_committed_flow_json",
+            _committed_route_dirty(state, phase="committed", source_kind="flow_json"),
+        )
+        return
+
 
 def visible_route_map_uses_canonical_source(state: State, trace) -> InvariantResult:
     del trace
-    if state.route_source_exists and state.visible_generation == state.route_generation:
+    if state.committed_route_exists and state.visible_generation == state.committed_generation:
         if state.controller_invented_nodes or not state.route_source_is_canonical:
             return InvariantResult.fail(
                 "user-visible route map was not derived from canonical route/frontier/snapshot"
@@ -303,19 +380,57 @@ def visible_route_map_uses_canonical_source(state: State, trace) -> InvariantRes
     return InvariantResult.pass_()
 
 
+def visible_route_map_is_committed_only(state: State, trace) -> InvariantResult:
+    del trace
+    if state.visible_source_kind in {"flow_draft", "repair_candidate"}:
+        return InvariantResult.fail("draft or repair candidate was projected to the user-visible route surface")
+    if state.chat_display_kind == "mermaid" or state.cockpit_display_kind == "route_map":
+        if state.visible_source_kind not in {"flow_json", "snapshot_from_flow_json"}:
+            return InvariantResult.fail("user-visible route map did not come from committed flow.json state")
+        if not state.committed_route_exists:
+            return InvariantResult.fail("user-visible route map was displayed before a committed flow.json existed")
+    return InvariantResult.pass_()
+
+
+def draft_review_cannot_update_visible_route_plan(state: State, trace) -> InvariantResult:
+    del trace
+    if state.draft_wrote_visible_display_plan:
+        return InvariantResult.fail("route draft wrote or replaced the user-visible display plan")
+    if state.route_state_snapshot_backed_by_draft:
+        return InvariantResult.fail("user-visible route_state_snapshot was backed by flow.draft.json")
+    if state.draft_route_fallback_supported:
+        return InvariantResult.fail("user-visible route sign generator allowed flow.draft.json fallback")
+    if state.draft_route_exists and not state.committed_route_exists and state.visible_source_kind != "waiting":
+        return InvariantResult.fail("draft-only run did not keep the user-visible surface in waiting state")
+    if state.repair_candidate_exists and state.visible_source_kind == "repair_candidate":
+        return InvariantResult.fail("repair candidate was displayed before committed activation")
+    return InvariantResult.pass_()
+
+
+def draft_cannot_overwrite_previous_committed_visible_route(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.previous_committed_visible_route_exists
+        and state.draft_route_exists
+        and state.visible_source_kind == "flow_draft"
+    ):
+        return InvariantResult.fail("new draft overwrote the previous committed visible route")
+    return InvariantResult.pass_()
+
+
 def route_source_replaces_startup_unknown_mermaid(state: State, trace) -> InvariantResult:
     del trace
-    if state.route_source_exists and state.visible_generation == state.route_generation:
+    if state.committed_route_exists and state.visible_generation == state.committed_generation:
         if state.mermaid_route_unknown or state.mermaid_node_unknown:
             return InvariantResult.fail(
-                "route draft or active route existed but user-visible Mermaid still showed route=unknown or node=unknown"
+                "committed route existed but user-visible Mermaid still showed route=unknown or node=unknown"
             )
     return InvariantResult.pass_()
 
 
 def chat_fallback_is_mermaid_or_explicitly_degraded(state: State, trace) -> InvariantResult:
     del trace
-    if state.route_source_exists and state.chat_fallback_required and state.visible_generation == state.route_generation:
+    if state.committed_route_exists and state.chat_fallback_required and state.visible_generation == state.committed_generation:
         if state.chat_display_kind == "bullet":
             return InvariantResult.fail("chat fallback displayed bullet list instead of Mermaid route sign")
         if state.chat_display_kind == "degraded" and not state.mermaid_degraded_reason_recorded:
@@ -327,7 +442,7 @@ def chat_fallback_is_mermaid_or_explicitly_degraded(state: State, trace) -> Inva
 
 def cockpit_and_chat_share_canonical_graph_source(state: State, trace) -> InvariantResult:
     del trace
-    if state.cockpit_available and state.visible_generation == state.route_generation:
+    if state.cockpit_available and state.visible_generation == state.committed_generation:
         if not state.same_graph_source_for_chat_and_cockpit:
             return InvariantResult.fail("Cockpit route map and chat fallback used different route sources")
     return InvariantResult.pass_()
@@ -335,7 +450,7 @@ def cockpit_and_chat_share_canonical_graph_source(state: State, trace) -> Invari
 
 def route_nodes_and_checklists_are_preserved(state: State, trace) -> InvariantResult:
     del trace
-    if state.route_source_exists and state.visible_generation == state.route_generation:
+    if state.committed_route_exists and state.visible_generation == state.committed_generation:
         if not (state.route_nodes_real and state.route_checklists_preserved):
             return InvariantResult.fail("route display dropped real major nodes or node checklists")
     return InvariantResult.pass_()
@@ -343,14 +458,14 @@ def route_nodes_and_checklists_are_preserved(state: State, trace) -> InvariantRe
 
 def route_statuses_remain_distinct(state: State, trace) -> InvariantResult:
     del trace
-    if state.route_source_exists and state.visible_generation == state.route_generation and not state.route_statuses_distinct:
+    if state.committed_route_exists and state.visible_generation == state.committed_generation and not state.route_statuses_distinct:
         return InvariantResult.fail("completed, active, selected, blocked, or pending node states were conflated")
     return InvariantResult.pass_()
 
 
 def visible_display_requires_receipt_not_files_only(state: State, trace) -> InvariantResult:
     del trace
-    if state.route_source_exists and state.visible_generation == state.route_generation:
+    if state.committed_route_exists and state.visible_generation == state.committed_generation:
         if state.generated_files_only or not (state.user_dialog_display_ledger_recorded or state.cockpit_receipt_recorded):
             return InvariantResult.fail("generated route diagram files existed without a user-visible display receipt")
     return InvariantResult.pass_()
@@ -366,6 +481,21 @@ def display_does_not_break_sealed_body_boundary_or_leak_evidence(state: State, t
 
 
 INVARIANTS = (
+    Invariant(
+        name="visible_route_map_is_committed_only",
+        description="Drafts and repair candidates never become the user-visible route source.",
+        predicate=visible_route_map_is_committed_only,
+    ),
+    Invariant(
+        name="draft_review_cannot_update_visible_route_plan",
+        description="Draft and review stages preserve waiting or previous committed user-visible state.",
+        predicate=draft_review_cannot_update_visible_route_plan,
+    ),
+    Invariant(
+        name="draft_cannot_overwrite_previous_committed_visible_route",
+        description="A new draft cannot replace the last committed visible route.",
+        predicate=draft_cannot_overwrite_previous_committed_visible_route,
+    ),
     Invariant(
         name="visible_route_map_uses_canonical_source",
         description="Visible route maps come from canonical route/frontier/snapshot state.",
@@ -422,18 +552,22 @@ def _safe_visible_route_base(**changes: object) -> State:
     return replace(
         State(
             status="running",
-            route_phase="draft",
+            route_phase="committed",
+            committed_route_exists=True,
+            previous_committed_visible_route_exists=True,
             route_source_exists=True,
-            route_source_kind="snapshot",
+            route_source_kind="snapshot_from_flow_json",
+            visible_source_kind="snapshot_from_flow_json",
             route_source_is_canonical=True,
             route_node_aliases_supported=True,
             frontier_aliases_supported=True,
-            draft_route_fallback_supported=True,
+            draft_route_fallback_supported=False,
             snapshot_fallback_supported=True,
             route_nodes_real=True,
             route_checklists_preserved=True,
             route_statuses_distinct=True,
             route_generation=1,
+            committed_generation=1,
             diagram_generation=1,
             visible_generation=1,
             diagram_written=True,
@@ -454,6 +588,37 @@ def _safe_visible_route_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
+        "draft_route_projected_to_user_visible_surface": _safe_visible_route_base(
+            route_phase="draft",
+            draft_route_exists=True,
+            committed_route_exists=False,
+            visible_source_kind="flow_draft",
+        ),
+        "draft_writes_visible_display_plan": _safe_visible_route_base(
+            draft_route_exists=True,
+            draft_wrote_visible_display_plan=True,
+        ),
+        "draft_backed_route_state_snapshot_visible": _safe_visible_route_base(
+            route_state_snapshot_backed_by_draft=True,
+        ),
+        "draft_backed_chat_route_sign": _safe_visible_route_base(
+            draft_route_fallback_supported=True,
+        ),
+        "draft_only_run_leaves_waiting_state": _safe_visible_route_base(
+            route_phase="draft",
+            draft_route_exists=True,
+            committed_route_exists=False,
+            visible_source_kind="flow_draft",
+        ),
+        "draft_overwrites_previous_committed_visible_route": _safe_visible_route_base(
+            draft_route_exists=True,
+            previous_committed_visible_route_exists=True,
+            visible_source_kind="flow_draft",
+        ),
+        "repair_candidate_projected_before_commit": _safe_visible_route_base(
+            repair_candidate_exists=True,
+            visible_source_kind="repair_candidate",
+        ),
         "controller_invents_route_nodes": _safe_visible_route_base(
             controller_invented_nodes=True,
         ),
@@ -500,20 +665,21 @@ def hazard_states() -> dict[str, State]:
 
 def current_implementation_failure_trace() -> dict[str, object]:
     state = _safe_visible_route_base(
-        mermaid_route_unknown=True,
-        mermaid_node_unknown=True,
-        mermaid_uses_route_nodes=False,
-        mermaid_uses_canonical_source=False,
-        chat_display_kind="bullet",
-        display_plan_only_source=True,
+        route_phase="draft",
+        draft_route_exists=True,
+        committed_route_exists=False,
+        visible_source_kind="flow_draft",
+        draft_wrote_visible_display_plan=True,
+        route_state_snapshot_backed_by_draft=True,
+        draft_route_fallback_supported=True,
     )
     return {
         "labels": [
-            "startup_no_route_displays_stage_mermaid_with_ledger",
-            "pm_writes_route_draft_with_real_nodes_and_checklists",
-            "current_sync_display_plan_projects_display_plan_as_bullets",
-            "current_mermaid_generator_reads_missing_flow_json_and_old_alias_fields",
-            "user_dialog_display_ledger_records_route_map_bullet_display_while_mermaid_remains_unknown",
+            "startup_no_committed_route_displays_waiting_state_with_ledger",
+            "pm_writes_internal_route_draft_without_visible_projection",
+            "current_router_writes_display_plan_from_flow_draft",
+            "current_route_sign_generator_accepts_flow_draft_fallback",
+            "user_dialog_or_cockpit_can_receive_a_draft_backed_route_map",
         ],
         "failures": invariant_failures(state),
         "state": state.__dict__,

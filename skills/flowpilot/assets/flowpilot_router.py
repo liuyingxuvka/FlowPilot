@@ -9395,10 +9395,9 @@ def _active_route_payload(run_root: Path, route_id: str | None = None) -> dict[s
     route_root = run_root / "routes"
     candidates: list[Path] = []
     if route_id:
-        candidates.extend([route_root / route_id / "flow.json", route_root / route_id / "flow.draft.json"])
+        candidates.append(route_root / route_id / "flow.json")
     if route_root.exists():
         candidates.extend(sorted(route_root.glob("*/flow.json")))
-        candidates.extend(sorted(route_root.glob("*/flow.draft.json")))
     seen: set[Path] = set()
     for path in candidates:
         if path in seen:
@@ -10191,16 +10190,14 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
         **_role_output_envelope_record(payload),
     }
     write_json(route_root / "flow.draft.json", route_payload)
-    _write_display_plan_from_route(
-        project_root,
-        run_root,
-        run_state,
-        route_id=route_id,
-        route_version=int(route_payload["route_version"]),
-        route_payload=route_payload,
-        active_node_id=None,
-        source_event="pm_writes_route_draft",
-    )
+    run_state["draft_route_visibility"] = {
+        "route_id": route_id,
+        "route_version": int(route_payload["route_version"]),
+        "draft_path": project_relative(project_root, route_root / "flow.draft.json"),
+        "user_visible": False,
+        "reason": "draft_routes_are_internal_until_pm_activates_reviewed_flow_json",
+        "recorded_at": utc_now(),
+    }
 
 
 def _reset_route_review_after_route_draft_repair(run_state: dict[str, Any]) -> None:

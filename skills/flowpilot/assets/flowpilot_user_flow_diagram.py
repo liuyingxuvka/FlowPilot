@@ -599,7 +599,13 @@ def _route_source_summary(route: dict[str, Any]) -> dict[str, int]:
     }
 
 
-def _route_source_candidates(routes_root: Path, active_route: str | None, snapshot_route_id: str | None) -> list[Path]:
+def _route_source_candidates(
+    routes_root: Path,
+    active_route: str | None,
+    snapshot_route_id: str | None,
+    *,
+    include_drafts: bool = False,
+) -> list[Path]:
     route_ids: list[str] = []
     for raw in (active_route, snapshot_route_id, "route-001"):
         if raw and raw not in route_ids:
@@ -607,10 +613,13 @@ def _route_source_candidates(routes_root: Path, active_route: str | None, snapsh
     candidates: list[Path] = []
     for route_id in route_ids:
         route_dir = routes_root / route_id
-        candidates.extend([route_dir / "flow.json", route_dir / "flow.draft.json"])
+        candidates.append(route_dir / "flow.json")
+        if include_drafts:
+            candidates.append(route_dir / "flow.draft.json")
     if routes_root.exists():
         candidates.extend(sorted(routes_root.glob("*/flow.json")))
-        candidates.extend(sorted(routes_root.glob("*/flow.draft.json")))
+        if include_drafts:
+            candidates.extend(sorted(routes_root.glob("*/flow.draft.json")))
     seen: set[Path] = set()
     unique: list[Path] = []
     for path in candidates:
@@ -625,17 +634,32 @@ def _load_route_source(
     *,
     active_route: str | None,
     snapshot: dict[str, Any],
+    include_drafts: bool = False,
 ) -> tuple[dict[str, Any], Path, str]:
     routes_root = Path(paths["routes_root"])
     snapshot_path = Path(paths["run_root"]) / "route_state_snapshot.json"
     snapshot_route = _snapshot_route(snapshot)
     snapshot_route_id = str(snapshot_route.get("route_id") or "") or None
-    for path in _route_source_candidates(routes_root, active_route, snapshot_route_id):
+    for path in _route_source_candidates(
+        routes_root,
+        active_route,
+        snapshot_route_id,
+        include_drafts=include_drafts,
+    ):
         route = _load_json(path)
         if route.get("nodes"):
             suffix = "flow_json" if path.name == "flow.json" else "flow_draft"
             return route, path, suffix
-    if snapshot_route.get("nodes"):
+    committed_route_exists = any(
+        path.exists()
+        for path in _route_source_candidates(
+            routes_root,
+            active_route,
+            snapshot_route_id,
+            include_drafts=False,
+        )
+    )
+    if snapshot_route.get("nodes") and committed_route_exists:
         return snapshot_route, snapshot_path, "route_state_snapshot"
     fallback_route_id = active_route or snapshot_route_id or "route-001"
     return {}, routes_root / fallback_route_id / "flow.json", "none"
@@ -693,6 +717,7 @@ def generate(
     mark_chat_displayed: bool,
     mark_ui_displayed: bool,
     reviewer_check: bool,
+    include_drafts: bool = False,
 ) -> dict[str, Any]:
     paths = resolve_flowpilot_paths(root)
     frontier_path = Path(paths["frontier_path"])
@@ -717,6 +742,7 @@ def generate(
             paths,
             active_route=active_route,
             snapshot=snapshot,
+            include_drafts=include_drafts,
         )
     else:
         route = {}
@@ -881,6 +907,11 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Print JSON metadata")
     parser.add_argument("--markdown", action="store_true", help="Print chat-ready Markdown instead of Mermaid source")
     parser.add_argument(
+        "--include-drafts",
+        action="store_true",
+        help="Diagnostic only: allow flow.draft.json as a route-sign source.",
+    )
+    parser.add_argument(
         "--trigger",
         default="user_request",
         choices=sorted(DISPLAY_TRIGGERS),
@@ -919,6 +950,7 @@ def main() -> int:
         mark_chat_displayed=_truthy(args.mark_chat_displayed),
         mark_ui_displayed=_truthy(args.mark_ui_displayed),
         reviewer_check=_truthy(args.reviewer_check),
+        include_drafts=_truthy(args.include_drafts),
     )
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))

@@ -13,22 +13,31 @@ import flowpilot_route_display_model as model
 
 
 REQUIRED_LABELS = (
-    "startup_no_route_displays_stage_mermaid_with_ledger",
-    "pm_writes_route_draft_with_real_nodes_and_checklists",
-    "router_refreshes_mermaid_from_canonical_route_source",
-    "chat_fallback_displays_mermaid_route_sign_and_records_ledger",
+    "startup_no_committed_route_displays_waiting_state_with_ledger",
+    "pm_writes_internal_route_draft_without_visible_projection",
+    "process_product_reviewer_checks_draft_without_visible_projection",
+    "pm_activates_reviewed_route_as_committed_flow_json",
+    "router_refreshes_mermaid_from_committed_route_source",
+    "committed_route_synced_to_user_visible_surface",
     "cockpit_displays_same_canonical_graph_and_records_receipt",
-    "pm_activates_reviewed_route_and_marks_display_dirty",
     "major_node_entry_marks_route_sign_dirty",
     "current_node_completion_moves_to_next_and_marks_display_dirty",
-    "route_mutation_or_review_failure_return_marks_display_dirty",
+    "route_mutation_or_review_failure_repair_candidate_stays_internal",
+    "pm_activates_reviewed_repair_as_committed_flow_json",
     "route_display_projection_lifecycle_complete",
 )
 
 
 HAZARD_EXPECTED_FAILURES = {
+    "draft_route_projected_to_user_visible_surface": "draft or repair candidate was projected to the user-visible route surface",
+    "draft_writes_visible_display_plan": "route draft wrote or replaced the user-visible display plan",
+    "draft_backed_route_state_snapshot_visible": "user-visible route_state_snapshot was backed by flow.draft.json",
+    "draft_backed_chat_route_sign": "user-visible route sign generator allowed flow.draft.json fallback",
+    "draft_only_run_leaves_waiting_state": "draft or repair candidate was projected to the user-visible route surface",
+    "draft_overwrites_previous_committed_visible_route": "draft or repair candidate was projected to the user-visible route surface",
+    "repair_candidate_projected_before_commit": "draft or repair candidate was projected to the user-visible route surface",
     "controller_invents_route_nodes": "user-visible route map was not derived from canonical route/frontier/snapshot",
-    "route_draft_keeps_startup_unknown_mermaid": "route draft or active route existed but user-visible Mermaid still showed route=unknown or node=unknown",
+    "route_draft_keeps_startup_unknown_mermaid": "committed route existed but user-visible Mermaid still showed route=unknown or node=unknown",
     "chat_fallback_bullet_list_after_route_draft": "chat fallback displayed bullet list instead of Mermaid route sign",
     "degraded_mermaid_without_reason": "chat fallback degraded without recording a Mermaid source reason",
     "cockpit_chat_source_drift": "Cockpit route map and chat fallback used different route sources",
@@ -45,11 +54,14 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|phase={state.route_phase}|startup={state.startup_displayed}|steps={state.steps}|"
         f"route={state.route_source_exists},{state.route_source_kind},canon={state.route_source_is_canonical},"
+        f"visible_source={state.visible_source_kind},draft={state.draft_route_exists},"
+        f"committed={state.committed_route_exists},repair={state.repair_candidate_exists},"
         f"nodes={state.route_nodes_real},checklist={state.route_checklists_preserved},"
         f"statuses={state.route_statuses_distinct}|aliases={state.route_node_aliases_supported},"
         f"{state.frontier_aliases_supported},draft={state.draft_route_fallback_supported},"
         f"snapshot={state.snapshot_fallback_supported}|gen={state.route_generation},"
         f"diagram={state.diagram_generation},visible={state.visible_generation}|"
+        f"draft_wrote_plan={state.draft_wrote_visible_display_plan},snapshot_draft={state.route_state_snapshot_backed_by_draft}|"
         f"mermaid={state.mermaid_source_available},unknown={state.mermaid_route_unknown},"
         f"{state.mermaid_node_unknown},route_nodes={state.mermaid_uses_route_nodes},"
         f"source={state.mermaid_uses_canonical_source}|chat={state.chat_display_kind},"
@@ -172,14 +184,14 @@ def _architecture_candidate() -> dict[str, object]:
         "principles": [
             "display_plan.json remains a native visible-plan projection, not the only user-facing route map",
             "Mermaid/chat route sign and Cockpit route map share canonical route/frontier/snapshot semantics",
-            "draft routes are valid display sources before flow.json activation",
+            "draft routes are internal-only until PM activates a reviewed flow.json route",
             "route_state_snapshot.route.nodes is the stable fallback when route file aliases drift",
             "display receipt is required; generated files alone do not satisfy user visibility",
         ],
         "minimal_runtime_change_set": [
-            "Teach flowpilot_user_flow_diagram.py route/frontier aliases and draft/snapshot fallback.",
-            "Refresh user-flow-diagram.* during sync_display_plan and use its Mermaid markdown as chat fallback display_text when route data exists.",
-            "Keep display_plan.json as host/native projection and record degraded reasons if Mermaid generation cannot use canonical route data.",
+            "Stop pm_writes_route_draft from replacing display_plan.json or visible route_state_snapshot with draft data.",
+            "Teach user-visible route-sign generation to ignore flow.draft.json unless a diagnostic/internal caller explicitly opts in.",
+            "Refresh user-flow-diagram.* during sync_display_plan only from committed flow.json or snapshots built from flow.json.",
         ],
     }
 
