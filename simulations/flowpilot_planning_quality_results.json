@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=84",
+    "summary": "sequences=3 initial_states=1 traces=114",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -32,6 +32,13 @@
           "node acceptance plan lacks skill-standard projection"
         ]
       },
+      "node_plan_not_mapped_to_product_model": {
+        "detected": true,
+        "expected_failure": "node acceptance plan is not mapped to a product model segment",
+        "failures": [
+          "node acceptance plan is not mapped to a product model segment"
+        ]
+      },
       "overmerged_complex_implementation_node": {
         "detected": true,
         "expected_failure": "route complexity does not match selected planning profile",
@@ -40,11 +47,39 @@
           "complex implementation work was overmerged into one unverifiable node"
         ]
       },
+      "pm_route_not_mapped_to_product_model": {
+        "detected": true,
+        "expected_failure": "PM route is not mapped to the product behavior model",
+        "failures": [
+          "PM route is not mapped to the product behavior model"
+        ]
+      },
+      "process_officer_route_viability_missing": {
+        "detected": true,
+        "expected_failure": "Process FlowGuard Officer did not validate route viability against the product model",
+        "failures": [
+          "Process FlowGuard Officer did not validate route viability against the product model"
+        ]
+      },
+      "product_model_missing": {
+        "detected": true,
+        "expected_failure": "route planning lacks a product behavior model from the Product FlowGuard Officer",
+        "failures": [
+          "route planning lacks a product behavior model from the Product FlowGuard Officer"
+        ]
+      },
       "profile_without_convergence_loop": {
         "detected": true,
         "expected_failure": "interactive UI route lacks required convergence loop",
         "failures": [
           "interactive UI route lacks required convergence loop"
+        ]
+      },
+      "repair_node_no_mainline_return": {
+        "detected": true,
+        "expected_failure": "repair node lacks a defined return to the mainline product route",
+        "failures": [
+          "repair node lacks a defined return to the mainline product route"
         ]
       },
       "reviewer_passes_hard_blindspot": {
@@ -117,11 +152,11 @@
       "valid_simple_route",
       "valid_ui_route"
     ],
-    "edge_count": 28,
+    "edge_count": 38,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 12,
-    "state_count": 29
+    "rejected_state_count": 17,
+    "state_count": 39
   }
 }

@@ -182,6 +182,7 @@
         "Status",
         "Evidence",
         "Open Issues",
+        "PM Suggestion Items",
         "Contract Self-Check"
       ],
       "conditional_required_result_body_sections": {
@@ -220,6 +221,7 @@
         "Status",
         "Evidence",
         "Open Issues",
+        "PM Suggestion Items",
         "Contract Self-Check"
       ],
       "conditional_required_result_body_sections": {
@@ -257,6 +259,7 @@
         "Evidence",
         "Findings",
         "Open Issues",
+        "PM Suggestion Items",
         "Contract Self-Check"
       ],
       "conditional_required_result_body_sections": {
@@ -299,6 +302,7 @@
         "findings",
         "blockers",
         "residual_risks",
+        "pm_suggestion_items",
         "contract_self_check"
       ],
       "required_body_values": {
@@ -324,6 +328,7 @@
         "hard_invariants",
         "skipped_checks",
         "confidence_boundary",
+        "pm_suggestion_items",
         "contract_self_check"
       ],
       "contract_self_check_required": true
@@ -441,6 +446,7 @@
         "findings",
         "blockers",
         "residual_risks",
+        "pm_suggestion_items",
         "contract_self_check"
       ],
       "required_body_values": {
@@ -541,6 +547,7 @@
         "findings",
         "blockers",
         "residual_risks",
+        "pm_suggestion_items",
         "contract_self_check"
       ],
       "required_body_values": {
@@ -574,6 +581,7 @@
         "findings",
         "blockers",
         "residual_risks",
+        "pm_suggestion_items",
         "contract_self_check"
       ],
       "required_body_values": {
@@ -904,6 +912,7 @@
         "independent_challenge.challenge_waivers",
         "blockers",
         "residual_risks",
+        "pm_suggestion_items",
         "contract_self_check"
       ],
       "required_body_values": {

@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 import flowpilot_router as router  # noqa: E402
 import card_runtime  # noqa: E402
 import packet_runtime  # noqa: E402
+import role_output_runtime  # noqa: E402
 
 
 STARTUP_ANSWERS = {
@@ -78,6 +79,78 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             hash_key: hashlib.sha256(output_path.read_bytes()).hexdigest(),
             "controller_visibility": "role_output_envelope_only",
         }
+
+    def write_event_envelope(self, root: Path, name: str, envelope: dict) -> tuple[str, str]:
+        run_root = self.run_root_for(root)
+        safe_name = name.strip("/").replace("\\", "/")
+        envelope_path = run_root / "mailbox" / "outbox" / "events" / f"{safe_name}.envelope.json"
+        envelope_path.parent.mkdir(parents=True, exist_ok=True)
+        envelope_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return self.rel(root, envelope_path), hashlib.sha256(envelope_path.read_bytes()).hexdigest()
+
+    def startup_fact_runtime_envelope(self, root: Path, name: str = "startup/reviewer_startup_fact_report") -> tuple[dict, str, str]:
+        run_root = self.run_root_for(root)
+        body_path = run_root / "test_role_outputs" / f"{name}.json"
+        body_path.parent.mkdir(parents=True, exist_ok=True)
+        body_path.write_text(json.dumps(self.startup_fact_report_body(root), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        body_ref = {
+            "path": self.rel(root, body_path),
+            "hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
+            "path_key": "report_path",
+            "hash_key": "report_hash",
+        }
+        receipt = {
+            "schema_version": role_output_runtime.ROLE_OUTPUT_RUNTIME_RECEIPT_SCHEMA,
+            "runtime_entrypoint": "submit_output",
+            "receipt_id": "test-startup-fact-report-runtime-receipt",
+            "run_id": run_root.name,
+            "role": "human_like_reviewer",
+            "agent_id": "agent-human_like_reviewer",
+            "output_type": "startup_fact_report",
+            "output_contract_id": "flowpilot.output_contract.startup_fact_report.v1",
+            "validation_status": "passed",
+            "body_path": body_ref["path"],
+            "body_hash": body_ref["hash"],
+            "controller_visibility": "receipt_metadata_only",
+            "controller_may_read_body": False,
+            "semantic_sufficiency_reviewed_by_runtime": False,
+        }
+        receipt_path = run_root / "role_output_runtime" / "receipts" / "startup_fact_report.receipt.json"
+        receipt_path.parent.mkdir(parents=True, exist_ok=True)
+        receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        envelope = {
+            "schema_version": role_output_runtime.ROLE_OUTPUT_ENVELOPE_SCHEMA,
+            "body_ref": body_ref,
+            "runtime_receipt_ref": {
+                "path": self.rel(root, receipt_path),
+                "hash": hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
+            },
+            "controller_visibility": "role_output_envelope_only",
+            "chat_response_body_allowed": False,
+            "event_name": "reviewer_reports_startup_facts",
+            "from_role": "human_like_reviewer",
+            "to_role": "controller",
+            "output_type": "startup_fact_report",
+            "output_contract_id": "flowpilot.output_contract.startup_fact_report.v1",
+            "role_output_runtime_validated": True,
+            "runtime_validates_mechanics_only": True,
+            "semantic_sufficiency_reviewed_by_runtime": False,
+        }
+        envelope_path, envelope_hash = self.write_event_envelope(root, name, envelope)
+        return envelope, envelope_path, envelope_hash
+
+    def material_scan_event_envelope(self, root: Path, name: str = "material/pm_material_scan") -> tuple[dict, str, str]:
+        payload = self.material_scan_file_backed_payload(root)
+        envelope = {
+            "schema_version": router.EVENT_ENVELOPE_SCHEMA,
+            "event": "pm_issues_material_and_capability_scan_packets",
+            "from_role": "project_manager",
+            "to_role": "controller",
+            "controller_visibility": "event_envelope_only",
+            "packets": payload["packets"],
+        }
+        envelope_path, envelope_hash = self.write_event_envelope(root, name, envelope)
+        return envelope, envelope_path, envelope_hash
 
     def model_miss_officer_report_body(self) -> dict:
         return {
@@ -346,6 +419,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         check_action = self.next_after_display_sync(root)
         self.assertEqual(check_action["action_type"], "check_card_return_event")
+        self.assertTrue(check_action["apply_required"])
         router.apply_action(root, "check_card_return_event")
 
     def deliver_user_intake_mail(self, root: Path) -> None:
@@ -806,7 +880,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(
                 root,
                 "flowguard/route_process_check",
-                {"reviewed_by_role": "process_flowguard_officer", "passed": True},
+                self.route_process_pass_body(),
             ),
         )
         self.deliver_expected_card(root, "product_officer.route_product_check")
@@ -816,7 +890,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(
                 root,
                 "flowguard/route_product_check",
-                {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                self.route_product_pass_body(),
             ),
         )
         self.deliver_expected_card(root, "reviewer.route_challenge")
@@ -829,6 +903,25 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
         )
+
+    def route_process_pass_body(self) -> dict:
+        return {
+            "reviewed_by_role": "process_flowguard_officer",
+            "passed": True,
+            "process_viability_verdict": "pass",
+            "product_behavior_model_checked": True,
+            "route_can_reach_product_model": True,
+            "repair_return_policy_checked": True,
+        }
+
+    def route_product_pass_body(self) -> dict:
+        return {
+            "reviewed_by_role": "product_flowguard_officer",
+            "passed": True,
+            "route_model_review_verdict": "pass",
+            "product_behavior_model_checked": True,
+            "route_maps_to_product_behavior_model": True,
+        }
 
     def write_current_node_acceptance_plan(self, root: Path) -> None:
         self.deliver_expected_card(root, "pm.current_node_loop")
@@ -1155,6 +1248,66 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ],
         }
 
+    def write_pm_suggestion_ledger(self, root: Path, entries: list[dict]) -> Path:
+        run_root = self.run_root_for(root)
+        ledger_path = run_root / "pm_suggestion_ledger.jsonl"
+        ledger_path.write_text(
+            "\n".join(json.dumps(entry, sort_keys=True) for entry in entries) + "\n",
+            encoding="utf-8",
+        )
+        return ledger_path
+
+    def pm_suggestion_entry(self, root: Path, *, clean: bool) -> dict:
+        run_root = self.run_root_for(root)
+        disposition = {
+            "status": "reject_with_reason" if clean else "pending",
+            "decided_by_role": "project_manager",
+            "decided_at": "2026-05-10T00:00:00Z" if clean else None,
+            "reason": "PM reviewed the nonblocking suggestion and rejected it for this route." if clean else None,
+            "target_node_or_gate_id": None,
+            "waiver_authority_role": None,
+            "route_version_impact": None,
+            "stale_evidence_handling": None,
+            "repair_or_reissue_target": None,
+            "same_review_class_recheck_required": False,
+            "flowpilot_skill_improvement_report_path": self.rel(
+                root,
+                run_root / "flowpilot_skill_improvement_report.json",
+            ),
+        }
+        return {
+            "schema_version": "flowpilot.pm_suggestion_item.v1",
+            "run_id": run_root.name,
+            "route_id": "route-001",
+            "route_version": 1,
+            "node_id": "node-001",
+            "gate_id": "gate-node-001",
+            "suggestion_id": "suggestion-001",
+            "recorded_at": "2026-05-10T00:00:00Z",
+            "source_role": "human_like_reviewer",
+            "source_output_ref": {
+                "path": self.rel(root, run_root / "reviews" / "terminal_backward_replay.json"),
+                "hash": None,
+                "sealed_body_content_copied": False,
+            },
+            "summary": "Reviewer suggested a higher-standard follow-up.",
+            "classification": "nonblocking_note" if clean else "current_gate_blocker",
+            "authority_basis": {
+                "reviewer_minimum_standard_failure": not clean,
+                "formal_flowguard_model_gate": False,
+                "worker_or_officer_advisory_only": False,
+                "reason": "Reviewer finding classification test fixture.",
+            },
+            "evidence_refs": [],
+            "pm_disposition": disposition,
+            "closure": {
+                "status": "closed" if clean else "open",
+                "closed_at": "2026-05-10T00:00:00Z" if clean else None,
+                "closure_evidence_refs": [],
+                "blocks_current_gate_until_closed": not clean,
+            },
+        }
+
     def terminal_replay_payload(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
         terminal_map = read_json(run_root / "terminal_human_backward_replay_map.json")
@@ -1399,6 +1552,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "pm_mutates_route_after_review_block",
             {
                 "repair_node_id": "node-001-acceptance-repair",
+                "repair_return_to_node_id": "node-001",
                 "reason": "node_acceptance_plan_review_block",
                 **self.prior_path_context_review(root, "Route mutation considered the node acceptance-plan reviewer block."),
             },
@@ -1457,6 +1611,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "pm_mutates_route_after_review_block",
             {
                 "repair_node_id": "node-001-dispatch-repair",
+                "repair_return_to_node_id": "node-001",
                 "reason": "current_node_dispatch_review_block",
                 **self.prior_path_context_review(root, "Route mutation considered the current-node dispatch reviewer block."),
             },
@@ -1796,7 +1951,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check",
-                    {"reviewed_by_role": "process_flowguard_officer", "passed": True},
+                    self.route_process_pass_body(),
                 ),
             )
         self.deliver_expected_card(root, "process_officer.route_process_check")
@@ -1806,7 +1961,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(
                 root,
                 "flowguard/route_process_check",
-                {"reviewed_by_role": "process_flowguard_officer", "passed": True},
+                self.route_process_pass_body(),
             ),
         )
 
@@ -1817,7 +1972,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 self.role_report_envelope(
                     root,
                     "flowguard/route_product_check",
-                    {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                    self.route_product_pass_body(),
                 ),
             )
         self.deliver_expected_card(root, "product_officer.route_product_check")
@@ -1827,7 +1982,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(
                 root,
                 "flowguard/route_product_check",
-                {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                self.route_product_pass_body(),
             ),
         )
 
@@ -1851,6 +2006,175 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
         )
+
+    def test_route_draft_requires_product_behavior_model_report(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+        (run_root / "flowguard" / "product_architecture_modelability.json").unlink()
+
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        with self.assertRaisesRegex(router.RouterError, "product behavior model report"):
+            router.record_external_event(
+                root,
+                "pm_writes_route_draft",
+                {
+                    "nodes": [{"node_id": "node-001"}],
+                    **self.prior_path_context_review(root, "Route draft attempted without product model."),
+                },
+            )
+
+    def test_route_check_reports_require_hard_gate_verdict_fields(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "nodes": [{"node_id": "node-001"}],
+                **self.prior_path_context_review(root, "Route draft considered prior context before route checks."),
+            },
+        )
+
+        self.deliver_expected_card(root, "process_officer.route_process_check")
+        with self.assertRaisesRegex(router.RouterError, "process_viability_verdict=pass"):
+            router.record_external_event(
+                root,
+                "process_officer_passes_route_check",
+                self.role_report_envelope(
+                    root,
+                    "flowguard/route_process_check_missing_verdict",
+                    {"reviewed_by_role": "process_flowguard_officer", "passed": True},
+                ),
+            )
+
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "nodes": [{"node_id": "node-001"}],
+                **self.prior_path_context_review(root, "Route draft considered prior context before route checks."),
+            },
+        )
+        self.deliver_expected_card(root, "process_officer.route_process_check")
+        router.record_external_event(
+            root,
+            "process_officer_passes_route_check",
+            self.role_report_envelope(root, "flowguard/route_process_check", self.route_process_pass_body()),
+        )
+
+        self.deliver_expected_card(root, "product_officer.route_product_check")
+        with self.assertRaisesRegex(router.RouterError, "route_model_review_verdict=pass"):
+            router.record_external_event(
+                root,
+                "product_officer_passes_route_check",
+                self.role_report_envelope(
+                    root,
+                    "flowguard/route_product_check_missing_verdict",
+                    {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                ),
+            )
+
+    def test_process_route_repair_required_blocks_activation_and_reopens_pm_route_draft(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "nodes": [{"node_id": "node-001"}],
+                **self.prior_path_context_review(root, "Route draft considered prior context before process check."),
+            },
+        )
+        self.deliver_expected_card(root, "process_officer.route_process_check")
+        router.record_external_event(
+            root,
+            "process_officer_requires_route_repair",
+            self.role_report_envelope(
+                root,
+                "flowguard/route_process_repair_required",
+                {
+                    "reviewed_by_role": "process_flowguard_officer",
+                    "passed": False,
+                    "process_viability_verdict": "repair_required",
+                    "product_behavior_model_checked": True,
+                    "route_can_reach_product_model": False,
+                    "repair_return_policy_checked": False,
+                    "recommended_resolution": "PM should redraft route nodes to cover missing product-model recovery path.",
+                    "blocking_findings": ["route cannot yet reach modeled recovery state"],
+                },
+            ),
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "reviewer_route_check_passed"):
+            router.record_external_event(root, "pm_activates_reviewed_route")
+        state = read_json(router.run_state_path(self.run_root_for(root)))
+        self.assertFalse(state["flags"]["route_draft_written_by_pm"])
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("pm_writes_route_draft", action["allowed_external_events"])
+
+    def test_route_mutation_requires_return_target_and_resets_route_hard_gates(self) -> None:
+        root = self.make_project()
+        run_root, _packet_path, _result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-route-hard-gate-mutation",
+        )
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.close_model_miss_triage(root, output_name="decisions/route_hard_gate_mutation_triage")
+        with self.assertRaisesRegex(router.RouterError, "repair_return_to_node_id"):
+            router.record_external_event(
+                root,
+                "pm_mutates_route_after_review_block",
+                {
+                    "repair_node_id": "node-001-repair-hard-gate",
+                    "reason": "missing_return_target",
+                    "stale_evidence": ["node-packet-route-hard-gate-mutation"],
+                    **self.prior_path_context_review(root, "Mutation intentionally lacks return target."),
+                },
+            )
+
+        router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            {
+                "repair_node_id": "node-001-repair-hard-gate",
+                "repair_return_to_node_id": "node-001",
+                "reason": "reviewer_block",
+                "stale_evidence": ["node-packet-route-hard-gate-mutation"],
+                **self.prior_path_context_review(root, "Mutation includes mainline return target."),
+            },
+        )
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["route_activated_by_pm"])
+        self.assertFalse(state["flags"]["route_draft_written_by_pm"])
+        self.assertFalse(state["flags"]["process_officer_route_check_passed"])
+        mutation = read_json(run_root / "routes" / "route-001" / "mutations.json")["items"][-1]
+        self.assertEqual(mutation["repair_return_policy"]["repair_return_to_node_id"], "node-001")
 
     def test_startup_waits_for_answers_before_banner_or_run_shell(self) -> None:
         root = self.make_project()
@@ -2412,12 +2736,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(second["return_wait_recorded"])
         self.assertTrue(second["relay_allowed"])
         self.assertFalse(second["apply_required"])
+        self.assertEqual(second["card_return_event"], "reviewer_card_ack")
+        self.assertNotIn("return_event", second)
         self.assertTrue(second["auto_committed_by_router"])
         self.assertEqual(second["next_step_contract"]["resource_lifecycle"], "committed_artifact")
         self.assertTrue(second["next_step_contract"]["artifact_committed"])
         self.assertTrue(second["next_step_contract"]["relay_allowed"])
         self.assertFalse(second["next_step_contract"]["apply_required"])
         self.assertTrue((root / second["card_envelope_path"]).exists())
+        envelope = read_json(root / second["card_envelope_path"])
+        self.assertEqual(envelope["card_return_event"], "reviewer_card_ack")
+        self.assertNotIn("return_event", envelope)
         pre_apply_state = read_json(run_root / "router_state.json")
         pre_apply_prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
         self.assertEqual(pre_apply_state["prompt_deliveries"], 1)
@@ -2455,7 +2784,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertEqual(card_ledger["deliveries"][0]["card_id"], "reviewer.startup_fact_check")
         self.assertEqual(card_ledger["deliveries"][0]["role_io_protocol_receipt_hash"], second["role_io_protocol_receipt_hash"])
-        self.assertEqual(return_ledger["pending_returns"][0]["return_event"], "reviewer_card_ack")
+        self.assertEqual(return_ledger["pending_returns"][0]["card_return_event"], "reviewer_card_ack")
+        self.assertNotIn("return_event", return_ledger["pending_returns"][0])
 
         with self.assertRaisesRegex(router.RouterError, "relay-only"):
             router.apply_action(root, "deliver_system_card")
@@ -2465,6 +2795,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(relay_action["relay_allowed"])
         with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
             router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        with self.assertRaisesRegex(router.RouterError, "card return event.*check_card_return_event"):
+            router.record_external_event(root, "reviewer_card_ack")
 
         open_result = card_runtime.open_card(
             root,
@@ -2481,6 +2813,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         check_action = self.next_after_display_sync(root)
         self.assertEqual(check_action["action_type"], "check_card_return_event")
+        self.assertTrue(check_action["apply_required"])
+        self.assertTrue(check_action["next_step_contract"]["apply_required"])
+        self.assertEqual(check_action["card_return_event"], "reviewer_card_ack")
+        self.assertNotIn("return_event", check_action)
         router.apply_action(root, "check_card_return_event")
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
@@ -2511,6 +2847,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["artifact_committed"])
         self.assertTrue(action["relay_allowed"])
         self.assertFalse(action["apply_required"])
+        self.assertEqual(action["card_return_event"], "reviewer_card_ack")
 
         open_result = card_runtime.open_card(
             root,
@@ -2528,6 +2865,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         check_action = self.next_after_display_sync(root)
         self.assertEqual(check_action["action_type"], "check_card_return_event")
+        self.assertTrue(check_action["apply_required"])
         router.apply_action(root, "check_card_return_event")
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
@@ -2997,6 +3335,150 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertFalse(canonical_report["_role_output_envelope"]["chat_response_body_allowed"])
 
+    def test_record_event_accepts_runtime_envelope_ref_for_startup_fact_report(self) -> None:
+        for mode in ("payload_ref", "cli_ref", "full_envelope"):
+            with self.subTest(mode=mode):
+                root = self.make_project()
+                run_root = self.boot_to_controller(root)
+                self.deliver_startup_fact_check_card(root)
+                self.deliver_initial_pm_cards_and_user_intake(root)
+                envelope, envelope_path, envelope_hash = self.startup_fact_runtime_envelope(root)
+
+                if mode == "payload_ref":
+                    result = router.record_external_event(
+                        root,
+                        "reviewer_reports_startup_facts",
+                        {"event_envelope_ref": {"path": envelope_path, "hash": envelope_hash}},
+                    )
+                elif mode == "cli_ref":
+                    parsed = router.parse_args(
+                        [
+                            "--root",
+                            str(root),
+                            "record-event",
+                            "--event",
+                            "reviewer_reports_startup_facts",
+                            "--envelope-path",
+                            envelope_path,
+                            "--envelope-hash",
+                            envelope_hash,
+                        ]
+                    )
+                    self.assertEqual(parsed.envelope_path, envelope_path)
+                    self.assertEqual(parsed.envelope_hash, envelope_hash)
+                    result = router.record_external_event(
+                        root,
+                        "reviewer_reports_startup_facts",
+                        envelope_path=envelope_path,
+                        envelope_hash=envelope_hash,
+                    )
+                else:
+                    result = router.record_external_event(root, "reviewer_reports_startup_facts", envelope)
+
+                self.assertTrue(result["ok"])
+                canonical_report = read_json(run_root / "startup" / "startup_fact_report.json")
+                source_envelope = canonical_report["_role_output_envelope"]
+                self.assertEqual(source_envelope["role_output_runtime_receipt_path"], envelope["runtime_receipt_ref"]["path"])
+                self.assertTrue(source_envelope["role_output_runtime_validated"])
+                self.assertFalse(source_envelope["chat_response_body_allowed"])
+                self.assertNotIn("runtime_receipt_path", source_envelope)
+
+    def test_record_event_rejects_bad_event_envelope_refs_before_payload_reconstruction(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.deliver_startup_fact_check_card(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        envelope, envelope_path, envelope_hash = self.startup_fact_runtime_envelope(root)
+
+        with self.assertRaisesRegex(router.RouterError, "hash mismatch"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": envelope_path, "hash": "0" * 64}},
+            )
+
+        missing_ref = {"event_envelope_ref": {"path": ".flowpilot/runs/missing/events/nope.envelope.json", "hash": envelope_hash}}
+        with self.assertRaisesRegex(router.RouterError, "file is missing"):
+            router.record_external_event(root, "reviewer_reports_startup_facts", missing_ref)
+
+        outside_path = root.parent / f"{root.name}-outside-event.envelope.json"
+        outside_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.addCleanup(lambda: outside_path.unlink(missing_ok=True))
+        with self.assertRaisesRegex(router.RouterError, "outside project root"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {
+                    "event_envelope_ref": {
+                        "path": str(outside_path),
+                        "hash": hashlib.sha256(outside_path.read_bytes()).hexdigest(),
+                    }
+                },
+            )
+
+        bad_schema = dict(envelope)
+        bad_schema["schema_version"] = "flowpilot.untrusted_event_envelope.v0"
+        bad_schema_path, bad_schema_hash = self.write_event_envelope(root, "startup/bad_schema", bad_schema)
+        with self.assertRaisesRegex(router.RouterError, "schema_version"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": bad_schema_path, "hash": bad_schema_hash}},
+            )
+
+        bad_event = dict(envelope)
+        bad_event["event_name"] = "pm_issues_material_and_capability_scan_packets"
+        bad_event_path, bad_event_hash = self.write_event_envelope(root, "startup/bad_event", bad_event)
+        with self.assertRaisesRegex(router.RouterError, "event mismatch"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": bad_event_path, "hash": bad_event_hash}},
+            )
+
+        bad_role = dict(envelope)
+        bad_role["from_role"] = "project_manager"
+        bad_role_path, bad_role_hash = self.write_event_envelope(root, "startup/bad_role", bad_role)
+        with self.assertRaisesRegex(router.RouterError, "from_role mismatch"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": bad_role_path, "hash": bad_role_hash}},
+            )
+
+        bad_visibility = dict(envelope)
+        bad_visibility["controller_visibility"] = "sealed_body_visible"
+        bad_visibility_path, bad_visibility_hash = self.write_event_envelope(root, "startup/bad_visibility", bad_visibility)
+        with self.assertRaisesRegex(router.RouterError, "controller_visibility"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": bad_visibility_path, "hash": bad_visibility_hash}},
+            )
+
+        leaked = dict(envelope)
+        leaked["recommendations"] = ["inline body content that belongs in the sealed report body"]
+        leaked_path, leaked_hash = self.write_event_envelope(root, "startup/leaked_body", leaked)
+        with self.assertRaisesRegex(router.RouterError, "leaked role body fields"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": leaked_path, "hash": leaked_hash}},
+            )
+
+    def test_record_event_rejects_envelope_outside_current_wait(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        envelope, envelope_path, envelope_hash = self.startup_fact_runtime_envelope(root)
+        self.assertEqual(envelope["event_name"], "reviewer_reports_startup_facts")
+
+        with self.assertRaisesRegex(router.RouterError, "not currently allowed"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                {"event_envelope_ref": {"path": envelope_path, "hash": envelope_hash}},
+            )
+
     def test_startup_fact_report_rejects_canonical_submission_alias(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -3153,6 +3635,35 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(packet["output_contract"]["expected_result_body_path"], material_index["packets"][0]["result_body_path"])
         packet_body = (root / packet["body_path"]).read_text(encoding="utf-8")
         self.assertIn(material_index["packets"][0]["result_body_path"], packet_body)
+
+    def test_record_event_accepts_material_scan_envelope_ref_with_packets(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.deliver_expected_card(root, "pm.material_scan")
+        envelope, envelope_path, envelope_hash = self.material_scan_event_envelope(root)
+
+        result = router.record_external_event(
+            root,
+            "pm_issues_material_and_capability_scan_packets",
+            {"event_envelope_ref": {"path": envelope_path, "hash": envelope_hash}},
+        )
+
+        self.assertTrue(result["ok"])
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        self.assertEqual(material_index["written_by_role"], "project_manager")
+        self.assertEqual(material_index["packets"][0]["packet_id"], envelope["packets"][0]["packet_id"])
+        self.assertTrue((root / material_index["packets"][0]["packet_envelope_path"]).exists())
+
+    def test_record_event_rejects_manual_material_scan_payload_with_hidden_packets(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.deliver_expected_card(root, "pm.material_scan")
+        payload = {"event_envelope": self.material_scan_event_envelope(root)[0]}
+
+        with self.assertRaisesRegex(router.RouterError, "payload\\.packets"):
+            router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", payload)
 
     def test_material_scan_packet_and_result_relays_combine_ledger_check(self) -> None:
         root = self.make_project()
@@ -3657,7 +4168,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check",
-                    {"reviewed_by_role": "process_flowguard_officer", "passed": True},
+                    self.route_process_pass_body(),
                 ),
             )
         self.complete_route_checks(root)
@@ -5319,6 +5830,29 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ledger = read_json(run_root / "gate_decisions" / "gate_decision_ledger.json")
         self.assertEqual(ledger["gate_decision_count"], 1)
 
+    def test_gate_decision_same_identity_replay_is_already_recorded(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        envelope = self.role_decision_envelope(
+            root,
+            "gate_decisions/replayed_quality_gate",
+            self.gate_decision_body(root, gate_id="replayed-quality-gate"),
+        )
+
+        router.record_external_event(root, "role_records_gate_decision", envelope)
+        state = read_json(router.run_state_path(run_root))
+        record_path = root / state["gate_decisions"][0]["decision_path"]
+        first_recorded_at = read_json(record_path)["recorded_at"]
+
+        replay = router.record_external_event(root, "role_records_gate_decision", envelope)
+
+        self.assertTrue(replay["already_recorded"])
+        self.assertEqual(read_json(record_path)["recorded_at"], first_recorded_at)
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(len(state["gate_decisions"]), 1)
+        processed = state["external_event_idempotency"]["processed"]["role_records_gate_decision"]
+        self.assertEqual(len(processed), 1)
+
     def test_gate_decision_rejects_mechanical_contradictions(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -5508,6 +6042,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "pm_mutates_route_after_review_block",
             {
                 "repair_node_id": "node-001-repair",
+                "repair_return_to_node_id": "node-001",
                 "reason": "reviewer_block",
                 "stale_evidence": ["node-packet-003"],
                 **self.prior_path_context_review(root, "Route mutation considered blocked node result and stale evidence."),
@@ -5521,6 +6056,84 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "reviewer_final_backward_replay_passed")
+
+    def test_route_mutation_new_repair_transaction_is_not_swallowed_by_old_flag(self) -> None:
+        root = self.make_project()
+        run_root, _packet_path, _result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-scoped-route-mutation",
+        )
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.close_model_miss_triage(root, output_name="decisions/scoped_route_mutation_first_triage")
+        first_payload = {
+            "repair_node_id": "node-001-repair-v2",
+            "repair_return_to_node_id": "node-001",
+            "route_version": 2,
+            "reason": "first_reviewer_block",
+            "stale_evidence": ["node-packet-scoped-route-mutation"],
+            **self.prior_path_context_review(root, "First route mutation considered the reviewer block."),
+        }
+        first = router.record_external_event(root, "pm_mutates_route_after_review_block", first_payload)
+        self.assertNotIn("already_recorded", first)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        self.assertTrue(state["flags"]["route_mutated_by_pm"])
+        self.assertFalse(state["flags"]["node_review_blocked"])
+        first_replay = router.record_external_event(root, "pm_mutates_route_after_review_block", first_payload)
+        self.assertTrue(first_replay["already_recorded"])
+        mutations = read_json(run_root / "routes" / "route-001" / "mutations.json")
+        self.assertEqual([item["route_version"] for item in mutations["items"]], [2])
+
+        blocker_path = run_root / "control_blocks" / "control-blocker-scoped-route-mutation.json"
+        blocker_rel = self.rel(root, blocker_path)
+        blocker = {
+            "schema_version": router.CONTROL_BLOCKER_SCHEMA,
+            "blocker_id": "control-blocker-scoped-route-mutation",
+            "run_id": run_root.name,
+            "handling_lane": "pm_repair_decision_required",
+            "delivery_status": "delivered",
+            "blocker_artifact_path": blocker_rel,
+            "target_role": "project_manager",
+            "pm_decision_required": True,
+            "pm_repair_decision_status": "recorded",
+            "repair_transaction_id": "repair-tx-scoped-route-mutation",
+            "allowed_resolution_events": ["pm_mutates_route_after_review_block"],
+            "created_at": "2026-05-10T00:00:00Z",
+        }
+        blocker_path.parent.mkdir(parents=True, exist_ok=True)
+        blocker_path.write_text(json.dumps(blocker, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        state["active_control_blocker"] = dict(blocker)
+        state["latest_control_blocker_path"] = blocker_rel
+        state["control_blockers"] = [dict(blocker)]
+        state["flags"]["node_review_blocked"] = True
+        state["flags"]["model_miss_triage_closed"] = True
+        router.save_run_state(run_root, state)
+
+        second = router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            {
+                "control_blocker_id": "control-blocker-scoped-route-mutation",
+                "repair_transaction_id": "repair-tx-scoped-route-mutation",
+                "repair_node_id": "node-001-repair-v3",
+                "repair_return_to_node_id": "node-001-repair-v2",
+                "route_version": 3,
+                "reason": "second_control_blocker_repair",
+                "stale_evidence": ["node-packet-scoped-route-mutation-v2"],
+                **self.prior_path_context_review(root, "Second route mutation considered a later control blocker."),
+            },
+        )
+
+        self.assertNotIn("already_recorded", second)
+        state = read_json(state_path)
+        self.assertIsNone(state["active_control_blocker"])
+        mutations = read_json(run_root / "routes" / "route-001" / "mutations.json")
+        self.assertEqual([item["route_version"] for item in mutations["items"]], [2, 3])
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["route_version"], 3)
+        self.assertEqual(frontier["active_node_id"], "node-001-repair-v3")
+        processed = state["external_event_idempotency"]["processed"]["pm_mutates_route_after_review_block"]
+        self.assertEqual(len(processed), 2)
 
     def test_parent_node_requires_backward_replay_before_completion(self) -> None:
         root = self.make_project()
@@ -5694,6 +6307,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {
                     "decision_owner": "project_manager",
                     "decision": "repair_existing_child",
+                    "repair_return_to_node_id": "parent-001",
                     **self.prior_path_context_review(root, "Parent segment repair decision considered prior route memory and replay evidence."),
                 },
             ),
@@ -5881,6 +6495,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             wait_action["payload_contract"],
             "pm_terminal_closure_decision_role_output",
             "current_ledgers_clean",
+            "pm_suggestion_ledger_clean",
             "prior_path_context_review.controller_summary_used_as_evidence",
         )
 
@@ -5926,6 +6541,35 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")
+
+    def test_final_ledger_rejects_dirty_pm_suggestion_ledger(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-suggestion-ledger")
+        self.complete_evidence_quality_package(root)
+        self.write_pm_suggestion_ledger(root, [self.pm_suggestion_entry(root, clean=False)])
+
+        self.deliver_expected_card(root, "pm.final_ledger")
+        with self.assertRaisesRegex(router.RouterError, "clean PM suggestion ledger"):
+            router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
+
+    def test_dirty_pm_suggestion_ledger_invalidates_terminal_closure_card(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-suggestion-closure")
+        self.complete_evidence_quality_package(root)
+        self.write_pm_suggestion_ledger(root, [self.pm_suggestion_entry(root, clean=True)])
+        self.complete_final_ledger_and_terminal_replay(root)
+        self.write_pm_suggestion_ledger(root, [self.pm_suggestion_entry(root, clean=False)])
+
+        action = router.next_action(root)
+        card_id = action.get("next_card_id") or action.get("card_id")
+        self.assertNotEqual(card_id, "pm.closure")
+        self.assertEqual(card_id, "pm.evidence_quality_package")
 
     def test_reconcile_recovers_legacy_terminal_closure_state(self) -> None:
         root = self.make_project()

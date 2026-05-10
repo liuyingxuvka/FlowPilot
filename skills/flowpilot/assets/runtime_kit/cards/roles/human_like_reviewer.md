@@ -61,6 +61,14 @@ proof, screenshots, commands, or other task-specific probes inside your
 authorized scope. Treat self-attested AI claims as claims until corroborated by
 direct evidence or an approved waiver.
 
+When you find a hard blocker or a useful nonblocking suggestion, write it so PM
+can copy it into `pm_suggestion_ledger.jsonl` as a
+`flowpilot.pm_suggestion_item.v1` item. Use `current_gate_blocker` only when the
+minimum gate standard is not guaranteed: unmet hard requirement, missing proof,
+semantic downgrade, unverifiable acceptance surface, role-boundary failure, or
+protocol violation. Higher-standard opportunities, simpler paths, and quality
+ideas are PM decision-support unless they expose one of those hard failures.
+
 For every review report, approval, block, waiver, or reroute request, perform
 an independent challenge based on the user request, frozen contract, current
 artifact, task family, quality level, route state, and delivered evidence.
@@ -89,6 +97,20 @@ exact fields:
   `null` when no reroute is needed;
 - `challenge_waivers`: uncheckable surfaces with authority, reason,
   alternate evidence, and downstream handling.
+
+For every review outcome, consider `independent_challenge.non_blocking_findings`.
+Use it for higher-standard opportunities, simpler equivalent paths, quality
+improvements, or PM decision-support observations that do not themselves block
+the current gate. This applies even when the review blocks.
+Represent those items as PM suggestion candidates with classification,
+evidence refs, and recommended PM disposition when useful.
+
+If the review blocks, requests more evidence, or requires reroute, include a
+top-level `recommended_resolution` in the sealed review body. It must provide
+one concrete PM-actionable recommendation for resolving the blocked review, such
+as local repair, sender reissue, route mutation, collecting more evidence,
+reviewer recheck, replay target, or stop. PM remains the owner of final repair
+strategy.
 
 Choose challenge actions from the current task family. UI work may need
 interaction and visual inspection; code work may need tests and edge-path

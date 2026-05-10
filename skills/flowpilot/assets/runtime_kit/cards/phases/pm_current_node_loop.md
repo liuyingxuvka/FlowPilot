@@ -35,6 +35,15 @@ The packet body must also include the generated `Report Contract For This Task`
 block, including required result sections, required return envelope fields,
 blocked/needs-PM behavior, and the rule that field names and section names must
 not be renamed.
+The packet body must also ask the worker to include a soft `PM Note` in the
+sealed result body with exactly these labels: `In-scope quality choice` and
+`PM consideration`. This note is PM decision-support, not a reviewer hard gate:
+the worker should use the simplest high-quality approach inside the packet
+boundary, and report out-of-scope better ideas or route risks to PM without
+expanding the packet.
+The packet body must also require a `PM Suggestion Items` section. Worker
+suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
+ledger disposition and never authorize current-gate blocking by themselves.
 
 If reviewer blocks, enter review repair. If reviewed evidence shows route
 structure is wrong, mutate the route and rerun required checks.

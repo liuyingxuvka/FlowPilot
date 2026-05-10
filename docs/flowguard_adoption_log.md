@@ -6288,3 +6288,382 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep deliver_system_card as relay metadata only; do not reintroduce public apply compatibility.
+
+
+## flowpilot-card-return-event-field-rename - Rename card ack envelope field to card_return_event
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot run showed Controller could mistake a mechanical card ack name for a record-event external event because the envelope exposed a generic return event field.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-09T22:21:24Z
+- Ended: 2026-05-09T22:21:24Z
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_card_envelope_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "system_card_delivery_requires_manifest_check or committed_system_card_relay_can_resolve_without_apply_roundtrip"`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py tests\test_flowpilot_card_runtime.py -q`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python simulations\run_command_refinement_checks.py`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`
+- OK: `python simulations\run_card_instruction_coverage_checks.py --json-out simulations\card_instruction_coverage_results.json`
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py --json-out simulations\flowpilot_packet_lifecycle_results.json`
+- OK: `python scripts\check_install.py`
+- OK: `rg -n '"return_event"\s*:' . -g '!backups/**' -g '!**/__pycache__/**' -g '!*.pyc'`
+- OK: `git diff --check`
+
+### Findings
+- Card ack envelope and ledger JSON now use `card_return_event`, while internal ledger/action names such as `check_card_return_event` remain unchanged by design.
+- FlowGuard now detects three hazards for this route: legacy field emission, routing card ack names through record-event, and marking check-card-return as optional when it advances state.
+- Router now gives a directed error for card ack names sent to record-event, and the normal check-card-return action is marked apply-required.
+- Runtime and router regression tests cover the renamed field, absence of the legacy JSON key, misuse error, and ack resolution path.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Full router runtime tests take about 13 minutes on this machine.
+- Initial shorter meta/capability check runs hit the local timeout; reruns with a longer timeout completed successfully.
+
+### Skipped Steps
+- Installed FlowPilot skill synchronization was skipped by explicit user request. Only the current repository was changed.
+
+### Next Actions
+- Keep mechanical card ack names out of ordinary external events unless the protocol is deliberately redesigned.
+
+
+## flowpilot-record-event-envelope-ref-transfer - Add path/hash event envelope transfer to record-event
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Controller reconstructed event envelopes by hand, which lost the standard `runtime_receipt_ref` on reviewer startup reports and hid PM material-scan `packets` from `payload.packets`.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-09T22:57:46Z
+- Ended: 2026-05-09T22:57:46Z
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_event_envelope_transfer_model.py
+- simulations/run_flowpilot_event_envelope_transfer_checks.py
+- simulations/flowpilot_event_envelope_transfer_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_event_envelope_transfer_checks.py --json-out simulations\flowpilot_event_envelope_transfer_results.json`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_event_envelope_transfer_model.py simulations\run_flowpilot_event_envelope_transfer_checks.py`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "record_event_accepts_runtime_envelope_ref_for_startup_fact_report or record_event_rejects_bad_event_envelope_refs_before_payload_reconstruction or record_event_rejects_envelope_outside_current_wait or record_event_accepts_material_scan_envelope_ref_with_packets or record_event_rejects_manual_material_scan_payload_with_hidden_packets"`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "startup_fact_report_accepts_file_backed_envelope_only_payload or startup_fact_report_rejects_canonical_submission_alias or material_scan_accepts_file_backed_packet_body_and_updates_frontier or material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card or material_scan_packet_and_result_relays_combine_ledger_check"`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py tests\test_flowpilot_card_runtime.py tests\test_flowpilot_role_output_runtime.py -q`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py --json-out simulations\flowpilot_role_output_runtime_results.json`
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_card_instruction_coverage_checks.py --json-out simulations\card_instruction_coverage_results.json`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`
+- OK: `python simulations\run_command_refinement_checks.py`
+- OK: `rg -n "runtime_receipt_path|runtime_receipt_hash|event_envelope_ref|--envelope-path|--envelope-hash|event_envelope" skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py skills\flowpilot\assets\runtime_kit\cards\roles\controller.md simulations\flowpilot_event_envelope_transfer_model.py simulations\run_flowpilot_event_envelope_transfer_checks.py`
+- OK: `git diff --check`
+
+### Findings
+- The new FlowGuard model proves legal full envelope payloads and path/hash envelope refs reach equivalent router outcomes for reviewer startup fact reports and PM material-scan packets.
+- The model and tests cover missing envelope files, outside-project paths, hash mismatch, schema mismatch, event mismatch, from_role mismatch, bad controller visibility, forbidden body fields, and envelopes outside the current allowed external event.
+- The known failed controller-reconstruction paths are rejected: renamed runtime receipt fields are not accepted as runtime-validated reports, and material scan packets hidden under a nested envelope are not accepted as `payload.packets`.
+- Duplicate submission of the same already-recorded envelope remains idempotent and does not create another event side effect.
+- Router `record-event` now accepts `--envelope-path`/`--envelope-hash` and `event_envelope_ref`, then reads the envelope itself after path/hash validation.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Full router/card/role-output runtime tests took about 10 minutes on this machine.
+- The specialized FlowGuard model is intentionally focused on record-event transfer mechanics, not semantic sufficiency of report or packet body content.
+
+### Skipped Steps
+- Installed FlowPilot skill synchronization was skipped by explicit user request. Only the current repository was changed.
+- Git commit, push, and release/publish actions were skipped by explicit user request.
+
+### Next Actions
+- Keep Controller guidance centered on passing envelope path/hash, not reconstructing envelope fields.
+
+
+## flowpilot-event-idempotency-model-upgrade - Model scoped duplicate external events before router repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live-run report showed `pm_mutates_route_after_review_block` could be swallowed by the run-wide `route_mutated_by_pm` flag even when PM was submitting a later control-blocker repair transaction and higher route version.
+- Status: model-upgrade-completed; production router repair not started by user request
+- Skill decision: use_flowguard
+- Started: 2026-05-10T08:00:00+02:00
+- Ended: 2026-05-10T08:18:12+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_event_idempotency_model.py
+- simulations/run_flowpilot_event_idempotency_checks.py
+- simulations/flowpilot_event_idempotency_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_event_idempotency_model.py simulations\run_flowpilot_event_idempotency_checks.py`
+- OK: `python simulations\run_flowpilot_event_idempotency_checks.py --json-out simulations\flowpilot_event_idempotency_results.json`
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py --json-out simulations\flowpilot_repair_transaction_results.json`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python simulations\run_meta_checks.py`
+
+### Findings
+- The model now catches the cross-cutting failure class: event identity must be `event name + explicit scope`, not only `event name + run-wide flag`.
+- Safe same-key replays must return `already_recorded` without another side effect.
+- New scoped keys, such as a later `control_blocker_id` / `repair_transaction_id` / `route_version`, must execute the writer even if the older run-wide flag is already true.
+- Retry budgets must produce an explicit PM escalation or dead-end after the budget is exceeded, not a silent duplicate swallow.
+- Source audit flagged one high-risk event: `pm_mutates_route_after_review_block`.
+- Source audit also flagged medium-risk scoped repeatables: `pm_records_control_blocker_repair_decision`, `role_records_gate_decision`, `pm_requests_startup_repair`, and `pm_writes_route_draft`.
+- Source audit flagged one low-risk retry path: `pm_completes_current_node_from_reviewed_result`, currently guarded by missing-write detection but still a candidate for the same scoped idempotency layer.
+
+### Counterexamples
+- `global_flag_swallows_new_route_mutation`
+- `repair_retry_below_budget_swallowed`
+- `retry_budget_exceeded_without_escalation`
+- `unconditional_repeat_duplicates_gate_decision`
+- `cycle_reuse_without_reset`
+- `accepted_without_dedupe_key_fields`
+- `no_legal_next_action_after_swallow`
+
+### Friction Points
+- `python simulations\run_meta_checks.py` needed a longer timeout; the first short run timed out, and the longer rerun passed.
+- The reported live run directory `.flowpilot/runs/run-20260509-210950` was not available locally, so this phase used source audit and model scenarios rather than replaying that exact run artifact.
+
+### Skipped Steps
+- Production router changes were intentionally skipped because the user requested model upgrade and repair planning before code repair.
+- Installed FlowPilot skill synchronization, git commit, push, and release/publish actions were not performed.
+- `python simulations\run_capability_checks.py` was not rerun because this phase did not change skill/capability routing.
+
+### Next Actions
+- Implement a small router-level scoped idempotency layer before the generic run-wide flag dedupe.
+- Define per-event policies such as one-shot, transaction-scoped, gate-scoped, cycle-scoped, and append-only tick.
+- Keep run-wide flags as phase/latest-state summaries, not the source of truth for duplicate suppression.
+
+
+## flowpilot-scoped-event-idempotency-router-repair - Add scoped external-event identity before run-wide flag dedupe
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The upgraded FlowGuard model showed that run-wide flags can swallow legitimate later external events when the event name repeats across a new blocker, repair transaction, route version, gate, startup cycle, route draft, or node completion scope.
+- Status: completed in local repository only
+- Skill decision: use_flowguard
+- Started: 2026-05-10T08:20:00+02:00
+- Ended: 2026-05-10T09:17:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_event_idempotency_model.py
+- simulations/run_flowpilot_event_idempotency_checks.py
+- simulations/flowpilot_event_idempotency_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_event_idempotency_model.py simulations\run_flowpilot_event_idempotency_checks.py tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_flowpilot_event_idempotency_checks.py --json-out simulations\flowpilot_event_idempotency_results.json`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "gate_decision_same_identity_replay_is_already_recorded or route_mutation_new_repair_transaction_is_not_swallowed_by_old_flag or pm_startup_repair_request_can_repeat_for_new_blocking_report or already_recorded_event_can_resolve_delivered_control_blocker or already_recorded_event_does_not_resolve_pm_required_control_blocker or already_recorded_event_resolves_fatal_control_blocker_after_pm_repair_decision"`
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py --json-out simulations\flowpilot_repair_transaction_results.json`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py tests\test_flowpilot_card_runtime.py tests\test_flowpilot_role_output_runtime.py -q --maxfail=1`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "gate_decision_same_identity_replay_is_already_recorded or route_mutation_new_repair_transaction_is_not_swallowed_by_old_flag"`
+- OK: `git diff --check`
+
+### Findings
+- Router now declares scoped idempotency policies for six repeatable event families: route mutation after review block, PM control-blocker repair decision, GateDecision, startup repair request, route draft write, and PM current-node completion.
+- `record_external_event` now computes a dedupe key before the old run-wide flag check. Same-key replays return `already_recorded` without rewriting side effects.
+- A new `pm_mutates_route_after_review_block` scoped by a later blocker / repair transaction / route version bypasses the old `route_mutated_by_pm` swallow path and executes the existing route mutation writer.
+- Route mutation attempts have a scoped retry budget for the same repair group; exceeding it now raises an explicit router error instead of silently swallowing another retry.
+- The event-idempotency source audit now reports zero missing production scoped policies.
+- Runtime tests prove the same GateDecision replay does not rewrite its record and a later route mutation transaction writes v3 after v2 instead of being swallowed.
+
+### Counterexamples
+- The model still intentionally detects the old bad architectures: `global_flag_swallows_new_route_mutation`, `repair_retry_below_budget_swallowed`, `retry_budget_exceeded_without_escalation`, `unconditional_repeat_duplicates_gate_decision`, `cycle_reuse_without_reset`, `accepted_without_dedupe_key_fields`, and `no_legal_next_action_after_swallow`.
+
+### Friction Points
+- The first broad runtime test run was launched in parallel with model regressions and hit the 15-minute command timeout. The same runtime suite passed when rerun alone with a longer timeout.
+- `run_flowpilot_control_plane_friction_checks.py` still reports one pre-existing live-run warning about historical role-output envelope hash replay mismatch. It is not introduced by this idempotency change.
+- The workspace contains many unrelated peer-agent modifications; this repair did not revert or normalize those files.
+
+### Skipped Steps
+- Installed FlowPilot skill synchronization was skipped by explicit user request.
+- Git commit, push, and release/publish actions were skipped by explicit user request.
+- Direct replay of `.flowpilot/runs/run-20260509-210950` remains unavailable because that run directory is not present locally.
+
+### Next Actions
+- When the user is ready, sync this repository change through the user's chosen local install/release path together with peer-agent changes.
+- If future production traces show legitimate more-than-three route mutations for the same repair group, tune the retry budget or move it to a per-policy configuration file.
+## 2026-05-10 - Reviewer Blocked-Resolution Guidance
+
+### Decision
+- Scope: prompt/protocol text only. No router, runtime state machine, installed skill sync, git push, or GitHub sync.
+- Reviewer cards now keep using `independent_challenge.non_blocking_findings` for higher-standard opportunities, simpler equivalent paths, quality improvements, and PM decision-support observations.
+- This applies for every review outcome, including blocked reviews.
+- When a review blocks, requests more evidence, or requires reroute, the sealed review body must include `recommended_resolution` with one concrete PM-actionable recommendation. PM remains owner of the final repair strategy.
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: reviewer card coverage scan for `Decision-Support Findings`, `recommended_resolution`, and `non_blocking_findings`
+- OK: `python -m py_compile skills\flowpilot\assets\role_output_runtime.py skills\flowpilot\assets\flowpilot_router.py`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `git diff --check` (line-ending normalization warnings only)
+- Attempted: `python simulations\run_capability_checks.py` timed out after 600 seconds; not counted as passed.
+
+### Findings
+- All 15 reviewer cards include the decision-support guidance.
+- The reviewer role core card includes the same field-level instruction.
+- `worker_result_review`, `material_sufficiency`, `startup_fact_check`, and `final_backward_replay` JSON examples now show `recommended_resolution` where blocked outcomes are represented directly.
+- The meta model passed with no invariant failures, missing labels, stuck states, or nonterminating components.
+
+### Skipped Steps
+- Installed FlowPilot skill sync skipped per user instruction.
+- Git commit, push, and GitHub sync skipped per user instruction.
+- Runtime schema enforcement skipped because the requested change was a minimal prompt/protocol update.
+
+
+## flowpilot-worker-officer-soft-pm-note-20260510 - Add soft PM Note guidance for FlowPilot worker and officer packets
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot role protocol change touching worker/officer packet guidance and card instruction coverage
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-10T06:54:53+00:00
+- Ended: 2026-05-10T06:54:53+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/card_instruction_coverage_model.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python -m py_compile simulations\card_instruction_coverage_model.py`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_output_contracts tests.test_flowpilot_planning_quality`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_role_output_runtime`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_reviewer_active_challenge`
+- OK (0.000s): `python simulations\run_card_instruction_coverage_checks.py --json-out simulations\card_instruction_coverage_results.json`
+- OK (0.000s): `python simulations\run_meta_checks.py --fast`
+- OK (0.000s): `python simulations\run_capability_checks.py --fast`
+
+### Findings
+- Worker and FlowGuard officer packets now carry soft PM Note guidance for in-scope quality choices and PM-only consideration of out-of-scope ideas.
+- The PM Note is intentionally not added to reviewer hard gates or output_contract required sections.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- A background full run of simulations\run_meta_checks.py was stopped after more than 10 minutes with no output; the supported --fast proof-reuse check passed instead.
+
+### Skipped Steps
+- No installed FlowPilot sync, install check, Git commit, push, or GitHub sync per user instruction.
+
+### Next Actions
+- User will coordinate local install, git, and remote synchronization later.
+
+
+## flowpilot-route-hard-gates-20260510 - Enforce product-model-first route hard gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot Router change. Soft product-model-first route guidance was upgraded into Router hard gates while keeping semantic judgement with Product/Process Officer and Reviewer roles.
+- Status: completed
+- Skill decision: use_flowguard
+- Date: 2026-05-10
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_route_hard_gate_model.py
+- simulations/flowpilot_planning_quality_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_route_hard_gate_checks.py --json-out simulations\flowpilot_route_hard_gate_results.json`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_route_hard_gate_model.py simulations\run_flowpilot_route_hard_gate_checks.py`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k "route_draft_requires_product_behavior_model_report or route_check_reports_require_hard_gate_verdict_fields or process_route_repair_required_blocks_activation_and_reopens_pm_route_draft or route_mutation_requires_return_target_and_resets_route_hard_gates or route_check_results_require_router_delivered_check_cards or product_architecture_and_root_contract_gate_route_skeleton or route_mutation_and_final_ledger_have_required_preconditions or route_mutation_new_repair_transaction_is_not_swallowed_by_old_flag or parent_backward_non_continue_decision_mutates_route_and_requires_rerun" -q`
+- OK: `python -m pytest tests\test_flowpilot_card_instruction_coverage.py -q`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned`
+- OK: `python scripts\audit_local_install_sync.py`
+- OK: `python scripts\install_flowpilot.py --check`
+- OK: `git diff --check` (line-ending normalization warnings only)
+
+### Findings
+- Router now requires a passed Product Officer product behavior model report before PM route draft.
+- Router route activation now requires role-owned product-model review pass and Process Officer `process_viability_verdict=pass`.
+- Process Officer can now report `repair_required` or `blocked`; those verdicts reopen PM route drafting instead of unlocking activation.
+- Route mutation now requires `repair_return_to_node_id` and clears stale route approvals so the changed route must pass route checks again before execution continues.
+- Router still does not judge semantic route quality; it checks only role-owned hard-gate artifacts and verdict fields.
+
+### Counterexamples
+- The hard-gate model rejects missing product model, missing route-product review pass, missing process verdict, ignored `repair_required`, ignored `blocked`, repair without mainline return, repair without fresh process recheck, and Router semantic overreach.
+
+### Friction Points
+- A test that intentionally submitted a malformed role report had to model the real control-blocker path instead of reusing the same run as a normal pass path.
+- The worktree also included parallel AI changes; this phase preserved them and local git synchronization includes them per user instruction.
+
+### Skipped Steps
+- Remote GitHub push skipped per user instruction.
+
+### Next Actions
+- User can review the local commit and decide when to push or otherwise synchronize the remote repository.
+
+
+## flowpilot-product-model-first-route-viability-20260510 - Use product behavior model before PM route drafting
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot planning sequence change. Product FlowGuard output now drives PM route drafting, and Process FlowGuard checks route viability against that product behavior model.
+- Status: completed
+- Skill decision: use_flowguard
+- Date: 2026-05-10
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_planning_quality_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`
+- OK: `python -m py_compile simulations\flowpilot_planning_quality_model.py simulations\run_flowpilot_planning_quality_checks.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python -m pytest tests\test_flowpilot_card_instruction_coverage.py -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k "product_architecture_and_root_contract_gate_route_skeleton or route_check_results_require_router_delivered_check_cards or node_acceptance_plan_requires_pm_high_standard_recheck or parent_backward_non_continue_decision_mutates_route_and_requires_rerun" -q`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- Product FlowGuard output is now treated as the root product behavior model for product-architecture work before PM route drafting.
+- PM route skeleton guidance now maps nodes to the product behavior model instead of treating the model as a late report.
+- Process FlowGuard guidance now checks whether the PM route can reach the product behavior model, instead of duplicating the Router's mechanical no-skip enforcement.
+- Repair and mutation paths now need an explicit return to the mainline node and a note about which product-model checks or evidence must rerun before continuing.
+
+### Counterexamples
+- The planning-quality model rejects missing product behavior model, PM route not mapped to product model, missing Process Officer route viability check, repair without mainline return, and node acceptance plans not mapped to a product-model segment.
+
+### Friction Points
+- A combined pytest run timed out, so validation was split into focused card coverage and router-runtime checks.
+- The worktree already contained broad parallel AI edits; this phase preserved those changes and only added the minimal product-model-first flow adjustments.
+
+### Skipped Steps
+- Installed FlowPilot skill synchronization skipped per user instruction.
+- Git stage, commit, push, and GitHub sync skipped per user instruction.
+
+### Next Actions
+- User will coordinate local install, git, and remote synchronization later.

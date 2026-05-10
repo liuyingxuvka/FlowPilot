@@ -22,6 +22,9 @@ HAZARD_EXPECTED_FAILURES = {
     "preapply_pending_relayed_as_committed_artifact": "Controller relayed planned system-card action before committed envelope artifact existed",
     "preapply_planned_action_marked_relay_allowed": "pre-apply system-card planning action was marked relay-allowed",
     "public_apply_deliver_system_card_used": "public Controller apply attempted to deliver a relay-only system-card action",
+    "legacy_return_event_field_used": "legacy return_event JSON field was still emitted",
+    "card_ack_recorded_as_external_event": "card ack was routed through record-event instead of check_card_return_event",
+    "check_card_return_apply_optional": "check_card_return_event changed state but was marked apply_required false",
     "missing_read_receipt": "required system card coverage passed without valid read receipt and ack/report envelope",
     "missing_ack_report": "required system card coverage passed without valid read receipt and ack/report envelope",
     "ack_without_receipt_refs": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
@@ -39,7 +42,7 @@ HAZARD_EXPECTED_FAILURES = {
     "bundle_receipt_without_per_card_refs": "bundle receipt replaced independent per-card receipts",
     "preload_receipt_authorizes_work": "preload-only receipt was used as work authorization",
     "cross_role_batch_missing_dependency_graph": "cross-role batch lacked explicit dependency graph, return events, join policy, or independence proof",
-    "cross_role_batch_missing_return_events": "cross-role batch lacked explicit dependency graph, return events, join policy, or independence proof",
+    "cross_role_batch_missing_card_return_events": "cross-role batch lacked explicit dependency graph, return events, join policy, or independence proof",
     "cross_role_hidden_dependency_parallelized": "cross-role batch parallelized a hidden dependency",
     "cross_role_missing_required_join": "Router advanced before required cross-role batch ack/report and receipt joins",
     "controller_reads_card_body": "Controller read a system-card body",
@@ -60,7 +63,8 @@ def _state_id(state: model.State) -> str:
         f"{state.post_apply_envelope_issued},{state.controller_relayed_preapply_artifact},"
         f"{state.runtime_open_blocked_not_committed},{state.public_system_card_apply_used}|"
         f"delivery={state.card_envelope_issued},{state.card_delivery_recorded},"
-        f"{state.return_event_declared},{state.pending_return_recorded}|"
+        f"{state.card_return_event_declared},{state.pending_return_recorded}|"
+        f"legacy_field={state.legacy_return_event_field_used}|"
         f"controller={state.controller_relayed_card_envelope},{state.controller_envelope_only},"
         f"read_body={state.controller_read_card_body},mutated={state.controller_mutated_batch}|"
         f"receipt={state.card_read_receipt_written},{state.receipt_current_run},"
@@ -71,8 +75,9 @@ def _state_id(state: model.State) -> str:
         f"{state.return_reminder_issued},{state.redelivery_attempt_issued}|"
         f"coverage={state.required_card_coverage_checked},{state.required_card_coverage_passed}|"
         f"batch={state.cross_role_batch_used},{state.batch_dependency_graph_declared},"
-        f"{state.batch_return_events_declared},{state.batch_join_policy_declared},"
+        f"{state.batch_card_return_events_declared},{state.batch_join_policy_declared},"
         f"{state.all_required_batch_receipts_joined},{state.all_required_batch_ack_reports_joined}|"
+        f"ack_control={state.card_ack_recorded_as_external_event},{state.check_card_return_apply_required}|"
         f"advanced={state.router_advanced}"
     )
 
@@ -184,7 +189,7 @@ def _scenario_report() -> dict[str, object]:
             "expected_failure": expected_legacy_bad,
             "failures": legacy_bad_failures,
         },
-        "target_v2_return_event_loop": {
+        "target_v2_card_return_event_loop": {
             "ok": not target_failures,
             "interpretation": "envelope, runtime receipt, ack/report envelope, receipt coverage, cross-role join, and PM gate all hold",
             "failures": target_failures,

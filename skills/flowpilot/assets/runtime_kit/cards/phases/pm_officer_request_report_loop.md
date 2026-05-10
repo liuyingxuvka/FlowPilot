@@ -16,6 +16,16 @@ Each officer request packet must include the registry `output_contract`
 and packet body's `Output Contract` section.
 The packet body must also include the generated `Report Contract For This Task`
 block so the officer sees the exact report fields before modeling.
+The packet body must also ask the officer to include a soft `PM Note` in the
+sealed report body with exactly these labels: `In-scope quality choice` and
+`PM consideration`. This note is PM decision-support, not a reviewer hard gate:
+the officer should use the simplest high-quality modeling boundary that answers
+PM's request, and report out-of-scope better ideas, route risks, or model
+improvements to PM without expanding the packet.
+The packet body must also require a `PM Suggestion Items` section. Officer
+suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
+ledger disposition. They become `current_gate_blocker` items only for formal
+model-gate findings inside PM's requested model boundary.
 
 For each modeling need, write a request that states:
 
@@ -27,6 +37,9 @@ For each modeling need, write a request that states:
   and post-repair model checks the PM needs before reviewer recheck;
 - model boundary, hard invariants, observed/source behavior, expected target
   behavior, and decisions the PM needs;
+- for product-model-first route design, whether the officer report should
+  define product behavior for PM route drafting, validate PM route viability
+  against that behavior, or check a repair branch's return to the mainline;
 - required commands or replay checks;
 - evidence paths, source materials, samples, traces, or experiment outputs the
   officer may inspect;
@@ -44,6 +57,7 @@ The officer report body must include these fields exactly:
   "hard_invariants": [],
   "skipped_checks": [],
   "confidence_boundary": "<what this model does and does not prove>",
+  "pm_suggestion_items": [],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,
@@ -54,6 +68,11 @@ The officer report body must include these fields exactly:
 
 The officer report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.
+
+PM must convert the report into a concrete route decision: continue, repair,
+add evidence, split a node, mutate the route, or block. A report that only says
+the model ran, without telling PM how it changes route or node design, is not
+sufficient.
 
 For model-miss reports that support `pm.model_miss_triage`, include these
 additional fields exactly:

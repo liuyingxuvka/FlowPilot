@@ -33,6 +33,7 @@
     "checkpoints_root": ".flowpilot/runs/run-001/checkpoints",
     "diagrams_root": ".flowpilot/runs/run-001/diagrams",
     "lifecycle_root": ".flowpilot/runs/run-001/lifecycle",
+    "pm_suggestion_ledger": ".flowpilot/runs/run-001/pm_suggestion_ledger.jsonl",
     "flowpilot_skill_improvement_observations": ".flowpilot/runs/run-001/flowpilot_skill_improvement_observations.jsonl",
     "flowpilot_skill_improvement_report": ".flowpilot/runs/run-001/flowpilot_skill_improvement_report.json"
   },

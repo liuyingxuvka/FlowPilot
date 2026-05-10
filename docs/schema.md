@@ -42,6 +42,7 @@ user-level:
 - `role_approvals/*.json`
 - `checkpoints/*.json`
 - `experiments/*/experiment.json`
+- `pm_suggestion_ledger.jsonl`
 - `flowpilot_skill_improvement_observations.jsonl`
 - `flowpilot_skill_improvement_report.json`
 
@@ -840,6 +841,39 @@ screenshot QA, or interaction smoke logs without the reviewer's personal
 walkthrough and visual/layout findings. If the reviewer cannot operate the
 surface, the gate blocks or requests more evidence; it does not pass from the
 worker report alone.
+
+## PM Suggestion Ledger
+
+`pm_suggestion_ledger.jsonl` is the run-scoped ledger for reviewer, worker, and
+FlowGuard officer suggestions that need Project Manager attention. It is
+separate from sealed packet/result bodies; entries may cite packet envelopes,
+result envelopes, review reports, model reports, evidence files, commands, or
+state references, but must not copy sealed body content.
+
+Each entry uses `flowpilot.pm_suggestion_item.v1` and records:
+
+- source role and source output reference;
+- suggestion summary and evidence references;
+- classification: `current_gate_blocker`, `current_node_improvement`,
+  `future_route_candidate`, `nonblocking_note`, or
+  `flowpilot_skill_improvement`;
+- authority basis, including whether a reviewer found a minimum-standard
+  failure, a FlowGuard officer reported a formal model-gate blocker, or a
+  worker/officer note is advisory only;
+- PM disposition: `adopt_now`, `repair_or_reissue`, `mutate_route`,
+  `defer_to_named_node`, `reject_with_reason`, `waive_with_authority`,
+  `stop_for_user`, or `record_for_flowpilot_maintenance`;
+- closure status and closure evidence.
+
+Current-gate blockers block gate closure until repaired and rechecked by the
+same review class, waived with authority, routed through mutation, or stopped
+for the user. Deferred suggestions must name a downstream node or gate. Rejected
+suggestions must include a PM reason. FlowPilot-skill improvement suggestions
+link to `flowpilot_skill_improvement_report.json` and do not block the current
+project unless PM separately classifies a true current-project blocker.
+Final route-wide ledger construction and terminal closure require a clean PM
+suggestion ledger: every item has a final PM disposition, current-gate blockers
+are closed or stopped, and role authority is valid for the classification.
 
 For generated UI concept targets, the observation also records whether the
 candidate appears to be an independent concept, an existing screenshot, an

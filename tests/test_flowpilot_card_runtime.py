@@ -52,7 +52,7 @@ def make_envelope(root: Path, run_root: Path, body_path: Path) -> Path:
         "sealed_body_reads_allowed": False,
         "requires_read_receipt": True,
         "open_method": "open-card",
-        "return_event": "pm_card_ack",
+        "card_return_event": "pm_card_ack",
         "expected_receipt_path": receipt_path.relative_to(root).as_posix(),
         "expected_return_path": ack_path.relative_to(root).as_posix(),
         "delivered_at": card_runtime.utc_now(),
@@ -79,6 +79,8 @@ def test_card_runtime_opens_card_and_submits_ack() -> None:
         receipt_paths=[opened["read_receipt_path"]],
     )
     assert ack["ack_envelope"]["contains_card_body"] is False
+    assert ack["ack_envelope"]["card_return_event"] == "pm_card_ack"
+    assert "return_event" not in ack["ack_envelope"]
     assert ack["ack_envelope"]["receipt_refs"]
     validation = card_runtime.validate_card_ack(
         root,
@@ -86,6 +88,7 @@ def test_card_runtime_opens_card_and_submits_ack() -> None:
         envelope_path=envelope_path.relative_to(root).as_posix(),
     )
     assert validation["ok"] is True
+    assert validation["card_return_event"] == "pm_card_ack"
     assert validation["receipt_ref_count"] == 1
 
 

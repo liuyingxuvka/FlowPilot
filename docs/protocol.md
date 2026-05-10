@@ -1139,6 +1139,30 @@ stop. A report that only summarizes worker screenshots, screenshot QA, or an
 interaction smoke log is `worker_report_only` evidence and cannot approve a
 human-review gate.
 
+Reviewer, worker, and FlowGuard officer suggestions share one PM disposition
+loop. Each suggestion that needs PM attention becomes a
+`flowpilot.pm_suggestion_item.v1` entry in
+`.flowpilot/runs/<run-id>/pm_suggestion_ledger.jsonl`. Reviewer suggestions,
+worker/officer `PM Note` items, model-derived route risks, and higher-standard
+or simplification opportunities use the same ledger fields. The ledger unifies
+intake and PM closure; it does not flatten role authority. Reviewers may block
+only when the minimum current-gate standard is not guaranteed. Workers cannot
+block gates. FlowGuard officers block only through formal model-gate findings;
+ordinary tool or model improvement notes remain PM decision-support.
+
+The PM disposition for every ledger item must be one of: `adopt_now`,
+`repair_or_reissue`, `mutate_route`, `defer_to_named_node`,
+`reject_with_reason`, `waive_with_authority`, `stop_for_user`, or
+`record_for_flowpilot_maintenance`. Current-gate blockers must be repaired and
+rechecked by the same review class, waived with authority, routed through
+mutation, or stopped for the user before gate closure. Deferrals must name a
+downstream node or gate. Rejections and waivers require PM reasons. Ledger
+entries may cite sealed packet/result envelopes and evidence paths, but they
+must not copy sealed body content.
+Final route-wide ledger construction and terminal closure require a clean PM
+suggestion ledger: no pending PM dispositions, no open current-gate blockers,
+and no malformed authority basis.
+
 Before any pass/fail judgement, the inspector writes a neutral observation of
 what was actually seen or exercised. For screenshots and UI concepts, this is a
 plain description of visible content, layout, chrome/taskbar/window artifacts,
@@ -1288,6 +1312,10 @@ observations to
 If no issue is observed, record only that the check was considered; do not
 create heavy empty node reports. These observations are independent of the
 current project's acceptance gates and do not block current project completion.
+When a role reports a FlowPilot skill issue through the PM suggestion ledger,
+the PM disposition is `record_for_flowpilot_maintenance` and the item links to
+`flowpilot_skill_improvement_report.json`; this does not replace the existing
+skill-improvement observation log.
 
 Before closing any parent/composite checkpoint, run the local parent backward
 replay for that structural parent node. Replay child evidence against the

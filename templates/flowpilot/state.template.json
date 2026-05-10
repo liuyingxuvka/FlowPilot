@@ -306,6 +306,7 @@
   "generated_resource_events": ".flowpilot/runs/run-001/generated_resource_events.jsonl",
   "activity_stream": ".flowpilot/runs/run-001/activity_stream.jsonl",
   "activity_latest": ".flowpilot/runs/run-001/activity_latest.json",
+  "pm_suggestion_ledger": ".flowpilot/runs/run-001/pm_suggestion_ledger.jsonl",
   "flowpilot_skill_improvement_observations": ".flowpilot/runs/run-001/flowpilot_skill_improvement_observations.jsonl",
   "flowpilot_skill_improvement_report": ".flowpilot/runs/run-001/flowpilot_skill_improvement_report.json",
   "final_route_wide_gate_ledger": ".flowpilot/runs/run-001/final_route_wide_gate_ledger.json",

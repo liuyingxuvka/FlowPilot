@@ -10,11 +10,14 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 # Product FlowGuard Officer Product Architecture Modelability
 
 Assess whether the product-function architecture can support product-behavior
-modeling and validation.
+modeling and validation. Treat this report as the root product behavior model
+that PM must use before route drafting, not merely as a late review of a route.
 
 Report:
 
 - modelable product states and transitions;
+- user actions, product states, failure/recovery paths, forbidden downgrades,
+  and completion evidence that route nodes must cover;
 - unmodeled or ambiguous behavior;
 - high-risk requirements needing scenarios or experiments;
 - confidence boundary;

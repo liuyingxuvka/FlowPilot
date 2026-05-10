@@ -54,6 +54,12 @@ Allowed PM decisions:
 For mutation or repair, record route version impact, stale evidence, affected
 ancestors, and the rerun target before new work starts.
 
+For route mutation, include `repair_return_to_node_id`, identifying the
+mainline node the repair is meant to rejoin. Router treats mutation as a fresh
+route-check boundary: old Process/Product/Reviewer route approvals become
+stale and the changed route must pass route checks again before execution
+continues.
+
 Mutation or repair output must include `prior_path_context_review` showing the
 history considered and why this repair does not repeat a superseded or failed
 path.

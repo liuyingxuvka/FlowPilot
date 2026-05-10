@@ -28,6 +28,12 @@ from chat context. The lower-level `packet_runtime.py open-packet-session` and
 `packet_runtime.py run-packet-session` commands remain compatibility
 entrypoints. Return only the bounded research result requested by the PM.
 
+The PM packet boundary is a hard scope boundary, not a low-standard target.
+Within the requested research boundary, use the simplest high-quality evidence
+path that answers PM's decision question. If a better idea would require
+broader research, extra experiments, route changes, or different acceptance,
+do not execute it; report it to PM only.
+
 Before returning the result envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 result or report body. If required source checks, sections, or evidence are
@@ -45,5 +51,14 @@ Include:
 - confidence boundary;
 - what was not checked;
 - whether the result answers the PM decision question.
+- a soft `PM Note` with exactly these labels: `In-scope quality choice` and
+  `PM consideration`. Use `none` when there is no useful note. The note is PM
+  decision-support and does not authorize route mutation, gate approval, or
+  scope expansion.
+- a `PM Suggestion Items` section. Convert useful PM considerations into
+  candidate `flowpilot.pm_suggestion_item.v1` entries with classification
+  `current_node_improvement`, `future_route_candidate`, `nonblocking_note`, or
+  `flowpilot_skill_improvement`. Worker-origin items are advisory only and
+  must not use `current_gate_blocker`.
 
 The report is not approval. It must go to the reviewer for direct checking.

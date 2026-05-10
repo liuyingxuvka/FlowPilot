@@ -23,3 +23,13 @@ Check only product fit:
 
 Return pass or block in the private report body. Keep the body out of
 Controller chat.
+
+Router hard gate fields for a pass:
+
+- `route_model_review_verdict: "pass"`;
+- `product_behavior_model_checked: true`;
+- `route_maps_to_product_behavior_model: true`.
+
+These fields are your role-owned judgement that the PM route follows the
+Product Officer's product behavior model. Router checks only this pass
+artifact; Router must not judge semantic product coverage itself.

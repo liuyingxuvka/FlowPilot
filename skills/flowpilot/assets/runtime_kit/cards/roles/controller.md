@@ -37,6 +37,9 @@ Allowed actions:
 - check the packet ledger before delivering mail or packet envelopes;
 - relay envelopes only, update holder/status ledgers, and request role
   decisions;
+- when returning a role/event envelope to the router, pass the envelope file
+  path and sha256 through `record-event --envelope-path ... --envelope-hash ...`
+  or `event_envelope_ref`; do not reconstruct the envelope fields by hand;
 - deliver router `control_blocker` artifacts exactly as instructed by the
   router action envelope;
 - display route signs and required startup text when the router or PM requires

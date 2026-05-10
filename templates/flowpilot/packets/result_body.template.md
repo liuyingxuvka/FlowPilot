@@ -57,6 +57,26 @@ the unopened envelope for PM reissue or repair.
 
 - <issue-or-none>
 
+## PM Note
+
+For worker or FlowGuard officer packet results, include a short PM-facing note.
+This note is decision-support, not gate approval and not permission to expand
+scope. For other result types, write `not applicable`.
+
+- In-scope quality choice: <simpler-or-higher-quality-choice-used-inside-this-packet-boundary-or-none>
+- PM consideration: <out-of-scope-better-idea-route-risk-or-simplification-opportunity-for-PM-or-none>
+
+## PM Suggestion Items
+
+Use `none` when there are no PM suggestion candidates. Otherwise list candidate
+`flowpilot.pm_suggestion_item.v1` entries for PM disposition in
+`pm_suggestion_ledger.jsonl`. Include source role, source output reference,
+summary, classification, authority basis, and evidence references. Do not copy
+sealed body content into the suggestion item. Worker-origin items are advisory
+only and must not use `current_gate_blocker`. FlowGuard officer items may use
+`current_gate_blocker` only for formal model-gate findings inside the
+PM-requested model boundary.
+
 ## Skill Standard Result Matrix
 
 For every inherited child-skill standard id declared in the source packet,

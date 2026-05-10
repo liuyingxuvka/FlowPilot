@@ -9,6 +9,22 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Reviewer Final Backward Replay
 
+## Decision-Support Findings
+
+For every outcome, consider `independent_challenge.non_blocking_findings`.
+Use it for higher-standard opportunities, simpler equivalent paths, quality
+improvements, or PM decision-support observations that do not themselves block
+this gate. This applies even when the review blocks.
+When useful, express these findings as candidate
+`flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
+`current_gate_blocker` only when the current gate's minimum standard cannot be
+guaranteed.
+
+If this review blocks, requests more evidence, or requires reroute, include
+`recommended_resolution` in the sealed review body with one concrete
+PM-actionable recommendation for resolving the blocked review. PM remains the
+owner of final repair strategy.
+
 Use the PM final route-wide gate ledger and terminal replay map as the only
 completion runway.
 
@@ -83,11 +99,14 @@ when the replay blocks completion.
       "pm_segment_decision": "repair_or_replay_required",
       "evidence_checked": [],
       "blockers": [],
+      "recommended_resolution": "<required when this segment fails; null when it passes>",
       "rerun_target": "<route node, segment, or ledger target>"
     }
   ],
   "blockers": [],
+  "recommended_resolution": "<required when top-level passed is false; null when passed is true>",
   "residual_risks": [],
+  "pm_suggestion_items": [],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,

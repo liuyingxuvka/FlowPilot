@@ -111,6 +111,13 @@ for review.
    Use the physical packet runtime (`skills/flowpilot/assets/packet_runtime.py`
    in the installed skill, `scripts/flowpilot_packets.py` in the repo) to write
    these files and generate controller handoffs from envelope fields only.
+   Reviewer, worker, and FlowGuard officer suggestions that need PM attention
+   are normalized into `pm_suggestion_ledger.jsonl`. Reviewer hard blockers,
+   worker/officer `PM Note` items, model-derived route risks, and useful
+   higher-standard or simplification opportunities all use the same PM
+   disposition fields, while role authority stays distinct: reviewers block
+   only minimum-standard failures, workers never block gates, and officer
+   blockers require formal model-gate findings.
 25. Before any parent/composite node closes, write
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the
@@ -280,6 +287,10 @@ for review.
 - `activity_stream.template.json`: append-only progress stream for PM,
   reviewer, officer, worker, route, checkpoint, heartbeat/manual-resume, and
   terminal events consumed by Cockpit/chat progress.
+- `pm_suggestion_ledger_entry.template.json`: JSONL entry shape for reviewer,
+  worker, and FlowGuard officer suggestions that require PM disposition. The
+  ledger records source role, classification, evidence refs, PM disposition,
+  and closure without copying sealed packet or result body content.
 - `pause_snapshot.template.json`: controlled-pause snapshot with current
   route/node, blockers, pending rechecks, evidence caveats, heartbeat/agent
   lifecycle, and cleanup boundary for fresh restarts.

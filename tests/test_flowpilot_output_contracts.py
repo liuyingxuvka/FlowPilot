@@ -51,6 +51,12 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.pm_terminal_closure_decision.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.pm_model_miss_triage_decision.v1", contract_ids)
         self.assertIn("flowpilot.output_contract.flowguard_model_miss_report.v1", contract_ids)
+        worker_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.worker_current_node_result.v1"
+        )
+        self.assertIn("PM Suggestion Items", worker_contract["required_result_body_sections"])
         startup_contract = next(
             item
             for item in registry["contracts"]
@@ -60,6 +66,19 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "external_fact_review.direct_evidence_paths_checked",
             startup_contract["required_body_fields"],
         )
+        self.assertIn("pm_suggestion_items", startup_contract["required_body_fields"])
+        reviewer_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.reviewer_review_report.v1"
+        )
+        self.assertIn("pm_suggestion_items", reviewer_contract["required_body_fields"])
+        officer_model_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.officer_model_report.v1"
+        )
+        self.assertIn("pm_suggestion_items", officer_model_contract["required_body_fields"])
         gate_contract = next(
             item
             for item in registry["contracts"]
@@ -253,6 +272,13 @@ class FlowPilotOutputContractTests(unittest.TestCase):
 
     def test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result(self) -> None:
         root = self.make_project()
+        default_contract = packet_runtime.default_output_contract(
+            packet_type="work_packet",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+        )
+        self.assertIn("PM Suggestion Items", default_contract["required_result_body_sections"])  # type: ignore[index]
         contract = {
             "schema_version": "flowpilot.output_contract.v1",
             "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",

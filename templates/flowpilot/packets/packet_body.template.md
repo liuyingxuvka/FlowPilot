@@ -59,6 +59,30 @@ unopened envelope for PM reissue or repair.
 
 - <bounded acceptance condition for this packet only>
 
+## Worker/Officer PM Note
+
+For packets addressed to `worker_a`, `worker_b`,
+`process_flowguard_officer`, or `product_flowguard_officer`, the PM packet
+boundary is a hard scope boundary, not a low-standard target. Within the
+declared boundary, use the simplest high-quality approach that satisfies this
+packet. If a better idea would require broader scope, new route work, extra
+files, dependencies, new model families, or changed acceptance, do not execute
+it; report it to PM only.
+
+Return a soft `PM Note` in the sealed result or report body with exactly these
+labels: `In-scope quality choice` and `PM consideration`. Use `none` when there
+is no useful note. This note is PM decision-support, not a reviewer hard gate.
+If this packet is not addressed to a worker or FlowGuard officer, write `not
+applicable`.
+
+Also return a `PM Suggestion Items` section. Use `none` when there are no PM
+suggestion candidates. Otherwise list candidate `flowpilot.pm_suggestion_item.v1`
+entries with source role, source output reference, summary, classification,
+authority basis, and evidence references. Do not copy sealed body content into
+the suggestion item. Worker-origin items are advisory only and must not use
+`current_gate_blocker`. FlowGuard officer items may use `current_gate_blocker`
+only for formal model-gate findings inside the PM-requested model boundary.
+
 ## Reviewer Independent Challenge Context
 
 For packets addressed to `human_like_reviewer`, the PM must provide the user
@@ -76,6 +100,10 @@ triage, nonblocking findings, pass-or-block decision, reroute request, PM
 decision-support recommendations for higher standards where useful, and any
 waivers. If the packet is not addressed to `human_like_reviewer`, write `not
 applicable`.
+When reviewer findings contain PM-actionable suggestions, represent them as
+candidate `flowpilot.pm_suggestion_item.v1` items for the PM ledger. Use
+`current_gate_blocker` only when the current gate's minimum standard cannot be
+guaranteed.
 
 ## Inherited Skill Standards
 

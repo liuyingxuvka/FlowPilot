@@ -1,0 +1,51 @@
+{
+  "schema_version": "flowpilot.pm_suggestion_item.v1",
+  "run_id": "<run-id>",
+  "route_id": "<route-id-or-null>",
+  "route_version": 0,
+  "node_id": "<node-id-or-terminal-or-null>",
+  "gate_id": "<gate-id-or-null>",
+  "suggestion_id": "<suggestion-id>",
+  "recorded_at": "<iso-8601-timestamp>",
+  "source_role": "<human_like_reviewer|worker_a|worker_b|process_flowguard_officer|product_flowguard_officer|project_manager>",
+  "source_output_ref": {
+    "path": "<review-report-result-report-or-envelope-path>",
+    "hash": "<sha256-or-null>",
+    "sealed_body_content_copied": false
+  },
+  "summary": "<short suggestion or concern>",
+  "classification": "<current_gate_blocker|current_node_improvement|future_route_candidate|nonblocking_note|flowpilot_skill_improvement>",
+  "authority_basis": {
+    "reviewer_minimum_standard_failure": false,
+    "formal_flowguard_model_gate": false,
+    "worker_or_officer_advisory_only": true,
+    "reason": "<why-this-classification-is-allowed-for-this-role>"
+  },
+  "evidence_refs": [
+    {
+      "kind": "<file|command|screenshot|model_result|reviewer_walkthrough|state_ref|envelope|none>",
+      "path": "<path-or-null>",
+      "hash": "<sha256-or-null>",
+      "summary": "<evidence-summary-without-sealed-body-content>"
+    }
+  ],
+  "pm_disposition": {
+    "status": "<pending|adopt_now|repair_or_reissue|mutate_route|defer_to_named_node|reject_with_reason|waive_with_authority|stop_for_user|record_for_flowpilot_maintenance>",
+    "decided_by_role": "project_manager",
+    "decided_at": "<iso-8601-timestamp-or-null>",
+    "reason": "<pm-reason-or-null>",
+    "target_node_or_gate_id": "<required-for-defer_to_named_node-or-null>",
+    "waiver_authority_role": "<required-for-waive_with_authority-or-null>",
+    "route_version_impact": "<required-for-mutate_route-or-null>",
+    "stale_evidence_handling": "<required-for-mutate_route-or-null>",
+    "repair_or_reissue_target": "<required-for-repair_or_reissue-or-null>",
+    "same_review_class_recheck_required": "<true|false>",
+    "flowpilot_skill_improvement_report_path": ".flowpilot/runs/<run-id>/flowpilot_skill_improvement_report.json"
+  },
+  "closure": {
+    "status": "<open|pending_repair|deferred_to_named_node|closed|stopped_for_user>",
+    "closed_at": "<iso-8601-timestamp-or-null>",
+    "closure_evidence_refs": [],
+    "blocks_current_gate_until_closed": "<true-only-for-unresolved-current_gate_blocker>"
+  }
+}

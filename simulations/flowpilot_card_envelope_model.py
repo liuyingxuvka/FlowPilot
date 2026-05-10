@@ -8,7 +8,7 @@ Risk intent brief:
   Router advancement.
 - Model-critical durable state: role I/O protocol acknowledgement for the
   current resume tick, card envelope identity, card manifest hash, target role
-  and agent identity, read receipt timing, expected return-event records,
+  and agent identity, read receipt timing, expected card-return event records,
   ack/report envelope identity, batch dependency graph, cross-role parallel
   delivery joins, and legacy prompt-delivery compatibility.
 - Adversarial branches include legacy delivery treated as read, missing read
@@ -77,7 +77,8 @@ class State:
     card_envelope_issued: bool = False
     card_delivery_recorded: bool = False
     card_hash_matches_manifest: bool = False
-    return_event_declared: bool = False
+    card_return_event_declared: bool = False
+    legacy_return_event_field_used: bool = False
     expected_return_path_recorded: bool = False
     pending_return_recorded: bool = False
     controller_relayed_card_envelope: bool = False
@@ -109,6 +110,8 @@ class State:
     ack_references_read_receipts: bool = False
     ack_returned_after_receipts: bool = False
     ack_controller_relayed_envelope_only: bool = False
+    card_ack_recorded_as_external_event: bool = False
+    check_card_return_apply_required: bool = False
     receipt_repair_request_issued: bool = False
     redelivery_attempt_issued: bool = False
     stale_delivery_superseded: bool = False
@@ -119,14 +122,14 @@ class State:
     cross_role_batch_used: bool = False
     batch_dependency_graph_declared: bool = False
     batch_join_policy_declared: bool = False
-    batch_return_events_declared: bool = False
+    batch_card_return_events_declared: bool = False
     independent_parallel_delivery: bool = False
     hidden_dependency_parallelized: bool = False
     all_required_batch_receipts_joined: bool = False
     all_required_batch_ack_reports_joined: bool = False
     missing_batch_join_detected: bool = False
     awaiting_batch_join_receipts: bool = False
-    awaiting_batch_return_events: bool = False
+    awaiting_batch_card_return_events: bool = False
     preload_only_receipt_used_as_authorization: bool = False
 
     heartbeat_resume_loaded_pending_return: bool = False
@@ -239,7 +242,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.card_envelope_issued:
         yield Transition(
-            "router_issues_card_envelope_with_manifest_hash_and_return_event",
+            "router_issues_card_envelope_with_manifest_hash_and_card_return_event",
             _inc(
                 state,
                 router_auto_committed_internal_action=True,
@@ -250,7 +253,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 card_delivery_recorded=True,
                 card_hash_matches_manifest=True,
                 required_card_declared=True,
-                return_event_declared=True,
+                card_return_event_declared=True,
                 expected_return_path_recorded=True,
                 pending_return_recorded=True,
             ),
@@ -350,6 +353,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 required_card_coverage_checked=True,
                 required_card_coverage_passed=True,
+                check_card_return_apply_required=True,
             ),
         )
         return
@@ -362,7 +366,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 cross_role_batch_used=True,
                 batch_dependency_graph_declared=True,
                 batch_join_policy_declared=True,
-                batch_return_events_declared=True,
+                batch_card_return_events_declared=True,
                 independent_parallel_delivery=True,
             ),
         )
@@ -376,7 +380,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     state,
                     missing_batch_join_detected=True,
                     awaiting_batch_join_receipts=True,
-                    awaiting_batch_return_events=True,
+                    awaiting_batch_card_return_events=True,
                 ),
             )
             return
@@ -466,10 +470,12 @@ def controller_must_stay_envelope_only(state: State, trace) -> InvariantResult:
 
 def required_card_receipt_gate(state: State, trace) -> InvariantResult:
     del trace
+    if state.legacy_return_event_field_used:
+        return InvariantResult.fail("legacy return_event JSON field was still emitted")
     if state.card_envelope_issued and not (
-        state.return_event_declared and state.expected_return_path_recorded and state.pending_return_recorded
+        state.card_return_event_declared and state.expected_return_path_recorded and state.pending_return_recorded
     ):
-        return InvariantResult.fail("card envelope lacked a Router-owned expected return event")
+        return InvariantResult.fail("card envelope lacked a Router-owned expected card_return_event")
     if state.card_envelope_issued and not (
         state.router_auto_committed_internal_action
         and state.committed_artifact_exists
@@ -491,6 +497,15 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("Router advanced while required card receipt wait/repair was unresolved")
     if (state.expected_return_missing_detected or state.await_expected_return) and state.router_advanced and not _ack_valid(state):
         return InvariantResult.fail("Router advanced while expected ack/report wait was unresolved")
+    return InvariantResult.pass_()
+
+
+def card_return_ack_uses_router_check_action(state: State, trace) -> InvariantResult:
+    del trace
+    if state.card_ack_recorded_as_external_event:
+        return InvariantResult.fail("card ack was routed through record-event instead of check_card_return_event")
+    if state.required_card_coverage_checked and not state.check_card_return_apply_required:
+        return InvariantResult.fail("check_card_return_event changed state but was marked apply_required false")
     return InvariantResult.pass_()
 
 
@@ -544,7 +559,7 @@ def cross_role_batch_requires_dependency_graph_and_join(state: State, trace) -> 
     if state.cross_role_batch_used and not (
         state.batch_dependency_graph_declared
         and state.batch_join_policy_declared
-        and state.batch_return_events_declared
+        and state.batch_card_return_events_declared
         and state.independent_parallel_delivery
     ):
         return InvariantResult.fail("cross-role batch lacked explicit dependency graph, return events, join policy, or independence proof")
@@ -557,7 +572,7 @@ def cross_role_batch_requires_dependency_graph_and_join(state: State, trace) -> 
     if (
         state.missing_batch_join_detected
         or state.awaiting_batch_join_receipts
-        or state.awaiting_batch_return_events
+        or state.awaiting_batch_card_return_events
     ) and state.router_advanced and not (
         state.all_required_batch_receipts_joined and state.all_required_batch_ack_reports_joined
     ):
@@ -591,6 +606,11 @@ INVARIANTS = (
         "required_card_receipt_gate",
         "Required card coverage and Router advancement require valid runtime read receipts.",
         required_card_receipt_gate,
+    ),
+    Invariant(
+        "card_return_ack_uses_router_check_action",
+        "Card acks are mechanical return checks and must be resolved by check_card_return_event.",
+        card_return_ack_uses_router_check_action,
     ),
     Invariant(
         "read_receipt_identity_gate",
@@ -643,7 +663,7 @@ REQUIRED_LABELS = (
     "legacy_delivery_stops_before_v2_authorization",
     "role_io_protocol_injected_and_acknowledged_for_current_tick",
     "router_computes_internal_card_delivery_action_without_relay_permission",
-    "router_issues_card_envelope_with_manifest_hash_and_return_event",
+    "router_issues_card_envelope_with_manifest_hash_and_card_return_event",
     "controller_relays_card_envelope_only",
     "router_detects_missing_expected_return_and_waits",
     "heartbeat_or_manual_resume_loads_pending_return",
@@ -690,7 +710,7 @@ def target_v2_state() -> State:
         card_envelope_issued=True,
         card_delivery_recorded=True,
         card_hash_matches_manifest=True,
-        return_event_declared=True,
+        card_return_event_declared=True,
         expected_return_path_recorded=True,
         pending_return_recorded=True,
         controller_relayed_card_envelope=True,
@@ -717,6 +737,7 @@ def target_v2_state() -> State:
         ack_references_read_receipts=True,
         ack_returned_after_receipts=True,
         ack_controller_relayed_envelope_only=True,
+        check_card_return_apply_required=True,
         receipt_repair_request_issued=True,
         redelivery_attempt_issued=True,
         stale_delivery_superseded=True,
@@ -724,13 +745,13 @@ def target_v2_state() -> State:
         cross_role_batch_used=True,
         batch_dependency_graph_declared=True,
         batch_join_policy_declared=True,
-        batch_return_events_declared=True,
+        batch_card_return_events_declared=True,
         independent_parallel_delivery=True,
         all_required_batch_receipts_joined=True,
         all_required_batch_ack_reports_joined=True,
         missing_batch_join_detected=True,
         awaiting_batch_join_receipts=True,
-        awaiting_batch_return_events=True,
+        awaiting_batch_card_return_events=True,
         heartbeat_resume_loaded_pending_return=True,
         manual_resume_loaded_pending_return=True,
         recovery_action_available=True,
@@ -754,6 +775,8 @@ def legacy_expected_bad_state() -> State:
         legacy_delivery_treated_as_read=True,
         required_card_coverage_checked=True,
         required_card_coverage_passed=True,
+        check_card_return_apply_required=True,
+        pm_decision_gate_kept=True,
         router_advanced=True,
     )
 
@@ -780,6 +803,18 @@ def hazard_states() -> dict[str, State]:
         "public_apply_deliver_system_card_used": replace(
             safe,
             public_system_card_apply_used=True,
+        ),
+        "legacy_return_event_field_used": replace(
+            safe,
+            legacy_return_event_field_used=True,
+        ),
+        "card_ack_recorded_as_external_event": replace(
+            safe,
+            card_ack_recorded_as_external_event=True,
+        ),
+        "check_card_return_apply_optional": replace(
+            safe,
+            check_card_return_apply_required=False,
         ),
         "missing_read_receipt": replace(
             safe,
@@ -850,9 +885,9 @@ def hazard_states() -> dict[str, State]:
             safe,
             batch_dependency_graph_declared=False,
         ),
-        "cross_role_batch_missing_return_events": replace(
+        "cross_role_batch_missing_card_return_events": replace(
             safe,
-            batch_return_events_declared=False,
+            batch_card_return_events_declared=False,
         ),
         "cross_role_hidden_dependency_parallelized": replace(
             safe,
@@ -863,7 +898,7 @@ def hazard_states() -> dict[str, State]:
             all_required_batch_receipts_joined=False,
             all_required_batch_ack_reports_joined=False,
             awaiting_batch_join_receipts=True,
-            awaiting_batch_return_events=True,
+            awaiting_batch_card_return_events=True,
             router_advanced=True,
         ),
         "controller_reads_card_body": replace(

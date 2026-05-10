@@ -1,0 +1,236 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=72",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "hazards": {
+      "accepted_without_dedupe_key_fields": {
+        "detected": true,
+        "expected_failure": "accepted scoped event without dedupe key fields",
+        "failures": [
+          "accepted scoped event without dedupe key fields"
+        ],
+        "state": "scenario=route_mutation_new_transaction|status=accepted|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_key_fields"
+      },
+      "cycle_reuse_without_reset": {
+        "detected": true,
+        "expected_failure": "cycle-scoped event reused without reset evidence",
+        "failures": [
+          "cycle-scoped event reused without reset evidence"
+        ],
+        "state": "scenario=cycle_scoped_event_after_reset|status=accepted|event=pm_registers_current_node_packet|family=cycle|flag=True|key=node-001-repair:packet-generation-2|prior=node-001:packet-generation-1|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_cycle_reset"
+      },
+      "global_flag_swallows_new_route_mutation": {
+        "detected": true,
+        "expected_failure": "new scoped event identity was swallowed by global event flag",
+        "failures": [
+          "new scoped event identity was swallowed by global event flag",
+          "repair retry below budget was silently swallowed"
+        ],
+        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+      },
+      "no_legal_next_action_after_swallow": {
+        "detected": true,
+        "expected_failure": "new scoped event identity was swallowed by global event flag",
+        "failures": [
+          "new scoped event identity was swallowed by global event flag",
+          "repair retry below budget was silently swallowed",
+          "idempotency decision produced no legal next action"
+        ],
+        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=True|reason=swallowed_then_stuck"
+      },
+      "repair_retry_below_budget_swallowed": {
+        "detected": true,
+        "expected_failure": "new scoped event identity was swallowed by global event flag",
+        "failures": [
+          "new scoped event identity was swallowed by global event flag",
+          "repair retry below budget was silently swallowed"
+        ],
+        "state": "scenario=repair_retry_below_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+      },
+      "retry_budget_exceeded_without_escalation": {
+        "detected": true,
+        "expected_failure": "repair retry budget exceeded without explicit PM escalation",
+        "failures": [
+          "new scoped event identity was swallowed by global event flag",
+          "repair retry budget exceeded without explicit PM escalation"
+        ],
+        "state": "scenario=repair_retry_exceeds_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-4:route-v5|prior=repair-tx-1:route-v2,repair-tx-2:route-v3,repair-tx-3:route-v4|retry=4/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+      },
+      "unconditional_repeat_duplicates_gate_decision": {
+        "detected": true,
+        "expected_failure": "duplicate side effect written for replayed event identity",
+        "failures": [
+          "same dedupe key wrote duplicate side effect",
+          "duplicate side effect written for replayed event identity"
+        ],
+        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_officer|prior=gate:route-check:v1:process_officer|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
+      }
+    },
+    "ok": true
+  },
+  "model": "flowpilot_event_idempotency",
+  "model_boundary": "external-event dedupe, retry, and scoped idempotency; no production code mutation",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "repair_principle": {
+    "dedupe_key": "event_name + explicit scope identity, not event_name + run-wide flag",
+    "new_key": "execute the event writer even when the run-wide flag for that event is already true",
+    "retry_budget": "after a configured retry budget, emit explicit PM escalation/dead-end instead of silently swallowing",
+    "same_key": "return already_recorded without side effects"
+  },
+  "safe_graph": {
+    "accepted": [
+      "control_repair_new_transaction",
+      "cycle_scoped_event_after_reset",
+      "gate_decision_new_key",
+      "repair_retry_below_budget",
+      "route_mutation_new_transaction"
+    ],
+    "already_recorded": [
+      "cycle_scoped_event_without_reset",
+      "gate_decision_same_key_replay",
+      "lifecycle_replay",
+      "one_shot_same_key_replay",
+      "route_mutation_same_transaction_replay"
+    ],
+    "edge_count": 24,
+    "escalated": [
+      "one_shot_new_context_rejected",
+      "repair_retry_exceeds_budget"
+    ],
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 25
+  },
+  "source_audit": {
+    "external_event_count": 71,
+    "finding_count": 0,
+    "findings": [],
+    "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
+    "ok": true,
+    "repeatable_exception_count": 6,
+    "repeatable_exceptions": {
+      "heartbeat_or_manual_resume_requested": {
+        "condition": "append_only_tick",
+        "exception_name": "pre_dedupe_special_case",
+        "source_excerpt": "handled before generic duplicate check"
+      },
+      "pm_completes_current_node_from_reviewed_result": {
+        "condition": "conditional",
+        "exception_name": "repeatable_current_node_completion",
+        "source_excerpt": "repeatable_current_node_completion = ( event == \"pm_completes_current_node_from_reviewed_result\" and run_state[\"flags\"].get(flag) and _active_node_completion_write_missing(run_root, run_state, payload)"
+      },
+      "pm_records_control_blocker_repair_decision": {
+        "condition": "conditional",
+        "exception_name": "repeatable_pm_repair_decision",
+        "source_excerpt": "repeatable_pm_repair_decision = ( event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT and isinstance(active_blocker, dict) and active_blocker.get(\"delivery_status\") == \"delivered\" and active_blocker.get(\"handling_lane\") in PM_DECISION_REQUIRE"
+      },
+      "pm_requests_startup_repair": {
+        "condition": "conditional",
+        "exception_name": "repeatable_startup_repair_request",
+        "source_excerpt": "repeatable_startup_repair_request = ( event == \"pm_requests_startup_repair\" and run_state[\"flags\"].get(flag) and run_state[\"flags\"].get(\"startup_fact_reported\") and run_state[\"flags\"].get(\"pm_startup_activation_card_delivered\")"
+      },
+      "pm_writes_route_draft": {
+        "condition": "conditional",
+        "exception_name": "repeatable_route_draft_repair",
+        "source_excerpt": "repeatable_route_draft_repair = ( event == \"pm_writes_route_draft\" and run_state[\"flags\"].get(flag) and not run_state[\"flags\"].get(\"route_activated_by_pm\")"
+      },
+      "role_records_gate_decision": {
+        "condition": "unconditional",
+        "exception_name": "repeatable_gate_decision",
+        "source_excerpt": "repeatable_gate_decision = event == GATE_DECISION_EVENT"
+      }
+    },
+    "required_scoped_event_count": 6,
+    "router_path": "skills\\flowpilot\\assets\\flowpilot_router.py",
+    "scoped_policies": {
+      "pm_completes_current_node_from_reviewed_result": {
+        "dedupe_fields": [
+          "node_id",
+          "packet_id",
+          "result_hash"
+        ],
+        "family": "node_completion",
+        "retry_group_fields": [
+          "event",
+          "node_id"
+        ]
+      },
+      "pm_mutates_route_after_review_block": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "route_version"
+        ],
+        "family": "transaction",
+        "max_distinct_keys_per_retry_group": 3,
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "model_miss_block"
+        ]
+      },
+      "pm_records_control_blocker_repair_decision": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id"
+        ],
+        "family": "transaction",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id"
+        ]
+      },
+      "pm_requests_startup_repair": {
+        "dedupe_fields": [
+          "startup_review_cycle",
+          "startup_fact_report_hash"
+        ],
+        "family": "startup_cycle",
+        "retry_group_fields": [
+          "event",
+          "startup_fact_report_hash"
+        ]
+      },
+      "pm_writes_route_draft": {
+        "dedupe_fields": [
+          "draft_version",
+          "route_hash"
+        ],
+        "family": "route_draft",
+        "retry_group_fields": [
+          "event",
+          "route_id"
+        ]
+      },
+      "role_records_gate_decision": {
+        "dedupe_fields": [
+          "gate_id",
+          "route_version",
+          "decided_by_role"
+        ],
+        "family": "gate",
+        "retry_group_fields": [
+          "event",
+          "gate_id",
+          "route_version"
+        ]
+      }
+    },
+    "scoped_policy_count": 6
+  }
+}

@@ -29,6 +29,15 @@ The packet body must also include the generated `Report Contract For This Task`
 block, including required result sections, direct evidence expectations,
 blocked/needs-PM behavior, and exact field or section names. Do not rely on the
 worker to infer the material scan report format from this phase card alone.
+The packet body must also ask the worker to include a soft `PM Note` in the
+sealed result body with exactly these labels: `In-scope quality choice` and
+`PM consideration`. This note is PM decision-support, not a reviewer hard gate:
+the worker should use the simplest high-quality approach inside the packet
+boundary, and report out-of-scope better ideas or route risks to PM without
+expanding the packet.
+The packet body must also require a `PM Suggestion Items` section. Worker
+suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
+ledger disposition and never authorize current-gate blocking by themselves.
 
 The packet must state:
 

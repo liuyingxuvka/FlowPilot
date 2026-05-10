@@ -20,6 +20,8 @@ route-memory prior path context. The plan must state:
 - prior path context files read and how completed, superseded, stale, blocked,
   or experimental history affects this node;
 - concrete node requirements and proof obligations;
+- the product behavior model segment this node covers, or the reason this node
+  is process-only;
 - inherited `skill_standard_projection`: every child-skill standard relevant
   to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
   `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
@@ -35,6 +37,10 @@ route-memory prior path context. The plan must state:
 - forbidden low-standard or placeholder outcomes;
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.
+
+For a repair node, include the mainline node or parent segment it returns to
+and the product-model, process-model, reviewer, or evidence checks that become
+stale and must rerun before mainline work resumes.
 
 The returned plan must include a complete `prior_path_context_review` object
 with `reviewed`, `source_paths`, `completed_nodes_considered`,

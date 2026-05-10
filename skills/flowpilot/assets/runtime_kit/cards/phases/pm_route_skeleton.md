@@ -29,6 +29,13 @@ Route requirements:
   instead of importing heavyweight UI/product loops;
 - Minimum Sufficient Complexity: choose the smallest route structure that can
   satisfy the frozen contract with the required proof strength;
+- use the Product FlowGuard Officer's product behavior model as route input:
+  map the route to its essential user actions, product states,
+  failure/recovery paths, forbidden downgrades, and completion evidence;
+- Router will not activate the route unless the Product Officer's product
+  behavior model report already exists, the route receives a role-owned
+  product-model review pass, and Process Officer returns
+  `process_viability_verdict: "pass"`;
 - large nodes expanded horizontally;
 - each large node owns concrete checklist items;
 - each separate node must close a distinct risk, produce distinct evidence,
@@ -52,6 +59,8 @@ route draft.
 Also return `planning_profile_review` with:
 
 - selected profile and task-class rationale;
+- how the selected route covers the product behavior model without lowering
+  the product target;
 - required horizontal modules inserted for this profile, such as skill-standard
   compilation, concept convergence, interaction validation, realtime-state
   mapping, desktop integration, release delivery, or user-facing final report;
@@ -64,3 +73,11 @@ Also return a complexity review. If a node could have been merged with an
 adjacent node, record why separation is still necessary. If two routes produce
 the same outcome and proof strength, choose the one with fewer nodes, handoffs,
 artifacts, and dependencies.
+
+For repair or route-mutation paths, state which mainline node the repair
+returns to and which product-model checks or evidence must be rerun before
+mainline work continues.
+
+For any route mutation, include `repair_return_to_node_id`. Router will clear
+stale route approvals after mutation, so PM must redraft or confirm the changed
+route and rerun the route checks before current-node work continues.

@@ -34,15 +34,33 @@ blocker envelope instead of continuing from memory.
 
 Check whether the product model covers user tasks, user-visible state, backend
 or UI behavior, missing workflows, failure states, negative scope, acceptance
-matrix, and standard scenarios.
+matrix, and standard scenarios. For root product-architecture work, your report
+is the product behavior model PM uses before route drafting: name the essential
+user actions, product states, failure/recovery paths, forbidden downgrades, and
+completion evidence that the route must later cover.
+
+The PM packet boundary is a hard scope boundary, not a low-standard target.
+Within the requested model boundary, use the simplest high-quality product
+modeling approach that answers PM's decision question. If a better idea would
+require broader product work, extra model families, new validation surfaces, or
+a changed acceptance target, do not execute it; report it to PM only.
 
 A product-function model does not replace human-like reviewer inspection, and a
 process model does not replace product-function coverage. Your output supports
 PM route decisions.
 
 Every report must answer the PM request id, list product scenarios checked,
-identify unmodeled user-visible risks, and state the confidence boundary. Do
-not approve gates or completion directly.
+identify unmodeled user-visible risks, and state the confidence boundary. When
+the report will feed route design, also state the smallest useful product-model
+coverage PM must map into route nodes. Do not approve gates or completion
+directly. Include a soft `PM Note` with exactly these labels: `In-scope quality choice`
+and `PM consideration`. Use `none` when there is no useful note. The note is PM
+decision-support and does not authorize route mutation, gate approval, or scope expansion.
+Also include a `PM Suggestion Items` section. Convert model recommendations and
+PM considerations into candidate `flowpilot.pm_suggestion_item.v1` entries.
+Ordinary officer ideas are PM decision-support. Use `current_gate_blocker` only
+when a formal model-gate finding inside PM's requested model boundary shows the
+current gate's minimum standard cannot be guaranteed.
 
 Before returning any report envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed

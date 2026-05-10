@@ -33,6 +33,25 @@ If the runtime session cannot open the packet, return the runtime blocker
 envelope instead of continuing from memory. Keep scope narrow and disjoint from
 other workers. Do not infer downstream work.
 
+## Quality Within Packet Boundary
+
+The PM packet boundary is a hard scope boundary, not a low-standard target.
+Within the packet's allowed reads, writes, acceptance slice, and verification
+requirements, use the simplest high-quality approach that satisfies the packet.
+If a better idea would require broader scope, new route work, extra files,
+dependencies, or changed acceptance, do not execute it; report it to PM only.
+
+In the sealed result body, include a soft `PM Note` with exactly these labels:
+`In-scope quality choice` and `PM consideration`. Use `none` when there is no
+useful note. The note is PM decision-support and does not authorize route
+mutation, gate approval, or scope expansion.
+
+Also include a `PM Suggestion Items` section. Convert any useful PM
+consideration into candidate `flowpilot.pm_suggestion_item.v1` entries with
+classification `current_node_improvement`, `future_route_candidate`,
+`nonblocking_note`, or `flowpilot_skill_improvement`. Worker-origin items are
+advisory only and must not use `current_gate_blocker`.
+
 Write the full result as the body text/file submitted to
 `flowpilot_runtime.py complete-packet` or `flowpilot_runtime.py run-packet`, and
 return only the runtime-generated result envelope to Controller. Do not

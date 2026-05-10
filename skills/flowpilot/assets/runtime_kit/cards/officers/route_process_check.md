@@ -12,13 +12,37 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 Review the PM route draft as the process FlowGuard officer.
 
-Check only the process shape:
+Check only the process shape and route viability against the product behavior
+model:
 
 - route draft was written by PM after the current prior-path context;
+- route nodes map to the Product FlowGuard Officer's product behavior model and
+  can reach the modeled completion state;
+- no product-model state, failure/recovery path, or completion evidence is left
+  only partially covered by the route;
 - route nodes preserve the frozen root contract and child-skill gate manifest;
 - node ordering has no missing reviewer/officer/worker authority gate;
+- repair or route-mutation branches define where they rejoin the mainline and
+  which product/process checks must rerun;
+- route structure avoids obvious no-op detours or complexity that does not add
+  product coverage, evidence strength, role authority, or failure isolation;
 - route mutation, stale evidence, frontier rewrite, parent replay, and terminal closure paths remain represented;
 - Controller remains relay-only and never becomes a route decision maker.
 
 Return pass or block in the private report body. If blocking, name the process
 failure and the route artifact path, but keep the body out of Controller chat.
+
+Router hard gate fields:
+
+- To pass, include `process_viability_verdict: "pass"`,
+  `product_behavior_model_checked: true`, `route_can_reach_product_model:
+  true`, and `repair_return_policy_checked: true`.
+- If the route needs PM repair, return event
+  `process_officer_requires_route_repair` with
+  `process_viability_verdict: "repair_required"` and a concrete
+  `recommended_resolution`.
+- If the route cannot safely proceed without a larger PM/user decision, return
+  event `process_officer_blocks_route_check` with
+  `process_viability_verdict: "blocked"` and the blocking reason.
+- Do not approve a repair or mutation path unless the report checks where it
+  rejoins the mainline and which product/process checks must rerun.

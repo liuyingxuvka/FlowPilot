@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot planning-quality model."""
+"""Run checks for the FlowPilot PM suggestion-disposition model."""
 
 from __future__ import annotations
 
@@ -10,10 +10,12 @@ from typing import Any
 
 from flowguard import Explorer
 
-import flowpilot_planning_quality_model as model
+import flowpilot_pm_suggestion_disposition_model as model
 
 
-RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_planning_quality_results.json")
+RESULTS_PATH = Path(__file__).resolve().with_name(
+    "flowpilot_pm_suggestion_disposition_results.json"
+)
 
 REQUIRED_LABELS = tuple(
     [f"select_{scenario}" for scenario in model.SCENARIOS]
@@ -22,28 +24,27 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    model.UI_WITHOUT_PROFILE: "complex task route lacks a selected planning profile",
-    model.PROFILE_WITHOUT_CONVERGENCE_LOOP: "interactive UI route lacks required convergence loop",
-    model.SKILL_SELECTED_NO_CONTRACT: "selected child skill lacks a compiled Skill Standard Contract",
-    model.SKILL_CONTRACT_MISSING_FIELDS: "Skill Standard Contract omits required fields",
-    model.SKILL_CONTRACT_NOT_MAPPED: "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
-    model.LOOP_VERIFY_ARTIFACT_NOT_INHERITED: "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
-    model.NODE_PLAN_MISSING_PROJECTION: "node acceptance plan lacks skill-standard projection",
-    model.WORK_PACKET_MISSING_PROJECTION: "work packet or result matrix lacks skill-standard projection",
-    model.REVIEWER_PASSES_HARD_BLINDSPOT: "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate",
-    model.OVERMERGED_COMPLEX_IMPLEMENTATION_NODE: "route complexity does not match selected planning profile",
-    model.ARTIFACTLESS_MAJOR_NODE: "major route node lacks a concrete acceptance artifact",
-    model.SIMPLE_TASK_OVERTEMPLATED: "simple task was over-templated instead of using a justified lightweight profile",
-    model.PRODUCT_MODEL_MISSING: "route planning lacks a product behavior model from the Product FlowGuard Officer",
-    model.PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL: "PM route is not mapped to the product behavior model",
-    model.PROCESS_OFFICER_ROUTE_VIABILITY_MISSING: "Process FlowGuard Officer did not validate route viability against the product model",
-    model.REPAIR_NODE_NO_MAINLINE_RETURN: "repair node lacks a defined return to the mainline product route",
-    model.NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL: "node acceptance plan is not mapped to a product model segment",
+    model.REVIEWER_HARD_BLOCKER_DOWNGRADED: "reviewer hard blocker was downgraded to a soft note",
+    model.REVIEWER_PREFERENCE_BLOCKS_GATE: "reviewer blocked a gate without minimum-standard failure",
+    model.WORKER_NOTE_BLOCKS_GATE: "worker advisory note was treated as a gate blocker",
+    model.OFFICER_MAINTENANCE_BLOCKS_PROJECT: "FlowPilot maintenance suggestion blocked current project completion",
+    model.PM_CLOSES_WITH_UNDISPOSED_SUGGESTION: "PM closed or advanced without disposing the suggestion",
+    model.DEFER_WITHOUT_TARGET: "PM deferred a suggestion without naming a downstream node or gate",
+    model.REJECT_WITHOUT_REASON: "PM rejected a suggestion without a reason",
+    model.WAIVE_WITHOUT_AUTHORITY: "PM waived a suggestion without authority and reason",
+    model.MUTATE_WITHOUT_STALE_HANDLING: "PM route mutation omitted route-version or stale-evidence handling",
+    model.LEDGER_LEAKS_SEALED_BODY: "suggestion ledger contains sealed body content",
+    model.DUPLICATE_SKILL_MAINTENANCE_SYSTEM: "FlowPilot maintenance suggestion did not link to existing skill-improvement report",
+    model.NO_SUGGESTION_HEAVY_REPORT: "no-suggestion case wrote a heavy empty report",
+    model.REPAIR_WITHOUT_REVIEWER_RECHECK: "current-gate blocker repair closed without same review-class recheck",
 }
 
 
 def _state_id(state: model.State) -> str:
-    return f"scenario={state.scenario}|status={state.status}|task={state.task_class}|reason={state.terminal_reason}"
+    return (
+        f"scenario={state.scenario}|status={state.status}|source={state.source_role}|"
+        f"class={state.classification}|disp={state.pm_disposition}|reason={state.terminal_reason}"
+    )
 
 
 def _build_graph() -> dict[str, Any]:
@@ -112,7 +113,9 @@ def _progress_report(graph: dict[str, Any]) -> dict[str, object]:
     while changed:
         changed = False
         for source, outgoing in enumerate(edges):
-            if source not in can_reach_terminal and any(target in can_reach_terminal for _label, target in outgoing):
+            if source not in can_reach_terminal and any(
+                target in can_reach_terminal for _label, target in outgoing
+            ):
                 can_reach_terminal.add(source)
                 changed = True
     stuck = [
@@ -140,7 +143,7 @@ def _flowguard_report() -> dict[str, object]:
         external_inputs=model.EXTERNAL_INPUTS,
         invariants=model.INVARIANTS,
         max_sequence_length=model.MAX_SEQUENCE_LENGTH,
-        terminal_predicate=lambda _input, state, _trace: model.is_terminal(state),
+        terminal_predicate=model.terminal_predicate,
         success_predicate=lambda state, _trace: model.is_success(state),
         required_labels=REQUIRED_LABELS,
     ).explore()
@@ -151,7 +154,9 @@ def _flowguard_report() -> dict[str, object]:
         "dead_branch_count": len(report.dead_branches),
         "exception_branch_count": len(report.exception_branches),
         "reachability_failure_count": len(report.reachability_failures),
-        "reachability_failures": [failure.message for failure in report.reachability_failures],
+        "reachability_failures": [
+            failure.message for failure in report.reachability_failures
+        ],
     }
 
 
@@ -159,13 +164,13 @@ def _hazard_report() -> dict[str, object]:
     hazards: dict[str, object] = {}
     failures: list[str] = []
     for name, state in model.hazard_states().items():
-        planning_failures = model.planning_failures(state)
+        suggestion_failures = model.suggestion_failures(state)
         expected = HAZARD_EXPECTED_FAILURES[name]
-        detected = any(expected in failure for failure in planning_failures)
+        detected = any(expected in failure for failure in suggestion_failures)
         hazards[name] = {
             "detected": detected,
             "expected_failure": expected,
-            "failures": planning_failures,
+            "failures": suggestion_failures,
         }
         if not detected:
             failures.append(f"{name}: expected failure containing {expected!r}")
@@ -184,7 +189,9 @@ def run_checks() -> dict[str, object]:
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
     }
-    result["ok"] = all(section.get("ok", False) for section in (safe_graph, progress, explorer, hazards))
+    result["ok"] = all(
+        section.get("ok", False) for section in (safe_graph, progress, explorer, hazards)
+    )
     return result
 
 

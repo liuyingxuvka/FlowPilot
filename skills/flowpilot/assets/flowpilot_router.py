@@ -47,14 +47,17 @@ CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.
 REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
 REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
+EVENT_ENVELOPE_SCHEMA = "flowpilot.event_envelope.v1"
 LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
 PAYLOAD_CONTRACT_SCHEMA = "flowpilot.payload_contract.v1"
 GATE_DECISION_SCHEMA = "flowpilot.gate_decision.v1"
 GATE_DECISION_RECORD_SCHEMA = "flowpilot.gate_decision_record.v1"
 GATE_DECISION_LEDGER_SCHEMA = "flowpilot.gate_decision_ledger.v1"
+PM_SUGGESTION_LEDGER_ENTRY_SCHEMA = "flowpilot.pm_suggestion_item.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
 PM_MODEL_MISS_TRIAGE_DECISION_EVENT = "pm_records_model_miss_triage_decision"
 GATE_DECISION_EVENT = "role_records_gate_decision"
+EVENT_IDEMPOTENCY_LEDGER_SCHEMA = "flowpilot.external_event_idempotency.v1"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
@@ -67,6 +70,32 @@ USER_REQUEST_PROVENANCE = "explicit_user_request"
 DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
 DISPLAY_CONFIRMATION_TARGET = "user_dialog"
 ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
+ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS = {
+    EVENT_ENVELOPE_SCHEMA,
+    ROLE_OUTPUT_ENVELOPE_SCHEMA,
+}
+ALLOWED_RECORD_EVENT_CONTROLLER_VISIBILITIES = {
+    "event_envelope_only",
+    "role_output_envelope_only",
+    "packet_envelope_only",
+    "result_envelope_only",
+    "packet_and_result_envelopes_only",
+    "control_event_envelope_only",
+}
+FORBIDDEN_RECORD_EVENT_ENVELOPE_BODY_FIELDS = {
+    "blockers",
+    "checks",
+    "commands",
+    "decision",
+    "decision_body",
+    "evidence",
+    "findings",
+    "passed",
+    "recommendations",
+    "repair_instructions",
+    "report_body",
+    "result_body",
+}
 ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
 ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
 ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
@@ -196,6 +225,28 @@ PM_TERMINAL_CLOSURE_DECISION_REQUIRED_BODY_FIELDS = (
     "decision",
     *(f"prior_path_context_review.{field}" for field in PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS),
 )
+PM_SUGGESTION_FINAL_DISPOSITIONS = {
+    "adopt_now",
+    "repair_or_reissue",
+    "mutate_route",
+    "defer_to_named_node",
+    "reject_with_reason",
+    "waive_with_authority",
+    "stop_for_user",
+    "record_for_flowpilot_maintenance",
+}
+PM_SUGGESTION_CLOSURE_STATUSES_BY_DISPOSITION = {
+    "adopt_now": {"closed"},
+    "repair_or_reissue": {"closed"},
+    "mutate_route": {"closed"},
+    "defer_to_named_node": {"deferred_to_named_node", "closed"},
+    "reject_with_reason": {"closed"},
+    "waive_with_authority": {"closed"},
+    "stop_for_user": {"stopped_for_user", "closed"},
+    "record_for_flowpilot_maintenance": {"closed"},
+}
+PM_SUGGESTION_WORKER_ROLES = {"worker_a", "worker_b"}
+PM_SUGGESTION_OFFICER_ROLES = {"process_flowguard_officer", "product_flowguard_officer"}
 GATE_DECISION_ALLOWED_KINDS = {
     "quality",
     "repair",
@@ -392,6 +443,40 @@ ROUTE_COMPLETION_FLAGS = (
     "pm_closure_card_delivered",
     "pm_closure_approved",
 )
+
+SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
+    "pm_mutates_route_after_review_block": {
+        "family": "transaction",
+        "dedupe_fields": ("control_blocker_id", "repair_transaction_id", "route_version"),
+        "retry_group_fields": ("event", "control_blocker_id", "model_miss_block"),
+        "max_distinct_keys_per_retry_group": 3,
+    },
+    PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT: {
+        "family": "transaction",
+        "dedupe_fields": ("control_blocker_id", "repair_transaction_id"),
+        "retry_group_fields": ("event", "control_blocker_id"),
+    },
+    GATE_DECISION_EVENT: {
+        "family": "gate",
+        "dedupe_fields": ("gate_id", "route_version", "decided_by_role"),
+        "retry_group_fields": ("event", "gate_id", "route_version"),
+    },
+    "pm_requests_startup_repair": {
+        "family": "startup_cycle",
+        "dedupe_fields": ("startup_review_cycle", "startup_fact_report_hash"),
+        "retry_group_fields": ("event", "startup_fact_report_hash"),
+    },
+    "pm_writes_route_draft": {
+        "family": "route_draft",
+        "dedupe_fields": ("draft_version", "route_hash"),
+        "retry_group_fields": ("event", "route_id"),
+    },
+    "pm_completes_current_node_from_reviewed_result": {
+        "family": "node_completion",
+        "dedupe_fields": ("node_id", "packet_id", "result_hash"),
+        "retry_group_fields": ("event", "node_id"),
+    },
+}
 
 PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
     "pm.prior_path_context",
@@ -1296,6 +1381,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "requires_flag": "process_officer_route_check_card_delivered",
         "summary": "Process FlowGuard Officer passed the route process check.",
     },
+    "process_officer_requires_route_repair": {
+        "flag": "process_officer_route_repair_required",
+        "requires_flag": "process_officer_route_check_card_delivered",
+        "summary": "Process FlowGuard Officer reported that the route needs PM repair before activation.",
+    },
+    "process_officer_blocks_route_check": {
+        "flag": "process_officer_route_check_blocked",
+        "requires_flag": "process_officer_route_check_card_delivered",
+        "summary": "Process FlowGuard Officer blocked the route from activation.",
+    },
     "product_officer_passes_route_check": {
         "flag": "product_officer_route_check_passed",
         "requires_flag": "product_officer_route_check_card_delivered",
@@ -1533,6 +1628,94 @@ def project_relative(project_root: Path, path: Path) -> str:
         raise RouterError(f"path is outside project root: {path}") from exc
 
 
+def _pm_suggestion_ledger_path(run_root: Path) -> Path:
+    return run_root / "pm_suggestion_ledger.jsonl"
+
+
+def _read_pm_suggestion_ledger(path: Path) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    if not path.exists():
+        return entries
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise RouterError(f"PM suggestion ledger line {line_number} is not valid JSON") from exc
+        if not isinstance(entry, dict):
+            raise RouterError(f"PM suggestion ledger line {line_number} must be a JSON object")
+        entry.setdefault("_line_number", line_number)
+        entries.append(entry)
+    return entries
+
+
+def _pm_suggestion_ledger_status(run_root: Path) -> dict[str, Any]:
+    ledger_path = _pm_suggestion_ledger_path(run_root)
+    entries = _read_pm_suggestion_ledger(ledger_path)
+    issues: list[dict[str, str]] = []
+
+    def add_issue(entry: dict[str, Any], message: str) -> None:
+        suggestion_id = str(entry.get("suggestion_id") or f"line-{entry.get('_line_number', '?')}")
+        issues.append({"suggestion_id": suggestion_id, "message": message})
+
+    for entry in entries:
+        if entry.get("schema_version") != PM_SUGGESTION_LEDGER_ENTRY_SCHEMA:
+            add_issue(entry, "schema_version must be flowpilot.pm_suggestion_item.v1")
+        source_role = str(entry.get("source_role") or "")
+        classification = str(entry.get("classification") or "")
+        source_output_ref = entry.get("source_output_ref") if isinstance(entry.get("source_output_ref"), dict) else {}
+        authority = entry.get("authority_basis") if isinstance(entry.get("authority_basis"), dict) else {}
+        disposition = entry.get("pm_disposition") if isinstance(entry.get("pm_disposition"), dict) else {}
+        closure = entry.get("closure") if isinstance(entry.get("closure"), dict) else {}
+        status = str(disposition.get("status") or "pending")
+        closure_status = str(closure.get("status") or "open")
+
+        if source_output_ref.get("sealed_body_content_copied") is True:
+            add_issue(entry, "source_output_ref must not copy sealed body content")
+        if status not in PM_SUGGESTION_FINAL_DISPOSITIONS:
+            add_issue(entry, "pm_disposition.status must be a final PM disposition")
+        elif closure_status not in PM_SUGGESTION_CLOSURE_STATUSES_BY_DISPOSITION[status]:
+            add_issue(entry, "closure.status must match the PM disposition")
+        if status == "defer_to_named_node" and not disposition.get("target_node_or_gate_id"):
+            add_issue(entry, "defer_to_named_node requires target_node_or_gate_id")
+        if status == "reject_with_reason" and not disposition.get("reason"):
+            add_issue(entry, "reject_with_reason requires a PM reason")
+        if status == "waive_with_authority" and (
+            not disposition.get("reason") or not disposition.get("waiver_authority_role")
+        ):
+            add_issue(entry, "waive_with_authority requires reason and waiver_authority_role")
+        if status == "mutate_route" and (
+            not disposition.get("route_version_impact") or not disposition.get("stale_evidence_handling")
+        ):
+            add_issue(entry, "mutate_route requires route_version_impact and stale_evidence_handling")
+        if status == "repair_or_reissue" and (
+            not disposition.get("repair_or_reissue_target")
+            or disposition.get("same_review_class_recheck_required") is not True
+        ):
+            add_issue(entry, "repair_or_reissue requires target and same-review-class recheck")
+        if classification == "current_gate_blocker":
+            if source_role in PM_SUGGESTION_WORKER_ROLES:
+                add_issue(entry, "worker-origin suggestions cannot be current_gate_blocker")
+            if source_role == "human_like_reviewer" and authority.get("reviewer_minimum_standard_failure") is not True:
+                add_issue(entry, "reviewer current_gate_blocker requires reviewer_minimum_standard_failure")
+            if source_role in PM_SUGGESTION_OFFICER_ROLES and authority.get("formal_flowguard_model_gate") is not True:
+                add_issue(entry, "officer current_gate_blocker requires formal_flowguard_model_gate")
+            if closure_status not in {"closed", "stopped_for_user"}:
+                add_issue(entry, "current_gate_blocker must be closed or stopped before final closure")
+        if closure.get("blocks_current_gate_until_closed") is True and closure_status not in {"closed", "stopped_for_user"}:
+            add_issue(entry, "blocking suggestion still blocks the current gate")
+
+    return {
+        "path": str(ledger_path),
+        "exists": ledger_path.exists(),
+        "entry_count": len(entries),
+        "issue_count": len(issues),
+        "clean": not issues,
+        "issues": issues,
+    }
+
+
 def resolve_project_path(project_root: Path, raw_path: str) -> Path:
     path = Path(raw_path)
     return path if path.is_absolute() else project_root / path
@@ -1750,6 +1933,448 @@ def _load_file_backed_role_payload_if_present(project_root: Path, payload: dict[
     ):
         return _load_file_backed_role_payload(project_root, payload)
     return payload
+
+
+def _record_event_envelope_ref_from_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+    ref = payload.get("event_envelope_ref")
+    if ref is None:
+        return None
+    if not isinstance(ref, dict):
+        raise RouterError("event_envelope_ref must be an object with path and hash")
+    return ref
+
+
+def _looks_like_record_event_envelope(payload: dict[str, Any] | None) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    schema = payload.get("schema_version")
+    return (
+        isinstance(schema, str)
+        and schema in ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS
+        and bool(payload.get("event") or payload.get("event_name"))
+    )
+
+
+def _currently_allowed_external_events(run_state: dict[str, Any]) -> list[str]:
+    pending_action = run_state.get("pending_action")
+    if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
+        raw_allowed = pending_action.get("allowed_external_events")
+        if isinstance(raw_allowed, list) and all(isinstance(item, str) for item in raw_allowed):
+            return list(raw_allowed)
+    groups = _pending_expected_external_event_groups(run_state)
+    if groups:
+        return [event for event, _meta in groups[0]]
+    return []
+
+
+def _record_event_expected_role(event: str, run_state: dict[str, Any]) -> str:
+    pending_action = run_state.get("pending_action")
+    if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
+        raw_allowed = pending_action.get("allowed_external_events")
+        if isinstance(raw_allowed, list) and event in raw_allowed:
+            to_role = pending_action.get("to_role")
+            if isinstance(to_role, str) and to_role:
+                return to_role
+    meta = EXTERNAL_EVENTS.get(event) or {}
+    return _event_wait_role(event, meta)
+
+
+def _record_event_from_role_matches(event: str, from_role: str, expected_role: str) -> bool:
+    if from_role == expected_role:
+        return True
+    if event.startswith("worker_") and expected_role == "worker_a" and from_role in {"worker_a", "worker_b"}:
+        return True
+    if "," in expected_role and from_role in {part.strip() for part in expected_role.split(",") if part.strip()}:
+        return True
+    return False
+
+
+def _validate_record_event_envelope(
+    project_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    envelope: dict[str, Any],
+) -> dict[str, Any]:
+    schema = envelope.get("schema_version")
+    if schema not in ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS:
+        allowed = ", ".join(sorted(ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS))
+        raise RouterError(f"event envelope schema_version must be one of: {allowed}")
+    envelope_event = envelope.get("event") or envelope.get("event_name")
+    if envelope_event != event:
+        raise RouterError(f"event envelope event mismatch: expected {event}, got {envelope_event!r}")
+    currently_allowed = _currently_allowed_external_events(run_state)
+    meta = EXTERNAL_EVENTS.get(event) or {}
+    flag = meta.get("flag")
+    event_already_recorded = bool(flag and run_state.get("flags", {}).get(flag))
+    if event not in currently_allowed and not event_already_recorded:
+        allowed_display = ", ".join(currently_allowed) if currently_allowed else "none"
+        raise RouterError(f"event envelope is not currently allowed by router wait state: {event}; allowed: {allowed_display}")
+    from_role = envelope.get("from_role")
+    if not isinstance(from_role, str) or not from_role:
+        raise RouterError("event envelope requires from_role")
+    expected_role = _record_event_expected_role(event, run_state)
+    if not _record_event_from_role_matches(event, from_role, expected_role):
+        raise RouterError(f"event envelope from_role mismatch: expected {expected_role}, got {from_role}")
+    visibility = envelope.get("controller_visibility")
+    if visibility not in ALLOWED_RECORD_EVENT_CONTROLLER_VISIBILITIES:
+        allowed = ", ".join(sorted(ALLOWED_RECORD_EVENT_CONTROLLER_VISIBILITIES))
+        raise RouterError(f"event envelope controller_visibility must be one of: {allowed}")
+    leaked_keys = sorted(FORBIDDEN_RECORD_EVENT_ENVELOPE_BODY_FIELDS & set(envelope))
+    if leaked_keys:
+        raise RouterError(f"event envelope leaked role body fields to Controller: {', '.join(leaked_keys)}")
+    return envelope
+
+
+def _load_record_event_envelope_ref(
+    project_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    path: str,
+    expected_hash: str,
+) -> dict[str, Any]:
+    if not path:
+        raise RouterError("record-event --envelope-path or event_envelope_ref.path is required")
+    if not expected_hash:
+        raise RouterError("record-event --envelope-hash or event_envelope_ref.hash is required")
+    resolved = resolve_project_path(project_root, path)
+    # project_relative is the containment check for absolute paths.
+    project_relative(project_root, resolved)
+    if not resolved.exists():
+        raise RouterError(f"event envelope file is missing: {path}")
+    if not resolved.is_file():
+        raise RouterError(f"event envelope path is not a file: {path}")
+    actual_hash = packet_runtime.sha256_file(resolved)
+    if actual_hash != expected_hash:
+        raise RouterError("event envelope hash mismatch")
+    envelope = read_json(resolved)
+    return _validate_record_event_envelope(project_root, run_state, event=event, envelope=envelope)
+
+
+def _normalize_record_event_payload(
+    project_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    payload: dict[str, Any] | None,
+    envelope_path: str | None = None,
+    envelope_hash: str | None = None,
+) -> dict[str, Any]:
+    payload = payload or {}
+    if envelope_path or envelope_hash:
+        return _load_record_event_envelope_ref(
+            project_root,
+            run_state,
+            event=event,
+            path=str(envelope_path or ""),
+            expected_hash=str(envelope_hash or ""),
+        )
+    ref = _record_event_envelope_ref_from_payload(payload)
+    if ref is not None:
+        return _load_record_event_envelope_ref(
+            project_root,
+            run_state,
+            event=event,
+            path=str(ref.get("path") or ""),
+            expected_hash=str(ref.get("hash") or ""),
+        )
+    if _looks_like_record_event_envelope(payload):
+        return _validate_record_event_envelope(project_root, run_state, event=event, envelope=payload)
+    return payload
+
+
+def _stable_identity_hash(value: Any) -> str:
+    data = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def _event_identity_ledger(run_state: dict[str, Any]) -> dict[str, Any]:
+    ledger = run_state.get("external_event_idempotency")
+    if not isinstance(ledger, dict):
+        ledger = {}
+        run_state["external_event_idempotency"] = ledger
+    ledger.setdefault("schema_version", EVENT_IDEMPOTENCY_LEDGER_SCHEMA)
+    processed = ledger.get("processed")
+    if not isinstance(processed, dict):
+        processed = {}
+        ledger["processed"] = processed
+    attempts = ledger.get("attempts")
+    if not isinstance(attempts, list):
+        attempts = []
+        ledger["attempts"] = attempts
+    return ledger
+
+
+def _payload_view_for_event_identity(project_root: Path, event: str, payload: dict[str, Any]) -> dict[str, Any]:
+    if event not in SCOPED_EVENT_IDENTITY_POLICIES:
+        return payload
+    return _load_file_backed_role_payload_if_present(project_root, payload)
+
+
+def _payload_body_hash(payload_view: dict[str, Any]) -> str:
+    envelope = payload_view.get("_role_output_envelope")
+    if isinstance(envelope, dict):
+        for key in ("body_hash", "body_raw_sha256", "body_semantic_sha256"):
+            value = str(envelope.get(key) or "").strip()
+            if value:
+                return value
+    return _stable_identity_hash(payload_view)
+
+
+def _frontier_for_event_identity(run_root: Path) -> dict[str, Any]:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    return frontier if isinstance(frontier, dict) else {}
+
+
+def _active_control_blocker_for_identity(run_state: dict[str, Any]) -> dict[str, Any]:
+    active = run_state.get("active_control_blocker")
+    return active if isinstance(active, dict) else {}
+
+
+def _route_mutation_identity_scope(run_root: Path, run_state: dict[str, Any], payload_view: dict[str, Any]) -> dict[str, str]:
+    frontier = _frontier_for_event_identity(run_root)
+    active = _active_control_blocker_for_identity(run_state)
+    active_block_flags = _active_model_miss_review_block_flags(run_state)
+    route_id = str(payload_view.get("route_id") or frontier.get("active_route_id") or "route-001")
+    raw_route_version = payload_view.get("route_version")
+    route_version = str(raw_route_version).strip() if raw_route_version not in (None, "") else ""
+    repair_identity = {
+        "active_node_id": payload_view.get("active_node_id") or payload_view.get("repair_node_id") or frontier.get("active_node_id"),
+        "reason": payload_view.get("reason"),
+        "repair_action": payload_view.get("repair_action") or payload_view.get("selected_next_action"),
+        "stale_evidence": payload_view.get("stale_evidence") or [],
+        "superseded_nodes": payload_view.get("superseded_nodes") or [],
+        "body_hash": _payload_body_hash(payload_view),
+    }
+    return {
+        "event": "pm_mutates_route_after_review_block",
+        "control_blocker_id": str(
+            payload_view.get("control_blocker_id")
+            or payload_view.get("blocker_id")
+            or active.get("blocker_id")
+            or "no-control-blocker"
+        ),
+        "repair_transaction_id": str(
+            payload_view.get("repair_transaction_id")
+            or payload_view.get("transaction_id")
+            or active.get("repair_transaction_id")
+            or "no-repair-transaction"
+        ),
+        "route_id": route_id,
+        "route_version": route_version or f"payload:{_stable_identity_hash(repair_identity)}",
+        "model_miss_block": ",".join(active_block_flags) or "no-model-miss-block",
+    }
+
+
+def _control_blocker_repair_decision_identity_scope(payload_view: dict[str, Any], run_state: dict[str, Any]) -> dict[str, str]:
+    active = _active_control_blocker_for_identity(run_state)
+    blocker_id = str(payload_view.get("blocker_id") or active.get("blocker_id") or "missing-blocker")
+    return {
+        "event": PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT,
+        "control_blocker_id": blocker_id,
+        "repair_transaction_id": str(payload_view.get("repair_transaction_id") or f"repair-tx-{blocker_id}"),
+    }
+
+
+def _gate_decision_identity_scope(run_root: Path, payload_view: dict[str, Any]) -> dict[str, str]:
+    frontier = _frontier_for_event_identity(run_root)
+    return {
+        "event": GATE_DECISION_EVENT,
+        "gate_id": str(payload_view.get("gate_id") or "missing-gate-id"),
+        "route_version": str(payload_view.get("route_version") or frontier.get("route_version") or "no-route-version"),
+        "decided_by_role": str(payload_view.get("owner_role") or payload_view.get("decided_by_role") or "unknown-role"),
+    }
+
+
+def _startup_repair_identity_scope(run_root: Path, run_state: dict[str, Any], payload_view: dict[str, Any]) -> dict[str, str]:
+    fact_report_path = run_root / "startup" / "startup_fact_report.json"
+    fact_hash = packet_runtime.sha256_file(fact_report_path) if fact_report_path.exists() else "missing-startup-fact-report"
+    return {
+        "event": "pm_requests_startup_repair",
+        "startup_review_cycle": str(payload_view.get("startup_review_cycle") or int(run_state.get("startup_repair_cycle") or 0) + 1),
+        "startup_fact_report_hash": str(payload_view.get("startup_fact_report_hash") or payload_view.get("blocked_report_hash") or fact_hash),
+        "decision_hash": _payload_body_hash(payload_view),
+    }
+
+
+def _route_draft_identity_scope(payload_view: dict[str, Any]) -> dict[str, str]:
+    route_payload = payload_view.get("route") if isinstance(payload_view.get("route"), dict) else {}
+    route_id = str(payload_view.get("route_id") or route_payload.get("route_id") or "route-001")
+    route_hash = str(payload_view.get("route_hash") or payload_view.get("draft_hash") or _payload_body_hash(payload_view))
+    return {
+        "event": "pm_writes_route_draft",
+        "route_id": route_id,
+        "draft_version": str(payload_view.get("draft_version") or payload_view.get("route_version") or route_payload.get("route_version") or "1"),
+        "route_hash": route_hash,
+    }
+
+
+def _current_node_completion_identity_scope(run_root: Path, run_state: dict[str, Any], payload_view: dict[str, Any]) -> dict[str, str]:
+    frontier = _frontier_for_event_identity(run_root)
+    node_id = str(payload_view.get("node_id") or frontier.get("active_node_id") or "missing-node")
+    packet_id = str(payload_view.get("packet_id") or frontier.get("active_packet_id") or run_state.get("current_node_packet_id") or "missing-packet")
+    result_hash = str(payload_view.get("result_hash") or payload_view.get("result_body_hash") or payload_view.get("body_hash") or "")
+    if not result_hash:
+        result_hash = _payload_body_hash(payload_view)
+    return {
+        "event": "pm_completes_current_node_from_reviewed_result",
+        "node_id": node_id,
+        "packet_id": packet_id,
+        "result_hash": result_hash,
+    }
+
+
+def _scoped_event_identity(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    event: str,
+    payload: dict[str, Any],
+) -> dict[str, Any] | None:
+    policy = SCOPED_EVENT_IDENTITY_POLICIES.get(event)
+    if not isinstance(policy, dict):
+        return None
+    payload_view = _payload_view_for_event_identity(project_root, event, payload)
+    if event == "pm_mutates_route_after_review_block":
+        scope = _route_mutation_identity_scope(run_root, run_state, payload_view)
+    elif event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+        scope = _control_blocker_repair_decision_identity_scope(payload_view, run_state)
+    elif event == GATE_DECISION_EVENT:
+        scope = _gate_decision_identity_scope(run_root, payload_view)
+    elif event == "pm_requests_startup_repair":
+        scope = _startup_repair_identity_scope(run_root, run_state, payload_view)
+    elif event == "pm_writes_route_draft":
+        scope = _route_draft_identity_scope(payload_view)
+    elif event == "pm_completes_current_node_from_reviewed_result":
+        scope = _current_node_completion_identity_scope(run_root, run_state, payload_view)
+    else:
+        return None
+    key_fields = tuple(str(field) for field in policy.get("dedupe_fields", ()))
+    key_parts = {field: str(scope.get(field) or "") for field in key_fields}
+    dedupe_key = f"{event}:{_stable_identity_hash(key_parts)}"
+    retry_group_fields = tuple(str(field) for field in policy.get("retry_group_fields", ()))
+    retry_group = f"{event}:{_stable_identity_hash({field: str(scope.get(field) or '') for field in retry_group_fields})}"
+    return {
+        "schema_version": EVENT_IDEMPOTENCY_LEDGER_SCHEMA,
+        "event": event,
+        "family": policy.get("family"),
+        "dedupe_key": dedupe_key,
+        "scope": scope,
+        "dedupe_fields": list(key_fields),
+        "retry_group": retry_group,
+        "max_distinct_keys_per_retry_group": policy.get("max_distinct_keys_per_retry_group"),
+    }
+
+
+def _scoped_event_is_recorded(run_state: dict[str, Any], identity: dict[str, Any] | None) -> bool:
+    if not identity:
+        return False
+    ledger = _event_identity_ledger(run_state)
+    processed = ledger.get("processed")
+    if not isinstance(processed, dict):
+        return False
+    event_keys = processed.get(str(identity.get("event")))
+    return isinstance(event_keys, dict) and str(identity.get("dedupe_key")) in event_keys
+
+
+def _check_scoped_event_retry_budget(run_state: dict[str, Any], identity: dict[str, Any] | None) -> None:
+    if not identity:
+        return
+    raw_budget = identity.get("max_distinct_keys_per_retry_group")
+    if raw_budget in (None, ""):
+        return
+    budget = int(raw_budget)
+    ledger = _event_identity_ledger(run_state)
+    attempts = ledger.get("attempts") if isinstance(ledger.get("attempts"), list) else []
+    group = str(identity.get("retry_group") or "")
+    key = str(identity.get("dedupe_key") or "")
+    distinct_keys = {
+        str(item.get("dedupe_key"))
+        for item in attempts
+        if isinstance(item, dict)
+        and item.get("retry_group") == group
+        and item.get("dedupe_key")
+    }
+    if key not in distinct_keys and len(distinct_keys) >= budget:
+        raise RouterError(
+            f"event {identity.get('event')} exceeded scoped retry budget for this repair group; "
+            "PM must record an escalation or protocol dead-end instead of another silent retry"
+        )
+
+
+def _mark_scoped_event_recorded(run_state: dict[str, Any], identity: dict[str, Any] | None) -> None:
+    if not identity:
+        return
+    ledger = _event_identity_ledger(run_state)
+    processed = ledger["processed"]
+    event = str(identity["event"])
+    key = str(identity["dedupe_key"])
+    event_keys = processed.setdefault(event, {})
+    record = {
+        "dedupe_key": key,
+        "event": event,
+        "family": identity.get("family"),
+        "scope": identity.get("scope"),
+        "retry_group": identity.get("retry_group"),
+        "recorded_at": utc_now(),
+    }
+    event_keys[key] = record
+    attempts = ledger.setdefault("attempts", [])
+    if isinstance(attempts, list) and not any(
+        isinstance(item, dict) and item.get("event") == event and item.get("dedupe_key") == key
+        for item in attempts
+    ):
+        attempts.append(record)
+
+
+def _already_recorded_external_event_result(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    payload: dict[str, Any],
+    scoped_identity: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    finalized = _finalize_repair_transaction_outcome(
+        project_root,
+        run_root,
+        run_state,
+        event=event,
+        payload=payload,
+    )
+    resolved = _resolve_delivered_control_blocker(
+        project_root,
+        run_root,
+        run_state,
+        resolved_by_event=event,
+        from_already_recorded_event=True,
+    )
+    if resolved or finalized:
+        run_state["pending_action"] = None
+        _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_already_recorded_event:{event}")
+        _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_already_recorded_event:{event}")
+        save_run_state(run_root, run_state)
+        result = {
+            "ok": True,
+            "event": event,
+            "already_recorded": True,
+            "control_blocker_resolved": bool(resolved),
+            "blocker_id": resolved.get("blocker_id") if resolved else None,
+            "repair_transaction_finalized": finalized,
+        }
+        if scoped_identity:
+            result["dedupe_key"] = scoped_identity.get("dedupe_key")
+            result["idempotency_scope"] = scoped_identity.get("scope")
+        return result
+    result = {"ok": True, "event": event, "already_recorded": True}
+    if scoped_identity:
+        result["dedupe_key"] = scoped_identity.get("dedupe_key")
+        result["idempotency_scope"] = scoped_identity.get("scope")
+    return result
 
 
 def _role_output_envelope_record(payload: dict[str, Any]) -> dict[str, Any]:
@@ -2255,6 +2880,23 @@ def _card_return_event_for_card(card_id: str) -> str:
     return "card_ack"
 
 
+CARD_RETURN_EVENT_NAMES = frozenset(
+    {
+        "controller_card_ack",
+        "pm_card_ack",
+        "reviewer_card_ack",
+        "worker_card_ack",
+        "process_officer_card_ack",
+        "product_officer_card_ack",
+        "card_ack",
+    }
+)
+
+
+def _is_card_return_event_name(event: str) -> bool:
+    return event in CARD_RETURN_EVENT_NAMES
+
+
 def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]:
     ledger = _read_return_event_ledger(run_root, run_id)
     pending: list[dict[str, Any]] = []
@@ -2348,7 +2990,7 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
             actor="controller",
             label=f"controller_checks_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
             summary=(
-                f"Validate returned {record.get('return_event')} from {record.get('target_role')} "
+                f"Validate returned {record.get('card_return_event')} from {record.get('target_role')} "
                 "against runtime card read receipts before Router may continue."
             ),
             allowed_reads=[
@@ -2365,7 +3007,7 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
             ],
             to_role=str(record.get("target_role") or ""),
             extra={
-                "return_event": record.get("return_event"),
+                "card_return_event": record.get("card_return_event"),
                 "delivery_id": record.get("delivery_id"),
                 "delivery_attempt_id": record.get("delivery_attempt_id"),
                 "card_id": record.get("card_id"),
@@ -2375,6 +3017,7 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
                 "controller_visibility": "ack_envelope_and_receipts_only",
                 "sealed_body_reads_allowed": False,
                 **committed_extra,
+                "apply_required": True,
             },
         )
     committed_extra = _committed_card_artifact_extra(
@@ -2388,7 +3031,7 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
         label=f"controller_waits_for_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
         summary=(
             f"Relay the committed system-card envelope to {record.get('target_role')} if needed, then wait "
-            f"for {record.get('return_event')} after the role opens the card through runtime."
+            f"for {record.get('card_return_event')} after the role opens the card through runtime."
         ),
         allowed_reads=[
             envelope_path,
@@ -2401,7 +3044,7 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
         ],
         to_role=str(record.get("target_role") or ""),
         extra={
-            "return_event": record.get("return_event"),
+            "card_return_event": record.get("card_return_event"),
             "delivery_id": record.get("delivery_id"),
             "delivery_attempt_id": record.get("delivery_attempt_id"),
             "card_id": record.get("card_id"),
@@ -2866,6 +3509,7 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.crew_ledger_current",
             "lifecycle_reconciliation.continuation_binding_current",
             "lifecycle_reconciliation.current_ledgers_clean",
+            "lifecycle_reconciliation.pm_suggestion_ledger_clean",
             "contract_self_check",
         ],
         allowed_values={
@@ -2881,12 +3525,13 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.crew_ledger_current": [True],
             "lifecycle_reconciliation.continuation_binding_current": [True],
             "lifecycle_reconciliation.current_ledgers_clean": [True],
+            "lifecycle_reconciliation.pm_suggestion_ledger_clean": [True],
         },
         structural_requirements=[
             "Return the body through a role_output_envelope with decision_path and decision_hash.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
-            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean lifecycle ledgers, and continuation binding are present.",
+            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean lifecycle ledgers, and continuation binding are present.",
         ],
         description=(
             "PM terminal closure approval. This is a role-output body contract; Controller may only "
@@ -5987,6 +6632,7 @@ def _current_closure_state_clean(run_root: Path) -> bool:
     final_ledger = read_json_if_exists(run_root / "final_route_wide_gate_ledger.json")
     terminal = read_json_if_exists(run_root / "reviews" / "terminal_backward_replay.json")
     task_projection = read_json_if_exists(_task_completion_projection_path(run_root))
+    pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
     return (
         evidence.get("unresolved_count") == 0
         and evidence.get("stale_count") == 0
@@ -5996,6 +6642,7 @@ def _current_closure_state_clean(run_root: Path) -> bool:
         and final_ledger.get("counts", {}).get("unresolved_count") == 0
         and terminal.get("passed") is True
         and task_projection.get("task_status") == "ready_for_pm_terminal_closure"
+        and pm_suggestion_status["clean"]
     )
 
 
@@ -7398,6 +8045,159 @@ def _write_role_block_report(
             "source_paths": [project_relative(project_root, item) for item in checked_paths],
             "blocking_findings": payload.get("blocking_findings") or payload.get("findings") or [],
             "repair_recommendation": payload.get("repair_recommendation"),
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+
+
+def _write_route_process_pass_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "process_flowguard_officer":
+        raise RouterError("route process check must be reviewed_by_role=process_flowguard_officer")
+    if payload.get("passed") is not True or payload.get("process_viability_verdict") != "pass":
+        raise RouterError("route process check requires process_viability_verdict=pass")
+    required_true = (
+        "product_behavior_model_checked",
+        "route_can_reach_product_model",
+        "repair_return_policy_checked",
+    )
+    missing = [field for field in required_true if payload.get(field) is not True]
+    if missing:
+        raise RouterError("route process check requires " + ", ".join(f"{field}=true" for field in missing))
+    checked_paths = [
+        _current_route_draft_path(run_root),
+        _product_behavior_model_report_path(run_root),
+        run_root / "root_acceptance_contract.json",
+        run_root / "child_skill_gate_manifest.json",
+    ]
+    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing_paths:
+        raise RouterError(f"route process check is missing source paths: {', '.join(missing_paths)}")
+    write_json(
+        _route_process_check_path(run_root),
+        {
+            "schema_version": "flowpilot.route_process_check.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "process_flowguard_officer",
+            "passed": True,
+            "process_viability_verdict": "pass",
+            "product_behavior_model_checked": True,
+            "route_can_reach_product_model": True,
+            "repair_return_policy_checked": True,
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+
+
+def _write_route_process_issue_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    expected_verdict: str,
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "process_flowguard_officer":
+        raise RouterError("route process issue report must be reviewed_by_role=process_flowguard_officer")
+    if payload.get("passed") is True:
+        raise RouterError("route process issue report cannot pass")
+    if payload.get("process_viability_verdict") != expected_verdict:
+        raise RouterError(f"route process issue report requires process_viability_verdict={expected_verdict}")
+    checked_paths = [
+        _current_route_draft_path(run_root),
+        _product_behavior_model_report_path(run_root),
+        run_root / "root_acceptance_contract.json",
+        run_root / "child_skill_gate_manifest.json",
+    ]
+    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing_paths:
+        raise RouterError(f"route process issue report is missing source paths: {', '.join(missing_paths)}")
+    write_json(
+        _route_process_check_path(run_root),
+        {
+            "schema_version": "flowpilot.route_process_check.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "process_flowguard_officer",
+            "passed": False,
+            "process_viability_verdict": expected_verdict,
+            "product_behavior_model_checked": bool(payload.get("product_behavior_model_checked")),
+            "route_can_reach_product_model": bool(payload.get("route_can_reach_product_model")),
+            "repair_return_policy_checked": bool(payload.get("repair_return_policy_checked")),
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
+            "blocking_findings": payload.get("blocking_findings") or payload.get("findings") or [],
+            "recommended_resolution": payload.get("recommended_resolution"),
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+    for flag in (
+        "route_draft_written_by_pm",
+        "process_officer_route_check_card_delivered",
+        "process_officer_route_check_passed",
+        "product_officer_route_check_card_delivered",
+        "product_officer_route_check_passed",
+        "reviewer_route_check_card_delivered",
+        "reviewer_route_check_passed",
+        "route_activated_by_pm",
+    ):
+        run_state.setdefault("flags", {})[flag] = False
+    run_state["route_process_viability"] = {
+        "verdict": expected_verdict,
+        "report_path": project_relative(project_root, _route_process_check_path(run_root)),
+        "reported_at": utc_now(),
+    }
+
+
+def _write_route_product_pass_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "product_flowguard_officer":
+        raise RouterError("route product check must be reviewed_by_role=product_flowguard_officer")
+    if payload.get("passed") is not True or payload.get("route_model_review_verdict") != "pass":
+        raise RouterError("route product check requires route_model_review_verdict=pass")
+    required_true = (
+        "product_behavior_model_checked",
+        "route_maps_to_product_behavior_model",
+    )
+    missing = [field for field in required_true if payload.get(field) is not True]
+    if missing:
+        raise RouterError("route product check requires " + ", ".join(f"{field}=true" for field in missing))
+    checked_paths = [
+        _current_route_draft_path(run_root),
+        _product_behavior_model_report_path(run_root),
+        run_root / "root_acceptance_contract.json",
+        _route_process_check_path(run_root),
+    ]
+    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing_paths:
+        raise RouterError(f"route product check is missing source paths: {', '.join(missing_paths)}")
+    write_json(
+        _route_product_check_path(run_root),
+        {
+            "schema_version": "flowpilot.route_product_check.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "product_flowguard_officer",
+            "passed": True,
+            "route_model_review_verdict": "pass",
+            "product_behavior_model_checked": True,
+            "route_maps_to_product_behavior_model": True,
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
             "residual_blindspots": payload.get("residual_blindspots") or [],
             "reported_at": utc_now(),
             **_role_output_envelope_record(payload),
@@ -8855,6 +9655,7 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
         raise RouterError("route draft requires capability evidence sync")
     if not child_manifest_path.exists() or read_json(child_manifest_path).get("status") != "approved":
         raise RouterError("route draft requires approved child-skill gate manifest")
+    product_model_path = _require_product_behavior_model_report(project_root, run_root)
     route_id = str(payload.get("route_id") or "route-001")
     route_root = run_root / "routes" / route_id
     draft = payload.get("route") if isinstance(payload.get("route"), dict) else {}
@@ -8864,6 +9665,8 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
         "route_id": route_id,
         "route_version": int(payload.get("route_version") or 1),
         "source_root_contract": project_relative(project_root, contract_path),
+        "source_product_behavior_model": project_relative(project_root, product_model_path),
+        "source_product_behavior_model_hash": hashlib.sha256(product_model_path.read_bytes()).hexdigest(),
         "prior_path_context_review": prior_review,
         "nodes": draft.get("nodes") or payload.get("nodes") or [],
         "written_by_role": "project_manager",
@@ -8887,6 +9690,8 @@ def _reset_route_review_after_route_draft_repair(run_state: dict[str, Any]) -> N
     for flag in (
         "process_officer_route_check_card_delivered",
         "process_officer_route_check_passed",
+        "process_officer_route_repair_required",
+        "process_officer_route_check_blocked",
         "product_officer_route_check_card_delivered",
         "product_officer_route_check_passed",
         "reviewer_route_check_card_delivered",
@@ -8894,6 +9699,65 @@ def _reset_route_review_after_route_draft_repair(run_state: dict[str, Any]) -> N
         "route_activated_by_pm",
     ):
         run_state.setdefault("flags", {})[flag] = False
+
+
+def _reset_route_hard_gate_approvals_for_recheck(run_state: dict[str, Any]) -> None:
+    for flag in (
+        "pm_route_skeleton_card_delivered",
+        "route_draft_written_by_pm",
+        "process_officer_route_check_card_delivered",
+        "process_officer_route_check_passed",
+        "process_officer_route_repair_required",
+        "process_officer_route_check_blocked",
+        "product_officer_route_check_card_delivered",
+        "product_officer_route_check_passed",
+        "reviewer_route_check_card_delivered",
+        "reviewer_route_check_passed",
+        "route_activated_by_pm",
+    ):
+        run_state.setdefault("flags", {})[flag] = False
+
+
+def _product_behavior_model_report_path(run_root: Path) -> Path:
+    return run_root / "flowguard" / "product_architecture_modelability.json"
+
+
+def _require_product_behavior_model_report(project_root: Path, run_root: Path) -> Path:
+    path = _product_behavior_model_report_path(run_root)
+    if not path.exists():
+        raise RouterError("route draft requires Product Officer product behavior model report")
+    report = read_json(path)
+    if report.get("passed") is not True:
+        raise RouterError("route draft requires passed Product Officer product behavior model report")
+    return path
+
+
+def _route_process_check_path(run_root: Path) -> Path:
+    return run_root / "flowguard" / "route_process_check.json"
+
+
+def _route_product_check_path(run_root: Path) -> Path:
+    return run_root / "flowguard" / "route_product_check.json"
+
+
+def _require_route_process_pass(project_root: Path, run_root: Path) -> Path:
+    path = _route_process_check_path(run_root)
+    if not path.exists():
+        raise RouterError("route activation requires route_process_check.json")
+    report = read_json(path)
+    if report.get("passed") is not True or report.get("process_viability_verdict") != "pass":
+        raise RouterError("route activation requires Process Officer process_viability_verdict=pass")
+    return path
+
+
+def _require_route_product_pass(project_root: Path, run_root: Path) -> Path:
+    path = _route_product_check_path(run_root)
+    if not path.exists():
+        raise RouterError("route activation requires route_product_check.json")
+    report = read_json(path)
+    if report.get("passed") is not True or report.get("route_model_review_verdict") != "pass":
+        raise RouterError("route activation requires passed product-model route review")
+    return path
 
 
 def _current_route_draft_path(run_root: Path) -> Path:
@@ -10036,6 +10900,7 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
                 "reason": f"parent_segment_decision:{decision}",
                 "stale_evidence": [project_relative(project_root, replay_path)],
                 "superseded_nodes": payload.get("superseded_nodes") or [],
+                "repair_return_to_node_id": payload.get("repair_return_to_node_id") or payload.get("return_to_node_id"),
                 "prior_path_context_review": payload.get("prior_path_context_review"),
             },
         )
@@ -10238,6 +11103,11 @@ def _route_payload_from_reviewed_draft(project_root: Path, run_root: Path, paylo
 
 
 def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    _require_product_behavior_model_report(project_root, run_root)
+    _require_route_process_pass(project_root, run_root)
+    _require_route_product_pass(project_root, run_root)
+    if not run_state["flags"].get("reviewer_route_check_passed"):
+        raise RouterError("route activation requires reviewer-passed route challenge")
     route_payload, draft_path = _route_payload_from_reviewed_draft(project_root, run_root, payload)
     route_id = str(payload.get("route_id") or route_payload.get("route_id") or draft_path.parent.name or "route-001")
     route_payload["route_id"] = route_id
@@ -10286,6 +11156,14 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
     frontier = read_json_if_exists(run_root / "execution_frontier.json")
     route_id = str(payload.get("route_id") or frontier.get("active_route_id") or "route-001")
     active_node_id = str(payload.get("active_node_id") or payload.get("repair_node_id") or frontier.get("active_node_id") or "node-001")
+    repair_return_to_node_id = str(
+        payload.get("repair_return_to_node_id")
+        or payload.get("mainline_return_node_id")
+        or payload.get("return_to_node_id")
+        or ""
+    ).strip()
+    if not repair_return_to_node_id:
+        raise RouterError("route mutation requires repair_return_to_node_id")
     route_version = int(payload.get("route_version") or int(frontier.get("route_version") or 1) + 1)
     superseded_nodes = [str(item) for item in (payload.get("superseded_nodes") or [])]
     stale_evidence = [str(item) for item in (payload.get("stale_evidence") or [])]
@@ -10299,6 +11177,12 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         "stale_evidence": stale_evidence,
         "superseded_nodes": superseded_nodes,
         "prior_path_context_review": prior_review,
+        "repair_return_policy": {
+            "repair_node_id": active_node_id,
+            "repair_return_to_node_id": repair_return_to_node_id,
+            "process_officer_recheck_required": True,
+            "route_activation_recheck_required": True,
+        },
         "repair_restart_policy": {
             "same_scope_replay_rerun_required": True,
             "final_ledger_rebuild_required": True,
@@ -10331,6 +11215,7 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
                 "title": str(payload.get("repair_node_title") or "Repair node"),
                 "created_by_mutation": True,
                 "mutation_reason": mutation_record["reason"],
+                "repair_return_to_node_id": repair_return_to_node_id,
             }
         )
     route["active_node_id"] = active_node_id
@@ -10374,6 +11259,7 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         active_node_id=active_node_id,
         source_event="pm_mutates_route_after_review_block",
     )
+    _reset_route_hard_gate_approvals_for_recheck(run_state)
     _reset_flags(run_state, CURRENT_NODE_CYCLE_FLAGS + ROUTE_COMPLETION_FLAGS)
 
 
@@ -10720,6 +11606,10 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
     pending_resource_count = int(generated_ledger.get("pending_resource_count", 0) or 0)
     unresolved_residual_risk_count = int(payload.get("unresolved_residual_risk_count", 0))
     stale_count = int(payload.get("stale_count", evidence_ledger.get("stale_count", 0) or 0))
+    pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
+    if not pm_suggestion_status["clean"]:
+        first_issue = pm_suggestion_status["issues"][0]["message"] if pm_suggestion_status["issues"] else "unknown issue"
+        raise RouterError(f"final ledger requires clean PM suggestion ledger: {first_issue}")
     if unresolved_count != 0:
         raise RouterError("final ledger requires unresolved_count=0")
     if unresolved_resource_count != 0:
@@ -10794,6 +11684,9 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "gate_decision_ledger": project_relative(project_root, gate_decision_ledger_path)
             if gate_decision_ledger_path.exists()
             else None,
+            "pm_suggestion_ledger": project_relative(project_root, _pm_suggestion_ledger_path(run_root))
+            if pm_suggestion_status["exists"]
+            else None,
         },
         "prior_path_context_review": prior_review,
         "current_route_scanned": True,
@@ -10806,6 +11699,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "generated_resource_lineage_collected": True,
             "final_completion_gates_collected": True,
             "gate_decisions_collected": True,
+            "pm_suggestions_disposed": True,
         },
         "evidence_integrity": {
             "generated_resource_lineage_resolved": True,
@@ -10826,6 +11720,8 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "unresolved_residual_risk_count": unresolved_residual_risk_count,
             "unresolved_count": unresolved_count,
             "gate_decision_count": len(gate_decisions),
+            "pm_suggestion_count": pm_suggestion_status["entry_count"],
+            "pm_suggestion_issue_count": pm_suggestion_status["issue_count"],
         },
         "entries": entries,
         "gate_decisions": gate_decisions,
@@ -11069,6 +11965,10 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
     task_projection = read_json(task_projection_path)
     if task_projection.get("task_status") != "ready_for_pm_terminal_closure":
         raise RouterError("terminal closure requires task completion projection")
+    pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
+    if not pm_suggestion_status["clean"]:
+        first_issue = pm_suggestion_status["issues"][0]["message"] if pm_suggestion_status["issues"] else "unknown issue"
+        raise RouterError(f"terminal closure requires clean PM suggestion ledger: {first_issue}")
     if not _current_closure_state_clean(run_root):
         raise RouterError("terminal closure requires current clean evidence/resource/final ledgers")
     continuation = read_json(continuation_path)
@@ -11091,9 +11991,17 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "continuation_binding": project_relative(project_root, continuation_path),
             "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
             "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+            "pm_suggestion_ledger": project_relative(project_root, _pm_suggestion_ledger_path(run_root))
+            if pm_suggestion_status["exists"]
+            else None,
         },
         "decision": decision,
         "prior_path_context_review": prior_review,
+        "pm_suggestion_ledger_review": {
+            "entry_count": pm_suggestion_status["entry_count"],
+            "issue_count": pm_suggestion_status["issue_count"],
+            "clean": pm_suggestion_status["clean"],
+        },
         "lifecycle": {
             "heartbeat_active": False,
             "manual_resume_notice_required": False,
@@ -11871,7 +12779,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         envelope_path = run_root / "mailbox" / "system_cards" / f"{safe_delivery_id}.json"
         expected_receipt_path = run_root / "runtime_receipts" / "card_reads" / f"{safe_delivery_id}.receipt.json"
         expected_return_path = run_root / "mailbox" / "outbox" / "card_acks" / f"{safe_delivery_id}.ack.json"
-        return_event = _card_return_event_for_card(entry["card_id"])
+        card_return_event = _card_return_event_for_card(entry["card_id"])
         target_agent_id = _active_agent_id_for_role(run_root, to_role)
         resume_tick_id = _latest_resume_tick_id(run_state)
         role_io_receipt = _role_io_protocol_receipt_for_agent(
@@ -11921,7 +12829,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 "sealed_body_reads_allowed": False,
                 "requires_read_receipt": True,
                 "open_method": "open-card",
-                "return_event": return_event,
+                "card_return_event": card_return_event,
                 "expected_return_path": project_relative(project_root, expected_return_path),
                 "expected_receipt_path": project_relative(project_root, expected_receipt_path),
                 "card_envelope_path": project_relative(project_root, envelope_path),
@@ -11964,7 +12872,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             action_type="deliver_system_card",
             actor="controller",
             label=entry["label"],
-            summary=f"Deliver system card envelope {entry['card_id']} to {to_role}; role must open through runtime and return {return_event}.",
+            summary=f"Deliver system card envelope {entry['card_id']} to {to_role}; role must open through runtime and return {card_return_event}.",
             allowed_reads=allowed_reads,
             allowed_writes=[
                 project_relative(project_root, envelope_path),
@@ -12491,7 +13399,7 @@ def _commit_system_card_delivery_artifact(
         "sealed_body_reads_allowed": False,
         "requires_read_receipt": True,
         "open_method": pending.get("open_method") or "open-card",
-        "return_event": pending.get("return_event") or _card_return_event_for_card(card_id),
+        "card_return_event": pending.get("card_return_event") or _card_return_event_for_card(card_id),
         "expected_return_path": pending.get("expected_return_path"),
         "expected_receipt_path": pending.get("expected_receipt_path"),
         "card_envelope_path": pending.get("card_envelope_path"),
@@ -12556,7 +13464,7 @@ def _commit_system_card_delivery_artifact(
         "sealed_body_reads_allowed": False,
         "requires_read_receipt": True,
         "open_method": delivery.get("open_method") or "open-card",
-        "return_event": delivery.get("return_event"),
+        "card_return_event": delivery.get("card_return_event"),
         "expected_receipt_path": project_relative(project_root, expected_receipt_path),
         "expected_return_path": project_relative(project_root, expected_return_path),
         "delivery_context": delivery_context,
@@ -12602,7 +13510,7 @@ def _commit_system_card_delivery_artifact(
             "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
             "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
             "requires_read_receipt": True,
-            "return_event": delivery.get("return_event"),
+            "card_return_event": delivery.get("card_return_event"),
             "expected_receipt_path": project_relative(project_root, expected_receipt_path),
             "expected_return_path": project_relative(project_root, expected_return_path),
             "delivered_at": delivery["delivered_at"],
@@ -12613,7 +13521,7 @@ def _commit_system_card_delivery_artifact(
     return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
     return_ledger.setdefault("pending_returns", []).append(
         {
-            "return_event": delivery.get("return_event"),
+            "card_return_event": delivery.get("card_return_event"),
             "status": "pending",
             "card_id": card_id,
             "delivery_id": delivery.get("delivery_id"),
@@ -12722,7 +13630,7 @@ def _auto_commit_system_card_delivery_action(
         **committed_extra,
         "summary": (
             f"Relay committed system card envelope {planned.get('card_id')} to {planned.get('to_role')}; "
-            f"the role must open it through runtime and return {planned.get('return_event')}."
+            f"the role must open it through runtime and return {planned.get('card_return_event')}."
         ),
         "allowed_writes": [],
         "auto_committed_by_router": True,
@@ -12977,7 +13885,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             if (
                 isinstance(item, dict)
                 and item.get("delivery_attempt_id") == pending.get("delivery_attempt_id")
-                and item.get("return_event") == pending.get("return_event")
+                and item.get("card_return_event") == pending.get("card_return_event")
             ):
                 item["status"] = "resolved"
                 item["resolved_at"] = utc_now()
@@ -12986,7 +13894,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 item["receipt_ref_count"] = validation["receipt_ref_count"]
         return_ledger.setdefault("completed_returns", []).append(
             {
-                "return_event": pending.get("return_event"),
+                "card_return_event": pending.get("card_return_event"),
                 "delivery_id": pending.get("delivery_id"),
                 "delivery_attempt_id": pending.get("delivery_attempt_id"),
                 "card_id": pending.get("card_id"),
@@ -13258,8 +14166,20 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     return result
 
 
-def _record_external_event_unchecked(project_root: Path, event: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def _record_external_event_unchecked(
+    project_root: Path,
+    event: str,
+    payload: dict[str, Any] | None = None,
+    *,
+    envelope_path: str | None = None,
+    envelope_hash: str | None = None,
+) -> dict[str, Any]:
     if event not in EXTERNAL_EVENTS:
+        if _is_card_return_event_name(event):
+            raise RouterError(
+                f"{event} is a card return event, not an external event; do not use record-event. "
+                "Return to the router and apply check_card_return_event."
+            )
         raise RouterError(f"unknown external event: {event}")
     bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
     run_state, run_root = load_run_state(project_root, bootstrap)
@@ -13292,13 +14212,32 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     if pending_card_return is not None:
         raise RouterError(
             "event blocked by unresolved card return: "
-            f"waiting for {pending_card_return.get('return_event')} "
+            f"waiting for {pending_card_return.get('card_return_event')} "
             f"from {pending_card_return.get('target_role')} "
             f"for card {pending_card_return.get('card_id')}; "
             "validate the expected return envelope before recording another role event"
         )
+    payload = _normalize_record_event_payload(
+        project_root,
+        run_state,
+        event=event,
+        payload=payload,
+        envelope_path=envelope_path,
+        envelope_hash=envelope_hash,
+    )
+    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+    if _scoped_event_is_recorded(run_state, scoped_identity):
+        return _already_recorded_external_event_result(
+            project_root,
+            run_root,
+            run_state,
+            event=event,
+            payload=payload,
+            scoped_identity=scoped_identity,
+        )
     if required_flag and not run_state["flags"].get(required_flag):
         raise RouterError(f"event {event} requires {required_flag}")
+    _check_scoped_event_retry_budget(run_state, scoped_identity)
     active_blocker = run_state.get("active_control_blocker")
     repeatable_pm_repair_decision = (
         event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT
@@ -13323,41 +14262,26 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
         and run_state["flags"].get(flag)
         and _active_node_completion_write_missing(run_root, run_state, payload)
     )
-    if run_state["flags"].get(flag) and not (
+    scoped_event_has_active_repair_context = bool(
+        scoped_identity
+        and event == "pm_mutates_route_after_review_block"
+        and _active_model_miss_review_block_flags(run_state)
+    )
+    if run_state["flags"].get(flag) and not scoped_event_has_active_repair_context and not (
         repeatable_pm_repair_decision
         or repeatable_gate_decision
         or repeatable_startup_repair_request
         or repeatable_route_draft_repair
         or repeatable_current_node_completion
     ):
-        finalized = _finalize_repair_transaction_outcome(
+        return _already_recorded_external_event_result(
             project_root,
             run_root,
             run_state,
             event=event,
             payload=payload,
+            scoped_identity=scoped_identity,
         )
-        resolved = _resolve_delivered_control_blocker(
-            project_root,
-            run_root,
-            run_state,
-            resolved_by_event=event,
-            from_already_recorded_event=True,
-        )
-        if resolved or finalized:
-            run_state["pending_action"] = None
-            _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_already_recorded_event:{event}")
-            _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_already_recorded_event:{event}")
-            save_run_state(run_root, run_state)
-            return {
-                "ok": True,
-                "event": event,
-                "already_recorded": True,
-                "control_blocker_resolved": bool(resolved),
-                "blocker_id": resolved.get("blocker_id") if resolved else None,
-                "repair_transaction_finalized": finalized,
-            }
-        return {"ok": True, "event": event, "already_recorded": True}
     payload = payload or {}
     if event in {"user_requests_run_stop", "user_requests_run_cancel"}:
         _write_run_lifecycle_request(project_root, run_root, run_state, event=event, payload=payload)
@@ -13595,36 +14519,25 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
             _reset_route_review_after_route_draft_repair(run_state)
         _write_route_draft(project_root, run_root, run_state, payload)
     elif event == "process_officer_passes_route_check":
-        _write_role_gate_report(
+        _write_route_process_pass_report(project_root, run_root, run_state, payload)
+    elif event == "process_officer_requires_route_repair":
+        _write_route_process_issue_report(
             project_root,
             run_root,
             run_state,
             payload,
-            expected_role="process_flowguard_officer",
-            path=run_root / "flowguard" / "route_process_check.json",
-            schema_version="flowpilot.route_process_check.v1",
-            checked_paths=[
-                _current_route_draft_path(run_root),
-                run_root / "root_acceptance_contract.json",
-                run_root / "child_skill_gate_manifest.json",
-            ],
+            expected_verdict="repair_required",
+        )
+    elif event == "process_officer_blocks_route_check":
+        _write_route_process_issue_report(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            expected_verdict="blocked",
         )
     elif event == "product_officer_passes_route_check":
-        _write_role_gate_report(
-            project_root,
-            run_root,
-            run_state,
-            payload,
-            expected_role="product_flowguard_officer",
-            path=run_root / "flowguard" / "route_product_check.json",
-            schema_version="flowpilot.route_product_check.v1",
-            checked_paths=[
-                _current_route_draft_path(run_root),
-                run_root / "product_function_architecture.json",
-                run_root / "root_acceptance_contract.json",
-                run_root / "flowguard" / "route_process_check.json",
-            ],
-        )
+        _write_route_product_pass_report(project_root, run_root, run_state, payload)
     elif event == "reviewer_passes_route_check":
         _write_role_gate_report(
             project_root,
@@ -13720,6 +14633,7 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     if event == "pm_absorbs_reviewed_research":
         run_state["flags"]["material_accepted_by_pm"] = True
     run_state["events"].append(record)
+    _mark_scoped_event_recorded(run_state, scoped_identity)
     if event == "reviewer_allows_material_scan_dispatch":
         _finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
         run_state["flags"]["material_scan_dispatch_blocked"] = False
@@ -13739,9 +14653,22 @@ def _record_external_event_unchecked(project_root: Path, event: str, payload: di
     return {"ok": True, "event": event}
 
 
-def record_external_event(project_root: Path, event: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def record_external_event(
+    project_root: Path,
+    event: str,
+    payload: dict[str, Any] | None = None,
+    *,
+    envelope_path: str | None = None,
+    envelope_hash: str | None = None,
+) -> dict[str, Any]:
     try:
-        return _record_external_event_unchecked(project_root, event, payload)
+        return _record_external_event_unchecked(
+            project_root,
+            event,
+            payload,
+            envelope_path=envelope_path,
+            envelope_hash=envelope_hash,
+        )
     except (RouterError, packet_runtime.PacketRuntimeError) as exc:
         existing_blocker = getattr(exc, "control_blocker", None)
         if isinstance(existing_blocker, dict):
@@ -14415,6 +15342,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     event_parser = sub.add_parser("record-event", help="Record a PM/reviewer/worker external event")
     event_parser.add_argument("--event", required=True)
     event_parser.add_argument("--payload-json", default="")
+    event_parser.add_argument("--envelope-path", default="", help="Project-local controller-visible event envelope path")
+    event_parser.add_argument("--envelope-hash", default="", help="Expected sha256 for --envelope-path")
     event_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     envelope_parser = sub.add_parser("role-output-envelope", help="Write a role output body and return a controller-visible envelope")
     envelope_parser.add_argument("--output-path", required=True)
@@ -14454,7 +15383,13 @@ def main(argv: list[str] | None = None) -> int:
             result = apply_action(root, args.action_type, payload)
         elif args.command == "record-event":
             payload = json.loads(args.payload_json) if args.payload_json else {}
-            result = record_external_event(root, args.event, payload)
+            result = record_external_event(
+                root,
+                args.event,
+                payload,
+                envelope_path=args.envelope_path or None,
+                envelope_hash=args.envelope_hash or None,
+            )
         elif args.command == "role-output-envelope":
             body = json.loads(args.body_json) if args.body_json else None
             result = write_role_output_envelope(

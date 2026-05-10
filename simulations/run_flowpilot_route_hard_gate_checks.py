@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot planning-quality model."""
+"""Run checks for the FlowPilot route-hard-gate model."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from typing import Any
 
 from flowguard import Explorer
 
-import flowpilot_planning_quality_model as model
+import flowpilot_route_hard_gate_model as model
 
 
-RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_planning_quality_results.json")
+RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_route_hard_gate_results.json")
 
 REQUIRED_LABELS = tuple(
     [f"select_{scenario}" for scenario in model.SCENARIOS]
@@ -22,28 +22,19 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    model.UI_WITHOUT_PROFILE: "complex task route lacks a selected planning profile",
-    model.PROFILE_WITHOUT_CONVERGENCE_LOOP: "interactive UI route lacks required convergence loop",
-    model.SKILL_SELECTED_NO_CONTRACT: "selected child skill lacks a compiled Skill Standard Contract",
-    model.SKILL_CONTRACT_MISSING_FIELDS: "Skill Standard Contract omits required fields",
-    model.SKILL_CONTRACT_NOT_MAPPED: "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
-    model.LOOP_VERIFY_ARTIFACT_NOT_INHERITED: "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
-    model.NODE_PLAN_MISSING_PROJECTION: "node acceptance plan lacks skill-standard projection",
-    model.WORK_PACKET_MISSING_PROJECTION: "work packet or result matrix lacks skill-standard projection",
-    model.REVIEWER_PASSES_HARD_BLINDSPOT: "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate",
-    model.OVERMERGED_COMPLEX_IMPLEMENTATION_NODE: "route complexity does not match selected planning profile",
-    model.ARTIFACTLESS_MAJOR_NODE: "major route node lacks a concrete acceptance artifact",
-    model.SIMPLE_TASK_OVERTEMPLATED: "simple task was over-templated instead of using a justified lightweight profile",
-    model.PRODUCT_MODEL_MISSING: "route planning lacks a product behavior model from the Product FlowGuard Officer",
-    model.PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL: "PM route is not mapped to the product behavior model",
-    model.PROCESS_OFFICER_ROUTE_VIABILITY_MISSING: "Process FlowGuard Officer did not validate route viability against the product model",
-    model.REPAIR_NODE_NO_MAINLINE_RETURN: "repair node lacks a defined return to the mainline product route",
-    model.NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL: "node acceptance plan is not mapped to a product model segment",
+    model.MISSING_PRODUCT_MODEL: "PM route draft requires Product Officer product behavior model report",
+    model.MISSING_ROUTE_MODEL_REVIEW: "route activation requires passed product-model route review",
+    model.MISSING_PROCESS_VERDICT: "route activation requires Process Officer process_viability_verdict=pass",
+    model.REPAIR_REQUIRED_IGNORED: "route activation requires Process Officer process_viability_verdict=pass",
+    model.BLOCKED_IGNORED: "route activation requires Process Officer process_viability_verdict=pass",
+    model.REPAIR_MISSING_MAINLINE_RETURN: "repair mutation requires a mainline return target",
+    model.REPAIR_WITHOUT_PROCESS_RECHECK: "repair route requires fresh Process Officer recheck before continuing",
+    model.ROUTER_SEMANTIC_OVERREACH: "Router must not judge semantic product-model coverage itself",
 }
 
 
 def _state_id(state: model.State) -> str:
-    return f"scenario={state.scenario}|status={state.status}|task={state.task_class}|reason={state.terminal_reason}"
+    return f"scenario={state.scenario}|status={state.status}|reason={state.terminal_reason}"
 
 
 def _build_graph() -> dict[str, Any]:
@@ -115,16 +106,8 @@ def _progress_report(graph: dict[str, Any]) -> dict[str, object]:
             if source not in can_reach_terminal and any(target in can_reach_terminal for _label, target in outgoing):
                 can_reach_terminal.add(source)
                 changed = True
-    stuck = [
-        _state_id(state)
-        for idx, state in enumerate(states)
-        if idx not in terminal and not edges[idx]
-    ]
-    cannot_reach_terminal = [
-        _state_id(state)
-        for idx, state in enumerate(states)
-        if idx not in can_reach_terminal
-    ]
+    stuck = [_state_id(state) for idx, state in enumerate(states) if idx not in terminal and not edges[idx]]
+    cannot_reach_terminal = [_state_id(state) for idx, state in enumerate(states) if idx not in can_reach_terminal]
     return {
         "ok": not stuck and not cannot_reach_terminal,
         "stuck_state_count": len(stuck),
@@ -159,13 +142,13 @@ def _hazard_report() -> dict[str, object]:
     hazards: dict[str, object] = {}
     failures: list[str] = []
     for name, state in model.hazard_states().items():
-        planning_failures = model.planning_failures(state)
+        route_failures = model.route_gate_failures(state)
         expected = HAZARD_EXPECTED_FAILURES[name]
-        detected = any(expected in failure for failure in planning_failures)
+        detected = any(expected in failure for failure in route_failures)
         hazards[name] = {
             "detected": detected,
             "expected_failure": expected,
-            "failures": planning_failures,
+            "failures": route_failures,
         }
         if not detected:
             failures.append(f"{name}: expected failure containing {expected!r}")

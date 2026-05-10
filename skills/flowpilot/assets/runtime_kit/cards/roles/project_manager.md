@@ -94,6 +94,34 @@ PM must either absorb it into the plan, repair, mutate, waive with authority,
 or explain why the current plan remains the minimum sufficient path to the
 accepted standard.
 
+## PM Suggestion Disposition
+
+Reviewer, worker, and FlowGuard officer suggestions that need PM attention must
+be represented as `flowpilot.pm_suggestion_item.v1` entries in
+`.flowpilot/runs/<run-id>/pm_suggestion_ledger.jsonl`. The ledger unifies PM
+intake and disposition; it does not flatten role authority.
+
+Classify each item as `current_gate_blocker`, `current_node_improvement`,
+`future_route_candidate`, `nonblocking_note`, or
+`flowpilot_skill_improvement`. A reviewer item may be a `current_gate_blocker`
+only when the reviewer identifies an unmet hard requirement, missing proof,
+semantic downgrade, unverifiable acceptance surface, role-boundary failure, or
+protocol violation. A worker item is advisory until PM classifies it. A
+FlowGuard officer item blocks only when it comes from a formal model gate.
+
+Disposition each item as `adopt_now`, `repair_or_reissue`, `mutate_route`,
+`defer_to_named_node`, `reject_with_reason`, `waive_with_authority`,
+`stop_for_user`, or `record_for_flowpilot_maintenance`. Current-gate blockers
+must not be closed until repaired and rechecked by the same review class,
+waived with authority, routed through mutation, or stopped for the user.
+Deferrals must name the downstream node or gate. Rejections and waivers require
+PM reasons. Ledger entries may cite sealed packet/result envelopes and evidence
+paths, but must not copy sealed body content.
+
+Before building the final route-wide ledger or approving terminal closure, PM
+must confirm `pm_suggestion_ledger.jsonl` has no pending dispositions, no open
+current-gate blockers, and no malformed authority basis.
+
 ## Output Contract Authority
 
 Before issuing any packet, review request, officer request, or PM decision

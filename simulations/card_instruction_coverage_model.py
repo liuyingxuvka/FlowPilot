@@ -101,6 +101,19 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
         "product_officer.core",
     }
 )
+PM_NOTE_GUIDANCE_REQUIRED_CARD_IDS = frozenset(
+    {
+        "pm.material_scan",
+        "pm.research_package",
+        "pm.current_node_loop",
+        "pm.officer_request_report_loop",
+        "worker_a.core",
+        "worker_b.core",
+        "worker.research_report",
+        "process_officer.core",
+        "product_officer.core",
+    }
+)
 PM_CONTROL_BLOCKER_REPAIR_CARD_IDS = frozenset(
     {
         "pm.core",
@@ -155,6 +168,7 @@ class CardFacts:
     pm_history_context_guidance: bool
     pm_minimum_complexity_guidance: bool
     output_contract_guidance: bool
+    pm_note_guidance: bool
     pm_control_blocker_repair_guidance: bool
 
 
@@ -265,6 +279,19 @@ def _has_output_contract_guidance(card_id: str, text: str) -> bool:
     if card_id.startswith("pm.") and card_id not in {"pm.core", "pm.output_contract_catalog"}:
         return has_packet_contract
     return has_packet_contract and "contract self-check" in lower
+
+
+def _has_pm_note_guidance(card_id: str, text: str) -> bool:
+    if card_id not in PM_NOTE_GUIDANCE_REQUIRED_CARD_IDS:
+        return True
+    lower = text.lower()
+    return (
+        "pm note" in lower
+        and "in-scope quality choice" in lower
+        and "pm consideration" in lower
+        and "decision-support" in lower
+        and ("scope expansion" in lower or "expanding the packet" in lower)
+    )
 
 
 def _has_pm_control_blocker_repair_guidance(card_id: str, role: str, text: str) -> bool:
@@ -413,6 +440,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 pm_history_context_guidance=_has_pm_history_context_guidance(card_id, expected_role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(card_id, expected_role, text),
                 output_contract_guidance=_has_output_contract_guidance(card_id, text),
+                pm_note_guidance=_has_pm_note_guidance(card_id, text),
                 pm_control_blocker_repair_guidance=_has_pm_control_blocker_repair_guidance(card_id, expected_role, text),
             )
         )
@@ -445,6 +473,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 pm_history_context_guidance=_has_pm_history_context_guidance(f"unmanifested:{rel}", role, text),
                 pm_minimum_complexity_guidance=_has_pm_minimum_complexity_guidance(f"unmanifested:{rel}", role, text),
                 output_contract_guidance=_has_output_contract_guidance(f"unmanifested:{rel}", text),
+                pm_note_guidance=_has_pm_note_guidance(f"unmanifested:{rel}", text),
                 pm_control_blocker_repair_guidance=_has_pm_control_blocker_repair_guidance(f"unmanifested:{rel}", role, text),
             )
         )
@@ -479,6 +508,8 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: missing PM minimum sufficient complexity guidance")
     if not card.output_contract_guidance:
         failures.append(f"{card.card_id}: missing output_contract and Contract Self-Check guidance")
+    if not card.pm_note_guidance:
+        failures.append(f"{card.card_id}: missing worker/officer PM Note soft guidance")
     if not card.pm_control_blocker_repair_guidance:
         failures.append(f"{card.card_id}: missing PM control-blocker repair guidance for fatal and repair-decision lanes")
     return tuple(failures)
@@ -555,6 +586,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         pm_history_context_guidance=True,
         pm_minimum_complexity_guidance=True,
         output_contract_guidance=True,
+        pm_note_guidance=True,
         pm_control_blocker_repair_guidance=True,
     )
     return {
@@ -582,6 +614,11 @@ def hazard_cards() -> dict[str, CardFacts]:
             good,
             card_id="pm.output_contract_catalog",
             output_contract_guidance=False,
+        ),
+        "missing_pm_note_guidance": replace(
+            good,
+            card_id="worker_a.core",
+            pm_note_guidance=False,
         ),
         "missing_pm_control_blocker_repair_guidance": replace(
             good,

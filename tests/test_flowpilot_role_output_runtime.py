@@ -204,6 +204,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             [row["pack_id"] for row in skeleton["quality_pack_checks"]],
             ["ui_visual_interaction_quality_pack", "localization_quality_pack"],
         )
+        self.assertEqual(skeleton["pm_suggestion_items"], [])
         envelope = role_output_runtime.submit_output(
             root,
             output_type="reviewer_review_report",
@@ -247,6 +248,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         )
         body = self.read_json(root / envelope["body_ref"]["path"])
         self.assertEqual(len(body["quality_pack_checks"]), 2)
+        self.assertEqual(body["pm_suggestion_items"], [])
 
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "quality_pack_checks"):
             role_output_runtime.submit_output(

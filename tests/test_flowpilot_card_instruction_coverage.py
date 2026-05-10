@@ -53,6 +53,39 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertNotIn("default worker_a", lowered)
                 self.assertNotIn("do not default", lowered)
 
+    def test_worker_and_officer_packets_carry_soft_pm_note_guidance(self) -> None:
+        guidance_paths = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
+            ROOT / "templates/flowpilot/packets/packet_body.template.md",
+            ROOT / "templates/flowpilot/packets/result_body.template.md",
+        ]
+        for path in guidance_paths:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8")
+                lowered = text.lower()
+                self.assertIn("pm note", lowered)
+                self.assertIn("in-scope quality choice", lowered)
+                self.assertIn("pm consideration", lowered)
+                self.assertIn("decision-support", lowered)
+
+        reviewer_card = (
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md"
+        ).read_text(encoding="utf-8").lower()
+        self.assertNotIn("pm note", reviewer_card)
+
+        contract_text = (
+            ROOT / "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json"
+        ).read_text(encoding="utf-8").lower()
+        self.assertNotIn("pm note", contract_text)
+
         repair_cards = [
             ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
             ROOT / "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md",
@@ -64,6 +97,64 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("repair keeps local context", text)
                 self.assertIn("fundamental", text)
                 self.assertIn("separable new work", text)
+
+    def test_pm_suggestion_disposition_guidance_is_unified_but_role_scoped(self) -> None:
+        pm_card = (
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md"
+        ).read_text(encoding="utf-8").lower()
+        for required in (
+            "pm_suggestion_ledger.jsonl",
+            "flowpilot.pm_suggestion_item.v1",
+            "current_gate_blocker",
+            "defer_to_named_node",
+            "reject_with_reason",
+            "waive_with_authority",
+            "no pending dispositions",
+        ):
+            self.assertIn(required, pm_card)
+
+        worker_cards = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
+        ]
+        for path in worker_cards:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8").lower()
+                self.assertIn("pm suggestion items", text)
+                self.assertIn("flowpilot.pm_suggestion_item.v1", text)
+                self.assertIn("advisory only", text)
+                self.assertIn("must not use `current_gate_blocker`", text)
+
+        officer_cards = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
+        ]
+        for path in officer_cards:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8").lower()
+                self.assertIn("pm suggestion items", text)
+                self.assertIn("formal model-gate", text)
+                self.assertIn("current_gate_blocker", text)
+
+        for path in (ROOT / "skills/flowpilot/assets/runtime_kit/cards/reviewer").glob("*.md"):
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8").lower()
+                self.assertIn("flowpilot.pm_suggestion_item.v1", text)
+                self.assertIn("minimum standard", text)
+
+        packet_template = (
+            ROOT / "templates/flowpilot/packets/packet_body.template.md"
+        ).read_text(encoding="utf-8").lower()
+        result_template = (
+            ROOT / "templates/flowpilot/packets/result_body.template.md"
+        ).read_text(encoding="utf-8").lower()
+        contract_text = (
+            ROOT / "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json"
+        ).read_text(encoding="utf-8").lower()
+        for text in (packet_template, result_template, contract_text):
+            self.assertIn("pm suggestion", text)
+            self.assertIn("pm_suggestion", text)
 
 
 if __name__ == "__main__":

@@ -209,7 +209,7 @@ def open_card(project_root: Path, *, envelope_path: str, role: str, agent_id: st
         "body_text_visibility": "target_role_only",
         "read_receipt_path": project_relative(project_root, receipt_path),
         "read_receipt_hash": receipt["receipt_hash"],
-        "next_required_return_event": envelope.get("return_event"),
+        "next_required_card_return_event": envelope.get("card_return_event"),
         "expected_return_path": envelope.get("expected_return_path"),
     }
 
@@ -271,7 +271,7 @@ def submit_card_ack(
         "resume_tick_id": envelope.get("resume_tick_id"),
         "role_key": role,
         "agent_id": agent_id,
-        "return_event": envelope.get("return_event") or "card_ack",
+        "card_return_event": envelope.get("card_return_event") or "card_ack",
         "status": status,
         "card_envelope_path": project_relative(project_root, envelope_file),
         "card_envelope_hash": stable_json_hash(envelope),
@@ -291,7 +291,7 @@ def submit_card_ack(
     ledger_path, ledger = _load_card_ledger(project_root, envelope)
     ledger.setdefault("ack_envelopes", []).append(
         {
-            "return_event": ack["return_event"],
+            "card_return_event": ack["card_return_event"],
             "status": status,
             "role_key": role,
             "agent_id": agent_id,
@@ -309,7 +309,7 @@ def submit_card_ack(
     completed = return_ledger.setdefault("completed_returns", [])
     completed.append(
         {
-            "return_event": ack["return_event"],
+            "card_return_event": ack["card_return_event"],
             "status": status,
             "role_key": role,
             "agent_id": agent_id,
@@ -324,7 +324,7 @@ def submit_card_ack(
         if (
             isinstance(pending, dict)
             and pending.get("delivery_attempt_id") == envelope.get("delivery_attempt_id")
-            and pending.get("return_event") == ack["return_event"]
+            and pending.get("card_return_event") == ack["card_return_event"]
         ):
             pending["status"] = "returned"
             pending["ack_path"] = project_relative(project_root, ack_path)
@@ -378,7 +378,7 @@ def validate_card_ack(project_root: Path, *, ack_path: str, envelope_path: str |
         "ok": True,
         "ack_path": project_relative(project_root, ack_file),
         "ack_hash": ack.get("ack_hash") or stable_json_hash(ack),
-        "return_event": ack.get("return_event"),
+        "card_return_event": ack.get("card_return_event"),
         "role_key": ack.get("role_key"),
         "agent_id": ack.get("agent_id"),
         "receipt_ref_count": len(validated_refs),

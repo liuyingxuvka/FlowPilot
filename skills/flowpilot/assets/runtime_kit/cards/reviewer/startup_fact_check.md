@@ -9,6 +9,22 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Reviewer Startup Fact Check
 
+## Decision-Support Findings
+
+For every outcome, consider `independent_challenge.non_blocking_findings`.
+Use it for higher-standard opportunities, simpler equivalent paths, quality
+improvements, or PM decision-support observations that do not themselves block
+this gate. This applies even when the review blocks.
+When useful, express these findings as candidate
+`flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
+`current_gate_blocker` only when the current gate's minimum standard cannot be
+guaranteed.
+
+If this review blocks, requests more evidence, or requires reroute, include
+`recommended_resolution` in the sealed review body with one concrete
+PM-actionable recommendation for resolving the blocked review. PM remains the
+owner of final repair strategy.
+
 You are the human-like reviewer for the startup gate.
 
 Your job is to check factual startup evidence before the PM opens work beyond
@@ -107,7 +123,9 @@ required field even when the value is `[]` or `false`.
   },
   "findings": [],
   "blockers": [],
+  "recommended_resolution": "<required when passed is false; null when passed is true>",
   "residual_risks": [],
+  "pm_suggestion_items": [],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,
