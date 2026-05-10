@@ -33,6 +33,8 @@ REQUIRED_LABELS = (
     "pm_writes_route_draft_with_nonempty_nodes",
     "route_process_check_card_delivered_with_route_draft_context",
     "process_officer_passes_route_check_after_nonempty_route",
+    "controller_waits_for_role_work_with_status_packet_read",
+    "target_role_updates_progress_status_via_runtime",
     "user_stop_requested",
     "run_lifecycle_reconciled_all_authorities",
     "route_state_snapshot_refreshed_after_lifecycle_change",
@@ -77,6 +79,11 @@ HAZARD_EXPECTED_FAILURES = {
     "route_process_check_on_shadow_route_draft": "route process check used a shadow route draft instead of the canonical route source",
     "route_draft_repair_kept_stale_route_checks": "route draft repair left stale route-check flags active",
     "multiple_active_tasks_under_current_json_only": "multiple active UI tasks were exposed under current_json_only authority",
+    "role_work_wait_without_status_packet_read": "role-work wait did not expose matching controller status packet",
+    "role_work_status_grants_packet_dir": "role-work progress visibility grant exposed more than controller status packet",
+    "role_work_status_leaks_findings": "controller-visible progress status leaked sealed body details",
+    "role_work_progress_manual_write": "role progress status update bypassed packet runtime",
+    "role_work_progress_nonnumeric": "role progress status was not a nonnegative numeric value",
     "optimized_transaction_without_hash_check": "optimized relay transaction skipped delivery, receipt, result-return, role, or hash evidence",
     "controller_reads_sealed_body": "Controller read sealed packet/result body",
 }
@@ -147,7 +154,11 @@ def _state_id(state: model.State) -> str:
         f"crew={state.crew_live_agents_active},packet_loop={state.packet_loop_active},"
         f"frontier={state.frontier_terminal}|snapshot={state.snapshot_published_as_active},"
         f"{state.snapshot_fresh_against_frontier_and_ledger}|active={state.multiple_running_index_entries_visible},"
-        f"{state.active_task_authority}"
+        f"{state.active_task_authority}|role_progress={state.role_work_wait_pending},"
+        f"{state.role_work_status_packet_exists},{state.role_work_status_packet_read_allowed},"
+        f"{state.role_work_status_visibility_grant},{state.role_work_progress_observed},"
+        f"{state.role_work_progress_runtime_written},{state.role_work_progress_numeric},"
+        f"{state.role_work_progress_nonnegative},{state.role_work_status_message_safe}"
     )
 
 

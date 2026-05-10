@@ -14173,6 +14173,14 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
     return None
 
 
+def _controller_status_packet_path_from_packet_envelope(packet_envelope_path: object) -> str | None:
+    raw = str(packet_envelope_path or "").replace("\\", "/")
+    suffix = "/packet_envelope.json"
+    if not raw.endswith(suffix):
+        return None
+    return raw[: -len("packet_envelope.json")] + "controller_status_packet.json"
+
+
 def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     index = _load_pm_role_work_request_index(run_root, run_state)
     active = _active_pm_role_work_request(index)
@@ -14283,6 +14291,10 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
             },
         )
     if active.get("status") == "packet_relayed":
+        status_packet_path = _controller_status_packet_path_from_packet_envelope(active.get("packet_envelope_path"))
+        allowed_reads = [project_relative(project_root, run_state_path(run_root))]
+        if status_packet_path:
+            allowed_reads.append(status_packet_path)
         return _expected_role_decision_wait_action(
             project_root,
             run_state,
@@ -14291,6 +14303,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
             summary="Controller has relayed the PM role-work packet and must wait for the target role to return its result envelope.",
             allowed_external_events=[ROLE_WORK_RESULT_RETURNED_EVENT],
             to_role=str(active.get("to_role") or ""),
+            allowed_reads_extra=allowed_reads,
             payload_contract={
                 "schema_version": PAYLOAD_CONTRACT_SCHEMA,
                 "name": "role_work_result_returned_envelope",
@@ -14396,6 +14409,7 @@ def _expected_role_decision_wait_action(
     allowed_external_events: list[str],
     to_role: str,
     payload_contract: dict[str, Any] | None = None,
+    allowed_reads_extra: list[str] | None = None,
 ) -> dict[str, Any]:
     allowed_events = list(allowed_external_events)
     if to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
@@ -14411,12 +14425,16 @@ def _expected_role_decision_wait_action(
         extra["pm_role_work_request_event"] = PM_ROLE_WORK_REQUEST_EVENT
     if payload_contract is not None:
         extra["payload_contract"] = payload_contract
+    allowed_reads = [project_relative(project_root, run_state_path(run_root))]
+    for item in allowed_reads_extra or []:
+        if item and item not in allowed_reads:
+            allowed_reads.append(item)
     return make_action(
         action_type="await_role_decision",
         actor="controller",
         label=label,
         summary=summary,
-        allowed_reads=[project_relative(project_root, run_state_path(run_root))],
+        allowed_reads=allowed_reads,
         allowed_writes=[project_relative(project_root, run_state_path(run_root))],
         to_role=to_role,
         extra=extra,

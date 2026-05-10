@@ -21,6 +21,9 @@ Risk intent brief:
   router-visible state, stage-advance views left stale, stale role-decision
   waits that expose external events before their requires_flag is true, and
   optimized transactions that skip hash, role, or Controller-boundary checks.
+  Long-running role-work waits are included: Controller can see only a
+  metadata-only controller_status_packet progress surface, never sealed packet
+  or result bodies.
 - Hard invariants: package-to-packet fields are preserved; material-scan
   dispatch requires phase, contract, write-target, and canonical-body
   consistency; repair reissues must materialize into packet files, ledger, and
@@ -31,7 +34,9 @@ Risk intent brief:
   blockers are router-visible; stage-advance views refresh; multi-active
   visibility has explicit authority; await_role_decision exposes only currently
   receivable external events; optimized transactions keep hash, role, and
-  envelope-only guarantees.
+  envelope-only guarantees; long-running waits expose exactly one status
+  packet, progress is runtime-written numeric metadata, and status messages do
+  not carry findings, evidence, recommendations, or body summaries.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -165,6 +170,16 @@ class State:
     snapshot_fresh_against_frontier_and_ledger: bool = False
     multiple_running_index_entries_visible: bool = False
     active_task_authority: str = "current_json_only"  # current_json_only | explicit_active_set
+
+    role_work_wait_pending: bool = False
+    role_work_status_packet_exists: bool = True
+    role_work_status_packet_read_allowed: bool = True
+    role_work_status_visibility_grant: str = "single_status_packet"  # none | single_status_packet | packet_dir | sealed_body
+    role_work_progress_observed: bool = False
+    role_work_progress_runtime_written: bool = True
+    role_work_progress_numeric: bool = True
+    role_work_progress_nonnegative: bool = True
+    role_work_status_message_safe: bool = True
 
 
 class Transition(NamedTuple):
@@ -398,6 +413,35 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "process_officer_passes_route_check_after_nonempty_route",
             _inc(state, holder="controller", route_process_check_passed=True),
+        )
+        return
+
+    if not state.role_work_wait_pending:
+        yield Transition(
+            "controller_waits_for_role_work_with_status_packet_read",
+            _inc(
+                state,
+                holder="controller",
+                role_work_wait_pending=True,
+                role_work_status_packet_exists=True,
+                role_work_status_packet_read_allowed=True,
+                role_work_status_visibility_grant="single_status_packet",
+            ),
+        )
+        return
+
+    if state.role_work_wait_pending and not state.role_work_progress_observed:
+        yield Transition(
+            "target_role_updates_progress_status_via_runtime",
+            _inc(
+                state,
+                holder="process_flowguard_officer",
+                role_work_progress_observed=True,
+                role_work_progress_runtime_written=True,
+                role_work_progress_numeric=True,
+                role_work_progress_nonnegative=True,
+                role_work_status_message_safe=True,
+            ),
         )
         return
 
@@ -736,6 +780,50 @@ def controller_boundary_survives_optimization(state: State, trace) -> InvariantR
     return InvariantResult.pass_()
 
 
+def role_work_wait_exposes_status_packet_only(state: State, trace) -> InvariantResult:
+    del trace
+    if state.role_work_wait_pending and not (
+        state.role_work_status_packet_exists and state.role_work_status_packet_read_allowed
+    ):
+        return InvariantResult.fail(
+            "role-work wait did not expose matching controller status packet"
+        )
+    if state.role_work_wait_pending and state.role_work_status_visibility_grant != "single_status_packet":
+        return InvariantResult.fail(
+            "role-work progress visibility grant exposed more than controller status packet"
+        )
+    return InvariantResult.pass_()
+
+
+def controller_visible_status_is_metadata_only(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.role_work_wait_pending
+        and state.role_work_status_packet_read_allowed
+        and not state.role_work_status_message_safe
+    ):
+        return InvariantResult.fail(
+            "controller-visible progress status leaked sealed body details"
+        )
+    return InvariantResult.pass_()
+
+
+def role_progress_updates_use_runtime_contract(state: State, trace) -> InvariantResult:
+    del trace
+    if state.role_work_progress_observed and not state.role_work_progress_runtime_written:
+        return InvariantResult.fail("role progress status update bypassed packet runtime")
+    return InvariantResult.pass_()
+
+
+def role_progress_value_is_numeric(state: State, trace) -> InvariantResult:
+    del trace
+    if state.role_work_progress_observed and not (
+        state.role_work_progress_numeric and state.role_work_progress_nonnegative
+    ):
+        return InvariantResult.fail("role progress status was not a nonnegative numeric value")
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="research_scope_preserved",
@@ -866,6 +954,26 @@ INVARIANTS = (
         name="controller_boundary_survives_optimization",
         description="Handoff optimization cannot weaken Controller's envelope-only, role, or hash guarantees.",
         predicate=controller_boundary_survives_optimization,
+    ),
+    Invariant(
+        name="role_work_wait_exposes_status_packet_only",
+        description="Long-running role-work waits expose only the matching Controller status packet.",
+        predicate=role_work_wait_exposes_status_packet_only,
+    ),
+    Invariant(
+        name="controller_visible_status_is_metadata_only",
+        description="Controller-readable progress status remains brief metadata and does not carry sealed findings.",
+        predicate=controller_visible_status_is_metadata_only,
+    ),
+    Invariant(
+        name="role_progress_updates_use_runtime_contract",
+        description="Roles update progress through the packet runtime rather than ad hoc JSON edits.",
+        predicate=role_progress_updates_use_runtime_contract,
+    ),
+    Invariant(
+        name="role_progress_value_is_numeric",
+        description="Progress values are comparable nonnegative numbers.",
+        predicate=role_progress_value_is_numeric,
     ),
 )
 
@@ -1120,6 +1228,35 @@ def hazard_states() -> dict[str, State]:
         "multiple_active_tasks_under_current_json_only": _safe_base(
             multiple_running_index_entries_visible=True,
             active_task_authority="current_json_only",
+        ),
+        "role_work_wait_without_status_packet_read": _safe_base(
+            role_work_wait_pending=True,
+            role_work_status_packet_exists=True,
+            role_work_status_packet_read_allowed=False,
+            role_work_status_visibility_grant="none",
+        ),
+        "role_work_status_grants_packet_dir": _safe_base(
+            role_work_wait_pending=True,
+            role_work_status_packet_exists=True,
+            role_work_status_packet_read_allowed=True,
+            role_work_status_visibility_grant="packet_dir",
+        ),
+        "role_work_status_leaks_findings": _safe_base(
+            role_work_wait_pending=True,
+            role_work_status_packet_exists=True,
+            role_work_status_packet_read_allowed=True,
+            role_work_status_visibility_grant="single_status_packet",
+            role_work_status_message_safe=False,
+        ),
+        "role_work_progress_manual_write": _safe_base(
+            role_work_wait_pending=True,
+            role_work_progress_observed=True,
+            role_work_progress_runtime_written=False,
+        ),
+        "role_work_progress_nonnumeric": _safe_base(
+            role_work_wait_pending=True,
+            role_work_progress_observed=True,
+            role_work_progress_numeric=False,
         ),
         "optimized_transaction_without_hash_check": _safe_base(
             mode="optimized",

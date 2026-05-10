@@ -6795,3 +6795,81 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - User will coordinate local install, git, and remote synchronization later.
+
+
+## flowpilot-role-progress-status - Add controller-visible role progress to FlowPilot packet status without exposing sealed bodies
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested model-first FlowGuard validation before changing long-running background role waiting behavior.
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-10T15:04:57+00:00
+- Ended: 2026-05-10T15:04:57+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## flowpilot-role-progress-status - Add controller-visible role progress to FlowPilot packet status without exposing sealed bodies
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested model-first FlowGuard validation before changing long-running background role waiting behavior.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-10T15:49:22+00:00
+- Ended: 2026-05-10T15:49:22+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+
+### Commands
+- OK (0.000s): `python simulations\\run_flowpilot_control_plane_friction_checks.py --json-out simulations\\flowpilot_control_plane_friction_results.json`
+- OK (0.000s): `python simulations\\run_meta_checks.py --fast`
+- OK (0.000s): `python simulations\\run_capability_checks.py --fast`
+- OK (0.000s): `python -m py_compile skills\\flowpilot\\assets\\packet_runtime.py skills\\flowpilot\\assets\\flowpilot_router.py simulations\\flowpilot_control_plane_friction_model.py simulations\\run_flowpilot_control_plane_friction_checks.py`
+- OK (0.000s): `python scripts\\check_install.py`
+- OK (0.000s): `python simulations\\run_prompt_isolation_checks.py`
+- OK (0.000s): `python simulations\\run_flowpilot_resume_checks.py`
+- OK (0.000s): `python simulations\\run_flowpilot_router_loop_checks.py --json-out simulations\\flowpilot_router_loop_results.json`
+- OK (0.000s): `python scripts\\smoke_autopilot.py --fast`
+- OK (0.000s): `python scripts\\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\\audit_local_install_sync.py --json`
+
+### Findings
+- Progress uses the existing controller_status_packet.json with metadata-only message and runtime-written numeric progress.
+- Controller pending action grants only the matching controller_status_packet.json, not packet directory or sealed body.
+- FlowGuard hazards catch missing status read access, broad packet directory grants, sealed/body detail leakage, manual progress writes, and nonnumeric progress.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Full meta/capability commands exceeded a 10 minute tool timeout; their generated proof files were then verified with --fast fingerprint reuse.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Keep unrelated concurrent worktree changes separate from this local progress-status commit.
