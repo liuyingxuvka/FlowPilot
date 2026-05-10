@@ -12,9 +12,9 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 ⚑ FlowPilot ⚑
 ✦━━━━━━━━━━━━━━━━━━━━✦
 
-- Formal run mode active.
-- Route-controlled execution has started.
-- Packets and ledgers are now in charge.
+- Developer: Yingxu Liu
+- Repository: https://github.com/liuyingxuvka/FlowPilot
+- Buy the developer a coffee: https://paypal.me/Yingxuliu
 
 ✦━━━━━━━━━━━━━━━━━━━━✦
 ```

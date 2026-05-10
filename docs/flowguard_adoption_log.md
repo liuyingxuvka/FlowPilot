@@ -6932,3 +6932,47 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If route mutation remains too easy in future PM outputs, promote `why_current_node_cannot_contain_repair` from prompt guidance into a stricter payload contract.
+
+
+## flowpilot-startup-banner-public-links-20260510 - Replace startup banner status bullets with project links
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested replacing the FlowPilot startup banner's generic startup-status bullets with developer, repository, and PayPal.Me support links, then syncing source, installed skill, and local git.
+- Status: completed
+- Skill decision: skip_with_reason
+- Started: 2026-05-10T16:25:00+00:00
+- Ended: 2026-05-10T16:48:00+00:00
+- Commands OK: True
+
+### Model Files
+- none
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_banner_action_and_result_are_user_visible`.
+- OK: `python scripts\check_install.py`.
+- OK: `python simulations\run_prompt_isolation_checks.py`.
+- OK: `python simulations\run_startup_pm_review_checks.py`.
+- OK: focused startup router subset, 7 tests.
+- OK: `python -m unittest tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_card_runtime tests.test_flowpilot_output_contracts`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+
+### Findings
+- The change is display-copy only: it updates the runtime startup banner card, source banner template, project startup banner template, and the direct router display assertions.
+- The router still requires user-dialog display confirmation and computes the display hash dynamically from the card text.
+- Local installed `flowpilot` was stale before sync and `source_fresh: true` after sync.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- The full unfiltered `tests.test_flowpilot_router_runtime` module exceeded the tool timeout twice, so focused startup/banner coverage and related card/runtime checks were used for this scoped display change.
+
+### Skipped Steps
+- No route, frontier, state-machine, or skill-control behavior changed, so no new FlowGuard model was created and full meta/capability model reruns were not required.
+- No GitHub push or release.
+
+### Next Actions
+- Keep the public-link banner text in sync across runtime card and both startup banner templates when future banner copy changes.
