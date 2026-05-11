@@ -39,6 +39,10 @@ REQUIRED_LABELS = (
     "pm_writes_route_draft_with_nonempty_nodes",
     "route_process_check_card_delivered_with_route_draft_context",
     "process_officer_passes_route_check_after_nonempty_route",
+    "reviewer_blocks_child_skill_gate_manifest_for_repair",
+    "pm_rewrites_child_skill_gate_after_block",
+    "router_consumes_gate_card_ack_and_preserves_semantic_wait",
+    "reviewer_passes_repaired_child_skill_gate_and_clears_block",
     "reviewer_block_classified_as_node_local",
     "reviewer_block_classified_as_route_invalidating",
     "pm_selects_same_node_repair_for_node_local_block",
@@ -86,6 +90,12 @@ HAZARD_EXPECTED_FAILURES = {
     "delivered_card_phase_context_stale": "delivered card current_phase did not match its actual workflow phase",
     "terminal_snapshot_flag_mismatch": "terminal route_state_snapshot flags disagreed with terminal run status",
     "child_skill_gate_manifest_review_unsynced": "child-skill gate manifest did not sync reviewer pass status",
+    "gate_pass_left_active_block": "gate pass left the matching active gate outcome block live",
+    "gate_pass_cleared_wrong_block": "gate pass cleared a different gate outcome block",
+    "ack_consumed_semantic_wait_lost": "card ACK consumed the mechanical wait without exposing semantic gate outcome wait",
+    "pm_impersonates_reviewer_followup": "reviewer follow-up event was accepted from the PM repair target role",
+    "no_legal_next_with_valid_role_output": "no-legal-next control blocker was created while a valid role output was receivable",
+    "duplicate_pm_repair_created_new_blocker": "duplicate PM repair decision created a new control blocker",
     "terminal_heartbeat_cleanup_unproven": "terminal continuation cleanup lacked host automation proof",
     "role_output_hash_replay_mismatch": "persisted role-output envelope hashes were not replayable against body paths",
     "frontier_stale_after_product_architecture_delivery": "execution frontier remained at material_scan after product architecture delivery",
@@ -171,7 +181,14 @@ def _state_id(state: model.State) -> str:
         f"terminal_snapshot={state.terminal_snapshot_published},"
         f"{state.terminal_snapshot_flags_consistent}|"
         f"child_skill_gate={state.child_skill_gate_review_recorded},"
-        f"{state.child_skill_gate_manifest_synced_with_review}|"
+        f"{state.child_skill_gate_manifest_synced_with_review},"
+        f"repair_flow={state.child_skill_gate_repair_flow_started},"
+        f"{state.child_skill_gate_pm_rewrote_after_block},"
+        f"ack={state.card_ack_consumed},{state.semantic_gate_wait_exposed_after_ack},"
+        f"block={state.gate_outcome_block_active},{state.gate_outcome_block_gate_key},"
+        f"pass={state.gate_outcome_pass_recorded},{state.gate_outcome_pass_gate_key},"
+        f"same_gen={state.gate_outcome_same_generation},"
+        f"clear_match={state.gate_outcome_clear_target_matches_pass_gate}|"
         f"terminal_cleanup={state.terminal_continuation_cleanup_recorded},"
         f"{state.terminal_host_automation_cleanup_proven}|"
         f"role_hash={state.role_output_envelopes_recorded},"
@@ -196,7 +213,12 @@ def _state_id(state: model.State) -> str:
         f"blocker={state.receipt_missing_blocker},{state.control_blocker_lane},"
         f"{state.control_blocker_target_role},{state.pm_repair_decision_recorded},"
         f"{state.control_blocker_followup_event_matchable},"
-        f"{state.control_resolution_predicate_normalized}|stop={state.stop_requested},"
+        f"{state.control_resolution_predicate_normalized},"
+        f"followup_role={state.followup_event_expected_role},{state.followup_event_from_role},"
+        f"valid_output={state.valid_role_output_waiting},"
+        f"no_legal={state.no_legal_next_control_blocker_materialized},"
+        f"dup_pm={state.duplicate_pm_repair_decision_seen},"
+        f"{state.duplicate_repair_created_new_blocker}|stop={state.stop_requested},"
         f"{state.current_status_stopped},hb={state.continuation_heartbeat_active},"
         f"crew={state.crew_live_agents_active},packet_loop={state.packet_loop_active},"
         f"frontier={state.frontier_terminal}|snapshot={state.snapshot_published_as_active},"

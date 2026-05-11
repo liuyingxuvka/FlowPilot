@@ -52,7 +52,12 @@ Risk intent brief:
   PM role-work results return to PM while current-node results still return to
   reviewer; role memory is an index, never an approval authority; and a
   complete model-miss officer report can reach a PM decision without a second
-  officer loop.
+  officer loop; child-skill gate reviewer passes clear only the matching
+  current gate blocker; direct Router ACK consumption preserves the semantic
+  reviewer pass/block wait; PM repair authority cannot impersonate reviewer
+  event authority; no-legal-next blockers wait for currently receivable role
+  output; and duplicate PM repair decisions are idempotent for the same
+  blocker.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -146,6 +151,17 @@ class State:
     terminal_snapshot_flags_consistent: bool = True
     child_skill_gate_review_recorded: bool = False
     child_skill_gate_manifest_synced_with_review: bool = True
+    child_skill_gate_repair_flow_started: bool = False
+    child_skill_gate_pm_rewrote_after_block: bool = False
+    gate_card_requires_semantic_outcome: bool = False
+    card_ack_consumed: bool = False
+    semantic_gate_wait_exposed_after_ack: bool = True
+    gate_outcome_block_active: bool = False
+    gate_outcome_block_gate_key: str = "none"
+    gate_outcome_pass_recorded: bool = False
+    gate_outcome_pass_gate_key: str = "none"
+    gate_outcome_same_generation: bool = True
+    gate_outcome_clear_target_matches_pass_gate: bool = True
     terminal_continuation_cleanup_recorded: bool = False
     terminal_host_automation_cleanup_proven: bool = True
     role_output_envelopes_recorded: bool = False
@@ -206,6 +222,12 @@ class State:
     pm_repair_decision_recorded: bool = False
     control_blocker_followup_event_matchable: bool = True
     control_resolution_predicate_normalized: bool = True
+    followup_event_expected_role: str = "none"
+    followup_event_from_role: str = "none"
+    valid_role_output_waiting: bool = False
+    no_legal_next_control_blocker_materialized: bool = False
+    duplicate_pm_repair_decision_seen: bool = False
+    duplicate_repair_created_new_blocker: bool = False
 
     stop_requested: bool = False
     current_status_stopped: bool = False
@@ -555,6 +577,69 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "process_officer_passes_route_check_after_nonempty_route",
             _inc(state, holder="controller", route_process_check_passed=True),
+        )
+        return
+
+    if state.route_process_check_passed and not state.child_skill_gate_repair_flow_started:
+        yield Transition(
+            "reviewer_blocks_child_skill_gate_manifest_for_repair",
+            _inc(
+                state,
+                holder="reviewer",
+                child_skill_gate_repair_flow_started=True,
+                gate_card_requires_semantic_outcome=True,
+                gate_outcome_block_active=True,
+                gate_outcome_block_gate_key="child_skill_gate_manifest",
+                gate_outcome_pass_recorded=False,
+                gate_outcome_pass_gate_key="none",
+                gate_outcome_same_generation=True,
+                gate_outcome_clear_target_matches_pass_gate=True,
+            ),
+        )
+        return
+
+    if state.gate_outcome_block_active and not state.child_skill_gate_pm_rewrote_after_block:
+        yield Transition(
+            "pm_rewrites_child_skill_gate_after_block",
+            _inc(
+                state,
+                holder="project_manager",
+                child_skill_gate_pm_rewrote_after_block=True,
+            ),
+        )
+        return
+
+    if (
+        state.child_skill_gate_pm_rewrote_after_block
+        and not state.card_ack_consumed
+    ):
+        yield Transition(
+            "router_consumes_gate_card_ack_and_preserves_semantic_wait",
+            _inc(
+                state,
+                holder="controller",
+                card_ack_consumed=True,
+                semantic_gate_wait_exposed_after_ack=True,
+            ),
+        )
+        return
+
+    if state.card_ack_consumed and not state.gate_outcome_pass_recorded:
+        yield Transition(
+            "reviewer_passes_repaired_child_skill_gate_and_clears_block",
+            _inc(
+                state,
+                holder="reviewer",
+                child_skill_gate_review_recorded=True,
+                child_skill_gate_manifest_synced_with_review=True,
+                gate_outcome_block_active=False,
+                gate_outcome_pass_recorded=True,
+                gate_outcome_pass_gate_key="child_skill_gate_manifest",
+                gate_outcome_same_generation=True,
+                gate_outcome_clear_target_matches_pass_gate=True,
+                followup_event_expected_role="human_like_reviewer",
+                followup_event_from_role="human_like_reviewer",
+            ),
         )
         return
 
@@ -950,6 +1035,56 @@ def child_skill_gate_manifest_syncs_review_status(state: State, trace) -> Invari
     return InvariantResult.pass_()
 
 
+def gate_pass_clears_matching_current_block(state: State, trace) -> InvariantResult:
+    del trace
+    if state.gate_outcome_pass_recorded and not state.gate_outcome_clear_target_matches_pass_gate:
+        return InvariantResult.fail("gate pass cleared a different gate outcome block")
+    if (
+        state.gate_outcome_pass_recorded
+        and state.gate_outcome_same_generation
+        and state.gate_outcome_block_gate_key == state.gate_outcome_pass_gate_key
+        and state.gate_outcome_block_active
+    ):
+        return InvariantResult.fail("gate pass left the matching active gate outcome block live")
+    return InvariantResult.pass_()
+
+
+def card_ack_preserves_semantic_gate_wait(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.card_ack_consumed
+        and state.gate_card_requires_semantic_outcome
+        and not state.semantic_gate_wait_exposed_after_ack
+    ):
+        return InvariantResult.fail("card ACK consumed the mechanical wait without exposing semantic gate outcome wait")
+    return InvariantResult.pass_()
+
+
+def followup_events_keep_event_role_authority(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.followup_event_expected_role == "human_like_reviewer"
+        and state.followup_event_from_role
+        and state.followup_event_from_role not in {"none", "human_like_reviewer"}
+    ):
+        return InvariantResult.fail("reviewer follow-up event was accepted from the PM repair target role")
+    return InvariantResult.pass_()
+
+
+def no_legal_next_waits_for_current_role_output(state: State, trace) -> InvariantResult:
+    del trace
+    if state.valid_role_output_waiting and state.no_legal_next_control_blocker_materialized:
+        return InvariantResult.fail("no-legal-next control blocker was created while a valid role output was receivable")
+    return InvariantResult.pass_()
+
+
+def duplicate_pm_repair_decisions_are_idempotent(state: State, trace) -> InvariantResult:
+    del trace
+    if state.duplicate_pm_repair_decision_seen and state.duplicate_repair_created_new_blocker:
+        return InvariantResult.fail("duplicate PM repair decision created a new control blocker")
+    return InvariantResult.pass_()
+
+
 def terminal_continuation_cleanup_is_proven(state: State, trace) -> InvariantResult:
     del trace
     if state.terminal_continuation_cleanup_recorded and not state.terminal_host_automation_cleanup_proven:
@@ -1318,6 +1453,31 @@ INVARIANTS = (
         predicate=child_skill_gate_manifest_syncs_review_status,
     ),
     Invariant(
+        name="gate_pass_clears_matching_current_block",
+        description="A same-gate current reviewer pass clears the matching active gate outcome blocker and does not clear a different gate.",
+        predicate=gate_pass_clears_matching_current_block,
+    ),
+    Invariant(
+        name="card_ack_preserves_semantic_gate_wait",
+        description="Direct Router ACK consumption resolves only the mechanical ACK and keeps the semantic reviewer pass/block wait receivable.",
+        predicate=card_ack_preserves_semantic_gate_wait,
+    ),
+    Invariant(
+        name="followup_events_keep_event_role_authority",
+        description="Control-blocker follow-up events use the event's own authorizing role, not the PM repair target role.",
+        predicate=followup_events_keep_event_role_authority,
+    ),
+    Invariant(
+        name="no_legal_next_waits_for_current_role_output",
+        description="No-legal-next control blockers are not emitted while a valid role output is still receivable.",
+        predicate=no_legal_next_waits_for_current_role_output,
+    ),
+    Invariant(
+        name="duplicate_pm_repair_decisions_are_idempotent",
+        description="A repeated PM decision for the same control blocker does not create another blocker.",
+        predicate=duplicate_pm_repair_decisions_are_idempotent,
+    ),
+    Invariant(
         name="terminal_continuation_cleanup_is_proven",
         description="Terminal continuation cleanup has durable host automation proof.",
         predicate=terminal_continuation_cleanup_is_proven,
@@ -1481,6 +1641,12 @@ def _safe_base(**changes: object) -> State:
             pm_repair_decision_recorded=False,
             control_blocker_followup_event_matchable=True,
             control_resolution_predicate_normalized=True,
+            followup_event_expected_role="none",
+            followup_event_from_role="none",
+            valid_role_output_waiting=False,
+            no_legal_next_control_blocker_materialized=False,
+            duplicate_pm_repair_decision_seen=False,
+            duplicate_repair_created_new_blocker=False,
             phase_dependency_cards_delivered=True,
             phase_required_sources_complete=True,
             delivered_card_phase_context_fresh=True,
@@ -1488,6 +1654,17 @@ def _safe_base(**changes: object) -> State:
             terminal_snapshot_flags_consistent=True,
             child_skill_gate_review_recorded=False,
             child_skill_gate_manifest_synced_with_review=True,
+            child_skill_gate_repair_flow_started=False,
+            child_skill_gate_pm_rewrote_after_block=False,
+            gate_card_requires_semantic_outcome=False,
+            card_ack_consumed=False,
+            semantic_gate_wait_exposed_after_ack=True,
+            gate_outcome_block_active=False,
+            gate_outcome_block_gate_key="none",
+            gate_outcome_pass_recorded=False,
+            gate_outcome_pass_gate_key="none",
+            gate_outcome_same_generation=True,
+            gate_outcome_clear_target_matches_pass_gate=True,
             terminal_continuation_cleanup_recorded=False,
             terminal_host_automation_cleanup_proven=True,
             role_output_envelopes_recorded=False,
@@ -1662,6 +1839,48 @@ def hazard_states() -> dict[str, State]:
         "child_skill_gate_manifest_review_unsynced": _safe_base(
             child_skill_gate_review_recorded=True,
             child_skill_gate_manifest_synced_with_review=False,
+        ),
+        "gate_pass_left_active_block": _safe_base(
+            child_skill_gate_review_recorded=True,
+            child_skill_gate_manifest_synced_with_review=True,
+            gate_outcome_block_active=True,
+            gate_outcome_block_gate_key="child_skill_gate_manifest",
+            gate_outcome_pass_recorded=True,
+            gate_outcome_pass_gate_key="child_skill_gate_manifest",
+            gate_outcome_same_generation=True,
+            gate_outcome_clear_target_matches_pass_gate=True,
+        ),
+        "gate_pass_cleared_wrong_block": _safe_base(
+            child_skill_gate_review_recorded=True,
+            child_skill_gate_manifest_synced_with_review=True,
+            gate_outcome_block_active=False,
+            gate_outcome_block_gate_key="route_check",
+            gate_outcome_pass_recorded=True,
+            gate_outcome_pass_gate_key="child_skill_gate_manifest",
+            gate_outcome_same_generation=True,
+            gate_outcome_clear_target_matches_pass_gate=False,
+        ),
+        "ack_consumed_semantic_wait_lost": _safe_base(
+            gate_card_requires_semantic_outcome=True,
+            card_ack_consumed=True,
+            semantic_gate_wait_exposed_after_ack=False,
+        ),
+        "pm_impersonates_reviewer_followup": _safe_base(
+            control_blocker_lane="pm_repair_decision_required",
+            control_blocker_target_role="project_manager",
+            pm_repair_decision_recorded=True,
+            control_blocker_followup_event_matchable=True,
+            followup_event_expected_role="human_like_reviewer",
+            followup_event_from_role="project_manager",
+        ),
+        "no_legal_next_with_valid_role_output": _safe_base(
+            valid_role_output_waiting=True,
+            no_legal_next_control_blocker_materialized=True,
+        ),
+        "duplicate_pm_repair_created_new_blocker": _safe_base(
+            pm_repair_decision_recorded=True,
+            duplicate_pm_repair_decision_seen=True,
+            duplicate_repair_created_new_blocker=True,
         ),
         "terminal_heartbeat_cleanup_unproven": _safe_base(
             terminal_continuation_cleanup_recorded=True,
@@ -2799,6 +3018,37 @@ def _audit_child_skill_gate_sync(run_root: Path) -> tuple[bool, dict[str, object
     }
 
 
+def _gate_key_for_outcome_event(event: object) -> str:
+    if event in {"reviewer_blocks_child_skill_gate_manifest", "reviewer_passes_child_skill_gate_manifest"}:
+        return "child_skill_gate_manifest"
+    if event in {"process_officer_blocks_child_skill_conformance_model", "process_officer_passes_child_skill_conformance_model"}:
+        return "child_skill_conformance_model"
+    if event in {"product_officer_blocks_child_skill_product_fit", "product_officer_passes_child_skill_product_fit"}:
+        return "child_skill_product_fit"
+    return "unknown"
+
+
+def _audit_gate_outcome_lifecycle(router_state: object) -> dict[str, object]:
+    flags = _router_flags(router_state)
+    active = router_state.get("active_gate_outcome_block") if isinstance(router_state, dict) else None
+    active_event = active.get("event") if isinstance(active, dict) else None
+    active_key = _gate_key_for_outcome_event(active_event)
+    child_passed = flags.get("child_skill_manifest_reviewer_passed") is True
+    pass_key = "child_skill_gate_manifest" if child_passed else "none"
+    same_key = bool(child_passed and isinstance(active, dict) and active_key == pass_key)
+    return {
+        "gate_outcome_block_active": isinstance(active, dict),
+        "gate_outcome_block_gate_key": active_key if isinstance(active, dict) else "none",
+        "gate_outcome_pass_recorded": child_passed,
+        "gate_outcome_pass_gate_key": pass_key,
+        "gate_outcome_same_generation": True,
+        "gate_outcome_clear_target_matches_pass_gate": True,
+        "same_gate_active_block_after_pass": same_key,
+        "active_gate_outcome_block_event": active_event,
+        "active_gate_outcome_block_report_path": active.get("report_path") if isinstance(active, dict) else None,
+    }
+
+
 def _terminal_snapshot_flags_consistent(snapshot: object, router_state: object, current: object) -> tuple[bool, dict[str, object]]:
     if not isinstance(snapshot, dict):
         return True, {"snapshot_present": False}
@@ -3302,6 +3552,16 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="child_skill_gate_manifest_syncs_review_status",
             evidence=child_skill_gate_evidence,
         )
+    gate_lifecycle = _audit_gate_outcome_lifecycle(router_state)
+    if gate_lifecycle.get("same_gate_active_block_after_pass"):
+        _add_finding(
+            findings,
+            code="gate_pass_left_active_block",
+            severity="error",
+            summary="same-gate reviewer pass is recorded while the previous active gate outcome block is still live",
+            invariant="gate_pass_clears_matching_current_block",
+            evidence=gate_lifecycle,
+        )
 
     terminal_snapshot_consistent, terminal_snapshot_evidence = _terminal_snapshot_flags_consistent(
         snapshot, router_state, current
@@ -3435,6 +3695,14 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         terminal_snapshot_flags_consistent=terminal_snapshot_consistent,
         child_skill_gate_review_recorded=child_skill_review_recorded,
         child_skill_gate_manifest_synced_with_review=child_skill_gate_synced,
+        gate_outcome_block_active=bool(gate_lifecycle.get("gate_outcome_block_active")),
+        gate_outcome_block_gate_key=str(gate_lifecycle.get("gate_outcome_block_gate_key") or "none"),
+        gate_outcome_pass_recorded=bool(gate_lifecycle.get("gate_outcome_pass_recorded")),
+        gate_outcome_pass_gate_key=str(gate_lifecycle.get("gate_outcome_pass_gate_key") or "none"),
+        gate_outcome_same_generation=bool(gate_lifecycle.get("gate_outcome_same_generation")),
+        gate_outcome_clear_target_matches_pass_gate=bool(
+            gate_lifecycle.get("gate_outcome_clear_target_matches_pass_gate")
+        ),
         terminal_continuation_cleanup_recorded=terminal_cleanup_recorded,
         terminal_host_automation_cleanup_proven=terminal_cleanup_proven,
         role_output_envelopes_recorded=role_output_envelope_count > 0,

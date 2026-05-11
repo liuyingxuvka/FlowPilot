@@ -1120,6 +1120,53 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - none recorded
 
+## gate-outcome-control-blocker-repair-20260511 - Model-backed repair for stale gate blockers and wrong-role follow-ups
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot accepted a PM-routed repair decision but then produced stale gate/control-blocker state around `reviewer_passes_child_skill_gate_manifest`.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T12:30:00+00:00
+- Ended: 2026-05-11T13:00:00+00:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_control_plane_friction_model.py`
+- `simulations/run_flowpilot_control_plane_friction_checks.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out tmp\flowpilot_control_plane_friction_results.json`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "child_skill_gate_manifest_repair_pass_clears_active_gate_block or control_blocker_reviewer_followup_rejects_pm_origin"`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "child_skill_gate_manifest_block_records_repair_without_approval or child_skill_gate_manifest_repair_pass_clears_active_gate_block or control_blocker_reviewer_followup_rejects_pm_origin or already_recorded_event_can_resolve_delivered_control_blocker or already_recorded_event_does_not_resolve_pm_required_control_blocker or already_recorded_event_resolves_fatal_control_blocker_after_pm_repair_decision or pm_repair_transaction_commits_material_reissue_generation or pm_repair_decision_can_repeat_for_new_control_blocker"`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The prior model did not represent an active gate outcome block coexisting with a newer same-gate reviewer pass.
+- The prior model did not check that direct Router ACK consumption preserves the semantic pass/block wait.
+- The prior model did not check that a control blocker delivered to PM cannot make PM the authorizing role for a reviewer follow-up event.
+
+### Counterexamples
+- `gate_pass_left_active_block`
+- `ack_consumed_semantic_wait_lost`
+- `pm_impersonates_reviewer_followup`
+- `no_legal_next_with_valid_role_output`
+- `duplicate_pm_repair_created_new_blocker`
+
+### Friction Points
+- Large meta/capability checks exceeded the short foreground timeout and were rerun as long background checks with stdout/stderr logs under `tmp/`.
+- The working tree had active peer-agent changes and a concurrent local commit. The repair avoided reverting those changes and staged only the model/plan/adoption files that belong to this repair pass.
+
+### Skipped Steps
+- No GitHub push was run, per user instruction.
+
+### Next Actions
+- Keep the gate outcome lifecycle checks in the control-plane friction model whenever future router wait-state or repair-dedup logic changes.
+
 
 ## direct-router-ack-migration - Routed system-card and active-holder ACKs directly to Router
 
