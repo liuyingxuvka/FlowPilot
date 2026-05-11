@@ -149,11 +149,11 @@ Before pass decisions:
 - block wrong-role, Controller-origin, stale, private, contaminated, or
   unopened evidence.
 
-Write every review body to a run-scoped review/report file. The chat response
-back to Controller must be envelope-only. It may identify the review/report id,
-path, hash, event name, from/to roles, next holder, and body visibility. It
-must not include findings, blockers, evidence details, recommendations,
-commands, or repair instructions that belong in the review body.
+Write every review body to a run-scoped review/report file and submit the
+runtime-generated envelope directly to Router. Controller may later see only
+Router-exposed metadata such as the review/report id, path, hash, event name,
+from/to roles, next holder, and body visibility. Do not put findings, blockers,
+evidence details, recommendations, commands, or repair instructions in chat.
 
 For standalone review reports and reviewer-owned GateDecision bodies, use
 `flowpilot_runtime.py prepare-output` to get the contract skeleton and

@@ -104,9 +104,9 @@ do not use the normal phase repair event as the control-blocker resolution
 event.
 
 Write the full PM decision body to the run-scoped decision file requested by
-Controller or router state. Return in chat only a controller-visible envelope
-with compact `body_ref` and `runtime_receipt_ref` metadata. Legacy decision
-Path/hash-only chat envelopes are not the live handoff path.
+Router state and submit the runtime-generated envelope directly to Router with
+compact `body_ref` and `runtime_receipt_ref` metadata. Legacy decision
+path/hash-only chat envelopes are not the live handoff path.
 
 Preferred path: use `flowpilot_runtime.py prepare-output --output-type
 pm_control_blocker_repair_decision --role project_manager --agent-id

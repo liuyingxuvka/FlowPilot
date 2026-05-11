@@ -82,9 +82,9 @@ category. Keep sealed packet/result body details out of chat.
 Use contract `flowpilot.output_contract.reviewer_review_report.v1` unless the
 packet or router action provides a more specific reviewer contract.
 
-Write the full body to the run-scoped reviewer report file requested by
-Controller or router state. Return in chat only a controller-visible envelope
-with the report path and hash.
+Write the full body to the run-scoped reviewer report file requested by Router
+state and submit the runtime-generated envelope directly to Router. Controller
+may later see only Router-exposed metadata with the report path and hash.
 
 The body must use these exact field names. Include every required field even
 when the worker result is blocked.

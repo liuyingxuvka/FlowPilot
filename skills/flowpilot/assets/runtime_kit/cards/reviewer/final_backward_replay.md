@@ -63,8 +63,9 @@ completion report alone is not evidence.
 Use contract `flowpilot.output_contract.terminal_backward_replay_report.v1`.
 
 Write the full body to the run-scoped terminal backward replay report file
-requested by Controller or router state. Return in chat only a
-controller-visible envelope with the report path and hash.
+requested by Router state and submit the runtime-generated envelope directly to
+Router. Controller may later see only Router-exposed metadata with the report
+path and hash.
 
 The body must use these exact field names. Include every required field even
 when the replay blocks completion.

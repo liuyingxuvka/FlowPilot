@@ -57,9 +57,9 @@ unsafe, define resume conditions, and stop all work beyond startup.
 
 ## Decision Contract For This Task
 
-Return only a controller-visible envelope in chat. Write the full decision body
-to the run-scoped decision file requested by Controller or router state. Use the
-exact field names below.
+Write the full decision body to the run-scoped decision file requested by
+Router state and submit the runtime-generated envelope directly to Router. Use
+the exact field names below.
 
 Approval body:
 

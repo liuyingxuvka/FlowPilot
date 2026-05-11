@@ -37,9 +37,10 @@ Your resume decision must choose exactly one outcome:
 - stop for user or environment action;
 - close only if final ledger and terminal replay already passed.
 
-Every decision back to Controller must include `controller_reminder`: Controller
-relays and records only. Controller must not read sealed bodies, implement,
-approve gates, advance routes, or close nodes from Controller-origin evidence.
+Every decision submitted to Router must include `controller_reminder`: Controller
+relays and records only after Router exposes the next action. Controller must
+not read sealed bodies, implement, approve gates, advance routes, or close nodes
+from Controller-origin evidence.
 Every decision must also include `prior_path_context_review` with current
 route-memory source paths and the impact of completed, superseded, stale,
 blocked, or experimental history on the resume decision.

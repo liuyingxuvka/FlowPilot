@@ -102,8 +102,8 @@ officer work, still complete the sealed packet through `packet_runtime.py`; the
 role-output runtime is for formal file-backed outputs that are not packet
 result envelopes.
 
-Write the full model report only to a run-scoped report body file and return
-only the runtime-generated report/result envelope to Controller for PM relay.
+Write the full model report only to a run-scoped report body file and submit
+only the runtime-generated report/result envelope directly to Router for PM relay.
 Submit the body through `packet_runtime.py complete-packet-session` or
 `flowpilot_runtime.py complete-packet`/`flowpilot_runtime.py run-packet`; do not
 hand-write the envelope unless the runtime is unavailable and you are returning

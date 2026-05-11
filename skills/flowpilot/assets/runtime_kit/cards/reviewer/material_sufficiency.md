@@ -52,8 +52,8 @@ accept the material until a clean sufficiency report exists.
 Use contract `flowpilot.output_contract.material_sufficiency_report.v1`.
 
 Write the full body to the run-scoped material sufficiency report file requested
-by Controller or router state. Return in chat only a controller-visible
-envelope with the report path and hash.
+by Router state and submit the runtime-generated envelope directly to Router.
+Controller may later see only Router-exposed metadata with the report path and hash.
 
 The body must use these exact field names. Include every required field even
 when the material is insufficient.
