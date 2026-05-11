@@ -7688,3 +7688,36 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## flowpilot-all-models-20260511 - Update all FlowPilot FlowGuard models after handoff artifact protocol changes
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requires every existing FlowGuard model to be updated and passing after broad protocol changes
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-11T16:03:46+00:00
+- Ended: 2026-05-11T16:03:46+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
