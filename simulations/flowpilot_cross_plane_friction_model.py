@@ -117,6 +117,9 @@ class State:
 
     reviewer_block_events_observed: bool = False
     reviewer_block_events_registered: bool = True
+    role_event_artifacts_scanned: bool = False
+    gate_outcome_contracts_observed: bool = False
+    gate_outcome_contracts_complete: bool = True
 
     node_completion_observed: bool = False
     node_completion_idempotency_scoped_to_active_node: bool = True
@@ -264,6 +267,24 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.role_event_artifacts_scanned:
+        yield Transition(
+            "role_output_event_artifacts_scanned",
+            _inc(state, role_event_artifacts_scanned=True),
+        )
+        return
+
+    if not state.gate_outcome_contracts_observed:
+        yield Transition(
+            "gate_outcome_contracts_cover_non_pass_paths",
+            _inc(
+                state,
+                gate_outcome_contracts_observed=True,
+                gate_outcome_contracts_complete=True,
+            ),
+        )
+        return
+
     if not state.node_completion_observed:
         yield Transition(
             "node_completion_idempotency_scoped_to_active_node",
@@ -397,8 +418,16 @@ def cockpit_uses_same_completion_projection(state: State, _trace: object) -> Inv
 
 
 def reviewer_block_events_are_known(state: State, _trace: object) -> InvariantResult:
+    if state.minimal_repair_strategy_selected and not state.role_event_artifacts_scanned:
+        return _fail("role output event artifacts were not scanned during event taxonomy audit")
     if state.reviewer_block_events_observed and not state.reviewer_block_events_registered:
         return _fail("reviewer blocker events are outside EXTERNAL_EVENTS taxonomy")
+    return _ok()
+
+
+def gate_outcome_contracts_have_non_pass_paths(state: State, _trace: object) -> InvariantResult:
+    if state.gate_outcome_contracts_observed and not state.gate_outcome_contracts_complete:
+        return _fail("reviewer/officer gate outcome contracts have pass-only paths")
     return _ok()
 
 
@@ -469,6 +498,11 @@ INVARIANTS = (
         predicate=reviewer_block_events_are_known,
     ),
     Invariant(
+        name="gate_outcome_contracts_have_non_pass_paths",
+        description="Reviewer/officer gate outcome contracts include a non-pass repair route.",
+        predicate=gate_outcome_contracts_have_non_pass_paths,
+    ),
+    Invariant(
         name="node_completion_is_idempotent_per_active_node",
         description="Node completion repeatability is scoped to the active node, not a global done flag.",
         predicate=node_completion_is_idempotent_per_active_node,
@@ -512,6 +546,8 @@ def _safe_base(**changes: object) -> State:
             route_snapshot_visible=True,
             cockpit_projection_visible=True,
             reviewer_block_events_observed=True,
+            role_event_artifacts_scanned=True,
+            gate_outcome_contracts_observed=True,
             node_completion_observed=True,
             cockpit_source_present_in_tree=True,
             standard_six_roles_requested=True,
@@ -573,6 +609,12 @@ def hazard_states() -> dict[str, State]:
         "reviewer_block_event_taxonomy_gap": _safe_base(
             reviewer_block_events_registered=False,
         ),
+        "role_output_event_artifact_scan_missing": _safe_base(
+            role_event_artifacts_scanned=False,
+        ),
+        "reviewer_officer_gate_outcome_pass_only": _safe_base(
+            gate_outcome_contracts_complete=False,
+        ),
         "node_completion_idempotency_global_only": _safe_base(
             node_completion_idempotency_scoped_to_active_node=False,
         ),
@@ -611,7 +653,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 16
+MAX_SEQUENCE_LENGTH = 20
 
 
 def _read_json(path: Path) -> tuple[Any, str | None]:
@@ -731,11 +773,11 @@ def _done_status(value: Any) -> bool:
     return _status(value) in DONE_ITEM_STATUSES
 
 
-def _load_router_event_names(router_path: Path) -> set[str]:
+def _load_router_external_events(router_path: Path) -> dict[str, dict[str, Any]]:
     try:
         tree = ast.parse(router_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, SyntaxError, OSError):
-        return set()
+        return {}
     for node in ast.walk(tree):
         target_is_external_events = False
         value: ast.AST | None = None
@@ -753,12 +795,20 @@ def _load_router_event_names(router_path: Path) -> set[str]:
             value = node.value
         if not target_is_external_events or not isinstance(value, ast.Dict):
             continue
-        names: set[str] = set()
-        for key in value.keys:
+        events: dict[str, dict[str, Any]] = {}
+        for key, item in zip(value.keys, value.values):
             if isinstance(key, ast.Constant) and isinstance(key.value, str):
-                names.add(key.value)
-        return names
-    return set()
+                try:
+                    meta = ast.literal_eval(item)
+                except (ValueError, SyntaxError):
+                    meta = {}
+                events[key.value] = meta if isinstance(meta, dict) else {}
+        return events
+    return {}
+
+
+def _load_router_event_names(router_path: Path) -> set[str]:
+    return set(_load_router_external_events(router_path))
 
 
 def _collect_events(value: Any) -> set[str]:
@@ -769,6 +819,8 @@ def _collect_events(value: Any) -> set[str]:
             for key, child in item.items():
                 normalized = str(key)
                 if normalized in {
+                    "event",
+                    "event_name",
                     "originating_event",
                     "resolved_by_event",
                     "pm_repair_rerun_target",
@@ -1259,10 +1311,26 @@ def _audit_event_taxonomy(
             error_code = str(data.get("error_code") or "")
             if error_code.startswith("unknown_external_event_"):
                 unknown_from_files.add(error_code.removeprefix("unknown_external_event_"))
+    event_artifact_roots = (
+        run_root / "mailbox" / "outbox" / "events",
+        run_root / "role_output_status",
+    )
+    for root in event_artifact_roots:
+        for path in root.glob("*.json"):
+            data, _error = _read_json(path)
+            if isinstance(data, dict):
+                observed.update(_collect_events(data))
     candidate_events = {
         event
         for event in observed
-        if event.startswith("reviewer_blocks")
+        if event.startswith(
+            (
+                "reviewer_blocks",
+                "current_node_reviewer_blocks",
+                "process_officer_blocks",
+                "product_officer_blocks",
+            )
+        )
     }.union(unknown_from_files)
     unknown = sorted(
         event
@@ -1283,6 +1351,88 @@ def _audit_event_taxonomy(
             minimal_fix=(
                 "Register the reviewer block events as first-class EXTERNAL_EVENTS "
                 "or normalize them to existing canonical blocker events before routing."
+            ),
+        )
+    ]
+
+
+ROLE_GATE_EVENT_PREFIXES = (
+    "reviewer_",
+    "current_node_reviewer_",
+    "process_officer_",
+    "product_officer_",
+)
+ROLE_GATE_PASS_MARKERS = (
+    "passes",
+    "passed",
+    "approves",
+    "allows",
+    "sufficient",
+)
+ROLE_GATE_NON_PASS_MARKERS = (
+    "blocks",
+    "blocked",
+    "insufficient",
+    "requires_repair",
+    "requests_repair",
+    "protocol_dead_end",
+    "repair_required",
+)
+STRUCTURED_REPORT_GATES = {
+    "reviewer_startup_fact_check_card_delivered",
+}
+
+
+def _event_class(event_name: str) -> str:
+    if any(marker in event_name for marker in ROLE_GATE_NON_PASS_MARKERS):
+        return "non_pass"
+    if any(marker in event_name for marker in ROLE_GATE_PASS_MARKERS):
+        return "pass"
+    return "other"
+
+
+def _audit_gate_outcome_contracts(project_root: Path) -> list[dict[str, object]]:
+    events = _load_router_external_events(project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py")
+    groups: dict[str, list[str]] = {}
+    for event_name, meta in events.items():
+        if bool(meta.get("legacy")):
+            continue
+        required_flag = str(meta.get("requires_flag") or "")
+        if not required_flag:
+            continue
+        groups.setdefault(required_flag, []).append(event_name)
+
+    pass_only: list[dict[str, object]] = []
+    for required_flag, event_names in sorted(groups.items()):
+        role_events = [
+            event_name
+            for event_name in event_names
+            if event_name.startswith(ROLE_GATE_EVENT_PREFIXES)
+        ]
+        if not role_events or required_flag in STRUCTURED_REPORT_GATES:
+            continue
+        classes = {_event_class(event_name) for event_name in role_events}
+        if "pass" in classes and "non_pass" not in classes:
+            pass_only.append(
+                {
+                    "requires_flag": required_flag,
+                    "events": sorted(role_events),
+                    "expected": "pass plus non-pass repair outcome",
+                }
+            )
+
+    if not pass_only:
+        return []
+    return [
+        _finding(
+            code="gate_outcome_contract_pass_only",
+            severity="error",
+            summary="Reviewer/officer gate event groups have pass outcomes without non-pass repair outcomes.",
+            matched_invariant="gate_outcome_contracts_have_non_pass_paths",
+            evidence={"groups": pass_only[:40], "count": len(pass_only)},
+            minimal_fix=(
+                "Add a Gate Outcome Contract for each role gate so pass, block, "
+                "repair, and controlled-stop outcomes are all routable."
             ),
         )
     ]
@@ -1448,6 +1598,7 @@ def audit_live_run(project_root: str | Path = ".", run_id: str | None = None) ->
             run_root=run_root,
         )
     )
+    findings.extend(_audit_gate_outcome_contracts(root))
     findings.extend(_audit_source_policy(root))
     findings.extend(_audit_router_source(root))
     findings.extend(_audit_role_liveness(router_state=router_state))
@@ -1499,6 +1650,10 @@ def state_from_findings(findings: list[dict[str, object]]) -> State:
         state = replace(state, cockpit_closed_runs_hidden_from_active_tabs=False)
     if "role_event_taxonomy_gap" in codes:
         state = replace(state, reviewer_block_events_registered=False)
+    if "role_output_event_artifact_scan_missing" in codes:
+        state = replace(state, role_event_artifacts_scanned=False)
+    if "gate_outcome_contract_pass_only" in codes:
+        state = replace(state, gate_outcome_contracts_complete=False)
     if "node_completion_idempotency_global_only" in codes:
         state = replace(state, node_completion_idempotency_scoped_to_active_node=False)
     if "install_audit_layout_policy_conflict" in codes:
@@ -1583,6 +1738,15 @@ REPAIR_ACTIONS = {
         "proof_obligation": (
             "Every emitted reviewer block event is accepted or normalized before "
             "router resolution."
+        ),
+    },
+    "gate_outcome_contracts": {
+        "title": "Gate outcome contracts for reviewer/officer gates",
+        "fixes": ["gate_outcome_contract_pass_only"],
+        "scope": "Gate outcome metadata, wait actions, and repair routing for role gates.",
+        "proof_obligation": (
+            "Every reviewer/officer gate has a routable pass outcome and a routable "
+            "non-pass outcome that does not advance stale approvals."
         ),
     },
     "active_node_completion_idempotency": {

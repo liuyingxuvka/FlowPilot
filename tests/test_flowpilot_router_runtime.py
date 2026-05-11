@@ -4640,6 +4640,111 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "capability_evidence_synced")
         self.assertTrue((run_root / "capabilities" / "capability_sync.json").exists())
 
+    def test_reviewer_and_officer_gate_event_groups_have_non_pass_outcomes(self) -> None:
+        pass_markers = ("passes", "passed", "approves", "allows", "sufficient")
+        non_pass_markers = ("blocks", "blocked", "insufficient", "requires_repair", "requests_repair", "protocol_dead_end")
+        groups: dict[str, list[str]] = {}
+        for event_name, meta in router.EXTERNAL_EVENTS.items():
+            if meta.get("legacy"):
+                continue
+            required_flag = str(meta.get("requires_flag") or "")
+            if not required_flag:
+                continue
+            role_events = groups.setdefault(required_flag, [])
+            if event_name.startswith(("reviewer_", "current_node_reviewer_", "process_officer_", "product_officer_")):
+                role_events.append(event_name)
+
+        pass_only: dict[str, list[str]] = {}
+        for required_flag, event_names in groups.items():
+            if required_flag == "reviewer_startup_fact_check_card_delivered":
+                continue
+            classes = {
+                "non_pass" if any(marker in event_name for marker in non_pass_markers)
+                else "pass" if any(marker in event_name for marker in pass_markers)
+                else "other"
+                for event_name in event_names
+            }
+            if "pass" in classes and "non_pass" not in classes:
+                pass_only[required_flag] = sorted(event_names)
+
+        self.assertEqual(pass_only, {})
+
+    def test_gate_outcome_block_specs_are_registered_and_reset_stale_passes(self) -> None:
+        self.assertTrue(router.GATE_OUTCOME_BLOCK_EVENT_SPECS)
+        for event_name, spec in router.GATE_OUTCOME_BLOCK_EVENT_SPECS.items():
+            self.assertIn(event_name, router.EXTERNAL_EVENTS)
+            self.assertIn(event_name, router.GATE_OUTCOME_BLOCK_EVENTS)
+            self.assertTrue(spec.get("checked_paths"))
+            reset_flags = tuple(spec.get("reset_flags") or ())
+            self.assertTrue(reset_flags)
+            self.assertNotIn(router.EXTERNAL_EVENTS[event_name]["flag"], reset_flags)
+
+        for event_name, clear_flags in router.GATE_OUTCOME_PASS_CLEAR_FLAGS.items():
+            self.assertIn(event_name, router.EXTERNAL_EVENTS)
+            self.assertTrue(clear_flags)
+
+    def test_child_skill_gate_manifest_block_records_repair_without_approval(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+
+        selected_skills = [
+            {
+                "skill_name": "model-first-function-flow",
+                "decision": "required",
+                "supported_capabilities": ["cap-001"],
+                "gates": [
+                    {
+                        "gate_id": "process-model",
+                        "required_approver": "process_flowguard_officer",
+                        "controller_can_approve": False,
+                    }
+                ],
+            }
+        ]
+        self.deliver_expected_card(root, "pm.dependency_policy")
+        router.record_external_event(root, "pm_records_dependency_policy", {"allowed_dependency_actions": ["use_existing_local_skill"]})
+        router.record_external_event(
+            root,
+            "pm_writes_capabilities_manifest",
+            {"capabilities": [{"capability_id": "cap-001", "behavior": "model and gate route work"}]},
+        )
+        self.deliver_expected_card(root, "pm.child_skill_selection")
+        router.record_external_event(root, "pm_writes_child_skill_selection", {"selected_skills": selected_skills})
+        self.deliver_expected_card(root, "pm.child_skill_gate_manifest")
+        router.record_external_event(root, "pm_writes_child_skill_gate_manifest", {"selected_skills": selected_skills})
+
+        self.deliver_expected_card(root, "reviewer.child_skill_gate_manifest_review")
+        router.record_external_event(
+            root,
+            "reviewer_blocks_child_skill_gate_manifest",
+            self.role_report_envelope(
+                root,
+                "reviews/child_skill_gate_manifest_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
+                    "blocking_findings": ["selected skills lack compiled standard contracts"],
+                    "repair_recommendation": "PM must rewrite manifest with per-gate mappings before rerun.",
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["child_skill_manifest_reviewer_blocked"])
+        self.assertFalse(state["flags"]["child_skill_manifest_reviewer_passed"])
+        self.assertFalse(state["flags"]["child_skill_gate_manifest_written"])
+        self.assertFalse(state["flags"]["child_skill_process_officer_passed"])
+        self.assertFalse(state["flags"]["child_skill_product_officer_passed"])
+        self.assertFalse(state["flags"]["child_skill_manifest_pm_approved_for_route"])
+        self.assertTrue((run_root / "reviews" / "child_skill_gate_manifest_block.json").exists())
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("pm_writes_child_skill_gate_manifest", action["allowed_external_events"])
+
     def test_resume_reentry_loads_state_before_resume_cards(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

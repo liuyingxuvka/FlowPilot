@@ -23,6 +23,8 @@ REQUIRED_LABELS = (
     "route_snapshot_projects_completed_frontier_nodes",
     "cockpit_projects_completed_nodes_and_hides_closed_runs",
     "reviewer_block_events_registered_in_router_taxonomy",
+    "role_output_event_artifacts_scanned",
+    "gate_outcome_contracts_cover_non_pass_paths",
     "node_completion_idempotency_scoped_to_active_node",
     "install_policy_accepts_first_class_cockpit_source",
     "standard_six_roles_ready_or_blocked_before_route_work",
@@ -47,6 +49,8 @@ HAZARD_EXPECTED_FAILURES = {
     "cockpit_completed_checklists_pending": "Cockpit projection is missing completed-node checklist projection",
     "cockpit_closed_run_exposed_as_active_tab": "Cockpit projection is missing closed runs hidden from active tabs",
     "reviewer_block_event_taxonomy_gap": "reviewer blocker events are outside EXTERNAL_EVENTS taxonomy",
+    "role_output_event_artifact_scan_missing": "role output event artifacts were not scanned during event taxonomy audit",
+    "reviewer_officer_gate_outcome_pass_only": "reviewer/officer gate outcome contracts have pass-only paths",
     "node_completion_idempotency_global_only": "node completion idempotency is not scoped to the active node",
     "install_audit_layout_policy_conflict": "install audit still rejects first-class flowpilot_cockpit source",
     "installed_skill_source_drift": "installed FlowPilot skill source differs from repository source",
@@ -77,7 +81,11 @@ def _state_id(state: model.State) -> str:
         f"{state.cockpit_status_derived_from_frontier},"
         f"{state.cockpit_checklists_complete_for_completed_nodes},"
         f"{state.cockpit_closed_runs_hidden_from_active_tabs}|"
-        f"events={state.reviewer_block_events_observed},{state.reviewer_block_events_registered}|"
+        f"events={state.reviewer_block_events_observed},"
+        f"{state.reviewer_block_events_registered},"
+        f"{state.role_event_artifacts_scanned},"
+        f"{state.gate_outcome_contracts_observed},"
+        f"{state.gate_outcome_contracts_complete}|"
         f"completion={state.node_completion_observed},"
         f"{state.node_completion_idempotency_scoped_to_active_node}|"
         f"install={state.cockpit_source_present_in_tree},"
