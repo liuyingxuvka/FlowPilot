@@ -63,6 +63,7 @@ GATE_DECISION_EVENT = "role_records_gate_decision"
 EVENT_IDEMPOTENCY_LEDGER_SCHEMA = "flowpilot.external_event_idempotency.v1"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
+CURRENT_STATUS_SUMMARY_SCHEMA = "flowpilot.current_status_summary.v1"
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
 ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
 CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA = "flowpilot.controller_boundary_confirmation.v1"
@@ -6753,8 +6754,72 @@ def _create_empty_role_memory(run_id: str, role: str) -> dict[str, Any]:
         "role_key": role,
         "status": "slot_created_no_work_yet",
         "summary": "",
+        "controller_decision_authority": False,
         "updated_at": utc_now(),
     }
+
+
+def _role_memory_event_role(event: str, payload: dict[str, Any]) -> str | None:
+    for key in (
+        "completed_by_role",
+        "reviewed_by_role",
+        "decided_by_role",
+        "recorded_by_role",
+        "requested_by_role",
+        "written_by_role",
+        "from_role",
+    ):
+        value = str(payload.get(key) or "").strip()
+        if value in CREW_ROLE_KEYS:
+            return value
+    if event.startswith("pm_") or event.startswith("project_manager_"):
+        return "project_manager"
+    if event.startswith("reviewer_") or event.startswith("current_node_reviewer_"):
+        return "human_like_reviewer"
+    if event.startswith("process_officer_"):
+        return "process_flowguard_officer"
+    if event.startswith("product_officer_"):
+        return "product_flowguard_officer"
+    if event.startswith("worker_"):
+        return "worker_a"
+    return None
+
+
+def _append_role_memory_delta(run_root: Path, run_state: dict[str, Any], *, event: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    role = _role_memory_event_role(event, payload)
+    if role not in CREW_ROLE_KEYS:
+        return None
+    memory_path = _role_memory_path(run_root, role)
+    memory = read_json_if_exists(memory_path) or _create_empty_role_memory(str(run_state["run_id"]), role)
+    artifact_refs = {
+        key: value
+        for key, value in payload.items()
+        if isinstance(key, str)
+        and isinstance(value, str)
+        and (
+            key.endswith("_path")
+            or key.endswith("_hash")
+            or key in {"packet_id", "request_id", "defect_or_blocker_id", "decision"}
+        )
+    }
+    delta = {
+        "event": event,
+        "recorded_at": utc_now(),
+        "artifact_refs": artifact_refs,
+        "authority": "memory_index_only",
+        "controller_decision_authority": False,
+        "sealed_body_stored": False,
+    }
+    deltas = memory.get("recent_deltas") if isinstance(memory.get("recent_deltas"), list) else []
+    deltas.append(delta)
+    memory["recent_deltas"] = deltas[-16:]
+    memory["status"] = "available"
+    memory["summary"] = f"Last observed event: {event}"
+    memory["updated_at"] = delta["recorded_at"]
+    memory["controller_decision_authority"] = False
+    memory["role_memory_used_for_completion_authority"] = False
+    write_json(memory_path, memory)
+    return {"role": role, "event": event, "delta_count": len(memory["recent_deltas"])}
 
 
 def _startup_answers_from_run(run_root: Path) -> dict[str, Any]:
@@ -8284,6 +8349,41 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
     }
 
 
+def _normalize_pm_role_work_result_recipient(
+    project_root: Path,
+    result_path: Path,
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    if result.get("next_recipient") == "project_manager":
+        return result
+    original_recipient = result.get("next_recipient")
+    result["next_recipient"] = "project_manager"
+    result["next_holder"] = "project_manager"
+    result["to_role"] = "project_manager"
+    result["recipient_normalization"] = {
+        "schema_version": "flowpilot.pm_role_work_result_recipient_normalization.v1",
+        "from": original_recipient,
+        "to": "project_manager",
+        "reason": "pm_role_work_result_returns_to_pm",
+        "controller_read_result_body": False,
+        "normalized_at": utc_now(),
+    }
+    write_json(result_path, result)
+    paths = packet_runtime.packet_paths_from_result_envelope(project_root, result)
+    ledger = read_json(paths["packet_ledger"])
+    records = ledger.get("packets") if isinstance(ledger.get("packets"), list) else []
+    for item in records:
+        if isinstance(item, dict) and item.get("packet_id") == result.get("packet_id"):
+            item["result_recipient_normalized_to_pm"] = True
+            item["result_recipient_normalized_at"] = result["recipient_normalization"]["normalized_at"]
+            nested = item.get("result_envelope")
+            if isinstance(nested, dict):
+                nested["next_recipient"] = "project_manager"
+    ledger["updated_at"] = utc_now()
+    write_json(paths["packet_ledger"], ledger)
+    return result
+
+
 def _write_role_work_result_returned(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise RouterError("role-work result payload must be an object")
@@ -8315,8 +8415,7 @@ def _write_role_work_result_returned(project_root: Path, run_root: Path, run_sta
         raise RouterError("role-work result envelope packet_id mismatch")
     if result.get("completed_by_role") != record.get("to_role"):
         raise RouterError("role-work result was completed by the wrong role")
-    if result.get("next_recipient") != "project_manager":
-        raise RouterError("role-work result must route next_recipient=project_manager")
+    result = _normalize_pm_role_work_result_recipient(project_root, result_path, result)
     packet_path = _packet_envelope_path_from_record(project_root, run_state, record)
     packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
     audit = packet_runtime.validate_result_ready_for_reviewer_relay(
@@ -9273,6 +9372,8 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
     digest = hashlib.sha256(json.dumps(projection, sort_keys=True).encode("utf-8")).hexdigest()
     snapshot_path = _route_state_snapshot_path(run_root)
     snapshot_digest = hashlib.sha256(snapshot_path.read_bytes()).hexdigest() if snapshot_path.exists() else None
+    status_summary_path = _current_status_summary_path(run_root)
+    status_summary_digest = hashlib.sha256(status_summary_path.read_bytes()).hexdigest() if status_summary_path.exists() else None
     route_sign = _route_map_route_sign_payload(project_root, write=False, mark_chat_displayed=False)
     route_sign_available = _route_sign_has_canonical_route(route_sign)
     dialog_fields = (
@@ -9293,6 +9394,9 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
         "route_state_snapshot_path": project_relative(project_root, snapshot_path),
         "route_state_snapshot_exists": snapshot_path.exists(),
         "route_state_snapshot_hash": snapshot_digest,
+        "current_status_summary_path": project_relative(project_root, status_summary_path),
+        "current_status_summary_exists": status_summary_path.exists(),
+        "current_status_summary_hash": status_summary_digest,
         "projection_hash": digest,
         "native_plan_projection": projection,
         "host_action": "replace_visible_plan",
@@ -9406,6 +9510,132 @@ def _active_route_payload(run_root: Path, route_id: str | None = None) -> dict[s
         if path.exists():
             return read_json(path)
     return None
+
+
+def _current_status_summary_path(run_root: Path) -> Path:
+    return run_root / "display" / "current_status_summary.json"
+
+
+def _route_node_label(route: dict[str, Any], node_id: str) -> str:
+    for node in _iter_route_nodes(route):
+        candidate = str(node.get("node_id") or node.get("id") or "")
+        if candidate == node_id:
+            return str(node.get("title") or node.get("label") or node_id)
+    return node_id
+
+
+def _status_summary_waiting_for(pending_action: dict[str, Any]) -> str | None:
+    for key in ("to_role", "waiting_for_role", "target_role", "actor"):
+        value = str(pending_action.get(key) or "").strip()
+        if value and value != "controller":
+            return value
+    allowed = pending_action.get("allowed_external_events")
+    if isinstance(allowed, list) and allowed:
+        return "external_event"
+    return None
+
+
+def _build_current_status_summary(
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    route_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json") or {}
+    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json") or {}
+    active_route_id = str(frontier.get("active_route_id") or run_state.get("active_route_id") or "")
+    route = route_payload or _active_route_payload(run_root, active_route_id) or {}
+    active_node_id = str(frontier.get("active_node_id") or route.get("active_node_id") or "")
+    node_label = _route_node_label(route, active_node_id) if active_node_id else None
+    pending_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    active_blocker = run_state.get("active_control_blocker") if isinstance(run_state.get("active_control_blocker"), dict) else None
+    run_status = str(run_state.get("status") or "running")
+    frontier_status = str(frontier.get("status") or "")
+    terminal = run_status in RUN_TERMINAL_STATUSES or frontier_status in RUN_TERMINAL_STATUSES or frontier.get("terminal") is True
+    waiting_for = _status_summary_waiting_for(pending_action)
+    if terminal:
+        state_kind = "terminal"
+    elif active_blocker:
+        state_kind = "blocked"
+    elif pending_action.get("action_type") == "await_role_decision":
+        state_kind = "waiting_for_role"
+    elif pending_action:
+        state_kind = "controller_action_ready"
+    else:
+        state_kind = "running"
+
+    labels = {
+        "terminal": {
+            "en": "Run is terminal.",
+            "zh": "这轮任务已经进入终止状态。",
+        },
+        "blocked": {
+            "en": "Run is waiting for a control-plane repair.",
+            "zh": "当前卡在控制流程修复上。",
+        },
+        "waiting_for_role": {
+            "en": f"Waiting for {waiting_for or 'a role'} to return a decision.",
+            "zh": f"正在等 {waiting_for or '某个角色'} 返回决定。",
+        },
+        "controller_action_ready": {
+            "en": "Controller has the next safe action ready.",
+            "zh": "控制器已经拿到下一步安全动作。",
+        },
+        "running": {
+            "en": "FlowPilot is running.",
+            "zh": "FlowPilot 正在运行。",
+        },
+    }
+    current_work = node_label or active_node_id or frontier_status or run_status
+    return {
+        "schema_version": CURRENT_STATUS_SUMMARY_SCHEMA,
+        "run_id": run_state.get("run_id"),
+        "updated_at": utc_now(),
+        "state_kind": state_kind,
+        "headline": labels[state_kind],
+        "current_work": current_work,
+        "route": {
+            "route_id": active_route_id or route.get("route_id"),
+            "route_version": frontier.get("route_version") or route.get("route_version"),
+            "active_node_id": active_node_id or None,
+            "active_node_label": node_label,
+            "completed_node_count": len(frontier.get("completed_nodes") or []),
+        },
+        "packet": {
+            "active_packet_id": packet_ledger.get("active_packet_id"),
+            "status": packet_ledger.get("active_packet_status"),
+            "holder": packet_ledger.get("active_packet_holder"),
+        },
+        "next_step": {
+            "action_type": pending_action.get("action_type"),
+            "label": pending_action.get("label"),
+            "waiting_for": waiting_for,
+        },
+        "blocker": {
+            "active": bool(active_blocker),
+            "blocker_id": active_blocker.get("blocker_id") if active_blocker else None,
+            "lane": active_blocker.get("handling_lane") if active_blocker else None,
+        },
+        "ui_contract": {
+            "metadata_only": True,
+            "sealed_body_fields_excluded": True,
+            "evidence_table_excluded": True,
+            "source_fields_excluded": True,
+            "hash_fields_excluded": True,
+        },
+    }
+
+
+def _write_current_status_summary(
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    route_payload: dict[str, Any] | None = None,
+) -> None:
+    write_json(
+        _current_status_summary_path(run_root),
+        _build_current_status_summary(run_root, run_state, route_payload=route_payload),
+    )
 
 
 def _build_route_state_snapshot(
@@ -9538,6 +9768,7 @@ def _write_route_state_snapshot(
         source_event=source_event,
     )
     write_json(_route_state_snapshot_path(run_root), snapshot)
+    _write_current_status_summary(run_root, run_state, route_payload=route_payload)
 
 
 def _mark_display_plan_dirty(run_state: dict[str, Any]) -> None:
@@ -9757,6 +9988,8 @@ def _sync_derived_run_views(
             "display_plan_path": sync_payload["display_plan_path"],
             "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
             "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
+            "current_status_summary_path": sync_payload.get("current_status_summary_path"),
+            "current_status_summary_hash": sync_payload.get("current_status_summary_hash"),
             "projection_hash": sync_payload["projection_hash"],
             "synced_at": utc_now(),
             "host_action": "derived_pre_route_phase_projection",
@@ -10325,6 +10558,62 @@ def _current_node_packet_context(project_root: Path, run_state: dict[str, Any]) 
         raise RouterError(f"current-node packet envelope is missing: {envelope_path}")
     envelope = packet_runtime.load_envelope(project_root, envelope_path)
     return envelope, envelope_path
+
+
+def _active_child_skill_bindings_from_plan(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_bindings = plan.get("active_child_skill_bindings")
+    if raw_bindings in (None, []):
+        return []
+    if not isinstance(raw_bindings, list):
+        raise RouterError("node_acceptance_plan.active_child_skill_bindings must be a list")
+    bindings: list[dict[str, Any]] = []
+    for index, binding in enumerate(raw_bindings, start=1):
+        if not isinstance(binding, dict):
+            raise RouterError(f"active_child_skill_bindings[{index}] must be an object")
+        if binding.get("applies_to_this_node") is False:
+            continue
+        if not binding.get("binding_id"):
+            raise RouterError(f"active_child_skill_bindings[{index}] requires binding_id")
+        if not binding.get("source_path"):
+            raise RouterError(f"active_child_skill_bindings[{index}] requires source_path")
+        bindings.append(binding)
+    return bindings
+
+
+def _active_child_skill_source_paths(bindings: list[dict[str, Any]]) -> list[str]:
+    paths: list[str] = []
+    for binding in bindings:
+        source_path = binding.get("source_path")
+        if source_path:
+            paths.append(str(source_path))
+        referenced_paths = binding.get("referenced_paths")
+        if isinstance(referenced_paths, list):
+            paths.extend(str(item) for item in referenced_paths if item)
+    return sorted(set(paths))
+
+
+def _metadata_string_list(metadata: dict[str, Any], *keys: str) -> list[str]:
+    values: list[str] = []
+    for key in keys:
+        raw_value = metadata.get(key)
+        if isinstance(raw_value, list):
+            values.extend(str(item) for item in raw_value if item)
+        elif isinstance(raw_value, str) and raw_value:
+            values.append(raw_value)
+    return sorted(set(values))
+
+
+def _metadata_binding_ids(metadata: dict[str, Any], *keys: str) -> list[str]:
+    ids: list[str] = []
+    for key in keys:
+        raw_value = metadata.get(key)
+        if isinstance(raw_value, list):
+            for item in raw_value:
+                if isinstance(item, dict) and item.get("binding_id"):
+                    ids.append(str(item["binding_id"]))
+                elif isinstance(item, str) and item:
+                    ids.append(item)
+    return sorted(set(ids))
 
 
 def _current_node_result_context(project_root: Path, run_state: dict[str, Any]) -> tuple[dict[str, Any], Path]:
@@ -11406,6 +11695,7 @@ def _write_node_acceptance_plan(
     *,
     source_event: str = "pm_writes_node_acceptance_plan",
 ) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="node acceptance plan")
     if payload.get("pm_owned", True) is not True:
         raise RouterError("node acceptance plan must be PM-owned")
@@ -11495,6 +11785,26 @@ def _write_node_acceptance_plan(
         "written_by_role": "project_manager",
         "source_event": source_event,
     }
+    for optional_field in [
+        "controller_summary_used_as_evidence",
+        "identity",
+        "node_title",
+        "node_objective",
+        "product_behavior_model_segment",
+        "proof_obligations",
+        "recheck_criteria",
+        "repair_context",
+        "fixtures_and_evidence_paths",
+        "forbidden_low_standard_outcomes",
+        "minimum_sufficient_complexity_review",
+        "inherited_gate_obligations",
+        "skill_standard_projection",
+        "active_child_skill_bindings",
+        "work_packet_projection",
+        "result_matrix_requirements",
+    ]:
+        if optional_field in payload:
+            plan[optional_field] = payload.get(optional_field)
     write_json(_active_node_acceptance_plan_path(run_root, frontier), plan)
     _update_display_plan_current_node(
         project_root,
@@ -11756,10 +12066,49 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
     plan_path = _active_node_acceptance_plan_path(run_root, frontier)
     if not plan_path.exists():
         raise RouterError("current-node packet requires node_acceptance_plan.json")
+    plan = read_json(plan_path)
+    active_bindings = _active_child_skill_bindings_from_plan(plan)
+    active_binding_source_paths = _active_child_skill_source_paths(active_bindings)
     if envelope.get("from_role") != "project_manager":
         raise RouterError("current-node packet must be issued by project_manager")
     if envelope.get("to_role") == "controller":
         raise RouterError("current-node packet cannot assign product work to Controller")
+    if active_bindings and envelope.get("to_role") in {"worker_a", "worker_b"}:
+        metadata = envelope.get("metadata") if isinstance(envelope.get("metadata"), dict) else {}
+        projected_ids = set(
+            _metadata_binding_ids(
+                metadata,
+                "active_child_skill_bindings",
+                "child_skill_binding_projection",
+            )
+        )
+        expected_ids = {str(binding["binding_id"]) for binding in active_bindings}
+        if not projected_ids:
+            raise RouterError("current-node worker packet requires active child skill bindings in metadata")
+        missing_ids = sorted(expected_ids - projected_ids)
+        if missing_ids:
+            raise RouterError(
+                "current-node worker packet metadata is missing active child skill bindings: "
+                + ", ".join(missing_ids)
+            )
+        if (
+            metadata.get("child_skill_use_instruction_written") is not True
+            and metadata.get("active_child_skill_use_instruction_written") is not True
+        ):
+            raise RouterError("current-node worker packet requires direct child-skill use instruction")
+        allowed_paths = set(
+            _metadata_string_list(
+                metadata,
+                "active_child_skill_source_paths_allowed",
+                "allowed_child_skill_source_paths",
+            )
+        )
+        missing_paths = sorted(set(active_binding_source_paths) - allowed_paths)
+        if missing_paths:
+            raise RouterError(
+                "current-node worker packet metadata is missing active child skill source paths: "
+                + ", ".join(missing_paths)
+            )
     if envelope.get("body_visibility") != packet_runtime.SEALED_BODY_VISIBILITY:
         raise RouterError("current-node packet body must be sealed to the target role")
     grant_path = _active_node_write_grant_path(run_root, frontier)
@@ -11779,6 +12128,8 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
             "packet_envelope_hash": hashlib.sha256(envelope_path.read_bytes()).hexdigest(),
             "packet_body_path": str(envelope.get("body_path") or ""),
             "packet_body_hash": str(envelope.get("body_hash") or ""),
+            "active_child_skill_bindings_declared": bool(active_bindings),
+            "active_child_skill_source_paths": active_binding_source_paths,
             "controller_may_read_packet_body": False,
             "controller_may_write_project_artifacts": False,
             "issued_at": utc_now(),
@@ -14624,6 +14975,89 @@ def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: 
     }
 
 
+def _reconcile_pending_role_wait_from_packet_status(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: object,
+) -> dict[str, Any] | None:
+    if not isinstance(pending_action, dict) or pending_action.get("action_type") != "await_role_decision":
+        return None
+    allowed_events = pending_action.get("allowed_external_events")
+    if not isinstance(allowed_events, list) or "worker_current_node_result_returned" not in allowed_events:
+        return None
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    meta = EXTERNAL_EVENTS["worker_current_node_result_returned"]
+    required_flag = str(meta.get("requires_flag") or "")
+    if required_flag and not flags.get(required_flag):
+        return None
+    if flags.get(meta["flag"]):
+        return None
+    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json")
+    status = str(packet_ledger.get("active_packet_status") or "")
+    if status not in {"worker-result-needs-review", "result-envelope-returned"}:
+        return None
+    record = _active_packet_ledger_record(packet_ledger)
+    if not isinstance(record, dict):
+        return None
+    packet_id = str(record.get("packet_id") or packet_ledger.get("active_packet_id") or "")
+    if not packet_id:
+        return None
+    result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+    if not result_path.exists():
+        return None
+    paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
+    status_packet = read_json_if_exists(paths["controller_status_packet"])
+    if status_packet.get("schema_version") != "flowpilot.controller_status_packet.v1":
+        return None
+    if status_packet.get("status") != "result-envelope-returned":
+        return None
+    result = packet_runtime.load_envelope(project_root, result_path)
+    if result.get("next_recipient") != "human_like_reviewer":
+        return None
+    result_hash = packet_runtime.sha256_file(result_path)
+    payload = {
+        "packet_id": packet_id,
+        "result_envelope_path": project_relative(project_root, result_path),
+        "result_envelope_hash": result_hash,
+        "reconciled_from_packet_ledger": True,
+        "reconciled_from_controller_status_packet": True,
+    }
+    _validate_current_node_result_event(project_root, run_state, payload)
+    event = "worker_current_node_result_returned"
+    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+    if _scoped_event_is_recorded(run_state, scoped_identity):
+        return None
+    run_state["flags"][meta["flag"]] = True
+    run_state["events"].append(
+        {
+            "event": event,
+            "summary": meta["summary"],
+            "payload": payload,
+            "recorded_at": utc_now(),
+            "reconciled_by_router": True,
+        }
+    )
+    _mark_scoped_event_recorded(run_state, scoped_identity)
+    append_history(
+        run_state,
+        "router_reconciled_pending_role_wait_from_packet_status",
+        {
+            "event": event,
+            "packet_id": packet_id,
+            "packet_status": status,
+            "result_envelope_path": payload["result_envelope_path"],
+            "status_packet_checked": True,
+        },
+    )
+    return {
+        "event": event,
+        "packet_id": packet_id,
+        "result_envelope_path": payload["result_envelope_path"],
+        "packet_status": status,
+    }
+
+
 def _commit_system_card_delivery_artifact(
     project_root: Path,
     run_state: dict[str, Any],
@@ -15066,6 +15500,174 @@ def _pending_bundle_return_record_for_action(run_root: Path, run_id: str, action
     return None
 
 
+def _apply_card_return_event_check(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending: dict[str, Any],
+) -> dict[str, Any]:
+    ack_path = str(pending.get("expected_return_path") or "")
+    envelope_path = str(pending.get("card_envelope_path") or "")
+    if not ack_path or not envelope_path:
+        raise RouterError("card return check requires expected_return_path and card_envelope_path")
+    validation = card_runtime.validate_card_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
+    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+    for item in return_ledger.setdefault("pending_returns", []):
+        if (
+            isinstance(item, dict)
+            and item.get("delivery_attempt_id") == pending.get("delivery_attempt_id")
+            and item.get("card_return_event") == pending.get("card_return_event")
+        ):
+            item["status"] = "resolved"
+            item["resolved_at"] = utc_now()
+            item["ack_path"] = validation["ack_path"]
+            item["ack_hash"] = validation["ack_hash"]
+            item["receipt_ref_count"] = validation["receipt_ref_count"]
+    completed = return_ledger.setdefault("completed_returns", [])
+    if not any(
+        isinstance(item, dict)
+        and item.get("delivery_attempt_id") == pending.get("delivery_attempt_id")
+        and item.get("card_return_event") == pending.get("card_return_event")
+        for item in completed
+    ):
+        completed.append(
+            {
+                "card_return_event": pending.get("card_return_event"),
+                "delivery_id": pending.get("delivery_id"),
+                "delivery_attempt_id": pending.get("delivery_attempt_id"),
+                "card_id": pending.get("card_id"),
+                "target_role": pending.get("to_role"),
+                "ack_path": validation["ack_path"],
+                "ack_hash": validation["ack_hash"],
+                "receipt_ref_count": validation["receipt_ref_count"],
+                "checked_at": utc_now(),
+                "status": "resolved",
+            }
+        )
+    return_ledger["updated_at"] = utc_now()
+    write_json(_return_event_ledger_path(run_root), return_ledger)
+    run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
+    run_state.setdefault("card_return_events", []).append(validation)
+    return {"ok": True, "status": "resolved", "validation": validation}
+
+
+def _apply_card_bundle_return_event_check(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending: dict[str, Any],
+) -> dict[str, Any]:
+    ack_path = str(pending.get("expected_return_path") or "")
+    envelope_path = str(pending.get("card_bundle_envelope_path") or "")
+    if not ack_path or not envelope_path:
+        raise RouterError("card bundle return check requires expected_return_path and card_bundle_envelope_path")
+    try:
+        validation = card_runtime.validate_card_bundle_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
+    except card_runtime.CardRuntimeError:
+        inspection = card_runtime.inspect_card_bundle_ack_incomplete(project_root, ack_path=ack_path, envelope_path=envelope_path)
+        if not inspection.get("incomplete"):
+            raise
+        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+        incomplete_record = {
+            "return_kind": "system_card_bundle",
+            "card_return_event": pending.get("card_return_event"),
+            "card_bundle_id": pending.get("card_bundle_id"),
+            "card_ids": pending.get("card_ids") or [],
+            "target_role": pending.get("to_role"),
+            "ack_path": inspection["ack_path"],
+            "ack_hash": inspection["ack_hash"],
+            "missing_card_ids": inspection["missing_card_ids"],
+            "checked_at": utc_now(),
+            "status": "bundle_ack_incomplete",
+            "recovery": "same_role_must_resubmit_bundle_ack_with_all_member_receipts",
+        }
+        for item in return_ledger.setdefault("pending_returns", []):
+            if (
+                isinstance(item, dict)
+                and item.get("return_kind") == "system_card_bundle"
+                and item.get("card_bundle_id") == pending.get("card_bundle_id")
+                and item.get("card_return_event") == pending.get("card_return_event")
+            ):
+                item["status"] = "bundle_ack_incomplete"
+                item["missing_card_ids"] = list(inspection["missing_card_ids"])
+                item["incomplete_ack_path"] = inspection["ack_path"]
+                item["incomplete_ack_hash"] = inspection["ack_hash"]
+                item["incomplete_checked_at"] = incomplete_record["checked_at"]
+                item["recovery"] = incomplete_record["recovery"]
+        return_ledger.setdefault("incomplete_returns", []).append(incomplete_record)
+        return_ledger["updated_at"] = utc_now()
+        write_json(_return_event_ledger_path(run_root), return_ledger)
+        run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
+        run_state.setdefault("card_return_events", []).append(incomplete_record)
+        return {
+            "ok": False,
+            "waiting": True,
+            "status": "bundle_ack_incomplete",
+            "record": incomplete_record,
+            "missing_card_ids": inspection["missing_card_ids"],
+            "expected_return_path": ack_path,
+            "waiting_for_role": pending.get("to_role"),
+        }
+    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+    for item in return_ledger.setdefault("pending_returns", []):
+        if (
+            isinstance(item, dict)
+            and item.get("return_kind") == "system_card_bundle"
+            and item.get("card_bundle_id") == pending.get("card_bundle_id")
+            and item.get("card_return_event") == pending.get("card_return_event")
+        ):
+            item["status"] = "resolved"
+            item["resolved_at"] = utc_now()
+            item["ack_path"] = validation["ack_path"]
+            item["ack_hash"] = validation["ack_hash"]
+            item["receipt_ref_count"] = validation["receipt_ref_count"]
+    completed = return_ledger.setdefault("completed_returns", [])
+    if not any(
+        isinstance(item, dict)
+        and item.get("return_kind") == "system_card_bundle"
+        and item.get("card_bundle_id") == pending.get("card_bundle_id")
+        and item.get("card_return_event") == pending.get("card_return_event")
+        for item in completed
+    ):
+        completed.append(
+            {
+                "return_kind": "system_card_bundle",
+                "card_return_event": pending.get("card_return_event"),
+                "card_bundle_id": pending.get("card_bundle_id"),
+                "card_ids": validation["member_card_ids"],
+                "target_role": pending.get("to_role"),
+                "ack_path": validation["ack_path"],
+                "ack_hash": validation["ack_hash"],
+                "receipt_ref_count": validation["receipt_ref_count"],
+                "checked_at": utc_now(),
+                "status": "resolved",
+            }
+        )
+    return_ledger["updated_at"] = utc_now()
+    write_json(_return_event_ledger_path(run_root), return_ledger)
+    run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
+    run_state.setdefault("card_return_events", []).append(validation)
+    return {"ok": True, "status": "resolved", "validation": validation}
+
+
+def _try_auto_consume_pending_card_return_ack(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending: dict[str, Any],
+) -> dict[str, Any]:
+    if pending.get("artifact_committed") is False:
+        return {"consumed": False, "preserve_pending": True, "reason": "artifact_not_committed"}
+    try:
+        if pending.get("action_type") in {"await_card_bundle_return_event", "check_card_bundle_return_event", "deliver_system_card_bundle"}:
+            result = _apply_card_bundle_return_event_check(project_root, run_root, run_state, pending)
+        else:
+            result = _apply_card_return_event_check(project_root, run_root, run_state, pending)
+    except (RouterError, card_runtime.CardRuntimeError) as exc:
+        return {"consumed": False, "preserve_pending": False, "reason": "ack_requires_explicit_check", "error": str(exc)}
+    return {"consumed": True, "result": result}
+
+
 def _committed_card_bundle_artifact_extra(
     project_root: Path,
     record: dict[str, Any],
@@ -15293,34 +15895,82 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         return terminal_action
     pending_action = run_state.get("pending_action")
     stale_pending = _pending_role_decision_staleness(run_state, pending_action)
+    reconciled_pending = None
     if stale_pending:
         run_state["pending_action"] = None
         append_history(run_state, "router_cleared_stale_pending_action", stale_pending)
         save_run_state(run_root, run_state)
-    elif _pending_card_return_ack_exists(project_root, pending_action):
-        run_state["pending_action"] = None
-        append_history(
+    else:
+        reconciled_pending = _reconcile_pending_role_wait_from_packet_status(
+            project_root,
+            run_root,
             run_state,
-            "router_cleared_card_return_wait_after_ack_arrived",
-            {
-                "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
-                "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
-            },
+            pending_action,
         )
-        save_run_state(run_root, run_state)
+        if reconciled_pending is not None:
+            run_state["pending_action"] = None
+            _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_reconciled_pending_role_wait")
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason="after_router_reconciled_pending_role_wait",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+    pending_action = run_state.get("pending_action")
+    if (
+        isinstance(pending_action, dict)
+        and pending_action.get("action_type") == "deliver_system_card"
+        and pending_action.get("artifact_committed") is not True
+    ):
+        return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, pending_action)
+    elif (
+        isinstance(pending_action, dict)
+        and pending_action.get("action_type") == "deliver_system_card_bundle"
+        and pending_action.get("artifact_committed") is not True
+    ):
+        return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, pending_action)
+    elif _pending_card_return_ack_exists(project_root, pending_action):
+        auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, pending_action)
+        if auto_ack.get("consumed"):
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_auto_consumed_card_return_ack",
+                {
+                    "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
+                    "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
+                    "status": (auto_ack.get("result") or {}).get("status"),
+                },
+            )
+            _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_auto_consumed_card_return_ack")
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason="after_router_auto_consumed_card_return_ack",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+        elif auto_ack.get("preserve_pending"):
+            append_history(run_state, "router_preserved_card_wait_before_artifact_commit", auto_ack)
+            save_run_state(run_root, run_state)
+            return pending_action
+        else:
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_deferred_invalid_card_ack_to_explicit_check",
+                {
+                    "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
+                    "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
+                    "reason": auto_ack.get("reason"),
+                    "error": auto_ack.get("error"),
+                },
+            )
+            save_run_state(run_root, run_state)
     elif pending_action:
-        if (
-            isinstance(pending_action, dict)
-            and pending_action.get("action_type") == "deliver_system_card"
-            and pending_action.get("artifact_committed") is not True
-        ):
-            return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, pending_action)
-        if (
-            isinstance(pending_action, dict)
-            and pending_action.get("action_type") == "deliver_system_card_bundle"
-            and pending_action.get("artifact_committed") is not True
-        ):
-            return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, pending_action)
         return pending_action
     if not _route_memory_ready(run_root, run_state):
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
@@ -15519,85 +16169,11 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         ledger["updated_at"] = utc_now()
         write_json(run_root / "packet_ledger.json", ledger)
     elif action_type == "check_card_return_event":
-        ack_path = str(pending.get("expected_return_path") or "")
-        envelope_path = str(pending.get("card_envelope_path") or "")
-        if not ack_path or not envelope_path:
-            raise RouterError("card return check requires expected_return_path and card_envelope_path")
-        validation = card_runtime.validate_card_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
-        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
-        for item in return_ledger.setdefault("pending_returns", []):
-            if (
-                isinstance(item, dict)
-                and item.get("delivery_attempt_id") == pending.get("delivery_attempt_id")
-                and item.get("card_return_event") == pending.get("card_return_event")
-            ):
-                item["status"] = "resolved"
-                item["resolved_at"] = utc_now()
-                item["ack_path"] = validation["ack_path"]
-                item["ack_hash"] = validation["ack_hash"]
-                item["receipt_ref_count"] = validation["receipt_ref_count"]
-        return_ledger.setdefault("completed_returns", []).append(
-            {
-                "card_return_event": pending.get("card_return_event"),
-                "delivery_id": pending.get("delivery_id"),
-                "delivery_attempt_id": pending.get("delivery_attempt_id"),
-                "card_id": pending.get("card_id"),
-                "target_role": pending.get("to_role"),
-                "ack_path": validation["ack_path"],
-                "ack_hash": validation["ack_hash"],
-                "receipt_ref_count": validation["receipt_ref_count"],
-                "checked_at": utc_now(),
-                "status": "resolved",
-            }
-        )
-        return_ledger["updated_at"] = utc_now()
-        write_json(_return_event_ledger_path(run_root), return_ledger)
-        run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
-        run_state.setdefault("card_return_events", []).append(validation)
+        _apply_card_return_event_check(project_root, run_root, run_state, pending)
     elif action_type == "check_card_bundle_return_event":
-        ack_path = str(pending.get("expected_return_path") or "")
-        envelope_path = str(pending.get("card_bundle_envelope_path") or "")
-        if not ack_path or not envelope_path:
-            raise RouterError("card bundle return check requires expected_return_path and card_bundle_envelope_path")
-        try:
-            validation = card_runtime.validate_card_bundle_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
-        except card_runtime.CardRuntimeError:
-            inspection = card_runtime.inspect_card_bundle_ack_incomplete(project_root, ack_path=ack_path, envelope_path=envelope_path)
-            if not inspection.get("incomplete"):
-                raise
-            return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
-            incomplete_record = {
-                "return_kind": "system_card_bundle",
-                "card_return_event": pending.get("card_return_event"),
-                "card_bundle_id": pending.get("card_bundle_id"),
-                "card_ids": pending.get("card_ids") or [],
-                "target_role": pending.get("to_role"),
-                "ack_path": inspection["ack_path"],
-                "ack_hash": inspection["ack_hash"],
-                "missing_card_ids": inspection["missing_card_ids"],
-                "checked_at": utc_now(),
-                "status": "bundle_ack_incomplete",
-                "recovery": "same_role_must_resubmit_bundle_ack_with_all_member_receipts",
-            }
-            for item in return_ledger.setdefault("pending_returns", []):
-                if (
-                    isinstance(item, dict)
-                    and item.get("return_kind") == "system_card_bundle"
-                    and item.get("card_bundle_id") == pending.get("card_bundle_id")
-                    and item.get("card_return_event") == pending.get("card_return_event")
-                ):
-                    item["status"] = "bundle_ack_incomplete"
-                    item["missing_card_ids"] = list(inspection["missing_card_ids"])
-                    item["incomplete_ack_path"] = inspection["ack_path"]
-                    item["incomplete_ack_hash"] = inspection["ack_hash"]
-                    item["incomplete_checked_at"] = incomplete_record["checked_at"]
-                    item["recovery"] = incomplete_record["recovery"]
-            return_ledger.setdefault("incomplete_returns", []).append(incomplete_record)
-            return_ledger["updated_at"] = utc_now()
-            write_json(_return_event_ledger_path(run_root), return_ledger)
-            run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
-            run_state.setdefault("card_return_events", []).append(incomplete_record)
-            append_history(run_state, "bundle_ack_incomplete", incomplete_record)
+        bundle_result = _apply_card_bundle_return_event_check(project_root, run_root, run_state, pending)
+        if bundle_result.get("status") == "bundle_ack_incomplete":
+            append_history(run_state, "bundle_ack_incomplete", bundle_result["record"])
             run_state["pending_action"] = None
             _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_action:bundle_ack_incomplete")
             _sync_derived_run_views(
@@ -15613,41 +16189,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "applied": action_type,
                 "waiting": True,
                 "status": "bundle_ack_incomplete",
-                "missing_card_ids": inspection["missing_card_ids"],
-                "expected_return_path": ack_path,
-                "waiting_for_role": pending.get("to_role"),
+                "missing_card_ids": bundle_result["missing_card_ids"],
+                "expected_return_path": bundle_result["expected_return_path"],
+                "waiting_for_role": bundle_result["waiting_for_role"],
             }
-        return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
-        for item in return_ledger.setdefault("pending_returns", []):
-            if (
-                isinstance(item, dict)
-                and item.get("return_kind") == "system_card_bundle"
-                and item.get("card_bundle_id") == pending.get("card_bundle_id")
-                and item.get("card_return_event") == pending.get("card_return_event")
-            ):
-                item["status"] = "resolved"
-                item["resolved_at"] = utc_now()
-                item["ack_path"] = validation["ack_path"]
-                item["ack_hash"] = validation["ack_hash"]
-                item["receipt_ref_count"] = validation["receipt_ref_count"]
-        return_ledger.setdefault("completed_returns", []).append(
-            {
-                "return_kind": "system_card_bundle",
-                "card_return_event": pending.get("card_return_event"),
-                "card_bundle_id": pending.get("card_bundle_id"),
-                "card_ids": validation["member_card_ids"],
-                "target_role": pending.get("to_role"),
-                "ack_path": validation["ack_path"],
-                "ack_hash": validation["ack_hash"],
-                "receipt_ref_count": validation["receipt_ref_count"],
-                "checked_at": utc_now(),
-                "status": "resolved",
-            }
-        )
-        return_ledger["updated_at"] = utc_now()
-        write_json(_return_event_ledger_path(run_root), return_ledger)
-        run_state["card_return_checks"] = int(run_state.get("card_return_checks", 0)) + 1
-        run_state.setdefault("card_return_events", []).append(validation)
     elif action_type == "await_card_return_event":
         return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
     elif action_type == "await_card_bundle_return_event":
@@ -15915,6 +16460,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "display_plan_path": sync_payload["display_plan_path"],
             "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
             "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
+            "current_status_summary_path": sync_payload.get("current_status_summary_path"),
+            "current_status_summary_hash": sync_payload.get("current_status_summary_hash"),
             "projection_hash": sync_payload["projection_hash"],
             "display_text_format": sync_payload.get("display_text_format"),
             "route_sign_display_required": sync_payload.get("route_sign_display_required"),
@@ -16464,6 +17011,11 @@ def _record_external_event_unchecked(
     elif event == "reviewer_reports_material_insufficient":
         run_state["material_review"] = "insufficient"
     append_history(run_state, event, payload)
+    role_memory_delta = _append_role_memory_delta(run_root, run_state, event=event, payload=payload)
+    if role_memory_delta is not None:
+        deltas = run_state.setdefault("role_memory_deltas", [])
+        deltas.append(role_memory_delta)
+        run_state["role_memory_deltas"] = deltas[-32:]
     _resolve_delivered_control_blocker(project_root, run_root, run_state, resolved_by_event=event)
     run_state["pending_action"] = None
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")

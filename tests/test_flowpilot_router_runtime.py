@@ -485,9 +485,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
         check_action = self.next_after_display_sync(root)
-        self.assertEqual(check_action["action_type"], "check_card_return_event")
-        self.assertTrue(check_action["apply_required"])
-        router.apply_action(root, "check_card_return_event")
+        if check_action["action_type"] == "check_card_return_event":
+            self.assertTrue(check_action["apply_required"])
+            router.apply_action(root, "check_card_return_event")
+            return
+        return_ledger = read_json(self.run_root_for(root) / "return_event_ledger.json")
+        self.assertTrue(
+            any(
+                isinstance(item, dict)
+                and item.get("delivery_attempt_id") == action.get("delivery_attempt_id")
+                and item.get("status") == "resolved"
+                for item in return_ledger.get("pending_returns", [])
+            )
+        )
 
     def ack_system_card_bundle_action(self, root: Path, action: dict) -> None:
         role = str(action["to_role"])
@@ -506,9 +516,20 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             receipt_paths=[str(path) for path in open_result["read_receipt_paths"]],
         )
         check_action = self.next_after_display_sync(root)
-        self.assertEqual(check_action["action_type"], "check_card_bundle_return_event")
-        self.assertTrue(check_action["apply_required"])
-        router.apply_action(root, "check_card_bundle_return_event")
+        if check_action["action_type"] == "check_card_bundle_return_event":
+            self.assertTrue(check_action["apply_required"])
+            router.apply_action(root, "check_card_bundle_return_event")
+            return
+        return_ledger = read_json(self.run_root_for(root) / "return_event_ledger.json")
+        self.assertTrue(
+            any(
+                isinstance(item, dict)
+                and item.get("return_kind") == "system_card_bundle"
+                and item.get("card_bundle_id") == action.get("card_bundle_id")
+                and item.get("status") == "resolved"
+                for item in return_ledger.get("pending_returns", [])
+            )
+        )
 
     def deliver_user_intake_mail(self, root: Path) -> None:
         action = self.next_after_display_sync(root)
@@ -1001,36 +1022,52 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "route_maps_to_product_behavior_model": True,
         }
 
-    def write_current_node_acceptance_plan(self, root: Path) -> None:
+    def write_current_node_acceptance_plan(
+        self,
+        root: Path,
+        *,
+        active_child_skill_bindings: list[dict] | None = None,
+    ) -> None:
         self.deliver_expected_card(root, "pm.current_node_loop")
         self.deliver_expected_card(root, "pm.event.node_started")
         self.deliver_expected_card(root, "pm.node_acceptance_plan")
+        payload = {
+            **self.prior_path_context_review(root, "Node acceptance plan considered route memory and active frontier."),
+            "high_standard_recheck": {
+                "ideal_outcome": "complete the current node at the highest practical standard",
+                "unacceptable_outcomes": ["partial work", "unverified closure", "controller downgrade"],
+                "higher_standard_opportunities": ["tighten acceptance evidence before dispatch"],
+                "semantic_downgrade_risks": ["treating packet existence as product acceptance"],
+                "decision": "proceed",
+                "why_current_plan_meets_highest_reasonable_standard": "PM listed node requirements, proof, and direct review gates before work dispatch.",
+            },
+            "node_requirements": [
+                {
+                    "requirement_id": "node-001-req",
+                    "acceptance_statement": "current node work is complete",
+                    "proof_required": "mixed",
+                }
+            ],
+            "experiment_plan": [],
+        }
+        if active_child_skill_bindings is not None:
+            payload["active_child_skill_bindings"] = active_child_skill_bindings
         router.record_external_event(
             root,
             "pm_writes_node_acceptance_plan",
-            {
-                **self.prior_path_context_review(root, "Node acceptance plan considered route memory and active frontier."),
-                "high_standard_recheck": {
-                    "ideal_outcome": "complete the current node at the highest practical standard",
-                    "unacceptable_outcomes": ["partial work", "unverified closure", "controller downgrade"],
-                    "higher_standard_opportunities": ["tighten acceptance evidence before dispatch"],
-                    "semantic_downgrade_risks": ["treating packet existence as product acceptance"],
-                    "decision": "proceed",
-                    "why_current_plan_meets_highest_reasonable_standard": "PM listed node requirements, proof, and direct review gates before work dispatch.",
-                },
-                "node_requirements": [
-                    {
-                        "requirement_id": "node-001-req",
-                        "acceptance_statement": "current node work is complete",
-                        "proof_required": "mixed",
-                    }
-                ],
-                "experiment_plan": [],
-            },
+            payload,
         )
 
-    def deliver_current_node_cards(self, root: Path) -> None:
-        self.write_current_node_acceptance_plan(root)
+    def deliver_current_node_cards(
+        self,
+        root: Path,
+        *,
+        active_child_skill_bindings: list[dict] | None = None,
+    ) -> None:
+        self.write_current_node_acceptance_plan(
+            root,
+            active_child_skill_bindings=active_child_skill_bindings,
+        )
         self.deliver_expected_card(root, "reviewer.node_acceptance_plan_review")
         router.record_external_event(
             root,
@@ -3047,13 +3084,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             agent_id=str(second["target_agent_id"]),
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
-        check_action = self.next_after_display_sync(root)
-        self.assertEqual(check_action["action_type"], "check_card_return_event")
-        self.assertTrue(check_action["apply_required"])
-        self.assertTrue(check_action["next_step_contract"]["apply_required"])
-        self.assertEqual(check_action["card_return_event"], "reviewer_card_ack")
-        self.assertNotIn("return_event", check_action)
-        router.apply_action(root, "check_card_return_event")
+        next_action = self.next_after_display_sync(root)
+        self.assertNotEqual(next_action["action_type"], "check_card_return_event")
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
 
@@ -3099,12 +3131,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
 
-        check_action = self.next_after_display_sync(root)
-        self.assertEqual(check_action["action_type"], "check_card_return_event")
-        self.assertTrue(check_action["apply_required"])
-        router.apply_action(root, "check_card_return_event")
+        next_action = self.next_after_display_sync(root)
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
+        self.assertNotEqual(next_action["action_type"], "check_card_return_event")
 
     def test_initial_pm_system_cards_are_delivered_as_same_role_bundle(self) -> None:
         root = self.make_project()
@@ -3216,12 +3246,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         incomplete_ack["ack_hash"] = card_runtime.stable_json_hash(incomplete_ack)
         router.write_json(root / action["expected_return_path"], incomplete_ack)
 
-        check_action = self.next_after_display_sync(root)
-        self.assertEqual(check_action["action_type"], "check_card_bundle_return_event")
-        result = router.apply_action(root, "check_card_bundle_return_event")
-        self.assertFalse(result["ok"])
-        self.assertEqual(result["status"], "bundle_ack_incomplete")
-        self.assertEqual(result["missing_card_ids"], [opened["cards"][-1]["card_id"]])
+        wait_action = self.next_after_display_sync(root)
         return_ledger = read_json(run_root / "return_event_ledger.json")
         bundle_pending = [
             item for item in return_ledger["pending_returns"]
@@ -3229,8 +3254,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ][0]
         self.assertEqual(bundle_pending["status"], "bundle_ack_incomplete")
         self.assertEqual(bundle_pending["missing_card_ids"], [opened["cards"][-1]["card_id"]])
-
-        wait_action = self.next_after_display_sync(root)
         self.assertEqual(wait_action["action_type"], "await_card_bundle_return_event")
         self.assertTrue(wait_action["bundle_ack_incomplete"])
         self.assertEqual(wait_action["missing_card_ids"], [opened["cards"][-1]["card_id"]])
@@ -3242,16 +3265,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             agent_id=agent_id,
             receipt_paths=[str(path) for path in opened["read_receipt_paths"]],
         )
-        check_action = self.next_after_display_sync(root)
-        self.assertEqual(check_action["action_type"], "check_card_bundle_return_event")
-        router.apply_action(root, "check_card_bundle_return_event")
+        next_action = self.next_after_display_sync(root)
         return_ledger = read_json(run_root / "return_event_ledger.json")
         bundle_pending = [
             item for item in return_ledger["pending_returns"]
             if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
         ][0]
         self.assertEqual(bundle_pending["status"], "resolved")
-        next_action = self.next_after_display_sync(root)
         self.assertEqual(next_action["action_type"], "check_packet_ledger")
 
     def test_user_intake_mail_requires_packet_ledger_check_after_pm_cards(self) -> None:
@@ -5023,6 +5043,84 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         envelope = read_json(root / packet["body_path"].replace("packet_body.md", "packet_envelope.json"))
         self.assertEqual(envelope["controller_relay"]["relayed_to_role"], "worker_a")
         self.assertFalse(envelope["controller_relay"]["body_was_read_by_controller"])
+
+    def test_current_node_worker_packet_requires_active_child_skill_binding_projection(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+
+        active_bindings = [
+            {
+                "binding_id": "frontend-design:node-001:implementation",
+                "source_skill": "frontend-design",
+                "source_path": "skills/frontend-design/SKILL.md",
+                "referenced_paths": ["skills/frontend-design/references/ui.md"],
+                "applies_to_this_node": True,
+                "node_slice_scope": "current node UI implementation",
+                "applies_to_packet_ids": ["node-packet-bound"],
+                "must_open_source_skill": True,
+                "selected_standard_ids": ["frontend-design.verify.rendered-qa"],
+                "stricter_than_pm_packet": True,
+                "precedence_rule": "PM packet is the minimum floor; stricter child-skill requirements apply.",
+                "result_evidence_required": True,
+                "reviewer_check_required": True,
+            }
+        ]
+        self.deliver_current_node_cards(root, active_child_skill_bindings=active_bindings)
+        run_root = self.run_root_for(root)
+        plan = read_json(run_root / "routes" / "route-001" / "nodes" / "node-001" / "node_acceptance_plan.json")
+        self.assertEqual(plan["active_child_skill_bindings"], active_bindings)
+
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="node-packet-missing-binding",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="current node work",
+            metadata={"route_version": 1},
+        )
+        packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        with self.assertRaisesRegex(router.RouterError, "active child skill bindings"):
+            router.record_external_event(
+                root,
+                "pm_registers_current_node_packet",
+                {"packet_id": "node-packet-missing-binding", "packet_envelope_path": packet_path},
+            )
+
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="node-packet-bound",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="current node work",
+            metadata={
+                "route_version": 1,
+                "active_child_skill_bindings": active_bindings,
+                "child_skill_use_instruction_written": True,
+                "active_child_skill_source_paths_allowed": [
+                    "skills/frontend-design/SKILL.md",
+                    "skills/frontend-design/references/ui.md",
+                ],
+            },
+        )
+        packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        router.record_external_event(
+            root,
+            "pm_registers_current_node_packet",
+            {"packet_id": "node-packet-bound", "packet_envelope_path": packet_path},
+        )
+        grant = read_json(run_root / "routes" / "route-001" / "nodes" / "node-001" / "current_node_write_grant.json")
+        self.assertTrue(grant["active_child_skill_bindings_declared"])
+        self.assertEqual(
+            grant["active_child_skill_source_paths"],
+            [
+                "skills/frontend-design/SKILL.md",
+                "skills/frontend-design/references/ui.md",
+            ],
+        )
 
     def test_current_node_completion_requires_reviewer_passed_packet_audit(self) -> None:
         root = self.make_project()

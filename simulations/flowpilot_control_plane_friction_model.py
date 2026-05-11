@@ -21,6 +21,9 @@ Risk intent brief:
   router-visible state, stage-advance views left stale, stale role-decision
   waits that expose external events before their requires_flag is true, and
   optimized transactions that skip hash, role, or Controller-boundary checks.
+  Status summaries, ack auto-consumption, stale wait reconciliation, role-work
+  recipient normalization, model-miss report completeness, and role-memory
+  deltas are included because these are the planned speed improvements.
   Long-running role-work waits are included: Controller can see only a
   metadata-only controller_status_packet progress surface, never sealed packet
   or result bodies. Reviewer-block repair routing is included: PM can repair
@@ -43,7 +46,13 @@ Risk intent brief:
   reviewer blocks remain routable without a route mutation, use fresh repair
   evidence, and require the same review class to recheck before continuation;
   route mutations record why the current node cannot contain the repair and
-  reopen route checks.
+  reopen route checks; optimized ack consumption validates exact ack, role, and
+  hash; pending waits reconcile only from durable packet/status evidence;
+  user-facing status summaries remain metadata-only and blocker-consistent;
+  PM role-work results return to PM while current-node results still return to
+  reviewer; role memory is an index, never an approval authority; and a
+  complete model-miss officer report can reach a PM decision without a second
+  officer loop.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -154,6 +163,11 @@ class State:
     route_draft_repaired_after_check: bool = False
     route_review_flags_reset_after_draft_repair: bool = True
 
+    status_summary_published: bool = False
+    status_summary_fresh_against_frontier_and_packet: bool = False
+    status_summary_metadata_only: bool = True
+    status_summary_blocker_state_consistent: bool = True
+
     review_block_observed: bool = False
     review_block_scope: str = "none"  # none | node_local | route_invalidating
     pm_selected_same_node_repair: bool = False
@@ -168,6 +182,23 @@ class State:
     optimized_transaction_records_delivery: bool = False
     optimized_transaction_records_open_receipts: bool = False
     optimized_transaction_records_result_return: bool = False
+    optimized_card_ack_transaction: bool = False
+    card_ack_validated: bool = False
+    card_ack_role_checked: bool = False
+    card_ack_hash_checked: bool = False
+    pending_wait_reconciled: bool = False
+    pending_wait_reconciliation_uses_packet_ledger: bool = False
+    pending_wait_reconciliation_uses_status_packet: bool = False
+    pending_wait_reconciliation_role_verified: bool = False
+    pending_wait_reconciliation_hash_verified: bool = False
+    pending_wait_reconciliation_from_chat: bool = False
+    pm_role_work_result_normalized: bool = False
+    pm_role_work_result_routes_to_pm: bool = True
+    current_node_result_routes_to_reviewer: bool = True
+    model_miss_officer_report_complete: bool = False
+    model_miss_pm_decision_from_single_report: bool = False
+    role_memory_delta_written: bool = False
+    role_memory_used_for_authority: bool = False
 
     receipt_missing_blocker: bool = False
     control_blocker_lane: str = "none"  # none | control_plane_reissue | pm_repair_decision_required | fatal_protocol_violation
@@ -229,10 +260,16 @@ class ControlPlaneStep:
         "control_blocker_lane",
         "lifecycle_authorities",
         "active_snapshot",
+        "status_summary",
+        "role_memory",
     )
     writes = (
         "package_materialization",
         "packet_transaction_receipt",
+        "ack_transaction_receipt",
+        "pending_wait_reconciliation",
+        "status_summary",
+        "role_memory_delta",
         "blocker_route",
         "lifecycle_reconciliation",
         "snapshot_refresh",
@@ -321,6 +358,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if state.mode == "optimized":
+        if not state.optimized_card_ack_transaction:
+            yield Transition(
+                "optimized_card_ack_auto_consumed_with_validation",
+                _inc(
+                    state,
+                    optimized_card_ack_transaction=True,
+                    card_ack_validated=True,
+                    card_ack_role_checked=True,
+                    card_ack_hash_checked=True,
+                ),
+            )
+            return
         if not state.optimized_relay_transaction:
             yield Transition(
                 "optimized_relay_transaction_records_delivery_open_and_hash",
@@ -338,6 +387,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     optimized_transaction_records_result_return=True,
                     role_identity_checked=True,
                     hash_verified=True,
+                ),
+            )
+            return
+
+        if not state.pending_wait_reconciled:
+            yield Transition(
+                "pending_wait_reconciled_from_packet_status",
+                _inc(
+                    state,
+                    pending_wait_reconciled=True,
+                    pending_wait_reconciliation_uses_packet_ledger=True,
+                    pending_wait_reconciliation_uses_status_packet=True,
+                    pending_wait_reconciliation_role_verified=True,
+                    pending_wait_reconciliation_hash_verified=True,
+                    pending_wait_reconciliation_from_chat=False,
                 ),
             )
             return
@@ -366,6 +430,41 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 _inc(state, holder="reviewer", result_body_open_receipt=True),
             )
             return
+
+    if not state.pm_role_work_result_normalized:
+        yield Transition(
+            "role_work_result_recipient_normalized_by_packet_type",
+            _inc(
+                state,
+                pm_role_work_result_normalized=True,
+                pm_role_work_result_routes_to_pm=True,
+                current_node_result_routes_to_reviewer=True,
+            ),
+        )
+        return
+
+    if not state.model_miss_officer_report_complete:
+        yield Transition(
+            "model_miss_officer_report_complete_for_pm_decision",
+            _inc(
+                state,
+                holder="process_flowguard_officer",
+                model_miss_officer_report_complete=True,
+                model_miss_pm_decision_from_single_report=True,
+            ),
+        )
+        return
+
+    if not state.role_memory_delta_written:
+        yield Transition(
+            "role_memory_delta_written_as_non_authority_index",
+            _inc(
+                state,
+                role_memory_delta_written=True,
+                role_memory_used_for_authority=False,
+            ),
+        )
+        return
 
     if not state.reviewer_report_written:
         yield Transition(
@@ -408,6 +507,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 frontier_fresh_after_stage_advance=True,
                 product_stage_view_published=True,
                 product_stage_view_fresh=True,
+            ),
+        )
+        return
+
+    if not state.status_summary_published:
+        yield Transition(
+            "status_summary_published_from_public_state",
+            _inc(
+                state,
+                status_summary_published=True,
+                status_summary_fresh_against_frontier_and_packet=True,
+                status_summary_metadata_only=True,
+                status_summary_blocker_state_consistent=True,
             ),
         )
         return
@@ -830,6 +942,17 @@ def display_surfaces_track_product_architecture_delivery(state: State, trace) ->
     return InvariantResult.pass_()
 
 
+def status_summary_is_public_and_fresh(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status_summary_published and not state.status_summary_fresh_against_frontier_and_packet:
+        return InvariantResult.fail("status summary was published stale against frontier or packet state")
+    if state.status_summary_published and not state.status_summary_metadata_only:
+        return InvariantResult.fail("status summary exposed sealed body, evidence table, source, or hash details")
+    if state.status_summary_published and not state.status_summary_blocker_state_consistent:
+        return InvariantResult.fail("status summary hid an unresolved blocker or pending repair state")
+    return InvariantResult.pass_()
+
+
 def route_checks_require_nonempty_route_nodes(state: State, trace) -> InvariantResult:
     del trace
     if state.route_process_check_card_delivered and not state.route_draft_has_nodes:
@@ -921,6 +1044,58 @@ def controller_boundary_survives_optimization(state: State, trace) -> InvariantR
         return InvariantResult.fail(
             "optimized relay transaction skipped delivery, receipt, result-return, role, or hash evidence"
         )
+    return InvariantResult.pass_()
+
+
+def optimized_ack_consumption_validates_receipt(state: State, trace) -> InvariantResult:
+    del trace
+    if state.optimized_card_ack_transaction and not (
+        state.card_ack_validated
+        and state.card_ack_role_checked
+        and state.card_ack_hash_checked
+    ):
+        return InvariantResult.fail(
+            "optimized card ack consumption skipped ack validation, role check, or hash check"
+        )
+    return InvariantResult.pass_()
+
+
+def pending_wait_reconciliation_uses_durable_packet_state(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pending_wait_reconciled and state.pending_wait_reconciliation_from_chat:
+        return InvariantResult.fail("pending wait reconciliation used chat or history instead of durable packet state")
+    if state.pending_wait_reconciled and not (
+        state.pending_wait_reconciliation_uses_packet_ledger
+        and state.pending_wait_reconciliation_uses_status_packet
+        and state.pending_wait_reconciliation_role_verified
+        and state.pending_wait_reconciliation_hash_verified
+    ):
+        return InvariantResult.fail(
+            "pending wait reconciliation skipped packet ledger, status packet, role, or hash evidence"
+        )
+    return InvariantResult.pass_()
+
+
+def role_work_recipient_normalization_preserves_routes(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pm_role_work_result_normalized and not state.pm_role_work_result_routes_to_pm:
+        return InvariantResult.fail("PM role-work result did not route back to project_manager")
+    if state.pm_role_work_result_normalized and not state.current_node_result_routes_to_reviewer:
+        return InvariantResult.fail("current-node worker result was rerouted away from human_like_reviewer")
+    return InvariantResult.pass_()
+
+
+def model_miss_report_can_feed_pm_once(state: State, trace) -> InvariantResult:
+    del trace
+    if state.model_miss_pm_decision_from_single_report and not state.model_miss_officer_report_complete:
+        return InvariantResult.fail("PM model-miss decision used an incomplete officer report")
+    return InvariantResult.pass_()
+
+
+def role_memory_is_index_not_authority(state: State, trace) -> InvariantResult:
+    del trace
+    if state.role_memory_used_for_authority:
+        return InvariantResult.fail("role memory was used as approval or completion authority")
     return InvariantResult.pass_()
 
 
@@ -1080,6 +1255,11 @@ INVARIANTS = (
         predicate=display_surfaces_track_product_architecture_delivery,
     ),
     Invariant(
+        name="status_summary_is_public_and_fresh",
+        description="Compact status summaries are fresh and user-facing metadata only.",
+        predicate=status_summary_is_public_and_fresh,
+    ),
+    Invariant(
         name="route_checks_require_nonempty_route_nodes",
         description="Route process checks cannot be delivered for empty route drafts.",
         predicate=route_checks_require_nonempty_route_nodes,
@@ -1113,6 +1293,31 @@ INVARIANTS = (
         name="controller_boundary_survives_optimization",
         description="Handoff optimization cannot weaken Controller's envelope-only, role, or hash guarantees.",
         predicate=controller_boundary_survives_optimization,
+    ),
+    Invariant(
+        name="optimized_ack_consumption_validates_receipt",
+        description="Optimized card ack consumption validates exact ack, role, and hash.",
+        predicate=optimized_ack_consumption_validates_receipt,
+    ),
+    Invariant(
+        name="pending_wait_reconciliation_uses_durable_packet_state",
+        description="Stale role waits reconcile only from durable packet ledger/status evidence.",
+        predicate=pending_wait_reconciliation_uses_durable_packet_state,
+    ),
+    Invariant(
+        name="role_work_recipient_normalization_preserves_routes",
+        description="PM role-work results return to PM while current-node results still route to reviewer.",
+        predicate=role_work_recipient_normalization_preserves_routes,
+    ),
+    Invariant(
+        name="model_miss_report_can_feed_pm_once",
+        description="One complete model-miss officer report can support PM decision without a second officer loop.",
+        predicate=model_miss_report_can_feed_pm_once,
+    ),
+    Invariant(
+        name="role_memory_is_index_not_authority",
+        description="Role memory deltas are resume indexes, not approval or completion authority.",
+        predicate=role_memory_is_index_not_authority,
     ),
     Invariant(
         name="role_work_wait_exposes_status_packet_only",
@@ -1216,8 +1421,29 @@ def _safe_base(**changes: object) -> State:
             route_process_check_passed=True,
             route_draft_repaired_after_check=False,
             route_review_flags_reset_after_draft_repair=True,
+            status_summary_published=True,
+            status_summary_fresh_against_frontier_and_packet=True,
+            status_summary_metadata_only=True,
+            status_summary_blocker_state_consistent=True,
             role_identity_checked=True,
             hash_verified=True,
+            optimized_card_ack_transaction=True,
+            card_ack_validated=True,
+            card_ack_role_checked=True,
+            card_ack_hash_checked=True,
+            pending_wait_reconciled=True,
+            pending_wait_reconciliation_uses_packet_ledger=True,
+            pending_wait_reconciliation_uses_status_packet=True,
+            pending_wait_reconciliation_role_verified=True,
+            pending_wait_reconciliation_hash_verified=True,
+            pending_wait_reconciliation_from_chat=False,
+            pm_role_work_result_normalized=True,
+            pm_role_work_result_routes_to_pm=True,
+            current_node_result_routes_to_reviewer=True,
+            model_miss_officer_report_complete=True,
+            model_miss_pm_decision_from_single_report=True,
+            role_memory_delta_written=True,
+            role_memory_used_for_authority=False,
         ),
         **changes,
     )
@@ -1368,6 +1594,18 @@ def hazard_states() -> dict[str, State]:
         "display_view_stale_after_product_architecture_delivery": _safe_base(
             product_stage_view_fresh=False,
         ),
+        "status_summary_stale": _safe_base(
+            status_summary_published=True,
+            status_summary_fresh_against_frontier_and_packet=False,
+        ),
+        "status_summary_leaks_sealed_or_source_fields": _safe_base(
+            status_summary_published=True,
+            status_summary_metadata_only=False,
+        ),
+        "status_summary_hides_unresolved_blocker": _safe_base(
+            status_summary_published=True,
+            status_summary_blocker_state_consistent=False,
+        ),
         "route_process_check_on_empty_route_draft": _safe_base(
             route_draft_has_nodes=False,
             route_process_check_card_delivered=True,
@@ -1470,6 +1708,47 @@ def hazard_states() -> dict[str, State]:
             optimized_transaction_records_open_receipts=True,
             optimized_transaction_records_result_return=True,
             hash_verified=False,
+        ),
+        "optimized_ack_without_role_check": _safe_base(
+            optimized_card_ack_transaction=True,
+            card_ack_validated=True,
+            card_ack_role_checked=False,
+            card_ack_hash_checked=True,
+        ),
+        "optimized_ack_without_hash_check": _safe_base(
+            optimized_card_ack_transaction=True,
+            card_ack_validated=True,
+            card_ack_role_checked=True,
+            card_ack_hash_checked=False,
+        ),
+        "pending_wait_reconciled_from_chat": _safe_base(
+            pending_wait_reconciled=True,
+            pending_wait_reconciliation_from_chat=True,
+        ),
+        "pending_wait_reconciled_without_status_packet": _safe_base(
+            pending_wait_reconciled=True,
+            pending_wait_reconciliation_uses_packet_ledger=True,
+            pending_wait_reconciliation_uses_status_packet=False,
+            pending_wait_reconciliation_role_verified=True,
+            pending_wait_reconciliation_hash_verified=True,
+        ),
+        "role_work_result_routed_to_reviewer": _safe_base(
+            pm_role_work_result_normalized=True,
+            pm_role_work_result_routes_to_pm=False,
+            current_node_result_routes_to_reviewer=True,
+        ),
+        "current_node_result_routed_to_pm": _safe_base(
+            pm_role_work_result_normalized=True,
+            pm_role_work_result_routes_to_pm=True,
+            current_node_result_routes_to_reviewer=False,
+        ),
+        "pm_decides_from_incomplete_model_miss_report": _safe_base(
+            model_miss_officer_report_complete=False,
+            model_miss_pm_decision_from_single_report=True,
+        ),
+        "role_memory_used_as_completion_authority": _safe_base(
+            role_memory_delta_written=True,
+            role_memory_used_for_authority=True,
         ),
         "controller_reads_sealed_body": _safe_base(controller_read_sealed_body=True),
     }
