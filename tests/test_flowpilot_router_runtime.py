@@ -3016,6 +3016,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(second["apply_required"])
         self.assertEqual(second["card_return_event"], "reviewer_card_ack")
         self.assertNotIn("return_event", second)
+        self.assertEqual(second["card_checkin_instruction"]["command_name"], "receive-card")
+        self.assertEqual(second["card_checkin_instruction"]["card_return_event"], "reviewer_card_ack")
+        self.assertTrue(second["card_checkin_instruction"]["do_not_handwrite_ack"])
+        self.assertIn("--envelope-path", second["card_checkin_instruction"]["command"])
         self.assertTrue(second["auto_committed_by_router"])
         self.assertEqual(second["next_step_contract"]["resource_lifecycle"], "committed_artifact")
         self.assertTrue(second["next_step_contract"]["artifact_committed"])
@@ -3024,6 +3028,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((root / second["card_envelope_path"]).exists())
         envelope = read_json(root / second["card_envelope_path"])
         self.assertEqual(envelope["card_return_event"], "reviewer_card_ack")
+        self.assertEqual(envelope["card_checkin_instruction"]["command_name"], "receive-card")
         self.assertNotIn("return_event", envelope)
         pre_apply_state = read_json(run_root / "router_state.json")
         pre_apply_prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
@@ -3073,7 +3078,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(relay_action["relay_allowed"])
         with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
             router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        with self.assertRaisesRegex(router.RouterError, "card return event.*check_card_return_event"):
+        with self.assertRaisesRegex(router.RouterError, "waiting for the runtime ACK"):
             router.record_external_event(root, "reviewer_card_ack")
 
         open_result = card_runtime.open_card(
@@ -3089,6 +3094,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             agent_id=str(second["target_agent_id"]),
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
+        rerouted = router.record_external_event(root, "reviewer_card_ack")
+        self.assertTrue(rerouted["ok"])
+        self.assertEqual(rerouted["routed_to"], "check_card_return_event")
         next_action = self.next_after_display_sync(root)
         self.assertNotEqual(next_action["action_type"], "check_card_return_event")
         return_ledger = read_json(run_root / "return_event_ledger.json")
@@ -3168,11 +3176,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["artifact_committed"])
         self.assertTrue(action["relay_allowed"])
         self.assertFalse(action["apply_required"])
+        self.assertEqual(action["card_checkin_instruction"]["command_name"], "receive-card-bundle")
+        self.assertEqual(action["card_checkin_instruction"]["card_return_event"], "pm_card_bundle_ack")
         self.assertTrue((root / action["card_bundle_envelope_path"]).exists())
         envelope = read_json(root / action["card_bundle_envelope_path"])
         self.assertEqual(envelope["schema_version"], card_runtime.CARD_BUNDLE_ENVELOPE_SCHEMA)
         self.assertEqual(envelope["card_ids"], expected_card_ids)
         self.assertEqual(envelope["card_return_event"], "pm_card_bundle_ack")
+        self.assertEqual(envelope["card_checkin_instruction"]["command_name"], "receive-card-bundle")
         self.assertEqual(len(envelope["cards"]), 5)
 
         self.ack_system_card_bundle_action(root, action)

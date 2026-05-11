@@ -23,7 +23,11 @@ HAZARD_EXPECTED_FAILURES = {
     "preapply_planned_action_marked_relay_allowed": "pre-apply system-card planning action was marked relay-allowed",
     "public_apply_deliver_system_card_used": "public Controller apply attempted to deliver a relay-only system-card action",
     "legacy_return_event_field_used": "legacy return_event JSON field was still emitted",
-    "card_ack_recorded_as_external_event": "card ack was routed through record-event instead of check_card_return_event",
+    "missing_checkin_instruction": "card envelope omitted explicit runtime check-in instruction",
+    "missing_checkin_tool_command": "card envelope omitted explicit runtime check-in instruction",
+    "role_handwrites_ack_instead_of_runtime": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
+    "card_ack_recorded_as_external_event": "card ack was accepted as a normal external event instead of being validated as card return",
+    "card_ack_external_event_not_rerouted": "card ack external-event entrypoint did not reroute to check_card_return_event",
     "check_card_return_apply_optional": "check_card_return_event changed state but was marked apply_required false",
     "missing_read_receipt": "required system card coverage passed without valid read receipt and ack/report envelope",
     "missing_ack_report": "required system card coverage passed without valid read receipt and ack/report envelope",
@@ -72,14 +76,17 @@ def _state_id(state: model.State) -> str:
         f"{state.post_apply_envelope_issued},{state.controller_relayed_preapply_artifact},"
         f"{state.runtime_open_blocked_not_committed},{state.public_system_card_apply_used}|"
         f"delivery={state.card_envelope_issued},{state.card_delivery_recorded},"
-        f"{state.card_return_event_declared},{state.pending_return_recorded}|"
+        f"{state.card_return_event_declared},{state.checkin_instruction_declared},"
+        f"{state.checkin_tool_command_declared},{state.pending_return_recorded}|"
         f"legacy_field={state.legacy_return_event_field_used}|"
         f"controller={state.controller_relayed_card_envelope},{state.controller_envelope_only},"
         f"read_body={state.controller_read_card_body},mutated={state.controller_mutated_batch}|"
         f"receipt={state.card_read_receipt_written},{state.receipt_current_run},"
-        f"{state.receipt_current_role},{state.receipt_current_agent},{state.receipt_hash_matches_manifest}|"
+        f"{state.receipt_current_role},{state.receipt_current_agent},"
+        f"{state.receipt_hash_matches_manifest},{state.role_used_checkin_runtime}|"
         f"ack={state.ack_report_returned},{state.ack_current_run},{state.ack_current_role},"
-        f"{state.ack_current_agent},{state.ack_references_read_receipts}|"
+        f"{state.ack_current_agent},{state.ack_references_read_receipts},"
+        f"{state.handwritten_ack_attempted}|"
         f"wait={state.await_expected_return},{state.recovery_action_available},"
         f"{state.return_reminder_issued},{state.redelivery_attempt_issued}|"
         f"coverage={state.required_card_coverage_checked},{state.required_card_coverage_passed}|"
@@ -92,7 +99,9 @@ def _state_id(state: model.State) -> str:
         f"batch={state.cross_role_batch_used},{state.batch_dependency_graph_declared},"
         f"{state.batch_card_return_events_declared},{state.batch_join_policy_declared},"
         f"{state.all_required_batch_receipts_joined},{state.all_required_batch_ack_reports_joined}|"
-        f"ack_control={state.card_ack_recorded_as_external_event},{state.check_card_return_apply_required}|"
+        f"ack_control={state.card_ack_sent_to_external_event_entrypoint},"
+        f"{state.card_ack_external_event_auto_rerouted},"
+        f"{state.card_ack_recorded_as_external_event},{state.check_card_return_apply_required}|"
         f"advanced={state.router_advanced}"
     )
 

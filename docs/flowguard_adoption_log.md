@@ -7267,3 +7267,46 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Keep future FlowPilot child-skill routing changes aligned across node plans, packet metadata, sealed body templates, worker/reviewer cards, output contracts, and FlowGuard hazard cases.
 - Local installed FlowPilot skill was synchronized; remote GitHub synchronization remains intentionally out of scope for this change.
+
+## 2026-05-11 - FlowPilot card ACK check-in repair
+
+### Trigger
+- System-card ACK handling affects card-return state, route progress, role runtime entrypoints, external-event routing, and installed skill behavior.
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --no-write`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`
+- OK: `python -m py_compile scripts\flowpilot_runtime.py skills\flowpilot\assets\flowpilot_runtime.py skills\flowpilot\assets\flowpilot_router.py`
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_system_card_delivery_requires_manifest_check -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_initial_pm_system_cards_are_delivered_as_same_role_bundle -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_committed_system_card_relay_can_resolve_without_apply_roundtrip -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_incomplete_system_card_bundle_ack_waits_for_missing_receipts_then_recovers -q`
+- OK: `python scripts\check_install.py --json`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- Card envelopes and card-bundle envelopes now carry an explicit `card_checkin_instruction`.
+- The unified runtime now has one-step `receive-card` and `receive-card-bundle` commands that open the card, write read receipts, write ACK envelopes, and validate them.
+- Controller guidance now states card ACKs are not normal external events.
+- Router can recover if a valid runtime-backed card ACK is sent to the external-event entrypoint; it reroutes to card-return validation instead of recording a normal event.
+
+### Counterexamples
+- Missing check-in instruction.
+- Missing check-in command.
+- Hand-written ACK attempt.
+- Card ACK sent to the external-event entrypoint without safe reroute.
+- ACK recorded as a normal external event.
+
+### Friction Points
+- Running the whole router runtime test file exceeded the tool timeout once, so the verification used focused ACK/card-bundle tests plus install checks.
+- Running local install sync and install check in parallel caused a transient missing-file read during copy; rerunning the check after sync passed.
+
+### Skipped Steps
+- Remote GitHub push/release skipped by user request.
+
+### Next Actions
+- Keep future system-card changes aligned across card envelopes, role I/O protocol, runtime entrypoints, Controller wording, router recovery, and FlowGuard hazards.

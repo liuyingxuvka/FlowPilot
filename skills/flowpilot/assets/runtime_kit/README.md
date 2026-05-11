@@ -17,8 +17,9 @@ Rules:
   mechanical validation, receipts, ledgers, hashes, and controller-visible
   envelopes.
 - `flowpilot_runtime.py` is the preferred unified role entrypoint. It delegates
-  packet/result opens and completions to `packet_runtime.py`, and formal
-  reports/decisions to `role_output_runtime.py`.
+  system-card check-in to `card_runtime.py`, packet/result opens and
+  completions to `packet_runtime.py`, and formal reports/decisions to
+  `role_output_runtime.py`.
 - Role-output envelopes should use compact `body_ref` and
   `runtime_receipt_ref` metadata. Legacy top-level path/hash fields are
   compatibility inputs.

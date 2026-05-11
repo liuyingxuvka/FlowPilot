@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -142,6 +143,38 @@ def test_card_runtime_opens_card_and_submits_ack() -> None:
     assert validation["receipt_ref_count"] == 1
 
 
+def test_unified_runtime_receive_card_writes_receipt_and_ack() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_envelope(root, run_root, body_path)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "flowpilot_runtime.py"),
+            "--root",
+            str(root),
+            "receive-card",
+            "--envelope-path",
+            envelope_path.relative_to(root).as_posix(),
+            "--role",
+            "project_manager",
+            "--agent-id",
+            "pm-agent-1",
+        ],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    result = json.loads(completed.stdout)
+    assert result["ok"] is True
+    assert result["command"] == "receive-card"
+    assert result["opened"]["body_text"] == "PM core card body"
+    assert result["ack"]["ack_envelope"]["card_return_event"] == "pm_card_ack"
+    assert result["validation"]["ok"] is True
+    assert (root / result["opened"]["read_receipt_path"]).exists()
+    assert (root / result["ack"]["ack_path"]).exists()
+
+
 def test_card_runtime_opens_bundle_and_submits_one_ack_with_per_card_receipts() -> None:
     root, run_root, body_path = make_project()
     envelope_path = make_bundle_envelope(root, run_root, body_path)
@@ -172,6 +205,37 @@ def test_card_runtime_opens_bundle_and_submits_one_ack_with_per_card_receipts() 
     )
     assert validation["ok"] is True
     assert validation["receipt_ref_count"] == 2
+
+
+def test_unified_runtime_receive_card_bundle_writes_all_receipts_and_ack() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_bundle_envelope(root, run_root, body_path)
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "flowpilot_runtime.py"),
+            "--root",
+            str(root),
+            "receive-card-bundle",
+            "--envelope-path",
+            envelope_path.relative_to(root).as_posix(),
+            "--role",
+            "project_manager",
+            "--agent-id",
+            "pm-agent-1",
+        ],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    result = json.loads(completed.stdout)
+    assert result["ok"] is True
+    assert result["command"] == "receive-card-bundle"
+    assert [card["card_id"] for card in result["opened"]["cards"]] == ["pm.core", "pm.phase_map"]
+    assert result["ack"]["ack_envelope"]["card_return_event"] == "pm_card_bundle_ack"
+    assert result["validation"]["ok"] is True
+    assert result["validation"]["receipt_ref_count"] == 2
 
 
 def test_card_runtime_rejects_wrong_role_and_ack_without_receipt() -> None:

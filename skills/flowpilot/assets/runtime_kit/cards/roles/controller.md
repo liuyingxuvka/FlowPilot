@@ -40,6 +40,12 @@ Allowed actions:
 - when returning a role/event envelope to the router, pass the envelope file
   path and sha256 through `record-event --envelope-path ... --envelope-hash ...`
   or `event_envelope_ref`; do not reconstruct the envelope fields by hand;
+- system-card ACKs are not normal role/event envelopes. When a card envelope
+  names `card_return_event` such as `controller_card_ack`, `pm_card_ack`,
+  `reviewer_card_ack`, `worker_card_ack`, `process_officer_card_ack`, or
+  `product_officer_card_ack`, the addressed role must use the card check-in
+  command named in that envelope. Controller must not hand-write the ACK and
+  must not treat it as an ordinary project event;
 - deliver router `control_blocker` artifacts exactly as instructed by the
   router action envelope;
 - display route signs and required startup text when the router or PM requires

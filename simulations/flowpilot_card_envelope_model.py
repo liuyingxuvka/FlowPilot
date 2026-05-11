@@ -9,19 +9,20 @@ Risk intent brief:
 - Model-critical durable state: role I/O protocol acknowledgement for the
   current resume tick, card envelope identity, card manifest hash, target role
   and agent identity, read receipt timing, expected card-return event records,
-  ack/report envelope identity, same-role system-card bundle eligibility,
-  batch dependency graph, cross-role parallel delivery joins, and legacy
-  prompt-delivery compatibility.
+  explicit runtime check-in instructions, ack/report envelope identity,
+  same-role system-card bundle eligibility, batch dependency graph, cross-role
+  parallel delivery joins, and legacy prompt-delivery compatibility.
 - Adversarial branches include legacy delivery treated as read, missing read
   receipt, missing ack/report envelope, ack/report without receipt references,
   wrong role, old run, old agent after replacement, hash mismatch, receipt
-  before delivery, Controller relaying a pre-apply planned artifact path as if
-  it were a committed envelope, public Controller apply of a relay-only
-  system-card action, missing resume I/O acknowledgement, preload-only
-  authorization, bundle receipt replacing per-card receipts, same-role bundle
-  crossing run/role/agent/resume boundaries, unsafe bundle dependencies,
-  hidden dependency parallelization, Controller body reads, Controller batch
-  mutation, and dead-end waiting after an interruption.
+  before delivery, missing runtime check-in instructions, hand-written ACKs,
+  Controller relaying a pre-apply planned artifact path as if it were a
+  committed envelope, public Controller apply of a relay-only system-card
+  action, missing resume I/O acknowledgement, preload-only authorization,
+  bundle receipt replacing per-card receipts, same-role bundle crossing
+  run/role/agent/resume boundaries, unsafe bundle dependencies, hidden
+  dependency parallelization, Controller body reads, Controller batch mutation,
+  and dead-end waiting after an interruption.
 - Hard invariants: Controller never reads card bodies; Router advancement
   requires current-run/current-role/current-agent/current-hash runtime receipts
   referenced by a current ack/report envelope; same-role card bundles are
@@ -82,6 +83,8 @@ class State:
     card_delivery_recorded: bool = False
     card_hash_matches_manifest: bool = False
     card_return_event_declared: bool = False
+    checkin_instruction_declared: bool = False
+    checkin_tool_command_declared: bool = False
     legacy_return_event_field_used: bool = False
     expected_return_path_recorded: bool = False
     pending_return_recorded: bool = False
@@ -98,6 +101,7 @@ class State:
     receipt_hash_matches_manifest: bool = False
     receipt_after_delivery: bool = False
     receipt_after_role_io_ack: bool = False
+    role_used_checkin_runtime: bool = False
 
     required_card_declared: bool = False
     required_card_coverage_checked: bool = False
@@ -114,6 +118,9 @@ class State:
     ack_references_read_receipts: bool = False
     ack_returned_after_receipts: bool = False
     ack_controller_relayed_envelope_only: bool = False
+    handwritten_ack_attempted: bool = False
+    card_ack_sent_to_external_event_entrypoint: bool = False
+    card_ack_external_event_auto_rerouted: bool = False
     card_ack_recorded_as_external_event: bool = False
     check_card_return_apply_required: bool = False
     receipt_repair_request_issued: bool = False
@@ -277,6 +284,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 card_hash_matches_manifest=True,
                 required_card_declared=True,
                 card_return_event_declared=True,
+                checkin_instruction_declared=True,
+                checkin_tool_command_declared=True,
                 expected_return_path_recorded=True,
                 pending_return_recorded=True,
             ),
@@ -347,6 +356,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 receipt_hash_matches_manifest=True,
                 receipt_after_delivery=True,
                 receipt_after_role_io_ack=True,
+                role_used_checkin_runtime=True,
                 per_card_receipts_referenced=True,
             ),
         )
@@ -365,6 +375,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 ack_returned_after_receipts=True,
                 ack_controller_relayed_envelope_only=True,
                 per_card_receipts_referenced=True,
+            ),
+        )
+        return
+
+    if (
+        state.ack_report_returned
+        and not state.card_ack_sent_to_external_event_entrypoint
+        and not state.required_card_coverage_checked
+    ):
+        yield Transition(
+            "router_reroutes_card_ack_received_at_external_event_entrypoint_to_return_check",
+            _inc(
+                state,
+                card_ack_sent_to_external_event_entrypoint=True,
+                card_ack_external_event_auto_rerouted=True,
             ),
         )
         return
@@ -510,6 +535,7 @@ def is_success(state: State) -> bool:
 def _receipt_valid(state: State) -> bool:
     return (
         state.card_read_receipt_written
+        and state.role_used_checkin_runtime
         and state.receipt_current_run
         and state.receipt_current_role
         and state.receipt_current_agent
@@ -522,6 +548,7 @@ def _receipt_valid(state: State) -> bool:
 def _ack_valid(state: State) -> bool:
     return (
         state.ack_report_returned
+        and not state.handwritten_ack_attempted
         and state.ack_current_run
         and state.ack_current_role
         and state.ack_current_agent
@@ -564,6 +591,10 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
     ):
         return InvariantResult.fail("card envelope lacked a Router-owned expected card_return_event")
     if state.card_envelope_issued and not (
+        state.checkin_instruction_declared and state.checkin_tool_command_declared
+    ):
+        return InvariantResult.fail("card envelope omitted explicit runtime check-in instruction")
+    if state.card_envelope_issued and not (
         state.router_auto_committed_internal_action
         and state.committed_artifact_exists
         and state.post_apply_envelope_issued
@@ -590,7 +621,9 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
 def card_return_ack_uses_router_check_action(state: State, trace) -> InvariantResult:
     del trace
     if state.card_ack_recorded_as_external_event:
-        return InvariantResult.fail("card ack was routed through record-event instead of check_card_return_event")
+        return InvariantResult.fail("card ack was accepted as a normal external event instead of being validated as card return")
+    if state.card_ack_sent_to_external_event_entrypoint and not state.card_ack_external_event_auto_rerouted:
+        return InvariantResult.fail("card ack external-event entrypoint did not reroute to check_card_return_event")
     if state.required_card_coverage_checked and not state.check_card_return_apply_required:
         return InvariantResult.fail("check_card_return_event changed state but was marked apply_required false")
     return InvariantResult.pass_()
@@ -806,6 +839,7 @@ REQUIRED_LABELS = (
     "router_reissues_stale_delivery_attempt_before_role_ack",
     "role_runtime_open_card_writes_current_receipt",
     "role_returns_card_ack_envelope_referencing_read_receipts",
+    "router_reroutes_card_ack_received_at_external_event_entrypoint_to_return_check",
     "router_checks_ack_report_and_required_card_receipt_coverage",
     "router_issues_guarded_same_role_system_card_bundle",
     "router_records_incomplete_same_role_bundle_ack_and_waits_for_missing_receipts",
@@ -851,6 +885,8 @@ def target_v2_state() -> State:
         card_delivery_recorded=True,
         card_hash_matches_manifest=True,
         card_return_event_declared=True,
+        checkin_instruction_declared=True,
+        checkin_tool_command_declared=True,
         expected_return_path_recorded=True,
         pending_return_recorded=True,
         controller_relayed_card_envelope=True,
@@ -862,6 +898,7 @@ def target_v2_state() -> State:
         receipt_hash_matches_manifest=True,
         receipt_after_delivery=True,
         receipt_after_role_io_ack=True,
+        role_used_checkin_runtime=True,
         required_card_declared=True,
         required_card_coverage_checked=True,
         required_card_coverage_passed=True,
@@ -877,6 +914,8 @@ def target_v2_state() -> State:
         ack_references_read_receipts=True,
         ack_returned_after_receipts=True,
         ack_controller_relayed_envelope_only=True,
+        card_ack_sent_to_external_event_entrypoint=True,
+        card_ack_external_event_auto_rerouted=True,
         check_card_return_apply_required=True,
         receipt_repair_request_issued=True,
         redelivery_attempt_issued=True,
@@ -964,9 +1003,27 @@ def hazard_states() -> dict[str, State]:
             safe,
             legacy_return_event_field_used=True,
         ),
+        "missing_checkin_instruction": replace(
+            safe,
+            checkin_instruction_declared=False,
+        ),
+        "missing_checkin_tool_command": replace(
+            safe,
+            checkin_tool_command_declared=False,
+        ),
+        "role_handwrites_ack_instead_of_runtime": replace(
+            safe,
+            role_used_checkin_runtime=False,
+            handwritten_ack_attempted=True,
+        ),
         "card_ack_recorded_as_external_event": replace(
             safe,
             card_ack_recorded_as_external_event=True,
+        ),
+        "card_ack_external_event_not_rerouted": replace(
+            safe,
+            card_ack_sent_to_external_event_entrypoint=True,
+            card_ack_external_event_auto_rerouted=False,
         ),
         "check_card_return_apply_optional": replace(
             safe,

@@ -1695,6 +1695,56 @@ def project_relative(project_root: Path, path: Path) -> str:
         raise RouterError(f"path is outside project root: {path}") from exc
 
 
+def _flowpilot_runtime_entrypoint_ref(project_root: Path) -> str:
+    runtime_path = Path(__file__).resolve().with_name("flowpilot_runtime.py")
+    try:
+        return project_relative(project_root, runtime_path)
+    except RouterError:
+        return str(runtime_path)
+
+
+def _card_checkin_instruction(
+    project_root: Path,
+    *,
+    envelope_path: str,
+    role: str,
+    agent_id: str | None,
+    card_return_event: str,
+    bundle: bool,
+) -> dict[str, Any]:
+    command_name = "receive-card-bundle" if bundle else "receive-card"
+    entrypoint = _flowpilot_runtime_entrypoint_ref(project_root)
+    command = [
+        "python",
+        entrypoint,
+        "--root",
+        ".",
+        command_name,
+        "--envelope-path",
+        envelope_path,
+        "--role",
+        role,
+        "--agent-id",
+        agent_id or "<agent-id>",
+    ]
+    return {
+        "schema_version": "flowpilot.card_checkin_instruction.v1",
+        "required": True,
+        "command_name": command_name,
+        "runtime_entrypoint": entrypoint,
+        "run_from": "project_root",
+        "command": command,
+        "card_return_event": card_return_event,
+        "expected_outcome": "runtime writes the read receipt and ACK envelope",
+        "do_not_handwrite_ack": True,
+        "do_not_record_as_external_event": True,
+        "plain_instruction": (
+            f"Run {command_name} from the project root to open this card through the runtime and write "
+            f"{card_return_event}. Do not hand-write the ACK file and do not record it as a normal external event."
+        ),
+    }
+
+
 def _pm_suggestion_ledger_path(run_root: Path) -> Path:
     return run_root / "pm_suggestion_ledger.jsonl"
 
@@ -2766,6 +2816,7 @@ def _role_io_protocol_payload() -> dict[str, Any]:
         "rules": [
             "act only on router/controller envelopes",
             "open system cards, mail, packets, and bundles through runtime",
+            "when a card envelope includes card_checkin_instruction, run its receive-card or receive-card-bundle command instead of hand-writing ACK files",
             "write read receipts after runtime open",
             "write reports, decisions, and results to run-scoped files",
             "return envelope-only acknowledgements to Controller",
@@ -14007,6 +14058,14 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         expected_return_path = run_root / "mailbox" / "outbox" / "card_acks" / f"{safe_delivery_id}.ack.json"
         card_return_event = _card_return_event_for_card(entry["card_id"])
         target_agent_id = _active_agent_id_for_role(run_root, to_role)
+        card_checkin_instruction = _card_checkin_instruction(
+            project_root,
+            envelope_path=project_relative(project_root, envelope_path),
+            role=to_role,
+            agent_id=target_agent_id,
+            card_return_event=card_return_event,
+            bundle=False,
+        )
         resume_tick_id = _latest_resume_tick_id(run_state)
         role_io_receipt = _role_io_protocol_receipt_for_agent(
             run_root,
@@ -14056,6 +14115,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 "requires_read_receipt": True,
                 "open_method": "open-card",
                 "card_return_event": card_return_event,
+                "card_checkin_instruction": card_checkin_instruction,
                 "expected_return_path": project_relative(project_root, expected_return_path),
                 "expected_receipt_path": project_relative(project_root, expected_receipt_path),
                 "card_envelope_path": project_relative(project_root, envelope_path),
@@ -14204,6 +14264,14 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
                 member[key] = action[key]
         cards.append(member)
     card_return_event = _card_bundle_return_event_for_role(role)
+    card_checkin_instruction = _card_checkin_instruction(
+        project_root,
+        envelope_path=project_relative(project_root, bundle_envelope_path),
+        role=role,
+        agent_id=str(first.get("target_agent_id") or "") or None,
+        card_return_event=card_return_event,
+        bundle=True,
+    )
     return make_action(
         action_type="deliver_system_card_bundle",
         actor="controller",
@@ -14235,6 +14303,7 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
             "requires_read_receipt": True,
             "open_method": "open-card-bundle",
             "card_return_event": card_return_event,
+            "card_checkin_instruction": card_checkin_instruction,
             "expected_return_path": project_relative(project_root, expected_return_path),
             "expected_receipt_paths": expected_receipt_paths,
             "card_bundle_id": bundle_id,
@@ -15088,6 +15157,7 @@ def _commit_system_card_delivery_artifact(
         "requires_read_receipt": True,
         "open_method": pending.get("open_method") or "open-card",
         "card_return_event": pending.get("card_return_event") or _card_return_event_for_card(card_id),
+        "card_checkin_instruction": pending.get("card_checkin_instruction"),
         "expected_return_path": pending.get("expected_return_path"),
         "expected_receipt_path": pending.get("expected_receipt_path"),
         "card_envelope_path": pending.get("card_envelope_path"),
@@ -15153,6 +15223,7 @@ def _commit_system_card_delivery_artifact(
         "requires_read_receipt": True,
         "open_method": delivery.get("open_method") or "open-card",
         "card_return_event": delivery.get("card_return_event"),
+        "card_checkin_instruction": delivery.get("card_checkin_instruction"),
         "expected_receipt_path": project_relative(project_root, expected_receipt_path),
         "expected_return_path": project_relative(project_root, expected_return_path),
         "delivery_context": delivery_context,
@@ -15199,6 +15270,7 @@ def _commit_system_card_delivery_artifact(
             "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
             "requires_read_receipt": True,
             "card_return_event": delivery.get("card_return_event"),
+            "card_checkin_instruction": delivery.get("card_checkin_instruction"),
             "expected_receipt_path": project_relative(project_root, expected_receipt_path),
             "expected_return_path": project_relative(project_root, expected_return_path),
             "delivered_at": delivery["delivered_at"],
@@ -15224,6 +15296,7 @@ def _commit_system_card_delivery_artifact(
             "apply_required": False,
             "expected_receipt_path": project_relative(project_root, expected_receipt_path),
             "expected_return_path": project_relative(project_root, expected_return_path),
+            "card_checkin_instruction": delivery.get("card_checkin_instruction"),
             "sent_at": delivery["delivered_at"],
         }
     )
@@ -15241,6 +15314,7 @@ def _commit_system_card_delivery_artifact(
         "relay_allowed": True,
         "apply_required": False,
         "card_envelope_path": project_relative(project_root, envelope_path),
+        "card_checkin_instruction": delivery.get("card_checkin_instruction"),
         "expected_return_path": project_relative(project_root, expected_return_path),
         "expected_receipt_path": project_relative(project_root, expected_receipt_path),
     }
@@ -15317,6 +15391,7 @@ def _commit_system_card_bundle_delivery_artifact(
                 "open_method": "open-card-bundle",
                 "card_return_event": envelope_card["card_return_event"],
                 "bundle_return_event": pending.get("card_return_event"),
+                "card_checkin_instruction": pending.get("card_checkin_instruction"),
                 "expected_return_path": expected_return_path_raw,
                 "expected_receipt_path": project_relative(project_root, expected_receipt_path),
                 "card_bundle_id": bundle_id,
@@ -15367,6 +15442,7 @@ def _commit_system_card_bundle_delivery_artifact(
         "requires_read_receipt": True,
         "open_method": "open-card-bundle",
         "card_return_event": pending.get("card_return_event"),
+        "card_checkin_instruction": pending.get("card_checkin_instruction"),
         "expected_receipt_paths": [card["expected_receipt_path"] for card in envelope_cards],
         "expected_return_path": project_relative(project_root, expected_return_path),
         "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
@@ -15422,6 +15498,7 @@ def _commit_system_card_bundle_delivery_artifact(
                 "requires_read_receipt": True,
                 "card_return_event": delivery.get("card_return_event"),
                 "bundle_return_event": pending.get("card_return_event"),
+                "card_checkin_instruction": delivery.get("card_checkin_instruction"),
                 "expected_receipt_path": delivery.get("expected_receipt_path"),
                 "expected_return_path": expected_return_path_raw,
                 "delivered_at": delivered_at,
@@ -15452,6 +15529,7 @@ def _commit_system_card_bundle_delivery_artifact(
             "apply_required": False,
             "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
             "expected_return_path": expected_return_path_raw,
+            "card_checkin_instruction": pending.get("card_checkin_instruction"),
             "sent_at": delivered_at,
         }
     )
@@ -15471,6 +15549,7 @@ def _commit_system_card_bundle_delivery_artifact(
         "card_bundle_id": bundle_id,
         "card_bundle_envelope_path": bundle_path_raw,
         "card_bundle_envelope_hash": envelope["bundle_hash"],
+        "card_checkin_instruction": pending.get("card_checkin_instruction"),
         "expected_return_path": expected_return_path_raw,
         "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
     }
@@ -15666,6 +15745,84 @@ def _try_auto_consume_pending_card_return_ack(
     except (RouterError, card_runtime.CardRuntimeError) as exc:
         return {"consumed": False, "preserve_pending": False, "reason": "ack_requires_explicit_check", "error": str(exc)}
     return {"consumed": True, "result": result}
+
+
+def _pending_action_matches_card_return(pending_action: object, pending_return: dict[str, Any]) -> bool:
+    if not isinstance(pending_action, dict):
+        return False
+    if pending_return.get("return_kind") == "system_card_bundle":
+        return (
+            pending_action.get("card_bundle_id") == pending_return.get("card_bundle_id")
+            or pending_action.get("expected_return_path") == pending_return.get("expected_return_path")
+        )
+    return (
+        pending_action.get("delivery_attempt_id") == pending_return.get("delivery_attempt_id")
+        or pending_action.get("expected_return_path") == pending_return.get("expected_return_path")
+    )
+
+
+def _record_card_return_event_from_external_entrypoint(project_root: Path, event: str) -> dict[str, Any]:
+    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    run_state, run_root = load_run_state(project_root, bootstrap)
+    if run_state is None or run_root is None:
+        raise RouterError("run state is missing")
+    pending = next(
+        (
+            item
+            for item in _pending_return_records(run_root, str(run_state["run_id"]))
+            if isinstance(item, dict) and item.get("card_return_event") == event
+        ),
+        None,
+    )
+    if pending is None:
+        raise RouterError(
+            f"{event} is a card return event, but no pending card return is waiting; "
+            "do not record it as a normal external event."
+        )
+    expected_return_path = str(pending.get("expected_return_path") or "")
+    if not expected_return_path:
+        raise RouterError(f"{event} is a card return event, but the pending return has no expected ACK path")
+    if not resolve_project_path(project_root, expected_return_path).exists():
+        raise RouterError(
+            f"{event} is a card return event; waiting for the runtime ACK at {expected_return_path}. "
+            "Ask the role to run the card check-in command from the envelope instead of hand-writing or recording the ACK."
+        )
+    check_pending = dict(pending)
+    check_pending.setdefault("to_role", pending.get("target_role"))
+    try:
+        if pending.get("return_kind") == "system_card_bundle":
+            routed_to = "check_card_bundle_return_event"
+            result = _apply_card_bundle_return_event_check(project_root, run_root, run_state, check_pending)
+        else:
+            routed_to = "check_card_return_event"
+            result = _apply_card_return_event_check(project_root, run_root, run_state, check_pending)
+    except (RouterError, card_runtime.CardRuntimeError) as exc:
+        raise RouterError(
+            f"{event} reached the card-return path but failed runtime validation: {exc}. "
+            "The role must use the card check-in command from the envelope."
+        ) from exc
+    if _pending_action_matches_card_return(run_state.get("pending_action"), pending):
+        run_state["pending_action"] = None
+    append_history(
+        run_state,
+        "router_rerouted_card_ack_from_record_event_to_check_card_return_event",
+        {
+            "event": event,
+            "routed_to": routed_to,
+            "expected_return_path": expected_return_path,
+            "status": result.get("status"),
+        },
+    )
+    _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_card_return_reroute:{event}")
+    _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_card_return_reroute:{event}", update_display=True)
+    save_run_state(run_root, run_state)
+    return {
+        "ok": bool(result.get("ok", True)),
+        "event": event,
+        "routed_to": routed_to,
+        "status": result.get("status"),
+        "expected_return_path": expected_return_path,
+    }
 
 
 def _committed_card_bundle_artifact_extra(
@@ -16522,10 +16679,7 @@ def _record_external_event_unchecked(
 ) -> dict[str, Any]:
     if event not in EXTERNAL_EVENTS:
         if _is_card_return_event_name(event):
-            raise RouterError(
-                f"{event} is a card return event, not an external event; do not use record-event. "
-                "Return to the router and apply check_card_return_event."
-            )
+            return _record_card_return_event_from_external_entrypoint(project_root, event)
         raise RouterError(f"unknown external event: {event}")
     bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
     run_state, run_root = load_run_state(project_root, bootstrap)
