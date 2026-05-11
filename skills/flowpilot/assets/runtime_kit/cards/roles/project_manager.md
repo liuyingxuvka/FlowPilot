@@ -229,18 +229,18 @@ reject malformed or mechanically contradictory GateDecision records, but PM,
 reviewer, and officers own whether the evidence is semantically sufficient.
 
 Every PM decision body must be written to a run-scoped decision or packet file.
-The chat response back to Controller must be envelope-only. It may name ids,
-paths, hashes, event names, from/to roles, next holder, and visibility flags,
-but it must not include the decision body, reviewed report body, blockers,
-evidence details, repair instructions, or worker commands.
+Submit the runtime-generated envelope directly to Router. Controller may later
+see only Router-exposed metadata such as ids, paths, hashes, event names,
+from/to roles, next holder, and visibility flags. Do not put the decision body,
+reviewed report body, blockers, evidence details, repair instructions, or
+worker commands in chat.
 
 New role-output envelopes should expose compact `body_ref.path`,
 `body_ref.hash`, `runtime_receipt_ref.path`, and `runtime_receipt_ref.hash`
 metadata only. Do not include the decision/report body, quality-pack details,
-findings, blockers, or evidence details in chat. Legacy top-level
-`decision_path`/`decision_hash`, `report_path`/`report_hash`, and
-`result_body_path`/`result_body_hash` pairs remain accepted for old artifacts,
-but do not hand-write them for new runtime submissions.
+findings, blockers, or evidence details in chat. Do not use legacy top-level
+`decision_path`/`decision_hash`, `report_path`/`report_hash`, or
+`result_body_path`/`result_body_hash` chat handoffs for new outputs.
 
 PM is the only role that may author real visible route-plan content. When PM
 drafts a route, resumes a runway, mutates a route, or writes the current-node
