@@ -7,10 +7,10 @@
     "safe_graph": "pass"
   },
   "counts": {
-    "accepted": 3,
-    "edges": 84,
-    "rejected": 11,
-    "states": 85
+    "accepted": 4,
+    "edges": 126,
+    "rejected": 17,
+    "states": 127
   },
   "ok": true,
   "skipped_checks": {
@@ -19,6 +19,34 @@
   "source": {
     "facts": {
       "asset_unified_runtime_path_exists": true,
+      "binding_report": {
+        "facts": {
+          "bound_contract_count": 16,
+          "declared_aliases": [
+            "pm_resume_recovery_decision"
+          ],
+          "declared_output_types": [
+            "current_node_result_review_pass",
+            "flowguard_model_miss_report",
+            "gate_decision",
+            "material_sufficiency_report",
+            "officer_model_report",
+            "pm_control_blocker_repair_decision",
+            "pm_model_miss_triage_decision",
+            "pm_parent_segment_decision",
+            "pm_resume_decision",
+            "pm_startup_activation_approval",
+            "pm_startup_protocol_dead_end",
+            "pm_startup_repair_request",
+            "pm_terminal_closure_decision",
+            "reviewer_review_report",
+            "startup_fact_report",
+            "terminal_backward_replay_report"
+          ]
+        },
+        "failures": [],
+        "ok": true
+      },
       "contract_ids_present": [
         "flowpilot.output_contract.gate_decision.v1",
         "flowpilot.output_contract.officer_model_report.v1",
@@ -28,11 +56,20 @@
       ],
       "quality_pack_catalog_path_exists": true,
       "runtime_output_types": [
+        "current_node_result_review_pass",
+        "flowguard_model_miss_report",
         "gate_decision",
         "material_sufficiency_report",
         "officer_model_report",
         "pm_control_blocker_repair_decision",
+        "pm_model_miss_triage_decision",
+        "pm_parent_segment_decision",
+        "pm_resume_decision",
         "pm_resume_recovery_decision",
+        "pm_startup_activation_approval",
+        "pm_startup_protocol_dead_end",
+        "pm_startup_repair_request",
+        "pm_terminal_closure_decision",
         "reviewer_review_report",
         "startup_fact_report",
         "terminal_backward_replay_report"

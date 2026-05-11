@@ -98,7 +98,7 @@ class OutputTypeSpec:
     explicit_array_fields: tuple[str, ...] = ()
 
 
-OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
+_BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
     "pm_resume_recovery_decision": OutputTypeSpec(
         output_type="pm_resume_recovery_decision",
         contract_id="flowpilot.output_contract.pm_resume_decision.v1",
@@ -262,6 +262,81 @@ OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
     ),
 }
 
+
+def _default_contract_registry_path() -> Path:
+    return Path(__file__).resolve().parent / "runtime_kit" / "contracts" / "contract_index.json"
+
+
+def _registry_text(item: dict[str, Any], key: str, *, contract_id: str) -> str:
+    value = item.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise RoleOutputRuntimeError(f"{contract_id} runtime binding is missing {key}")
+    return value.strip()
+
+
+def _registry_text_list(item: dict[str, Any], key: str) -> tuple[str, ...]:
+    value = item.get(key)
+    if not isinstance(value, list):
+        return ()
+    return tuple(str(part).strip() for part in value if str(part).strip())
+
+
+def _registry_event_name(item: dict[str, Any], *, contract_id: str) -> str | None:
+    mode = item.get("router_event_mode")
+    if mode == "fixed":
+        return _registry_text(item, "router_event", contract_id=contract_id)
+    if mode == "router_supplied":
+        return None
+    raise RoleOutputRuntimeError(f"{contract_id} runtime binding has unsupported router_event_mode: {mode!r}")
+
+
+def _spec_from_registry_contract(item: dict[str, Any], *, output_type: str) -> OutputTypeSpec:
+    contract_id = _registry_text(item, "contract_id", contract_id="<unknown>")
+    allowed_roles = _registry_text_list(item, "recipient_roles")
+    if not allowed_roles:
+        raise RoleOutputRuntimeError(f"{contract_id} runtime binding has no recipient_roles")
+    return OutputTypeSpec(
+        output_type=output_type,
+        contract_id=contract_id,
+        allowed_roles=allowed_roles,
+        path_key=_registry_text(item, "path_key", contract_id=contract_id),
+        hash_key=_registry_text(item, "hash_key", contract_id=contract_id),
+        default_subdir=_registry_text(item, "default_subdir", contract_id=contract_id),
+        default_filename_prefix=_registry_text(item, "default_filename_prefix", contract_id=contract_id),
+        event_name=_registry_event_name(item, contract_id=contract_id),
+        body_schema_version=str(item.get("body_schema_version") or "").strip() or None,
+        explicit_array_fields=_registry_text_list(item, "explicit_array_fields"),
+    )
+
+
+def _load_registry_output_type_specs(path: Path) -> dict[str, OutputTypeSpec]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise RoleOutputRuntimeError(f"output contract registry root must be an object: {path}")
+    specs: dict[str, OutputTypeSpec] = {}
+    contracts = payload.get("contracts")
+    if not isinstance(contracts, list):
+        raise RoleOutputRuntimeError(f"output contract registry contracts must be a list: {path}")
+    for item in contracts:
+        if not isinstance(item, dict) or item.get("runtime_channel") != "role_output_runtime":
+            continue
+        contract_id = _registry_text(item, "contract_id", contract_id="<unknown>")
+        output_type = _registry_text(item, "output_type", contract_id=contract_id)
+        specs[output_type] = _spec_from_registry_contract(item, output_type=output_type)
+        for alias in _registry_text_list(item, "output_type_aliases"):
+            specs[alias] = _spec_from_registry_contract(item, output_type=alias)
+    return specs
+
+
+def _output_type_specs() -> dict[str, OutputTypeSpec]:
+    specs = dict(_BUILTIN_OUTPUT_TYPE_SPECS)
+    registry_path = _default_contract_registry_path()
+    if registry_path.exists():
+        specs.update(_load_registry_output_type_specs(registry_path))
+    return specs
+
+
+OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = _output_type_specs()
 SUPPORTED_OUTPUT_TYPES = frozenset(OUTPUT_TYPE_SPECS)
 
 

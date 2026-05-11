@@ -365,7 +365,29 @@
       ],
       "contract_self_check_required": true,
       "reviewer_independent_challenge_required": true,
-      "reviewer_must_block_missing_or_failed_check": true
+      "reviewer_must_block_missing_or_failed_check": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "reviewer_review_report",
+      "body_schema_version": "flowpilot.reviewer_review_report.v1",
+      "default_subdir": "reviews",
+      "default_filename_prefix": "reviewer_review_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "router_supplied",
+      "explicit_array_fields": [
+        "direct_evidence_paths_checked",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.officer_model_report.v1",
@@ -388,7 +410,22 @@
         "pm_suggestion_items",
         "contract_self_check"
       ],
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "officer_model_report",
+      "body_schema_version": "flowpilot.officer_model_report.v1",
+      "default_subdir": "officer_reports",
+      "default_filename_prefix": "officer_model_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "router_supplied",
+      "explicit_array_fields": [
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "pm_suggestion_items"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
@@ -415,7 +452,24 @@
       "required_body_values": {},
       "same_class_scope_required": true,
       "minimal_sufficient_repair_required": true,
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "flowguard_model_miss_report",
+      "body_schema_version": "flowpilot.flowguard_model_miss_report.v1",
+      "default_subdir": "officer_reports",
+      "default_filename_prefix": "flowguard_model_miss_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "router_supplied",
+      "explicit_array_fields": [
+        "same_class_findings",
+        "coverage_added",
+        "candidate_repairs",
+        "rejected_larger_repairs",
+        "rejected_smaller_repairs",
+        "post_repair_model_checks_required",
+        "residual_blindspots"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.pm_model_miss_triage_decision.v1",
@@ -473,7 +527,18 @@
         "out_of_scope_repair_requires_flowguard_incapability_reason",
         "non_authorizing_decisions_do_not_unlock_review_repair"
       ],
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_model_miss_triage_decision",
+      "body_schema_version": "flowpilot.pm_model_miss_triage_decision.v1",
+      "default_subdir": "defects/model_miss_triage",
+      "default_filename_prefix": "pm_model_miss_triage_decision",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "explicit_array_fields": [
+        "blockers"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.startup_fact_report.v1",
@@ -511,7 +576,32 @@
         "external_fact_review.reviewed_by_role": "human_like_reviewer",
         "external_fact_review.self_attested_ai_claims_accepted_as_proof": false
       },
-      "reviewer_independent_challenge_required": true
+      "reviewer_independent_challenge_required": true,
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "startup_fact_report",
+      "body_schema_version": "flowpilot.startup_fact_report.v1",
+      "default_subdir": "reviews",
+      "default_filename_prefix": "startup_fact_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "fixed",
+      "router_event": "reviewer_reports_startup_facts",
+      "explicit_array_fields": [
+        "external_fact_review.direct_evidence_paths_checked",
+        "external_fact_review.reviewer_checked_requirement_ids",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.pm_startup_activation_approval.v1",
@@ -527,7 +617,17 @@
       "required_body_values": {
         "approved_by_role": "project_manager",
         "decision": "approved"
-      }
+      },
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_startup_activation_approval",
+      "body_schema_version": "flowpilot.pm_startup_activation_approval.v1",
+      "default_subdir": "startup",
+      "default_filename_prefix": "pm_startup_activation_approval",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "router_event": "pm_approves_startup_activation"
     },
     {
       "contract_id": "flowpilot.output_contract.pm_startup_repair_request.v1",
@@ -554,6 +654,19 @@
         "project_manager",
         "worker_a",
         "worker_b"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_startup_repair_request",
+      "body_schema_version": "flowpilot.pm_startup_repair_request.v1",
+      "default_subdir": "startup",
+      "default_filename_prefix": "pm_startup_repair_request",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "router_event": "pm_requests_startup_repair",
+      "explicit_array_fields": [
+        "blockers"
       ]
     },
     {
@@ -576,7 +689,21 @@
         "declared_by_role": "project_manager",
         "decision": "protocol_dead_end",
         "no_legal_repair_path": true
-      }
+      },
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_startup_protocol_dead_end",
+      "body_schema_version": "flowpilot.pm_startup_protocol_dead_end.v1",
+      "default_subdir": "startup",
+      "default_filename_prefix": "pm_startup_protocol_dead_end",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "router_event": "pm_declares_startup_protocol_dead_end",
+      "explicit_array_fields": [
+        "attempted_legal_paths",
+        "resume_conditions"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
@@ -612,7 +739,30 @@
         "direct_material_sources_checked": true,
         "packet_matches_checked_sources": true
       },
-      "reviewer_independent_challenge_required": true
+      "reviewer_independent_challenge_required": true,
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "material_sufficiency_report",
+      "body_schema_version": "flowpilot.material_sufficiency_report.v1",
+      "default_subdir": "reviews",
+      "default_filename_prefix": "material_sufficiency_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "router_supplied",
+      "explicit_array_fields": [
+        "checked_source_paths",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.current_node_result_review_pass.v1",
@@ -652,7 +802,31 @@
         "per_packet_findings",
         "overall_passed"
       ],
-      "reviewer_independent_challenge_required": true
+      "reviewer_independent_challenge_required": true,
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "current_node_result_review_pass",
+      "body_schema_version": "flowpilot.current_node_result_review_pass.v1",
+      "default_subdir": "reviews",
+      "default_filename_prefix": "current_node_result_review_pass",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "fixed",
+      "router_event": "current_node_reviewer_passes_result",
+      "explicit_array_fields": [
+        "direct_evidence_paths_checked",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
@@ -695,6 +869,24 @@
         "success",
         "blocker",
         "protocol_blocker"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_control_blocker_repair_decision",
+      "body_schema_version": "flowpilot.pm_control_blocker_repair_decision.v1",
+      "default_subdir": "control_blocks",
+      "default_filename_prefix": "pm_control_blocker_repair_decision",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "router_event": "pm_records_control_blocker_repair_decision",
+      "explicit_array_fields": [
+        "blockers",
+        "repair_transaction.replacement_packets",
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered"
       ]
     },
     {
@@ -753,7 +945,24 @@
         "ambiguous_resume_continue_requires_explicit_recovery_evidence",
         "terminal_resume_close_requires_final_ledger_and_backward_replay"
       ],
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_resume_decision",
+      "output_type_aliases": [
+        "pm_resume_recovery_decision"
+      ],
+      "body_schema_version": "flowpilot.pm_resume_decision.v1",
+      "default_subdir": "continuation",
+      "default_filename_prefix": "pm_resume_decision",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "explicit_array_fields": [
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.pm_parent_segment_decision.v1",
@@ -801,7 +1010,21 @@
         "parent_backward_replay_exists",
         "non_continue_requires_route_mutation_and_same_parent_replay_rerun"
       ],
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_parent_segment_decision",
+      "body_schema_version": "flowpilot.pm_parent_segment_decision.v1",
+      "default_subdir": "routes",
+      "default_filename_prefix": "pm_parent_segment_decision",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "explicit_array_fields": [
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.pm_terminal_closure_decision.v1",
@@ -848,7 +1071,21 @@
         "lifecycle_ledgers_clean",
         "continuation_binding_closed_by_router"
       ],
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_terminal_closure_decision",
+      "body_schema_version": "flowpilot.pm_terminal_closure_decision.v1",
+      "default_subdir": "closure",
+      "default_filename_prefix": "pm_terminal_closure_decision",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "explicit_array_fields": [
+        "prior_path_context_review.completed_nodes_considered",
+        "prior_path_context_review.superseded_nodes_considered",
+        "prior_path_context_review.stale_evidence_considered",
+        "prior_path_context_review.prior_blocks_or_experiments_considered"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.gate_decision.v1",
@@ -950,7 +1187,20 @@
         "process_flowguard_officer",
         "product_flowguard_officer"
       ],
-      "contract_self_check_required": true
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "gate_decision",
+      "body_schema_version": "flowpilot.gate_decision.v1",
+      "default_subdir": "gate_decisions",
+      "default_filename_prefix": "gate_decision",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "fixed",
+      "router_event": "role_records_gate_decision",
+      "explicit_array_fields": [
+        "required_evidence",
+        "evidence_refs"
+      ]
     },
     {
       "contract_id": "flowpilot.output_contract.terminal_backward_replay_report.v1",
@@ -988,7 +1238,29 @@
         "passed": true,
         "pm_segment_decision": "continue"
       },
-      "reviewer_independent_challenge_required": true
+      "reviewer_independent_challenge_required": true,
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "terminal_backward_replay_report",
+      "body_schema_version": "flowpilot.terminal_backward_replay_report.v1",
+      "default_subdir": "reviews",
+      "default_filename_prefix": "terminal_backward_replay_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "fixed",
+      "router_event": "reviewer_final_backward_replay_passed",
+      "explicit_array_fields": [
+        "segment_reviews",
+        "direct_evidence_paths_checked",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.challenge_waivers"
+      ]
     }
   ]
 }

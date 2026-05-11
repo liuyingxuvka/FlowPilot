@@ -35,7 +35,8 @@ Before approving, verify that the reviewer report covers:
 - display-surface evidence;
 - old-state and old-asset quarantine.
 
-If the report is clean, approve startup activation through Controller.
+If the report is clean, approve startup activation through the role-output
+runtime with output type `pm_startup_activation_approval`.
 
 If the report contains findings that are not worth a targeted repair, you may
 still approve only with a file-backed PM findings decision. This decision must
@@ -60,6 +61,14 @@ unsafe, define resume conditions, and stop all work beyond startup.
 Write the full decision body to the run-scoped decision file requested by
 Router state and submit the runtime-generated envelope directly to Router. Use
 the exact field names below.
+
+Use these exact runtime bindings. These are registry-backed output types with
+fixed Router events, so do not invent an output type or route through a
+Controller-readable decision body:
+
+- Approval: `flowpilot_runtime.py prepare-output --output-type pm_startup_activation_approval --role project_manager --agent-id <agent-id>`, then `flowpilot_runtime.py submit-output-to-router`; Router records `pm_approves_startup_activation`.
+- Repair request: use `--output-type pm_startup_repair_request`; Router records `pm_requests_startup_repair`.
+- Protocol dead-end: use `--output-type pm_startup_protocol_dead_end`; Router records `pm_declares_startup_protocol_dead_end`.
 
 Approval body:
 

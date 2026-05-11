@@ -88,6 +88,47 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "role_output_ledger.json")
         self.assertEqual(ledger["outputs"][0]["output_type"], "pm_resume_recovery_decision")
 
+    def test_registry_backed_output_types_are_preparable(self) -> None:
+        root = self.make_project()
+        registry = self.read_json(ASSETS / "runtime_kit" / "contracts" / "contract_index.json")
+        for contract in registry["contracts"]:
+            if contract.get("runtime_channel") != "role_output_runtime":
+                continue
+            output_types = [contract["output_type"], *contract.get("output_type_aliases", [])]
+            expected_event = contract.get("router_event") if contract.get("router_event_mode") == "fixed" else None
+            for output_type in output_types:
+                session = role_output_runtime.prepare_output_session(
+                    root,
+                    output_type=output_type,
+                    role=contract["recipient_roles"][0],
+                    agent_id=f"agent-{output_type}",
+                )
+                self.assertEqual(session["output_type"], output_type)
+                self.assertEqual(session["output_contract_id"], contract["contract_id"])
+                self.assertEqual(session["event_name"], expected_event)
+                self.assertEqual(session["path_key"], contract["path_key"])
+                self.assertEqual(session["hash_key"], contract["hash_key"])
+
+    def test_startup_activation_approval_is_registry_bound_runtime_output(self) -> None:
+        root = self.make_project()
+        envelope = role_output_runtime.submit_output(
+            root,
+            output_type="pm_startup_activation_approval",
+            role="project_manager",
+            agent_id="agent-pm-startup",
+            body={"decision": "approved"},
+        )
+
+        self.assertEqual(envelope["event_name"], "pm_approves_startup_activation")
+        self.assertEqual(
+            envelope["output_contract_id"],
+            "flowpilot.output_contract.pm_startup_activation_approval.v1",
+        )
+        body = self.read_json(root / envelope["body_ref"]["path"])
+        self.assertEqual(body["schema_version"], "flowpilot.pm_startup_activation_approval.v1")
+        self.assertEqual(body["approved_by_role"], "project_manager")
+        self.assertEqual(body["decision"], "approved")
+
     def test_router_validates_runtime_receipt_when_loading_role_output(self) -> None:
         root = self.make_project()
         envelope = role_output_runtime.submit_output(

@@ -21,8 +21,15 @@ RESULTS_PATH = ROOT / "flowpilot_role_output_runtime_results.json"
 
 REQUIRED_LABELS = (
     "select_valid_pm_resume_decision",
+    "select_valid_startup_activation_approval",
     "select_valid_gate_decision",
     "select_valid_reviewer_report",
+    "select_missing_registry_runtime_binding",
+    "select_registry_contract_id_mismatch",
+    "select_registry_allowed_role_mismatch",
+    "select_registry_router_event_missing",
+    "select_unregistered_runtime_output_type",
+    "select_broken_compat_output_alias",
     "select_missing_runtime_receipt",
     "select_missing_required_field",
     "select_missing_explicit_empty_array",
@@ -39,6 +46,12 @@ REQUIRED_LABELS = (
     "runtime_validates_writes_receipt_and_envelope",
     "runtime_submits_role_output_directly_to_router",
     "router_accepts_runtime_checked_role_output",
+    "router_rejects_missing_registry_runtime_binding",
+    "router_rejects_registry_contract_id_mismatch",
+    "router_rejects_registry_allowed_role_mismatch",
+    "router_rejects_registry_router_event_missing",
+    "router_rejects_unregistered_runtime_output_type",
+    "router_rejects_broken_compat_output_alias",
     "router_rejects_missing_runtime_receipt",
     "router_rejects_missing_required_field",
     "router_rejects_missing_explicit_empty_array",
@@ -53,6 +66,12 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
+    "missing_registry_runtime_binding": "without registry runtime binding",
+    "registry_contract_id_mismatch": "registry/runtime contract id mismatch",
+    "registry_allowed_role_mismatch": "registry/runtime allowed role mismatch",
+    "registry_router_event_missing": "missing Router event binding",
+    "unregistered_runtime_output_type": "not declared by registry",
+    "broken_compat_output_alias": "broken compatibility output alias",
     "missing_runtime_receipt": "without runtime receipt",
     "missing_required_field": "missing required field",
     "missing_explicit_empty_array": "missing explicit empty array",
@@ -92,6 +111,20 @@ REQUIRED_CONTRACT_IDS = {
     "flowpilot.output_contract.officer_model_report.v1",
 }
 
+REGISTRY_BINDING_REQUIRED_FIELDS = {
+    "runtime_channel",
+    "output_type",
+    "body_schema_version",
+    "expected_return_envelope",
+    "default_subdir",
+    "default_filename_prefix",
+    "path_key",
+    "hash_key",
+    "router_event_mode",
+}
+
+ROUTER_EVENT_MODES = {"fixed", "router_supplied"}
+
 ROLE_CARDS = (
     "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
     "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
@@ -106,6 +139,12 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|output={state.output_type}|"
         f"role={state.submitting_role}->{state.allowed_role}|"
+        f"registry={state.registry_runtime_binding_present},"
+        f"{state.registry_contract_id_matches_runtime},"
+        f"{state.registry_allowed_roles_match_runtime},"
+        f"{state.registry_router_event_exists},"
+        f"{state.runtime_output_type_declared_by_registry},"
+        f"{state.compat_output_alias_valid}|"
         f"runtime={state.runtime_receipt_written}|hash={state.body_hash_verified}|"
         f"direct_router={state.direct_router_submission},{state.router_receives_role_output_envelope},"
         f"{state.controller_waits_router_status}|"
@@ -251,6 +290,140 @@ def _contract_ids(project_root: Path) -> set[str]:
     return {str(item.get("contract_id")) for item in contracts if isinstance(item, dict)}
 
 
+def _registry_contracts(project_root: Path) -> list[dict[str, Any]]:
+    path = project_root / "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json"
+    if not path.exists():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    contracts = payload.get("contracts") if isinstance(payload, dict) else []
+    return [item for item in contracts if isinstance(item, dict)]
+
+
+def _runtime_binding_contracts(contracts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in contracts
+        if item.get("runtime_channel") == "role_output_runtime"
+        or item.get("expected_return_envelope") == "role_output_envelope"
+        or item.get("task_family") == "pm.startup_activation"
+    ]
+
+
+def _runtime_specs(runtime: Any) -> dict[str, Any]:
+    specs = getattr(runtime, "OUTPUT_TYPE_SPECS", {})
+    if isinstance(specs, dict):
+        return specs
+    return {}
+
+
+def _router_events(project_root: Path) -> set[str]:
+    assets = project_root / "skills/flowpilot/assets"
+    if str(assets) not in sys.path:
+        sys.path.insert(0, str(assets))
+    try:
+        router = importlib.import_module("flowpilot_router")
+    except Exception:  # pragma: no cover - diagnostics handle import failure elsewhere
+        return set()
+    events = getattr(router, "EXTERNAL_EVENTS", {})
+    return {str(name) for name in events} if isinstance(events, dict) else set()
+
+
+def _binding_source_report(project_root: Path, runtime: Any) -> dict[str, object]:
+    failures: list[str] = []
+    contracts = _registry_contracts(project_root)
+    bound_contracts = _runtime_binding_contracts(contracts)
+    specs = _runtime_specs(runtime)
+    router_events = _router_events(project_root)
+
+    contracts_by_id = {str(item.get("contract_id")): item for item in contracts}
+    declared_output_types: set[str] = set()
+    declared_aliases: set[str] = set()
+
+    for contract in bound_contracts:
+        contract_id = str(contract.get("contract_id") or "")
+        missing_fields = sorted(
+            field
+            for field in REGISTRY_BINDING_REQUIRED_FIELDS
+            if contract.get(field) in (None, "", [])
+        )
+        if missing_fields:
+            failures.append(f"{contract_id}: registry binding missing fields {missing_fields}")
+            continue
+
+        if contract.get("runtime_channel") != "role_output_runtime":
+            failures.append(f"{contract_id}: runtime_channel must be role_output_runtime")
+        if contract.get("expected_return_envelope") != "role_output_envelope":
+            failures.append(f"{contract_id}: expected_return_envelope must be role_output_envelope")
+
+        event_mode = str(contract.get("router_event_mode") or "")
+        if event_mode not in ROUTER_EVENT_MODES:
+            failures.append(f"{contract_id}: router_event_mode must be one of {sorted(ROUTER_EVENT_MODES)}")
+        if event_mode == "fixed":
+            router_event = str(contract.get("router_event") or "")
+            if not router_event:
+                failures.append(f"{contract_id}: fixed router_event_mode requires router_event")
+            elif router_event not in router_events:
+                failures.append(f"{contract_id}: router_event {router_event!r} is not handled by Router")
+
+        output_type = str(contract.get("output_type") or "")
+        declared_output_types.add(output_type)
+        spec = specs.get(output_type)
+        if spec is None:
+            failures.append(f"{contract_id}: runtime missing output_type {output_type!r}")
+        else:
+            if getattr(spec, "contract_id", None) != contract_id:
+                failures.append(
+                    f"{contract_id}: runtime output_type {output_type!r} points at "
+                    f"{getattr(spec, 'contract_id', None)!r}"
+                )
+            if tuple(contract.get("recipient_roles") or ()) != tuple(getattr(spec, "allowed_roles", ())):
+                failures.append(f"{contract_id}: runtime allowed_roles differ from registry recipient_roles")
+            for attr, field in (
+                ("body_schema_version", "body_schema_version"),
+                ("default_subdir", "default_subdir"),
+                ("default_filename_prefix", "default_filename_prefix"),
+                ("path_key", "path_key"),
+                ("hash_key", "hash_key"),
+            ):
+                if getattr(spec, attr, None) != contract.get(field):
+                    failures.append(f"{contract_id}: runtime {attr} differs from registry {field}")
+            expected_event = contract.get("router_event") if event_mode == "fixed" else None
+            if getattr(spec, "event_name", None) != expected_event:
+                failures.append(f"{contract_id}: runtime event_name differs from registry router_event binding")
+
+        for alias in contract.get("output_type_aliases") or []:
+            alias = str(alias)
+            declared_aliases.add(alias)
+            alias_spec = specs.get(alias)
+            if alias_spec is None:
+                failures.append(f"{contract_id}: runtime missing alias output_type {alias!r}")
+            elif getattr(alias_spec, "contract_id", None) != contract_id:
+                failures.append(f"{contract_id}: alias output_type {alias!r} points at wrong contract")
+
+    declared_contract_ids = {str(item.get("contract_id")) for item in bound_contracts}
+    for output_type, spec in specs.items():
+        output_type = str(output_type)
+        contract_id = str(getattr(spec, "contract_id", ""))
+        if contract_id not in contracts_by_id:
+            failures.append(f"{output_type}: runtime contract_id {contract_id!r} is absent from registry")
+            continue
+        if contract_id not in declared_contract_ids:
+            failures.append(f"{output_type}: runtime contract {contract_id!r} is not declared runtime-backed")
+            continue
+        if output_type not in declared_output_types and output_type not in declared_aliases:
+            failures.append(f"{output_type}: runtime output_type is not declared by registry or aliases")
+
+    return {
+        "ok": not failures,
+        "failures": failures,
+        "facts": {
+            "bound_contract_count": len(bound_contracts),
+            "declared_output_types": sorted(declared_output_types),
+            "declared_aliases": sorted(declared_aliases),
+        },
+    }
+
+
 def _source_report(project_root: Path) -> dict[str, object]:
     failures: list[str] = []
     assets = project_root / "skills/flowpilot/assets"
@@ -302,6 +475,10 @@ def _source_report(project_root: Path) -> dict[str, object]:
         failures.append("PM output contract catalog missing submit-output-to-router guidance")
 
     runtime_output_types: set[str] = set()
+    binding_report: dict[str, object] = {
+        "ok": False,
+        "failures": ["role_output_runtime import did not complete"],
+    }
     if runtime_path.exists():
         runtime_text = runtime_path.read_text(encoding="utf-8")
         if "def update_output_progress" not in runtime_text:
@@ -321,6 +498,9 @@ def _source_report(project_root: Path) -> dict[str, object]:
                 failures.append(f"role_output_runtime missing output types: {missing_types}")
             if not hasattr(runtime, "quality_pack_checks_for_run"):
                 failures.append("role_output_runtime missing generic quality_pack_checks support")
+            binding_report = _binding_source_report(project_root, runtime)
+            if not binding_report["ok"]:
+                failures.extend(str(item) for item in binding_report.get("failures", []))
         except Exception as exc:  # pragma: no cover - diagnostic script
             failures.append(f"role_output_runtime import failed: {exc!r}")
 
@@ -368,6 +548,7 @@ def _source_report(project_root: Path) -> dict[str, object]:
             "quality_pack_catalog_path_exists": quality_pack_catalog_path.exists(),
             "contract_ids_present": sorted(REQUIRED_CONTRACT_IDS & contract_ids),
             "runtime_output_types": sorted(runtime_output_types),
+            "binding_report": binding_report,
         },
     }
 

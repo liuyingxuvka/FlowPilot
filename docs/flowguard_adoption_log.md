@@ -7721,3 +7721,141 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+
+## contract-runtime-gap-audit-20260511 - Audit FlowPilot contract-event-runtime output type gap for startup activation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Protocol/runtime routing mismatch affects stateful role-output submission, router events, and startup activation authority.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T20:38:22+00:00
+- Ended: 2026-05-11T20:38:22+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python simulations\run_flowpilot_role_output_runtime_checks.py --json-out tmp\role_output_runtime_check_current.json`
+- OK (0.000s): `python simulations\run_output_contract_checks.py --json-out tmp\output_contract_check_current.json`
+
+### Findings
+- PM startup activation contracts exist and router events exist, but role_output_runtime lacks matching output types and registry runtime metadata.
+- Current role-output checks are manually enumerated and pass despite contract registry/runtime coverage gaps.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- No production code was changed because this turn used OpenSpec explore/read-only audit framing.
+
+### Next Actions
+- Add registry-backed conformance that every role_output_envelope contract maps to a runtime output type and router event or is explicitly marked non-runtime.
+
+
+## contract-runtime-binding-registry-20260511 - Make FlowPilot role-output contract runtime bindings registry-driven and checked end to end
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Changing role-output runtime, contract registry, router event binding, and startup activation submission affects stateful protocol flow, role authority, route events, and sealed body boundaries.
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-11T20:45:14+00:00
+- Ended: 2026-05-11T20:45:14+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_role_output_runtime_model.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+
+### Findings
+- Risk intent: prevent descriptive contract tables from drifting away from runtime output types, router events, and role cards.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Write detailed binding upgrade plan and then upgrade FlowGuard model/source checks before production code edits.
+
+
+## contract-runtime-binding-registry-20260511 - Make FlowPilot role-output contract runtime bindings registry-driven and checked end to end
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Changing role-output runtime, contract registry, router event binding, and startup activation submission affects stateful protocol flow, role authority, route events, and sealed body boundaries.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T21:15:33+00:00
+- Ended: 2026-05-11T21:15:33+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- simulations/flowpilot_role_output_runtime_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_role_output_runtime_checks.py; python -m unittest tests.test_flowpilot_role_output_runtime -v; python scripts/check_install.py; python simulations/run_meta_checks.py; python simulations/run_capability_checks.py --fast; targeted startup/router unittest set`
+- FAIL (0.000s): `python simulations/run_capability_checks.py (full rerun exceeded 10 minutes; --fast proof remained valid because capability_model.py and runner fingerprint were unchanged)`
+
+### Findings
+- Registry-backed binding source now covers 16 role-output contracts plus pm_resume_recovery_decision compatibility alias; source check fails if a runtime-backed contract lacks output_type, body schema, allowed roles, path/hash keys, default location, or fixed router event.
+- Startup activation approval, repair request, and protocol dead-end are ordinary registry rows and are accepted by flowpilot_runtime.py prepare-output/submit-output-to-router through generated SUPPORTED_OUTPUT_TYPES.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
+
+
+## contract-runtime-binding-registry-20260511 - Make FlowPilot role-output contract runtime bindings registry-driven and checked end to end
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Changing role-output runtime, contract registry, router event binding, and startup activation submission affects stateful protocol flow, role authority, route events, and sealed body boundaries.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T21:15:49+00:00
+- Ended: 2026-05-11T21:15:49+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_role_output_runtime_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_role_output_runtime_checks.py; python -m unittest tests.test_flowpilot_role_output_runtime -v; python scripts/check_install.py; python simulations/run_meta_checks.py; python simulations/run_capability_checks.py --fast; targeted startup/router unittest set`
+
+### Findings
+- Registry-backed binding source now covers 16 role-output contracts plus pm_resume_recovery_decision compatibility alias; source check fails if a runtime-backed contract lacks output_type, body schema, allowed roles, path/hash keys, default location, or fixed router event.
+- Startup activation approval, repair request, and protocol dead-end are ordinary registry rows and are accepted by flowpilot_runtime.py prepare-output/submit-output-to-router through generated SUPPORTED_OUTPUT_TYPES.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Full capability rerun was not treated as required for this change because capability_model.py and run_capability_checks.py were unchanged; python simulations/run_capability_checks.py --fast reused a valid proof. A forced full rerun exceeded 10 minutes.
+
+### Next Actions
+- Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.

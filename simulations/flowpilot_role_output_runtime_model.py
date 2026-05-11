@@ -17,6 +17,9 @@ Risk intent brief:
   wait for Router status.
 - Let route-declared quality packs appear as generic report checklist rows
   without teaching the runtime UI, desktop, localization, or product semantics.
+- Treat the contract registry as the source of truth for runtime-backed role
+  outputs so contracts, output types, allowed roles, aliases, and Router events
+  cannot drift across separate manually maintained lists.
 """
 
 from __future__ import annotations
@@ -28,8 +31,15 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 VALID_PM_RESUME = "valid_pm_resume_decision"
+VALID_STARTUP_ACTIVATION_APPROVAL = "valid_startup_activation_approval"
 VALID_GATE_DECISION = "valid_gate_decision"
 VALID_REVIEWER_REPORT = "valid_reviewer_report"
+MISSING_REGISTRY_RUNTIME_BINDING = "missing_registry_runtime_binding"
+REGISTRY_CONTRACT_ID_MISMATCH = "registry_contract_id_mismatch"
+REGISTRY_ALLOWED_ROLE_MISMATCH = "registry_allowed_role_mismatch"
+REGISTRY_ROUTER_EVENT_MISSING = "registry_router_event_missing"
+UNREGISTERED_RUNTIME_OUTPUT_TYPE = "unregistered_runtime_output_type"
+BROKEN_COMPAT_OUTPUT_ALIAS = "broken_compat_output_alias"
 MISSING_RUNTIME_RECEIPT = "missing_runtime_receipt"
 MISSING_REQUIRED_FIELD = "missing_required_field"
 MISSING_EXPLICIT_EMPTY_ARRAY = "missing_explicit_empty_array"
@@ -44,11 +54,18 @@ PACK_SPECIFIC_RUNTIME_JUDGMENT = "pack_specific_runtime_judgment"
 
 VALID_SCENARIOS = (
     VALID_PM_RESUME,
+    VALID_STARTUP_ACTIVATION_APPROVAL,
     VALID_GATE_DECISION,
     VALID_REVIEWER_REPORT,
 )
 
 NEGATIVE_SCENARIOS = (
+    MISSING_REGISTRY_RUNTIME_BINDING,
+    REGISTRY_CONTRACT_ID_MISMATCH,
+    REGISTRY_ALLOWED_ROLE_MISMATCH,
+    REGISTRY_ROUTER_EVENT_MISSING,
+    UNREGISTERED_RUNTIME_OUTPUT_TYPE,
+    BROKEN_COMPAT_OUTPUT_ALIAS,
     MISSING_RUNTIME_RECEIPT,
     MISSING_REQUIRED_FIELD,
     MISSING_EXPLICIT_EMPTY_ARRAY,
@@ -81,6 +98,15 @@ PM_REVIEW_REASONS = {
     "runtime_attempted_pack_specific_judgment",
 }
 
+PROTOCOL_REPAIR_REASONS = {
+    "missing_registry_runtime_binding",
+    "registry_contract_id_mismatch",
+    "registry_allowed_role_mismatch",
+    "registry_router_event_missing",
+    "unregistered_runtime_output_type",
+    "broken_compat_output_alias",
+}
+
 
 @dataclass(frozen=True)
 class Tick:
@@ -98,6 +124,8 @@ class OutputContract:
     contract_id: str
     allowed_role: str
     requires_explicit_empty_arrays: bool
+    router_event: str
+    alias_output_types: tuple[str, ...] = ()
 
 
 PM_RESUME_CONTRACT = OutputContract(
@@ -105,6 +133,16 @@ PM_RESUME_CONTRACT = OutputContract(
     contract_id="flowpilot.output_contract.pm_resume_decision.v1",
     allowed_role="project_manager",
     requires_explicit_empty_arrays=True,
+    router_event="pm_resume_recovery_decision_returned",
+    alias_output_types=("pm_resume_decision",),
+)
+
+STARTUP_ACTIVATION_APPROVAL_CONTRACT = OutputContract(
+    output_type="pm_startup_activation_approval",
+    contract_id="flowpilot.output_contract.pm_startup_activation_approval.v1",
+    allowed_role="project_manager",
+    requires_explicit_empty_arrays=False,
+    router_event="pm_approves_startup_activation",
 )
 
 GATE_DECISION_CONTRACT = OutputContract(
@@ -112,6 +150,7 @@ GATE_DECISION_CONTRACT = OutputContract(
     contract_id="flowpilot.output_contract.gate_decision.v1",
     allowed_role="human_like_reviewer",
     requires_explicit_empty_arrays=False,
+    router_event="role_records_gate_decision",
 )
 
 REVIEWER_REPORT_CONTRACT = OutputContract(
@@ -119,12 +158,20 @@ REVIEWER_REPORT_CONTRACT = OutputContract(
     contract_id="flowpilot.output_contract.reviewer_review_report.v1",
     allowed_role="human_like_reviewer",
     requires_explicit_empty_arrays=True,
+    router_event="reviewer_reports_current_node_review",
 )
 
 CONTRACTS_BY_SCENARIO = {
     VALID_PM_RESUME: PM_RESUME_CONTRACT,
+    VALID_STARTUP_ACTIVATION_APPROVAL: STARTUP_ACTIVATION_APPROVAL_CONTRACT,
     VALID_GATE_DECISION: GATE_DECISION_CONTRACT,
     VALID_REVIEWER_REPORT: REVIEWER_REPORT_CONTRACT,
+    MISSING_REGISTRY_RUNTIME_BINDING: STARTUP_ACTIVATION_APPROVAL_CONTRACT,
+    REGISTRY_CONTRACT_ID_MISMATCH: STARTUP_ACTIVATION_APPROVAL_CONTRACT,
+    REGISTRY_ALLOWED_ROLE_MISMATCH: STARTUP_ACTIVATION_APPROVAL_CONTRACT,
+    REGISTRY_ROUTER_EVENT_MISSING: STARTUP_ACTIVATION_APPROVAL_CONTRACT,
+    UNREGISTERED_RUNTIME_OUTPUT_TYPE: STARTUP_ACTIVATION_APPROVAL_CONTRACT,
+    BROKEN_COMPAT_OUTPUT_ALIAS: PM_RESUME_CONTRACT,
     MISSING_RUNTIME_RECEIPT: PM_RESUME_CONTRACT,
     MISSING_REQUIRED_FIELD: PM_RESUME_CONTRACT,
     MISSING_EXPLICIT_EMPTY_ARRAY: PM_RESUME_CONTRACT,
@@ -147,6 +194,14 @@ class State:
     contract_id: str = ""
     allowed_role: str = ""
     submitting_role: str = ""
+    router_event: str = ""
+
+    registry_runtime_binding_present: bool = False
+    registry_contract_id_matches_runtime: bool = False
+    registry_allowed_roles_match_runtime: bool = False
+    registry_router_event_exists: bool = False
+    runtime_output_type_declared_by_registry: bool = False
+    compat_output_alias_valid: bool = True
 
     runtime_prepared_skeleton: bool = False
     runtime_required_fields_known: bool = False
@@ -291,7 +346,43 @@ def _pack_specific_runtime_judgment_for(scenario: str) -> bool:
     return scenario == PACK_SPECIFIC_RUNTIME_JUDGMENT
 
 
+def _registry_binding_present_for(scenario: str) -> bool:
+    return scenario != MISSING_REGISTRY_RUNTIME_BINDING
+
+
+def _registry_contract_id_matches_for(scenario: str) -> bool:
+    return scenario != REGISTRY_CONTRACT_ID_MISMATCH
+
+
+def _registry_allowed_roles_match_for(scenario: str) -> bool:
+    return scenario != REGISTRY_ALLOWED_ROLE_MISMATCH
+
+
+def _registry_router_event_exists_for(scenario: str) -> bool:
+    return scenario != REGISTRY_ROUTER_EVENT_MISSING
+
+
+def _runtime_output_declared_for(scenario: str) -> bool:
+    return scenario != UNREGISTERED_RUNTIME_OUTPUT_TYPE
+
+
+def _compat_alias_valid_for(scenario: str) -> bool:
+    return scenario != BROKEN_COMPAT_OUTPUT_ALIAS
+
+
 def _router_rejection_reason(state: State) -> str:
+    if not state.registry_runtime_binding_present:
+        return "missing_registry_runtime_binding"
+    if not state.registry_contract_id_matches_runtime:
+        return "registry_contract_id_mismatch"
+    if not state.registry_allowed_roles_match_runtime:
+        return "registry_allowed_role_mismatch"
+    if not state.registry_router_event_exists:
+        return "registry_router_event_missing"
+    if not state.runtime_output_type_declared_by_registry:
+        return "unregistered_runtime_output_type"
+    if not state.compat_output_alias_valid:
+        return "broken_compat_output_alias"
     if not state.runtime_receipt_written:
         return "missing_runtime_receipt"
     if not state.required_fields_present:
@@ -318,6 +409,8 @@ def _router_rejection_reason(state: State) -> str:
 
 
 def _repair_lane_for(reason: str) -> str:
+    if reason in PROTOCOL_REPAIR_REASONS:
+        return "protocol_registry_repair"
     if reason in ROLE_REISSUE_REASONS:
         return "same_role_reissue"
     if reason in PM_REVIEW_REASONS:
@@ -342,6 +435,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     contract_id=contract.contract_id,
                     allowed_role=contract.allowed_role,
                     submitting_role=_submitting_role_for(scenario, contract),
+                    router_event=contract.router_event,
+                    registry_runtime_binding_present=_registry_binding_present_for(scenario),
+                    registry_contract_id_matches_runtime=_registry_contract_id_matches_for(scenario),
+                    registry_allowed_roles_match_runtime=_registry_allowed_roles_match_for(scenario),
+                    registry_router_event_exists=_registry_router_event_exists_for(scenario),
+                    runtime_output_type_declared_by_registry=_runtime_output_declared_for(scenario),
+                    compat_output_alias_valid=_compat_alias_valid_for(scenario),
                 ),
             )
         return
@@ -438,6 +538,25 @@ def accepted_outputs_have_runtime_receipt(state: State, trace) -> InvariantResul
     del trace
     if state.status == "accepted" and not state.runtime_receipt_written:
         return InvariantResult.fail("accepted role output without runtime receipt")
+    return InvariantResult.pass_()
+
+
+def accepted_outputs_have_registry_binding(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    if not state.registry_runtime_binding_present:
+        return InvariantResult.fail("accepted role output without registry runtime binding")
+    if not state.registry_contract_id_matches_runtime:
+        return InvariantResult.fail("accepted role output with registry/runtime contract id mismatch")
+    if not state.registry_allowed_roles_match_runtime:
+        return InvariantResult.fail("accepted role output with registry/runtime allowed role mismatch")
+    if not state.registry_router_event_exists:
+        return InvariantResult.fail("accepted role output with missing Router event binding")
+    if not state.runtime_output_type_declared_by_registry:
+        return InvariantResult.fail("accepted runtime output type not declared by registry")
+    if not state.compat_output_alias_valid:
+        return InvariantResult.fail("accepted role output with broken compatibility output alias")
     return InvariantResult.pass_()
 
 
@@ -569,6 +688,17 @@ def boundary_violations_route_to_pm_review(state: State, trace) -> InvariantResu
     return InvariantResult.pass_()
 
 
+def registry_binding_violations_route_to_protocol_repair(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.status == "rejected"
+        and state.router_rejection_reason in PROTOCOL_REPAIR_REASONS
+        and state.repair_lane != "protocol_registry_repair"
+    ):
+        return InvariantResult.fail("registry binding violation did not route to protocol registry repair")
+    return InvariantResult.pass_()
+
+
 def negative_scenarios_are_rejected(state: State, trace) -> InvariantResult:
     del trace
     if state.status == "accepted" and state.scenario in NEGATIVE_SCENARIOS:
@@ -579,6 +709,11 @@ def negative_scenarios_are_rejected(state: State, trace) -> InvariantResult:
 
 
 INVARIANTS = (
+    Invariant(
+        name="accepted_outputs_have_registry_binding",
+        description="Router acceptance requires a registry-backed contract/output type/role/event binding.",
+        predicate=accepted_outputs_have_registry_binding,
+    ),
     Invariant(
         name="accepted_outputs_have_runtime_receipt",
         description="Router acceptance requires a role-output runtime validation receipt.",
@@ -645,6 +780,11 @@ INVARIANTS = (
         predicate=boundary_violations_route_to_pm_review,
     ),
     Invariant(
+        name="registry_binding_violations_route_to_protocol_repair",
+        description="Contract/runtime/router binding drift routes to protocol registry repair.",
+        predicate=registry_binding_violations_route_to_protocol_repair,
+    ),
+    Invariant(
         name="negative_scenarios_are_rejected",
         description="Every invalid role-output runtime scenario must be rejected.",
         predicate=negative_scenarios_are_rejected,
@@ -680,6 +820,13 @@ def _accepted_base(**changes: object) -> State:
         contract_id=PM_RESUME_CONTRACT.contract_id,
         allowed_role=PM_RESUME_CONTRACT.allowed_role,
         submitting_role=PM_RESUME_CONTRACT.allowed_role,
+        router_event=PM_RESUME_CONTRACT.router_event,
+        registry_runtime_binding_present=True,
+        registry_contract_id_matches_runtime=True,
+        registry_allowed_roles_match_runtime=True,
+        registry_router_event_exists=True,
+        runtime_output_type_declared_by_registry=True,
+        compat_output_alias_valid=True,
         runtime_prepared_skeleton=True,
         runtime_required_fields_known=True,
         role_authored_body=True,
@@ -703,6 +850,12 @@ def _accepted_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
+        "missing_registry_runtime_binding": _accepted_base(registry_runtime_binding_present=False),
+        "registry_contract_id_mismatch": _accepted_base(registry_contract_id_matches_runtime=False),
+        "registry_allowed_role_mismatch": _accepted_base(registry_allowed_roles_match_runtime=False),
+        "registry_router_event_missing": _accepted_base(registry_router_event_exists=False),
+        "unregistered_runtime_output_type": _accepted_base(runtime_output_type_declared_by_registry=False),
+        "broken_compat_output_alias": _accepted_base(compat_output_alias_valid=False),
         "missing_runtime_receipt": _accepted_base(runtime_receipt_written=False),
         "missing_required_field": _accepted_base(required_fields_present=False),
         "missing_explicit_empty_array": _accepted_base(explicit_empty_arrays_present=False),

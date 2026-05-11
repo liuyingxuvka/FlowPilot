@@ -12,6 +12,65 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+ROLE_OUTPUT_BINDING_REQUIRED_FIELDS = {
+    "runtime_channel",
+    "output_type",
+    "body_schema_version",
+    "expected_return_envelope",
+    "default_subdir",
+    "default_filename_prefix",
+    "path_key",
+    "hash_key",
+    "router_event_mode",
+}
+
+
+def _role_output_runtime_binding_issues(flowpilot_router, role_output_runtime):
+    registry_path = ROOT / "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json"
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    runtime_specs = getattr(role_output_runtime, "OUTPUT_TYPE_SPECS", {})
+    router_events = set(getattr(flowpilot_router, "EXTERNAL_EVENTS", {}))
+    issues = []
+    for item in registry.get("contracts", []):
+        if not isinstance(item, dict) or item.get("runtime_channel") != "role_output_runtime":
+            continue
+        contract_id = str(item.get("contract_id") or "")
+        missing = sorted(field for field in ROLE_OUTPUT_BINDING_REQUIRED_FIELDS if not item.get(field))
+        if missing:
+            issues.append(f"{contract_id}: missing runtime binding fields {missing}")
+            continue
+        if item.get("expected_return_envelope") != "role_output_envelope":
+            issues.append(f"{contract_id}: expected_return_envelope must be role_output_envelope")
+        if item.get("router_event_mode") == "fixed":
+            router_event = str(item.get("router_event") or "")
+            if router_event not in router_events:
+                issues.append(f"{contract_id}: fixed router_event is not registered: {router_event}")
+        elif item.get("router_event_mode") != "router_supplied":
+            issues.append(f"{contract_id}: router_event_mode must be fixed or router_supplied")
+        output_types = [item.get("output_type"), *item.get("output_type_aliases", [])]
+        for output_type in [str(value) for value in output_types if value]:
+            spec = runtime_specs.get(output_type)
+            if spec is None:
+                issues.append(f"{contract_id}: runtime missing output_type {output_type}")
+                continue
+            comparisons = {
+                "contract_id": contract_id,
+                "body_schema_version": item.get("body_schema_version"),
+                "path_key": item.get("path_key"),
+                "hash_key": item.get("hash_key"),
+                "default_subdir": item.get("default_subdir"),
+                "default_filename_prefix": item.get("default_filename_prefix"),
+            }
+            for attr, expected in comparisons.items():
+                if getattr(spec, attr, None) != expected:
+                    issues.append(f"{contract_id}: {output_type}.{attr} does not match registry")
+            if tuple(str(role) for role in item.get("recipient_roles", [])) != getattr(spec, "allowed_roles", ()):
+                issues.append(f"{contract_id}: {output_type}.allowed_roles does not match registry")
+            expected_event = item.get("router_event") if item.get("router_event_mode") == "fixed" else None
+            if getattr(spec, "event_name", None) != expected_event:
+                issues.append(f"{contract_id}: {output_type}.event_name does not match registry")
+    return issues
+
 
 REQUIRED_FILES = [
     "README.md",
@@ -634,6 +693,9 @@ def main() -> int:
             role_output_runtime_ok = bool(
                 getattr(role_output_runtime, "ROLE_OUTPUT_RUNTIME_SCHEMA", None)
                 and "pm_resume_recovery_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
+                and "pm_startup_activation_approval" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
+                and "pm_startup_repair_request" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
+                and "pm_startup_protocol_dead_end" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and "gate_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and hasattr(role_output_runtime, "quality_pack_checks_for_run")
             )
@@ -646,6 +708,18 @@ def main() -> int:
                 }
             )
             if not role_output_runtime_ok:
+                result["ok"] = False
+            role_output_binding_issues = _role_output_runtime_binding_issues(flowpilot_router, role_output_runtime)
+            role_output_binding_ok = not role_output_binding_issues
+            result["checks"].append(
+                {
+                    "name": "flowpilot_role_output_runtime_registry_bindings",
+                    "ok": role_output_binding_ok,
+                    "issue_count": len(role_output_binding_issues),
+                    "issues": role_output_binding_issues,
+                }
+            )
+            if not role_output_binding_ok:
                 result["ok"] = False
             cli_cases = [
                 ["--root", str(ROOT), "next", "--json"],
@@ -696,7 +770,7 @@ def main() -> int:
                     str(ROOT),
                     "prepare-output",
                     "--output-type",
-                    "pm_resume_recovery_decision",
+                    "pm_startup_activation_approval",
                     "--role",
                     "project_manager",
                     "--agent-id",
@@ -740,7 +814,7 @@ def main() -> int:
                     str(ROOT),
                     "prepare-output",
                     "--output-type",
-                    "pm_resume_recovery_decision",
+                    "pm_startup_activation_approval",
                     "--role",
                     "project_manager",
                     "--agent-id",
