@@ -21,6 +21,7 @@ CARD_BUNDLE_ENVELOPE_SCHEMA = "flowpilot.card_bundle_envelope.v1"
 CARD_READ_RECEIPT_SCHEMA = "flowpilot.card_read_receipt.v1"
 CARD_ACK_ENVELOPE_SCHEMA = "flowpilot.card_ack_envelope.v1"
 CARD_BUNDLE_ACK_ENVELOPE_SCHEMA = "flowpilot.card_bundle_ack_envelope.v1"
+CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA = "flowpilot.direct_router_ack_token.v1"
 CARD_LEDGER_SCHEMA = "flowpilot.card_ledger.v1"
 RETURN_EVENT_LEDGER_SCHEMA = "flowpilot.return_event_ledger.v1"
 
@@ -150,6 +151,102 @@ def _validate_target_identity(envelope: dict[str, Any], *, role: str, agent_id: 
     target_agent = envelope.get("target_agent_id")
     if isinstance(target_agent, str) and target_agent and target_agent != agent_id:
         raise CardRuntimeError("card envelope target agent mismatch")
+
+
+def _validate_direct_router_ack_token(
+    envelope: dict[str, Any],
+    *,
+    role: str,
+    agent_id: str,
+    bundle: bool,
+) -> tuple[dict[str, Any], str]:
+    token = envelope.get("direct_router_ack_token")
+    if not isinstance(token, dict):
+        raise CardRuntimeError("card envelope missing direct Router ACK token")
+    if token.get("schema_version") != CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA:
+        raise CardRuntimeError("direct Router ACK token schema mismatch")
+    if token.get("submission_mode") != "direct_to_router":
+        raise CardRuntimeError("card ACK token must submit directly to Router")
+    if token.get("controller_ack_handoff_allowed") is not False:
+        raise CardRuntimeError("card ACK token must forbid Controller ACK handoff")
+    expected_kind = "system_card_bundle" if bundle else "system_card"
+    if token.get("return_kind") != expected_kind:
+        raise CardRuntimeError("card ACK token return kind mismatch")
+    checks = {
+        "run_id": envelope.get("run_id"),
+        "target_role": role,
+        "target_agent_id": envelope.get("target_agent_id"),
+        "card_return_event": envelope.get("card_return_event"),
+        "expected_return_path": envelope.get("expected_return_path"),
+    }
+    for key, expected in checks.items():
+        if expected is not None and token.get(key) != expected:
+            raise CardRuntimeError(f"card ACK token {key} mismatch")
+    token_agent = token.get("target_agent_id")
+    if isinstance(token_agent, str) and token_agent and token_agent != agent_id:
+        raise CardRuntimeError("card ACK token target_agent_id mismatch")
+    if bundle:
+        if token.get("card_bundle_id") != envelope.get("bundle_id"):
+            raise CardRuntimeError("card ACK token bundle id mismatch")
+        if token.get("card_ids") != envelope.get("card_ids"):
+            raise CardRuntimeError("card ACK token bundle card ids mismatch")
+        if token.get("expected_receipt_paths") != envelope.get("expected_receipt_paths"):
+            raise CardRuntimeError("card ACK token bundle receipt paths mismatch")
+    else:
+        for key in ("card_id", "delivery_id", "delivery_attempt_id", "expected_receipt_path", "body_hash"):
+            expected = envelope.get(key)
+            if expected is not None and token.get(key) != expected:
+                raise CardRuntimeError(f"card ACK token {key} mismatch")
+    token_hash = stable_json_hash(token)
+    recorded_hash = envelope.get("direct_router_ack_token_hash")
+    if recorded_hash is not None and recorded_hash != token_hash:
+        raise CardRuntimeError("direct Router ACK token hash mismatch")
+    return token, token_hash
+
+
+def _validate_ack_direct_router_fields(
+    project_root: Path,
+    ack_file: Path,
+    ack: dict[str, Any],
+    *,
+    envelope: dict[str, Any] | None,
+    bundle: bool,
+) -> tuple[dict[str, Any], str]:
+    if ack.get("ack_delivery_mode") != "direct_to_router":
+        raise CardRuntimeError("card ACK must use direct Router delivery mode")
+    if ack.get("submitted_to") != "router":
+        raise CardRuntimeError("card ACK must be submitted to Router")
+    if ack.get("controller_ack_handoff_used") is not False:
+        raise CardRuntimeError("card ACK must not use Controller handoff")
+    token = ack.get("direct_router_ack_token")
+    if not isinstance(token, dict):
+        raise CardRuntimeError("card ACK missing direct Router ACK token")
+    if token.get("schema_version") != CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA:
+        raise CardRuntimeError("direct Router ACK token schema mismatch")
+    token_hash = stable_json_hash(token)
+    if ack.get("direct_router_ack_token_hash") != token_hash:
+        raise CardRuntimeError("card ACK token hash mismatch")
+    if token.get("run_id") != ack.get("run_id"):
+        raise CardRuntimeError("card ACK token run mismatch")
+    if token.get("target_role") != ack.get("role_key"):
+        raise CardRuntimeError("card ACK token role mismatch")
+    target_agent = token.get("target_agent_id")
+    if isinstance(target_agent, str) and target_agent and target_agent != ack.get("agent_id"):
+        raise CardRuntimeError("card ACK token agent mismatch")
+    if token.get("card_return_event") != ack.get("card_return_event"):
+        raise CardRuntimeError("card ACK token return event mismatch")
+    if token.get("expected_return_path") != project_relative(project_root, ack_file):
+        raise CardRuntimeError("card ACK token return path mismatch")
+    if envelope is not None:
+        expected_token, expected_hash = _validate_direct_router_ack_token(
+            envelope,
+            role=str(ack.get("role_key") or ""),
+            agent_id=str(ack.get("agent_id") or ""),
+            bundle=bundle,
+        )
+        if token != expected_token or token_hash != expected_hash:
+            raise CardRuntimeError("card ACK token does not match envelope")
+    return token, token_hash
 
 
 def open_card(project_root: Path, *, envelope_path: str, role: str, agent_id: str) -> dict[str, Any]:
@@ -337,6 +434,12 @@ def submit_card_ack(
     expected_return = envelope.get("expected_return_path")
     if not isinstance(expected_return, str) or not expected_return:
         raise CardRuntimeError("card envelope missing expected_return_path")
+    direct_token, direct_token_hash = _validate_direct_router_ack_token(
+        envelope,
+        role=role,
+        agent_id=agent_id,
+        bundle=False,
+    )
     if status not in {"acknowledged", "blocked"}:
         raise CardRuntimeError("card ack status must be acknowledged or blocked")
     if receipt_paths is None:
@@ -381,6 +484,11 @@ def submit_card_ack(
         "status": status,
         "card_envelope_path": project_relative(project_root, envelope_file),
         "card_envelope_hash": stable_json_hash(envelope),
+        "ack_delivery_mode": "direct_to_router",
+        "submitted_to": "router",
+        "controller_ack_handoff_used": False,
+        "direct_router_ack_token": direct_token,
+        "direct_router_ack_token_hash": direct_token_hash,
         "delivery_id": envelope.get("delivery_id"),
         "delivery_attempt_id": envelope.get("delivery_attempt_id"),
         "acknowledged_envelopes": [envelope.get("envelope_id")],
@@ -405,6 +513,8 @@ def submit_card_ack(
             "delivery_attempt_id": envelope.get("delivery_attempt_id"),
             "ack_path": project_relative(project_root, ack_path),
             "ack_hash": ack["ack_hash"],
+            "ack_delivery_mode": ack["ack_delivery_mode"],
+            "direct_router_ack_token_hash": direct_token_hash,
             "receipt_ref_count": len(receipt_refs),
             "returned_at": returned_at,
         }
@@ -423,6 +533,8 @@ def submit_card_ack(
             "delivery_attempt_id": envelope.get("delivery_attempt_id"),
             "ack_path": project_relative(project_root, ack_path),
             "ack_hash": ack["ack_hash"],
+            "ack_delivery_mode": ack["ack_delivery_mode"],
+            "direct_router_ack_token_hash": direct_token_hash,
             "returned_at": returned_at,
         }
     )
@@ -458,6 +570,12 @@ def submit_card_bundle_ack(
     expected_return = envelope.get("expected_return_path")
     if not isinstance(expected_return, str) or not expected_return:
         raise CardRuntimeError("card bundle envelope missing expected_return_path")
+    direct_token, direct_token_hash = _validate_direct_router_ack_token(
+        envelope,
+        role=role,
+        agent_id=agent_id,
+        bundle=True,
+    )
     if status not in {"acknowledged", "blocked"}:
         raise CardRuntimeError("card bundle ack status must be acknowledged or blocked")
     cards = [card for card in envelope["cards"] if isinstance(card, dict)]
@@ -518,6 +636,11 @@ def submit_card_bundle_ack(
         "card_bundle_id": envelope.get("bundle_id"),
         "card_bundle_envelope_path": project_relative(project_root, envelope_file),
         "card_bundle_envelope_hash": stable_json_hash(envelope),
+        "ack_delivery_mode": "direct_to_router",
+        "submitted_to": "router",
+        "controller_ack_handoff_used": False,
+        "direct_router_ack_token": direct_token,
+        "direct_router_ack_token_hash": direct_token_hash,
         "acknowledged_bundle": envelope.get("bundle_id"),
         "acknowledged_envelopes": [envelope.get("bundle_id")],
         "member_card_ids": [card.get("card_id") for card in cards],
@@ -542,6 +665,8 @@ def submit_card_bundle_ack(
             "member_card_ids": ack["member_card_ids"],
             "ack_path": project_relative(project_root, ack_path),
             "ack_hash": ack["ack_hash"],
+            "ack_delivery_mode": ack["ack_delivery_mode"],
+            "direct_router_ack_token_hash": direct_token_hash,
             "receipt_ref_count": len(receipt_refs),
             "returned_at": returned_at,
         }
@@ -561,6 +686,8 @@ def submit_card_bundle_ack(
             "member_card_ids": ack["member_card_ids"],
             "ack_path": project_relative(project_root, ack_path),
             "ack_hash": ack["ack_hash"],
+            "ack_delivery_mode": ack["ack_delivery_mode"],
+            "direct_router_ack_token_hash": direct_token_hash,
             "returned_at": returned_at,
         }
     )
@@ -602,6 +729,13 @@ def validate_card_ack(project_root: Path, *, ack_path: str, envelope_path: str |
             raise CardRuntimeError("card ack envelope hash mismatch")
     else:
         envelope = None
+    _token, token_hash = _validate_ack_direct_router_fields(
+        project_root,
+        ack_file,
+        ack,
+        envelope=envelope,
+        bundle=False,
+    )
     validated_refs: list[dict[str, Any]] = []
     for ref in refs:
         if not isinstance(ref, dict) or not isinstance(ref.get("receipt_path"), str):
@@ -626,6 +760,8 @@ def validate_card_ack(project_root: Path, *, ack_path: str, envelope_path: str |
         "card_return_event": ack.get("card_return_event"),
         "role_key": ack.get("role_key"),
         "agent_id": ack.get("agent_id"),
+        "ack_delivery_mode": ack.get("ack_delivery_mode"),
+        "direct_router_ack_token_hash": token_hash,
         "receipt_ref_count": len(validated_refs),
     }
 
@@ -646,6 +782,13 @@ def validate_card_bundle_ack(project_root: Path, *, ack_path: str, envelope_path
         raise CardRuntimeError("card bundle ack envelope path mismatch")
     if ack.get("card_bundle_envelope_hash") != stable_json_hash(envelope):
         raise CardRuntimeError("card bundle ack envelope hash mismatch")
+    _token, token_hash = _validate_ack_direct_router_fields(
+        project_root,
+        ack_file,
+        ack,
+        envelope=envelope,
+        bundle=True,
+    )
     refs = ack.get("receipt_refs")
     if not isinstance(refs, list) or not refs:
         raise CardRuntimeError("card bundle ack requires receipt_refs")
@@ -688,6 +831,8 @@ def validate_card_bundle_ack(project_root: Path, *, ack_path: str, envelope_path
         "card_return_event": ack.get("card_return_event"),
         "role_key": ack.get("role_key"),
         "agent_id": ack.get("agent_id"),
+        "ack_delivery_mode": ack.get("ack_delivery_mode"),
+        "direct_router_ack_token_hash": token_hash,
         "card_bundle_id": ack.get("card_bundle_id"),
         "member_card_ids": [card.get("card_id") for card in cards],
         "receipt_ref_count": len(validated_refs),
@@ -708,6 +853,13 @@ def inspect_card_bundle_ack_incomplete(project_root: Path, *, ack_path: str, env
         raise CardRuntimeError("card bundle ack envelope path mismatch")
     if ack.get("card_bundle_envelope_hash") != stable_json_hash(envelope):
         raise CardRuntimeError("card bundle ack envelope hash mismatch")
+    _validate_ack_direct_router_fields(
+        project_root,
+        ack_file,
+        ack,
+        envelope=envelope,
+        bundle=True,
+    )
     cards = [card for card in envelope["cards"] if isinstance(card, dict)]
     cards_by_attempt = {
         (str(card.get("card_id") or ""), str(card.get("delivery_attempt_id") or "")): card

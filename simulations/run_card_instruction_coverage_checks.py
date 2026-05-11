@@ -17,12 +17,13 @@ RESULTS_PATH = ROOT / "card_instruction_coverage_results.json"
 def explore_actual_cards() -> dict[str, object]:
     cards = model.collect_card_facts(PROJECT_ROOT)
     router_facts = model.collect_router_facts(PROJECT_ROOT)
+    packet_prompts = model.collect_packet_prompt_facts(PROJECT_ROOT)
     state = model.State()
     labels: list[str] = []
     states_seen = 1
 
     while state.status == "checking":
-        transitions = tuple(model.next_safe_states(state, cards, router_facts))
+        transitions = tuple(model.next_safe_states(state, cards, router_facts, packet_prompts))
         if len(transitions) != 1:
             return {
                 "ok": False,
@@ -52,6 +53,7 @@ def explore_actual_cards() -> dict[str, object]:
         "router_sequence_manifest_errors": list(router_facts.sequence_manifest_errors),
         "external_card_flag_errors": list(router_facts.external_card_flag_errors),
         "live_context_errors": list(router_facts.live_context_errors),
+        "packet_prompt_facts": asdict(packet_prompts),
     }
 
 
@@ -67,7 +69,17 @@ def check_hazards() -> dict[str, object]:
             "card": asdict(card),
         }
         ok = ok and detected
-    return {"ok": ok, "hazards": results}
+    packet_results: dict[str, object] = {}
+    for name, packet_prompts in model.hazard_packet_prompts().items():
+        failures = model.packet_prompt_failures(packet_prompts)
+        detected = bool(failures)
+        packet_results[name] = {
+            "detected": detected,
+            "failures": list(failures),
+            "packet_prompts": asdict(packet_prompts),
+        }
+        ok = ok and detected
+    return {"ok": ok, "hazards": results, "packet_prompt_hazards": packet_results}
 
 
 def main() -> int:

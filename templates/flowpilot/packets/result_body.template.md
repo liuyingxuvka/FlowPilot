@@ -17,15 +17,17 @@ completed_by_role: <completed_by_role>
 recipient_role: <same-as-result-envelope-next_recipient>
 recipient_identity: I completed this as `<completed_by_role>` for this packet result only; the next recipient must read it only as the result envelope recipient.
 allowed_scope: Read and review only this result body, its result envelope, and the source packet evidence after verifying Controller relay and completed_by_role identity.
-forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass Controller, hide unresolved issues, or relabel this result.
-required_return: Return the role-appropriate review, PM decision, officer response, blocker, or reissue/repair request through the current FlowPilot packet path.
+forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass Router, hide unresolved issues, or relabel this result.
+required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, officer response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path.
 ---
 
 # Result Body
 
 This file contains the detailed result for the packet. The controller must not
 read, summarize, repair, execute, or complete this result body. The controller
-only relays the result envelope to the next recipient.
+only relays the result envelope to the next recipient after Router tells it to.
+Current active-holder packet completion is submitted to Router first, not to
+Controller.
 
 Before reading this file, reviewer, PM, or officer must verify that
 `result_envelope.json#controller_relay` was delivered by Controller, targets the

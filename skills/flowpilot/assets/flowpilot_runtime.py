@@ -110,7 +110,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     open_card = sub.add_parser("open-card", help="Open a system-card envelope and write a read receipt.")
     _add_card_identity_args(open_card)
 
-    ack_card = sub.add_parser("ack-card", help="Return an envelope-only card ACK referencing read receipts.")
+    ack_card = sub.add_parser("ack-card", help="Submit a direct Router card ACK referencing read receipts.")
     _add_card_identity_args(ack_card)
     ack_card.add_argument("--receipt-path", action="append", default=[])
     ack_card.add_argument("--status", choices=("acknowledged", "blocked"), default="acknowledged")
@@ -122,7 +122,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     open_bundle = sub.add_parser("open-card-bundle", help="Open a same-role system-card bundle and write read receipts.")
     _add_card_identity_args(open_bundle)
 
-    ack_bundle = sub.add_parser("ack-card-bundle", help="Return one envelope-only ACK for a same-role card bundle.")
+    ack_bundle = sub.add_parser("ack-card-bundle", help="Submit one direct Router ACK for a same-role card bundle.")
     _add_card_identity_args(ack_bundle)
     ack_bundle.add_argument("--receipt-path", action="append", default=[])
     ack_bundle.add_argument("--status", choices=("acknowledged", "blocked"), default="acknowledged")

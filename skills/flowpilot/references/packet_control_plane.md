@@ -5,9 +5,10 @@ preventing controller/worker over-execution.
 
 ## Roles
 
-- Controller: main assistant. Relays packets, records live status, waits for
-  role decisions, and keeps the loop moving. It is not the implementation
-  worker.
+- Controller: main assistant. Relays formal packet/result envelopes, records
+  live status, waits for Router next-action notices or role decisions, and
+  keeps the loop moving. It is not the implementation worker and it does not
+  submit mechanical ACKs.
 - PM: owns global route, frozen acceptance floor, node packet creation, repair,
   route mutation, and completion decisions.
 - Reviewer: owns result review, gate challenge, and PM-decision challenge.
@@ -29,8 +30,9 @@ Controller bootstraps only user-approved startup options
 -> Controller signs relay and sends only the envelope to the target role
 -> Recipient verifies controller relay signature before opening the body
 -> Worker reads and executes exactly its packet body
--> Worker returns RESULT_ENVELOPE + RESULT_BODY and waits, or uses an
-   active-holder fast-lane lease for packet-local mechanical result submission
+-> Worker ACKs the active-holder lease directly to Router when a lease exists
+-> Worker submits packet-local completion directly to Router through the lease
+-> Router writes controller_next_action_notice.json after mechanical checks pass
 -> Controller signs relay and sends only the result envelope to Reviewer
 -> Reviewer audits mail chain, role origin, hashes, and evidence
 -> Controller relays review envelope to PM
@@ -85,9 +87,12 @@ next decision. The controller must not read or execute `packet_body` or
 `result_body`, generate worker artifacts, run product validation, approve
 gates, close nodes, rewrite hashes, or relabel wrong-role completion.
 
-All formal mail goes through Controller. PM, reviewer, worker, and officer
-roles must not privately pass packet/result bodies or formal review/decision
-mail. Each Controller relay writes `controller_relay` on the envelope with
+All formal cross-role mail goes through Controller. Mechanical system-card
+ACKs, active-holder packet ACKs, and active-holder packet result submission are
+Router-direct check-ins, not formal cross-role mail. PM, reviewer, worker, and
+officer roles must not privately pass packet/result bodies or formal
+review/decision mail. Each Controller relay writes `controller_relay` on the
+envelope with
 `delivered_via_controller: true`, `controller_agent_id`, `received_from_role`,
 `relayed_to_role`, holder before/after, `envelope_hash`,
 `body_was_read_by_controller: false`, and `body_was_executed_by_controller:
@@ -269,6 +274,7 @@ ROLE_REMINDER:
   recipient_allowed_actions:
   recipient_forbidden_actions:
   return_to_controller_only: true
+  ack_returns_directly_to_router: true
 ```
 
 Every sub-agent-to-controller response must include:
@@ -280,6 +286,7 @@ ROLE_ECHO:
   own_allowed_actions:
   own_forbidden_actions:
   result_returns_to_controller_only: true
+  ack_returns_directly_to_router: true
 ```
 
 Missing reminders are dispatch/review blockers, not cosmetic formatting gaps.
@@ -316,13 +323,14 @@ Resume rules:
 - If PM issues or reissues `PACKET_ENVELOPE` and `PACKET_BODY`, require
   `controller_reminder`, verify router direct-dispatch preflight, sign the
   controller relay, then send only the envelope to the target role.
-- If the packet is already with a worker, resume that exact packet only when
-  controller relay signature, recipient body-open record, router direct-dispatch
-  preflight evidence, and worker identity are clear.
-- If a worker result envelope exists, send the `RESULT_ENVELOPE` to reviewer.
-  Reviewer and PM may read the result body from their authorized review or
-  decision position. Reviewer pass goes to PM; reviewer block goes to PM for
-  repair, mutation, user block, or stop.
+- If the packet is already with a worker and an active-holder lease is open,
+  wait for the packet-id-specific Router-authored
+  `controller_next_action_notice.json`; do not infer completion from worker
+  chat.
+- If a worker result envelope exists after Router mechanical acceptance, send
+  the `RESULT_ENVELOPE` to reviewer. Reviewer and PM may read the result body
+  from their authorized review or decision position. Reviewer pass goes to PM;
+  reviewer block goes to PM for repair, mutation, user block, or stop.
 - If holder, worker identity, router direct-dispatch evidence, or worker-result state is
   ambiguous, block and ask PM for recovery/reissue/reassignment. Controller
   must not infer missing worker work or finish the packet.

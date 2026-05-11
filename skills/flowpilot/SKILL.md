@@ -74,7 +74,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 ## Controller Boundary
 
-After the router loads Controller core, the main assistant is Controller only. Controller may call the router, check the prompt manifest, check the packet ledger, deliver system cards, relay packet envelopes, update status, and ask roles for decisions.
+After the router loads Controller core, the main assistant is Controller only. Controller may call the router, check the prompt manifest, check the packet ledger, deliver system cards, relay packet envelopes, update status, wait for router next-action notices, and ask roles for decisions.
 
 Controller must not:
 
@@ -84,12 +84,13 @@ Controller must not:
 - mark route nodes complete;
 - mutate the route from its own judgement;
 - read, summarize, execute, edit, or repair sealed packet/result bodies.
+- receive, write, relay, or submit system-card ACKs or active-holder packet ACKs.
 
 When the router returns a control blocker, Controller may deliver only the public blocker id plus sealed repair packet path/hash to the target role. Controller must not read, restate, or patch sealed repair details.
 
 When the user asks to stop or cancel the active run, record `user_requests_run_stop` or `user_requests_run_cancel`, then follow the terminal lifecycle action. Do not continue route work after that.
 
-All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Role-to-role work uses packet/mail ledgers, not shared prompt context.
+All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Their ACKs go directly from the addressed role to Router through the card check-in command; Controller does not receive or relay those ACKs. Role-to-role work uses packet/mail ledgers, not shared prompt context.
 
 ## Runtime Kit
 

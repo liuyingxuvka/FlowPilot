@@ -79,6 +79,15 @@
       "cards\\reviewer\\current_node_dispatch.md",
       "cards\\reviewer\\dispatch_request.md"
     ],
+    "packet_prompt_facts": {
+      "packet_body_direct_ack_guidance": true,
+      "packet_body_forbids_controller_ack": true,
+      "packet_body_names_router_notice": true,
+      "packet_body_result_submission_guidance": true,
+      "packet_runtime_direct_ack_identity_guidance": true,
+      "result_body_direct_completion_guidance": true,
+      "stale_controller_ack_guidance": false
+    },
     "router_sequence_manifest_errors": [],
     "state_count": 67,
     "status": "complete"
@@ -90,6 +99,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -106,7 +117,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -118,6 +130,8 @@
           "action_guidance": false,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -134,7 +148,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -146,6 +161,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": false,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -162,11 +179,74 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
           "hazard.good: missing chat body suppression rule"
+        ]
+      },
+      "missing_controller_router_notice_guidance": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "controller.core",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": false,
+          "direct_router_ack_guidance": true,
+          "envelope_only_return": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "controller",
+          "router_active": true,
+          "stale_controller_ack_guidance": false
+        },
+        "detected": true,
+        "failures": [
+          "controller.core: Controller card does not teach waiting for Router next-action notice"
+        ]
+      },
+      "missing_direct_router_ack_guidance": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": false,
+          "envelope_only_return": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true,
+          "stale_controller_ack_guidance": false
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing direct Router system-card ACK guidance"
         ]
       },
       "missing_envelope_only_return": {
@@ -174,6 +254,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": false,
           "identity_boundary": true,
           "kind": "phase",
@@ -190,7 +272,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -202,6 +285,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": false,
           "kind": "phase",
@@ -218,7 +303,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -230,6 +316,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -246,7 +334,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -258,6 +347,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -274,7 +365,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -287,6 +379,8 @@
           "action_guidance": true,
           "card_id": "pm.output_contract_catalog",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -303,7 +397,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -315,6 +410,8 @@
           "action_guidance": true,
           "card_id": "pm.review_repair",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -331,7 +428,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -343,6 +441,8 @@
           "action_guidance": true,
           "card_id": "pm.route_skeleton",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -359,7 +459,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -371,6 +472,8 @@
           "action_guidance": true,
           "card_id": "pm.route_skeleton",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -387,7 +490,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -399,6 +503,8 @@
           "action_guidance": true,
           "card_id": "worker_a.core",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -415,7 +521,8 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -427,6 +534,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -443,7 +552,8 @@
           "recipient_role_matches": true,
           "required_return": false,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -455,6 +565,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -471,11 +583,43 @@
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
           "hazard.good: next_step_source does not name flowpilot_router.py"
+        ]
+      },
+      "stale_controller_ack_guidance": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
+          "envelope_only_return": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "router_active": true,
+          "stale_controller_ack_guidance": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: stale prompt still teaches Controller-routed ACK handling"
         ]
       },
       "wrong_recipient_role": {
@@ -483,6 +627,8 @@
           "action_guidance": true,
           "card_id": "hazard.good",
           "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
           "envelope_only_return": true,
           "identity_boundary": true,
           "kind": "phase",
@@ -499,7 +645,8 @@
           "recipient_role_matches": false,
           "required_return": true,
           "role": "project_manager",
-          "router_active": true
+          "router_active": true,
+          "stale_controller_ack_guidance": false
         },
         "detected": true,
         "failures": [
@@ -507,7 +654,114 @@
         ]
       }
     },
-    "ok": true
+    "ok": true,
+    "packet_prompt_hazards": {
+      "missing_packet_controller_ack_forbid": {
+        "detected": true,
+        "failures": [
+          "packet body template does not forbid Controller-routed packet ACK/completion"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": false,
+          "packet_body_names_router_notice": true,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_packet_direct_router_ack_guidance": {
+        "detected": true,
+        "failures": [
+          "packet body template does not teach direct Router packet ACK"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": false,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_packet_result_submission_guidance": {
+        "detected": true,
+        "failures": [
+          "packet body template does not teach direct Router packet result submission"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_result_submission_guidance": false,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_packet_router_notice_guidance": {
+        "detected": true,
+        "failures": [
+          "packet body template does not name controller_next_action_notice.json"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": false,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_packet_runtime_direct_ack_identity_guidance": {
+        "detected": true,
+        "failures": [
+          "packet runtime identity boundary does not include direct Router ACK rule"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": false,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_result_direct_completion_guidance": {
+        "detected": true,
+        "failures": [
+          "result body template does not teach active-holder completion direct to Router"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "result_body_direct_completion_guidance": false,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "stale_packet_controller_ack_guidance": {
+        "detected": true,
+        "failures": [
+          "packet prompt surface still teaches Controller-routed ACK handling"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": true
+        }
+      }
+    }
   },
   "ok": true
 }

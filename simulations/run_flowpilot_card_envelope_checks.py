@@ -25,13 +25,22 @@ HAZARD_EXPECTED_FAILURES = {
     "legacy_return_event_field_used": "legacy return_event JSON field was still emitted",
     "missing_checkin_instruction": "card envelope omitted explicit runtime check-in instruction",
     "missing_checkin_tool_command": "card envelope omitted explicit runtime check-in instruction",
+    "missing_card_ack_token": "card envelope omitted direct Router ACK token or instruction",
+    "missing_direct_router_ack_instruction": "card envelope omitted direct Router ACK token or instruction",
+    "direct_ack_token_requires_frontier_before_startup_frontier_exists": "direct Router ACK token required route/frontier before startup frontier exists",
+    "startup_card_token_missing_frontier_optional_binding": "startup card ACK token did not allow missing route/frontier binding",
     "role_handwrites_ack_instead_of_runtime": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
-    "card_ack_recorded_as_external_event": "card ack was accepted as a normal external event instead of being validated as card return",
-    "card_ack_external_event_not_rerouted": "card ack external-event entrypoint did not reroute to check_card_return_event",
+    "card_ack_recorded_as_external_event": "card ack was accepted as a normal external event instead of direct Router ACK",
+    "card_ack_external_event_auto_rerouted": "legacy card ACK external-event entrypoint still auto-rerouted instead of hard failing",
+    "card_ack_external_event_not_rejected": "legacy card ACK external-event entrypoint was not rejected",
     "check_card_return_apply_optional": "check_card_return_event changed state but was marked apply_required false",
     "missing_read_receipt": "required system card coverage passed without valid read receipt and ack/report envelope",
     "missing_ack_report": "required system card coverage passed without valid read receipt and ack/report envelope",
     "ack_without_receipt_refs": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
+    "ack_without_direct_router_token": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
+    "ack_sent_through_controller_handoff": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
+    "ack_contains_body_content": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
+    "ack_not_submitted_to_router": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
     "advanced_during_missing_receipt_wait": "required system card coverage passed without valid read receipt and ack/report envelope",
     "advanced_during_missing_return_wait": "required system card coverage passed without valid read receipt and ack/report envelope",
     "pending_return_without_recovery": "pending return wait had no heartbeat/manual resume recovery action",
@@ -61,6 +70,11 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_reads_card_body": "Controller read a system-card body",
     "controller_mutates_batch": "Controller changed Router-authored batch delivery",
     "read_receipt_replaces_semantic_gate": "system-card read receipt replaced semantic PM/reviewer/officer judgement",
+    "stale_controller_ack_prompt": "stale prompt still instructed ACK return to Controller",
+    "missing_role_direct_router_ack_prompt": "Router advanced without prompt coverage for direct Router ACK instructions",
+    "missing_packet_direct_router_ack_prompt": "Router advanced without prompt coverage for direct Router ACK instructions",
+    "missing_packet_direct_router_result_prompt": "Router advanced without prompt coverage for direct Router ACK instructions",
+    "missing_controller_waits_on_router_notice_prompt": "Router advanced without prompt coverage for direct Router ACK instructions",
 }
 
 
@@ -77,7 +91,11 @@ def _state_id(state: model.State) -> str:
         f"{state.runtime_open_blocked_not_committed},{state.public_system_card_apply_used}|"
         f"delivery={state.card_envelope_issued},{state.card_delivery_recorded},"
         f"{state.card_return_event_declared},{state.checkin_instruction_declared},"
-        f"{state.checkin_tool_command_declared},{state.pending_return_recorded}|"
+        f"{state.checkin_tool_command_declared},{state.card_ack_token_declared},"
+        f"{state.direct_router_ack_instruction_declared},{state.startup_card_before_frontier},"
+        f"{state.direct_ack_token_frontier_optional_when_missing},"
+        f"{state.direct_ack_token_requires_frontier_before_available},"
+        f"{state.pending_return_recorded}|"
         f"legacy_field={state.legacy_return_event_field_used}|"
         f"controller={state.controller_relayed_card_envelope},{state.controller_envelope_only},"
         f"read_body={state.controller_read_card_body},mutated={state.controller_mutated_batch}|"
@@ -86,6 +104,8 @@ def _state_id(state: model.State) -> str:
         f"{state.receipt_hash_matches_manifest},{state.role_used_checkin_runtime}|"
         f"ack={state.ack_report_returned},{state.ack_current_run},{state.ack_current_role},"
         f"{state.ack_current_agent},{state.ack_references_read_receipts},"
+        f"{state.ack_body_empty},{state.ack_direct_to_router},"
+        f"{state.ack_router_token_valid},{state.ack_no_controller_handoff},"
         f"{state.handwritten_ack_attempted}|"
         f"wait={state.await_expected_return},{state.recovery_action_available},"
         f"{state.return_reminder_issued},{state.redelivery_attempt_issued}|"
@@ -101,7 +121,14 @@ def _state_id(state: model.State) -> str:
         f"{state.all_required_batch_receipts_joined},{state.all_required_batch_ack_reports_joined}|"
         f"ack_control={state.card_ack_sent_to_external_event_entrypoint},"
         f"{state.card_ack_external_event_auto_rerouted},"
-        f"{state.card_ack_recorded_as_external_event},{state.check_card_return_apply_required}|"
+        f"{state.card_ack_external_event_rejected},{state.card_ack_recorded_as_external_event},"
+        f"{state.check_card_return_apply_required}|"
+        f"prompt_ack={state.prompt_ack_coverage_checked},{state.prompt_ack_coverage_passed},"
+        f"{state.stale_controller_ack_prompt_present},"
+        f"{state.role_direct_router_ack_prompt_present},"
+        f"{state.packet_direct_router_ack_prompt_present},"
+        f"{state.packet_direct_router_result_prompt_present},"
+        f"{state.controller_waits_on_router_notice_prompt_present}|"
         f"advanced={state.router_advanced}"
     )
 
@@ -215,7 +242,7 @@ def _scenario_report() -> dict[str, object]:
         },
         "target_v2_card_return_event_loop": {
             "ok": not target_failures,
-            "interpretation": "envelope, runtime receipt, ack/report envelope, receipt coverage, guarded same-role bundle, cross-role join, and PM gate all hold",
+            "interpretation": "envelope, runtime receipt, direct Router ACK/report envelope, prompt coverage, receipt coverage, guarded same-role bundle, cross-role join, and PM gate all hold",
             "failures": target_failures,
         },
     }

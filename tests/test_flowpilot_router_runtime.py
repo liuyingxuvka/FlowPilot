@@ -589,15 +589,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             role = request["role_key"]
             record = {
                 "role_key": role,
-                "agent_id": f"resume-agent-{request['rehydrated_after_resume_tick_id']}-{role}",
+                "agent_id": f"live-agent-{request['rehydrated_after_resume_tick_id']}-{role}",
                 "model_policy": "strongest_available",
                 "reasoning_effort_policy": "highest_available",
-                "rehydration_result": "rehydrated_from_current_run_memory",
-                "host_liveness_status": "unknown",
-                "liveness_decision": "spawned_replacement_from_current_run_memory",
+                "rehydration_result": "live_agent_continuity_confirmed",
+                "host_liveness_status": "active",
+                "liveness_decision": "confirmed_existing_agent",
                 "resume_agent_attempted": True,
-                "bounded_wait_result": "not_waited",
-                "bounded_wait_ms": 0,
+                "bounded_wait_result": "completed",
+                "bounded_wait_ms": 1000,
                 "liveness_probe_batch_id": batch_id,
                 "liveness_probe_mode": "concurrent_batch",
                 "liveness_probe_started_at": "2026-05-11T00:00:00Z",
@@ -605,7 +605,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "wait_agent_timeout_treated_as_active": False,
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
-                "spawned_after_resume_state_loaded": True,
+                "rehydrated_after_resume_state_loaded": True,
+                "spawned_after_resume_state_loaded": False,
                 "core_prompt_path": request["core_prompt_path"],
                 "core_prompt_hash": request["core_prompt_hash"],
             }
@@ -3030,6 +3031,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("return_event", second)
         self.assertEqual(second["card_checkin_instruction"]["command_name"], "receive-card")
         self.assertEqual(second["card_checkin_instruction"]["card_return_event"], "reviewer_card_ack")
+        self.assertEqual(second["card_checkin_instruction"]["ack_submission_mode"], "direct_to_router")
+        self.assertFalse(second["card_checkin_instruction"]["controller_ack_handoff_allowed"])
+        self.assertEqual(second["ack_submission_mode"], "direct_to_router")
+        self.assertFalse(second["controller_ack_handoff_allowed"])
+        self.assertTrue(second["direct_router_ack_token_hash"])
         self.assertTrue(second["card_checkin_instruction"]["do_not_handwrite_ack"])
         self.assertIn("--envelope-path", second["card_checkin_instruction"]["command"])
         self.assertTrue(second["auto_committed_by_router"])
@@ -3041,6 +3047,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         envelope = read_json(root / second["card_envelope_path"])
         self.assertEqual(envelope["card_return_event"], "reviewer_card_ack")
         self.assertEqual(envelope["card_checkin_instruction"]["command_name"], "receive-card")
+        self.assertEqual(envelope["direct_router_ack_token"]["submission_mode"], "direct_to_router")
+        self.assertFalse(envelope["direct_router_ack_token"]["controller_ack_handoff_allowed"])
         self.assertNotIn("return_event", envelope)
         pre_apply_state = read_json(run_root / "router_state.json")
         pre_apply_prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
@@ -3090,7 +3098,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(relay_action["relay_allowed"])
         with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
             router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        with self.assertRaisesRegex(router.RouterError, "waiting for the runtime ACK"):
+        with self.assertRaisesRegex(router.RouterError, "legacy record-event ACK path is disabled"):
             router.record_external_event(root, "reviewer_card_ack")
 
         open_result = card_runtime.open_card(
@@ -3106,9 +3114,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             agent_id=str(second["target_agent_id"]),
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
-        rerouted = router.record_external_event(root, "reviewer_card_ack")
-        self.assertTrue(rerouted["ok"])
-        self.assertEqual(rerouted["routed_to"], "check_card_return_event")
+        with self.assertRaisesRegex(router.RouterError, "legacy record-event ACK path is disabled"):
+            router.record_external_event(root, "reviewer_card_ack")
         next_action = self.next_after_display_sync(root)
         self.assertNotEqual(next_action["action_type"], "check_card_return_event")
         return_ledger = read_json(run_root / "return_event_ledger.json")
@@ -3261,6 +3268,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "card_bundle_id": envelope["bundle_id"],
             "card_bundle_envelope_path": action["card_bundle_envelope_path"],
             "card_bundle_envelope_hash": card_runtime.stable_json_hash(envelope),
+            "ack_delivery_mode": "direct_to_router",
+            "submitted_to": "router",
+            "controller_ack_handoff_used": False,
+            "direct_router_ack_token": envelope["direct_router_ack_token"],
+            "direct_router_ack_token_hash": envelope["direct_router_ack_token_hash"],
             "acknowledged_bundle": envelope["bundle_id"],
             "acknowledged_envelopes": [envelope["bundle_id"]],
             "member_card_ids": envelope["card_ids"][:-1],
@@ -4745,6 +4757,162 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertIn("pm_writes_child_skill_gate_manifest", action["allowed_external_events"])
 
+    def test_child_skill_gate_manifest_repair_pass_clears_active_gate_block(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+
+        selected_skills = [
+            {
+                "skill_name": "model-first-function-flow",
+                "decision": "required",
+                "supported_capabilities": ["cap-001"],
+                "gates": [
+                    {
+                        "gate_id": "process-model",
+                        "required_approver": "process_flowguard_officer",
+                        "evidence_required": ["model-check-result"],
+                        "controller_can_approve": False,
+                    }
+                ],
+            }
+        ]
+        self.deliver_expected_card(root, "pm.dependency_policy")
+        router.record_external_event(root, "pm_records_dependency_policy", {"allowed_dependency_actions": ["use_existing_local_skill"]})
+        router.record_external_event(
+            root,
+            "pm_writes_capabilities_manifest",
+            {"capabilities": [{"capability_id": "cap-001", "behavior": "model and gate route work"}]},
+        )
+        self.deliver_expected_card(root, "pm.child_skill_selection")
+        router.record_external_event(root, "pm_writes_child_skill_selection", {"selected_skills": selected_skills})
+        self.deliver_expected_card(root, "pm.child_skill_gate_manifest")
+        router.record_external_event(root, "pm_writes_child_skill_gate_manifest", {"selected_skills": selected_skills})
+
+        self.deliver_expected_card(root, "reviewer.child_skill_gate_manifest_review")
+        router.record_external_event(
+            root,
+            "reviewer_blocks_child_skill_gate_manifest",
+            self.role_report_envelope(
+                root,
+                "reviews/child_skill_gate_manifest_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
+                    "blocking_findings": ["selected skills lack compiled standard contracts"],
+                    "repair_recommendation": "PM must rewrite manifest with per-gate mappings before rerun.",
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["active_gate_outcome_block"]["event"], "reviewer_blocks_child_skill_gate_manifest")
+
+        router.record_external_event(root, "pm_writes_child_skill_gate_manifest", {"selected_skills": selected_skills})
+        self.deliver_expected_card(root, "reviewer.child_skill_gate_manifest_review")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("reviewer_passes_child_skill_gate_manifest", action["allowed_external_events"])
+        self.assertIn("reviewer_blocks_child_skill_gate_manifest", action["allowed_external_events"])
+
+        router.record_external_event(
+            root,
+            "reviewer_passes_child_skill_gate_manifest",
+            self.role_report_envelope(
+                root,
+                "reviews/child_skill_gate_manifest_review_repaired",
+                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertIsNone(state.get("active_gate_outcome_block"))
+        self.assertFalse(state["flags"]["child_skill_manifest_reviewer_blocked"])
+        self.assertTrue(state["flags"]["child_skill_manifest_reviewer_passed"])
+        manifest = read_json(run_root / "child_skill_gate_manifest.json")
+        self.assertTrue(manifest["approval"]["reviewer_passed"])
+
+    def test_control_blocker_reviewer_followup_rejects_pm_origin(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+
+        selected_skills = [
+            {
+                "skill_name": "model-first-function-flow",
+                "decision": "required",
+                "supported_capabilities": ["cap-001"],
+                "gates": [
+                    {
+                        "gate_id": "process-model",
+                        "required_approver": "process_flowguard_officer",
+                        "evidence_required": ["model-check-result"],
+                        "controller_can_approve": False,
+                    }
+                ],
+            }
+        ]
+        self.deliver_expected_card(root, "pm.dependency_policy")
+        router.record_external_event(root, "pm_records_dependency_policy", {"allowed_dependency_actions": ["use_existing_local_skill"]})
+        router.record_external_event(
+            root,
+            "pm_writes_capabilities_manifest",
+            {"capabilities": [{"capability_id": "cap-001", "behavior": "model and gate route work"}]},
+        )
+        self.deliver_expected_card(root, "pm.child_skill_selection")
+        router.record_external_event(root, "pm_writes_child_skill_selection", {"selected_skills": selected_skills})
+        self.deliver_expected_card(root, "pm.child_skill_gate_manifest")
+        router.record_external_event(root, "pm_writes_child_skill_gate_manifest", {"selected_skills": selected_skills})
+        self.deliver_expected_card(root, "reviewer.child_skill_gate_manifest_review")
+
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has no legal next action while reviewer gate result is waiting",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/pm_repair_to_reviewer_gate_followup",
+                self.pm_control_blocker_decision_body(
+                    blocker["blocker_id"],
+                    decision="repair_completed",
+                    rerun_target="reviewer_passes_child_skill_gate_manifest",
+                ),
+            ),
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("reviewer_passes_child_skill_gate_manifest", action["allowed_external_events"])
+        report = self.role_report_envelope(
+            root,
+            "reviews/child_skill_gate_manifest_review_pm_impersonation",
+            {"reviewed_by_role": "human_like_reviewer", "passed": True},
+        )
+        pm_origin_envelope = {
+            "schema_version": router.EVENT_ENVELOPE_SCHEMA,
+            "event": "reviewer_passes_child_skill_gate_manifest",
+            "from_role": "project_manager",
+            "to_role": "controller",
+            "controller_visibility": "event_envelope_only",
+            **report,
+        }
+        with self.assertRaisesRegex(router.RouterError, "from_role mismatch"):
+            router.record_external_event(root, "reviewer_passes_child_skill_gate_manifest", pm_origin_envelope)
+
     def test_resume_reentry_loads_state_before_resume_cards(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -4774,7 +4942,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "rehydrate_role_agents")
-        self.assertTrue(action["requires_host_spawn"])
+        self.assertFalse(action["requires_host_spawn"])
+        self.assertTrue(action["requires_host_role_rehydration"])
+        self.assertTrue(action["spawn_required_only_for_replacements"])
+        self.assertTrue(action["reuse_live_agents_when_active"])
         self.assertEqual(action["payload_contract"]["name"], "resume_role_rehydration_receipt")
         self.assert_payload_contract_mentions(
             action["payload_contract"],
@@ -4784,7 +4955,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "rehydrated_role_agents[].reasoning_effort_policy",
             "rehydrated_role_agents[].rehydrated_for_run_id",
             "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
-            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
+            "rehydrated_role_agents[].rehydrated_after_resume_state_loaded",
             "rehydrated_role_agents[].core_prompt_path",
             "rehydrated_role_agents[].core_prompt_hash",
             "rehydrated_role_agents[].host_liveness_status",
@@ -4817,7 +4988,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             {item["reasoning_effort_policy"] for item in action["role_rehydration_request"]},
             {"highest_available"},
         )
-        self.assertEqual(action["spawn_policy"], "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision")
+        self.assertEqual(action["spawn_policy"], "reuse_confirmed_live_agents_spawn_only_missing_cancelled_completed_unknown_or_timeout")
         self.assertTrue(action["liveness_preflight_required"])
         self.assertTrue(action["liveness_preflight_policy"]["concurrent_probe_required"])
         self.assertTrue(action["liveness_preflight_policy"]["start_all_probes_before_waiting"])
@@ -4864,6 +5035,41 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(router.RouterError, "all_liveness_probes_started_before_wait"):
             router.apply_action(root, "rehydrate_role_agents", payload)
         action = router.next_action(root)
+        payload = self.resume_role_agent_payload(root, action)
+        payload["rehydrated_role_agents"][0].update(
+            {
+                "rehydration_result": "rehydrated_from_current_run_memory",
+                "host_liveness_status": "active",
+                "liveness_decision": "spawned_replacement_from_current_run_memory",
+                "spawned_after_resume_state_loaded": True,
+            }
+        )
+        with self.assertRaisesRegex(router.RouterError, "active host liveness must use live_agent_continuity_confirmed"):
+            router.apply_action(root, "rehydrate_role_agents", payload)
+        action = router.next_action(root)
+        payload = self.resume_role_agent_payload(root, action)
+        replaced_role = payload["rehydrated_role_agents"][0]["role_key"]
+        payload["rehydrated_role_agents"][0].update(
+            {
+                "agent_id": f"replacement-agent-{replaced_role}",
+                "rehydration_result": "rehydrated_from_current_run_memory",
+                "host_liveness_status": "missing",
+                "liveness_decision": "spawned_replacement_from_current_run_memory",
+                "bounded_wait_result": "not_waited",
+                "bounded_wait_ms": 0,
+                "spawned_after_resume_state_loaded": True,
+            }
+        )
+        router.apply_action(root, "rehydrate_role_agents", payload)
+        rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
+        self.assertEqual(rehydration["liveness_preflight"]["replacement_role_keys"], [replaced_role])
+        self.assertEqual(rehydration["liveness_preflight"]["decision"], "roles_ready_after_replacement")
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        action = router.next_action(root)
         router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
         rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
         self.assertTrue(rehydration["all_six_roles_ready"])
@@ -4881,7 +5087,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             if item["resume_tick_id"] == resume_tick_id
         ]
         self.assertEqual(len(resume_receipts), 6)
-        self.assertEqual({item["lifecycle_phase"] for item in resume_receipts}, {"missing_agent_replacement"})
+        self.assertEqual({item["lifecycle_phase"] for item in resume_receipts}, {"heartbeat_rehydration"})
 
         self.deliver_expected_card(root, "controller.resume_reentry")
         self.deliver_expected_card(root, "pm.crew_rehydration_freshness")

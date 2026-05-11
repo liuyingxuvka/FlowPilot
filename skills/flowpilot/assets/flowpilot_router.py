@@ -1860,6 +1860,14 @@ GATE_OUTCOME_PASS_CLEAR_FLAGS: dict[str, tuple[str, ...]] = {
     "reviewer_passes_evidence_quality_package": ("evidence_quality_reviewer_blocked",),
     "reviewer_final_backward_replay_passed": ("final_backward_replay_blocked",),
 }
+GATE_OUTCOME_PASS_CLEARS_EVENTS: dict[str, tuple[str, ...]] = {
+    pass_event: tuple(
+        block_event
+        for block_event in GATE_OUTCOME_BLOCK_EVENTS
+        if EXTERNAL_EVENTS[block_event]["flag"] in clear_flags
+    )
+    for pass_event, clear_flags in GATE_OUTCOME_PASS_CLEAR_FLAGS.items()
+}
 
 
 class RouterError(ValueError):
@@ -2028,13 +2036,84 @@ def _card_checkin_instruction(
         "run_from": "project_root",
         "command": command,
         "card_return_event": card_return_event,
-        "expected_outcome": "runtime writes the read receipt and ACK envelope",
+        "ack_submission_mode": "direct_to_router",
+        "controller_ack_handoff_allowed": False,
+        "expected_outcome": "runtime writes the read receipt and direct Router ACK envelope",
         "do_not_handwrite_ack": True,
         "do_not_record_as_external_event": True,
         "plain_instruction": (
-            f"Run {command_name} from the project root to open this card through the runtime and write "
-            f"{card_return_event}. Do not hand-write the ACK file and do not record it as a normal external event."
+            f"Run {command_name} from the project root to open this card through the runtime and submit "
+            f"{card_return_event} directly to Router. Do not hand-write the ACK, do not give the ACK to "
+            "Controller, and do not record it as a normal external event."
         ),
+    }
+
+
+def _direct_router_ack_token_for_card(
+    run_state: dict[str, Any],
+    run_root: Path,
+    *,
+    card_id: str,
+    to_role: str,
+    target_agent_id: str | None,
+    card_return_event: str,
+    expected_return_path: str,
+    expected_receipt_path: str,
+    delivery_id: str | None,
+    delivery_attempt_id: str | None,
+    body_hash: str | None,
+) -> dict[str, Any]:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    return {
+        "schema_version": card_runtime.CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA,
+        "return_kind": "system_card",
+        "submission_mode": "direct_to_router",
+        "controller_ack_handoff_allowed": False,
+        "run_id": run_state.get("run_id"),
+        "route_version": frontier.get("route_version"),
+        "frontier_node_id": frontier.get("active_node_id"),
+        "card_id": card_id,
+        "card_return_event": card_return_event,
+        "target_role": to_role,
+        "target_agent_id": target_agent_id,
+        "delivery_id": delivery_id,
+        "delivery_attempt_id": delivery_attempt_id,
+        "expected_return_path": expected_return_path,
+        "expected_receipt_path": expected_receipt_path,
+        "body_hash": body_hash,
+    }
+
+
+def _direct_router_ack_token_for_bundle(
+    run_state: dict[str, Any],
+    run_root: Path,
+    *,
+    bundle_id: str,
+    role: str,
+    target_agent_id: str | None,
+    card_return_event: str,
+    card_ids: list[str],
+    delivery_attempt_ids: list[str],
+    expected_return_path: str,
+    expected_receipt_paths: list[str],
+) -> dict[str, Any]:
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    return {
+        "schema_version": card_runtime.CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA,
+        "return_kind": "system_card_bundle",
+        "submission_mode": "direct_to_router",
+        "controller_ack_handoff_allowed": False,
+        "run_id": run_state.get("run_id"),
+        "route_version": frontier.get("route_version"),
+        "frontier_node_id": frontier.get("active_node_id"),
+        "card_bundle_id": bundle_id,
+        "card_ids": card_ids,
+        "delivery_attempt_ids": delivery_attempt_ids,
+        "card_return_event": card_return_event,
+        "target_role": role,
+        "target_agent_id": target_agent_id,
+        "expected_return_path": expected_return_path,
+        "expected_receipt_paths": expected_receipt_paths,
     }
 
 
@@ -2397,6 +2476,12 @@ def _record_event_expected_role(event: str, run_state: dict[str, Any]) -> str:
     if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
         raw_allowed = pending_action.get("allowed_external_events")
         if isinstance(raw_allowed, list) and event in raw_allowed:
+            if (
+                pending_action.get("label") == "controller_waits_for_control_blocker_resolution"
+                or pending_action.get("blocker_artifact_path")
+            ) and event != PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+                meta = EXTERNAL_EVENTS.get(event) or {}
+                return _event_wait_role(event, meta)
             to_role = pending_action.get("to_role")
             if isinstance(to_role, str) and to_role:
                 return to_role
@@ -3947,7 +4032,7 @@ def _resume_role_rehydration_payload_contract(
             "rehydrated_role_agents[].rehydration_result",
             "rehydrated_role_agents[].rehydrated_for_run_id",
             "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
-            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
+            "rehydrated_role_agents[].rehydrated_after_resume_state_loaded",
             "rehydrated_role_agents[].core_prompt_path",
             "rehydrated_role_agents[].core_prompt_hash",
             "rehydrated_role_agents[].host_liveness_status",
@@ -3970,7 +4055,7 @@ def _resume_role_rehydration_payload_contract(
             "rehydrated_role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
             "rehydrated_role_agents[].rehydration_result": sorted(RESUME_ROLE_AGENT_RESULTS),
             "rehydrated_role_agents[].rehydrated_for_run_id": [run_state["run_id"]],
-            "rehydrated_role_agents[].spawned_after_resume_state_loaded": [True],
+            "rehydrated_role_agents[].rehydrated_after_resume_state_loaded": [True],
             "rehydrated_role_agents[].host_liveness_status": sorted(ROLE_AGENT_HOST_LIVENESS_STATUSES),
             "rehydrated_role_agents[].liveness_decision": sorted(ROLE_AGENT_LIVENESS_DECISIONS),
             "rehydrated_role_agents[].resume_agent_attempted": [True],
@@ -3997,11 +4082,15 @@ def _resume_role_rehydration_payload_contract(
             "Start all six liveness probes in one concurrent batch before waiting for individual results.",
             "Use one liveness_probe_batch_id for the top-level receipt and every role record.",
             "Each record must match the corresponding role_rehydration_request path/hash fields.",
-            "Each restored or replacement live role agent must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
+            "Reuse active current-run role agents after memory/context refresh; spawn only replacement roles whose liveness is missing, cancelled, unknown, completed, or timeout_unknown.",
+            "Each restored or replacement live role agent must be bound to the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
             "A wait_agent timeout must be recorded as timeout_unknown and must not justify live_agent_continuity_confirmed.",
-            "missing, cancelled, unknown, or timeout_unknown host liveness must spawn a replacement from current-run memory instead of continuing to wait on the old role.",
+            "missing, cancelled, completed, unknown, or timeout_unknown host liveness must spawn a replacement from current-run memory instead of continuing to wait on the old role.",
         ],
-        description="Restore or replace all six live FlowPilot role agents from current-run memory before PM resume decision, using the strongest available background role intelligence policy.",
+        optional_fields=[
+            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
+        ],
+        description="Refresh or replace all six FlowPilot role bindings from current-run memory before PM resume decision, reusing active agents and spawning only failed replacements.",
         reviewer_check="PM and reviewer checks use the written crew_rehydration_report before resume decisions.",
     )
 
@@ -6642,7 +6731,9 @@ def _resume_role_context(project_root: Path, run_root: Path, run_state: dict[str
     }
     context = {
         "role_key": role,
-        "required_rehydration_result": ROLE_AGENT_REHYDRATION_RESULT,
+        "required_rehydration_result": "conditional_on_host_liveness",
+        "active_liveness_rehydration_result": ROLE_AGENT_CONTINUITY_RESULT,
+        "replacement_rehydration_result": ROLE_AGENT_REHYDRATION_RESULT,
         "allowed_rehydration_results": sorted(RESUME_ROLE_AGENT_RESULTS),
         "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
         "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
@@ -6650,7 +6741,9 @@ def _resume_role_context(project_root: Path, run_root: Path, run_state: dict[str
         "inherit_foreground_model_allowed": False,
         "rehydrated_for_run_id": run_state["run_id"],
         "rehydrated_after_resume_tick_id": _latest_resume_tick_id(run_state),
-        "spawned_after_resume_state_loaded": True,
+        "rehydrated_after_resume_state_loaded": True,
+        "spawned_after_resume_state_loaded": False,
+        "spawned_after_resume_state_loaded_required_if_replaced": True,
         "core_prompt_path": project_relative(project_root, core_path),
         "core_prompt_hash": _path_hash(core_path),
         "memory_packet_path": project_relative(project_root, memory_path),
@@ -6737,8 +6830,12 @@ def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, ru
             {
                 "requires_payload": "rehydrated_role_agents",
                 "payload_contract": _resume_role_rehydration_payload_contract(run_state, contexts),
-                "requires_host_spawn": True,
-                "spawn_policy": "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision",
+                "requires_host_spawn": False,
+                "requires_host_role_rehydration": True,
+                "requires_host_spawn_for_replacements": True,
+                "spawn_required_only_for_replacements": True,
+                "reuse_live_agents_when_active": True,
+                "spawn_policy": "reuse_confirmed_live_agents_spawn_only_missing_cancelled_completed_unknown_or_timeout",
                 "pm_memory_rehydration_required": True,
             }
         )
@@ -6860,18 +6957,26 @@ def _normalize_resume_role_agent_records(
             raise RouterError(f"{role} wait_agent timeout_unknown cannot be treated as active continuity")
         if host_liveness_status in {"missing", "cancelled", "unknown", "timeout_unknown"} and liveness_decision == "confirmed_existing_agent":
             raise RouterError(f"{role} missing/cancelled/unknown host liveness cannot confirm existing agent")
+        if host_liveness_status == "completed" and liveness_decision == "confirmed_existing_agent":
+            raise RouterError(f"{role} completed host liveness cannot confirm existing agent")
         if result == ROLE_AGENT_CONTINUITY_RESULT and not (
             host_liveness_status == "active" and liveness_decision == "confirmed_existing_agent"
         ):
             raise RouterError(f"{role} live continuity requires active host liveness")
         if result == ROLE_AGENT_REHYDRATION_RESULT and liveness_decision != "spawned_replacement_from_current_run_memory":
             raise RouterError(f"{role} replacement rehydration requires spawned_replacement_from_current_run_memory")
+        if result == ROLE_AGENT_REHYDRATION_RESULT and host_liveness_status == "active":
+            raise RouterError(f"{role} active host liveness must use live_agent_continuity_confirmed, not replacement rehydration")
         if raw.get("rehydrated_for_run_id") != run_state["run_id"]:
             raise RouterError(f"{role} must be rehydrated_for_run_id={run_state['run_id']}")
         if raw.get("rehydrated_after_resume_tick_id") != resume_tick_id:
             raise RouterError(f"{role} must be rehydrated_after_resume_tick_id={resume_tick_id}")
-        if raw.get("spawned_after_resume_state_loaded") is not True:
-            raise RouterError(f"{role} must be spawned_after_resume_state_loaded=true")
+        rehydrated_after_state_loaded = raw.get("rehydrated_after_resume_state_loaded")
+        legacy_spawned_after_state_loaded = raw.get("spawned_after_resume_state_loaded")
+        if rehydrated_after_state_loaded is not True and legacy_spawned_after_state_loaded is not True:
+            raise RouterError(f"{role} must be rehydrated_after_resume_state_loaded=true")
+        if result == ROLE_AGENT_REHYDRATION_RESULT and legacy_spawned_after_state_loaded is not True:
+            raise RouterError(f"{role} replacement rehydration requires spawned_after_resume_state_loaded=true")
         if raw.get("core_prompt_path") != context["core_prompt_path"] or raw.get("core_prompt_hash") != context["core_prompt_hash"]:
             raise RouterError(f"{role} core prompt identity mismatch")
         memory_status = context["role_memory_status"]
@@ -6908,7 +7013,8 @@ def _normalize_resume_role_agent_records(
             "wait_agent_timeout_treated_as_active": False,
             "rehydrated_for_run_id": run_state["run_id"],
             "rehydrated_after_resume_tick_id": resume_tick_id,
-            "spawned_after_resume_state_loaded": True,
+            "rehydrated_after_resume_state_loaded": True,
+            "spawned_after_resume_state_loaded": result == ROLE_AGENT_REHYDRATION_RESULT,
             "role_memory_status": memory_status,
             "memory_packet_path": context["memory_packet_path"],
             "memory_packet_hash": context["memory_packet_hash"],
@@ -9130,6 +9236,30 @@ def _write_gate_outcome_block_report(
     gate_blocks.append(record)
     run_state["gate_outcome_blocks"] = gate_blocks[-20:]
     run_state["active_gate_outcome_block"] = record
+
+
+def _clear_active_gate_outcome_block_for_pass(run_state: dict[str, Any], *, event: str) -> None:
+    cleared_events = set(GATE_OUTCOME_PASS_CLEARS_EVENTS.get(event, ()))
+    if not cleared_events:
+        return
+    active = run_state.get("active_gate_outcome_block")
+    if not isinstance(active, dict) or active.get("event") not in cleared_events:
+        return
+    cleared_at = utc_now()
+    active["status"] = "cleared_by_pass"
+    active["cleared_by_event"] = event
+    active["cleared_at"] = cleared_at
+    blocks = run_state.get("gate_outcome_blocks")
+    if isinstance(blocks, list):
+        for record in reversed(blocks):
+            if not isinstance(record, dict):
+                continue
+            if record.get("event") == active.get("event") and record.get("report_path") == active.get("report_path"):
+                record["status"] = "cleared_by_pass"
+                record["cleared_by_event"] = event
+                record["cleared_at"] = cleared_at
+                break
+    run_state["active_gate_outcome_block"] = None
 
 
 def _write_route_process_pass_report(
@@ -14479,6 +14609,22 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             card_return_event=card_return_event,
             bundle=False,
         )
+        expected_return_rel = project_relative(project_root, expected_return_path)
+        expected_receipt_rel = project_relative(project_root, expected_receipt_path)
+        direct_ack_token = _direct_router_ack_token_for_card(
+            run_state,
+            run_root,
+            card_id=entry["card_id"],
+            to_role=to_role,
+            target_agent_id=target_agent_id,
+            card_return_event=card_return_event,
+            expected_return_path=expected_return_rel,
+            expected_receipt_path=expected_receipt_rel,
+            delivery_id=delivery_id,
+            delivery_attempt_id=delivery_attempt_id,
+            body_hash=card_hash,
+        )
+        direct_ack_token_hash = card_runtime.stable_json_hash(direct_ack_token)
         resume_tick_id = _latest_resume_tick_id(run_state)
         role_io_receipt = _role_io_protocol_receipt_for_agent(
             run_root,
@@ -14529,8 +14675,10 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 "open_method": "open-card",
                 "card_return_event": card_return_event,
                 "card_checkin_instruction": card_checkin_instruction,
-                "expected_return_path": project_relative(project_root, expected_return_path),
-                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
+                "direct_router_ack_token": direct_ack_token,
+                "direct_router_ack_token_hash": direct_ack_token_hash,
+                "expected_return_path": expected_return_rel,
+                "expected_receipt_path": expected_receipt_rel,
                 "card_envelope_path": project_relative(project_root, envelope_path),
                 "delivery_id": delivery_id,
                 "delivery_attempt_id": delivery_attempt_id,
@@ -14544,11 +14692,13 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 "role_io_protocol_receipt_path": role_io_receipt.get("receipt_path") if isinstance(role_io_receipt, dict) else None,
                 "role_io_protocol_receipt_hash": role_io_receipt.get("receipt_hash") if isinstance(role_io_receipt, dict) else None,
                 "ack_report_required": True,
+                "ack_submission_mode": "direct_to_router",
+                "controller_ack_handoff_allowed": False,
                 "read_receipt_is_mechanical_only": True,
                 "planned_artifacts": {
                     "card_envelope_path": project_relative(project_root, envelope_path),
-                    "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-                    "expected_return_path": project_relative(project_root, expected_return_path),
+                    "expected_receipt_path": expected_receipt_rel,
+                    "expected_return_path": expected_return_rel,
                 },
             }
         )
@@ -14571,7 +14721,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             action_type="deliver_system_card",
             actor="controller",
             label=entry["label"],
-            summary=f"Deliver system card envelope {entry['card_id']} to {to_role}; role must open through runtime and return {card_return_event}.",
+            summary=f"Deliver system card envelope {entry['card_id']} to {to_role}; role must open through runtime and submit {card_return_event} directly to Router.",
             allowed_reads=allowed_reads,
             allowed_writes=[
                 project_relative(project_root, envelope_path),
@@ -14677,6 +14827,19 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
                 member[key] = action[key]
         cards.append(member)
     card_return_event = _card_bundle_return_event_for_role(role)
+    direct_ack_token = _direct_router_ack_token_for_bundle(
+        run_state,
+        run_root,
+        bundle_id=bundle_id,
+        role=role,
+        target_agent_id=str(first.get("target_agent_id") or "") or None,
+        card_return_event=card_return_event,
+        card_ids=card_ids,
+        delivery_attempt_ids=[str(action.get("delivery_attempt_id") or "") for action in actions],
+        expected_return_path=project_relative(project_root, expected_return_path),
+        expected_receipt_paths=expected_receipt_paths,
+    )
+    direct_ack_token_hash = card_runtime.stable_json_hash(direct_ack_token)
     card_checkin_instruction = _card_checkin_instruction(
         project_root,
         envelope_path=project_relative(project_root, bundle_envelope_path),
@@ -14691,7 +14854,7 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
         label=f"same_role_system_card_bundle_delivered_{_safe_delivery_component(card_ids[0])}_to_{_safe_delivery_component(card_ids[-1])}",
         summary=(
             f"Deliver one committed system-card bundle with {len(card_ids)} cards to {role}; "
-            f"the role must open it through runtime and return {card_return_event}."
+            f"the role must open it through runtime and submit {card_return_event} directly to Router."
         ),
         allowed_reads=allowed_reads,
         allowed_writes=[
@@ -14717,6 +14880,8 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
             "open_method": "open-card-bundle",
             "card_return_event": card_return_event,
             "card_checkin_instruction": card_checkin_instruction,
+            "direct_router_ack_token": direct_ack_token,
+            "direct_router_ack_token_hash": direct_ack_token_hash,
             "expected_return_path": project_relative(project_root, expected_return_path),
             "expected_receipt_paths": expected_receipt_paths,
             "card_bundle_id": bundle_id,
@@ -14727,6 +14892,8 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
             "role_io_protocol_receipt_path": first.get("role_io_protocol_receipt_path"),
             "role_io_protocol_receipt_hash": first.get("role_io_protocol_receipt_hash"),
             "ack_report_required": True,
+            "ack_submission_mode": "direct_to_router",
+            "controller_ack_handoff_allowed": False,
             "read_receipt_is_mechanical_only": True,
             "same_role_bundle": True,
             "manifest_batch_checked": True,
@@ -15431,6 +15598,21 @@ def _pending_expected_external_event_groups(run_state: dict[str, Any]) -> list[l
             ordered_requires.append(required_flag)
         grouped[required_flag].append((event, meta))
 
+    def group_already_has_terminal_outcome(group: list[tuple[str, dict[str, str]]]) -> bool:
+        recorded_events = [event for event, meta in group if flags.get(meta["flag"])]
+        if not recorded_events:
+            return False
+        recorded_blocks = [event for event in recorded_events if event in GATE_OUTCOME_BLOCK_EVENTS]
+        if recorded_blocks:
+            pass_events = [
+                event
+                for event, meta in group
+                if event in GATE_OUTCOME_PASS_CLEAR_FLAGS and not flags.get(meta["flag"])
+            ]
+            if pass_events:
+                return False
+        return True
+
     pending: list[list[tuple[str, dict[str, str]]]] = []
     for required_flag in ordered_requires:
         if not flags.get(required_flag):
@@ -15440,7 +15622,7 @@ def _pending_expected_external_event_groups(run_state: dict[str, Any]) -> list[l
         ):
             continue
         group = grouped[required_flag]
-        if any(flags.get(meta["flag"]) for _event, meta in group):
+        if group_already_has_terminal_outcome(group):
             continue
         pending.append(group)
     return pending
@@ -15628,6 +15810,8 @@ def _commit_system_card_delivery_artifact(
         "open_method": pending.get("open_method") or "open-card",
         "card_return_event": pending.get("card_return_event") or _card_return_event_for_card(card_id),
         "card_checkin_instruction": pending.get("card_checkin_instruction"),
+        "direct_router_ack_token": pending.get("direct_router_ack_token"),
+        "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
         "expected_return_path": pending.get("expected_return_path"),
         "expected_receipt_path": pending.get("expected_receipt_path"),
         "card_envelope_path": pending.get("card_envelope_path"),
@@ -15694,6 +15878,8 @@ def _commit_system_card_delivery_artifact(
         "open_method": delivery.get("open_method") or "open-card",
         "card_return_event": delivery.get("card_return_event"),
         "card_checkin_instruction": delivery.get("card_checkin_instruction"),
+        "direct_router_ack_token": delivery.get("direct_router_ack_token"),
+        "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
         "expected_receipt_path": project_relative(project_root, expected_receipt_path),
         "expected_return_path": project_relative(project_root, expected_return_path),
         "delivery_context": delivery_context,
@@ -15741,6 +15927,7 @@ def _commit_system_card_delivery_artifact(
             "requires_read_receipt": True,
             "card_return_event": delivery.get("card_return_event"),
             "card_checkin_instruction": delivery.get("card_checkin_instruction"),
+            "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
             "expected_receipt_path": project_relative(project_root, expected_receipt_path),
             "expected_return_path": project_relative(project_root, expected_return_path),
             "delivered_at": delivery["delivered_at"],
@@ -15767,6 +15954,7 @@ def _commit_system_card_delivery_artifact(
             "expected_receipt_path": project_relative(project_root, expected_receipt_path),
             "expected_return_path": project_relative(project_root, expected_return_path),
             "card_checkin_instruction": delivery.get("card_checkin_instruction"),
+            "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
             "sent_at": delivery["delivered_at"],
         }
     )
@@ -15862,6 +16050,8 @@ def _commit_system_card_bundle_delivery_artifact(
                 "card_return_event": envelope_card["card_return_event"],
                 "bundle_return_event": pending.get("card_return_event"),
                 "card_checkin_instruction": pending.get("card_checkin_instruction"),
+                "direct_router_ack_token": pending.get("direct_router_ack_token"),
+                "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
                 "expected_return_path": expected_return_path_raw,
                 "expected_receipt_path": project_relative(project_root, expected_receipt_path),
                 "card_bundle_id": bundle_id,
@@ -15913,6 +16103,8 @@ def _commit_system_card_bundle_delivery_artifact(
         "open_method": "open-card-bundle",
         "card_return_event": pending.get("card_return_event"),
         "card_checkin_instruction": pending.get("card_checkin_instruction"),
+        "direct_router_ack_token": pending.get("direct_router_ack_token"),
+        "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
         "expected_receipt_paths": [card["expected_receipt_path"] for card in envelope_cards],
         "expected_return_path": project_relative(project_root, expected_return_path),
         "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
@@ -15969,6 +16161,7 @@ def _commit_system_card_bundle_delivery_artifact(
                 "card_return_event": delivery.get("card_return_event"),
                 "bundle_return_event": pending.get("card_return_event"),
                 "card_checkin_instruction": delivery.get("card_checkin_instruction"),
+                "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
                 "expected_receipt_path": delivery.get("expected_receipt_path"),
                 "expected_return_path": expected_return_path_raw,
                 "delivered_at": delivered_at,
@@ -16000,6 +16193,7 @@ def _commit_system_card_bundle_delivery_artifact(
             "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
             "expected_return_path": expected_return_path_raw,
             "card_checkin_instruction": pending.get("card_checkin_instruction"),
+            "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
             "sent_at": delivered_at,
         }
     )
@@ -16232,67 +16426,12 @@ def _pending_action_matches_card_return(pending_action: object, pending_return: 
 
 
 def _record_card_return_event_from_external_entrypoint(project_root: Path, event: str) -> dict[str, Any]:
-    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
-    run_state, run_root = load_run_state(project_root, bootstrap)
-    if run_state is None or run_root is None:
-        raise RouterError("run state is missing")
-    pending = next(
-        (
-            item
-            for item in _pending_return_records(run_root, str(run_state["run_id"]))
-            if isinstance(item, dict) and item.get("card_return_event") == event
-        ),
-        None,
+    del project_root
+    raise RouterError(
+        f"{event} is a system-card ACK return event, and the legacy record-event ACK path is disabled. "
+        "The addressed role must run the card check-in command from the envelope so the ACK is submitted "
+        "directly to Router with its direct Router ACK token."
     )
-    if pending is None:
-        raise RouterError(
-            f"{event} is a card return event, but no pending card return is waiting; "
-            "do not record it as a normal external event."
-        )
-    expected_return_path = str(pending.get("expected_return_path") or "")
-    if not expected_return_path:
-        raise RouterError(f"{event} is a card return event, but the pending return has no expected ACK path")
-    if not resolve_project_path(project_root, expected_return_path).exists():
-        raise RouterError(
-            f"{event} is a card return event; waiting for the runtime ACK at {expected_return_path}. "
-            "Ask the role to run the card check-in command from the envelope instead of hand-writing or recording the ACK."
-        )
-    check_pending = dict(pending)
-    check_pending.setdefault("to_role", pending.get("target_role"))
-    try:
-        if pending.get("return_kind") == "system_card_bundle":
-            routed_to = "check_card_bundle_return_event"
-            result = _apply_card_bundle_return_event_check(project_root, run_root, run_state, check_pending)
-        else:
-            routed_to = "check_card_return_event"
-            result = _apply_card_return_event_check(project_root, run_root, run_state, check_pending)
-    except (RouterError, card_runtime.CardRuntimeError) as exc:
-        raise RouterError(
-            f"{event} reached the card-return path but failed runtime validation: {exc}. "
-            "The role must use the card check-in command from the envelope."
-        ) from exc
-    if _pending_action_matches_card_return(run_state.get("pending_action"), pending):
-        run_state["pending_action"] = None
-    append_history(
-        run_state,
-        "router_rerouted_card_ack_from_record_event_to_check_card_return_event",
-        {
-            "event": event,
-            "routed_to": routed_to,
-            "expected_return_path": expected_return_path,
-            "status": result.get("status"),
-        },
-    )
-    _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_card_return_reroute:{event}")
-    _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_card_return_reroute:{event}", update_display=True)
-    save_run_state(run_root, run_state)
-    return {
-        "ok": bool(result.get("ok", True)),
-        "event": event,
-        "routed_to": routed_to,
-        "status": result.get("status"),
-        "expected_return_path": expected_return_path,
-    }
 
 
 def _committed_card_bundle_artifact_extra(
@@ -17596,6 +17735,7 @@ def _record_external_event_unchecked(
             raise RouterError("PM can request research on this path only after an insufficient reviewer material report")
     for clear_flag in GATE_OUTCOME_PASS_CLEAR_FLAGS.get(event, ()):
         run_state.setdefault("flags", {})[clear_flag] = False
+    _clear_active_gate_outcome_block_for_pass(run_state, event=event)
     record = {
         "event": event,
         "summary": meta["summary"],

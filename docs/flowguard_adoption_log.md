@@ -1121,6 +1121,105 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
+## direct-router-ack-migration - Routed system-card and active-holder ACKs directly to Router
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing protocol change to ACK routing, prompt contracts, Router/card runtime validation, and packet active-holder flow
+- Status: completed with targeted verification; full router pytest suite did not finish within the local timeout window
+- Skill decision: used_flowguard
+- Started: 2026-05-11T12:00:00+00:00
+- Ended: 2026-05-11T12:35:00+00:00
+- Duration seconds: not measured precisely
+- Commands OK: true for required targeted checks; false for timeout-only full-suite attempts
+
+### Model Files
+- `simulations/flowpilot_card_envelope_model.py`
+- `simulations/card_instruction_coverage_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `python -m py_compile skills\flowpilot\assets\card_runtime.py skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\flowpilot_runtime.py skills\flowpilot\assets\packet_runtime.py simulations\flowpilot_card_envelope_model.py simulations\run_flowpilot_card_envelope_checks.py simulations\card_instruction_coverage_model.py simulations\run_card_instruction_coverage_checks.py`
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py -q`
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py -q`
+- OK: targeted router ACK/card/bundle/route-card checks in `tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- Timeout: `python -m pytest tests\test_flowpilot_router_runtime.py -q`
+- Timeout: `python simulations\run_meta_checks.py`
+- Timeout: `python simulations\run_capability_checks.py`
+
+### Findings
+- Direct Router ACK token validation is now required for system-card and bundle ACKs.
+- Legacy `record-event *_card_ack` submissions are rejected instead of rerouted.
+- Prompt coverage now detects stale Controller-routed ACK wording and missing direct-Router ACK/result guidance in card and packet prompts.
+- A model miss was found and fixed: startup system cards may be issued before an execution frontier exists, so direct ACK tokens must allow missing frontier bindings only during that startup-before-frontier state.
+- The prompt coverage model found real stale/custom card wording in route officer/reviewer cards and a duplicate stale identity block in `pm_role_work_request`; those prompts were corrected.
+
+### Counterexamples
+- Missing direct Router ACK token.
+- ACK submitted through Controller handoff.
+- ACK accepted through legacy external-event entrypoint.
+- Missing direct Router ACK prompt coverage.
+- Stale Controller ACK prompt wording.
+- Missing packet active-holder ACK/result guidance.
+- Missing Controller wait-for-router-notice guidance.
+
+### Friction Points
+- The full router pytest module and full meta/capability graph expansions exceeded the local timeout windows. Targeted router checks passed, and meta/capability proofs were reused through the runners' `--fast` proof-validation mode because those model files were not changed.
+
+### Skipped Steps
+- No GitHub push was performed, per user instruction.
+
+### Next Actions
+- If a future change touches `simulations/meta_model.py` or `simulations/capability_model.py`, rerun the full non-fast graph checks with a larger execution window.
+
+
+## 2026-05-11 - Heartbeat resume role reuse model upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: optimize FlowPilot heartbeat/manual resume so confirmed live role agents are reused after current-run memory refresh, while only failed or uncertain roles are replaced.
+- Status: completed
+- Skill decision: used_flowguard
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_resume_model.py`
+- `simulations/run_flowpilot_resume_checks.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_resume_checks.py`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_resume_model.py simulations\run_flowpilot_resume_checks.py`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_resume_reentry_loads_state_before_resume_cards -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k resume -q`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+
+### Findings
+- The resume model now distinguishes all-active reuse, partial failed-role replacement, and all-uncertain replacement.
+- Added hazards prove the model catches all-active roles being replaced, one failed role causing all six replacements, and failed-role recovery that does not reuse still-active roles.
+
+### Counterexamples
+- `all_active_roles_replaced_instead_of_reused`
+- `one_failed_role_replaced_all_six`
+- `one_failed_role_does_not_reuse_active_roles`
+
+### Friction Points
+- Full `run_meta_checks.py` and `run_capability_checks.py` exceeded the local timeout, so unchanged meta/capability proof artifacts were checked with `--fast`.
+
+### Skipped Steps
+- Full meta/capability reruns were skipped because this change only touched the resume model/router contract and the full checks timed out locally.
+
+### Next Actions
+- none recorded
+
+
 ## 2026-05-11 - Unified role-output progress and concurrent resume liveness
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -7410,6 +7509,72 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Commands
 - OK (0.000s): `python .flowpilot/runs/run-20260511-081606/flowguard/root_contract_modelability_checks.py --contract-path .flowpilot/runs/run-20260511-081606/root_acceptance_contract.json --scenario-pack-path .flowpilot/runs/run-20260511-081606/standard_scenario_pack.json --json-out .flowpilot/runs/run-20260511-081606/flowguard/root_contract_modelability_results.json`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## run-20260511-081606-child-skill-product-fit - Product FlowGuard officer assessed child-skill product fit and produced role-output event envelope
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot child-skill product-fit gate before route design
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T10:57:47+00:00
+- Ended: 2026-05-11T10:57:47+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python .flowpilot/runs/run-20260511-081606/flowguard/child_skill_product_fit_checks.py --capabilities-path .flowpilot/runs/run-20260511-081606/capabilities.json --selection-path .flowpilot/runs/run-20260511-081606/pm_child_skill_selection.json --manifest-path .flowpilot/runs/run-20260511-081606/child_skill_gate_manifest.json --conformance-path .flowpilot/runs/run-20260511-081606/flowguard/child_skill_conformance_model.json --json-out .flowpilot/runs/run-20260511-081606/flowguard/child_skill_product_fit_results.json`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## run-20260511-081606-route-product-check - Product FlowGuard officer assessed PM route product fit and produced route product pass event envelope
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot route product check gate before route activation
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T11:41:01+00:00
+- Ended: 2026-05-11T11:41:01+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python .flowpilot/runs/run-20260511-081606/flowguard/route_product_check_model.py --flow-draft-path .flowpilot/runs/run-20260511-081606/routes/route-001/flow.draft.json --route-payload-path .flowpilot/runs/run-20260511-081606/route_drafts/route-001_pm_route_draft_payload.body.json --product-architecture-path .flowpilot/runs/run-20260511-081606/product_function_architecture.json --product-model-path .flowpilot/runs/run-20260511-081606/flowguard/product_architecture_modelability.json --root-contract-path .flowpilot/runs/run-20260511-081606/root_acceptance_contract.json --capabilities-path .flowpilot/runs/run-20260511-081606/capabilities.json --process-results-path .flowpilot/runs/run-20260511-081606/flowguard/route_process_check_results.json --json-out .flowpilot/runs/run-20260511-081606/flowguard/route_product_check_results.json`
 
 ### Findings
 - none recorded

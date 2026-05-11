@@ -1,46 +1,43 @@
-# FlowPilot Card ACK Repair Plan
+# FlowPilot Direct Router ACK Plan
 
-## Risk Intent Brief
+## Current Direction
 
-This change repairs the system-card check-in path. The protected harm is a
-FlowPilot run getting stuck before startup because a role hand-writes an ACK or
-Controller routes a card ACK as a normal external event.
+This older card-ACK repair note is superseded by the direct-Router ACK
+migration. The protected harm is still the same: a FlowPilot run must not get
+stuck or advance incorrectly because a role hand-writes an ACK, sends an ACK to
+Controller, or lets Controller record an ACK as an ordinary external event.
 
-The model must make these states visible:
+The current rule is stricter:
 
-- a system-card delivery has a real committed envelope;
-- the receiving role gets an explicit check-in instruction;
-- the role opens the card through the runtime check-in tool;
-- the runtime writes the read receipt and ACK;
-- Controller never treats a card ACK as ordinary project output;
-- Router can safely recover if Controller sends a card ACK to the external
-  event entrypoint;
-- Router still rejects hand-written or stale ACK files.
-
-Residual blindspots: the model checks the control-plane flow and file shape. It
-does not prove the role semantically understood the card body; reviewer or PM
-judgement gates still own semantic review.
+- system-card ACKs go directly from the addressed role to Router through the
+  card check-in command;
+- active-holder packet ACKs and packet completion reports go directly from the
+  current holder to Router through the lease;
+- Controller waits for Router action envelopes or
+  `controller_next_action_notice.json`;
+- Controller does not receive, write, relay, recover, or record ACKs;
+- the legacy `record-event *_card_ack` path is rejected, not rerouted.
 
 ## Implementation Plan
 
 | Step | Change | Why | Acceptance check |
 | --- | --- | --- | --- |
-| 1 | Add one short check-in instruction block to every system-card envelope that requires ACK. | The role should see the "打卡" instruction inside the work package, not infer it from memory. | Delivered card envelope exposes the runtime command and says not to hand-write ACK. |
-| 2 | Keep the runtime check-in tool as the official path and make it one-step. | Add `receive-card` / `receive-card-bundle`, which opens the card, writes the read receipt, and writes the ACK. Keep `open-card` / `ack-card` for lower-level compatibility. | Tests prove the one-step command creates an ACK accepted by Router. |
-| 3 | Tighten Controller core wording for card ACKs. | Controller currently has a broad "role/event envelope -> record-event" instruction that can mislead it. | Controller card explicitly says card ACKs are not normal events and must return to Router for ACK checking. |
-| 4 | Upgrade Router's external-event entrypoint for card ACK mistakes. | If Controller still sends a card ACK to record-event, Router should guide or consume it through ACK validation, not dead-end. | `record_external_event(..., "reviewer_card_ack")` with a valid runtime ACK resolves the pending card return. |
-| 5 | Keep validation strict. | The fix must not accept hand-written or stale ACK files. | Tests show malformed ACK, wrong role, wrong agent, or missing receipt still fail. |
+| 1 | Add a direct-Router ACK token to every committed system-card and bundle envelope. | Router must know which current card holder may check in. | ACK validation rejects tokenless, stale, wrong-role, wrong-agent, and wrong-card ACKs. |
+| 2 | Make the card runtime write ACKs as `direct_to_router` receipts only. | ACKs are mechanical check-ins, not Controller mail. | Runtime ACKs include direct token/hash and `controller_ack_handoff_used: false`. |
+| 3 | Reject legacy `record-event *_card_ack` submissions. | Compatibility with the old path keeps the system ambiguous. | Router returns a control-plane failure instead of accepting or rerouting the ACK. |
+| 4 | Update all role/system card prompts and packet templates. | Roles must see the new rule in the work they receive, not infer it from memory. | Prompt coverage model fails on stale Controller ACK wording and missing direct-Router ACK wording. |
+| 5 | Preserve formal Controller relay for cross-role mail only. | Reports, decisions, and review envelopes still need Controller-visible coordination. | Packet/result docs distinguish mechanical ACKs from formal mail. |
 | 6 | Sync repo source to the installed local FlowPilot skill and make a local git commit only. | The user asked for local install, local repo, and local git synchronization, not GitHub push. | Installer check reports the installed skill is fresh; local commit exists; no remote push. |
 
 ## Bug Risks To Catch Before Editing
 
 | Risk | What could go wrong | FlowGuard must catch |
 | --- | --- | --- |
-| 1 | Controller sends card ACK through normal external-event recording again. | ACK cannot be recorded as ordinary event; valid ACK must be routed to card-return validation. |
-| 2 | Router "fix" becomes too permissive and accepts a hand-written ACK. | ACK is accepted only with runtime read receipt references, matching run, role, agent, envelope, and hashes. |
-| 3 | Work package still hides the check-in command. | A committed system-card envelope that requires ACK must include check-in instructions. |
-| 4 | Role opens the card but does not send the ACK. | Router must stay in pending-return state with a recovery reminder, not advance. |
+| 1 | Controller receives, submits, or records a system-card ACK. | Legacy `record-event *_card_ack` path is rejected and prompts forbid Controller ACK handling. |
+| 2 | A role card still teaches the old ACK path. | Prompt coverage fails on stale ACK-to-Controller phrases. |
+| 3 | A work packet omits the new active-holder ACK/result fast-lane instruction. | Packet prompt coverage fails when direct Router ACK/result terms are missing. |
+| 4 | Router accepts a hand-written or tokenless ACK. | Runtime validation requires the direct Router token, receipt paths, role, agent, card, envelope, and hashes. |
 | 5 | ACK from old run, wrong role, wrong agent, or wrong card is accepted. | Validation rejects mismatched run/role/agent/card/hash. |
-| 6 | Controller reads card body while trying to help. | Controller remains envelope-only; card body access remains forbidden. |
-| 7 | Bundle cards regress while fixing single-card ACK. | Bundle ACK path keeps per-card receipt join and incomplete-ACK recovery. |
-| 8 | Local installed skill is stale after the repository fix. | Install/audit check must confirm installed FlowPilot source is fresh. |
+| 6 | Controller infers packet completion from worker chat. | Controller card and packet docs require waiting for Router's next-action notice. |
+| 7 | Bundle cards regress while fixing single-card ACK. | Bundle ACK validation keeps per-card receipt join and incomplete-ACK recovery. |
+| 8 | Local installed skill is stale after the repository fix. | Install/audit check confirms installed FlowPilot source is fresh. |

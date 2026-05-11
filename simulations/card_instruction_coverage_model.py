@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -48,6 +49,47 @@ LIVE_CONTEXT_REQUIRED_FIELDS = (
     "user_request_path",
     "execution_frontier",
     "prompt_delivery_ledger",
+)
+DIRECT_ROUTER_ACK_REQUIRED_TERMS = (
+    "system-card acks go directly to router",
+    "card check-in command",
+    "router-directed return path",
+)
+STALE_CONTROLLER_ACK_PATTERNS = (
+    re.compile(r"\breturn\s+(?:the\s+)?ack\s+to\s+controller\b", re.IGNORECASE),
+    re.compile(r"\bsend\s+(?:the\s+)?ack\s+to\s+controller\b", re.IGNORECASE),
+    re.compile(r"\bsubmit\s+(?:the\s+)?ack\s+to\s+controller\b", re.IGNORECASE),
+    re.compile(r"\bgive\s+(?:the\s+)?ack\s+to\s+controller\b", re.IGNORECASE),
+    re.compile(r"\back\s+returns?\s+to\s+controller\b", re.IGNORECASE),
+    re.compile(r"\back\s+returned\s+to\s+controller\b", re.IGNORECASE),
+    re.compile(r"\bcontroller\s+(?:must|should)\s+submit\s+(?:the\s+)?ack\b", re.IGNORECASE),
+    re.compile(r"\bcontroller\s+submits\s+(?:the\s+)?ack\b", re.IGNORECASE),
+    re.compile(r"\bcontroller\s+receives\s+(?:the\s+)?ack\b", re.IGNORECASE),
+    re.compile(r"\bwaiting\s+for\s+the\s+runtime\s+ack\b", re.IGNORECASE),
+)
+STALE_CONTROLLER_ACK_LINE_PATTERNS = (
+    re.compile(r"\brecord-event\b.*\bcard_ack\b", re.IGNORECASE),
+    re.compile(r"\bcard_ack\b.*\brecord-event\b", re.IGNORECASE),
+)
+PACKET_BODY_DIRECT_ACK_TERMS = (
+    "active-holder-ack",
+    "directly to router",
+    "do not send packet acks or packet completion reports to controller",
+    "controller_next_action_notice.json",
+)
+PACKET_BODY_RESULT_TERMS = (
+    "active-holder-submit-result",
+    "active-holder-submit-existing-result",
+)
+RESULT_BODY_DIRECT_COMPLETION_TERMS = (
+    "active-holder packet completion is submitted to router first",
+    "not to controller",
+    "active-holder lease",
+)
+PACKET_RUNTIME_DIRECT_ACK_TERMS = (
+    "direct_router_ack_rule",
+    "packet ack and packet completion report go directly to router",
+    "controller_next_action_notice.json",
 )
 PM_HISTORY_CONTEXT_REQUIRED_CARD_IDS = frozenset(
     {
@@ -161,6 +203,9 @@ class CardFacts:
     chat_body_suppression: bool
     next_step_source: bool
     next_step_mentions_router: bool
+    direct_router_ack_guidance: bool
+    stale_controller_ack_guidance: bool
+    controller_router_notice_guidance: bool
     live_context_guidance: bool
     action_guidance: bool
     pm_history_context_guidance: bool
@@ -178,6 +223,17 @@ class RouterFacts:
     sequence_manifest_errors: tuple[str, ...]
     live_context_errors: tuple[str, ...]
     orphan_card_files: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class PacketPromptFacts:
+    packet_body_direct_ack_guidance: bool
+    packet_body_result_submission_guidance: bool
+    packet_body_forbids_controller_ack: bool
+    packet_body_names_router_notice: bool
+    result_body_direct_completion_guidance: bool
+    packet_runtime_direct_ack_identity_guidance: bool
+    stale_controller_ack_guidance: bool
 
 
 @dataclass(frozen=True)
@@ -331,6 +387,42 @@ def _has_live_context_guidance(identity: dict[str, str], text: str) -> bool:
     return all(term in lower for term in LIVE_CONTEXT_REQUIRED_TERMS)
 
 
+def _has_direct_router_ack_guidance(identity: dict[str, str], text: str) -> bool:
+    lower = (
+        f"{identity.get('required_return', '')}\n"
+        f"{identity.get(NEXT_STEP_SOURCE_FIELD, '')}\n"
+        f"{text}"
+    ).lower()
+    return all(term in lower for term in DIRECT_ROUTER_ACK_REQUIRED_TERMS)
+
+
+def _has_stale_controller_ack_guidance(text: str) -> bool:
+    if any(pattern.search(text) for pattern in STALE_CONTROLLER_ACK_PATTERNS):
+        return True
+    return any(
+        pattern.search(line)
+        for line in text.splitlines()
+        for pattern in STALE_CONTROLLER_ACK_LINE_PATTERNS
+    )
+
+
+def _has_controller_router_notice_guidance(role: str, text: str) -> bool:
+    if role != "controller":
+        return True
+    lower = text.lower()
+    return (
+        "active-holder" in lower
+        and "controller_next_action_notice.json" in lower
+        and "wait" in lower
+        and "router" in lower
+    )
+
+
+def _has_terms(text: str, terms: tuple[str, ...]) -> bool:
+    lower = re.sub(r"\s+", " ", text.lower())
+    return all(term in lower for term in terms)
+
+
 def _manifest_entries(project_root: Path) -> list[dict[str, Any]]:
     manifest_path = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "manifest.json"
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -435,6 +527,9 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
+                direct_router_ack_guidance=_has_direct_router_ack_guidance(identity, text),
+                stale_controller_ack_guidance=_has_stale_controller_ack_guidance(text),
+                controller_router_notice_guidance=_has_controller_router_notice_guidance(expected_role, text),
                 live_context_guidance=_has_live_context_guidance(identity, text),
                 action_guidance=_has_action_guidance(expected_role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(card_id, expected_role, text),
@@ -468,6 +563,9 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
+                direct_router_ack_guidance=_has_direct_router_ack_guidance(identity, text),
+                stale_controller_ack_guidance=_has_stale_controller_ack_guidance(text),
+                controller_router_notice_guidance=_has_controller_router_notice_guidance(role, text),
                 live_context_guidance=_has_live_context_guidance(identity, text),
                 action_guidance=_has_action_guidance(role, text),
                 pm_history_context_guidance=_has_pm_history_context_guidance(f"unmanifested:{rel}", role, text),
@@ -478,6 +576,30 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
             )
         )
     return tuple(sorted(facts, key=lambda card: card.card_id))
+
+
+def collect_packet_prompt_facts(project_root: Path) -> PacketPromptFacts:
+    packet_body = (project_root / "templates" / "flowpilot" / "packets" / "packet_body.template.md").read_text(
+        encoding="utf-8"
+    )
+    result_body = (project_root / "templates" / "flowpilot" / "packets" / "result_body.template.md").read_text(
+        encoding="utf-8"
+    )
+    packet_runtime = (project_root / "skills" / "flowpilot" / "assets" / "packet_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    combined = "\n".join((packet_body, result_body, packet_runtime))
+    normalized_packet_body = re.sub(r"\s+", " ", packet_body.lower())
+    return PacketPromptFacts(
+        packet_body_direct_ack_guidance=_has_terms(packet_body, PACKET_BODY_DIRECT_ACK_TERMS),
+        packet_body_result_submission_guidance=_has_terms(packet_body, PACKET_BODY_RESULT_TERMS),
+        packet_body_forbids_controller_ack="do not send packet acks or packet completion reports to controller"
+        in normalized_packet_body,
+        packet_body_names_router_notice="controller_next_action_notice.json" in packet_body,
+        result_body_direct_completion_guidance=_has_terms(result_body, RESULT_BODY_DIRECT_COMPLETION_TERMS),
+        packet_runtime_direct_ack_identity_guidance=_has_terms(packet_runtime, PACKET_RUNTIME_DIRECT_ACK_TERMS),
+        stale_controller_ack_guidance=_has_stale_controller_ack_guidance(combined),
+    )
 
 
 def card_failures(card: CardFacts) -> tuple[str, ...]:
@@ -498,6 +620,12 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: missing next_step_source")
     if not card.next_step_mentions_router:
         failures.append(f"{card.card_id}: next_step_source does not name flowpilot_router.py")
+    if not card.direct_router_ack_guidance:
+        failures.append(f"{card.card_id}: missing direct Router system-card ACK guidance")
+    if card.stale_controller_ack_guidance:
+        failures.append(f"{card.card_id}: stale prompt still teaches Controller-routed ACK handling")
+    if not card.controller_router_notice_guidance:
+        failures.append(f"{card.card_id}: Controller card does not teach waiting for Router next-action notice")
     if not card.live_context_guidance:
         failures.append(f"{card.card_id}: missing live router delivery context guidance")
     if not card.action_guidance:
@@ -515,7 +643,31 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
     return tuple(failures)
 
 
-def next_safe_states(state: State, cards: tuple[CardFacts, ...], router_facts: RouterFacts) -> Iterable[Transition]:
+def packet_prompt_failures(packet_prompts: PacketPromptFacts) -> tuple[str, ...]:
+    failures: list[str] = []
+    if not packet_prompts.packet_body_direct_ack_guidance:
+        failures.append("packet body template does not teach direct Router packet ACK")
+    if not packet_prompts.packet_body_result_submission_guidance:
+        failures.append("packet body template does not teach direct Router packet result submission")
+    if not packet_prompts.packet_body_forbids_controller_ack:
+        failures.append("packet body template does not forbid Controller-routed packet ACK/completion")
+    if not packet_prompts.packet_body_names_router_notice:
+        failures.append("packet body template does not name controller_next_action_notice.json")
+    if not packet_prompts.result_body_direct_completion_guidance:
+        failures.append("result body template does not teach active-holder completion direct to Router")
+    if not packet_prompts.packet_runtime_direct_ack_identity_guidance:
+        failures.append("packet runtime identity boundary does not include direct Router ACK rule")
+    if packet_prompts.stale_controller_ack_guidance:
+        failures.append("packet prompt surface still teaches Controller-routed ACK handling")
+    return tuple(failures)
+
+
+def next_safe_states(
+    state: State,
+    cards: tuple[CardFacts, ...],
+    router_facts: RouterFacts,
+    packet_prompts: PacketPromptFacts | None = None,
+) -> Iterable[Transition]:
     if state.status != "checking":
         return
     if state.index == 0:
@@ -527,6 +679,14 @@ def next_safe_states(state: State, cards: tuple[CardFacts, ...], router_facts: R
         if router_failures:
             yield Transition("router_instruction_contract_failed", replace(state, status="blocked", failures=router_failures))
             return
+        if packet_prompts is not None:
+            packet_failures = packet_prompt_failures(packet_prompts)
+            if packet_failures:
+                yield Transition(
+                    "packet_prompt_direct_router_ack_contract_failed",
+                    replace(state, status="blocked", failures=packet_failures),
+                )
+                return
     if state.index >= len(cards):
         yield Transition("card_instruction_coverage_complete", replace(state, status="complete"))
         return
@@ -581,6 +741,9 @@ def hazard_cards() -> dict[str, CardFacts]:
         chat_body_suppression=True,
         next_step_source=True,
         next_step_mentions_router=True,
+        direct_router_ack_guidance=True,
+        stale_controller_ack_guidance=False,
+        controller_router_notice_guidance=True,
         live_context_guidance=True,
         action_guidance=True,
         pm_history_context_guidance=True,
@@ -597,6 +760,14 @@ def hazard_cards() -> dict[str, CardFacts]:
         "missing_chat_body_suppression": replace(good, chat_body_suppression=False),
         "missing_next_step_source": replace(good, next_step_source=False, next_step_mentions_router=False),
         "next_step_without_router": replace(good, next_step_mentions_router=False),
+        "missing_direct_router_ack_guidance": replace(good, direct_router_ack_guidance=False),
+        "stale_controller_ack_guidance": replace(good, stale_controller_ack_guidance=True),
+        "missing_controller_router_notice_guidance": replace(
+            good,
+            card_id="controller.core",
+            role="controller",
+            controller_router_notice_guidance=False,
+        ),
         "missing_live_context_guidance": replace(good, live_context_guidance=False),
         "missing_action_guidance": replace(good, action_guidance=False),
         "missing_pm_history_context_guidance": replace(
@@ -625,4 +796,28 @@ def hazard_cards() -> dict[str, CardFacts]:
             card_id="pm.review_repair",
             pm_control_blocker_repair_guidance=False,
         ),
+    }
+
+
+def hazard_packet_prompts() -> dict[str, PacketPromptFacts]:
+    good = PacketPromptFacts(
+        packet_body_direct_ack_guidance=True,
+        packet_body_result_submission_guidance=True,
+        packet_body_forbids_controller_ack=True,
+        packet_body_names_router_notice=True,
+        result_body_direct_completion_guidance=True,
+        packet_runtime_direct_ack_identity_guidance=True,
+        stale_controller_ack_guidance=False,
+    )
+    return {
+        "missing_packet_direct_router_ack_guidance": replace(good, packet_body_direct_ack_guidance=False),
+        "missing_packet_result_submission_guidance": replace(good, packet_body_result_submission_guidance=False),
+        "missing_packet_controller_ack_forbid": replace(good, packet_body_forbids_controller_ack=False),
+        "missing_packet_router_notice_guidance": replace(good, packet_body_names_router_notice=False),
+        "missing_result_direct_completion_guidance": replace(good, result_body_direct_completion_guidance=False),
+        "missing_packet_runtime_direct_ack_identity_guidance": replace(
+            good,
+            packet_runtime_direct_ack_identity_guidance=False,
+        ),
+        "stale_packet_controller_ack_guidance": replace(good, stale_controller_ack_guidance=True),
     }

@@ -4,18 +4,21 @@ Risk intent brief:
 - Prevent system-card delivery from being mistaken for target-role reading or
   target-role completion.
 - Protect the Controller boundary by requiring envelope-only relay and
-  runtime-created card receipts plus role-authored ack/report envelopes before
-  Router advancement.
+  runtime-created card receipts plus role-authored direct Router ACK/report
+  envelopes before Router advancement.
 - Model-critical durable state: role I/O protocol acknowledgement for the
   current resume tick, card envelope identity, card manifest hash, target role
   and agent identity, read receipt timing, expected card-return event records,
-  explicit runtime check-in instructions, ack/report envelope identity,
+  explicit runtime check-in instructions, direct Router ack/report envelope
+  identity,
   same-role system-card bundle eligibility, batch dependency graph, cross-role
   parallel delivery joins, and legacy prompt-delivery compatibility.
 - Adversarial branches include legacy delivery treated as read, missing read
   receipt, missing ack/report envelope, ack/report without receipt references,
   wrong role, old run, old agent after replacement, hash mismatch, receipt
   before delivery, missing runtime check-in instructions, hand-written ACKs,
+  stale prompts that still teach Controller ACK handling, missing direct Router
+  ACK instructions in role cards or packet templates,
   Controller relaying a pre-apply planned artifact path as if it were a
   committed envelope, public Controller apply of a relay-only system-card
   action, missing resume I/O acknowledgement, preload-only authorization,
@@ -25,7 +28,7 @@ Risk intent brief:
   and dead-end waiting after an interruption.
 - Hard invariants: Controller never reads card bodies; Router advancement
   requires current-run/current-role/current-agent/current-hash runtime receipts
-  referenced by a current ack/report envelope; same-role card bundles are
+  referenced by a current direct Router ack/report envelope; same-role card bundles are
   allowed only when every member card keeps manifest/hash/delivery/receipt
   evidence and the bundle does not hide an external boundary; cross-role
   parallel delivery is allowed only with Router-authored dependency and join
@@ -85,6 +88,11 @@ class State:
     card_return_event_declared: bool = False
     checkin_instruction_declared: bool = False
     checkin_tool_command_declared: bool = False
+    card_ack_token_declared: bool = False
+    direct_router_ack_instruction_declared: bool = False
+    startup_card_before_frontier: bool = False
+    direct_ack_token_frontier_optional_when_missing: bool = False
+    direct_ack_token_requires_frontier_before_available: bool = False
     legacy_return_event_field_used: bool = False
     expected_return_path_recorded: bool = False
     pending_return_recorded: bool = False
@@ -117,10 +125,14 @@ class State:
     ack_current_agent: bool = False
     ack_references_read_receipts: bool = False
     ack_returned_after_receipts: bool = False
-    ack_controller_relayed_envelope_only: bool = False
+    ack_body_empty: bool = False
+    ack_direct_to_router: bool = False
+    ack_router_token_valid: bool = False
+    ack_no_controller_handoff: bool = False
     handwritten_ack_attempted: bool = False
     card_ack_sent_to_external_event_entrypoint: bool = False
     card_ack_external_event_auto_rerouted: bool = False
+    card_ack_external_event_rejected: bool = False
     card_ack_recorded_as_external_event: bool = False
     check_card_return_apply_required: bool = False
     receipt_repair_request_issued: bool = False
@@ -159,6 +171,14 @@ class State:
     awaiting_batch_join_receipts: bool = False
     awaiting_batch_card_return_events: bool = False
     preload_only_receipt_used_as_authorization: bool = False
+
+    prompt_ack_coverage_checked: bool = False
+    prompt_ack_coverage_passed: bool = False
+    stale_controller_ack_prompt_present: bool = False
+    role_direct_router_ack_prompt_present: bool = False
+    packet_direct_router_ack_prompt_present: bool = False
+    packet_direct_router_result_prompt_present: bool = False
+    controller_waits_on_router_notice_prompt_present: bool = False
 
     heartbeat_resume_loaded_pending_return: bool = False
     manual_resume_loaded_pending_return: bool = False
@@ -286,6 +306,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 card_return_event_declared=True,
                 checkin_instruction_declared=True,
                 checkin_tool_command_declared=True,
+                card_ack_token_declared=True,
+                direct_router_ack_instruction_declared=True,
+                startup_card_before_frontier=True,
+                direct_ack_token_frontier_optional_when_missing=True,
                 expected_return_path_recorded=True,
                 pending_return_recorded=True,
             ),
@@ -373,7 +397,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 ack_current_agent=True,
                 ack_references_read_receipts=True,
                 ack_returned_after_receipts=True,
-                ack_controller_relayed_envelope_only=True,
+                ack_body_empty=True,
+                ack_direct_to_router=True,
+                ack_router_token_valid=True,
+                ack_no_controller_handoff=True,
                 per_card_receipts_referenced=True,
             ),
         )
@@ -385,11 +412,26 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and not state.required_card_coverage_checked
     ):
         yield Transition(
-            "router_reroutes_card_ack_received_at_external_event_entrypoint_to_return_check",
+            "router_rejects_card_ack_received_at_legacy_external_event_entrypoint",
             _inc(
                 state,
                 card_ack_sent_to_external_event_entrypoint=True,
-                card_ack_external_event_auto_rerouted=True,
+                card_ack_external_event_rejected=True,
+            ),
+        )
+        return
+
+    if not state.prompt_ack_coverage_checked:
+        yield Transition(
+            "prompt_coverage_confirms_direct_router_ack_instructions",
+            _inc(
+                state,
+                prompt_ack_coverage_checked=True,
+                prompt_ack_coverage_passed=True,
+                role_direct_router_ack_prompt_present=True,
+                packet_direct_router_ack_prompt_present=True,
+                packet_direct_router_result_prompt_present=True,
+                controller_waits_on_router_notice_prompt_present=True,
             ),
         )
         return
@@ -554,7 +596,12 @@ def _ack_valid(state: State) -> bool:
         and state.ack_current_agent
         and state.ack_references_read_receipts
         and state.ack_returned_after_receipts
-        and state.ack_controller_relayed_envelope_only
+        and state.ack_body_empty
+        and state.ack_direct_to_router
+        and state.ack_router_token_valid
+        and state.ack_no_controller_handoff
+        and state.card_ack_token_declared
+        and state.direct_router_ack_instruction_declared
     )
 
 
@@ -595,6 +642,14 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
     ):
         return InvariantResult.fail("card envelope omitted explicit runtime check-in instruction")
     if state.card_envelope_issued and not (
+        state.card_ack_token_declared and state.direct_router_ack_instruction_declared
+    ):
+        return InvariantResult.fail("card envelope omitted direct Router ACK token or instruction")
+    if state.startup_card_before_frontier and state.direct_ack_token_requires_frontier_before_available:
+        return InvariantResult.fail("direct Router ACK token required route/frontier before startup frontier exists")
+    if state.startup_card_before_frontier and not state.direct_ack_token_frontier_optional_when_missing:
+        return InvariantResult.fail("startup card ACK token did not allow missing route/frontier binding")
+    if state.card_envelope_issued and not (
         state.router_auto_committed_internal_action
         and state.committed_artifact_exists
         and state.post_apply_envelope_issued
@@ -621,11 +676,31 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
 def card_return_ack_uses_router_check_action(state: State, trace) -> InvariantResult:
     del trace
     if state.card_ack_recorded_as_external_event:
-        return InvariantResult.fail("card ack was accepted as a normal external event instead of being validated as card return")
-    if state.card_ack_sent_to_external_event_entrypoint and not state.card_ack_external_event_auto_rerouted:
-        return InvariantResult.fail("card ack external-event entrypoint did not reroute to check_card_return_event")
+        return InvariantResult.fail("card ack was accepted as a normal external event instead of direct Router ACK")
+    if state.card_ack_external_event_auto_rerouted:
+        return InvariantResult.fail("legacy card ACK external-event entrypoint still auto-rerouted instead of hard failing")
+    if state.card_ack_sent_to_external_event_entrypoint and not state.card_ack_external_event_rejected:
+        return InvariantResult.fail("legacy card ACK external-event entrypoint was not rejected")
     if state.required_card_coverage_checked and not state.check_card_return_apply_required:
         return InvariantResult.fail("check_card_return_event changed state but was marked apply_required false")
+    return InvariantResult.pass_()
+
+
+def prompt_ack_instruction_coverage(state: State, trace) -> InvariantResult:
+    del trace
+    if state.stale_controller_ack_prompt_present:
+        return InvariantResult.fail("stale prompt still instructed ACK return to Controller")
+    if state.prompt_ack_coverage_checked and not state.prompt_ack_coverage_passed:
+        return InvariantResult.fail("prompt coverage check did not pass direct Router ACK instructions")
+    if state.router_advanced and not (
+        state.prompt_ack_coverage_checked
+        and state.prompt_ack_coverage_passed
+        and state.role_direct_router_ack_prompt_present
+        and state.packet_direct_router_ack_prompt_present
+        and state.packet_direct_router_result_prompt_present
+        and state.controller_waits_on_router_notice_prompt_present
+    ):
+        return InvariantResult.fail("Router advanced without prompt coverage for direct Router ACK instructions")
     return InvariantResult.pass_()
 
 
@@ -772,8 +847,13 @@ INVARIANTS = (
     ),
     Invariant(
         "card_return_ack_uses_router_check_action",
-        "Card acks are mechanical return checks and must be resolved by check_card_return_event.",
+        "Card acks are mechanical return checks and must use the direct Router ACK path.",
         card_return_ack_uses_router_check_action,
+    ),
+    Invariant(
+        "prompt_ack_instruction_coverage",
+        "Prompts and packet templates must teach direct Router ACKs and reject stale Controller ACK instructions.",
+        prompt_ack_instruction_coverage,
     ),
     Invariant(
         "read_receipt_identity_gate",
@@ -824,7 +904,7 @@ INVARIANTS = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 19
+MAX_SEQUENCE_LENGTH = 21
 
 REQUIRED_LABELS = (
     "legacy_prompt_delivery_shape_recorded_without_v2_receipt",
@@ -839,7 +919,8 @@ REQUIRED_LABELS = (
     "router_reissues_stale_delivery_attempt_before_role_ack",
     "role_runtime_open_card_writes_current_receipt",
     "role_returns_card_ack_envelope_referencing_read_receipts",
-    "router_reroutes_card_ack_received_at_external_event_entrypoint_to_return_check",
+    "router_rejects_card_ack_received_at_legacy_external_event_entrypoint",
+    "prompt_coverage_confirms_direct_router_ack_instructions",
     "router_checks_ack_report_and_required_card_receipt_coverage",
     "router_issues_guarded_same_role_system_card_bundle",
     "router_records_incomplete_same_role_bundle_ack_and_waits_for_missing_receipts",
@@ -887,6 +968,10 @@ def target_v2_state() -> State:
         card_return_event_declared=True,
         checkin_instruction_declared=True,
         checkin_tool_command_declared=True,
+        card_ack_token_declared=True,
+        direct_router_ack_instruction_declared=True,
+        startup_card_before_frontier=True,
+        direct_ack_token_frontier_optional_when_missing=True,
         expected_return_path_recorded=True,
         pending_return_recorded=True,
         controller_relayed_card_envelope=True,
@@ -913,9 +998,12 @@ def target_v2_state() -> State:
         ack_current_agent=True,
         ack_references_read_receipts=True,
         ack_returned_after_receipts=True,
-        ack_controller_relayed_envelope_only=True,
+        ack_body_empty=True,
+        ack_direct_to_router=True,
+        ack_router_token_valid=True,
+        ack_no_controller_handoff=True,
         card_ack_sent_to_external_event_entrypoint=True,
-        card_ack_external_event_auto_rerouted=True,
+        card_ack_external_event_rejected=True,
         check_card_return_apply_required=True,
         receipt_repair_request_issued=True,
         redelivery_attempt_issued=True,
@@ -947,6 +1035,12 @@ def target_v2_state() -> State:
         missing_batch_join_detected=True,
         awaiting_batch_join_receipts=True,
         awaiting_batch_card_return_events=True,
+        prompt_ack_coverage_checked=True,
+        prompt_ack_coverage_passed=True,
+        role_direct_router_ack_prompt_present=True,
+        packet_direct_router_ack_prompt_present=True,
+        packet_direct_router_result_prompt_present=True,
+        controller_waits_on_router_notice_prompt_present=True,
         heartbeat_resume_loaded_pending_return=True,
         manual_resume_loaded_pending_return=True,
         recovery_action_available=True,
@@ -1011,6 +1105,22 @@ def hazard_states() -> dict[str, State]:
             safe,
             checkin_tool_command_declared=False,
         ),
+        "missing_card_ack_token": replace(
+            safe,
+            card_ack_token_declared=False,
+        ),
+        "missing_direct_router_ack_instruction": replace(
+            safe,
+            direct_router_ack_instruction_declared=False,
+        ),
+        "direct_ack_token_requires_frontier_before_startup_frontier_exists": replace(
+            safe,
+            direct_ack_token_requires_frontier_before_available=True,
+        ),
+        "startup_card_token_missing_frontier_optional_binding": replace(
+            safe,
+            direct_ack_token_frontier_optional_when_missing=False,
+        ),
         "role_handwrites_ack_instead_of_runtime": replace(
             safe,
             role_used_checkin_runtime=False,
@@ -1020,10 +1130,16 @@ def hazard_states() -> dict[str, State]:
             safe,
             card_ack_recorded_as_external_event=True,
         ),
-        "card_ack_external_event_not_rerouted": replace(
+        "card_ack_external_event_auto_rerouted": replace(
             safe,
             card_ack_sent_to_external_event_entrypoint=True,
-            card_ack_external_event_auto_rerouted=False,
+            card_ack_external_event_auto_rerouted=True,
+            card_ack_external_event_rejected=False,
+        ),
+        "card_ack_external_event_not_rejected": replace(
+            safe,
+            card_ack_sent_to_external_event_entrypoint=True,
+            card_ack_external_event_rejected=False,
         ),
         "check_card_return_apply_optional": replace(
             safe,
@@ -1044,6 +1160,22 @@ def hazard_states() -> dict[str, State]:
         "ack_without_receipt_refs": replace(
             safe,
             ack_references_read_receipts=False,
+        ),
+        "ack_without_direct_router_token": replace(
+            safe,
+            ack_router_token_valid=False,
+        ),
+        "ack_sent_through_controller_handoff": replace(
+            safe,
+            ack_no_controller_handoff=False,
+        ),
+        "ack_contains_body_content": replace(
+            safe,
+            ack_body_empty=False,
+        ),
+        "ack_not_submitted_to_router": replace(
+            safe,
+            ack_direct_to_router=False,
         ),
         "advanced_during_missing_receipt_wait": replace(
             safe,
@@ -1172,5 +1304,25 @@ def hazard_states() -> dict[str, State]:
             safe,
             read_receipt_used_as_semantic_gate=True,
             pm_decision_gate_kept=False,
+        ),
+        "stale_controller_ack_prompt": replace(
+            safe,
+            stale_controller_ack_prompt_present=True,
+        ),
+        "missing_role_direct_router_ack_prompt": replace(
+            safe,
+            role_direct_router_ack_prompt_present=False,
+        ),
+        "missing_packet_direct_router_ack_prompt": replace(
+            safe,
+            packet_direct_router_ack_prompt_present=False,
+        ),
+        "missing_packet_direct_router_result_prompt": replace(
+            safe,
+            packet_direct_router_result_prompt_present=False,
+        ),
+        "missing_controller_waits_on_router_notice_prompt": replace(
+            safe,
+            controller_waits_on_router_notice_prompt_present=False,
         ),
     }

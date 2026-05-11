@@ -241,9 +241,12 @@ long-form public explanation lives in `docs/protocol.md`.
     The PM writes a physical packet envelope/body pair, the router runs
     direct-dispatch preflight,
     the worker receives only that envelope plus the body file addressed to its role,
-    and the worker returns a physical result envelope/body pair before stopping for the
-    next packet. The controller relays result envelope -> reviewer -> PM ->
-    next packet envelope and continues internally when `stop_for_user: false`.
+    ACKs the active-holder lease directly to Router when present, and submits the
+    physical result envelope/body pair to Router through that lease before stopping
+    for the next packet. Router writes `controller_next_action_notice.json` after
+    mechanical checks pass. The controller then relays result envelope -> reviewer
+    -> PM -> next packet envelope and continues internally when
+    `stop_for_user: false`.
     The installed runtime is `skills/flowpilot/assets/packet_runtime.py`; the
     repository wrapper is `scripts/flowpilot_packets.py`. Missing physical
     files or body text in controller context blocks dispatch.
@@ -257,10 +260,12 @@ long-form public explanation lives in `docs/protocol.md`.
     boundary and its own role boundary. Missing reminders are blockers, not
     cosmetic omissions.
     On heartbeat or manual resume, the controller reloads the packet ledger and
-    resumes from the packet holder. If a worker result is already present, it
-    goes to reviewer. If holder, router direct-dispatch evidence, worker
-    identity, or result state is unclear, the controller asks PM for
-    recovery/reissue/reassignment and must not finish the packet itself.
+    resumes from the packet holder. If an active-holder lease is open, Controller
+    waits for the packet-specific Router next-action notice instead of treating
+    worker chat as completion. If a worker result is already Router-accepted, it
+    goes to reviewer. If holder, router direct-dispatch evidence, worker identity,
+    or result state is unclear, the controller asks PM for recovery/reissue/
+    reassignment and must not finish the packet itself.
 39. Start only the first chunk whose continuation mode is known. Automated
     routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
