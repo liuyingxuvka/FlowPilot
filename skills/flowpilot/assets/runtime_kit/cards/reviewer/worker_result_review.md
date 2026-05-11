@@ -56,6 +56,12 @@ Check:
   status `done`, `not_applicable`, `waived`, or `blocked`, evidence path or
   waiver reason, and the worker's explanation. Missing rows, manifest-only
   evidence, or unapproved waivers block pass;
+- when the source packet declares active child-skill bindings, the result body
+  includes `Child Skill Use Evidence` rows showing the worker opened the source
+  `SKILL.md` or required reference paths, used the current-node slice directly,
+  and followed the stricter child-skill standard or cited an explicit PM
+  waiver. Missing evidence, summary-only use, whole-skill use that ignores the
+  node slice, or PM-floor downgrades block pass;
 - output satisfies packet acceptance slice.
 
 Return pass, needs repair, needs more material, or invalid role origin.

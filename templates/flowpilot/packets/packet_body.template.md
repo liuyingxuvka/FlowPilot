@@ -117,6 +117,19 @@ the node acceptance plan field that makes them not applicable.
 
 - <standard-id-or-none>
 
+## Active Child Skill Bindings
+
+If the node acceptance plan declares active child-skill bindings for this
+packet, open the cited `SKILL.md` and referenced paths before execution, then
+use only the current-node slice named by the binding. The PM packet is the
+minimum floor: when the child skill has a stricter applicable standard, follow
+the child skill unless the packet includes an explicit PM waiver. Return a
+matching `Child Skill Use Evidence` row for every active binding. If no active
+child-skill bindings apply, write `none` and cite the node acceptance plan field
+that makes them not applicable.
+
+- <binding-id-or-none>
+
 ## Required Verification Or Evidence
 
 - <command-probe-screenshot-model-check-or-review-evidence>

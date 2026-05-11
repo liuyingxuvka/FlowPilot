@@ -57,6 +57,12 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             if item["contract_id"] == "flowpilot.output_contract.worker_current_node_result.v1"
         )
         self.assertIn("PM Suggestion Items", worker_contract["required_result_body_sections"])
+        self.assertIn(
+            "Child Skill Use Evidence",
+            worker_contract["conditional_required_result_body_sections"][
+                "source_packet_declares_active_child_skill_bindings"
+            ],
+        )
         startup_contract = next(
             item
             for item in registry["contracts"]

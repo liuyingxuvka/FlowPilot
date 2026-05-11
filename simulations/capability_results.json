@@ -1,8 +1,9 @@
 {
   "graph": {
-    "edge_count": 632646,
+    "edge_count": 650122,
     "invariant_failures": [],
     "labels": [
+      "active_child_skill_bindings_written",
       "activity_stream_initialized",
       "anti_rough_finish_found_rework",
       "anti_rough_finish_passed",
@@ -224,6 +225,7 @@
       "research_tool_capability_decision_recorded",
       "research_worker_report_returned",
       "research_worker_rework_completed",
+      "reviewer_child_skill_use_evidence_checked",
       "role_identity_protocol_recorded",
       "role_memory_packets_refreshed_after_capability_work",
       "root_acceptance_proof_matrix_written",
@@ -304,18 +306,20 @@
       "visual_asset_style_review_done",
       "worker_a_spawned_fresh_for_task",
       "worker_b_spawned_fresh_for_task",
-      "worker_output_ready_for_review"
+      "worker_child_skill_use_evidence_returned",
+      "worker_output_ready_for_review",
+      "worker_packet_child_skill_binding_projected"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 607187,
+    "state_count": 624663,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
     }
   },
   "hazard": {
-    "case_count": 9,
+    "case_count": 16,
     "cases": [
       {
         "expected_fragment": "standard inheritance",
@@ -340,6 +344,66 @@
         ],
         "matched_expected_failure": true,
         "name": "child_skill_standards_not_promoted"
+      },
+      {
+        "expected_fragment": "active child-skill bindings",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "active child-skill bindings were missing before current-node execution"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "active_child_skill_binding_missing"
+      },
+      {
+        "expected_fragment": "current-node child-skill slice",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "active child-skill binding was not limited to the current-node child-skill slice"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "active_child_skill_binding_not_node_scoped"
+      },
+      {
+        "expected_fragment": "stricter child-skill standard precedence",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "stricter child-skill standard precedence was not bound above the PM packet floor"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "child_skill_stricter_standard_downgraded"
+      },
+      {
+        "expected_fragment": "direct child-skill use instruction",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "worker packet lacked a direct child-skill use instruction"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "worker_packet_missing_child_skill_use_instruction"
+      },
+      {
+        "expected_fragment": "source paths",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "worker packet lacked allowed source paths for active child-skill SKILL.md and references"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "worker_packet_missing_child_skill_source_paths"
       },
       {
         "expected_fragment": "manifest-only evidence",
@@ -380,6 +444,30 @@
         ],
         "matched_expected_failure": true,
         "name": "missing_child_skill_execution_reports"
+      },
+      {
+        "expected_fragment": "Child Skill Use Evidence",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "worker result lacked Child Skill Use Evidence for active bindings"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "worker_missing_child_skill_use_evidence"
+      },
+      {
+        "expected_fragment": "reviewer child-skill use evidence check",
+        "failure_count": 1,
+        "failure_samples": [
+          {
+            "invariant": "active_child_skill_binding_required_for_execution",
+            "reason": "reviewer child-skill use evidence check was missing before approval"
+          }
+        ],
+        "matched_expected_failure": true,
+        "name": "reviewer_missing_child_skill_use_evidence_check"
       },
       {
         "expected_fragment": "palette",
@@ -482,22 +570,22 @@
     "status": "OK"
   },
   "loop": {
-    "edge_count": 632646,
+    "edge_count": 650122,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 607187,
+    "state_count": 624663,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 632646,
+    "edge_count": 650122,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 607187,
+    "state_count": 624663,
     "status": "OK",
     "success_state_count": 4368
   }

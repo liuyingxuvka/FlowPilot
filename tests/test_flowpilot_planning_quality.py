@@ -99,10 +99,13 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         for category in model.STANDARD_FIELDS:
             self.assertIn(category, child_manifest_card)
         self.assertIn("skill_standard_projection", node_plan_card)
+        self.assertIn("active_child_skill_bindings", node_plan_card)
         self.assertIn("work_packet_projection", node_plan_card)
         self.assertIn("hard block", route_review_card)
         self.assertIn("Inherited Skill Standards", packet_template)
+        self.assertIn("Active Child Skill Bindings", packet_template)
         self.assertIn("Skill Standard Result Matrix", result_template)
+        self.assertIn("Child Skill Use Evidence", result_template)
 
         selected_skill = manifest_template["selected_skills"][0]
         self.assertIn("skill_standard_contract", selected_skill)
@@ -113,6 +116,7 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("reviewer_or_officer_gate_ids", standard)
         self.assertIn("expected_artifact_paths", standard)
         self.assertIn("skill_standard_projection", node_template)
+        self.assertIn("active_child_skill_bindings", node_template)
         self.assertIn("work_packet_projection", node_template)
 
         worker_contract = next(
@@ -125,6 +129,12 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             "Skill Standard Result Matrix",
             worker_contract["conditional_required_result_body_sections"][
                 "source_packet_declares_inherited_skill_standard_ids"
+            ],
+        )
+        self.assertIn(
+            "Child Skill Use Evidence",
+            worker_contract["conditional_required_result_body_sections"][
+                "source_packet_declares_active_child_skill_bindings"
             ],
         )
 

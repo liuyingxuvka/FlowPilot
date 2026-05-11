@@ -34,10 +34,18 @@ route-memory prior path context. The plan must state:
   `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
   required artifact path, required reviewer/officer gate, and whether it is
   completed here, completed later, not applicable, or waived by PM authority;
+- `active_child_skill_bindings`: for each selected child skill that supplies
+  execution behavior for this node, name the exact child skill, source
+  `SKILL.md` path, required reference paths, current-node slice, packet ids,
+  selected standard ids, and result evidence required. The PM packet is the
+  minimum floor; if the child skill has a stricter applicable requirement, the
+  stricter child-skill requirement wins unless PM records an explicit waiver;
 - `work_packet_projection`: the exact inherited standard ids that must be
-  copied into each worker/officer packet and the result-matrix rows the
-  recipient must return. Do not issue a work packet if this projection is
-  missing for a selected child skill;
+  copied into each worker/officer packet, plus the active child-skill bindings
+  that must be copied into each worker packet with direct-use instructions,
+  allowed source paths, result-matrix rows, and `Child Skill Use Evidence`
+  rows the recipient must return. Do not issue a work packet if this projection
+  is missing for a selected child skill;
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
 - whether the node has children and therefore requires parent backward replay;

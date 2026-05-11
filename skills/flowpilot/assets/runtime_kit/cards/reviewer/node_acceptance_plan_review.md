@@ -52,9 +52,15 @@ Check:
   `skill_standard_projection` with source skill, source path, category,
   artifact expectation, reviewer/officer gate, and status. Missing `LOOP`,
   `VERIFY`, or `ARTIFACT` projection for a selected child skill blocks pass;
+- every child skill that supplies actual execution behavior for this node has
+  an `active_child_skill_bindings` row with source `SKILL.md`, reference paths,
+  current-node slice, packet projection, direct-use requirement, result
+  evidence requirement, and the rule that stricter child-skill standards
+  override the PM packet floor unless explicitly waived;
 - every worker/officer packet that can be issued from the plan has a matching
   `work_packet_projection` and requires a result matrix row for each inherited
-  standard id;
+  standard id plus `Child Skill Use Evidence` for each active child-skill
+  binding;
 - skipped checks are marked blocked, waived with authority, or not applicable;
 - worker reports alone cannot approve the node.
 - PM's `high_standard_recheck` and minimum sufficient complexity rationale are

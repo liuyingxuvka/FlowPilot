@@ -216,7 +216,9 @@ REQUIRED_LABELS = (
     "node_product_function_model_checked",
     "current_node_high_standard_recheck_written",
     "node_acceptance_plan_written",
+    "active_child_skill_bindings_written",
     "node_acceptance_risk_experiments_mapped",
+    "worker_packet_child_skill_binding_projected",
     "pm_review_hold_instruction_written",
     "lightweight_self_check_completed",
     "quality_package_passed_no_raise",
@@ -226,12 +228,14 @@ REQUIRED_LABELS = (
     "anti_rough_finish_passed",
     "anti_rough_finish_found_rework",
     "worker_output_ready_for_review",
+    "worker_child_skill_use_evidence_returned",
     "pm_review_release_order_written",
     "pm_released_reviewer_for_current_gate",
     "packet_runtime_physical_isolation_verified",
     "controller_mail_relay_chain_audit_done",
     "packet_envelope_body_audit_done",
     "packet_role_origin_audit_done",
+    "reviewer_child_skill_use_evidence_checked",
     "node_human_inspection_context_loaded",
     "node_human_neutral_observation_written",
     "node_human_manual_experiments_run",
@@ -487,7 +491,12 @@ def _state_id(state: model.State) -> str:
         f"{state.node_product_function_model_product_officer_approved}|"
         f"node_acceptance={state.current_node_high_standard_recheck_written},"
         f"{state.node_acceptance_plan_written},"
+        f"{state.active_child_skill_bindings_written},"
+        f"{state.active_child_skill_binding_scope_limited},"
+        f"{state.child_skill_stricter_standard_precedence_bound},"
         f"{state.node_acceptance_risk_experiments_mapped},"
+        f"{state.worker_packet_child_skill_use_instruction_written},"
+        f"{state.active_child_skill_source_paths_allowed},"
         f"{state.pm_review_hold_instruction_written}|"
         f"micro_self={state.lightweight_self_check_done},"
         f"{state.lightweight_self_check_questions},"
@@ -498,6 +507,7 @@ def _state_id(state: model.State) -> str:
         f"{state.validation_matrix_defined},"
         f"{state.anti_rough_finish_done},"
         f"{state.worker_output_ready_for_review},"
+        f"{state.worker_child_skill_use_evidence_returned},"
         f"{state.pm_review_release_order_written},"
         f"{state.pm_released_reviewer_for_current_gate},"
         f"physical_packet={state.packet_runtime_physical_files_written},"
@@ -507,6 +517,7 @@ def _state_id(state: model.State) -> str:
         f"role_origin={state.packet_role_origin_audit_done},"
         f"{state.packet_result_author_verified},"
         f"{state.packet_result_author_matches_assignment},"
+        f"{state.reviewer_child_skill_use_evidence_checked},"
         f"role_memory_refresh={state.role_memory_refreshed_after_work},"
         f"human_review={state.node_human_review_context_loaded},"
         f"{state.node_human_neutral_observation_written},"

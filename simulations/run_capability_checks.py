@@ -179,6 +179,7 @@ REQUIRED_LABELS = (
     "child_skill_subroute_projected",
     "current_node_high_standard_recheck_written",
     "node_acceptance_plan_written",
+    "active_child_skill_bindings_written",
     "node_acceptance_risk_experiments_mapped",
     "child_skill_conformance_model_checked",
     "strict_gate_obligation_review_model_checked",
@@ -226,6 +227,7 @@ REQUIRED_LABELS = (
     "pm_capability_work_decision_recorded",
     "child_skill_node_gate_manifest_refined",
     "child_skill_gate_authority_records_written",
+    "worker_packet_child_skill_binding_projected",
     "child_node_sidecar_scan_no_need",
     "child_node_sidecar_scan_need_found_no_pool",
     "child_node_sidecar_scan_need_found_existing_idle",
@@ -282,6 +284,8 @@ REQUIRED_LABELS = (
     "child_skill_execution_evidence_audited",
     "child_skill_manifest_only_evidence_rejected",
     "child_skill_execution_reports_written",
+    "worker_child_skill_use_evidence_returned",
+    "reviewer_child_skill_use_evidence_checked",
     "child_skill_evidence_matches_outputs",
     "child_skill_domain_quality_checked",
     "child_skill_iteration_loop_closed",
@@ -469,12 +473,19 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_subroute_projected},"
         f"node_acceptance={state.current_node_high_standard_recheck_written},"
         f"{state.node_acceptance_plan_written},"
+        f"{state.active_child_skill_bindings_written},"
+        f"{state.active_child_skill_binding_scope_limited},"
+        f"{state.child_skill_stricter_standard_precedence_bound},"
         f"{state.node_acceptance_risk_experiments_mapped},"
         f"{state.child_skill_conformance_model_checked},"
         f"{state.child_skill_conformance_model_process_officer_approved},"
         f"strict_gate={state.strict_gate_obligation_review_model_checked},"
         f"{state.child_skill_manifest_only_evidence_rejected},"
         f"{state.child_skill_execution_reports_written},"
+        f"{state.worker_packet_child_skill_use_instruction_written},"
+        f"{state.active_child_skill_source_paths_allowed},"
+        f"{state.worker_child_skill_use_evidence_returned},"
+        f"{state.reviewer_child_skill_use_evidence_checked},"
         f"{state.child_skill_execution_evidence_audited},"
         f"{state.child_skill_evidence_matches_outputs},"
         f"{state.child_skill_domain_quality_checked},"

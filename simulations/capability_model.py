@@ -213,14 +213,21 @@ class State:
     current_node_high_standard_recheck_written: bool = False
     current_node_minimum_sufficient_complexity_review_written: bool = False
     node_acceptance_plan_written: bool = False
+    active_child_skill_bindings_written: bool = False
+    active_child_skill_binding_scope_limited: bool = False
+    child_skill_stricter_standard_precedence_bound: bool = False
     node_acceptance_risk_experiments_mapped: bool = False
     child_skill_node_gate_manifest_refined: bool = False
     child_skill_gate_authority_records_written: bool = False
+    worker_packet_child_skill_use_instruction_written: bool = False
+    active_child_skill_source_paths_allowed: bool = False
     child_skill_conformance_model_checked: bool = False
     child_skill_conformance_model_process_officer_approved: bool = False
     strict_gate_obligation_review_model_checked: bool = False
     child_skill_manifest_only_evidence_rejected: bool = False
     child_skill_execution_reports_written: bool = False
+    worker_child_skill_use_evidence_returned: bool = False
+    reviewer_child_skill_use_evidence_checked: bool = False
     child_skill_execution_evidence_audited: bool = False
     child_skill_evidence_matches_outputs: bool = False
     child_skill_domain_quality_checked: bool = False
@@ -599,11 +606,18 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "current_node_high_standard_recheck_written": False,
             "current_node_minimum_sufficient_complexity_review_written": False,
             "node_acceptance_plan_written": False,
+            "active_child_skill_bindings_written": False,
+            "active_child_skill_binding_scope_limited": False,
+            "child_skill_stricter_standard_precedence_bound": False,
             "node_acceptance_risk_experiments_mapped": False,
             "child_skill_node_gate_manifest_refined": False,
             "child_skill_gate_authority_records_written": False,
+            "worker_packet_child_skill_use_instruction_written": False,
+            "active_child_skill_source_paths_allowed": False,
             "child_skill_manifest_only_evidence_rejected": False,
             "child_skill_execution_reports_written": False,
+            "worker_child_skill_use_evidence_returned": False,
+            "reviewer_child_skill_use_evidence_checked": False,
             "current_child_skill_gate_independent_validation_done": False,
             "child_skill_current_gates_role_approved": False,
             "child_node_sidecar_scan_done": False,
@@ -1642,14 +1656,21 @@ class CapabilityRouterStep:
         "current_node_high_standard_recheck_written",
         "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
+        "active_child_skill_bindings_written",
+        "active_child_skill_binding_scope_limited",
+        "child_skill_stricter_standard_precedence_bound",
         "node_acceptance_risk_experiments_mapped",
         "child_skill_node_gate_manifest_refined",
         "child_skill_gate_authority_records_written",
+        "worker_packet_child_skill_use_instruction_written",
+        "active_child_skill_source_paths_allowed",
         "child_skill_conformance_model_checked",
         "child_skill_conformance_model_process_officer_approved",
         "strict_gate_obligation_review_model_checked",
         "child_skill_manifest_only_evidence_rejected",
         "child_skill_execution_reports_written",
+        "worker_child_skill_use_evidence_returned",
+        "reviewer_child_skill_use_evidence_checked",
         "child_skill_execution_evidence_audited",
         "child_skill_evidence_matches_outputs",
         "child_skill_domain_quality_checked",
@@ -1992,14 +2013,21 @@ class CapabilityRouterStep:
         "current_node_high_standard_recheck_written",
         "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
+        "active_child_skill_bindings_written",
+        "active_child_skill_binding_scope_limited",
+        "child_skill_stricter_standard_precedence_bound",
         "node_acceptance_risk_experiments_mapped",
         "child_skill_node_gate_manifest_refined",
         "child_skill_gate_authority_records_written",
+        "worker_packet_child_skill_use_instruction_written",
+        "active_child_skill_source_paths_allowed",
         "child_skill_conformance_model_checked",
         "child_skill_conformance_model_process_officer_approved",
         "strict_gate_obligation_review_model_checked",
         "child_skill_manifest_only_evidence_rejected",
         "child_skill_execution_reports_written",
+        "worker_child_skill_use_evidence_returned",
+        "reviewer_child_skill_use_evidence_checked",
         "child_skill_execution_evidence_audited",
         "child_skill_evidence_matches_outputs",
         "child_skill_domain_quality_checked",
@@ -3890,6 +3918,16 @@ class CapabilityRouterStep:
             and state.pm_capability_work_decision_recorded
             and not state.node_acceptance_risk_experiments_mapped
         ):
+            if not state.active_child_skill_bindings_written:
+                yield _step(
+                    state,
+                    label="active_child_skill_bindings_written",
+                    action="project manager writes current-node active child-skill bindings with source skill paths, node-slice scope, selected standards, and stricter-than-PM precedence before worker dispatch",
+                    active_child_skill_bindings_written=True,
+                    active_child_skill_binding_scope_limited=True,
+                    child_skill_stricter_standard_precedence_bound=True,
+                )
+                return
             yield _step(
                 state,
                 label="node_acceptance_risk_experiments_mapped",
@@ -3935,6 +3973,21 @@ class CapabilityRouterStep:
                 label="child_skill_gate_authority_records_written",
                 action="write current child-skill gate authority records into the execution frontier before execution evidence is drafted",
                 child_skill_gate_authority_records_written=True,
+            )
+            return
+
+        if (
+            _base_ready(state)
+            and state.pm_capability_work_decision_recorded
+            and state.child_skill_gate_authority_records_written
+            and not state.worker_packet_child_skill_use_instruction_written
+        ):
+            yield _step(
+                state,
+                label="worker_packet_child_skill_binding_projected",
+                action="project active child-skill bindings into the current-node worker packet with direct use instructions and allowed source SKILL.md/reference paths",
+                worker_packet_child_skill_use_instruction_written=True,
+                active_child_skill_source_paths_allowed=True,
             )
             return
 
@@ -4127,6 +4180,14 @@ class CapabilityRouterStep:
                     role_memory_refreshed_after_work=False,
                 )
                 return
+            if not state.worker_child_skill_use_evidence_returned:
+                yield _step(
+                    state,
+                    label="worker_child_skill_use_evidence_returned",
+                    action="worker returns Child Skill Use Evidence proving the bound child skill source was opened, applied to the current node slice, and any stricter child-skill standard was followed or explicitly waived",
+                    worker_child_skill_use_evidence_returned=True,
+                )
+                return
             if not state.child_skill_manifest_only_evidence_rejected:
                 yield _step(
                     state,
@@ -4300,6 +4361,14 @@ class CapabilityRouterStep:
                     packet_role_origin_audit_done=True,
                     packet_result_author_verified=True,
                     packet_result_author_matches_assignment=True,
+                )
+                return
+            if not state.reviewer_child_skill_use_evidence_checked:
+                yield _step(
+                    state,
+                    label="reviewer_child_skill_use_evidence_checked",
+                    action="human-like reviewer checks backend Child Skill Use Evidence, source-skill opening, current-node slice fit, and stricter child-skill standard precedence before content inspection",
+                    reviewer_child_skill_use_evidence_checked=True,
                 )
                 return
             if not state.implementation_human_review_context_loaded:
@@ -4872,6 +4941,14 @@ class CapabilityRouterStep:
                 )
                 return
             if not state.ui_screenshot_qa_done:
+                if not state.worker_child_skill_use_evidence_returned:
+                    yield _step(
+                        state,
+                        label="worker_child_skill_use_evidence_returned",
+                        action="UI worker returns Child Skill Use Evidence proving the bound child skill source was opened, applied to the current node slice, and any stricter child-skill standard was followed or explicitly waived",
+                        worker_child_skill_use_evidence_returned=True,
+                    )
+                    return
                 yield _step(
                     state,
                     label="ui_screenshot_qa_done",
@@ -5049,6 +5126,8 @@ class CapabilityRouterStep:
                         ui_implementation_aesthetic_reasons_recorded=False,
                         ui_concept_vs_implementation_deviation_table_written=False,
                         ui_divergence_review_done=False,
+                        worker_child_skill_use_evidence_returned=False,
+                        reviewer_child_skill_use_evidence_checked=False,
                         child_skill_manifest_only_evidence_rejected=False,
                         child_skill_execution_reports_written=False,
                         child_skill_execution_evidence_audited=False,
@@ -5254,6 +5333,14 @@ class CapabilityRouterStep:
                     packet_role_origin_audit_done=True,
                     packet_result_author_verified=True,
                     packet_result_author_matches_assignment=True,
+                )
+                return
+            if not state.reviewer_child_skill_use_evidence_checked:
+                yield _step(
+                    state,
+                    label="reviewer_child_skill_use_evidence_checked",
+                    action="human-like reviewer checks UI Child Skill Use Evidence, source-skill opening, current-node slice fit, and stricter child-skill standard precedence before content inspection",
+                    reviewer_child_skill_use_evidence_checked=True,
                 )
                 return
             if not state.implementation_human_review_context_loaded:
@@ -6074,6 +6161,85 @@ def child_skill_fidelity_before_capability_work(
         )
     if state.final_verification_done and not state.validation_matrix_defined:
         return InvariantResult.fail("final verification started before validation matrix")
+    return InvariantResult.pass_()
+
+
+def active_child_skill_binding_required_for_execution(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    node_execution_binding_needed = (
+        state.node_acceptance_risk_experiments_mapped
+        or state.child_skill_node_gate_manifest_refined
+        or state.child_skill_gate_authority_records_written
+        or state.child_node_sidecar_scan_done
+        or state.quality_package_done
+        or state.non_ui_implemented
+        or state.ui_implemented
+        or state.final_verification_done
+        or state.child_skill_completion_verified
+        or state.status == "complete"
+    )
+    if node_execution_binding_needed and not state.active_child_skill_bindings_written:
+        return InvariantResult.fail(
+            "active child-skill bindings were missing before current-node execution"
+        )
+    if node_execution_binding_needed and not state.active_child_skill_binding_scope_limited:
+        return InvariantResult.fail(
+            "active child-skill binding was not limited to the current-node child-skill slice"
+        )
+    if node_execution_binding_needed and not state.child_skill_stricter_standard_precedence_bound:
+        return InvariantResult.fail(
+            "stricter child-skill standard precedence was not bound above the PM packet floor"
+        )
+
+    worker_packet_needed = (
+        state.child_node_sidecar_scan_done
+        or state.quality_package_done
+        or state.non_ui_implemented
+        or state.ui_implemented
+        or state.worker_output_ready_for_review
+        or state.final_verification_done
+        or state.child_skill_completion_verified
+        or state.status == "complete"
+    )
+    if worker_packet_needed and not state.worker_packet_child_skill_use_instruction_written:
+        return InvariantResult.fail(
+            "worker packet lacked a direct child-skill use instruction"
+        )
+    if worker_packet_needed and not state.active_child_skill_source_paths_allowed:
+        return InvariantResult.fail(
+            "worker packet lacked allowed source paths for active child-skill SKILL.md and references"
+        )
+
+    worker_result_needs_use_evidence = (
+        state.child_skill_manifest_only_evidence_rejected
+        or state.child_skill_execution_reports_written
+        or state.child_skill_execution_evidence_audited
+        or state.worker_output_ready_for_review
+        or state.final_verification_done
+        or state.child_skill_completion_verified
+        or state.status == "complete"
+    )
+    if worker_result_needs_use_evidence and not state.worker_child_skill_use_evidence_returned:
+        return InvariantResult.fail(
+            "worker result lacked Child Skill Use Evidence for active bindings"
+        )
+
+    reviewer_content_started = (
+        state.implementation_human_review_context_loaded
+        or state.implementation_human_neutral_observation_written
+        or state.implementation_human_manual_experiments_run
+        or state.implementation_reviewer_independent_probe_done
+        or state.implementation_human_inspection_passed
+        or state.child_skill_current_gates_role_approved
+        or state.child_skill_completion_verified
+        or state.status == "complete"
+    )
+    if reviewer_content_started and not state.reviewer_child_skill_use_evidence_checked:
+        return InvariantResult.fail(
+            "reviewer child-skill use evidence check was missing before approval"
+        )
     return InvariantResult.pass_()
 
 
@@ -7245,6 +7411,11 @@ INVARIANTS = (
         predicate=child_skill_fidelity_before_capability_work,
     ),
     Invariant(
+        name="active_child_skill_binding_required_for_execution",
+        description="Current-node execution requires active child-skill bindings, packet use instructions, source paths, use evidence, and reviewer checks.",
+        predicate=active_child_skill_binding_required_for_execution,
+    ),
+    Invariant(
         name="ui_route_requires_ui_capabilities",
         description="UI implementation requires the autonomous UI child-skill route, child-skill-routed UI evidence before implementation, geometry/rendered QA after implementation, and source-skill loop closure before completion.",
         predicate=ui_route_requires_ui_capabilities,
@@ -7319,6 +7490,31 @@ HAZARD_CASES = (
         "standard inheritance",
     ),
     (
+        "active_child_skill_binding_missing",
+        {"active_child_skill_bindings_written": False},
+        "active child-skill bindings",
+    ),
+    (
+        "active_child_skill_binding_not_node_scoped",
+        {"active_child_skill_binding_scope_limited": False},
+        "current-node child-skill slice",
+    ),
+    (
+        "child_skill_stricter_standard_downgraded",
+        {"child_skill_stricter_standard_precedence_bound": False},
+        "stricter child-skill standard precedence",
+    ),
+    (
+        "worker_packet_missing_child_skill_use_instruction",
+        {"worker_packet_child_skill_use_instruction_written": False},
+        "direct child-skill use instruction",
+    ),
+    (
+        "worker_packet_missing_child_skill_source_paths",
+        {"active_child_skill_source_paths_allowed": False},
+        "source paths",
+    ),
+    (
         "manifest_only_child_skill_gate_evidence",
         {"child_skill_manifest_only_evidence_rejected": False},
         "manifest-only evidence",
@@ -7327,6 +7523,16 @@ HAZARD_CASES = (
         "missing_child_skill_execution_reports",
         {"child_skill_execution_reports_written": False},
         "execution reports",
+    ),
+    (
+        "worker_missing_child_skill_use_evidence",
+        {"worker_child_skill_use_evidence_returned": False},
+        "Child Skill Use Evidence",
+    ),
+    (
+        "reviewer_missing_child_skill_use_evidence_check",
+        {"reviewer_child_skill_use_evidence_checked": False},
+        "reviewer child-skill use evidence check",
     ),
     (
         "ui_palette_override_not_rationalized",
@@ -7362,7 +7568,7 @@ HAZARD_CASES = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 140
+MAX_SEQUENCE_LENGTH = 145
 
 
 def initial_state() -> State:

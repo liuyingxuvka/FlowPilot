@@ -42,6 +42,14 @@ requirements, use the simplest high-quality approach that satisfies the packet.
 If a better idea would require broader scope, new route work, extra files,
 dependencies, or changed acceptance, do not execute it; report it to PM only.
 
+If the source packet declares `Active Child Skill Bindings`, open the cited
+child skill `SKILL.md` and required reference paths through the packet's
+allowed reads before execution. Use only the current-node slice named by the
+binding, but apply that slice directly instead of relying on PM's summary. The
+PM packet is the minimum floor: when the child skill has a stricter applicable
+standard, follow the child skill unless the packet includes an explicit PM
+waiver. Return `Child Skill Use Evidence` for every active binding.
+
 In the sealed result body, include a soft `PM Note` with exactly these labels:
 `In-scope quality choice` and `PM consideration`. Use `none` when there is no
 useful note. The note is PM decision-support and does not authorize route

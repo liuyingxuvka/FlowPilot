@@ -87,6 +87,19 @@ Standards` section says no child-skill standards apply.
 | --- | --- | --- | --- | --- |
 | <standard-id-or-none> | <done|not_applicable|waived|blocked> | <path-or-null> | <reason-or-null> | <short-note> |
 
+## Child Skill Use Evidence
+
+For every active child-skill binding declared in the source packet, include one
+row proving that the source skill or required reference was opened and the
+current-node slice was applied. If an applicable child-skill standard was
+stricter than the PM packet, record that the stricter standard was followed or
+cite the explicit PM waiver. Use `none` only when the source packet's `Active
+Child Skill Bindings` section says no active child-skill bindings apply.
+
+| binding_id | source_skill_path_opened | referenced_paths_opened | node_slice_scope_used | stricter_standard_applied_or_waived | evidence_path | note |
+| --- | --- | --- | --- | --- | --- | --- |
+| <binding-id-or-none> | <path-or-none> | <paths-or-none> | <scope-or-none> | <applied|waived|not_applicable> | <path-or-null> | <short-note> |
+
 ## Contract Self-Check
 
 - source_output_contract_id: <packet-envelope-output_contract.contract_id>

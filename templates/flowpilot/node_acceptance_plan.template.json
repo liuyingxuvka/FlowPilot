@@ -87,6 +87,24 @@
       }
     ]
   },
+  "active_child_skill_bindings": [
+    {
+      "binding_id": "<skill-name>:<node-id>:<slice-id>",
+      "source_skill": "<skill-name>",
+      "source_path": "<path-to-SKILL.md>",
+      "referenced_paths": [],
+      "applies_to_this_node": true,
+      "node_slice_scope": "<which part of the child skill applies to this node>",
+      "applies_to_packet_ids": [],
+      "must_open_source_skill": true,
+      "selected_standard_ids": [],
+      "stricter_than_pm_packet": "<true|false|unknown>",
+      "precedence_rule": "PM packet is the minimum floor; stricter child-skill requirements apply unless explicitly waived by PM authority.",
+      "waiver_authority": "project_manager",
+      "result_evidence_required": true,
+      "reviewer_check_required": true
+    }
+  ],
   "work_packet_projection": [
     {
       "packet_id_or_slice": "<packet-id-or-slice>",

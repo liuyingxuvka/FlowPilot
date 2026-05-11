@@ -1,8 +1,9 @@
 {
   "graph": {
-    "edge_count": 618200,
+    "edge_count": 639776,
     "invariant_failures": [],
     "labels": [
+      "active_child_skill_bindings_written",
       "activity_stream_initialized",
       "anti_rough_finish_found_rework",
       "anti_rough_finish_passed",
@@ -215,6 +216,7 @@
       "research_tool_capability_decision_recorded",
       "research_worker_report_returned",
       "research_worker_rework_completed",
+      "reviewer_child_skill_use_evidence_checked",
       "role_identity_protocol_recorded",
       "role_memory_packets_refreshed_after_work",
       "root_acceptance_proof_matrix_written",
@@ -274,33 +276,35 @@
       "visible_user_flow_diagram_emitted",
       "worker_a_spawned_fresh_for_task",
       "worker_b_spawned_fresh_for_task",
-      "worker_output_ready_for_review"
+      "worker_child_skill_use_evidence_returned",
+      "worker_output_ready_for_review",
+      "worker_packet_child_skill_binding_projected"
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 598029,
+    "state_count": 619605,
     "terminal_counts": {
       "blocked": 13032,
       "complete": 1280
     }
   },
   "loop": {
-    "edge_count": 618200,
+    "edge_count": 639776,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 598029,
+    "state_count": 619605,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 618200,
+    "edge_count": 639776,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 598029,
+    "state_count": 619605,
     "status": "OK",
     "success_state_count": 1280
   }

@@ -200,6 +200,9 @@
       "conditional_required_result_body_sections": {
         "source_packet_declares_inherited_skill_standard_ids": [
           "Skill Standard Result Matrix"
+        ],
+        "source_packet_declares_active_child_skill_bindings": [
+          "Child Skill Use Evidence"
         ]
       },
       "required_result_envelope_fields": [

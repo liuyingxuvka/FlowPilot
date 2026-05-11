@@ -7174,3 +7174,62 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Remote GitHub sync intentionally skipped; only local repo and installed local skill were updated.
+
+
+## child-skill-execution-binding-20260511 - Bind selected child skills at current-node execution time
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User required FlowPilot workers and reviewers to directly use relevant child skills during current-node execution, with child-skill stricter standards taking precedence over the PM packet floor.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T00:00:00+00:00
+- Ended: 2026-05-11T00:00:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/capability_model.py
+- simulations/meta_model.py
+- simulations/flowpilot_control_plane_friction_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\capability_model.py simulations\run_capability_checks.py simulations\meta_model.py simulations\run_meta_checks.py`
+- OK: `python simulations\run_capability_checks.py --force`
+- OK: `python simulations\run_meta_checks.py --force`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_planning_quality.py tests\test_flowpilot_output_contracts.py`
+- OK: `python -m pytest tests\test_flowpilot_planning_quality.py tests\test_flowpilot_output_contracts.py -q`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k "current_node_worker_packet_requires_active_child_skill_binding_projection or current_node_packet_relay_uses_router_direct_dispatch or current_node_completion_requires_reviewer_passed_packet_audit" -q`
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_output_contracts.py -q`
+- OK: `python -m pytest tests\test_flowpilot_card_instruction_coverage.py tests\test_flowpilot_card_runtime.py -q`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- Capability and meta models now include current-node active child-skill bindings, direct worker packet use instructions, allowed child-skill source paths, worker `Child Skill Use Evidence`, reviewer evidence checks, and stricter child-skill standard precedence over the PM packet floor.
+- Router now preserves PM-authored `active_child_skill_bindings` and blocks current-node worker packets that omit active binding projection, direct-use metadata, or source path allowances.
+- Packet/result templates, worker cards, reviewer cards, and output contracts now make execution-time child-skill use explicit without broad route-wide skill forcing.
+
+### Counterexamples
+- Missing active child-skill binding.
+- Binding not scoped to the current-node child-skill slice.
+- Stricter child-skill standard downgraded to the PM packet floor.
+- Worker packet missing direct child-skill use instruction.
+- Worker packet missing allowed child-skill source paths.
+- Worker result missing `Child Skill Use Evidence`.
+- Reviewer approval missing child-skill use evidence check.
+
+### Friction Points
+- Meta model current-node fields reset after terminal completion, so current-node binding invariants must apply during node execution/review windows, while terminal completeness remains covered by terminal replay and final-review gates.
+
+### Skipped Steps
+- Remote GitHub push/release skipped by user request.
+- Control-plane friction live-run audit skipped with `--skip-live-audit`; abstract model and hazard checks passed.
+
+### Next Actions
+- Keep future FlowPilot child-skill routing changes aligned across node plans, packet metadata, sealed body templates, worker/reviewer cards, output contracts, and FlowGuard hazard cases.
+- Local installed FlowPilot skill was synchronized; remote GitHub synchronization remains intentionally out of scope for this change.

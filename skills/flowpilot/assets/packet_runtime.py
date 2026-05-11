@@ -167,6 +167,19 @@ DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE = {
     "pm_decision": "pm.decision",
 }
 
+DEFAULT_OUTPUT_CONTRACT_CONDITIONAL_RESULT_SECTIONS_BY_PACKET_TYPE = {
+    "material_scan": {
+        "source_packet_declares_inherited_skill_standard_ids": ["Skill Standard Result Matrix"],
+    },
+    "research": {
+        "source_packet_declares_inherited_skill_standard_ids": ["Skill Standard Result Matrix"],
+    },
+    "work_packet": {
+        "source_packet_declares_inherited_skill_standard_ids": ["Skill Standard Result Matrix"],
+        "source_packet_declares_active_child_skill_bindings": ["Child Skill Use Evidence"],
+    },
+}
+
 PROGRESS_MESSAGE_MAX_LEN = 160
 PROGRESS_MESSAGE_FORBIDDEN_TERMS = (
     "body summary",
@@ -331,7 +344,7 @@ def default_output_contract(
     contract_id = DEFAULT_OUTPUT_CONTRACT_BY_PACKET_TYPE.get(packet_type)
     if not contract_id:
         return None
-    return {
+    contract = {
         "schema_version": OUTPUT_CONTRACT_SCHEMA,
         "contract_id": contract_id,
         "selected_by_role": "project_manager",
@@ -345,6 +358,10 @@ def default_output_contract(
         "reviewer_must_block_missing_or_failed_check": True,
         "registry_path": "runtime_kit/contracts/contract_index.json",
     }
+    conditional_sections = DEFAULT_OUTPUT_CONTRACT_CONDITIONAL_RESULT_SECTIONS_BY_PACKET_TYPE.get(packet_type)
+    if conditional_sections:
+        contract["conditional_required_result_body_sections"] = conditional_sections
+    return contract
 
 
 def normalize_output_contract(
@@ -373,6 +390,9 @@ def normalize_output_contract(
     normalized.setdefault("required_result_body_sections", OUTPUT_CONTRACT_REQUIRED_RESULT_SECTIONS)
     normalized.setdefault("required_result_envelope_fields", OUTPUT_CONTRACT_REQUIRED_RESULT_ENVELOPE_FIELDS)
     normalized.setdefault("forbidden_envelope_body_fields", OUTPUT_CONTRACT_FORBIDDEN_ENVELOPE_BODY_FIELDS)
+    conditional_sections = DEFAULT_OUTPUT_CONTRACT_CONDITIONAL_RESULT_SECTIONS_BY_PACKET_TYPE.get(packet_type)
+    if conditional_sections:
+        normalized.setdefault("conditional_required_result_body_sections", conditional_sections)
     normalized.setdefault("contract_self_check_required", True)
     normalized.setdefault("reviewer_must_block_missing_or_failed_check", True)
     normalized.setdefault("registry_path", "runtime_kit/contracts/contract_index.json")
