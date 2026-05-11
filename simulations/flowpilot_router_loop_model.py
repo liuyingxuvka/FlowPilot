@@ -6,7 +6,8 @@ Risk intent brief:
   reads or authorship.
 - Model-critical durable state: PM route activation, current-node packet
   registration, PM high-standard gate, router direct dispatch, worker
-  dispatch/result routing, reviewer pass/block, route mutation, stale
+  dispatch, active-holder packet lease, fast-lane mechanical retry/result
+  submission, Controller next-action notice, reviewer pass/block, route mutation, stale
   evidence/frontier marking, node completion, final route-wide ledger
   source-of-truth generation, same-scope replay, generated-resource and visual
   evidence closure, and segmented final backward replay.
@@ -27,7 +28,8 @@ Risk intent brief:
   no-next-action blockers;
   current-node packets gate write grants; router direct dispatch gates worker work;
   worker and officer results are
-  packet-ledger checked before reviewer/PM relay; repair/recheck returns to the
+  packet-ledger checked before reviewer/PM relay; active-holder fast-lane
+  closure writes a Controller-visible next-action notice before cross-role relay; repair/recheck returns to the
   reviewer before PM completion; reviewer result decisions require the
   result-review system card after relay; mutation requires reviewer block and stale
   evidence/frontier markers; same-scope replay reruns after mutation;
@@ -103,6 +105,22 @@ class State:
     worker_dispatched: bool = False
     worker_project_write_performed: bool = False
     worker_packet_identity_boundary_present: bool = False
+    active_holder_lease_issued: bool = False
+    active_holder_contact_attempted: bool = False
+    active_holder_contact_is_current_holder: bool = True
+    active_holder_contact_agent_matches: bool = True
+    active_holder_contact_packet_current: bool = True
+    active_holder_contact_route_frontier_current: bool = True
+    active_holder_contact_action_allowed: bool = True
+    active_holder_ack_recorded: bool = False
+    active_holder_packet_opened_through_runtime: bool = False
+    active_holder_progress_recorded: bool = False
+    active_holder_progress_controller_safe: bool = True
+    fast_lane_initial_result_submitted: bool = False
+    fast_lane_mechanical_reject_recorded: bool = False
+    fast_lane_result_resubmitted: bool = False
+    fast_lane_result_mechanics_passed: bool = False
+    fast_lane_controller_notice_written: bool = False
     worker_result_returned: bool = False
     worker_result_identity_boundary_present: bool = False
     worker_result_ledger_checked: bool = False
@@ -508,6 +526,22 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         worker_dispatched=False,
         worker_project_write_performed=False,
         worker_packet_identity_boundary_present=False,
+        active_holder_lease_issued=False,
+        active_holder_contact_attempted=False,
+        active_holder_contact_is_current_holder=True,
+        active_holder_contact_agent_matches=True,
+        active_holder_contact_packet_current=True,
+        active_holder_contact_route_frontier_current=True,
+        active_holder_contact_action_allowed=True,
+        active_holder_ack_recorded=False,
+        active_holder_packet_opened_through_runtime=False,
+        active_holder_progress_recorded=False,
+        active_holder_progress_controller_safe=True,
+        fast_lane_initial_result_submitted=False,
+        fast_lane_mechanical_reject_recorded=False,
+        fast_lane_result_resubmitted=False,
+        fast_lane_result_mechanics_passed=False,
+        fast_lane_controller_notice_written=False,
         worker_result_returned=False,
         worker_result_identity_boundary_present=False,
         worker_result_ledger_checked=False,
@@ -816,6 +850,92 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.active_holder_lease_issued:
+        yield Transition(
+            "active_holder_lease_issued_for_current_worker",
+            replace(state, holder="worker", active_holder_lease_issued=True),
+        )
+        return
+
+    if not state.active_holder_ack_recorded:
+        yield Transition(
+            "active_holder_ack_recorded_by_current_worker",
+            replace(
+                state,
+                holder="worker",
+                active_holder_contact_attempted=True,
+                active_holder_ack_recorded=True,
+            ),
+        )
+        return
+
+    if not state.active_holder_packet_opened_through_runtime:
+        yield Transition(
+            "active_holder_packet_opened_through_runtime",
+            replace(state, holder="worker", active_holder_packet_opened_through_runtime=True),
+        )
+        return
+
+    if not state.active_holder_progress_recorded:
+        yield Transition(
+            "active_holder_progress_recorded_as_controller_safe_metadata",
+            replace(
+                state,
+                holder="worker",
+                active_holder_contact_attempted=True,
+                active_holder_progress_recorded=True,
+            ),
+        )
+        return
+
+    if not state.fast_lane_initial_result_submitted:
+        yield Transition(
+            "active_holder_initial_result_submitted_to_router",
+            replace(
+                state,
+                holder="worker",
+                active_holder_contact_attempted=True,
+                fast_lane_initial_result_submitted=True,
+            ),
+        )
+        return
+
+    if not state.fast_lane_mechanical_reject_recorded:
+        yield Transition(
+            "router_mechanically_rejects_result_to_same_holder",
+            replace(
+                state,
+                holder="worker",
+                fast_lane_mechanical_reject_recorded=True,
+            ),
+        )
+        return
+
+    if not state.fast_lane_result_resubmitted:
+        yield Transition(
+            "active_holder_resubmits_mechanically_repaired_result",
+            replace(
+                state,
+                holder="worker",
+                active_holder_contact_attempted=True,
+                fast_lane_result_resubmitted=True,
+            ),
+        )
+        return
+
+    if not state.fast_lane_result_mechanics_passed:
+        yield Transition(
+            "router_accepts_fast_lane_result_mechanics",
+            replace(
+                state,
+                holder="controller",
+                fast_lane_result_mechanics_passed=True,
+                worker_result_returned=True,
+                worker_result_identity_boundary_present=True,
+            ),
+        )
+        return
+
     if not state.worker_result_returned:
         yield Transition(
             "worker_result_returned_to_packet_ledger",
@@ -833,6 +953,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "worker_result_ledger_checked_before_reviewer_relay",
             replace(state, holder="controller", worker_result_ledger_checked=True),
+        )
+        return
+
+    if not state.fast_lane_controller_notice_written:
+        yield Transition(
+            "router_writes_controller_notice_after_fast_lane_close",
+            replace(state, holder="controller", fast_lane_controller_notice_written=True),
         )
         return
 
@@ -1354,16 +1481,72 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("worker project write occurred before current-node write grant")
     if state.worker_dispatched and not state.worker_packet_identity_boundary_present:
         failures.append("worker dispatched without packet recipient identity boundary")
+    if state.active_holder_lease_issued and not (
+        state.current_node_packet_registered
+        and state.write_grant_issued
+        and state.reviewer_dispatch_allowed
+        and state.worker_dispatched
+        and state.worker_packet_identity_boundary_present
+    ):
+        failures.append("active-holder lease issued before current worker dispatch and write grant")
+    if state.active_holder_contact_attempted and not state.active_holder_lease_issued:
+        failures.append("active-holder contact attempted without an issued lease")
+    if state.active_holder_contact_attempted and not state.active_holder_contact_is_current_holder:
+        failures.append("active-holder fast lane accepted contact from a non-holder role")
+    if state.active_holder_contact_attempted and not state.active_holder_contact_agent_matches:
+        failures.append("active-holder fast lane accepted contact from a stale or wrong agent")
+    if state.active_holder_contact_attempted and not state.active_holder_contact_packet_current:
+        failures.append("active-holder fast lane accepted a stale or wrong packet")
+    if state.active_holder_contact_attempted and not state.active_holder_contact_route_frontier_current:
+        failures.append("active-holder fast lane accepted contact after route or frontier staleness")
+    if state.active_holder_contact_attempted and not state.active_holder_contact_action_allowed:
+        failures.append("active-holder fast lane accepted an action outside the lease")
+    if state.active_holder_ack_recorded and not state.active_holder_contact_attempted:
+        failures.append("active-holder ack recorded without a fast-lane contact attempt")
+    if state.active_holder_packet_opened_through_runtime and not state.active_holder_ack_recorded:
+        failures.append("active-holder packet opened through runtime before packet ack")
+    if state.active_holder_progress_recorded and not state.active_holder_ack_recorded:
+        failures.append("active-holder progress recorded before packet ack")
+    if state.active_holder_progress_recorded and not state.active_holder_packet_opened_through_runtime:
+        failures.append("active-holder progress recorded before packet body runtime open")
+    if state.active_holder_progress_recorded and not state.active_holder_progress_controller_safe:
+        failures.append("active-holder progress exposed sealed body, findings, evidence, or recommendations")
+    if state.fast_lane_initial_result_submitted and not state.active_holder_ack_recorded:
+        failures.append("active-holder result submitted before packet ack")
+    if state.fast_lane_initial_result_submitted and not state.active_holder_packet_opened_through_runtime:
+        failures.append("active-holder result submitted before packet body was opened through packet runtime")
+    if state.fast_lane_initial_result_submitted and not state.active_holder_contact_attempted:
+        failures.append("active-holder result submitted without a fast-lane contact attempt")
+    if state.fast_lane_mechanical_reject_recorded and not state.fast_lane_initial_result_submitted:
+        failures.append("router mechanical rejection recorded before active-holder result submission")
+    if state.fast_lane_result_resubmitted and not state.fast_lane_mechanical_reject_recorded:
+        failures.append("active-holder result resubmitted without prior router mechanical rejection")
+    if state.fast_lane_result_mechanics_passed and not (
+        state.fast_lane_initial_result_submitted
+        and (
+            not state.fast_lane_mechanical_reject_recorded
+            or state.fast_lane_result_resubmitted
+        )
+    ):
+        failures.append("router accepted fast-lane result mechanics before valid submit or resubmit")
+    if state.worker_result_returned and not state.fast_lane_result_mechanics_passed:
+        failures.append("worker result returned before active-holder mechanics pass")
     if state.worker_result_returned and not state.worker_dispatched:
         failures.append("worker result returned before worker dispatch")
     if state.worker_result_returned and not state.worker_result_identity_boundary_present:
         failures.append("worker result returned without completed-by identity boundary")
     if state.worker_result_ledger_checked and not state.worker_result_returned:
         failures.append("worker result ledger checked before result was returned")
+    if state.fast_lane_controller_notice_written and not (
+        state.worker_result_ledger_checked and state.fast_lane_result_mechanics_passed
+    ):
+        failures.append("router wrote Controller next-action notice before fast-lane mechanics and ledger check passed")
     if state.worker_result_routed_to_reviewer and not (
         state.worker_result_returned and state.worker_result_ledger_checked
     ):
         failures.append("worker result routed before result was returned and packet-ledger checked")
+    if state.worker_result_routed_to_reviewer and not state.fast_lane_controller_notice_written:
+        failures.append("worker result routed to reviewer before router wrote Controller next-action notice")
     if state.reviewer_worker_result_card_delivered and not state.worker_result_routed_to_reviewer:
         failures.append("reviewer result-review card delivered before worker result relay")
     if state.reviewer_decision in {"pass", "block"} and not state.worker_result_routed_to_reviewer:
@@ -1590,7 +1773,7 @@ INVARIANTS = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 90
+MAX_SEQUENCE_LENGTH = 110
 
 
 def build_workflow() -> Workflow:
@@ -1638,6 +1821,16 @@ def _active_packet_loop(**changes: object) -> State:
         worker_dispatched=True,
         worker_project_write_performed=True,
         worker_packet_identity_boundary_present=True,
+        active_holder_lease_issued=True,
+        active_holder_contact_attempted=True,
+        active_holder_ack_recorded=True,
+        active_holder_packet_opened_through_runtime=True,
+        active_holder_progress_recorded=True,
+        fast_lane_initial_result_submitted=True,
+        fast_lane_mechanical_reject_recorded=True,
+        fast_lane_result_resubmitted=True,
+        fast_lane_result_mechanics_passed=True,
+        fast_lane_controller_notice_written=True,
         worker_result_returned=True,
         worker_result_identity_boundary_present=True,
         worker_result_ledger_checked=True,
@@ -1671,6 +1864,39 @@ def _mutated(**changes: object) -> State:
         stale_evidence_marked=True,
         frontier_marked_stale=True,
         route_history_context_stale=True,
+    )
+    return replace(base, **changes)
+
+
+def _active_holder_leased(**changes: object) -> State:
+    base = State(
+        status="running",
+        holder="worker",
+        route_version=1,
+        controller_boundary_confirmed=True,
+        route_activated=True,
+        officer_lifecycle_flags_current=True,
+        officer_packet_card_delivered=True,
+        officer_packet_relayed=True,
+        officer_packet_identity_boundary_present=True,
+        officer_result_returned=True,
+        officer_result_identity_boundary_present=True,
+        officer_result_ledger_checked=True,
+        officer_result_routed_to_pm=True,
+        pm_absorbed_officer_result=True,
+        route_history_context_refreshed=True,
+        pm_prior_path_context_reviewed=True,
+        node_acceptance_plan_prior_context_used=True,
+        pm_node_high_standard_gate_opened=True,
+        pm_node_high_standard_risks_reviewed=True,
+        node_acceptance_plan_written=True,
+        reviewer_node_acceptance_plan_reviewed=True,
+        current_node_packet_registered=True,
+        write_grant_issued=True,
+        reviewer_dispatch_allowed=True,
+        worker_dispatched=True,
+        worker_packet_identity_boundary_present=True,
+        active_holder_lease_issued=True,
     )
     return replace(base, **changes)
 
@@ -1828,6 +2054,73 @@ def hazard_states() -> dict[str, State]:
         ),
         "worker_project_write_without_grant": _active_packet_loop(
             write_grant_issued=False,
+        ),
+        "active_holder_lease_before_worker_dispatch": _active_holder_leased(
+            worker_dispatched=False,
+            worker_packet_identity_boundary_present=False,
+        ),
+        "active_holder_contact_without_lease": _active_holder_leased(
+            active_holder_lease_issued=False,
+            active_holder_contact_attempted=True,
+        ),
+        "active_holder_contact_by_wrong_role": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_contact_is_current_holder=False,
+        ),
+        "active_holder_contact_by_stale_agent": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_contact_agent_matches=False,
+        ),
+        "active_holder_contact_by_stale_packet": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_contact_packet_current=False,
+        ),
+        "active_holder_contact_after_stale_frontier": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_contact_route_frontier_current=False,
+        ),
+        "active_holder_contact_action_not_allowed": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_contact_action_allowed=False,
+        ),
+        "fast_lane_progress_leaks_controller_visible_content": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_ack_recorded=True,
+            active_holder_progress_recorded=True,
+            active_holder_progress_controller_safe=False,
+        ),
+        "fast_lane_result_before_packet_ack": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            fast_lane_initial_result_submitted=True,
+            active_holder_ack_recorded=False,
+        ),
+        "fast_lane_result_before_packet_open": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_ack_recorded=True,
+            fast_lane_initial_result_submitted=True,
+            worker_project_write_performed=False,
+        ),
+        "fast_lane_mechanical_pass_marks_node_complete": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_ack_recorded=True,
+            fast_lane_initial_result_submitted=True,
+            fast_lane_result_mechanics_passed=True,
+            worker_result_returned=True,
+            worker_result_identity_boundary_present=True,
+            pm_node_completed=True,
+        ),
+        "fast_lane_closes_without_controller_notice": _active_packet_loop(
+            fast_lane_controller_notice_written=False,
+        ),
+        "fast_lane_controller_notice_before_ledger_check": _active_holder_leased(
+            active_holder_contact_attempted=True,
+            active_holder_ack_recorded=True,
+            fast_lane_initial_result_submitted=True,
+            fast_lane_result_mechanics_passed=True,
+            worker_result_returned=True,
+            worker_result_identity_boundary_present=True,
+            worker_result_ledger_checked=False,
+            fast_lane_controller_notice_written=True,
         ),
         "reviewer_pass_without_routed_worker_result": _active_packet_loop(
             worker_result_routed_to_reviewer=False,

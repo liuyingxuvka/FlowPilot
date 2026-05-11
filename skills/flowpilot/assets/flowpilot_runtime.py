@@ -143,6 +143,51 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     run_packet.add_argument("--result-body-file", default="")
     run_packet.add_argument("--next-recipient", required=True)
 
+    issue_active = sub.add_parser("issue-active-holder-lease", help="Issue a scoped fast-lane lease to the current packet holder.")
+    issue_active.add_argument("--envelope-path", required=True)
+    issue_active.add_argument("--holder-role", required=True)
+    issue_active.add_argument("--holder-agent-id", required=True)
+    issue_active.add_argument("--route-version", required=True, type=int)
+    issue_active.add_argument("--frontier-version", required=True, type=int)
+    issue_active.add_argument("--allowed-action", action="append", default=[])
+
+    active_ack = sub.add_parser("active-holder-ack", help="Acknowledge a fast-lane packet lease.")
+    active_ack.add_argument("--lease-path", required=True)
+    active_ack.add_argument("--role", required=True)
+    active_ack.add_argument("--agent-id", required=True)
+    active_ack.add_argument("--route-version", type=int, default=None)
+    active_ack.add_argument("--frontier-version", type=int, default=None)
+
+    active_progress = sub.add_parser("active-holder-progress", help="Write controller-safe fast-lane packet progress.")
+    active_progress.add_argument("--lease-path", required=True)
+    active_progress.add_argument("--role", required=True)
+    active_progress.add_argument("--agent-id", required=True)
+    active_progress.add_argument("--progress", required=True, type=int)
+    active_progress.add_argument("--message", required=True)
+    active_progress.add_argument("--route-version", type=int, default=None)
+    active_progress.add_argument("--frontier-version", type=int, default=None)
+
+    active_submit = sub.add_parser("active-holder-submit-result", help="Submit a packet result through the fast lane.")
+    active_submit.add_argument("--lease-path", required=True)
+    active_submit.add_argument("--role", required=True)
+    active_submit.add_argument("--agent-id", required=True)
+    active_submit.add_argument("--result-body-text", default="")
+    active_submit.add_argument("--result-body-file", default="")
+    active_submit.add_argument("--next-recipient", required=True)
+    active_submit.add_argument("--route-version", type=int, default=None)
+    active_submit.add_argument("--frontier-version", type=int, default=None)
+
+    active_submit_existing = sub.add_parser(
+        "active-holder-submit-existing-result",
+        help="Submit an existing packet result envelope through the fast lane.",
+    )
+    active_submit_existing.add_argument("--lease-path", required=True)
+    active_submit_existing.add_argument("--role", required=True)
+    active_submit_existing.add_argument("--agent-id", required=True)
+    active_submit_existing.add_argument("--result-envelope-path", required=True)
+    active_submit_existing.add_argument("--route-version", type=int, default=None)
+    active_submit_existing.add_argument("--frontier-version", type=int, default=None)
+
     open_result = sub.add_parser("open-result", help="Open a result body through the review runtime session.")
     open_result.add_argument("--result-envelope-path", required=True)
     open_result.add_argument("--role", required=True)
@@ -233,6 +278,58 @@ def main(argv: list[str] | None = None) -> int:
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
         )
+    elif args.command == "issue-active-holder-lease":
+        envelope = packet_runtime.load_envelope(root, args.envelope_path)
+        result = packet_runtime.issue_active_holder_lease(
+            root,
+            packet_envelope=envelope,
+            holder_role=args.holder_role,
+            holder_agent_id=args.holder_agent_id,
+            route_version=args.route_version,
+            frontier_version=args.frontier_version,
+            allowed_actions=args.allowed_action or None,
+        )
+    elif args.command == "active-holder-ack":
+        result = packet_runtime.active_holder_ack(
+            root,
+            lease_path=args.lease_path,
+            role=args.role,
+            agent_id=args.agent_id,
+            route_version=args.route_version,
+            frontier_version=args.frontier_version,
+        )
+    elif args.command == "active-holder-progress":
+        result = packet_runtime.active_holder_progress(
+            root,
+            lease_path=args.lease_path,
+            role=args.role,
+            agent_id=args.agent_id,
+            progress=args.progress,
+            message=args.message,
+            route_version=args.route_version,
+            frontier_version=args.frontier_version,
+        )
+    elif args.command == "active-holder-submit-result":
+        result = packet_runtime.active_holder_submit_result(
+            root,
+            lease_path=args.lease_path,
+            role=args.role,
+            agent_id=args.agent_id,
+            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
+            next_recipient=args.next_recipient,
+            route_version=args.route_version,
+            frontier_version=args.frontier_version,
+        )
+    elif args.command == "active-holder-submit-existing-result":
+        result = packet_runtime.active_holder_submit_existing_result(
+            root,
+            lease_path=args.lease_path,
+            role=args.role,
+            agent_id=args.agent_id,
+            result_envelope_path=args.result_envelope_path,
+            route_version=args.route_version,
+            frontier_version=args.frontier_version,
+        )
     elif args.command == "open-result":
         result = packet_runtime.begin_result_review_session(
             root,
@@ -270,6 +367,8 @@ def main(argv: list[str] | None = None) -> int:
     else:  # pragma: no cover - argparse enforces command choices
         raise RuntimeError(f"unknown command: {args.command}")
     print(json.dumps(result, indent=2, sort_keys=True))
+    if args.command in {"active-holder-submit-result", "active-holder-submit-existing-result"} and result.get("passed") is False:
+        return 2
     return 0
 
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import io
 import json
 import sys
 import tempfile
@@ -42,6 +44,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
     def read_json(self, path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
+
+    def run_packet_cli(self, root: Path, args: list[str], *, expected_rc: int = 0) -> dict:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            rc = packet_runtime.main(["--root", str(root), *args])
+        self.assertEqual(rc, expected_rc)
+        return json.loads(output.getvalue())
 
     def issue_packet(self, root: Path, *, packet_id: str = "packet-001", body_text: str = "SECRET_WORKER_BODY") -> dict:
         return packet_runtime.create_packet(
@@ -626,6 +635,260 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
         with self.assertRaises(packet_runtime.PacketRuntimeError):
             packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
+
+    def test_active_holder_fast_lane_closes_with_controller_notice(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        lease = packet_runtime.issue_active_holder_lease(
+            root,
+            packet_envelope=envelope,
+            holder_role="worker_a",
+            holder_agent_id="agent-worker-a-1",
+            route_version=1,
+            frontier_version=1,
+        )
+
+        ack = packet_runtime.active_holder_ack(
+            root,
+            lease_path=lease["lease_path"],
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+            route_version=1,
+            frontier_version=1,
+        )
+        self.assertEqual(ack["event"], "active_holder_ack")
+
+        progress = packet_runtime.active_holder_progress(
+            root,
+            lease_path=lease["lease_path"],
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+            progress=20,
+            message="Implementation is underway.",
+            route_version=1,
+            frontier_version=1,
+        )
+        self.assertEqual(progress["holder"], "worker_a")
+        self.assertEqual(progress["status"], "working")
+
+        session = packet_runtime.begin_role_packet_session(
+            root,
+            envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+        )
+        self.assertEqual(session["agent_id"], "agent-worker-a-1")
+
+        submission = packet_runtime.active_holder_submit_result(
+            root,
+            lease_path=lease["lease_path"],
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+            result_body_text="FAST_LANE_RESULT_SECRET commands and files",
+            next_recipient="human_like_reviewer",
+            route_version=1,
+            frontier_version=1,
+        )
+
+        self.assertTrue(submission["passed"])
+        notice = submission["controller_next_action_notice"]
+        self.assertEqual(notice["schema_version"], packet_runtime.CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA)
+        self.assertEqual(notice["next_action"], "deliver_result_to_reviewer")
+        self.assertEqual(notice["to"], "controller")
+        self.assertFalse(notice["controller_may_read_result_body"])
+        notice_path = self.packet_dir(root) / "controller_next_action_notice.json"
+        self.assertTrue(notice_path.exists())
+
+        ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json")
+        packet_record = ledger["packets"][0]
+        self.assertTrue(packet_record["active_holder_lease_issued"])
+        self.assertTrue(packet_record["active_holder_ack_recorded"])
+        self.assertTrue(packet_record["active_holder_progress_recorded"])
+        self.assertTrue(packet_record["fast_lane_result_mechanics_passed"])
+        self.assertTrue(packet_record["fast_lane_controller_notice_written"])
+        self.assertEqual(ledger["active_packet_holder"], "controller")
+        self.assertEqual(ledger["active_packet_status"], "router-next-action-ready-for-controller")
+
+        result = self.read_json(self.result_envelope_path(root))
+        self.assertNotIn("controller_relay", result)
+        relayed = self.relay_result(root, result)
+        packet_runtime.read_result_body_for_role(root, relayed, role="human_like_reviewer")
+        audit = packet_runtime.validate_for_reviewer(
+            root,
+            packet_envelope=self.read_json(self.packet_envelope_path(root)),
+            result_envelope=relayed,
+            agent_role_map={"agent-worker-a-1": "worker_a"},
+        )
+        self.assertTrue(audit["passed"])
+
+    def test_active_holder_cli_round_trip_writes_controller_notice(self) -> None:
+        root = self.make_project()
+        self.relay_packet(root, self.issue_packet(root))
+        packet_path = ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json"
+
+        lease = self.run_packet_cli(
+            root,
+            [
+                "issue-active-holder-lease",
+                "--envelope-path",
+                packet_path,
+                "--holder-role",
+                "worker_a",
+                "--holder-agent-id",
+                "agent-worker-a-1",
+                "--route-version",
+                "1",
+                "--frontier-version",
+                "1",
+            ],
+        )
+        self.assertEqual(lease["holder_agent_id"], "agent-worker-a-1")
+
+        ack = self.run_packet_cli(
+            root,
+            [
+                "active-holder-ack",
+                "--lease-path",
+                lease["lease_path"],
+                "--role",
+                "worker_a",
+                "--agent-id",
+                "agent-worker-a-1",
+                "--route-version",
+                "1",
+                "--frontier-version",
+                "1",
+            ],
+        )
+        self.assertEqual(ack["event"], "active_holder_ack")
+
+        self.run_packet_cli(
+            root,
+            [
+                "open-packet-session",
+                "--envelope-path",
+                packet_path,
+                "--role",
+                "worker_a",
+                "--agent-id",
+                "agent-worker-a-1",
+            ],
+        )
+        submission = self.run_packet_cli(
+            root,
+            [
+                "active-holder-submit-result",
+                "--lease-path",
+                lease["lease_path"],
+                "--role",
+                "worker_a",
+                "--agent-id",
+                "agent-worker-a-1",
+                "--result-body-text",
+                "CLI fast lane result",
+                "--next-recipient",
+                "human_like_reviewer",
+                "--route-version",
+                "1",
+                "--frontier-version",
+                "1",
+            ],
+        )
+
+        self.assertTrue(submission["passed"])
+        notice = submission["controller_next_action_notice"]
+        self.assertEqual(notice["notice_path"], ".flowpilot/runs/run-test/packets/packet-001/controller_next_action_notice.json")
+        self.assertEqual(notice["next_action"], "deliver_result_to_reviewer")
+
+    def test_active_holder_fast_lane_rejects_wrong_or_stale_contact(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        lease = packet_runtime.issue_active_holder_lease(
+            root,
+            packet_envelope=envelope,
+            holder_role="worker_a",
+            holder_agent_id="agent-worker-a-1",
+            route_version=1,
+            frontier_version=1,
+        )
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "wrong_role"):
+            packet_runtime.active_holder_ack(
+                root,
+                lease_path=lease["lease_path"],
+                role="worker_b",
+                agent_id="agent-worker-b-1",
+                route_version=1,
+                frontier_version=1,
+            )
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "wrong_agent"):
+            packet_runtime.active_holder_ack(
+                root,
+                lease_path=lease["lease_path"],
+                role="worker_a",
+                agent_id="agent-worker-a-2",
+                route_version=1,
+                frontier_version=1,
+            )
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "route_version_stale"):
+            packet_runtime.active_holder_ack(
+                root,
+                lease_path=lease["lease_path"],
+                role="worker_a",
+                agent_id="agent-worker-a-1",
+                route_version=2,
+                frontier_version=1,
+            )
+
+    def test_active_holder_mechanical_reject_keeps_current_holder(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        lease = packet_runtime.issue_active_holder_lease(
+            root,
+            packet_envelope=envelope,
+            holder_role="worker_a",
+            holder_agent_id="agent-worker-a-1",
+            route_version=1,
+            frontier_version=1,
+        )
+        packet_runtime.active_holder_ack(
+            root,
+            lease_path=lease["lease_path"],
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+        )
+        packet_runtime.begin_role_packet_session(
+            root,
+            envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+        )
+        wrong_agent_result = packet_runtime.write_result(
+            root,
+            packet_envelope=self.read_json(self.packet_envelope_path(root)),
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a-2",
+            result_body_text="wrong agent result",
+            next_recipient="human_like_reviewer",
+        )
+
+        rejected = packet_runtime.active_holder_submit_existing_result(
+            root,
+            lease_path=lease["lease_path"],
+            role="worker_a",
+            agent_id="agent-worker-a-1",
+            result_envelope_path=wrong_agent_result["result_body_path"].rsplit("/", 1)[0] + "/result_envelope.json",
+        )
+
+        self.assertFalse(rejected["passed"])
+        self.assertIn("active_holder_result_completed_by_wrong_agent", rejected["audit"]["blockers"])
+        ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json")
+        self.assertEqual(ledger["active_packet_holder"], "worker_a")
+        self.assertEqual(ledger["active_packet_status"], "active-holder-mechanical-reject")
+        self.assertTrue(ledger["packets"][0]["fast_lane_mechanical_reject_recorded"])
+        self.assertFalse((self.packet_dir(root) / "controller_next_action_notice.json").exists())
 
 
 if __name__ == "__main__":

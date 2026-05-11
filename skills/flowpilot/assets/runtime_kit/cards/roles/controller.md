@@ -61,6 +61,11 @@ Allowed actions:
 - replace the host visible plan only from the router-provided
   `display_plan.json` projection. If no PM display plan exists yet, clear any
   pre-FlowPilot assistant plan to the router's waiting-for-PM placeholder.
+- when Router has issued an active-holder packet lease, wait on the
+  packet-id-specific router-authored `controller_next_action_notice.json`
+  instead of asking the holder to chat through every mechanical retry. The
+  notice is controller-visible metadata only; after reading it, call Router or
+  relay the named envelope exactly as instructed.
 
 Forbidden actions:
 
@@ -71,6 +76,9 @@ Forbidden actions:
 - do not create project evidence for PM, reviewer, officer, or worker gates.
 - do not invent, preserve, or restore visible route-plan items from chat
   history, ordinary Codex planning, or Controller summaries.
+- do not infer packet completion from holder chat while an active-holder lease
+  is open. Only a router-authored next-action notice, PM blocker, timeout, or
+  explicit router action can end Controller's wait.
 
 ## Router Control Blockers
 

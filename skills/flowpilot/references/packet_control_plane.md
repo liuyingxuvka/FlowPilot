@@ -29,13 +29,46 @@ Controller bootstraps only user-approved startup options
 -> Controller signs relay and sends only the envelope to the target role
 -> Recipient verifies controller relay signature before opening the body
 -> Worker reads and executes exactly its packet body
--> Worker returns RESULT_ENVELOPE + RESULT_BODY and waits
+-> Worker returns RESULT_ENVELOPE + RESULT_BODY and waits, or uses an
+   active-holder fast-lane lease for packet-local mechanical result submission
 -> Controller signs relay and sends only the result envelope to Reviewer
 -> Reviewer audits mail chain, role origin, hashes, and evidence
 -> Controller relays review envelope to PM
 -> PM issues next packet, repair packet, route mutation, user block, or complete
 -> Controller continues internally unless PM says stop_for_user: true
 ```
+
+## Active-Holder Fast Lane
+
+For the currently active packet only, Router may issue an
+`active_holder_lease.json` to the packet holder. The lease binds the run,
+packet, node, holder role, holder agent id, route version, frontier version,
+allowed actions, and packet hashes. It is a short-lived permission slip, not a
+new chat channel and not role-to-role mail.
+
+The holder may use the fast lane only for:
+
+- `active-holder-ack`;
+- `active-holder-progress` with controller-safe metadata only;
+- `active-holder-submit-result`;
+- `active-holder-submit-existing-result` after a mechanical envelope retry.
+
+Router rejects wrong role, wrong agent, stale packet, stale route/frontier, and
+actions not listed in the lease. Progress remains Controller-visible metadata;
+it must not contain sealed body content, findings, evidence, recommendations,
+or repair instructions.
+
+When result mechanics pass, Router writes
+`controller_next_action_notice.json` beside the packet result files and updates
+the packet ledger holder to Controller with status
+`router-next-action-ready-for-controller`. Controller waits for that
+packet-id-specific notice instead of hand-relaying every mechanical retry. The
+notice may tell Controller to deliver the result envelope to Reviewer, but it
+does not let Controller read the result body or mark the node complete.
+
+Mechanical success is not semantic approval. Reviewer still opens the result
+through the packet runtime and PM still owns route advancement, repair,
+mutation, and completion.
 
 ## Evidence Rule
 

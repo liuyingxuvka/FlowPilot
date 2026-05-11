@@ -33,6 +33,17 @@ If the runtime session cannot open the packet, return the runtime blocker
 envelope instead of continuing from memory. Keep scope narrow and disjoint from
 other workers. Do not infer downstream work.
 
+If Router includes an `active_holder_lease.json` path for this exact packet,
+Worker B may use only that lease's fast-lane actions: acknowledge the packet,
+write controller-safe progress, submit the result, and repair mechanical
+envelope problems rejected by the runtime. Use
+`flowpilot_runtime.py active-holder-ack`,
+`flowpilot_runtime.py active-holder-progress`, and
+`flowpilot_runtime.py active-holder-submit-result` with the current
+`route_version`, `frontier_version`, role, and concrete agent id. Do not use
+the fast lane for another packet, another role, semantic approval, node
+completion, route mutation, or reviewer/PM decisions.
+
 ## Quality Within Packet Boundary
 
 The PM packet boundary is a hard scope boundary, not a low-standard target.
@@ -66,6 +77,12 @@ return only the runtime-generated result envelope to Controller. Do not
 hand-write the result envelope unless the runtime is unavailable and you are
 returning a protocol blocker. Do not include commands run, files changed,
 findings, blockers, screenshots, or other result-body content in chat.
+
+When using the active-holder fast lane, submit the same sealed result body
+through `flowpilot_runtime.py active-holder-submit-result`. After mechanical
+success, Router writes `controller_next_action_notice.json` for Controller.
+Return only controller-visible notice or envelope metadata; do not paste result
+body content or ask Controller to decide the next step from chat.
 
 Normal Worker B task completion uses `packet_runtime.py` because it is a packet
 result envelope. If the router explicitly asks Worker B for a standalone
