@@ -71,6 +71,27 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         )
         return root
 
+    def make_startup_project(self) -> Path:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-startup-"))
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        _write_json(
+            root / ".flowpilot" / "current.json",
+            {
+                "current_run_id": "run-test",
+                "current_run_root": ".flowpilot/runs/run-test",
+            },
+        )
+        _write_json(run_root / "state.json", {"status": "controller_ready"})
+        _write_json(
+            run_root / "execution_frontier.json",
+            {
+                "active_route_id": None,
+                "active_node_id": None,
+                "status": "startup_intake",
+            },
+        )
+        return root
+
     def write_legacy_layout(self, root: Path, *, active_route: str = "legacy-route") -> None:
         flowpilot_root = root / ".flowpilot"
         _write_json(flowpilot_root / "state.json", {"active_route": active_route})
@@ -112,9 +133,38 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         )
 
         self.assertEqual(payload["current_stage"], "verification")
+        self.assertTrue(payload["canonical_route_available"])
+        self.assertEqual(payload["display_role"], "canonical_route")
+        self.assertFalse(payload["is_placeholder"])
+        self.assertIsNone(payload["replacement_rule"])
         self.assertIn("FlowPilot Route Sign", payload["markdown"])
         self.assertIn("Now: node-006-final-verification", payload["mermaid"])
         self.assertNotIn("FlowGuard Model<br/>Now", payload["mermaid"])
+
+    def test_startup_route_sign_is_explicit_placeholder_until_route_exists(self) -> None:
+        root = self.make_startup_project()
+        payload = route_sign.generate(
+            root,
+            write=True,
+            trigger="startup",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=True,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        display_packet = json.loads(Path(payload["display_packet_path"]).read_text(encoding="utf-8"))
+        self.assertFalse(payload["canonical_route_available"])
+        self.assertEqual(payload["display_role"], "startup_placeholder")
+        self.assertTrue(payload["is_placeholder"])
+        self.assertEqual(payload["replacement_rule"], "replace_when_canonical_route_available")
+        self.assertEqual(display_packet["display_role"], "startup_placeholder")
+        self.assertTrue(display_packet["is_placeholder"])
+        self.assertEqual(display_packet["replacement_rule"], "replace_when_canonical_route_available")
+        self.assertEqual(display_packet["route_source_kind"], "none")
+        self.assertEqual(display_packet["route_node_count"], 0)
+        self.assertIn("FlowPilot Route Sign", payload["markdown"])
 
     def test_major_node_entry_requires_chat_route_sign(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")

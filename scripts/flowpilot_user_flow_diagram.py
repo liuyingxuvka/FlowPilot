@@ -774,6 +774,14 @@ def generate(
         source_findings=source_health["findings"],
     )
     mermaid_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    canonical_route_available = (
+        source_health["status"] == "ok"
+        and route_source_kind in {"flow_json", "route_state_snapshot"}
+        and route_source_summary["node_count"] > 0
+    )
+    display_role = "canonical_route" if canonical_route_available else "startup_placeholder"
+    is_placeholder = not canonical_route_available
+    replacement_rule = "replace_when_canonical_route_available" if is_placeholder else None
 
     diagram_dir = Path(paths["diagrams_dir"])
     mmd_path = diagram_dir / "user-flow-diagram.mmd"
@@ -786,6 +794,9 @@ def generate(
         "language": "en",
         "generated_at": generated_at,
         "display_trigger": trigger,
+        "display_role": display_role,
+        "is_placeholder": is_placeholder,
+        "replacement_rule": replacement_rule,
         "display_surface": display_surface,
         "cockpit_open": cockpit_open,
         "chat_display_required": chat_display_required,
@@ -821,6 +832,7 @@ def generate(
         "route_version_rendered": frontier.get("route_version") or route.get("route_version"),
         "frontier_version_rendered": frontier.get("frontier_version"),
         "route_source_kind": route_source_kind,
+        "canonical_route_available": canonical_route_available,
         "route_node_count": route_source_summary["node_count"],
         "route_checklist_item_count": route_source_summary["checklist_item_count"],
         "source_route_path": str(route_path),
@@ -878,8 +890,12 @@ def generate(
         "current_declares_run": paths["current_declares_run"],
         "active_run_root_valid": paths["active_run_root_valid"],
         "display_gate_status": display_packet["display_gate_status"],
+        "display_role": display_role,
+        "is_placeholder": is_placeholder,
+        "replacement_rule": replacement_rule,
         "route_sign_layout": route_sign["layout"],
         "route_source_kind": route_source_kind,
+        "canonical_route_available": canonical_route_available,
         "route_node_count": route_source_summary["node_count"],
         "route_checklist_item_count": route_source_summary["checklist_item_count"],
         "run_id": paths["run_id"],

@@ -38,6 +38,10 @@ HAZARD_EXPECTED_FAILURES = {
     "repair_candidate_projected_before_commit": "draft or repair candidate was projected to the user-visible route surface",
     "controller_invents_route_nodes": "user-visible route map was not derived from canonical route/frontier/snapshot",
     "route_draft_keeps_startup_unknown_mermaid": "committed route existed but user-visible Mermaid still showed route=unknown or node=unknown",
+    "startup_placeholder_missing_identity": "startup placeholder route sign lacked explicit placeholder identity",
+    "startup_placeholder_missing_replacement_rule": "startup placeholder route sign lacked explicit canonical-route replacement rule",
+    "canonical_route_keeps_placeholder_identity": "canonical route display kept startup placeholder semantics",
+    "canonical_route_missing_identity": "canonical route display lacked explicit canonical identity",
     "chat_fallback_bullet_list_after_route_draft": "chat fallback displayed bullet list instead of Mermaid route sign",
     "degraded_mermaid_without_reason": "chat fallback degraded without recording a Mermaid source reason",
     "cockpit_chat_source_drift": "Cockpit route map and chat fallback used different route sources",
@@ -56,6 +60,7 @@ def _state_id(state: model.State) -> str:
         f"route={state.route_source_exists},{state.route_source_kind},canon={state.route_source_is_canonical},"
         f"visible_source={state.visible_source_kind},draft={state.draft_route_exists},"
         f"committed={state.committed_route_exists},repair={state.repair_candidate_exists},"
+        f"display_role={state.display_role},placeholder={state.is_placeholder},replacement={state.replacement_rule},"
         f"nodes={state.route_nodes_real},checklist={state.route_checklists_preserved},"
         f"statuses={state.route_statuses_distinct}|aliases={state.route_node_aliases_supported},"
         f"{state.frontier_aliases_supported},draft={state.draft_route_fallback_supported},"
@@ -184,6 +189,7 @@ def _architecture_candidate() -> dict[str, object]:
         "principles": [
             "display_plan.json remains a native visible-plan projection, not the only user-facing route map",
             "Mermaid/chat route sign and Cockpit route map share canonical route/frontier/snapshot semantics",
+            "Startup Mermaid may be displayed as a placeholder only when it has explicit placeholder identity and replacement metadata",
             "draft routes are internal-only until PM activates a reviewed flow.json route",
             "route_state_snapshot.route.nodes is the stable fallback when route file aliases drift",
             "display receipt is required; generated files alone do not satisfy user visibility",
@@ -192,6 +198,7 @@ def _architecture_candidate() -> dict[str, object]:
             "Stop pm_writes_route_draft from replacing display_plan.json or visible route_state_snapshot with draft data.",
             "Teach user-visible route-sign generation to ignore flow.draft.json unless a diagnostic/internal caller explicitly opts in.",
             "Refresh user-flow-diagram.* during sync_display_plan only from committed flow.json or snapshots built from flow.json.",
+            "Add display packet metadata for display_role, is_placeholder, and replacement_rule.",
         ],
     }
 

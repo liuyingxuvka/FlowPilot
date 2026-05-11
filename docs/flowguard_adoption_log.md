@@ -3,6 +3,40 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-11 - Route Placeholder Display Contract
+
+- Trigger reason: User wanted the startup Mermaid route sign to remain as a
+  useful placeholder while making its placeholder identity and replacement rule
+  explicit before any runtime change.
+- Risk modeled: Startup route-sign placeholders could be mistaken for canonical
+  route maps, keep showing after real route data appears, or rely on indirect
+  fields such as `route_source_kind: none` instead of a clear display contract.
+- Model files: `simulations/flowpilot_route_display_model.py`,
+  `simulations/run_flowpilot_route_display_checks.py`,
+  `simulations/flowpilot_route_display_results.json`.
+- Commands:
+  - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`:
+    `1.0`
+  - OK after one model-order repair:
+    `python simulations\run_flowpilot_route_display_checks.py --json-out simulations\flowpilot_route_display_results.json`
+  - OK: `python -m py_compile scripts\flowpilot_user_flow_diagram.py skills\flowpilot\assets\flowpilot_user_flow_diagram.py simulations\flowpilot_route_display_model.py simulations\run_flowpilot_route_display_checks.py`
+  - OK: `python -m unittest tests.test_flowpilot_user_flow_diagram tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_display_plan_is_controller_synced_projection_from_pm_plan tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_cockpit_requested_startup_display_records_chat_fallback_mermaid tests.test_flowpilot_meta_route_sign`
+  - OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+  - OK: `python scripts\check_install.py`
+  - OK: `python scripts\audit_local_install_sync.py --json`
+  - OK: `python scripts\install_flowpilot.py --check --json`
+- Findings: The route-display model now catches missing placeholder identity,
+  missing placeholder replacement rule, canonical displays that keep placeholder
+  semantics, and canonical displays with no canonical identity. Runtime display
+  packets now carry `display_role`, `is_placeholder`, `replacement_rule`, and
+  `canonical_route_available`.
+- Skipped/partial checks: Full `tests.test_flowpilot_router_runtime` was
+  attempted but timed out after about ten minutes, so it was not counted as a
+  pass. The targeted router display tests and install checks passed.
+- Next action: If a future native Cockpit UI reader consumes these packets,
+  prefer the explicit fields over inferring placeholder state from route source
+  and node counts.
+
 ## flowpilot-terminal-closure-router-loop-20260508 - Stop routing after PM terminal closure
 
 - Project: FlowGuardProjectAutopilot_20260430

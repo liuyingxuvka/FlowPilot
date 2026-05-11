@@ -11,8 +11,9 @@ Risk intent brief:
   Cockpit/chat receipts, and the previous committed visible route.
 - Adversarial branches include draft-only routes with no ``flow.json``,
   draft-backed display plans, draft-backed snapshots, draft-backed route signs,
-  repair candidates shown before recheck, previous committed routes overwritten
-  by drafts, Cockpit/chat source drift, checklist loss, status conflation, and
+  startup placeholders with missing identity/replacement metadata, repair
+  candidates shown before recheck, previous committed routes overwritten by
+  drafts, Cockpit/chat source drift, checklist loss, status conflation, and
   accidental internal evidence/source-field display.
 - Hard invariant: user-visible route maps are committed-route only. A draft may
   be reviewed internally, but it must not advance the visible route generation,
@@ -69,6 +70,9 @@ class State:
     route_source_kind: str = "none"  # none | flow_json | snapshot_from_flow_json
     visible_source_kind: str = "none"  # none | waiting | flow_json | snapshot_from_flow_json | flow_draft | repair_candidate
     route_source_is_canonical: bool = True
+    display_role: str = "none"  # none | startup_placeholder | canonical_route
+    is_placeholder: bool = False
+    replacement_rule: str = "none"  # none | replace_when_canonical_route_available
     controller_invented_nodes: bool = False
     route_node_aliases_supported: bool = False
     frontier_aliases_supported: bool = False
@@ -143,6 +147,9 @@ def _draft_written(state: State, *, repair: bool = False) -> State:
         diagram_generation=state.diagram_generation,
         visible_generation=state.visible_generation,
         visible_source_kind=state.visible_source_kind,
+        display_role=state.display_role,
+        is_placeholder=state.is_placeholder,
+        replacement_rule=state.replacement_rule,
         chat_display_kind=state.chat_display_kind,
         cockpit_display_kind=state.cockpit_display_kind,
         user_dialog_display_ledger_recorded=state.user_dialog_display_ledger_recorded,
@@ -171,6 +178,9 @@ def _committed_route_dirty(
         route_source_exists=True,
         route_source_kind=source_kind,
         visible_source_kind=state.visible_source_kind,
+        display_role=state.display_role,
+        is_placeholder=state.is_placeholder,
+        replacement_rule=state.replacement_rule,
         route_source_is_canonical=True,
         route_node_aliases_supported=True,
         frontier_aliases_supported=True,
@@ -251,10 +261,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 startup_displayed=True,
                 diagram_written=False,
                 mermaid_source_available=False,
-                mermaid_route_unknown=False,
-                mermaid_node_unknown=False,
+                mermaid_route_unknown=True,
+                mermaid_node_unknown=True,
                 visible_source_kind="waiting",
-                chat_display_kind="degraded",
+                display_role="startup_placeholder",
+                is_placeholder=True,
+                replacement_rule="replace_when_canonical_route_available",
+                chat_display_kind="mermaid",
                 mermaid_degraded_reason_recorded=True,
                 user_dialog_display_ledger_recorded=True,
                 visible_generation=0,
@@ -308,6 +321,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 chat_fallback_required=True,
                 chat_display_kind="mermaid",
                 visible_source_kind=state.route_source_kind,
+                display_role="canonical_route",
+                is_placeholder=False,
+                replacement_rule="none",
                 user_dialog_display_ledger_recorded=True,
                 generated_files_only=False,
                 visible_generation=state.committed_generation,
@@ -322,6 +338,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 cockpit_receipt_recorded=True,
                 chat_display_kind="mermaid",
                 visible_source_kind=state.route_source_kind,
+                display_role="canonical_route",
+                is_placeholder=False,
+                replacement_rule="none",
                 user_dialog_display_ledger_recorded=True,
                 same_graph_source_for_chat_and_cockpit=True,
                 generated_files_only=False,
@@ -385,10 +404,42 @@ def visible_route_map_is_committed_only(state: State, trace) -> InvariantResult:
     if state.visible_source_kind in {"flow_draft", "repair_candidate"}:
         return InvariantResult.fail("draft or repair candidate was projected to the user-visible route surface")
     if state.chat_display_kind == "mermaid" or state.cockpit_display_kind == "route_map":
+        if not state.committed_route_exists and state.is_placeholder and state.display_role == "startup_placeholder":
+            return InvariantResult.pass_()
         if state.visible_source_kind not in {"flow_json", "snapshot_from_flow_json"}:
             return InvariantResult.fail("user-visible route map did not come from committed flow.json state")
         if not state.committed_route_exists:
             return InvariantResult.fail("user-visible route map was displayed before a committed flow.json existed")
+    return InvariantResult.pass_()
+
+
+def startup_placeholder_has_explicit_identity_and_replacement_rule(state: State, trace) -> InvariantResult:
+    del trace
+    startup_mermaid = (
+        state.startup_displayed
+        and not state.committed_route_exists
+        and state.chat_display_kind == "mermaid"
+    )
+    if startup_mermaid:
+        if state.display_role != "startup_placeholder" or not state.is_placeholder:
+            return InvariantResult.fail("startup placeholder route sign lacked explicit placeholder identity")
+        if state.replacement_rule != "replace_when_canonical_route_available":
+            return InvariantResult.fail("startup placeholder route sign lacked explicit canonical-route replacement rule")
+    return InvariantResult.pass_()
+
+
+def canonical_route_replaces_placeholder_identity(state: State, trace) -> InvariantResult:
+    del trace
+    canonical_visible = (
+        state.committed_route_exists
+        and state.visible_generation == state.committed_generation
+        and (state.chat_display_kind == "mermaid" or state.cockpit_display_kind == "route_map")
+    )
+    if canonical_visible:
+        if state.is_placeholder or state.replacement_rule != "none":
+            return InvariantResult.fail("canonical route display kept startup placeholder semantics")
+        if state.display_role != "canonical_route":
+            return InvariantResult.fail("canonical route display lacked explicit canonical identity")
     return InvariantResult.pass_()
 
 
@@ -492,6 +543,16 @@ INVARIANTS = (
         predicate=draft_review_cannot_update_visible_route_plan,
     ),
     Invariant(
+        name="startup_placeholder_has_explicit_identity_and_replacement_rule",
+        description="Startup placeholder route signs are explicitly marked and carry their replacement rule.",
+        predicate=startup_placeholder_has_explicit_identity_and_replacement_rule,
+    ),
+    Invariant(
+        name="canonical_route_replaces_placeholder_identity",
+        description="Canonical route displays replace placeholder semantics when real route data appears.",
+        predicate=canonical_route_replaces_placeholder_identity,
+    ),
+    Invariant(
         name="draft_cannot_overwrite_previous_committed_visible_route",
         description="A new draft cannot replace the last committed visible route.",
         predicate=draft_cannot_overwrite_previous_committed_visible_route,
@@ -559,6 +620,9 @@ def _safe_visible_route_base(**changes: object) -> State:
             route_source_kind="snapshot_from_flow_json",
             visible_source_kind="snapshot_from_flow_json",
             route_source_is_canonical=True,
+            display_role="canonical_route",
+            is_placeholder=False,
+            replacement_rule="none",
             route_node_aliases_supported=True,
             frontier_aliases_supported=True,
             draft_route_fallback_supported=False,
@@ -625,6 +689,35 @@ def hazard_states() -> dict[str, State]:
         "route_draft_keeps_startup_unknown_mermaid": _safe_visible_route_base(
             mermaid_route_unknown=True,
             mermaid_node_unknown=True,
+        ),
+        "startup_placeholder_missing_identity": State(
+            status="running",
+            startup_displayed=True,
+            visible_source_kind="waiting",
+            chat_display_kind="mermaid",
+            user_dialog_display_ledger_recorded=True,
+            mermaid_route_unknown=True,
+            mermaid_node_unknown=True,
+        ),
+        "startup_placeholder_missing_replacement_rule": State(
+            status="running",
+            startup_displayed=True,
+            visible_source_kind="waiting",
+            chat_display_kind="mermaid",
+            display_role="startup_placeholder",
+            is_placeholder=True,
+            replacement_rule="none",
+            user_dialog_display_ledger_recorded=True,
+            mermaid_route_unknown=True,
+            mermaid_node_unknown=True,
+        ),
+        "canonical_route_keeps_placeholder_identity": _safe_visible_route_base(
+            display_role="startup_placeholder",
+            is_placeholder=True,
+            replacement_rule="replace_when_canonical_route_available",
+        ),
+        "canonical_route_missing_identity": _safe_visible_route_base(
+            display_role="none",
         ),
         "chat_fallback_bullet_list_after_route_draft": _safe_visible_route_base(
             chat_display_kind="bullet",
