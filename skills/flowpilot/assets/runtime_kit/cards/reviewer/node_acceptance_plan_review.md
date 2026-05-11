@@ -62,6 +62,37 @@ Check:
   unacceptable outcomes, semantic downgrade risks, simpler equivalent paths,
   and any justified extra complexity.
 
+## Supporting Skill Fidelity Review
+
+Before passing a PM node acceptance plan, review the selected supporting child
+skills, including directly referenced required files. Check whether PM
+preserved the binding requirements of those skills.
+
+Block the plan if a binding skill requirement is omitted, weakened, merged into
+an unverifiable generic phrase, deferred without a named later node, or marked
+complete without the evidence required by the skill.
+
+Binding requirements include, when present: concrete counts or ranges, required
+ordering, default iteration or retry budgets, required artifacts, required
+evidence, forbidden substitutions, reviewer gates, final verdict rules, waiver
+or blocker rules, and explicit non-goals.
+
+Review aggressively for silent weakening. PM may compress wording, but the
+resulting acceptance plan must be at least as strict as the skill. If the skill
+contains examples or reference files that define the workflow, include them in
+the review.
+
+Examples of silent weakening:
+
+- "generate concepts" when the skill requires candidate search, scoring,
+  synthesis, and final selection;
+- "run checks" when the skill requires named commands, replay, screenshots, or
+  step evidence;
+- "iterate" when the skill defines iteration budget, per-round evidence, or
+  stop conditions;
+- "use fresh assets" when the skill forbids specific substitutions or requires
+  provenance.
+
 The report body must include `independent_challenge` from the human-like
 reviewer core card. Pass is invalid if it only checks the PM checklist and does
 not challenge implicit commitments, missing failure paths, or unverifiable

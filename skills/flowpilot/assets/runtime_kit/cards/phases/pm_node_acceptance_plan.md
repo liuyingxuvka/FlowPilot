@@ -45,6 +45,32 @@ route-memory prior path context. The plan must state:
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.
 
+## Supporting Skill Fidelity
+
+When a supporting child skill is selected for this node, do not summarize it
+only at the theme level. Read the skill body and any directly referenced
+required files, then preserve the skill's binding requirements in this node
+acceptance plan.
+
+Binding requirements include, when present: concrete counts or ranges,
+required ordering, default iteration or retry budgets, required artifacts,
+required evidence, forbidden substitutions, reviewer gates, final verdict
+rules, waiver or blocker rules, and explicit non-goals.
+
+Do not weaken a specific skill requirement into a generic phrase. If wording is
+compressed, preserve the same acceptance force. If a skill requirement is
+deferred, name the later node that will satisfy it and the evidence that will
+close it.
+
+Examples of weakening to avoid:
+
+- replacing a required multi-candidate search, scoring, synthesis, and final
+  selection process with "generate concepts";
+- replacing required replay or check commands with "run validation";
+- replacing required screenshot-after-each-iteration behavior with "iterate
+  visually";
+- replacing a forbidden-substitution rule with "use appropriate assets".
+
 For a repair node, include the mainline node or parent segment it returns to
 and the product-model, process-model, reviewer, or evidence checks that become
 stale and must rerun before mainline work resumes.
