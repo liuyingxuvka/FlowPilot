@@ -2451,7 +2451,16 @@ def _currently_allowed_external_events(run_state: dict[str, Any]) -> list[str]:
     if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
         raw_allowed = pending_action.get("allowed_external_events")
         if isinstance(raw_allowed, list) and all(isinstance(item, str) for item in raw_allowed):
-            allowed = list(raw_allowed)
+            try:
+                allowed = _validated_external_event_names(raw_allowed, context="pending role wait")
+            except RouterError:
+                if (
+                    pending_action.get("label") == "controller_waits_for_control_blocker_resolution"
+                    and pending_action.get("handling_lane") in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
+                ):
+                    allowed = [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
+                else:
+                    allowed = []
             to_role = str(pending_action.get("to_role") or "")
             if "project_manager" in {part.strip() for part in to_role.split(",")} and PM_ROLE_WORK_REQUEST_EVENT not in allowed:
                 allowed.append(PM_ROLE_WORK_REQUEST_EVENT)
@@ -3789,6 +3798,11 @@ def make_action(
         action["to_role"] = to_role
     if extra:
         action.update(extra)
+    if action_type == "await_role_decision":
+        action["allowed_external_events"] = _validated_external_event_names(
+            action.get("allowed_external_events"),
+            context=f"await_role_decision action {label}",
+        )
     action.setdefault("resource_lifecycle", "pending_action")
     action.setdefault("artifact_committed", False)
     action.setdefault("relay_allowed", False)
@@ -4680,9 +4694,45 @@ def _skill_observation_reminder(
     }
 
 
+def _validated_external_event_names(
+    events: Any,
+    *,
+    context: str,
+    allow_pm_repair_event: bool = True,
+) -> list[str]:
+    if not isinstance(events, list) or not events:
+        raise RouterError(f"{context} requires a non-empty allowed_external_events list")
+    normalized: list[str] = []
+    invalid: list[str] = []
+    for item in events:
+        name = _control_resolution_event_name(item)
+        if not name:
+            invalid.append(str(item))
+            continue
+        if name == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT and not allow_pm_repair_event:
+            invalid.append(name)
+            continue
+        if name not in EXTERNAL_EVENTS:
+            invalid.append(name)
+            continue
+        if name not in normalized:
+            normalized.append(name)
+    if invalid:
+        raise RouterError(f"{context} contains unregistered external event(s): {', '.join(invalid)}")
+    return normalized
+
+
+def _external_event_validation_issue(events: Any) -> dict[str, Any] | None:
+    try:
+        _validated_external_event_names(events, context="event validation")
+    except RouterError as exc:
+        return {"reason": "invalid_allowed_external_events", "error": str(exc)}
+    return None
+
+
 def _control_blocker_allowed_resolution_events(category: str, event: str | None) -> list[str]:
     if category == "control_plane_reissue" and event:
-        return [event]
+        return _validated_external_event_names([event], context="control-plane reissue resolution")
     if category in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES:
         return [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
     return sorted(EXTERNAL_EVENTS)
@@ -5017,6 +5067,21 @@ def _sync_control_plane_indexes(project_root: Path, run_root: Path, run_state: d
     _write_repair_transaction_index(project_root, run_root, run_state)
 
 
+def _control_blocker_wait_events(record: dict[str, Any]) -> tuple[list[str], dict[str, Any] | None]:
+    raw_events = record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS)
+    issue = _external_event_validation_issue(raw_events)
+    if issue is None:
+        return _validated_external_event_names(raw_events, context="control blocker wait"), None
+    lane = str(record.get("handling_lane") or "")
+    if lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES:
+        return [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT], {
+            **issue,
+            "fallback": "pm_must_resubmit_control_blocker_repair_decision",
+            "previous_allowed_resolution_events": raw_events,
+        }
+    raise RouterError(str(issue.get("error") or "control blocker wait contains invalid allowed external events"))
+
+
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     active = run_state.get("active_control_blocker")
     if not isinstance(active, dict):
@@ -5027,6 +5092,7 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
         return None
     lane = str(record.get("handling_lane") or active.get("handling_lane") or "pm_repair_decision_required")
     target_role = str(record.get("target_role") or active.get("target_role") or "project_manager")
+    allowed_resolution_events, event_contract_issue = _control_blocker_wait_events(record)
     if record.get("delivery_status") != "delivered":
         return make_action(
             action_type="handle_control_blocker",
@@ -5054,7 +5120,8 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
                 "controller_forbidden_actions": record.get("controller_forbidden_actions") or [],
                 "sealed_body_reads_allowed": False,
                 "controller_history_is_evidence": False,
-                "allowed_resolution_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS),
+                "allowed_resolution_events": allowed_resolution_events,
+                "event_contract_issue": event_contract_issue,
                 "repair_details_visibility": "sealed_to_target_role_not_controller",
                 "skill_observation_reminder": record.get("skill_observation_reminder"),
             },
@@ -5068,12 +5135,13 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
         allowed_writes=[project_relative(project_root, run_state_path(run_root))],
         to_role=target_role,
         extra={
-            "allowed_external_events": record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS),
+            "allowed_external_events": allowed_resolution_events,
             "blocker_artifact_path": artifact_rel,
             "target_role": target_role,
             "handling_lane": lane,
             "repair_transaction_id": record.get("repair_transaction_id"),
             "repair_outcome_table": record.get("repair_outcome_table"),
+            "event_contract_issue": event_contract_issue,
         },
     )
 
@@ -5343,11 +5411,16 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     if not repair_action:
         raise RouterError("control blocker repair decision requires repair_action")
     raw_rerun_target = decision.get("rerun_target")
-    rerun_target = _control_resolution_event_name(raw_rerun_target) or str(raw_rerun_target or "").strip()
+    rerun_target = _control_resolution_event_name(raw_rerun_target)
     if not rerun_target:
-        raise RouterError("control blocker repair decision requires rerun_target")
+        raise RouterError("control blocker repair decision rerun_target must name a registered external event")
     if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         raise RouterError("control blocker repair decision rerun_target must name a corrected follow-up event, not the PM decision event")
+    rerun_target = _validated_external_event_names(
+        [rerun_target],
+        context="control blocker repair decision rerun_target",
+        allow_pm_repair_event=False,
+    )[0]
     repair_transaction_request = decision.get("repair_transaction")
     if not isinstance(repair_transaction_request, dict):
         raise RouterError("control blocker repair decision requires repair_transaction")
@@ -5365,7 +5438,11 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     if contract_self_check.get("exact_field_names_used") is not True:
         raise RouterError("control blocker repair decision requires contract_self_check.exact_field_names_used=true")
     outcome_table = _repair_outcome_table(rerun_target)
-    allowed_resolution_events = _repair_outcome_events(outcome_table)
+    allowed_resolution_events = _validated_external_event_names(
+        _repair_outcome_events(outcome_table),
+        context="control blocker repair outcome table",
+        allow_pm_repair_event=False,
+    )
     transaction_id = _repair_transaction_id(blocker_id)
     packet_generation_id = f"{transaction_id}-gen-001"
     packet_specs, packet_spec_source = _repair_packet_specs_from_decision(
@@ -5660,7 +5737,7 @@ def _control_blocker_allows_resolution_event(record: dict[str, Any], event: str)
         return False
     raw_events = record.get("allowed_resolution_events")
     if isinstance(raw_events, list) and raw_events:
-        allowed_events = {_control_resolution_event_name(item) or str(item) for item in raw_events}
+        allowed_events = {name for item in raw_events if (name := _control_resolution_event_name(item))}
         return event in allowed_events
     if record.get("handling_lane") == "control_plane_reissue":
         return event == record.get("originating_event")
@@ -5672,14 +5749,14 @@ def _control_resolution_event_name(value: Any) -> str | None:
         for key in ("event", "corrected_followup_event", "event_name"):
             name = str(value.get(key) or "").strip()
             if name:
-                return name
+                return _control_resolution_event_name(name)
         return None
     if not isinstance(value, str):
         return None
     text = value.strip()
     if not text:
         return None
-    if text in EXTERNAL_EVENTS or text == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+    if text in EXTERNAL_EVENTS:
         return text
     parsed: Any = None
     try:
@@ -5688,8 +5765,8 @@ def _control_resolution_event_name(value: Any) -> str | None:
         try:
             parsed = ast.literal_eval(text)
         except (ValueError, SyntaxError):
-            return text
-    return _control_resolution_event_name(parsed) or text
+            return None
+    return _control_resolution_event_name(parsed)
 
 
 def _resolve_delivered_control_blocker(
@@ -15527,6 +15604,10 @@ def _expected_role_decision_wait_action(
     allowed_events = list(allowed_external_events)
     if pm_work_request_channel and to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
         allowed_events.append(PM_ROLE_WORK_REQUEST_EVENT)
+    allowed_events = _validated_external_event_names(
+        allowed_events,
+        context=f"await_role_decision action {label}",
+    )
     extra: dict[str, Any] = {
         "allowed_external_events": allowed_events,
         "controller_only_mode_active": True,

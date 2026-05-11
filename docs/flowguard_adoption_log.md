@@ -1120,6 +1120,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - none recorded
 
+
+## flowpilot-control-plane-event-contract - Validate Router external event waits before persistence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Router control blocker repair could persist a wait for a string that was not a registered external event, causing resume to wait for an event that could never be recorded.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T14:20:00+00:00
+- Ended: 2026-05-11T15:45:00+00:00
+- Commands OK: partial; focused checks passed, one broad existing conformance scan still reports unrelated current-source issues.
+
+### Model Files
+- `simulations/flowpilot_event_contract_model.py`
+- `simulations/run_flowpilot_event_contract_checks.py`
+- `simulations/flowpilot_event_contract_results.json`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py simulations\flowpilot_event_contract_model.py simulations\run_flowpilot_event_contract_checks.py tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_flowpilot_event_contract_checks.py --json-out simulations\flowpilot_event_contract_results.json`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_delivered_control_blocker_with_legacy_invalid_wait_falls_back_to_pm_repair_decision tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_repair_transaction_recheck_blocker_registers_followup_blocker tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_repair_transaction_protocol_blocker_registers_followup_blocker tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_repair_decision_can_repeat_for_new_control_blocker tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out %TEMP%\flowpilot_router_loop_event_contract.json`
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py --json-out %TEMP%\flowpilot_repair_transaction_event_contract.json`
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- Partial: `python -m unittest tests.test_flowpilot_router_runtime` did not complete in the foreground timeout and the background retry did not emit a terminal summary.
+- Known unrelated residual: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json` still reports current-source conformance findings about PM resume payload and reviewer blocker flags; the abstract model portion passes and this is outside the event-wait contract fix.
+
+### Findings
+- FlowGuard event-contract model now rejects unregistered PM rerun targets, internal Router action labels, PM repair self-loops, ACK/check-in event waits, waits whose prerequisites are false, success-only repair outcome tables, duplicate PM repair mutation, and post-write cleanup-only recovery.
+- Production Router now validates external wait events before writing pending actions or control blocker repair outcomes.
+- Legacy bad PM-decision-required control blockers fall back to requesting a fresh PM repair decision instead of waiting forever on an unrecordable event.
+
+### Counterexamples
+- `internal_router_action_as_pm_rerun_target`
+- `unknown_string_as_pm_rerun_target`
+- `pm_repair_event_as_rerun_target`
+- `ack_event_in_allowed_external_events`
+- `ack_consumed_semantic_wait_lost`
+- `wait_requires_false_flag`
+- `material_repair_success_only`
+- `duplicate_pm_repair_created_new_blocker`
+- `postwrite_cleanup_only_for_invalid_wait`
+
+### Friction Points
+- Full router runtime unittest is too slow or unstable for an interactive foreground pass; keep focused regression tests as the required event-contract gate and run the full suite as a background or CI-level check.
+
+### Next Actions
+- Consider adding a runtime conformance runner that summarizes the full router runtime suite without relying on unittest progress dots.
+
 ## gate-outcome-control-blocker-repair-20260511 - Model-backed repair for stale gate blockers and wrong-role follow-ups
 
 - Project: FlowGuardProjectAutopilot_20260430

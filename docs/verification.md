@@ -8,6 +8,7 @@ Run:
 python simulations/run_startup_pm_review_checks.py
 python simulations/run_card_instruction_coverage_checks.py
 python simulations/run_command_refinement_checks.py
+python simulations/run_flowpilot_event_contract_checks.py
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
@@ -35,6 +36,10 @@ Expected:
   baseline and permit only the safe internal `run-until-wait` startup fold;
   higher-risk card, relay, startup fact-card, and role-output folds remain
   rejected until they have dedicated conformance replay.
+- event contract checks reject internal Router actions, unknown strings, direct
+  ACK/check-in events, false-prerequisite waits, success-only material repair
+  outcome tables, duplicate repair side effects, and post-write-only cleanup as
+  legal persisted role waits.
 
 Route-local models under `.flowpilot/task-models/` belong to an adopted target
 project's runtime evidence. They should be checked when present in that target

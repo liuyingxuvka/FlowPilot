@@ -6411,6 +6411,101 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
 
+    def test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="packet group reviewer audit failed: PM must repair route draft handoff",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/material.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        with self.assertRaisesRegex(router.RouterError, "rerun_target must name a registered external event"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(
+                    root,
+                    "control_blocks/invalid_pm_repair_decision",
+                    self.pm_control_blocker_decision_body(
+                        blocker["blocker_id"],
+                        rerun_target="router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision",
+                    ),
+                ),
+            )
+
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertNotEqual(
+            original.get("allowed_resolution_events"),
+            ["router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision"],
+        )
+        self.assertNotIn("pm_repair_rerun_target", original)
+
+    def test_delivered_control_blocker_with_legacy_invalid_wait_falls_back_to_pm_repair_decision(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="packet group reviewer audit failed: legacy bad control wait",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/legacy.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        artifact_path = self.control_blocker_path(root, blocker)
+        artifact = read_json(artifact_path)
+        artifact["pm_repair_decision_status"] = "recorded"
+        artifact["pm_repair_rerun_target"] = "router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision"
+        artifact["allowed_resolution_events"] = [
+            "router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision"
+        ]
+        router.write_json(artifact_path, artifact)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["allowed_external_events"], ["pm_records_control_blocker_repair_decision"])
+        self.assertEqual(
+            action["event_contract_issue"]["fallback"],
+            "pm_must_resubmit_control_blocker_repair_decision",
+        )
+
+    def test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="packet group reviewer audit failed: route draft needs PM reissue",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/route-draft.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/valid_route_draft_pm_repair_decision",
+                self.pm_control_blocker_decision_body(blocker["blocker_id"], rerun_target="pm_writes_route_draft"),
+            ),
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["allowed_external_events"], ["pm_writes_route_draft"])
+
     def test_pm_repair_decision_can_repeat_for_new_control_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
