@@ -14,6 +14,7 @@ if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
 import card_runtime  # noqa: E402
+import flowpilot_router  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
 
@@ -214,6 +215,21 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     submit_output.add_argument("--session-path", default="")
     submit_output.add_argument("--controller-status-packet-path", default="")
 
+    submit_output_router = sub.add_parser(
+        "submit-output-to-router",
+        help="Submit a role-output body and record its event directly with Router.",
+    )
+    submit_output_router.add_argument("--output-type", required=True, choices=sorted(role_output_runtime.SUPPORTED_OUTPUT_TYPES))
+    submit_output_router.add_argument("--role", required=True)
+    submit_output_router.add_argument("--agent-id", required=True)
+    submit_output_router.add_argument("--body-json", default="")
+    submit_output_router.add_argument("--body-file", default="")
+    submit_output_router.add_argument("--output-path", default="")
+    submit_output_router.add_argument("--run-id", default="")
+    submit_output_router.add_argument("--event-name", default="")
+    submit_output_router.add_argument("--session-path", default="")
+    submit_output_router.add_argument("--controller-status-packet-path", default="")
+
     progress_output = sub.add_parser("progress-output", help="Update Controller-visible formal role-output progress.")
     progress_output.add_argument("--output-type", required=True, choices=sorted(role_output_runtime.SUPPORTED_OUTPUT_TYPES))
     progress_output.add_argument("--role", required=True)
@@ -377,6 +393,31 @@ def main(argv: list[str] | None = None) -> int:
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
         )
+    elif args.command == "submit-output-to-router":
+        body = _read_body_json(root, args.body_json, args.body_file)
+        envelope = role_output_runtime.submit_output(
+            root,
+            output_type=args.output_type,
+            role=args.role,
+            agent_id=args.agent_id,
+            body=body,
+            output_path=args.output_path or None,
+            run_id=args.run_id or None,
+            event_name=args.event_name or None,
+            session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
+        )
+        event_name = str(args.event_name or envelope.get("event_name") or "").strip()
+        if not event_name:
+            raise role_output_runtime.RoleOutputRuntimeError("submit-output-to-router requires event_name")
+        router_result = flowpilot_router.record_external_event(root, event_name, envelope)
+        result = {
+            "ok": True,
+            "command": "submit-output-to-router",
+            "event": event_name,
+            "envelope": envelope,
+            "router_result": router_result,
+        }
     elif args.command == "progress-output":
         result = role_output_runtime.update_output_progress(
             root,

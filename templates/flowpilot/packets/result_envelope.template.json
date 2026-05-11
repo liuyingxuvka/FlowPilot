@@ -65,11 +65,11 @@
       "sender_reminder": "The sender/producer for this envelope is `<completed_by_role>`.",
       "recipient_reminder": "The recipient is `<next_recipient>` for this envelope only. Open the body only after verifying Controller relay, role target, and hash; act only inside the addressed role and packet/result scope.",
       "reply_continuation_reminder": "When returning or relaying the next envelope, include this same visible mutual-role reminder so Controller and the next recipient are reminded again.",
-      "body_boundary_reminder": "Keep sealed body content out of Controller-visible chat; return envelope metadata only."
+      "body_boundary_reminder": "Keep sealed body content out of Controller-visible chat; submit envelope metadata to Router."
     },
     "reply_continuation_reminder": "When returning or relaying the next envelope, include this same visible mutual-role reminder so Controller and the next recipient are reminded again.",
     "recipient_role_reminder": "This mail is for `<next_recipient>` only.",
-    "mail_only_reminder": "The recipient must answer through a file-backed packet/result/report body and return only an envelope to Controller.",
+    "mail_only_reminder": "The recipient must answer through a file-backed packet/result/report body and submit the runtime envelope to Router; Controller sees only Router-authorized metadata.",
     "chat_response_body_allowed": false
   },
   "controller_relay_history": [],

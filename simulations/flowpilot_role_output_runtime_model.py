@@ -2,7 +2,8 @@
 
 Risk intent brief:
 - Generalize the packet-runtime "clock-in" idea to formal role outputs while
-  preserving the existing mail/packet boundary.
+  preserving sealed-body boundaries and removing Controller as the return
+  receiver for completed work.
 - Prevent hand-written PM/reviewer/officer/worker reports from reaching the
   router with missing required fields, missing explicit empty arrays, wrong
   role ownership, stale hashes, or body leakage in Controller-visible payloads.
@@ -11,8 +12,9 @@ Risk intent brief:
   content quality.
 - Avoid turning mechanical metadata gaps into PM repair loops when the original
   role can safely re-submit through the runtime.
-- Let the runtime emit compact Controller-visible envelopes while keeping full
-  audit detail in receipts and ledgers.
+- Let the runtime submit compact role-output envelopes directly to Router while
+  keeping full audit detail in receipts and ledgers and leaving Controller to
+  wait for Router status.
 - Let route-declared quality packs appear as generic report checklist rows
   without teaching the runtime UI, desktop, localization, or product semantics.
 """
@@ -35,6 +37,7 @@ WRONG_ROLE = "wrong_role"
 STALE_BODY_HASH = "stale_body_hash"
 INLINE_BODY_LEAK = "inline_body_leak"
 CONTROLLER_READS_BODY = "controller_reads_body"
+CONTROLLER_INTERMEDIATES_OUTPUT = "controller_intermediates_output"
 SEMANTIC_AUTO_APPROVAL = "semantic_auto_approval"
 MISSING_QUALITY_PACK_CHECK = "missing_quality_pack_check"
 PACK_SPECIFIC_RUNTIME_JUDGMENT = "pack_specific_runtime_judgment"
@@ -53,6 +56,7 @@ NEGATIVE_SCENARIOS = (
     STALE_BODY_HASH,
     INLINE_BODY_LEAK,
     CONTROLLER_READS_BODY,
+    CONTROLLER_INTERMEDIATES_OUTPUT,
     SEMANTIC_AUTO_APPROVAL,
     MISSING_QUALITY_PACK_CHECK,
     PACK_SPECIFIC_RUNTIME_JUDGMENT,
@@ -71,6 +75,7 @@ ROLE_REISSUE_REASONS = {
 PM_REVIEW_REASONS = {
     "wrong_role",
     "inline_body_leak",
+    "controller_intermediated_output",
     "controller_read_body",
     "runtime_attempted_semantic_approval",
     "runtime_attempted_pack_specific_judgment",
@@ -127,6 +132,7 @@ CONTRACTS_BY_SCENARIO = {
     STALE_BODY_HASH: PM_RESUME_CONTRACT,
     INLINE_BODY_LEAK: PM_RESUME_CONTRACT,
     CONTROLLER_READS_BODY: PM_RESUME_CONTRACT,
+    CONTROLLER_INTERMEDIATES_OUTPUT: PM_RESUME_CONTRACT,
     SEMANTIC_AUTO_APPROVAL: GATE_DECISION_CONTRACT,
     MISSING_QUALITY_PACK_CHECK: REVIEWER_REPORT_CONTRACT,
     PACK_SPECIFIC_RUNTIME_JUDGMENT: REVIEWER_REPORT_CONTRACT,
@@ -157,7 +163,10 @@ class State:
     envelope_generated_by_runtime: bool = False
     envelope_leaks_body: bool = False
     controller_reads_body: bool = False
-    controller_receives_envelope_only: bool = False
+    controller_intermediates_output: bool = False
+    direct_router_submission: bool = False
+    router_receives_role_output_envelope: bool = False
+    controller_waits_router_status: bool = False
     compact_envelope_refs_used: bool = False
     progress_updates_runtime_written: bool = True
     progress_value_numeric: bool = True
@@ -262,6 +271,10 @@ def _controller_reads_body_for(scenario: str) -> bool:
     return scenario == CONTROLLER_READS_BODY
 
 
+def _controller_intermediates_output_for(scenario: str) -> bool:
+    return scenario == CONTROLLER_INTERMEDIATES_OUTPUT
+
+
 def _semantic_approval_for(scenario: str) -> bool:
     return scenario == SEMANTIC_AUTO_APPROVAL
 
@@ -291,6 +304,8 @@ def _router_rejection_reason(state: State) -> str:
         return "stale_body_hash"
     if state.envelope_leaks_body:
         return "inline_body_leak"
+    if state.controller_intermediates_output:
+        return "controller_intermediated_output"
     if state.controller_reads_body:
         return "controller_read_body"
     if state.runtime_claimed_semantic_approval:
@@ -377,13 +392,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.controller_receives_envelope_only:
+    if not state.direct_router_submission:
         yield Transition(
-            "controller_receives_runtime_envelope_only",
+            "runtime_submits_role_output_directly_to_router",
             replace(
                 state,
                 controller_reads_body=_controller_reads_body_for(state.scenario),
-                controller_receives_envelope_only=True,
+                controller_intermediates_output=_controller_intermediates_output_for(state.scenario),
+                direct_router_submission=True,
+                router_receives_role_output_envelope=True,
+                controller_waits_router_status=True,
             ),
         )
         return
@@ -453,6 +471,26 @@ def controller_never_reads_role_output_body(state: State, trace) -> InvariantRes
     del trace
     if state.status == "accepted" and state.controller_reads_body:
         return InvariantResult.fail("accepted role output after Controller body read")
+    return InvariantResult.pass_()
+
+
+def accepted_outputs_submit_directly_to_router(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    if not state.direct_router_submission:
+        return InvariantResult.fail("accepted role output without direct Router submission")
+    if not state.router_receives_role_output_envelope:
+        return InvariantResult.fail("accepted role output was not received by Router")
+    if not state.controller_waits_router_status:
+        return InvariantResult.fail("accepted role output left Controller waiting on a role instead of Router")
+    return InvariantResult.pass_()
+
+
+def controller_never_intermediates_role_output(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status == "accepted" and state.controller_intermediates_output:
+        return InvariantResult.fail("accepted role output routed through Controller")
     return InvariantResult.pass_()
 
 
@@ -562,6 +600,16 @@ INVARIANTS = (
         predicate=controller_never_reads_role_output_body,
     ),
     Invariant(
+        name="accepted_outputs_submit_directly_to_router",
+        description="Accepted role outputs are submitted directly to Router; Controller waits for Router status.",
+        predicate=accepted_outputs_submit_directly_to_router,
+    ),
+    Invariant(
+        name="controller_never_intermediates_role_output",
+        description="Controller must not be the return receiver for completed role-output work.",
+        predicate=controller_never_intermediates_role_output,
+    ),
+    Invariant(
         name="accepted_envelope_is_metadata_only",
         description="Accepted Controller-visible envelopes must not leak role body content.",
         predicate=accepted_envelope_is_metadata_only,
@@ -644,7 +692,9 @@ def _accepted_base(**changes: object) -> State:
         runtime_receipt_written=True,
         body_hash_verified=True,
         envelope_generated_by_runtime=True,
-        controller_receives_envelope_only=True,
+        direct_router_submission=True,
+        router_receives_role_output_envelope=True,
+        controller_waits_router_status=True,
         compact_envelope_refs_used=True,
         router_decision="accept",
     )
@@ -660,6 +710,10 @@ def hazard_states() -> dict[str, State]:
         "stale_body_hash": _accepted_base(body_hash_verified=False),
         "inline_body_leak": _accepted_base(envelope_leaks_body=True),
         "controller_reads_body": _accepted_base(controller_reads_body=True),
+        "controller_intermediates_output": _accepted_base(controller_intermediates_output=True),
+        "missing_direct_router_submission": _accepted_base(direct_router_submission=False),
+        "missing_router_receipt": _accepted_base(router_receives_role_output_envelope=False),
+        "controller_waits_role_instead_of_router": _accepted_base(controller_waits_router_status=False),
         "semantic_auto_approval": _accepted_base(runtime_claimed_semantic_approval=True),
         "missing_default_progress_status": _accepted_base(runtime_progress_status_initialized=False),
         "missing_progress_prompt": _accepted_base(progress_prompt_included=False),

@@ -26,7 +26,7 @@ The current rule is stricter:
 | 2 | Make the card runtime write ACKs as `direct_to_router` receipts only. | ACKs are mechanical check-ins, not Controller mail. | Runtime ACKs include direct token/hash and `controller_ack_handoff_used: false`. |
 | 3 | Reject legacy `record-event *_card_ack` submissions. | Compatibility with the old path keeps the system ambiguous. | Router returns a control-plane failure instead of accepting or rerouting the ACK. |
 | 4 | Update all role/system card prompts and packet templates. | Roles must see the new rule in the work they receive, not infer it from memory. | Prompt coverage model fails on stale Controller ACK wording and missing direct-Router ACK wording. |
-| 5 | Preserve formal Controller relay for cross-role mail only. | Reports, decisions, and review envelopes still need Controller-visible coordination. | Packet/result docs distinguish mechanical ACKs from formal mail. |
+| 5 | Preserve Controller visibility without making Controller the return receiver. | Reports, decisions, and review envelopes need Router-recorded coordination, not Controller handoff. | Packet/result docs distinguish direct Router submission from later Router-authorized Controller relay. |
 | 6 | Sync repo source to the installed local FlowPilot skill and make a local git commit only. | The user asked for local install, local repo, and local git synchronization, not GitHub push. | Installer check reports the installed skill is fresh; local commit exists; no remote push. |
 
 ## Bug Risks To Catch Before Editing

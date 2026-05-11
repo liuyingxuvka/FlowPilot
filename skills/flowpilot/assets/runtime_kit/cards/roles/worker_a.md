@@ -3,10 +3,10 @@ recipient_role: worker_a
 recipient_identity: FlowPilot worker_a role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go directly to Router through the card check-in command. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then return only the Router-directed controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 progress_status: Every packet or formal role-output work item has default Controller-visible metadata progress. Maintain it through the runtime while working; keep messages brief and do not include sealed body content, findings, evidence, recommendations, decisions, or result details.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs go directly to Router; after formal role output completion or blocking, use the Router-directed return path. Controller must wait for or call flowpilot_router.py for the next action.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; return a protocol blocker through Controller.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must wait for Router status or call flowpilot_router.py for the next action.
+runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Worker A Core Card
 
@@ -27,9 +27,7 @@ the unified runtime (`flowpilot_runtime.py open-packet` or
 `flowpilot_runtime.py run-packet`) with a concrete `--agent-id`; do not read the
 packet body by ordinary file read or from chat context. The runtime session
 verifies Controller relay, target role, body hash, and output contract, then
-writes the packet-open receipt. The lower-level `packet_runtime.py
-open-packet-session` and `packet_runtime.py run-packet-session` commands remain
-compatibility entrypoints.
+writes the packet-open receipt. Use the unified runtime as the live packet execution entrypoint.
 If the runtime session cannot open the packet, return the runtime blocker
 envelope instead of continuing from memory. Do not use the full route,
 downstream plan, old screenshots, old assets, or private role context unless
@@ -89,7 +87,7 @@ route, or treat consultation advice as completion.
 
 Write the full result as the body text/file submitted to
 `flowpilot_runtime.py complete-packet` or `flowpilot_runtime.py run-packet`, and
-return only the runtime-generated result envelope to Controller. Do not
+submit the runtime-generated result envelope directly to Router. Do not
 hand-write the result envelope unless the runtime is unavailable and you are
 returning a protocol blocker. Do not include commands run, files changed,
 findings, blockers, screenshots, or other result-body content in chat.
@@ -103,12 +101,10 @@ body content or ask Controller to decide the next step from chat.
 Normal Worker A task completion uses `packet_runtime.py` because it is a packet
 result envelope. If the router explicitly asks Worker A for a standalone
 file-backed role report or formal non-packet output, use
-`flowpilot_runtime.py prepare-output` and `flowpilot_runtime.py submit-output`
+`flowpilot_runtime.py prepare-output` and `flowpilot_runtime.py submit-output-to-router`
 with a concrete `--agent-id` so mechanical fields, hashes, receipt, ledger
 record, and controller-visible envelope are generated by the runtime. The
-lower-level `role_output_runtime.py prepare-output` and
-`role_output_runtime.py submit-output` commands remain compatibility
-entrypoints.
+lower-level `role_output_runtime.py` commands only validate local mechanics; live handoff must use `flowpilot_runtime.py submit-output-to-router` so Router records the event. Use the Router-supplied `--event-name` when the output type has no runtime default event.
 
 Before returning a result envelope, read the source packet's `output_contract`
 and write a `Contract Self-Check` section in the sealed result body. If the

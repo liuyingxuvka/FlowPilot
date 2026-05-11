@@ -244,8 +244,10 @@ long-form public explanation lives in `docs/protocol.md`.
     ACKs the active-holder lease directly to Router when present, and submits the
     physical result envelope/body pair to Router through that lease before stopping
     for the next packet. Router writes `controller_next_action_notice.json` after
-    mechanical checks pass. The controller then relays result envelope -> reviewer
-    -> PM -> next packet envelope and continues internally when
+    mechanical checks pass. The controller then relays only Router-authorized
+    envelope metadata. Reviewer and PM formal outputs are submitted directly to
+    Router through `flowpilot_runtime.py submit-output-to-router`; Controller
+    waits for Router status before the next relay and continues internally when
     `stop_for_user: false`.
     The installed runtime is `skills/flowpilot/assets/packet_runtime.py`; the
     repository wrapper is `scripts/flowpilot_packets.py`. Missing physical

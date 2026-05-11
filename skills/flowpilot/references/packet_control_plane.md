@@ -5,10 +5,11 @@ preventing controller/worker over-execution.
 
 ## Roles
 
-- Controller: main assistant. Relays formal packet/result envelopes, records
-  live status, waits for Router next-action notices or role decisions, and
-  keeps the loop moving. It is not the implementation worker and it does not
-  submit mechanical ACKs.
+- Controller: main assistant. Relays only Router-authorized packet/result or
+  role-output envelope metadata after Router status changes, records live
+  status, waits for Router next-action notices, and keeps the loop moving. It
+  is not the implementation worker and it does not submit mechanical ACKs or
+  completed role outputs.
 - PM: owns global route, frozen acceptance floor, node packet creation, repair,
   route mutation, and completion decisions.
 - Reviewer: owns result review, gate challenge, and PM-decision challenge.
@@ -35,7 +36,9 @@ Controller bootstraps only user-approved startup options
 -> Router writes controller_next_action_notice.json after mechanical checks pass
 -> Controller signs relay and sends only the result envelope to Reviewer
 -> Reviewer audits mail chain, role origin, hashes, and evidence
--> Controller relays review envelope to PM
+-> Reviewer submits review output directly to Router through the runtime
+-> Router records the review event and writes Controller-visible next status
+-> Controller relays only the Router-authorized PM-facing envelope if instructed
 -> PM issues next packet, repair packet, route mutation, user block, or complete
 -> Controller continues internally unless PM says stop_for_user: true
 ```
@@ -80,19 +83,23 @@ completion, screenshot, generated data, or dependency-install evidence is
 invalid unless the PM packet explicitly assigned that administrative action to
 the controller and the router direct-dispatch preflight allowed that assignment.
 
-Packets and results use an envelope/body split. The controller may read only
-`packet_envelope` and `result_envelope`, update holder/status, relay envelopes,
-display required Mermaid route signs, wait for role returns, and ask PM for the
-next decision. The controller must not read or execute `packet_body` or
-`result_body`, generate worker artifacts, run product validation, approve
-gates, close nodes, rewrite hashes, or relabel wrong-role completion.
+Packets, results, and formal role outputs use an envelope/body split. The
+controller may read only `packet_envelope`, `result_envelope`, role-output
+envelope metadata, Router status packets, and Router next-action notices. It
+may update holder/status, relay Router-authorized envelopes, display required
+Mermaid route signs, and call Router for the next decision. The controller
+must not read or execute `packet_body`, `result_body`, or role-output bodies,
+generate worker artifacts, run product validation, approve gates, close nodes,
+rewrite hashes, relabel wrong-role completion, or treat role chat as a
+completed report.
 
-All formal cross-role mail goes through Controller. Mechanical system-card
-ACKs, active-holder packet ACKs, and active-holder packet result submission are
-Router-direct check-ins, not formal cross-role mail. PM, reviewer, worker, and
+Completed work goes to Router first. Mechanical system-card ACKs,
+active-holder packet ACKs, active-holder packet result submission, and formal
+role-output submission are Router-direct check-ins. PM, reviewer, worker, and
 officer roles must not privately pass packet/result bodies or formal
-review/decision mail. Each Controller relay writes `controller_relay` on the
-envelope with
+review/decision mail to Controller. When Router later instructs Controller to
+relay envelope metadata to another role, each Controller relay writes
+`controller_relay` on the envelope with
 `delivered_via_controller: true`, `controller_agent_id`, `received_from_role`,
 `relayed_to_role`, holder before/after, `envelope_hash`,
 `body_was_read_by_controller: false`, and `body_was_executed_by_controller:

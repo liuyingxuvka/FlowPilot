@@ -792,6 +792,19 @@ def main() -> int:
                     "--body-json",
                     "{}",
                 ],
+                [
+                    "--root",
+                    str(ROOT),
+                    "submit-output-to-router",
+                    "--output-type",
+                    "gate_decision",
+                    "--role",
+                    "human_like_reviewer",
+                    "--agent-id",
+                    "agent-reviewer-check",
+                    "--body-json",
+                    "{}",
+                ],
             ]
             unified_cli_parse_errors = []
             for case in unified_cli_cases:

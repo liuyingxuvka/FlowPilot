@@ -30,13 +30,14 @@ REQUIRED_LABELS = (
     "select_stale_body_hash",
     "select_inline_body_leak",
     "select_controller_reads_body",
+    "select_controller_intermediates_output",
     "select_semantic_auto_approval",
     "select_missing_quality_pack_check",
     "select_pack_specific_runtime_judgment",
     "runtime_prepares_contract_skeleton",
     "role_authors_body_inside_runtime_skeleton",
     "runtime_validates_writes_receipt_and_envelope",
-    "controller_receives_runtime_envelope_only",
+    "runtime_submits_role_output_directly_to_router",
     "router_accepts_runtime_checked_role_output",
     "router_rejects_missing_runtime_receipt",
     "router_rejects_missing_required_field",
@@ -45,6 +46,7 @@ REQUIRED_LABELS = (
     "router_rejects_stale_body_hash",
     "router_rejects_inline_body_leak",
     "router_rejects_controller_read_body",
+    "router_rejects_controller_intermediated_output",
     "router_rejects_runtime_attempted_semantic_approval",
     "router_rejects_missing_quality_pack_check",
     "router_rejects_runtime_attempted_pack_specific_judgment",
@@ -58,6 +60,10 @@ HAZARD_EXPECTED_FAILURES = {
     "stale_body_hash": "stale body hash",
     "inline_body_leak": "leaked body content",
     "controller_reads_body": "Controller body read",
+    "controller_intermediates_output": "routed through Controller",
+    "missing_direct_router_submission": "without direct Router submission",
+    "missing_router_receipt": "was not received by Router",
+    "controller_waits_role_instead_of_router": "left Controller waiting on a role instead of Router",
     "semantic_auto_approval": "replaced semantic gate approval",
     "missing_default_progress_status": "without default progress status",
     "missing_progress_prompt": "without shared progress prompt",
@@ -101,6 +107,8 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|output={state.output_type}|"
         f"role={state.submitting_role}->{state.allowed_role}|"
         f"runtime={state.runtime_receipt_written}|hash={state.body_hash_verified}|"
+        f"direct_router={state.direct_router_submission},{state.router_receives_role_output_envelope},"
+        f"{state.controller_waits_router_status}|"
         f"progress={state.runtime_progress_status_initialized},{state.progress_prompt_included},"
         f"{state.progress_visibility_grant},{state.progress_updates_runtime_written},"
         f"{state.progress_value_numeric},{state.progress_message_metadata_only}|"
@@ -268,16 +276,21 @@ def _source_report(project_root: Path) -> dict[str, object]:
         failures.append(f"contract registry missing ids: {missing_contracts}")
 
     missing_card_mentions: list[str] = []
+    missing_direct_router_submit_guidance: list[str] = []
     missing_progress_guidance: list[str] = []
     for rel in ROLE_CARDS:
         path = project_root / rel
         text = path.read_text(encoding="utf-8") if path.exists() else ""
-        if "role_output_runtime.py" not in text:
+        if "flowpilot_runtime.py" not in text:
             missing_card_mentions.append(rel)
+        if "submit-output-to-router" not in text:
+            missing_direct_router_submit_guidance.append(rel)
         if "progress_status" not in text:
             missing_progress_guidance.append(rel)
     if missing_card_mentions:
-        failures.append(f"role cards missing role_output_runtime.py guidance: {missing_card_mentions}")
+        failures.append(f"role cards missing flowpilot_runtime.py guidance: {missing_card_mentions}")
+    if missing_direct_router_submit_guidance:
+        failures.append(f"role cards missing submit-output-to-router guidance: {missing_direct_router_submit_guidance}")
     if missing_progress_guidance:
         failures.append(f"role cards missing role-output progress guidance: {missing_progress_guidance}")
 
@@ -285,6 +298,8 @@ def _source_report(project_root: Path) -> dict[str, object]:
     catalog_text = output_catalog.read_text(encoding="utf-8") if output_catalog.exists() else ""
     if "progress_status" not in catalog_text:
         failures.append("PM output contract catalog missing role-output progress_status guidance")
+    if "submit-output-to-router" not in catalog_text:
+        failures.append("PM output contract catalog missing submit-output-to-router guidance")
 
     runtime_output_types: set[str] = set()
     if runtime_path.exists():
@@ -293,6 +308,8 @@ def _source_report(project_root: Path) -> dict[str, object]:
             failures.append("role_output_runtime missing update_output_progress")
         if "progress_written_by_runtime" not in runtime_text:
             failures.append("role_output_runtime missing runtime-written progress marker")
+        if "\"submitted_to\": \"router\"" not in runtime_text:
+            failures.append("role_output_runtime missing direct Router submission envelope marker")
         if str(assets) not in sys.path:
             sys.path.insert(0, str(assets))
         try:
@@ -311,6 +328,34 @@ def _source_report(project_root: Path) -> dict[str, object]:
         asset_wrapper_text = asset_unified_runtime_path.read_text(encoding="utf-8")
         if "progress-output" not in asset_wrapper_text:
             failures.append("unified flowpilot_runtime missing progress-output command")
+        if "submit-output-to-router" not in asset_wrapper_text:
+            failures.append("unified flowpilot_runtime missing submit-output-to-router command")
+
+    stale_role_output_prompt_patterns = (
+        "return only the Router-directed controller-visible envelope",
+        "return to Controller only as a runtime envelope",
+        "returns only the compact controller-visible envelope",
+        "returned to Controller as envelope-only payloads",
+        "All formal cross-role mail goes through Controller",
+    )
+    stale_hits: list[str] = []
+    scan_roots = [
+        project_root / "skills/flowpilot/assets/runtime_kit/cards",
+        project_root / "skills/flowpilot/references",
+        project_root / "templates/flowpilot/packets",
+        project_root / "skills/flowpilot/assets/role_output_runtime.py",
+    ]
+    for scan_root in scan_roots:
+        if not scan_root.exists():
+            continue
+        paths = [scan_root] if scan_root.is_file() else sorted(scan_root.rglob("*.md"))
+        for path in paths:
+            text = path.read_text(encoding="utf-8")
+            for pattern in stale_role_output_prompt_patterns:
+                if pattern in text:
+                    stale_hits.append(f"{path.relative_to(project_root).as_posix()}: {pattern}")
+    if stale_hits:
+        failures.append(f"stale Controller role-output return guidance remains: {stale_hits[:20]}")
 
     return {
         "ok": not failures,

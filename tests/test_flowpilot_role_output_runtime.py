@@ -43,7 +43,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
     def read_json(self, path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
 
-    def test_pm_resume_submit_fills_mechanical_fields_and_returns_envelope_only(self) -> None:
+    def test_pm_resume_submit_fills_mechanical_fields_and_returns_direct_router_envelope(self) -> None:
         root = self.make_project()
         envelope = role_output_runtime.submit_output(
             root,
@@ -61,9 +61,18 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(envelope["schema_version"], role_output_runtime.ROLE_OUTPUT_ENVELOPE_SCHEMA)
+        self.assertEqual(
+            envelope["router_submission_schema"],
+            role_output_runtime.ROLE_OUTPUT_DIRECT_ROUTER_SUBMISSION_SCHEMA,
+        )
         self.assertEqual(envelope["body_ref"]["path"], ".flowpilot/runs/run-test/continuation/pm_resume_runtime_body.json")
         self.assertIn("runtime_receipt_ref", envelope)
         self.assertEqual(envelope["controller_visibility"], "role_output_envelope_only")
+        self.assertEqual(envelope["delivery_mode"], "direct_to_router")
+        self.assertEqual(envelope["submitted_to"], "router")
+        self.assertEqual(envelope["to_role"], "router")
+        self.assertFalse(envelope["controller_handoff_used"])
+        self.assertFalse(envelope["controller_receives_role_output"])
         self.assertFalse(envelope["chat_response_body_allowed"])
         self.assertNotIn("decision_path", envelope)
         self.assertNotIn("decision_hash", envelope)

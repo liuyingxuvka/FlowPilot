@@ -4,7 +4,7 @@ This runtime is the report/decision counterpart to packet_runtime. It does not
 replace packet mail: packet bodies and packet results still flow through
 packet_runtime. This module handles formal role outputs such as PM decisions,
 reviewer reports, officer reports, and GateDecision bodies before they are
-returned to Controller as envelope-only payloads.
+submitted to Router as envelope-only payloads.
 """
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ ROLE_OUTPUT_RUNTIME_RECEIPT_SCHEMA = "flowpilot.role_output_runtime_receipt.v1"
 ROLE_OUTPUT_RUNTIME_SESSION_SCHEMA = "flowpilot.role_output_runtime_session.v1"
 ROLE_OUTPUT_LEDGER_SCHEMA = "flowpilot.role_output_ledger.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
+ROLE_OUTPUT_DIRECT_ROUTER_SUBMISSION_SCHEMA = "flowpilot.role_output_direct_router_submission.v1"
 ROLE_OUTPUT_STATUS_SCHEMA = "flowpilot.controller_status_packet.v1"
 CONTRACT_REGISTRY_PATH = Path("skills/flowpilot/assets/runtime_kit/contracts/contract_index.json")
 QUALITY_PACK_CATALOG_PATH = Path("skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json")
@@ -1184,6 +1185,7 @@ def _build_envelope(
 ) -> dict[str, Any]:
     envelope = {
         "schema_version": ROLE_OUTPUT_ENVELOPE_SCHEMA,
+        "router_submission_schema": ROLE_OUTPUT_DIRECT_ROUTER_SUBMISSION_SCHEMA,
         "body_ref": {
             "path": _project_relative(project_root, output_path),
             "hash": body_hash,
@@ -1196,8 +1198,13 @@ def _build_envelope(
         },
         "controller_visibility": "role_output_envelope_only",
         "chat_response_body_allowed": False,
+        "delivery_mode": "direct_to_router",
+        "submitted_to": "router",
+        "controller_handoff_used": False,
+        "controller_receives_role_output": False,
+        "controller_next_step_source": "router_status_or_notice",
         "from_role": role,
-        "to_role": "controller",
+        "to_role": "router",
         "output_type": spec.output_type,
         "output_contract_id": spec.contract_id,
         "role_output_runtime_validated": True,

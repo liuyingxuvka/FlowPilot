@@ -3281,7 +3281,7 @@ def _role_io_protocol_payload() -> dict[str, Any]:
             "when a card envelope includes card_checkin_instruction, run its receive-card or receive-card-bundle command instead of hand-writing ACK files",
             "write read receipts after runtime open",
             "write reports, decisions, and results to run-scoped files",
-            "return envelope-only acknowledgements to Controller",
+            "submit ACKs and role-output envelopes directly to Router through runtime commands",
             "do not send card/body/report body text back to chat",
             "stop with a protocol blocker on wrong role, hash mismatch, stale run, missing envelope, or missing result target",
         ],
@@ -4223,13 +4223,13 @@ def _pm_resume_decision_payload_contract(project_root: Path, run_root: Path) -> 
             ],
         },
         structural_requirements=[
-            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
         ],
         description=(
             "PM heartbeat/manual-resume recovery decision. This is a role-output body contract, "
-            "not Controller-authored project evidence; Controller may only relay the envelope to the router."
+            "not Controller-authored project evidence; Controller waits for Router status after the runtime submits it."
         ),
     )
 
@@ -4264,14 +4264,14 @@ def _pm_parent_segment_decision_payload_contract(project_root: Path, run_root: P
             ],
         },
         structural_requirements=[
-            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
             "Only decision=continue may close the active parent node; all other decisions require route mutation and same-parent replay rerun.",
         ],
         description=(
             "PM parent-segment decision after reviewer backward replay. This is a role-output body "
-            "contract; Controller may only relay the envelope to the router."
+            "contract; Controller waits for Router status after the runtime submits it."
         ),
     )
 
@@ -4313,14 +4313,14 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.pm_suggestion_ledger_clean": [True],
         },
         structural_requirements=[
-            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
             "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean lifecycle ledgers, and continuation binding are present.",
         ],
         description=(
             "PM terminal closure approval. This is a role-output body contract; Controller may only "
-            "relay the envelope to the router and must not infer closure from chat history."
+            "wait for Router status and must not infer closure from chat history."
         ),
     )
 
@@ -4366,7 +4366,7 @@ def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -
             ],
         },
         structural_requirements=[
-            "Return the body through a role_output_envelope with decision_path and decision_hash.",
+            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Do not start pm.review_repair until this decision either authorizes a model-backed repair or records why FlowGuard cannot model the bug class.",
             "For model-backed repair, officer reports must include old_model_miss_reason, bug_class_definition, same_class_findings, coverage_added, candidate_repairs, minimal_sufficient_repair_recommendation, rejected_larger_repairs, rejected_smaller_repairs, post_repair_model_checks_required, and residual_blindspots.",
             "PM selects the repair path; officer reports provide model evidence and repair recommendations but do not approve route mutation by themselves.",
@@ -8784,7 +8784,7 @@ def _write_material_sufficiency_report(project_root: Path, run_root: Path, run_s
     if payload.get("reviewed_by_role") != "human_like_reviewer":
         raise RouterError("material sufficiency report must be reviewed_by_role=human_like_reviewer")
     if not run_state["flags"].get("material_scan_results_relayed_to_reviewer"):
-        raise RouterError("material sufficiency report requires Controller-relayed material result envelopes")
+        raise RouterError("material sufficiency report requires material result envelopes made available to reviewer")
     material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
     raw_agent_map = payload.get("agent_role_map")
     _validate_packet_group_for_reviewer(
@@ -9154,7 +9154,7 @@ def _write_role_work_result_returned(project_root: Path, run_root: Path, run_sta
     if not isinstance(record, dict):
         raise RouterError(f"role-work result references unknown request_id: {request_id}")
     if record.get("status") != "packet_relayed":
-        raise RouterError("role-work result requires Controller-relayed request packet")
+        raise RouterError("role-work result requires request packet made available to worker")
     packet_id = str(payload.get("packet_id") or record.get("packet_id") or "").strip()
     if packet_id != str(record.get("packet_id") or ""):
         raise RouterError("role-work result packet_id must match request packet")
@@ -9251,7 +9251,7 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
 
 def _write_worker_research_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not run_state["flags"].get("research_packet_relayed"):
-        raise RouterError("research report requires Controller-relayed research packet")
+        raise RouterError("research report requires research packet made available to worker")
     research_index = _load_packet_index(_research_packet_index_path(run_root), label="research")
     _validate_packet_bodies_opened_by_targets(project_root, run_state, research_index["packets"])
     _validate_results_exist_for_packets(project_root, run_state, research_index["packets"], next_recipient="human_like_reviewer")
@@ -11229,7 +11229,7 @@ def _live_card_delivery_context(
             "Treat this router delivery envelope as the live context for the "
             "current run, current task, current card, current phase, and current "
             "node/frontier. If required context is missing or stale, do not "
-            "continue from memory; return a protocol blocker through Controller."
+            "continue from memory; submit a protocol blocker through the Router-directed runtime path."
         ),
     }
 

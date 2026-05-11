@@ -8,9 +8,9 @@
   },
   "counts": {
     "accepted": 3,
-    "edges": 78,
-    "rejected": 10,
-    "states": 79
+    "edges": 84,
+    "rejected": 11,
+    "states": 85
   },
   "ok": true,
   "skipped_checks": {

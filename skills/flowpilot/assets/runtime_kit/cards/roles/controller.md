@@ -3,9 +3,9 @@ recipient_role: controller
 recipient_identity: FlowPilot controller role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go directly to Router through the card check-in command. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then return only the Router-directed controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs go directly to Router; after formal role output completion or blocking, use the Router-directed return path. Controller must wait for or call flowpilot_router.py for the next action.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; return a protocol blocker through Controller.
+required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must wait for Router status or call flowpilot_router.py for the next action.
+runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Controller Core Card
 
@@ -44,8 +44,9 @@ Allowed actions:
   names `card_return_event` such as `controller_card_ack`, `pm_card_ack`,
   `reviewer_card_ack`, `worker_card_ack`, `process_officer_card_ack`, or
   `product_officer_card_ack`, the addressed role must use the card check-in
-  command named in that envelope. Controller must not hand-write the ACK and
-  must not treat it as an ordinary project event;
+  command named in that envelope. This is the router-directed return path for
+  card ACKs. Controller must not hand-write the ACK and must not treat it as an
+  ordinary project event;
 - deliver router `control_blocker` artifacts exactly as instructed by the
   router action envelope;
 - display route signs and required startup text when the router or PM requires

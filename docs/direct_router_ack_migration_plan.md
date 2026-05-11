@@ -3,7 +3,7 @@
 ## Goal
 
 Move all FlowPilot ACK traffic to Router-owned direct check-in paths and remove
-the old Controller-mediated or external-event compatibility path.
+the old Controller ACK route and external-event route.
 
 The target behavior is single-track:
 
@@ -13,8 +13,10 @@ The target behavior is single-track:
    active holder.
 4. Router validates mechanics, writes controller-visible next-action notices,
    and decides the next stage.
-5. Controller waits for Router status/notice and relays formal cross-role mail
-   only when Router instructs it to do so.
+5. Formal role outputs are also submitted directly to Router through the
+   unified runtime.
+6. Controller waits for Router status/notice and relays only Router-authorized
+   envelope metadata when Router instructs it to do so.
 
 ## Implementation Checklist
 
@@ -27,8 +29,8 @@ The target behavior is single-track:
 | 5 | Remove legacy card ACK compatibility. | `skills/flowpilot/assets/flowpilot_router.py` | `record_external_event(..., "*_card_ack")` no longer reroutes; it raises a protocol error. |
 | 6 | Keep packet ACK/result fast lane as the packet-local Router path and align text around it. | `skills/flowpilot/assets/packet_runtime.py`, `templates/flowpilot/packets/*.template.md` | Packet bodies tell active holders to ACK and return packet completion to Router, not Controller. |
 | 7 | Update all role/system/phase/reviewer/officer cards that still teach old ACK routing. | `skills/flowpilot/assets/runtime_kit/cards/**/*.md` | No card prompt says Controller should receive, teach, hand-write, or relay ACKs. |
-| 8 | Update protocol documentation and skill guidance. | `skills/flowpilot/SKILL.md`, `skills/flowpilot/references/*.md`, `docs/*.md` | Docs describe ACKs as Router-direct and formal mail as Controller-relayed by Router instruction. |
-| 9 | Update tests for new pass/fail behavior. | `tests/test_flowpilot_card_runtime.py`, `tests/test_flowpilot_router_runtime.py`, `tests/test_flowpilot_packet_runtime.py` | New path passes; old compatibility path fails. |
+| 8 | Update protocol documentation and skill guidance. | `skills/flowpilot/SKILL.md`, `skills/flowpilot/references/*.md`, `docs/*.md` | Docs describe ACKs, active-holder packet results, and formal role outputs as Router-direct; Controller relays only Router-authorized metadata. |
+| 9 | Update tests for new pass/fail behavior. | `tests/test_flowpilot_card_runtime.py`, `tests/test_flowpilot_router_runtime.py`, `tests/test_flowpilot_packet_runtime.py` | New path passes; old external-event ACK route fails. |
 | 10 | Sync local install and local git only. | installed skill under user Codex home, local repository | Install audit passes; local commit exists; no GitHub push. |
 
 ## Affected Surface
@@ -38,10 +40,10 @@ The target behavior is single-track:
 | Router card return event handling | Old external-event ACKs can still be auto-rerouted. | Old external-event ACKs are rejected as legacy protocol violations. |
 | Card runtime ACK envelopes | ACKs prove receipt but do not yet make the Router-direct authorization explicit enough. | ACK envelopes include direct Router authorization fields tied to run, role, agent, delivery, card hash, and expected return. |
 | Controller card | Controller guidance still mentions role/event envelopes and ACK handling in a way that can preserve old habits. | Controller is told to wait for Router card/packet status and never receive, write, or relay ACKs. |
-| Role cards | Many role cards still say role outputs return to Controller, which is correct for formal reports but ambiguous for ACKs. | Cards distinguish mechanical ACKs from formal mail: ACKs go to Router; reports/decisions follow Router-directed formal mail. |
+| Role cards | Many role cards still say role outputs return to Controller. | Cards tell roles to submit formal outputs with `flowpilot_runtime.py submit-output-to-router`; reports/decisions no longer return to Controller as the receiver. |
 | Packet body template | It still says return a result envelope to Controller. | Current active holder first ACKs Router and returns packet completion to Router; Controller receives only Router next-action notice. |
-| Result body template | It still describes formal result return through the old packet path. | It distinguishes active-holder direct Router submission from later Controller relay to the next recipient. |
-| Protocol docs | Some docs say all formal mail goes through Controller without carving out mechanical ACKs. | Docs say ACKs/check-ins are Router-direct; formal cross-role envelopes remain Controller-relayed. |
+| Result body template | It still describes formal result return through the old packet path. | It distinguishes active-holder direct Router submission from later Router-authorized Controller relay to the next recipient. |
+| Protocol docs | Some docs say all formal mail goes through Controller. | Docs say completed work goes to Router first; Controller relays only Router-authorized envelope metadata. |
 | Prompt/card coverage tests | Old text can remain unnoticed. | Tests fail when old ACK instructions remain or new Router-direct instructions are missing. |
 
 ## Risk Ledger

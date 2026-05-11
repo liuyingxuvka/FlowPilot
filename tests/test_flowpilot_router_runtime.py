@@ -120,6 +120,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         envelope = {
             "schema_version": role_output_runtime.ROLE_OUTPUT_ENVELOPE_SCHEMA,
+            "router_submission_schema": role_output_runtime.ROLE_OUTPUT_DIRECT_ROUTER_SUBMISSION_SCHEMA,
             "body_ref": body_ref,
             "runtime_receipt_ref": {
                 "path": self.rel(root, receipt_path),
@@ -127,9 +128,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
             "controller_visibility": "role_output_envelope_only",
             "chat_response_body_allowed": False,
+            "delivery_mode": "direct_to_router",
+            "submitted_to": "router",
+            "controller_handoff_used": False,
+            "controller_receives_role_output": False,
+            "controller_next_step_source": "router_status_or_notice",
             "event_name": "reviewer_reports_startup_facts",
             "from_role": "human_like_reviewer",
-            "to_role": "controller",
+            "to_role": "router",
             "output_type": "startup_fact_report",
             "output_contract_id": "flowpilot.output_contract.startup_fact_report.v1",
             "role_output_runtime_validated": True,

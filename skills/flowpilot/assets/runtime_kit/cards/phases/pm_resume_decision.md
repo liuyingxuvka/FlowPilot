@@ -3,9 +3,9 @@ recipient_role: project_manager
 recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go directly to Router through the card check-in command. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then return only the Router-directed controller-visible envelope with ids, paths, hashes, from/to roles, next holder, event name, and body visibility. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs go directly to Router; after formal role output completion or blocking, use the Router-directed return path. Controller must wait for or call flowpilot_router.py for the next action.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; return a protocol blocker through Controller.
+required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must wait for Router status or call flowpilot_router.py for the next action.
+runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Resume Decision Card
 
@@ -59,20 +59,7 @@ approve gates or carry route authority.
 
 Use contract `flowpilot.output_contract.pm_resume_decision.v1`.
 Return it through router event `pm_resume_recovery_decision_returned`.
-Write the decision body to a run-scoped file and return to Controller only a
-runtime-generated role-output envelope with `body_ref`,
-`runtime_receipt_ref`, `controller_visibility:
-"role_output_envelope_only"`, and no inline decision body. Legacy
-`decision_path`/`decision_hash` envelopes are accepted only for compatibility.
-
-Preferred path: run `flowpilot_runtime.py prepare-output --output-type
-pm_resume_recovery_decision --role project_manager --agent-id <agent-id>` to
-get the skeleton, then run `flowpilot_runtime.py submit-output` with the
-completed decision body. The lower-level `role_output_runtime.py` commands are
-compatibility entrypoints. The runtime fills the mechanical fixed fields,
-explicit empty arrays, quality-pack checklist rows when declared, hash,
-receipt, and ledger entry. PM still writes the decision, impact, evidence
-rationale, and semantic recovery judgement.
+Write the decision body to a run-scoped file and submit it directly to Router with `flowpilot_runtime.py submit-output-to-router`. Use contract `flowpilot.output_contract.pm_resume_decision.v1` and router event `pm_resume_recovery_decision_returned`. The runtime-generated role-output envelope carries `body_ref`, `runtime_receipt_ref`, `controller_visibility: "role_output_envelope_only"`, and no inline decision body. Path/hash-only chat envelopes are not the live handoff path. Preferred path: run `flowpilot_runtime.py prepare-output --output-type pm_resume_recovery_decision --role project_manager --agent-id <agent-id>` to get the skeleton, then run `flowpilot_runtime.py submit-output-to-router` with the completed decision body. Lower-level `role_output_runtime.py` commands only validate local mechanics; live handoff must use the unified runtime so Router records the event. The runtime fills mechanical fixed fields, explicit empty arrays, quality-pack checklist rows when declared, hash, receipt, and ledger entry. PM still writes the decision, impact, evidence rationale, and semantic recovery judgement.
 
 Use these exact field names. The `decision` value must be one of:
 `continue_current_packet_loop`, `request_sender_reissue`,
