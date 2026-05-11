@@ -30,12 +30,16 @@ Write a bounded research package that names:
 - how the result can affect material understanding, route mutation, user
   questions, or blocking.
 
-Before assigning a worker packet, consider worker balance and packet shape. For
-light or single-scope work, choose either `worker_a` or `worker_b` while keeping
-worker opportunities roughly balanced across the current run. For heavy work
-that naturally splits into disjoint scopes, create bounded separate packets for
-`worker_a` and `worker_b` so they can run in parallel without overlapping files,
-evidence duties, or review ownership.
+Register research as one router-owned packet batch with `batch_id` and
+`packets[]`. The batch may include worker research packets and bounded
+FlowGuard officer model packets when those roles can start now from the same
+available facts. Use workers for evidence gathering, repository/source
+inspection, experiments, or implementation-grounded research. Use
+`product_flowguard_officer` for product behavior/modelability questions and
+`process_flowguard_officer` for process/state/route questions. Do not ask an
+officer to make PM decisions or reviewer approvals. Router waits for every
+batch result, including officer results, before the research batch can be sent
+for reviewer direct-source/model-output checking.
 
 Any research worker packet created from the package must include the registry
 `output_contract` `flowpilot.output_contract.worker_research_result.v1` in both

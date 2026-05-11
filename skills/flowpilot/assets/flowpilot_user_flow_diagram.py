@@ -114,12 +114,13 @@ def _snapshot_route(snapshot: dict[str, Any]) -> dict[str, Any]:
     route = snapshot.get("route") if isinstance(snapshot.get("route"), dict) else {}
     if not route:
         return {}
-    nodes = [node for node in route.get("nodes", []) if isinstance(node, dict)]
+    nodes = _all_route_nodes(route)
     return {
         "schema_version": "flowpilot.route.snapshot_projection.v1",
         "route_id": route.get("route_id"),
         "route_version": route.get("route_version"),
         "active_node_id": route.get("active_node_id"),
+        "display_depth": _route_display_depth(route),
         "status": "snapshot",
         "nodes": nodes,
     }
@@ -127,6 +128,191 @@ def _snapshot_route(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 def _node_id(node: dict[str, Any]) -> str:
     return str(node.get("id") or node.get("node_id") or "")
+
+
+def _raw_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+    for key in ("nodes", "route_nodes"):
+        nodes = route.get(key)
+        if isinstance(nodes, list):
+            return [node for node in nodes if isinstance(node, dict)]
+    for key in ("full_route_tree", "route_tree"):
+        tree = route.get(key)
+        if isinstance(tree, dict):
+            nodes = tree.get("nodes")
+            if isinstance(nodes, list):
+                return [node for node in nodes if isinstance(node, dict)]
+    return []
+
+
+def _inline_child_nodes(node: dict[str, Any]) -> list[dict[str, Any]]:
+    children: list[dict[str, Any]] = []
+    for key in ("children", "child_nodes", "subnodes"):
+        raw_children = node.get(key)
+        if isinstance(raw_children, list):
+            children.extend(child for child in raw_children if isinstance(child, dict))
+    return children
+
+
+def _node_child_ids(node: dict[str, Any]) -> list[str]:
+    child_ids: list[str] = []
+    for key in ("child_node_ids", "children_ids", "subnode_ids"):
+        raw_ids = node.get(key)
+        if isinstance(raw_ids, list):
+            child_ids.extend(str(item) for item in raw_ids if item)
+    for child in _inline_child_nodes(node):
+        child_id = _node_id(child)
+        if child_id:
+            child_ids.append(child_id)
+    return list(dict.fromkeys(child_ids))
+
+
+def _flatten_route_nodes(
+    raw_nodes: list[dict[str, Any]],
+    *,
+    parent_node_id: str | None = None,
+    depth: int = 1,
+) -> list[dict[str, Any]]:
+    flattened: list[dict[str, Any]] = []
+    for node in raw_nodes:
+        node_id = _node_id(node)
+        if not node_id:
+            continue
+        children = _inline_child_nodes(node)
+        child_ids = _node_child_ids(node)
+        projected = dict(node)
+        projected.setdefault("parent_node_id", parent_node_id)
+        projected.setdefault("depth", depth)
+        if child_ids:
+            projected["child_node_ids"] = child_ids
+        flattened.append(projected)
+        flattened.extend(_flatten_route_nodes(children, parent_node_id=node_id, depth=depth + 1))
+    return flattened
+
+
+def _all_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+    return _flatten_route_nodes(_raw_route_nodes(route))
+
+
+def _route_node_depth(node: dict[str, Any]) -> int:
+    raw = node.get("depth") or node.get("route_depth")
+    try:
+        depth = int(raw)
+    except (TypeError, ValueError):
+        depth = 1
+    return max(1, depth)
+
+
+def _route_display_depth(route: dict[str, Any]) -> int:
+    display_plan = route.get("display_plan") if isinstance(route.get("display_plan"), dict) else {}
+    raw = route.get("display_depth") or display_plan.get("display_depth") or 2
+    try:
+        depth = int(raw)
+    except (TypeError, ValueError):
+        depth = 2
+    return max(1, depth)
+
+
+def _node_kind(node: dict[str, Any]) -> str:
+    explicit = str(node.get("node_kind") or node.get("kind") or "").strip().lower()
+    if explicit:
+        return explicit
+    topology = _node_topology(node)
+    if topology.get("topology_strategy"):
+        return "repair"
+    if _node_child_ids(node):
+        return "parent"
+    return "leaf"
+
+
+def _display_depth_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+    display_depth = _route_display_depth(route)
+    visible: list[dict[str, Any]] = []
+    for node in _all_route_nodes(route):
+        if _route_node_depth(node) <= display_depth or _truthy(node.get("user_visible")):
+            visible.append(node)
+    return visible
+
+
+def _route_active_path(
+    frontier: dict[str, Any],
+    route: dict[str, Any],
+    active_node: str | None,
+) -> list[dict[str, Any]]:
+    raw_path = frontier.get("active_path")
+    if isinstance(raw_path, list) and raw_path:
+        path: list[dict[str, Any]] = []
+        nodes_by_id = {_node_id(node): node for node in _all_route_nodes(route)}
+        for item in raw_path:
+            if isinstance(item, dict):
+                node_id = str(item.get("node_id") or item.get("id") or "")
+                node = nodes_by_id.get(node_id, {})
+                node_kind = str(item.get("node_kind") or (_node_kind(node) if node else "") or "")
+                path.append(
+                    {
+                        "node_id": node_id,
+                        "label": str(item.get("label") or item.get("title") or _node_label(node) or node_id),
+                        "depth": int(item.get("depth") or _route_node_depth(node) or 1),
+                        "node_kind": node_kind,
+                    }
+                )
+            elif item:
+                node_id = str(item)
+                node = nodes_by_id.get(node_id, {})
+                path.append(
+                    {
+                        "node_id": node_id,
+                        "label": _node_label(node) if node else node_id,
+                        "depth": _route_node_depth(node) if node else 1,
+                        "node_kind": _node_kind(node) if node else "",
+                    }
+                )
+        return [item for item in path if item.get("node_id")]
+
+    if not active_node:
+        return []
+    nodes = _all_route_nodes(route)
+    by_id = {_node_id(node): node for node in nodes}
+    current = by_id.get(str(active_node))
+    if not current:
+        return []
+    reversed_path: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    while current:
+        node_id = _node_id(current)
+        if not node_id or node_id in seen:
+            break
+        seen.add(node_id)
+        reversed_path.append(
+            {
+                "node_id": node_id,
+                "label": _node_label(current),
+                "depth": _route_node_depth(current),
+                "node_kind": _node_kind(current),
+            }
+        )
+        parent_id = current.get("parent_node_id")
+        current = by_id.get(str(parent_id)) if parent_id else None
+    return list(reversed(reversed_path))
+
+
+def _hidden_leaf_progress(route: dict[str, Any]) -> dict[str, Any]:
+    display_depth = _route_display_depth(route)
+    hidden_leaves = [
+        node
+        for node in _all_route_nodes(route)
+        if _route_node_depth(node) > display_depth and _node_kind(node) in {"leaf", "repair"}
+    ]
+    completed = [
+        node
+        for node in hidden_leaves
+        if _normalize(node.get("status")) in {"complete", "completed", "done"}
+    ]
+    return {
+        "display_depth": display_depth,
+        "hidden_leaf_count": len(hidden_leaves),
+        "completed_hidden_leaf_count": len(completed),
+        "has_hidden_leaves": bool(hidden_leaves),
+    }
 
 
 def _active_route(frontier: dict[str, Any], state: dict[str, Any], route: dict[str, Any] | None = None) -> str | None:
@@ -166,7 +352,7 @@ def classify_current_stage(frontier: dict[str, Any], route: dict[str, Any]) -> s
     route_status = _normalize(route.get("status"))
     route_mutation = frontier.get("route_mutation") or {}
     route_mutation_pending = _route_mutation_pending(frontier)
-    known_route_nodes = {_node_id(node) for node in route.get("nodes", []) if isinstance(node, dict) and _node_id(node)}
+    known_route_nodes = {_node_id(node) for node in _all_route_nodes(route) if _node_id(node)}
     text = " ".join(
         _normalize(value)
         for value in (
@@ -231,7 +417,7 @@ def _is_mutation_node(node: dict[str, Any]) -> bool:
 
 
 def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[str, Any]]:
-    nodes = [node for node in route.get("nodes", []) if isinstance(node, dict) and _node_id(node)]
+    nodes = [node for node in _display_depth_nodes(route) if _node_id(node)]
     mainline = [str(item) for item in frontier.get("current_mainline") or []]
     if mainline:
         by_id = {_node_id(node): node for node in nodes}
@@ -528,6 +714,8 @@ def build_mermaid(
 ) -> tuple[str, dict[str, Any]]:
     active_node = _active_node(frontier, route=route)
     nodes = _route_nodes(frontier, route)
+    active_path = _route_active_path(frontier, route, str(active_node) if active_node else None)
+    hidden_leaf_progress = _hidden_leaf_progress(route)
     return_path = detect_return_path(
         frontier=frontier,
         route_nodes=nodes,
@@ -552,7 +740,13 @@ def build_mermaid(
             return_path=return_path,
         )
         layout = "stage_summary"
-    return source, {**return_path, "layout": layout}
+    return source, {
+        **return_path,
+        "layout": layout,
+        "display_depth": _route_display_depth(route),
+        "active_path": active_path,
+        "hidden_leaf_progress": hidden_leaf_progress,
+    }
 
 
 def build_chat_markdown(
@@ -566,6 +760,8 @@ def build_chat_markdown(
     cockpit_open: bool,
     chat_display_required: bool,
     return_path: dict[str, Any],
+    active_path: list[dict[str, Any]] | None = None,
+    hidden_leaf_progress: dict[str, Any] | None = None,
     source_status: str,
     source_findings: list[str],
 ) -> str:
@@ -574,20 +770,36 @@ def build_chat_markdown(
     Display-gate, evidence, source-health, and confirmation details are
     internal control-plane data. They stay in the display packet and ledgers.
     """
-    return "\n".join(
-        [
-            "# FlowPilot Route Sign",
-            "",
-            "```mermaid",
-            source,
-            "```",
-            "",
+    lines = [
+        "# FlowPilot Route Sign",
+        "",
+        "```mermaid",
+        source,
+        "```",
+        "",
+    ]
+    if active_path:
+        path_labels = [
+            f"{item.get('label') or item.get('node_id')} ({item.get('node_id')})"
+            for item in active_path
+            if item.get("node_id")
         ]
-    )
+        if path_labels:
+            lines.extend(["Current path: " + " > ".join(path_labels), ""])
+    if hidden_leaf_progress and hidden_leaf_progress.get("has_hidden_leaves"):
+        lines.extend(
+            [
+                "Hidden leaf progress: "
+                f"{hidden_leaf_progress.get('completed_hidden_leaf_count', 0)}/"
+                f"{hidden_leaf_progress.get('hidden_leaf_count', 0)} complete",
+                "",
+            ]
+        )
+    return "\n".join(lines)
 
 
 def _route_source_summary(route: dict[str, Any]) -> dict[str, int]:
-    nodes = _route_nodes({}, route)
+    nodes = _all_route_nodes(route)
     checklist_count = 0
     for node in nodes:
         checklist = node.get("checklist")
@@ -689,8 +901,14 @@ def _review_display(
     if display_packet["return_or_repair"]["required"] and not display_packet["return_or_repair"]["edge_present"]:
         findings.append("A review/validation return or route mutation lacks a visible repair edge.")
     active_node = str(display_packet.get("active_node") or "")
-    if active_node and active_node not in mermaid:
-        findings.append("The Mermaid source does not include the active node.")
+    active_path_ids = {
+        str(item.get("node_id") or item.get("id") or "")
+        for item in display_packet.get("active_path", [])
+        if isinstance(item, dict)
+    }
+    active_node_visible = bool(active_node and (active_node in mermaid or active_node in active_path_ids))
+    if active_node and not active_node_visible:
+        findings.append("The route sign does not include the active node in either the visible diagram or current path.")
     if not chat_displayed and not ui_displayed:
         findings.append("No visible display surface was confirmed.")
     return {
@@ -700,7 +918,7 @@ def _review_display(
         "status": "pass" if not findings else "blocked",
         "checked_chat_display": chat_displayed,
         "checked_cockpit_ui_display": ui_displayed,
-        "checked_active_route_node_match": active_node in mermaid if active_node else False,
+        "checked_active_route_node_match": active_node_visible if active_node else False,
         "checked_return_or_repair_edge": not display_packet["return_or_repair"]["required"]
         or display_packet["return_or_repair"]["edge_present"],
         "blocking_findings": findings,
@@ -770,6 +988,8 @@ def generate(
         cockpit_open=cockpit_open,
         chat_display_required=chat_display_required,
         return_path=route_sign,
+        active_path=route_sign["active_path"],
+        hidden_leaf_progress=route_sign["hidden_leaf_progress"],
         source_status=source_health["status"],
         source_findings=source_health["findings"],
     )
@@ -816,7 +1036,7 @@ def generate(
         "simplified_flowpilot_english_mermaid": True,
         "user_visible_display_text": {
             "clean": True,
-            "content": "title_and_mermaid_only",
+            "content": "title_mermaid_current_path_and_hidden_leaf_progress",
             "contains_internal_display_evidence": False,
             "internal_evidence_location": "display_packet_and_user_dialog_display_ledger",
         },
@@ -826,6 +1046,9 @@ def generate(
         },
         "stage_count_target": "6-8",
         "layout": route_sign["layout"],
+        "display_depth": route_sign["display_depth"],
+        "active_path": route_sign["active_path"],
+        "hidden_leaf_progress": route_sign["hidden_leaf_progress"],
         "current_stage": current_stage,
         "active_route": active_route,
         "active_node": active_node,
@@ -894,6 +1117,9 @@ def generate(
         "is_placeholder": is_placeholder,
         "replacement_rule": replacement_rule,
         "route_sign_layout": route_sign["layout"],
+        "display_depth": route_sign["display_depth"],
+        "active_path": route_sign["active_path"],
+        "hidden_leaf_progress": route_sign["hidden_leaf_progress"],
         "route_source_kind": route_source_kind,
         "canonical_route_available": canonical_route_available,
         "route_node_count": route_source_summary["node_count"],

@@ -23,6 +23,14 @@ You own route decisions, material sufficiency decisions after reviewer reports,
 research/experiment requests, route repair, route mutation, node completion
 decisions, final ledger approval, and completion decisions.
 
+When a router-authorized phase lets PM issue work, prefer one explicit
+`batch_id` with `packets[]` or `requests[]` for all work that can start now.
+Simultaneous registration means PM asserts the packets are independent enough
+to run in parallel inside the current phase, current node, or current PM
+decision boundary. Do not include work that depends on a future result from the
+same batch. Router owns busy/idle enforcement, result joining, review routing,
+and stage advancement.
+
 When PM is the addressed packet recipient, open the sealed packet through
 the unified runtime (`flowpilot_runtime.py open-packet`) with a concrete
 `--agent-id`; do not read packet bodies by ordinary file read or from chat

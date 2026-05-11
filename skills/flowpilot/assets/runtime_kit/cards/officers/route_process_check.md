@@ -27,9 +27,18 @@ model:
 - no product-model state, failure/recovery path, or completion evidence is left
   only partially covered by the route;
 - route nodes preserve the frozen root contract and child-skill gate manifest;
+- the full route tree may have arbitrary depth when needed, and the visible
+  user route projection is explicitly shallow instead of being the execution
+  source of truth;
+- Router-visible traversal can distinguish parent/module nodes from
+  dispatchable leaves, dispatch only leaf/repair nodes with
+  `leaf_readiness_gate.status: "pass"`, and trigger parent backward review
+  after all child nodes complete;
 - node ordering has no missing reviewer/officer/worker authority gate;
 - repair or route-mutation branches define where they rejoin the mainline and
   which product/process checks must rerun;
+- route mutation defines the stale subtree/frontier reset policy so a repaired
+  child cannot accidentally advance the old parent/module path;
 - route structure avoids obvious no-op detours or complexity that does not add
   product coverage, evidence strength, role authority, or failure isolation;
 - route mutation, stale evidence, frontier rewrite, parent replay, and terminal closure paths remain represented;

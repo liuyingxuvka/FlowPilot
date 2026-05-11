@@ -38,6 +38,8 @@
     "gate_count": 0,
     "parent_node_count": 0,
     "parent_backward_replay_count": 0,
+    "deep_leaf_count": 0,
+    "deep_leaf_coverage_count": 0,
     "approved_count": 0,
     "waived_count": 0,
     "superseded_count": 0,
@@ -204,8 +206,10 @@
     "required_segment_checks": {
       "root_acceptance_reviewed": false,
       "parent_nodes_reviewed": false,
-      "leaf_nodes_reviewed": false,
-      "every_effective_node_replayed_by_reviewer": false,
+    "leaf_nodes_reviewed": false,
+    "deep_leaf_nodes_reviewed": false,
+    "every_deep_leaf_mapped_to_parent_segment": false,
+    "every_effective_node_replayed_by_reviewer": false,
       "pm_segment_decisions_recorded": false,
       "worker_or_completion_report_only_segments": 0
     },

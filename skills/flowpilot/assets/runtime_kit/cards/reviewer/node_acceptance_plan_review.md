@@ -47,6 +47,14 @@ Check:
   relevant;
 - node requirements are concrete and testable;
 - the plan states whether parent backward replay is structurally required;
+- if the active node has children, the plan blocks direct worker packet
+  dispatch and routes execution into child subtree entry or parent backward
+  replay;
+- if the active node is a leaf or repair node, the plan contains a
+  `leaf_readiness_gate` with `status: "pass"` only when the node has one clear
+  worker outcome, can be executed without PM replanning, has defined proof,
+  dependency boundaries, failure isolation, and has been checked for both
+  under-decomposition and over-decomposition;
 - every inherited gate obligation has a required role and evidence path;
 - every inherited child-skill standard relevant to the node is listed in
   `skill_standard_projection` with source skill, source path, category,

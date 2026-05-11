@@ -45,6 +45,19 @@ Check:
 - the selected planning profile matches the task type and stated quality level;
 - route nodes and checklists are not over-simplified, overmerged, or too coarse
   to produce stage-level acceptance artifacts;
+- the route is not artificially capped at two levels. Complex parent/module
+  nodes must be recursively decomposed until every executable leaf is
+  worker-ready without replanning, and the route must still provide a shallow
+  user-visible projection for display;
+- every leaf has a `leaf_readiness_gate` and every parent/module has children,
+  parent/module acceptance intent, and a parent backward review path. Block if
+  a parent/module can receive a worker packet directly or if a leaf is too
+  broad for one bounded packet; this is the required under-decomposition
+  check;
+- the route passes an over-decomposition check. Extra nodes that do not add evidence,
+  role authority, real parallelism, failure isolation, recovery boundary, or a
+  user-visible milestone should be merged, waived with reason, or treated as a
+  nonblocking PM suggestion depending on risk;
 - necessary convergence loops are present for the chosen profile, especially
   concept-to-implementation visual comparison, interaction validation, realtime
   state mapping, desktop integration, or release validation when those are

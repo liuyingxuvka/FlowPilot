@@ -117,7 +117,7 @@
     "state_count": 25
   },
   "source_audit": {
-    "external_event_count": 91,
+    "external_event_count": 92,
     "finding_count": 0,
     "findings": [],
     "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
@@ -128,11 +128,6 @@
         "condition": "append_only_tick",
         "exception_name": "pre_dedupe_special_case",
         "source_excerpt": "handled before generic duplicate check"
-      },
-      "pm_completes_current_node_from_reviewed_result": {
-        "condition": "conditional",
-        "exception_name": "repeatable_current_node_completion",
-        "source_excerpt": "repeatable_current_node_completion = ( event == \"pm_completes_current_node_from_reviewed_result\" and run_state[\"flags\"].get(flag) and _active_node_completion_write_missing(run_root, run_state, payload)"
       },
       "pm_records_control_blocker_repair_decision": {
         "condition": "conditional",
@@ -168,6 +163,11 @@
         "condition": "unconditional",
         "exception_name": "repeatable_role_work_result",
         "source_excerpt": "repeatable_role_work_result = event == ROLE_WORK_RESULT_RETURNED_EVENT"
+      },
+      "worker_current_node_result_returned": {
+        "condition": "unconditional",
+        "exception_name": "repeatable_current_node_result",
+        "source_excerpt": "repeatable_current_node_result = event == \"worker_current_node_result_returned\""
       }
     },
     "required_scoped_event_count": 6,
@@ -178,6 +178,18 @@
           "node_id",
           "packet_id",
           "result_hash"
+        ],
+        "family": "node_completion",
+        "retry_group_fields": [
+          "event",
+          "node_id"
+        ]
+      },
+      "pm_completes_parent_node_from_backward_replay": {
+        "dedupe_fields": [
+          "node_id",
+          "parent_backward_replay_hash",
+          "parent_segment_decision_hash"
         ],
         "family": "node_completion",
         "retry_group_fields": [
@@ -277,8 +289,19 @@
           "event",
           "request_id"
         ]
+      },
+      "worker_current_node_result_returned": {
+        "dedupe_fields": [
+          "packet_id",
+          "result_hash"
+        ],
+        "family": "current_node_result",
+        "retry_group_fields": [
+          "event",
+          "packet_id"
+        ]
       }
     },
-    "scoped_policy_count": 9
+    "scoped_policy_count": 11
   }
 }

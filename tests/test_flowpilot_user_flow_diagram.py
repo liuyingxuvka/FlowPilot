@@ -317,6 +317,77 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIn("node=node-003", payload["mermaid"])
         self.assertNotIn("route=unknown", payload["mermaid"])
 
+    def test_deep_route_tree_renders_shallow_graph_with_active_path(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-deep-tree-"))
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(run_root / "state.json", {"active_route_id": "route-001"})
+        _write_json(
+            run_root / "routes" / "route-001" / "flow.json",
+            {
+                "route_id": "route-001",
+                "route_version": 9,
+                "display_depth": 2,
+                "active_node_id": "leaf-001",
+                "nodes": [
+                    {
+                        "node_id": "parent-001",
+                        "title": "Parent",
+                        "status": "active",
+                        "node_kind": "parent",
+                        "children": [
+                            {
+                                "node_id": "module-001",
+                                "title": "Module",
+                                "status": "active",
+                                "node_kind": "module",
+                                "children": [
+                                    {
+                                        "node_id": "leaf-001",
+                                        "title": "Deep Leaf",
+                                        "status": "active",
+                                        "node_kind": "leaf",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        _write_json(
+            run_root / "execution_frontier.json",
+            {
+                "active_route_id": "route-001",
+                "active_node_id": "leaf-001",
+                "route_version": 9,
+                "frontier_version": 3,
+                "current_mainline": ["parent-001", "module-001", "leaf-001"],
+            },
+        )
+
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="leaf_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=True,
+            mark_ui_displayed=False,
+            reviewer_check=True,
+        )
+
+        self.assertTrue(payload["ok"], json.dumps(payload.get("review"), indent=2))
+        self.assertEqual(payload["route_node_count"], 3)
+        self.assertEqual(payload["display_depth"], 2)
+        self.assertEqual(payload["hidden_leaf_progress"]["hidden_leaf_count"], 1)
+        self.assertEqual([item["node_id"] for item in payload["active_path"]], ["parent-001", "module-001", "leaf-001"])
+        self.assertIn("Parent", payload["mermaid"])
+        self.assertIn("Module", payload["mermaid"])
+        self.assertNotIn("Deep Leaf<br/>", payload["mermaid"])
+        self.assertIn("Current path: Parent (parent-001) > Module (module-001) > Deep Leaf (leaf-001)", payload["markdown"])
+        self.assertIn("Hidden leaf progress: 0/1 complete", payload["markdown"])
+
     def test_active_run_pointer_is_authoritative_over_legacy_state(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")
         self.write_legacy_layout(root)

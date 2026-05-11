@@ -24,9 +24,13 @@ work while PM owns a decision.
 
 Use `pm_registers_role_work_request` when PM needs a reviewer, officer, or
 worker to gather evidence, update or run a model, review a candidate, research a
-question, or prepare information before PM decides. The channel is generic; do
-not special-case `product_flowguard_officer`, `process_flowguard_officer`,
-reviewer, or worker requests.
+question, or prepare information before PM decides. PM may submit one request or
+one `batch_id` with `requests[]`/`packets[]`. A batch means every listed request
+can start now inside the current PM decision boundary. Router records the batch,
+relays each addressed envelope, waits for every result, and then PM records one
+batch disposition. The channel is generic; do not special-case
+`product_flowguard_officer`, `process_flowguard_officer`, reviewer, or worker
+requests.
 
 The request must include:
 
@@ -41,8 +45,9 @@ The request must include:
 Controller may relay the packet and result envelopes only. Controller may not
 read the request body, result body, or decide from their content.
 
-After the target role returns `role_work_result_returned`, PM must record
-`pm_records_role_work_result_decision` with `decision` set to `absorbed`,
-`canceled`, or `superseded`. Blocking requests must be resolved before the
-dependent PM decision can close. Advisory requests must be absorbed, canceled,
-or superseded before terminal closure.
+After every target role in the active batch returns `role_work_result_returned`,
+PM must record `pm_records_role_work_result_decision` with `batch_id` for a
+batch or `request_id` for a single request, and `decision` set to `absorbed`,
+`canceled`, or `superseded`. Blocking batches must be resolved before the
+dependent PM decision can close. Advisory batches must be absorbed, canceled, or
+superseded before terminal closure.

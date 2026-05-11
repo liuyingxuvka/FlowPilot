@@ -275,6 +275,11 @@ class State:
     flowguard_model_report_toolchain_recommendations_done: bool = False
     flowguard_model_report_confidence_boundary_done: bool = False
     candidate_route_tree_generated: bool = False
+    recursive_route_decomposition_policy_written: bool = False
+    route_leaf_readiness_gates_defined: bool = False
+    route_reviewer_depth_review_required: bool = False
+    router_leaf_only_dispatch_policy_checked: bool = False
+    user_flow_diagram_shallow_projection_policy_recorded: bool = False
     root_route_model_checked: bool = False
     root_route_model_process_officer_approved: bool = False
     root_product_function_model_checked: bool = False
@@ -300,6 +305,8 @@ class State:
     current_node_high_standard_recheck_written: bool = False
     current_node_minimum_sufficient_complexity_review_written: bool = False
     node_acceptance_plan_written: bool = False
+    active_node_leaf_readiness_gate_passed: bool = False
+    active_node_parent_dispatch_blocked: bool = False
     active_child_skill_bindings_written: bool = False
     active_child_skill_binding_scope_limited: bool = False
     child_skill_stricter_standard_precedence_bound: bool = False
@@ -414,6 +421,7 @@ class State:
     final_route_wide_gate_ledger_child_skill_gates_collected: bool = False
     final_route_wide_gate_ledger_human_review_gates_collected: bool = False
     final_route_wide_gate_ledger_parent_backward_replays_collected: bool = False
+    final_route_wide_gate_ledger_deep_leaf_coverage_collected: bool = False
     final_route_wide_gate_ledger_product_process_gates_collected: bool = False
     final_route_wide_gate_ledger_resource_lineage_resolved: bool = False
     final_route_wide_gate_ledger_stale_evidence_checked: bool = False
@@ -518,6 +526,7 @@ def _reset_user_flow_diagram_gate() -> dict[str, object]:
     return {
         "visible_user_flow_diagram_emitted": False,
         "user_flow_diagram_refreshed": False,
+        "user_flow_diagram_shallow_projection_policy_recorded": False,
         "user_flow_diagram_chat_display_required": False,
         "user_flow_diagram_chat_displayed": False,
         "user_flow_diagram_return_edge_required": False,
@@ -559,6 +568,8 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "current_node_high_standard_recheck_written": False,
             "current_node_minimum_sufficient_complexity_review_written": False,
             "node_acceptance_plan_written": False,
+            "active_node_leaf_readiness_gate_passed": False,
+            "active_node_parent_dispatch_blocked": False,
             "active_child_skill_bindings_written": False,
             "active_child_skill_binding_scope_limited": False,
             "child_skill_stricter_standard_precedence_bound": False,
@@ -577,6 +588,7 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_child_skill_gates_collected": False,
         "final_route_wide_gate_ledger_human_review_gates_collected": False,
         "final_route_wide_gate_ledger_parent_backward_replays_collected": False,
+        "final_route_wide_gate_ledger_deep_leaf_coverage_collected": False,
         "final_route_wide_gate_ledger_product_process_gates_collected": False,
         "final_route_wide_gate_ledger_resource_lineage_resolved": False,
         "final_route_wide_gate_ledger_stale_evidence_checked": False,
@@ -879,6 +891,7 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_child_skill_gates_collected
         and state.final_route_wide_gate_ledger_human_review_gates_collected
         and state.final_route_wide_gate_ledger_parent_backward_replays_collected
+        and state.final_route_wide_gate_ledger_deep_leaf_coverage_collected
         and state.final_route_wide_gate_ledger_product_process_gates_collected
         and state.final_route_wide_gate_ledger_resource_lineage_resolved
         and state.final_route_wide_gate_ledger_stale_evidence_checked
@@ -1027,6 +1040,7 @@ class AutopilotStep:
         "product_function_architecture_reviewer_challenged",
         "visible_user_flow_diagram_emitted",
         "user_flow_diagram_refreshed",
+        "user_flow_diagram_shallow_projection_policy_recorded",
         "user_flow_diagram_chat_display_required",
         "user_flow_diagram_chat_displayed",
         "user_flow_diagram_return_edge_required",
@@ -1127,6 +1141,10 @@ class AutopilotStep:
         "flowguard_process_design_done",
         "flowguard_officer_model_adversarial_probe_done",
         "candidate_route_tree_generated",
+        "recursive_route_decomposition_policy_written",
+        "route_leaf_readiness_gates_defined",
+        "route_reviewer_depth_review_required",
+        "router_leaf_only_dispatch_policy_checked",
         "root_route_model_checked",
         "root_route_model_process_officer_approved",
         "root_product_function_model_checked",
@@ -1156,6 +1174,8 @@ class AutopilotStep:
         "current_node_high_standard_recheck_written",
         "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
+        "active_node_leaf_readiness_gate_passed",
+        "active_node_parent_dispatch_blocked",
         "active_child_skill_bindings_written",
         "active_child_skill_binding_scope_limited",
         "child_skill_stricter_standard_precedence_bound",
@@ -1252,6 +1272,7 @@ class AutopilotStep:
         "final_route_wide_gate_ledger_child_skill_gates_collected",
         "final_route_wide_gate_ledger_human_review_gates_collected",
         "final_route_wide_gate_ledger_parent_backward_replays_collected",
+        "final_route_wide_gate_ledger_deep_leaf_coverage_collected",
         "final_route_wide_gate_ledger_product_process_gates_collected",
         "final_route_wide_gate_ledger_resource_lineage_resolved",
         "final_route_wide_gate_ledger_stale_evidence_checked",
@@ -2695,6 +2716,27 @@ class AutopilotStep:
                 label="candidate_route_tree_generated",
                 action="generate candidate route tree from the frozen contract",
                 candidate_route_tree_generated=True,
+                active_node="write_recursive_decomposition_policy",
+            )
+            return
+
+        if not state.recursive_route_decomposition_policy_written:
+            yield _step(
+                state,
+                label="recursive_route_decomposition_policy_written",
+                action="project manager records arbitrary-depth route decomposition, shallow display projection, PMK route memory, and split/merge stop rules before route checks",
+                recursive_route_decomposition_policy_written=True,
+                route_reviewer_depth_review_required=True,
+                active_node="define_leaf_readiness_gates",
+            )
+            return
+
+        if not state.route_leaf_readiness_gates_defined:
+            yield _step(
+                state,
+                label="route_leaf_readiness_gates_defined",
+                action="project manager defines leaf-readiness gates for dispatchable leaves and marks parent/module nodes as non-worker-dispatchable",
+                route_leaf_readiness_gates_defined=True,
                 active_node="check_root_route_model",
             )
             return
@@ -2779,7 +2821,17 @@ class AutopilotStep:
                 label="route_model_checked",
                 action="run FlowGuard checks for active route",
                 route_checked=True,
-                active_node="sync_markdown_summary",
+                active_node="check_router_leaf_only_dispatch_policy",
+            )
+            return
+
+        if not state.router_leaf_only_dispatch_policy_checked:
+            yield _step(
+                state,
+                label="router_leaf_only_dispatch_policy_checked",
+                action="process model verifies Router can traverse the full route tree, dispatch only ready leaf/repair nodes, and send parent/module nodes to child subtree or backward replay",
+                router_leaf_only_dispatch_policy_checked=True,
+                active_node="record_parent_backward_trigger_rule",
             )
             return
 
@@ -2799,6 +2851,16 @@ class AutopilotStep:
                 label="parent_backward_review_targets_enumerated",
                 action="project manager enumerates all effective parent/composite nodes directly from flow.json before route execution or after route mutation",
                 parent_backward_review_targets_enumerated=True,
+                active_node="record_user_flow_shallow_projection_policy",
+            )
+            return
+
+        if not state.user_flow_diagram_shallow_projection_policy_recorded:
+            yield _step(
+                state,
+                label="user_flow_diagram_shallow_projection_policy_recorded",
+                action="record that user-visible route signs render only the shallow route projection while showing the active deep path and hidden leaf progress",
+                user_flow_diagram_shallow_projection_policy_recorded=True,
                 active_node="sync_markdown_summary",
             )
             return
@@ -4022,6 +4084,15 @@ class AutopilotStep:
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
+            if not state.final_route_wide_gate_ledger_deep_leaf_coverage_collected:
+                yield _step(
+                    state,
+                    label="final_route_wide_gate_ledger_deep_leaf_coverage_collected",
+                    action="PM collects every effective deep leaf node, its acceptance plan, review evidence, and parent/module segment mapping into the final ledger",
+                    final_route_wide_gate_ledger_deep_leaf_coverage_collected=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
             if not state.final_route_wide_gate_ledger_product_process_gates_collected:
                 yield _step(
                     state,
@@ -4550,6 +4621,24 @@ class AutopilotStep:
                     node_acceptance_plan_written=True,
                     current_node_skill_improvement_check_done=False,
                     checkpoint_written=False,
+                    active_node="check_current_node_leaf_readiness",
+                )
+                return
+            if not state.active_node_leaf_readiness_gate_passed:
+                yield _step(
+                    state,
+                    label="active_node_leaf_readiness_gate_passed",
+                    action="project manager and reviewer confirm a leaf/repair node has a passing readiness gate before worker dispatch",
+                    active_node_leaf_readiness_gate_passed=True,
+                    active_node="block_parent_node_direct_dispatch",
+                )
+                return
+            if not state.active_node_parent_dispatch_blocked:
+                yield _step(
+                    state,
+                    label="active_node_parent_dispatch_blocked",
+                    action="Router/PM path confirms parent or module nodes cannot receive worker packets and must enter child subtree or parent backward replay",
+                    active_node_parent_dispatch_blocked=True,
                     active_node="map_node_acceptance_risk_experiments",
                 )
                 return
@@ -5325,16 +5414,27 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         state.flowguard_process_design_done
         and state.child_skill_manifest_pm_approved_for_route
         and state.candidate_route_tree_generated
+        and state.recursive_route_decomposition_policy_written
+        and state.route_leaf_readiness_gates_defined
+        and state.route_reviewer_depth_review_required
         and state.root_route_model_checked
         and state.root_product_function_model_checked
         and state.strict_gate_obligation_review_model_checked
     ):
         return InvariantResult.fail(
-            "formal route or work started before candidate tree plus root process/product/strict-review model checks"
+            "formal route or work started before candidate tree, recursive decomposition policy, leaf-readiness gates, and root process/product/strict-review model checks"
         )
     if formal_execution_started and not state.work_beyond_startup_allowed:
         return InvariantResult.fail(
             "formal execution started before PM allowed work beyond startup from a factual reviewer report"
+        )
+    if state.execution_frontier_written and not state.router_leaf_only_dispatch_policy_checked:
+        return InvariantResult.fail(
+            "execution frontier was written without verifying Router leaf-only dispatch and parent/module review routing"
+        )
+    if state.user_flow_diagram_refreshed and not state.user_flow_diagram_shallow_projection_policy_recorded:
+        return InvariantResult.fail(
+            "user route diagram refreshed before shallow projection, active path, and hidden leaf progress policy was recorded"
         )
     if state.startup_preflight_review_report_written and not state.startup_reviewer_fact_evidence_checked:
         return InvariantResult.fail(
@@ -5557,9 +5657,11 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
         if not (
             state.node_acceptance_plan_written
             and state.node_acceptance_risk_experiments_mapped
+            and state.active_node_leaf_readiness_gate_passed
+            and state.active_node_parent_dispatch_blocked
         ):
             return InvariantResult.fail(
-                "chunk started before current node acceptance plan and risk experiment mapping"
+                "chunk started before current node acceptance plan, leaf-readiness gate, parent-dispatch block, and risk experiment mapping"
             )
         if not state.lightweight_self_check_done:
             return InvariantResult.fail("chunk started before lightweight heartbeat self-check")
@@ -5620,6 +5722,14 @@ def active_child_skill_binding_required_for_chunk_execution(
     if worker_packet_needed and not state.worker_packet_child_skill_use_instruction_written:
         return InvariantResult.fail(
             "worker packet lacked a direct child-skill use instruction"
+        )
+    if worker_packet_needed and not (
+        state.active_node_leaf_readiness_gate_passed
+        and state.active_node_parent_dispatch_blocked
+        and state.router_leaf_only_dispatch_policy_checked
+    ):
+        return InvariantResult.fail(
+            "worker packet was possible before leaf readiness and parent/module dispatch blocking were proven"
         )
     if worker_packet_needed and not state.active_child_skill_source_paths_allowed:
         return InvariantResult.fail(
@@ -6235,7 +6345,7 @@ def actor_authority_gates_require_correct_role(
         and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "PM built final route-wide gate ledger before current route scan, gate collection, generated-resource lineage, stale-evidence check, superseded explanations, zero unresolved count, and zero unresolved residual risks"
+            "PM built final route-wide gate ledger before current route scan, deep leaf and parent review gate collection, generated-resource lineage, stale-evidence check, superseded explanations, zero unresolved count, and zero unresolved residual risks"
         )
     if state.final_route_wide_gate_ledger_reviewer_backward_checked and not (
         state.final_route_wide_gate_ledger_pm_built

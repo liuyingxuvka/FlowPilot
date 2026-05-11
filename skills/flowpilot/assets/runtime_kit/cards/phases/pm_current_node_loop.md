@@ -23,24 +23,34 @@ For each active route node:
 
 1. receive the node-started event card;
 2. read the latest route-memory prior path context and active frontier;
-3. issue a bounded packet for the current node only;
-4. wait for router direct-dispatch preflight before worker delivery;
-5. wait for worker result and reviewer result review;
-6. perform a PM high-standard recheck against the node acceptance plan;
-7. complete the node only after reviewer pass or repair pass.
+3. confirm the active node is a dispatchable leaf or repair node with
+   `leaf_readiness_gate.status: "pass"`; if it is a parent/module node, enter
+   the child subtree or parent backward replay path instead of issuing a worker
+   packet batch;
+4. issue one bounded current-node packet batch for the current leaf/repair node
+   only;
+5. wait for router direct-dispatch preflight before role delivery;
+6. wait for every batch result and one reviewer batch result review;
+7. perform a PM high-standard recheck against the node acceptance plan;
+8. complete the leaf/repair node only after reviewer pass or repair pass, then
+   let Router trigger parent/module backward review when all children complete.
 
-Before assigning a worker packet, consider worker balance and packet shape. For
-light or single-scope work, choose either `worker_a` or `worker_b` while keeping
-worker opportunities roughly balanced across the current run. For heavy work
-that naturally splits into disjoint scopes, create bounded separate packets for
-`worker_a` and `worker_b` so they can run in parallel without overlapping files,
-evidence duties, or review ownership.
+Register current-node work as one router-owned packet batch with `batch_id` and
+`packets[]`. The batch may include separate `worker_a` and `worker_b` packets,
+plus bounded `product_flowguard_officer` or `process_flowguard_officer` packets
+when modeling work belongs inside the active node and can start now. Router
+records every packet in the batch, gives each packet its own write grant, waits
+for every result, then sends the whole batch to reviewer. PM may complete the
+node only after the reviewer passes the complete batch or a repair batch.
 
 Every current-node worker packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_current_node_result.v1` in both the packet
 envelope and packet body's `Output Contract` section. The contract must match
 the active node id, recipient role, acceptance plan, required verification, and
 reviewer block conditions.
+Do not create a current-node worker packet for a parent/module node, for a leaf
+whose readiness gate is missing or failed, or for a node whose acceptance plan
+still says the worker must decide the decomposition.
 The packet body must also include the generated `Report Contract For This Task`
 block, including required result sections, required return envelope fields,
 blocked/needs-PM behavior, and the rule that field names and section names must

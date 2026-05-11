@@ -1,0 +1,182 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=84",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "coarse_leaf_marked_ready": {
+        "detected": true,
+        "expected_failure": "leaf is too coarse for direct worker execution",
+        "failures": [
+          "leaf is too coarse for direct worker execution"
+        ]
+      },
+      "display_hides_active_path": {
+        "detected": true,
+        "expected_failure": "user display hides active deep path or hidden leaf progress",
+        "failures": [
+          "user display hides active deep path or hidden leaf progress"
+        ]
+      },
+      "display_leaks_deep_tree": {
+        "detected": true,
+        "expected_failure": "user display leaked the deep internal route tree",
+        "failures": [
+          "user display leaked the deep internal route tree"
+        ]
+      },
+      "final_ledger_omits_deep_leaf": {
+        "detected": true,
+        "expected_failure": "final route-wide ledger omits deep leaf nodes",
+        "failures": [
+          "final route-wide ledger omits deep leaf nodes"
+        ]
+      },
+      "fixed_two_layer_complex_route": {
+        "detected": true,
+        "expected_failure": "complex route was accepted with fixed two-layer depth",
+        "failures": [
+          "complex route was accepted with fixed two-layer depth",
+          "recursive route tree lacks parent-to-leaf structure"
+        ]
+      },
+      "missing_decomposition_memory": {
+        "detected": true,
+        "expected_failure": "PMK route memory lacks decomposition rationale",
+        "failures": [
+          "PMK route memory lacks decomposition rationale"
+        ]
+      },
+      "mutation_frontier_not_reset": {
+        "detected": true,
+        "expected_failure": "route mutation split node without resetting stale frontier",
+        "failures": [
+          "route mutation split node without resetting stale frontier"
+        ]
+      },
+      "over_split_leaf_steps": {
+        "detected": true,
+        "expected_failure": "route over-split operational steps without independent acceptance value",
+        "failures": [
+          "route over-split operational steps without independent acceptance value"
+        ]
+      },
+      "parent_dispatched_to_worker": {
+        "detected": true,
+        "expected_failure": "router dispatched a parent or module node to a worker",
+        "failures": [
+          "router dispatched a parent or module node to a worker",
+          "router dispatch policy is not leaf-only"
+        ]
+      },
+      "parent_failure_advances": {
+        "detected": true,
+        "expected_failure": "parent review failure advanced without route mutation or child rework",
+        "failures": [
+          "parent completed without passing backward composition review",
+          "parent review failure advanced without route mutation or child rework"
+        ]
+      },
+      "parent_review_skipped": {
+        "detected": true,
+        "expected_failure": "parent completed without passing backward composition review",
+        "failures": [
+          "parent completed without passing backward composition review"
+        ]
+      },
+      "reviewer_skips_depth_review": {
+        "detected": true,
+        "expected_failure": "reviewer did not check both insufficient depth and over-decomposition",
+        "failures": [
+          "reviewer did not check both insufficient depth and over-decomposition"
+        ]
+      },
+      "unready_leaf_dispatched": {
+        "detected": true,
+        "expected_failure": "dispatchable leaf lacks passing leaf-readiness gate",
+        "failures": [
+          "dispatchable leaf lacks passing leaf-readiness gate",
+          "router dispatched a leaf without a passed readiness gate"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "intended_plan": {
+    "failures": [],
+    "ok": true,
+    "scenario": "intended_recursive_route",
+    "state": {
+      "active_node_has_children": false,
+      "active_path_breadcrumb_visible": true,
+      "all_dispatchable_leaves_ready": true,
+      "canonical_tree_depth": 4,
+      "dispatched_leaf_readiness_status": "pass",
+      "dispatched_node_kind": "leaf",
+      "display_depth": 2,
+      "final_ledger_covers_deep_leaves": true,
+      "final_ledger_covers_parent_reviews": true,
+      "hidden_leaf_progress_visible": true,
+      "leaf_dependency_boundary_defined": true,
+      "leaf_failure_isolation_defined": true,
+      "leaf_proof_defined": true,
+      "leaf_readiness_gate_defined": true,
+      "leaf_single_outcome": true,
+      "leaf_worker_executable_without_replanning": true,
+      "non_leaf_nodes_have_children": true,
+      "over_split_independent_acceptance_value": true,
+      "over_split_operational_steps": false,
+      "parent_backward_review_failed": false,
+      "parent_backward_review_passed": true,
+      "parent_backward_review_required": true,
+      "parent_children_completed": true,
+      "parent_failure_causes_mutation_or_rework": true,
+      "parent_marked_complete": true,
+      "pm_full_route_tree_written": true,
+      "pmk_decomposition_memory_written": true,
+      "pmk_split_stop_merge_rationale_written": true,
+      "reviewer_blocks_bad_depth": true,
+      "reviewer_checked_over_decomposition": true,
+      "reviewer_checked_under_decomposition": true,
+      "route_has_leaf_nodes": true,
+      "route_has_module_nodes": true,
+      "route_has_parent_nodes": true,
+      "route_mutation_split_node": true,
+      "router_dispatches_only_leaf_nodes": true,
+      "router_knows_active_path": true,
+      "scenario": "intended_recursive_route",
+      "stale_frontier_reset_to_mutated_subtree": true,
+      "status": "running",
+      "task_complexity": "complex",
+      "terminal_reason": "none",
+      "user_display_leaks_deep_tree": false,
+      "user_display_uses_shallow_projection": true,
+      "worker_packet_registered": true
+    }
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "intended_recursive_route"
+    ],
+    "edge_count": 28,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 13,
+    "state_count": 29
+  }
+}

@@ -63,6 +63,16 @@
     "parent_backward_replay_path": ".flowpilot/runs/<run-id>/routes/<route-id>/nodes/<node-id>/parent_backward_replay.json",
     "semantic_importance_used_to_trigger_review": false
   },
+  "leaf_readiness_gate": {
+    "status": "<pass|fail|not_applicable_parent|pending>",
+    "single_outcome": "<true|false>",
+    "worker_executable_without_replanning": "<true|false>",
+    "proof_defined": "<true|false>",
+    "dependency_boundary_defined": "<true|false>",
+    "failure_isolation_defined": "<true|false>",
+    "over_decomposition_checked": "<true|false>",
+    "reason": "<why-this-node-is-or-is-not-dispatchable>"
+  },
   "inherited_root_requirements": [
     {
       "requirement_id": "<root-requirement-id>",

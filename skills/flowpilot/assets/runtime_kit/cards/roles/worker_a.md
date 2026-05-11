@@ -33,6 +33,11 @@ envelope instead of continuing from memory. Do not use the full route,
 downstream plan, old screenshots, old assets, or private role context unless
 the packet explicitly includes it.
 
+Your packet may be one member of a PM-authored parallel batch. Complete only the
+packet addressed to Worker A. Do not wait for sibling packets, infer whether the
+batch is complete, request reviewer review, or decide route advancement. Router
+joins the whole batch after every addressed role returns its result.
+
 If Router includes an `active_holder_lease.json` path for this exact packet,
 Worker A may use only that lease's fast-lane actions: acknowledge the packet,
 write controller-safe progress, submit the result, and repair mechanical

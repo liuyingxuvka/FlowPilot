@@ -79,6 +79,27 @@ Route requirements:
 - include a concise PM-authored visible route summary suitable for
   `display_plan.json`; it may be high level, but it must name the route nodes
   that Controller is allowed to show in the host visible plan;
+- recursive decomposition is allowed and expected when the work is complex.
+  Do not stop at a fixed two-layer shape. Build a `full_route_tree` that can
+  use any needed depth, then expose only a shallow `display_plan` for the
+  user-visible route sign. Default `display_depth` is 2 unless PM records a
+  stronger reason for a different depth;
+- split every complex parent/module node until each executable leaf is a
+  concrete worker-ready task with clear input, output, evidence, dependencies,
+  failure boundary, and proof. Parent/module nodes are composition and review
+  boundaries, not worker packets;
+- each node must include `node_kind` (`parent`, `module`, `leaf`, or `repair`),
+  `parent_node_id`, `depth`, `child_node_ids`, `user_visible`, and for leaves a
+  `leaf_readiness_gate`. A leaf may be dispatched only when
+  `leaf_readiness_gate.status` is `pass`;
+- record a `decomposition_review` that attacks both under-decomposition
+  (worker leaf too broad or vague) and over-decomposition (extra nodes that add
+  no evidence, failure isolation, role boundary, parallelism, or user-visible
+  milestone);
+- record route-memory / PMK entries for the decomposition policy, visible
+  projection, current active path policy, hidden leaf progress policy, and why
+  each parent/module exists. Later route mutations must update this route
+  memory instead of relying on chat;
 - worker-capable nodes must close with all checklist items complete;
 - human manual checks belong in final reports or review gates, not as fake
   unfinished worker nodes;

@@ -22,6 +22,12 @@ officer has passed the route process check.
 Check only product fit:
 
 - route nodes preserve the product-function architecture and frozen root contract;
+- parent/module nodes represent product-composition or review boundaries, and
+  their child leaves collectively prove the parent product outcome before the
+  parent is accepted;
+- shallow user-visible route summaries do not hide product obligations: the
+  final ledger and terminal backward replay must still cover every effective
+  deep leaf and every parent/module segment;
 - required product capabilities have route coverage;
 - UI, visual, desktop, localization, interaction, and verification requirements are not silently demoted;
 - final ledger and terminal replay can prove the delivered product against the contract;

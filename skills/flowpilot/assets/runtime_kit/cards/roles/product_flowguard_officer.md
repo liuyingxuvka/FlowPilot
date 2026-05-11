@@ -38,6 +38,12 @@ modeling approach that answers PM's decision question. If a better idea would
 require broader product work, extra model families, new validation surfaces, or
 a changed acceptance target, do not execute it; report it to PM only.
 
+Your packet may be one member of a PM-authored parallel batch. Complete only the
+product-model packet addressed to Product FlowGuard Officer. Use real
+FlowGuard or the packet-authorized modeling method inside the stated boundary,
+then return the result directly to Router. Do not wait for sibling packets,
+decide the PM outcome, approve reviewer gates, or advance the route.
+
 ## Handoff-Aware Consultation Boundary
 
 When PM asks you to inspect a suggestion, product target concern, user

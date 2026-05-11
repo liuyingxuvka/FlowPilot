@@ -31,7 +31,12 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Review a worker result before PM may use it.
+Review a worker result or a router-supplied packet batch before PM may use it.
+When Router provides `batch_id`, `packet_ids`, or a packet index, open every
+sealed result in that batch through the runtime and return one batch-level
+review. Do not pass the batch after inspecting only the first or easiest result.
+The sealed review body must identify `batch_id`, `packet_count`,
+`reviewed_packet_ids`, `per_packet_findings`, and `overall_passed`.
 
 Open the sealed result body through `flowpilot_runtime.py open-result` with a
 concrete `--agent-id` before judging substance. Use the unified runtime as the live result-open entrypoint. This runtime session is the reviewer read receipt; do not replace

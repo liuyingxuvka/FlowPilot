@@ -6,6 +6,23 @@
     "rejected_extra_route_complexity": [],
     "route_complexity_justifications": []
   },
+  "display_depth": 2,
+  "decomposition_policy": {
+    "recursive_decomposition_allowed": true,
+    "fixed_two_layer_cap_forbidden": true,
+    "parent_or_module_nodes_are_not_worker_dispatchable": true,
+    "leaf_nodes_require_readiness_gate_pass": true,
+    "under_decomposition_check_required": true,
+    "over_decomposition_check_required": true,
+    "route_memory_required": true
+  },
+  "display_plan": {
+    "display_depth": 2,
+    "source": "PM shallow projection from the full route tree",
+    "show_top_layers_only": true,
+    "show_active_path_when_deep_node_hidden": true,
+    "show_hidden_leaf_progress": true
+  },
   "nodes": [
     {
       "allowed_next": [
@@ -14,6 +31,20 @@
         "blocked"
       ],
       "id": "node-001-start",
+      "node_kind": "leaf",
+      "parent_node_id": null,
+      "depth": 1,
+      "child_node_ids": [],
+      "user_visible": true,
+      "leaf_readiness_gate": {
+        "status": "pending",
+        "single_outcome": false,
+        "worker_executable_without_replanning": false,
+        "proof_defined": false,
+        "dependency_boundary_defined": false,
+        "failure_isolation_defined": false,
+        "over_decomposition_checked": false
+      },
       "required_gates": [
         "self_interrogation",
         "material_intake_packet_written",
@@ -60,6 +91,20 @@
         "blocked"
       ],
       "id": "node-002-parent-subtree-review",
+      "node_kind": "leaf",
+      "parent_node_id": null,
+      "depth": 1,
+      "child_node_ids": [],
+      "user_visible": true,
+      "leaf_readiness_gate": {
+        "status": "pending",
+        "single_outcome": false,
+        "worker_executable_without_replanning": false,
+        "proof_defined": false,
+        "dependency_boundary_defined": false,
+        "failure_isolation_defined": false,
+        "over_decomposition_checked": false
+      },
       "required_gates": [
         "parent_subtree_loaded",
         "parent_subtree_map_emitted",
@@ -81,6 +126,20 @@
         "blocked"
       ],
       "id": "node-003-child-skill-conformance",
+      "node_kind": "leaf",
+      "parent_node_id": null,
+      "depth": 1,
+      "child_node_ids": [],
+      "user_visible": true,
+      "leaf_readiness_gate": {
+        "status": "pending",
+        "single_outcome": false,
+        "worker_executable_without_replanning": false,
+        "proof_defined": false,
+        "dependency_boundary_defined": false,
+        "failure_isolation_defined": false,
+        "over_decomposition_checked": false
+      },
       "required_gates": [
         "child_skill_gate_manifest_refined_for_node",
         "child_skill_contract_loaded",
@@ -107,6 +166,20 @@
         "blocked"
       ],
       "id": "node-004-implement",
+      "node_kind": "leaf",
+      "parent_node_id": null,
+      "depth": 1,
+      "child_node_ids": [],
+      "user_visible": true,
+      "leaf_readiness_gate": {
+        "status": "pending",
+        "single_outcome": false,
+        "worker_executable_without_replanning": false,
+        "proof_defined": false,
+        "dependency_boundary_defined": false,
+        "failure_isolation_defined": false,
+        "over_decomposition_checked": false
+      },
       "required_gates": [
         "chunk_verification_defined"
       ],
@@ -125,6 +198,20 @@
         "blocked"
       ],
       "id": "node-005-verify",
+      "node_kind": "leaf",
+      "parent_node_id": null,
+      "depth": 1,
+      "child_node_ids": [],
+      "user_visible": true,
+      "leaf_readiness_gate": {
+        "status": "pending",
+        "single_outcome": false,
+        "worker_executable_without_replanning": false,
+        "proof_defined": false,
+        "dependency_boundary_defined": false,
+        "failure_isolation_defined": false,
+        "over_decomposition_checked": false
+      },
       "required_gates": [
         "final_verification",
         "final_route_wide_gate_ledger",

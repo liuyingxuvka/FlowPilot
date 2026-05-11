@@ -52,6 +52,19 @@ route-memory prior path context. The plan must state:
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
 - whether the node has children and therefore requires parent backward replay;
+- whether the active node is a parent/module, leaf, or repair node. If it has
+  children, this plan must mark the node as not worker-dispatchable and route
+  execution into the child subtree or parent backward replay instead of issuing
+  a worker packet for the parent;
+- for a leaf or repair node, include a `leaf_readiness_gate` with `status`,
+  `single_outcome`, `worker_executable_without_replanning`, `proof_defined`,
+  `dependency_boundary_defined`, `failure_isolation_defined`, and
+  `over_decomposition_checked`. Use `status: "pass"` only when the node can be
+  completed by a worker from the packet without PM replanning;
+- at node entry, re-ask whether this apparent leaf is still too broad. If it
+  is too broad, split it into children through route mutation before worker
+  dispatch. If it is over-split, merge or waive the extra structure with a PM
+  complexity reason before dispatch;
 - forbidden low-standard or placeholder outcomes;
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.

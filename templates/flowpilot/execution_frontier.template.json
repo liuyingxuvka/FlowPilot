@@ -13,6 +13,17 @@
   "route_version": 1,
   "frontier_version": 1,
   "active_node": "node-001-start",
+  "active_parent_node_id": "<parent-node-id-or-null>",
+  "active_leaf_node_id": "<leaf-or-repair-node-id-or-null>",
+  "active_path": [
+    {
+      "node_id": "node-001-start",
+      "label": "Startup",
+      "depth": 1,
+      "node_kind": "<parent|module|leaf|repair>"
+    }
+  ],
+  "pending_parent_backward_reviews": [],
   "current_subnode": "<subnode-id-or-null>",
   "next_gate": "<gate-id-or-null>",
   "user_flow_diagram": {
@@ -36,6 +47,14 @@
     ],
     "same_graph_for_chat_and_ui": true,
     "stage_count_target": "6-8",
+    "display_depth": 2,
+    "active_path": [],
+    "hidden_leaf_progress": {
+      "display_depth": 2,
+      "hidden_leaf_count": 0,
+      "completed_hidden_leaf_count": 0,
+      "has_hidden_leaves": false
+    },
     "highlight_current_stage": true,
     "current_stage": "<intake|product|modeling|route|execution|verification|completion|repair>",
     "cockpit_open": false,

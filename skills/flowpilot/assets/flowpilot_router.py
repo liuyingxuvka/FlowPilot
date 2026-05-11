@@ -161,6 +161,8 @@ MODEL_MISS_OFFICER_REPORT_REQUIRED_FIELDS = (
 PM_ROLE_WORK_REQUEST_INDEX_SCHEMA = "flowpilot.pm_role_work_request_index.v1"
 PM_ROLE_WORK_REQUEST_SCHEMA = "flowpilot.pm_role_work_request.v1"
 PM_ROLE_WORK_RESULT_DECISION_SCHEMA = "flowpilot.pm_role_work_result_decision.v1"
+PARALLEL_PACKET_BATCH_SCHEMA = "flowpilot.parallel_packet_batch.v1"
+PARALLEL_PACKET_BATCH_REF_SCHEMA = "flowpilot.parallel_packet_batch_ref.v1"
 PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES = {
     "human_like_reviewer",
     "process_flowguard_officer",
@@ -187,6 +189,14 @@ PM_ROLE_WORK_OPEN_STATUSES = {
     "result_relayed_to_pm",
 }
 PM_ROLE_WORK_TERMINAL_DECISIONS = {"absorbed", "canceled", "superseded"}
+PARALLEL_PACKET_BATCH_OPEN_STATUSES = {
+    "registered",
+    "packets_relayed",
+    "results_joined",
+    "results_relayed_to_reviewer",
+    "results_relayed_to_pm",
+    "reviewed",
+}
 PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
     "current_node_work": {
         "task_family": "worker.current_node",
@@ -580,6 +590,11 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
         "dedupe_fields": ("request_id", "decision"),
         "retry_group_fields": ("event", "request_id"),
     },
+    "worker_current_node_result_returned": {
+        "family": "current_node_result",
+        "dedupe_fields": ("packet_id", "result_hash"),
+        "retry_group_fields": ("event", "packet_id"),
+    },
     GATE_DECISION_EVENT: {
         "family": "gate",
         "dedupe_fields": ("gate_id", "route_version", "decided_by_role"),
@@ -598,6 +613,11 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
     "pm_completes_current_node_from_reviewed_result": {
         "family": "node_completion",
         "dedupe_fields": ("node_id", "packet_id", "result_hash"),
+        "retry_group_fields": ("event", "node_id"),
+    },
+    "pm_completes_parent_node_from_backward_replay": {
+        "family": "node_completion",
+        "dedupe_fields": ("node_id", "parent_backward_replay_hash", "parent_segment_decision_hash"),
         "retry_group_fields": ("event", "node_id"),
     },
 }
@@ -1052,7 +1072,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "pm_parent_backward_targets_card_delivered",
         "label": "pm_parent_backward_targets_phase_card_delivered",
         "card_id": "pm.parent_backward_targets",
-        "requires_flag": "node_reviewer_passed_result",
+        "requires_flag": "node_acceptance_plan_reviewer_passed",
         "requires_active_node_children": True,
         "to_role": "project_manager",
     },
@@ -1316,6 +1336,7 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "pm_registers_current_node_packet": {
         "flag": "current_node_packet_registered",
         "requires_flag": "node_acceptance_plan_reviewer_passed",
+        "forbids_active_node_children": True,
         "summary": "PM registered a current-node packet envelope for router direct dispatch.",
     },
     "router_direct_material_scan_dispatch_recheck_passed": {
@@ -1671,6 +1692,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "node_completed_by_pm",
         "requires_flag": "node_reviewer_passed_result",
         "summary": "PM completed current node from reviewed result.",
+    },
+    "pm_completes_parent_node_from_backward_replay": {
+        "flag": "node_completed_by_pm",
+        "requires_flag": "parent_segment_decision_recorded",
+        "summary": "PM completed a parent/module node after reviewer-passed backward replay and PM segment decision.",
     },
     "pm_records_evidence_quality_package": {
         "flag": "evidence_quality_package_written",
@@ -2843,6 +2869,22 @@ def _role_work_result_identity_scope(payload_view: dict[str, Any]) -> dict[str, 
     }
 
 
+def _current_node_result_identity_scope(payload_view: dict[str, Any]) -> dict[str, str]:
+    result_hash = str(
+        payload_view.get("result_hash")
+        or payload_view.get("result_body_hash")
+        or payload_view.get("body_hash")
+        or ""
+    )
+    if not result_hash:
+        result_hash = _payload_body_hash(payload_view)
+    return {
+        "event": "worker_current_node_result_returned",
+        "packet_id": str(payload_view.get("packet_id") or "missing-packet-id"),
+        "result_hash": result_hash,
+    }
+
+
 def _pm_role_work_result_decision_identity_scope(payload_view: dict[str, Any]) -> dict[str, str]:
     return {
         "event": PM_ROLE_WORK_RESULT_DECISION_EVENT,
@@ -2878,6 +2920,8 @@ def _scoped_event_identity(
         scope = _pm_role_work_request_identity_scope(payload_view)
     elif event == ROLE_WORK_RESULT_RETURNED_EVENT:
         scope = _role_work_result_identity_scope(payload_view)
+    elif event == "worker_current_node_result_returned":
+        scope = _current_node_result_identity_scope(payload_view)
     elif event == PM_ROLE_WORK_RESULT_DECISION_EVENT:
         scope = _pm_role_work_result_decision_identity_scope(payload_view)
     else:
@@ -6672,6 +6716,18 @@ def _display_plan_chat_markdown(plan_projection: dict[str, Any], *, display_kind
         lines.append(f"- {label} - {status}")
     if len(lines) == 2:
         lines.append("- Waiting for PM route - in_progress")
+    active_path = plan_projection.get("active_path") if isinstance(plan_projection.get("active_path"), list) else []
+    if active_path:
+        path_labels = [
+            str(item.get("label") or item.get("id"))
+            for item in active_path
+            if isinstance(item, dict) and (item.get("label") or item.get("id"))
+        ]
+        if path_labels:
+            lines.extend(["", f"Current path: {' > '.join(path_labels)}"])
+    progress = plan_projection.get("hidden_leaf_progress")
+    if isinstance(progress, dict) and progress.get("total"):
+        lines.append(f"Hidden leaf progress: {progress.get('completed', 0)}/{progress.get('total')} complete")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -8637,6 +8693,7 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
     if not isinstance(packet_specs, list) or not packet_specs:
         raise RouterError("material scan requires payload.packets with PM-authored packet bodies")
     records: list[dict[str, Any]] = []
+    batch_id = str(payload.get("batch_id") or "material-scan-batch-001")
     for index, spec in enumerate(packet_specs, start=1):
         if not isinstance(spec, dict):
             raise RouterError("each material scan packet must be an object")
@@ -8662,27 +8719,28 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
             },
             output_contract=spec.get("output_contract") if isinstance(spec.get("output_contract"), dict) else None,
         )
-        paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
-        records.append(
-            {
-                "packet_id": packet_id,
-                "to_role": to_role,
-                "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
-                "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
-                "result_body_path": project_relative(project_root, paths["result_body"]),
-                "result_write_target": {
-                    "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
-                    "result_body_path": project_relative(project_root, paths["result_body"]),
-                },
-                "output_contract_id": envelope.get("output_contract_id"),
-            }
-        )
+        records.append(_packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type="material_scan"))
+    _write_parallel_packet_batch(
+        project_root,
+        run_root,
+        run_state,
+        batch_id=batch_id,
+        batch_kind="material_scan",
+        phase="material_scan",
+        records=records,
+        node_id="material-intake",
+        join_policy="all_results_before_review",
+        review_policy="batch_material_sufficiency_review_before_pm",
+        pm_absorption_required=True,
+    )
     write_json(
         _material_scan_index_path(run_root),
         {
             "schema_version": "flowpilot.material_scan_packets.v1",
             "run_id": run_state["run_id"],
             "written_by_role": "project_manager",
+            "batch_id": batch_id,
+            "batch_kind": "material_scan",
             "controller_may_read_packet_body": False,
             "router_direct_dispatch_required_before_worker": True,
             "reviewer_dispatch_required_before_worker": False,
@@ -8823,6 +8881,9 @@ def _write_research_package(project_root: Path, run_root: Path, run_state: dict[
     decision_question = payload.get("decision_question")
     if not decision_question:
         raise RouterError("research package requires decision_question")
+    packet_specs = payload.get("packets")
+    if packet_specs is not None and (not isinstance(packet_specs, list) or not packet_specs):
+        raise RouterError("research package packets must be a non-empty list when provided")
     package = {
         "schema_version": "flowpilot.research_package.v1",
         "run_id": run_state["run_id"],
@@ -8831,6 +8892,8 @@ def _write_research_package(project_root: Path, run_root: Path, run_state: dict[
         "allowed_source_types": payload.get("allowed_source_types") or [],
         "host_capability_decision": payload.get("host_capability_decision") or "local_sources_only",
         "worker_owner": payload.get("worker_owner") or "worker_a",
+        "batch_id": payload.get("batch_id") or "research-batch-001",
+        "packets": packet_specs or [],
         "reviewer_direct_check_required": True,
         "stop_conditions": payload.get("stop_conditions") or [],
         "written_at": utc_now(),
@@ -8850,7 +8913,7 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
     worker_owner = str(package.get("worker_owner") or "worker_a")
     if worker_owner not in {"worker_a", "worker_b"}:
         raise RouterError("research worker owner must be worker_a or worker_b")
-    packet_id = str(payload.get("packet_id") or "research-packet-001")
+    batch_id = str(payload.get("batch_id") or package.get("batch_id") or "research-batch-001")
     allowed_source_types = list(package.get("allowed_source_types") or [])
     allowed_sources = payload.get("allowed_sources")
     if not isinstance(allowed_sources, list) or not allowed_sources:
@@ -8866,29 +8929,79 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
         "reviewer_direct_check_required": bool(package.get("reviewer_direct_check_required")),
         "stop_conditions": stop_conditions,
     }
-    body_text = payload.get("worker_packet_body")
-    if body_text is None:
-        body_text = json.dumps(research_body_payload, indent=2, sort_keys=True)
-    if not isinstance(body_text, str) or not body_text.strip():
-        raise RouterError("research capability decision requires non-empty worker packet body")
-    envelope = packet_runtime.create_packet(
+    raw_packet_specs = payload.get("packets") if isinstance(payload.get("packets"), list) else package.get("packets")
+    packet_specs = raw_packet_specs if isinstance(raw_packet_specs, list) and raw_packet_specs else [
+        {
+            "packet_id": payload.get("packet_id") or "research-packet-001",
+            "to_role": worker_owner,
+            "body_text": payload.get("worker_packet_body"),
+            "output_contract": payload.get("output_contract") if isinstance(payload.get("output_contract"), dict) else None,
+        }
+    ]
+    records: list[dict[str, Any]] = []
+    for index, spec in enumerate(packet_specs, start=1):
+        if not isinstance(spec, dict):
+            raise RouterError("each research packet spec must be an object")
+        to_role = str(spec.get("to_role") or spec.get("recipient_role") or worker_owner)
+        if to_role not in {"worker_a", "worker_b", "process_flowguard_officer", "product_flowguard_officer"}:
+            raise RouterError("research packets may target workers or FlowGuard officers only")
+        packet_type = "officer_request" if to_role in {"process_flowguard_officer", "product_flowguard_officer"} else "research"
+        packet_id = str(spec.get("packet_id") or f"research-packet-{index:03d}")
+        body_text = spec.get("body_text")
+        if body_text is None:
+            body_text = json.dumps(
+                {
+                    **research_body_payload,
+                    "batch_id": batch_id,
+                    "packet_focus": spec.get("packet_focus") or spec.get("request_kind") or "research",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        if not isinstance(body_text, str) or not body_text.strip():
+            raise RouterError("research packet requires non-empty body_text")
+        output_contract = spec.get("output_contract") if isinstance(spec.get("output_contract"), dict) else None
+        if output_contract is None and packet_type == "officer_request":
+            output_contract = _pm_role_work_output_contract(
+                run_root,
+                contract_id=str(spec.get("output_contract_id") or "flowpilot.output_contract.officer_model_report.v1"),
+                to_role=to_role,
+                packet_type=packet_type,
+                node_id="research",
+            )
+        envelope = packet_runtime.create_packet(
+            project_root,
+            run_id=str(run_state["run_id"]),
+            packet_id=packet_id,
+            from_role="project_manager",
+            to_role=to_role,
+            node_id="research",
+            body_text=body_text,
+            is_current_node=False,
+            packet_type=packet_type,
+            metadata={
+                "stage": "research",
+                "source": "research_capability_decision_recorded",
+                "batch_id": batch_id,
+                "research_package_path": project_relative(project_root, package_path),
+                **(spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {}),
+            },
+            output_contract=output_contract,
+        )
+        records.append(_packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type=packet_type))
+    _write_parallel_packet_batch(
         project_root,
-        run_id=str(run_state["run_id"]),
-        packet_id=packet_id,
-        from_role="project_manager",
-        to_role=worker_owner,
+        run_root,
+        run_state,
+        batch_id=batch_id,
+        batch_kind="research",
+        phase="research",
+        records=records,
         node_id="research",
-        body_text=body_text,
-        is_current_node=False,
-        packet_type="research",
-        metadata={
-            "stage": "research",
-            "source": "research_capability_decision_recorded",
-            "research_package_path": project_relative(project_root, package_path),
-        },
-        output_contract=payload.get("output_contract") if isinstance(payload.get("output_contract"), dict) else None,
+        join_policy="all_results_before_review",
+        review_policy="batch_research_direct_source_review_before_pm",
+        pm_absorption_required=True,
     )
-    packet_paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
     write_json(
         run_root / "research" / "research_capability_decision.json",
         {
@@ -8901,11 +9014,13 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
             "allowed_sources": allowed_sources,
             "host_capability_decision": package.get("host_capability_decision"),
             "worker_owner": worker_owner,
+            "batch_id": batch_id,
             "reviewer_direct_check_required": bool(package.get("reviewer_direct_check_required")),
             "stop_conditions": stop_conditions,
             "explicit_user_approval_required": bool(payload.get("explicit_user_approval_required")),
             "explicit_user_approval_recorded": bool(payload.get("explicit_user_approval_recorded")),
-            "worker_packet_id": packet_id,
+            "worker_packet_id": records[0]["packet_id"],
+            "packet_ids": [record["packet_id"] for record in records],
             "recorded_at": utc_now(),
             **_role_output_envelope_record(payload),
         },
@@ -8916,27 +9031,17 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
             "schema_version": "flowpilot.research_packet.v1",
             "run_id": run_state["run_id"],
             "written_by_role": "project_manager",
-            "packet_id": packet_id,
+            "batch_id": batch_id,
+            "packet_id": records[0]["packet_id"],
             "worker_owner": worker_owner,
             "controller_may_read_packet_body": False,
-            "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
-            "packet_body_path": envelope["body_path"],
-            "packet_body_hash": envelope["body_hash"],
-            "body_path": envelope["body_path"],
-            "body_hash": envelope["body_hash"],
-            "result_envelope_path": project_relative(project_root, packet_paths["result_envelope"]),
-            "packets": [
-                {
-                    "packet_id": packet_id,
-                    "to_role": worker_owner,
-                    "packet_envelope_path": envelope["body_path"].replace("packet_body.md", "packet_envelope.json"),
-                    "packet_body_path": envelope["body_path"],
-                    "packet_body_hash": envelope["body_hash"],
-                    "body_path": envelope["body_path"],
-                    "body_hash": envelope["body_hash"],
-                    "result_envelope_path": project_relative(project_root, packet_paths["result_envelope"]),
-                }
-            ],
+            "packet_envelope_path": records[0]["packet_envelope_path"],
+            "packet_body_path": records[0].get("packet_body_path"),
+            "packet_body_hash": records[0].get("packet_body_hash"),
+            "body_path": records[0].get("packet_body_path"),
+            "body_hash": records[0].get("packet_body_hash"),
+            "result_envelope_path": records[0]["result_envelope_path"],
+            "packets": records,
             "written_at": utc_now(),
         },
     )
@@ -8945,6 +9050,61 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
 def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise RouterError("PM role-work request payload must be an object")
+    raw_batch = payload.get("requests") if isinstance(payload.get("requests"), list) else payload.get("packets")
+    if isinstance(raw_batch, list):
+        if not raw_batch:
+            raise RouterError("PM role-work request batch requires at least one request")
+        batch_id = str(payload.get("batch_id") or "pm-role-work-batch-001")
+        request_ids: list[str] = []
+        to_roles: list[str] = []
+        for index, spec in enumerate(raw_batch, start=1):
+            if not isinstance(spec, dict):
+                raise RouterError("PM role-work request batch entries must be objects")
+            request_id = str(spec.get("request_id") or f"{batch_id}-request-{index:03d}")
+            to_role = str(spec.get("to_role") or spec.get("recipient_role") or "")
+            if to_role in to_roles:
+                raise RouterError("PM role-work request batch cannot assign two open packets to the same role")
+            to_roles.append(to_role)
+            request_ids.append(request_id)
+            single_payload = {
+                **payload,
+                **spec,
+                "request_id": request_id,
+                "batch_id": batch_id,
+            }
+            single_payload.pop("requests", None)
+            single_payload.pop("packets", None)
+            _write_pm_role_work_request(project_root, run_root, run_state, single_payload)
+        index_doc = _load_pm_role_work_request_index(run_root, run_state)
+        records = [
+            record
+            for request_id in request_ids
+            if isinstance((record := _pm_role_work_request_record(index_doc, request_id)), dict)
+        ]
+        _write_parallel_packet_batch(
+            project_root,
+            run_root,
+            run_state,
+            batch_id=batch_id,
+            batch_kind="pm_role_work",
+            phase="pm_role_work_request",
+            records=records,
+            node_id=str(payload.get("node_id") or "pm-role-work"),
+            join_policy="all_results_before_pm_absorption",
+            review_policy="pm_absorbs_batch_without_reviewer_unless_packet_requires_review",
+            pm_absorption_required=True,
+        )
+        index_doc["active_batch_id"] = batch_id
+        index_doc["active_request_ids"] = request_ids
+        index_doc["active_request_id"] = request_ids[0] if request_ids else None
+        _write_pm_role_work_request_index(run_root, index_doc)
+        run_state["pm_role_work_requests"] = {
+            "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
+            "active_batch_id": batch_id,
+            "active_request_ids": request_ids,
+            "active_request_mode": payload.get("request_mode") or payload.get("mode") or "blocking",
+        }
+        return
     if not _pm_role_work_channel_open(run_state):
         raise RouterError("PM role-work request requires an open PM decision context")
     requested_by_role = str(payload.get("requested_by_role") or payload.get("from_role") or "").strip()
@@ -9045,6 +9205,7 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
     record = {
         "schema_version": PM_ROLE_WORK_REQUEST_SCHEMA,
         "request_id": request_id,
+        "batch_id": payload.get("batch_id"),
         "requested_by_role": "project_manager",
         "to_role": to_role,
         "request_mode": request_mode,
@@ -9071,6 +9232,24 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
     else:
         index.setdefault("requests", []).append(record)
     index["active_request_id"] = request_id
+    if not payload.get("batch_id"):
+        batch_id = f"pm-role-work-batch-{_safe_packet_id_component(request_id)}"
+        record["batch_id"] = batch_id
+        _write_parallel_packet_batch(
+            project_root,
+            run_root,
+            run_state,
+            batch_id=batch_id,
+            batch_kind="pm_role_work",
+            phase="pm_role_work_request",
+            records=[record],
+            node_id=node_id,
+            join_policy="all_results_before_pm_absorption",
+            review_policy="pm_absorbs_batch_without_reviewer_unless_packet_requires_review",
+            pm_absorption_required=True,
+        )
+        index["active_batch_id"] = batch_id
+        index["active_request_ids"] = [request_id]
     _write_pm_role_work_request_index(run_root, index)
     run_state["pm_role_work_requests"] = {
         "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
@@ -9199,13 +9378,15 @@ def _write_role_work_result_returned(project_root: Path, run_root: Path, run_sta
     record["result_returned_at"] = utc_now()
     index["active_request_id"] = request_id
     _write_pm_role_work_request_index(run_root, index)
+    _mark_parallel_batch_results_joined(project_root, run_root, run_state, "pm_role_work")
 
 
 def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> str:
     decision_payload = _load_file_backed_role_payload_if_present(project_root, payload)
     request_id = str(decision_payload.get("request_id") or "").strip()
-    if not request_id:
-        raise RouterError("PM role-work result decision requires request_id")
+    batch_id = str(decision_payload.get("batch_id") or "").strip()
+    if not request_id and not batch_id:
+        raise RouterError("PM role-work result decision requires request_id or batch_id")
     decided_by_role = str(
         decision_payload.get("decided_by_role")
         or decision_payload.get("recorded_by_role")
@@ -9217,16 +9398,34 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
     if decision not in PM_ROLE_WORK_TERMINAL_DECISIONS:
         raise RouterError("PM role-work result decision must be absorbed, canceled, or superseded")
     index = _load_pm_role_work_request_index(run_root, run_state)
-    record = _pm_role_work_request_record(index, request_id)
-    if not isinstance(record, dict):
-        raise RouterError(f"PM role-work result decision references unknown request_id: {request_id}")
-    if decision == "absorbed" and record.get("status") != "result_relayed_to_pm":
-        raise RouterError("PM may absorb role-work result only after Controller relays the result to PM")
-    if decision in {"canceled", "superseded"} and record.get("status") not in PM_ROLE_WORK_OPEN_STATUSES:
-        raise RouterError("PM role-work result decision can cancel or supersede only an unresolved request")
+    records: list[dict[str, Any]]
+    if batch_id:
+        records = [
+            record
+            for record in index.get("requests", [])
+            if isinstance(record, dict) and str(record.get("batch_id") or index.get("active_batch_id") or "") == batch_id
+        ]
+        if not records:
+            active_ids = {str(item) for item in index.get("active_request_ids", []) if item}
+            records = [
+                record
+                for record in index.get("requests", [])
+                if isinstance(record, dict) and str(record.get("request_id")) in active_ids
+            ]
+    else:
+        record = _pm_role_work_request_record(index, request_id)
+        records = [record] if isinstance(record, dict) else []
+    if not records:
+        raise RouterError("PM role-work result decision references unknown request_id or batch_id")
+    if decision == "absorbed" and any(record.get("status") != "result_relayed_to_pm" for record in records):
+        raise RouterError("PM may absorb role-work batch only after Controller relays every result to PM")
+    if decision in {"canceled", "superseded"} and any(record.get("status") not in PM_ROLE_WORK_OPEN_STATUSES for record in records):
+        raise RouterError("PM role-work result decision can cancel or supersede only unresolved requests")
     decision_record = {
         "schema_version": PM_ROLE_WORK_RESULT_DECISION_SCHEMA,
-        "request_id": request_id,
+        "request_id": request_id or records[0].get("request_id"),
+        "batch_id": batch_id or records[0].get("batch_id"),
+        "request_ids": [record.get("request_id") for record in records],
         "decided_by_role": "project_manager",
         "decision": decision,
         "decision_reason": decision_payload.get("decision_reason") or "",
@@ -9234,18 +9433,30 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
         **_role_output_envelope_record(decision_payload),
     }
     decisions_dir = run_root / "pm_work_requests" / "decisions"
-    decision_path = decisions_dir / f"{_safe_packet_id_component(request_id)}.{decision}.json"
+    decision_key = batch_id or request_id
+    decision_path = decisions_dir / f"{_safe_packet_id_component(decision_key)}.{decision}.json"
     write_json(decision_path, decision_record)
-    record["status"] = decision
-    record["pm_result_decision"] = {
-        "decision": decision,
-        "decision_path": project_relative(project_root, decision_path),
-        "decision_hash": packet_runtime.sha256_file(decision_path),
-        "recorded_at": decision_record["recorded_at"],
-    }
-    if index.get("active_request_id") == request_id:
+    for record in records:
+        record["status"] = decision
+        record["pm_result_decision"] = {
+            "decision": decision,
+            "decision_path": project_relative(project_root, decision_path),
+            "decision_hash": packet_runtime.sha256_file(decision_path),
+            "recorded_at": decision_record["recorded_at"],
+        }
+    if request_id and index.get("active_request_id") == request_id:
         index["active_request_id"] = None
+    if batch_id and index.get("active_batch_id") == batch_id:
+        index["active_batch_id"] = None
+        index["active_request_ids"] = []
     _write_pm_role_work_request_index(run_root, index)
+    if batch_id and decision == "absorbed":
+        _mark_parallel_batch_reviewed(
+            run_root,
+            "pm_role_work",
+            passed=True,
+            reviewed_packet_ids=[str(record.get("packet_id")) for record in records],
+        )
     return decision
 
 
@@ -9255,21 +9466,24 @@ def _write_worker_research_report(project_root: Path, run_root: Path, run_state:
     research_index = _load_packet_index(_research_packet_index_path(run_root), label="research")
     _validate_packet_bodies_opened_by_targets(project_root, run_state, research_index["packets"])
     _validate_results_exist_for_packets(project_root, run_state, research_index["packets"], next_recipient="human_like_reviewer")
-    if payload.get("completed_by_role") not in {"worker_a", "worker_b"}:
-        raise RouterError("research report must be completed by worker_a or worker_b")
-    if not payload.get("answers_decision_question"):
-        raise RouterError("research report must state whether it answers the PM decision question")
+    completed_roles = sorted({str(record.get("to_role")) for record in research_index["packets"] if isinstance(record, dict)})
+    if not payload.get("answers_decision_question", True):
+        raise RouterError("research batch report must state whether it answers the PM decision question")
     write_json(
         run_root / "research" / "worker_research_report.json",
         {
             "schema_version": "flowpilot.research_worker_report.v1",
             "run_id": run_state["run_id"],
-            "completed_by_role": payload.get("completed_by_role"),
+            "batch_id": research_index.get("batch_id"),
+            "packet_count": len(research_index["packets"]),
+            "completed_by_roles": completed_roles,
+            "completed_by_role": payload.get("completed_by_role") or ",".join(completed_roles),
+            "packet_ids": [record.get("packet_id") for record in research_index["packets"] if isinstance(record, dict)],
             "raw_evidence_pointers": payload.get("raw_evidence_pointers") or [],
             "negative_findings": payload.get("negative_findings") or [],
             "contradictions": payload.get("contradictions") or [],
             "confidence_boundary": payload.get("confidence_boundary") or "worker report only; reviewer check required",
-            "answers_decision_question": bool(payload.get("answers_decision_question")),
+            "answers_decision_question": bool(payload.get("answers_decision_question", True)),
             "reported_at": utc_now(),
         },
     )
@@ -10048,11 +10262,137 @@ def _reset_flags(run_state: dict[str, Any], names: tuple[str, ...]) -> None:
         run_state["flags"][name] = False
 
 
-def _route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+def _node_identifier(node: dict[str, Any]) -> str:
+    return str(node.get("node_id") or node.get("id") or "")
+
+
+def _raw_route_nodes(route: dict[str, Any]) -> list[Any]:
     nodes = route.get("nodes")
-    if not isinstance(nodes, list):
+    if isinstance(nodes, dict):
+        return list(nodes.values())
+    if isinstance(nodes, list):
+        return list(nodes)
+    return []
+
+
+def _inline_child_nodes(node: dict[str, Any]) -> list[Any]:
+    children: list[Any] = []
+    for key in ("children", "child_nodes"):
+        raw_children = node.get(key)
+        if isinstance(raw_children, list):
+            children.extend(raw_children)
+    return children
+
+
+def _flatten_route_nodes(raw_nodes: list[Any], *, parent_node_id: str | None = None, depth: int = 1) -> list[dict[str, Any]]:
+    flattened: list[dict[str, Any]] = []
+    for raw_node in raw_nodes:
+        if not isinstance(raw_node, dict):
+            continue
+        node = dict(raw_node)
+        node_id = _node_identifier(node)
+        if not node_id:
+            continue
+        node.setdefault("node_id", node_id)
+        if parent_node_id and not node.get("parent_node_id"):
+            node["parent_node_id"] = parent_node_id
+        if not node.get("depth"):
+            node["_computed_depth"] = depth
+        flattened.append(node)
+        flattened.extend(_flatten_route_nodes(_inline_child_nodes(node), parent_node_id=node_id, depth=depth + 1))
+    return flattened
+
+
+def _route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+    return _flatten_route_nodes(_raw_route_nodes(route))
+
+
+def _route_node_depth(node: dict[str, Any]) -> int:
+    raw_depth = node.get("depth", node.get("_computed_depth", 1))
+    try:
+        return max(1, int(raw_depth))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _route_display_depth(route: dict[str, Any]) -> int:
+    display = route.get("display") if isinstance(route.get("display"), dict) else {}
+    raw_depth = display.get("display_depth") or route.get("display_depth") or 2
+    try:
+        return max(1, int(raw_depth))
+    except (TypeError, ValueError):
+        return 2
+
+
+def _display_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+    display_depth = _route_display_depth(route)
+    nodes = _route_nodes(route)
+    visible = [
+        node
+        for node in nodes
+        if node.get("user_visible") is True or _route_node_depth(node) <= display_depth
+    ]
+    return visible or nodes
+
+
+def _route_active_path(route: dict[str, Any], active_node_id: str | None) -> list[dict[str, str]]:
+    if not active_node_id:
         return []
-    return [node for node in nodes if isinstance(node, dict) and (node.get("node_id") or node.get("id"))]
+    nodes = _route_nodes(route)
+    by_id = {_node_identifier(node): node for node in nodes if _node_identifier(node)}
+    if str(active_node_id) not in by_id:
+        return []
+    path: list[dict[str, str]] = []
+    seen: set[str] = set()
+    cursor: str | None = str(active_node_id)
+    while cursor and cursor in by_id and cursor not in seen:
+        seen.add(cursor)
+        node = by_id[cursor]
+        path.append(
+            {
+                "id": cursor,
+                "label": str(node.get("title") or node.get("label") or cursor),
+                "node_kind": _node_kind(node),
+            }
+        )
+        parent_id = node.get("parent_node_id")
+        cursor = str(parent_id) if parent_id else None
+    return list(reversed(path))
+
+
+def _route_hidden_leaf_progress(route: dict[str, Any]) -> dict[str, int]:
+    display_depth = _route_display_depth(route)
+    hidden_leaf_nodes = [
+        node
+        for node in _route_nodes(route)
+        if _route_node_depth(node) > display_depth and _node_kind(node) == "leaf"
+    ]
+    completed = [
+        node
+        for node in hidden_leaf_nodes
+        if str(node.get("status") or "").lower() in {"complete", "completed", "done", "passed"}
+    ]
+    return {"completed": len(completed), "total": len(hidden_leaf_nodes)}
+
+
+def _is_leaf_readiness_passed(node: dict[str, Any], plan: dict[str, Any] | None = None) -> bool:
+    candidates = []
+    if isinstance(node.get("leaf_readiness_gate"), dict):
+        candidates.append(node["leaf_readiness_gate"])
+    if plan and isinstance(plan.get("leaf_readiness_gate"), dict):
+        candidates.append(plan["leaf_readiness_gate"])
+    if not candidates:
+        return False
+    return any(str(gate.get("status") or "").lower() in {"pass", "passed", "approved"} for gate in candidates)
+
+
+def _node_kind(node: dict[str, Any]) -> str:
+    raw_kind = str(node.get("node_kind") or node.get("kind") or "").lower()
+    if raw_kind in {"parent", "module", "leaf", "repair"}:
+        return raw_kind
+    if _node_child_ids(node):
+        return "parent"
+    return "leaf"
 
 
 def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> list[dict[str, Any]]:
@@ -10072,7 +10412,8 @@ def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> 
 
 
 def _next_effective_node_id(route: dict[str, Any], mutations: dict[str, Any], completed_nodes: list[str], current_node_id: str) -> str | None:
-    effective_ids = [str(node.get("node_id") or node.get("id")) for node in _effective_route_nodes(route, mutations)]
+    effective_nodes = _effective_route_nodes(route, mutations)
+    effective_ids = [str(node.get("node_id") or node.get("id")) for node in effective_nodes]
     if not effective_ids:
         return None
     try:
@@ -10080,8 +10421,15 @@ def _next_effective_node_id(route: dict[str, Any], mutations: dict[str, Any], co
     except ValueError:
         start = 0
     completed = set(completed_nodes)
+    nodes_by_id = {str(node.get("node_id") or node.get("id")): node for node in effective_nodes}
     for node_id in effective_ids[start:] + effective_ids[:start]:
         if node_id not in completed:
+            node = nodes_by_id.get(node_id) or {}
+            if _node_kind(node) != "leaf":
+                child_ids = set(_node_child_ids(node))
+                if child_ids and child_ids.issubset(completed):
+                    return node_id
+                continue
             return node_id
     return None
 
@@ -10179,6 +10527,8 @@ def _display_plan_projection(plan: dict[str, Any]) -> dict[str, Any]:
         ],
         "current_node_id": current_node_id,
         "current_node": plan.get("current_node") if isinstance(plan.get("current_node"), dict) else None,
+        "active_path": plan.get("active_path") if isinstance(plan.get("active_path"), list) else [],
+        "hidden_leaf_progress": plan.get("hidden_leaf_progress") if isinstance(plan.get("hidden_leaf_progress"), dict) else None,
     }
 
 
@@ -10631,7 +10981,7 @@ def _write_display_plan_from_route(
     active_node_id: str | None,
     source_event: str,
 ) -> None:
-    nodes = _iter_route_nodes(route_payload)
+    nodes = _display_route_nodes(route_payload)
     items = []
     for index, node in enumerate(nodes, start=1):
         node_id = str(node.get("node_id") or node.get("id") or f"node-{index:03d}")
@@ -10658,8 +11008,11 @@ def _write_display_plan_from_route(
         "title": str(route_payload.get("title") or route_payload.get("name") or "FlowPilot route"),
         "route_id": route_id,
         "route_version": route_version,
+        "display_depth": _route_display_depth(route_payload),
         "items": items,
         "current_node_id": active_node_id,
+        "active_path": _route_active_path(route_payload, active_node_id),
+        "hidden_leaf_progress": _route_hidden_leaf_progress(route_payload),
         "controller_may_invent_route_items": False,
         "updated_at": utc_now(),
     }
@@ -11415,6 +11768,33 @@ def _current_node_packet_context(project_root: Path, run_state: dict[str, Any]) 
     return envelope, envelope_path
 
 
+def _current_node_packet_records(project_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    run_root = project_root / str(run_state["run_root"])
+    frontier = _active_frontier(run_root)
+    index_path = _active_node_packet_index_path(run_root, frontier)
+    if index_path.exists():
+        return _load_packet_index(index_path, label="current-node batch")["packets"]
+    envelope, _envelope_path = _current_node_packet_context(project_root, run_state)
+    return [_packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type=str(envelope.get("packet_type") or "work_packet"))]
+
+
+def _current_node_results_complete(project_root: Path, run_state: dict[str, Any]) -> bool:
+    for record in _current_node_packet_records(project_root, run_state):
+        result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+        if not result_path.exists():
+            return False
+    return True
+
+
+def _current_node_missing_result_roles(project_root: Path, run_state: dict[str, Any]) -> list[str]:
+    missing: list[str] = []
+    for record in _current_node_packet_records(project_root, run_state):
+        result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+        if not result_path.exists():
+            missing.append(str(record.get("to_role") or record.get("packet_id") or "unknown"))
+    return sorted(set(missing))
+
+
 def _active_child_skill_bindings_from_plan(plan: dict[str, Any]) -> list[dict[str, Any]]:
     raw_bindings = plan.get("active_child_skill_bindings")
     if raw_bindings in (None, []):
@@ -11528,6 +11908,210 @@ def _research_packet_index_path(run_root: Path) -> Path:
     return run_root / "research" / "research_packet.json"
 
 
+def _parallel_packet_batch_root(run_root: Path) -> Path:
+    return run_root / "packet_batches"
+
+
+def _parallel_packet_batch_path(run_root: Path, batch_id: str) -> Path:
+    return _parallel_packet_batch_root(run_root) / f"{_safe_packet_id_component(batch_id)}.json"
+
+
+def _parallel_packet_batch_ref_path(run_root: Path, batch_kind: str) -> Path:
+    return _parallel_packet_batch_root(run_root) / f"active_{_safe_packet_id_component(batch_kind)}.json"
+
+
+def _packet_record_from_envelope(
+    project_root: Path,
+    run_state: dict[str, Any],
+    *,
+    envelope: dict[str, Any],
+    packet_type: str | None = None,
+    request_id: str | None = None,
+) -> dict[str, Any]:
+    packet_id = str(envelope.get("packet_id") or "").strip()
+    if not packet_id:
+        raise RouterError("packet envelope requires packet_id")
+    paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
+    record = {
+        "packet_id": packet_id,
+        "to_role": str(envelope.get("to_role") or ""),
+        "packet_type": packet_type or str(envelope.get("packet_type") or ""),
+        "packet_envelope_path": str(envelope.get("body_path") or "").replace("packet_body.md", "packet_envelope.json"),
+        "packet_body_path": envelope.get("body_path"),
+        "packet_body_hash": envelope.get("body_hash"),
+        "body_path": envelope.get("body_path"),
+        "body_hash": envelope.get("body_hash"),
+        "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+        "result_body_path": project_relative(project_root, paths["result_body"]),
+        "result_write_target": {
+            "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
+            "result_body_path": project_relative(project_root, paths["result_body"]),
+        },
+        "output_contract_id": envelope.get("output_contract_id"),
+        "status": "registered",
+    }
+    if request_id:
+        record["request_id"] = request_id
+    return record
+
+
+def _write_parallel_packet_batch(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    batch_id: str,
+    batch_kind: str,
+    phase: str,
+    records: list[dict[str, Any]],
+    node_id: str | None = None,
+    join_policy: str = "all_results_before_review",
+    review_policy: str = "batch_review_before_pm",
+    pm_absorption_required: bool = True,
+    parent_batch_id: str | None = None,
+) -> dict[str, Any]:
+    if not batch_id:
+        raise RouterError("parallel packet batch requires batch_id")
+    if not records:
+        raise RouterError("parallel packet batch requires at least one packet")
+    packet_ids = [str(record.get("packet_id") or "").strip() for record in records]
+    if any(not packet_id for packet_id in packet_ids):
+        raise RouterError("parallel packet batch packets require packet_id")
+    if len(set(packet_ids)) != len(packet_ids):
+        raise RouterError("parallel packet batch packet_id values must be unique")
+    to_roles = [str(record.get("to_role") or "").strip() for record in records]
+    if any(not role for role in to_roles):
+        raise RouterError("parallel packet batch packets require to_role")
+    if len(set(to_roles)) != len(to_roles):
+        raise RouterError("parallel packet batch cannot assign two open packets to the same role")
+    batch_path = _parallel_packet_batch_path(run_root, batch_id)
+    existing = read_json_if_exists(batch_path)
+    if existing and existing.get("status") in PARALLEL_PACKET_BATCH_OPEN_STATUSES:
+        raise RouterError(f"parallel packet batch is already open: {batch_id}")
+    normalized_records: list[dict[str, Any]] = []
+    for record in records:
+        item = dict(record)
+        item["batch_id"] = batch_id
+        item["batch_kind"] = batch_kind
+        item.setdefault("status", "registered")
+        record.update(item)
+        normalized_records.append(item)
+    batch = {
+        "schema_version": PARALLEL_PACKET_BATCH_SCHEMA,
+        "run_id": run_state["run_id"],
+        "batch_id": batch_id,
+        "batch_kind": batch_kind,
+        "phase": phase,
+        "node_id": node_id,
+        "owner_role": "project_manager",
+        "join_policy": join_policy,
+        "review_policy": review_policy,
+        "pm_absorption_required": pm_absorption_required,
+        "parent_batch_id": parent_batch_id,
+        "status": "registered",
+        "controller_visibility": "packet_and_result_envelopes_only",
+        "controller_may_read_packet_body": False,
+        "controller_may_read_result_body": False,
+        "packets": normalized_records,
+        "counts": {
+            "registered": len(normalized_records),
+            "relayed": 0,
+            "results_returned": 0,
+            "reviewed": 0,
+        },
+        "written_at": utc_now(),
+        "updated_at": utc_now(),
+    }
+    write_json(batch_path, batch)
+    write_json(
+        _parallel_packet_batch_ref_path(run_root, batch_kind),
+        {
+            "schema_version": PARALLEL_PACKET_BATCH_REF_SCHEMA,
+            "run_id": run_state["run_id"],
+            "batch_kind": batch_kind,
+            "active_batch_id": batch_id,
+            "batch_path": project_relative(project_root, batch_path),
+            "updated_at": utc_now(),
+        },
+    )
+    return batch
+
+
+def _load_parallel_packet_batch(run_root: Path, batch_id: str) -> dict[str, Any]:
+    path = _parallel_packet_batch_path(run_root, batch_id)
+    if not path.exists():
+        raise RouterError(f"parallel packet batch is missing: {path}")
+    batch = read_json(path)
+    if batch.get("schema_version") != PARALLEL_PACKET_BATCH_SCHEMA:
+        raise RouterError("parallel packet batch has unsupported schema")
+    if not isinstance(batch.get("packets"), list) or not batch["packets"]:
+        raise RouterError("parallel packet batch requires non-empty packets")
+    return batch
+
+
+def _active_parallel_packet_batch(run_root: Path, batch_kind: str) -> dict[str, Any] | None:
+    ref_path = _parallel_packet_batch_ref_path(run_root, batch_kind)
+    ref = read_json_if_exists(ref_path)
+    if not ref:
+        return None
+    batch_id = str(ref.get("active_batch_id") or "").strip()
+    if not batch_id:
+        return None
+    return _load_parallel_packet_batch(run_root, batch_id)
+
+
+def _write_parallel_packet_batch_state(run_root: Path, batch: dict[str, Any]) -> None:
+    batch["updated_at"] = utc_now()
+    write_json(_parallel_packet_batch_path(run_root, str(batch["batch_id"])), batch)
+
+
+def _mark_parallel_batch_packets_relayed(run_root: Path, batch_kind: str) -> None:
+    batch = _active_parallel_packet_batch(run_root, batch_kind)
+    if not batch:
+        return
+    for record in batch["packets"]:
+        if isinstance(record, dict):
+            record["status"] = "packet_relayed"
+            record["relayed_at"] = utc_now()
+    batch["status"] = "packets_relayed"
+    batch["counts"]["relayed"] = len(batch["packets"])
+    _write_parallel_packet_batch_state(run_root, batch)
+
+
+def _mark_parallel_batch_results_joined(project_root: Path, run_root: Path, run_state: dict[str, Any], batch_kind: str) -> None:
+    batch = _active_parallel_packet_batch(run_root, batch_kind)
+    if not batch:
+        return
+    returned = 0
+    for record in batch["packets"]:
+        if not isinstance(record, dict):
+            continue
+        result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+        if result_path.exists():
+            returned += 1
+            record["status"] = "result_returned"
+            record["result_returned_at"] = utc_now()
+    batch["counts"]["results_returned"] = returned
+    if returned == len(batch["packets"]):
+        batch["status"] = "results_joined"
+        batch["joined_at"] = utc_now()
+    _write_parallel_packet_batch_state(run_root, batch)
+
+
+def _mark_parallel_batch_reviewed(run_root: Path, batch_kind: str, *, passed: bool, reviewed_packet_ids: list[str]) -> None:
+    batch = _active_parallel_packet_batch(run_root, batch_kind)
+    if not batch:
+        return
+    batch["status"] = "reviewed" if passed else "review_blocked"
+    batch["review"] = {
+        "passed": passed,
+        "reviewed_packet_ids": reviewed_packet_ids,
+        "reviewed_at": utc_now(),
+    }
+    batch["counts"]["reviewed"] = len(reviewed_packet_ids)
+    _write_parallel_packet_batch_state(run_root, batch)
+
+
 def _pm_role_work_request_index_path(run_root: Path) -> Path:
     return run_root / "pm_work_requests" / "index.json"
 
@@ -11540,6 +12124,8 @@ def _empty_pm_role_work_request_index(run_state: dict[str, Any]) -> dict[str, An
         "controller_may_read_packet_body": False,
         "controller_may_read_result_body": False,
         "active_request_id": None,
+        "active_batch_id": None,
+        "active_request_ids": [],
         "requests": [],
         "written_at": utc_now(),
         "updated_at": utc_now(),
@@ -11556,6 +12142,8 @@ def _load_pm_role_work_request_index(run_root: Path, run_state: dict[str, Any]) 
     if not isinstance(index.get("requests"), list):
         raise RouterError("PM role-work request index requires requests list")
     index.setdefault("active_request_id", None)
+    index.setdefault("active_batch_id", None)
+    index.setdefault("active_request_ids", [])
     return index
 
 
@@ -11581,6 +12169,21 @@ def _active_pm_role_work_request(index: dict[str, Any]) -> dict[str, Any] | None
         if isinstance(record, dict) and record.get("status") in PM_ROLE_WORK_OPEN_STATUSES:
             return record
     return None
+
+
+def _active_pm_role_work_batch_records(index: dict[str, Any]) -> list[dict[str, Any]]:
+    active_ids = index.get("active_request_ids")
+    if not isinstance(active_ids, list) or not active_ids:
+        return []
+    wanted = {str(item) for item in active_ids}
+    records = [
+        record
+        for record in index.get("requests", [])
+        if isinstance(record, dict)
+        and str(record.get("request_id")) in wanted
+        and record.get("status") in PM_ROLE_WORK_OPEN_STATUSES
+    ]
+    return records
 
 
 def _unresolved_pm_role_work_requests(run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
@@ -12326,6 +12929,8 @@ def _validate_packet_group_for_reviewer(
         blockers.extend(str(blocker) for blocker in audit.get("blockers") or [])
     run_root = project_root / str(run_state["run_root"])
     proof_path = _router_owned_check_proof_path(audit_path)
+    batch_ids = sorted({str(record.get("batch_id")) for record in records if isinstance(record, dict) and record.get("batch_id")})
+    reviewed_packet_ids = [str(record.get("packet_id")) for record in records if isinstance(record, dict)]
     write_json(
         audit_path,
         {
@@ -12335,7 +12940,11 @@ def _validate_packet_group_for_reviewer(
             "router_replacement_scope": "mechanical_only",
             "self_attested_ai_claims_accepted_as_proof": False,
             "router_owned_check_proof_path": project_relative(project_root, proof_path),
+            "batch_id": batch_ids[0] if len(batch_ids) == 1 else None,
+            "batch_ids": batch_ids,
             "packet_count": len(records),
+            "reviewed_packet_ids": reviewed_packet_ids,
+            "overall_passed": not blockers,
             "audits": audits,
             "blockers": blockers,
             "passed": not blockers,
@@ -12379,17 +12988,16 @@ def _active_route_flow(run_root: Path, frontier: dict[str, Any]) -> dict[str, An
 
 
 def _iter_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
-    raw_nodes = route.get("nodes")
-    if isinstance(raw_nodes, dict):
-        return [item for item in raw_nodes.values() if isinstance(item, dict)]
-    if isinstance(raw_nodes, list):
-        return [item for item in raw_nodes if isinstance(item, dict)]
-    return []
+    return _route_nodes(route)
 
 
 def _active_node_definition(run_root: Path, frontier: dict[str, Any]) -> dict[str, Any]:
     route = _active_route_flow(run_root, frontier)
     active_node_id = str(frontier["active_node_id"])
+    return _active_node_definition_from_route(route, active_node_id)
+
+
+def _active_node_definition_from_route(route: dict[str, Any], active_node_id: str) -> dict[str, Any]:
     for node in _iter_route_nodes(route):
         if node.get("node_id") == active_node_id or node.get("id") == active_node_id:
             return node
@@ -12397,10 +13005,10 @@ def _active_node_definition(run_root: Path, frontier: dict[str, Any]) -> dict[st
 
 
 def _node_child_ids(node: dict[str, Any]) -> list[str]:
+    child_ids: list[str] = []
     for key in ("child_node_ids", "children", "child_nodes"):
         raw_children = node.get(key)
         if isinstance(raw_children, list):
-            child_ids: list[str] = []
             for child in raw_children:
                 if isinstance(child, str):
                     child_ids.append(child)
@@ -12408,8 +13016,7 @@ def _node_child_ids(node: dict[str, Any]) -> list[str]:
                     child_id = child.get("node_id") or child.get("id")
                     if child_id:
                         child_ids.append(str(child_id))
-            return child_ids
-    return []
+    return child_ids
 
 
 def _active_node_has_children(run_root: Path, frontier: dict[str, Any]) -> bool:
@@ -12426,6 +13033,10 @@ def _active_node_acceptance_plan_path(run_root: Path, frontier: dict[str, Any]) 
 
 def _active_node_write_grant_path(run_root: Path, frontier: dict[str, Any]) -> Path:
     return _active_node_root(run_root, frontier) / "current_node_write_grant.json"
+
+
+def _active_node_packet_index_path(run_root: Path, frontier: dict[str, Any]) -> Path:
+    return _active_node_root(run_root, frontier) / "current_node_packet_batch.json"
 
 
 def _active_node_completion_ledger_path(run_root: Path, frontier: dict[str, Any]) -> Path:
@@ -12619,6 +13230,24 @@ def _write_node_acceptance_plan(
         raise RouterError("Controller cannot downgrade node standards")
     node = _active_node_definition(run_root, frontier)
     child_ids = _node_child_ids(node)
+    payload_leaf_gate = payload.get("leaf_readiness_gate") if isinstance(payload.get("leaf_readiness_gate"), dict) else None
+    if payload_leaf_gate is not None:
+        leaf_readiness_gate = dict(payload_leaf_gate)
+    elif child_ids:
+        leaf_readiness_gate = {
+            "status": "not_applicable_parent",
+            "reason": "Parent/module nodes are composition boundaries and cannot receive worker packets directly.",
+        }
+    else:
+        leaf_readiness_gate = {
+            "status": "pass",
+            "legacy_inferred_from_reviewed_node_plan": True,
+            "single_outcome": True,
+            "worker_executable_without_replanning": True,
+            "proof_defined": bool(experiment_plan),
+            "dependency_boundary_defined": True,
+            "failure_isolation_defined": True,
+        }
     plan = {
         "schema_version": "flowpilot.node_acceptance_plan.v1",
         "run_id": run_state["run_id"],
@@ -12639,12 +13268,13 @@ def _write_node_acceptance_plan(
         },
         "prior_path_context_review": prior_review,
         "node_structure": {
-            "node_kind": "parent" if child_ids else "leaf",
+            "node_kind": _node_kind(node),
             "has_children": bool(child_ids),
             "child_node_ids": child_ids,
             "parent_backward_replay_required": bool(child_ids),
             "semantic_importance_used_to_trigger_review": False,
         },
+        "leaf_readiness_gate": leaf_readiness_gate,
         "node_requirements": node_requirements,
         "experiment_plan": experiment_plan,
         "high_standard_recheck": {
@@ -12923,14 +13553,17 @@ def _write_pm_research_absorption(project_root: Path, run_root: Path, run_state:
     )
 
 
-def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    if not run_state["flags"].get("node_acceptance_plan_reviewer_passed"):
-        raise RouterError("current-node packet requires reviewer-passed node acceptance plan")
-    envelope_path = _packet_envelope_path(project_root, run_state, payload)
-    if not envelope_path.exists():
-        raise RouterError(f"current-node packet envelope is missing: {envelope_path}")
-    envelope = packet_runtime.load_envelope(project_root, envelope_path)
-    frontier = _active_frontier(run_root)
+def _validate_current_node_packet_envelope(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    envelope: dict[str, Any],
+    envelope_path: Path,
+    frontier: dict[str, Any],
+    plan: dict[str, Any],
+) -> dict[str, Any]:
+    active_bindings = _active_child_skill_bindings_from_plan(plan)
+    active_binding_source_paths = _active_child_skill_source_paths(active_bindings)
     active_node = frontier.get("active_node_id")
     if active_node and envelope.get("node_id") != active_node:
         raise RouterError(
@@ -12942,12 +13575,6 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
         raise RouterError("current-node packet metadata.route_version is required")
     if int(packet_route_version) != route_version:
         raise RouterError("current-node packet route_version must match active frontier")
-    plan_path = _active_node_acceptance_plan_path(run_root, frontier)
-    if not plan_path.exists():
-        raise RouterError("current-node packet requires node_acceptance_plan.json")
-    plan = read_json(plan_path)
-    active_bindings = _active_child_skill_bindings_from_plan(plan)
-    active_binding_source_paths = _active_child_skill_source_paths(active_bindings)
     if envelope.get("from_role") != "project_manager":
         raise RouterError("current-node packet must be issued by project_manager")
     if envelope.get("to_role") == "controller":
@@ -12990,31 +13617,113 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
             )
     if envelope.get("body_visibility") != packet_runtime.SEALED_BODY_VISIBILITY:
         raise RouterError("current-node packet body must be sealed to the target role")
+    return {
+        "schema_version": "flowpilot.current_node_write_grant.v1",
+        "run_id": run_state["run_id"],
+        "route_id": str(frontier["active_route_id"]),
+        "route_version": route_version,
+        "node_id": str(frontier["active_node_id"]),
+        "packet_id": str(envelope["packet_id"]),
+        "granted_to_role": str(envelope["to_role"]),
+        "granted_by_role": "project_manager",
+        "grant_scope": "current_node_packet_body_and_result_only",
+        "packet_envelope_path": project_relative(project_root, envelope_path),
+        "packet_envelope_hash": hashlib.sha256(envelope_path.read_bytes()).hexdigest(),
+        "packet_body_path": str(envelope.get("body_path") or ""),
+        "packet_body_hash": str(envelope.get("body_hash") or ""),
+        "active_child_skill_bindings_declared": bool(active_bindings),
+        "active_child_skill_source_paths": active_binding_source_paths,
+        "controller_may_read_packet_body": False,
+        "controller_may_write_project_artifacts": False,
+        "issued_at": utc_now(),
+    }
+
+
+def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    if not run_state["flags"].get("node_acceptance_plan_reviewer_passed"):
+        raise RouterError("current-node packet requires reviewer-passed node acceptance plan")
+    frontier = _active_frontier(run_root)
+    plan_path = _active_node_acceptance_plan_path(run_root, frontier)
+    if not plan_path.exists():
+        raise RouterError("current-node packet requires node_acceptance_plan.json")
+    plan = read_json(plan_path)
+    active_node_definition = _active_node_definition(run_root, frontier)
+    if _node_child_ids(active_node_definition):
+        raise RouterError("current-node worker packet requires a leaf node; parent/module nodes must enter child subtree or parent backward replay")
+    if _node_kind(active_node_definition) not in {"leaf", "repair"}:
+        raise RouterError("current-node worker packet requires node_kind=leaf or repair")
+    if not _is_leaf_readiness_passed(active_node_definition, plan):
+        raise RouterError("current-node worker packet requires leaf_readiness_gate.status=pass")
+    raw_packets = payload.get("packets")
+    packet_payloads = raw_packets if isinstance(raw_packets, list) and raw_packets else [payload]
+    records: list[dict[str, Any]] = []
+    grants: list[dict[str, Any]] = []
+    batch_id = str(payload.get("batch_id") or f"{frontier['active_node_id']}-batch-001")
+    for packet_payload in packet_payloads:
+        if not isinstance(packet_payload, dict):
+            raise RouterError("current-node batch packet specs must be objects")
+        envelope_path = _packet_envelope_path(project_root, run_state, packet_payload)
+        if not envelope_path.exists():
+            raise RouterError(f"current-node packet envelope is missing: {envelope_path}")
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        grants.append(_validate_current_node_packet_envelope(project_root, run_root, run_state, envelope, envelope_path, frontier, plan))
+        records.append(_packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type=str(envelope.get("packet_type") or "work_packet")))
+    _write_parallel_packet_batch(
+        project_root,
+        run_root,
+        run_state,
+        batch_id=batch_id,
+        batch_kind="current_node",
+        phase="current_node_loop",
+        records=records,
+        node_id=str(frontier["active_node_id"]),
+        join_policy="all_results_before_review",
+        review_policy="batch_current_node_result_review_before_pm_completion",
+        pm_absorption_required=True,
+    )
+    write_json(
+        _active_node_packet_index_path(run_root, frontier),
+        {
+            "schema_version": "flowpilot.current_node_packet_batch.v1",
+            "run_id": run_state["run_id"],
+            "batch_id": batch_id,
+            "route_id": str(frontier["active_route_id"]),
+            "route_version": int(frontier.get("route_version") or 0),
+            "node_id": str(frontier["active_node_id"]),
+            "controller_may_read_packet_body": False,
+            "packets": records,
+            "written_at": utc_now(),
+        },
+    )
     grant_path = _active_node_write_grant_path(run_root, frontier)
     write_json(
         grant_path,
         {
-            "schema_version": "flowpilot.current_node_write_grant.v1",
+            "schema_version": "flowpilot.current_node_write_grants.v1",
             "run_id": run_state["run_id"],
             "route_id": str(frontier["active_route_id"]),
-            "route_version": route_version,
+            "route_version": int(frontier.get("route_version") or 0),
             "node_id": str(frontier["active_node_id"]),
-            "packet_id": str(envelope["packet_id"]),
-            "granted_to_role": str(envelope["to_role"]),
+            "batch_id": batch_id,
+            "packet_id": str(grants[0]["packet_id"]),
+            "granted_to_role": str(grants[0]["granted_to_role"]),
             "granted_by_role": "project_manager",
             "grant_scope": "current_node_packet_body_and_result_only",
-            "packet_envelope_path": project_relative(project_root, envelope_path),
-            "packet_envelope_hash": hashlib.sha256(envelope_path.read_bytes()).hexdigest(),
-            "packet_body_path": str(envelope.get("body_path") or ""),
-            "packet_body_hash": str(envelope.get("body_hash") or ""),
-            "active_child_skill_bindings_declared": bool(active_bindings),
-            "active_child_skill_source_paths": active_binding_source_paths,
+            "packet_envelope_path": str(grants[0]["packet_envelope_path"]),
+            "packet_envelope_hash": str(grants[0]["packet_envelope_hash"]),
+            "packet_body_path": str(grants[0]["packet_body_path"]),
+            "packet_body_hash": str(grants[0]["packet_body_hash"]),
+            "active_child_skill_bindings_declared": bool(grants[0]["active_child_skill_bindings_declared"]),
+            "active_child_skill_source_paths": grants[0]["active_child_skill_source_paths"],
+            "grants": grants,
             "controller_may_read_packet_body": False,
             "controller_may_write_project_artifacts": False,
             "issued_at": utc_now(),
         },
     )
     run_state["flags"]["current_node_write_grant_issued"] = True
+    run_state["current_node_packet_id"] = records[0]["packet_id"]
+    run_state["current_node_batch_id"] = batch_id
 
 
 def _validate_current_node_result_event(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -13028,15 +13737,20 @@ def _validate_current_node_result_event(project_root: Path, run_state: dict[str,
     if not result_path.exists():
         raise RouterError(f"current-node result envelope is missing: {result_path}")
     result = packet_runtime.load_envelope(project_root, result_path)
-    if str(result.get("packet_id") or "") != str(grant.get("packet_id") or ""):
+    grant_records = grant.get("grants") if isinstance(grant.get("grants"), list) else [grant]
+    grant_by_packet_id = {str(item.get("packet_id")): item for item in grant_records if isinstance(item, dict)}
+    result_packet_id = str(result.get("packet_id") or "")
+    expected_grant = grant_by_packet_id.get(result_packet_id)
+    if expected_grant is None:
         raise RouterError("current-node result packet_id does not match current-node write grant")
-    if str(result.get("completed_by_role") or "") != str(grant.get("granted_to_role") or ""):
+    if str(result.get("completed_by_role") or "") != str(expected_grant.get("granted_to_role") or ""):
         raise RouterError("wrong role: current-node result completed_by_role does not match current-node write grant")
     if result.get("next_recipient") != "human_like_reviewer":
         raise RouterError("current-node worker result must route to human_like_reviewer")
     if result.get("completed_by_role") == "controller":
         raise RouterError("Controller-origin current-node result is invalid")
-    packet_envelope, _packet_envelope_path = _current_node_packet_context(project_root, run_state)
+    packet_path = resolve_project_path(project_root, str(expected_grant.get("packet_envelope_path") or ""))
+    packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
     agent_role_map = _agent_role_map_from_crew_ledger(run_root)
     audit = packet_runtime.validate_result_ready_for_reviewer_relay(
         project_root,
@@ -13046,6 +13760,7 @@ def _validate_current_node_result_event(project_root: Path, run_state: dict[str,
     )
     if not audit.get("passed"):
         raise RouterError(f"current-node result failed pre-relay packet runtime audit: {audit.get('blockers')}")
+    _mark_parallel_batch_results_joined(project_root, run_root, run_state, "current_node")
 
 
 def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -13055,62 +13770,24 @@ def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str
     if payload.get("passed") is not True:
         raise RouterError("current-node reviewer pass must explicitly pass")
     run_root = project_root / str(run_state["run_root"])
-    packet_envelope, packet_envelope_path = _current_node_packet_context(project_root, run_state)
-    result_envelope, result_envelope_path = _current_node_result_context(project_root, run_state)
     raw_agent_map = payload.get("agent_role_map")
     payload_agent_role_map = raw_agent_map if isinstance(raw_agent_map, dict) else None
-    trusted_agent_role_map = _agent_role_map_from_crew_ledger(run_root)
-    agent_role_map = _merge_agent_role_maps(trusted_agent_role_map, payload_agent_role_map)
-    audit = packet_runtime.validate_for_reviewer(
-        project_root,
-        packet_envelope=packet_envelope,
-        result_envelope=result_envelope,
-        agent_role_map=agent_role_map,
-    )
     frontier = _active_frontier(run_root)
     audit_path = _active_node_root(run_root, frontier) / "reviews" / "current_node_packet_runtime_audit.json"
-    proof_path = _router_owned_check_proof_path(audit_path)
-    packet_body_path = resolve_project_path(project_root, str(packet_envelope.get("body_path") or ""))
-    result_body_path = resolve_project_path(project_root, str(result_envelope.get("result_body_path") or ""))
-    write_json(
-        audit_path,
-        {
-            "schema_version": "flowpilot.current_node_packet_runtime_audit.v1",
-            "run_id": run_state["run_id"],
-            "route_id": str(frontier["active_route_id"]),
-            "route_version": int(frontier.get("route_version") or 0),
-            "node_id": str(frontier["active_node_id"]),
-            "reviewed_by_role": "human_like_reviewer",
-            "router_replacement_scope": "mechanical_only",
-            "self_attested_ai_claims_accepted_as_proof": False,
-            "router_owned_check_proof_path": project_relative(project_root, proof_path),
-            "audit": audit,
-            "passed": bool(audit.get("passed")),
-            "blockers": audit.get("blockers") or [],
-            "reviewed_at": utc_now(),
-        },
-    )
-    _write_router_owned_check_proof(
+    records = _current_node_packet_records(project_root, run_state)
+    _validate_packet_group_for_reviewer(
         project_root,
-        run_root,
-        check_name="current_node_packet_runtime_audit",
+        run_state,
+        records,
         audit_path=audit_path,
-        source_kind="packet_runtime_hash",
-        evidence_paths=[
-            packet_envelope_path,
-            result_envelope_path,
-            packet_body_path,
-            result_body_path,
-        ],
+        agent_role_map=payload_agent_role_map,
     )
-    _validate_router_owned_check_proof(
-        project_root,
+    _mark_parallel_batch_reviewed(
         run_root,
-        check_name="current_node_packet_runtime_audit",
-        audit_path=audit_path,
+        "current_node",
+        passed=True,
+        reviewed_packet_ids=[str(record.get("packet_id")) for record in records],
     )
-    if not audit.get("passed"):
-        raise RouterError(f"reviewer pass rejected by packet audit: {audit.get('blockers')}")
 
 
 def _route_payload_from_reviewed_draft(project_root: Path, run_root: Path, payload: dict[str, Any]) -> tuple[dict[str, Any], Path]:
@@ -13159,6 +13836,8 @@ def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[
         "status": "current_node_loop",
         "active_route_id": route_id,
         "active_node_id": active_node_id,
+        "active_path": _route_active_path(route_payload, active_node_id),
+        "active_leaf_node_id": active_node_id if _node_kind(_active_node_definition_from_route(route_payload, active_node_id)) in {"leaf", "repair"} else None,
         "route_version": route_version,
         "updated_at": utc_now(),
         "source": "pm_activates_reviewed_route",
@@ -14169,11 +14848,44 @@ def _write_node_completion_ledger(
     completed_node_id: str,
     completed_nodes: list[str],
     next_node_id: str | None,
+    source_event: str = "pm_completes_current_node_from_reviewed_result",
 ) -> Path:
-    packet_envelope, packet_envelope_path = _current_node_packet_context(project_root, run_state)
-    result_envelope, result_envelope_path = _current_node_result_context(project_root, run_state)
+    active_node_is_parent = _active_node_has_children(run_root, frontier)
+    packet_envelope: dict[str, Any] = {}
+    result_envelope: dict[str, Any] = {}
+    packet_envelope_path: Path | None = None
+    result_envelope_path: Path | None = None
+    if not active_node_is_parent:
+        packet_envelope, packet_envelope_path = _current_node_packet_context(project_root, run_state)
+        result_envelope, result_envelope_path = _current_node_result_context(project_root, run_state)
     audit_path = _active_node_root(run_root, frontier) / "reviews" / "current_node_packet_runtime_audit.json"
     ledger_path = _active_node_completion_ledger_path(run_root, frontier)
+    source_paths = {
+        "execution_frontier_before_update": project_relative(project_root, run_root / "execution_frontier.json"),
+        "node_acceptance_plan": project_relative(project_root, _active_node_acceptance_plan_path(run_root, frontier)),
+    }
+    if packet_envelope_path and result_envelope_path:
+        source_paths.update(
+            {
+                "current_node_write_grant": project_relative(project_root, _active_node_write_grant_path(run_root, frontier)),
+                "packet_envelope": project_relative(project_root, packet_envelope_path),
+                "result_envelope": project_relative(project_root, result_envelope_path),
+                "current_node_packet_runtime_audit": project_relative(project_root, audit_path),
+            }
+        )
+    if active_node_is_parent:
+        source_paths.update(
+            {
+                "parent_backward_replay": project_relative(
+                    project_root,
+                    _active_node_root(run_root, frontier) / "parent_backward_replay.json",
+                ),
+                "pm_parent_segment_decision": project_relative(
+                    project_root,
+                    _active_node_root(run_root, frontier) / "pm_parent_segment_decision.json",
+                ),
+            }
+        )
     write_json(
         ledger_path,
         {
@@ -14187,18 +14899,13 @@ def _write_node_completion_ledger(
             "worker_result_packet_id": str(result_envelope.get("packet_id") or ""),
             "worker_result_completed_by_role": str(result_envelope.get("completed_by_role") or ""),
             "current_node_packet_id": str(packet_envelope.get("packet_id") or ""),
+            "completion_source_event": source_event,
+            "parent_backward_replay_completion": active_node_is_parent,
             "completed_nodes_after_update": completed_nodes,
             "next_node_id": next_node_id,
             "flowpilot_completable_work_closed": True,
             "human_inspection_notes_belong_in_final_report": True,
-            "source_paths": {
-                "execution_frontier_before_update": project_relative(project_root, run_root / "execution_frontier.json"),
-                "node_acceptance_plan": project_relative(project_root, _active_node_acceptance_plan_path(run_root, frontier)),
-                "current_node_write_grant": project_relative(project_root, _active_node_write_grant_path(run_root, frontier)),
-                "packet_envelope": project_relative(project_root, packet_envelope_path),
-                "result_envelope": project_relative(project_root, result_envelope_path),
-                "current_node_packet_runtime_audit": project_relative(project_root, audit_path),
-            },
+            "source_paths": source_paths,
             "completed_at": utc_now(),
         },
     )
@@ -14206,7 +14913,14 @@ def _write_node_completion_ledger(
     return ledger_path
 
 
-def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+def _mark_frontier_node_completed(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    source_event: str = "pm_completes_current_node_from_reviewed_result",
+) -> None:
     frontier = _active_frontier(run_root)
     active_node_id = str(payload.get("node_id") or frontier.get("active_node_id") or "node-001")
     if active_node_id != str(frontier.get("active_node_id")):
@@ -14238,6 +14952,7 @@ def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state:
         completed_node_id=active_node_id,
         completed_nodes=completed,
         next_node_id=next_node_id,
+        source_event=source_event,
     )
     frontier.update(
         {
@@ -14245,10 +14960,16 @@ def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state:
             "run_id": run_state["run_id"],
             "status": "current_node_loop" if next_node_id else "node_completed_by_pm",
             "active_node_id": next_node_id or active_node_id,
+            "active_path": _route_active_path(route, next_node_id or active_node_id) if route else frontier.get("active_path", []),
+            "active_leaf_node_id": (
+                next_node_id
+                if next_node_id and route and _node_kind(_active_node_definition_from_route(route, next_node_id)) in {"leaf", "repair"}
+                else None
+            ),
             "completed_nodes": completed,
             "latest_node_completion_ledger_path": project_relative(project_root, completion_ledger_path),
             "updated_at": utc_now(),
-            "source": "pm_completes_current_node_from_reviewed_result",
+            "source": source_event,
         }
     )
     write_json(run_root / "execution_frontier.json", frontier)
@@ -14263,7 +14984,7 @@ def _mark_frontier_node_completed(project_root: Path, run_root: Path, run_state:
             route_version=int(frontier.get("route_version") or 0),
             route_payload=route,
             active_node_id=next_node_id,
-            source_event="pm_completes_current_node_from_reviewed_result",
+            source_event=source_event,
         )
 
 
@@ -15346,7 +16067,7 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                 ],
-                to_role=str(index["packets"][0].get("to_role") or "worker_a"),
+                to_role=",".join(sorted({str(record.get("to_role") or "worker_a") for record in index["packets"]})),
                 extra={
                     "postcondition": "research_packet_relayed",
                     "controller_visibility": "packet_envelope_only",
@@ -15360,10 +16081,10 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
             action_type="relay_research_packet",
             actor="controller",
             label="research_packet_relayed_to_worker",
-            summary="Relay research packet envelope to worker without opening the body.",
+            summary="Relay research batch packet envelopes without opening their bodies.",
             allowed_reads=[project_relative(project_root, _research_packet_index_path(run_root))],
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
-            to_role=str(index["packets"][0].get("to_role") or "worker_a"),
+            to_role=",".join(sorted({str(record.get("to_role") or "worker_a") for record in index["packets"]})),
             extra={
                 "postcondition": "research_packet_relayed",
                 "controller_visibility": "packet_envelope_only",
@@ -15418,13 +16139,14 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
     if not flags.get("current_node_packet_registered"):
         return None
     if not flags.get("current_node_packet_relayed"):
-        payload = _latest_event_payload(run_state, "pm_registers_current_node_packet")
-        envelope_path = _packet_envelope_path(project_root, run_state, payload)
-        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        records = _current_node_packet_records(project_root, run_state)
         frontier = _active_frontier(run_root)
         grant_path = _active_node_write_grant_path(run_root, frontier)
         grant_extra: dict[str, Any] = {}
-        relay_allowed_reads = [project_relative(project_root, envelope_path)]
+        relay_allowed_reads = [
+            project_relative(project_root, _packet_envelope_path_from_record(project_root, run_state, record))
+            for record in records
+        ]
         if grant_path.exists():
             relay_allowed_reads.append(project_relative(project_root, grant_path))
             grant_extra = {
@@ -15437,8 +16159,8 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 actor="controller",
                 label="current_node_packet_relayed_after_router_direct_preflight_with_ledger_check",
                 summary=(
-                    f"Check the packet ledger and relay current-node packet {envelope['packet_id']} "
-                    f"to {envelope['to_role']} without opening its body."
+                    "Check the packet ledger and relay every current-node batch packet "
+                    "without opening packet bodies."
                 ),
                 allowed_reads=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
@@ -15448,9 +16170,9 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                 ],
-                to_role=str(envelope["to_role"]),
+                to_role=",".join(sorted({str(record.get("to_role")) for record in records})),
                 extra={
-                    "packet_id": envelope["packet_id"],
+                    "packet_ids": [record.get("packet_id") for record in records],
                     "postcondition": "current_node_packet_relayed",
                     "controller_visibility": "packet_envelope_only",
                     "sealed_body_reads_allowed": False,
@@ -15463,12 +16185,12 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             action_type="relay_current_node_packet",
             actor="controller",
             label="current_node_packet_relayed_after_router_direct_preflight",
-            summary=f"Directly relay current-node packet {envelope['packet_id']} to {envelope['to_role']} without opening its body.",
+            summary="Directly relay current-node batch packet envelopes without opening their bodies.",
             allowed_reads=relay_allowed_reads,
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
-            to_role=str(envelope["to_role"]),
+            to_role=",".join(sorted({str(record.get("to_role")) for record in records})),
             extra={
-                "packet_id": envelope["packet_id"],
+                "packet_ids": [record.get("packet_id") for record in records],
                 "postcondition": "current_node_packet_relayed",
                 "controller_visibility": "packet_envelope_only",
                 "sealed_body_reads_allowed": False,
@@ -15476,9 +16198,29 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             },
         )
     if flags.get("current_node_worker_result_returned") and not flags.get("current_node_result_relayed_to_reviewer"):
-        payload = _latest_event_payload(run_state, "worker_current_node_result_returned")
-        result_path = _result_envelope_path(project_root, run_state, payload)
-        result = packet_runtime.load_envelope(project_root, result_path)
+        if not _current_node_results_complete(project_root, run_state):
+            missing_roles = _current_node_missing_result_roles(project_root, run_state)
+            return _expected_role_decision_wait_action(
+                project_root,
+                run_state,
+                run_root,
+                label="controller_waits_for_remaining_current_node_batch_results",
+                summary="Controller must wait for every current-node batch result before relaying the batch to reviewer.",
+                allowed_external_events=["worker_current_node_result_returned"],
+                to_role=",".join(missing_roles) if missing_roles else "worker_a,worker_b",
+                payload_contract={
+                    "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                    "name": "current_node_batch_result_envelope",
+                    "required_fields": ["packet_id", "result_envelope_path"],
+                    "batch_join_policy": "all_results_before_review",
+                },
+                producer_roles_override=missing_roles,
+            )
+        records = _current_node_packet_records(project_root, run_state)
+        result_paths = [
+            _result_envelope_path_from_packet_record(project_root, run_state, record)
+            for record in records
+        ]
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="relay_current_node_result_to_reviewer",
@@ -15486,11 +16228,11 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 label="current_node_result_relayed_to_reviewer_with_ledger_check",
                 summary=(
                     "Check the packet ledger and relay the current-node worker "
-                    "result envelope to reviewer without opening the result body."
+                    "batch result envelopes to reviewer without opening result bodies."
                 ),
                 allowed_reads=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
-                    project_relative(project_root, result_path),
+                    *[project_relative(project_root, path) for path in result_paths],
                 ],
                 allowed_writes=[
                     project_relative(project_root, run_state_path(run_root)),
@@ -15498,7 +16240,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 ],
                 to_role="human_like_reviewer",
                 extra={
-                    "packet_id": result["packet_id"],
+                    "packet_ids": [record.get("packet_id") for record in records],
                     "postcondition": "current_node_result_relayed_to_reviewer",
                     "controller_visibility": "result_envelope_only",
                     "sealed_body_reads_allowed": False,
@@ -15510,12 +16252,12 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             action_type="relay_current_node_result_to_reviewer",
             actor="controller",
             label="current_node_result_relayed_to_reviewer",
-            summary=f"Relay current-node result envelope {result['packet_id']} to reviewer without opening result body.",
-            allowed_reads=[project_relative(project_root, result_path)],
+            summary="Relay current-node batch result envelopes to reviewer without opening result bodies.",
+            allowed_reads=[project_relative(project_root, path) for path in result_paths],
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
             to_role="human_like_reviewer",
             extra={
-                "packet_id": result["packet_id"],
+                "packet_ids": [record.get("packet_id") for record in records],
                 "postcondition": "current_node_result_relayed_to_reviewer",
                 "controller_visibility": "result_envelope_only",
                 "sealed_body_reads_allowed": False,
@@ -15558,6 +16300,166 @@ def _role_output_status_packet_path_for_wait(
 
 def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     index = _load_pm_role_work_request_index(run_root, run_state)
+    batch_records = _active_pm_role_work_batch_records(index)
+    if batch_records:
+        index_path = _pm_role_work_request_index_path(run_root)
+        packet_ids = [record.get("packet_id") for record in batch_records]
+        to_roles = ",".join(sorted({str(record.get("to_role") or "") for record in batch_records if record.get("to_role")}))
+        if any(record.get("status") == "open" for record in batch_records):
+            allowed_reads = [
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, index_path),
+                *[str(record.get("packet_envelope_path")) for record in batch_records],
+            ]
+            if not run_state.get("ledger_check_requested"):
+                return make_action(
+                    action_type="relay_pm_role_work_request_packet",
+                    actor="controller",
+                    label="pm_role_work_request_batch_relayed_with_ledger_check",
+                    summary="Check the packet ledger and relay every PM role-work request packet in the active batch without opening sealed bodies.",
+                    allowed_reads=allowed_reads,
+                    allowed_writes=[
+                        project_relative(project_root, run_state_path(run_root)),
+                        project_relative(project_root, run_root / "packet_ledger.json"),
+                        project_relative(project_root, index_path),
+                    ],
+                    to_role=to_roles,
+                    extra={
+                        "batch_id": index.get("active_batch_id"),
+                        "request_id": batch_records[0].get("request_id") if len(batch_records) == 1 else None,
+                        "packet_id": batch_records[0].get("packet_id") if len(batch_records) == 1 else None,
+                        "packet_ids": packet_ids,
+                        "postcondition": "pm_role_work_request_packet_relayed",
+                        "controller_visibility": "packet_envelopes_only",
+                        "sealed_body_reads_allowed": False,
+                        "combined_ledger_check_and_relay": True,
+                        "ledger_check_receipt_required": True,
+                        "pm_work_requests": project_relative(project_root, index_path),
+                    },
+                )
+            return make_action(
+                action_type="relay_pm_role_work_request_packet",
+                actor="controller",
+                label="pm_role_work_request_batch_relayed",
+                summary="Relay every PM role-work request packet in the active batch without opening sealed bodies.",
+                allowed_reads=[project_relative(project_root, index_path), *[str(record.get("packet_envelope_path")) for record in batch_records]],
+                allowed_writes=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, index_path),
+                ],
+                to_role=to_roles,
+                extra={
+                    "batch_id": index.get("active_batch_id"),
+                    "request_id": batch_records[0].get("request_id") if len(batch_records) == 1 else None,
+                    "packet_id": batch_records[0].get("packet_id") if len(batch_records) == 1 else None,
+                    "packet_ids": packet_ids,
+                    "postcondition": "pm_role_work_request_packet_relayed",
+                    "controller_visibility": "packet_envelopes_only",
+                    "sealed_body_reads_allowed": False,
+                    "pm_work_requests": project_relative(project_root, index_path),
+                },
+            )
+        if (
+            any(record.get("status") in {"packet_relayed", "result_returned"} for record in batch_records)
+            and not all(record.get("status") == "result_returned" for record in batch_records)
+        ):
+            missing_roles = [
+                str(record.get("to_role") or record.get("request_id") or "unknown")
+                for record in batch_records
+                if not resolve_project_path(project_root, str(record.get("result_envelope_path") or "")).exists()
+            ]
+            return _expected_role_decision_wait_action(
+                project_root,
+                run_state,
+                run_root,
+                label="controller_waits_for_pm_role_work_batch_results",
+                summary="Controller has relayed the PM role-work batch and must wait for every target role to return a result envelope.",
+                allowed_external_events=[ROLE_WORK_RESULT_RETURNED_EVENT],
+                to_role=",".join(sorted(set(missing_roles))) if missing_roles else to_roles,
+                payload_contract={
+                    "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                    "name": "role_work_result_returned_envelope",
+                    "required_fields": ["request_id", "packet_id", "result_envelope_path"],
+                    "batch_id": index.get("active_batch_id"),
+                    "batch_join_policy": "all_results_before_pm_absorption",
+                    "expected_next_recipient": "project_manager",
+                },
+                producer_roles_override=missing_roles,
+            )
+        if all(record.get("status") == "result_returned" for record in batch_records):
+            allowed_reads = [
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, index_path),
+                *[str(record.get("result_envelope_path")) for record in batch_records],
+            ]
+            if not run_state.get("ledger_check_requested"):
+                return make_action(
+                    action_type="relay_pm_role_work_result_to_pm",
+                    actor="controller",
+                    label="pm_role_work_result_batch_relayed_to_pm_with_ledger_check",
+                    summary="Check the packet ledger and relay every role-work result envelope in the batch back to PM without opening sealed result bodies.",
+                    allowed_reads=allowed_reads,
+                    allowed_writes=[
+                        project_relative(project_root, run_state_path(run_root)),
+                        project_relative(project_root, run_root / "packet_ledger.json"),
+                        project_relative(project_root, index_path),
+                    ],
+                    to_role="project_manager",
+                    extra={
+                        "batch_id": index.get("active_batch_id"),
+                        "request_id": batch_records[0].get("request_id") if len(batch_records) == 1 else None,
+                        "packet_id": batch_records[0].get("packet_id") if len(batch_records) == 1 else None,
+                        "packet_ids": packet_ids,
+                        "postcondition": "pm_role_work_result_relayed_to_pm",
+                        "controller_visibility": "result_envelopes_only",
+                        "sealed_body_reads_allowed": False,
+                        "combined_ledger_check_and_relay": True,
+                        "ledger_check_receipt_required": True,
+                        "pm_work_requests": project_relative(project_root, index_path),
+                    },
+                )
+            return make_action(
+                action_type="relay_pm_role_work_result_to_pm",
+                actor="controller",
+                label="pm_role_work_result_batch_relayed_to_pm",
+                summary="Relay every role-work result envelope in the batch back to PM without opening sealed result bodies.",
+                allowed_reads=[project_relative(project_root, index_path), *[str(record.get("result_envelope_path")) for record in batch_records]],
+                allowed_writes=[
+                    project_relative(project_root, run_root / "packet_ledger.json"),
+                    project_relative(project_root, index_path),
+                ],
+                to_role="project_manager",
+                extra={
+                    "batch_id": index.get("active_batch_id"),
+                    "request_id": batch_records[0].get("request_id") if len(batch_records) == 1 else None,
+                    "packet_id": batch_records[0].get("packet_id") if len(batch_records) == 1 else None,
+                    "packet_ids": packet_ids,
+                    "postcondition": "pm_role_work_result_relayed_to_pm",
+                    "controller_visibility": "result_envelopes_only",
+                    "sealed_body_reads_allowed": False,
+                    "pm_work_requests": project_relative(project_root, index_path),
+                },
+            )
+        if all(record.get("status") == "result_relayed_to_pm" for record in batch_records):
+            return _expected_role_decision_wait_action(
+                project_root,
+                run_state,
+                run_root,
+                label="controller_waits_for_pm_role_work_batch_result_decision",
+                summary="Controller relayed the full role-work result batch to PM and must wait for one PM batch disposition.",
+                allowed_external_events=[PM_ROLE_WORK_RESULT_DECISION_EVENT],
+                to_role="project_manager",
+                payload_contract={
+                    "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                    "name": "pm_role_work_batch_result_decision",
+                    "required_fields": ["decided_by_role", "batch_id", "decision"],
+                    "allowed_values": {
+                        "decided_by_role": ["project_manager"],
+                        "decision": sorted(PM_ROLE_WORK_TERMINAL_DECISIONS),
+                    },
+                    "expected_batch_id": index.get("active_batch_id"),
+                },
+            )
     active = _active_pm_role_work_request(index)
     if not isinstance(active, dict):
         return None
@@ -15786,6 +16688,7 @@ def _expected_role_decision_wait_action(
     payload_contract: dict[str, Any] | None = None,
     allowed_reads_extra: list[str] | None = None,
     pm_work_request_channel: bool = True,
+    producer_roles_override: list[str] | None = None,
 ) -> dict[str, Any]:
     role_output_events = list(allowed_external_events)
     role_output_status_packet_path = _role_output_status_packet_path_for_wait(
@@ -15816,17 +16719,28 @@ def _expected_role_decision_wait_action(
         allowed_events,
         context=f"await_role_decision action {label}",
     )
-    _validate_wait_event_producer_binding(
-        allowed_events,
-        to_role=to_role,
-        context=f"await_role_decision action {label}",
-    )
+    if producer_roles_override is None:
+        _validate_wait_event_producer_binding(
+            allowed_events,
+            to_role=to_role,
+            context=f"await_role_decision action {label}",
+        )
+    else:
+        producer_roles = {str(role) for role in producer_roles_override if str(role)}
+        target_roles = _role_set(to_role)
+        if producer_roles and not producer_roles.issubset(target_roles):
+            raise RouterError(
+                f"await_role_decision action {label} waits for event producer role(s) {sorted(producer_roles)} "
+                f"but targets {sorted(target_roles)}"
+            )
     extra: dict[str, Any] = {
         "allowed_external_events": allowed_events,
         "controller_only_mode_active": True,
         "controller_may_create_project_evidence": False,
         "expected_wait_is_not_control_blocker": True,
     }
+    if producer_roles_override is not None:
+        extra["expected_event_producer_roles"] = sorted({str(role) for role in producer_roles_override if str(role)})
     if pm_work_request_channel and to_role == "project_manager":
         extra["pm_work_request_channel_available"] = True
         extra["pm_role_work_request_event"] = PM_ROLE_WORK_REQUEST_EVENT
@@ -15879,13 +16793,39 @@ def _event_wait_role(event: str, meta: dict[str, str]) -> str:
     return "project_manager"
 
 
-def _pending_expected_external_event_groups(run_state: dict[str, Any]) -> list[list[tuple[str, dict[str, str]]]]:
+def _active_node_children_status(run_root: Path | None) -> bool | None:
+    if run_root is None:
+        return None
+    try:
+        frontier = _active_frontier(run_root)
+        return _active_node_has_children(run_root, frontier)
+    except (OSError, KeyError, RouterError, json.JSONDecodeError, ValueError, TypeError):
+        return None
+
+
+def _event_applicable_for_active_node(meta: dict[str, Any], active_node_has_children: bool | None) -> bool:
+    if active_node_has_children is None:
+        return True
+    if meta.get("requires_active_node_children") and not active_node_has_children:
+        return False
+    if meta.get("forbids_active_node_children") and active_node_has_children:
+        return False
+    return True
+
+
+def _pending_expected_external_event_groups(
+    run_state: dict[str, Any],
+    run_root: Path | None = None,
+) -> list[list[tuple[str, dict[str, Any]]]]:
     flags = run_state["flags"]
     grouped: dict[str, list[tuple[str, dict[str, str]]]] = {}
     ordered_requires: list[str] = []
+    active_node_has_children = _active_node_children_status(run_root)
     for event, meta in EXTERNAL_EVENTS.items():
         required_flag = meta.get("requires_flag")
         if not required_flag:
+            continue
+        if not _event_applicable_for_active_node(meta, active_node_has_children):
             continue
         if required_flag not in grouped:
             grouped[required_flag] = []
@@ -15923,7 +16863,7 @@ def _pending_expected_external_event_groups(run_state: dict[str, Any]) -> list[l
 
 
 def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    pending_groups = _pending_expected_external_event_groups(run_state)
+    pending_groups = _pending_expected_external_event_groups(run_state, run_root)
     if not pending_groups:
         return None
     group = pending_groups[0]
@@ -17270,6 +18210,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             raise RouterError("material scan packet relay requires a current packet-ledger check")
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         _relay_packet_records(project_root, run_state, index["packets"], controller_agent_id="controller")
+        _mark_parallel_batch_packets_relayed(run_root, "material_scan")
         run_state["flags"]["material_scan_packets_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_material_scan_results_to_reviewer":
@@ -17285,6 +18226,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         _relay_result_records(project_root, run_state, index["packets"], to_role="human_like_reviewer", controller_agent_id="controller")
         run_state["flags"]["material_scan_results_relayed_to_reviewer"] = True
+        batch = _active_parallel_packet_batch(run_root, "material_scan")
+        if batch:
+            batch["status"] = "results_relayed_to_reviewer"
+            _write_parallel_packet_batch_state(run_root, batch)
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_research_packet":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
@@ -17298,6 +18243,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             raise RouterError("research packet relay requires a current packet-ledger check")
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         _relay_packet_records(project_root, run_state, index["packets"], controller_agent_id="controller")
+        _mark_parallel_batch_packets_relayed(run_root, "research")
         run_state["flags"]["research_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_research_result_to_reviewer":
@@ -17312,6 +18258,10 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             raise RouterError("research result relay requires a current packet-ledger check")
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         _relay_result_records(project_root, run_state, index["packets"], to_role="human_like_reviewer", controller_agent_id="controller")
+        batch = _active_parallel_packet_batch(run_root, "research")
+        if batch:
+            batch["status"] = "results_relayed_to_reviewer"
+            _write_parallel_packet_batch_state(run_root, batch)
         run_state["flags"]["research_result_relayed_to_reviewer"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_pm_role_work_request_packet":
@@ -17323,22 +18273,29 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
             run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         index = _load_pm_role_work_request_index(run_root, run_state)
-        active = _active_pm_role_work_request(index)
-        if not isinstance(active, dict) or active.get("status") != "open":
+        batch_records = _active_pm_role_work_batch_records(index)
+        records = [record for record in batch_records if record.get("status") == "open"] if batch_records else []
+        if not records:
+            active = _active_pm_role_work_request(index)
+            records = [active] if isinstance(active, dict) and active.get("status") == "open" else []
+        if not records:
             raise RouterError("PM role-work request relay requires an open active request")
-        _relay_packet_records(project_root, run_state, [active], controller_agent_id="controller")
-        active["status"] = "packet_relayed"
-        active["packet_relayed_at"] = utc_now()
-        index["active_request_id"] = active.get("request_id")
+        _relay_packet_records(project_root, run_state, records, controller_agent_id="controller")
+        for record in records:
+            record["status"] = "packet_relayed"
+            record["packet_relayed_at"] = utc_now()
+        _mark_parallel_batch_packets_relayed(run_root, "pm_role_work")
+        index["active_request_id"] = records[0].get("request_id")
         _write_pm_role_work_request_index(run_root, index)
         run_state["flags"]["pm_role_work_request_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
         run_state["pm_role_work_requests"] = {
             "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
-            "active_request_id": active.get("request_id"),
-            "active_packet_id": active.get("packet_id"),
-            "active_to_role": active.get("to_role"),
-            "active_request_mode": active.get("request_mode"),
+            "active_batch_id": index.get("active_batch_id"),
+            "active_request_ids": [record.get("request_id") for record in records],
+            "active_packet_ids": [record.get("packet_id") for record in records],
+            "active_to_role": ",".join(sorted({str(record.get("to_role")) for record in records})),
+            "active_request_mode": records[0].get("request_mode"),
         }
     elif action_type == "relay_pm_role_work_result_to_pm":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
@@ -17349,22 +18306,32 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
             run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         index = _load_pm_role_work_request_index(run_root, run_state)
-        active = _active_pm_role_work_request(index)
-        if not isinstance(active, dict) or active.get("status") != "result_returned":
+        batch_records = _active_pm_role_work_batch_records(index)
+        records = [record for record in batch_records if record.get("status") == "result_returned"] if batch_records else []
+        if not records:
+            active = _active_pm_role_work_request(index)
+            records = [active] if isinstance(active, dict) and active.get("status") == "result_returned" else []
+        if not records:
             raise RouterError("PM role-work result relay requires an active returned result")
-        _relay_result_records(project_root, run_state, [active], to_role="project_manager", controller_agent_id="controller")
-        active["status"] = "result_relayed_to_pm"
-        active["result_relayed_to_pm_at"] = utc_now()
-        index["active_request_id"] = active.get("request_id")
+        _relay_result_records(project_root, run_state, records, to_role="project_manager", controller_agent_id="controller")
+        for record in records:
+            record["status"] = "result_relayed_to_pm"
+            record["result_relayed_to_pm_at"] = utc_now()
+        batch = _active_parallel_packet_batch(run_root, "pm_role_work")
+        if batch:
+            batch["status"] = "results_relayed_to_pm"
+            _write_parallel_packet_batch_state(run_root, batch)
+        index["active_request_id"] = records[0].get("request_id")
         _write_pm_role_work_request_index(run_root, index)
         run_state["flags"]["pm_role_work_result_relayed_to_pm"] = True
         run_state["ledger_check_requested"] = False
         run_state["pm_role_work_requests"] = {
             "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
-            "active_request_id": active.get("request_id"),
-            "active_packet_id": active.get("packet_id"),
-            "active_to_role": active.get("to_role"),
-            "active_request_mode": active.get("request_mode"),
+            "active_batch_id": index.get("active_batch_id"),
+            "active_request_ids": [record.get("request_id") for record in records],
+            "active_packet_ids": [record.get("packet_id") for record in records],
+            "active_to_role": ",".join(sorted({str(record.get("to_role")) for record in records})),
+            "active_request_mode": records[0].get("request_mode"),
         }
     elif action_type == "relay_current_node_packet":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
@@ -17376,23 +18343,27 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("current-node packet relay requires a current packet-ledger check")
-        envelope, envelope_path = _current_node_packet_context(project_root, run_state)
-        audit = packet_runtime.validate_packet_ready_for_direct_relay(
-            project_root,
-            packet_envelope=envelope,
-            envelope_path=envelope_path,
-        )
-        if not audit.get("passed"):
-            raise RouterError(f"current-node packet envelope is not ready for direct relay: {audit.get('blockers')}")
-        _ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get("node_id") or ""))
-        packet_runtime.controller_relay_envelope(
-            project_root,
-            envelope=envelope,
-            envelope_path=envelope_path,
-            controller_agent_id="controller",
-            received_from_role=str(envelope.get("from_role") or "project_manager"),
-            relayed_to_role=str(envelope.get("to_role")),
-        )
+        records = _current_node_packet_records(project_root, run_state)
+        for record in records:
+            envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
+            envelope = packet_runtime.load_envelope(project_root, envelope_path)
+            audit = packet_runtime.validate_packet_ready_for_direct_relay(
+                project_root,
+                packet_envelope=envelope,
+                envelope_path=envelope_path,
+            )
+            if not audit.get("passed"):
+                raise RouterError(f"current-node packet envelope is not ready for direct relay: {audit.get('blockers')}")
+            _ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get("node_id") or ""))
+            packet_runtime.controller_relay_envelope(
+                project_root,
+                envelope=envelope,
+                envelope_path=envelope_path,
+                controller_agent_id="controller",
+                received_from_role=str(envelope.get("from_role") or "project_manager"),
+                relayed_to_role=str(envelope.get("to_role")),
+            )
+        _mark_parallel_batch_packets_relayed(run_root, "current_node")
         run_state["flags"]["current_node_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_current_node_result_to_reviewer":
@@ -17403,18 +18374,15 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             run_state["ledger_check_requested"] = True
             run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
             run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
-        result, result_path = _current_node_result_context(project_root, run_state)
         if not run_state["flags"].get("current_node_worker_result_returned"):
             raise RouterError("current-node result relay requires worker result event")
-        _ensure_barrier_bundles_ready(project_root, node_id=str(result.get("node_id") or ""))
-        packet_runtime.controller_relay_envelope(
-            project_root,
-            envelope=result,
-            envelope_path=result_path,
-            controller_agent_id="controller",
-            received_from_role=str(result.get("completed_by_role") or "unknown"),
-            relayed_to_role="human_like_reviewer",
-        )
+        records = _current_node_packet_records(project_root, run_state)
+        _validate_results_exist_for_packets(project_root, run_state, records, next_recipient="human_like_reviewer")
+        _relay_result_records(project_root, run_state, records, to_role="human_like_reviewer", controller_agent_id="controller")
+        batch = _active_parallel_packet_batch(run_root, "current_node")
+        if batch:
+            batch["status"] = "results_relayed_to_reviewer"
+            _write_parallel_packet_batch_state(run_root, batch)
         run_state["flags"]["current_node_result_relayed_to_reviewer"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "load_resume_state":
@@ -17661,13 +18629,17 @@ def _record_external_event_unchecked(
         and not run_state["flags"].get("route_activated_by_pm")
     )
     repeatable_current_node_completion = (
-        event == "pm_completes_current_node_from_reviewed_result"
+        event in {
+            "pm_completes_current_node_from_reviewed_result",
+            "pm_completes_parent_node_from_backward_replay",
+        }
         and run_state["flags"].get(flag)
         and _active_node_completion_write_missing(run_root, run_state, payload)
     )
     repeatable_pm_role_work_request = event == PM_ROLE_WORK_REQUEST_EVENT
     repeatable_role_work_result = event == ROLE_WORK_RESULT_RETURNED_EVENT
     repeatable_pm_role_work_result_decision = event == PM_ROLE_WORK_RESULT_DECISION_EVENT
+    repeatable_current_node_result = event == "worker_current_node_result_returned"
     scoped_event_has_active_repair_context = bool(
         scoped_identity
         and event == "pm_mutates_route_after_review_block"
@@ -17683,6 +18655,7 @@ def _record_external_event_unchecked(
         or repeatable_pm_role_work_request
         or repeatable_role_work_result
         or repeatable_pm_role_work_result_decision
+        or repeatable_current_node_result
     ):
         return _already_recorded_external_event_result(
             project_root,
@@ -17781,10 +18754,27 @@ def _record_external_event_unchecked(
     elif event == "worker_scan_results_returned":
         material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         _validate_results_exist_for_packets(project_root, run_state, material_index["packets"], next_recipient="human_like_reviewer")
+        _mark_parallel_batch_results_joined(project_root, run_root, run_state, "material_scan")
     elif event == "reviewer_reports_material_sufficient":
         _write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=True)
+        material_batch = _active_parallel_packet_batch(run_root, "material_scan")
+        if material_batch:
+            _mark_parallel_batch_reviewed(
+                run_root,
+                "material_scan",
+                passed=True,
+                reviewed_packet_ids=[str(record.get("packet_id")) for record in material_batch["packets"] if isinstance(record, dict)],
+            )
     elif event == "reviewer_reports_material_insufficient":
         _write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=False)
+        material_batch = _active_parallel_packet_batch(run_root, "material_scan")
+        if material_batch:
+            _mark_parallel_batch_reviewed(
+                run_root,
+                "material_scan",
+                passed=False,
+                reviewed_packet_ids=[str(record.get("packet_id")) for record in material_batch["packets"] if isinstance(record, dict)],
+            )
     elif event == "pm_writes_research_package":
         _write_research_package(project_root, run_root, run_state, payload)
     elif event == "research_capability_decision_recorded":
@@ -17797,6 +18787,7 @@ def _record_external_event_unchecked(
         _write_pm_role_work_result_decision(project_root, run_root, run_state, payload)
     elif event == "worker_research_report_returned":
         _write_worker_research_report(project_root, run_root, run_state, payload)
+        _mark_parallel_batch_results_joined(project_root, run_root, run_state, "research")
     elif event == "reviewer_passes_research_direct_source_check":
         research_index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         raw_agent_map = payload.get("agent_role_map")
@@ -17817,6 +18808,14 @@ def _record_external_event_unchecked(
             schema_version="flowpilot.research_reviewer_report.v1",
             checked_paths=[run_root / "research" / "research_package.json", run_root / "research" / "worker_research_report.json"],
         )
+        research_batch = _active_parallel_packet_batch(run_root, "research")
+        if research_batch:
+            _mark_parallel_batch_reviewed(
+                run_root,
+                "research",
+                passed=True,
+                reviewed_packet_ids=[str(record.get("packet_id")) for record in research_batch["packets"] if isinstance(record, dict)],
+            )
     elif event == "pm_absorbs_reviewed_research":
         _write_pm_research_absorption(project_root, run_root, run_state)
     elif event == "pm_writes_material_understanding":
@@ -17986,6 +18985,14 @@ def _record_external_event_unchecked(
         parent_segment_decision = _write_parent_segment_decision(project_root, run_root, run_state, payload)
     elif event == "pm_completes_current_node_from_reviewed_result":
         _mark_frontier_node_completed(project_root, run_root, run_state, payload)
+    elif event == "pm_completes_parent_node_from_backward_replay":
+        _mark_frontier_node_completed(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            source_event="pm_completes_parent_node_from_backward_replay",
+        )
     elif event == "pm_records_evidence_quality_package":
         _write_evidence_quality_package(project_root, run_root, run_state, payload)
     elif event == "reviewer_passes_evidence_quality_package":
@@ -18037,7 +19044,10 @@ def _record_external_event_unchecked(
         "recorded_at": utc_now(),
     }
     run_state["flags"][flag] = True
-    if event == "pm_completes_current_node_from_reviewed_result" and _node_completion_event_advanced_to_next_node(
+    if event in {
+        "pm_completes_current_node_from_reviewed_result",
+        "pm_completes_parent_node_from_backward_replay",
+    } and _node_completion_event_advanced_to_next_node(
         run_root,
         payload,
     ):

@@ -32,6 +32,11 @@ If the runtime session cannot open the packet, return the runtime blocker
 envelope instead of continuing from memory. Keep scope narrow and disjoint from
 other workers. Do not infer downstream work.
 
+Your packet may be one member of a PM-authored parallel batch. Complete only the
+packet addressed to Worker B. Do not wait for sibling packets, infer whether the
+batch is complete, request reviewer review, or decide route advancement. Router
+joins the whole batch after every addressed role returns its result.
+
 If Router includes an `active_holder_lease.json` path for this exact packet,
 Worker B may use only that lease's fast-lane actions: acknowledge the packet,
 write controller-safe progress, submit the result, and repair mechanical

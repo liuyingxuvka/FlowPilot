@@ -356,6 +356,13 @@
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer"
       },
+      "batch_review_fields": [
+        "batch_id",
+        "packet_count",
+        "reviewed_packet_ids",
+        "per_packet_findings",
+        "overall_passed"
+      ],
       "contract_self_check_required": true,
       "reviewer_independent_challenge_required": true,
       "reviewer_must_block_missing_or_failed_check": true
@@ -638,6 +645,13 @@
         "reviewed_by_role": "human_like_reviewer",
         "passed": true
       },
+      "batch_review_fields": [
+        "batch_id",
+        "packet_count",
+        "reviewed_packet_ids",
+        "per_packet_findings",
+        "overall_passed"
+      ],
       "reviewer_independent_challenge_required": true
     },
     {

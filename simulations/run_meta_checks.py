@@ -171,12 +171,16 @@ REQUIRED_LABELS = (
     "flowguard_process_designed",
     "flowguard_officer_model_adversarial_probe_done",
     "candidate_route_tree_generated",
+    "recursive_route_decomposition_policy_written",
+    "route_leaf_readiness_gates_defined",
     "root_route_model_checked",
     "root_product_function_model_checked",
     "strict_gate_obligation_review_model_checked",
     "route_model_checked",
+    "router_leaf_only_dispatch_policy_checked",
     "parent_backward_structural_trigger_rule_recorded",
     "parent_backward_review_targets_enumerated",
+    "user_flow_diagram_shallow_projection_policy_recorded",
     "markdown_summary_synced",
     "execution_frontier_written",
     "codex_plan_synced",
@@ -216,6 +220,8 @@ REQUIRED_LABELS = (
     "node_product_function_model_checked",
     "current_node_high_standard_recheck_written",
     "node_acceptance_plan_written",
+    "active_node_leaf_readiness_gate_passed",
+    "active_node_parent_dispatch_blocked",
     "active_child_skill_bindings_written",
     "node_acceptance_risk_experiments_mapped",
     "worker_packet_child_skill_binding_projected",
@@ -284,6 +290,7 @@ REQUIRED_LABELS = (
     "final_route_wide_gate_ledger_child_skill_gates_collected",
     "final_route_wide_gate_ledger_human_review_gates_collected",
     "final_route_wide_gate_ledger_parent_backward_replays_collected",
+    "final_route_wide_gate_ledger_deep_leaf_coverage_collected",
     "final_route_wide_gate_ledger_product_process_gates_collected",
     "final_route_wide_gate_ledger_resource_lineage_resolved",
     "final_route_wide_gate_ledger_stale_evidence_checked",
@@ -452,6 +459,9 @@ def _state_id(state: model.State) -> str:
         f"fg_design={state.flowguard_process_design_done},"
         f"{state.flowguard_officer_model_adversarial_probe_done}|"
         f"candidate_tree={state.candidate_route_tree_generated}|"
+        f"recursive={state.recursive_route_decomposition_policy_written},"
+        f"{state.route_leaf_readiness_gates_defined},"
+        f"{state.router_leaf_only_dispatch_policy_checked}|"
         f"root_model={state.root_route_model_checked},"
         f"{state.root_route_model_process_officer_approved},"
         f"{state.root_product_function_model_checked},"
@@ -491,6 +501,8 @@ def _state_id(state: model.State) -> str:
         f"{state.node_product_function_model_product_officer_approved}|"
         f"node_acceptance={state.current_node_high_standard_recheck_written},"
         f"{state.node_acceptance_plan_written},"
+        f"{state.active_node_leaf_readiness_gate_passed},"
+        f"{state.active_node_parent_dispatch_blocked},"
         f"{state.active_child_skill_bindings_written},"
         f"{state.active_child_skill_binding_scope_limited},"
         f"{state.child_skill_stricter_standard_precedence_bound},"
