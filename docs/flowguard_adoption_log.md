@@ -7694,21 +7694,21 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: User requires every existing FlowGuard model to be updated and passing after broad protocol changes
-- Status: in_progress
+- Status: completed
 - Skill decision: used_flowguard
-- Started: 2026-05-11T16:03:46+00:00
-- Ended: 2026-05-11T16:03:46+00:00
+- Started: 2026-05-11T16:15:11+00:00
+- Ended: 2026-05-11T16:15:11+00:00
 - Duration seconds: 0.000
 - Commands OK: True
 
 ### Model Files
-- none recorded
+- simulations/flowpilot_protocol_contract_conformance_model.py
 
 ### Commands
-- none recorded
+- OK (0.000s): `python tmp\\run_all_flowguard_checks.py`
 
 ### Findings
-- none recorded
+- Updated protocol conformance source scan to recognize direct PM resume payload_contract binding and gate-outcome reviewer block lanes; full regression passed 39/39.
 
 ### Counterexamples
 - none recorded
@@ -7717,7 +7717,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 ### Skipped Steps
-- none recorded
+- production replay skipped by model-specific conformance checks where declared; this pass was the repository model regression suite
 
 ### Next Actions
 - none recorded
