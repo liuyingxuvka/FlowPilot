@@ -1057,6 +1057,16 @@ def _declared_reviewer_block_flags(router: Any) -> frozenset[str]:
     return frozenset(flags)
 
 
+def _gate_outcome_block_lane_flags(router: Any) -> frozenset[str]:
+    flags: set[str] = set()
+    for event_name in getattr(router, "GATE_OUTCOME_BLOCK_EVENTS", frozenset()):
+        meta = router.EXTERNAL_EVENTS.get(str(event_name), {})
+        flag = meta.get("flag")
+        if flag:
+            flags.add(str(flag))
+    return frozenset(flags)
+
+
 def _declared_model_miss_review_block_flags(router: Any, router_source: str) -> frozenset[str]:
     declared = getattr(router, "MODEL_MISS_REVIEW_BLOCK_FLAGS", None)
     if declared is not None:
@@ -1213,6 +1223,7 @@ def _pm_resume_action_contract_fields(router_source: str) -> frozenset[str]:
         return frozenset()
     wait_has_contract = (
         '"payload_contract": _pm_resume_decision_payload_contract' in wait_segment
+        or "payload_contract=_pm_resume_decision_payload_contract" in wait_segment
         or (
             "_role_decision_payload_contract_for_events" in wait_segment
             and 'allowed_events == ["pm_resume_recovery_decision_returned"]' in event_dispatch_segment
@@ -1403,6 +1414,7 @@ def collect_source_state(project_root: Path) -> State:
     )
     declared_model_miss_flags = _declared_model_miss_review_block_flags(router, router_source)
     model_miss_card_flags, model_miss_cards_aligned = _model_miss_review_block_card_flag_sets(router)
+    gate_outcome_block_flags = _gate_outcome_block_lane_flags(router)
 
     return State(
         status="accepted",
@@ -1477,7 +1489,11 @@ def collect_source_state(project_root: Path) -> State:
             router_source
         ),
         declared_reviewer_block_flags=_declared_reviewer_block_flags(router),
-        reviewer_block_lane_flags=declared_model_miss_flags | CONTROL_RECHECK_REVIEW_BLOCK_FLAGS,
+        reviewer_block_lane_flags=(
+            declared_model_miss_flags
+            | CONTROL_RECHECK_REVIEW_BLOCK_FLAGS
+            | gate_outcome_block_flags
+        ),
         model_miss_review_block_event_flags=_model_miss_review_block_event_flags(router),
         model_miss_review_block_card_flags=model_miss_card_flags,
         model_miss_review_block_cards_aligned=model_miss_cards_aligned,
