@@ -144,6 +144,8 @@ class State:
 
     runtime_prepared_skeleton: bool = False
     runtime_required_fields_known: bool = False
+    runtime_progress_status_initialized: bool = False
+    progress_prompt_included: bool = False
     role_authored_body: bool = False
     required_fields_present: bool = False
     explicit_empty_arrays_present: bool = False
@@ -157,6 +159,12 @@ class State:
     controller_reads_body: bool = False
     controller_receives_envelope_only: bool = False
     compact_envelope_refs_used: bool = False
+    progress_updates_runtime_written: bool = True
+    progress_value_numeric: bool = True
+    progress_value_nonnegative: bool = True
+    progress_message_metadata_only: bool = True
+    progress_visibility_grant: str = "single_status_packet"  # single_status_packet | output_dir | sealed_body
+    progress_used_for_semantic_decision: bool = False
 
     semantic_review_required: bool = True
     runtime_claimed_semantic_approval: bool = False
@@ -330,6 +338,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 runtime_prepared_skeleton=True,
                 runtime_required_fields_known=True,
+                runtime_progress_status_initialized=True,
+                progress_prompt_included=True,
                 quality_packs_declared=_quality_packs_declared_for(state.scenario),
             ),
         )
@@ -471,6 +481,27 @@ def accepted_envelope_uses_compact_refs(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def accepted_outputs_have_default_progress_contract(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    if not state.runtime_progress_status_initialized:
+        return InvariantResult.fail("accepted role output without default progress status")
+    if not state.progress_prompt_included:
+        return InvariantResult.fail("accepted role output without shared progress prompt")
+    if state.progress_visibility_grant != "single_status_packet":
+        return InvariantResult.fail("role-output progress visibility was wider than status metadata")
+    if not state.progress_message_metadata_only:
+        return InvariantResult.fail("role-output progress status leaked sealed body content")
+    if not state.progress_updates_runtime_written:
+        return InvariantResult.fail("role-output progress update bypassed runtime")
+    if not (state.progress_value_numeric and state.progress_value_nonnegative):
+        return InvariantResult.fail("role-output progress value was not nonnegative numeric")
+    if state.progress_used_for_semantic_decision:
+        return InvariantResult.fail("role-output progress was used as semantic decision evidence")
+    return InvariantResult.pass_()
+
+
 def declared_quality_packs_have_generic_rows(state: State, trace) -> InvariantResult:
     del trace
     if state.status == "accepted" and state.quality_packs_declared and not state.quality_pack_checks_present:
@@ -546,6 +577,11 @@ INVARIANTS = (
         predicate=accepted_envelope_uses_compact_refs,
     ),
     Invariant(
+        name="accepted_outputs_have_default_progress_contract",
+        description="Accepted role outputs initialize metadata-only progress and prompt roles to maintain it through runtime.",
+        predicate=accepted_outputs_have_default_progress_contract,
+    ),
+    Invariant(
         name="declared_quality_packs_have_generic_rows",
         description="Declared route quality packs are answered through generic rows without pack-specific runtime judgment.",
         predicate=declared_quality_packs_have_generic_rows,
@@ -603,6 +639,8 @@ def _accepted_base(**changes: object) -> State:
         explicit_empty_arrays_present=True,
         fixed_values_valid=True,
         role_is_allowed=True,
+        runtime_progress_status_initialized=True,
+        progress_prompt_included=True,
         runtime_receipt_written=True,
         body_hash_verified=True,
         envelope_generated_by_runtime=True,
@@ -623,6 +661,13 @@ def hazard_states() -> dict[str, State]:
         "inline_body_leak": _accepted_base(envelope_leaks_body=True),
         "controller_reads_body": _accepted_base(controller_reads_body=True),
         "semantic_auto_approval": _accepted_base(runtime_claimed_semantic_approval=True),
+        "missing_default_progress_status": _accepted_base(runtime_progress_status_initialized=False),
+        "missing_progress_prompt": _accepted_base(progress_prompt_included=False),
+        "progress_status_grants_output_dir": _accepted_base(progress_visibility_grant="output_dir"),
+        "progress_status_leaks_body": _accepted_base(progress_message_metadata_only=False),
+        "progress_update_manual_write": _accepted_base(progress_updates_runtime_written=False),
+        "progress_value_nonnumeric": _accepted_base(progress_value_numeric=False),
+        "progress_used_as_semantic_decision": _accepted_base(progress_used_for_semantic_decision=True),
         "missing_quality_pack_check": _accepted_base(
             scenario=MISSING_QUALITY_PACK_CHECK,
             output_type=REVIEWER_REPORT_CONTRACT.output_type,

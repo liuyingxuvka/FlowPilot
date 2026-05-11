@@ -59,6 +59,13 @@ HAZARD_EXPECTED_FAILURES = {
     "inline_body_leak": "leaked body content",
     "controller_reads_body": "Controller body read",
     "semantic_auto_approval": "replaced semantic gate approval",
+    "missing_default_progress_status": "without default progress status",
+    "missing_progress_prompt": "without shared progress prompt",
+    "progress_status_grants_output_dir": "progress visibility was wider than status metadata",
+    "progress_status_leaks_body": "progress status leaked sealed body content",
+    "progress_update_manual_write": "progress update bypassed runtime",
+    "progress_value_nonnumeric": "progress value was not nonnegative numeric",
+    "progress_used_as_semantic_decision": "progress was used as semantic decision evidence",
     "missing_quality_pack_check": "omitted declared quality-pack checks",
     "pack_specific_runtime_judgment": "judged quality-pack semantics",
 }
@@ -94,6 +101,9 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|output={state.output_type}|"
         f"role={state.submitting_role}->{state.allowed_role}|"
         f"runtime={state.runtime_receipt_written}|hash={state.body_hash_verified}|"
+        f"progress={state.runtime_progress_status_initialized},{state.progress_prompt_included},"
+        f"{state.progress_visibility_grant},{state.progress_updates_runtime_written},"
+        f"{state.progress_value_numeric},{state.progress_message_metadata_only}|"
         f"router={state.router_decision}:{state.router_rejection_reason}|lane={state.repair_lane}"
     )
 
@@ -237,11 +247,14 @@ def _source_report(project_root: Path) -> dict[str, object]:
     failures: list[str] = []
     assets = project_root / "skills/flowpilot/assets"
     runtime_path = assets / "role_output_runtime.py"
+    asset_unified_runtime_path = assets / "flowpilot_runtime.py"
     wrapper_path = project_root / "scripts/flowpilot_outputs.py"
     unified_wrapper_path = project_root / "scripts/flowpilot_runtime.py"
     quality_pack_catalog_path = assets / "runtime_kit/quality_pack_catalog.json"
     if not runtime_path.exists():
         failures.append("skills/flowpilot/assets/role_output_runtime.py is missing")
+    if not asset_unified_runtime_path.exists():
+        failures.append("skills/flowpilot/assets/flowpilot_runtime.py is missing")
     if not wrapper_path.exists():
         failures.append("scripts/flowpilot_outputs.py is missing")
     if not unified_wrapper_path.exists():
@@ -255,16 +268,31 @@ def _source_report(project_root: Path) -> dict[str, object]:
         failures.append(f"contract registry missing ids: {missing_contracts}")
 
     missing_card_mentions: list[str] = []
+    missing_progress_guidance: list[str] = []
     for rel in ROLE_CARDS:
         path = project_root / rel
         text = path.read_text(encoding="utf-8") if path.exists() else ""
         if "role_output_runtime.py" not in text:
             missing_card_mentions.append(rel)
+        if "progress_status" not in text:
+            missing_progress_guidance.append(rel)
     if missing_card_mentions:
         failures.append(f"role cards missing role_output_runtime.py guidance: {missing_card_mentions}")
+    if missing_progress_guidance:
+        failures.append(f"role cards missing role-output progress guidance: {missing_progress_guidance}")
+
+    output_catalog = project_root / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_output_contract_catalog.md"
+    catalog_text = output_catalog.read_text(encoding="utf-8") if output_catalog.exists() else ""
+    if "progress_status" not in catalog_text:
+        failures.append("PM output contract catalog missing role-output progress_status guidance")
 
     runtime_output_types: set[str] = set()
     if runtime_path.exists():
+        runtime_text = runtime_path.read_text(encoding="utf-8")
+        if "def update_output_progress" not in runtime_text:
+            failures.append("role_output_runtime missing update_output_progress")
+        if "progress_written_by_runtime" not in runtime_text:
+            failures.append("role_output_runtime missing runtime-written progress marker")
         if str(assets) not in sys.path:
             sys.path.insert(0, str(assets))
         try:
@@ -279,11 +307,17 @@ def _source_report(project_root: Path) -> dict[str, object]:
         except Exception as exc:  # pragma: no cover - diagnostic script
             failures.append(f"role_output_runtime import failed: {exc!r}")
 
+    if asset_unified_runtime_path.exists():
+        asset_wrapper_text = asset_unified_runtime_path.read_text(encoding="utf-8")
+        if "progress-output" not in asset_wrapper_text:
+            failures.append("unified flowpilot_runtime missing progress-output command")
+
     return {
         "ok": not failures,
         "failures": failures,
         "facts": {
             "runtime_path_exists": runtime_path.exists(),
+            "asset_unified_runtime_path_exists": asset_unified_runtime_path.exists(),
             "wrapper_path_exists": wrapper_path.exists(),
             "unified_wrapper_path_exists": unified_wrapper_path.exists(),
             "quality_pack_catalog_path_exists": quality_pack_catalog_path.exists(),

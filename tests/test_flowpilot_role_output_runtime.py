@@ -277,6 +277,74 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 },
             )
 
+    def test_role_output_progress_status_is_default_runtime_written_metadata(self) -> None:
+        root = self.make_project()
+        session = role_output_runtime.prepare_output_session(
+            root,
+            output_type="pm_resume_recovery_decision",
+            role="project_manager",
+            agent_id="agent-pm-progress",
+        )
+
+        status_path = root / session["controller_status_packet_path"]
+        self.assertTrue(status_path.exists())
+        self.assertEqual(
+            session["body_skeleton"]["_role_output_contract"]["progress_status"]["controller_status_packet_path"],
+            session["controller_status_packet_path"],
+        )
+        status = self.read_json(status_path)
+        self.assertEqual(status["status"], "prepared")
+        self.assertEqual(status["progress"], 0)
+        self.assertTrue(status["progress_written_by_runtime"])
+        self.assertFalse(status["controller_may_read_body"])
+        self.assertFalse(status["progress_is_decision_evidence"])
+        self.assertFalse(status["body_text_persisted_in_status"])
+
+        progress = role_output_runtime.update_output_progress(
+            root,
+            output_type="pm_resume_recovery_decision",
+            role="project_manager",
+            agent_id="agent-pm-progress",
+            progress=40,
+            message="Reviewing current route memory.",
+            session_path=session["session_path"],
+        )
+        self.assertEqual(progress["controller_status_packet_path"], session["controller_status_packet_path"])
+        status = self.read_json(status_path)
+        self.assertEqual(status["status"], "working")
+        self.assertEqual(status["progress"], 40)
+        self.assertEqual(status["session_id"], session["session_id"])
+
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "sealed body details"):
+            role_output_runtime.update_output_progress(
+                root,
+                output_type="pm_resume_recovery_decision",
+                role="project_manager",
+                agent_id="agent-pm-progress",
+                progress=50,
+                message="The sealed body findings are ready.",
+                session_path=session["session_path"],
+            )
+
+        envelope = role_output_runtime.submit_output(
+            root,
+            output_type="pm_resume_recovery_decision",
+            role="project_manager",
+            agent_id="agent-pm-progress",
+            session_path=session["session_path"],
+            body={
+                "decision": "continue_current_packet_loop",
+                "explicit_recovery_evidence_recorded": True,
+                "prior_path_context_review": {
+                    "impact_on_decision": "PM checked current route memory before resuming.",
+                },
+            },
+        )
+        self.assertEqual(envelope["controller_status_packet_path"], session["controller_status_packet_path"])
+        status = self.read_json(status_path)
+        self.assertEqual(status["status"], "submitted")
+        self.assertEqual(status["progress"], 999)
+
 
 if __name__ == "__main__":
     unittest.main()

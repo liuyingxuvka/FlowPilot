@@ -584,6 +584,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def resume_role_agent_payload(self, root: Path, action: dict | None = None) -> dict:
         action = action or self.next_after_display_sync(root)
         records = []
+        batch_id = action["liveness_probe_batch_id"]
         for request in action["role_rehydration_request"]:
             role = request["role_key"]
             record = {
@@ -596,6 +597,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "liveness_decision": "spawned_replacement_from_current_run_memory",
                 "resume_agent_attempted": True,
                 "bounded_wait_result": "not_waited",
+                "bounded_wait_ms": 0,
+                "liveness_probe_batch_id": batch_id,
+                "liveness_probe_mode": "concurrent_batch",
+                "liveness_probe_started_at": "2026-05-11T00:00:00Z",
+                "liveness_probe_completed_at": "2026-05-11T00:00:01Z",
                 "wait_agent_timeout_treated_as_active": False,
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
@@ -623,6 +629,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             records.append(record)
         return {
             "background_agents_capability_status": "available",
+            "liveness_probe_batch_id": batch_id,
+            "liveness_probe_mode": "concurrent_batch",
+            "all_liveness_probes_started_before_wait": True,
             "rehydrated_role_agents": records,
         }
 
@@ -1630,7 +1639,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         repaired_state = read_json(router.run_state_path(run_root))
         labels = [entry["label"] for entry in repaired_state["history"]]
         self.assertIn("router_cleared_stale_pending_action", labels)
-        self.assertIsNone(repaired_state["pending_action"])
+        pending = repaired_state["pending_action"]
+        if pending is not None:
+            self.assertEqual(pending["label"], "controller_instructed_to_check_prompt_manifest")
+            self.assertEqual(pending["next_card_id"], "pm.event.reviewer_blocked")
 
     def test_node_acceptance_plan_block_enters_model_miss_repair_path(self) -> None:
         root = self.make_project()
@@ -4674,6 +4686,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "rehydrated_role_agents[].liveness_decision",
             "rehydrated_role_agents[].resume_agent_attempted",
             "rehydrated_role_agents[].bounded_wait_result",
+            "rehydrated_role_agents[].bounded_wait_ms",
+            "rehydrated_role_agents[].liveness_probe_batch_id",
+            "rehydrated_role_agents[].liveness_probe_mode",
+            "rehydrated_role_agents[].liveness_probe_started_at",
+            "rehydrated_role_agents[].liveness_probe_completed_at",
             "rehydrated_role_agents[].wait_agent_timeout_treated_as_active",
             "rehydrated_role_agents[].memory_packet_path",
             "rehydrated_role_agents[].memory_packet_hash",
@@ -4697,6 +4714,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(action["spawn_policy"], "spawn_or_confirm_all_six_live_resume_roles_before_pm_resume_decision")
         self.assertTrue(action["liveness_preflight_required"])
+        self.assertTrue(action["liveness_preflight_policy"]["concurrent_probe_required"])
+        self.assertTrue(action["liveness_preflight_policy"]["start_all_probes_before_waiting"])
+        self.assertEqual(action["liveness_preflight_policy"]["probe_mode"], "concurrent_batch")
+        self.assertEqual(action["liveness_preflight_policy"]["liveness_probe_batch_id"], action["liveness_probe_batch_id"])
         self.assertFalse(action["liveness_preflight_policy"]["timeout_unknown_is_active"])
         self.assertEqual(action["liveness_preflight_policy"]["roles_to_check"], list(router.CREW_ROLE_KEYS))
         self.assertEqual(len(action["role_rehydration_request"]), 6)
@@ -4728,11 +4749,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(router.RouterError, "timeout_unknown|wait_agent_timeout_treated_as_active"):
             router.apply_action(root, "rehydrate_role_agents", payload)
         action = router.next_action(root)
+        payload = self.resume_role_agent_payload(root, action)
+        payload["rehydrated_role_agents"][0]["liveness_probe_mode"] = "serial"
+        with self.assertRaisesRegex(router.RouterError, "concurrent liveness probe mode"):
+            router.apply_action(root, "rehydrate_role_agents", payload)
+        action = router.next_action(root)
+        payload = self.resume_role_agent_payload(root, action)
+        payload["all_liveness_probes_started_before_wait"] = False
+        with self.assertRaisesRegex(router.RouterError, "all_liveness_probes_started_before_wait"):
+            router.apply_action(root, "rehydrate_role_agents", payload)
+        action = router.next_action(root)
         router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
         rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
         self.assertTrue(rehydration["all_six_roles_ready"])
         self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], list(router.CREW_ROLE_KEYS))
         self.assertFalse(rehydration["liveness_preflight"]["wait_agent_timeout_treated_as_active"])
+        self.assertEqual(rehydration["liveness_preflight"]["probe_mode"], "concurrent_batch")
+        self.assertTrue(rehydration["liveness_preflight"]["all_liveness_probes_started_before_wait"])
         self.assertTrue(rehydration["current_run_memory_complete"])
         self.assertTrue(rehydration["pm_memory_rehydrated"])
         role_io = read_json(run_root / "role_io_protocol_ledger.json")
@@ -4777,6 +4810,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.rel(root, run_root / "route_memory" / "pm_prior_path_context.json"),
             self.rel(root, run_root / "route_memory" / "route_history_index.json"),
         )
+        progress_status = action["role_output_progress_status"]
+        progress_status_path = progress_status["controller_status_packet_path"]
+        self.assertIn(progress_status_path, action["allowed_reads"])
+        self.assertIn(self.rel(root, run_root / "role_output_status"), progress_status_path)
+        self.assertNotIn(self.rel(root, run_root / "continuation"), action["allowed_reads"])
+        self.assertTrue(progress_status["default_progress_required"])
+        self.assertEqual(progress_status["controller_visibility"], "metadata_only")
+        self.assertFalse(progress_status["progress_is_decision_evidence"])
+        self.assertEqual(
+            action["payload_contract"]["progress_status"]["controller_status_packet_path"],
+            progress_status_path,
+        )
+        self.assertIn("flowpilot_runtime.py progress-output", action["payload_contract"]["structural_requirements"][-1])
 
         with self.assertRaisesRegex(router.RouterError, "file-backed body path"):
             router.record_external_event(root, "pm_resume_recovery_decision_returned", {"decision": "continue_current_packet_loop"})
@@ -6805,7 +6851,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         run_root = self.run_root_for(root)
         material_index_path = run_root / "material" / "material_scan_packets.json"

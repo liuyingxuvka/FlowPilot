@@ -62,6 +62,12 @@ and role-output ledger entry, and returns only the compact controller-visible
 envelope with `body_ref` and `runtime_receipt_ref`. It does not judge semantic
 sufficiency or pack-specific UI/desktop/localization quality.
 
+`progress_status`: every formal role-output work item has default
+Controller-visible metadata progress. Use `flowpilot_runtime.py
+progress-output` while working and keep messages brief; do not include sealed
+body content, findings, evidence, recommendations, decisions, or result
+details. Progress is status only and must not be used as pass/fail evidence.
+
 When a gate can pass, block, waive, skip, repair locally, mutate the route, or
 affect completion, require a file-backed `GateDecision` body using
 `flowpilot.output_contract.gate_decision.v1`. It must use the exact fields

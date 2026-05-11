@@ -29,6 +29,7 @@ REQUIRED_LABELS = (
     "visible_plan_restored_from_current_run",
     "crew_memory_loaded",
     "controller_relay_boundary_confirmed",
+    "six_role_liveness_concurrent_probe_batch_started",
     "six_role_liveness_checked_all_active",
     "six_role_liveness_checked_recovery_needed",
     "six_role_liveness_timeout_unknown_recorded",
@@ -74,7 +75,10 @@ def _state_id(state: model.State) -> str:
         f"{state.crew_roles_ready},restored={state.crew_restored},"
         f"replaced={state.crew_replaced},memory_injected={state.run_memory_injected_into_roles},"
         f"report={state.crew_rehydration_report_written}|"
-        f"liveness={state.resume_wake_recorded_to_router},"
+        f"liveness={state.resume_wake_recorded_to_router},batch={state.liveness_probe_batch_started},"
+        f"{state.liveness_probe_batch_concurrent},"
+        f"{state.all_six_liveness_probes_started_before_wait},"
+        f"{state.liveness_probe_batch_id_consistent},serial={state.serial_liveness_wait_used},"
         f"{state.all_six_role_liveness_checked},{state.role_liveness_outcome}|"
         f"lifecycle={state.crew_lifecycle_flags_current},"
         f"{state.capability_lifecycle_flags_current},"

@@ -18,6 +18,7 @@
   },
   "source": {
     "facts": {
+      "asset_unified_runtime_path_exists": true,
       "contract_ids_present": [
         "flowpilot.output_contract.gate_decision.v1",
         "flowpilot.output_contract.officer_model_report.v1",

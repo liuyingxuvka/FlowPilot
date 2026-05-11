@@ -229,6 +229,19 @@ class State:
     role_work_progress_nonnegative: bool = True
     role_work_status_message_safe: bool = True
 
+    work_package_progress_default_scope: str = "all_work_packages"  # packet_only | all_work_packages
+    role_output_wait_pending: bool = False
+    role_output_progress_prompt_inherited: bool = True
+    role_output_status_packet_exists: bool = True
+    role_output_status_packet_read_allowed: bool = True
+    role_output_status_visibility_grant: str = "single_status_packet"  # none | single_status_packet | output_dir | sealed_body
+    role_output_progress_observed: bool = False
+    role_output_progress_runtime_written: bool = True
+    role_output_progress_numeric: bool = True
+    role_output_progress_nonnegative: bool = True
+    role_output_status_message_safe: bool = True
+    progress_status_used_as_decision_evidence: bool = False
+
 
 class Transition(NamedTuple):
     label: str
@@ -651,6 +664,37 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 role_work_progress_numeric=True,
                 role_work_progress_nonnegative=True,
                 role_work_status_message_safe=True,
+            ),
+        )
+        return
+
+    if not state.role_output_wait_pending:
+        yield Transition(
+            "controller_waits_for_role_output_with_status_packet_read",
+            _inc(
+                state,
+                holder="controller",
+                work_package_progress_default_scope="all_work_packages",
+                role_output_wait_pending=True,
+                role_output_progress_prompt_inherited=True,
+                role_output_status_packet_exists=True,
+                role_output_status_packet_read_allowed=True,
+                role_output_status_visibility_grant="single_status_packet",
+            ),
+        )
+        return
+
+    if state.role_output_wait_pending and not state.role_output_progress_observed:
+        yield Transition(
+            "target_role_updates_role_output_progress_via_runtime",
+            _inc(
+                state,
+                holder="project_manager",
+                role_output_progress_observed=True,
+                role_output_progress_runtime_written=True,
+                role_output_progress_numeric=True,
+                role_output_progress_nonnegative=True,
+                role_output_status_message_safe=True,
             ),
         )
         return
@@ -1101,6 +1145,13 @@ def role_memory_is_index_not_authority(state: State, trace) -> InvariantResult:
 
 def role_work_wait_exposes_status_packet_only(state: State, trace) -> InvariantResult:
     del trace
+    if (
+        (state.role_work_wait_pending or state.role_output_wait_pending)
+        and state.work_package_progress_default_scope != "all_work_packages"
+    ):
+        return InvariantResult.fail(
+            "work-package progress was not default for all role work"
+        )
     if state.role_work_wait_pending and not (
         state.role_work_status_packet_exists and state.role_work_status_packet_read_allowed
     ):
@@ -1110,6 +1161,20 @@ def role_work_wait_exposes_status_packet_only(state: State, trace) -> InvariantR
     if state.role_work_wait_pending and state.role_work_status_visibility_grant != "single_status_packet":
         return InvariantResult.fail(
             "role-work progress visibility grant exposed more than controller status packet"
+        )
+    if state.role_output_wait_pending and not state.role_output_progress_prompt_inherited:
+        return InvariantResult.fail(
+            "formal role-output work lacked shared progress prompt coverage"
+        )
+    if state.role_output_wait_pending and not (
+        state.role_output_status_packet_exists and state.role_output_status_packet_read_allowed
+    ):
+        return InvariantResult.fail(
+            "role-output wait did not expose matching controller status packet"
+        )
+    if state.role_output_wait_pending and state.role_output_status_visibility_grant != "single_status_packet":
+        return InvariantResult.fail(
+            "role-output progress visibility grant exposed more than controller status packet"
         )
     return InvariantResult.pass_()
 
@@ -1124,6 +1189,18 @@ def controller_visible_status_is_metadata_only(state: State, trace) -> Invariant
         return InvariantResult.fail(
             "controller-visible progress status leaked sealed body details"
         )
+    if (
+        state.role_output_wait_pending
+        and state.role_output_status_packet_read_allowed
+        and not state.role_output_status_message_safe
+    ):
+        return InvariantResult.fail(
+            "controller-visible role-output progress status leaked sealed body details"
+        )
+    if state.progress_status_used_as_decision_evidence:
+        return InvariantResult.fail(
+            "progress status was used as role decision evidence"
+        )
     return InvariantResult.pass_()
 
 
@@ -1131,6 +1208,8 @@ def role_progress_updates_use_runtime_contract(state: State, trace) -> Invariant
     del trace
     if state.role_work_progress_observed and not state.role_work_progress_runtime_written:
         return InvariantResult.fail("role progress status update bypassed packet runtime")
+    if state.role_output_progress_observed and not state.role_output_progress_runtime_written:
+        return InvariantResult.fail("role-output progress status update bypassed packet runtime")
     return InvariantResult.pass_()
 
 
@@ -1140,6 +1219,10 @@ def role_progress_value_is_numeric(state: State, trace) -> InvariantResult:
         state.role_work_progress_numeric and state.role_work_progress_nonnegative
     ):
         return InvariantResult.fail("role progress status was not a nonnegative numeric value")
+    if state.role_output_progress_observed and not (
+        state.role_output_progress_numeric and state.role_output_progress_nonnegative
+    ):
+        return InvariantResult.fail("role-output progress status was not a nonnegative numeric value")
     return InvariantResult.pass_()
 
 
@@ -1700,6 +1783,48 @@ def hazard_states() -> dict[str, State]:
             role_work_wait_pending=True,
             role_work_progress_observed=True,
             role_work_progress_numeric=False,
+        ),
+        "progress_default_packet_only": _safe_base(
+            role_work_wait_pending=True,
+            work_package_progress_default_scope="packet_only",
+        ),
+        "role_output_progress_prompt_missing": _safe_base(
+            role_output_wait_pending=True,
+            role_output_progress_prompt_inherited=False,
+        ),
+        "role_output_wait_without_status_packet_read": _safe_base(
+            role_output_wait_pending=True,
+            role_output_status_packet_exists=True,
+            role_output_status_packet_read_allowed=False,
+            role_output_status_visibility_grant="none",
+        ),
+        "role_output_status_grants_output_dir": _safe_base(
+            role_output_wait_pending=True,
+            role_output_status_packet_exists=True,
+            role_output_status_packet_read_allowed=True,
+            role_output_status_visibility_grant="output_dir",
+        ),
+        "role_output_status_leaks_findings": _safe_base(
+            role_output_wait_pending=True,
+            role_output_status_packet_exists=True,
+            role_output_status_packet_read_allowed=True,
+            role_output_status_visibility_grant="single_status_packet",
+            role_output_status_message_safe=False,
+        ),
+        "role_output_progress_manual_write": _safe_base(
+            role_output_wait_pending=True,
+            role_output_progress_observed=True,
+            role_output_progress_runtime_written=False,
+        ),
+        "role_output_progress_nonnumeric": _safe_base(
+            role_output_wait_pending=True,
+            role_output_progress_observed=True,
+            role_output_progress_numeric=False,
+        ),
+        "progress_status_used_as_decision": _safe_base(
+            role_output_wait_pending=True,
+            role_output_progress_observed=True,
+            progress_status_used_as_decision_evidence=True,
         ),
         "optimized_transaction_without_hash_check": _safe_base(
             mode="optimized",

@@ -110,6 +110,7 @@ RESUME_ROLE_AGENT_RESULTS = {ROLE_AGENT_REHYDRATION_RESULT, ROLE_AGENT_CONTINUIT
 ROLE_AGENT_HOST_LIVENESS_STATUSES = {"active", "completed", "missing", "cancelled", "timeout_unknown", "unknown"}
 ROLE_AGENT_BOUNDED_WAIT_RESULTS = {"not_waited", "completed", "timeout_unknown"}
 ROLE_AGENT_LIVENESS_DECISIONS = {"confirmed_existing_agent", "spawned_replacement_from_current_run_memory"}
+ROLE_AGENT_LIVENESS_PROBE_MODE = "concurrent_batch"
 CONTROL_BLOCKER_LANES = {
     "control_plane_reissue",
     "pm_repair_decision_required",
@@ -3644,6 +3645,9 @@ def _resume_role_rehydration_payload_contract(
         required_object="payload",
         required_fields=[
             "background_agents_capability_status",
+            "liveness_probe_batch_id",
+            "liveness_probe_mode",
+            "all_liveness_probes_started_before_wait",
             "rehydrated_role_agents[].role_key",
             "rehydrated_role_agents[].agent_id",
             "rehydrated_role_agents[].model_policy",
@@ -3658,10 +3662,17 @@ def _resume_role_rehydration_payload_contract(
             "rehydrated_role_agents[].liveness_decision",
             "rehydrated_role_agents[].resume_agent_attempted",
             "rehydrated_role_agents[].bounded_wait_result",
+            "rehydrated_role_agents[].bounded_wait_ms",
+            "rehydrated_role_agents[].liveness_probe_batch_id",
+            "rehydrated_role_agents[].liveness_probe_mode",
+            "rehydrated_role_agents[].liveness_probe_started_at",
+            "rehydrated_role_agents[].liveness_probe_completed_at",
             "rehydrated_role_agents[].wait_agent_timeout_treated_as_active",
         ],
         allowed_values={
             "background_agents_capability_status": ["available"],
+            "liveness_probe_mode": [ROLE_AGENT_LIVENESS_PROBE_MODE],
+            "all_liveness_probes_started_before_wait": [True],
             "rehydrated_role_agents[].role_key": list(CREW_ROLE_KEYS),
             "rehydrated_role_agents[].model_policy": [BACKGROUND_ROLE_MODEL_POLICY],
             "rehydrated_role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
@@ -3672,6 +3683,7 @@ def _resume_role_rehydration_payload_contract(
             "rehydrated_role_agents[].liveness_decision": sorted(ROLE_AGENT_LIVENESS_DECISIONS),
             "rehydrated_role_agents[].resume_agent_attempted": [True],
             "rehydrated_role_agents[].bounded_wait_result": sorted(ROLE_AGENT_BOUNDED_WAIT_RESULTS),
+            "rehydrated_role_agents[].liveness_probe_mode": [ROLE_AGENT_LIVENESS_PROBE_MODE],
             "rehydrated_role_agents[].wait_agent_timeout_treated_as_active": [False],
         },
         conditional_required_fields={
@@ -3690,6 +3702,8 @@ def _resume_role_rehydration_payload_contract(
         },
         structural_requirements=[
             "Provide exactly one non-duplicate rehydrated role agent record for each FlowPilot role key.",
+            "Start all six liveness probes in one concurrent batch before waiting for individual results.",
+            "Use one liveness_probe_batch_id for the top-level receipt and every role record.",
             "Each record must match the corresponding role_rehydration_request path/hash fields.",
             "Each restored or replacement live role agent must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
             "A wait_agent timeout must be recorded as timeout_unknown and must not justify live_agent_continuity_confirmed.",
@@ -6375,12 +6389,17 @@ def _resume_role_contexts(project_root: Path, run_root: Path, run_state: dict[st
     return [_resume_role_context(project_root, run_root, run_state, role) for role in CREW_ROLE_KEYS]
 
 
+def _resume_liveness_probe_batch_id(run_state: dict[str, Any]) -> str:
+    return f"resume-liveness-{run_state['run_id']}-{_latest_resume_tick_id(run_state)}"
+
+
 def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     answers = _startup_answers_from_run(run_root)
     mode = answers.get("background_agents")
     contexts = _resume_role_contexts(project_root, run_root, run_state)
     missing_memory = [item["role_key"] for item in contexts if item["role_memory_status"] != "available"]
     resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
+    liveness_probe_batch_id = _resume_liveness_probe_batch_id(run_state)
     extra: dict[str, Any] = {
         "background_agents_mode": mode,
         "role_keys": list(CREW_ROLE_KEYS),
@@ -6401,11 +6420,16 @@ def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, ru
         },
         "memory_missing_role_keys": missing_memory,
         "crew_rehydration_report_path": project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+        "liveness_probe_batch_id": liveness_probe_batch_id,
         "liveness_preflight_required": True,
         "liveness_preflight_policy": {
             "roles_to_check": list(CREW_ROLE_KEYS),
             "current_waiting_role_source": "packet_ledger.next_recipient_role",
             "resume_agent_check_required": True,
+            "concurrent_probe_required": True,
+            "probe_mode": ROLE_AGENT_LIVENESS_PROBE_MODE,
+            "liveness_probe_batch_id": liveness_probe_batch_id,
+            "start_all_probes_before_waiting": True,
             "bounded_wait_allowed": True,
             "wait_agent_timeout_result": "timeout_unknown",
             "timeout_unknown_is_active": False,
@@ -6469,6 +6493,13 @@ def _normalize_resume_role_agent_records(
         raise RouterError("cannot rehydrate roles before background_agents startup answer is recorded")
     if payload.get("background_agents_capability_status") != "available":
         raise RouterError("resume role rehydration requires background_agents_capability_status=available")
+    expected_batch_id = _resume_liveness_probe_batch_id(run_state)
+    if payload.get("liveness_probe_batch_id") != expected_batch_id:
+        raise RouterError(f"resume role rehydration requires liveness_probe_batch_id={expected_batch_id}")
+    if payload.get("liveness_probe_mode") != ROLE_AGENT_LIVENESS_PROBE_MODE:
+        raise RouterError(f"resume role rehydration requires liveness_probe_mode={ROLE_AGENT_LIVENESS_PROBE_MODE}")
+    if payload.get("all_liveness_probes_started_before_wait") is not True:
+        raise RouterError("resume role rehydration requires all_liveness_probes_started_before_wait=true")
     raw_records = payload.get("rehydrated_role_agents") or payload.get("role_agents")
     if isinstance(raw_records, dict):
         iterable = list(raw_records.values())
@@ -6477,6 +6508,17 @@ def _normalize_resume_role_agent_records(
     else:
         raise RouterError("rehydrate_role_agents requires payload.rehydrated_role_agents list or object")
     records_by_role: dict[str, dict[str, Any]] = {}
+    probe_started_times: list[datetime] = []
+    probe_completed_times: list[datetime] = []
+
+    def parse_probe_time(role_key: str, field: str, value: object) -> datetime:
+        if not isinstance(value, str) or not value.strip():
+            raise RouterError(f"{role_key} requires {field}")
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise RouterError(f"{role_key} requires ISO timestamp {field}") from exc
+
     for raw in iterable:
         if not isinstance(raw, dict):
             raise RouterError("each rehydrated role agent record must be an object")
@@ -6507,6 +6549,19 @@ def _normalize_resume_role_agent_records(
         bounded_wait_result = str(raw.get("bounded_wait_result") or "")
         if bounded_wait_result not in ROLE_AGENT_BOUNDED_WAIT_RESULTS:
             raise RouterError(f"{role} requires bounded_wait_result")
+        if raw.get("liveness_probe_batch_id") != expected_batch_id:
+            raise RouterError(f"{role} liveness probe batch id mismatch")
+        if raw.get("liveness_probe_mode") != ROLE_AGENT_LIVENESS_PROBE_MODE:
+            raise RouterError(f"{role} requires concurrent liveness probe mode")
+        bounded_wait_ms = raw.get("bounded_wait_ms")
+        if isinstance(bounded_wait_ms, bool) or not isinstance(bounded_wait_ms, int) or bounded_wait_ms < 0:
+            raise RouterError(f"{role} requires nonnegative bounded_wait_ms")
+        started_at = parse_probe_time(str(role), "liveness_probe_started_at", raw.get("liveness_probe_started_at"))
+        completed_at = parse_probe_time(str(role), "liveness_probe_completed_at", raw.get("liveness_probe_completed_at"))
+        if completed_at < started_at:
+            raise RouterError(f"{role} liveness probe completed before it started")
+        probe_started_times.append(started_at)
+        probe_completed_times.append(completed_at)
         if raw.get("wait_agent_timeout_treated_as_active") is not False:
             raise RouterError(f"{role} must record wait_agent_timeout_treated_as_active=false")
         if bounded_wait_result == "timeout_unknown" and result == ROLE_AGENT_CONTINUITY_RESULT:
@@ -6553,6 +6608,11 @@ def _normalize_resume_role_agent_records(
             "liveness_decision": liveness_decision,
             "resume_agent_attempted": True,
             "bounded_wait_result": bounded_wait_result,
+            "bounded_wait_ms": bounded_wait_ms,
+            "liveness_probe_batch_id": expected_batch_id,
+            "liveness_probe_mode": ROLE_AGENT_LIVENESS_PROBE_MODE,
+            "liveness_probe_started_at": raw.get("liveness_probe_started_at"),
+            "liveness_probe_completed_at": raw.get("liveness_probe_completed_at"),
             "wait_agent_timeout_treated_as_active": False,
             "rehydrated_for_run_id": run_state["run_id"],
             "rehydrated_after_resume_tick_id": resume_tick_id,
@@ -6567,6 +6627,8 @@ def _normalize_resume_role_agent_records(
             "pm_resume_context_delivered": role == "project_manager",
             "recorded_at": utc_now(),
         }
+    if probe_started_times and probe_completed_times and max(probe_started_times) > min(probe_completed_times):
+        raise RouterError("all liveness probes must start before waiting for individual results")
     missing = [role for role in CREW_ROLE_KEYS if role not in records_by_role]
     if missing:
         raise RouterError(f"missing rehydrated live role agent records: {', '.join(missing)}")
@@ -6614,6 +6676,9 @@ def _write_resume_role_rehydration_report(
         "all_six_roles_ready": len(records) == len(CREW_ROLE_KEYS),
         "liveness_preflight": {
             "checked_at": utc_now(),
+            "probe_mode": ROLE_AGENT_LIVENESS_PROBE_MODE,
+            "liveness_probe_batch_id": _resume_liveness_probe_batch_id(run_state),
+            "all_liveness_probes_started_before_wait": True,
             "awaiting_role": resume_next.get("next_recipient_role"),
             "roles_checked": [record["role_key"] for record in records],
             "timeout_unknown_role_keys": timeout_unknown_roles,
@@ -14667,6 +14732,30 @@ def _controller_status_packet_path_from_packet_envelope(packet_envelope_path: ob
     return raw[: -len("packet_envelope.json")] + "controller_status_packet.json"
 
 
+def _role_output_status_packet_path_for_wait(
+    project_root: Path,
+    run_root: Path,
+    *,
+    to_role: str,
+    allowed_events: list[str],
+    payload_contract: dict[str, Any] | None,
+) -> str | None:
+    if not isinstance(payload_contract, dict):
+        return None
+    if payload_contract.get("required_object") != "role_output_body":
+        return None
+    if not to_role or "," in to_role or to_role == "host":
+        return None
+    event_name = "_or_".join(allowed_events) if allowed_events else str(payload_contract.get("name") or "")
+    path = role_output_runtime.default_role_output_status_packet_path(
+        run_root,
+        role=to_role,
+        output_type=str(payload_contract.get("name") or "role_output"),
+        event_name=event_name,
+    )
+    return project_relative(project_root, path)
+
+
 def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     index = _load_pm_role_work_request_index(run_root, run_state)
     active = _active_pm_role_work_request(index)
@@ -14896,9 +14985,32 @@ def _expected_role_decision_wait_action(
     to_role: str,
     payload_contract: dict[str, Any] | None = None,
     allowed_reads_extra: list[str] | None = None,
+    pm_work_request_channel: bool = True,
 ) -> dict[str, Any]:
+    role_output_events = list(allowed_external_events)
+    role_output_status_packet_path = _role_output_status_packet_path_for_wait(
+        project_root,
+        run_root,
+        to_role=to_role,
+        allowed_events=role_output_events,
+        payload_contract=payload_contract,
+    )
+    if role_output_status_packet_path and payload_contract is not None:
+        payload_contract = dict(payload_contract)
+        structural = list(payload_contract.get("structural_requirements") or [])
+        structural.append(
+            "Maintain role-output progress through flowpilot_runtime.py progress-output; progress is metadata-only and is not pass/fail evidence."
+        )
+        payload_contract["structural_requirements"] = structural
+        payload_contract["progress_status"] = {
+            "default_progress_required": True,
+            "controller_status_packet_path": role_output_status_packet_path,
+            "runtime_command": "flowpilot_runtime.py progress-output",
+            "controller_visibility": "metadata_only",
+            "progress_is_decision_evidence": False,
+        }
     allowed_events = list(allowed_external_events)
-    if to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
+    if pm_work_request_channel and to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
         allowed_events.append(PM_ROLE_WORK_REQUEST_EVENT)
     extra: dict[str, Any] = {
         "allowed_external_events": allowed_events,
@@ -14906,12 +15018,22 @@ def _expected_role_decision_wait_action(
         "controller_may_create_project_evidence": False,
         "expected_wait_is_not_control_blocker": True,
     }
-    if to_role == "project_manager":
+    if pm_work_request_channel and to_role == "project_manager":
         extra["pm_work_request_channel_available"] = True
         extra["pm_role_work_request_event"] = PM_ROLE_WORK_REQUEST_EVENT
     if payload_contract is not None:
         extra["payload_contract"] = payload_contract
+    if role_output_status_packet_path:
+        extra["role_output_progress_status"] = {
+            "controller_status_packet_path": role_output_status_packet_path,
+            "default_progress_required": True,
+            "runtime_command": "flowpilot_runtime.py progress-output",
+            "controller_visibility": "metadata_only",
+            "progress_is_decision_evidence": False,
+        }
     allowed_reads = [project_relative(project_root, run_state_path(run_root))]
+    if role_output_status_packet_path and role_output_status_packet_path not in allowed_reads:
+        allowed_reads.append(role_output_status_packet_path)
     for item in allowed_reads_extra or []:
         if item and item not in allowed_reads:
             allowed_reads.append(item)
@@ -16156,20 +16278,19 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card_bundle":
         return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, action)
     if action is None and _resume_waits_for_pm_decision(run_state):
-        action = make_action(
-            action_type="await_role_decision",
-            actor="controller",
+        action = _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
             label="controller_waits_for_pm_resume_decision",
             summary="Resume state has been loaded and resume cards delivered. Controller must wait for PM resume decision before continuing any route, mail, or packet work.",
-            allowed_reads=[
+            allowed_external_events=["pm_resume_recovery_decision_returned"],
+            to_role="project_manager",
+            allowed_reads_extra=[
                 project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
-                project_relative(project_root, run_state_path(run_root)),
             ],
-            allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-            extra={
-                "allowed_external_events": ["pm_resume_recovery_decision_returned"],
-                "payload_contract": _pm_resume_decision_payload_contract(project_root, run_root),
-            },
+            payload_contract=_pm_resume_decision_payload_contract(project_root, run_root),
+            pm_work_request_channel=False,
         )
     if action is None:
         action = _next_mail_action(project_root, run_state, run_root)

@@ -27,6 +27,7 @@ ROLE_OUTPUT_RUNTIME_RECEIPT_SCHEMA = "flowpilot.role_output_runtime_receipt.v1"
 ROLE_OUTPUT_RUNTIME_SESSION_SCHEMA = "flowpilot.role_output_runtime_session.v1"
 ROLE_OUTPUT_LEDGER_SCHEMA = "flowpilot.role_output_ledger.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
+ROLE_OUTPUT_STATUS_SCHEMA = "flowpilot.controller_status_packet.v1"
 CONTRACT_REGISTRY_PATH = Path("skills/flowpilot/assets/runtime_kit/contracts/contract_index.json")
 QUALITY_PACK_CATALOG_PATH = Path("skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json")
 ATTACHED_QUALITY_PACK_REL_PATHS = (
@@ -61,6 +62,21 @@ FORBIDDEN_CONTROLLER_VISIBLE_BODY_FIELDS = {
 }
 
 PLACEHOLDER_PREFIXES = ("<required:", "<choose:")
+PROGRESS_MESSAGE_MAX_LEN = getattr(packet_runtime, "PROGRESS_MESSAGE_MAX_LEN", 160)
+PROGRESS_MESSAGE_FORBIDDEN_TERMS = getattr(
+    packet_runtime,
+    "PROGRESS_MESSAGE_FORBIDDEN_TERMS",
+    (
+        "body summary",
+        "evidence",
+        "finding",
+        "findings",
+        "recommendation",
+        "recommendations",
+        "result details",
+        "sealed body",
+    ),
+)
 
 
 class RoleOutputRuntimeError(ValueError):
@@ -612,6 +628,15 @@ def build_output_skeleton(
         "output_type": spec.output_type,
         "runtime_validates_mechanics_only": True,
         "semantic_sufficiency_owner": "assigned_role_or_downstream_gate",
+        "progress_status": {
+            "default_progress_required": True,
+            "runtime_command": "flowpilot_runtime.py progress-output",
+            "controller_visibility": "metadata_only",
+            "message_boundary": (
+                "Use brief status metadata only. Do not include sealed body content, findings, "
+                "evidence, recommendations, decisions, or result details."
+            ),
+        },
     }
     return skeleton
 
@@ -850,6 +875,166 @@ def _role_output_ledger_path(run_root: Path) -> Path:
     return run_root / "role_output_ledger.json"
 
 
+def _role_output_status_dir(run_root: Path) -> Path:
+    return run_root / "role_output_status"
+
+
+def _safe_status_part(value: str) -> str:
+    cleaned: list[str] = []
+    for char in str(value or "").strip():
+        if char.isalnum() or char in {"-", "_", "."}:
+            cleaned.append(char)
+        elif cleaned and cleaned[-1] != "_":
+            cleaned.append("_")
+    return "".join(cleaned).strip("._-")[:96] or "unknown"
+
+
+def default_role_output_status_packet_path(
+    run_root: Path,
+    *,
+    role: str,
+    output_type: str,
+    event_name: str | None = None,
+) -> Path:
+    key = event_name or output_type
+    return _role_output_status_dir(run_root) / (
+        f"{_safe_status_part(role)}--{_safe_status_part(key)}--controller_status_packet.json"
+    )
+
+
+def _validate_progress_value(progress: int) -> int:
+    if isinstance(progress, bool) or not isinstance(progress, int) or progress < 0:
+        raise RoleOutputRuntimeError("progress must be a nonnegative integer")
+    return progress
+
+
+def _validate_progress_message(message: str) -> str:
+    text = str(message or "").strip()
+    if not text:
+        raise RoleOutputRuntimeError("progress message must be non-empty")
+    if len(text) > PROGRESS_MESSAGE_MAX_LEN:
+        raise RoleOutputRuntimeError(f"progress message must be {PROGRESS_MESSAGE_MAX_LEN} characters or fewer")
+    lowered = text.lower()
+    for term in PROGRESS_MESSAGE_FORBIDDEN_TERMS:
+        if term in lowered:
+            raise RoleOutputRuntimeError("progress message must not include sealed body details")
+    return text
+
+
+def write_output_progress_status(
+    project_root: Path,
+    *,
+    run_root: Path,
+    output_type: str,
+    role: str,
+    agent_id: str,
+    status: str,
+    message: str,
+    progress: int,
+    event_name: str | None = None,
+    controller_status_packet_path: str | Path | None = None,
+    session_id: str | None = None,
+) -> dict[str, Any]:
+    resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
+    spec = _spec_for(output_type)
+    if not _role_allowed(spec, role):
+        raise RoleOutputRuntimeError(f"{output_type} progress may be updated only by {', '.join(spec.allowed_roles)}")
+    status_path = (
+        _resolve_project_path(project_root, controller_status_packet_path)
+        if controller_status_packet_path
+        else default_role_output_status_packet_path(
+            run_root,
+            role=role,
+            output_type=spec.output_type,
+            event_name=event_name or spec.event_name,
+        )
+    )
+    payload = {
+        "schema_version": ROLE_OUTPUT_STATUS_SCHEMA,
+        "runtime_entrypoint": "role_output_runtime.progress",
+        "run_id": run_root.name,
+        "holder": role,
+        "status": status,
+        "message": _validate_progress_message(message),
+        "progress": _validate_progress_value(progress),
+        "progress_written_by_runtime": True,
+        "progress_updated_by_role": role,
+        "progress_updated_by_agent_id": resolved_agent_id,
+        "output_type": spec.output_type,
+        "output_contract_id": spec.contract_id,
+        "event_name": event_name or spec.event_name,
+        "updated_at": utc_now(),
+        "controller_visibility": "role_output_status_metadata_only",
+        "controller_allowed_actions": ["read_role_output_status", "wait_for_role_output_envelope"],
+        "controller_forbidden_actions": [
+            "read_role_output_body",
+            "read_role_output_directory",
+            "infer_role_decision_from_progress",
+            "approve_gate",
+        ],
+        "controller_may_read_body": False,
+        "progress_is_decision_evidence": False,
+        "body_text_persisted_in_status": False,
+    }
+    if session_id:
+        payload["session_id"] = session_id
+    _write_json(status_path, payload)
+    payload["controller_status_packet_path"] = _project_relative(project_root, status_path)
+    return payload
+
+
+def _load_output_session(project_root: Path, session_path: str | Path) -> dict[str, Any]:
+    session = _read_json(_resolve_project_path(project_root, session_path))
+    if session.get("schema_version") != ROLE_OUTPUT_RUNTIME_SESSION_SCHEMA:
+        raise RoleOutputRuntimeError("role output session has unsupported schema")
+    return session
+
+
+def update_output_progress(
+    project_root: Path,
+    *,
+    output_type: str,
+    role: str,
+    agent_id: str,
+    progress: int,
+    message: str,
+    run_id: str | None = None,
+    event_name: str | None = None,
+    session_path: str | Path | None = None,
+    controller_status_packet_path: str | Path | None = None,
+) -> dict[str, Any]:
+    resolved_run_id, run_root = _run_paths(project_root, run_id)
+    resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
+    session_id = None
+    if session_path:
+        session = _load_output_session(project_root, session_path)
+        if session.get("role") != role:
+            raise RoleOutputRuntimeError("progress role does not match role-output session")
+        if session.get("agent_id") != resolved_agent_id:
+            raise RoleOutputRuntimeError("progress agent_id does not match role-output session")
+        if session.get("output_type") != output_type:
+            raise RoleOutputRuntimeError("progress output_type does not match role-output session")
+        resolved_run_id, run_root = _run_paths(project_root, str(session.get("run_id") or resolved_run_id))
+        controller_status_packet_path = (
+            controller_status_packet_path or session.get("controller_status_packet_path")
+        )
+        event_name = event_name or session.get("event_name")
+        session_id = str(session.get("session_id") or "")
+    return write_output_progress_status(
+        project_root,
+        run_root=run_root,
+        output_type=output_type,
+        role=role,
+        agent_id=resolved_agent_id,
+        status="working",
+        message=message,
+        progress=progress,
+        event_name=event_name,
+        controller_status_packet_path=controller_status_packet_path,
+        session_id=session_id,
+    )
+
+
 def _read_ledger(path: Path, run_id: str) -> dict[str, Any]:
     if path.exists():
         ledger = _read_json(path)
@@ -915,12 +1100,24 @@ def prepare_output_session(
     agent_id: str,
     run_id: str | None = None,
     body_path: str | Path | None = None,
+    event_name: str | None = None,
+    controller_status_packet_path: str | Path | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     spec = _spec_for(output_type)
     resolved_run_id, run_root = _run_paths(project_root, run_id)
     skeleton = build_output_skeleton(project_root, output_type=output_type, role=role, run_id=resolved_run_id)
     output_path = _resolve_project_path(project_root, body_path) if body_path else _default_output_path(run_root, spec)
+    status_path = (
+        _resolve_project_path(project_root, controller_status_packet_path)
+        if controller_status_packet_path
+        else default_role_output_status_packet_path(
+            run_root,
+            role=role,
+            output_type=spec.output_type,
+            event_name=event_name or spec.event_name,
+        )
+    )
     session = {
         "schema_version": ROLE_OUTPUT_RUNTIME_SESSION_SCHEMA,
         "runtime_entrypoint": "prepare_output_session",
@@ -931,9 +1128,10 @@ def prepare_output_session(
         "output_type": spec.output_type,
         "output_contract_id": spec.contract_id,
         "suggested_body_path": _project_relative(project_root, output_path),
+        "controller_status_packet_path": _project_relative(project_root, status_path),
         "path_key": spec.path_key,
         "hash_key": spec.hash_key,
-        "event_name": spec.event_name,
+        "event_name": event_name or spec.event_name,
         "controller_visibility": "session_metadata_only",
         "controller_may_read_body": False,
         "runtime_validates_mechanics_only": True,
@@ -941,6 +1139,29 @@ def prepare_output_session(
     }
     session_path = _role_output_sessions_dir(run_root) / f"{session['session_id']}.json"
     session["session_path"] = _project_relative(project_root, session_path)
+    skeleton.setdefault("_role_output_contract", {})
+    skeleton["_role_output_contract"]["progress_status"] = {
+        "default_progress_required": True,
+        "controller_status_packet_path": session["controller_status_packet_path"],
+        "runtime_command": "flowpilot_runtime.py progress-output",
+        "message_boundary": (
+            "Use brief metadata only. Do not include sealed body content, findings, evidence, "
+            "recommendations, decisions, or result details."
+        ),
+    }
+    write_output_progress_status(
+        project_root,
+        run_root=run_root,
+        output_type=spec.output_type,
+        role=role,
+        agent_id=resolved_agent_id,
+        status="prepared",
+        message=f"Role output {spec.output_type} prepared for {role}.",
+        progress=0,
+        event_name=event_name or spec.event_name,
+        controller_status_packet_path=status_path,
+        session_id=session["session_id"],
+    )
     _write_json(session_path, session)
     return {
         **session,
@@ -959,6 +1180,7 @@ def _build_envelope(
     receipt_hash: str,
     agent_id: str,
     event_name: str | None,
+    controller_status_packet_path: str | None = None,
 ) -> dict[str, Any]:
     envelope = {
         "schema_version": ROLE_OUTPUT_ENVELOPE_SCHEMA,
@@ -984,6 +1206,8 @@ def _build_envelope(
     }
     if event_name:
         envelope["event_name"] = event_name
+    if controller_status_packet_path:
+        envelope["controller_status_packet_path"] = controller_status_packet_path
     return envelope
 
 
@@ -998,10 +1222,27 @@ def submit_output(
     output_path: str | Path | None = None,
     run_id: str | None = None,
     event_name: str | None = None,
+    session_path: str | Path | None = None,
+    controller_status_packet_path: str | Path | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     spec = _spec_for(output_type)
     resolved_run_id, run_root = _run_paths(project_root, run_id)
+    session_id = None
+    if session_path:
+        session = _load_output_session(project_root, session_path)
+        if session.get("role") != role:
+            raise RoleOutputRuntimeError("submit-output role does not match role-output session")
+        if session.get("agent_id") != resolved_agent_id:
+            raise RoleOutputRuntimeError("submit-output agent_id does not match role-output session")
+        if session.get("output_type") != output_type:
+            raise RoleOutputRuntimeError("submit-output output_type does not match role-output session")
+        resolved_run_id, run_root = _run_paths(project_root, str(session.get("run_id") or resolved_run_id))
+        event_name = event_name or session.get("event_name")
+        controller_status_packet_path = (
+            controller_status_packet_path or session.get("controller_status_packet_path")
+        )
+        session_id = str(session.get("session_id") or "")
     if not _role_allowed(spec, role):
         raise RoleOutputRuntimeError(f"{output_type} may be submitted only by {', '.join(spec.allowed_roles)}")
     if body_file:
@@ -1039,6 +1280,16 @@ def submit_output(
     if not validation["ok"]:
         raise RoleOutputRuntimeError(f"role output validation failed: {validation['issues'][0]}")
     resolved_output_path = _resolve_project_path(project_root, output_path) if output_path else _default_output_path(run_root, spec)
+    status_path = (
+        _resolve_project_path(project_root, controller_status_packet_path)
+        if controller_status_packet_path
+        else default_role_output_status_packet_path(
+            run_root,
+            role=role,
+            output_type=spec.output_type,
+            event_name=event_name or spec.event_name,
+        )
+    )
     _write_json(resolved_output_path, merged_body)
     body_hash = _sha256_file(resolved_output_path)
     receipt_id = f"role-output-receipt-{uuid.uuid4().hex}"
@@ -1077,6 +1328,7 @@ def submit_output(
         receipt_hash=receipt_hash,
         agent_id=resolved_agent_id,
         event_name=event_name or spec.event_name,
+        controller_status_packet_path=_project_relative(project_root, status_path),
     )
     ledger_record = {
         "output_id": receipt_id,
@@ -1090,12 +1342,26 @@ def submit_output(
         "envelope": envelope,
         "receipt_path": _project_relative(project_root, receipt_path),
         "receipt_hash": receipt_hash,
+        "controller_status_packet_path": _project_relative(project_root, status_path),
         "controller_visibility": "ledger_metadata_only",
         "controller_may_read_body": False,
         "semantic_sufficiency_reviewed_by_runtime": False,
         "recorded_at": utc_now(),
     }
     _append_ledger(run_root, resolved_run_id, ledger_record)
+    write_output_progress_status(
+        project_root,
+        run_root=run_root,
+        output_type=spec.output_type,
+        role=role,
+        agent_id=resolved_agent_id,
+        status="submitted",
+        message=f"Role output {spec.output_type} submitted by {role}.",
+        progress=999,
+        event_name=event_name or spec.event_name,
+        controller_status_packet_path=status_path,
+        session_id=session_id,
+    )
     return envelope
 
 
@@ -1156,6 +1422,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     prepare.add_argument("--agent-id", required=True)
     prepare.add_argument("--run-id", default="")
     prepare.add_argument("--body-path", default="")
+    prepare.add_argument("--event-name", default="")
+    prepare.add_argument("--controller-status-packet-path", default="")
 
     validate = sub.add_parser("validate-output", help="Validate a role output body without writing an envelope")
     validate.add_argument("--output-type", required=True, choices=sorted(SUPPORTED_OUTPUT_TYPES))
@@ -1172,6 +1440,19 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     submit.add_argument("--output-path", default="")
     submit.add_argument("--run-id", default="")
     submit.add_argument("--event-name", default="")
+    submit.add_argument("--session-path", default="")
+    submit.add_argument("--controller-status-packet-path", default="")
+
+    progress = sub.add_parser("progress-output", help="Update Controller-visible formal role-output progress")
+    progress.add_argument("--output-type", required=True, choices=sorted(SUPPORTED_OUTPUT_TYPES))
+    progress.add_argument("--role", required=True)
+    progress.add_argument("--agent-id", required=True)
+    progress.add_argument("--progress", required=True, type=int)
+    progress.add_argument("--message", required=True)
+    progress.add_argument("--run-id", default="")
+    progress.add_argument("--event-name", default="")
+    progress.add_argument("--session-path", default="")
+    progress.add_argument("--controller-status-packet-path", default="")
 
     verify = sub.add_parser("verify-envelope", help="Verify a runtime-generated role-output envelope receipt")
     verify.add_argument("--envelope-file", required=True)
@@ -1190,6 +1471,8 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             run_id=args.run_id or None,
             body_path=args.body_path or None,
+            event_name=args.event_name or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
         )
     elif args.command == "validate-output":
         body = _read_json(_resolve_project_path(root, args.body_file))
@@ -1224,6 +1507,21 @@ def main(argv: list[str] | None = None) -> int:
             output_path=args.output_path or None,
             run_id=args.run_id or None,
             event_name=args.event_name or None,
+            session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
+        )
+    elif args.command == "progress-output":
+        result = update_output_progress(
+            root,
+            output_type=args.output_type,
+            role=args.role,
+            agent_id=args.agent_id,
+            progress=args.progress,
+            message=args.message,
+            run_id=args.run_id or None,
+            event_name=args.event_name or None,
+            session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
         )
     elif args.command == "verify-envelope":
         envelope = _read_json(_resolve_project_path(root, args.envelope_file))

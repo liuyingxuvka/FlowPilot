@@ -199,6 +199,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     prepare_output.add_argument("--agent-id", required=True)
     prepare_output.add_argument("--run-id", default="")
     prepare_output.add_argument("--body-path", default="")
+    prepare_output.add_argument("--event-name", default="")
+    prepare_output.add_argument("--controller-status-packet-path", default="")
 
     submit_output = sub.add_parser("submit-output", help="Submit a role-output body and return a compact envelope.")
     submit_output.add_argument("--output-type", required=True, choices=sorted(role_output_runtime.SUPPORTED_OUTPUT_TYPES))
@@ -209,6 +211,19 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     submit_output.add_argument("--output-path", default="")
     submit_output.add_argument("--run-id", default="")
     submit_output.add_argument("--event-name", default="")
+    submit_output.add_argument("--session-path", default="")
+    submit_output.add_argument("--controller-status-packet-path", default="")
+
+    progress_output = sub.add_parser("progress-output", help="Update Controller-visible formal role-output progress.")
+    progress_output.add_argument("--output-type", required=True, choices=sorted(role_output_runtime.SUPPORTED_OUTPUT_TYPES))
+    progress_output.add_argument("--role", required=True)
+    progress_output.add_argument("--agent-id", required=True)
+    progress_output.add_argument("--progress", required=True, type=int)
+    progress_output.add_argument("--message", required=True)
+    progress_output.add_argument("--run-id", default="")
+    progress_output.add_argument("--event-name", default="")
+    progress_output.add_argument("--session-path", default="")
+    progress_output.add_argument("--controller-status-packet-path", default="")
 
     verify_output = sub.add_parser("verify-output-envelope", help="Verify a role-output runtime receipt.")
     verify_output.add_argument("--envelope-file", required=True)
@@ -345,6 +360,8 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             run_id=args.run_id or None,
             body_path=args.body_path or None,
+            event_name=args.event_name or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
         )
     elif args.command == "submit-output":
         body = _read_body_json(root, args.body_json, args.body_file)
@@ -357,6 +374,21 @@ def main(argv: list[str] | None = None) -> int:
             output_path=args.output_path or None,
             run_id=args.run_id or None,
             event_name=args.event_name or None,
+            session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
+        )
+    elif args.command == "progress-output":
+        result = role_output_runtime.update_output_progress(
+            root,
+            output_type=args.output_type,
+            role=args.role,
+            agent_id=args.agent_id,
+            progress=args.progress,
+            message=args.message,
+            run_id=args.run_id or None,
+            event_name=args.event_name or None,
+            session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
         )
     elif args.command == "verify-output-envelope":
         envelope = json.loads(Path(args.envelope_file).read_text(encoding="utf-8"))

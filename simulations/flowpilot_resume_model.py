@@ -73,6 +73,11 @@ class State:
     frontier_loaded: bool = False
     visible_plan_restored_from_run: bool = False
     crew_memory_loaded: bool = False
+    liveness_probe_batch_started: bool = False
+    liveness_probe_batch_concurrent: bool = False
+    all_six_liveness_probes_started_before_wait: bool = False
+    liveness_probe_batch_id_consistent: bool = False
+    serial_liveness_wait_used: bool = False
     all_six_role_liveness_checked: bool = False
     role_liveness_outcome: str = "unknown"  # unknown | all_active | recovery_needed | timeout_unknown
     timeout_unknown_treated_as_active: bool = False
@@ -393,6 +398,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, controller_relay_boundary_confirmed=True, holder="controller"),
         )
         return
+    if not state.liveness_probe_batch_started:
+        yield Transition(
+            "six_role_liveness_concurrent_probe_batch_started",
+            replace(
+                state,
+                liveness_probe_batch_started=True,
+                liveness_probe_batch_concurrent=True,
+                all_six_liveness_probes_started_before_wait=True,
+                liveness_probe_batch_id_consistent=True,
+            ),
+        )
+        return
     if not state.all_six_role_liveness_checked:
         yield Transition(
             "six_role_liveness_checked_all_active",
@@ -668,6 +685,22 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.all_six_role_liveness_checked and not state.controller_relay_boundary_confirmed:
         failures.append("six-role liveness checked before Controller loaded current-run resume state")
+    if state.serial_liveness_wait_used:
+        failures.append("six-role liveness was not checked as a concurrent batch")
+    if (
+        state.all_six_role_liveness_checked
+        or state.host_role_rehydrate_requested
+        or state.crew_roles_ready
+        or state.pm_decision_requested
+        or state.pm_decision_prompt_delivered
+        or state.pm_decision_returned
+    ) and not (
+        state.liveness_probe_batch_started
+        and state.liveness_probe_batch_concurrent
+        and state.all_six_liveness_probes_started_before_wait
+        and state.liveness_probe_batch_id_consistent
+    ):
+        failures.append("six-role liveness was not checked as a concurrent batch")
     if state.host_role_rehydrate_requested and not state.all_six_role_liveness_checked:
         failures.append("host role rehydration requested before all six role liveness was checked")
     if state.timeout_unknown_treated_as_active:
@@ -812,7 +845,7 @@ INVARIANTS = (
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 36
+MAX_SEQUENCE_LENGTH = 40
 
 
 def build_workflow() -> Workflow:
@@ -854,6 +887,10 @@ def _ready_for_pm(**changes: object) -> State:
         visible_plan_restored_from_run=True,
         crew_memory_loaded=True,
         controller_relay_boundary_confirmed=True,
+        liveness_probe_batch_started=True,
+        liveness_probe_batch_concurrent=True,
+        all_six_liveness_probes_started_before_wait=True,
+        liveness_probe_batch_id_consistent=True,
         all_six_role_liveness_checked=True,
         role_liveness_outcome="all_active",
         host_role_rehydrate_requested=True,
@@ -953,6 +990,21 @@ def hazard_states() -> dict[str, State]:
         "pm_decision_before_six_role_liveness": _ready_for_pm(
             all_six_role_liveness_checked=False,
             pm_decision_requested=True,
+        ),
+        "six_role_liveness_serial_wait": _ready_for_pm(
+            serial_liveness_wait_used=True,
+        ),
+        "six_role_liveness_without_probe_batch": _ready_for_pm(
+            liveness_probe_batch_started=False,
+            liveness_probe_batch_concurrent=False,
+            all_six_liveness_probes_started_before_wait=False,
+            liveness_probe_batch_id_consistent=False,
+        ),
+        "six_role_liveness_waits_before_all_probe_starts": _ready_for_pm(
+            all_six_liveness_probes_started_before_wait=False,
+        ),
+        "six_role_liveness_batch_id_mismatch": _ready_for_pm(
+            liveness_probe_batch_id_consistent=False,
         ),
         "pm_decision_before_crew_recovery": _ready_for_pm(
             crew_roles_ready=False,

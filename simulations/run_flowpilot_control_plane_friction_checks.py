@@ -48,6 +48,8 @@ REQUIRED_LABELS = (
     "route_mutation_resets_route_checks_for_reapproval",
     "controller_waits_for_role_work_with_status_packet_read",
     "target_role_updates_progress_status_via_runtime",
+    "controller_waits_for_role_output_with_status_packet_read",
+    "target_role_updates_role_output_progress_via_runtime",
     "user_stop_requested",
     "run_lifecycle_reconciled_all_authorities",
     "route_state_snapshot_refreshed_after_lifecycle_change",
@@ -107,6 +109,14 @@ HAZARD_EXPECTED_FAILURES = {
     "role_work_status_leaks_findings": "controller-visible progress status leaked sealed body details",
     "role_work_progress_manual_write": "role progress status update bypassed packet runtime",
     "role_work_progress_nonnumeric": "role progress status was not a nonnegative numeric value",
+    "progress_default_packet_only": "work-package progress was not default for all role work",
+    "role_output_progress_prompt_missing": "formal role-output work lacked shared progress prompt coverage",
+    "role_output_wait_without_status_packet_read": "role-output wait did not expose matching controller status packet",
+    "role_output_status_grants_output_dir": "role-output progress visibility grant exposed more than controller status packet",
+    "role_output_status_leaks_findings": "controller-visible role-output progress status leaked sealed body details",
+    "role_output_progress_manual_write": "role-output progress status update bypassed packet runtime",
+    "role_output_progress_nonnumeric": "role-output progress status was not a nonnegative numeric value",
+    "progress_status_used_as_decision": "progress status was used as role decision evidence",
     "optimized_transaction_without_hash_check": "optimized relay transaction skipped delivery, receipt, result-return, role, or hash evidence",
     "optimized_ack_without_role_check": "optimized card ack consumption skipped ack validation, role check, or hash check",
     "optimized_ack_without_hash_check": "optimized card ack consumption skipped ack validation, role check, or hash check",
@@ -195,7 +205,15 @@ def _state_id(state: model.State) -> str:
         f"{state.role_work_status_packet_exists},{state.role_work_status_packet_read_allowed},"
         f"{state.role_work_status_visibility_grant},{state.role_work_progress_observed},"
         f"{state.role_work_progress_runtime_written},{state.role_work_progress_numeric},"
-        f"{state.role_work_progress_nonnegative},{state.role_work_status_message_safe}"
+        f"{state.role_work_progress_nonnegative},{state.role_work_status_message_safe}|"
+        f"default_progress={state.work_package_progress_default_scope}|"
+        f"role_output_progress={state.role_output_wait_pending},"
+        f"{state.role_output_progress_prompt_inherited},"
+        f"{state.role_output_status_packet_exists},{state.role_output_status_packet_read_allowed},"
+        f"{state.role_output_status_visibility_grant},{state.role_output_progress_observed},"
+        f"{state.role_output_progress_runtime_written},{state.role_output_progress_numeric},"
+        f"{state.role_output_progress_nonnegative},{state.role_output_status_message_safe},"
+        f"used_as_decision={state.progress_status_used_as_decision_evidence}"
     )
 
 

@@ -1121,6 +1121,55 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
+## 2026-05-11 - Unified role-output progress and concurrent resume liveness
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Reduce background-agent wait time by making all role-output waits expose metadata-only progress and by requiring concurrent six-role resume liveness probes.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T08:16:06+00:00
+- Ended: 2026-05-11T10:51:26+00:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_control_plane_friction_model.py`
+- `simulations/flowpilot_resume_model.py`
+- `simulations/flowpilot_role_output_runtime_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations/flowpilot_control_plane_friction_results.json`
+- OK: `python simulations/run_flowpilot_resume_checks.py`
+- OK: `python simulations/run_flowpilot_role_output_runtime_checks.py --json-out simulations/flowpilot_role_output_runtime_results.json`
+- OK: `python simulations/run_meta_checks.py`
+- OK: `python simulations/run_capability_checks.py`
+- OK: `python simulations/run_flowpilot_router_loop_checks.py`
+- OK: `python -m pytest tests/test_flowpilot_role_output_runtime.py tests/test_flowpilot_packet_runtime.py -q`
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py` split into four collected-test shards; all 122 collected tests passed across the shards.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/check_install.py --json`
+
+### Findings
+- Role-output progress needed to be defaulted through the existing runtime progress pattern, not added as a PM-resume-only patch.
+- The resume PM decision wait was bypassing the shared role-output wait constructor; routing it through that constructor exposed the metadata-only progress status consistently.
+- Six-role resume liveness must be represented as a single concurrent batch with one batch id and all probe starts recorded before any individual wait result.
+
+### Counterexamples
+- Model hazards caught missing default progress, missing progress prompt inheritance, broad status visibility, sealed-body leakage, manual progress writes, nonnumeric progress, using progress as decision evidence, serial six-role liveness waits, missing probe batches, early waiting before all starts, and batch id mismatch.
+
+### Friction Points
+- Full `tests/test_flowpilot_router_runtime.py` exceeded a 10 minute single-process timeout, so the same collected tests were run in four shards.
+- Two router tests had stale expectations from the concurrent active-holder/ledger-check work and were updated to assert the current invariants.
+
+### Skipped Steps
+- GitHub push was intentionally skipped per user instruction.
+
+### Next Actions
+- Keep future role-output waits on the shared wait constructor so progress visibility and metadata-only boundaries stay uniform.
+
+
 ## flowpilot-startup-optimization - Compress startup with reviewer-first PM-prep parallelism
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -7310,3 +7359,69 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future system-card changes aligned across card envelopes, role I/O protocol, runtime entrypoints, Controller wording, router recovery, and FlowGuard hazards.
+
+
+## run-20260511-081606-product-architecture-modelability - Product FlowGuard officer assessed product architecture modelability and produced role-output event envelope
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot product architecture modelability gate before route drafting
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T09:30:42+00:00
+- Ended: 2026-05-11T09:30:42+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python .flowpilot/runs/run-20260511-081606/flowguard/product_architecture_modelability_checks.py --architecture-path .flowpilot/runs/run-20260511-081606/product_function_architecture.json --json-out .flowpilot/runs/run-20260511-081606/flowguard/product_architecture_modelability_results.json`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## run-20260511-081606-root-contract-modelability - Product FlowGuard officer assessed root acceptance contract modelability and produced role-output event envelope
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot root contract modelability gate before route design
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-11T09:54:10+00:00
+- Ended: 2026-05-11T09:54:10+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python .flowpilot/runs/run-20260511-081606/flowguard/root_contract_modelability_checks.py --contract-path .flowpilot/runs/run-20260511-081606/root_acceptance_contract.json --scenario-pack-path .flowpilot/runs/run-20260511-081606/standard_scenario_pack.json --json-out .flowpilot/runs/run-20260511-081606/flowguard/root_contract_modelability_results.json`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
