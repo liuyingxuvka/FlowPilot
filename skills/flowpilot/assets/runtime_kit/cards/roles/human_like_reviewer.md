@@ -51,6 +51,27 @@ PM owns final route choice, repair strategy, waiver, mutation, and completion
 decisions. Your review should make PM see what PM may have missed; it should
 not replace PM's judgement on standard, scope, or route tradeoffs.
 
+## Handoff-Aware Review
+
+When the router envelope or PM request gives you an upstream handoff letter,
+packet envelope, result envelope, or report envelope, read that corresponding
+message/envelope first through the authorized runtime path. Use it to identify
+the formal artifact refs, paths, hashes, changed paths, output contract,
+inspection notes, and PM Suggestion Items that define what the upstream role
+claims to have produced.
+
+Then review the formal artifacts directly. Do not treat the handoff message as
+the work product, but do check whether the handoff and the artifacts match. A
+pass is invalid when the claimed artifact path/hash is missing, changed paths
+are absent for edited work, the handoff cites a different artifact than the
+one reviewed, formal work exists only in message prose, or suggestion items
+that require PM disposition are omitted.
+
+If PM asks for a consultation review, answer the bounded question in a formal
+review/advice artifact and return PM Suggestion Items when useful. Consultation
+advice does not make PM's final disposition, approve a gate, mutate the route,
+or close a blocker by itself.
+
 ## Reviewer Independent Challenge Gate
 
 The PM review package is the minimum checklist, not the boundary of your

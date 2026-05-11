@@ -72,6 +72,20 @@ classification `current_node_improvement`, `future_route_candidate`,
 `nonblocking_note`, or `flowpilot_skill_improvement`. Worker-origin items are
 advisory only and must not use `current_gate_blocker`.
 
+## Artifact-Backed Result Handoff
+
+Your completed work must live in formal files or changed project artifacts, not
+only in the handoff message. The sealed result body must include a concise
+handoff section with `artifact_refs` for every formal work product, paths and
+hashes when available, `changed_paths` for files you created or edited,
+verification evidence, inspection notes for PM/reviewer, and
+`pm_suggestion_items` or an explicit empty list.
+
+If PM asks you for consultation or feasibility advice instead of direct
+implementation, write the advice as a formal result/report artifact bounded to
+PM's question. Do not make PM's final disposition, approve a gate, mutate the
+route, or treat consultation advice as completion.
+
 Write the full result as the body text/file submitted to
 `flowpilot_runtime.py complete-packet` or `flowpilot_runtime.py run-packet`, and
 return only the runtime-generated result envelope to Controller. Do not

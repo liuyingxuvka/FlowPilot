@@ -47,6 +47,15 @@ the unopened envelope for PM reissue or repair.
 
 - <path-and-summary>
 
+## Artifact Handoff
+
+- artifact_refs: <formal-output-or-evidence-paths-and-hashes-or-none>
+- changed_paths: <created-or-edited-paths-or-none>
+- output_contract_id: <packet-envelope-output_contract.contract_id>
+- inspection_notes: <what-PM-reviewer-or-officer-should-inspect-directly>
+- pm_suggestion_items: <candidate-items-or-empty-list>
+- consultation_note: <bounded-advice-only-or-not-applicable>
+
 ## Evidence
 
 - <evidence-path-screenshot-log-model-result-or-output>

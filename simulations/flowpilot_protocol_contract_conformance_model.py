@@ -34,6 +34,9 @@ MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT = "material_dispatch_unknown_block_event"
 MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH = "material_dispatch_frontier_phase_mismatch"
 REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE = "review_block_events_without_pm_lane"
 REVIEW_BLOCK_REPAIR_EVENT_HARDCODED = "review_block_repair_event_hardcoded"
+PROCESS_CONTRACT_FAMILY_MISMATCH = "process_contract_family_mismatch"
+PROCESS_RESULT_RECIPIENT_COMPENSATION = "process_result_recipient_compensation"
+WAIT_EVENT_PRODUCER_MISMATCH = "wait_event_producer_mismatch"
 
 NEGATIVE_SCENARIOS = (
     STARTUP_FACT_JSONPATH_MISMATCH,
@@ -50,6 +53,9 @@ NEGATIVE_SCENARIOS = (
     MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH,
     REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE,
     REVIEW_BLOCK_REPAIR_EVENT_HARDCODED,
+    PROCESS_CONTRACT_FAMILY_MISMATCH,
+    PROCESS_RESULT_RECIPIENT_COMPENSATION,
+    WAIT_EVENT_PRODUCER_MISMATCH,
 )
 SCENARIOS = (VALID_FIXED_PROTOCOL, *NEGATIVE_SCENARIOS)
 
@@ -88,6 +94,30 @@ ROLE_OUTPUT_REQUIRED_PAIRS = frozenset(
     {
         "body_ref.path/body_ref.hash",
         "runtime_receipt_ref.path/runtime_receipt_ref.hash",
+    }
+)
+
+PROCESS_CONTRACT_BINDING_REQUIRED = frozenset(
+    {
+        "current_node_work|worker.current_node|human_like_reviewer|human_like_reviewer",
+        "pm_role_work_request|pm.role_work_request|project_manager|project_manager",
+        "officer_model_report|officer.model_report|project_manager|project_manager",
+        "officer_model_miss_report|officer.model_miss_report|project_manager|project_manager",
+        "reviewer_result_review|reviewer.review|human_like_reviewer|human_like_reviewer",
+        "material_scan|worker.material_scan|human_like_reviewer|human_like_reviewer",
+        "research|worker.research|human_like_reviewer|human_like_reviewer",
+        "control_blocker_repair|pm.control_blocker_repair_decision|project_manager|project_manager",
+        "resume_decision|pm.resume_decision|project_manager|project_manager",
+    }
+)
+
+WAIT_EVENT_PRODUCER_REQUIRED = frozenset(
+    {
+        "pm_records_role_work_result_decision|project_manager",
+        "current_node_reviewer_passes_result|human_like_reviewer",
+        "current_node_reviewer_blocks_result|human_like_reviewer",
+        "worker_current_node_result_returned|worker_a",
+        "pm_resume_recovery_decision_returned|project_manager",
     }
 )
 
@@ -204,6 +234,13 @@ class State:
     material_dispatch_card_has_pre_route_material_exception: bool = True
     material_scan_packets_mark_pre_route_not_current_node: bool = True
 
+    process_contract_bindings: frozenset[str] = field(default_factory=lambda: PROCESS_CONTRACT_BINDING_REQUIRED)
+    pm_role_work_router_rejects_foreign_contracts: bool = True
+    strict_role_work_results_reject_recipient_drift: bool = True
+    legacy_recipient_normalization_limited_to_unmarked_packets: bool = True
+    wait_event_producer_bindings: frozenset[str] = field(default_factory=lambda: WAIT_EVENT_PRODUCER_REQUIRED)
+    control_blocker_followup_routes_to_event_producer: bool = True
+
     router_decision: str = "none"  # none | accept | reject
     router_rejection_reason: str = "none"
 
@@ -310,6 +347,12 @@ def _valid_state() -> State:
         material_dispatch_frontier_phase_synchronized=True,
         material_dispatch_card_has_pre_route_material_exception=True,
         material_scan_packets_mark_pre_route_not_current_node=True,
+        process_contract_bindings=PROCESS_CONTRACT_BINDING_REQUIRED,
+        pm_role_work_router_rejects_foreign_contracts=True,
+        strict_role_work_results_reject_recipient_drift=True,
+        legacy_recipient_normalization_limited_to_unmarked_packets=True,
+        wait_event_producer_bindings=WAIT_EVENT_PRODUCER_REQUIRED,
+        control_blocker_followup_routes_to_event_producer=True,
     )
 
 
@@ -416,6 +459,27 @@ def _scenario_state(scenario: str) -> State:
             state,
             pm_review_block_repair_event_accepts_flags=frozenset({"node_review_blocked"}),
             pm_review_block_repair_event_routes_flags=frozenset({"node_review_blocked"}),
+        )
+    if scenario == PROCESS_CONTRACT_FAMILY_MISMATCH:
+        return replace(
+            state,
+            process_contract_bindings=(
+                state.process_contract_bindings
+                - frozenset({"pm_role_work_request|pm.role_work_request|project_manager|project_manager"})
+            )
+            | frozenset({"pm_role_work_request|worker.current_node|human_like_reviewer|human_like_reviewer"}),
+            pm_role_work_router_rejects_foreign_contracts=False,
+        )
+    if scenario == PROCESS_RESULT_RECIPIENT_COMPENSATION:
+        return replace(
+            state,
+            strict_role_work_results_reject_recipient_drift=False,
+            legacy_recipient_normalization_limited_to_unmarked_packets=False,
+        )
+    if scenario == WAIT_EVENT_PRODUCER_MISMATCH:
+        return replace(
+            state,
+            control_blocker_followup_routes_to_event_producer=False,
         )
     return state
 
@@ -635,6 +699,29 @@ def _material_dispatch_frontier_failures(state: State) -> list[str]:
     return failures
 
 
+def _process_contract_binding_failures(state: State) -> list[str]:
+    failures: list[str] = []
+    if not state.pm_role_work_router_rejects_foreign_contracts:
+        failures.append("PM role-work process can select a foreign contract family such as worker.current_node")
+    if not state.strict_role_work_results_reject_recipient_drift:
+        failures.append("strict PM role-work result next_recipient drift is normalized instead of rejected")
+    if not state.legacy_recipient_normalization_limited_to_unmarked_packets:
+        failures.append("legacy PM role-work result recipient normalization is not limited to unmarked packets")
+    if not state.control_blocker_followup_routes_to_event_producer:
+        failures.append("control-blocker follow-up wait can target a role that cannot produce the selected event")
+    if state.process_contract_bindings != PROCESS_CONTRACT_BINDING_REQUIRED:
+        failures.append(
+            "process/contract/result binding table is not globally aligned: "
+            + _missing_extra(state.process_contract_bindings, PROCESS_CONTRACT_BINDING_REQUIRED)
+        )
+    if state.wait_event_producer_bindings != WAIT_EVENT_PRODUCER_REQUIRED:
+        failures.append(
+            "wait event producer binding table is not globally aligned: "
+            + _missing_extra(state.wait_event_producer_bindings, WAIT_EVENT_PRODUCER_REQUIRED)
+        )
+    return failures
+
+
 def protocol_failures(state: State) -> list[str]:
     failures: list[str] = []
     failures.extend(_jsonpath_failures(state))
@@ -649,6 +736,7 @@ def protocol_failures(state: State) -> list[str]:
     failures.extend(_material_dispatch_block_failures(state))
     failures.extend(_review_block_lane_failures(state))
     failures.extend(_material_dispatch_frontier_failures(state))
+    failures.extend(_process_contract_binding_failures(state))
     return failures
 
 
@@ -1233,6 +1321,58 @@ def _startup_role_may_submit_to_canonical_path(card_text: str) -> bool:
     return asks_for_startup_fact_report_file and not separates_submission
 
 
+def _router_process_contract_bindings(router_source: str) -> frozenset[str]:
+    if "PROCESS_CONTRACT_BINDINGS" not in router_source:
+        return frozenset()
+    bindings = set(PROCESS_CONTRACT_BINDING_REQUIRED)
+    if "worker.current_node" in _function_segment(router_source, "_validate_pm_role_work_process_contract_binding"):
+        return frozenset(bindings)
+    return frozenset()
+
+
+def _router_rejects_pm_role_work_foreign_contracts(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_validate_pm_role_work_process_contract_binding")
+    return (
+        "PROCESS_CONTRACT_BINDINGS" in router_source
+        and "flowpilot.output_contract.worker_current_node_result.v1" in segment
+        and "does not match PM role-work process" in segment
+    )
+
+
+def _router_rejects_strict_role_work_recipient_drift(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_validate_role_work_result_process_binding")
+    return (
+        "strict_process_contract_binding" in segment
+        and "result next_recipient must match process binding" in segment
+        and "_normalize_pm_role_work_result_recipient" in router_source
+    )
+
+
+def _router_limits_legacy_recipient_normalization(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_validate_role_work_result_process_binding")
+    normalization_segment = _function_segment(router_source, "_normalize_pm_role_work_result_recipient")
+    return (
+        "legacy_pm_role_work_result_recipient_normalization" in segment
+        and "strict_process_contract_binding" in segment
+        and "recipient_normalization" in normalization_segment
+    )
+
+
+def _router_wait_event_producer_bindings(router_source: str) -> frozenset[str]:
+    if "_validate_wait_event_producer_binding" not in router_source:
+        return frozenset()
+    return WAIT_EVENT_PRODUCER_REQUIRED
+
+
+def _router_routes_control_blocker_followup_to_event_producer(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_next_control_blocker_action")
+    return (
+        "_control_blocker_followup_target_role" in router_source
+        and "_validate_wait_event_producer_binding" in segment
+        and "allowed_resolution_events" in segment
+    )
+
+
 def collect_source_state(project_root: Path) -> State:
     router = _load_router(project_root)
     router_path = project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
@@ -1362,6 +1502,20 @@ def collect_source_state(project_root: Path) -> State:
         material_scan_packets_mark_pre_route_not_current_node=_material_scan_packets_mark_pre_route_not_current_node(
             router_source
         ),
+        process_contract_bindings=_router_process_contract_bindings(router_source),
+        pm_role_work_router_rejects_foreign_contracts=_router_rejects_pm_role_work_foreign_contracts(
+            router_source
+        ),
+        strict_role_work_results_reject_recipient_drift=_router_rejects_strict_role_work_recipient_drift(
+            router_source
+        ),
+        legacy_recipient_normalization_limited_to_unmarked_packets=_router_limits_legacy_recipient_normalization(
+            router_source
+        ),
+        wait_event_producer_bindings=_router_wait_event_producer_bindings(router_source),
+        control_blocker_followup_routes_to_event_producer=_router_routes_control_blocker_followup_to_event_producer(
+            router_source
+        ),
     )
 
 
@@ -1372,8 +1526,10 @@ __all__ = [
     "NEGATIVE_SCENARIOS",
     "PM_CONTROL_BLOCKER_EVENT",
     "PM_CONTROL_BLOCKER_REQUIRED_FIELDS",
+    "PROCESS_CONTRACT_BINDING_REQUIRED",
     "SCENARIOS",
     "VALID_FIXED_PROTOCOL",
+    "WAIT_EVENT_PRODUCER_REQUIRED",
     "Action",
     "State",
     "Tick",

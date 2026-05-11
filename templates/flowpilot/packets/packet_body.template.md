@@ -70,6 +70,23 @@ completion reports to Controller; Router will write
 
 - <bounded acceptance condition for this packet only>
 
+## Artifact-Backed Handoff Requirements
+
+The packet recipient's work product must be written to formal files or project
+artifacts, not only to a message body. The result/report body must include a
+handoff section that points PM and reviewer to the formal artifacts.
+
+The handoff section must include:
+
+- `artifact_refs`: paths and hashes for every formal output or evidence file;
+- `changed_paths`: files created or edited, or `none`;
+- `output_contract_id`: the contract used for the result/report;
+- `inspection_notes`: what PM, reviewer, or officer should inspect directly;
+- `pm_suggestion_items`: candidate `flowpilot.pm_suggestion_item.v1` entries,
+  or an explicit empty list;
+- consultation note: if this packet is PM consultation, answer only the bounded
+  question and do not make PM's final disposition.
+
 ## Worker/Officer PM Note
 
 For packets addressed to `worker_a`, `worker_b`,

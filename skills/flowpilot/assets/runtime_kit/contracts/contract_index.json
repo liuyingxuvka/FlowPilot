@@ -194,6 +194,7 @@
         "Status",
         "Evidence",
         "Open Issues",
+        "Artifact Handoff",
         "PM Suggestion Items",
         "Contract Self-Check"
       ],
@@ -239,6 +240,7 @@
         "Status",
         "Work Performed",
         "Findings",
+        "Artifact Handoff",
         "PM Suggestion Items",
         "Contract Self-Check"
       ],
@@ -265,6 +267,7 @@
         "Status",
         "Evidence",
         "Open Issues",
+        "Artifact Handoff",
         "PM Suggestion Items",
         "Contract Self-Check"
       ],
@@ -303,6 +306,7 @@
         "Evidence",
         "Findings",
         "Open Issues",
+        "Artifact Handoff",
         "PM Suggestion Items",
         "Contract Self-Check"
       ],
@@ -366,6 +370,8 @@
       ],
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
+        "reviewed_by_role",
+        "passed",
         "modeled_boundary",
         "commands_run",
         "counterexamples_or_absence",

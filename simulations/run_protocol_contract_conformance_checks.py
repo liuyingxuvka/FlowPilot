@@ -34,6 +34,9 @@ REQUIRED_LABELS = (
     "select_material_dispatch_frontier_phase_mismatch",
     "select_review_block_events_without_pm_lane",
     "select_review_block_repair_event_hardcoded",
+    "select_process_contract_family_mismatch",
+    "select_process_result_recipient_compensation",
+    "select_wait_event_producer_mismatch",
     "router_accepts_conformant_protocol",
     "router_rejects_startup_fact_jsonpath_mismatch",
     "router_rejects_control_blocker_ambiguous_event",
@@ -49,6 +52,9 @@ REQUIRED_LABELS = (
     "router_rejects_material_dispatch_frontier_phase_mismatch",
     "router_rejects_review_block_events_without_pm_lane",
     "router_rejects_review_block_repair_event_hardcoded",
+    "router_rejects_process_contract_family_mismatch",
+    "router_rejects_process_result_recipient_compensation",
+    "router_rejects_wait_event_producer_mismatch",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -66,6 +72,9 @@ HAZARD_EXPECTED_FAILURES = {
     "material_dispatch_frontier_phase_mismatch": "material dispatch review can run while execution_frontier still reports startup_intake",
     "review_block_events_without_pm_lane": "PM model-miss cards do not cover all declared model-miss reviewer block flags",
     "review_block_repair_event_hardcoded": "PM review-block repair event does not accept all declared model-miss reviewer block flags",
+    "process_contract_family_mismatch": "PM role-work process can select a foreign contract family",
+    "process_result_recipient_compensation": "strict PM role-work result next_recipient drift is normalized instead of rejected",
+    "wait_event_producer_mismatch": "control-blocker follow-up wait can target a role that cannot produce the selected event",
 }
 
 
@@ -260,6 +269,12 @@ def _check_current_source() -> dict[str, object]:
             "material_dispatch_frontier_phase_synchronized": state.material_dispatch_frontier_phase_synchronized,
             "material_dispatch_card_has_pre_route_material_exception": state.material_dispatch_card_has_pre_route_material_exception,
             "material_scan_packets_mark_pre_route_not_current_node": state.material_scan_packets_mark_pre_route_not_current_node,
+            "process_contract_bindings": sorted(state.process_contract_bindings),
+            "pm_role_work_router_rejects_foreign_contracts": state.pm_role_work_router_rejects_foreign_contracts,
+            "strict_role_work_results_reject_recipient_drift": state.strict_role_work_results_reject_recipient_drift,
+            "legacy_recipient_normalization_limited_to_unmarked_packets": state.legacy_recipient_normalization_limited_to_unmarked_packets,
+            "wait_event_producer_bindings": sorted(state.wait_event_producer_bindings),
+            "control_blocker_followup_routes_to_event_producer": state.control_blocker_followup_routes_to_event_producer,
         },
     }
 

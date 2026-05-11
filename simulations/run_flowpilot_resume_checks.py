@@ -33,9 +33,10 @@ REQUIRED_LABELS = (
     "six_role_liveness_checked_all_active",
     "six_role_liveness_checked_recovery_needed",
     "six_role_liveness_timeout_unknown_recorded",
-    "host_spawn_or_rehydrate_six_resume_roles_requested",
-    "crew_roles_restored_from_current_run_memory",
-    "crew_roles_replaced_from_current_run_memory",
+    "host_reuse_or_replace_resume_roles_requested",
+    "active_live_resume_roles_reused_after_memory_refresh",
+    "only_failed_resume_roles_replaced_from_current_run_memory",
+    "all_uncertain_resume_roles_replaced_from_current_run_memory",
     "current_run_memory_injected_into_resume_roles",
     "crew_rehydration_report_written_before_pm_resume",
     "crew_capability_officer_lifecycle_flags_reconciled",
@@ -80,6 +81,9 @@ def _state_id(state: model.State) -> str:
         f"{state.all_six_liveness_probes_started_before_wait},"
         f"{state.liveness_probe_batch_id_consistent},serial={state.serial_liveness_wait_used},"
         f"{state.all_six_role_liveness_checked},{state.role_liveness_outcome}|"
+        f"reuse={state.live_agent_reuse_preferred},{state.active_live_agents_reused},"
+        f"failed={state.failed_role_count},replaced={state.replacement_role_count},"
+        f"unneeded={state.unnecessary_replacement_attempted}|"
         f"lifecycle={state.crew_lifecycle_flags_current},"
         f"{state.capability_lifecycle_flags_current},"
         f"{state.officer_lifecycle_flags_current}|"

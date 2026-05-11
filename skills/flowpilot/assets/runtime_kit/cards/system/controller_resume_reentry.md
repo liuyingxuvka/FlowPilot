@@ -25,6 +25,12 @@ First load only the current-run control files named by the router action:
 - `crew_ledger.json`;
 - `crew_memory/`.
 
+Also preserve the handoff/artifact protocol state across resume. Load only
+router-authorized metadata for pending handoff refs, artifact refs, changed
+paths, PM suggestion ledger state, and any consultation request/result state.
+Do not treat ACKs, leases, liveness records, or old role activity as proof that
+the formal artifact was produced, reviewed, or dispositioned.
+
 Also check continuation authority:
 
 - startup answers allow heartbeat or manual resume for this run;

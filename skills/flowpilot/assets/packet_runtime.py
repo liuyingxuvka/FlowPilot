@@ -124,6 +124,7 @@ OUTPUT_CONTRACT_REQUIRED_RESULT_SECTIONS = [
     "Status",
     "Evidence",
     "Open Issues",
+    "Artifact Handoff",
     "PM Suggestion Items",
     "Contract Self-Check",
 ]

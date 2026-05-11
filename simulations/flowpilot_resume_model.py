@@ -12,7 +12,8 @@ Risk intent brief:
   old run control state, body reads, missing manifest/ledger checks, dynamic
   launchers, heartbeat keepalive self-classification, stale crew ids, missing
   one-minute heartbeat evidence, stale lifecycle flags, host role liveness
-  ambiguity, and route progress inferred from chat history.
+  ambiguity, unnecessary replacement of live roles, replacing all six roles
+  when only one role failed, and route progress inferred from chat history.
 - Hard invariants: stable launcher only; Controller is relay-only; PM decisions
   happen after heartbeat/manual wake records re-entry to the router, one-minute
   heartbeat evidence when automated, current-run state, visible plan
@@ -83,6 +84,11 @@ class State:
     timeout_unknown_treated_as_active: bool = False
     missing_role_treated_as_waiting: bool = False
     host_role_rehydrate_requested: bool = False
+    live_agent_reuse_preferred: bool = False
+    active_live_agents_reused: bool = False
+    failed_role_count: int = 0
+    replacement_role_count: int = 0
+    unnecessary_replacement_attempted: bool = False
 
     controller_relay_boundary_confirmed: bool = False
     controller_read_forbidden_body: bool = False
@@ -417,6 +423,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 all_six_role_liveness_checked=True,
                 role_liveness_outcome="all_active",
+                live_agent_reuse_preferred=True,
+                failed_role_count=0,
             ),
         )
         yield Transition(
@@ -425,6 +433,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 all_six_role_liveness_checked=True,
                 role_liveness_outcome="recovery_needed",
+                live_agent_reuse_preferred=True,
+                failed_role_count=1,
             ),
         )
         yield Transition(
@@ -433,12 +443,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 all_six_role_liveness_checked=True,
                 role_liveness_outcome="timeout_unknown",
+                failed_role_count=6,
             ),
         )
         return
     if not state.host_role_rehydrate_requested:
         yield Transition(
-            "host_spawn_or_rehydrate_six_resume_roles_requested",
+            "host_reuse_or_replace_resume_roles_requested",
             replace(state, host_role_rehydrate_requested=True),
         )
         return
@@ -451,24 +462,41 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.crew_roles_ready:
         if state.role_liveness_outcome == "all_active":
             yield Transition(
-                "crew_roles_restored_from_current_run_memory",
+                "active_live_resume_roles_reused_after_memory_refresh",
                 replace(
                     state,
                     crew_roles_ready=True,
                     crew_restored=True,
+                    active_live_agents_reused=True,
                     all_roles_current_run_bound=True,
+                    replacement_role_count=0,
                 ),
             )
-        yield Transition(
-            "crew_roles_replaced_from_current_run_memory",
-            replace(
-                state,
-                crew_roles_ready=True,
-                crew_replaced=True,
-                all_roles_current_run_bound=True,
-                replacement_roles_seeded_from_memory=True,
-            ),
-        )
+        if state.role_liveness_outcome == "recovery_needed":
+            yield Transition(
+                "only_failed_resume_roles_replaced_from_current_run_memory",
+                replace(
+                    state,
+                    crew_roles_ready=True,
+                    crew_replaced=True,
+                    active_live_agents_reused=True,
+                    all_roles_current_run_bound=True,
+                    replacement_roles_seeded_from_memory=True,
+                    replacement_role_count=state.failed_role_count,
+                ),
+            )
+        if state.role_liveness_outcome == "timeout_unknown":
+            yield Transition(
+                "all_uncertain_resume_roles_replaced_from_current_run_memory",
+                replace(
+                    state,
+                    crew_roles_ready=True,
+                    crew_replaced=True,
+                    all_roles_current_run_bound=True,
+                    replacement_roles_seeded_from_memory=True,
+                    replacement_role_count=state.failed_role_count,
+                ),
+            )
         return
     if not state.crew_rehydration_report_written:
         yield Transition(
@@ -707,11 +735,39 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("timeout_unknown was treated as an active role")
     if state.missing_role_treated_as_waiting:
         failures.append("missing or cancelled role was treated as a legal wait")
+    if state.unnecessary_replacement_attempted:
+        failures.append("live role replacement was attempted without failed liveness")
     if (
         state.role_liveness_outcome in {"recovery_needed", "timeout_unknown"}
         and state.crew_restored
     ):
         failures.append("roles were restored as active after missing/cancelled/timeout liveness")
+    if state.role_liveness_outcome == "all_active" and state.crew_replaced:
+        failures.append("all-active resume replaced live roles instead of reusing them")
+    if (
+        state.role_liveness_outcome == "all_active"
+        and state.crew_roles_ready
+        and not (state.crew_restored and state.active_live_agents_reused and state.replacement_role_count == 0)
+    ):
+        failures.append("all-active resume did not reuse live roles after memory refresh")
+    if (
+        state.role_liveness_outcome == "recovery_needed"
+        and state.crew_roles_ready
+        and state.replacement_role_count != state.failed_role_count
+    ):
+        failures.append("recovery-needed resume replaced a count different from failed roles")
+    if (
+        state.role_liveness_outcome == "recovery_needed"
+        and state.crew_roles_ready
+        and not state.active_live_agents_reused
+    ):
+        failures.append("recovery-needed resume did not reuse still-active roles")
+    if (
+        state.role_liveness_outcome == "timeout_unknown"
+        and state.crew_roles_ready
+        and state.replacement_role_count != state.failed_role_count
+    ):
+        failures.append("timeout_unknown resume did not replace every uncertain role")
     if state.crew_roles_ready and not (
         state.host_role_rehydrate_requested
         and state.all_six_role_liveness_checked
@@ -896,6 +952,10 @@ def _ready_for_pm(**changes: object) -> State:
         host_role_rehydrate_requested=True,
         crew_roles_ready=True,
         crew_restored=True,
+        live_agent_reuse_preferred=True,
+        active_live_agents_reused=True,
+        failed_role_count=0,
+        replacement_role_count=0,
         run_memory_injected_into_roles=True,
         crew_rehydration_report_written=True,
         all_roles_current_run_bound=True,
@@ -1023,6 +1083,33 @@ def hazard_states() -> dict[str, State]:
             run_memory_injected_into_roles=False,
             crew_rehydration_report_written=False,
             pm_decision_requested=True,
+        ),
+        "all_active_roles_replaced_instead_of_reused": _ready_for_pm(
+            role_liveness_outcome="all_active",
+            crew_restored=False,
+            crew_replaced=True,
+            active_live_agents_reused=False,
+            replacement_roles_seeded_from_memory=True,
+            replacement_role_count=6,
+            unnecessary_replacement_attempted=True,
+        ),
+        "one_failed_role_replaced_all_six": _ready_for_pm(
+            role_liveness_outcome="recovery_needed",
+            failed_role_count=1,
+            crew_restored=False,
+            crew_replaced=True,
+            active_live_agents_reused=True,
+            replacement_roles_seeded_from_memory=True,
+            replacement_role_count=6,
+        ),
+        "one_failed_role_does_not_reuse_active_roles": _ready_for_pm(
+            role_liveness_outcome="recovery_needed",
+            failed_role_count=1,
+            crew_restored=False,
+            crew_replaced=True,
+            active_live_agents_reused=False,
+            replacement_roles_seeded_from_memory=True,
+            replacement_role_count=1,
         ),
         "six_memory_files_counted_without_role_rehydrate": _ready_for_pm(
             host_role_rehydrate_requested=False,

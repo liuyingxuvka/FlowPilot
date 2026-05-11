@@ -57,6 +57,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             if item["contract_id"] == "flowpilot.output_contract.worker_current_node_result.v1"
         )
         self.assertIn("PM Suggestion Items", worker_contract["required_result_body_sections"])
+        self.assertIn("Artifact Handoff", worker_contract["required_result_body_sections"])
         self.assertIn(
             "Child Skill Use Evidence",
             worker_contract["conditional_required_result_body_sections"][
@@ -285,6 +286,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             node_id="node-001",
         )
         self.assertIn("PM Suggestion Items", default_contract["required_result_body_sections"])  # type: ignore[index]
+        self.assertIn("Artifact Handoff", default_contract["required_result_body_sections"])  # type: ignore[index]
         contract = {
             "schema_version": "flowpilot.output_contract.v1",
             "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",

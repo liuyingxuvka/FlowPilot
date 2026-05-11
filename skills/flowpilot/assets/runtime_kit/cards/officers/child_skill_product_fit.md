@@ -23,3 +23,23 @@ Report:
 - whether rejected/deferred skills leave product gaps;
 - product risks that need scenarios, route nodes, or final replay checks;
 - confidence boundary and PM review-required hotspots.
+
+Required gate fields:
+
+- For `product_officer_passes_child_skill_product_fit`, include top-level:
+
+```json
+{
+  "reviewed_by_role": "product_flowguard_officer",
+  "passed": true
+}
+```
+
+- For `product_officer_blocks_child_skill_product_fit`, include top-level:
+
+```json
+{
+  "reviewed_by_role": "product_flowguard_officer",
+  "passed": false
+}
+```

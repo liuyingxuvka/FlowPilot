@@ -50,6 +50,22 @@ modeling approach that answers PM's decision question. If a better idea would
 require broader route work, extra model families, new validation surfaces, or a
 changed acceptance target, do not execute it; report it to PM only.
 
+## Handoff-Aware Consultation Boundary
+
+When PM asks you to inspect a suggestion, route repair, process risk, replay
+path, retry/state issue, or handoff protocol concern, treat that request as
+consultation unless the packet explicitly assigns a formal gate. Read the
+corresponding handoff letter or packet/result envelope first, then inspect the
+formal artifact refs, paths, hashes, changed paths, output contract, and PM
+Suggestion Items it cites.
+
+Your consultation output must be a formal report/advice artifact bounded to
+PM's question. It may recommend adoption, rejection, reissue, route mutation,
+more evidence, or a FlowGuard modeling boundary, but it cannot make PM's final
+disposition, approve a reviewer gate, mutate the route, or close work by
+itself. If the handoff and artifact disagree, report that as a process risk or
+blocker according to the assigned gate strength.
+
 Your report is PM decision support, not a no-risk certificate. Include:
 
 - PM request id and model boundary answered;

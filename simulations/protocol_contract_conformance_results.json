@@ -1,6 +1,6 @@
 {
   "checks": {
-    "current_source_conformance": "pass",
+    "current_source_conformance": "fail",
     "flowguard_explorer": "pass",
     "hazard_invariants": "pass",
     "progress": "pass",
@@ -8,17 +8,27 @@
   },
   "counts": {
     "accepted": 1,
-    "edges": 30,
-    "rejected": 14,
-    "states": 31
+    "edges": 36,
+    "rejected": 17,
+    "states": 37
   },
   "current_source": {
     "facts": {
+      "control_blocker_followup_routes_to_event_producer": true,
       "declared_reviewer_block_flags": [
+        "child_skill_manifest_reviewer_blocked",
+        "evidence_quality_reviewer_blocked",
+        "final_backward_replay_blocked",
         "node_acceptance_plan_review_blocked",
-        "node_review_blocked"
+        "node_review_blocked",
+        "parent_backward_replay_blocked",
+        "product_architecture_reviewer_blocked",
+        "research_review_blocked",
+        "reviewer_route_check_blocked",
+        "root_contract_reviewer_blocked"
       ],
       "display_status_available_before_startup_fact_review": true,
+      "legacy_recipient_normalization_limited_to_unmarked_packets": true,
       "material_dispatch_block_event_registered": true,
       "material_dispatch_block_report_writer": true,
       "material_dispatch_card_has_pre_route_material_exception": true,
@@ -95,23 +105,7 @@
         "repair_transaction",
         "rerun_target"
       ],
-      "pm_resume_action_contract_fields": [
-        "controller_reminder.controller_may_advance_or_close_route",
-        "controller_reminder.controller_may_infer_from_chat_history",
-        "controller_reminder.controller_may_read_sealed_bodies",
-        "controller_reminder.controller_only",
-        "decision",
-        "decision_owner",
-        "explicit_recovery_evidence_recorded",
-        "prior_path_context_review.completed_nodes_considered",
-        "prior_path_context_review.controller_summary_used_as_evidence",
-        "prior_path_context_review.impact_on_decision",
-        "prior_path_context_review.prior_blocks_or_experiments_considered",
-        "prior_path_context_review.reviewed",
-        "prior_path_context_review.source_paths",
-        "prior_path_context_review.stale_evidence_considered",
-        "prior_path_context_review.superseded_nodes_considered"
-      ],
+      "pm_resume_action_contract_fields": [],
       "pm_resume_card_fields": [
         "contract_self_check",
         "contract_self_check.all_required_fields_present",
@@ -188,6 +182,18 @@
       "pm_review_block_repair_event_routes_flags": [
         "node_acceptance_plan_review_blocked",
         "node_review_blocked"
+      ],
+      "pm_role_work_router_rejects_foreign_contracts": true,
+      "process_contract_bindings": [
+        "control_blocker_repair|pm.control_blocker_repair_decision|project_manager|project_manager",
+        "current_node_work|worker.current_node|human_like_reviewer|human_like_reviewer",
+        "material_scan|worker.material_scan|human_like_reviewer|human_like_reviewer",
+        "officer_model_miss_report|officer.model_miss_report|project_manager|project_manager",
+        "officer_model_report|officer.model_report|project_manager|project_manager",
+        "pm_role_work_request|pm.role_work_request|project_manager|project_manager",
+        "research|worker.research|human_like_reviewer|human_like_reviewer",
+        "resume_decision|pm.resume_decision|project_manager|project_manager",
+        "reviewer_result_review|reviewer.review|human_like_reviewer|human_like_reviewer"
       ],
       "reviewer_block_lane_flags": [
         "material_scan_dispatch_recheck_blocked",
@@ -313,10 +319,393 @@
         "external_fact_review.reviewer_checked_requirement_ids",
         "external_fact_review.router_mechanical_audit_hash",
         "external_fact_review.self_attested_ai_claims_accepted_as_proof"
+      ],
+      "strict_role_work_results_reject_recipient_drift": true,
+      "wait_event_producer_bindings": [
+        "current_node_reviewer_blocks_result|human_like_reviewer",
+        "current_node_reviewer_passes_result|human_like_reviewer",
+        "pm_records_role_work_result_decision|project_manager",
+        "pm_resume_recovery_decision_returned|project_manager",
+        "worker_current_node_result_returned|worker_a"
       ]
     },
-    "failures": [],
-    "ok": true
+    "failures": [
+      "PM resume decision action payload_contract omits required fields: controller_reminder.controller_may_advance_or_close_route, controller_reminder.controller_may_infer_from_chat_history, controller_reminder.controller_may_read_sealed_bodies, controller_reminder.controller_only, decision, decision_owner, explicit_recovery_evidence_recorded, prior_path_context_review.completed_nodes_considered, prior_path_context_review.controller_summary_used_as_evidence, prior_path_context_review.impact_on_decision, prior_path_context_review.prior_blocks_or_experiments_considered, prior_path_context_review.reviewed, prior_path_context_review.source_paths, prior_path_context_review.stale_evidence_considered, prior_path_context_review.superseded_nodes_considered",
+      "declared reviewer block flags lack an explicit router lane: child_skill_manifest_reviewer_blocked, evidence_quality_reviewer_blocked, final_backward_replay_blocked, parent_backward_replay_blocked, product_architecture_reviewer_blocked, research_review_blocked, reviewer_route_check_blocked, root_contract_reviewer_blocked"
+    ],
+    "ok": false
+  },
+  "failure_details": {
+    "current_source": {
+      "facts": {
+        "control_blocker_followup_routes_to_event_producer": true,
+        "declared_reviewer_block_flags": [
+          "child_skill_manifest_reviewer_blocked",
+          "evidence_quality_reviewer_blocked",
+          "final_backward_replay_blocked",
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked",
+          "parent_backward_replay_blocked",
+          "product_architecture_reviewer_blocked",
+          "research_review_blocked",
+          "reviewer_route_check_blocked",
+          "root_contract_reviewer_blocked"
+        ],
+        "display_status_available_before_startup_fact_review": true,
+        "legacy_recipient_normalization_limited_to_unmarked_packets": true,
+        "material_dispatch_block_event_registered": true,
+        "material_dispatch_block_report_writer": true,
+        "material_dispatch_card_has_pre_route_material_exception": true,
+        "material_dispatch_direct_preflight_required": true,
+        "material_dispatch_frontier_phase_synchronized": true,
+        "material_dispatch_pm_block_cards_reachable": true,
+        "material_dispatch_route_memory_tracks_block": true,
+        "material_scan_card_requires_file_backed_packet_bodies": true,
+        "material_scan_index_forbids_controller_body_reads": true,
+        "material_scan_packets_mark_pre_route_not_current_node": true,
+        "material_scan_router_accepts_file_backed_packet_specs": true,
+        "material_scan_router_requires_inline_body_text_only": false,
+        "model_miss_review_block_card_flags": [
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked"
+        ],
+        "model_miss_review_block_cards_aligned": true,
+        "model_miss_review_block_event_flags": [
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked"
+        ],
+        "model_miss_triage_accepts_review_block_flags": [
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked"
+        ],
+        "pm_control_blocker_allowed_events": [
+          "pm_records_control_blocker_repair_decision"
+        ],
+        "pm_control_blocker_card_events": [
+          "pm_records_control_blocker_repair_decision",
+          "pm_requests_startup_repair"
+        ],
+        "pm_control_blocker_card_fields": [
+          "blocker_id",
+          "blockers",
+          "contract_self_check",
+          "contract_self_check.all_required_fields_present",
+          "contract_self_check.empty_required_arrays_explicit",
+          "contract_self_check.exact_field_names_used",
+          "decided_by_role",
+          "decision",
+          "prior_path_context_review",
+          "prior_path_context_review.reviewed",
+          "prior_path_context_review.source_paths",
+          "repair_action",
+          "repair_transaction",
+          "repair_transaction.plan_kind",
+          "repair_transaction.replacement_packet_specs_hash",
+          "repair_transaction.replacement_packet_specs_path",
+          "repair_transaction.replacement_packets",
+          "rerun_target",
+          "run_id",
+          "schema_version"
+        ],
+        "pm_control_blocker_contract_fields": [
+          "blocker_id",
+          "blockers",
+          "contract_self_check",
+          "decided_by_role",
+          "decision",
+          "prior_path_context_review",
+          "repair_action",
+          "repair_transaction",
+          "rerun_target"
+        ],
+        "pm_control_blocker_router_fields": [
+          "blocker_id",
+          "blockers",
+          "contract_self_check",
+          "decided_by_role",
+          "decision",
+          "prior_path_context_review",
+          "repair_action",
+          "repair_transaction",
+          "rerun_target"
+        ],
+        "pm_resume_action_contract_fields": [],
+        "pm_resume_card_fields": [
+          "contract_self_check",
+          "contract_self_check.all_required_fields_present",
+          "contract_self_check.current_run_route_memory_paths_cited",
+          "contract_self_check.empty_required_arrays_explicit",
+          "contract_self_check.exact_field_names_used",
+          "controller_reminder",
+          "controller_reminder.controller_may_advance_or_close_route",
+          "controller_reminder.controller_may_approve_gates",
+          "controller_reminder.controller_may_create_project_evidence",
+          "controller_reminder.controller_may_implement",
+          "controller_reminder.controller_may_infer_from_chat_history",
+          "controller_reminder.controller_may_read_sealed_bodies",
+          "controller_reminder.controller_only",
+          "decision",
+          "decision_owner",
+          "explicit_recovery_evidence_recorded",
+          "prior_path_context_review",
+          "prior_path_context_review.completed_nodes_considered",
+          "prior_path_context_review.controller_summary_used_as_evidence",
+          "prior_path_context_review.impact_on_decision",
+          "prior_path_context_review.prior_blocks_or_experiments_considered",
+          "prior_path_context_review.reviewed",
+          "prior_path_context_review.source_paths",
+          "prior_path_context_review.stale_evidence_considered",
+          "prior_path_context_review.superseded_nodes_considered",
+          "recovery_evidence",
+          "recovery_evidence.chat_history_progress_inference_used",
+          "recovery_evidence.crew_rehydration_report_path",
+          "recovery_evidence.packet_ledger_path",
+          "recovery_evidence.resume_reentry_path",
+          "recovery_evidence.sealed_packet_or_result_bodies_read",
+          "run_id",
+          "schema_version"
+        ],
+        "pm_resume_contract_fields": [
+          "controller_reminder.controller_may_advance_or_close_route",
+          "controller_reminder.controller_may_infer_from_chat_history",
+          "controller_reminder.controller_may_read_sealed_bodies",
+          "controller_reminder.controller_only",
+          "decision",
+          "decision_owner",
+          "explicit_recovery_evidence_recorded",
+          "prior_path_context_review.completed_nodes_considered",
+          "prior_path_context_review.controller_summary_used_as_evidence",
+          "prior_path_context_review.impact_on_decision",
+          "prior_path_context_review.prior_blocks_or_experiments_considered",
+          "prior_path_context_review.reviewed",
+          "prior_path_context_review.source_paths",
+          "prior_path_context_review.stale_evidence_considered",
+          "prior_path_context_review.superseded_nodes_considered"
+        ],
+        "pm_resume_router_fields": [
+          "controller_reminder.controller_may_advance_or_close_route",
+          "controller_reminder.controller_may_infer_from_chat_history",
+          "controller_reminder.controller_may_read_sealed_bodies",
+          "controller_reminder.controller_only",
+          "decision",
+          "decision_owner",
+          "explicit_recovery_evidence_recorded",
+          "prior_path_context_review.completed_nodes_considered",
+          "prior_path_context_review.controller_summary_used_as_evidence",
+          "prior_path_context_review.impact_on_decision",
+          "prior_path_context_review.prior_blocks_or_experiments_considered",
+          "prior_path_context_review.reviewed",
+          "prior_path_context_review.source_paths",
+          "prior_path_context_review.stale_evidence_considered",
+          "prior_path_context_review.superseded_nodes_considered"
+        ],
+        "pm_review_block_repair_event_accepts_flags": [
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked"
+        ],
+        "pm_review_block_repair_event_routes_flags": [
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked"
+        ],
+        "pm_role_work_router_rejects_foreign_contracts": true,
+        "process_contract_bindings": [
+          "control_blocker_repair|pm.control_blocker_repair_decision|project_manager|project_manager",
+          "current_node_work|worker.current_node|human_like_reviewer|human_like_reviewer",
+          "material_scan|worker.material_scan|human_like_reviewer|human_like_reviewer",
+          "officer_model_miss_report|officer.model_miss_report|project_manager|project_manager",
+          "officer_model_report|officer.model_report|project_manager|project_manager",
+          "pm_role_work_request|pm.role_work_request|project_manager|project_manager",
+          "research|worker.research|human_like_reviewer|human_like_reviewer",
+          "resume_decision|pm.resume_decision|project_manager|project_manager",
+          "reviewer_result_review|reviewer.review|human_like_reviewer|human_like_reviewer"
+        ],
+        "reviewer_block_lane_flags": [
+          "material_scan_dispatch_recheck_blocked",
+          "material_scan_dispatch_recheck_protocol_blocked",
+          "node_acceptance_plan_review_blocked",
+          "node_review_blocked"
+        ],
+        "role_output_card_path_hash_pairs": [
+          "body_path/body_hash",
+          "body_ref.path/body_ref.hash",
+          "decision_path/decision_hash",
+          "report_path/report_hash",
+          "result_body_path/result_body_hash",
+          "runtime_receipt_ref.path/runtime_receipt_ref.hash"
+        ],
+        "role_output_cards_forbid_sha256_aliases": true,
+        "role_output_cards_require_compact_refs": true,
+        "role_output_contract_path_hash_pairs": [
+          "architecture_path/architecture_hash",
+          "body_ref.path/body_ref.hash",
+          "contract_path/contract_hash",
+          "decision_path/decision_hash",
+          "draft_path/draft_hash",
+          "ledger_path/ledger_hash",
+          "manifest_path/manifest_hash",
+          "package_path/package_hash",
+          "plan_path/plan_hash",
+          "report_path/report_hash",
+          "result_body_path/result_body_hash",
+          "route_path/route_hash",
+          "runtime_receipt_ref.path/runtime_receipt_ref.hash"
+        ],
+        "role_output_router_path_hash_pairs": [
+          "architecture_path/architecture_hash",
+          "body_path/body_hash",
+          "body_ref.path/body_ref.hash",
+          "contract_path/contract_hash",
+          "decision_path/decision_hash",
+          "draft_path/draft_hash",
+          "ledger_path/ledger_hash",
+          "manifest_path/manifest_hash",
+          "memo_path/memo_hash",
+          "package_path/package_hash",
+          "plan_path/plan_hash",
+          "report_path/report_hash",
+          "result_body_path/result_body_hash",
+          "route_path/route_hash",
+          "runtime_receipt_ref.path/runtime_receipt_ref.hash"
+        ],
+        "role_output_router_rejects_nested_envelope": true,
+        "role_output_router_rejects_sha256_aliases": true,
+        "router_blocks_startup_fact_canonical_alias": true,
+        "router_rewrites_startup_fact_canonical": true,
+        "startup_card_example_paths": [
+          "blockers",
+          "contract_self_check",
+          "contract_self_check.all_required_fields_present",
+          "contract_self_check.empty_required_arrays_explicit",
+          "contract_self_check.exact_field_names_used",
+          "external_fact_review",
+          "external_fact_review.direct_evidence_paths_checked",
+          "external_fact_review.reviewed_by_role",
+          "external_fact_review.reviewer_checked_requirement_ids",
+          "external_fact_review.self_attested_ai_claims_accepted_as_proof",
+          "findings",
+          "independent_challenge",
+          "independent_challenge.blocking_findings",
+          "independent_challenge.challenge_actions",
+          "independent_challenge.challenge_waivers",
+          "independent_challenge.explicit_and_implicit_commitments",
+          "independent_challenge.explicit_and_implicit_commitments.explicit",
+          "independent_challenge.explicit_and_implicit_commitments.implicit",
+          "independent_challenge.failure_hypotheses",
+          "independent_challenge.non_blocking_findings",
+          "independent_challenge.pass_or_block",
+          "independent_challenge.reroute_request",
+          "independent_challenge.scope_restatement",
+          "passed",
+          "pm_suggestion_items",
+          "recommended_resolution",
+          "report_type",
+          "residual_risks",
+          "reviewed_by_role",
+          "run_id",
+          "schema_version"
+        ],
+        "startup_card_prose_paths": [
+          "external_fact_review.reviewer_checked_requirement_ids"
+        ],
+        "startup_contract_paths": [
+          "blockers",
+          "contract_self_check",
+          "external_fact_review",
+          "external_fact_review.direct_evidence_paths_checked",
+          "external_fact_review.reviewed_by_role",
+          "external_fact_review.reviewer_checked_requirement_ids",
+          "external_fact_review.self_attested_ai_claims_accepted_as_proof",
+          "findings",
+          "independent_challenge",
+          "independent_challenge.blocking_findings",
+          "independent_challenge.challenge_actions",
+          "independent_challenge.challenge_waivers",
+          "independent_challenge.explicit_and_implicit_commitments",
+          "independent_challenge.failure_hypotheses",
+          "independent_challenge.non_blocking_findings",
+          "independent_challenge.pass_or_block",
+          "independent_challenge.reroute_request",
+          "independent_challenge.scope_restatement",
+          "passed",
+          "pm_suggestion_items",
+          "residual_risks",
+          "reviewed_by_role"
+        ],
+        "startup_repair_exact_duplicate_rejected": true,
+        "startup_repair_request_repeatable_for_new_blocking_report": true,
+        "startup_repair_request_tracks_cycle_identity": true,
+        "startup_role_may_submit_to_canonical_path": false,
+        "startup_router_validator_paths": [
+          "external_fact_review",
+          "external_fact_review.direct_evidence_paths_checked",
+          "external_fact_review.notes",
+          "external_fact_review.reviewed_by_role",
+          "external_fact_review.reviewer_checked_requirement_ids",
+          "external_fact_review.router_mechanical_audit_hash",
+          "external_fact_review.self_attested_ai_claims_accepted_as_proof"
+        ],
+        "strict_role_work_results_reject_recipient_drift": true,
+        "wait_event_producer_bindings": [
+          "current_node_reviewer_blocks_result|human_like_reviewer",
+          "current_node_reviewer_passes_result|human_like_reviewer",
+          "pm_records_role_work_result_decision|project_manager",
+          "pm_resume_recovery_decision_returned|project_manager",
+          "worker_current_node_result_returned|worker_a"
+        ]
+      },
+      "failures": [
+        "PM resume decision action payload_contract omits required fields: controller_reminder.controller_may_advance_or_close_route, controller_reminder.controller_may_infer_from_chat_history, controller_reminder.controller_may_read_sealed_bodies, controller_reminder.controller_only, decision, decision_owner, explicit_recovery_evidence_recorded, prior_path_context_review.completed_nodes_considered, prior_path_context_review.controller_summary_used_as_evidence, prior_path_context_review.impact_on_decision, prior_path_context_review.prior_blocks_or_experiments_considered, prior_path_context_review.reviewed, prior_path_context_review.source_paths, prior_path_context_review.stale_evidence_considered, prior_path_context_review.superseded_nodes_considered",
+        "declared reviewer block flags lack an explicit router lane: child_skill_manifest_reviewer_blocked, evidence_quality_reviewer_blocked, final_backward_replay_blocked, parent_backward_replay_blocked, product_architecture_reviewer_blocked, research_review_blocked, reviewer_route_check_blocked, root_contract_reviewer_blocked"
+      ],
+      "ok": false
+    },
+    "flowguard_explorer": {
+      "dead_branch_count": 0,
+      "exception_branch_count": 0,
+      "ok": true,
+      "reachability_failure_count": 0,
+      "reachability_failures": [],
+      "summary": "sequences=3 initial_states=1 traces=108",
+      "violation_count": 0
+    },
+    "hazard_invariants": {
+      "failures": [],
+      "ok": true,
+      "results": {
+        "cockpit_missing_host_receipt": "detected",
+        "control_blocker_ambiguous_event": "detected",
+        "control_blocker_weak_decision_contract": "detected",
+        "display_fallback_after_pm_activation": "detected",
+        "material_dispatch_frontier_phase_mismatch": "detected",
+        "material_dispatch_unknown_block_event": "detected",
+        "material_scan_inline_body_only": "detected",
+        "pm_resume_decision_weak_contract": "detected",
+        "process_contract_family_mismatch": "detected",
+        "process_result_recipient_compensation": "detected",
+        "review_block_events_without_pm_lane": "detected",
+        "review_block_repair_event_hardcoded": "detected",
+        "role_output_envelope_ambiguity": "detected",
+        "startup_fact_hash_alias": "detected",
+        "startup_fact_jsonpath_mismatch": "detected",
+        "startup_repair_dedupes_new_report": "detected",
+        "wait_event_producer_mismatch": "detected"
+      }
+    },
+    "progress": {
+      "cannot_reach_terminal_count": 0,
+      "ok": true,
+      "samples": [],
+      "stuck_state_count": 0
+    },
+    "safe_graph": {
+      "accepted_state_count": 1,
+      "edge_count": 36,
+      "invariant_failures": [],
+      "missing_labels": [],
+      "ok": true,
+      "rejected_state_count": 17,
+      "state_count": 37
+    }
   },
   "hazards": {
     "cockpit_missing_host_receipt": "detected",
@@ -327,14 +716,17 @@
     "material_dispatch_unknown_block_event": "detected",
     "material_scan_inline_body_only": "detected",
     "pm_resume_decision_weak_contract": "detected",
+    "process_contract_family_mismatch": "detected",
+    "process_result_recipient_compensation": "detected",
     "review_block_events_without_pm_lane": "detected",
     "review_block_repair_event_hardcoded": "detected",
     "role_output_envelope_ambiguity": "detected",
     "startup_fact_hash_alias": "detected",
     "startup_fact_jsonpath_mismatch": "detected",
-    "startup_repair_dedupes_new_report": "detected"
+    "startup_repair_dedupes_new_report": "detected",
+    "wait_event_producer_mismatch": "detected"
   },
-  "ok": true,
+  "ok": false,
   "skipped_checks": {
     "production_replay": "skipped_with_reason: this check scans source facts and explores a protocol model; it is not a full runtime transcript replay"
   }

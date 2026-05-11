@@ -187,6 +187,81 @@ PM_ROLE_WORK_OPEN_STATUSES = {
     "result_relayed_to_pm",
 }
 PM_ROLE_WORK_TERMINAL_DECISIONS = {"absorbed", "canceled", "superseded"}
+PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
+    "current_node_work": {
+        "task_family": "worker.current_node",
+        "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
+        "packet_type": "work_packet",
+        "required_result_next_recipient": "human_like_reviewer",
+        "absorbing_role": "human_like_reviewer",
+    },
+    "pm_role_work_request": {
+        "task_family": "pm.role_work_request",
+        "contract_id": "flowpilot.output_contract.pm_role_work_result.v1",
+        "packet_type": "pm_role_work_request",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
+    },
+    "officer_model_report": {
+        "task_family": "officer.model_report",
+        "contract_id": "flowpilot.output_contract.officer_model_report.v1",
+        "packet_type": "officer_request",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
+    },
+    "officer_model_miss_report": {
+        "task_family": "officer.model_miss_report",
+        "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
+        "packet_type": "officer_request",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
+    },
+    "reviewer_result_review": {
+        "task_family": "reviewer.review",
+        "contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
+        "packet_type": "review_request",
+        "required_result_next_recipient": "human_like_reviewer",
+        "absorbing_role": "human_like_reviewer",
+    },
+    "material_scan": {
+        "task_family": "worker.material_scan",
+        "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+        "packet_type": "material_scan",
+        "required_result_next_recipient": "human_like_reviewer",
+        "absorbing_role": "human_like_reviewer",
+    },
+    "research": {
+        "task_family": "worker.research",
+        "contract_id": "flowpilot.output_contract.worker_research_result.v1",
+        "packet_type": "research",
+        "required_result_next_recipient": "human_like_reviewer",
+        "absorbing_role": "human_like_reviewer",
+    },
+    "control_blocker_repair": {
+        "task_family": "pm.control_blocker_repair_decision",
+        "contract_id": "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
+        "packet_type": "role_decision",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
+    },
+    "resume_decision": {
+        "task_family": "pm.resume_decision",
+        "contract_id": "flowpilot.output_contract.pm_resume_decision.v1",
+        "packet_type": "role_decision",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
+    },
+}
+PM_ROLE_WORK_CONTRACT_PROCESS_KINDS = {
+    "flowpilot.output_contract.pm_role_work_result.v1": "pm_role_work_request",
+    "flowpilot.output_contract.officer_model_report.v1": "officer_model_report",
+    "flowpilot.output_contract.flowguard_model_miss_report.v1": "officer_model_miss_report",
+}
+PM_ROLE_WORK_FOREIGN_CONTRACT_IDS = {
+    "flowpilot.output_contract.worker_current_node_result.v1",
+    "flowpilot.output_contract.worker_material_scan_result.v1",
+    "flowpilot.output_contract.worker_research_result.v1",
+}
 STARTUP_ANSWER_ENUMS = {
     "background_agents": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
@@ -5082,6 +5157,43 @@ def _control_blocker_wait_events(record: dict[str, Any]) -> tuple[list[str], dic
     raise RouterError(str(issue.get("error") or "control blocker wait contains invalid allowed external events"))
 
 
+def _event_producer_roles(allowed_events: list[str]) -> set[str]:
+    roles: set[str] = set()
+    for event in allowed_events:
+        meta = EXTERNAL_EVENTS.get(event) or {}
+        roles.add(_event_wait_role(event, meta))
+    return roles
+
+
+def _role_set(to_role: str) -> set[str]:
+    return {part.strip() for part in str(to_role or "").split(",") if part.strip()}
+
+
+def _control_blocker_followup_target_role(allowed_events: list[str], fallback_role: str) -> str:
+    roles = _event_producer_roles(allowed_events)
+    if not roles:
+        return fallback_role
+    fallback_roles = _role_set(fallback_role)
+    if roles.issubset(fallback_roles):
+        return fallback_role
+    return ",".join(sorted(roles))
+
+
+def _validate_wait_event_producer_binding(
+    allowed_events: list[str],
+    *,
+    to_role: str,
+    context: str,
+) -> None:
+    producer_roles = _event_producer_roles(allowed_events)
+    target_roles = _role_set(to_role)
+    if producer_roles and not producer_roles.issubset(target_roles):
+        raise RouterError(
+            f"{context} waits for event producer role(s) {sorted(producer_roles)} "
+            f"but targets {sorted(target_roles)}"
+        )
+
+
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     active = run_state.get("active_control_blocker")
     if not isinstance(active, dict):
@@ -5093,6 +5205,12 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
     lane = str(record.get("handling_lane") or active.get("handling_lane") or "pm_repair_decision_required")
     target_role = str(record.get("target_role") or active.get("target_role") or "project_manager")
     allowed_resolution_events, event_contract_issue = _control_blocker_wait_events(record)
+    target_role = _control_blocker_followup_target_role(allowed_resolution_events, target_role)
+    _validate_wait_event_producer_binding(
+        allowed_resolution_events,
+        to_role=target_role,
+        context="control blocker wait",
+    )
     if record.get("delivery_status") != "delivered":
         return make_action(
             action_type="handle_control_blocker",
@@ -8864,14 +8982,22 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         request_kind=request_kind,
         output_contract_id=output_contract_id,
     )
+    process_binding = _validate_pm_role_work_process_contract_binding(
+        contract_id=output_contract_id,
+        to_role=to_role,
+        request_kind=request_kind,
+    )
     node_id = str(payload.get("node_id") or "pm-role-work").strip() or "pm-role-work"
     packet_id = str(payload.get("packet_id") or f"pm-role-work-{_safe_packet_id_component(request_id)}")
-    packet_type = _pm_role_work_packet_type_from_contract(
+    packet_type = str(process_binding["packet_type"])
+    validated_packet_type = _pm_role_work_packet_type_from_contract(
         run_root,
         contract_id=output_contract_id,
         to_role=to_role,
         request_kind=request_kind,
     )
+    if validated_packet_type != packet_type:
+        raise RouterError("PM role-work packet type does not match process contract binding")
     selected_contract = dict(output_contract) if output_contract else _pm_role_work_output_contract(
         run_root,
         contract_id=output_contract_id,
@@ -8880,11 +9006,20 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         node_id=node_id,
     )
     if output_contract:
-        selected_contract.setdefault("contract_id", output_contract_id)
+        if str(selected_contract.get("contract_id") or output_contract_id) != output_contract_id:
+            raise RouterError("PM role-work output_contract.contract_id must match output_contract_id")
+        supplied_task_family = str(selected_contract.get("task_family") or process_binding["task_family"])
+        if supplied_task_family != process_binding["task_family"]:
+            raise RouterError("PM role-work output_contract.task_family must match process contract binding")
+        selected_contract["contract_id"] = output_contract_id
         selected_contract.setdefault("selected_by_role", "project_manager")
         selected_contract.setdefault("recipient_role", to_role)
         selected_contract.setdefault("node_id", node_id)
         selected_contract.setdefault("packet_type", packet_type)
+    selected_contract["process_kind"] = process_binding["process_kind"]
+    selected_contract["task_family"] = process_binding["task_family"]
+    selected_contract["required_result_next_recipient"] = process_binding["required_result_next_recipient"]
+    selected_contract["absorbing_role"] = process_binding["absorbing_role"]
     envelope = packet_runtime.create_packet(
         project_root,
         run_id=str(run_state["run_id"]),
@@ -8901,6 +9036,8 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
             "request_kind": request_kind,
             "request_mode": request_mode,
             "pm_role_work_request": True,
+            "strict_process_contract_binding": True,
+            "process_contract_binding": process_binding,
         },
         output_contract=selected_contract,
     )
@@ -8921,6 +9058,10 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         "result_envelope_path": project_relative(project_root, paths["result_envelope"]),
         "result_body_path": project_relative(project_root, paths["result_body"]),
         "output_contract_id": envelope.get("output_contract_id") or output_contract_id,
+        "process_kind": process_binding["process_kind"],
+        "process_contract_binding": process_binding,
+        "strict_process_contract_binding": True,
+        "required_result_next_recipient": process_binding["required_result_next_recipient"],
         "controller_may_read_packet_body": False,
         "body_source": body_ref,
         "registered_at": utc_now(),
@@ -8975,6 +9116,33 @@ def _normalize_pm_role_work_result_recipient(
     return result
 
 
+def _validate_role_work_result_process_binding(
+    project_root: Path,
+    result_path: Path,
+    *,
+    record: dict[str, Any],
+    packet_envelope: dict[str, Any],
+    result: dict[str, Any],
+) -> dict[str, Any]:
+    metadata = packet_envelope.get("metadata") if isinstance(packet_envelope.get("metadata"), dict) else {}
+    binding = metadata.get("process_contract_binding") if isinstance(metadata.get("process_contract_binding"), dict) else {}
+    strict_process_contract_binding = bool(
+        metadata.get("strict_process_contract_binding")
+        or record.get("strict_process_contract_binding")
+    )
+    expected_next_recipient = str(
+        binding.get("required_result_next_recipient")
+        or record.get("required_result_next_recipient")
+        or "project_manager"
+    )
+    if result.get("next_recipient") == expected_next_recipient:
+        return result
+    if strict_process_contract_binding:
+        raise RouterError("role-work result next_recipient must match process binding")
+    result["legacy_pm_role_work_result_recipient_normalization"] = True
+    return _normalize_pm_role_work_result_recipient(project_root, result_path, result)
+
+
 def _write_role_work_result_returned(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise RouterError("role-work result payload must be an object")
@@ -9006,9 +9174,15 @@ def _write_role_work_result_returned(project_root: Path, run_root: Path, run_sta
         raise RouterError("role-work result envelope packet_id mismatch")
     if result.get("completed_by_role") != record.get("to_role"):
         raise RouterError("role-work result was completed by the wrong role")
-    result = _normalize_pm_role_work_result_recipient(project_root, result_path, result)
     packet_path = _packet_envelope_path_from_record(project_root, run_state, record)
     packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
+    result = _validate_role_work_result_process_binding(
+        project_root,
+        result_path,
+        record=record,
+        packet_envelope=packet_envelope,
+        result=result,
+    )
     audit = packet_runtime.validate_result_ready_for_reviewer_relay(
         project_root,
         packet_envelope=packet_envelope,
@@ -11079,20 +11253,30 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
     route_id = str(payload.get("route_id") or "route-001")
     route_root = run_root / "routes" / route_id
     draft = payload.get("route") if isinstance(payload.get("route"), dict) else {}
-    route_payload = {
-        "schema_version": "flowpilot.route_draft.v1",
-        "run_id": run_state["run_id"],
-        "route_id": route_id,
-        "route_version": int(payload.get("route_version") or 1),
-        "source_root_contract": project_relative(project_root, contract_path),
-        "source_product_behavior_model": project_relative(project_root, product_model_path),
-        "source_product_behavior_model_hash": hashlib.sha256(product_model_path.read_bytes()).hexdigest(),
-        "prior_path_context_review": prior_review,
-        "nodes": draft.get("nodes") or payload.get("nodes") or [],
-        "written_by_role": "project_manager",
-        "written_at": utc_now(),
-        **_role_output_envelope_record(payload),
+    route_payload = dict(payload)
+    original_schema_version = route_payload.get("schema_version")
+    if original_schema_version and original_schema_version != "flowpilot.route_draft.v1":
+        route_payload["pm_authored_payload_schema_version"] = original_schema_version
+    route_payload["schema_version"] = "flowpilot.route_draft.v1"
+    route_payload["run_id"] = run_state["run_id"]
+    route_payload["route_id"] = route_id
+    route_payload["route_version"] = int(payload.get("route_version") or draft.get("route_version") or 1)
+    route_payload["source_root_contract"] = project_relative(project_root, contract_path)
+    route_payload["source_product_behavior_model"] = project_relative(project_root, product_model_path)
+    route_payload["source_product_behavior_model_hash"] = hashlib.sha256(product_model_path.read_bytes()).hexdigest()
+    route_payload["prior_path_context_review"] = prior_review
+    route_payload["nodes"] = draft.get("nodes") or payload.get("nodes") or []
+    route_payload["written_by_role"] = "project_manager"
+    route_payload["written_at"] = str(payload.get("written_at") or utc_now())
+    route_payload["router_preservation"] = {
+        "schema_version": "flowpilot.router_artifact_preservation.v1",
+        "canonical_source": "pm_role_output_body",
+        "official_artifact_path": project_relative(project_root, route_root / "flow.draft.json"),
+        "role_authored_fields_preserved": True,
+        "whitelist_rebuild_used": False,
+        "recorded_at": utc_now(),
     }
+    route_payload.update(_role_output_envelope_record(payload))
     write_json(route_root / "flow.draft.json", route_payload)
     run_state["draft_route_visibility"] = {
         "route_id": route_id,
@@ -11444,6 +11628,42 @@ def _pm_role_work_request_body_text(project_root: Path, payload: dict[str, Any])
     raise RouterError("PM role-work request requires file-backed packet_body_path/packet_body_hash")
 
 
+def _validate_pm_role_work_process_contract_binding(
+    *,
+    contract_id: str,
+    to_role: str,
+    request_kind: str,
+) -> dict[str, Any]:
+    foreign_current_node_contract = "flowpilot.output_contract.worker_current_node_result.v1"
+    foreign_current_node_family = "worker.current_node"
+    if contract_id in PM_ROLE_WORK_FOREIGN_CONTRACT_IDS or contract_id == foreign_current_node_contract:
+        raise RouterError(
+            f"output_contract_id {contract_id} does not match PM role-work process; "
+            f"{foreign_current_node_family} belongs to current-node execution, not delegated PM side work"
+        )
+    process_kind = PM_ROLE_WORK_CONTRACT_PROCESS_KINDS.get(contract_id)
+    if not process_kind:
+        raise RouterError(f"PM role-work request output_contract_id is not allowed for PM role-work process: {contract_id}")
+    binding = dict(PROCESS_CONTRACT_BINDINGS[process_kind])
+    if process_kind in {"officer_model_report", "officer_model_miss_report"} and to_role not in {
+        "process_flowguard_officer",
+        "product_flowguard_officer",
+    }:
+        raise RouterError(f"output_contract_id {contract_id} is an officer process contract and must target an officer role")
+    if process_kind == "officer_model_miss_report" and request_kind != "model_miss":
+        raise RouterError("officer model-miss contract requires request_kind=model_miss")
+    if process_kind == "pm_role_work_request" and to_role not in PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES:
+        raise RouterError("PM role-work process target role is not allowed")
+    return {
+        "process_kind": process_kind,
+        "task_family": binding["task_family"],
+        "contract_id": binding["contract_id"],
+        "packet_type": binding["packet_type"],
+        "required_result_next_recipient": binding["required_result_next_recipient"],
+        "absorbing_role": binding["absorbing_role"],
+    }
+
+
 def _pm_role_work_packet_type_from_contract(
     run_root: Path,
     *,
@@ -11451,25 +11671,13 @@ def _pm_role_work_packet_type_from_contract(
     to_role: str,
     request_kind: str,
 ) -> str:
-    registry = read_json_if_exists(run_root / "runtime_kit" / "contracts" / "contract_index.json")
-    if not registry:
-        registry = read_json(runtime_kit_source() / "contracts" / "contract_index.json")
-    for rule in registry.get("selection_rules", []):
-        if not isinstance(rule, dict) or rule.get("contract_id") != contract_id:
-            continue
-        roles = rule.get("recipient_roles")
-        if isinstance(roles, list) and to_role not in roles:
-            continue
-        packet_type = str(rule.get("packet_type") or "").strip()
-        if packet_type:
-            return packet_type
-    if to_role in {"process_flowguard_officer", "product_flowguard_officer"}:
-        return "officer_request"
-    if to_role == "human_like_reviewer":
-        return "review_request"
-    if request_kind in {"implementation", "model_update"}:
-        return "work_packet"
-    return "research"
+    del run_root
+    binding = _validate_pm_role_work_process_contract_binding(
+        contract_id=contract_id,
+        to_role=to_role,
+        request_kind=request_kind,
+    )
+    return str(binding["packet_type"])
 
 
 def _pm_role_work_output_contract(
@@ -15606,6 +15814,11 @@ def _expected_role_decision_wait_action(
         allowed_events.append(PM_ROLE_WORK_REQUEST_EVENT)
     allowed_events = _validated_external_event_names(
         allowed_events,
+        context=f"await_role_decision action {label}",
+    )
+    _validate_wait_event_producer_binding(
+        allowed_events,
+        to_role=to_role,
         context=f"await_role_decision action {label}",
     )
     extra: dict[str, Any] = {

@@ -960,6 +960,58 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         draft = read_json(run_root / "routes" / "route-001" / "flow.draft.json")
         self.assertEqual(draft["prior_path_context_review"]["source_paths"][0], self.rel(root, context_path))
 
+    def test_pm_route_draft_preserves_role_authored_repair_policy_fields(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+
+        nodes = [{"node_id": "node-001"}]
+        repair_policy = {
+            "policy_id": "route-001-repair-return-policy-test",
+            "branch_table": [
+                {
+                    "trigger": "reviewer_block",
+                    "rejoin_target": "node-001",
+                    "rerun_checks": ["process_officer_route_process_check"],
+                }
+            ],
+        }
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "schema_version": "flowpilot.pm_route_draft_payload.v1",
+                "route_id": "route-001",
+                "route_version": 4,
+                "nodes": nodes,
+                "route": {
+                    "route_id": "route-001",
+                    "route_version": 4,
+                    "nodes": nodes,
+                    "repair_return_policy": repair_policy,
+                },
+                "route_repair_return_policy": repair_policy,
+                **self.prior_path_context_review(
+                    root,
+                    "Route draft preserves PM-authored repair-return policy fields.",
+                ),
+            },
+        )
+
+        draft = read_json(run_root / "routes" / "route-001" / "flow.draft.json")
+        self.assertEqual(draft["schema_version"], "flowpilot.route_draft.v1")
+        self.assertEqual(draft["pm_authored_payload_schema_version"], "flowpilot.pm_route_draft_payload.v1")
+        self.assertEqual(draft["route_repair_return_policy"], repair_policy)
+        self.assertEqual(draft["route"]["repair_return_policy"], repair_policy)
+        self.assertFalse(draft["router_preservation"]["whitelist_rebuild_used"])
+        self.assertTrue(draft["router_preservation"]["role_authored_fields_preserved"])
+
     def test_controller_next_action_reuses_fresh_route_memory(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -1928,6 +1980,96 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         bad_role = self.pm_role_work_request_payload(root, request_id="bad-role", to_role="controller")
         with self.assertRaisesRegex(router.RouterError, "other than PM or Controller"):
             router.record_external_event(root, "pm_registers_role_work_request", bad_role)
+
+    def test_pm_role_work_request_rejects_current_node_contract_family(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = {
+            "action_type": "await_role_decision",
+            "to_role": "project_manager",
+            "allowed_external_events": ["pm_registers_role_work_request"],
+        }
+        router.write_json(router.run_state_path(run_root), state)
+
+        bad_contract = self.pm_role_work_request_payload(
+            root,
+            request_id="bad-current-node-contract",
+            to_role="worker_a",
+            request_kind="implementation",
+            output_contract_id="flowpilot.output_contract.worker_current_node_result.v1",
+            body_text="Do a delegated PM repair task.",
+        )
+        with self.assertRaisesRegex(router.RouterError, "does not match PM role-work process"):
+            router.record_external_event(root, "pm_registers_role_work_request", bad_contract)
+
+    def test_strict_pm_role_work_result_rejects_wrong_next_recipient(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-strict-role-work")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        run_root = self.run_root_for(root)
+
+        router.record_external_event(
+            root,
+            "pm_registers_role_work_request",
+            self.pm_role_work_request_payload(
+                root,
+                request_id="strict-role-work-001",
+                to_role="worker_a",
+                request_kind="implementation",
+                output_contract_id="flowpilot.output_contract.pm_role_work_result.v1",
+                body_text="Do a delegated PM repair task.",
+            ),
+        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        router.apply_action(root, "relay_pm_role_work_request_packet")
+
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        record = index["requests"][0]
+        envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role="worker_a",
+            completed_by_agent_id="worker-a-agent",
+            result_body_text="Status\n\nComplete\n\nContract Self-Check\n\nPassed.",
+            next_recipient="human_like_reviewer",
+        )
+        result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
+        with self.assertRaisesRegex(router.RouterError, "next_recipient must match process binding"):
+            router.record_external_event(
+                root,
+                "role_work_result_returned",
+                {
+                    "request_id": "strict-role-work-001",
+                    "packet_id": "pm-role-work-strict-role-work-001",
+                    "result_envelope_path": result_path,
+                },
+            )
+
+    def test_wait_event_producer_binding_rejects_wrong_target_role(self) -> None:
+        with self.assertRaisesRegex(router.RouterError, "event producer role"):
+            router._validate_wait_event_producer_binding(
+                ["current_node_reviewer_passes_result"],
+                to_role="project_manager",
+                context="test wait",
+            )
+        router._validate_wait_event_producer_binding(
+            ["current_node_reviewer_passes_result"],
+            to_role="human_like_reviewer",
+            context="test wait",
+        )
+        self.assertEqual(
+            router._control_blocker_followup_target_role(
+                ["current_node_reviewer_passes_result"],
+                "project_manager",
+            ),
+            "human_like_reviewer",
+        )
 
     def test_model_backed_model_miss_triage_unlocks_review_repair(self) -> None:
         root = self.make_project()

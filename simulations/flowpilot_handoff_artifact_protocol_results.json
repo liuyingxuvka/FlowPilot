@@ -1,0 +1,158 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=120",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "ack_treated_as_completion": {
+        "detected": true,
+        "expected_failure": "ACK was treated as completion evidence",
+        "failures": [
+          "ACK was treated as completion evidence"
+        ]
+      },
+      "blocker_advances_while_consulting": {
+        "detected": true,
+        "expected_failure": "blocking suggestion advanced while unresolved or consulting",
+        "failures": [
+          "PM failed to issue final disposition after consultation",
+          "blocking suggestion advanced while unresolved or consulting"
+        ]
+      },
+      "consultation_result_not_read": {
+        "detected": true,
+        "expected_failure": "PM did not read consultation result before final disposition",
+        "failures": [
+          "PM failed to issue final disposition after consultation",
+          "consultation request was treated as final PM disposition",
+          "PM did not read consultation result before final disposition",
+          "PM failed to issue final disposition after consultation"
+        ]
+      },
+      "consultation_treated_as_final": {
+        "detected": true,
+        "expected_failure": "PM failed to issue final disposition after consultation",
+        "failures": [
+          "PM failed to issue final disposition after consultation"
+        ]
+      },
+      "consultation_without_packet": {
+        "detected": true,
+        "expected_failure": "PM consultation request lacks bounded formal packet",
+        "failures": [
+          "PM consultation request lacks bounded formal packet",
+          "PM failed to issue final disposition after consultation",
+          "consultation request was treated as final PM disposition"
+        ]
+      },
+      "downstream_skips_handoff": {
+        "detected": true,
+        "expected_failure": "downstream role did not receive and read the handoff letter",
+        "failures": [
+          "downstream role did not receive and read the handoff letter",
+          "downstream role did not check handoff against formal artifacts"
+        ]
+      },
+      "forced_consultation_for_minor": {
+        "detected": true,
+        "expected_failure": "consultation was forced for a minor suggestion",
+        "failures": [
+          "consultation was forced for a minor suggestion despite sufficient PM basis",
+          "PM consultation request lacks bounded formal packet",
+          "PM failed to issue final disposition after consultation",
+          "consultation request was treated as final PM disposition"
+        ]
+      },
+      "handoff_artifact_mismatch": {
+        "detected": true,
+        "expected_failure": "handoff claims do not match formal artifacts",
+        "failures": [
+          "downstream role did not check handoff against formal artifacts",
+          "handoff claims do not match formal artifacts"
+        ]
+      },
+      "ledger_leaks_sealed_body": {
+        "detected": true,
+        "expected_failure": "sealed body content leaked into handoff or ledger",
+        "failures": [
+          "sealed body content leaked into handoff or ledger"
+        ]
+      },
+      "major_direct_reject_without_reason": {
+        "detected": true,
+        "expected_failure": "major suggestion was directly rejected without PM reason",
+        "failures": [
+          "major suggestion was directly rejected without PM reason"
+        ]
+      },
+      "message_only_work_product": {
+        "detected": true,
+        "expected_failure": "substantive work product exists only in the handoff letter",
+        "failures": [
+          "substantive work product exists only in the handoff letter"
+        ]
+      },
+      "missing_pm_suggestion_section": {
+        "detected": true,
+        "expected_failure": "role output omitted PM Suggestion Items",
+        "failures": [
+          "role output omitted PM Suggestion Items",
+          "no-suggestion case lacks explicit no-new-suggestion statement"
+        ]
+      },
+      "router_truncates_artifact": {
+        "detected": true,
+        "expected_failure": "Router rebuilt or narrowed the role-authored official artifact",
+        "failures": [
+          "Router rebuilt or narrowed the role-authored official artifact",
+          "official review target does not preserve role-authored fields"
+        ]
+      },
+      "stale_hash_accepted": {
+        "detected": true,
+        "expected_failure": "artifact refs were accepted without current path/hash validation",
+        "failures": [
+          "artifact refs were accepted without current path/hash validation"
+        ]
+      },
+      "suggestion_ignored_by_pm": {
+        "detected": true,
+        "expected_failure": "PM ignored a suggestion without final disposition or consultation",
+        "failures": [
+          "PM ignored a suggestion without final disposition or consultation"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_direct_pm_disposition",
+      "valid_full_upgrade_plan",
+      "valid_no_suggestion_handoff",
+      "valid_optional_consultation",
+      "valid_route_artifact_preserved"
+    ],
+    "edge_count": 40,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 15,
+    "state_count": 41
+  }
+}

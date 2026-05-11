@@ -95,7 +95,11 @@ IMPLEMENTATION_CONTRACT = ContractSpec(
     required_body_fields=frozenset(
         {
             "acceptance_plan_ref",
+            "artifact_refs",
+            "changed_paths",
+            "inspection_notes",
             "node_id",
+            "pm_suggestion_items",
             "work_scope",
         }
     ),

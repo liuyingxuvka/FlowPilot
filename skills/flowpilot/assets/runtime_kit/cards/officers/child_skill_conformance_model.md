@@ -23,3 +23,23 @@ Report:
 - process risks from skipped steps, missing approvers, or unsupported tools;
 - whether a child-skill conformance model is needed now or can be deferred;
 - confidence boundary and PM review-required hotspots.
+
+Required gate fields:
+
+- For `process_officer_passes_child_skill_conformance_model`, include top-level:
+
+```json
+{
+  "reviewed_by_role": "process_flowguard_officer",
+  "passed": true
+}
+```
+
+- For `process_officer_blocks_child_skill_conformance_model`, include top-level:
+
+```json
+{
+  "reviewed_by_role": "process_flowguard_officer",
+  "passed": false
+}
+```

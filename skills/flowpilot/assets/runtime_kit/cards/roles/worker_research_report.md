@@ -61,4 +61,12 @@ Include:
   `flowpilot_skill_improvement`. Worker-origin items are advisory only and
   must not use `current_gate_blocker`.
 
+The research result must be artifact-backed. The sealed body must include a
+handoff section with `artifact_refs` for raw evidence, notes, tables, scripts,
+or report files, paths and hashes when available, `changed_paths` if files were
+created or edited, verification/source-check evidence, inspection notes for PM
+or reviewer, and `pm_suggestion_items` or an explicit empty list. If PM asks
+for consultation advice, answer only the bounded question in a formal
+advice/report artifact; PM still owns the final disposition.
+
 The report is not approval. It must go to the reviewer for direct checking.

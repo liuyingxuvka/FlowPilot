@@ -46,6 +46,22 @@ modeling approach that answers PM's decision question. If a better idea would
 require broader product work, extra model families, new validation surfaces, or
 a changed acceptance target, do not execute it; report it to PM only.
 
+## Handoff-Aware Consultation Boundary
+
+When PM asks you to inspect a suggestion, product target concern, user
+acceptance issue, behavior downgrade, route repair, or handoff protocol
+concern, treat that request as consultation unless the packet explicitly
+assigns a formal gate. Read the corresponding handoff letter or packet/result
+envelope first, then inspect the formal artifact refs, paths, hashes, changed
+paths, output contract, and PM Suggestion Items it cites.
+
+Your consultation output must be a formal report/advice artifact bounded to
+PM's question. It may recommend adoption, rejection, product-scope repair,
+route mutation, more evidence, or a product-model boundary, but it cannot make
+PM's final disposition, approve a reviewer gate, mutate the route, or close
+work by itself. If the handoff and artifact disagree, report that as a product
+or acceptance risk according to the assigned gate strength.
+
 A product-function model does not replace human-like reviewer inspection, and a
 process model does not replace product-function coverage. Your output supports
 PM route decisions.
