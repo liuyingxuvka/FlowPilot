@@ -2,6 +2,42 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.8.0 - 2026-05-12
+
+### Added
+
+- Added recursive route decomposition coverage, route replanning policy checks,
+  event contract checks, event capability registry checks, model mesh checks,
+  and the unified control transaction registry for route progression,
+  packet dispatch, result absorption, reviewer gates, control blockers,
+  route mutation, and legacy reconciliation.
+- Added direct Router paths for FlowPilot role outputs, startup fact reports,
+  ACK/check-in handling, and FlowPilot output envelopes so the Controller stays
+  on envelope relay rather than informal body interpretation.
+- Added card/runtime coverage for active-holder packet fast lanes, handoff
+  artifact protocol enforcement, role-output contract bindings, and
+  reviewer/PM user-perspective checks.
+
+### Changed
+
+- Strengthened runtime cards, PM/reviewer/officer prompts, packet templates,
+  and role-output contracts so route nodes, child-skill bindings, worker
+  results, and control-plane blockers route through explicit registry-backed
+  events.
+- Updated FlowPilot route signs and display helpers to support committed-only
+  route visibility, recursive decomposition, and route-placeholder contracts.
+- Expanded installation, smoke, and coverage sweep checks to include the new
+  control-plane, model-mesh, recursive-decomposition, and registry surfaces.
+
+### Fixed
+
+- Fixed route replanning so planning/root/parent entry gaps are handled as
+  replanning or node expansion rather than being misclassified as repair work.
+- Fixed gate-outcome blocker routing, ACK/check-in loops, packet active-holder
+  progress, resume liveness, and stale or false-prerequisite control events.
+- Hardened public release hygiene by keeping local `tmp/` validation output out
+  of the tracked release boundary.
+
 ## 0.7.0 - 2026-05-10
 
 ### Added

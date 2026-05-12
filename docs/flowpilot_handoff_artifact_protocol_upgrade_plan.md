@@ -21,7 +21,7 @@ Remote GitHub sync is out of scope. Local repository changes, local installed sk
 | 9 | Require consulted role formal advice | Process/product/reviewer/worker consultation replies are formal advice artifacts, not chat | Officer/reviewer/worker cards define consultation response duties |
 | 10 | Gate advancement on unresolved blocking items | A blocking suggestion cannot advance only because consultation is pending | Router/ledger checks reject unresolved blocking suggestion states |
 | 11 | Keep ACK separate from completion | ACK only proves a card was received; handoff/artifact output proves work completion | System and role cards state ACK is not completion evidence |
-| 12 | Sync local install after source change | Repository-owned FlowPilot skill refreshes installed `C:\Users\liu_y\.codex\skills\flowpilot` | `install_flowpilot.py --sync-repo-owned --check --json` reports fresh source |
+| 12 | Sync local install after source change | Repository-owned FlowPilot skill refreshes installed `<Codex skills root>/flowpilot` | `install_flowpilot.py --sync-repo-owned --check --json` reports fresh source |
 
 ## Bug and Regression Risks to Model
 
@@ -70,7 +70,7 @@ Remote GitHub sync is out of scope. Local repository changes, local installed sk
 
 - Do not push GitHub remote.
 - Preserve existing local changes unless explicitly part of this upgrade.
-- Keep source repository changes in `C:\Users\liu_y\Documents\FlowGuardProjectAutopilot_20260430`.
+- Keep source repository changes in the active FlowPilot checkout.
 - Refresh installed skill from the source repository after validation.
 - Confirm local git status at the end so changed files are visible for commit.
 
