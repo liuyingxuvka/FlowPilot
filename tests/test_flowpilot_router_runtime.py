@@ -5561,6 +5561,61 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.rel(root, run_root / "continuation" / "crew_rehydration_report.json"),
         )
 
+    def test_resume_reentry_preempts_active_control_blocker_until_pm_decision(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has no legal next action while resume is sleeping",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
+
+        self.deliver_expected_card(root, "controller.resume_reentry")
+        self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
+        self.deliver_expected_card(root, "pm.resume_decision")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
+
+        router.record_external_event(
+            root,
+            "pm_resume_recovery_decision_returned",
+            self.role_decision_envelope(
+                root,
+                "continuation/pm_resume_decision_with_deferred_blocker",
+                {
+                    "decision_owner": "project_manager",
+                    "decision": "continue_current_packet_loop",
+                    "explicit_recovery_evidence_recorded": True,
+                    **self.prior_path_context_review(root, "PM resumes after current-run state and roles were rehydrated."),
+                    "controller_reminder": {
+                        "controller_only": True,
+                        "controller_may_read_sealed_bodies": False,
+                        "controller_may_infer_from_chat_history": False,
+                        "controller_may_advance_or_close_route": False,
+                    },
+                },
+            ),
+        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+        self.assertEqual(action["blocker_id"], blocker["blocker_id"])
+
     def test_resume_ambiguous_state_blocks_continue_without_recovery_evidence(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

@@ -13,7 +13,8 @@ Risk intent brief:
   launchers, heartbeat keepalive self-classification, stale crew ids, missing
   one-minute heartbeat evidence, stale lifecycle flags, host role liveness
   ambiguity, unnecessary replacement of live roles, replacing all six roles
-  when only one role failed, and route progress inferred from chat history.
+  when only one role failed, active control blockers racing ahead of resume
+  re-entry, and route progress inferred from chat history.
 - Hard invariants: stable launcher only; Controller is relay-only; PM decisions
   happen after heartbeat/manual wake records re-entry to the router, one-minute
   heartbeat evidence when automated, current-run state, visible plan
@@ -59,6 +60,12 @@ class State:
     heartbeat_trigger_evidence_loaded: bool = False
     heartbeat_interval_minutes: int = 0
     heartbeat_trigger_bound_to_current_run: bool = False
+    active_control_blocker_scan_done: bool = False
+    active_control_blocker_present: bool = False
+    active_control_blocker_deferred_until_resume_ready: bool = False
+    control_blocker_waited_before_resume_ready: bool = False
+    control_blocker_handled: bool = False
+    control_blocker_handled_after_pm_resume_decision: bool = False
 
     current_pointer_loaded: bool = False
     current_pointer_valid: bool = False
@@ -355,6 +362,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
+    if state.entry_mode in {"heartbeat", "manual"} and not state.active_control_blocker_scan_done:
+        yield Transition(
+            "no_active_control_blocker_pending_on_resume",
+            replace(state, active_control_blocker_scan_done=True),
+        )
+        yield Transition(
+            "active_control_blocker_deferred_until_resume_ready",
+            replace(
+                state,
+                active_control_blocker_scan_done=True,
+                active_control_blocker_present=True,
+                active_control_blocker_deferred_until_resume_ready=True,
+            ),
+        )
+        return
     if not state.current_pointer_loaded:
         yield Transition(
             "current_pointer_loaded",
@@ -549,6 +571,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, pm_decision_returned=True, holder="controller"),
         )
         return
+    if state.active_control_blocker_present and not state.control_blocker_handled:
+        yield Transition(
+            "active_control_blocker_handled_after_pm_resume_decision",
+            replace(
+                state,
+                control_blocker_handled=True,
+                control_blocker_handled_after_pm_resume_decision=True,
+            ),
+        )
+        return
     if not state.reviewer_dispatch_prompt_delivered:
         yield Transition(
             "reviewer_dispatch_card_delivered",
@@ -672,6 +704,39 @@ def invariant_failures(state: State) -> list[str]:
         and not _heartbeat_trigger_ready(state)
     ):
         failures.append("heartbeat resume continued before current-run one-minute trigger evidence")
+    if state.active_control_blocker_present and not state.active_control_blocker_scan_done:
+        failures.append("active control blocker was present without a resume blocker scan")
+    if (
+        state.active_control_blocker_present
+        and not state.active_control_blocker_deferred_until_resume_ready
+        and not state.control_blocker_handled
+    ):
+        failures.append("active control blocker was not explicitly deferred during resume")
+    if state.control_blocker_waited_before_resume_ready and not state.pm_decision_returned:
+        failures.append("control blocker wait started before PM resume decision")
+    if state.control_blocker_handled and not _loaded_current_run_state(state):
+        failures.append("active control blocker handled before resume state load")
+    if state.control_blocker_handled and not (
+        state.host_role_rehydrate_requested
+        and state.all_six_role_liveness_checked
+        and state.crew_roles_ready
+        and state.run_memory_injected_into_roles
+        and state.crew_rehydration_report_written
+    ):
+        failures.append("active control blocker handled before role rehydration")
+    if state.control_blocker_handled and not state.pm_decision_returned:
+        failures.append("active control blocker handled before PM resume decision")
+    if (
+        state.control_blocker_handled_after_pm_resume_decision
+        and not state.pm_decision_returned
+    ):
+        failures.append("active control blocker after-resume marker was written before PM resume decision")
+    if (
+        state.active_control_blocker_present
+        and not state.control_blocker_handled
+        and (state.route_progress_recorded or state.status == "complete")
+    ):
+        failures.append("resume advanced route work before returning to the deferred active control blocker")
     if state.run_root_loaded and not (
         state.current_pointer_loaded and state.current_pointer_valid
     ):
@@ -893,15 +958,16 @@ INVARIANTS = (
             "Heartbeat and manual resume re-enter through a stable launcher, "
             "confirm one-minute heartbeat evidence when automated, load current-run "
             "state and ledgers, reconcile lifecycle flags, recover crew before PM "
-            "decision, keep Controller relay-only, and gate prompt/mail/project "
-            "progress through manifest, packet ledger, reviewer, and PM evidence."
+            "decision, defer active control blockers until PM resume decision, "
+            "keep Controller relay-only, and gate prompt/mail/project progress "
+            "through manifest, packet ledger, reviewer, and PM evidence."
         ),
         predicate=resume_reentry_invariant,
     ),
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 40
+MAX_SEQUENCE_LENGTH = 44
 
 
 def build_workflow() -> Workflow:
@@ -930,6 +996,7 @@ def _ready_for_pm(**changes: object) -> State:
         heartbeat_trigger_evidence_loaded=True,
         heartbeat_interval_minutes=1,
         heartbeat_trigger_bound_to_current_run=True,
+        active_control_blocker_scan_done=True,
         current_pointer_loaded=True,
         current_pointer_valid=True,
         run_root_loaded=True,
@@ -1027,6 +1094,56 @@ def hazard_states() -> dict[str, State]:
             heartbeat_trigger_evidence_loaded=True,
             heartbeat_interval_minutes=1,
             heartbeat_trigger_bound_to_current_run=False,
+        ),
+        "active_blocker_handled_before_resume_state_load": State(
+            status="running",
+            entry_mode="heartbeat",
+            holder="controller",
+            stable_launcher_entered=True,
+            resume_wake_recorded_to_router=True,
+            heartbeat_trigger_evidence_loaded=True,
+            heartbeat_interval_minutes=1,
+            heartbeat_trigger_bound_to_current_run=True,
+            active_control_blocker_scan_done=True,
+            active_control_blocker_present=True,
+            active_control_blocker_deferred_until_resume_ready=True,
+            control_blocker_handled=True,
+        ),
+        "active_blocker_waited_before_role_rehydration": State(
+            status="running",
+            entry_mode="heartbeat",
+            holder="controller",
+            stable_launcher_entered=True,
+            resume_wake_recorded_to_router=True,
+            heartbeat_trigger_evidence_loaded=True,
+            heartbeat_interval_minutes=1,
+            heartbeat_trigger_bound_to_current_run=True,
+            active_control_blocker_scan_done=True,
+            active_control_blocker_present=True,
+            active_control_blocker_deferred_until_resume_ready=True,
+            current_pointer_loaded=True,
+            current_pointer_valid=True,
+            run_root_loaded=True,
+            run_root_matches_pointer=True,
+            old_run_scan_done=True,
+            old_run_control_state_quarantined=True,
+            router_state_loaded=True,
+            packet_ledger_loaded=True,
+            prompt_ledger_loaded=True,
+            frontier_loaded=True,
+            visible_plan_restored_from_run=True,
+            crew_memory_loaded=True,
+            controller_relay_boundary_confirmed=True,
+            control_blocker_waited_before_resume_ready=True,
+        ),
+        "active_blocker_handled_before_pm_resume_decision": _ready_for_pm(
+            active_control_blocker_present=True,
+            active_control_blocker_deferred_until_resume_ready=True,
+            control_blocker_handled=True,
+        ),
+        "active_blocker_present_without_defer_record": _ready_for_pm(
+            active_control_blocker_present=True,
+            active_control_blocker_deferred_until_resume_ready=False,
         ),
         "run_root_without_valid_pointer": State(stable_launcher_entered=True, run_root_loaded=True),
         "router_state_before_old_run_rejection": State(
@@ -1208,6 +1325,20 @@ def hazard_states() -> dict[str, State]:
             mail_deliveries=1,
             ledger_check_requests=1,
             ledger_checks=1,
+        ),
+        "resume_completed_with_unhandled_active_control_blocker": _with_pm_decision(
+            active_control_blocker_present=True,
+            active_control_blocker_deferred_until_resume_ready=True,
+            reviewer_dispatch_prompt_delivered=True,
+            reviewer_dispatch_allowed=True,
+            work_branch="existing_result",
+            existing_worker_result_found=True,
+            existing_worker_result_routed_to_reviewer=True,
+            reviewer_result_passed=True,
+            pm_node_decision_prompt_delivered=True,
+            route_progress_recorded=True,
+            route_progress_source="reviewed_packet",
+            status="complete",
         ),
         "complete_without_reviewed_progress": _ready_for_pm(status="complete"),
         "pm_decision_from_chat_history": _ready_for_pm(

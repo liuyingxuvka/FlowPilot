@@ -5324,6 +5324,13 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
     return {field: record.get(field) for field in fields if field in record}
 
 
+def _resume_reentry_gate_pending(run_state: dict[str, Any]) -> bool:
+    flags = run_state.get("flags", {})
+    return bool(flags.get("resume_reentry_requested")) and not bool(
+        flags.get("pm_resume_recovery_decision_returned")
+    )
+
+
 def _sync_protocol_blocker_index(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
     blockers: list[dict[str, Any]] = []
     blocker_root = run_root / "blockers"
@@ -5442,6 +5449,8 @@ def _validate_wait_event_producer_binding(
 
 
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    if _resume_reentry_gate_pending(run_state):
+        return None
     active = run_state.get("active_control_blocker")
     if not isinstance(active, dict):
         return None

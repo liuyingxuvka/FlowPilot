@@ -19,6 +19,7 @@ REQUIRED_LABELS = (
     "stable_manual_resume_launcher_entered",
     "resume_wake_recorded_to_router",
     "one_minute_heartbeat_resume_trigger_confirmed",
+    "active_control_blocker_deferred_until_resume_ready",
     "current_pointer_loaded",
     "current_run_root_loaded",
     "old_run_control_state_rejected",
@@ -45,6 +46,7 @@ REQUIRED_LABELS = (
     "controller_instructed_to_check_prompt_manifest",
     "pm_decision_card_delivered_with_controller_reminder",
     "pm_resume_decision_returned",
+    "active_control_blocker_handled_after_pm_resume_decision",
     "reviewer_dispatch_card_delivered",
     "reviewer_dispatch_allowed",
     "existing_worker_result_envelope_found",
@@ -67,6 +69,12 @@ def _state_id(state: model.State) -> str:
         f"heartbeat={state.heartbeat_trigger_evidence_loaded},"
         f"{state.heartbeat_interval_minutes},"
         f"{state.heartbeat_trigger_bound_to_current_run}|"
+        f"active_blocker={state.active_control_blocker_scan_done},"
+        f"{state.active_control_blocker_present},"
+        f"{state.active_control_blocker_deferred_until_resume_ready},"
+        f"waited={state.control_blocker_waited_before_resume_ready},"
+        f"handled={state.control_blocker_handled},"
+        f"after_pm={state.control_blocker_handled_after_pm_resume_decision}|"
         f"ptr={state.current_pointer_loaded},{state.current_pointer_valid}|"
         f"run={state.run_root_loaded},{state.run_root_matches_pointer}|"
         f"router={state.router_state_loaded}|packet={state.packet_ledger_loaded}|"

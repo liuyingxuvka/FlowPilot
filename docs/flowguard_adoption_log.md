@@ -8151,3 +8151,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
+
+## flowpilot-resume-priority-control-blocker-20260512 - Prioritize heartbeat/manual resume before active control blockers
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Heartbeat resume was observed to handle an existing active router control blocker before running resume reentry, which can delay crew rehydration and make resumed work unreachable.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T17:45:00+02:00
+- Ended: 2026-05-12T18:17:45+02:00
+- Duration seconds: 1965
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_resume_model.py
+- simulations/run_flowpilot_resume_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_resume_model.py simulations\run_flowpilot_resume_checks.py tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_flowpilot_resume_checks.py`
+- OK: targeted resume runtime unittest set
+- OK: targeted control-blocker runtime unittest set
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The resume model now represents an active control blocker that exists at heartbeat/manual resume entry.
+- The router fix suppresses active-control-blocker handling while `resume_reentry_requested` is true and `pm_resume_recovery_decision_returned` is false.
+- The deferred control blocker is not deleted; after PM resume recovery decision evidence is recorded, the router can return to the original blocker.
+- Runtime regression coverage proves the first resume action is `load_resume_state`, not `handle_control_blocker`, when both are possible.
+
+### Counterexamples
+- The upgraded model detects active blocker handling before resume state load.
+- The upgraded model detects waiting on or handling an active blocker before role rehydration and PM resume decision.
+- The upgraded model detects an active blocker being present without an explicit defer record.
+- The upgraded model detects completing route progress while an active control blocker remains unhandled after resume readiness.
+
+### Friction Points
+- A full `tests.test_flowpilot_router_runtime` run exceeded the local 5 minute command window, so validation used focused resume and control-blocker runtime suites.
+- A full non-fast capability check exceeded the local 5 minute command window; capability routing files were unchanged, so the fast proof path was used and passed.
+- Running install sync and install audit in parallel produced a stale audit read once; rerunning the audit after sync passed.
+
+### Skipped Steps
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+- Production conformance replay for the abstract resume model remains skipped because no production replay adapter exists in the allowed write set.
+
+### Next Actions
+- If resume ordering changes again, keep the active-control-blocker defer/return labels and hazards in the resume model so the same regression is caught before runtime edits.
