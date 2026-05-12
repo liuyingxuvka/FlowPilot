@@ -397,6 +397,40 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             payload["display_confirmation"] = action["payload_template"]["display_confirmation"]
         return payload
 
+    def terminal_summary_payload(self, root: Path, action: dict, run_root: Path, *, note: str = "Run ended.") -> dict:
+        summary = (
+            f"{router.TERMINAL_SUMMARY_ATTRIBUTION}\n\n"
+            "# Final Summary\n\n"
+            f"- Status: {action['run_lifecycle_status']}\n"
+            f"- Note: {note}\n"
+        )
+        source_paths = [self.rel(root, router.run_state_path(run_root))]
+        lifecycle_path = run_root / "lifecycle" / "run_lifecycle.json"
+        if lifecycle_path.exists():
+            source_paths.append(self.rel(root, lifecycle_path))
+        return {
+            "summary_markdown": summary,
+            "displayed_to_user": True,
+            "displayed_summary_sha256": hashlib.sha256(summary.encode("utf-8")).hexdigest(),
+            "read_scope_used": router.TERMINAL_SUMMARY_READ_SCOPE,
+            "source_paths_reviewed": source_paths,
+        }
+
+    def apply_terminal_summary(self, root: Path, action: dict, run_root: Path, *, note: str = "Run ended.") -> dict:
+        result = router.apply_action(root, "write_terminal_summary", self.terminal_summary_payload(root, action, run_root, note=note))
+        self.assertEqual(result["applied"], "write_terminal_summary")
+        self.assertEqual(result["terminal_summary_path"], self.rel(root, run_root / "final_summary.md"))
+        summary = (run_root / "final_summary.md").read_text(encoding="utf-8")
+        self.assertTrue(summary.startswith(router.TERMINAL_SUMMARY_ATTRIBUTION))
+        summary_record = read_json(run_root / "final_summary.json")
+        self.assertEqual(summary_record["schema_version"], router.TERMINAL_SUMMARY_SCHEMA)
+        self.assertEqual(summary_record["flowpilot_project_url"], router.FLOWPILOT_PROJECT_URL)
+        index = read_json(root / ".flowpilot" / "index.json")
+        run_entry = next(item for item in index["runs"] if item["run_id"] == read_json(router.run_state_path(run_root))["run_id"])
+        self.assertEqual(run_entry["final_summary_path"], self.rel(root, run_root / "final_summary.md"))
+        self.assertEqual(run_entry["flowpilot_project_url"], router.FLOWPILOT_PROJECT_URL)
+        return result
+
     def heartbeat_binding_payload(self, root: Path, automation_id: str = "codex-test-heartbeat") -> dict:
         run_root = self.run_root_for(root)
         run_id = read_json(router.run_state_path(run_root))["run_id"]
@@ -3808,6 +3842,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
         action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
+        self.assertEqual(action["read_scope"], router.TERMINAL_SUMMARY_READ_SCOPE)
+        self.assertIn(f"{self.rel(root, run_root)}/**", action["allowed_reads"])
+        self.assertEqual(action["run_lifecycle_status"], "protocol_dead_end")
+        self.apply_terminal_summary(root, action, run_root, note="Startup protocol dead end.")
+        action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "protocol_dead_end")
         lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
@@ -4018,6 +4058,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
         action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
+        self.assertEqual(action["run_lifecycle_status"], "stopped_by_user")
+        self.assertFalse(action["controller_may_continue_route_work"])
+        self.assertTrue(action["controller_may_read_all_current_run_files"])
+        self.apply_terminal_summary(root, action, run_root, note="User asked to stop.")
+        action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "stopped_by_user")
         self.assertFalse(action["controller_may_continue_route_work"])
@@ -4053,7 +4099,37 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result = router.record_external_event(root, "user_requests_run_cancel", {"reason": "user switched to cancel"})
         self.assertTrue(result["ok"])
         action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
         self.assertEqual(action["run_lifecycle_status"], "cancelled_by_user")
+
+    def test_terminal_summary_payload_requires_attribution_display_and_run_root_sources(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
+
+        bad_summary = "Final Summary\n\nNo FlowPilot attribution.\n"
+        with self.assertRaisesRegex(router.RouterError, "GitHub attribution"):
+            router.apply_controller_action(
+                root,
+                "write_terminal_summary",
+                {
+                    "summary_markdown": bad_summary,
+                    "displayed_to_user": True,
+                    "displayed_summary_sha256": hashlib.sha256(bad_summary.encode("utf-8")).hexdigest(),
+                    "read_scope_used": router.TERMINAL_SUMMARY_READ_SCOPE,
+                },
+            )
+
+        good = self.terminal_summary_payload(root, action, run_root, note="User asked to stop.")
+        with self.assertRaisesRegex(router.RouterError, "current run root"):
+            router.apply_controller_action(root, "write_terminal_summary", {**good, "source_paths_reviewed": ["outside.json"]})
+
+        with self.assertRaisesRegex(router.RouterError, "displayed_to_user=true"):
+            router.apply_controller_action(root, "write_terminal_summary", {**good, "displayed_to_user": False})
+
+        self.apply_terminal_summary(root, action, run_root, note="User asked to stop.")
 
     def test_startup_fact_report_accepts_file_backed_envelope_only_payload(self) -> None:
         root = self.make_project()
@@ -8034,6 +8110,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(snapshot["active_ui_task_catalog"]["active_tasks"], [])
 
         action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
+        self.assertEqual(action["run_lifecycle_status"], "closed")
+        self.assertEqual(action["required_attribution_line"], router.TERMINAL_SUMMARY_ATTRIBUTION)
+        self.apply_terminal_summary(root, action, run_root, note="PM approved terminal closure.")
+        action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")
 
@@ -8118,6 +8199,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIsNone(state["active_control_blocker"])
         blocker_record = read_json(self.control_blocker_path(root, blocker))
         self.assertEqual(blocker_record["resolution_status"], "superseded_by_terminal_lifecycle")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
+        self.assertEqual(action["run_lifecycle_status"], "closed")
+        self.apply_terminal_summary(root, action, run_root, note="Reconciled legacy terminal closure.")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")

@@ -47,6 +47,7 @@ CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.
 REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
 REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
 CONTROL_TRANSACTION_REGISTRY_SCHEMA = "flowpilot.control_transaction_registry.v1"
+TERMINAL_SUMMARY_SCHEMA = "flowpilot.final_summary.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 EVENT_ENVELOPE_SCHEMA = "flowpilot.event_envelope.v1"
 LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
@@ -77,6 +78,11 @@ STARTUP_ANSWER_INTERPRETATION_SCHEMA = "flowpilot.startup_answer_interpretation.
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
 DISPLAY_CONFIRMATION_TARGET = "user_dialog"
+FLOWPILOT_PROJECT_URL = "https://github.com/liuyingxuvka/FlowPilot"
+TERMINAL_SUMMARY_ATTRIBUTION = (
+    f"Generated with [FlowPilot]({FLOWPILOT_PROJECT_URL}) - a project-control workflow for AI coding agents."
+)
+TERMINAL_SUMMARY_READ_SCOPE = "current_run_root_all_files"
 ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
 ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS = {
     EVENT_ENVELOPE_SCHEMA,
@@ -476,6 +482,8 @@ RUNTIME_FLAG_DEFAULTS = {
     "pm_role_work_result_absorbed": False,
     "model_miss_triage_followup_request_pending": False,
     "model_miss_triage_controlled_stop_recorded": False,
+    "terminal_summary_card_delivered": False,
+    "terminal_summary_written": False,
 }
 
 SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
@@ -4112,6 +4120,34 @@ def _startup_answers_payload_contract() -> dict[str, Any]:
     )
 
 
+def _terminal_summary_payload_contract() -> dict[str, Any]:
+    return _payload_contract(
+        name="terminal_summary_markdown_and_user_display_receipt",
+        required_object="payload",
+        required_fields=[
+            "summary_markdown",
+            "displayed_to_user",
+            "displayed_summary_sha256",
+            "read_scope_used",
+        ],
+        optional_fields=["source_paths_reviewed"],
+        allowed_values={
+            "displayed_to_user": [True],
+            "read_scope_used": [TERMINAL_SUMMARY_READ_SCOPE],
+        },
+        structural_requirements=[
+            f"summary_markdown must start with this exact attribution line: {TERMINAL_SUMMARY_ATTRIBUTION}",
+            "displayed_summary_sha256 must equal sha256(summary_markdown)",
+            "source_paths_reviewed, when supplied, may cite only files inside the current run root",
+            "Controller must show this same summary text to the user before applying the action",
+        ],
+        description=(
+            "Write the final FlowPilot run summary after terminal mode is reached. "
+            "This is a terminal-only read exception for all files inside the current run root."
+        ),
+    )
+
+
 def _display_surface_receipt_payload_contract() -> dict[str, Any]:
     return _payload_contract(
         name="display_surface_receipt",
@@ -6261,6 +6297,260 @@ def _lifecycle_record_path(run_root: Path) -> Path:
     return run_root / "lifecycle" / "run_lifecycle.json"
 
 
+def _terminal_summary_markdown_path(run_root: Path) -> Path:
+    return run_root / "final_summary.md"
+
+
+def _terminal_summary_json_path(run_root: Path) -> Path:
+    return run_root / "final_summary.json"
+
+
+def _terminal_summary_hash(summary_markdown: str) -> str:
+    return hashlib.sha256(summary_markdown.encode("utf-8")).hexdigest()
+
+
+def _path_is_inside(child: Path, parent: Path) -> bool:
+    try:
+        child.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _terminal_summary_index_entry(
+    project_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any] | None:
+    index = read_json_if_exists(project_root / ".flowpilot" / "index.json")
+    runs = index.get("runs") if isinstance(index.get("runs"), list) else []
+    run_id = run_state.get("run_id")
+    for item in runs:
+        if isinstance(item, dict) and item.get("run_id") == run_id:
+            return item
+    return None
+
+
+def _terminal_summary_written(project_root: Path, run_state: dict[str, Any], run_root: Path) -> bool:
+    markdown_path = _terminal_summary_markdown_path(run_root)
+    json_path = _terminal_summary_json_path(run_root)
+    if not markdown_path.exists() or not json_path.exists():
+        return False
+    try:
+        summary_markdown = markdown_path.read_text(encoding="utf-8")
+        summary_record = read_json(json_path)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, RouterError):
+        return False
+    if not summary_markdown.startswith(TERMINAL_SUMMARY_ATTRIBUTION):
+        return False
+    if summary_record.get("schema_version") != TERMINAL_SUMMARY_SCHEMA:
+        return False
+    if summary_record.get("run_id") != run_state.get("run_id"):
+        return False
+    if summary_record.get("run_lifecycle_status") != _terminal_lifecycle_mode(run_state):
+        return False
+    summary_hash = _terminal_summary_hash(summary_markdown)
+    if summary_record.get("summary_sha256") != summary_hash:
+        return False
+    if summary_record.get("flowpilot_project_url") != FLOWPILOT_PROJECT_URL:
+        return False
+    entry = _terminal_summary_index_entry(project_root, run_state)
+    if not isinstance(entry, dict):
+        return False
+    return (
+        entry.get("final_summary_path") == project_relative(project_root, markdown_path)
+        and entry.get("final_summary_json_path") == project_relative(project_root, json_path)
+        and entry.get("flowpilot_project_url") == FLOWPILOT_PROJECT_URL
+    )
+
+
+def _terminal_summary_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    *,
+    mode: str,
+) -> dict[str, Any]:
+    run_root_rel = project_relative(project_root, run_root)
+    markdown_rel = project_relative(project_root, _terminal_summary_markdown_path(run_root))
+    json_rel = project_relative(project_root, _terminal_summary_json_path(run_root))
+    index_rel = project_relative(project_root, project_root / ".flowpilot" / "index.json")
+    state_rel = project_relative(project_root, run_state_path(run_root))
+    current_rel = project_relative(project_root, project_root / ".flowpilot" / "current.json")
+    lifecycle_rel = project_relative(project_root, _lifecycle_record_path(run_root))
+    return make_action(
+        action_type="write_terminal_summary",
+        actor="controller",
+        label=f"controller_writes_terminal_summary_for_{mode}",
+        summary=(
+            "The run is terminal. Read all files under the current run root, write a short final "
+            "summary with FlowPilot GitHub attribution, show the same summary to the user, then stop route work."
+        ),
+        allowed_reads=[
+            f"{run_root_rel}/**",
+            lifecycle_rel,
+            state_rel,
+            current_rel,
+            index_rel,
+        ],
+        allowed_writes=[
+            markdown_rel,
+            json_rel,
+            index_rel,
+            current_rel,
+            state_rel,
+        ],
+        extra={
+            "run_lifecycle_status": mode,
+            "terminal_for_route": True,
+            "summary_schema_version": TERMINAL_SUMMARY_SCHEMA,
+            "summary_markdown_path": markdown_rel,
+            "summary_json_path": json_rel,
+            "flowpilot_project_url": FLOWPILOT_PROJECT_URL,
+            "required_attribution_line": TERMINAL_SUMMARY_ATTRIBUTION,
+            "read_scope": TERMINAL_SUMMARY_READ_SCOPE,
+            "controller_may_read_all_current_run_files": True,
+            "sealed_body_reads_allowed": True,
+            "controller_may_continue_route_work": False,
+            "controller_may_spawn_new_role_work": False,
+            "controller_may_approve_or_reopen_gates": False,
+            "controller_may_create_project_evidence": False,
+            "requires_payload": True,
+            "payload_contract": _terminal_summary_payload_contract(),
+            "postcondition": "terminal_summary_written",
+            "allowed_external_events": ["user_requests_run_stop", "user_requests_run_cancel"],
+        },
+    )
+
+
+def _validate_terminal_summary_payload(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any] | None,
+    *,
+    mode: str,
+) -> tuple[str, dict[str, Any]]:
+    if not isinstance(payload, dict):
+        raise RouterError("write_terminal_summary requires payload")
+    summary_markdown = payload.get("summary_markdown")
+    if not isinstance(summary_markdown, str) or not summary_markdown.strip():
+        raise RouterError("write_terminal_summary requires non-empty payload.summary_markdown")
+    if not summary_markdown.startswith(TERMINAL_SUMMARY_ATTRIBUTION):
+        raise RouterError("final summary markdown must start with the FlowPilot GitHub attribution line")
+    if payload.get("displayed_to_user") is not True:
+        raise RouterError("write_terminal_summary requires displayed_to_user=true after showing the summary to the user")
+    summary_hash = _terminal_summary_hash(summary_markdown)
+    if payload.get("displayed_summary_sha256") != summary_hash:
+        raise RouterError("displayed_summary_sha256 must equal sha256(summary_markdown)")
+    if payload.get("read_scope_used") != TERMINAL_SUMMARY_READ_SCOPE:
+        raise RouterError(f"write_terminal_summary requires read_scope_used={TERMINAL_SUMMARY_READ_SCOPE}")
+    source_paths: list[str] = []
+    raw_source_paths = payload.get("source_paths_reviewed")
+    if raw_source_paths is not None:
+        if not isinstance(raw_source_paths, list):
+            raise RouterError("source_paths_reviewed must be a list when supplied")
+        for raw in raw_source_paths:
+            if not isinstance(raw, str) or not raw.strip():
+                raise RouterError("source_paths_reviewed entries must be non-empty strings")
+            source_path = resolve_project_path(project_root, raw.strip())
+            if not _path_is_inside(source_path, run_root):
+                raise RouterError("source_paths_reviewed may cite only files inside the current run root")
+            source_paths.append(project_relative(project_root, source_path))
+    written_at = utc_now()
+    markdown_path = _terminal_summary_markdown_path(run_root)
+    json_path = _terminal_summary_json_path(run_root)
+    record = {
+        "schema_version": TERMINAL_SUMMARY_SCHEMA,
+        "run_id": run_state.get("run_id"),
+        "run_lifecycle_status": mode,
+        "flowpilot_project_url": FLOWPILOT_PROJECT_URL,
+        "attribution_line": TERMINAL_SUMMARY_ATTRIBUTION,
+        "read_scope": TERMINAL_SUMMARY_READ_SCOPE,
+        "controller_read_scope_authorized": True,
+        "controller_may_continue_route_work": False,
+        "controller_may_spawn_new_role_work": False,
+        "controller_may_approve_or_reopen_gates": False,
+        "summary_markdown_path": project_relative(project_root, markdown_path),
+        "summary_json_path": project_relative(project_root, json_path),
+        "summary_sha256": summary_hash,
+        "displayed_to_user": True,
+        "displayed_summary_sha256": summary_hash,
+        "source_paths_reviewed": source_paths,
+        "written_at": written_at,
+    }
+    return summary_markdown, record
+
+
+def _write_terminal_summary(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any] | None,
+    *,
+    mode: str,
+) -> dict[str, Any]:
+    summary_markdown, record = _validate_terminal_summary_payload(project_root, run_root, run_state, payload, mode=mode)
+    markdown_path = _terminal_summary_markdown_path(run_root)
+    json_path = _terminal_summary_json_path(run_root)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(summary_markdown, encoding="utf-8")
+    write_json(json_path, record)
+
+    now = str(record["written_at"])
+    markdown_rel = project_relative(project_root, markdown_path)
+    json_rel = project_relative(project_root, json_path)
+    index_path = project_root / ".flowpilot" / "index.json"
+    index = read_json_if_exists(index_path) or {"schema_version": "flowpilot.index.v1", "runs": []}
+    runs = index.setdefault("runs", [])
+    run_id = run_state.get("run_id")
+    entry = None
+    for item in runs:
+        if isinstance(item, dict) and item.get("run_id") == run_id:
+            entry = item
+            break
+    if entry is None:
+        entry = {
+            "run_id": run_id,
+            "run_root": project_relative(project_root, run_root),
+            "created_at": run_state.get("created_at") or now,
+        }
+        runs.append(entry)
+    entry["status"] = mode
+    entry["updated_at"] = now
+    entry["final_summary_path"] = markdown_rel
+    entry["final_summary_json_path"] = json_rel
+    entry["final_summary_sha256"] = record["summary_sha256"]
+    entry["flowpilot_project_url"] = FLOWPILOT_PROJECT_URL
+    index["current_run_id"] = run_id
+    index["updated_at"] = now
+    write_json(index_path, index)
+
+    current_path = project_root / ".flowpilot" / "current.json"
+    current = read_json_if_exists(current_path) or {}
+    if current.get("current_run_id") == run_id:
+        current["status"] = mode
+        current["final_summary_path"] = markdown_rel
+        current["final_summary_json_path"] = json_rel
+        current["flowpilot_project_url"] = FLOWPILOT_PROJECT_URL
+        current["updated_at"] = now
+        write_json(current_path, current)
+
+    flags = run_state.setdefault("flags", {})
+    flags["terminal_summary_card_delivered"] = True
+    flags["terminal_summary_written"] = True
+    run_state["terminal_summary"] = {
+        "schema_version": TERMINAL_SUMMARY_SCHEMA,
+        "path": markdown_rel,
+        "json_path": json_rel,
+        "sha256": record["summary_sha256"],
+        "displayed_to_user": True,
+        "read_scope": TERMINAL_SUMMARY_READ_SCOPE,
+        "flowpilot_project_url": FLOWPILOT_PROJECT_URL,
+        "written_at": now,
+    }
+    return record
+
+
 def _terminal_closure_suite_is_closed(run_root: Path) -> bool:
     closure = read_json_if_exists(run_root / "closure" / "terminal_closure_suite.json")
     frontier = read_json_if_exists(run_root / "execution_frontier.json")
@@ -6577,6 +6867,9 @@ def _run_lifecycle_terminal_action(project_root: Path, run_state: dict[str, Any]
     mode = _terminal_lifecycle_mode(run_state)
     if not mode:
         return None
+    if not _terminal_summary_written(project_root, run_state, run_root):
+        run_state.setdefault("flags", {})["terminal_summary_card_delivered"] = True
+        return _terminal_summary_action(project_root, run_state, run_root, mode=mode)
     lifecycle_rel = project_relative(project_root, _lifecycle_record_path(run_root))
     return make_action(
         action_type="run_lifecycle_terminal",
@@ -19177,6 +19470,16 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["startup_display_status_written"] = True
     elif action_type == "handle_control_blocker":
         _mark_control_blocker_delivered(project_root, run_root, run_state, pending)
+    elif action_type == "write_terminal_summary":
+        mode = _terminal_lifecycle_mode(run_state)
+        if not mode:
+            raise RouterError("write_terminal_summary is allowed only after the run is terminal")
+        record = _write_terminal_summary(project_root, run_root, run_state, payload, mode=mode)
+        if not _terminal_summary_written(project_root, run_state, run_root):
+            raise RouterError("terminal summary write did not produce a valid indexed summary")
+        result_extra["terminal_summary_path"] = record["summary_markdown_path"]
+        result_extra["terminal_summary_json_path"] = record["summary_json_path"]
+        result_extra["terminal_summary_sha256"] = record["summary_sha256"]
     elif action_type == "run_lifecycle_terminal":
         return {"ok": True, "applied": action_type, "terminal": True, "run_lifecycle_status": _terminal_lifecycle_mode(run_state)}
     elif action_type == "await_role_decision":
@@ -19185,6 +19488,11 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         raise RouterError(f"unknown controller action: {action_type}")
     append_history(run_state, str(pending["label"]), {"action_type": action_type})
     run_state["pending_action"] = None
+    if action_type == "write_terminal_summary":
+        save_run_state(run_root, run_state)
+        result = {"ok": True, "applied": action_type}
+        result.update(result_extra)
+        return result
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_controller_action:{action_type}")
     _sync_derived_run_views(
         project_root,

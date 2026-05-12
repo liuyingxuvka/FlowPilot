@@ -1013,6 +1013,24 @@ back to `.flowpilot/runs/<run-id>/state.json`,
 then stops the heartbeat automation. Manual-resume routes record that no
 heartbeat automation exists to stop.
 
+After the run is already terminal, and before the final
+`run_lifecycle_terminal` observation, Router issues one
+`write_terminal_summary` Controller action. This is a terminal-only exception
+that lets Controller read every file under the current run root to produce a
+short final receipt for the user and future agents. Controller must display the
+same Markdown summary to the user, then FlowPilot saves it as
+`.flowpilot/runs/<run-id>/final_summary.md` and
+`.flowpilot/runs/<run-id>/final_summary.json`, and registers both paths in
+`.flowpilot/index.json`. The Markdown file must begin with:
+
+```text
+Generated with [FlowPilot](https://github.com/liuyingxuvka/FlowPilot) - a project-control workflow for AI coding agents.
+```
+
+This action does not reopen route work. It may not approve gates, mutate routes,
+spawn roles, create project evidence, or write anything other than the summary
+receipt, index/current pointers, and router state.
+
 Pause, restart, and terminal closure all use the same lifecycle reconciliation
 gate: scan Codex app heartbeat automations, `.flowpilot/current.json`,
 `.flowpilot/runs/<run-id>/state.json`,
@@ -1676,4 +1694,6 @@ Completion requires:
 - terminal continuation lifecycle state written back to local
   state/frontier/lifecycle/heartbeat or manual-resume evidence;
 - crew ledger and role memory packets archived with final role statuses;
+- run final summary written, displayed to the user, and registered in
+  `.flowpilot/index.json` with the FlowPilot GitHub attribution;
 - completion report emitted.

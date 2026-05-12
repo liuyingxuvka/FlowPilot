@@ -617,6 +617,27 @@ instructions. `manual-resume` mode sets `can_wait_for_heartbeat` false and
 instructs the user to type `continue FlowPilot`. Terminal completion stores a
 completion notice instead of a resume prompt.
 
+Before a terminal run is finally observed as closed, stopped, cancelled, or a
+protocol dead end, FlowPilot writes a run-scoped final summary receipt:
+
+- `.flowpilot/runs/<run-id>/final_summary.md`;
+- `.flowpilot/runs/<run-id>/final_summary.json`;
+- `.flowpilot/index.json` fields `final_summary_path`,
+  `final_summary_json_path`, `final_summary_sha256`, and
+  `flowpilot_project_url`.
+
+`final_summary.md` must start with:
+
+```text
+Generated with [FlowPilot](https://github.com/liuyingxuvka/FlowPilot) - a project-control workflow for AI coding agents.
+```
+
+The terminal summary action is the only time the Controller may read all files
+under the current run root as one summary source. The read scope is
+`current_run_root_all_files`. It does not allow route mutation, gate approval,
+new project evidence, role spawning, or writes outside the final summary files,
+`.flowpilot/index.json`, `.flowpilot/current.json`, and router state.
+
 The execution frontier stores the native plan sync status separately from the
 PM runway evidence. `synced_to_visible_plan` requires either native plan tool
 evidence when available or an explicit no-native-tool fallback. It also records

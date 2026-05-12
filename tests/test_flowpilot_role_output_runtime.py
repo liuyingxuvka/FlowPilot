@@ -13,6 +13,7 @@ ASSETS = ROOT / "skills" / "flowpilot" / "assets"
 sys.path.insert(0, str(ASSETS))
 
 import flowpilot_router as router  # noqa: E402
+import flowpilot_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
 
 
@@ -128,6 +129,89 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertEqual(body["schema_version"], "flowpilot.pm_startup_activation_approval.v1")
         self.assertEqual(body["approved_by_role"], "project_manager")
         self.assertEqual(body["decision"], "approved")
+
+    def test_direct_router_submission_authority_accepts_fixed_contract_event(self) -> None:
+        root = self.make_project()
+        authority = role_output_runtime.validate_direct_router_submission_authority(
+            root,
+            output_type="pm_resume_recovery_decision",
+            role="project_manager",
+            agent_id="agent-pm-fixed-authority",
+        )
+
+        self.assertTrue(authority["ok"])
+        self.assertEqual(authority["authority_source"], "fixed_contract_event")
+        self.assertEqual(authority["event_name"], "pm_resume_recovery_decision_returned")
+
+    def test_router_supplied_direct_submission_requires_current_wait_authority(self) -> None:
+        root = self.make_project()
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "Router-supplied event"):
+            role_output_runtime.validate_direct_router_submission_authority(
+                root,
+                output_type="officer_model_report",
+                role="product_flowguard_officer",
+                agent_id="agent-product-officer-no-event",
+            )
+
+        _write_json(
+            root / ".flowpilot" / "runs" / "run-test" / "state.json",
+            {
+                "pending_action": {
+                    "action_type": "await_role_decision",
+                    "to_role": "project_manager",
+                    "allowed_external_events": ["pm_registers_role_work_request"],
+                }
+            },
+        )
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "not currently allowed"):
+            role_output_runtime.validate_direct_router_submission_authority(
+                root,
+                output_type="officer_model_report",
+                role="product_flowguard_officer",
+                agent_id="agent-product-officer-wrong-event",
+                event_name="product_officer_model_report",
+            )
+
+        _write_json(
+            root / ".flowpilot" / "runs" / "run-test" / "state.json",
+            {
+                "pending_action": {
+                    "action_type": "await_role_decision",
+                    "to_role": "product_flowguard_officer",
+                    "allowed_external_events": ["product_officer_blocks_product_architecture_modelability"],
+                }
+            },
+        )
+        authority = role_output_runtime.validate_direct_router_submission_authority(
+            root,
+            output_type="officer_model_report",
+            role="product_flowguard_officer",
+            agent_id="agent-product-officer-current-wait",
+            event_name="product_officer_blocks_product_architecture_modelability",
+        )
+        self.assertTrue(authority["ok"])
+        self.assertEqual(authority["authority_source"], "current_router_wait")
+
+    def test_cli_submit_output_to_router_blocks_router_supplied_output_without_current_wait(self) -> None:
+        root = self.make_project()
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "Router-supplied event"):
+            flowpilot_runtime.main(
+                [
+                    "--root",
+                    str(root),
+                    "submit-output-to-router",
+                    "--output-type",
+                    "officer_model_report",
+                    "--role",
+                    "product_flowguard_officer",
+                    "--agent-id",
+                    "agent-product-officer-cli",
+                    "--body-json",
+                    "{}",
+                ]
+            )
+
+        self.assertFalse((root / ".flowpilot" / "runs" / "run-test" / "role_outputs").exists())
 
     def test_router_validates_runtime_receipt_when_loading_role_output(self) -> None:
         root = self.make_project()

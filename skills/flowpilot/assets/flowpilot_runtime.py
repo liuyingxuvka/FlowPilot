@@ -395,6 +395,15 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "submit-output-to-router":
         body = _read_body_json(root, args.body_json, args.body_file)
+        authority = role_output_runtime.validate_direct_router_submission_authority(
+            root,
+            output_type=args.output_type,
+            role=args.role,
+            agent_id=args.agent_id,
+            run_id=args.run_id or None,
+            event_name=args.event_name or None,
+            session_path=args.session_path or None,
+        )
         envelope = role_output_runtime.submit_output(
             root,
             output_type=args.output_type,
@@ -415,6 +424,7 @@ def main(argv: list[str] | None = None) -> int:
             "ok": True,
             "command": "submit-output-to-router",
             "event": event_name,
+            "authority": authority,
             "envelope": envelope,
             "router_result": router_result,
         }

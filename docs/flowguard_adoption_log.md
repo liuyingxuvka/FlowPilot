@@ -7882,6 +7882,199 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
 
 
+## flowpilot-terminal-summary-20260512 - Require final run summary before terminal observation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot terminal behavior now grants Controller a terminal-only all-current-run-files read scope and writes a final run summary receipt with FlowPilot GitHub attribution.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T19:01:00+02:00
+- Ended: 2026-05-12T19:01:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_terminal_summary_model.py
+- simulations/run_flowpilot_terminal_summary_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_terminal_summary_model.py simulations\run_flowpilot_terminal_summary_checks.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_flowpilot_terminal_summary_checks.py --json-out simulations\flowpilot_terminal_summary_results.json`
+- OK: `python simulations\run_meta_checks.py` in background; 634501 states, 654672 edges, no stuck states, no nonterminating components.
+- OK: targeted terminal-summary router tests covering protocol dead end, stopped/cancelled run, closure, legacy closure recovery, and invalid summary payloads.
+- OK: `python -m unittest tests.test_flowpilot_role_output_runtime`
+- OK: `python simulations\run_flowpilot_dynamic_return_path_checks.py --json-out simulations\flowpilot_dynamic_return_path_results.json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- Added terminal summary model coverage for closed, stopped, cancelled, and blocked-handoff terminal modes.
+- Runtime now returns `write_terminal_summary` before `run_lifecycle_terminal` when a terminal run lacks a valid indexed summary for the current lifecycle mode.
+- The summary action grants `current_run_root_all_files` read scope only after terminal mode, validates first-line FlowPilot GitHub attribution, verifies the displayed summary hash, writes `final_summary.md` and `final_summary.json`, and registers paths in `.flowpilot/index.json`.
+- `write_terminal_summary` skips generic route-memory/display refreshes so the terminal receipt cannot mutate route artifacts as incidental cleanup.
+
+### Counterexamples
+- Hazards detected terminal lifecycle without summary, pre-terminal all-file read, missing attribution, missing index registration, display/saved-content mismatch, repeated summary request after completion, outside-run read, gate approval after summary, route continuation after summary, and non-summary writes in summary mode.
+
+### Friction Points
+- Full `run_meta_checks.py` exceeded the first 3-minute foreground timeout; rerunning it in the background completed successfully.
+
+### Skipped Steps
+- `python simulations\run_capability_checks.py` was not rerun because this change did not alter skill/capability routing.
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+
+### Next Actions
+- Future terminal artifacts should use the indexed `final_summary` receipt as the human-readable run history entry instead of adding separate ad hoc completion reports.
+
+
+## flowpilot-work-authority-runtime-20260512 - Bind formal role outputs to current work authority
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a FlowGuard-first implementation so system cards, role cards, and formal reports cannot rely on guessed Router events or prompt prose as work authority.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T18:02:00+02:00
+- Ended: 2026-05-12T18:59:31+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_dynamic_return_path_model.py
+- simulations/run_flowpilot_dynamic_return_path_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_dynamic_return_path_model.py simulations\run_flowpilot_dynamic_return_path_checks.py skills\flowpilot\assets\role_output_runtime.py skills\flowpilot\assets\flowpilot_runtime.py tests\test_flowpilot_role_output_runtime.py`
+- OK: `python simulations\run_flowpilot_dynamic_return_path_checks.py --json-out simulations\flowpilot_dynamic_return_path_results.json`
+- OK: `python -m pytest tests\test_flowpilot_role_output_runtime.py -q`
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py --json-out simulations\flowpilot_role_output_runtime_results.json`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`
+- OK: `python simulations\run_flowpilot_model_mesh_checks.py --json-out simulations\flowpilot_model_mesh_results.json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python simulations\run_flowpilot_terminal_summary_checks.py --json-out simulations\flowpilot_terminal_summary_results.json`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "terminal_summary or terminal_lifecycle or run_lifecycle_terminal or user_requests_run_stop or user_requests_run_cancel"`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The dynamic-return-path model now rejects system-card-only formal reports, task-like cards without work authority, role-guessed events, registered-but-not-currently-allowed events, mechanical green misused as Router acceptance, stale authority, wrong role, wrong contract, and wrong result recipient.
+- `flowpilot_runtime.py submit-output-to-router` now calls `role_output_runtime.validate_direct_router_submission_authority` before writing role-output artifacts or recording a Router event.
+- Fixed-event role outputs remain valid through the contract registry; router-supplied role outputs require the current Router wait to list the submitted event.
+- Core role/system cards and the PM output contract catalog now state that identity/system cards can ACK or explain routing but cannot by themselves authorize formal report work.
+- The local installed FlowPilot skill is fresh against the repository after sync.
+- Parallel terminal-summary work was preserved and separately verified before local install sync.
+
+### Counterexamples
+- Rejected: hidden formal work inside an identity card, task card without registered authority, role-guessed unknown event, registered event outside current wait, static card text treated as a dynamic lease, old direct officer event competing with PM role-work, wrong role, wrong contract, wrong recipient, stale authority, and mechanical runtime pass treated as process pass.
+
+### Friction Points
+- A direct full `run_meta_checks.py` invocation did not return a readable result through the tool, so the valid cached proof path was used with `--fast`.
+- The model mesh live projection still classifies the historical active run as blocked by existing packet-authority findings; that is a current-run state issue, not a regression from this change.
+
+### Skipped Steps
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+
+### Next Actions
+- For future router-supplied role-output contracts, keep the direct Router submission authority check and prefer PM role-work packets or active-holder leases for assigned work instead of prompt-only event names.
+
+
+## flowpilot-resume-priority-control-blocker-20260512 - Prioritize heartbeat/manual resume before active control blockers
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Heartbeat resume was observed to handle an existing active router control blocker before running resume reentry, which can delay crew rehydration and make resumed work unreachable.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T17:45:00+02:00
+- Ended: 2026-05-12T18:17:45+02:00
+- Duration seconds: 1965
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_resume_model.py
+- simulations/run_flowpilot_resume_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_resume_model.py simulations\run_flowpilot_resume_checks.py tests\test_flowpilot_router_runtime.py`
+- OK: `python simulations\run_flowpilot_resume_checks.py`
+- OK: targeted resume runtime unittest set
+- OK: targeted control-blocker runtime unittest set
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The resume model now represents an active control blocker that exists at heartbeat/manual resume entry.
+- The router fix suppresses active control-blocker handling while `resume_reentry_requested` is true and `pm_resume_recovery_decision_returned` is false.
+- The deferred control blocker is not deleted; after PM resume recovery decision evidence is recorded, the router can return to the original blocker.
+- Runtime regression coverage proves the first resume action is `load_resume_state`, not `handle_control_blocker`, when both are possible.
+
+### Counterexamples
+- The upgraded model detects active blocker handling before resume state load.
+- The upgraded model detects waiting on or handling an active blocker before role rehydration and PM resume decision.
+- The upgraded model detects an active blocker being present without an explicit defer record.
+- The upgraded model detects completing route progress while an active control blocker remains unhandled after resume readiness.
+
+### Friction Points
+- A full `tests.test_flowpilot_router_runtime` run exceeded the local 5 minute command window, so validation used focused resume and control-blocker runtime suites.
+- A full non-fast capability check exceeded the local 5 minute command window; capability routing files were unchanged, so the fast proof path was used and passed.
+- Running install sync and install audit in parallel produced a stale audit read once; rerunning the audit after sync passed.
+
+### Skipped Steps
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+- Production conformance replay for the abstract resume model remains skipped because no production replay adapter exists in the allowed write set.
+
+### Next Actions
+- If resume ordering changes again, keep the active-control-blocker defer/return labels and hazards in the resume model so the same regression is caught before runtime edits.
+
+
+## flowpilot-dynamic-return-path-authority-20260512 - Model and audit router-supplied role-output return-path authority
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to upgrade FlowGuard coverage for prompt/report road-sign failures, run models against current FlowPilot state, and propose a bottom-level fix without modifying FlowPilot product code.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T18:02:00+02:00
+- Ended: 2026-05-12T18:09:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_dynamic_return_path_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations/flowpilot_dynamic_return_path_model.py simulations/run_flowpilot_dynamic_return_path_checks.py`
+- OK: `python simulations/run_flowpilot_dynamic_return_path_checks.py --json-out simulations/flowpilot_dynamic_return_path_results.json`
+- OK: `python simulations/run_flowpilot_model_mesh_checks.py --json-out tmp/flowpilot_model_mesh_dynamic_return_crosscheck.json`
+- OK: `python simulations/run_flowpilot_role_output_runtime_checks.py --json-out tmp/flowpilot_role_output_runtime_dynamic_return_crosscheck.json`
+
+### Findings
+- The new model separates static card guidance, mechanical role-output validation, and live Router/PM packet authority.
+- Current run `run-20260512-110741` has two concrete rejected router-supplied `officer_model_report` attempts: `product_officer_model_report` was unknown, and `product_officer_blocks_product_architecture_modelability` was registered but not currently allowed.
+- Four router-supplied role-output contracts require a concrete dynamic lease: `officer_model_report`, `flowguard_model_miss_report`, `reviewer_review_report`, and `material_sufficiency_report`.
+- Existing PM role-work packets show the correct mitigation shape for `officer_model_report`: a PM-authored packet with strict process contract binding and result recipient set to `project_manager`.
+
+### Counterexamples
+- The model rejects system-card-only router-supplied reports, role-guessed unknown events, registered but not currently allowed events, mechanical green treated as Router acceptance, static card text treated as a dynamic event lease, and legacy direct officer events competing with PM role-work result contracts.
+
+### Skipped Steps
+- FlowPilot product/router/runtime code was intentionally not modified per user instruction.
+- Remote GitHub sync/push was not requested.
+
+### Next Actions
+- Implement the architecture fix separately: make every router-supplied role-output task enter through an assignment lease/result contract, then make role-output submission consume that lease instead of relying on role-guessed event names or generic card prose.
+
+
 ## flowpilot-control-transaction-registry-20260512 - Unify FlowPilot control writes behind a registered transaction authority
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -8151,57 +8344,3 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
-
-## flowpilot-resume-priority-control-blocker-20260512 - Prioritize heartbeat/manual resume before active control blockers
-
-- Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Heartbeat resume was observed to handle an existing active router control blocker before running resume reentry, which can delay crew rehydration and make resumed work unreachable.
-- Status: completed
-- Skill decision: used_flowguard
-- Started: 2026-05-12T17:45:00+02:00
-- Ended: 2026-05-12T18:17:45+02:00
-- Duration seconds: 1965
-- Commands OK: True
-
-### Model Files
-- simulations/flowpilot_resume_model.py
-- simulations/run_flowpilot_resume_checks.py
-
-### Commands
-- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
-- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_resume_model.py simulations\run_flowpilot_resume_checks.py tests\test_flowpilot_router_runtime.py`
-- OK: `python simulations\run_flowpilot_resume_checks.py`
-- OK: targeted resume runtime unittest set
-- OK: targeted control-blocker runtime unittest set
-- OK: `python scripts\check_install.py`
-- OK: `python simulations\run_meta_checks.py`
-- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
-- OK: `python simulations\run_capability_checks.py --fast`
-- OK: `python scripts\smoke_autopilot.py --fast`
-- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
-- OK: `python scripts\audit_local_install_sync.py --json`
-- OK: `python scripts\install_flowpilot.py --check --json`
-
-### Findings
-- The resume model now represents an active control blocker that exists at heartbeat/manual resume entry.
-- The router fix suppresses active-control-blocker handling while `resume_reentry_requested` is true and `pm_resume_recovery_decision_returned` is false.
-- The deferred control blocker is not deleted; after PM resume recovery decision evidence is recorded, the router can return to the original blocker.
-- Runtime regression coverage proves the first resume action is `load_resume_state`, not `handle_control_blocker`, when both are possible.
-
-### Counterexamples
-- The upgraded model detects active blocker handling before resume state load.
-- The upgraded model detects waiting on or handling an active blocker before role rehydration and PM resume decision.
-- The upgraded model detects an active blocker being present without an explicit defer record.
-- The upgraded model detects completing route progress while an active control blocker remains unhandled after resume readiness.
-
-### Friction Points
-- A full `tests.test_flowpilot_router_runtime` run exceeded the local 5 minute command window, so validation used focused resume and control-blocker runtime suites.
-- A full non-fast capability check exceeded the local 5 minute command window; capability routing files were unchanged, so the fast proof path was used and passed.
-- Running install sync and install audit in parallel produced a stale audit read once; rerunning the audit after sync passed.
-
-### Skipped Steps
-- Remote GitHub sync/push was intentionally skipped per user instruction.
-- Production conformance replay for the abstract resume model remains skipped because no production replay adapter exists in the allowed write set.
-
-### Next Actions
-- If resume ordering changes again, keep the active-control-blocker defer/return labels and hazards in the resume model so the same regression is caught before runtime edits.
