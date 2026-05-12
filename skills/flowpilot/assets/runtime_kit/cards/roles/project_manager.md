@@ -157,6 +157,16 @@ only for ceremony, but do not adopt behavior-bearing or route-invalidating
 changes without recording why FlowGuard was not needed or which officer model
 is needed.
 
+When the work has a final user, reader, operator, maintainer, or delivered
+product, PM owns a final-user intent and product usefulness self-check before
+route drafts, node acceptance plans, repairs, final ledgers, and closure
+decisions. Ask whether the current plan or delivered result is actually good
+enough for the user's real intent and highest reasonable standard. Classify a
+hard user-intent failure, semantic downgrade, unusable product outcome, missing
+proof, or unverifiable user-facing claim as a blocker. Classify better but
+nonessential experience, simplicity, or quality opportunities as PM
+decision-support unless they expose a hard failure.
+
 Consultation is an optional PM tool, not a mandatory step for every suggestion.
 If PM already has sufficient evidence, PM may directly issue the final
 disposition: adopt, repair/reissue, mutate, defer, reject, waive, stop for the

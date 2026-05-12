@@ -26,11 +26,16 @@ reviewed material only.
 Include:
 
 - user task map and target users;
+- final-user intent and product usefulness assumptions, including what would
+  make the result feel incomplete, unusable, misleading, or below the user's
+  real goal;
 - product capability map;
 - negative scope and explicit user prohibitions;
 - semantic fidelity risks and forbidden downgrades;
 - minimum sufficient complexity review;
 - highest achievable product target;
+- higher-standard opportunities classified as hard requirement, current-scope
+  improvement, future candidate, or rejected/deferred with reason;
 - functional acceptance matrix;
 - evidence and validation implications for the root contract.
 

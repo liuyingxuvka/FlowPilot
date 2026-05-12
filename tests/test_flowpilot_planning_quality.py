@@ -23,6 +23,10 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.SKILL_SELECTED_NO_CONTRACT]["detected"])
         self.assertTrue(hazards[model.REVIEWER_PASSES_HARD_BLINDSPOT]["detected"])
         self.assertTrue(hazards[model.SIMPLE_TASK_OVERTEMPLATED]["detected"])
+        self.assertTrue(hazards[model.PM_USER_INTENT_SELF_CHECK_MISSING]["detected"])
+        self.assertTrue(hazards[model.PM_HIGHER_STANDARD_SELF_CHECK_MISSING]["detected"])
+        self.assertTrue(hazards[model.PM_IMPROVEMENT_SCOPE_CREEP]["detected"])
+        self.assertTrue(hazards[model.PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING]["detected"])
 
     def test_runtime_cards_and_templates_expose_planning_quality_contracts(self) -> None:
         route_card = (
@@ -54,6 +58,36 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             / "cards"
             / "phases"
             / "pm_node_acceptance_plan.md"
+        ).read_text(encoding="utf-8")
+        product_architecture_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_product_architecture.md"
+        ).read_text(encoding="utf-8")
+        final_ledger_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_final_ledger.md"
+        ).read_text(encoding="utf-8")
+        closure_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_closure.md"
         ).read_text(encoding="utf-8")
         route_review_card = (
             ROOT
@@ -95,12 +129,19 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
 
         self.assertIn("planning_profile", route_card)
         self.assertIn("interactive_software_ui_product", route_card)
+        self.assertIn("PM user-intent self-check", route_card)
+        self.assertIn("product usefulness failures", route_card)
         self.assertIn("skill_standard_contracts", child_manifest_card)
         for category in model.STANDARD_FIELDS:
             self.assertIn(category, child_manifest_card)
         self.assertIn("skill_standard_projection", node_plan_card)
         self.assertIn("active_child_skill_bindings", node_plan_card)
         self.assertIn("work_packet_projection", node_plan_card)
+        self.assertIn("final-user intent and product usefulness self-check", node_plan_card)
+        self.assertIn("nonessential improvement", node_plan_card)
+        self.assertIn("final-user intent and product usefulness assumptions", product_architecture_card)
+        self.assertIn("final-user intent and delivered-product usefulness claims", final_ledger_card)
+        self.assertIn("final_user_outcome_replay", closure_card)
         self.assertIn("hard block", route_review_card)
         self.assertIn("Inherited Skill Standards", packet_template)
         self.assertIn("Active Child Skill Bindings", packet_template)

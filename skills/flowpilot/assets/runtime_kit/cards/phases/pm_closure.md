@@ -23,6 +23,12 @@ Close only after final ledger and backward replay pass.
 Read the latest route-memory prior path context before closure. Closure must
 not rely on a stale view of completed nodes, superseded nodes, stale evidence,
 route mutations, terminal replay, or lifecycle state.
+Before approval, PM must self-check the delivered product or final output from
+the final user's, reader's, operator's, maintainer's, or recipient's point of
+view. Closure is blocked by a hard user-intent failure, unusable outcome,
+semantic downgrade, missing proof, or unverifiable user-facing quality claim.
+Better but nonessential experience, simplicity, or quality opportunities must
+be dispositioned as PM suggestion items before closure.
 
 Closure order:
 
@@ -88,6 +94,13 @@ paths from the router delivery envelope.
     "crew_ledger_current": true,
     "continuation_binding_current": true,
     "current_ledgers_clean": true
+  },
+  "final_user_outcome_replay": {
+    "reviewed": true,
+    "delivered_output_satisfies_user_intent": true,
+    "user_facing_claims_have_evidence": true,
+    "hard_user_intent_failures": [],
+    "nonblocking_higher_standard_opportunities_dispositioned": true
   },
   "final_report": {},
   "contract_self_check": {

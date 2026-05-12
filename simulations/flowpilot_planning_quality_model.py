@@ -8,7 +8,9 @@ Risk intent brief:
   compiled into route/node/work-packet obligations, reviewer hard-requirement
   blindspots being recorded as harmless residual risk, product FlowGuard
   modeling being treated as an after-the-fact review instead of PM route input,
-  repair nodes failing to reconnect to the mainline, and simple tasks being
+  PM omitting final-user and higher-standard self-checks, nonblocking
+  improvement opportunities being turned into current-gate scope creep, repair
+  nodes failing to reconnect to the mainline, and simple tasks being
   over-templated.
 - Modeled state and side effects: PM planning profile selection, child-skill
   standard compilation, root product behavior model availability, PM route and
@@ -54,6 +56,11 @@ PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL = "pm_route_not_mapped_to_product_model"
 PROCESS_OFFICER_ROUTE_VIABILITY_MISSING = "process_officer_route_viability_missing"
 REPAIR_NODE_NO_MAINLINE_RETURN = "repair_node_no_mainline_return"
 NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL = "node_plan_not_mapped_to_product_model"
+PM_USER_INTENT_SELF_CHECK_MISSING = "pm_user_intent_self_check_missing"
+PM_HIGHER_STANDARD_SELF_CHECK_MISSING = "pm_higher_standard_self_check_missing"
+PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED = "pm_improvement_opportunity_unclassified"
+PM_IMPROVEMENT_SCOPE_CREEP = "pm_improvement_scope_creep"
+PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING = "pm_closure_user_outcome_replay_missing"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE, VALID_SIMPLE_ROUTE)
 NEGATIVE_SCENARIOS = (
@@ -74,6 +81,11 @@ NEGATIVE_SCENARIOS = (
     PROCESS_OFFICER_ROUTE_VIABILITY_MISSING,
     REPAIR_NODE_NO_MAINLINE_RETURN,
     NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL,
+    PM_USER_INTENT_SELF_CHECK_MISSING,
+    PM_HIGHER_STANDARD_SELF_CHECK_MISSING,
+    PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED,
+    PM_IMPROVEMENT_SCOPE_CREEP,
+    PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -119,6 +131,13 @@ class State:
     process_officer_validated_route_viability: bool = False
     repair_return_to_mainline_defined: bool = False
     node_acceptance_plan_maps_product_model_segment: bool = False
+    pm_user_intent_self_check_written: bool = False
+    pm_higher_standard_self_check_written: bool = False
+    pm_improvement_opportunities_classified: bool = False
+    pm_higher_standard_opportunity_found: bool = False
+    pm_improvement_incorrectly_hard_blocker: bool = False
+    closure_or_final_ledger_decision: bool = False
+    closure_replays_final_user_outcome: bool = False
 
     child_skill_selected: bool = False
     skill_standard_contract_compiled: bool = False
@@ -205,6 +224,9 @@ def _valid_ui_state() -> State:
         process_officer_validated_route_viability=True,
         repair_return_to_mainline_defined=True,
         node_acceptance_plan_maps_product_model_segment=True,
+        pm_user_intent_self_check_written=True,
+        pm_higher_standard_self_check_written=True,
+        pm_improvement_opportunities_classified=True,
         child_skill_selected=True,
         skill_standard_contract_compiled=True,
         skill_standard_fields=STANDARD_FIELDS,
@@ -232,6 +254,8 @@ def _valid_simple_state() -> State:
         simple_task_profile_waiver=True,
         route_complexity_matches_profile=True,
         route_nodes_have_stage_artifacts=True,
+        pm_user_intent_self_check_written=True,
+        pm_improvement_opportunities_classified=True,
         reviewer_passed_route=True,
     )
 
@@ -300,6 +324,28 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, repair_return_to_mainline_defined=False)
     if scenario == NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL:
         return replace(state, node_acceptance_plan_maps_product_model_segment=False)
+    if scenario == PM_USER_INTENT_SELF_CHECK_MISSING:
+        return replace(state, pm_user_intent_self_check_written=False)
+    if scenario == PM_HIGHER_STANDARD_SELF_CHECK_MISSING:
+        return replace(state, pm_higher_standard_self_check_written=False)
+    if scenario == PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED:
+        return replace(
+            state,
+            pm_higher_standard_opportunity_found=True,
+            pm_improvement_opportunities_classified=False,
+        )
+    if scenario == PM_IMPROVEMENT_SCOPE_CREEP:
+        return replace(
+            state,
+            pm_higher_standard_opportunity_found=True,
+            pm_improvement_incorrectly_hard_blocker=True,
+        )
+    if scenario == PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            closure_replays_final_user_outcome=False,
+        )
     return state
 
 
@@ -329,6 +375,24 @@ def planning_failures(state: State) -> list[str]:
         failures.append("repair node lacks a defined return to the mainline product route")
     if complex_task and not state.node_acceptance_plan_maps_product_model_segment:
         failures.append("node acceptance plan is not mapped to a product model segment")
+    if complex_task and not state.pm_user_intent_self_check_written:
+        failures.append("PM plan lacks final-user intent and product usefulness self-check")
+    if complex_task and not state.pm_higher_standard_self_check_written:
+        failures.append("PM plan lacks higher-standard improvement-space self-check")
+    if (
+        complex_task
+        and state.pm_higher_standard_opportunity_found
+        and not state.pm_improvement_opportunities_classified
+    ):
+        failures.append("PM left higher-standard improvement opportunity unclassified")
+    if state.pm_improvement_incorrectly_hard_blocker:
+        failures.append("PM treated a nonblocking higher-standard improvement as a hard current-gate requirement")
+    if (
+        complex_task
+        and state.closure_or_final_ledger_decision
+        and not state.closure_replays_final_user_outcome
+    ):
+        failures.append("PM closure lacks final-user outcome replay")
 
     if state.child_skill_selected:
         if not state.skill_standard_contract_compiled:
@@ -462,6 +526,20 @@ def repairs_rejoin_mainline(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def pm_self_checks_user_value_and_standard(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in planning_failures(state):
+        if (
+            "final-user" in failure
+            or "higher-standard" in failure
+            or "nonblocking" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepts_only_valid_plans",
@@ -497,6 +575,11 @@ INVARIANTS = (
         name="repairs_rejoin_mainline",
         description="Repair nodes must define how they return to the mainline product route before acceptance.",
         predicate=repairs_rejoin_mainline,
+    ),
+    Invariant(
+        name="pm_self_checks_user_value_and_standard",
+        description="PM must self-check final-user value and classify higher-standard improvements without scope creep.",
+        predicate=pm_self_checks_user_value_and_standard,
     ),
 )
 

@@ -45,6 +45,10 @@ Check:
 - the plan matches the active route id, route version, and active node id;
 - root requirements and product-function architecture are represented when
   relevant;
+- when the node affects a final user, operator, maintainer, reader, or
+  delivered product, the plan states how the node contributes to user intent,
+  final-user usefulness, and experience or product quality, plus what evidence
+  will prove that contribution;
 - node requirements are concrete and testable;
 - the plan states whether parent backward replay is structurally required;
 - if the active node has children, the plan blocks direct worker packet

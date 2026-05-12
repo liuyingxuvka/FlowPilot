@@ -38,4 +38,12 @@ Do not approve from worker reports alone. Start with a neutral observation,
 probe the current artifact or behavior directly when applicable, compare child
 evidence to the parent goal, and record blocking findings.
 
-Pass only when the effective children compose into the parent goal.
+When the parent contributes to a final user, operator, maintainer, reader, or
+delivered product, include that perspective in the same
+`independent_challenge`: ask whether the composed child results are actually
+usable, coherent, and aligned with the user's intent at the parent level.
+Record higher-standard but nonblocking product or experience improvements as
+PM decision-support.
+
+Pass only when the effective children compose into the parent goal and the
+parent-level user-facing outcome remains credible.

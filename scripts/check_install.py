@@ -994,6 +994,81 @@ def main() -> int:
             )
             if not active_challenge_ok:
                 result["ok"] = False
+            user_perspective_card_markers = {
+                "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md": [
+                    "final-user intent",
+                    "product usefulness",
+                    "Existence evidence is not enough",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": [
+                    "final-user intent and product usefulness self-check",
+                    "decision-support",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": [
+                    "final-user usefulness",
+                    "file existence",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": [
+                    "parent-level user-facing outcome",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md": [
+                    "not merely a clean ledger",
+                    "hard user-intent failures",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md": [
+                    "user-facing quality",
+                    "file existence",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md": [
+                    "final product usefulness",
+                    "PM decision-support",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md": [
+                    "final-user usefulness",
+                    "evidence",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md": [
+                    "final-user intent and product usefulness assumptions",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": [
+                    "final-user intent and product usefulness self-check",
+                    "nonessential improvement",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": [
+                    "PM user-intent self-check",
+                    "product usefulness failures",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md": [
+                    "final-user intent and delivered-product usefulness claims",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md": [
+                    "final_user_outcome_replay",
+                    "unverifiable user-facing quality claim",
+                ],
+            }
+            user_perspective_failures = []
+            for relative_path, markers in user_perspective_card_markers.items():
+                card_path = ROOT / relative_path
+                text = card_path.read_text(encoding="utf-8") if card_path.exists() else ""
+                missing = [marker for marker in markers if marker not in text]
+                if missing or not card_path.exists():
+                    user_perspective_failures.append(
+                        {
+                            "path": relative_path,
+                            "missing_file": not card_path.exists(),
+                            "missing_markers": missing,
+                        }
+                    )
+            user_perspective_ok = not user_perspective_failures
+            result["checks"].append(
+                {
+                    "name": "flowpilot_user_perspective_card_propagation_valid",
+                    "ok": user_perspective_ok,
+                    "failures": user_perspective_failures,
+                }
+            )
+            if not user_perspective_ok:
+                result["ok"] = False
         except Exception as exc:  # pragma: no cover - diagnostic script
             result["ok"] = False
             result["checks"].append(

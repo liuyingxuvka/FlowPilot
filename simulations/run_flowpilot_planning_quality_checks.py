@@ -39,6 +39,11 @@ HAZARD_EXPECTED_FAILURES = {
     model.PROCESS_OFFICER_ROUTE_VIABILITY_MISSING: "Process FlowGuard Officer did not validate route viability against the product model",
     model.REPAIR_NODE_NO_MAINLINE_RETURN: "repair node lacks a defined return to the mainline product route",
     model.NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL: "node acceptance plan is not mapped to a product model segment",
+    model.PM_USER_INTENT_SELF_CHECK_MISSING: "PM plan lacks final-user intent and product usefulness self-check",
+    model.PM_HIGHER_STANDARD_SELF_CHECK_MISSING: "PM plan lacks higher-standard improvement-space self-check",
+    model.PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED: "PM left higher-standard improvement opportunity unclassified",
+    model.PM_IMPROVEMENT_SCOPE_CREEP: "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement",
+    model.PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING: "PM closure lacks final-user outcome replay",
 }
 
 

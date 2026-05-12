@@ -38,6 +38,10 @@ Check:
 - evidence ledger entries are concrete, current, and non-stale;
 - generated resources have terminal disposition;
 - UI or visual evidence is present when the route requires it;
+- user-facing quality, product usefulness, readability, operability, or
+  experience claims are backed by evidence that proves the claim, not only by
+  file existence, hashes, report prose, or a screenshot that shows an artifact
+  exists;
 - old screenshots, old icons, old concept images, or old assets are not reused
   as current evidence;
 - completion report-only evidence is not closing a gate that needs direct

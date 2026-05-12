@@ -52,6 +52,10 @@ Check:
   target role;
 - no Controller-origin project evidence closes the gate;
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;
+- when the result affects a final user, operator, maintainer, reader, or
+  delivered product, `independent_challenge` explicitly tests final-user usefulness,
+  user intent, experience quality, and semantic fit instead of treating packet
+  satisfaction as enough;
 - result body includes `Contract Self-Check` against the source packet
   `output_contract`, and missing or failed self-check blocks pass;
 - when the source packet declares inherited skill-standard ids, the result body
@@ -65,7 +69,10 @@ Check:
   and followed the stricter child-skill standard or cited an explicit PM
   waiver. Missing evidence, summary-only use, whole-skill use that ignores the
   node slice, or PM-floor downgrades block pass;
-- output satisfies packet acceptance slice.
+- output satisfies packet acceptance slice;
+- direct evidence proves user-facing quality claims when those claims are made;
+  file existence, hashes, report prose, or screenshots alone do not prove the
+  result is usable or good enough from the final user's point of view.
 
 Return pass, needs repair, needs more material, or invalid role origin.
 If validation was already performed by the router or packet runtime, skip only

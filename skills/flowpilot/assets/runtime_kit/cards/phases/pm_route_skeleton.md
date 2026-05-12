@@ -67,6 +67,9 @@ Route requirements:
 - use the Product FlowGuard Officer's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
+- include a PM user-intent self-check: how the route preserves the user's real
+  goal, final-user usefulness, and highest reasonable product standard without
+  importing unnecessary nodes or validation surfaces;
 - Router will not activate the route unless the Product Officer's product
   behavior model report already exists, the route receives a role-owned
   product-model review pass, and Process Officer returns
@@ -134,7 +137,7 @@ Also return `planning_profile_review` with:
 - route nodes that own those modules;
 - evidence artifacts expected from each major node;
 - explicit self-check that the route is not too coarse for the user's stated
-  quality level.
+  quality level and not too weak to catch final-user intent or product usefulness failures.
 
 Also return a complexity review. If a node could have been merged with an
 adjacent node, record why separation is still necessary. If two routes produce

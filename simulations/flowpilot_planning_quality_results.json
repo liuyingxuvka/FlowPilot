@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=114",
+    "summary": "sequences=3 initial_states=1 traces=144",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -47,11 +47,46 @@
           "complex implementation work was overmerged into one unverifiable node"
         ]
       },
+      "pm_closure_user_outcome_replay_missing": {
+        "detected": true,
+        "expected_failure": "PM closure lacks final-user outcome replay",
+        "failures": [
+          "PM closure lacks final-user outcome replay"
+        ]
+      },
+      "pm_higher_standard_self_check_missing": {
+        "detected": true,
+        "expected_failure": "PM plan lacks higher-standard improvement-space self-check",
+        "failures": [
+          "PM plan lacks higher-standard improvement-space self-check"
+        ]
+      },
+      "pm_improvement_opportunity_unclassified": {
+        "detected": true,
+        "expected_failure": "PM left higher-standard improvement opportunity unclassified",
+        "failures": [
+          "PM left higher-standard improvement opportunity unclassified"
+        ]
+      },
+      "pm_improvement_scope_creep": {
+        "detected": true,
+        "expected_failure": "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement",
+        "failures": [
+          "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement"
+        ]
+      },
       "pm_route_not_mapped_to_product_model": {
         "detected": true,
         "expected_failure": "PM route is not mapped to the product behavior model",
         "failures": [
           "PM route is not mapped to the product behavior model"
+        ]
+      },
+      "pm_user_intent_self_check_missing": {
+        "detected": true,
+        "expected_failure": "PM plan lacks final-user intent and product usefulness self-check",
+        "failures": [
+          "PM plan lacks final-user intent and product usefulness self-check"
         ]
       },
       "process_officer_route_viability_missing": {
@@ -152,11 +187,11 @@
       "valid_simple_route",
       "valid_ui_route"
     ],
-    "edge_count": 38,
+    "edge_count": 48,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 17,
-    "state_count": 39
+    "rejected_state_count": 22,
+    "state_count": 49
   }
 }

@@ -32,6 +32,10 @@ route-memory prior path context. The plan must state:
 - concrete node requirements and proof obligations;
 - the product behavior model segment this node covers, or the reason this node
   is process-only;
+- final-user intent and product usefulness self-check for this node when
+  applicable: how the node changes the user's real outcome, what would make it
+  unusable or semantically downgraded, and which evidence will prove that the
+  user-facing claim is true;
 - inherited `skill_standard_projection`: every child-skill standard relevant
   to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
   `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
@@ -110,6 +114,11 @@ The returned plan must include a complete `high_standard_recheck` object with
 `why_current_plan_meets_highest_reasonable_standard`. Use `decision:
 proceed` only when the plan already reaches the highest reasonable standard
 for this node without unnecessary complexity.
+Classify every higher-standard opportunity as hard current requirement,
+current-node improvement, future-route candidate, nonblocking note, or rejected
+with reason. Do not turn a nonessential improvement into a hard blocker unless
+it exposes a hard user-intent failure, missing proof, semantic downgrade,
+unusable outcome, or unverifiable user-facing claim.
 
 For Minimum Sufficient Complexity, record whether a simpler equivalent node
 plan exists, why the chosen packet/check/evidence structure is the smallest

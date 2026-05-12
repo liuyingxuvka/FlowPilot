@@ -31,6 +31,9 @@ source of truth for completion.
 Resolve:
 
 - effective and superseded nodes;
+- final-user intent and delivered-product usefulness claims, including the
+  evidence that proves each current user-facing claim instead of merely proving
+  that an artifact exists;
 - child-skill and review gates;
 - product/process FlowGuard gates;
 - minimum sufficient complexity dispositions for route nodes, skills, and
@@ -48,6 +51,9 @@ Then build `terminal_human_backward_replay_map.json` as ordered segments from
 delivered output to root, parents, leaves, child-skill gates, repairs, and
 generated resources. Request terminal backward replay from Reviewer; any repair
 or stale evidence found there requires ledger rebuild before closure.
+The replay map must start from the delivered product or final output as a
+final user, reader, operator, maintainer, or recipient would experience it, and
+then walk backward to route evidence and root intent.
 
 Do not let unused complexity survive as a completion note. Extra nodes, skills,
 resources, reports, or validation branches must either prove a current gate,

@@ -91,6 +91,16 @@ higher-standard opportunity, simpler path, missing design obligation,
 over-repair risk, or useful quality improvement, give PM a clear
 higher-standard recommendation as decision-support unless it is a hard blocker.
 
+When the reviewed work affects a final user, reader, operator, maintainer, or
+delivered product, make that perspective part of the same
+`independent_challenge`. Decide whether final-user perspective is applicable;
+if it is, challenge whether the result satisfies the user's real intent,
+product usefulness, experience quality, and highest reasonable standard, not
+only whether the PM checklist and evidence ledger are clean. A hard final-user
+intent failure, unusable product outcome, semantic downgrade, or unproven
+user-facing quality claim is a blocker. A better but nonessential product,
+experience, or simplicity opportunity is PM decision-support.
+
 Every review body must include an `independent_challenge` object with these
 exact fields:
 
@@ -99,7 +109,8 @@ exact fields:
 - `explicit_and_implicit_commitments`: explicit user/PM requirements plus
   implicit commitments created by the artifact itself;
 - `failure_hypotheses`: plausible ways this review could be wrong,
-  incomplete, unusable, stale, overclaimed, under-tested, or falsely complete;
+  incomplete, unusable, stale, overclaimed, under-tested, falsely complete, or
+  misaligned with final-user intent when that perspective applies;
 - `challenge_actions`: task-specific probes, source inspections, commands,
   walkthroughs, counterexample checks, or reasoned waivers you personally
   performed;
@@ -138,6 +149,13 @@ absent, or when a hard requirement, frozen contract item, child-skill standard,
 quality level, exposed product behavior, or core task commitment is converted
 into residual risk. If a surface cannot be checked, block or record a waiver
 with authority and downstream handling.
+
+Existence evidence is not enough for user-facing quality claims. A file, hash,
+ledger row, screenshot, or report can prove that an artifact exists, but it
+does not by itself prove that a final user can understand, operate, trust, or
+benefit from the delivered result. For final replay, start from the delivered
+product or output and walk backward through the ledger; do not start and end
+with ledger cleanliness.
 
 Before pass decisions:
 

@@ -37,6 +37,13 @@ HAZARD_EXPECTED_FAILURES = {
     model.MISSING_REROUTE_REQUEST_FOR_BLOCKER: "reviewer blocker lacks PM reroute or repair request",
     model.PM_IMPROVEMENT_SIGNAL_DROPPED: "reviewer dropped a higher-standard PM decision-support recommendation",
     model.SIMPLE_REVIEW_OVERBURDENED: "simple review was overburdened with irrelevant heavyweight challenge work",
+    model.USER_PERSPECTIVE_APPLICABILITY_UNDECIDED: "reviewer pass lacks final-user perspective applicability decision",
+    model.FINAL_USER_INTENT_OMITTED: "reviewer pass omits final-user intent and product usefulness challenge",
+    model.USER_PERSPECTIVE_FAILURE_HYPOTHESIS_MISSING: "reviewer pass lacks final-user failure hypothesis",
+    model.HARD_USER_INTENT_FAILURE_DOWNGRADED: "reviewer did not block a hard final-user intent or product usefulness failure",
+    model.FINAL_REPLAY_LEDGER_ONLY: "final replay used ledger cleanliness without delivered-product user-perspective replay",
+    model.USER_FACING_EVIDENCE_EXISTS_ONLY: "reviewer accepted user-facing quality claims from existence-only evidence",
+    model.REVIEWER_MADE_PM_ROUTE_DECISION: "reviewer made a PM-owned route or repair decision instead of decision-support",
 }
 
 

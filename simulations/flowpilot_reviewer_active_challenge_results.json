@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=114",
+    "summary": "sequences=3 initial_states=1 traces=162",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -35,6 +35,20 @@
           "reviewer pass leaves core commitments unverified and unblocked"
         ]
       },
+      "final_replay_ledger_only": {
+        "detected": true,
+        "expected_failure": "final replay used ledger cleanliness without delivered-product user-perspective replay",
+        "failures": [
+          "final replay used ledger cleanliness without delivered-product user-perspective replay"
+        ]
+      },
+      "final_user_intent_omitted": {
+        "detected": true,
+        "expected_failure": "reviewer pass omits final-user intent and product usefulness challenge",
+        "failures": [
+          "reviewer pass omits final-user intent and product usefulness challenge"
+        ]
+      },
       "generic_actions_not_task_specific": {
         "detected": true,
         "expected_failure": "reviewer challenge actions do not fit the task family",
@@ -47,6 +61,13 @@
         "expected_failure": "reviewer did not block a hard requirement or core commitment failure",
         "failures": [
           "reviewer did not block a hard requirement or core commitment failure"
+        ]
+      },
+      "hard_user_intent_failure_downgraded": {
+        "detected": true,
+        "expected_failure": "reviewer did not block a hard final-user intent or product usefulness failure",
+        "failures": [
+          "reviewer did not block a hard final-user intent or product usefulness failure"
         ]
       },
       "missing_implicit_commitments": {
@@ -114,6 +135,13 @@
           "reviewer pass lacks independent evidence discovery or a reasoned waiver"
         ]
       },
+      "reviewer_made_pm_route_decision": {
+        "detected": true,
+        "expected_failure": "reviewer made a PM-owned route or repair decision instead of decision-support",
+        "failures": [
+          "reviewer made a PM-owned route or repair decision instead of decision-support"
+        ]
+      },
       "simple_review_overburdened": {
         "detected": true,
         "expected_failure": "simple review was overburdened with irrelevant heavyweight challenge work",
@@ -126,6 +154,27 @@
         "expected_failure": "reviewer found an uncheckable surface without waiver or blocker",
         "failures": [
           "reviewer found an uncheckable surface without waiver or blocker"
+        ]
+      },
+      "user_facing_evidence_exists_only": {
+        "detected": true,
+        "expected_failure": "reviewer accepted user-facing quality claims from existence-only evidence",
+        "failures": [
+          "reviewer accepted user-facing quality claims from existence-only evidence"
+        ]
+      },
+      "user_perspective_applicability_undecided": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks final-user perspective applicability decision",
+        "failures": [
+          "reviewer pass lacks final-user perspective applicability decision"
+        ]
+      },
+      "user_perspective_failure_hypothesis_missing": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks final-user failure hypothesis",
+        "failures": [
+          "reviewer pass lacks final-user failure hypothesis"
         ]
       }
     },
@@ -142,14 +191,15 @@
     "accepted_scenarios": [
       "valid_code_review",
       "valid_document_review",
+      "valid_final_replay_review",
       "valid_simple_review",
       "valid_ui_review"
     ],
-    "edge_count": 38,
+    "edge_count": 54,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 15,
-    "state_count": 39
+    "rejected_state_count": 22,
+    "state_count": 55
   }
 }

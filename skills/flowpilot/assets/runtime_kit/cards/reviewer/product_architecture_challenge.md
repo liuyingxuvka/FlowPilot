@@ -37,11 +37,16 @@ the root contract.
 Check:
 
 - user request and reviewed material were represented honestly;
+- target users, use intent, and final product usefulness are represented
+  explicitly enough to challenge the architecture;
 - required product capabilities are not missing;
 - visible surfaces or workflow steps have a real purpose;
 - negative scope preserves user intent;
 - acceptance matrix can actually prove the target product;
 - low-quality, placeholder, or semantic-downgrade outcomes are blocked.
+- higher-standard product, experience, or simplicity improvements that are not
+  hard requirements are returned as PM decision-support, not as reviewer-owned
+  route decisions.
 
 Return a pass only after direct review. Worker or PM summaries are pointers,
 not approval evidence.

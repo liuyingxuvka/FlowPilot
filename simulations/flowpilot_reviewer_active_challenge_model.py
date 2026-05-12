@@ -6,12 +6,15 @@ Risk intent brief:
 - Protected harms: reviewer pass-through of low-standard PM packets, visible
   or exposed commitments being treated as decoration, hard failures being
   downgraded to residual notes, known evidence packages being treated as the
-  full review boundary, PM losing useful higher-standard recommendations, and
-  simple reviews being overloaded with irrelevant heavyweight probes.
+  full review boundary, final-user intent and product usefulness being omitted
+  from applicable challenges, PM losing useful higher-standard recommendations,
+  reviewer role creep into PM route decisions, and simple reviews being
+  overloaded with irrelevant heavyweight probes.
 - Modeled state and side effects: reviewer scope restatement, explicit and
   implicit commitment extraction, failure-hypothesis generation, task-specific
-  challenge actions, direct evidence discovery or waiver handling, blocker
-  triage, and PM reroute/repair/recommendation requests.
+  challenge actions, final-user/product usefulness challenge, direct evidence
+  discovery or waiver handling, blocker triage, and PM reroute/repair/
+  recommendation requests.
 - Hard invariants: a pass requires a complete independent challenge report;
   hard requirement or core-commitment failures must block; challenge actions
   must fit the current task family; known evidence must be treated as a
@@ -33,6 +36,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 VALID_UI_REVIEW = "valid_ui_review"
 VALID_CODE_REVIEW = "valid_code_review"
 VALID_DOCUMENT_REVIEW = "valid_document_review"
+VALID_FINAL_REPLAY_REVIEW = "valid_final_replay_review"
 VALID_SIMPLE_REVIEW = "valid_simple_review"
 
 CHECKLIST_ONLY_PASS = "checklist_only_pass"
@@ -50,11 +54,19 @@ UNCHECKABLE_WITHOUT_WAIVER = "uncheckable_without_waiver"
 MISSING_REROUTE_REQUEST_FOR_BLOCKER = "missing_reroute_request_for_blocker"
 PM_IMPROVEMENT_SIGNAL_DROPPED = "pm_improvement_signal_dropped"
 SIMPLE_REVIEW_OVERBURDENED = "simple_review_overburdened"
+USER_PERSPECTIVE_APPLICABILITY_UNDECIDED = "user_perspective_applicability_undecided"
+FINAL_USER_INTENT_OMITTED = "final_user_intent_omitted"
+USER_PERSPECTIVE_FAILURE_HYPOTHESIS_MISSING = "user_perspective_failure_hypothesis_missing"
+HARD_USER_INTENT_FAILURE_DOWNGRADED = "hard_user_intent_failure_downgraded"
+FINAL_REPLAY_LEDGER_ONLY = "final_replay_ledger_only"
+USER_FACING_EVIDENCE_EXISTS_ONLY = "user_facing_evidence_exists_only"
+REVIEWER_MADE_PM_ROUTE_DECISION = "reviewer_made_pm_route_decision"
 
 VALID_SCENARIOS = (
     VALID_UI_REVIEW,
     VALID_CODE_REVIEW,
     VALID_DOCUMENT_REVIEW,
+    VALID_FINAL_REPLAY_REVIEW,
     VALID_SIMPLE_REVIEW,
 )
 NEGATIVE_SCENARIOS = (
@@ -73,6 +85,13 @@ NEGATIVE_SCENARIOS = (
     MISSING_REROUTE_REQUEST_FOR_BLOCKER,
     PM_IMPROVEMENT_SIGNAL_DROPPED,
     SIMPLE_REVIEW_OVERBURDENED,
+    USER_PERSPECTIVE_APPLICABILITY_UNDECIDED,
+    FINAL_USER_INTENT_OMITTED,
+    USER_PERSPECTIVE_FAILURE_HYPOTHESIS_MISSING,
+    HARD_USER_INTENT_FAILURE_DOWNGRADED,
+    FINAL_REPLAY_LEDGER_ONLY,
+    USER_FACING_EVIDENCE_EXISTS_ONLY,
+    REVIEWER_MADE_PM_ROUTE_DECISION,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -91,7 +110,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
-    task_family: str = "unset"  # ui_product | code_change | document | simple_review
+    task_family: str = "unset"  # ui_product | code_change | document | final_replay | simple_review
 
     pm_review_context_present: bool = False
     pm_checklist_treated_as_floor: bool = False
@@ -108,14 +127,26 @@ class State:
     direct_evidence_or_approved_waiver_present: bool = False
     core_commitments_verified_or_blocked: bool = False
 
+    final_user_perspective_applicability_decided: bool = False
+    final_user_perspective_required: bool = False
+    final_user_intent_considered: bool = False
+    user_perspective_failure_hypothesis_recorded: bool = False
+    user_facing_evidence_supports_claims: bool = False
+    delivery_replay_required: bool = False
+    delivered_product_replayed_from_user_perspective: bool = False
+
     hard_issue_found: bool = False
     hard_issue_classified_blocker: bool = False
     hard_issue_downgraded_to_residual: bool = False
+    hard_user_intent_failure_found: bool = False
+    hard_user_intent_failure_classified_blocker: bool = False
+    hard_user_intent_failure_downgraded_to_suggestion: bool = False
     uncheckable_surface_present: bool = False
     waiver_or_blocker_for_uncheckable: bool = False
     reroute_request_recorded_when_needed: bool = True
     higher_standard_opportunity_found: bool = False
     pm_decision_support_recommendation_recorded: bool = True
+    reviewer_made_pm_route_decision: bool = False
 
     reviewer_passed: bool = False
     reviewer_blocked: bool = False
@@ -168,6 +199,8 @@ def initial_state() -> State:
 
 
 def _valid_review_state(scenario: str, task_family: str) -> State:
+    user_perspective_required = task_family != "simple_review"
+    delivery_replay_required = task_family == "final_replay"
     return State(
         status="running",
         scenario=scenario,
@@ -185,6 +218,13 @@ def _valid_review_state(scenario: str, task_family: str) -> State:
         challenge_actions_executed_or_blocker_recorded=True,
         direct_evidence_or_approved_waiver_present=True,
         core_commitments_verified_or_blocked=True,
+        final_user_perspective_applicability_decided=True,
+        final_user_perspective_required=user_perspective_required,
+        final_user_intent_considered=user_perspective_required,
+        user_perspective_failure_hypothesis_recorded=user_perspective_required,
+        user_facing_evidence_supports_claims=user_perspective_required,
+        delivery_replay_required=delivery_replay_required,
+        delivered_product_replayed_from_user_perspective=delivery_replay_required,
         reviewer_passed=True,
         report_schema_complete=True,
     )
@@ -197,6 +237,8 @@ def _scenario_state(scenario: str) -> State:
         return _valid_review_state(scenario, "code_change")
     if scenario == VALID_DOCUMENT_REVIEW:
         return _valid_review_state(scenario, "document")
+    if scenario == VALID_FINAL_REPLAY_REVIEW:
+        return _valid_review_state(scenario, "final_replay")
     if scenario == VALID_SIMPLE_REVIEW:
         return _valid_review_state(scenario, "simple_review")
 
@@ -277,6 +319,30 @@ def _scenario_state(scenario: str) -> State:
             _valid_review_state(scenario, "simple_review"),
             simple_review_overburdened=True,
         )
+    if scenario == USER_PERSPECTIVE_APPLICABILITY_UNDECIDED:
+        return replace(state, final_user_perspective_applicability_decided=False)
+    if scenario == FINAL_USER_INTENT_OMITTED:
+        return replace(state, final_user_intent_considered=False)
+    if scenario == USER_PERSPECTIVE_FAILURE_HYPOTHESIS_MISSING:
+        return replace(state, user_perspective_failure_hypothesis_recorded=False)
+    if scenario == HARD_USER_INTENT_FAILURE_DOWNGRADED:
+        return replace(
+            state,
+            hard_user_intent_failure_found=True,
+            hard_user_intent_failure_classified_blocker=False,
+            hard_user_intent_failure_downgraded_to_suggestion=True,
+            reviewer_passed=True,
+            reviewer_blocked=False,
+        )
+    if scenario == FINAL_REPLAY_LEDGER_ONLY:
+        return replace(
+            _valid_review_state(scenario, "final_replay"),
+            delivered_product_replayed_from_user_perspective=False,
+        )
+    if scenario == USER_FACING_EVIDENCE_EXISTS_ONLY:
+        return replace(state, user_facing_evidence_supports_claims=False)
+    if scenario == REVIEWER_MADE_PM_ROUTE_DECISION:
+        return replace(state, reviewer_made_pm_route_decision=True)
     return state
 
 
@@ -309,6 +375,32 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         failures.append("reviewer pass lacks direct evidence or an approved waiver")
     if state.reviewer_passed and not state.core_commitments_verified_or_blocked:
         failures.append("reviewer pass leaves core commitments unverified and unblocked")
+    if state.reviewer_passed and not state.final_user_perspective_applicability_decided:
+        failures.append("reviewer pass lacks final-user perspective applicability decision")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
+        and not state.final_user_intent_considered
+    ):
+        failures.append("reviewer pass omits final-user intent and product usefulness challenge")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
+        and not state.user_perspective_failure_hypothesis_recorded
+    ):
+        failures.append("reviewer pass lacks final-user failure hypothesis")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
+        and not state.user_facing_evidence_supports_claims
+    ):
+        failures.append("reviewer accepted user-facing quality claims from existence-only evidence")
+    if (
+        state.reviewer_passed
+        and state.delivery_replay_required
+        and not state.delivered_product_replayed_from_user_perspective
+    ):
+        failures.append("final replay used ledger cleanliness without delivered-product user-perspective replay")
     if state.reviewer_passed and not state.report_schema_complete:
         failures.append("reviewer pass lacks independent challenge report fields")
 
@@ -318,6 +410,12 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         or state.reviewer_passed
     ):
         failures.append("reviewer did not block a hard requirement or core commitment failure")
+    if state.hard_user_intent_failure_found and (
+        not state.hard_user_intent_failure_classified_blocker
+        or state.hard_user_intent_failure_downgraded_to_suggestion
+        or state.reviewer_passed
+    ):
+        failures.append("reviewer did not block a hard final-user intent or product usefulness failure")
     if state.uncheckable_surface_present and not state.waiver_or_blocker_for_uncheckable:
         failures.append("reviewer found an uncheckable surface without waiver or blocker")
     if state.reviewer_blocked and state.hard_issue_found and not state.reroute_request_recorded_when_needed:
@@ -326,6 +424,8 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         failures.append("reviewer dropped a higher-standard PM decision-support recommendation")
     if state.task_family == "simple_review" and state.simple_review_overburdened:
         failures.append("simple review was overburdened with irrelevant heavyweight challenge work")
+    if state.reviewer_made_pm_route_decision:
+        failures.append("reviewer made a PM-owned route or repair decision instead of decision-support")
     if state.status in {"accepted", "rejected"} and not (state.reviewer_passed or state.reviewer_blocked):
         failures.append("review ended without pass or block decision")
 
@@ -409,6 +509,31 @@ def higher_standard_signals_reach_pm(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def user_perspective_challenge_when_applicable(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in reviewer_challenge_failures(state):
+        if (
+            "final-user" in failure
+            or "product usefulness" in failure
+            or "user-facing quality claims" in failure
+            or "delivered-product user-perspective replay" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
+def reviewer_respects_pm_authority(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in reviewer_challenge_failures(state):
+        if "PM-owned route or repair decision" in failure:
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 def simple_reviews_stay_lightweight(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
@@ -449,6 +574,16 @@ INVARIANTS = (
         name="higher_standard_signals_reach_pm",
         description="Reviewer higher-standard findings must reach PM as decision-support.",
         predicate=higher_standard_signals_reach_pm,
+    ),
+    Invariant(
+        name="user_perspective_challenge_when_applicable",
+        description="Applicable reviews must challenge final-user intent, product usefulness, and delivered-output evidence.",
+        predicate=user_perspective_challenge_when_applicable,
+    ),
+    Invariant(
+        name="reviewer_respects_pm_authority",
+        description="Reviewer may block or advise but must not take PM-owned route or repair decisions.",
+        predicate=reviewer_respects_pm_authority,
     ),
 )
 

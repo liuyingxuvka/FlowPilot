@@ -36,6 +36,9 @@ completion runway.
 
 Check backward from the delivered product or final output:
 
+- from the final user's, reader's, operator's, maintainer's, or product
+  recipient's point of view, the delivered output actually satisfies the real
+  user intent and is not merely a clean ledger;
 - the current route version, not an old route, is the route being closed;
 - every effective node and parent segment decision is covered;
 - superseded or repaired work is not counted as current unless the PM ledger
@@ -46,6 +49,10 @@ Check backward from the delivered product or final output:
   zero;
 - any repair made during this replay forces PM ledger rebuild and a fresh
   terminal replay.
+- higher-standard but nonessential product, experience, simplicity, or quality
+  opportunities are recorded as PM decision-support; hard user-intent failures,
+  unusable outcomes, semantic downgrades, or unproven user-facing quality
+  claims block completion.
 
 Router-built ledgers can prove mechanical coverage only when backed by current
 hashes and run-bound artifacts. They do not prove that the delivered product or

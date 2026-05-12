@@ -34,6 +34,59 @@ ROLE_CHECKS = {
     },
 }
 
+USER_PERSPECTIVE_CARD_CHECKS = {
+    "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md": (
+        r"final-user intent",
+        r"product usefulness",
+        r"Existence evidence is not enough",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": (
+        r"final-user intent and product usefulness self-check",
+        r"decision-support",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": (
+        r"final-user usefulness",
+        r"file existence",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": (
+        r"parent-level user-facing outcome",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md": (
+        r"not merely a clean ledger",
+        r"hard user-intent failures",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md": (
+        r"user-facing quality",
+        r"file existence",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md": (
+        r"final product usefulness",
+        r"PM decision-support",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md": (
+        r"final-user usefulness",
+        r"evidence",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md": (
+        r"final-user intent and product usefulness assumptions",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": (
+        r"final-user intent and product usefulness self-check",
+        r"nonessential improvement",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": (
+        r"PM user-intent self-check",
+        r"product usefulness failures",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md": (
+        r"final-user intent and delivered-product usefulness claims",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md": (
+        r"final_user_outcome_replay",
+        r"unverifiable user-facing quality claim",
+    ),
+}
+
 
 def _has(text: str, pattern: str) -> bool:
     return bool(re.search(pattern, text, flags=re.I | re.S))
@@ -92,6 +145,32 @@ def check(root: Path = ROOT) -> dict[str, Any]:
                     "card_id": card.get("id"),
                     "role": role,
                     "path": str(card_path.relative_to(root)),
+                    "missing": missing,
+                }
+            )
+    for relative_path, patterns in USER_PERSPECTIVE_CARD_CHECKS.items():
+        card_path = root / relative_path
+        if not card_path.exists():
+            issues.append(
+                {
+                    "card_id": "user_perspective_propagation",
+                    "role": "targeted",
+                    "missing_file": str(card_path),
+                }
+            )
+            continue
+        text = card_path.read_text(encoding="utf-8")
+        missing = [
+            pattern
+            for pattern in patterns
+            if not _has(text, pattern)
+        ]
+        if missing:
+            issues.append(
+                {
+                    "card_id": "user_perspective_propagation",
+                    "role": "targeted",
+                    "path": relative_path,
                     "missing": missing,
                 }
             )
