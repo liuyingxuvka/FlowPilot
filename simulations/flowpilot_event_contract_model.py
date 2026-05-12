@@ -34,6 +34,8 @@ ACK_EVENT = "pm_route_skeleton_card_returned"
 
 PM_ROUTE_DRAFT_EVENT = "pm_writes_route_draft"
 REVIEWER_MATERIAL_EVENT = "reviewer_reports_material_sufficient"
+GENERIC_BLOCKER_EVENT = "pm_records_control_blocker_followup_blocker"
+GENERIC_PROTOCOL_EVENT = "pm_records_control_blocker_protocol_blocker"
 MATERIAL_SUCCESS_EVENT = "router_direct_material_scan_dispatch_recheck_passed"
 MATERIAL_BLOCKER_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
 MATERIAL_PROTOCOL_EVENT = "router_protocol_blocker_material_scan_dispatch_recheck"
@@ -43,6 +45,8 @@ REGISTERED_EXTERNAL_EVENTS = frozenset(
         PM_REPAIR_EVENT,
         PM_ROUTE_DRAFT_EVENT,
         REVIEWER_MATERIAL_EVENT,
+        GENERIC_BLOCKER_EVENT,
+        GENERIC_PROTOCOL_EVENT,
         MATERIAL_SUCCESS_EVENT,
         MATERIAL_BLOCKER_EVENT,
         MATERIAL_PROTOCOL_EVENT,
@@ -52,6 +56,8 @@ CURRENTLY_RECEIVABLE_EVENTS = frozenset(
     {
         PM_ROUTE_DRAFT_EVENT,
         REVIEWER_MATERIAL_EVENT,
+        GENERIC_BLOCKER_EVENT,
+        GENERIC_PROTOCOL_EVENT,
         MATERIAL_SUCCESS_EVENT,
         MATERIAL_BLOCKER_EVENT,
         MATERIAL_PROTOCOL_EVENT,
@@ -74,6 +80,7 @@ PM_REPAIR_EVENT_AS_RERUN_TARGET = "pm_repair_event_as_rerun_target"
 WAIT_REQUIRES_FALSE_FLAG = "wait_requires_false_flag"
 ACK_EVENT_IN_ALLOWED_EXTERNAL_EVENTS = "ack_event_in_allowed_external_events"
 ACK_CONSUMED_SEMANTIC_WAIT_LOST = "ack_consumed_semantic_wait_lost"
+GENERIC_REPAIR_COLLAPSED_OUTCOMES = "generic_repair_collapsed_outcomes"
 MATERIAL_REPAIR_SUCCESS_ONLY = "material_repair_success_only"
 DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER = "duplicate_pm_repair_created_new_blocker"
 POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT = "postwrite_cleanup_only_for_invalid_wait"
@@ -92,6 +99,7 @@ NEGATIVE_SCENARIOS = (
     WAIT_REQUIRES_FALSE_FLAG,
     ACK_EVENT_IN_ALLOWED_EXTERNAL_EVENTS,
     ACK_CONSUMED_SEMANTIC_WAIT_LOST,
+    GENERIC_REPAIR_COLLAPSED_OUTCOMES,
     MATERIAL_REPAIR_SUCCESS_ONLY,
     DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER,
     POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT,
@@ -168,13 +176,13 @@ def _scenario_state(scenario: str) -> State:
             rerun_target_registered_external=True,
             rerun_target_currently_receivable=True,
             pending_wait_written=True,
-            allowed_external_events=(PM_ROUTE_DRAFT_EVENT,),
+            allowed_external_events=(PM_ROUTE_DRAFT_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
             repair_outcome_table_written=True,
             repair_success_event=PM_ROUTE_DRAFT_EVENT,
-            repair_blocker_event=PM_ROUTE_DRAFT_EVENT,
-            repair_protocol_event=PM_ROUTE_DRAFT_EVENT,
+            repair_blocker_event=GENERIC_BLOCKER_EVENT,
+            repair_protocol_event=GENERIC_PROTOCOL_EVENT,
         )
     if scenario == VALID_REVIEWER_MATERIAL_RERUN:
         return State(
@@ -185,13 +193,13 @@ def _scenario_state(scenario: str) -> State:
             rerun_target_registered_external=True,
             rerun_target_currently_receivable=True,
             pending_wait_written=True,
-            allowed_external_events=(REVIEWER_MATERIAL_EVENT,),
+            allowed_external_events=(REVIEWER_MATERIAL_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
             repair_outcome_table_written=True,
             repair_success_event=REVIEWER_MATERIAL_EVENT,
-            repair_blocker_event=REVIEWER_MATERIAL_EVENT,
-            repair_protocol_event=REVIEWER_MATERIAL_EVENT,
+            repair_blocker_event=GENERIC_BLOCKER_EVENT,
+            repair_protocol_event=GENERIC_PROTOCOL_EVENT,
         )
     if scenario == VALID_MATERIAL_REPAIR_OUTCOME_TABLE:
         return State(
@@ -236,9 +244,13 @@ def _scenario_state(scenario: str) -> State:
             duplicate_repair_created_new_blocker=False,
             duplicate_repair_created_new_transaction=False,
             pending_wait_written=True,
-            allowed_external_events=(PM_ROUTE_DRAFT_EVENT,),
+            allowed_external_events=(PM_ROUTE_DRAFT_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
+            repair_outcome_table_written=True,
+            repair_success_event=PM_ROUTE_DRAFT_EVENT,
+            repair_blocker_event=GENERIC_BLOCKER_EVENT,
+            repair_protocol_event=GENERIC_PROTOCOL_EVENT,
         )
 
     if scenario == INTERNAL_ROUTER_ACTION_AS_PM_RERUN_TARGET:
@@ -315,6 +327,23 @@ def _scenario_state(scenario: str) -> State:
             semantic_wait_required_after_ack=True,
             semantic_wait_written_after_ack=False,
             semantic_wait_valid_after_ack=False,
+        )
+    if scenario == GENERIC_REPAIR_COLLAPSED_OUTCOMES:
+        return State(
+            status="running",
+            scenario=scenario,
+            pm_repair_decision_received=True,
+            rerun_target=PM_ROUTE_DRAFT_EVENT,
+            rerun_target_registered_external=True,
+            rerun_target_currently_receivable=True,
+            pending_wait_written=True,
+            allowed_external_events=(PM_ROUTE_DRAFT_EVENT,),
+            allowed_events_registered=True,
+            allowed_events_currently_receivable=True,
+            repair_outcome_table_written=True,
+            repair_success_event=PM_ROUTE_DRAFT_EVENT,
+            repair_blocker_event=PM_ROUTE_DRAFT_EVENT,
+            repair_protocol_event=PM_ROUTE_DRAFT_EVENT,
         )
     if scenario == MATERIAL_REPAIR_SUCCESS_ONLY:
         return State(
@@ -404,6 +433,13 @@ def event_contract_failures(state: State) -> list[str]:
     if state.direct_ack_consumed and state.semantic_wait_required_after_ack:
         if not (state.semantic_wait_written_after_ack and state.semantic_wait_valid_after_ack):
             failures.append("direct ACK consumption erased the required semantic role wait")
+
+    if state.repair_outcome_table_written:
+        outcome_events = (state.repair_success_event, state.repair_blocker_event, state.repair_protocol_event)
+        if any(event == "none" for event in outcome_events):
+            failures.append("repair outcome table is missing success, blocker, or protocol-blocker row")
+        if len(set(outcome_events)) != 3:
+            failures.append("repair outcome table collapsed success, blocker, and protocol-blocker events")
 
     if state.material_repair_target and state.repair_outcome_table_written:
         expected = (MATERIAL_SUCCESS_EVENT, MATERIAL_BLOCKER_EVENT, MATERIAL_PROTOCOL_EVENT)

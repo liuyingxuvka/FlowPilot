@@ -10,10 +10,13 @@ Risk intent brief:
 - Adversarial branches include spec-only reissues, partial publication, success
   only resolution gates, reviewer blocker outcomes that cannot be routed, PM
   decisions resolving blockers by themselves, stale packet generations, and
-  controller no-legal-next-action after a valid recheck failure.
+  controller no-legal-next-action after a valid recheck failure, plus parent
+  repairs that target leaf-only current-node events and outcome tables whose
+  success/blocker/protocol-blocker rows collapse onto one business event.
 - Hard invariant: a repair is a transaction. It either commits one coherent new
-  packet generation with both success and non-success outcomes routable, or it
-  remains blocked with a router-visible follow-up blocker.
+  packet generation with both success and non-success outcomes routable through
+  executable, context-compatible event identities, or it remains blocked with a
+  router-visible follow-up blocker.
 - Blindspot: this is a protocol model. It does not assert product quality or
   inspect concrete packet body contents.
 """
@@ -32,6 +35,45 @@ MODEL_MISS_REVIEW_BLOCK_LANES = {
     "node_result": "route_mutation",
     "material_dispatch": "material_dispatch_recheck",
 }
+NODE_KINDS = {"leaf", "parent", "module", "repair"}
+PARENT_NODE_KINDS = {"parent", "module"}
+CONTROL_REPAIR_ORIGINS = {
+    "none",
+    "parent_backward_replay",
+    "current_node_result",
+    "material_dispatch",
+}
+LEAF_CURRENT_NODE_EVENTS = {
+    "pm_registers_current_node_packet",
+    "reviewer_allows_current_node_dispatch",
+    "worker_current_node_result_returned",
+    "reviewer_current_node_result_decision",
+    "pm_completes_current_node",
+}
+PARENT_REPAIR_SAFE_EVENTS = {
+    "pm_enters_child_subtree",
+    "pm_records_parent_protocol_blocker",
+    "pm_records_parent_segment_decision",
+    "pm_completes_parent_node",
+    "reviewer_parent_backward_replay",
+}
+BUSINESS_VALIDATED_REPAIR_EVENTS = LEAF_CURRENT_NODE_EVENTS | {
+    "pm_completes_parent_node",
+    "pm_records_parent_segment_decision",
+}
+EVENT_NODE_KIND_COMPATIBILITY = {
+    event: {"leaf", "repair"}
+    for event in LEAF_CURRENT_NODE_EVENTS
+}
+EVENT_NODE_KIND_COMPATIBILITY.update(
+    {
+        "pm_enters_child_subtree": PARENT_NODE_KINDS,
+        "pm_records_parent_protocol_blocker": PARENT_NODE_KINDS,
+        "pm_records_parent_segment_decision": PARENT_NODE_KINDS,
+        "pm_completes_parent_node": PARENT_NODE_KINDS,
+        "reviewer_parent_backward_replay": PARENT_NODE_KINDS,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -48,6 +90,9 @@ class Action:
 class State:
     status: str = "new"  # new | running | blocked | complete
     holder: str = "controller"
+    active_node_kind: str = "leaf"  # leaf | parent | module | repair
+    control_repair_origin: str = "none"  # none | parent_backward_replay | current_node_result | material_dispatch
+    rerun_target_event: str = "none"
     steps: int = 0
 
     blocker_detected: bool = False
@@ -95,6 +140,9 @@ class State:
     success_outcome_routable: bool = False
     blocker_outcome_routable: bool = False
     protocol_outcome_routable: bool = False
+    success_outcome_event: str = "none"
+    blocker_outcome_event: str = "none"
+    protocol_outcome_event: str = "none"
 
     reviewer_recheck_requested: bool = False
     reviewer_can_emit_success: bool = False
@@ -125,6 +173,27 @@ def initial_state() -> State:
 
 def _inc(state: State, **changes: object) -> State:
     return replace(state, steps=state.steps + 1, status="running", **changes)
+
+
+def _event_allowed_for_node_kind(event: str, node_kind: str) -> bool:
+    if event == "none":
+        return True
+    allowed = EVENT_NODE_KIND_COMPATIBILITY.get(event)
+    if allowed is None:
+        return True
+    return node_kind in allowed
+
+
+def _outcome_events(state: State) -> tuple[str, ...]:
+    return tuple(
+        event
+        for event in (
+            state.success_outcome_event,
+            state.blocker_outcome_event,
+            state.protocol_outcome_event,
+        )
+        if event != "none"
+    )
 
 
 class RepairTransactionStep:
@@ -326,6 +395,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 success_outcome_routable=True,
                 blocker_outcome_routable=True,
                 protocol_outcome_routable=True,
+                rerun_target_event="router_repair_recheck_success",
+                success_outcome_event="router_repair_recheck_success",
+                blocker_outcome_event="router_repair_recheck_blocker",
+                protocol_outcome_event="router_repair_recheck_protocol_blocker",
             ),
         )
         return
@@ -542,6 +615,92 @@ def outcome_table_accepts_success_and_failure(state: State, trace) -> InvariantR
     return InvariantResult.pass_()
 
 
+def active_node_and_repair_origin_are_known(state: State, trace) -> InvariantResult:
+    del trace
+    if state.active_node_kind not in NODE_KINDS:
+        return InvariantResult.fail(
+            "active node kind is outside repair transaction event compatibility table"
+        )
+    if state.control_repair_origin not in CONTROL_REPAIR_ORIGINS:
+        return InvariantResult.fail(
+            "control repair origin is outside repair transaction model"
+        )
+    return InvariantResult.pass_()
+
+
+def repair_rerun_target_matches_node_kind(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.rerun_target_event != "none"
+        and not _event_allowed_for_node_kind(state.rerun_target_event, state.active_node_kind)
+    ):
+        return InvariantResult.fail(
+            "repair rerun target event incompatible with active node kind"
+        )
+    return InvariantResult.pass_()
+
+
+def parent_repair_targets_parent_safe_event(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.control_repair_origin == "parent_backward_replay"
+        and state.rerun_target_event != "none"
+        and state.rerun_target_event not in PARENT_REPAIR_SAFE_EVENTS
+    ):
+        return InvariantResult.fail(
+            "parent backward replay repair target was not parent-safe"
+        )
+    return InvariantResult.pass_()
+
+
+def outcome_events_match_node_kind(state: State, trace) -> InvariantResult:
+    del trace
+    for event in _outcome_events(state):
+        if not _event_allowed_for_node_kind(event, state.active_node_kind):
+            return InvariantResult.fail(
+                "repair outcome event incompatible with active node kind"
+            )
+    return InvariantResult.pass_()
+
+
+def committed_outcome_table_has_event_identities(state: State, trace) -> InvariantResult:
+    del trace
+    if state.router_resolution_table_staged:
+        if state.success_outcome_routable and state.success_outcome_event == "none":
+            return InvariantResult.fail(
+                "repair success outcome was routable without event identity"
+            )
+        if state.blocker_outcome_routable and state.blocker_outcome_event == "none":
+            return InvariantResult.fail(
+                "repair blocker outcome was routable without event identity"
+            )
+        if state.protocol_outcome_routable and state.protocol_outcome_event == "none":
+            return InvariantResult.fail(
+                "repair protocol-blocker outcome was routable without event identity"
+            )
+    return InvariantResult.pass_()
+
+
+def outcome_table_uses_distinct_repair_events(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.router_resolution_table_staged:
+        return InvariantResult.pass_()
+    outcome_events = _outcome_events(state)
+    if (
+        len(outcome_events) == 3
+        and len(set(outcome_events)) == 1
+        and outcome_events[0] in BUSINESS_VALIDATED_REPAIR_EVENTS
+    ):
+        return InvariantResult.fail(
+            "repair outcome table collapsed success blocker and protocol-blocker onto one business-validated event"
+        )
+    if len(outcome_events) == 3 and len(set(outcome_events)) < 3:
+        return InvariantResult.fail(
+            "repair outcome table reused one event for multiple reviewer outcomes"
+        )
+    return InvariantResult.pass_()
+
+
 def reviewer_recheck_requires_committed_generation(state: State, trace) -> InvariantResult:
     del trace
     if state.reviewer_recheck_requested and not (
@@ -663,6 +822,36 @@ INVARIANTS = (
         predicate=outcome_table_accepts_success_and_failure,
     ),
     Invariant(
+        name="active_node_and_repair_origin_are_known",
+        description="Repair transactions classify active node kind and repair origin before event compatibility checks.",
+        predicate=active_node_and_repair_origin_are_known,
+    ),
+    Invariant(
+        name="repair_rerun_target_matches_node_kind",
+        description="Repair rerun targets must be executable under the active node kind.",
+        predicate=repair_rerun_target_matches_node_kind,
+    ),
+    Invariant(
+        name="parent_repair_targets_parent_safe_event",
+        description="Parent/backward-replay repairs cannot target leaf-only current-node events.",
+        predicate=parent_repair_targets_parent_safe_event,
+    ),
+    Invariant(
+        name="outcome_events_match_node_kind",
+        description="Every repair outcome event is compatible with the active node kind.",
+        predicate=outcome_events_match_node_kind,
+    ),
+    Invariant(
+        name="committed_outcome_table_has_event_identities",
+        description="Routable repair outcomes carry concrete event identities.",
+        predicate=committed_outcome_table_has_event_identities,
+    ),
+    Invariant(
+        name="outcome_table_uses_distinct_repair_events",
+        description="Success, blocker, and protocol-blocker outcomes do not collapse onto one business event.",
+        predicate=outcome_table_uses_distinct_repair_events,
+    ),
+    Invariant(
         name="reviewer_recheck_requires_committed_generation",
         description="Reviewer recheck starts only after commit and complete outcome table.",
         predicate=reviewer_recheck_requires_committed_generation,
@@ -736,6 +925,10 @@ def _safe_base(**changes: object) -> State:
             success_outcome_routable=True,
             blocker_outcome_routable=True,
             protocol_outcome_routable=True,
+            rerun_target_event="router_repair_recheck_success",
+            success_outcome_event="router_repair_recheck_success",
+            blocker_outcome_event="router_repair_recheck_blocker",
+            protocol_outcome_event="router_repair_recheck_protocol_blocker",
             reviewer_recheck_requested=True,
             reviewer_can_emit_success=True,
             reviewer_can_emit_blocker=True,
@@ -833,6 +1026,25 @@ def hazard_states() -> dict[str, State]:
             success_outcome_routable=True,
             blocker_outcome_routable=False,
             protocol_outcome_routable=False,
+        ),
+        "parent_repair_rerun_targets_current_node_packet": _safe_base(
+            active_node_kind="parent",
+            control_repair_origin="parent_backward_replay",
+            rerun_target_event="pm_registers_current_node_packet",
+        ),
+        "parent_repair_outcome_targets_current_node_packet": _safe_base(
+            active_node_kind="parent",
+            control_repair_origin="parent_backward_replay",
+            success_outcome_event="pm_registers_current_node_packet",
+        ),
+        "collapsed_repair_outcomes_on_business_event": _safe_base(
+            success_outcome_event="pm_registers_current_node_packet",
+            blocker_outcome_event="pm_registers_current_node_packet",
+            protocol_outcome_event="pm_registers_current_node_packet",
+        ),
+        "routable_outcome_missing_event_identity": _safe_base(
+            success_outcome_routable=True,
+            success_outcome_event="none",
         ),
         "reviewer_recheck_before_commit": _safe_base(
             transaction_committed_atomically=False,

@@ -105,6 +105,10 @@ HAZARD_EXPECTED_FAILURES = {
     "node_acceptance_plan_without_pm_high_standard_gate": "node acceptance plan written before PM high-standard gate",
     "node_acceptance_plan_without_prior_path_context": "node acceptance plan written before PM read fresh prior path context",
     "packet_registered_before_acceptance_plan_review": "current-node packet registered before PM high-standard gate and reviewed node acceptance plan",
+    "parent_node_current_packet_registered": "current-node packet registered for parent or module node",
+    "control_repair_wait_event_incompatible_with_parent": "router allowed event incompatible with active node kind",
+    "parent_backward_repair_targets_leaf_dispatch": "parent backward replay repair waited on non-parent-safe event",
+    "collapsed_repair_outcomes_on_business_validated_event": "repair outcome table collapsed success blocker and protocol-blocker onto one business-validated event",
     "worker_dispatched_before_reviewer_dispatch": "worker dispatched before router direct dispatch",
     "reviewer_pass_without_routed_worker_result": "reviewer decided before worker result was routed to reviewer",
     "reviewer_result_card_before_result_relay": "reviewer result-review card delivered before worker result relay",
@@ -198,10 +202,16 @@ def _expected_failure_for_hazard(name: str) -> str:
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|route={state.route_version},"
+        f"node_kind={state.active_node_kind}|"
         f"active={state.route_activated}|ctrl={state.controller_boundary_confirmed}|"
         f"ctrl_mode={state.controller_only_mode_active},"
         f"{state.no_next_action_detected},"
         f"{state.pm_decision_required_blocker_written}|"
+        f"control_repair={state.control_repair_origin},"
+        f"{state.control_repair_wait_event},"
+        f"outcomes={state.repair_outcome_success_event},"
+        f"{state.repair_outcome_blocker_event},"
+        f"{state.repair_outcome_protocol_blocker_event}|"
         f"officer={state.officer_packet_card_delivered},"
         f"{state.officer_packet_relayed},"
         f"{state.officer_packet_identity_boundary_present},"

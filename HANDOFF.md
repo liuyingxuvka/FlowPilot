@@ -416,6 +416,11 @@ FlowGuard caught and fixed these design issues:
   direct ACK/check-in event, false-prerequisite event, success-only material
   repair table, duplicate PM repair side effect, or post-write-only cleanup
   path.
+- Event capability registry coverage lives in
+  `simulations/flowpilot_event_capability_registry_model.py`. It verifies that
+  registered external events are also currently executable for the active node
+  kind, repair origin, target role, wait/rerun/outcome usage, and distinct
+  success/blocker/protocol-blocker repair rows.
 - The second legacy FlowPilot backup lives under
   `backups/flowpilot-20260504-second-backup-20260504-195841/` with matching
   zip archive. It is marked as a preserved backup and must not be deleted by
@@ -456,6 +461,7 @@ python simulations/run_flowpilot_resume_checks.py
 python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json
 python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json
 python simulations/run_flowpilot_event_contract_checks.py --json-out simulations/flowpilot_event_contract_results.json
+python simulations/run_flowpilot_event_capability_registry_checks.py --json-out simulations/flowpilot_event_capability_registry_results.json
 python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python scripts/check_install.py

@@ -1,0 +1,328 @@
+{
+  "architecture_candidate": {
+    "minimum_runtime_change_set": [
+      "Add event capability metadata around the existing Router EXTERNAL_EVENTS table.",
+      "Use the capability validator before writing control-blocker waits.",
+      "Use the capability validator before committing a PM repair rerun target.",
+      "Reject unsupported generic repair outcome tables instead of collapsing non-success rows onto the success event.",
+      "Keep material dispatch repair on its existing three explicit outcome events."
+    ],
+    "name": "event_capability_registry",
+    "principles": [
+      "External event registration is necessary but not sufficient for execution.",
+      "The same capability lookup gates waits, PM rerun targets, and repair outcome rows.",
+      "Parent/module backward-replay repairs are restricted to parent-safe events.",
+      "Repair success, blocker, and protocol-blocker rows use distinct eligible event identities.",
+      "Controller wait target roles are derived from event producer roles, not prompt text."
+    ]
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=102",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "ack_event_wait_accepted": {
+        "detected": true,
+        "expected_failure": "direct ACK/check-in event was accepted as external capability",
+        "failures": [
+          "direct ACK/check-in event was accepted as external capability",
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "ack_event_wait_accepted",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_route_skeleton_card_returned"
+          ]
+        }
+      },
+      "blocker_outcome_uses_success_event": {
+        "detected": true,
+        "expected_failure": "repair non-success outcome uses success-only business event",
+        "failures": [
+          "repair non-success outcome uses success-only business event",
+          "repair outcome event is not eligible for blocker row",
+          "repair outcome event is not eligible for protocol_blocker row",
+          "repair outcome table collapsed success blocker and protocol-blocker events"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": true,
+          "repair_blocker_event": "worker_current_node_result_returned",
+          "repair_origin": "current_node_result",
+          "repair_protocol_event": "worker_current_node_result_returned",
+          "repair_success_event": "worker_current_node_result_returned",
+          "rerun_target": "worker_current_node_result_returned",
+          "scenario": "blocker_outcome_uses_success_event",
+          "status": "running",
+          "target_role": "worker_a",
+          "terminal_reason": "none",
+          "wait_events": []
+        }
+      },
+      "collapsed_repair_outcomes_on_business_event": {
+        "detected": true,
+        "expected_failure": "repair outcome table collapsed success blocker and protocol-blocker events",
+        "failures": [
+          "repair non-success outcome uses success-only business event",
+          "repair outcome event is not eligible for blocker row",
+          "repair outcome event is not eligible for protocol_blocker row",
+          "repair outcome table collapsed success blocker and protocol-blocker events"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": true,
+          "repair_blocker_event": "worker_current_node_result_returned",
+          "repair_origin": "current_node_result",
+          "repair_protocol_event": "worker_current_node_result_returned",
+          "repair_success_event": "worker_current_node_result_returned",
+          "rerun_target": "worker_current_node_result_returned",
+          "scenario": "collapsed_repair_outcomes_on_business_event",
+          "status": "running",
+          "target_role": "worker_a",
+          "terminal_reason": "none",
+          "wait_events": []
+        }
+      },
+      "false_precondition_wait_accepted": {
+        "detected": true,
+        "expected_failure": "event capability precondition is not currently receivable",
+        "failures": [
+          "event capability precondition is not currently receivable"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": false,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "false_precondition_wait_accepted",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_registers_current_node_packet"
+          ]
+        }
+      },
+      "parent_backward_rerun_targets_leaf_dispatch": {
+        "detected": true,
+        "expected_failure": "parent backward replay repair used non-parent-safe event",
+        "failures": [
+          "event capability incompatible with active node kind",
+          "event capability incompatible with repair origin",
+          "parent backward replay repair used non-parent-safe event"
+        ],
+        "state": {
+          "active_node_kind": "module",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "parent_backward_replay",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "pm_registers_current_node_packet",
+          "scenario": "parent_backward_rerun_targets_leaf_dispatch",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_registers_current_node_packet"
+          ]
+        }
+      },
+      "parent_backward_success_outcome_leaf_event": {
+        "detected": true,
+        "expected_failure": "parent backward replay repair used non-parent-safe event",
+        "failures": [
+          "event capability incompatible with active node kind",
+          "event capability incompatible with repair origin",
+          "parent backward replay repair used non-parent-safe event",
+          "repair outcome table collapsed success blocker and protocol-blocker events"
+        ],
+        "state": {
+          "active_node_kind": "parent",
+          "currently_receivable": true,
+          "repair_blocker_event": "reviewer_blocks_parent_backward_replay",
+          "repair_origin": "parent_backward_replay",
+          "repair_protocol_event": "reviewer_blocks_parent_backward_replay",
+          "repair_success_event": "pm_registers_current_node_packet",
+          "rerun_target": "pm_records_parent_segment_decision",
+          "scenario": "parent_backward_success_outcome_leaf_event",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": []
+        }
+      },
+      "parent_current_packet_wait_accepted": {
+        "detected": true,
+        "expected_failure": "event capability incompatible with active node kind",
+        "failures": [
+          "event capability incompatible with active node kind"
+        ],
+        "state": {
+          "active_node_kind": "parent",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "parent_current_packet_wait_accepted",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_registers_current_node_packet"
+          ]
+        }
+      },
+      "pm_repair_event_as_rerun_target": {
+        "detected": true,
+        "expected_failure": "event capability cannot be used as repair rerun target",
+        "failures": [
+          "event capability cannot be used as repair rerun target"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "current_node_result",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "pm_records_control_blocker_repair_decision",
+          "scenario": "pm_repair_event_as_rerun_target",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_records_control_blocker_repair_decision"
+          ]
+        }
+      },
+      "protocol_outcome_uses_success_event": {
+        "detected": true,
+        "expected_failure": "repair outcome event is not eligible for protocol_blocker row",
+        "failures": [
+          "repair outcome event is not eligible for protocol_blocker row",
+          "repair outcome table collapsed success blocker and protocol-blocker events"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "router_direct_material_scan_dispatch_recheck_blocked",
+          "repair_origin": "material_dispatch",
+          "repair_protocol_event": "router_direct_material_scan_dispatch_recheck_passed",
+          "repair_success_event": "router_direct_material_scan_dispatch_recheck_passed",
+          "rerun_target": "router_direct_material_scan_dispatch_recheck_passed",
+          "scenario": "protocol_outcome_uses_success_event",
+          "status": "running",
+          "target_role": "controller",
+          "terminal_reason": "none",
+          "wait_events": []
+        }
+      },
+      "unregistered_event_accepted": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "unregistered_event_accepted",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_registers_current_node_packte"
+          ]
+        }
+      },
+      "wrong_producer_role_wait_accepted": {
+        "detected": true,
+        "expected_failure": "wait target role does not include event producer role",
+        "failures": [
+          "wait target role does not include event producer role"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "wrong_producer_role_wait_accepted",
+          "status": "running",
+          "target_role": "human_like_reviewer",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_registers_current_node_packet"
+          ]
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0,
+    "terminal_state_count": 17
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_generic_repair_outcome_table",
+      "valid_leaf_current_packet_wait",
+      "valid_material_repair_outcome_table",
+      "valid_parent_backward_wait",
+      "valid_parent_repair_outcome_table",
+      "valid_worker_leaf_result_wait"
+    ],
+    "edge_count": 34,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "ack_event_wait_accepted",
+      "blocker_outcome_uses_success_event",
+      "collapsed_repair_outcomes_on_business_event",
+      "false_precondition_wait_accepted",
+      "parent_backward_rerun_targets_leaf_dispatch",
+      "parent_backward_success_outcome_leaf_event",
+      "parent_current_packet_wait_accepted",
+      "pm_repair_event_as_rerun_target",
+      "protocol_outcome_uses_success_event",
+      "unregistered_event_accepted",
+      "wrong_producer_role_wait_accepted"
+    ],
+    "state_count": 35
+  }
+}

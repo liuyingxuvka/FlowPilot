@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot event-contract model."""
+"""Run checks for the FlowPilot event-capability registry model."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from typing import Any
 
 from flowguard import Explorer
 
-import flowpilot_event_contract_model as model
+import flowpilot_event_capability_registry_model as model
 
 
-RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_event_contract_results.json")
+RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_event_capability_registry_results.json")
 
 REQUIRED_LABELS = tuple(
     [f"select_{scenario}" for scenario in model.SCENARIOS]
@@ -22,28 +22,28 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    model.INTERNAL_ROUTER_ACTION_AS_PM_RERUN_TARGET: "internal Router action was accepted as PM rerun target",
-    model.UNKNOWN_STRING_AS_PM_RERUN_TARGET: "invalid PM repair rerun_target was not rejected before persistence",
-    model.PM_REPAIR_EVENT_AS_RERUN_TARGET: "PM repair decision event was accepted as its own rerun target",
-    model.WAIT_REQUIRES_FALSE_FLAG: "persisted role wait contains event whose prerequisite is not currently satisfied",
-    model.ACK_EVENT_IN_ALLOWED_EXTERNAL_EVENTS: "persisted role wait contains direct ACK/check-in event",
-    model.ACK_CONSUMED_SEMANTIC_WAIT_LOST: "direct ACK consumption erased the required semantic role wait",
-    model.GENERIC_REPAIR_COLLAPSED_OUTCOMES: "repair outcome table collapsed success, blocker, and protocol-blocker events",
-    model.MATERIAL_REPAIR_SUCCESS_ONLY: "material repair outcome table did not route success, blocker, and protocol outcomes",
-    model.DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER: "duplicate PM repair decision created new blocker or transaction",
-    model.POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT: "invalid wait was persisted and only repaired by post-write cleanup",
+    model.UNREGISTERED_EVENT_ACCEPTED: "event capability row is missing",
+    model.FALSE_PRECONDITION_WAIT_ACCEPTED: "event capability precondition is not currently receivable",
+    model.WRONG_PRODUCER_ROLE_WAIT_ACCEPTED: "wait target role does not include event producer role",
+    model.ACK_EVENT_WAIT_ACCEPTED: "direct ACK/check-in event was accepted as external capability",
+    model.PARENT_CURRENT_PACKET_WAIT_ACCEPTED: "event capability incompatible with active node kind",
+    model.PARENT_BACKWARD_RERUN_TARGETS_LEAF_DISPATCH: "parent backward replay repair used non-parent-safe event",
+    model.PARENT_BACKWARD_SUCCESS_OUTCOME_LEAF_EVENT: "parent backward replay repair used non-parent-safe event",
+    model.COLLAPSED_REPAIR_OUTCOMES_ON_BUSINESS_EVENT: "repair outcome table collapsed success blocker and protocol-blocker events",
+    model.BLOCKER_OUTCOME_USES_SUCCESS_EVENT: "repair non-success outcome uses success-only business event",
+    model.PROTOCOL_OUTCOME_USES_SUCCESS_EVENT: "repair outcome event is not eligible for protocol_blocker row",
+    model.PM_REPAIR_EVENT_AS_RERUN_TARGET: "event capability cannot be used as repair rerun target",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
-        f"scenario={state.scenario}|status={state.status}|target={state.rerun_target}|"
-        f"pending={state.pending_wait_written},{state.allowed_external_events}|"
-        f"registered={state.allowed_events_registered}|receivable={state.allowed_events_currently_receivable}|"
-        f"ack={state.direct_ack_consumed},{state.semantic_wait_written_after_ack},{state.semantic_wait_valid_after_ack}|"
-        f"repair={state.repair_success_event},{state.repair_blocker_event},{state.repair_protocol_event}|"
-        f"dup={state.duplicate_pm_repair_decision_seen},{state.duplicate_repair_created_new_blocker},"
-        f"{state.duplicate_repair_created_new_transaction}|reason={state.terminal_reason}"
+        f"scenario={state.scenario}|status={state.status}|"
+        f"node={state.active_node_kind}|origin={state.repair_origin}|"
+        f"target_role={state.target_role}|receivable={state.currently_receivable}|"
+        f"waits={state.wait_events}|rerun={state.rerun_target}|"
+        f"outcomes={state.repair_success_event},{state.repair_blocker_event},"
+        f"{state.repair_protocol_event}|reason={state.terminal_reason}"
     )
 
 
@@ -154,18 +154,38 @@ def _hazard_report() -> dict[str, object]:
     hazards: dict[str, object] = {}
     failures: list[str] = []
     for name, state in model.hazard_states().items():
-        event_failures = model.event_contract_failures(state)
+        capability_failures = model.event_capability_failures(state)
         expected = HAZARD_EXPECTED_FAILURES[name]
-        detected = any(expected in failure for failure in event_failures)
+        detected = any(expected in failure for failure in capability_failures)
         hazards[name] = {
             "detected": detected,
             "expected_failure": expected,
-            "failures": event_failures,
+            "failures": capability_failures,
             "state": state.__dict__,
         }
         if not detected:
             failures.append(f"{name}: expected failure containing {expected!r}")
     return {"ok": not failures, "hazards": hazards, "failures": failures}
+
+
+def _architecture_candidate() -> dict[str, object]:
+    return {
+        "name": "event_capability_registry",
+        "principles": [
+            "External event registration is necessary but not sufficient for execution.",
+            "The same capability lookup gates waits, PM rerun targets, and repair outcome rows.",
+            "Parent/module backward-replay repairs are restricted to parent-safe events.",
+            "Repair success, blocker, and protocol-blocker rows use distinct eligible event identities.",
+            "Controller wait target roles are derived from event producer roles, not prompt text.",
+        ],
+        "minimum_runtime_change_set": [
+            "Add event capability metadata around the existing Router EXTERNAL_EVENTS table.",
+            "Use the capability validator before writing control-blocker waits.",
+            "Use the capability validator before committing a PM repair rerun target.",
+            "Reject unsupported generic repair outcome tables instead of collapsing non-success rows onto the success event.",
+            "Keep material dispatch repair on its existing three explicit outcome events.",
+        ],
+    }
 
 
 def run_checks() -> dict[str, object]:
@@ -179,6 +199,7 @@ def run_checks() -> dict[str, object]:
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "architecture_candidate": _architecture_candidate(),
     }
     result["ok"] = all(section.get("ok", False) for section in (safe_graph, progress, explorer, hazards))
     return result

@@ -9,6 +9,7 @@ python simulations/run_startup_pm_review_checks.py
 python simulations/run_card_instruction_coverage_checks.py
 python simulations/run_command_refinement_checks.py
 python simulations/run_flowpilot_event_contract_checks.py
+python simulations/run_flowpilot_event_capability_registry_checks.py
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
@@ -41,6 +42,10 @@ Expected:
   ACK/check-in events, false-prerequisite waits, success-only material repair
   outcome tables, duplicate repair side effects, and post-write-only cleanup as
   legal persisted role waits.
+- event capability registry checks reject registered-but-not-currently-executable
+  waits, wrong producer roles, parent/module repairs that target leaf-only
+  events, and repair outcome tables that collapse success, blocker, and
+  protocol-blocker rows onto one event.
 - route replanning policy checks reject planning/root/parent node-entry gaps
   being converted into repair nodes before executable child work, while still
   allowing post-work reviewer failures to use repair/mutation paths.

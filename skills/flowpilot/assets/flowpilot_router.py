@@ -55,6 +55,9 @@ GATE_DECISION_RECORD_SCHEMA = "flowpilot.gate_decision_record.v1"
 GATE_DECISION_LEDGER_SCHEMA = "flowpilot.gate_decision_ledger.v1"
 PM_SUGGESTION_LEDGER_ENTRY_SCHEMA = "flowpilot.pm_suggestion_item.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
+PM_CONTROL_BLOCKER_FOLLOWUP_BLOCKER_EVENT = "pm_records_control_blocker_followup_blocker"
+PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT = "pm_records_control_blocker_protocol_blocker"
+PM_PARENT_PROTOCOL_BLOCKER_EVENT = "pm_records_parent_protocol_blocker"
 PM_MODEL_MISS_TRIAGE_DECISION_EVENT = "pm_records_model_miss_triage_decision"
 PM_ROLE_WORK_REQUEST_EVENT = "pm_registers_role_work_request"
 ROLE_WORK_RESULT_RETURNED_EVENT = "role_work_result_returned"
@@ -548,6 +551,26 @@ MATERIAL_REPAIR_OUTCOME_EVENTS = {
     "router_direct_material_scan_dispatch_recheck_blocked",
     "router_protocol_blocker_material_scan_dispatch_recheck",
 }
+CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS = {
+    PM_CONTROL_BLOCKER_FOLLOWUP_BLOCKER_EVENT,
+    PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT,
+}
+LEAF_CURRENT_NODE_EVENT_CAPABILITY_EVENTS = {
+    "pm_registers_current_node_packet",
+    "worker_current_node_result_returned",
+    "current_node_reviewer_passes_result",
+    "current_node_reviewer_blocks_result",
+    "pm_completes_current_node_from_reviewed_result",
+}
+PARENT_REPAIR_SAFE_EVENTS = {
+    "pm_builds_parent_backward_targets",
+    "reviewer_passes_parent_backward_replay",
+    "reviewer_blocks_parent_backward_replay",
+    "pm_records_parent_segment_decision",
+    "pm_completes_parent_node_from_backward_replay",
+    PM_PARENT_PROTOCOL_BLOCKER_EVENT,
+}
+PARENT_NODE_EVENT_CAPABILITY_EVENTS = PARENT_REPAIR_SAFE_EVENTS
 
 ROUTE_COMPLETION_FLAGS = (
     "pm_evidence_quality_package_card_delivered",
@@ -574,6 +597,14 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
         "family": "transaction",
         "dedupe_fields": ("control_blocker_id", "repair_transaction_id"),
         "retry_group_fields": ("event", "control_blocker_id"),
+    },
+    **{
+        event: {
+            "family": "control_blocker_repair_outcome",
+            "dedupe_fields": ("control_blocker_id", "repair_transaction_id", "outcome"),
+            "retry_group_fields": ("event", "control_blocker_id", "repair_transaction_id"),
+        }
+        for event in (*sorted(CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS), PM_PARENT_PROTOCOL_BLOCKER_EVENT)
     },
     PM_ROLE_WORK_REQUEST_EVENT: {
         "family": "pm_role_work_request",
@@ -1683,6 +1714,21 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "pm_records_control_blocker_repair_decision": {
         "flag": "pm_control_blocker_repair_decision_recorded",
         "summary": "PM recorded a repair decision for a router materialized control blocker.",
+    },
+    "pm_records_control_blocker_followup_blocker": {
+        "flag": "pm_control_blocker_followup_blocker_recorded",
+        "requires_flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "PM recorded that a control-blocker repair follow-up ended in a blocker that needs a new PM decision.",
+    },
+    "pm_records_control_blocker_protocol_blocker": {
+        "flag": "pm_control_blocker_protocol_blocker_recorded",
+        "requires_flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "PM recorded that a control-blocker repair follow-up exposed a protocol blocker.",
+    },
+    "pm_records_parent_protocol_blocker": {
+        "flag": "parent_protocol_blocker_recorded",
+        "requires_flag": "pm_control_blocker_repair_decision_recorded",
+        "summary": "PM recorded a parent/module repair protocol blocker after parent backward replay repair.",
     },
     "role_records_gate_decision": {
         "flag": "gate_decision_recorded",
@@ -2797,6 +2843,26 @@ def _control_blocker_repair_decision_identity_scope(payload_view: dict[str, Any]
     }
 
 
+def _control_blocker_repair_outcome_identity_scope(
+    payload_view: dict[str, Any],
+    run_state: dict[str, Any],
+    event: str,
+) -> dict[str, str]:
+    active = _active_control_blocker_for_identity(run_state)
+    blocker_id = str(payload_view.get("blocker_id") or active.get("blocker_id") or "missing-blocker")
+    outcome = "protocol_blocker" if event in {PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT, PM_PARENT_PROTOCOL_BLOCKER_EVENT} else "blocker"
+    return {
+        "event": event,
+        "control_blocker_id": blocker_id,
+        "repair_transaction_id": str(
+            payload_view.get("repair_transaction_id")
+            or active.get("repair_transaction_id")
+            or f"repair-tx-{blocker_id}"
+        ),
+        "outcome": outcome,
+    }
+
+
 def _gate_decision_identity_scope(run_root: Path, payload_view: dict[str, Any]) -> dict[str, str]:
     frontier = _frontier_for_event_identity(run_root)
     return {
@@ -2908,6 +2974,8 @@ def _scoped_event_identity(
         scope = _route_mutation_identity_scope(run_root, run_state, payload_view)
     elif event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         scope = _control_blocker_repair_decision_identity_scope(payload_view, run_state)
+    elif event in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS or event == PM_PARENT_PROTOCOL_BLOCKER_EVENT:
+        scope = _control_blocker_repair_outcome_identity_scope(payload_view, run_state, event)
     elif event == GATE_DECISION_EVENT:
         scope = _gate_decision_identity_scope(run_root, payload_view)
     elif event == "pm_requests_startup_repair":
@@ -4841,6 +4909,114 @@ def _validated_external_event_names(
     return normalized
 
 
+def _active_node_kind_for_event_capability(run_root: Path | None) -> str | None:
+    if run_root is None:
+        return None
+    try:
+        frontier = _active_frontier(run_root)
+        node = _active_node_definition(run_root, frontier)
+    except (OSError, KeyError, RouterError, json.JSONDecodeError, ValueError, TypeError):
+        return None
+    kind = _node_kind(node)
+    if _node_child_ids(node) and kind not in {"parent", "module"}:
+        return "parent"
+    return kind or None
+
+
+def _event_capability_issue(
+    event: str,
+    *,
+    run_root: Path | None = None,
+    run_state: dict[str, Any] | None = None,
+    usage: str = "wait",
+    repair_origin: str | None = None,
+    outcome_kind: str | None = None,
+    currently_receivable: bool = True,
+) -> str | None:
+    if event not in EXTERNAL_EVENTS:
+        return "event is not registered"
+    if not currently_receivable:
+        return "event is not currently receivable"
+    if usage == "rerun_target" and event in {
+        PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT,
+        *CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS,
+        PM_PARENT_PROTOCOL_BLOCKER_EVENT,
+    }:
+        return "event cannot be used as a repair rerun target"
+    active_node_kind = _active_node_kind_for_event_capability(run_root)
+    if active_node_kind in {"parent", "module"} and event in LEAF_CURRENT_NODE_EVENT_CAPABILITY_EVENTS:
+        return "event is incompatible with parent/module active node"
+    if active_node_kind in {"leaf", "repair"} and event in PARENT_NODE_EVENT_CAPABILITY_EVENTS:
+        return "event requires a parent/module active node"
+    active_node_has_children = _active_node_children_status(run_root)
+    meta = EXTERNAL_EVENTS.get(event) or {}
+    if not _event_applicable_for_active_node(meta, active_node_has_children):
+        return "event is incompatible with active node child state"
+    origin = repair_origin or "none"
+    if origin == "parent_backward_replay" and event not in PARENT_REPAIR_SAFE_EVENTS:
+        return "parent backward replay repair cannot target this event"
+    if usage == "repair_outcome":
+        if outcome_kind == "success" and event in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS | {PM_PARENT_PROTOCOL_BLOCKER_EVENT}:
+            return "repair success outcome cannot use a non-success event"
+        if outcome_kind == "blocker" and event not in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS | {"reviewer_blocks_parent_backward_replay", "router_direct_material_scan_dispatch_recheck_blocked"}:
+            return "repair blocker outcome must use a blocker-capable event"
+        if outcome_kind == "protocol_blocker" and event not in {
+            PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT,
+            PM_PARENT_PROTOCOL_BLOCKER_EVENT,
+            "router_protocol_blocker_material_scan_dispatch_recheck",
+        }:
+            return "repair protocol-blocker outcome must use a protocol-blocker-capable event"
+    required_flag = meta.get("requires_flag")
+    if usage in {"wait", "rerun_target"} and run_state is not None and required_flag and not run_state.get("flags", {}).get(required_flag):
+        return f"event requires unsatisfied flag {required_flag}"
+    return None
+
+
+def _run_state_with_assumed_flag(run_state: dict[str, Any], flag: str) -> dict[str, Any]:
+    assumed = dict(run_state)
+    flags = dict(run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {})
+    flags[flag] = True
+    assumed["flags"] = flags
+    return assumed
+
+
+def _validated_event_capability_names(
+    events: Any,
+    *,
+    context: str,
+    run_root: Path | None = None,
+    run_state: dict[str, Any] | None = None,
+    usage: str = "wait",
+    repair_origin: str | None = None,
+    outcome_kind: str | None = None,
+    allow_pm_repair_event: bool = True,
+    currently_receivable: bool = True,
+) -> list[str]:
+    normalized = _validated_external_event_names(
+        events,
+        context=context,
+        allow_pm_repair_event=allow_pm_repair_event,
+    )
+    issues = [
+        f"{event}: {issue}"
+        for event in normalized
+        if (
+            issue := _event_capability_issue(
+                event,
+                run_root=run_root,
+                run_state=run_state,
+                usage=usage,
+                repair_origin=repair_origin,
+                outcome_kind=outcome_kind,
+                currently_receivable=currently_receivable,
+            )
+        )
+    ]
+    if issues:
+        raise RouterError(f"{context} contains non-executable external event(s): {', '.join(issues)}")
+    return normalized
+
+
 def _external_event_validation_issue(events: Any) -> dict[str, Any] | None:
     try:
         _validated_external_event_names(events, context="event validation")
@@ -5136,6 +5312,7 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
         "pm_repair_decision_path",
         "pm_repair_decision_hash",
         "pm_repair_rerun_target",
+        "repair_origin",
         "repair_transaction_id",
         "repair_transaction_path",
         "repair_outcome_table",
@@ -5186,11 +5363,24 @@ def _sync_control_plane_indexes(project_root: Path, run_root: Path, run_state: d
     _write_repair_transaction_index(project_root, run_root, run_state)
 
 
-def _control_blocker_wait_events(record: dict[str, Any]) -> tuple[list[str], dict[str, Any] | None]:
+def _control_blocker_wait_events(
+    record: dict[str, Any],
+    *,
+    run_root: Path | None = None,
+    run_state: dict[str, Any] | None = None,
+) -> tuple[list[str], dict[str, Any] | None]:
     raw_events = record.get("allowed_resolution_events") or sorted(EXTERNAL_EVENTS)
     issue = _external_event_validation_issue(raw_events)
     if issue is None:
-        return _validated_external_event_names(raw_events, context="control blocker wait"), None
+        repair_origin = str(record.get("repair_origin") or "none")
+        return _validated_event_capability_names(
+            raw_events,
+            context="control blocker wait",
+            run_root=run_root,
+            run_state=run_state,
+            usage="wait",
+            repair_origin=repair_origin,
+        ), None
     lane = str(record.get("handling_lane") or "")
     if lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES:
         return [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT], {
@@ -5248,7 +5438,11 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
         return None
     lane = str(record.get("handling_lane") or active.get("handling_lane") or "pm_repair_decision_required")
     target_role = str(record.get("target_role") or active.get("target_role") or "project_manager")
-    allowed_resolution_events, event_contract_issue = _control_blocker_wait_events(record)
+    allowed_resolution_events, event_contract_issue = _control_blocker_wait_events(
+        record,
+        run_root=run_root,
+        run_state=run_state,
+    )
     target_role = _control_blocker_followup_target_role(allowed_resolution_events, target_role)
     _validate_wait_event_producer_binding(
         allowed_resolution_events,
@@ -5578,17 +5772,29 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         raise RouterError("control blocker repair decision rerun_target must name a registered external event")
     if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
         raise RouterError("control blocker repair decision rerun_target must name a corrected follow-up event, not the PM decision event")
-    rerun_target = _validated_external_event_names(
-        [rerun_target],
-        context="control blocker repair decision rerun_target",
-        allow_pm_repair_event=False,
-    )[0]
     repair_transaction_request = decision.get("repair_transaction")
     if not isinstance(repair_transaction_request, dict):
         raise RouterError("control blocker repair decision requires repair_transaction")
     requested_plan_kind = str(repair_transaction_request.get("plan_kind") or "").strip()
     if requested_plan_kind not in {"event_replay", "packet_reissue", "route_mutation"}:
         raise RouterError("repair_transaction.plan_kind must be event_replay, packet_reissue, or route_mutation")
+    repair_origin = _control_blocker_repair_origin(
+        active,
+        rerun_target=rerun_target,
+        requested_plan_kind=requested_plan_kind,
+        run_root=run_root,
+        run_state=run_state,
+    )
+    post_decision_state = _run_state_with_assumed_flag(run_state, "pm_control_blocker_repair_decision_recorded")
+    rerun_target = _validated_event_capability_names(
+        [rerun_target],
+        context="control blocker repair decision rerun_target",
+        run_root=run_root,
+        run_state=post_decision_state,
+        usage="rerun_target",
+        repair_origin=repair_origin,
+        allow_pm_repair_event=False,
+    )[0]
     blockers = decision.get("blockers")
     if not isinstance(blockers, list):
         raise RouterError("control blocker repair decision requires blockers list")
@@ -5599,10 +5805,21 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         raise RouterError("control blocker repair decision requires contract_self_check.all_required_fields_present=true")
     if contract_self_check.get("exact_field_names_used") is not True:
         raise RouterError("control blocker repair decision requires contract_self_check.exact_field_names_used=true")
-    outcome_table = _repair_outcome_table(rerun_target)
-    allowed_resolution_events = _validated_external_event_names(
+    outcome_table = _repair_outcome_table(rerun_target, repair_origin=repair_origin)
+    _validate_repair_outcome_table(
+        outcome_table,
+        context="control blocker repair outcome table",
+        run_root=run_root,
+        run_state=post_decision_state,
+        repair_origin=repair_origin,
+    )
+    allowed_resolution_events = _validated_event_capability_names(
         _repair_outcome_events(outcome_table),
         context="control blocker repair outcome table",
+        run_root=run_root,
+        run_state=post_decision_state,
+        usage="wait",
+        repair_origin=repair_origin,
         allow_pm_repair_event=False,
     )
     transaction_id = _repair_transaction_id(blocker_id)
@@ -5632,6 +5849,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         "repair_transaction_id": transaction_id,
         "prior_path_context_review": prior_path_context_review,
         "repair_action": repair_action,
+        "repair_origin": repair_origin,
         "rerun_target": rerun_target,
         "outcome_table": outcome_table,
         "blockers": blockers,
@@ -5666,6 +5884,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         "packet_spec_source": packet_spec_source,
         "generation_commit": generation_commit,
         "pm_repair_decision_path": project_relative(project_root, decision_path),
+        "repair_origin": repair_origin,
         "rerun_target": rerun_target,
         "outcome_table": outcome_table,
         "allowed_resolution_events": allowed_resolution_events,
@@ -5682,6 +5901,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         record["pm_repair_decision_path"] = decision_rel
         record["pm_repair_decision_hash"] = decision_hash
         record["pm_repair_rerun_target"] = rerun_target
+        record["repair_origin"] = repair_origin
         record["repair_transaction_id"] = transaction_id
         record["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
         record["repair_outcome_table"] = outcome_table
@@ -5692,6 +5912,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     active["pm_repair_decision_path"] = decision_rel
     active["pm_repair_decision_hash"] = decision_hash
     active["pm_repair_rerun_target"] = rerun_target
+    active["repair_origin"] = repair_origin
     active["repair_transaction_id"] = transaction_id
     active["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
     active["repair_outcome_table"] = outcome_table
@@ -12387,7 +12608,42 @@ def _repair_transaction_id(blocker_id: str) -> str:
     return f"repair-tx-{safe or 'control-blocker'}"
 
 
-def _repair_outcome_table(rerun_target: str) -> dict[str, dict[str, Any]]:
+def _control_blocker_repair_origin(
+    active: dict[str, Any],
+    *,
+    rerun_target: str,
+    requested_plan_kind: str,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> str:
+    originating_event = str(active.get("originating_event") or "")
+    if (
+        requested_plan_kind == "packet_reissue"
+        or rerun_target in MATERIAL_REPAIR_OUTCOME_EVENTS
+        or originating_event in MATERIAL_REPAIR_OUTCOME_EVENTS
+        or originating_event in {"reviewer_blocks_material_scan_dispatch", "reviewer_blocks_material_scan_dispatch_recheck"}
+    ):
+        return "material_dispatch"
+    if (
+        rerun_target in PARENT_REPAIR_SAFE_EVENTS
+        or originating_event in PARENT_REPAIR_SAFE_EVENTS
+        or run_state.get("flags", {}).get("parent_backward_replay_blocked")
+    ):
+        return "parent_backward_replay"
+    if rerun_target in LEAF_CURRENT_NODE_EVENT_CAPABILITY_EVENTS or originating_event in LEAF_CURRENT_NODE_EVENT_CAPABILITY_EVENTS:
+        return "current_node_result"
+    try:
+        if _active_node_kind_for_event_capability(run_root) in {"parent", "module"} and originating_event in {
+            "pm_records_parent_segment_decision",
+            "pm_completes_parent_node_from_backward_replay",
+        }:
+            return "parent_backward_replay"
+    except (RouterError, OSError, ValueError, TypeError):
+        pass
+    return "none"
+
+
+def _repair_outcome_table(rerun_target: str, *, repair_origin: str = "none") -> dict[str, dict[str, Any]]:
     if rerun_target in {
         "router_direct_material_scan_dispatch_recheck_passed",
         "reviewer_allows_material_scan_dispatch",
@@ -12406,22 +12662,73 @@ def _repair_outcome_table(rerun_target: str) -> dict[str, dict[str, Any]]:
                 "terminal": "blocked",
             },
         }
+    if repair_origin == "parent_backward_replay":
+        if rerun_target not in PARENT_REPAIR_SAFE_EVENTS:
+            raise RouterError("parent backward replay repair rerun_target must be a parent-safe event")
+        if rerun_target in {"reviewer_blocks_parent_backward_replay", PM_PARENT_PROTOCOL_BLOCKER_EVENT}:
+            raise RouterError("parent backward replay repair rerun_target must be a success-capable parent event")
+        return {
+            "success": {
+                "event": rerun_target,
+                "terminal": "complete",
+            },
+            "blocker": {
+                "event": "reviewer_blocks_parent_backward_replay",
+                "terminal": "blocked",
+            },
+            "protocol_blocker": {
+                "event": PM_PARENT_PROTOCOL_BLOCKER_EVENT,
+                "terminal": "blocked",
+            },
+        }
+    if rerun_target in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS or rerun_target == PM_PARENT_PROTOCOL_BLOCKER_EVENT:
+        raise RouterError("control blocker repair rerun_target must be a success-capable follow-up event")
     return {
         "success": {
             "event": rerun_target,
             "terminal": "complete",
         },
         "blocker": {
-            "event": rerun_target,
+            "event": PM_CONTROL_BLOCKER_FOLLOWUP_BLOCKER_EVENT,
             "terminal": "blocked",
-            "shares_success_event": True,
         },
         "protocol_blocker": {
-            "event": rerun_target,
+            "event": PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT,
             "terminal": "blocked",
-            "shares_success_event": True,
         },
     }
+
+
+def _validate_repair_outcome_table(
+    outcome_table: dict[str, Any],
+    *,
+    context: str,
+    run_root: Path,
+    run_state: dict[str, Any],
+    repair_origin: str,
+) -> None:
+    events_by_kind: dict[str, str] = {}
+    for kind in ("success", "blocker", "protocol_blocker"):
+        outcome = outcome_table.get(kind)
+        if not isinstance(outcome, dict):
+            raise RouterError(f"{context} requires {kind} outcome row")
+        event = str(outcome.get("event") or "").strip()
+        if not event:
+            raise RouterError(f"{context} {kind} outcome row requires event")
+        events_by_kind[kind] = event
+    if len(set(events_by_kind.values())) != len(events_by_kind):
+        raise RouterError(f"{context} must use distinct success, blocker, and protocol-blocker events")
+    for kind, event in events_by_kind.items():
+        _validated_event_capability_names(
+            [event],
+            context=f"{context} {kind} outcome",
+            run_root=run_root,
+            run_state=run_state,
+            usage="repair_outcome",
+            repair_origin=repair_origin,
+            outcome_kind=kind,
+            allow_pm_repair_event=False,
+        )
 
 
 def _repair_outcome_events(outcome_table: dict[str, Any]) -> list[str]:
@@ -16779,9 +17086,12 @@ def _expected_role_decision_wait_action(
     allowed_events = list(allowed_external_events)
     if pm_work_request_channel and to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
         allowed_events.append(PM_ROLE_WORK_REQUEST_EVENT)
-    allowed_events = _validated_external_event_names(
+    allowed_events = _validated_event_capability_names(
         allowed_events,
         context=f"await_role_decision action {label}",
+        run_root=run_root,
+        run_state=run_state,
+        usage="wait",
     )
     if producer_roles_override is None:
         _validate_wait_event_producer_binding(
@@ -18681,6 +18991,7 @@ def _record_external_event_unchecked(
     )
     repeatable_gate_decision = event == GATE_DECISION_EVENT
     repeatable_gate_outcome_block = event in GATE_OUTCOME_BLOCK_EVENTS
+    repeatable_control_blocker_repair_outcome = event in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS or event == PM_PARENT_PROTOCOL_BLOCKER_EVENT
     repeatable_startup_repair_request = (
         event == "pm_requests_startup_repair"
         and run_state["flags"].get(flag)
@@ -18713,6 +19024,7 @@ def _record_external_event_unchecked(
         repeatable_pm_repair_decision
         or repeatable_gate_decision
         or repeatable_gate_outcome_block
+        or repeatable_control_blocker_repair_outcome
         or repeatable_startup_repair_request
         or repeatable_route_draft_repair
         or repeatable_current_node_completion

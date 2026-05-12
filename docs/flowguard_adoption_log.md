@@ -7827,6 +7827,102 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
 
 
+## flowpilot-event-capability-registry-runtime-20260512 - Gate waits, rerun targets, and repair outcomes through event capability facts
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested the control table and prompt migration plan to prevent scattered prompt authority and the router bug class where a registered event could be persisted as a wait even when it was not executable for the current route state or repair origin.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T07:01:02+02:00
+- Ended: 2026-05-12T07:56:49+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_event_capability_registry_model.py
+- simulations/flowpilot_event_contract_model.py
+- simulations/flowpilot_repair_transaction_model.py
+- simulations/flowpilot_router_loop_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_event_contract_model.py simulations\run_flowpilot_event_contract_checks.py simulations\flowpilot_event_capability_registry_model.py simulations\run_flowpilot_event_capability_registry_checks.py scripts\check_install.py scripts\run_flowguard_coverage_sweep.py`
+- OK: `python simulations\run_flowpilot_event_capability_registry_checks.py --json-out simulations\flowpilot_event_capability_registry_results.json`
+- OK: `python simulations\run_flowpilot_event_contract_checks.py --json-out simulations\flowpilot_event_contract_results.json`
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py --json-out simulations\flowpilot_repair_transaction_results.json`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_flowpilot_route_replanning_policy_checks.py --json-out simulations\flowpilot_route_replanning_policy_results.json`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "control_blocker_repair or repair_transaction or pm_repair_decision or parent_backward_non_continue or parent_node_cannot_receive_current_node_packet"`
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py` in background; 634501 states, 654672 edges, no stuck states, no nonterminating components.
+- OK: `python simulations\run_capability_checks.py` in background; 624663 states, 650122 edges, no stuck states, no nonterminating components.
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- WARN: `python scripts\run_flowguard_coverage_sweep.py --json-out tmp\flowguard_coverage_sweep_event_capability_after_sync.json` returned nonzero because four pre-existing support runners are unparsed/unavailable, but finding_count was zero after local install sync.
+
+### Findings
+- Added a concrete event capability model that treats event registration as necessary but not sufficient. Waits, repair rerun targets, and repair outcome rows must also match active node kind, repair origin, target role, current prerequisite flags, and row usage.
+- Router repair decisions now reject registered but non-receivable rerun targets before writing a wait. Parent/backward replay repairs cannot target leaf-only current-node packet events.
+- Generic control-blocker repair outcomes now use distinct success, blocker, and protocol-blocker events instead of collapsing all outcomes onto one business event. Material dispatch keeps its existing three explicit outcome events.
+- The migration plan records the prompt/control-table inventory, optimization sequence, risk checklist, FlowGuard coverage matrix, and pre-implementation architecture fit check.
+
+### Counterexamples
+- FlowGuard hazards detect unregistered events, false-precondition waits, wrong producer-role waits, ACK waits, parent repairs targeting leaf events, collapsed repair outcomes, blocker/protocol rows using success-only events, and PM repair events reused as rerun targets.
+
+### Friction Points
+- Read-only coverage sweep still has four pre-existing unparsed support runners. It is useful for drift findings, and it confirmed the installed-skill drift disappeared after sync, but it remains nonzero until those support runners expose parseable result paths.
+
+### Skipped Steps
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+
+### Next Actions
+- Continue the broader prompt migration by replacing scattered worker/card command prose with generated snippets sourced from the control/event capability tables.
+
+
+## flowpilot-control-event-compatibility-model-upgrade-20260512 - Model router repair event identity and node-kind compatibility
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot control-plane deadlock analysis exposed a model miss where repair and router outcome tables treated events as routable without checking whether the concrete event was executable under the active parent/leaf node kind.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T07:01:02+02:00
+- Ended: 2026-05-12T07:01:02+02:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_router_loop_model.py
+- simulations/flowpilot_repair_transaction_model.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK (0.000s): `python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_results.json`
+- OK (0.000s): `python simulations/run_meta_checks.py`
+- OK (0.000s): `python -m py_compile simulations/flowpilot_router_loop_model.py simulations/run_flowpilot_router_loop_checks.py simulations/flowpilot_repair_transaction_model.py simulations/run_flowpilot_repair_transaction_checks.py`
+
+### Findings
+- Router-loop and repair-transaction models now represent active node kind, repair origin, concrete rerun event identity, and success/blocker/protocol-blocker outcome event identities.
+- New hazard states catch parent/backward-replay repairs targeting leaf-only current-node events, outcome events incompatible with the active node kind, collapsed outcome tables, and routable outcomes without concrete event identities.
+- Abstract model checks passed with no safe-graph invariant failures, no stuck states, and no nonterminal loops.
+
+### Counterexamples
+- Captured known-bad hazard mutations for the event-compatibility deadlock class; all were detected by the upgraded model.
+
+### Friction Points
+- `python simulations/run_meta_checks.py` needed a longer timeout because the project-level graph has more than 600k states.
+
+### Skipped Steps
+- Production router mutation and runtime conformance replay were intentionally skipped; this task was limited to model upgrade, simulation, and repair recommendation.
+- Capability checks were not rerun because this change did not alter skill/capability routing.
+
+### Next Actions
+- Implement the router fix as a separate change: add a shared event-capability preflight and make repair outcome-table construction use distinct, context-compatible event identities.
+
+
 ## contract-runtime-binding-registry-20260511 - Make FlowPilot role-output contract runtime bindings registry-driven and checked end to end
 
 - Project: FlowGuardProjectAutopilot_20260430

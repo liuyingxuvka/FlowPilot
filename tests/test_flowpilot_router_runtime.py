@@ -6855,6 +6855,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state = read_json(router.run_state_path(run_root))
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
             run_root,
@@ -6921,7 +6923,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        state = read_json(router.run_state_path(run_root))
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
             run_root,
@@ -6944,13 +6949,111 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["allowed_external_events"], ["pm_writes_route_draft"])
+        self.assertEqual(
+            set(action["allowed_external_events"]),
+            {
+                "pm_writes_route_draft",
+                "pm_records_control_blocker_followup_blocker",
+                "pm_records_control_blocker_protocol_blocker",
+            },
+        )
+
+    def test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="packet group reviewer audit failed: route draft needs PM reissue",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/route-draft-not-ready.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        with self.assertRaisesRegex(router.RouterError, "pm_writes_route_draft: event requires unsatisfied flag"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(
+                    root,
+                    "control_blocks/not_receivable_route_draft_pm_repair_decision",
+                    self.pm_control_blocker_decision_body(blocker["blocker_id"], rerun_target="pm_writes_route_draft"),
+                ),
+            )
+
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertNotIn("pm_repair_rerun_target", original)
+
+    def test_pm_repair_decision_rejects_parent_repair_targeting_current_node_packet(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        router.record_external_event(
+            root,
+            "pm_activates_reviewed_route",
+            {
+                "route_id": "route-001",
+                "active_node_id": "parent-001",
+                "route_version": 1,
+                "route": {
+                    "schema_version": "flowpilot.route.v1",
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "active_node_id": "parent-001",
+                    "nodes": [
+                        {
+                            "node_id": "parent-001",
+                            "status": "active",
+                            "title": "Parent node",
+                            "child_node_ids": ["child-001"],
+                        },
+                        {"node_id": "child-001", "status": "planned", "title": "Child node"},
+                    ],
+                },
+            },
+        )
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["node_acceptance_plan_reviewer_passed"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="parent backward replay repair cannot jump to leaf current-node packet registration",
+            event="pm_records_parent_segment_decision",
+            payload={"decision_path": ".flowpilot/runs/test/decisions/parent.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        with self.assertRaisesRegex(router.RouterError, "pm_registers_current_node_packet: event is incompatible with parent/module active node"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(
+                    root,
+                    "control_blocks/parent_bad_rerun_pm_repair_decision",
+                    self.pm_control_blocker_decision_body(
+                        blocker["blocker_id"],
+                        rerun_target="pm_registers_current_node_packet",
+                    ),
+                ),
+            )
+
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertNotIn("pm_repair_rerun_target", original)
 
     def test_pm_repair_decision_can_repeat_for_new_control_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state_path = router.run_state_path(run_root)
         state = read_json(state_path)
+        state["flags"]["reviewer_material_sufficiency_card_delivered"] = True
+        router.save_run_state(run_root, state)
         first = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
             run_root,

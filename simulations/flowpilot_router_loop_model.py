@@ -16,6 +16,10 @@ Risk intent brief:
   result relay before packet-ledger checks, reviewer result-review card before
   result relay, officer packet relay without an officer card, repair/recheck
   bypasses around the reviewer,
+  router wait events that are impossible under the active node kind, parent
+  repair lanes that target leaf/current-node worker dispatch, collapsed repair
+  outcome tables that map success/blocker/protocol-blocker to one
+  business-validated event,
   route mutation without reviewer block or stale markers, PM completion before
   reviewer pass, final ledger without a current route scan/zero unresolved
   items/source-of-truth file, stale/unresolved evidence, pending generated
@@ -51,6 +55,39 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 MAX_ROUTE_MUTATIONS = 1
+NODE_KINDS = {"leaf", "parent", "module", "repair"}
+PARENT_NODE_KINDS = {"parent", "module"}
+LEAF_CURRENT_NODE_EVENTS = {
+    "pm_registers_current_node_packet",
+    "reviewer_allows_current_node_dispatch",
+    "worker_current_node_result_returned",
+    "reviewer_current_node_result_decision",
+    "pm_completes_current_node",
+}
+PARENT_REPAIR_SAFE_EVENTS = {
+    "pm_enters_child_subtree",
+    "pm_records_parent_protocol_blocker",
+    "pm_records_parent_segment_decision",
+    "pm_completes_parent_node",
+    "reviewer_parent_backward_replay",
+}
+BUSINESS_VALIDATED_REPAIR_EVENTS = LEAF_CURRENT_NODE_EVENTS | {
+    "pm_completes_parent_node",
+    "pm_records_parent_segment_decision",
+}
+EVENT_NODE_KIND_COMPATIBILITY = {
+    event: {"leaf", "repair"}
+    for event in LEAF_CURRENT_NODE_EVENTS
+}
+EVENT_NODE_KIND_COMPATIBILITY.update(
+    {
+        "pm_enters_child_subtree": PARENT_NODE_KINDS,
+        "pm_records_parent_protocol_blocker": PARENT_NODE_KINDS,
+        "pm_records_parent_segment_decision": PARENT_NODE_KINDS,
+        "pm_completes_parent_node": PARENT_NODE_KINDS,
+        "reviewer_parent_backward_replay": PARENT_NODE_KINDS,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -67,6 +104,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | blocked | complete
     holder: str = "none"  # none | controller | pm | reviewer | worker | officer
+    active_node_kind: str = "leaf"  # leaf | parent | module | repair
     route_version: int = 0
 
     controller_boundary_confirmed: bool = False
@@ -76,6 +114,11 @@ class State:
     controller_read_sealed_body: bool = False
     controller_originated_project_evidence: bool = False
     controller_relayed_body_content: bool = False
+    control_repair_origin: str = "none"  # none | parent_backward_replay | current_node_result | material_dispatch
+    control_repair_wait_event: str = "none"
+    repair_outcome_success_event: str = "none"
+    repair_outcome_blocker_event: str = "none"
+    repair_outcome_protocol_blocker_event: str = "none"
 
     route_activated: bool = False
     officer_packet_card_delivered: bool = False
@@ -500,6 +543,7 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
     return replace(
         state,
         route_activated=False,
+        active_node_kind="leaf",
         officer_packet_card_delivered=False,
         officer_packet_relayed=False,
         officer_packet_identity_boundary_present=False,
@@ -589,6 +633,11 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         final_backward_replay_passed=False,
         task_completion_projection_published=False,
         pm_terminal_closure_card_delivered=False,
+        control_repair_origin="none",
+        control_repair_wait_event="none",
+        repair_outcome_success_event="none",
+        repair_outcome_blocker_event="none",
+        repair_outcome_protocol_blocker_event="none",
         **changes,
     )
 
@@ -636,6 +685,25 @@ def expected_wait_hazard_states() -> dict[str, State]:
                 seen.add(transition.state)
                 pending.append(transition.state)
     return samples
+
+
+def _event_allowed_for_node_kind(event: str, node_kind: str) -> bool:
+    allowed = EVENT_NODE_KIND_COMPATIBILITY.get(event)
+    if allowed is None:
+        return True
+    return node_kind in allowed
+
+
+def _repair_outcome_events(state: State) -> tuple[str, ...]:
+    return tuple(
+        event
+        for event in (
+            state.repair_outcome_success_event,
+            state.repair_outcome_blocker_event,
+            state.repair_outcome_protocol_blocker_event,
+        )
+        if event != "none"
+    )
 
 
 def next_safe_states(state: State) -> Iterable[Transition]:
@@ -1405,6 +1473,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
 
+    if state.active_node_kind not in NODE_KINDS:
+        failures.append("active node kind is outside the modeled event compatibility table")
     if state.controller_read_sealed_body:
         failures.append("Controller read a sealed packet/result body")
     if state.controller_originated_project_evidence:
@@ -1419,6 +1489,27 @@ def invariant_failures(state: State) -> list[str]:
         state.no_next_action_detected or state.pm_decision_required_blocker_written
     ):
         failures.append("expected role-event wait incorrectly wrote PM decision-required blocker")
+    if (
+        state.control_repair_wait_event != "none"
+        and not _event_allowed_for_node_kind(state.control_repair_wait_event, state.active_node_kind)
+    ):
+        failures.append("router allowed event incompatible with active node kind")
+    if (
+        state.control_repair_origin == "parent_backward_replay"
+        and state.control_repair_wait_event != "none"
+        and state.control_repair_wait_event not in PARENT_REPAIR_SAFE_EVENTS
+    ):
+        failures.append("parent backward replay repair waited on non-parent-safe event")
+    outcome_events = _repair_outcome_events(state)
+    if (
+        len(outcome_events) == 3
+        and len(set(outcome_events)) == 1
+        and outcome_events[0] in BUSINESS_VALIDATED_REPAIR_EVENTS
+    ):
+        failures.append("repair outcome table collapsed success blocker and protocol-blocker onto one business-validated event")
+    for outcome_event in outcome_events:
+        if not _event_allowed_for_node_kind(outcome_event, state.active_node_kind):
+            failures.append("repair outcome event incompatible with active node kind")
 
     if state.route_activated and not state.controller_boundary_confirmed:
         failures.append("route activated before Controller relay boundary was confirmed")
@@ -1456,6 +1547,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer reviewed node acceptance plan before PM wrote it")
     if state.current_node_packet_registered and not state.route_activated:
         failures.append("current-node packet registered before route activation")
+    if state.current_node_packet_registered and state.active_node_kind in PARENT_NODE_KINDS:
+        failures.append("current-node packet registered for parent or module node")
     if state.current_node_packet_registered and not (
         state.node_acceptance_plan_written
         and state.reviewer_node_acceptance_plan_reviewed
@@ -2035,6 +2128,51 @@ def hazard_states() -> dict[str, State]:
             pm_node_high_standard_gate_opened=True,
             pm_node_high_standard_risks_reviewed=True,
             current_node_packet_registered=True,
+        ),
+        "parent_node_current_packet_registered": State(
+            status="running",
+            controller_boundary_confirmed=True,
+            route_version=1,
+            route_activated=True,
+            active_node_kind="parent",
+            pm_node_high_standard_gate_opened=True,
+            pm_node_high_standard_risks_reviewed=True,
+            node_acceptance_plan_written=True,
+            reviewer_node_acceptance_plan_reviewed=True,
+            current_node_packet_registered=True,
+        ),
+        "control_repair_wait_event_incompatible_with_parent": State(
+            status="running",
+            controller_boundary_confirmed=True,
+            route_version=1,
+            route_activated=True,
+            active_node_kind="parent",
+            control_repair_origin="parent_backward_replay",
+            control_repair_wait_event="pm_registers_current_node_packet",
+        ),
+        "parent_backward_repair_targets_leaf_dispatch": State(
+            status="running",
+            controller_boundary_confirmed=True,
+            route_version=1,
+            route_activated=True,
+            active_node_kind="parent",
+            control_repair_origin="parent_backward_replay",
+            control_repair_wait_event="pm_registers_current_node_packet",
+            repair_outcome_success_event="pm_registers_current_node_packet",
+            repair_outcome_blocker_event="pm_registers_current_node_packet",
+            repair_outcome_protocol_blocker_event="pm_registers_current_node_packet",
+        ),
+        "collapsed_repair_outcomes_on_business_validated_event": State(
+            status="running",
+            controller_boundary_confirmed=True,
+            route_version=1,
+            route_activated=True,
+            active_node_kind="leaf",
+            control_repair_origin="current_node_result",
+            control_repair_wait_event="pm_registers_current_node_packet",
+            repair_outcome_success_event="pm_registers_current_node_packet",
+            repair_outcome_blocker_event="pm_registers_current_node_packet",
+            repair_outcome_protocol_blocker_event="pm_registers_current_node_packet",
         ),
         "write_grant_before_packet_registration": State(
             status="running",

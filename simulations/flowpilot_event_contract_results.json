@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=84",
+    "summary": "sequences=3 initial_states=1 traces=90",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -133,6 +133,47 @@
           "terminal_reason": "none"
         }
       },
+      "generic_repair_collapsed_outcomes": {
+        "detected": true,
+        "expected_failure": "repair outcome table collapsed success, blocker, and protocol-blocker events",
+        "failures": [
+          "repair outcome table collapsed success, blocker, and protocol-blocker events"
+        ],
+        "state": {
+          "ack_event_exposed_as_external_wait": false,
+          "allowed_events_currently_receivable": true,
+          "allowed_events_registered": true,
+          "allowed_external_events": [
+            "pm_writes_route_draft"
+          ],
+          "cleanup_after_bad_persist": false,
+          "direct_ack_consumed": false,
+          "duplicate_pm_repair_decision_seen": false,
+          "duplicate_repair_created_new_blocker": false,
+          "duplicate_repair_created_new_transaction": false,
+          "invalid_wait_ever_persisted": false,
+          "material_repair_target": false,
+          "pending_wait_written": true,
+          "pm_repair_decision_received": true,
+          "repair_blocker_event": "pm_writes_route_draft",
+          "repair_outcome_table_written": true,
+          "repair_protocol_event": "pm_writes_route_draft",
+          "repair_success_event": "pm_writes_route_draft",
+          "rerun_target": "pm_writes_route_draft",
+          "rerun_target_currently_receivable": true,
+          "rerun_target_is_ack_event": false,
+          "rerun_target_is_internal_router_action": false,
+          "rerun_target_is_pm_repair_event": false,
+          "rerun_target_registered_external": true,
+          "rerun_target_rejected_before_persist": false,
+          "scenario": "generic_repair_collapsed_outcomes",
+          "semantic_wait_required_after_ack": false,
+          "semantic_wait_valid_after_ack": true,
+          "semantic_wait_written_after_ack": false,
+          "status": "running",
+          "terminal_reason": "none"
+        }
+      },
       "internal_router_action_as_pm_rerun_target": {
         "detected": true,
         "expected_failure": "internal Router action was accepted as PM rerun target",
@@ -183,7 +224,8 @@
         "detected": true,
         "expected_failure": "material repair outcome table did not route success, blocker, and protocol outcomes",
         "failures": [
-          "material repair outcome table did not route success, blocker, and protocol outcomes"
+          "material repair outcome table did not route success, blocker, and protocol outcomes",
+          "repair outcome table collapsed success, blocker, and protocol-blocker events"
         ],
         "state": {
           "ack_event_exposed_as_external_wait": false,
@@ -404,7 +446,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 14
+    "terminal_state_count": 15
   },
   "safe_graph": {
     "accepted_scenarios": [
@@ -414,7 +456,7 @@
       "valid_reviewer_material_rerun",
       "valid_route_draft_rerun"
     ],
-    "edge_count": 28,
+    "edge_count": 30,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -422,6 +464,7 @@
       "ack_consumed_semantic_wait_lost",
       "ack_event_in_allowed_external_events",
       "duplicate_pm_repair_created_new_blocker",
+      "generic_repair_collapsed_outcomes",
       "internal_router_action_as_pm_rerun_target",
       "material_repair_success_only",
       "pm_repair_event_as_rerun_target",
@@ -429,6 +472,6 @@
       "unknown_string_as_pm_rerun_target",
       "wait_requires_false_flag"
     ],
-    "state_count": 29
+    "state_count": 31
   }
 }

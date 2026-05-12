@@ -56,6 +56,10 @@ HAZARD_EXPECTED_FAILURES = {
     "replacement_generation_keeps_old_generation_current": "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets",
     "replacement_generation_has_duplicate_identity": "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets",
     "success_only_outcome_table": "repair transaction router outcome table did not route success, blocker, and protocol outcomes",
+    "parent_repair_rerun_targets_current_node_packet": "repair rerun target event incompatible with active node kind",
+    "parent_repair_outcome_targets_current_node_packet": "repair outcome event incompatible with active node kind",
+    "collapsed_repair_outcomes_on_business_event": "repair outcome table collapsed success blocker and protocol-blocker onto one business-validated event",
+    "routable_outcome_missing_event_identity": "repair success outcome was routable without event identity",
     "reviewer_recheck_before_commit": "reviewer recheck was requested before a committed generation and complete outcome table",
     "reviewer_recheck_before_post_repair_model_check": "reviewer recheck was requested before the repaired FlowGuard model checked the candidate fix",
     "reviewer_blocker_unroutable": "reviewer recheck outcome was not accepted by router",
@@ -70,6 +74,8 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|steps={state.steps}|"
+        f"node={state.active_node_kind},origin={state.control_repair_origin},"
+        f"rerun={state.rerun_target_event}|"
         f"blocker={state.blocker_detected},{state.blocker_registered_in_router},"
         f"{state.blocker_has_origin_event},{state.blocker_has_allowed_nonterminal_events},"
         f"kind={state.blocker_kind},lane={state.blocker_pm_repair_lane},"
@@ -95,7 +101,8 @@ def _state_id(state: model.State) -> str:
         f"{state.canonical_packet_identity_unique},{state.packet_hashes_replayable},"
         f"{state.result_write_targets_explicit},post_model={state.post_repair_model_check_passed}|"
         f"outcomes={state.success_outcome_routable},{state.blocker_outcome_routable},"
-        f"{state.protocol_outcome_routable}|"
+        f"{state.protocol_outcome_routable},events={state.success_outcome_event},"
+        f"{state.blocker_outcome_event},{state.protocol_outcome_event}|"
         f"review={state.reviewer_recheck_requested},{state.reviewer_outcome},"
         f"accepted={state.router_accepted_reviewer_outcome}|"
         f"terminal={state.original_blocker_resolved},{state.followup_blocker_registered},"
@@ -218,7 +225,8 @@ def _architecture_candidate() -> dict[str, object]:
             "PM repair decisions open a transaction; they never resolve blockers directly.",
             "Replacement packets are committed as one generation across physical files, packet ledger, dispatch index, and router resolution table.",
             "Committed repair generations pass the repaired FlowGuard model check before reviewer recheck starts.",
-            "The router publishes success, blocker, and protocol-blocker outcomes before reviewer recheck starts.",
+            "The router publishes success, blocker, and protocol-blocker outcomes as distinct event identities before reviewer recheck starts.",
+            "Every repair target event is checked against the active node kind; parent/backward-replay repairs only use parent-safe events.",
             "A reviewer failure is a legal terminal blocked state with a router-visible follow-up blocker, not controller no-legal-next-action.",
             "Terminal success or blocked states refresh packet ledger, frontier, and display authorities together.",
         ],
@@ -228,7 +236,8 @@ def _architecture_candidate() -> dict[str, object]:
             "Add a run-scoped repair_transaction record and transaction_id.",
             "Move packet reissue materialization behind one commit function.",
             "Run the repaired FlowGuard model against the candidate fix before reviewer recheck.",
-            "Replace allowed_resolution_events success-only lists with an outcome table containing success and non-success events.",
+            "Replace allowed_resolution_events success-only lists with an outcome table containing distinct success and non-success event identities.",
+            "Add one event-capability preflight used by both allowed_external_events and repair outcome-table construction.",
             "Require reviewer recheck to consume only committed generation ids.",
             "Refresh router_state, packet_ledger, execution_frontier, and display surfaces in the same commit/finalize path.",
         ],
