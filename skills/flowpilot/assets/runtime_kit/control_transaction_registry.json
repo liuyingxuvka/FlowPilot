@@ -1,0 +1,216 @@
+{
+  "schema_version": "flowpilot.control_transaction_registry.v1",
+  "authority": "router",
+  "purpose": "Unified authority for FlowPilot control writes. Rows reference existing contract, event-capability, repair-transaction, and packet-authority registries instead of duplicating them.",
+  "controller_may_invent_transactions": false,
+  "transaction_types": [
+    {
+      "transaction_type": "route_progression",
+      "producer_roles": [
+        "project_manager",
+        "human_like_reviewer",
+        "process_flowguard_officer",
+        "product_flowguard_officer"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.gate_decision.v1",
+        "flowpilot.output_contract.pm_parent_segment_decision.v1"
+      ],
+      "router_events": [
+        "pm_records_parent_segment_decision",
+        "pm_completes_parent_node_from_backward_replay"
+      ],
+      "event_usages": [
+        "recorded_event",
+        "wait"
+      ],
+      "packet_authority_required": false,
+      "repair_transaction_required": false,
+      "outcome_policy": "single_event",
+      "commit_targets": [
+        "frontier",
+        "run_state",
+        "status_summary"
+      ],
+      "legacy_policy": "block_if_invalid"
+    },
+    {
+      "transaction_type": "packet_dispatch",
+      "producer_roles": [
+        "project_manager"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.pm_role_work_result.v1"
+      ],
+      "router_events": [
+        "pm_registers_current_node_packet"
+      ],
+      "event_usages": [
+        "recorded_event",
+        "wait"
+      ],
+      "packet_authority_required": false,
+      "repair_transaction_required": false,
+      "outcome_policy": "single_event",
+      "commit_targets": [
+        "packet_ledger",
+        "run_state",
+        "status_summary"
+      ],
+      "legacy_policy": "block_if_invalid"
+    },
+    {
+      "transaction_type": "result_absorption",
+      "producer_roles": [
+        "worker_a",
+        "worker_b"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.worker_current_node_result.v1"
+      ],
+      "router_events": [
+        "worker_current_node_result_returned"
+      ],
+      "event_usages": [
+        "recorded_event",
+        "wait"
+      ],
+      "packet_authority_required": true,
+      "repair_transaction_required": false,
+      "outcome_policy": "single_event",
+      "commit_targets": [
+        "packet_ledger",
+        "run_state",
+        "status_summary"
+      ],
+      "legacy_policy": "block_if_invalid"
+    },
+    {
+      "transaction_type": "reviewer_gate_result",
+      "producer_roles": [
+        "human_like_reviewer"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.reviewer_review_report.v1"
+      ],
+      "router_events": [
+        "current_node_reviewer_passes_result",
+        "current_node_reviewer_blocks_result"
+      ],
+      "event_usages": [
+        "recorded_event",
+        "repair_outcome"
+      ],
+      "packet_authority_required": "when_reviewing_packet_result",
+      "repair_transaction_required": false,
+      "outcome_policy": "three_distinct_outcomes",
+      "commit_targets": [
+        "run_state",
+        "blocker_index",
+        "status_summary"
+      ],
+      "legacy_policy": "block_if_invalid"
+    },
+    {
+      "transaction_type": "control_blocker_repair",
+      "producer_roles": [
+        "project_manager"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.pm_control_blocker_repair_decision.v1"
+      ],
+      "router_events": [
+        "pm_records_control_blocker_repair_decision",
+        "pm_records_control_blocker_followup_blocker",
+        "pm_records_control_blocker_protocol_blocker"
+      ],
+      "event_usages": [
+        "recorded_event",
+        "rerun_target",
+        "repair_outcome"
+      ],
+      "packet_authority_required": "when_repair_rechecks_packet_result",
+      "repair_transaction_required": true,
+      "outcome_policy": "three_distinct_outcomes",
+      "commit_targets": [
+        "repair_transaction",
+        "blocker_index",
+        "run_state",
+        "status_summary"
+      ],
+      "optional_commit_targets": [
+        "packet_ledger",
+        "frontier",
+        "dispatch_index"
+      ],
+      "legacy_policy": "quarantine_invalid"
+    },
+    {
+      "transaction_type": "control_plane_reissue",
+      "producer_roles": [
+        "router"
+      ],
+      "output_contract_ids": [],
+      "router_events": [],
+      "event_usages": [
+        "wait"
+      ],
+      "packet_authority_required": "audit_existing_only",
+      "repair_transaction_required": false,
+      "outcome_policy": "single_event",
+      "commit_targets": [
+        "blocker_index",
+        "run_state",
+        "status_summary"
+      ],
+      "legacy_policy": "block_if_invalid"
+    },
+    {
+      "transaction_type": "route_mutation",
+      "producer_roles": [
+        "project_manager"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.pm_parent_segment_decision.v1",
+        "flowpilot.output_contract.gate_decision.v1"
+      ],
+      "router_events": [
+        "pm_mutates_route_after_review_block"
+      ],
+      "event_usages": [
+        "recorded_event"
+      ],
+      "packet_authority_required": false,
+      "repair_transaction_required": "when_mutation_resolves_control_blocker",
+      "outcome_policy": "single_event",
+      "commit_targets": [
+        "route",
+        "frontier",
+        "stale_evidence",
+        "run_state",
+        "status_summary"
+      ],
+      "legacy_policy": "block_if_invalid"
+    },
+    {
+      "transaction_type": "legacy_reconcile",
+      "producer_roles": [
+        "router"
+      ],
+      "output_contract_ids": [],
+      "router_events": [],
+      "event_usages": [
+        "reconcile"
+      ],
+      "packet_authority_required": "audit_existing_only",
+      "repair_transaction_required": "audit_existing_only",
+      "outcome_policy": "quarantine_invalid",
+      "commit_targets": [
+        "blocker_index",
+        "repair_transaction_index",
+        "status_summary"
+      ],
+      "legacy_policy": "quarantine_invalid"
+    }
+  ]
+}

@@ -3,6 +3,61 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## flowpilot-model-mesh-runner-integration-20260512 - Upgrade mesh coverage ingestion and derive runtime repair recommendation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested running the FlowPilot model mesh across all
+  FlowGuard models, upgrading only the model/check network as needed, finding
+  current FlowPilot issues, and stopping before runtime code changes with an
+  architecture repair recommendation.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T09:20:00+02:00
+- Ended: 2026-05-12T09:40:11+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_model_mesh_model.py
+- scripts/run_flowguard_coverage_sweep.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema 1.0
+- OK: `python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json`
+- OK: `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 30 --json-out tmp\flowguard_model_mesh_network_sweep_after_runner_upgrade.json`
+- OK: `python scripts/check_install.py`
+- OK: `python scripts/smoke_autopilot.py --fast`
+- Partial: `python scripts/smoke_autopilot.py` timed out after 124 seconds and
+  left a spawned `run_meta_checks.py` child process; both were stopped.
+
+### Findings
+- Coverage sweep now parses all 44 FlowGuard runners in this repository; no
+  runner remains unparsed or unavailable.
+- The only live findings after runner ingestion were the four mesh blockers:
+  active blocker present, packet authority unchecked, parent repair reusing a
+  leaf-only event, and collapsed repair outcome events.
+- The mesh classification is valid while current-run permission is blocked:
+  `classification_ok=true`, `current_run_can_continue=false`, and
+  `decision=blocked_by_cross_model_contradiction`.
+
+### Counterexamples
+- The model rejects treating abstract/local green checks as authority to
+  continue the current live run.
+- The model rejects ignoring coverage parse gaps in a mesh-level decision.
+
+### Friction Points
+- Full smoke is too heavy for this quick recommendation pass; fast smoke,
+  install, mesh, and coverage sweep passed.
+
+### Skipped Steps
+- FlowPilot runtime/code repair was intentionally not started per user
+  instruction.
+- Local installed skill sync and remote publish/push were not run.
+
+### Next Actions
+- Implement the recommended runtime repair separately as a small control-plane
+  transaction kernel with event-capability preflight, typed repair outcomes,
+  and packet authority gating.
+
 ## 2026-05-11 - Route Placeholder Display Contract
 
 - Trigger reason: User wanted the startup Mermaid route sign to remain as a
@@ -7825,6 +7880,147 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
+
+
+## flowpilot-control-transaction-registry-20260512 - Unify FlowPilot control writes behind a registered transaction authority
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a FlowGuard-first bottom-architecture fix that connects FlowPilot's contract, event-capability, packet-authority, and repair tables before runtime optimization.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T09:00:00+02:00
+- Ended: 2026-05-12T09:00:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_transaction_registry_model.py
+- simulations/flowpilot_model_mesh_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_flowpilot_control_transaction_registry_checks.py --json-out simulations/flowpilot_control_transaction_registry_results.json`
+- OK: `python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json`
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py -k "repair_transaction or control_blocker"`
+- OK: `python scripts/check_install.py --json`
+- OK: `python scripts/smoke_autopilot.py --fast`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 120 --json-out tmp/flowguard_coverage_sweep_after_sync.json`
+
+### Findings
+- Added `runtime_kit/control_transaction_registry.json` as the unified authority for route progression, packet dispatch, result absorption, reviewer gates, control-blocker repair, control-plane reissue, route mutation, and legacy reconcile commits.
+- Router source checks now validate the registry against registered contracts, external events, event usages, commit targets, packet-authority policy, repair policy, outcome policy, and legacy policy.
+- PM control-blocker repair now validates the `control_blocker_repair` transaction before writing repair decision artifacts, repair transaction records, active blocker updates, or indexes.
+- Control-plane reissue is now a first-class transaction and can wait for the reissued role event without being falsely blocked by the original card-delivery flag.
+- The model mesh now treats missing or incomplete control transaction authority as a blocker for safe continuation.
+
+### Counterexamples
+- FlowGuard rejects unregistered transactions, contract/event split-brain, missing packet authority, invalid completed-agent identity, collapsed repair outcomes, repair without transaction, parent repair leaf-event reuse, partial commits, active blocker marked green, bad legacy transaction continuation, bad registry references, route mutation without stale-evidence policy, non-success outcomes using success-only events, missing atomic commit targets, and control-plane reissue without delivery authority.
+
+### Friction Points
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py` hit a transient Windows `__pycache__` file lock; syntax was verified with `python -B -c "compile(...)"` instead.
+- Coverage sweep still reports four live current-run blockers from the active run: active blocker present, unchecked packet authority, parent repair leaf-event reuse, and collapsed repair outcomes. These are classified as current-run findings, not install drift.
+
+### Skipped Steps
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+
+### Next Actions
+- Repair the active run's persisted blocker/packet-authority artifacts through the newly registered transaction path if the current run should continue.
+
+
+## reviewer-pm-user-perspective-challenge-20260512 - Fuse final-user challenge into reviewer and PM gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Reviewer and PM prompt behavior affects FlowPilot completion quality, evidence sufficiency, route decisions, and user-facing product standards.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T08:45:00+02:00
+- Ended: 2026-05-12T09:10:00+02:00
+- Commands OK: mostly true
+
+### Model Files
+- simulations/flowpilot_reviewer_active_challenge_model.py
+- simulations/run_flowpilot_reviewer_active_challenge_checks.py
+- simulations/flowpilot_reviewer_active_challenge_results.json
+- simulations/flowpilot_planning_quality_model.py
+- simulations/run_flowpilot_planning_quality_checks.py
+- simulations/flowpilot_planning_quality_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_reviewer_active_challenge_model.py simulations\run_flowpilot_reviewer_active_challenge_checks.py tests\test_flowpilot_reviewer_active_challenge.py`
+- OK: `python -m py_compile simulations\flowpilot_planning_quality_model.py simulations\run_flowpilot_planning_quality_checks.py tests\test_flowpilot_planning_quality.py`
+- OK: `python simulations\run_flowpilot_reviewer_active_challenge_checks.py --json-out simulations\flowpilot_reviewer_active_challenge_results.json`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`
+- OK: `python -m unittest tests.test_flowpilot_reviewer_active_challenge tests.test_flowpilot_planning_quality`
+- OK: `python scripts\check_runtime_card_capability_reminders.py`
+- OK: `python scripts\check_install.py`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- TIMEOUT_RECORDED: `python scripts\smoke_autopilot.py` exceeded 120 seconds after another local change added the model-mesh check to the smoke chain.
+- EXISTING_FAILURE_RECORDED: `python -m unittest tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_output_contracts tests.test_flowpilot_reviewer_active_challenge tests.test_flowpilot_planning_quality` failed because the existing card-instruction unit test expects worker-balance guidance in `pm_material_scan.md`, `pm_current_node_loop.md`, and `pm_research_package.md`; this was outside the scoped user-perspective change.
+- READ_ONLY_SWEEP_RECORDED: `python scripts\run_flowguard_coverage_sweep.py --timeout-seconds 120` reported pre-existing live model-mesh blockers in the active FlowPilot run and several historical runner parse gaps; the reviewer/PM user-perspective runners themselves passed.
+
+### Findings
+- Reviewer active-challenge model now rejects missing final-user applicability decision, omitted final-user/product-usefulness challenge, missing user-perspective failure hypothesis, hard user-intent failure downgrade, final replay that only trusts ledger cleanliness, existence-only user-facing evidence, and reviewer PM-role creep.
+- Planning-quality model now rejects PM plans that omit final-user/product-usefulness self-checks, omit higher-standard improvement-space self-checks, leave improvement opportunities unclassified, turn nonblocking improvements into hard current-gate requirements, or close without final-user outcome replay.
+- Runtime cards were updated without adding a separate UX phase or top-level reviewer report object; the wording is folded into `independent_challenge`, PM product architecture, route skeleton, node acceptance, final ledger, and closure cards.
+- Local installed FlowPilot skill was synchronized from the repository and verified source-fresh.
+
+### Counterexamples
+- Reviewer hazards: `final_user_intent_omitted`, `hard_user_intent_failure_downgraded`, `final_replay_ledger_only`, `user_facing_evidence_exists_only`, and `reviewer_made_pm_route_decision` are all detected.
+- PM hazards: `pm_user_intent_self_check_missing`, `pm_higher_standard_self_check_missing`, `pm_improvement_opportunity_unclassified`, `pm_improvement_scope_creep`, and `pm_closure_user_outcome_replay_missing` are all detected.
+
+### Friction Points
+- Full smoke now depends on the concurrently added model-mesh path and timed out in this validation window.
+- A broad unittest selection exposed an existing worker-balance prompt coverage mismatch outside this scoped patch.
+
+### Skipped Steps
+- Remote GitHub push/sync was intentionally skipped per user instruction.
+- Existing model-mesh active-run blockers were not repaired in this patch because they belong to a parallel optimization stream.
+
+### Next Actions
+- Keep future reviewer and PM prompt changes covered by both the reviewer active-challenge and planning-quality models before editing runtime cards.
+- If the worker-balance card coverage test is still desired, handle it as a separate small prompt consistency patch.
+
+
+## flowpilot-model-mesh-20260512 - Add FlowPilot model mesh authority gate
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a FlowGuard-first meta model that connects FlowPilot's specialized models before runtime optimization work.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T08:37:18+02:00
+- Ended: 2026-05-12T08:37:18+02:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_model_mesh_model.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"; python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json; python -m py_compile simulations/flowpilot_model_mesh_model.py simulations/run_flowpilot_model_mesh_checks.py scripts/smoke_autopilot.py scripts/check_install.py scripts/run_flowguard_coverage_sweep.py; python scripts/check_install.py; python scripts/smoke_autopilot.py --fast`
+
+### Findings
+- Added a model-mesh authority gate that accepts safe continuation only from current/live or conformance-grade evidence and separately accepts correctly classified blocked states.
+- The model catches 15 risk scenarios, including abstract-only green evidence, skipped live audit, stale run evidence, hidden active blockers, collapsed repair outcomes, parent repair leaf-event reuse, packet authority gaps, sealed-body reads, coverage parse errors, stale local install, and install checks that require safe-to-continue.
+- Live metadata-only projection of the current run classified it as `blocked_by_cross_model_contradiction`, with active blocker, collapsed repair outcomes, parent repair leaf-event reuse, and packet authority unchecked as blocking reasons.
+
+### Counterexamples
+- Current live run projection would be unsafe to treat as green; the mesh correctly blocks it without opening sealed body files.
+
+### Friction Points
+- The read-only coverage sweep still reports four pre-existing unparsed support runners, so the sweep process exits nonzero even though the new mesh runner is classified as coverage_strong and passes.
+
+### Skipped Steps
+- Full local skill sync was not run in this step; this change established the repository model, runner, result, install, smoke, and coverage-sweep integration.
+
+### Next Actions
+- Use the mesh result as the top-level permission gate before applying the later runtime repair/optimization steps.
 
 
 ## flowpilot-event-capability-registry-runtime-20260512 - Gate waits, rerun targets, and repair outcomes through event capability facts

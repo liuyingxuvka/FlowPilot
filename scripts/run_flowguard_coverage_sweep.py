@@ -27,9 +27,11 @@ STRONG_COVERAGE = {
     "flowpilot_startup_control",
     "flowpilot_packet_lifecycle",
     "flowpilot_repair_transaction",
+    "flowpilot_control_transaction_registry",
     "flowpilot_event_capability_registry",
     "flowpilot_route_replanning_policy",
     "flowpilot_cross_plane_friction",
+    "flowpilot_model_mesh",
 }
 ABSTRACT_STRONG = {
     "meta",
@@ -76,10 +78,19 @@ def _declared_result_path(path: Path, text: str) -> Path | None:
     match = re.search(r'RESULTS_PATH\s*=\s*ROOT\s*/\s*"([^"]+)"', text)
     if match:
         return path.parent / match.group(1)
-    match = re.search(r'RESULTS_PATH\s*=\s*Path\(__file__\)\.with_name\("([^"]+)"\)', text)
+    match = re.search(r'RESULTS_PATH\s*=\s*Path\(__file__\)\.with_name\(\s*"([^"]+)"\s*\)', text)
     if match:
         return path.parent / match.group(1)
-    match = re.search(r'RESULTS_PATH\s*=\s*Path\(__file__\)\.resolve\(\)\.with_name\("([^"]+)"\)', text)
+    match = re.search(
+        r'RESULTS_PATH\s*=\s*Path\(__file__\)\.resolve\(\)\.with_name\(\s*"([^"]+)"\s*\)',
+        text,
+    )
+    if match:
+        return path.parent / match.group(1)
+    match = re.search(
+        r'RESULTS_PATH\s*=\s*Path\(__file__\)\.resolve\(\)\.parent\s*/\s*"([^"]+)"',
+        text,
+    )
     if match:
         return path.parent / match.group(1)
     return None
@@ -211,8 +222,10 @@ def _classify_finding(finding: dict[str, Any]) -> str:
     return "boundary_expected_or_informational"
 
 
-def _run_runner(path: Path, timeout_seconds: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+def _run_runner(path: Path, text: str, timeout_seconds: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     command = [sys.executable, str(path.relative_to(ROOT))]
+    if 'add_argument("--json"' in text and "--json-out" not in text:
+        command.append("--json")
     try:
         completed = subprocess.run(
             command,
@@ -247,7 +260,7 @@ def _runner_record(path: Path, *, timeout_seconds: int) -> dict[str, Any]:
     result_path = _declared_result_path(path, text)
     can_run = _read_only_runnable(text)
     if can_run:
-        payload, metadata = _run_runner(path, timeout_seconds)
+        payload, metadata = _run_runner(path, text, timeout_seconds)
     else:
         payload, error = _load_existing_result(result_path)
         metadata = {

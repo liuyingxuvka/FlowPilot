@@ -421,6 +421,12 @@ FlowGuard caught and fixed these design issues:
   registered external events are also currently executable for the active node
   kind, repair origin, target role, wait/rerun/outcome usage, and distinct
   success/blocker/protocol-blocker repair rows.
+- Control transaction registry coverage lives in
+  `simulations/flowpilot_control_transaction_registry_model.py`.
+  `skills/flowpilot/assets/runtime_kit/control_transaction_registry.json`
+  is the unified registry for route progression, packet dispatch, result
+  absorption, reviewer gates, control-blocker repair, control-plane reissue,
+  route mutation, and legacy reconcile commits.
 - The second legacy FlowPilot backup lives under
   `backups/flowpilot-20260504-second-backup-20260504-195841/` with matching
   zip archive. It is marked as a preserved backup and must not be deleted by
@@ -462,6 +468,8 @@ python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/fl
 python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json
 python simulations/run_flowpilot_event_contract_checks.py --json-out simulations/flowpilot_event_contract_results.json
 python simulations/run_flowpilot_event_capability_registry_checks.py --json-out simulations/flowpilot_event_capability_registry_results.json
+python simulations/run_flowpilot_control_transaction_registry_checks.py --json-out simulations/flowpilot_control_transaction_registry_results.json
+python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json
 python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python scripts/check_install.py

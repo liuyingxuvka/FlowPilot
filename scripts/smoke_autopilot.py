@@ -37,6 +37,18 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_cross_plane_friction_results.json",
     ]
+    model_mesh_check = [
+        sys.executable,
+        "simulations/run_flowpilot_model_mesh_checks.py",
+        "--json-out",
+        "simulations/flowpilot_model_mesh_results.json",
+    ]
+    control_transaction_registry_check = [
+        sys.executable,
+        "simulations/run_flowpilot_control_transaction_registry_checks.py",
+        "--json-out",
+        "simulations/flowpilot_control_transaction_registry_results.json",
+    ]
     if args.fast:
         meta_check.append("--fast")
         capability_check.append("--fast")
@@ -50,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
         [sys.executable, "simulations/run_flowpilot_reviewer_active_challenge_checks.py"],
         control_plane_friction_check,
         cross_plane_friction_check,
+        control_transaction_registry_check,
+        model_mesh_check,
         meta_check,
         capability_check,
     ]

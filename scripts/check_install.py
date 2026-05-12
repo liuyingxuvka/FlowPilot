@@ -81,6 +81,7 @@ REQUIRED_FILES = [
     "docs/project_brief.md",
     "docs/design_decisions.md",
     "docs/flowguard_preflight_findings.md",
+    "docs/flowguard_model_mesh_plan.md",
     "docs/stable_heartbeat_plan_frontier_findings.md",
     "docs/protocol.md",
     "docs/schema.md",
@@ -88,6 +89,7 @@ REQUIRED_FILES = [
     "docs/reviewer_fact_audit.md",
     "docs/flowpilot_clean_rebuild_plan.md",
     "docs/flowpilot_control_table_prompt_registry_migration_plan.md",
+    "docs/flowpilot_control_transaction_registry_plan.md",
     "docs/flowpilot_startup_optimization_plan.md",
     "docs/flowpilot_route_replanning_policy_plan.md",
     "docs/legacy_to_router_equivalence.md",
@@ -105,6 +107,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/role_output_runtime.py",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
     "skills/flowpilot/assets/runtime_kit/README.md",
+    "skills/flowpilot/assets/runtime_kit/control_transaction_registry.json",
     "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json",
     "skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json",
     "skills/flowpilot/assets/runtime_kit/cards/system/startup_banner.md",
@@ -291,6 +294,12 @@ REQUIRED_FILES = [
     "simulations/flowpilot_cross_plane_friction_model.py",
     "simulations/run_flowpilot_cross_plane_friction_checks.py",
     "simulations/flowpilot_cross_plane_friction_results.json",
+    "simulations/flowpilot_model_mesh_model.py",
+    "simulations/run_flowpilot_model_mesh_checks.py",
+    "simulations/flowpilot_model_mesh_results.json",
+    "simulations/flowpilot_control_transaction_registry_model.py",
+    "simulations/run_flowpilot_control_transaction_registry_checks.py",
+    "simulations/flowpilot_control_transaction_registry_results.json",
     "simulations/flowpilot_output_contract_model.py",
     "simulations/run_output_contract_checks.py",
     "simulations/flowpilot_output_contract_results.json",
@@ -358,6 +367,7 @@ JSON_FILES = [
     "docs/legacy_prompt_to_cards_matrix.json",
     "docs/flowpilot_ten_step_migration_status.json",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
+    "skills/flowpilot/assets/runtime_kit/control_transaction_registry.json",
     "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json",
     "skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json",
     "simulations/release_tooling_results.json",
@@ -372,6 +382,8 @@ JSON_FILES = [
     "simulations/flowpilot_event_contract_results.json",
     "simulations/flowpilot_event_capability_registry_results.json",
     "simulations/flowpilot_cross_plane_friction_results.json",
+    "simulations/flowpilot_model_mesh_results.json",
+    "simulations/flowpilot_control_transaction_registry_results.json",
     "simulations/flowpilot_output_contract_results.json",
     "simulations/flowpilot_router_action_contract_results.json",
     "simulations/flowpilot_packet_lifecycle_results.json",
@@ -730,6 +742,18 @@ def main() -> int:
                 }
             )
             if not role_output_binding_ok:
+                result["ok"] = False
+            control_transaction_issues = flowpilot_router._control_transaction_registry_issues()
+            control_transaction_ok = not control_transaction_issues
+            result["checks"].append(
+                {
+                    "name": "flowpilot_control_transaction_registry_valid",
+                    "ok": control_transaction_ok,
+                    "issue_count": len(control_transaction_issues),
+                    "issues": control_transaction_issues,
+                }
+            )
+            if not control_transaction_ok:
                 result["ok"] = False
             cli_cases = [
                 ["--root", str(ROOT), "next", "--json"],
