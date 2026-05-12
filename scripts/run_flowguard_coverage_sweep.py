@@ -28,6 +28,7 @@ STRONG_COVERAGE = {
     "flowpilot_packet_lifecycle",
     "flowpilot_repair_transaction",
     "flowpilot_control_transaction_registry",
+    "flowpilot_legal_next_action",
     "flowpilot_event_capability_registry",
     "flowpilot_route_replanning_policy",
     "flowpilot_cross_plane_friction",

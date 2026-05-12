@@ -59,6 +59,45 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
 
+    def seed_child_completion_ledger(self, root: Path, node_id: str, *, route_id: str = "route-001", route_version: int = 1) -> Path:
+        run_root = self.run_root_for(root)
+        frontier_path = run_root / "execution_frontier.json"
+        frontier = read_json(frontier_path)
+        completed = [str(item) for item in (frontier.get("completed_nodes") or [])]
+        if node_id not in completed:
+            completed.append(node_id)
+        ledger_path = run_root / "routes" / route_id / "nodes" / node_id / "node_completion_ledger.json"
+        ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        ledger_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.node_completion_ledger.v1",
+                    "run_id": run_root.name,
+                    "route_id": route_id,
+                    "route_version": route_version,
+                    "node_id": node_id,
+                    "completed_by_role": "project_manager",
+                    "reviewer_result_passed": True,
+                    "completion_source_event": "test_seed_completed_child",
+                    "parent_backward_replay_completion": False,
+                    "completed_nodes_after_update": completed,
+                    "next_node_id": None,
+                    "flowpilot_completable_work_closed": True,
+                    "human_inspection_notes_belong_in_final_report": True,
+                    "source_paths": {},
+                    "completed_at": "2026-05-12T00:00:00Z",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        frontier["completed_nodes"] = completed
+        frontier["latest_node_completion_ledger_path"] = self.rel(root, ledger_path)
+        frontier_path.write_text(json.dumps(frontier, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return ledger_path
+
     def control_blocker_path(self, root: Path, blocker: dict) -> Path:
         return root / str(blocker["blocker_artifact_path"])
 
@@ -1310,6 +1349,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         wait_action = router.next_action(root)
         self.assertEqual(wait_action["action_type"], "await_role_decision")
         self.assertIn("pm_records_parent_segment_decision", wait_action["allowed_external_events"])
+        self.assertNotIn(router.PM_ROLE_WORK_REQUEST_EVENT, wait_action["allowed_external_events"])
+        self.assertFalse(wait_action["pm_role_work_request_channel_available"])
+        self.assertIn("record_parent_segment_decision", wait_action["legal_next_actions"]["legal_action_ids"])
         if "payload_contract" in wait_action:
             self.assert_payload_contract_mentions(
                 wait_action["payload_contract"],
@@ -7838,6 +7880,42 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         active_old_node = next(node for node in active_route["nodes"] if node.get("node_id") == "node-001")
         self.assertEqual(active_old_node["status"], "superseded")
 
+    def test_parent_backward_targets_require_current_child_completion_ledgers(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        router.record_external_event(
+            root,
+            "pm_activates_reviewed_route",
+            {
+                "route_id": "route-001",
+                "active_node_id": "parent-001",
+                "route_version": 1,
+                "route": {
+                    "schema_version": "flowpilot.route.v1",
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "active_node_id": "parent-001",
+                    "nodes": [
+                        {
+                            "node_id": "parent-001",
+                            "status": "active",
+                            "title": "Parent node",
+                            "child_node_ids": ["child-001"],
+                        },
+                        {"node_id": "child-001", "status": "completed", "title": "Child node"},
+                    ],
+                },
+            },
+        )
+        self.deliver_current_node_cards(root)
+        state_path = router.run_state_path(self.run_root_for(root))
+        state = read_json(state_path)
+        state["flags"]["pm_parent_backward_targets_card_delivered"] = True
+        router.save_run_state(self.run_root_for(root), state)
+        with self.assertRaisesRegex(router.RouterError, "requires legal route action build_parent_backward_targets"):
+            router.record_external_event(root, "pm_builds_parent_backward_targets")
+
     def test_parent_node_requires_backward_replay_before_completion(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -7866,6 +7944,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 },
             },
         )
+        self.seed_child_completion_ledger(root, "child-001")
         self.deliver_current_node_cards(root)
         packet = packet_runtime.create_packet(
             root,
@@ -7914,6 +7993,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 },
             },
         )
+        self.seed_child_completion_ledger(root, "child-001")
         self.deliver_current_node_cards(root)
         self.deliver_expected_card(root, "pm.parent_backward_targets")
         router.record_external_event(root, "pm_builds_parent_backward_targets")

@@ -13452,6 +13452,17 @@ ROUTE_ACTION_POLICY_CARD_TO_ACTION = {
 }
 
 
+ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS = {
+    "build_parent_backward_targets",
+    "review_parent_backward_replay",
+    "record_parent_segment_decision",
+    "complete_parent_node",
+}
+
+
+ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS = set(ROUTE_ACTION_POLICY_EVENT_TO_ACTION.values())
+
+
 def _route_action_policy_registry_path(run_root: Path | None = None) -> Path:
     if run_root is not None:
         candidate = run_root / "runtime_kit" / "route_action_policy_registry.json"
@@ -14369,6 +14380,251 @@ def _node_child_ids(node: dict[str, Any]) -> list[str]:
 
 def _active_node_has_children(run_root: Path, frontier: dict[str, Any]) -> bool:
     return bool(_node_child_ids(_active_node_definition(run_root, frontier)))
+
+
+def _route_node_map(route: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    return {str(node.get("node_id") or node.get("id")): node for node in _iter_route_nodes(route) if node.get("node_id") or node.get("id")}
+
+
+def _route_descendant_node_ids(route: dict[str, Any], node_id: str) -> list[str]:
+    node_by_id = _route_node_map(route)
+    descendants: list[str] = []
+    seen: set[str] = set()
+
+    def visit(current_node_id: str) -> None:
+        if current_node_id in seen:
+            return
+        seen.add(current_node_id)
+        node = node_by_id.get(current_node_id)
+        if not node:
+            return
+        for child_id in _node_child_ids(node):
+            if child_id not in descendants:
+                descendants.append(child_id)
+            visit(child_id)
+
+    visit(str(node_id))
+    return descendants
+
+
+def _node_completion_ledger_path_for(run_root: Path, route_id: str, node_id: str) -> Path:
+    return run_root / "routes" / route_id / "nodes" / node_id / "node_completion_ledger.json"
+
+
+def _node_completion_ledger_current(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    frontier: dict[str, Any],
+    node_id: str,
+) -> dict[str, Any]:
+    route_id = str(frontier.get("active_route_id") or "")
+    route_version = int(frontier.get("route_version") or 0)
+    ledger_path = _node_completion_ledger_path_for(run_root, route_id, str(node_id))
+    if not ledger_path.exists():
+        return {
+            "node_id": str(node_id),
+            "current": False,
+            "reason": "missing_node_completion_ledger",
+            "ledger_path": project_relative(project_root, ledger_path),
+        }
+    ledger = read_json(ledger_path)
+    issues: list[str] = []
+    if ledger.get("schema_version") != "flowpilot.node_completion_ledger.v1":
+        issues.append("schema_version_mismatch")
+    if str(ledger.get("run_id") or "") != str(run_state.get("run_id") or ""):
+        issues.append("run_id_mismatch")
+    if str(ledger.get("route_id") or "") != route_id:
+        issues.append("route_id_mismatch")
+    try:
+        ledger_route_version = int(ledger.get("route_version") or 0)
+    except (TypeError, ValueError):
+        ledger_route_version = -1
+    if ledger_route_version != route_version:
+        issues.append("route_version_mismatch")
+    if str(ledger.get("node_id") or "") != str(node_id):
+        issues.append("node_id_mismatch")
+    if ledger.get("flowpilot_completable_work_closed") is not True:
+        issues.append("flowpilot_work_not_closed")
+    return {
+        "node_id": str(node_id),
+        "current": not issues,
+        "issues": issues,
+        "ledger_path": project_relative(project_root, ledger_path),
+    }
+
+
+def _parent_segment_decision_value(run_root: Path, frontier: dict[str, Any]) -> str | None:
+    decision_path = _active_node_root(run_root, frontier) / "pm_parent_segment_decision.json"
+    if not decision_path.exists():
+        return None
+    decision = read_json(decision_path)
+    return str(decision.get("decision") or "") or None
+
+
+def _route_action_for_event(event: str) -> str | None:
+    return ROUTE_ACTION_POLICY_EVENT_TO_ACTION.get(str(event))
+
+
+def _route_action_for_card(card_id: str) -> str | None:
+    return ROUTE_ACTION_POLICY_CARD_TO_ACTION.get(str(card_id))
+
+
+def _legal_next_action_context(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    policy_by_id = _route_action_policy_by_id(run_root)
+    frontier = _active_frontier(run_root)
+    route = _active_route_flow(run_root, frontier)
+    active_node_id = str(frontier["active_node_id"])
+    active_node = _active_node_definition_from_route(route, active_node_id)
+    child_ids = _node_child_ids(active_node)
+    descendants = _route_descendant_node_ids(route, active_node_id)
+    completed_nodes = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    descendant_ledgers = [
+        _node_completion_ledger_current(project_root, run_root, run_state, frontier, node_id)
+        for node_id in descendants
+    ]
+    descendants_in_frontier = all(node_id in completed_nodes for node_id in descendants)
+    descendant_ledgers_current = all(bool(item.get("current")) for item in descendant_ledgers)
+    child_chain_closed_current = bool(descendants) and descendants_in_frontier and descendant_ledgers_current
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    active_node_kind = _node_kind(active_node)
+    is_parent_scope = active_node_kind in {"parent", "module"} or bool(child_ids)
+    legal_ids: list[str] = []
+    reasons: list[str] = []
+
+    def add(action_id: str) -> None:
+        if action_id not in policy_by_id:
+            reasons.append(f"policy_missing:{action_id}")
+            return
+        if action_id not in legal_ids:
+            legal_ids.append(action_id)
+
+    if is_parent_scope:
+        if not child_chain_closed_current:
+            reasons.append("child_chain_not_closed_current")
+            if child_ids:
+                add("enter_next_child")
+            add("continue_current_child")
+            if flags.get("parent_backward_replay_blocked") or flags.get("node_review_blocked") or flags.get("node_acceptance_plan_review_blocked"):
+                add("request_child_repair")
+                if flags.get("model_miss_triage_closed"):
+                    add("mutate_route")
+        else:
+            if flags.get("parent_backward_replay_blocked"):
+                if flags.get("model_miss_triage_closed"):
+                    add("mutate_route")
+                else:
+                    add("request_child_repair")
+            elif not flags.get("parent_backward_targets_built"):
+                add("build_parent_backward_targets")
+            elif not flags.get("parent_backward_replay_passed"):
+                add("review_parent_backward_replay")
+            elif not flags.get("parent_segment_decision_recorded"):
+                add("record_parent_segment_decision")
+            elif _parent_segment_decision_value(run_root, frontier) == "continue" and active_node_id not in completed_nodes:
+                add("complete_parent_node")
+    else:
+        if flags.get("node_review_blocked") or flags.get("node_acceptance_plan_review_blocked"):
+            add("request_child_repair")
+            if flags.get("model_miss_triage_closed"):
+                add("mutate_route")
+        elif not flags.get("current_node_result_returned"):
+            add("continue_current_child")
+        elif not flags.get("current_node_result_relayed_to_pm"):
+            add("wait_for_child_result")
+        else:
+            add("continue_current_child")
+
+    final_ledger_path = run_root / "final_route_wide_gate_ledger.json"
+    terminal_replay_path = run_root / "reviews" / "terminal_backward_replay.json"
+    completion_projection_path = _task_completion_projection_path(run_root)
+    if (
+        flags.get("final_ledger_built_clean")
+        and flags.get("final_backward_replay_passed")
+        and final_ledger_path.exists()
+        and terminal_replay_path.exists()
+        and completion_projection_path.exists()
+    ):
+        projection = read_json_if_exists(completion_projection_path)
+        if projection.get("task_status") == "ready_for_pm_terminal_closure":
+            add("terminal_closure")
+
+    parent_actions_illegal = sorted(ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS - set(legal_ids))
+    return {
+        "schema_version": "flowpilot.legal_next_action_context.v1",
+        "source": "router",
+        "route_action_policy_registry": project_relative(project_root, _route_action_policy_registry_path(run_root)),
+        "active_route_id": str(frontier["active_route_id"]),
+        "route_version": int(frontier.get("route_version") or 0),
+        "active_node_id": active_node_id,
+        "active_node_kind": active_node_kind,
+        "active_node_has_children": bool(child_ids),
+        "direct_child_node_ids": child_ids,
+        "descendant_node_ids": descendants,
+        "completed_node_ids": sorted(completed_nodes),
+        "descendant_completion_ledgers": descendant_ledgers,
+        "child_chain_closed_current": child_chain_closed_current,
+        "legal_action_ids": legal_ids,
+        "legal_next_actions": [
+            {
+                "action_id": action_id,
+                "transaction_type": policy_by_id[action_id].get("transaction_type"),
+                "commit_targets": policy_by_id[action_id].get("commit_targets") or [],
+            }
+            for action_id in legal_ids
+        ],
+        "illegal_parent_closure_action_ids": parent_actions_illegal,
+        "blocking_reasons": reasons,
+        "pm_may_choose_only_from_legal_next_actions": True,
+        "controller_may_advance_or_close_route": False,
+    }
+
+
+def _legal_next_action_ids(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> set[str]:
+    context = _legal_next_action_context(project_root, run_root, run_state)
+    return {str(item) for item in context.get("legal_action_ids", [])}
+
+
+def _legal_route_action_allowed(project_root: Path, run_root: Path, run_state: dict[str, Any], action_id: str) -> bool:
+    return str(action_id) in _legal_next_action_ids(project_root, run_root, run_state)
+
+
+def _require_legal_route_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action_id: str,
+    context: str,
+) -> None:
+    legal_context = _legal_next_action_context(project_root, run_root, run_state)
+    legal_ids = {str(item) for item in legal_context.get("legal_action_ids", [])}
+    if str(action_id) in legal_ids:
+        return
+    reason_items = [str(item) for item in legal_context.get("blocking_reasons", []) if item]
+    reasons = ", ".join(reason_items) or "not in legal_next_actions"
+    if (
+        str(action_id) == "mutate_route"
+        and "child_chain_not_closed_current" in reason_items
+        and "pm_mutates_route_after_review_block" in str(context)
+    ):
+        reasons = f"{reasons}; replanning required before route mutation, not repair node"
+    raise RouterError(f"{context} requires legal route action {action_id}; current legal actions are {sorted(legal_ids)} ({reasons})")
+
+
+def _filter_events_by_legal_route_actions(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    events: list[str],
+) -> list[str]:
+    if not any(_route_action_for_event(event) for event in events):
+        return events
+    legal_ids = _legal_next_action_ids(project_root, run_root, run_state)
+    return [
+        event
+        for event in events
+        if (_route_action_for_event(event) is None or _route_action_for_event(event) in legal_ids)
+    ]
 
 
 def _active_node_root(run_root: Path, frontier: dict[str, Any]) -> Path:
@@ -16297,6 +16553,14 @@ def _mark_frontier_node_completed(
     if active_node_id != str(frontier.get("active_node_id")):
         raise RouterError("completed node_id must match active frontier")
     if _active_node_has_children(run_root, frontier):
+        if source_event == "pm_completes_parent_node_from_backward_replay":
+            _require_legal_route_action(
+                project_root,
+                run_root,
+                run_state,
+                "complete_parent_node",
+                "parent node completion commit",
+            )
         replay_path = _active_node_root(run_root, frontier) / "parent_backward_replay.json"
         decision_path = _active_node_root(run_root, frontier) / "pm_parent_segment_decision.json"
         missing = [project_relative(project_root, path) for path in (replay_path, decision_path) if not path.exists()]
@@ -16942,8 +17206,17 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             continue
         if entry.get("requires_active_node_children") and not _active_node_has_children(run_root, _active_frontier(run_root)):
             continue
+        policy_action = _route_action_for_card(entry["card_id"])
+        legal_context: dict[str, Any] | None = None
+        if policy_action:
+            legal_context = _legal_next_action_context(project_root, run_root, run_state)
+            if policy_action not in {str(item) for item in legal_context.get("legal_action_ids", [])}:
+                continue
         to_role = _system_card_to_role(run_root, entry)
         if not run_state.get("manifest_check_requested"):
+            manifest_extra = {"next_card_id": entry["card_id"], "to_role": to_role}
+            if legal_context is not None:
+                manifest_extra["legal_next_actions"] = legal_context
             return make_action(
                 action_type="check_prompt_manifest",
                 actor="controller",
@@ -16951,10 +17224,12 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 summary="Controller must check prompt manifest before delivering the next system card.",
                 allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
                 allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_card_id": entry["card_id"], "to_role": to_role},
+                extra=manifest_extra,
             )
         card = manifest_card(manifest, entry["card_id"])
         delivery_extra = {"postcondition": entry["flag"]}
+        if legal_context is not None:
+            delivery_extra["legal_next_actions"] = legal_context
         delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
         pm_decision_contract = _pm_decision_payload_contract_for_card(project_root, run_root, entry["card_id"])
         if pm_decision_contract is not None:
@@ -18122,6 +18397,9 @@ def _expected_role_decision_wait_action(
     producer_roles_override: list[str] | None = None,
 ) -> dict[str, Any]:
     role_output_events = list(allowed_external_events)
+    route_action_event_present = any(_route_action_for_event(event) for event in role_output_events)
+    if route_action_event_present:
+        pm_work_request_channel = False
     role_output_status_packet_path = _role_output_status_packet_path_for_wait(
         project_root,
         run_root,
@@ -18173,6 +18451,10 @@ def _expected_role_decision_wait_action(
         "controller_may_create_project_evidence": False,
         "expected_wait_is_not_control_blocker": True,
     }
+    if route_action_event_present:
+        extra["legal_next_actions"] = _legal_next_action_context(project_root, run_root, run_state)
+        extra["pm_may_choose_only_from_legal_next_actions"] = True
+        extra["pm_role_work_request_channel_available"] = False
     if producer_roles_override is not None:
         extra["expected_event_producer_roles"] = sorted({str(role) for role in producer_roles_override if str(role)})
     if pm_work_request_channel and to_role == "project_manager":
@@ -18300,25 +18582,33 @@ def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict
     pending_groups = _pending_expected_external_event_groups(run_state, run_root)
     if not pending_groups:
         return None
-    group = pending_groups[0]
-    allowed_events = [event for event, _meta in group]
-    roles = sorted({_event_wait_role(event, meta) for event, meta in group})
-    required_flag = str(group[0][1].get("requires_flag") or "")
-    role_label = roles[0] if len(roles) == 1 else ",".join(roles)
-    safe_event_label = "_or_".join(allowed_events).replace("-", "_")
-    return _expected_role_decision_wait_action(
-        project_root,
-        run_state,
-        run_root,
-        label=f"controller_waits_for_expected_event_{safe_event_label}",
-        summary=(
-            f"Prerequisite {required_flag} is satisfied and no controller action is due. "
-            f"Controller must wait for expected external event(s): {', '.join(allowed_events)}."
-        ),
-        allowed_external_events=allowed_events,
-        to_role=role_label,
-        payload_contract=_role_decision_payload_contract_for_events(project_root, run_root, allowed_events),
-    )
+    for group in pending_groups:
+        group_events = [event for event, _meta in group]
+        allowed_events = _filter_events_by_legal_route_actions(project_root, run_root, run_state, group_events)
+        if not allowed_events:
+            continue
+        allowed_event_set = set(allowed_events)
+        filtered_group = [(event, meta) for event, meta in group if event in allowed_event_set]
+        roles = sorted({_event_wait_role(event, meta) for event, meta in filtered_group})
+        required_flag = str(filtered_group[0][1].get("requires_flag") or "")
+        role_label = roles[0] if len(roles) == 1 else ",".join(roles)
+        safe_event_label = "_or_".join(allowed_events).replace("-", "_")
+        route_action_wait = any(_route_action_for_event(event) for event in allowed_events)
+        return _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
+            label=f"controller_waits_for_expected_event_{safe_event_label}",
+            summary=(
+                f"Prerequisite {required_flag} is satisfied and no controller action is due. "
+                f"Controller must wait for expected external event(s): {', '.join(allowed_events)}."
+            ),
+            allowed_external_events=allowed_events,
+            to_role=role_label,
+            payload_contract=_role_decision_payload_contract_for_events(project_root, run_root, allowed_events),
+            pm_work_request_channel=not route_action_wait,
+        )
+    return None
 
 
 def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: object) -> dict[str, Any] | None:
@@ -20117,6 +20407,9 @@ def _record_external_event_unchecked(
             scoped_identity=scoped_identity,
         )
     payload = payload or {}
+    route_action = _route_action_for_event(event)
+    if route_action:
+        _require_legal_route_action(project_root, run_root, run_state, route_action, f"external event {event}")
     if event in {"user_requests_run_stop", "user_requests_run_cancel"}:
         _write_run_lifecycle_request(project_root, run_root, run_state, event=event, payload=payload)
     elif event == "pm_activates_reviewed_route":

@@ -7882,6 +7882,77 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
 
 
+## flowpilot-pm-package-absorption-verification-20260512 - Verify PM-first package absorption and local install sync
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a FlowGuard-first implementation path for routing PM-issued worker package results back to the Project Manager before any formal reviewer gate.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T21:15:00+02:00
+- Ended: 2026-05-12T23:59:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_pm_package_absorption_model.py
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/flowpilot_resume_model.py
+- simulations/flowpilot_router_loop_model.py
+- simulations/flowpilot_protocol_contract_conformance_model.py
+- simulations/flowpilot_legal_next_action_model.py
+- simulations/flowpilot_model_driven_recursive_route_model.py
+- simulations/flowpilot_parent_child_lifecycle_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_pm_package_absorption_checks.py --json-out simulations\flowpilot_pm_package_absorption_results.json`
+- OK: `python simulations\run_protocol_contract_conformance_checks.py --json-out simulations\protocol_contract_conformance_results.json`
+- OK: `python simulations\run_flowpilot_dynamic_return_path_checks.py --json-out simulations\flowpilot_dynamic_return_path_results.json`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json`
+- OK: `python simulations\run_flowpilot_resume_checks.py`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_flowpilot_legal_next_action_checks.py --json-out simulations\flowpilot_legal_next_action_results.json`
+- OK: `python simulations\run_flowpilot_model_driven_recursive_route_checks.py --json-out simulations\flowpilot_model_driven_recursive_route_results.json`
+- OK: `python simulations\run_flowpilot_parent_child_lifecycle_checks.py --json-out simulations\flowpilot_parent_child_lifecycle_results.json`
+- OK: `python simulations\run_meta_checks.py --fast`
+- OK: `python simulations\run_capability_checks.py --fast`
+- OK: `python -m unittest tests.test_flowpilot_output_contracts tests.test_flowpilot_packet_runtime`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime` split into three deterministic chunks: 50 passed, 50 passed, 44 passed.
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- The focused PM package model accepts only the PM-first flow for current-node, material-scan, research, and resume worker results.
+- Negative hazards catch direct raw worker result relay to reviewer, undispositioned worker evidence, reviewer gate without a PM-built package, missing node-completion reviewer gate, removed critical reviewer gates, resume direct-to-reviewer drift, controller body reads, and legacy reviewer-relay flags reused as current acceptance.
+- Runtime and contract source checks show current-node, material-scan, research, and reviewer-result-review package results require `project_manager` as the first result recipient.
+- The local installed FlowPilot skill is fresh against this repository after sync.
+- A parallel legal-next-action change was preserved and verified; one route-root error message was tightened so replanning gaps are not mislabeled as repair-node work.
+
+### Counterexamples
+- `raw_worker_result_relayed_to_reviewer`
+- `formal_evidence_from_undispositioned_result`
+- `reviewer_started_without_pm_gate_package`
+- `node_completion_without_reviewer_gate`
+- `critical_reviewer_gate_removed`
+- `resume_result_direct_to_reviewer`
+- `material_research_decision_without_gate`
+- `controller_reads_sealed_body`
+- `legacy_reviewer_relay_used_as_current_acceptance`
+- `pm_forwarded_raw_package_to_reviewer`
+
+### Friction Points
+- A full one-shot router runtime unittest run exceeded the tool timeout, so the suite was split into three stable chunks.
+- A direct full meta/capability rerun produced valid proof files but did not return cleanly through the tool output path; `--fast` proof reuse returned cleanly afterward.
+- The dynamic-return-path live-run projection still reports two historical active-run findings in `run-20260512-110741`; this is current-run state debt, not a PM package absorption model failure.
+
+### Skipped Steps
+- The control-plane friction live audit was skipped for the abstract validation because the active run contains unrelated historical findings.
+- Remote GitHub sync/push was intentionally skipped per user instruction.
+
+### Next Actions
+- If the historical active run should continue, repair its persisted dynamic-return-path blockers through the registered PM/router path rather than treating those old outputs as current evidence.
+
+
 ## flowpilot-parent-child-lifecycle-model-miss-20260512 - Model parent/child lifecycle authority before Router repair
 
 - Project: FlowGuardProjectAutopilot_20260430
