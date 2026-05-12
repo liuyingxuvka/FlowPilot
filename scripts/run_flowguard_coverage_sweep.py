@@ -27,6 +27,7 @@ STRONG_COVERAGE = {
     "flowpilot_startup_control",
     "flowpilot_packet_lifecycle",
     "flowpilot_repair_transaction",
+    "flowpilot_route_replanning_policy",
     "flowpilot_cross_plane_friction",
 }
 ABSTRACT_STRONG = {

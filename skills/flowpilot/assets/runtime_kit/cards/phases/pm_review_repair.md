@@ -40,6 +40,18 @@ context and the reviewer block source path. Do not create a repair node from
 the current block alone if older completed, failed, superseded, stale, or
 experimental history changes the correct repair shape.
 
+First classify the block by phase. A planning-phase, route-root, parent/module,
+or node-entry gap before executable child work is not a repair-node case. PM
+must rewrite the route draft, add ordinary peer/child nodes, or split the
+parent/module and rerun the route checks. A `repair` node is reserved for a
+reviewed failure after work evidence exists, a blocked parent backward replay,
+or another post-work review failure where the current route cannot contain the
+fix.
+
+If the fix requires new capability, do not jump straight to a process route
+mutation. Send the capability change through Product FlowGuard first, then
+Process FlowGuard, then Reviewer route challenge before execution continues.
+
 Apply Minimum Sufficient Complexity to repair strategy. Choose the smallest
 repair that can close the blocker and restore the frozen contract. Prefer
 sender reissue or localized repair when that fully fixes the issue. Insert a

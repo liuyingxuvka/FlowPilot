@@ -394,6 +394,12 @@ FlowGuard caught and fixed these design issues:
   state. `execution_frontier.json` tracks the active node, completed nodes, and
   route-mutation repair state; mutation records are written before new repair
   work can proceed.
+- Route replanning now has an explicit phase boundary. Planning/root/parent
+  node-entry gaps before executable child work must be handled by route
+  replanning or ordinary node expansion, not by creating a repair node. Route
+  activation also rejects active nodes that are not present in the reviewed
+  route draft. The policy is modeled in
+  `simulations/flowpilot_route_replanning_policy_model.py`.
 - `docs/flowpilot_clean_rebuild_plan.md` and
   `docs/legacy_to_router_equivalence.json` are the current rebuild plan and
   old-protocol equivalence checklist. `scripts/check_install.py` verifies both
@@ -451,6 +457,7 @@ python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/fl
 python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json
 python simulations/run_flowpilot_event_contract_checks.py --json-out simulations/flowpilot_event_contract_results.json
 python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json
+python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

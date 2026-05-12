@@ -29,6 +29,12 @@ Check only product fit:
   final ledger and terminal backward replay must still cover every effective
   deep leaf and every parent/module segment;
 - required product capabilities have route coverage;
+- any newly added capability has an explicit product-fit basis before the
+  changed route depends on it, and no process-only patch silently adds product
+  behavior that Product FlowGuard has not reviewed;
+- root or parent/module planning gaps are represented as product route
+  decomposition or ordinary capability/node expansion, not prematurely labeled
+  as repair work before reviewed execution evidence exists;
 - UI, visual, desktop, localization, interaction, and verification requirements are not silently demoted;
 - final ledger and terminal replay can prove the delivered product against the contract;
 - any simplification is equivalent rather than a lowered standard.

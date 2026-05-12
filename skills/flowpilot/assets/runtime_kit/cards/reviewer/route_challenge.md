@@ -54,6 +54,13 @@ Check:
   a parent/module can receive a worker packet directly or if a leaf is too
   broad for one bounded packet; this is the required under-decomposition
   check;
+- the route does not disguise a planning/root/parent node-entry gap as a
+  repair node before any executable child work or reviewed work evidence
+  exists. In that situation, require route replanning, ordinary node expansion,
+  or parent splitting instead;
+- any capability expansion was reviewed in product-fit order before process
+  route approval. Block if the route depends on new product behavior that was
+  only justified by a process mutation;
 - the route passes an over-decomposition check. Extra nodes that do not add evidence,
   role authority, real parallelism, failure isolation, recovery boundary, or a
   user-visible milestone should be merged, waived with reason, or treated as a

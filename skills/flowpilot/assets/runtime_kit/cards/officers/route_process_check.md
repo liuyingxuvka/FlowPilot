@@ -34,6 +34,11 @@ model:
   dispatchable leaves, dispatch only leaf/repair nodes with
   `leaf_readiness_gate.status: "pass"`, and trigger parent backward review
   after all child nodes complete;
+- root or parent/module node-entry gaps before executable child work are handled
+  as route replanning or ordinary node expansion, not as repair-node creation;
+- if the draft adds or changes capability, the Product FlowGuard capability fit
+  check happened before this process check, and the process route uses that
+  product-approved capability shape;
 - node ordering has no missing reviewer/officer/worker authority gate;
 - repair or route-mutation branches define where they rejoin the mainline and
   which product/process checks must rerun;

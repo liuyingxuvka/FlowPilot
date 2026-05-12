@@ -13001,7 +13001,48 @@ def _active_node_definition_from_route(route: dict[str, Any], active_node_id: st
     for node in _iter_route_nodes(route):
         if node.get("node_id") == active_node_id or node.get("id") == active_node_id:
             return node
-    return {"node_id": active_node_id}
+    raise RouterError(f"active route node is missing from route: {active_node_id}")
+
+
+def _is_route_root_like_node_id(node_id: str) -> bool:
+    normalized = str(node_id or "").strip().lower().replace("-", "_")
+    return normalized in {"root", "route_root", "route"} or normalized.startswith("route_root")
+
+
+def _route_mutation_review_lane(run_state: dict[str, Any]) -> str:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if flags.get("node_review_blocked"):
+        return "current_node_result_review"
+    if flags.get("parent_backward_replay_blocked"):
+        return "parent_backward_replay"
+    if flags.get("node_acceptance_plan_review_blocked"):
+        return "node_acceptance_plan_review"
+    return "unknown"
+
+
+def _validate_route_mutation_phase_boundary(
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    route_id: str,
+    current_active_node_id: str,
+) -> None:
+    lane = _route_mutation_review_lane(run_state)
+    if lane != "node_acceptance_plan_review":
+        return
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    completed_nodes = [str(item) for item in (frontier.get("completed_nodes") or [])]
+    if completed_nodes:
+        return
+    route_path = run_root / "routes" / route_id / "flow.json"
+    route = read_json_if_exists(route_path)
+    active_node = _active_node_definition_from_route(route, current_active_node_id) if route else {}
+    if _node_kind(active_node) not in {"parent", "module"} and not _is_route_root_like_node_id(current_active_node_id):
+        return
+    raise RouterError(
+        "planning/root node-entry gaps before executable child work must be resolved by route replanning "
+        "or ordinary node expansion, not by creating a repair node"
+    )
 
 
 def _node_child_ids(node: dict[str, Any]) -> list[str]:
@@ -13825,6 +13866,7 @@ def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[
         or first_node.get("id")
         or "node-001"
     )
+    active_node_definition = _active_node_definition_from_route(route_payload, active_node_id)
     route_root = run_root / "routes" / route_id
     route_payload["active_node_id"] = active_node_id
     route_payload["source"] = "pm_activates_reviewed_route"
@@ -13837,7 +13879,7 @@ def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[
         "active_route_id": route_id,
         "active_node_id": active_node_id,
         "active_path": _route_active_path(route_payload, active_node_id),
-        "active_leaf_node_id": active_node_id if _node_kind(_active_node_definition_from_route(route_payload, active_node_id)) in {"leaf", "repair"} else None,
+        "active_leaf_node_id": active_node_id if _node_kind(active_node_definition) in {"leaf", "repair"} else None,
         "route_version": route_version,
         "updated_at": utc_now(),
         "source": "pm_activates_reviewed_route",
@@ -13882,6 +13924,12 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
     route_version = int(payload.get("route_version") or int(frontier.get("route_version") or 1) + 1)
     superseded_nodes = [str(item) for item in (payload.get("superseded_nodes") or [])]
     stale_evidence = [str(item) for item in (payload.get("stale_evidence") or [])]
+    _validate_route_mutation_phase_boundary(
+        run_root,
+        run_state,
+        route_id=route_id,
+        current_active_node_id=current_active_node_id,
+    )
     topology_strategy = str(
         payload.get("topology_strategy")
         or payload.get("mutation_topology")
@@ -13962,6 +14010,11 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
     write_json(mutation_path, mutations)
     route_path = run_root / "routes" / route_id / "flow.json"
     route = read_json_if_exists(route_path)
+    repaired_node = {}
+    try:
+        repaired_node = _active_node_definition_from_route(route, repair_of_node_id) if route else {}
+    except RouterError:
+        repaired_node = {}
     route.setdefault("schema_version", "flowpilot.route.v1")
     route.setdefault("route_id", route_id)
     draft_route = dict(route)
@@ -13989,8 +14042,19 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         nodes.append(
             {
                 "node_id": active_node_id,
+                "node_kind": "repair",
                 "status": "pending_activation",
                 "title": str(payload.get("repair_node_title") or "Repair node"),
+                "parent_node_id": payload.get("parent_node_id") or repaired_node.get("parent_node_id"),
+                "depth": int(payload.get("repair_node_depth") or repaired_node.get("depth") or repaired_node.get("_computed_depth") or 1),
+                "child_node_ids": [],
+                "user_visible": bool(payload.get("user_visible", True)),
+                "leaf_readiness_gate": {
+                    "status": "pass",
+                    "repair_node": True,
+                    "worker_executable_without_replanning": True,
+                    "reviewed_route_reactivation_required_before_dispatch": True,
+                },
                 "created_by_mutation": True,
                 "mutation_reason": mutation_record["reason"],
                 "topology_strategy": topology_strategy,

@@ -1755,6 +1755,73 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(frontier["active_node_id"], "node-001")
         self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-acceptance-repair")
 
+    def test_route_root_node_entry_gap_requires_replanning_not_repair_node(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "route": {
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "active_node_id": "route_root",
+                    "nodes": [
+                        {
+                            "node_id": "route_root",
+                            "node_kind": "parent",
+                            "title": "Route root",
+                            "child_node_ids": ["child-001"],
+                        },
+                        {
+                            "node_id": "child-001",
+                            "node_kind": "leaf",
+                            "parent_node_id": "route_root",
+                            "leaf_readiness_gate": {"status": "pass"},
+                        },
+                    ],
+                },
+                **self.prior_path_context_review(root, "Parent route draft considered route memory before activation."),
+            },
+        )
+        self.complete_route_checks(root)
+        router.record_external_event(root, "pm_activates_reviewed_route", {"route_id": "route-001", "active_node_id": "route_root"})
+        self.write_current_node_acceptance_plan(root)
+        self.deliver_expected_card(root, "reviewer.node_acceptance_plan_review")
+        router.record_external_event(
+            root,
+            "reviewer_blocks_node_acceptance_plan",
+            self.role_report_envelope(
+                root,
+                "reviews/root_node_acceptance_plan_block",
+                {
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
+                    "blocking_findings": ["route root is still a planning boundary and lacks executable child expansion"],
+                },
+            ),
+        )
+        self.close_model_miss_triage(root, output_name="decisions/root_node_entry_gap_triage")
+
+        with self.assertRaisesRegex(router.RouterError, "replanning.*not.*repair node"):
+            router.record_external_event(
+                root,
+                "pm_mutates_route_after_review_block",
+                {
+                    "repair_node_id": "route_root-repair",
+                    "repair_return_to_node_id": "route_root",
+                    "reason": "root_node_acceptance_plan_review_block",
+                    **self.prior_path_context_review(root, "Root planning gap must be replanned before repair is available."),
+                },
+            )
+
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["active_node_id"], "route_root")
+        self.assertNotEqual(frontier.get("status"), "route_mutation_pending_recheck")
+
     def test_node_acceptance_plan_block_can_be_revised_on_same_node(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -4794,6 +4861,25 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             )
         self.complete_route_checks(root)
         router.record_external_event(root, "pm_activates_reviewed_route")
+
+    def test_route_activation_rejects_active_node_missing_from_reviewed_route(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "nodes": [{"node_id": "node-001"}],
+                **self.prior_path_context_review(root, "Route draft considered prior path context before activation."),
+            },
+        )
+        self.complete_route_checks(root)
+
+        with self.assertRaisesRegex(router.RouterError, "active route node is missing"):
+            router.record_external_event(root, "pm_activates_reviewed_route", {"active_node_id": "missing-node"})
 
     def test_child_skill_gates_block_raw_inventory_and_controller_approval(self) -> None:
         root = self.make_project()

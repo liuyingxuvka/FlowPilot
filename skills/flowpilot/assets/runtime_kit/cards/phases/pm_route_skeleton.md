@@ -88,6 +88,17 @@ Route requirements:
   concrete worker-ready task with clear input, output, evidence, dependencies,
   failure boundary, and proof. Parent/module nodes are composition and review
   boundaries, not worker packets;
+- Planning-phase gaps are route replanning, not repair. If the root route,
+  a parent/module node, or node-entry planning cannot yet support execution,
+  rewrite the route draft, add ordinary peer/child nodes, or split the parent
+  until the executable leaves exist. Do not create a `repair` node before a
+  reviewed execution result, parent backward replay, or other post-work review
+  failure proves that repair is actually needed;
+- if PM decides new capability is required before the route can work, add the
+  capability through the capability/child-skill path first. Product FlowGuard
+  must review the capability's product fit before Process FlowGuard checks the
+  updated process route, and the changed route must then return to the normal
+  reviewer route challenge;
 - each node must include `node_kind` (`parent`, `module`, `leaf`, or `repair`),
   `parent_node_id`, `depth`, `child_node_ids`, `user_visible`, and for leaves a
   `leaf_readiness_gate`. A leaf may be dispatched only when
