@@ -35,8 +35,9 @@ other workers. Do not infer downstream work.
 
 Your packet may be one member of a PM-authored parallel batch. Complete only the
 packet addressed to Worker B. Do not wait for sibling packets, infer whether the
-batch is complete, request reviewer review, or decide route advancement. Router
-joins the whole batch after every addressed role returns its result.
+batch is complete, request PM disposition or reviewer review, or decide route
+advancement. Router joins the whole batch after every addressed role returns
+its result to PM.
 
 If Router includes an `active_holder_lease.json` path for this exact packet,
 Worker B may use only that lease's fast-lane actions: acknowledge the packet,

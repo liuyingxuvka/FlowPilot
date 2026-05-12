@@ -31,6 +31,10 @@ source of truth for completion.
 Resolve:
 
 - effective and superseded nodes;
+- every major node, parent/module, child subtree, promoted former leaf, repair
+  node, and supplemental node in the current route. Before project completion,
+  walk backward over the whole route and prove that no major node or subtree
+  was skipped;
 - final-user intent and delivered-product usefulness claims, including the
   evidence that proves each current user-facing claim instead of merely proving
   that an artifact exists;
@@ -42,6 +46,13 @@ Resolve:
 - stale, invalid, missing, waived, blocked, or superseded evidence;
 - zero unresolved count;
 - zero unresolved residual risks.
+
+If the final backward walk finds an omitted major node, omitted subtree,
+unclosed bug class, or stale evidence class, first decide whether the
+Product/Process FlowGuard model missed the class. When it did, update the
+model, search the same class across the whole route, add supplemental or repair
+nodes, rerun stale gates, rebuild this ledger, and only then request terminal
+Reviewer replay.
 
 Return `prior_path_context_review` and cite both route-memory files. If any
 repair or route mutation happened after that context was refreshed, block and

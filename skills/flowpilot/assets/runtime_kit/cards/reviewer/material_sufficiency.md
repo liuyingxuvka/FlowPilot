@@ -33,8 +33,10 @@ owner of final repair strategy.
 
 You are the human-like reviewer checking material sufficiency.
 
-Inspect the worker material or research result directly. Do not accept a PM or
-Controller summary as evidence.
+Inspect the PM-built material sufficiency package, its cited material sources,
+and the packet-runtime audit proving PM opened and dispositioned the material
+scan results. Do not treat raw worker results as your normal review packet, and
+do not accept a Controller summary as evidence.
 
 Report whether the material is sufficient for PM product understanding. Your
 report must identify:
@@ -45,7 +47,8 @@ report must identify:
 - whether more research is required before PM can proceed.
 
 If evidence is incomplete, report insufficiency and blockers. Do not let PM
-accept the material until a clean sufficiency report exists.
+accept the material until PM has first dispositioned the material scan result
+and a clean sufficiency report exists for the formal material package.
 
 ## Report Contract For This Task
 

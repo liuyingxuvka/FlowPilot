@@ -7882,6 +7882,62 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
 
 
+## flowpilot-parent-child-lifecycle-model-miss-20260512 - Model parent/child lifecycle authority before Router repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Runtime model miss where route/frontier state could appear green while parent/backward closure actions were requested before the active child subtree had executed and completed.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-12T21:00:00+02:00
+- Ended: 2026-05-12
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_parent_child_lifecycle_model.py
+- simulations/run_flowpilot_parent_child_lifecycle_checks.py
+- simulations/flowpilot_model_mesh_model.py
+- simulations/run_flowpilot_model_mesh_checks.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile simulations\flowpilot_parent_child_lifecycle_model.py simulations\run_flowpilot_parent_child_lifecycle_checks.py`
+- OK: `python simulations\run_flowpilot_parent_child_lifecycle_checks.py --json-out simulations\flowpilot_parent_child_lifecycle_results.json`
+- OK: `python simulations\run_flowpilot_model_driven_recursive_route_checks.py --json-out simulations\flowpilot_model_driven_recursive_route_results.json`
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python -m py_compile simulations\flowpilot_model_mesh_model.py simulations\run_flowpilot_model_mesh_checks.py`
+- OK: `python simulations\run_flowpilot_model_mesh_checks.py --project-root . --run-id run-20260512-110741 --json-out simulations\flowpilot_model_mesh_results.json`
+
+### Findings
+- Added a focused FlowGuard model for parent/module closure authority, child subtree entry, leaf execution, descendant completion, current-ledger authority, and live Router next-action replay.
+- The focused model accepts valid parent/child and leaf lifecycles, and rejects 12 same-class hazards.
+- The model mesh now projects metadata-only route/frontier/router state and blocks the current run with `parent_child_lifecycle_conformance_failed` instead of treating old route state or abstract green evidence as liveness proof.
+
+### Counterexamples
+- abstract_green_without_live_action_replay
+- child_completion_from_old_route_version
+- direct_child_done_descendant_pending
+- live_router_action_not_in_model
+- non_leaf_acceptance_stuck_on_parent
+- parent_complete_before_child_completion
+- parent_dispatches_worker_packet
+- parent_flags_leak_to_child
+- parent_replay_before_child_entry
+- parent_segment_before_child_completion
+- parent_targets_before_child_entry
+- stale_route_status_counts_as_child_done
+
+### Friction Points
+- Production Router code was intentionally left untouched per user instruction.
+- One pre-existing Router syntax error from the stopped run remains outside this model-only pass.
+
+### Skipped Steps
+- Router/product repair was intentionally skipped until the upgraded models finish identifying the full failure class.
+- Sealed packet/result/report bodies were not read.
+
+### Next Actions
+- Use these model results to derive the smallest bottom-level fix that enforces parent/child lifecycle authority in one shared place instead of patching the observed bad action only.
+
+
 ## flowpilot-terminal-summary-20260512 - Require final run summary before terminal observation
 
 - Project: FlowGuardProjectAutopilot_20260430

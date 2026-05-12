@@ -67,6 +67,8 @@ Route requirements:
 - use the Product FlowGuard Officer's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
+- use only a PM-accepted product behavior model. If PM has not accepted the
+  Product FlowGuard model, return to product-model decision before drafting;
 - include a PM user-intent self-check: how the route preserves the user's real
   goal, final-user usefulness, and highest reasonable product standard without
   importing unnecessary nodes or validation surfaces;
@@ -85,12 +87,27 @@ Route requirements:
 - recursive decomposition is allowed and expected when the work is complex.
   Do not stop at a fixed two-layer shape. Build a `full_route_tree` that can
   use any needed depth, then expose only a shallow `display_plan` for the
-  user-visible route sign. Default `display_depth` is 2 unless PM records a
-  stronger reason for a different depth;
+  chat-visible route sign. Default chat `display_depth` is 1 so the root is
+  omitted and all first-level route modules remain visible. Cockpit/UI should
+  use the full route tree with expandable children rather than the chat
+  projection;
 - split every complex parent/module node until each executable leaf is a
   concrete worker-ready task with clear input, output, evidence, dependencies,
   failure boundary, and proof. Parent/module nodes are composition and review
   boundaries, not worker packets;
+- arrange the Process FlowGuard execution model as a single serial line. Parent
+  A precedes parent B, children A1/A2/A3 are ordered inside A, and deeper
+  children are ordered the same way. Do not use parallel graph branches as the
+  canonical process route unless PM records a non-execution display-only
+  projection;
+- before entering any non-leaf node, plan that local subtree with the same
+  pattern: PM local product goal, Product FlowGuard local product model, PM
+  decision, Reviewer product challenge, Process FlowGuard serial child route,
+  PM decision, Reviewer route challenge, then child execution;
+- at apparent leaf entry, PM may decide the leaf is still too broad. In that
+  case, promote it to a parent/module, add deeper child nodes, invalidate stale
+  approvals for that subtree, and rerun the local product/process/reviewer
+  loop before dispatch;
 - Planning-phase gaps are route replanning, not repair. If the root route,
   a parent/module node, or node-entry planning cannot yet support execution,
   rewrite the route draft, add ordinary peer/child nodes, or split the parent
@@ -117,7 +134,11 @@ Route requirements:
 - worker-capable nodes must close with all checklist items complete;
 - human manual checks belong in final reports or review gates, not as fake
   unfinished worker nodes;
-- officer and reviewer route checks are required before activation.
+- Process FlowGuard must produce a serial route execution model and PM must
+  explicitly accept it before Product FlowGuard route fit review and Reviewer
+  route challenge can proceed;
+- officer, PM model-decision, and reviewer route checks are required before
+  activation.
 
 Do not activate a route until Process Officer, Product Officer, and Reviewer
 checks pass.

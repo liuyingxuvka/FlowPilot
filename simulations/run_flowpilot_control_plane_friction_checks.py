@@ -23,8 +23,10 @@ REQUIRED_LABELS = (
     "packet_delivered_by_controller",
     "target_records_packet_body_open_receipt",
     "worker_result_returned_to_ledger",
-    "controller_routes_result_to_reviewer_after_ledger_check",
-    "reviewer_records_result_body_open_receipt",
+    "controller_routes_result_to_pm_after_ledger_check",
+    "pm_records_result_body_open_receipt",
+    "pm_records_package_result_disposition",
+    "pm_releases_formal_gate_package_to_reviewer",
     "optimized_card_ack_auto_consumed_with_validation",
     "optimized_relay_transaction_records_delivery_open_and_hash",
     "pending_wait_reconciled_from_packet_status",
@@ -68,7 +70,7 @@ HAZARD_EXPECTED_FAILURES = {
     "material_dispatch_write_target_missing": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
     "material_dispatch_duplicate_canonical_body": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
     "material_dispatch_allowed_without_preflight": "material scan dispatch was allowed before router direct-dispatch preflight",
-    "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, relay, and result-open receipts existed",
+    "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed",
     "missing_receipt_blocker_escalated_to_pm": "missing receipt blocker was not routed as same-role reviewer control-plane reissue",
     "stopped_run_with_active_heartbeat": "stopped run left heartbeat, crew, packet loop, or frontier authority active",
     "stopped_run_with_active_packet_loop": "stopped run left heartbeat, crew, packet loop, or frontier authority active",
@@ -133,7 +135,7 @@ HAZARD_EXPECTED_FAILURES = {
     "pending_wait_reconciled_from_chat": "pending wait reconciliation used chat or history instead of durable packet state",
     "pending_wait_reconciled_without_status_packet": "pending wait reconciliation skipped packet ledger, status packet, role, or hash evidence",
     "role_work_result_routed_to_reviewer": "PM role-work result did not route back to project_manager",
-    "current_node_result_routed_to_pm": "current-node worker result was rerouted away from human_like_reviewer",
+    "current_node_result_routed_to_reviewer": "current-node worker result did not route back to project_manager",
     "pm_decides_from_incomplete_model_miss_report": "PM model-miss decision used an incomplete officer report",
     "role_memory_used_as_completion_authority": "role memory was used as approval or completion authority",
     "controller_reads_sealed_body": "Controller read sealed packet/result body",
@@ -167,7 +169,8 @@ def _state_id(state: model.State) -> str:
         f"recheck_blocker={state.reviewer_recheck_protocol_blocker_written},"
         f"{state.reviewer_recheck_protocol_blocker_routable}|"
         f"{state.packet_delivered},{state.packet_body_open_receipt}|result={state.result_returned},"
-        f"{state.result_routed_to_reviewer},{state.result_body_open_receipt}|"
+        f"{state.result_routed_to_pm},{state.result_body_open_receipt},"
+        f"{state.pm_result_disposition_recorded},{state.pm_formal_review_package_released}|"
         f"review={state.reviewer_report_written},{state.reviewer_report_accepted}|"
         f"material={state.pm_material_understanding_written},{state.pm_material_understanding_source_available}|"
         f"product={state.product_architecture_card_delivered},"

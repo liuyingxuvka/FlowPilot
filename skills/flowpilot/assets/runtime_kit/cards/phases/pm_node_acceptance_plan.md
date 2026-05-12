@@ -69,6 +69,11 @@ route-memory prior path context. The plan must state:
   is too broad, split it into children through route mutation before worker
   dispatch. If it is over-split, merge or waive the extra structure with a PM
   complexity reason before dispatch;
+- when a leaf is promoted to parent/module, mark old leaf approvals stale,
+  attach the new ordered children, and require the local Product FlowGuard
+  model, PM model decision, Reviewer product challenge, Process FlowGuard
+  serial child route, PM process decision, and Reviewer route challenge before
+  dispatching those children;
 - forbidden low-standard or placeholder outcomes;
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.

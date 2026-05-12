@@ -1,0 +1,139 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=90",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "controller_reads_sealed_body": {
+        "detected": true,
+        "expected_failure": "Controller read sealed packet/result body",
+        "failures": [
+          "Controller read sealed packet/result body"
+        ]
+      },
+      "critical_reviewer_gate_removed": {
+        "detected": true,
+        "expected_failure": "critical PM route/node/material/research decision bypassed reviewer gate",
+        "failures": [
+          "critical PM route/node/material/research decision bypassed reviewer gate"
+        ]
+      },
+      "formal_evidence_from_undispositioned_result": {
+        "detected": true,
+        "expected_failure": "formal evidence used a worker result without PM absorbed disposition",
+        "failures": [
+          "formal evidence used a worker result without PM absorbed disposition",
+          "PM completed a node without PM disposition and reviewer node-completion gate"
+        ]
+      },
+      "legacy_reviewer_relay_used_as_current_acceptance": {
+        "detected": true,
+        "expected_failure": "PM-issued worker result did not return to project_manager",
+        "failures": [
+          "PM-issued worker result did not return to project_manager",
+          "formal evidence used a worker result without PM absorbed disposition",
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "legacy direct-reviewer relay flag was used as current acceptance"
+        ]
+      },
+      "material_research_decision_without_gate": {
+        "detected": true,
+        "expected_failure": "critical PM route/node/material/research decision bypassed reviewer gate",
+        "failures": [
+          "critical PM route/node/material/research decision bypassed reviewer gate",
+          "material/research result affected a protected decision without PM absorption and reviewer gate"
+        ]
+      },
+      "node_completion_without_reviewer_gate": {
+        "detected": true,
+        "expected_failure": "PM completed a node without PM disposition and reviewer node-completion gate",
+        "failures": [
+          "critical PM route/node/material/research decision bypassed reviewer gate",
+          "PM completed a node without PM disposition and reviewer node-completion gate"
+        ]
+      },
+      "pm_forwarded_raw_package_to_reviewer": {
+        "detected": true,
+        "expected_failure": "raw PM-issued worker result reached reviewer before PM gate package",
+        "failures": [
+          "raw PM-issued worker result reached reviewer before PM gate package",
+          "PM disposition forwarded a raw worker package to reviewer",
+          "reviewer gate started without a PM-built formal gate package",
+          "PM completed a node without PM disposition and reviewer node-completion gate"
+        ]
+      },
+      "raw_worker_result_relayed_to_reviewer": {
+        "detected": true,
+        "expected_failure": "raw PM-issued worker result reached reviewer before PM gate package",
+        "failures": [
+          "raw PM-issued worker result reached reviewer before PM gate package",
+          "PM-issued worker result did not return to project_manager",
+          "formal evidence used a worker result without PM absorbed disposition",
+          "reviewer gate started without a PM-built formal gate package",
+          "PM completed a node without PM disposition and reviewer node-completion gate"
+        ]
+      },
+      "resume_result_direct_to_reviewer": {
+        "detected": true,
+        "expected_failure": "raw PM-issued worker result reached reviewer before PM gate package",
+        "failures": [
+          "raw PM-issued worker result reached reviewer before PM gate package",
+          "PM-issued worker result did not return to project_manager",
+          "formal evidence used a worker result without PM absorbed disposition",
+          "reviewer gate started without a PM-built formal gate package",
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "resume worker result bypassed PM disposition"
+        ]
+      },
+      "reviewer_started_without_pm_gate_package": {
+        "detected": true,
+        "expected_failure": "reviewer gate started without a PM-built formal gate package",
+        "failures": [
+          "reviewer gate started without a PM-built formal gate package",
+          "PM completed a node without PM disposition and reviewer node-completion gate"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_critical_gate_without_worker_package",
+      "valid_current_node_pm_gate",
+      "valid_material_pm_gate",
+      "valid_research_pm_gate",
+      "valid_resume_result_to_pm"
+    ],
+    "edge_count": 30,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "controller_reads_sealed_body",
+      "critical_reviewer_gate_removed",
+      "formal_evidence_from_undispositioned_result",
+      "legacy_reviewer_relay_used_as_current_acceptance",
+      "material_research_decision_without_gate",
+      "node_completion_without_reviewer_gate",
+      "pm_forwarded_raw_package_to_reviewer",
+      "raw_worker_result_relayed_to_reviewer",
+      "resume_result_direct_to_reviewer",
+      "reviewer_started_without_pm_gate_package"
+    ],
+    "state_count": 31
+  }
+}

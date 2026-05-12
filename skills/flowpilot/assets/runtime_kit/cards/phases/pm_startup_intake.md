@@ -34,4 +34,5 @@ Forbidden:
 
 - do not write the final route yet;
 - do not issue implementation packets;
-- do not use worker material before reviewer sufficiency review.
+- do not use worker material before PM package-result disposition and reviewer
+  sufficiency review.

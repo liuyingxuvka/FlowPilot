@@ -218,15 +218,17 @@ model-backed autopilot:
 - Heartbeat/manual-resume now re-enters the packet-gated controller loop. The
   stable launcher loads the active run and packet ledger, restores roles, asks
   PM for `PM_DECISION` with `controller_reminder`, runs router direct-dispatch
-  preflight before worker execution, routes existing worker results to reviewer,
-  and blocks ambiguous worker state for PM recovery rather than letting
-  Controller infer or finish work.
+  preflight before worker execution, routes existing worker results to PM for
+  package-result disposition, and blocks ambiguous worker state for PM recovery
+  rather than letting Controller infer or finish work.
 - Material scan, research, and current-node execution now use physical
   packet/result envelopes. Controller may relay envelope metadata only; workers
-  open packet bodies, reviewers open result bodies, and PM may complete a node
-  only after reviewer-passed result evidence plus any required parent backward
-  replay and PM segment decision. Generalized async FlowGuard officer
-  request/report packets remain the next packet-loop expansion.
+  open packet bodies, worker results return to PM, PM records a package-result
+  disposition, and reviewers inspect PM-built formal gate packages rather than
+  raw worker result bodies. PM may complete a node only after the formal
+  reviewer node-completion gate passes plus any required parent backward replay
+  and PM segment decision. Generalized async FlowGuard officer request/report
+  packets remain the next packet-loop expansion.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns
@@ -388,8 +390,9 @@ FlowGuard caught and fixed these design issues:
 - `flowpilot_router.py` now drives the current-node packet loop through the
   physical `packet_runtime` envelope/body system. It requires route activation,
   current-node packet registration, router direct-dispatch preflight, packet
-  ledger checks, Controller envelope-only relay, worker result relay to
-  reviewer, and reviewer packet audit before PM node completion.
+  ledger checks, Controller envelope-only relay, worker result relay to PM,
+  PM package-result disposition, and a reviewer formal node-completion audit
+  before PM node completion.
 - Route activation and review-block repair now write run-scoped route/frontier
   state. `execution_frontier.json` tracks the active node, completed nodes, and
   route-mutation repair state; mutation records are written before new repair

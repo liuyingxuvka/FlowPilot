@@ -31,9 +31,11 @@ heavy work that naturally splits into disjoint scopes, create bounded separate
 packets for `worker_a` and `worker_b` so they can run in parallel without
 overlapping files, evidence duties, or review ownership. Simultaneous
 registration means PM asserts every packet can start now. Router records the
-batch size, relays the addressed envelopes, waits for every result, and only
-then sends the whole material batch to reviewer for one material sufficiency
-review.
+batch size, relays the addressed envelopes, waits for every result, and relays
+the material result envelopes back to PM. PM must open the relayed result bodies
+through the runtime and record `pm_records_material_scan_result_disposition`
+before any reviewer material sufficiency gate. Only an absorbed PM disposition
+releases a formal material sufficiency package to the reviewer.
 
 Each material scan packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_material_scan_result.v1` in both the packet
@@ -61,7 +63,9 @@ The packet must state:
 - what must be reported as missing instead of guessed.
 
 Do not accept material, write product understanding, or design the route from
-raw worker output. Reviewer sufficiency must happen first.
+raw worker output. PM must first disposition the worker material results, then
+reviewer sufficiency must happen on the formal PM material package before PM
+accepts material for product understanding.
 
 For each packet, write the packet body to a run-scoped file and return only a
 Controller-visible spec with top-level `body_path` and `body_hash` fields

@@ -1,0 +1,154 @@
+{
+  "covered_same_class_hazards": [
+    "abstract_green_without_live_action_replay",
+    "child_completion_from_old_route_version",
+    "direct_child_done_descendant_pending",
+    "live_router_action_not_in_model",
+    "non_leaf_acceptance_stuck_on_parent",
+    "parent_complete_before_child_completion",
+    "parent_dispatches_worker_packet",
+    "parent_flags_leak_to_child",
+    "parent_replay_before_child_entry",
+    "parent_segment_before_child_completion",
+    "parent_targets_before_child_entry",
+    "stale_route_status_counts_as_child_done"
+  ],
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=84",
+    "violation_count": 0
+  },
+  "hazards": {
+    "failures": [],
+    "hazards": {
+      "abstract_green_without_live_action_replay": {
+        "detected": true,
+        "expected_failure": "abstract model green was used without live Router next-action replay",
+        "failures": [
+          "abstract model green was used without live Router next-action replay"
+        ]
+      },
+      "child_completion_from_old_route_version": {
+        "detected": true,
+        "expected_failure": "child completion ledger belongs to a stale route version",
+        "failures": [
+          "child completion ledger belongs to a stale route version",
+          "parent closure action requested before current child completion ledger"
+        ]
+      },
+      "direct_child_done_descendant_pending": {
+        "detected": true,
+        "expected_failure": "direct child completion was treated as subtree completion while descendants were pending",
+        "failures": [
+          "parent closure action requested before all effective children completed",
+          "direct child completion was treated as subtree completion while descendants were pending",
+          "parent closure action requested before current child completion ledger"
+        ]
+      },
+      "live_router_action_not_in_model": {
+        "detected": true,
+        "expected_failure": "live Router next action was not covered by the conformance model",
+        "failures": [
+          "live Router next action was not covered by the conformance model"
+        ]
+      },
+      "non_leaf_acceptance_stuck_on_parent": {
+        "detected": true,
+        "expected_failure": "non-leaf acceptance passed but Router did not enter a child subtree",
+        "failures": [
+          "non-leaf acceptance passed but Router did not enter a child subtree"
+        ]
+      },
+      "parent_complete_before_child_completion": {
+        "detected": true,
+        "expected_failure": "parent closure action requested before all effective children completed",
+        "failures": [
+          "parent closure action requested before all effective children completed",
+          "parent closure action requested before current child completion ledger"
+        ]
+      },
+      "parent_dispatches_worker_packet": {
+        "detected": true,
+        "expected_failure": "parent or module node attempted worker packet dispatch",
+        "failures": [
+          "parent or module node attempted worker packet dispatch",
+          "non-leaf acceptance passed but Router did not enter a child subtree"
+        ]
+      },
+      "parent_flags_leak_to_child": {
+        "detected": true,
+        "expected_failure": "child frontier entered without resetting parent current-node cycle flags",
+        "failures": [
+          "child frontier entered without resetting parent current-node cycle flags",
+          "parent current-node flags leaked into child execution"
+        ]
+      },
+      "parent_replay_before_child_entry": {
+        "detected": true,
+        "expected_failure": "parent closure action requested before child subtree entry",
+        "failures": [
+          "parent closure action requested before child subtree entry",
+          "parent closure action requested before child leaf execution",
+          "parent closure action requested before all effective children completed",
+          "parent closure action requested before current child completion ledger"
+        ]
+      },
+      "parent_segment_before_child_completion": {
+        "detected": true,
+        "expected_failure": "parent closure action requested before all effective children completed",
+        "failures": [
+          "parent closure action requested before all effective children completed",
+          "parent closure action requested before current child completion ledger"
+        ]
+      },
+      "parent_targets_before_child_entry": {
+        "detected": true,
+        "expected_failure": "parent closure action requested before child subtree entry",
+        "failures": [
+          "parent closure action requested before child subtree entry",
+          "parent closure action requested before child leaf execution",
+          "parent closure action requested before all effective children completed",
+          "parent closure action requested before current child completion ledger"
+        ]
+      },
+      "stale_route_status_counts_as_child_done": {
+        "detected": true,
+        "expected_failure": "stale route status was used as child completion authority",
+        "failures": [
+          "stale route status was used as child completion authority",
+          "parent closure action requested before current child completion ledger"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "intended": {
+    "leaf_failures": [],
+    "ok": true,
+    "parent_failures": []
+  },
+  "model": "flowpilot_parent_child_lifecycle",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_leaf_lifecycle",
+      "valid_parent_child_lifecycle"
+    ],
+    "edge_count": 28,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 12,
+    "state_count": 29
+  }
+}

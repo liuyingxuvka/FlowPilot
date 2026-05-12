@@ -25,14 +25,18 @@ For each active route node:
 2. read the latest route-memory prior path context and active frontier;
 3. confirm the active node is a dispatchable leaf or repair node with
    `leaf_readiness_gate.status: "pass"`; if it is a parent/module node, enter
-   the child subtree or parent backward replay path instead of issuing a worker
+   the local product/process/reviewer planning loop for that subtree, then the
+   child subtree or parent backward replay path instead of issuing a worker
    packet batch;
 4. issue one bounded current-node packet batch for the current leaf/repair node
    only;
 5. wait for router direct-dispatch preflight before role delivery;
-6. wait for every batch result and one reviewer batch result review;
-7. perform a PM high-standard recheck against the node acceptance plan;
-8. complete the leaf/repair node only after reviewer pass or repair pass, then
+6. wait for every batch result, open each relayed result as PM, and record
+   `pm_records_current_node_result_disposition`;
+7. when the result is absorbed, release a formal node-completion package to the
+   reviewer; the reviewer reviews that PM package, not raw worker output;
+8. perform a PM high-standard recheck against the node acceptance plan;
+9. complete the leaf/repair node only after reviewer pass or repair pass, then
    let Router trigger parent/module backward review when all children complete.
 
 Register current-node work as one router-owned packet batch with `batch_id` and
@@ -40,8 +44,12 @@ Register current-node work as one router-owned packet batch with `batch_id` and
 plus bounded `product_flowguard_officer` or `process_flowguard_officer` packets
 when modeling work belongs inside the active node and can start now. Router
 records every packet in the batch, gives each packet its own write grant, waits
-for every result, then sends the whole batch to reviewer. PM may complete the
-node only after the reviewer passes the complete batch or a repair batch.
+for every result, then relays the result envelopes back to PM. PM must open the
+relayed result bodies through the runtime and record a disposition:
+`absorbed`, `rework_requested`, `canceled`, `blocked`, or
+`route_or_node_mutation_required`. Only an absorbed result may become part of a
+PM-built node-completion review package. PM may complete the node only after the
+reviewer passes that formal PM gate package or a repaired formal package.
 
 Every current-node worker packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_current_node_result.v1` in both the packet
@@ -51,6 +59,10 @@ reviewer block conditions.
 Do not create a current-node worker packet for a parent/module node, for a leaf
 whose readiness gate is missing or failed, or for a node whose acceptance plan
 still says the worker must decide the decomposition.
+If PM discovers at entry that an apparent leaf is still too broad for one
+bounded worker packet, promote it to a parent/module, add ordered child nodes,
+invalidate stale approvals for that subtree, and rerun local Product FlowGuard,
+Process FlowGuard, PM decision, and Reviewer gates before any worker dispatch.
 The packet body must also include the generated `Report Contract For This Task`
 block, including required result sections, required return envelope fields,
 blocked/needs-PM behavior, and the rule that field names and section names must

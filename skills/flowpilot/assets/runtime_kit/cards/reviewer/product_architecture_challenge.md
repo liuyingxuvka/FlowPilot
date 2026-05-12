@@ -31,8 +31,8 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Personally challenge the PM product-function architecture before it can feed
-the root contract.
+Personally challenge the PM product-function architecture and the PM-accepted
+Product FlowGuard behavior model before they can feed the root contract.
 
 Check:
 
@@ -43,6 +43,9 @@ Check:
 - visible surfaces or workflow steps have a real purpose;
 - negative scope preserves user intent;
 - acceptance matrix can actually prove the target product;
+- PM accepted the current Product FlowGuard behavior model after reading it,
+  and the model's states, failure/recovery paths, forbidden downgrades, and
+  completion evidence are consistent with the PM product architecture;
 - low-quality, placeholder, or semantic-downgrade outcomes are blocked.
 - higher-standard product, experience, or simplicity improvements that are not
   hard requirements are returned as PM decision-support, not as reviewer-owned

@@ -99,13 +99,13 @@ ROLE_OUTPUT_REQUIRED_PAIRS = frozenset(
 
 PROCESS_CONTRACT_BINDING_REQUIRED = frozenset(
     {
-        "current_node_work|worker.current_node|human_like_reviewer|human_like_reviewer",
+        "current_node_work|worker.current_node|project_manager|project_manager",
         "pm_role_work_request|pm.role_work_request|project_manager|project_manager",
         "officer_model_report|officer.model_report|project_manager|project_manager",
         "officer_model_miss_report|officer.model_miss_report|project_manager|project_manager",
-        "reviewer_result_review|reviewer.review|human_like_reviewer|human_like_reviewer",
-        "material_scan|worker.material_scan|human_like_reviewer|human_like_reviewer",
-        "research|worker.research|human_like_reviewer|human_like_reviewer",
+        "reviewer_result_review|reviewer.review|project_manager|project_manager",
+        "material_scan|worker.material_scan|project_manager|project_manager",
+        "research|worker.research|project_manager|project_manager",
         "control_blocker_repair|pm.control_blocker_repair_decision|project_manager|project_manager",
         "resume_decision|pm.resume_decision|project_manager|project_manager",
     }

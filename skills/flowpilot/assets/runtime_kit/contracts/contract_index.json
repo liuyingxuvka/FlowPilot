@@ -215,11 +215,12 @@
         "body_visibility"
       ],
       "required_result_envelope_values": {
-        "next_recipient": "human_like_reviewer",
+        "next_recipient": "project_manager",
         "body_visibility": "sealed_target_role_only"
       },
       "contract_self_check_required": true,
-      "reviewer_must_block_missing_or_failed_check": true
+      "pm_must_record_package_result_disposition": true,
+      "reviewer_reviews_pm_formal_gate_package_only": true
     },
     {
       "contract_id": "flowpilot.output_contract.pm_role_work_result.v1",
@@ -277,7 +278,7 @@
         ]
       },
       "required_result_envelope_values": {
-        "next_recipient": "human_like_reviewer",
+        "next_recipient": "project_manager",
         "body_visibility": "sealed_target_role_only"
       },
       "required_report_body_fields": [
@@ -287,7 +288,8 @@
         "answers_decision_question"
       ],
       "contract_self_check_required": true,
-      "reviewer_must_block_missing_or_failed_check": true
+      "pm_must_record_package_result_disposition": true,
+      "reviewer_reviews_pm_formal_gate_package_only": true
     },
     {
       "contract_id": "flowpilot.output_contract.worker_research_result.v1",
@@ -322,8 +324,13 @@
         "confidence_boundary",
         "answers_decision_question"
       ],
+      "required_result_envelope_values": {
+        "next_recipient": "project_manager",
+        "body_visibility": "sealed_target_role_only"
+      },
       "contract_self_check_required": true,
-      "reviewer_must_block_missing_or_failed_check": true
+      "pm_must_record_package_result_disposition": true,
+      "reviewer_reviews_pm_formal_gate_package_only": true
     },
     {
       "contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
@@ -767,7 +774,7 @@
     {
       "contract_id": "flowpilot.output_contract.current_node_result_review_pass.v1",
       "schema_version": "flowpilot.output_contract.v1",
-      "task_family": "reviewer.current_node_result_review",
+      "task_family": "reviewer.pm_node_completion_package_review",
       "recipient_roles": [
         "human_like_reviewer"
       ],

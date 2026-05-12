@@ -19,7 +19,7 @@ Selection rules:
 - current-node worker packet: `flowpilot.output_contract.worker_current_node_result.v1`;
 - material scan worker packet: `flowpilot.output_contract.worker_material_scan_result.v1`;
 - research worker packet: `flowpilot.output_contract.worker_research_result.v1`;
-- reviewer dispatch or result review request: `flowpilot.output_contract.reviewer_review_report.v1`;
+- reviewer formal gate review request: `flowpilot.output_contract.reviewer_review_report.v1`;
 - process or product FlowGuard officer request: `flowpilot.output_contract.officer_model_report.v1`;
 - PM, reviewer, process officer, or product officer gate decision: `flowpilot.output_contract.gate_decision.v1`;
 - PM startup, repair, resume, segment, route, or closure decision: the matching `flowpilot.output_contract.pm_*` contract from the registry.

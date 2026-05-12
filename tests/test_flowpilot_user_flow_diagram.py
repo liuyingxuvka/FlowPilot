@@ -327,7 +327,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             {
                 "route_id": "route-001",
                 "route_version": 9,
-                "display_depth": 2,
+                "display_depth": 1,
                 "active_node_id": "leaf-001",
                 "nodes": [
                     {
@@ -379,14 +379,69 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
 
         self.assertTrue(payload["ok"], json.dumps(payload.get("review"), indent=2))
         self.assertEqual(payload["route_node_count"], 3)
-        self.assertEqual(payload["display_depth"], 2)
+        self.assertEqual(payload["display_depth"], 1)
         self.assertEqual(payload["hidden_leaf_progress"]["hidden_leaf_count"], 1)
         self.assertEqual([item["node_id"] for item in payload["active_path"]], ["parent-001", "module-001", "leaf-001"])
         self.assertIn("Parent", payload["mermaid"])
-        self.assertIn("Module", payload["mermaid"])
+        self.assertNotIn("Module<br/>", payload["mermaid"])
         self.assertNotIn("Deep Leaf<br/>", payload["mermaid"])
         self.assertIn("Current path: Parent (parent-001) > Module (module-001) > Deep Leaf (leaf-001)", payload["markdown"])
         self.assertIn("Hidden leaf progress: 0/1 complete", payload["markdown"])
+
+    def test_large_canonical_route_renders_real_nodes_not_protocol_stage_graph(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-large-route-"))
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(run_root / "state.json", {"active_route_id": "route-001"})
+        nodes = [
+            {
+                "node_id": f"module-{index:02d}",
+                "title": f"Real module {index}",
+                "status": "running" if index == 10 else "pending",
+                "depth": 1,
+                "node_kind": "module",
+            }
+            for index in range(1, 20)
+        ]
+        _write_json(
+            run_root / "routes" / "route-001" / "flow.json",
+            {
+                "route_id": "route-001",
+                "route_version": 12,
+                "display_depth": 1,
+                "nodes": [{"node_id": "route-root", "title": "Root", "node_kind": "root", "depth": 0, "children": nodes}],
+            },
+        )
+        _write_json(
+            run_root / "execution_frontier.json",
+            {
+                "active_route_id": "route-001",
+                "active_node_id": "module-10",
+                "route_version": 12,
+                "frontier_version": 4,
+                "current_mainline": [f"module-{index:02d}" for index in range(1, 20)],
+            },
+        )
+
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="key_node_change",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        self.assertEqual(payload["route_sign_layout"], "route_nodes")
+        self.assertEqual(payload["route_node_count"], 20)
+        self.assertIn("Real module 1", payload["mermaid"])
+        self.assertIn("Real module 19", payload["mermaid"])
+        self.assertIn("Now: module-10", payload["mermaid"])
+        self.assertNotIn("Root<br/>", payload["mermaid"])
+        self.assertNotIn("Product Behavior Model", payload["mermaid"])
+        self.assertIn("Current status:", payload["markdown"])
 
     def test_active_run_pointer_is_authoritative_over_legacy_state(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")

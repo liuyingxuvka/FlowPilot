@@ -56,6 +56,16 @@ REQUIRED_LABELS = {
     "reject_control_transaction_registry_missing",
     "select_control_transaction_partial_commit_accepted",
     "reject_control_transaction_partial_commit_accepted",
+    "select_parent_child_lifecycle_conformance_missed",
+    "reject_parent_child_lifecycle_conformance_missed",
+    "select_parent_child_lifecycle_replay_skipped",
+    "reject_parent_child_lifecycle_replay_skipped",
+    "select_legal_next_action_policy_missing",
+    "reject_legal_next_action_policy_missing",
+    "select_legal_next_action_projection_missing",
+    "reject_legal_next_action_projection_missing",
+    "select_legal_next_action_conformance_failed",
+    "reject_legal_next_action_conformance_failed",
 }
 
 HAZARD_EXPECTED_FAILURES = {
@@ -85,6 +95,15 @@ HAZARD_EXPECTED_FAILURES = {
     },
     "control_transaction_registry_missing": {"control_transaction_registry_not_authoritative"},
     "control_transaction_partial_commit_accepted": {"control_transaction_commit_scope_incomplete"},
+    "parent_child_lifecycle_conformance_missed": {"parent_child_lifecycle_conformance_failed"},
+    "parent_child_lifecycle_replay_skipped": {"parent_child_lifecycle_conformance_replay_missing"},
+    "legal_next_action_policy_missing": {
+        "legal_next_action_policy_not_registered",
+        "legal_next_action_projection_missing",
+        "legal_next_action_conformance_failed",
+    },
+    "legal_next_action_projection_missing": {"legal_next_action_projection_missing"},
+    "legal_next_action_conformance_failed": {"legal_next_action_conformance_failed"},
 }
 
 
@@ -109,7 +128,10 @@ def _state_id(state: model.State) -> str:
         f"parse={state.coverage_parse_errors_ignored}|install={state.install_requires_safe_to_continue}|"
         f"sync={state.installed_skill_matches_repo},{state.local_sync_required}|"
         f"ctr={state.control_transaction_registry_registered},{state.control_transaction_registry_valid},"
-        f"{state.control_transaction_commit_scope_complete}"
+        f"{state.control_transaction_commit_scope_complete}|parent_child="
+        f"{state.parent_child_lifecycle_conformant},{state.parent_child_lifecycle_replayed}|legal="
+        f"{state.legal_next_action_policy_registered},{state.legal_next_action_projected},"
+        f"{state.legal_next_action_conformant}"
     )
 
 

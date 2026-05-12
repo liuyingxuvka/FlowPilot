@@ -49,8 +49,8 @@ Risk intent brief:
   reopen route checks; optimized ack consumption validates exact ack, role, and
   hash; pending waits reconcile only from durable packet/status evidence;
   user-facing status summaries remain metadata-only and blocker-consistent;
-  PM role-work results return to PM while current-node results still return to
-  reviewer; role memory is an index, never an approval authority; and a
+  PM role-work and current-node worker results return to PM before formal
+  reviewer gates; role memory is an index, never an approval authority; and a
   complete model-miss officer report can reach a PM decision without a second
   officer loop; child-skill gate reviewer passes clear only the matching
   current gate blocker; direct Router ACK consumption preserves the semantic
@@ -132,7 +132,10 @@ class State:
     packet_body_open_receipt: bool = False
     result_returned: bool = False
     result_routed_to_reviewer: bool = False
+    result_routed_to_pm: bool = False
     result_body_open_receipt: bool = False
+    pm_result_disposition_recorded: bool = False
+    pm_formal_review_package_released: bool = False
     reviewer_report_written: bool = False
     reviewer_report_accepted: bool = False
 
@@ -210,7 +213,7 @@ class State:
     pending_wait_reconciliation_from_chat: bool = False
     pm_role_work_result_normalized: bool = False
     pm_role_work_result_routes_to_pm: bool = True
-    current_node_result_routes_to_reviewer: bool = True
+    current_node_result_routes_to_pm: bool = True
     model_miss_officer_report_complete: bool = False
     model_miss_pm_decision_from_single_report: bool = False
     role_memory_delta_written: bool = False
@@ -410,12 +413,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 "optimized_relay_transaction_records_delivery_open_and_hash",
                 _inc(
                     state,
-                    holder="reviewer",
+                    holder="pm",
                     packet_delivered=True,
                     packet_body_open_receipt=True,
                     result_returned=True,
-                    result_routed_to_reviewer=True,
+                    result_routed_to_pm=True,
                     result_body_open_receipt=True,
+                    pm_result_disposition_recorded=True,
+                    pm_formal_review_package_released=True,
                     optimized_relay_transaction=True,
                     optimized_transaction_records_delivery=True,
                     optimized_transaction_records_open_receipts=True,
@@ -453,16 +458,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if not state.result_returned:
             yield Transition("worker_result_returned_to_ledger", _inc(state, holder="controller", result_returned=True))
             return
-        if not state.result_routed_to_reviewer:
+        if not state.result_routed_to_pm:
             yield Transition(
-                "controller_routes_result_to_reviewer_after_ledger_check",
-                _inc(state, holder="reviewer", result_routed_to_reviewer=True),
+                "controller_routes_result_to_pm_after_ledger_check",
+                _inc(state, holder="pm", result_routed_to_pm=True),
             )
             return
         if not state.result_body_open_receipt:
             yield Transition(
-                "reviewer_records_result_body_open_receipt",
-                _inc(state, holder="reviewer", result_body_open_receipt=True),
+                "pm_records_result_body_open_receipt",
+                _inc(state, holder="pm", result_body_open_receipt=True),
+            )
+            return
+        if not state.pm_result_disposition_recorded:
+            yield Transition(
+                "pm_records_package_result_disposition",
+                _inc(state, holder="pm", pm_result_disposition_recorded=True),
+            )
+            return
+        if not state.pm_formal_review_package_released:
+            yield Transition(
+                "pm_releases_formal_gate_package_to_reviewer",
+                _inc(state, holder="reviewer", pm_formal_review_package_released=True),
             )
             return
 
@@ -473,7 +490,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 pm_role_work_result_normalized=True,
                 pm_role_work_result_routes_to_pm=True,
-                current_node_result_routes_to_reviewer=True,
+                current_node_result_routes_to_pm=True,
             ),
         )
         return
@@ -858,11 +875,13 @@ def reviewer_report_requires_open_receipts(state: State, trace) -> InvariantResu
         state.packet_delivered
         and state.packet_body_open_receipt
         and state.result_returned
-        and state.result_routed_to_reviewer
+        and state.result_routed_to_pm
         and state.result_body_open_receipt
+        and state.pm_result_disposition_recorded
+        and state.pm_formal_review_package_released
     ):
         return InvariantResult.fail(
-            "reviewer report was accepted before delivery, packet-open, result-return, relay, and result-open receipts existed"
+            "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed"
         )
     return InvariantResult.pass_()
 
@@ -1259,8 +1278,8 @@ def role_work_recipient_normalization_preserves_routes(state: State, trace) -> I
     del trace
     if state.pm_role_work_result_normalized and not state.pm_role_work_result_routes_to_pm:
         return InvariantResult.fail("PM role-work result did not route back to project_manager")
-    if state.pm_role_work_result_normalized and not state.current_node_result_routes_to_reviewer:
-        return InvariantResult.fail("current-node worker result was rerouted away from human_like_reviewer")
+    if state.pm_role_work_result_normalized and not state.current_node_result_routes_to_pm:
+        return InvariantResult.fail("current-node worker result did not route back to project_manager")
     return InvariantResult.pass_()
 
 
@@ -1626,8 +1645,10 @@ def _safe_base(**changes: object) -> State:
             packet_delivered=True,
             packet_body_open_receipt=True,
             result_returned=True,
-            result_routed_to_reviewer=True,
+            result_routed_to_pm=True,
             result_body_open_receipt=True,
+            pm_result_disposition_recorded=True,
+            pm_formal_review_package_released=True,
             reviewer_report_written=True,
             reviewer_report_accepted=True,
             pm_material_understanding_written=True,
@@ -1699,7 +1720,7 @@ def _safe_base(**changes: object) -> State:
             pending_wait_reconciliation_from_chat=False,
             pm_role_work_result_normalized=True,
             pm_role_work_result_routes_to_pm=True,
-            current_node_result_routes_to_reviewer=True,
+            current_node_result_routes_to_pm=True,
             model_miss_officer_report_complete=True,
             model_miss_pm_decision_from_single_report=True,
             role_memory_delta_written=True,
@@ -2079,12 +2100,12 @@ def hazard_states() -> dict[str, State]:
         "role_work_result_routed_to_reviewer": _safe_base(
             pm_role_work_result_normalized=True,
             pm_role_work_result_routes_to_pm=False,
-            current_node_result_routes_to_reviewer=True,
+            current_node_result_routes_to_pm=True,
         ),
-        "current_node_result_routed_to_pm": _safe_base(
+        "current_node_result_routed_to_reviewer": _safe_base(
             pm_role_work_result_normalized=True,
             pm_role_work_result_routes_to_pm=True,
-            current_node_result_routes_to_reviewer=False,
+            current_node_result_routes_to_pm=False,
         ),
         "pm_decides_from_incomplete_model_miss_report": _safe_base(
             model_miss_officer_report_complete=False,
@@ -2268,11 +2289,17 @@ def _audit_material_scan_dispatch_integrity(
         }
 
     router_phase = str(router_state.get("phase") or "") if isinstance(router_state, dict) else ""
+    router_status = str(router_state.get("status") or "") if isinstance(router_state, dict) else ""
     frontier_phase = str(frontier.get("phase") or "") if isinstance(frontier, dict) else ""
     frontier_status = str(frontier.get("status") or "") if isinstance(frontier, dict) else ""
     flags = _router_flags(router_state)
+    stopped_by_user = (
+        router_status == "stopped_by_user"
+        or frontier_status == "stopped_by_user"
+        or bool(flags.get("run_stopped_by_user"))
+    )
     material_scan_complete = bool(flags.get("material_review_sufficient"))
-    phase_context_consistent = material_scan_complete or (
+    phase_context_consistent = stopped_by_user or material_scan_complete or (
         router_phase == "material_scan"
         and frontier_phase == "material_scan"
         and frontier_status == "material_scan"

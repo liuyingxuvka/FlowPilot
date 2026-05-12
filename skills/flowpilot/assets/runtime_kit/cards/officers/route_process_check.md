@@ -24,6 +24,9 @@ model:
 - route draft was written by PM after the current prior-path context;
 - route nodes map to the Product FlowGuard Officer's product behavior model and
   can reach the modeled completion state;
+- the canonical process model is serial: every effective root, parent/module,
+  child, leaf, and repair segment has a definite ordered predecessor/successor
+  path, and all required nodes are reachable before completion;
 - no product-model state, failure/recovery path, or completion evidence is left
   only partially covered by the route;
 - route nodes preserve the frozen root contract and child-skill gate manifest;
@@ -34,6 +37,17 @@ model:
   dispatchable leaves, dispatch only leaf/repair nodes with
   `leaf_readiness_gate.status: "pass"`, and trigger parent backward review
   after all child nodes complete;
+- each non-leaf node has a local entry loop before child execution: PM local
+  product goal, Product FlowGuard local model, PM decision, Reviewer product
+  challenge, Process FlowGuard serial child route, PM decision, Reviewer route
+  challenge;
+- each leaf is small enough for one bounded worker packet. If a leaf hides
+  multiple ordered work packages, require promotion to parent/module and deeper
+  child decomposition before dispatch;
+- parent completion and final completion include backward coverage review, and
+  any omission first checks whether the process model missed a class of work,
+  upgrades the model when needed, searches same-class omissions, adds
+  supplemental nodes, and reruns stale gates;
 - root or parent/module node-entry gaps before executable child work are handled
   as route replanning or ordinary node expansion, not as repair-node creation;
 - if the draft adds or changes capability, the Product FlowGuard capability fit
@@ -56,7 +70,10 @@ Router hard gate fields:
 
 - To pass, include `process_viability_verdict: "pass"`,
   `product_behavior_model_checked: true`, `route_can_reach_product_model:
-  true`, and `repair_return_policy_checked: true`.
+  true`, `repair_return_policy_checked: true`,
+  `serial_execution_model_checked: true`,
+  `all_effective_nodes_reachable_in_order: true`, and
+  `recursive_child_routes_serialized: true`.
 - If the route needs PM repair, return event
   `process_officer_requires_route_repair` with
   `process_viability_verdict: "repair_required"` and a concrete

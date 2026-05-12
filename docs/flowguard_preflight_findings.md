@@ -23,8 +23,9 @@ Current source and runtime checks must preserve these boundaries:
 - heartbeat/manual resume must load current-run state, execution frontier,
   packet ledger, and role memory before deciding what can proceed;
 - router direct-dispatch validation is mandatory before PM-authored work
-  packets reach a worker, and reviewer result review remains mandatory before
-  existing or fresh worker output is used as accepted evidence;
+  packets reach a worker. Existing or fresh worker results must return to the
+  PM for a recorded package-result disposition before any PM-built formal
+  gate package is released to the reviewer;
 - Cockpit UI unavailability is a startup display-surface fallback, not proof
   that route execution is blocked. If the user requested Cockpit and the UI
   cannot open, PM records the fallback and the reviewer independently verifies

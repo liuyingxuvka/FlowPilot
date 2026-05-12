@@ -99,7 +99,7 @@
   "project_manager_decision": "<execute_completion_runway|pm_stop|block|mutate_route|complete|null>",
   "pm_selected_current_gate": "<gate-id-or-null>",
   "packet_resume": {
-    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
     "active_packet_id": "<packet-id-or-null>",
     "packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
     "packet_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",
@@ -137,7 +137,7 @@
     "packet_body_hash_checked_before_dispatch": false,
     "result_body_hash_checked_before_review_pass": false,
     "review_decision_path": "<review-decision-path-or-null>",
-    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-pm|ask-pm-for-result-disposition|send-pm-gate-package-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
     "resume_policy": "Controller asks PM for recovery/reissue/reassignment when packet holder, worker identity, relay signature, recipient body-open record, dispatch evidence, or worker result state is unclear.",
     "ambiguous_worker_state_blocks_controller_execution": true,
     "controller_may_finish_worker_packet": false,

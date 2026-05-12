@@ -24,9 +24,16 @@ Report:
 - modelable product states and transitions;
 - user actions, product states, failure/recovery paths, forbidden downgrades,
   and completion evidence that route nodes must cover;
+- the smallest useful hierarchy of product behavior segments that PM can later
+  map to route parents/modules/leaves without hiding multiple behaviors inside
+  one worker leaf;
 - unmodeled or ambiguous behavior;
 - high-risk requirements needing scenarios or experiments;
 - confidence boundary;
 - whether PM must repair the architecture before contract freeze.
 
 This is decision support for the PM, not a no-risk certificate.
+PM must explicitly accept this model before Reviewer challenges the product
+architecture. If PM rejects it, rebuild the product behavior model after the
+PM architecture change or clarification instead of treating the old model as
+good enough.

@@ -6,7 +6,7 @@
     "rejected_extra_route_complexity": [],
     "route_complexity_justifications": []
   },
-  "display_depth": 2,
+  "display_depth": 1,
   "decomposition_policy": {
     "recursive_decomposition_allowed": true,
     "fixed_two_layer_cap_forbidden": true,
@@ -17,7 +17,7 @@
     "route_memory_required": true
   },
   "display_plan": {
-    "display_depth": 2,
+    "display_depth": 1,
     "source": "PM shallow projection from the full route tree",
     "show_top_layers_only": true,
     "show_active_path_when_deep_node_hidden": true,

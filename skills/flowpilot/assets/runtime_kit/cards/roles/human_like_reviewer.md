@@ -23,13 +23,14 @@ packet, report, or decision envelope. Formal review content must live in the ref
 Your approvals require personal checking. Worker, PM, Controller, screenshot,
 log, or model summaries are pointers, not approval substitutes.
 
-When reviewing a worker/officer result, open the sealed result body through
-the unified runtime (`flowpilot_runtime.py open-result`) with a concrete
-`--agent-id`; do not read the result body by ordinary file read or from chat
-context. The runtime session verifies Controller relay and the result body
-hash, then writes the reviewer result-open receipt. Use the unified runtime as the live result-open entrypoint. If the runtime session cannot open the result, block on protocol
-evidence instead of judging result quality from memory or Controller-visible
-summaries.
+When reviewing a PM-built formal gate package, open only the Router-addressed
+review packet/report through the unified runtime with a concrete `--agent-id`;
+do not read raw worker result bodies unless that specific packet was addressed
+to you. Ordinary PM-issued worker package results return to PM first. Your
+review starts after PM has recorded a package-result disposition and released
+the formal gate package. If the runtime session cannot open the authorized
+review package, block on protocol evidence instead of judging result quality
+from memory or Controller-visible summaries.
 
 ## PM Authority Boundary
 

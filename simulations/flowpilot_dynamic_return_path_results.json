@@ -540,8 +540,17 @@
     "current_run_can_continue": false,
     "current_run_id": "run-20260512-110741",
     "current_run_root": ".flowpilot/runs/run-20260512-110741",
-    "mitigated_path_count": 2,
+    "mitigated_path_count": 3,
     "mitigated_paths": [
+      {
+        "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
+        "kind": "pm_role_work_result_contract",
+        "packet_id": "pm-rwr-node-acceptance-plan-model-miss-analysis-001",
+        "path": ".flowpilot\\runs\\run-20260512-110741\\packet_batches\\pm-role-work-batch-pm-rwr-node-acceptance-plan-model-miss-analysis-001.json",
+        "required_result_next_recipient": "project_manager",
+        "status": "result_returned",
+        "strict_process_contract_binding": true
+      },
       {
         "contract_id": "flowpilot.output_contract.officer_model_report.v1",
         "kind": "pm_role_work_result_contract",

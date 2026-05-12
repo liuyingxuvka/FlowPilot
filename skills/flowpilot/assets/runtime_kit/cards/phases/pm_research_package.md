@@ -38,8 +38,10 @@ inspection, experiments, or implementation-grounded research. Use
 `product_flowguard_officer` for product behavior/modelability questions and
 `process_flowguard_officer` for process/state/route questions. Do not ask an
 officer to make PM decisions or reviewer approvals. Router waits for every
-batch result, including officer results, before the research batch can be sent
-for reviewer direct-source/model-output checking.
+batch result, including officer results, before relaying result envelopes back
+to PM. PM must open the relayed result bodies through the runtime and record
+`pm_records_research_result_disposition`. Only an absorbed PM disposition
+releases a formal research source-check package to the reviewer.
 
 Any research worker packet created from the package must include the registry
 `output_contract` `flowpilot.output_contract.worker_research_result.v1` in both
@@ -58,5 +60,6 @@ The packet body must also require a `PM Suggestion Items` section. Worker
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition and never authorize current-gate blocking by themselves.
 
-Do not proceed to product architecture until reviewed research is absorbed or
-the route is explicitly changed or blocked.
+Do not proceed to product architecture until PM has dispositioned the research
+result and the formal reviewer source-check gate has either passed or driven a
+PM route change, rework request, user question, or blocker.

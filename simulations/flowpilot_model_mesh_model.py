@@ -76,6 +76,11 @@ class State:
     control_transaction_registry_registered: bool = True
     control_transaction_registry_valid: bool = True
     control_transaction_commit_scope_complete: bool = True
+    parent_child_lifecycle_conformant: bool = True
+    parent_child_lifecycle_replayed: bool = True
+    legal_next_action_policy_registered: bool = True
+    legal_next_action_projected: bool = True
+    legal_next_action_conformant: bool = True
 
 
 @dataclass(frozen=True)
@@ -222,6 +227,28 @@ SCENARIOS: Dict[str, State] = {
         _valid_live_state("control_transaction_partial_commit_accepted"),
         control_transaction_commit_scope_complete=False,
     ),
+    "parent_child_lifecycle_conformance_missed": replace(
+        _valid_live_state("parent_child_lifecycle_conformance_missed"),
+        parent_child_lifecycle_conformant=False,
+    ),
+    "parent_child_lifecycle_replay_skipped": replace(
+        _valid_live_state("parent_child_lifecycle_replay_skipped"),
+        parent_child_lifecycle_replayed=False,
+    ),
+    "legal_next_action_policy_missing": replace(
+        _valid_live_state("legal_next_action_policy_missing"),
+        legal_next_action_policy_registered=False,
+        legal_next_action_projected=False,
+        legal_next_action_conformant=False,
+    ),
+    "legal_next_action_projection_missing": replace(
+        _valid_live_state("legal_next_action_projection_missing"),
+        legal_next_action_projected=False,
+    ),
+    "legal_next_action_conformance_failed": replace(
+        _valid_live_state("legal_next_action_conformance_failed"),
+        legal_next_action_conformant=False,
+    ),
 }
 
 VALID_SCENARIOS = {
@@ -283,6 +310,16 @@ def mesh_failures(state: State) -> List[str]:
             failures.append("control_transaction_registry_not_authoritative")
         if not state.control_transaction_commit_scope_complete:
             failures.append("control_transaction_commit_scope_incomplete")
+        if not state.parent_child_lifecycle_replayed:
+            failures.append("parent_child_lifecycle_conformance_replay_missing")
+        if not state.parent_child_lifecycle_conformant:
+            failures.append("parent_child_lifecycle_conformance_failed")
+        if not state.legal_next_action_policy_registered:
+            failures.append("legal_next_action_policy_not_registered")
+        if not state.legal_next_action_projected:
+            failures.append("legal_next_action_projection_missing")
+        if not state.legal_next_action_conformant:
+            failures.append("legal_next_action_conformance_failed")
 
     if state.decision in BLOCKING_DECISIONS:
         if state.safe_to_continue_claimed:
@@ -533,6 +570,168 @@ def _parent_repair_uses_leaf_event(repair_index: Any, frontier: Any) -> bool:
     return False
 
 
+def _route_nodes(route: Any) -> List[Mapping[str, Any]]:
+    raw_nodes = _dict_get(route, ["nodes"], [])
+    if isinstance(raw_nodes, list):
+        return [node for node in raw_nodes if isinstance(node, Mapping)]
+    graph_nodes = _dict_get(route, ["graph", "nodes"], [])
+    if isinstance(graph_nodes, list):
+        return [node for node in graph_nodes if isinstance(node, Mapping)]
+    return []
+
+
+def _route_node_id(node: Mapping[str, Any]) -> str:
+    return str(node.get("node_id") or node.get("id") or "")
+
+
+def _route_node_child_ids(node: Mapping[str, Any]) -> List[str]:
+    child_ids: List[str] = []
+    for key in ("child_node_ids", "children", "child_nodes"):
+        raw_children = node.get(key)
+        if not isinstance(raw_children, list):
+            continue
+        for child in raw_children:
+            if isinstance(child, str):
+                child_ids.append(child)
+            elif isinstance(child, Mapping):
+                child_id = child.get("node_id") or child.get("id")
+                if child_id:
+                    child_ids.append(str(child_id))
+    return child_ids
+
+
+def _route_descendant_ids(nodes_by_id: Mapping[str, Mapping[str, Any]], node_id: str) -> set[str]:
+    descendants: set[str] = set()
+    stack = list(_route_node_child_ids(nodes_by_id.get(node_id, {})))
+    while stack:
+        child_id = str(stack.pop())
+        if child_id in descendants:
+            continue
+        descendants.add(child_id)
+        stack.extend(_route_node_child_ids(nodes_by_id.get(child_id, {})))
+    return descendants
+
+
+def _parent_child_lifecycle_conformant(route: Any, frontier: Any, router_state: Any) -> bool:
+    active_node_id = str(_dict_get(frontier, ["active_node_id"]) or "")
+    if not active_node_id:
+        return True
+    nodes_by_id = {_route_node_id(node): node for node in _route_nodes(route) if _route_node_id(node)}
+    active_node = nodes_by_id.get(active_node_id)
+    if not active_node:
+        return True
+    child_ids = _route_node_child_ids(active_node)
+    if not child_ids:
+        return True
+
+    descendants = _route_descendant_ids(nodes_by_id, active_node_id) or set(child_ids)
+    completed_nodes = {str(item) for item in (_dict_get(frontier, ["completed_nodes"], []) or [])}
+    children_complete = bool(descendants) and descendants.issubset(completed_nodes)
+    flags = _dict_get(router_state, ["flags"], {})
+    pending = _dict_get(router_state, ["pending_action"], {})
+    allowed_events = _dict_get(pending, ["allowed_external_events"], [])
+    if not isinstance(allowed_events, list):
+        allowed_events = []
+    closure_cards = {
+        "pm.parent_backward_targets",
+        "reviewer.parent_backward_replay",
+        "pm.parent_segment_decision",
+    }
+    closure_events = {
+        "pm_builds_parent_backward_targets",
+        "reviewer_passes_parent_backward_replay",
+        "reviewer_blocks_parent_backward_replay",
+        "pm_records_parent_segment_decision",
+        "pm_completes_parent_node_from_backward_replay",
+    }
+    closure_flags = {
+        "pm_parent_backward_targets_card_delivered",
+        "parent_backward_targets_built",
+        "reviewer_parent_backward_replay_card_delivered",
+        "parent_backward_replay_passed",
+        "parent_backward_replay_blocked",
+        "pm_parent_segment_decision_card_delivered",
+        "parent_segment_decision_recorded",
+    }
+    closure_requested = (
+        _dict_get(pending, ["card_id"]) in closure_cards
+        or _dict_get(pending, ["next_card_id"]) in closure_cards
+        or any(str(event) in closure_events for event in allowed_events)
+        or any(bool(_dict_get(flags, [flag], False)) for flag in closure_flags)
+    )
+    return not (closure_requested and not children_complete)
+
+
+def _route_action_policy_registered(policy: Any) -> bool:
+    rows = _dict_get(policy, ["route_actions"], None)
+    return (
+        isinstance(policy, Mapping)
+        and policy.get("schema_version") == "flowpilot.route_action_policy_registry.v1"
+        and policy.get("authority") == "router"
+        and policy.get("router_must_compute_before_pm_decision") is True
+        and policy.get("router_must_validate_before_event_acceptance") is True
+        and policy.get("router_must_validate_before_commit") is True
+        and isinstance(rows, list)
+        and bool(rows)
+    )
+
+
+def _pending_action_requires_legal_projection(pending_action: Any) -> bool:
+    if not isinstance(pending_action, Mapping):
+        return False
+    allowed_events = _dict_get(pending_action, ["allowed_external_events"], [])
+    next_card_id = str(_dict_get(pending_action, ["next_card_id"]) or _dict_get(pending_action, ["card_id"]) or "")
+    action_type = str(_dict_get(pending_action, ["action_type"]) or "")
+    route_movement_events = {
+        "pm_builds_parent_backward_targets",
+        "pm_records_parent_segment_decision",
+        "pm_completes_parent_node_from_backward_replay",
+        "pm_mutates_route_after_review_block",
+    }
+    if any(str(event) in route_movement_events for event in (allowed_events if isinstance(allowed_events, list) else [])):
+        return True
+    if next_card_id in {"pm.parent_backward_targets", "pm.parent_segment_decision", "pm.closure"}:
+        return True
+    return action_type in {"await_role_decision", "deliver_system_card"} and "parent" in next_card_id
+
+
+def _legal_next_action_projected(router_state: Any, frontier: Any, policy: Any) -> bool:
+    if not _route_action_policy_registered(policy):
+        return False
+    if _dict_get(frontier, ["terminal"], False):
+        return True
+    pending_action = _dict_get(router_state, ["pending_action"], None)
+    if not _pending_action_requires_legal_projection(pending_action):
+        return True
+    legal_actions = _dict_get(pending_action, ["legal_next_actions"], None)
+    if legal_actions is None:
+        legal_actions = _dict_get(pending_action, ["extra", "legal_next_actions"], None)
+    if legal_actions is None:
+        legal_actions = _dict_get(router_state, ["legal_next_actions"], None)
+    return isinstance(legal_actions, list) and all(isinstance(item, str) and item for item in legal_actions)
+
+
+def _legal_next_action_conformant(router_state: Any, frontier: Any, policy: Any) -> bool:
+    if not _legal_next_action_projected(router_state, frontier, policy):
+        return False
+    pending_action = _dict_get(router_state, ["pending_action"], None)
+    if not _pending_action_requires_legal_projection(pending_action):
+        return True
+    legal_actions = _dict_get(pending_action, ["legal_next_actions"], None)
+    if legal_actions is None:
+        legal_actions = _dict_get(pending_action, ["extra", "legal_next_actions"], None)
+    if not isinstance(legal_actions, list):
+        return False
+    active_path = _dict_get(frontier, ["active_path"], [])
+    active_node_kind = ""
+    if isinstance(active_path, list) and active_path and isinstance(active_path[-1], Mapping):
+        active_node_kind = str(active_path[-1].get("node_kind") or "")
+    if active_node_kind not in {"parent", "module"}:
+        forbidden = {"build_parent_backward_targets", "record_parent_segment_decision", "complete_parent_node"}
+        return not any(item in forbidden for item in legal_actions)
+    return True
+
+
 def _packet_authority_unchecked(packet_ledger: Any) -> bool:
     packets = _dict_get(packet_ledger, ["packets"], {})
     for packet in _iter_dicts(packets.values() if isinstance(packets, Mapping) else packets):
@@ -671,21 +870,30 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         }
 
     frontier = _read_json(run_root / "execution_frontier.json")
+    router_state = _read_json(run_root / "router_state.json")
+    active_route_id = str(_dict_get(frontier, ["active_route_id"]) or "route-001")
+    active_route = _read_json(run_root / "routes" / active_route_id / "flow.json")
     packet_ledger = _read_json(run_root / "packet_ledger.json")
     status_summary = _read_json(run_root / "display" / "current_status_summary.json")
     repair_index = _read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
     control_transaction_registry = _read_json(
         root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "control_transaction_registry.json"
     )
+    route_action_policy_registry = _read_json(
+        root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "route_action_policy_registry.json"
+    )
 
     parse_errors = [
         name
         for name, data in {
             "execution_frontier": frontier,
+            "router_state": router_state,
+            "active_route": active_route,
             "packet_ledger": packet_ledger,
             "current_status_summary": status_summary,
             "repair_transaction_index": repair_index,
             "control_transaction_registry": control_transaction_registry,
+            "route_action_policy_registry": route_action_policy_registry,
         }.items()
         if isinstance(data, Mapping) and "__parse_error__" in data
     ]
@@ -702,6 +910,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
     )
     collapsed_repair = _collapsed_repair_events(repair_index)
     parent_leaf_event = _parent_repair_uses_leaf_event(repair_index, frontier)
+    parent_child_conformant = _parent_child_lifecycle_conformant(active_route, frontier, router_state)
     packet_authority_unchecked = _packet_authority_unchecked(packet_ledger)
     authorities_agree = _authorities_agree(frontier, packet_ledger, status_summary)
     control_registry_registered = isinstance(control_transaction_registry, Mapping)
@@ -728,6 +937,9 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
             for row in control_registry_rows
         )
     )
+    legal_policy_registered = _route_action_policy_registered(route_action_policy_registry)
+    legal_action_projected = _legal_next_action_projected(router_state, frontier, route_action_policy_registry)
+    legal_action_conformant = _legal_next_action_conformant(router_state, frontier, route_action_policy_registry)
 
     blocking_reasons = list(reasons)
     if parse_errors:
@@ -738,6 +950,8 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         blocking_reasons.append("repair_outcome_events_collapsed")
     if parent_leaf_event:
         blocking_reasons.append("parent_repair_reuses_leaf_event")
+    if not parent_child_conformant:
+        blocking_reasons.append("parent_child_lifecycle_conformance_failed")
     if packet_authority_unchecked:
         blocking_reasons.append("packet_authority_unchecked")
     if not authorities_agree:
@@ -748,17 +962,27 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         blocking_reasons.append("control_transaction_registry_invalid")
     elif not control_commit_scope_complete:
         blocking_reasons.append("control_transaction_commit_scope_incomplete")
+    if not legal_policy_registered:
+        blocking_reasons.append("legal_next_action_policy_missing")
+    elif not legal_action_projected:
+        blocking_reasons.append("legal_next_action_projection_missing")
+    elif not legal_action_conformant:
+        blocking_reasons.append("legal_next_action_conformance_failed")
 
     if parse_errors:
         decision = "model_coverage_insufficient"
     elif (
         collapsed_repair
         or parent_leaf_event
+        or not parent_child_conformant
         or packet_authority_unchecked
         or not authorities_agree
         or not control_registry_registered
         or not control_registry_valid
         or not control_commit_scope_complete
+        or not legal_policy_registered
+        or not legal_action_projected
+        or not legal_action_conformant
     ):
         decision = "blocked_by_cross_model_contradiction"
     elif active_blocker:
@@ -786,6 +1010,8 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         collapsed_repair_outcome_events=collapsed_repair,
         repair_event_node_compatible=not parent_leaf_event,
         parent_repair_reuses_leaf_event=parent_leaf_event,
+        parent_child_lifecycle_conformant=parent_child_conformant,
+        parent_child_lifecycle_replayed=True,
         role_origin_checked=not packet_authority_unchecked,
         completed_agent_id_belongs_to_role=not packet_authority_unchecked,
         packet_evidence_accepted=packet_authority_unchecked,
@@ -798,6 +1024,9 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         control_transaction_registry_registered=control_registry_registered,
         control_transaction_registry_valid=control_registry_valid,
         control_transaction_commit_scope_complete=control_commit_scope_complete,
+        legal_next_action_policy_registered=legal_policy_registered,
+        legal_next_action_projected=legal_action_projected,
+        legal_next_action_conformant=legal_action_conformant,
     )
 
     projected_failures = mesh_failures(state)

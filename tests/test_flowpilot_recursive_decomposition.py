@@ -98,7 +98,7 @@ class FlowPilotRecursiveDecompositionTests(unittest.TestCase):
 
         self.assertTrue(route_template["decomposition_policy"]["recursive_decomposition_allowed"])
         self.assertTrue(route_template["decomposition_policy"]["fixed_two_layer_cap_forbidden"])
-        self.assertEqual(route_template["display_plan"]["display_depth"], 2)
+        self.assertEqual(route_template["display_plan"]["display_depth"], 1)
         self.assertIn("leaf_readiness_gate", route_template["nodes"][0])
         self.assertIn("leaf_readiness_gate", node_template)
         self.assertIn("active_path", frontier_template)

@@ -47,5 +47,8 @@ condition. If a simpler architecture can produce the same user-visible behavior
 with the same proof strength, choose it and record the rejected extra
 complexity.
 
-Do not draft or activate a route from this card. Reviewer challenge and Product
-FlowGuard Officer modelability must pass first.
+Do not draft or activate a route from this card. Product FlowGuard Officer must
+turn this architecture into a concrete product behavior model, then PM must
+explicitly accept that model before Reviewer challenge can run. If PM finds
+that the model does not represent the intended product, rewrite the product
+architecture or ask Product FlowGuard to rebuild the model before continuing.

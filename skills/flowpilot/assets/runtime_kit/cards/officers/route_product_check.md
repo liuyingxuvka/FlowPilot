@@ -17,11 +17,14 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 
 Review the PM route draft as the product FlowGuard officer after the process
-officer has passed the route process check.
+officer has passed the serial route process check and PM has accepted that
+process model.
 
 Check only product fit:
 
 - route nodes preserve the product-function architecture and frozen root contract;
+- the PM-accepted product behavior model is still the source for route product
+  coverage, not a stale product summary or process-only patch;
 - parent/module nodes represent product-composition or review boundaries, and
   their child leaves collectively prove the parent product outcome before the
   parent is accepted;

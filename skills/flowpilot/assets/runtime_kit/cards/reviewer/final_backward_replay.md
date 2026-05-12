@@ -41,6 +41,10 @@ Check backward from the delivered product or final output:
   user intent and is not merely a clean ledger;
 - the current route version, not an old route, is the route being closed;
 - every effective node and parent segment decision is covered;
+- every major node, parent/module, child subtree, promoted former leaf, repair
+  node, and supplemental node in the current route was reached, superseded with
+  reason, or intentionally waived by PM authority and reviewer-checked
+  evidence;
 - superseded or repaired work is not counted as current unless the PM ledger
   says why it is safe;
 - generated resources have terminal disposition and no old asset is reused as
@@ -49,6 +53,11 @@ Check backward from the delivered product or final output:
   zero;
 - any repair made during this replay forces PM ledger rebuild and a fresh
   terminal replay.
+- any omitted node/subtree/bug class must be classified as a product model
+  miss, process model miss, stale evidence issue, route mutation gap, or
+  implementation failure. Product/process model misses require model update,
+  same-class omission search, supplemental or repair nodes, stale gate reruns,
+  and a rebuilt final ledger before completion can pass.
 - higher-standard but nonessential product, experience, simplicity, or quality
   opportunities are recorded as PM decision-support; hard user-intent failures,
   unusable outcomes, semantic downgrades, or unproven user-facing quality

@@ -47,6 +47,7 @@ CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.
 REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
 REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
 CONTROL_TRANSACTION_REGISTRY_SCHEMA = "flowpilot.control_transaction_registry.v1"
+ROUTE_ACTION_POLICY_REGISTRY_SCHEMA = "flowpilot.route_action_policy_registry.v1"
 TERMINAL_SUMMARY_SCHEMA = "flowpilot.final_summary.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 EVENT_ENVELOPE_SCHEMA = "flowpilot.event_envelope.v1"
@@ -199,6 +200,13 @@ PM_ROLE_WORK_OPEN_STATUSES = {
     "result_relayed_to_pm",
 }
 PM_ROLE_WORK_TERMINAL_DECISIONS = {"absorbed", "canceled", "superseded"}
+PM_PACKAGE_RESULT_DECISIONS = {
+    "absorbed",
+    "rework_requested",
+    "canceled",
+    "blocked",
+    "route_or_node_mutation_required",
+}
 PARALLEL_PACKET_BATCH_OPEN_STATUSES = {
     "registered",
     "packets_relayed",
@@ -212,8 +220,8 @@ PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
         "task_family": "worker.current_node",
         "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
         "packet_type": "work_packet",
-        "required_result_next_recipient": "human_like_reviewer",
-        "absorbing_role": "human_like_reviewer",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
     },
     "pm_role_work_request": {
         "task_family": "pm.role_work_request",
@@ -240,22 +248,22 @@ PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
         "task_family": "reviewer.review",
         "contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
         "packet_type": "review_request",
-        "required_result_next_recipient": "human_like_reviewer",
-        "absorbing_role": "human_like_reviewer",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
     },
     "material_scan": {
         "task_family": "worker.material_scan",
         "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
         "packet_type": "material_scan",
-        "required_result_next_recipient": "human_like_reviewer",
-        "absorbing_role": "human_like_reviewer",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
     },
     "research": {
         "task_family": "worker.research",
         "contract_id": "flowpilot.output_contract.worker_research_result.v1",
         "packet_type": "research",
-        "required_result_next_recipient": "human_like_reviewer",
-        "absorbing_role": "human_like_reviewer",
+        "required_result_next_recipient": "project_manager",
+        "absorbing_role": "project_manager",
     },
     "control_blocker_repair": {
         "task_family": "pm.control_blocker_repair_decision",
@@ -468,10 +476,19 @@ RUNTIME_FLAG_DEFAULTS = {
     "pm_prior_path_context_refreshed": False,
     "material_scan_packets_relayed": False,
     "material_scan_results_relayed_to_reviewer": False,
+    "material_scan_results_relayed_to_pm": False,
+    "material_scan_result_disposition_recorded": False,
+    "material_scan_results_absorbed_by_pm": False,
     "research_packet_relayed": False,
     "research_result_relayed_to_reviewer": False,
+    "research_result_relayed_to_pm": False,
+    "research_result_disposition_recorded": False,
+    "research_result_absorbed_for_review_by_pm": False,
     "current_node_packet_relayed": False,
     "current_node_result_relayed_to_reviewer": False,
+    "current_node_result_relayed_to_pm": False,
+    "current_node_result_disposition_recorded": False,
+    "current_node_result_absorbed_by_pm": False,
     "current_node_write_grant_issued": False,
     "node_completion_ledger_updated": False,
     "task_completion_projection_published": False,
@@ -512,6 +529,9 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "current_node_write_grant_issued",
     "current_node_packet_relayed",
     "current_node_worker_result_returned",
+    "current_node_result_relayed_to_pm",
+    "current_node_result_disposition_recorded",
+    "current_node_result_absorbed_by_pm",
     "reviewer_worker_result_card_delivered",
     "current_node_result_relayed_to_reviewer",
     "node_reviewer_passed_result",
@@ -665,6 +685,8 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
 PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
     "pm.prior_path_context",
     "pm.route_skeleton",
+    "pm.product_behavior_model_decision",
+    "pm.process_route_model_decision",
     "pm.crew_rehydration_freshness",
     "pm.resume_decision",
     "pm.current_node_loop",
@@ -902,7 +924,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "reviewer_material_sufficiency_card_delivered",
         "label": "reviewer_material_sufficiency_card_delivered",
         "card_id": "reviewer.material_sufficiency",
-        "requires_flag": "material_scan_results_relayed_to_reviewer",
+        "requires_flag": "material_scan_results_absorbed_by_pm",
         "to_role": "human_like_reviewer",
     },
     {
@@ -937,7 +959,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "reviewer_research_check_card_delivered",
         "label": "reviewer_research_direct_source_check_card_delivered",
         "card_id": "reviewer.research_direct_source_check",
-        "requires_flag": "research_result_relayed_to_reviewer",
+        "requires_flag": "research_result_absorbed_for_review_by_pm",
         "to_role": "human_like_reviewer",
     },
     {
@@ -958,7 +980,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "reviewer_worker_result_card_delivered",
         "label": "reviewer_worker_result_review_card_delivered",
         "card_id": "reviewer.worker_result_review",
-        "requires_flag": "current_node_result_relayed_to_reviewer",
+        "requires_flag": "current_node_result_absorbed_by_pm",
         "to_role": "human_like_reviewer",
     },
     {
@@ -976,10 +998,17 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "product_flowguard_officer",
     },
     {
+        "flag": "pm_product_behavior_model_decision_card_delivered",
+        "label": "pm_product_behavior_model_decision_card_delivered",
+        "card_id": "pm.product_behavior_model_decision",
+        "requires_flag": "product_architecture_modelability_passed",
+        "to_role": "project_manager",
+    },
+    {
         "flag": "reviewer_product_architecture_card_delivered",
         "label": "reviewer_product_architecture_challenge_card_delivered",
         "card_id": "reviewer.product_architecture_challenge",
-        "requires_flag": "product_architecture_modelability_passed",
+        "requires_flag": "pm_product_behavior_model_accepted",
         "to_role": "human_like_reviewer",
     },
     {
@@ -1067,10 +1096,17 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "process_flowguard_officer",
     },
     {
+        "flag": "pm_process_route_model_decision_card_delivered",
+        "label": "pm_process_route_model_decision_card_delivered",
+        "card_id": "pm.process_route_model_decision",
+        "requires_flag": "process_officer_route_check_passed",
+        "to_role": "project_manager",
+    },
+    {
         "flag": "product_officer_route_check_card_delivered",
         "label": "product_officer_route_product_check_card_delivered",
         "card_id": "product_officer.route_product_check",
-        "requires_flag": "process_officer_route_check_passed",
+        "requires_flag": "pm_process_route_model_accepted",
         "to_role": "product_flowguard_officer",
     },
     {
@@ -1194,6 +1230,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
 CARD_PHASE_BY_ID = {
     "pm.product_architecture": "product_architecture",
     "product_officer.product_architecture_modelability": "product_architecture",
+    "pm.product_behavior_model_decision": "product_architecture",
     "reviewer.product_architecture_challenge": "product_architecture",
     "pm.root_contract": "root_contract",
     "reviewer.root_contract_challenge": "root_contract",
@@ -1207,6 +1244,7 @@ CARD_PHASE_BY_ID = {
     "pm.prior_path_context": "prior_path_context",
     "pm.route_skeleton": "route_skeleton",
     "process_officer.route_process_check": "route_skeleton",
+    "pm.process_route_model_decision": "route_skeleton",
     "product_officer.route_product_check": "route_skeleton",
     "reviewer.route_challenge": "route_skeleton",
 }
@@ -1229,11 +1267,17 @@ CARD_REQUIRED_SOURCE_PATHS = {
     "reviewer.product_architecture_challenge": {
         "product_function_architecture": "product_function_architecture.json",
         "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
+        "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
+    },
+    "pm.product_behavior_model_decision": {
+        "product_function_architecture": "product_function_architecture.json",
+        "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
     },
     "pm.root_contract": {
         "product_function_architecture": "product_function_architecture.json",
         "product_architecture_challenge": "reviews/product_architecture_challenge.json",
         "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
+        "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
     },
     "reviewer.root_contract_challenge": {
         "root_acceptance_contract": "root_acceptance_contract.json",
@@ -1295,11 +1339,13 @@ CARD_REQUIRED_SOURCE_PATHS = {
     "product_officer.route_product_check": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
         "route_process_check": "flowguard/route_process_check.json",
     },
     "reviewer.route_challenge": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
         "route_process_check": "flowguard/route_process_check.json",
         "route_product_check": "flowguard/route_product_check.json",
     },
@@ -1420,12 +1466,22 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "worker_scan_results_returned": {
         "flag": "worker_scan_results_returned",
         "requires_flag": "worker_packets_delivered",
-        "summary": "Worker scan results returned to reviewer path.",
+        "summary": "Worker scan results returned to the PM-first result path.",
+    },
+    "pm_records_material_scan_result_disposition": {
+        "flag": "material_scan_result_disposition_recorded",
+        "requires_flag": "material_scan_results_relayed_to_pm",
+        "summary": "PM recorded material scan result disposition and released a formal material sufficiency package when absorbed.",
     },
     "worker_current_node_result_returned": {
         "flag": "current_node_worker_result_returned",
         "requires_flag": "current_node_packet_relayed",
         "summary": "Worker returned a current-node result envelope.",
+    },
+    "pm_records_current_node_result_disposition": {
+        "flag": "current_node_result_disposition_recorded",
+        "requires_flag": "current_node_result_relayed_to_pm",
+        "summary": "PM recorded current-node worker result disposition and released the formal node-completion review package when absorbed.",
     },
     "reviewer_reports_material_sufficient": {
         "flag": "material_review_sufficient",
@@ -1461,6 +1517,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "worker_research_report_returned",
         "requires_flag": "worker_research_report_card_delivered",
         "summary": "Worker returned a bounded research report.",
+    },
+    "pm_records_research_result_disposition": {
+        "flag": "research_result_disposition_recorded",
+        "requires_flag": "research_result_relayed_to_pm",
+        "summary": "PM recorded research result disposition and released a formal research source-check package when absorbed.",
     },
     "reviewer_passes_research_direct_source_check": {
         "flag": "research_review_passed",
@@ -1501,6 +1562,22 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "product_architecture_modelability_passed",
         "requires_flag": "product_officer_product_architecture_card_delivered",
         "summary": "Product FlowGuard Officer passed product architecture modelability.",
+    },
+    "product_officer_model_report": {
+        "flag": "legacy_product_officer_model_report_received",
+        "requires_flag": "product_officer_product_architecture_card_delivered",
+        "legacy": True,
+        "summary": "Legacy Product FlowGuard model-report status event retained only so old run artifacts remain registered in the event taxonomy.",
+    },
+    "pm_accepts_product_behavior_model": {
+        "flag": "pm_product_behavior_model_accepted",
+        "requires_flag": "pm_product_behavior_model_decision_card_delivered",
+        "summary": "PM accepted the Product FlowGuard product behavior model as the product basis for review and route planning.",
+    },
+    "pm_requests_product_behavior_model_rebuild": {
+        "flag": "pm_product_behavior_model_rebuild_requested",
+        "requires_flag": "pm_product_behavior_model_decision_card_delivered",
+        "summary": "PM rejected the current product behavior model and requested product architecture/model rebuild before reviewer challenge.",
     },
     "product_officer_blocks_product_architecture_modelability": {
         "flag": "product_architecture_modelability_blocked",
@@ -1606,6 +1683,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
         "flag": "process_officer_route_check_passed",
         "requires_flag": "process_officer_route_check_card_delivered",
         "summary": "Process FlowGuard Officer passed the route process check.",
+    },
+    "pm_accepts_process_route_model": {
+        "flag": "pm_process_route_model_accepted",
+        "requires_flag": "pm_process_route_model_decision_card_delivered",
+        "summary": "PM accepted the Process FlowGuard serial route execution model before product and reviewer route challenge.",
+    },
+    "pm_requests_process_route_model_rebuild": {
+        "flag": "pm_process_route_model_rebuild_requested",
+        "requires_flag": "pm_process_route_model_decision_card_delivered",
+        "summary": "PM rejected the current process route model and requested route/model rebuild before route challenge.",
     },
     "process_officer_requires_route_repair": {
         "flag": "process_officer_route_repair_required",
@@ -1792,7 +1879,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
 
 
 PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS = (
+    "pm_product_architecture_card_delivered",
     "product_architecture_written_by_pm",
+    "pm_product_behavior_model_decision_card_delivered",
+    "pm_product_behavior_model_accepted",
+    "pm_product_behavior_model_rebuild_requested",
     "product_architecture_reviewer_passed",
     "product_architecture_modelability_passed",
     "reviewer_product_architecture_card_delivered",
@@ -1810,6 +1901,9 @@ PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS = (
     "capability_evidence_synced",
     "route_draft_written_by_pm",
     "process_officer_route_check_passed",
+    "pm_process_route_model_decision_card_delivered",
+    "pm_process_route_model_accepted",
+    "pm_process_route_model_rebuild_requested",
     "product_officer_route_check_passed",
     "reviewer_route_check_passed",
     "route_activated_by_pm",
@@ -1830,6 +1924,9 @@ ROOT_CONTRACT_REPAIR_RESET_FLAGS = (
     "capability_evidence_synced",
     "route_draft_written_by_pm",
     "process_officer_route_check_passed",
+    "pm_process_route_model_decision_card_delivered",
+    "pm_process_route_model_accepted",
+    "pm_process_route_model_rebuild_requested",
     "product_officer_route_check_passed",
     "reviewer_route_check_passed",
     "route_activated_by_pm",
@@ -1846,6 +1943,9 @@ CHILD_SKILL_GATE_REPAIR_RESET_FLAGS = (
     "product_officer_child_skill_card_delivered",
     "route_draft_written_by_pm",
     "process_officer_route_check_passed",
+    "pm_process_route_model_decision_card_delivered",
+    "pm_process_route_model_accepted",
+    "pm_process_route_model_rebuild_requested",
     "product_officer_route_check_passed",
     "reviewer_route_check_passed",
     "route_activated_by_pm",
@@ -1854,6 +1954,9 @@ ROUTE_GATE_REPAIR_RESET_FLAGS = (
     "route_draft_written_by_pm",
     "process_officer_route_check_passed",
     "process_officer_route_repair_required",
+    "pm_process_route_model_decision_card_delivered",
+    "pm_process_route_model_accepted",
+    "pm_process_route_model_rebuild_requested",
     "product_officer_route_check_passed",
     "reviewer_route_check_passed",
     "process_officer_route_check_card_delivered",
@@ -1865,7 +1968,9 @@ RESEARCH_GATE_REPAIR_RESET_FLAGS = (
     "research_package_written_by_pm",
     "research_capability_decision_recorded",
     "research_packet_relayed",
-    "research_result_relayed_to_reviewer",
+    "research_result_relayed_to_pm",
+    "research_result_disposition_recorded",
+    "research_result_absorbed_for_review_by_pm",
     "worker_research_report_returned",
     "research_review_passed",
     "reviewer_research_check_card_delivered",
@@ -4843,10 +4948,13 @@ def _should_materialize_control_blocker(
     if action_type in {
         "relay_material_scan_packets",
         "relay_material_scan_results_to_reviewer",
+        "relay_material_scan_results_to_pm",
         "relay_research_packet",
         "relay_research_result_to_reviewer",
+        "relay_research_result_to_pm",
         "relay_current_node_packet",
         "relay_current_node_result_to_reviewer",
+        "relay_current_node_result_to_pm",
     }:
         return True
     if isinstance(payload, dict) and any(
@@ -8009,13 +8117,13 @@ def _derive_resume_next_recipient_from_packet_ledger(run_root: Path) -> dict[str
             controller_next_action = "wait_for_recorded_packet_holder_result"
             reason = "Packet ledger says the packet is already with a role; Controller waits for that role's envelope-only return."
         elif status in {"worker-result-needs-review", "result-envelope-returned"}:
-            next_recipient = result_recipient or "human_like_reviewer"
-            controller_next_action = "relay_result_envelope_to_recorded_reviewer"
-            reason = "Packet ledger says a result envelope is with Controller and records the review recipient."
+            next_recipient = "project_manager"
+            controller_next_action = "relay_result_envelope_to_project_manager_for_disposition"
+            reason = "Packet ledger says a result envelope is with Controller; under PM-first package absorption, Controller must relay it to PM for disposition before any reviewer gate."
         elif status in {"result-envelope-relayed", "result-body-opened-by-recipient"}:
-            next_recipient = holder or result_recipient or "human_like_reviewer"
-            controller_next_action = "wait_for_recorded_result_holder_review"
-            reason = "Packet ledger says the result is already with its review holder."
+            next_recipient = holder or result_recipient or "project_manager"
+            controller_next_action = "wait_for_pm_result_disposition_or_formal_gate_release"
+            reason = "Packet ledger says the result is already with its holder; PM disposition is required before any reviewer gate."
         elif status == "contaminated-returned-to-sender":
             next_recipient = holder or str(record.get("from_role") or "project_manager") if isinstance(record, dict) else "project_manager"
             controller_next_action = "wait_for_sender_reissue_or_pm_repair_decision"
@@ -9284,8 +9392,8 @@ def _write_material_scan_packets(project_root: Path, run_root: Path, run_state: 
         phase="material_scan",
         records=records,
         node_id="material-intake",
-        join_policy="all_results_before_review",
-        review_policy="batch_material_sufficiency_review_before_pm",
+        join_policy="all_results_before_pm_absorption",
+        review_policy="pm_absorbs_batch_before_material_sufficiency_review",
         pm_absorption_required=True,
     )
     write_json(
@@ -9396,8 +9504,8 @@ def _write_material_sufficiency_report(project_root: Path, run_root: Path, run_s
     payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("reviewed_by_role") != "human_like_reviewer":
         raise RouterError("material sufficiency report must be reviewed_by_role=human_like_reviewer")
-    if not run_state["flags"].get("material_scan_results_relayed_to_reviewer"):
-        raise RouterError("material sufficiency report requires material result envelopes made available to reviewer")
+    if not run_state["flags"].get("material_scan_results_absorbed_by_pm"):
+        raise RouterError("material sufficiency report requires PM-absorbed material result package")
     material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
     raw_agent_map = payload.get("agent_role_map")
     _validate_packet_group_for_reviewer(
@@ -9553,8 +9661,8 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
         phase="research",
         records=records,
         node_id="research",
-        join_policy="all_results_before_review",
-        review_policy="batch_research_direct_source_review_before_pm",
+        join_policy="all_results_before_pm_absorption",
+        review_policy="pm_absorbs_batch_before_research_direct_source_review",
         pm_absorption_required=True,
     )
     write_json(
@@ -10015,12 +10123,91 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
     return decision
 
 
+def _validate_result_bodies_opened_by_pm(project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]]) -> None:
+    for record in records:
+        result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+        result = packet_runtime.load_envelope(project_root, result_path)
+        opened = result.get("result_body_opened_by_role")
+        if not (
+            isinstance(opened, dict)
+            and opened.get("role") == "project_manager"
+            and opened.get("controller_relay_verified") is True
+            and opened.get("body_hash_verified") is True
+        ):
+            raise RouterError(
+                f"PM result disposition requires project_manager to open result body after Controller relay: {result.get('packet_id')}"
+            )
+
+
+def _write_pm_package_result_disposition(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    batch_kind: str,
+    package_label: str,
+    gate_kind: str,
+    output_path: Path,
+) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
+    if payload.get("decided_by_role") != "project_manager":
+        raise RouterError(f"{package_label} result disposition requires decided_by_role=project_manager")
+    decision = str(payload.get("decision") or "").strip()
+    if decision not in PM_PACKAGE_RESULT_DECISIONS:
+        raise RouterError(f"{package_label} result disposition has unsupported decision")
+    batch = _active_parallel_packet_batch(run_root, batch_kind)
+    if not batch or batch.get("status") != "results_relayed_to_pm":
+        raise RouterError(f"{package_label} result disposition requires results_relayed_to_pm")
+    records = [record for record in batch.get("packets") or [] if isinstance(record, dict)]
+    if not records:
+        raise RouterError(f"{package_label} result disposition requires packet records")
+    _validate_result_bodies_opened_by_pm(project_root, run_state, records)
+    disposition = {
+        "schema_version": "flowpilot.pm_package_result_disposition.v1",
+        "run_id": run_state["run_id"],
+        "batch_id": batch.get("batch_id"),
+        "batch_kind": batch_kind,
+        "package_label": package_label,
+        "gate_kind": gate_kind,
+        "decided_by_role": "project_manager",
+        "decision": decision,
+        "decision_reason": payload.get("decision_reason") or payload.get("reason") or "",
+        "packet_ids": [str(record.get("packet_id")) for record in records],
+        "result_envelope_paths": [str(record.get("result_envelope_path")) for record in records],
+        "formal_gate_package_released": decision == "absorbed",
+        "reviewer_receives_raw_worker_result": False,
+        "reviewer_review_scope": "pm_formal_gate_package_only" if decision == "absorbed" else "none",
+        "residual_risks": payload.get("residual_risks") if isinstance(payload.get("residual_risks"), list) else [],
+        "recorded_at": utc_now(),
+        **_role_output_envelope_record(payload),
+    }
+    write_json(output_path, disposition)
+    batch["pm_result_disposition"] = {
+        "decision": decision,
+        "decision_path": project_relative(project_root, output_path),
+        "decision_hash": packet_runtime.sha256_file(output_path),
+        "recorded_at": disposition["recorded_at"],
+    }
+    if decision == "absorbed":
+        batch["status"] = "pm_absorbed"
+        if batch_kind == "material_scan":
+            run_state["flags"]["material_scan_results_absorbed_by_pm"] = True
+        elif batch_kind == "research":
+            run_state["flags"]["research_result_absorbed_for_review_by_pm"] = True
+        elif batch_kind == "current_node":
+            run_state["flags"]["current_node_result_absorbed_by_pm"] = True
+    else:
+        batch["status"] = decision
+    _write_parallel_packet_batch_state(run_root, batch)
+
+
 def _write_worker_research_report(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not run_state["flags"].get("research_packet_relayed"):
         raise RouterError("research report requires research packet made available to worker")
     research_index = _load_packet_index(_research_packet_index_path(run_root), label="research")
     _validate_packet_bodies_opened_by_targets(project_root, run_state, research_index["packets"])
-    _validate_results_exist_for_packets(project_root, run_state, research_index["packets"], next_recipient="human_like_reviewer")
+    _validate_results_exist_for_packets(project_root, run_state, research_index["packets"], next_recipient="project_manager")
     completed_roles = sorted({str(record.get("to_role")) for record in research_index["packets"] if isinstance(record, dict)})
     if not payload.get("answers_decision_question", True):
         raise RouterError("research batch report must state whether it answers the PM decision question")
@@ -10166,6 +10353,101 @@ def _write_role_gate_report(
     )
 
 
+def _write_pm_model_decision(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    path: Path,
+    schema_version: str,
+    expected_decision: str,
+    source_paths: list[Path],
+) -> None:
+    payload = _load_file_backed_role_payload_if_present(project_root, payload)
+    if payload.get("decided_by_role") != "project_manager":
+        raise RouterError("PM model decision must include decided_by_role=project_manager")
+    if payload.get("decision") != expected_decision:
+        raise RouterError(f"PM model decision requires decision={expected_decision}")
+    missing = [project_relative(project_root, item) for item in source_paths if not item.exists()]
+    if missing:
+        raise RouterError(f"PM model decision is missing source paths: {', '.join(missing)}")
+    write_json(
+        path,
+        {
+            "schema_version": schema_version,
+            "run_id": run_state["run_id"],
+            "decided_by_role": "project_manager",
+            "decision": expected_decision,
+            "source_paths": [project_relative(project_root, item) for item in source_paths],
+            "pm_model_fit_review": payload.get("pm_model_fit_review"),
+            "product_goal_coverage": payload.get("product_goal_coverage"),
+            "unmodeled_or_ambiguous_behavior": payload.get("unmodeled_or_ambiguous_behavior") or [],
+            "serial_execution_line_review": payload.get("serial_execution_line_review"),
+            "recursive_node_entry_review": payload.get("recursive_node_entry_review"),
+            "leaf_worker_readiness_review": payload.get("leaf_worker_readiness_review"),
+            "parent_and_final_backward_review_policy": payload.get("parent_and_final_backward_review_policy"),
+            "model_miss_repair_policy": payload.get("model_miss_repair_policy"),
+            "next_action": payload.get("next_action"),
+            "decided_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+
+
+def _write_pm_product_behavior_model_decision(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    accepted: bool,
+) -> None:
+    _write_pm_model_decision(
+        project_root,
+        run_root,
+        run_state,
+        payload,
+        path=run_root / "flowguard" / "product_behavior_model_pm_decision.json",
+        schema_version="flowpilot.product_behavior_model_pm_decision.v1",
+        expected_decision="accept_product_behavior_model"
+        if accepted
+        else "request_product_behavior_model_rebuild",
+        source_paths=[
+            run_root / "product_function_architecture.json",
+            run_root / "flowguard" / "product_architecture_modelability.json",
+        ],
+    )
+    if not accepted:
+        for flag in PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS:
+            run_state.setdefault("flags", {})[flag] = False
+
+
+def _write_pm_process_route_model_decision(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    accepted: bool,
+) -> None:
+    _write_pm_model_decision(
+        project_root,
+        run_root,
+        run_state,
+        payload,
+        path=run_root / "flowguard" / "process_route_model_pm_decision.json",
+        schema_version="flowpilot.process_route_model_pm_decision.v1",
+        expected_decision="accept_process_route_model" if accepted else "request_process_route_model_rebuild",
+        source_paths=[
+            _current_route_draft_path(run_root),
+            run_root / "flowguard" / "route_process_check.json",
+        ],
+    )
+    if not accepted:
+        _reset_route_review_after_route_draft_repair(run_state)
+
+
 def _write_role_block_report(
     project_root: Path,
     run_root: Path,
@@ -10297,6 +10579,9 @@ def _write_route_process_pass_report(
         "product_behavior_model_checked",
         "route_can_reach_product_model",
         "repair_return_policy_checked",
+        "serial_execution_model_checked",
+        "all_effective_nodes_reachable_in_order",
+        "recursive_child_routes_serialized",
     )
     missing = [field for field in required_true if payload.get(field) is not True]
     if missing:
@@ -10321,6 +10606,9 @@ def _write_route_process_pass_report(
             "product_behavior_model_checked": True,
             "route_can_reach_product_model": True,
             "repair_return_policy_checked": True,
+            "serial_execution_model_checked": True,
+            "all_effective_nodes_reachable_in_order": True,
+            "recursive_child_routes_serialized": True,
             "source_paths": [project_relative(project_root, item) for item in checked_paths],
             "residual_blindspots": payload.get("residual_blindspots") or [],
             "reported_at": utc_now(),
@@ -10376,6 +10664,9 @@ def _write_route_process_issue_report(
         "route_draft_written_by_pm",
         "process_officer_route_check_card_delivered",
         "process_officer_route_check_passed",
+        "pm_process_route_model_decision_card_delivered",
+        "pm_process_route_model_accepted",
+        "pm_process_route_model_rebuild_requested",
         "product_officer_route_check_card_delivered",
         "product_officer_route_check_passed",
         "reviewer_route_check_card_delivered",
@@ -10413,6 +10704,7 @@ def _write_route_product_pass_report(
         _product_behavior_model_report_path(run_root),
         run_root / "root_acceptance_contract.json",
         _route_process_check_path(run_root),
+        run_root / "flowguard" / "process_route_model_pm_decision.json",
     ]
     missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
     if missing_paths:
@@ -10865,18 +11157,29 @@ def _route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
 def _route_node_depth(node: dict[str, Any]) -> int:
     raw_depth = node.get("depth", node.get("_computed_depth", 1))
     try:
-        return max(1, int(raw_depth))
+        return max(0, int(raw_depth))
     except (TypeError, ValueError):
         return 1
 
 
 def _route_display_depth(route: dict[str, Any]) -> int:
     display = route.get("display") if isinstance(route.get("display"), dict) else {}
-    raw_depth = display.get("display_depth") or route.get("display_depth") or 2
+    raw_depth = display.get("display_depth") or route.get("display_depth") or 1
     try:
         return max(1, int(raw_depth))
     except (TypeError, ValueError):
-        return 2
+        return 1
+
+
+def _is_route_root_node(node: dict[str, Any]) -> bool:
+    explicit = str(node.get("node_kind") or node.get("kind") or "").strip().lower()
+    if explicit == "root":
+        return True
+    raw_depth = node["depth"] if "depth" in node else node.get("route_depth")
+    try:
+        return int(raw_depth) == 0
+    except (TypeError, ValueError):
+        return False
 
 
 def _display_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
@@ -10885,9 +11188,10 @@ def _display_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
     visible = [
         node
         for node in nodes
-        if node.get("user_visible") is True or _route_node_depth(node) <= display_depth
+        if not _is_route_root_node(node)
+        and (node.get("user_visible") is True or _route_node_depth(node) <= display_depth)
     ]
-    return visible or nodes
+    return visible or [node for node in nodes if not _is_route_root_node(node)]
 
 
 def _route_active_path(route: dict[str, Any], active_node_id: str | None) -> list[dict[str, str]]:
@@ -10912,7 +11216,7 @@ def _route_active_path(route: dict[str, Any], active_node_id: str | None) -> lis
         )
         parent_id = node.get("parent_node_id")
         cursor = str(parent_id) if parent_id else None
-    return list(reversed(path))
+    return [item for item in reversed(path) if item.get("node_kind") != "root"]
 
 
 def _route_hidden_leaf_progress(route: dict[str, Any]) -> dict[str, int]:
@@ -12202,6 +12506,9 @@ def _reset_route_review_after_route_draft_repair(run_state: dict[str, Any]) -> N
         "process_officer_route_check_passed",
         "process_officer_route_repair_required",
         "process_officer_route_check_blocked",
+        "pm_process_route_model_decision_card_delivered",
+        "pm_process_route_model_accepted",
+        "pm_process_route_model_rebuild_requested",
         "product_officer_route_check_card_delivered",
         "product_officer_route_check_passed",
         "reviewer_route_check_card_delivered",
@@ -12219,6 +12526,9 @@ def _reset_route_hard_gate_approvals_for_recheck(run_state: dict[str, Any]) -> N
         "process_officer_route_check_passed",
         "process_officer_route_repair_required",
         "process_officer_route_check_blocked",
+        "pm_process_route_model_decision_card_delivered",
+        "pm_process_route_model_accepted",
+        "pm_process_route_model_rebuild_requested",
         "product_officer_route_check_card_delivered",
         "product_officer_route_check_passed",
         "reviewer_route_check_card_delivered",
@@ -13115,6 +13425,111 @@ def _validate_control_transaction_requirements(
     }
 
 
+ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS = (
+    "router_must_compute_before_pm_decision",
+    "router_must_validate_before_event_acceptance",
+    "router_must_validate_before_commit",
+    "pm_may_choose_only_from_legal_next_actions",
+)
+
+
+ROUTE_ACTION_POLICY_EVENT_TO_ACTION = {
+    "pm_builds_parent_backward_targets": "build_parent_backward_targets",
+    "reviewer_passes_parent_backward_replay": "review_parent_backward_replay",
+    "reviewer_blocks_parent_backward_replay": "review_parent_backward_replay",
+    "pm_records_parent_segment_decision": "record_parent_segment_decision",
+    "pm_completes_parent_node_from_backward_replay": "complete_parent_node",
+    "pm_mutates_route_after_review_block": "mutate_route",
+    "pm_approves_terminal_closure": "terminal_closure",
+}
+
+
+ROUTE_ACTION_POLICY_CARD_TO_ACTION = {
+    "pm.parent_backward_targets": "build_parent_backward_targets",
+    "reviewer.parent_backward_replay": "review_parent_backward_replay",
+    "pm.parent_segment_decision": "record_parent_segment_decision",
+    "pm.closure": "terminal_closure",
+}
+
+
+def _route_action_policy_registry_path(run_root: Path | None = None) -> Path:
+    if run_root is not None:
+        candidate = run_root / "runtime_kit" / "route_action_policy_registry.json"
+        if candidate.exists():
+            return candidate
+    return runtime_kit_source() / "route_action_policy_registry.json"
+
+
+def _load_route_action_policy_registry(run_root: Path | None = None) -> dict[str, Any]:
+    return read_json(_route_action_policy_registry_path(run_root))
+
+
+def _route_action_policy_rows(run_root: Path | None = None) -> list[dict[str, Any]]:
+    registry = _load_route_action_policy_registry(run_root)
+    rows = registry.get("route_actions")
+    if not isinstance(rows, list):
+        raise RouterError("route action policy registry requires route_actions list")
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def _route_action_policy_issues(run_root: Path | None = None) -> list[str]:
+    issues: list[str] = []
+    try:
+        registry = _load_route_action_policy_registry(run_root)
+    except Exception as exc:
+        return [f"route action policy registry cannot be loaded: {exc}"]
+    if registry.get("schema_version") != ROUTE_ACTION_POLICY_REGISTRY_SCHEMA:
+        issues.append("route action policy registry schema_version mismatch")
+    if registry.get("authority") != "router":
+        issues.append("route action policy registry authority must be router")
+    for field in ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS:
+        if registry.get(field) is not True:
+            issues.append(f"route action policy registry requires {field}=true")
+
+    raw_rows = registry.get("route_actions")
+    if not isinstance(raw_rows, list) or not raw_rows:
+        issues.append("route action policy registry requires non-empty route_actions list")
+        return issues
+
+    transaction_types = {str(row.get("transaction_type")) for row in _control_transaction_registry_rows(run_root)}
+    seen: set[str] = set()
+    for index, row in enumerate(raw_rows):
+        if not isinstance(row, dict):
+            issues.append(f"route_actions[{index}] must be an object")
+            continue
+        action_id = str(row.get("action_id") or "").strip()
+        context = action_id or f"route_actions[{index}]"
+        if not action_id:
+            issues.append(f"{context}: action_id is required")
+        elif action_id in seen:
+            issues.append(f"{context}: duplicate action_id")
+        seen.add(action_id)
+        for field in ("actor_roles", "router_events", "requires", "forbids", "commit_targets"):
+            if not isinstance(row.get(field), list):
+                issues.append(f"{context}: {field} must be a list")
+        transaction_type = str(row.get("transaction_type") or "").strip()
+        if transaction_type not in transaction_types:
+            issues.append(f"{context}: transaction_type is not registered: {transaction_type}")
+        for event in row.get("router_events", []) if isinstance(row.get("router_events"), list) else []:
+            if str(event) not in EXTERNAL_EVENTS:
+                issues.append(f"{context}: router_event is not registered: {event}")
+        for target in row.get("commit_targets", []) if isinstance(row.get("commit_targets"), list) else []:
+            if str(target) not in CONTROL_TRANSACTION_COMMIT_TARGETS:
+                issues.append(f"{context}: unsupported commit_target: {target}")
+    return issues
+
+
+def _validate_route_action_policy_registry(run_root: Path | None = None) -> None:
+    issues = _route_action_policy_issues(run_root)
+    if issues:
+        raise RouterError("route action policy registry invalid: " + "; ".join(issues))
+
+
+def _route_action_policy_by_id(run_root: Path | None = None) -> dict[str, dict[str, Any]]:
+    _validate_route_action_policy_registry(run_root)
+    return {str(row["action_id"]): row for row in _route_action_policy_rows(run_root)}
+
+
 def _pm_role_work_channel_open(run_state: dict[str, Any]) -> bool:
     if run_state.get("flags", {}).get("model_miss_triage_followup_request_pending"):
         return True
@@ -13504,6 +13919,9 @@ def _commit_material_scan_repair_generation(
     run_state["flags"]["worker_packets_delivered"] = False
     run_state["flags"]["worker_scan_results_returned"] = False
     run_state["flags"]["material_scan_results_relayed_to_reviewer"] = False
+    run_state["flags"]["material_scan_results_relayed_to_pm"] = False
+    run_state["flags"]["material_scan_result_disposition_recorded"] = False
+    run_state["flags"]["material_scan_results_absorbed_by_pm"] = False
     run_state["flags"]["material_review_sufficient"] = False
     run_state["flags"]["material_review_insufficient"] = False
     run_state["material_review"] = None
@@ -14607,8 +15025,8 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
         phase="current_node_loop",
         records=records,
         node_id=str(frontier["active_node_id"]),
-        join_policy="all_results_before_review",
-        review_policy="batch_current_node_result_review_before_pm_completion",
+        join_policy="all_results_before_pm_absorption",
+        review_policy="pm_absorbs_batch_before_node_completion_review",
         pm_absorption_required=True,
     )
     write_json(
@@ -14675,8 +15093,8 @@ def _validate_current_node_result_event(project_root: Path, run_state: dict[str,
         raise RouterError("current-node result packet_id does not match current-node write grant")
     if str(result.get("completed_by_role") or "") != str(expected_grant.get("granted_to_role") or ""):
         raise RouterError("wrong role: current-node result completed_by_role does not match current-node write grant")
-    if result.get("next_recipient") != "human_like_reviewer":
-        raise RouterError("current-node worker result must route to human_like_reviewer")
+    if result.get("next_recipient") != "project_manager":
+        raise RouterError("current-node worker result must route to project_manager")
     if result.get("completed_by_role") == "controller":
         raise RouterError("Controller-origin current-node result is invalid")
     packet_path = resolve_project_path(project_root, str(expected_grant.get("packet_envelope_path") or ""))
@@ -16959,14 +17377,14 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
                 "sealed_body_reads_allowed": False,
             },
         )
-    if flags.get("worker_scan_results_returned") and not flags.get("material_scan_results_relayed_to_reviewer"):
+    if flags.get("worker_scan_results_returned") and not flags.get("material_scan_results_relayed_to_pm"):
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="relay_material_scan_results_to_reviewer",
+                action_type="relay_material_scan_results_to_pm",
                 actor="controller",
-                label="material_scan_results_relayed_to_reviewer_with_ledger_check",
-                summary="Check the packet ledger and relay material scan result envelopes to reviewer without opening result bodies.",
+                label="material_scan_results_relayed_to_pm_with_ledger_check",
+                summary="Check the packet ledger and relay material scan result envelopes to PM without opening result bodies.",
                 allowed_reads=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, _material_scan_index_path(run_root)),
@@ -16975,9 +17393,9 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                 ],
-                to_role="human_like_reviewer",
+                to_role="project_manager",
                 extra={
-                    "postcondition": "material_scan_results_relayed_to_reviewer",
+                    "postcondition": "material_scan_results_relayed_to_pm",
                     "controller_visibility": "result_envelopes_only",
                     "sealed_body_reads_allowed": False,
                     "combined_ledger_check_and_relay": True,
@@ -16986,17 +17404,37 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
                 },
             )
         return make_action(
-            action_type="relay_material_scan_results_to_reviewer",
+            action_type="relay_material_scan_results_to_pm",
             actor="controller",
-            label="material_scan_results_relayed_to_reviewer",
-            summary="Relay material scan result envelopes to reviewer without opening result bodies.",
+            label="material_scan_results_relayed_to_pm",
+            summary="Relay material scan result envelopes to PM without opening result bodies.",
             allowed_reads=[project_relative(project_root, _material_scan_index_path(run_root))],
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
-            to_role="human_like_reviewer",
+            to_role="project_manager",
             extra={
-                "postcondition": "material_scan_results_relayed_to_reviewer",
+                "postcondition": "material_scan_results_relayed_to_pm",
                 "controller_visibility": "result_envelopes_only",
                 "sealed_body_reads_allowed": False,
+            },
+        )
+    if flags.get("material_scan_results_relayed_to_pm") and not flags.get("material_scan_result_disposition_recorded"):
+        return _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
+            label="controller_waits_for_pm_material_scan_result_disposition",
+            summary="Controller relayed material scan results to PM and must wait for PM to record a result disposition before any reviewer sufficiency gate.",
+            allowed_external_events=["pm_records_material_scan_result_disposition"],
+            to_role="project_manager",
+            payload_contract={
+                "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                "name": "pm_material_scan_result_disposition",
+                "required_fields": ["decided_by_role", "decision"],
+                "allowed_values": {
+                    "decided_by_role": ["project_manager"],
+                    "decision": sorted(PM_PACKAGE_RESULT_DECISIONS),
+                },
+                "result_body_open_required_by_role": "project_manager",
             },
         )
     return None
@@ -17044,14 +17482,14 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
                 "sealed_body_reads_allowed": False,
             },
         )
-    if flags.get("worker_research_report_returned") and not flags.get("research_result_relayed_to_reviewer"):
+    if flags.get("worker_research_report_returned") and not flags.get("research_result_relayed_to_pm"):
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="relay_research_result_to_reviewer",
+                action_type="relay_research_result_to_pm",
                 actor="controller",
-                label="research_result_relayed_to_reviewer_with_ledger_check",
-                summary="Check the packet ledger and relay research result envelope to reviewer without opening the result body.",
+                label="research_result_relayed_to_pm_with_ledger_check",
+                summary="Check the packet ledger and relay research result envelope to PM without opening the result body.",
                 allowed_reads=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, _research_packet_index_path(run_root)),
@@ -17060,9 +17498,9 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                 ],
-                to_role="human_like_reviewer",
+                to_role="project_manager",
                 extra={
-                    "postcondition": "research_result_relayed_to_reviewer",
+                    "postcondition": "research_result_relayed_to_pm",
                     "controller_visibility": "result_envelope_only",
                     "sealed_body_reads_allowed": False,
                     "combined_ledger_check_and_relay": True,
@@ -17071,17 +17509,37 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
                 },
             )
         return make_action(
-            action_type="relay_research_result_to_reviewer",
+            action_type="relay_research_result_to_pm",
             actor="controller",
-            label="research_result_relayed_to_reviewer",
-            summary="Relay research result envelope to reviewer without opening the result body.",
+            label="research_result_relayed_to_pm",
+            summary="Relay research result envelope to PM without opening the result body.",
             allowed_reads=[project_relative(project_root, _research_packet_index_path(run_root))],
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
-            to_role="human_like_reviewer",
+            to_role="project_manager",
             extra={
-                "postcondition": "research_result_relayed_to_reviewer",
+                "postcondition": "research_result_relayed_to_pm",
                 "controller_visibility": "result_envelope_only",
                 "sealed_body_reads_allowed": False,
+            },
+        )
+    if flags.get("research_result_relayed_to_pm") and not flags.get("research_result_disposition_recorded"):
+        return _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
+            label="controller_waits_for_pm_research_result_disposition",
+            summary="Controller relayed research results to PM and must wait for PM disposition before any reviewer direct-source gate.",
+            allowed_external_events=["pm_records_research_result_disposition"],
+            to_role="project_manager",
+            payload_contract={
+                "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                "name": "pm_research_result_disposition",
+                "required_fields": ["decided_by_role", "decision"],
+                "allowed_values": {
+                    "decided_by_role": ["project_manager"],
+                    "decision": sorted(PM_PACKAGE_RESULT_DECISIONS),
+                },
+                "result_body_open_required_by_role": "project_manager",
             },
         )
     return None
@@ -17150,7 +17608,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 **grant_extra,
             },
         )
-    if flags.get("current_node_worker_result_returned") and not flags.get("current_node_result_relayed_to_reviewer"):
+    if flags.get("current_node_worker_result_returned") and not flags.get("current_node_result_relayed_to_pm"):
         if not _current_node_results_complete(project_root, run_state):
             missing_roles = _current_node_missing_result_roles(project_root, run_state)
             return _expected_role_decision_wait_action(
@@ -17158,14 +17616,14 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 run_state,
                 run_root,
                 label="controller_waits_for_remaining_current_node_batch_results",
-                summary="Controller must wait for every current-node batch result before relaying the batch to reviewer.",
+                summary="Controller must wait for every current-node batch result before relaying the batch to PM.",
                 allowed_external_events=["worker_current_node_result_returned"],
                 to_role=",".join(missing_roles) if missing_roles else "worker_a,worker_b",
                 payload_contract={
                     "schema_version": PAYLOAD_CONTRACT_SCHEMA,
                     "name": "current_node_batch_result_envelope",
                     "required_fields": ["packet_id", "result_envelope_path"],
-                    "batch_join_policy": "all_results_before_review",
+                    "batch_join_policy": "all_results_before_pm_absorption",
                 },
                 producer_roles_override=missing_roles,
             )
@@ -17176,12 +17634,12 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
         ]
         if not run_state.get("ledger_check_requested"):
             return make_action(
-                action_type="relay_current_node_result_to_reviewer",
+                action_type="relay_current_node_result_to_pm",
                 actor="controller",
-                label="current_node_result_relayed_to_reviewer_with_ledger_check",
+                label="current_node_result_relayed_to_pm_with_ledger_check",
                 summary=(
                     "Check the packet ledger and relay the current-node worker "
-                    "batch result envelopes to reviewer without opening result bodies."
+                    "batch result envelopes to PM without opening result bodies."
                 ),
                 allowed_reads=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
@@ -17191,10 +17649,10 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                 ],
-                to_role="human_like_reviewer",
+                to_role="project_manager",
                 extra={
                     "packet_ids": [record.get("packet_id") for record in records],
-                    "postcondition": "current_node_result_relayed_to_reviewer",
+                    "postcondition": "current_node_result_relayed_to_pm",
                     "controller_visibility": "result_envelope_only",
                     "sealed_body_reads_allowed": False,
                     "combined_ledger_check_and_relay": True,
@@ -17202,18 +17660,38 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 },
             )
         return make_action(
-            action_type="relay_current_node_result_to_reviewer",
+            action_type="relay_current_node_result_to_pm",
             actor="controller",
-            label="current_node_result_relayed_to_reviewer",
-            summary="Relay current-node batch result envelopes to reviewer without opening result bodies.",
+            label="current_node_result_relayed_to_pm",
+            summary="Relay current-node batch result envelopes to PM without opening result bodies.",
             allowed_reads=[project_relative(project_root, path) for path in result_paths],
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
-            to_role="human_like_reviewer",
+            to_role="project_manager",
             extra={
                 "packet_ids": [record.get("packet_id") for record in records],
-                "postcondition": "current_node_result_relayed_to_reviewer",
+                "postcondition": "current_node_result_relayed_to_pm",
                 "controller_visibility": "result_envelope_only",
                 "sealed_body_reads_allowed": False,
+            },
+        )
+    if flags.get("current_node_result_relayed_to_pm") and not flags.get("current_node_result_disposition_recorded"):
+        return _expected_role_decision_wait_action(
+            project_root,
+            run_state,
+            run_root,
+            label="controller_waits_for_pm_current_node_result_disposition",
+            summary="Controller relayed current-node worker results to PM and must wait for PM disposition before any reviewer node-completion gate.",
+            allowed_external_events=["pm_records_current_node_result_disposition"],
+            to_role="project_manager",
+            payload_contract={
+                "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                "name": "pm_current_node_result_disposition",
+                "required_fields": ["decided_by_role", "decision"],
+                "allowed_values": {
+                    "decided_by_role": ["project_manager"],
+                    "decision": sorted(PM_PACKAGE_RESULT_DECISIONS),
+                },
+                "result_body_open_required_by_role": "project_manager",
             },
         )
     return None
@@ -17924,7 +18402,7 @@ def _reconcile_pending_role_wait_from_packet_status(
     if status_packet.get("status") != "result-envelope-returned":
         return None
     result = packet_runtime.load_envelope(project_root, result_path)
-    if result.get("next_recipient") != "human_like_reviewer":
+    if result.get("next_recipient") != "project_manager":
         return None
     result_hash = packet_runtime.sha256_file(result_path)
     payload = {
@@ -19169,7 +19647,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         _mark_parallel_batch_packets_relayed(run_root, "material_scan")
         run_state["flags"]["material_scan_packets_relayed"] = True
         run_state["ledger_check_requested"] = False
-    elif action_type == "relay_material_scan_results_to_reviewer":
+    elif action_type in {"relay_material_scan_results_to_pm", "relay_material_scan_results_to_reviewer"}:
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
             if not combined_ledger_check:
@@ -19180,11 +19658,11 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         if not run_state.get("ledger_check_requested"):
             raise RouterError("material scan result relay requires a current packet-ledger check")
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
-        _relay_result_records(project_root, run_state, index["packets"], to_role="human_like_reviewer", controller_agent_id="controller")
-        run_state["flags"]["material_scan_results_relayed_to_reviewer"] = True
+        _relay_result_records(project_root, run_state, index["packets"], to_role="project_manager", controller_agent_id="controller")
+        run_state["flags"]["material_scan_results_relayed_to_pm"] = True
         batch = _active_parallel_packet_batch(run_root, "material_scan")
         if batch:
-            batch["status"] = "results_relayed_to_reviewer"
+            batch["status"] = "results_relayed_to_pm"
             _write_parallel_packet_batch_state(run_root, batch)
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_research_packet":
@@ -19202,7 +19680,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         _mark_parallel_batch_packets_relayed(run_root, "research")
         run_state["flags"]["research_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
-    elif action_type == "relay_research_result_to_reviewer":
+    elif action_type in {"relay_research_result_to_pm", "relay_research_result_to_reviewer"}:
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
             if not combined_ledger_check:
@@ -19213,12 +19691,12 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         if not run_state.get("ledger_check_requested"):
             raise RouterError("research result relay requires a current packet-ledger check")
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
-        _relay_result_records(project_root, run_state, index["packets"], to_role="human_like_reviewer", controller_agent_id="controller")
+        _relay_result_records(project_root, run_state, index["packets"], to_role="project_manager", controller_agent_id="controller")
         batch = _active_parallel_packet_batch(run_root, "research")
         if batch:
-            batch["status"] = "results_relayed_to_reviewer"
+            batch["status"] = "results_relayed_to_pm"
             _write_parallel_packet_batch_state(run_root, batch)
-        run_state["flags"]["research_result_relayed_to_reviewer"] = True
+        run_state["flags"]["research_result_relayed_to_pm"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "relay_pm_role_work_request_packet":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
@@ -19322,7 +19800,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         _mark_parallel_batch_packets_relayed(run_root, "current_node")
         run_state["flags"]["current_node_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
-    elif action_type == "relay_current_node_result_to_reviewer":
+    elif action_type in {"relay_current_node_result_to_pm", "relay_current_node_result_to_reviewer"}:
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
             if not combined_ledger_check:
@@ -19333,13 +19811,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         if not run_state["flags"].get("current_node_worker_result_returned"):
             raise RouterError("current-node result relay requires worker result event")
         records = _current_node_packet_records(project_root, run_state)
-        _validate_results_exist_for_packets(project_root, run_state, records, next_recipient="human_like_reviewer")
-        _relay_result_records(project_root, run_state, records, to_role="human_like_reviewer", controller_agent_id="controller")
+        _validate_results_exist_for_packets(project_root, run_state, records, next_recipient="project_manager")
+        _relay_result_records(project_root, run_state, records, to_role="project_manager", controller_agent_id="controller")
         batch = _active_parallel_packet_batch(run_root, "current_node")
         if batch:
-            batch["status"] = "results_relayed_to_reviewer"
+            batch["status"] = "results_relayed_to_pm"
             _write_parallel_packet_batch_state(run_root, batch)
-        run_state["flags"]["current_node_result_relayed_to_reviewer"] = True
+        run_state["flags"]["current_node_result_relayed_to_pm"] = True
         run_state["ledger_check_requested"] = False
     elif action_type == "load_resume_state":
         resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
@@ -19726,8 +20204,19 @@ def _record_external_event_unchecked(
         _validate_packet_bodies_opened_by_targets(project_root, run_state, material_index["packets"])
     elif event == "worker_scan_results_returned":
         material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
-        _validate_results_exist_for_packets(project_root, run_state, material_index["packets"], next_recipient="human_like_reviewer")
+        _validate_results_exist_for_packets(project_root, run_state, material_index["packets"], next_recipient="project_manager")
         _mark_parallel_batch_results_joined(project_root, run_root, run_state, "material_scan")
+    elif event == "pm_records_material_scan_result_disposition":
+        _write_pm_package_result_disposition(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            batch_kind="material_scan",
+            package_label="material_scan",
+            gate_kind="material_sufficiency",
+            output_path=run_root / "material" / "pm_material_scan_result_disposition.json",
+        )
     elif event == "reviewer_reports_material_sufficient":
         _write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=True)
         material_batch = _active_parallel_packet_batch(run_root, "material_scan")
@@ -19761,6 +20250,17 @@ def _record_external_event_unchecked(
     elif event == "worker_research_report_returned":
         _write_worker_research_report(project_root, run_root, run_state, payload)
         _mark_parallel_batch_results_joined(project_root, run_root, run_state, "research")
+    elif event == "pm_records_research_result_disposition":
+        _write_pm_package_result_disposition(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            batch_kind="research",
+            package_label="research",
+            gate_kind="research_direct_source_check",
+            output_path=run_root / "research" / "pm_research_result_disposition.json",
+        )
     elif event == "reviewer_passes_research_direct_source_check":
         research_index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         raw_agent_map = payload.get("agent_role_map")
@@ -19804,7 +20304,11 @@ def _record_external_event_unchecked(
             expected_role="human_like_reviewer",
             path=run_root / "reviews" / "product_architecture_challenge.json",
             schema_version="flowpilot.product_architecture_review.v1",
-            checked_paths=[run_root / "product_function_architecture.json"],
+            checked_paths=[
+                run_root / "product_function_architecture.json",
+                run_root / "flowguard" / "product_architecture_modelability.json",
+                run_root / "flowguard" / "product_behavior_model_pm_decision.json",
+            ],
         )
     elif event == "product_officer_passes_product_architecture_modelability":
         _write_role_gate_report(
@@ -19817,6 +20321,10 @@ def _record_external_event_unchecked(
             schema_version="flowpilot.product_architecture_modelability.v1",
             checked_paths=[run_root / "product_function_architecture.json"],
         )
+    elif event == "pm_accepts_product_behavior_model":
+        _write_pm_product_behavior_model_decision(project_root, run_root, run_state, payload, accepted=True)
+    elif event == "pm_requests_product_behavior_model_rebuild":
+        _write_pm_product_behavior_model_decision(project_root, run_root, run_state, payload, accepted=False)
     elif event == "pm_writes_root_acceptance_contract":
         _write_root_acceptance_contract(project_root, run_root, run_state, payload)
     elif event == "reviewer_passes_root_acceptance_contract":
@@ -19911,6 +20419,10 @@ def _record_external_event_unchecked(
         _write_route_draft(project_root, run_root, run_state, payload)
     elif event == "process_officer_passes_route_check":
         _write_route_process_pass_report(project_root, run_root, run_state, payload)
+    elif event == "pm_accepts_process_route_model":
+        _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=True)
+    elif event == "pm_requests_process_route_model_rebuild":
+        _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=False)
     elif event == "process_officer_requires_route_repair":
         _write_route_process_issue_report(
             project_root,
@@ -19941,6 +20453,7 @@ def _record_external_event_unchecked(
             checked_paths=[
                 _current_route_draft_path(run_root),
                 run_root / "flowguard" / "route_process_check.json",
+                run_root / "flowguard" / "process_route_model_pm_decision.json",
                 run_root / "flowguard" / "route_product_check.json",
             ],
         )
@@ -19948,6 +20461,18 @@ def _record_external_event_unchecked(
         _validate_current_node_packet_event(project_root, run_root, run_state, payload)
     elif event == "worker_current_node_result_returned":
         _validate_current_node_result_event(project_root, run_state, payload)
+    elif event == "pm_records_current_node_result_disposition":
+        frontier = _active_frontier(run_root)
+        _write_pm_package_result_disposition(
+            project_root,
+            run_root,
+            run_state,
+            payload,
+            batch_kind="current_node",
+            package_label="current_node",
+            gate_kind="node_completion",
+            output_path=_active_node_root(run_root, frontier) / "reviews" / "pm_current_node_result_disposition.json",
+        )
     elif event == "current_node_reviewer_passes_result":
         _validate_current_node_reviewer_pass(project_root, run_state, payload)
     elif event == "pm_builds_parent_backward_targets":
@@ -20017,6 +20542,12 @@ def _record_external_event_unchecked(
         "recorded_at": utc_now(),
     }
     run_state["flags"][flag] = True
+    if event == "pm_accepts_product_behavior_model":
+        run_state["flags"]["pm_product_behavior_model_rebuild_requested"] = False
+    elif event == "pm_accepts_process_route_model":
+        run_state["flags"]["pm_process_route_model_rebuild_requested"] = False
+    elif event in {"pm_requests_product_behavior_model_rebuild", "pm_requests_process_route_model_rebuild"}:
+        run_state["flags"][flag] = False
     if event in {
         "pm_completes_current_node_from_reviewed_result",
         "pm_completes_parent_node_from_backward_replay",

@@ -203,7 +203,7 @@
     "active_result_envelope_path": ".flowpilot/runs/run-001/packets/<packet-id>/result_envelope.json",
     "active_result_body_path": ".flowpilot/runs/run-001/packets/<packet-id>/result_body.md",
     "packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
-    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+    "status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
     "controller_status_packet_path": ".flowpilot/runs/run-001/packets/<packet-id>/controller_status_packet.json",
     "holder_change_user_status_update_required": true,
     "holder_change_user_status_update_written": false,
@@ -273,7 +273,7 @@
       "invalid_role_origin_blocks_advance": true,
       "pm_reissue_or_repair_required_on_mismatch": true
     },
-    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+    "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-pm|ask-pm-for-result-disposition|send-pm-gate-package-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
     "controller_may_execute_worker_packet": false,
     "controller_may_finish_worker_packet": false,
     "controller_may_read_worker_body": false,

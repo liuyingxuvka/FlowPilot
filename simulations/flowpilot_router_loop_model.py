@@ -7,14 +7,15 @@ Risk intent brief:
 - Model-critical durable state: PM route activation, current-node packet
   registration, PM high-standard gate, router direct dispatch, worker
   dispatch, active-holder packet lease, fast-lane mechanical retry/result
-  submission, Controller next-action notice, reviewer pass/block, route mutation, stale
+  submission, Controller next-action notice, PM result disposition, formal
+  reviewer gate release, reviewer pass/block, route mutation, stale
   evidence/frontier marking, node completion, final route-wide ledger
   source-of-truth generation, same-scope replay, generated-resource and visual
   evidence closure, and segmented final backward replay.
 - Adversarial branches include packet registration before route activation,
-  worker dispatch before router direct dispatch, reviewer pass before result routing,
-  result relay before packet-ledger checks, reviewer result-review card before
-  result relay, officer packet relay without an officer card, repair/recheck
+  worker dispatch before router direct dispatch, reviewer pass before PM
+  disposition and formal gate release, result relay before packet-ledger checks,
+  reviewer result-review card before PM gate release, officer packet relay without an officer card, repair/recheck
   bypasses around the reviewer,
   router wait events that are impossible under the active node kind, parent
   repair lanes that target leaf/current-node worker dispatch, collapsed repair
@@ -32,10 +33,11 @@ Risk intent brief:
   no-next-action blockers;
   current-node packets gate write grants; router direct dispatch gates worker work;
   worker and officer results are
-  packet-ledger checked before reviewer/PM relay; active-holder fast-lane
+  packet-ledger checked before PM relay; PM dispositions worker results before
+  formal reviewer gate packages; active-holder fast-lane
   closure writes a Controller-visible next-action notice before cross-role relay; repair/recheck returns to the
   reviewer before PM completion; reviewer result decisions require the
-  result-review system card after relay; mutation requires reviewer block and stale
+  formal PM gate package and result-review system card; mutation requires reviewer block and stale
   evidence/frontier markers; same-scope replay reruns after mutation;
   PM node completion updates the durable completion ledger before parent replay
   or task completion projection;
@@ -167,6 +169,9 @@ class State:
     worker_result_returned: bool = False
     worker_result_identity_boundary_present: bool = False
     worker_result_ledger_checked: bool = False
+    worker_result_routed_to_pm: bool = False
+    pm_result_disposition_recorded: bool = False
+    pm_formal_node_gate_package_released: bool = False
     worker_result_routed_to_reviewer: bool = False
     reviewer_worker_result_card_delivered: bool = False
     reviewer_decision: str = "none"  # none | pass | block
@@ -314,9 +319,28 @@ EXPECTED_ROLE_EVENT_CONTRACTS: tuple[EventContract, ...] = (
         ),
     ),
     EventContract(
+        name="pm_records_current_node_result_disposition",
+        role="pm",
+        requires_all=(("worker_result_routed_to_pm", True),),
+        satisfied_by_any=(
+            (("pm_result_disposition_recorded", True),),
+        ),
+    ),
+    EventContract(
+        name="pm_releases_current_node_formal_gate",
+        role="pm",
+        requires_all=(("pm_result_disposition_recorded", True),),
+        satisfied_by_any=(
+            (("pm_formal_node_gate_package_released", True),),
+        ),
+    ),
+    EventContract(
         name="reviewer_current_node_result_decision",
         role="reviewer",
-        requires_all=(("reviewer_worker_result_card_delivered", True),),
+        requires_all=(
+            ("pm_formal_node_gate_package_released", True),
+            ("reviewer_worker_result_card_delivered", True),
+        ),
         satisfied_by_any=(
             (("reviewer_decision", "pass"),),
             (("reviewer_decision", "block"),),
@@ -589,6 +613,9 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         worker_result_returned=False,
         worker_result_identity_boundary_present=False,
         worker_result_ledger_checked=False,
+        worker_result_routed_to_pm=False,
+        pm_result_disposition_recorded=False,
+        pm_formal_node_gate_package_released=False,
         worker_result_routed_to_reviewer=False,
         reviewer_worker_result_card_delivered=False,
         reviewer_decision="none",
@@ -1019,7 +1046,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.worker_result_ledger_checked:
         yield Transition(
-            "worker_result_ledger_checked_before_reviewer_relay",
+            "worker_result_ledger_checked_before_pm_relay",
             replace(state, holder="controller", worker_result_ledger_checked=True),
         )
         return
@@ -1031,20 +1058,34 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.worker_result_routed_to_reviewer:
+    if not state.worker_result_routed_to_pm:
         yield Transition(
-            "worker_result_routed_to_reviewer",
+            "worker_result_routed_to_pm",
             replace(
                 state,
-                holder="reviewer",
-                worker_result_routed_to_reviewer=True,
+                holder="pm",
+                worker_result_routed_to_pm=True,
             ),
+        )
+        return
+
+    if not state.pm_result_disposition_recorded:
+        yield Transition(
+            "pm_records_current_node_result_disposition",
+            replace(state, holder="pm", pm_result_disposition_recorded=True),
+        )
+        return
+
+    if not state.pm_formal_node_gate_package_released:
+        yield Transition(
+            "pm_releases_current_node_formal_gate_package_to_reviewer",
+            replace(state, holder="reviewer", pm_formal_node_gate_package_released=True),
         )
         return
 
     if not state.reviewer_worker_result_card_delivered:
         yield Transition(
-            "reviewer_worker_result_review_card_delivered_after_result_relay",
+            "reviewer_worker_result_review_card_delivered_after_pm_gate_release",
             replace(state, holder="reviewer", reviewer_worker_result_card_delivered=True),
         )
         return
@@ -1634,20 +1675,26 @@ def invariant_failures(state: State) -> list[str]:
         state.worker_result_ledger_checked and state.fast_lane_result_mechanics_passed
     ):
         failures.append("router wrote Controller next-action notice before fast-lane mechanics and ledger check passed")
-    if state.worker_result_routed_to_reviewer and not (
+    if state.worker_result_routed_to_pm and not (
         state.worker_result_returned and state.worker_result_ledger_checked
     ):
         failures.append("worker result routed before result was returned and packet-ledger checked")
-    if state.worker_result_routed_to_reviewer and not state.fast_lane_controller_notice_written:
-        failures.append("worker result routed to reviewer before router wrote Controller next-action notice")
-    if state.reviewer_worker_result_card_delivered and not state.worker_result_routed_to_reviewer:
-        failures.append("reviewer result-review card delivered before worker result relay")
-    if state.reviewer_decision in {"pass", "block"} and not state.worker_result_routed_to_reviewer:
-        failures.append("reviewer decided before worker result was routed to reviewer")
+    if state.worker_result_routed_to_pm and not state.fast_lane_controller_notice_written:
+        failures.append("worker result routed to PM before router wrote Controller next-action notice")
+    if state.worker_result_routed_to_reviewer:
+        failures.append("worker result routed directly to reviewer before PM disposition")
+    if state.pm_result_disposition_recorded and not state.worker_result_routed_to_pm:
+        failures.append("PM disposition recorded before worker result was routed to PM")
+    if state.pm_formal_node_gate_package_released and not state.pm_result_disposition_recorded:
+        failures.append("PM formal node gate package released before result disposition")
+    if state.reviewer_worker_result_card_delivered and not state.pm_formal_node_gate_package_released:
+        failures.append("reviewer result-review card delivered before PM formal gate package")
+    if state.reviewer_decision in {"pass", "block"} and not state.pm_formal_node_gate_package_released:
+        failures.append("reviewer decided before PM formal gate package release")
     if state.reviewer_decision in {"pass", "block"} and not state.reviewer_worker_result_card_delivered:
         failures.append("reviewer decided before result-review card delivery")
-    if state.reviewer_decision == "pass" and not state.worker_result_routed_to_reviewer:
-        failures.append("reviewer pass recorded before routed worker result")
+    if state.reviewer_decision == "pass" and not state.pm_result_disposition_recorded:
+        failures.append("reviewer pass recorded before PM result disposition")
     if state.repair_packet_registered and not state.reviewer_block_seen:
         failures.append("repair packet registered before reviewer block")
     if state.repair_dispatch_allowed and not state.repair_packet_registered:
@@ -1851,7 +1898,8 @@ INVARIANTS = (
             "expected role-event waits never materialize PM blockers, "
             "current-node packets gate write grants, router direct dispatch before "
             "worker or repair work, "
-            "packet-ledger checks before worker/officer result relay, reviewer "
+            "packet-ledger checks before worker/officer result relay, PM result "
+            "disposition before formal reviewer node-completion gates, reviewer "
             "recheck before repaired completion, reviewer-blocked route mutation "
             "with stale evidence/frontier markers, same-scope replay after "
             "mutation, node completion ledger updates before parent backward replay "
@@ -1927,7 +1975,9 @@ def _active_packet_loop(**changes: object) -> State:
         worker_result_returned=True,
         worker_result_identity_boundary_present=True,
         worker_result_ledger_checked=True,
-        worker_result_routed_to_reviewer=True,
+        worker_result_routed_to_pm=True,
+        pm_result_disposition_recorded=True,
+        pm_formal_node_gate_package_released=True,
         reviewer_worker_result_card_delivered=True,
     )
     return replace(base, **changes)
@@ -2187,6 +2237,9 @@ def hazard_states() -> dict[str, State]:
             worker_result_returned=False,
             worker_result_identity_boundary_present=False,
             worker_result_ledger_checked=False,
+            worker_result_routed_to_pm=False,
+            pm_result_disposition_recorded=False,
+            pm_formal_node_gate_package_released=False,
             worker_result_routed_to_reviewer=False,
             reviewer_worker_result_card_delivered=False,
         ),
@@ -2261,11 +2314,11 @@ def hazard_states() -> dict[str, State]:
             fast_lane_controller_notice_written=True,
         ),
         "reviewer_pass_without_routed_worker_result": _active_packet_loop(
-            worker_result_routed_to_reviewer=False,
+            pm_formal_node_gate_package_released=False,
             reviewer_decision="pass",
         ),
         "reviewer_result_card_before_result_relay": _active_packet_loop(
-            worker_result_routed_to_reviewer=False,
+            pm_formal_node_gate_package_released=False,
             reviewer_worker_result_card_delivered=True,
         ),
         "reviewer_decision_without_result_review_card": _active_packet_loop(
@@ -2274,6 +2327,9 @@ def hazard_states() -> dict[str, State]:
         ),
         "worker_result_routed_without_ledger_check": _active_packet_loop(
             worker_result_ledger_checked=False,
+            worker_result_routed_to_pm=True,
+        ),
+        "worker_result_routed_directly_to_reviewer": _active_packet_loop(
             worker_result_routed_to_reviewer=True,
         ),
         "pm_completion_without_reviewer_pass": _active_packet_loop(

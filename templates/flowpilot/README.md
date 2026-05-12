@@ -44,11 +44,11 @@ for review.
    `agent_id` values are audit history only. If authorization is missing or
    startup fails, pause and ask. Continue with memory-seeded single-agent
    six-role continuity only after an explicit user fallback decision.
-10. PM issues a material-intake packet envelope/body pair; after reviewer
-   dispatch, an authorized non-controller worker reads the body and writes
-   `material_intake_packet.json`, including local skill and host capability
-   inventory as candidate-only resources. The human-like reviewer approves
-   material sufficiency before PM planning uses it.
+10. PM issues a material-intake packet envelope/body pair; after router
+   direct-dispatch, an authorized non-controller worker reads the body and
+   writes the material scan result back to PM. PM records a package-result
+   disposition, then releases a formal material sufficiency package for the
+   human-like reviewer before PM planning uses it.
 11. Project manager writes `pm_material_understanding.json`, classifies material
    complexity, and records whether messy/raw materials require discovery,
    cleanup, modeling, research, validation, or reconciliation nodes. When a
@@ -56,10 +56,11 @@ for review.
    decisions, PM writes a formal research package under `research/`, assigns a
    worker to search, inspect, experiment, or reconcile evidence, then releases
    the human-like reviewer to check original sources or outputs directly.
-   Worker reports are pointers only. Reviewer failure returns to worker rework
-   or route mutation; PM may use the result only after reviewer sufficiency
-   passes and PM absorbs the result into material understanding or mutates the
-   route.
+   Worker reports are PM intake material only. PM opens and dispositions the
+   returned result first, then releases a formal reviewer source-check package.
+   Reviewer failure returns to PM for worker rework or route mutation; PM may
+   use the result only after the formal reviewer gate passes and PM absorbs the
+   result into material understanding or mutates the route.
 12. Ask the project manager to synthesize `product_function_architecture.json`
    before contract freeze, including user tasks, capabilities, feature
    decisions, high-standard posture, strongest feasible product target,
@@ -98,15 +99,16 @@ for review.
    experiments, evidence paths, route-sign display proof, and terminal replay
    obligations.
    PM owns reviewer timing: write a review hold before worker/officer
-   work, then after worker output, verification, and anti-rough-finish evidence
-   are ready, write a review release naming gate, evidence paths, scope, and
-   required inspections. Early reviewer work is precheck only and cannot open
-   or block the gate.
+   work, receive worker output back to PM, record the package-result
+   disposition, and only then release a formal reviewer gate package naming
+   evidence paths, scope, and required inspections. Early reviewer work is
+   precheck only and cannot open or block the gate.
    PM work packets use the envelope/body split under `packets/`: the
    controller sees only `packet_envelope.json` and `result_envelope.json`,
    while detailed instructions and returned evidence stay in
-   `packet_body.md` and `result_body.md` for the addressed role, reviewer, or
-   PM. Controller body reads, body execution, wrong-role completion relabels,
+   `packet_body.md` for the addressed role and returned worker
+   `result_body.md` for PM disposition. Reviewers inspect PM-built formal gate
+   packages rather than raw worker result bodies. Controller body reads, body execution, wrong-role completion relabels,
    and body-hash mismatches are blockers, not repairable formatting defects.
    Use the physical packet runtime (`skills/flowpilot/assets/packet_runtime.py`
    in the installed skill, `scripts/flowpilot_packets.py` in the repo) to write
@@ -233,10 +235,10 @@ for review.
   with explicit tool/source boundaries and reviewer checks.
 - `research_worker_report.template.json`: worker output for a research package,
   including raw source pointers, negative findings, contradictions, and
-  confidence boundaries.
+  confidence boundaries. It returns to PM for disposition.
 - `research_reviewer_report.template.json`: human-like reviewer report that
-  directly checks source evidence or experiment output before PM may use the
-  worker result.
+  checks the PM-built formal source package before PM may use the research
+  result.
 - `product_function_architecture.template.json`: PM-owned pre-contract product
   function architecture package.
 - `pm_child_skill_selection.template.json`: PM-owned selection of required,

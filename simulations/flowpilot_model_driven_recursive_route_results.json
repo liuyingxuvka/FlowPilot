@@ -1,0 +1,173 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=120",
+    "violation_count": 0
+  },
+  "hazards": {
+    "failures": [],
+    "hazards": {
+      "cockpit_hides_deep_tree": {
+        "detected": true,
+        "expected_failure": "Cockpit display hid full route tree or current path",
+        "failures": [
+          "Cockpit display hid full route tree or current path"
+        ]
+      },
+      "final_closure_omits_major_node_review": {
+        "detected": true,
+        "expected_failure": "project completed before final review covered all major nodes and subtrees",
+        "failures": [
+          "project completed before final review covered all major nodes and subtrees"
+        ]
+      },
+      "final_model_miss_not_upgraded": {
+        "detected": true,
+        "expected_failure": "final omission closed without Process/FlowGuard model-miss upgrade",
+        "failures": [
+          "final omission closed without Process/FlowGuard model-miss upgrade"
+        ]
+      },
+      "hidden_parallel_leaf_marked_ready": {
+        "detected": true,
+        "expected_failure": "leaf readiness accepted hidden parallel or multi-worker work",
+        "failures": [
+          "leaf readiness accepted hidden parallel or multi-worker work"
+        ]
+      },
+      "leaf_too_large_not_promoted": {
+        "detected": true,
+        "expected_failure": "oversized leaf was not promoted to a parent with child nodes",
+        "failures": [
+          "oversized leaf was not promoted to a parent with child nodes"
+        ]
+      },
+      "non_leaf_entry_process_loop_skipped": {
+        "detected": true,
+        "expected_failure": "non-leaf node entered children before local serial process model PM decision and reviewer challenge",
+        "failures": [
+          "non-leaf node entered children before local serial process model PM decision and reviewer challenge"
+        ]
+      },
+      "non_leaf_entry_product_loop_skipped": {
+        "detected": true,
+        "expected_failure": "non-leaf node entered children before local product model PM decision and reviewer challenge",
+        "failures": [
+          "non-leaf node entered children before local product model PM decision and reviewer challenge"
+        ]
+      },
+      "parent_completion_omits_child_coverage": {
+        "detected": true,
+        "expected_failure": "parent completed before all child nodes were accounted for",
+        "failures": [
+          "parent completed before all child nodes were accounted for"
+        ]
+      },
+      "parent_omission_patched_without_model_miss": {
+        "detected": true,
+        "expected_failure": "parent omission patched without Process/FlowGuard model-miss triage and model upgrade",
+        "failures": [
+          "parent omission patched without Process/FlowGuard model-miss triage and model upgrade"
+        ]
+      },
+      "placeholder_kept_after_real_route": {
+        "detected": true,
+        "expected_failure": "real route available but startup placeholder remained active",
+        "failures": [
+          "real route available but startup placeholder remained active"
+        ]
+      },
+      "process_model_missing_before_activation": {
+        "detected": true,
+        "expected_failure": "route activated without Process Officer serial execution model",
+        "failures": [
+          "route activated without Process Officer serial execution model"
+        ]
+      },
+      "process_model_not_serial": {
+        "detected": true,
+        "expected_failure": "process route execution model is not serial",
+        "failures": [
+          "process route execution model is not serial"
+        ]
+      },
+      "product_model_pm_decision_skipped": {
+        "detected": true,
+        "expected_failure": "route drafted before PM accepted product behavior model",
+        "failures": [
+          "route drafted before PM accepted product behavior model"
+        ]
+      },
+      "product_review_skipped_before_route": {
+        "detected": true,
+        "expected_failure": "route drafted before reviewer challenged product model",
+        "failures": [
+          "route drafted before reviewer challenged product model"
+        ]
+      },
+      "promoted_leaf_keeps_old_approvals": {
+        "detected": true,
+        "expected_failure": "promoted leaf kept stale approvals instead of rerunning local gates",
+        "failures": [
+          "promoted leaf kept stale approvals instead of rerunning local gates"
+        ]
+      },
+      "real_route_uses_protocol_stages": {
+        "detected": true,
+        "expected_failure": "real route Mermaid did not use canonical serial execution model",
+        "failures": [
+          "real route Mermaid did not use canonical serial execution model"
+        ]
+      },
+      "real_route_without_mermaid": {
+        "detected": true,
+        "expected_failure": "real route display omitted Mermaid graph in chat",
+        "failures": [
+          "real route display omitted Mermaid graph in chat"
+        ]
+      },
+      "route_drafted_before_product_model": {
+        "detected": true,
+        "expected_failure": "route drafted before Product Officer wrote product behavior model",
+        "failures": [
+          "route drafted before Product Officer wrote product behavior model"
+        ]
+      },
+      "same_class_omissions_not_searched": {
+        "detected": true,
+        "expected_failure": "parent model miss did not search same-class omissions",
+        "failures": [
+          "parent model miss did not search same-class omissions"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "intended_plan": {
+    "failures": [],
+    "ok": true,
+    "scenario": "intended_model_driven_recursive_route"
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "intended_model_driven_recursive_route"
+    ],
+    "edge_count": 40,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 19,
+    "state_count": 41
+  }
+}

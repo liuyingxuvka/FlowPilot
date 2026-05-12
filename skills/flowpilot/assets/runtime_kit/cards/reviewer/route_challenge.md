@@ -32,8 +32,9 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Review the PM route draft after both FlowGuard officers have passed their route
-checks.
+Review the PM route draft after Process FlowGuard has produced a serial route
+model, PM has accepted that process model, and Product FlowGuard has passed
+route product fit.
 
 Independently challenge whether the route is understandable, executable, and
 faithful to the user's current request and frozen contract. Treat officer
@@ -42,6 +43,8 @@ reports as pointers, not as your own inspection.
 Check:
 
 - the active route draft is the same draft the officers checked;
+- the process route is a single ordered execution line, including ordered
+  children for every parent/module and ordered deeper children as needed;
 - the selected planning profile matches the task type and stated quality level;
 - route nodes and checklists are not over-simplified, overmerged, or too coarse
   to produce stage-level acceptance artifacts;
@@ -54,6 +57,12 @@ Check:
   a parent/module can receive a worker packet directly or if a leaf is too
   broad for one bounded packet; this is the required under-decomposition
   check;
+- every non-leaf entry has the local product/process/reviewer loop represented
+  before child execution. Block if the route jumps straight from parent entry
+  to worker dispatch without local modeling and PM decision;
+- leaf promotion is allowed and required when PM discovers an apparent leaf is
+  too broad at entry. Block if stale approvals remain valid after a promoted
+  leaf becomes a parent/module;
 - the route does not disguise a planning/root/parent node-entry gap as a
   repair node before any executable child work or reviewed work evidence
   exists. In that situation, require route replanning, ordinary node expansion,

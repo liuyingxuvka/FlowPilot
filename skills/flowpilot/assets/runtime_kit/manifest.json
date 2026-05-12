@@ -324,6 +324,15 @@
     },
     {
       "audience": "project_manager",
+      "id": "pm.product_behavior_model_decision",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_product_behavior_model_decision.md",
+      "phase": "product_architecture",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
       "id": "pm.route_skeleton",
       "issued_by": "router",
       "kind": "phase",
@@ -353,6 +362,15 @@
       "issued_by": "router",
       "kind": "reviewer_gate",
       "path": "cards/reviewer/route_challenge.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.process_route_model_decision",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_process_route_model_decision.md",
+      "phase": "route_skeleton",
       "source": "system"
     },
     {

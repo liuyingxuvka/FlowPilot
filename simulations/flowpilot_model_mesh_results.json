@@ -20,8 +20,13 @@
       "install_requires_safe_continue",
       "installed_skill_stale_accepted",
       "known_hazard_without_live_projection",
+      "legal_next_action_conformance_failed",
+      "legal_next_action_policy_missing",
+      "legal_next_action_projection_missing",
       "missing_conformance_claims_runtime",
       "packet_role_origin_unchecked",
+      "parent_child_lifecycle_conformance_missed",
+      "parent_child_lifecycle_replay_skipped",
       "parent_repair_leaf_event",
       "sealed_body_opened_by_mesh",
       "skipped_live_audit_used_to_continue",
@@ -32,7 +37,7 @@
   "coverage": {
     "graph": {
       "accepted_state_count": 4,
-      "edge_count": 42,
+      "edge_count": 52,
       "labels_seen": [
         "accept_valid_blocked_current_state",
         "accept_valid_conformance_can_continue",
@@ -48,8 +53,13 @@
         "reject_install_requires_safe_continue",
         "reject_installed_skill_stale_accepted",
         "reject_known_hazard_without_live_projection",
+        "reject_legal_next_action_conformance_failed",
+        "reject_legal_next_action_policy_missing",
+        "reject_legal_next_action_projection_missing",
         "reject_missing_conformance_claims_runtime",
         "reject_packet_role_origin_unchecked",
+        "reject_parent_child_lifecycle_conformance_missed",
+        "reject_parent_child_lifecycle_replay_skipped",
         "reject_parent_repair_leaf_event",
         "reject_sealed_body_opened_by_mesh",
         "reject_skipped_live_audit_used_to_continue",
@@ -65,8 +75,13 @@
         "select_install_requires_safe_continue",
         "select_installed_skill_stale_accepted",
         "select_known_hazard_without_live_projection",
+        "select_legal_next_action_conformance_failed",
+        "select_legal_next_action_policy_missing",
+        "select_legal_next_action_projection_missing",
         "select_missing_conformance_claims_runtime",
         "select_packet_role_origin_unchecked",
+        "select_parent_child_lifecycle_conformance_missed",
+        "select_parent_child_lifecycle_replay_skipped",
         "select_parent_repair_leaf_event",
         "select_sealed_body_opened_by_mesh",
         "select_skipped_live_audit_used_to_continue",
@@ -79,9 +94,9 @@
       ],
       "missing_labels": [],
       "ok": true,
-      "rejected_state_count": 17,
-      "state_count": 43,
-      "terminal_state_count": 21,
+      "rejected_state_count": 22,
+      "state_count": 53,
+      "terminal_state_count": 26,
       "violations": []
     },
     "negative_reject_labels_seen": [
@@ -95,8 +110,13 @@
       "reject_install_requires_safe_continue",
       "reject_installed_skill_stale_accepted",
       "reject_known_hazard_without_live_projection",
+      "reject_legal_next_action_conformance_failed",
+      "reject_legal_next_action_policy_missing",
+      "reject_legal_next_action_projection_missing",
       "reject_missing_conformance_claims_runtime",
       "reject_packet_role_origin_unchecked",
+      "reject_parent_child_lifecycle_conformance_missed",
+      "reject_parent_child_lifecycle_replay_skipped",
       "reject_parent_repair_leaf_event",
       "reject_sealed_body_opened_by_mesh",
       "reject_skipped_live_audit_used_to_continue",
@@ -104,7 +124,7 @@
       "reject_unregistered_model_authoritative"
     ],
     "ok": true,
-    "required_negative_count": 17
+    "required_negative_count": 22
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,
@@ -112,12 +132,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=63",
+    "summary": "sequences=2 initial_states=1 traces=78",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 42,
+    "edge_count": 52,
     "labels_seen": [
       "accept_valid_blocked_current_state",
       "accept_valid_conformance_can_continue",
@@ -133,8 +153,13 @@
       "reject_install_requires_safe_continue",
       "reject_installed_skill_stale_accepted",
       "reject_known_hazard_without_live_projection",
+      "reject_legal_next_action_conformance_failed",
+      "reject_legal_next_action_policy_missing",
+      "reject_legal_next_action_projection_missing",
       "reject_missing_conformance_claims_runtime",
       "reject_packet_role_origin_unchecked",
+      "reject_parent_child_lifecycle_conformance_missed",
+      "reject_parent_child_lifecycle_replay_skipped",
       "reject_parent_repair_leaf_event",
       "reject_sealed_body_opened_by_mesh",
       "reject_skipped_live_audit_used_to_continue",
@@ -150,8 +175,13 @@
       "select_install_requires_safe_continue",
       "select_installed_skill_stale_accepted",
       "select_known_hazard_without_live_projection",
+      "select_legal_next_action_conformance_failed",
+      "select_legal_next_action_policy_missing",
+      "select_legal_next_action_projection_missing",
       "select_missing_conformance_claims_runtime",
       "select_packet_role_origin_unchecked",
+      "select_parent_child_lifecycle_conformance_missed",
+      "select_parent_child_lifecycle_replay_skipped",
       "select_parent_repair_leaf_event",
       "select_sealed_body_opened_by_mesh",
       "select_skipped_live_audit_used_to_continue",
@@ -164,9 +194,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 17,
-    "state_count": 43,
-    "terminal_state_count": 21,
+    "rejected_state_count": 22,
+    "state_count": 53,
+    "terminal_state_count": 26,
     "violations": []
   },
   "hazard_review": {
@@ -285,6 +315,43 @@
       },
       {
         "expected_failures": [
+          "legal_next_action_conformance_failed"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "legal_next_action_conformance_failed"
+        ],
+        "ok": true,
+        "scenario": "legal_next_action_conformance_failed"
+      },
+      {
+        "expected_failures": [
+          "legal_next_action_conformance_failed",
+          "legal_next_action_policy_not_registered",
+          "legal_next_action_projection_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "legal_next_action_conformance_failed",
+          "legal_next_action_policy_not_registered",
+          "legal_next_action_projection_missing"
+        ],
+        "ok": true,
+        "scenario": "legal_next_action_policy_missing"
+      },
+      {
+        "expected_failures": [
+          "legal_next_action_projection_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "legal_next_action_projection_missing"
+        ],
+        "ok": true,
+        "scenario": "legal_next_action_projection_missing"
+      },
+      {
+        "expected_failures": [
           "evidence_tier_below_required_runtime_confidence",
           "missing_conformance_adapter_cannot_claim_runtime_conformance"
         ],
@@ -306,6 +373,28 @@
         ],
         "ok": true,
         "scenario": "packet_role_origin_unchecked"
+      },
+      {
+        "expected_failures": [
+          "parent_child_lifecycle_conformance_failed"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "parent_child_lifecycle_conformance_failed"
+        ],
+        "ok": true,
+        "scenario": "parent_child_lifecycle_conformance_missed"
+      },
+      {
+        "expected_failures": [
+          "parent_child_lifecycle_conformance_replay_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "parent_child_lifecycle_conformance_replay_missing"
+        ],
+        "ok": true,
+        "scenario": "parent_child_lifecycle_replay_skipped"
       },
       {
         "expected_failures": [
@@ -369,7 +458,8 @@
   },
   "live_run_projection": {
     "blocking_reasons": [
-      "packet_authority_unchecked"
+      "packet_authority_unchecked",
+      "parent_child_lifecycle_conformance_failed"
     ],
     "classification_ok": true,
     "current_run_can_continue": false,
@@ -381,6 +471,15 @@
         "id": "flowpilot_model_mesh.packet_authority_unchecked",
         "message": "Current FlowPilot run is not permitted to continue: packet_authority_unchecked",
         "reason": "packet_authority_unchecked",
+        "run_id": "run-20260512-110741",
+        "severity": "blocking"
+      },
+      {
+        "current_run_can_continue": false,
+        "decision": "blocked_by_cross_model_contradiction",
+        "id": "flowpilot_model_mesh.parent_child_lifecycle_conformance_failed",
+        "message": "Current FlowPilot run is not permitted to continue: parent_child_lifecycle_conformance_failed",
+        "reason": "parent_child_lifecycle_conformance_failed",
         "run_id": "run-20260512-110741",
         "severity": "blocking"
       }
@@ -406,6 +505,9 @@
       "install_requires_safe_to_continue": false,
       "installed_skill_matches_repo": true,
       "known_hazard_live_projection_available": true,
+      "legal_next_action_conformant": true,
+      "legal_next_action_policy_registered": true,
+      "legal_next_action_projected": true,
       "live_audit_skipped": false,
       "live_required": true,
       "local_sync_required": false,
@@ -415,6 +517,8 @@
       "model_result_ok": true,
       "model_result_run_matches_current": true,
       "packet_evidence_accepted": true,
+      "parent_child_lifecycle_conformant": false,
+      "parent_child_lifecycle_replayed": true,
       "parent_repair_reuses_leaf_event": false,
       "repair_event_node_compatible": true,
       "required_tier": "live_current_green",

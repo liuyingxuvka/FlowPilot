@@ -40,10 +40,12 @@ REQUIRED_LABELS = (
     "router_mechanically_rejects_result_to_same_holder",
     "active_holder_resubmits_mechanically_repaired_result",
     "router_accepts_fast_lane_result_mechanics",
-    "worker_result_ledger_checked_before_reviewer_relay",
+    "worker_result_ledger_checked_before_pm_relay",
     "router_writes_controller_notice_after_fast_lane_close",
-    "worker_result_routed_to_reviewer",
-    "reviewer_worker_result_review_card_delivered_after_result_relay",
+    "worker_result_routed_to_pm",
+    "pm_records_current_node_result_disposition",
+    "pm_releases_current_node_formal_gate_package_to_reviewer",
+    "reviewer_worker_result_review_card_delivered_after_pm_gate_release",
     "reviewer_passes_current_node_result",
     "reviewer_blocks_current_node_result",
     "controller_refreshes_route_history_context_for_repair_or_mutation",
@@ -110,10 +112,11 @@ HAZARD_EXPECTED_FAILURES = {
     "parent_backward_repair_targets_leaf_dispatch": "parent backward replay repair waited on non-parent-safe event",
     "collapsed_repair_outcomes_on_business_validated_event": "repair outcome table collapsed success blocker and protocol-blocker onto one business-validated event",
     "worker_dispatched_before_reviewer_dispatch": "worker dispatched before router direct dispatch",
-    "reviewer_pass_without_routed_worker_result": "reviewer decided before worker result was routed to reviewer",
-    "reviewer_result_card_before_result_relay": "reviewer result-review card delivered before worker result relay",
+    "reviewer_pass_without_routed_worker_result": "reviewer decided before PM formal gate package release",
+    "reviewer_result_card_before_result_relay": "reviewer result-review card delivered before PM formal gate package",
     "reviewer_decision_without_result_review_card": "reviewer decided before result-review card delivery",
     "worker_result_routed_without_ledger_check": "worker result routed before result was returned and packet-ledger checked",
+    "worker_result_routed_directly_to_reviewer": "worker result routed directly to reviewer before PM disposition",
     "pm_completion_without_reviewer_pass": "PM completed current node before reviewer pass",
     "repair_packet_without_reviewer_block": "repair packet registered before reviewer block",
     "repair_worker_dispatched_before_reviewer_dispatch": "repair worker dispatched before router direct repair dispatch",
@@ -179,7 +182,7 @@ HAZARD_EXPECTED_FAILURES = {
     "fast_lane_result_before_packet_ack": "active-holder result submitted before packet ack",
     "fast_lane_result_before_packet_open": "active-holder result submitted before packet body was opened through packet runtime",
     "fast_lane_mechanical_pass_marks_node_complete": "PM completed current node before reviewer pass",
-    "fast_lane_closes_without_controller_notice": "worker result routed to reviewer before router wrote Controller next-action notice",
+    "fast_lane_closes_without_controller_notice": "worker result routed to PM before router wrote Controller next-action notice",
     "fast_lane_controller_notice_before_ledger_check": "router wrote Controller next-action notice before fast-lane mechanics and ledger check passed",
     "true_no_next_action_without_blocker": "Controller detected no legal next action without writing a PM decision-required blocker",
 }
@@ -235,7 +238,10 @@ def _state_id(state: model.State) -> str:
         f"result={state.worker_result_returned},"
         f"{state.worker_result_identity_boundary_present},"
         f"{state.worker_result_ledger_checked},"
-        f"{state.worker_result_routed_to_reviewer}|"
+        f"{state.worker_result_routed_to_pm},"
+        f"{state.pm_result_disposition_recorded},"
+        f"{state.pm_formal_node_gate_package_released},"
+        f"direct_reviewer={state.worker_result_routed_to_reviewer}|"
         f"review_card={state.reviewer_worker_result_card_delivered}|"
         f"review={state.reviewer_decision},block_seen={state.reviewer_block_seen}|"
         f"repair={state.repair_packet_registered},"

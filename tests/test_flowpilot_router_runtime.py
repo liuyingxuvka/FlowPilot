@@ -311,7 +311,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], expected_action_type)
         return router.apply_action(root, expected_action_type)
 
-    def open_packets_and_write_results(self, root: Path, index_path: Path, *, result_text: str = "worker result") -> None:
+    def open_packets_and_write_results(
+        self,
+        root: Path,
+        index_path: Path,
+        *,
+        result_text: str = "worker result",
+        next_recipient: str = "project_manager",
+    ) -> None:
         index = read_json(index_path)
         for record in index["packets"]:
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
@@ -322,14 +329,60 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 completed_by_role=envelope["to_role"],
                 completed_by_agent_id=f"{envelope['to_role']}-agent",
                 result_body_text=result_text,
-                next_recipient="human_like_reviewer",
+                next_recipient=next_recipient,
             )
+
+    def open_results_for_pm(self, root: Path, index_path: Path) -> None:
+        index = read_json(index_path)
+        for record in index["packets"]:
+            result = packet_runtime.load_envelope(root, record["result_envelope_path"])
+            packet_runtime.read_result_body_for_role(root, result, role="project_manager")
 
     def open_results_for_reviewer(self, root: Path, index_path: Path) -> None:
         index = read_json(index_path)
         for record in index["packets"]:
             result = packet_runtime.load_envelope(root, record["result_envelope_path"])
             packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
+
+    def absorb_material_scan_results_with_pm(self, root: Path, index_path: Path, *, decision: str = "absorbed") -> None:
+        self.apply_next_packet_action(root, "relay_material_scan_results_to_pm")
+        self.open_results_for_pm(root, index_path)
+        router.record_external_event(
+            root,
+            "pm_records_material_scan_result_disposition",
+            {
+                "decided_by_role": "project_manager",
+                "decision": decision,
+                "decision_reason": "PM absorbed material scan results for formal reviewer gate.",
+            },
+        )
+
+    def absorb_research_results_with_pm(self, root: Path, index_path: Path, *, decision: str = "absorbed") -> None:
+        self.apply_next_packet_action(root, "relay_research_result_to_pm")
+        self.open_results_for_pm(root, index_path)
+        router.record_external_event(
+            root,
+            "pm_records_research_result_disposition",
+            {
+                "decided_by_role": "project_manager",
+                "decision": decision,
+                "decision_reason": "PM absorbed research results for formal reviewer gate.",
+            },
+        )
+
+    def absorb_current_node_results_with_pm(self, root: Path, result_paths: list[str | Path], *, decision: str = "absorbed") -> None:
+        self.apply_until_action(root, "relay_current_node_result_to_pm")
+        for result_path in result_paths:
+            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="project_manager")
+        router.record_external_event(
+            root,
+            "pm_records_current_node_result_disposition",
+            {
+                "decided_by_role": "project_manager",
+                "decision": decision,
+                "decision_reason": "PM absorbed current-node worker result for the formal node-completion gate.",
+            },
+        )
 
     def pm_role_work_request_payload(
         self,
@@ -727,8 +780,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
         router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         router.record_external_event(root, "worker_scan_results_returned")
-        self.apply_next_packet_action(root, "relay_material_scan_results_to_reviewer")
-        self.open_results_for_reviewer(root, material_index_path)
+        self.absorb_material_scan_results_with_pm(root, material_index_path)
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "reviewer.material_sufficiency")
@@ -793,6 +845,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "product_flowguard_officer", "passed": True},
             ),
         )
+
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "pm.product_behavior_model_decision")
+        self.ack_system_card_action(root, action)
+        router.record_external_event(root, "pm_accepts_product_behavior_model", self.product_behavior_model_decision_body())
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -1084,6 +1142,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 self.route_process_pass_body(),
             ),
         )
+        self.deliver_expected_card(root, "pm.process_route_model_decision")
+        router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
         self.deliver_expected_card(root, "product_officer.route_product_check")
         router.record_external_event(
             root,
@@ -1113,6 +1173,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "product_behavior_model_checked": True,
             "route_can_reach_product_model": True,
             "repair_return_policy_checked": True,
+            "serial_execution_model_checked": True,
+            "all_effective_nodes_reachable_in_order": True,
+            "recursive_child_routes_serialized": True,
         }
 
     def route_product_pass_body(self) -> dict:
@@ -1122,6 +1185,36 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "route_model_review_verdict": "pass",
             "product_behavior_model_checked": True,
             "route_maps_to_product_behavior_model": True,
+        }
+
+    def product_behavior_model_decision_body(self) -> dict:
+        return {
+            "decided_by_role": "project_manager",
+            "decision": "accept_product_behavior_model",
+            "source_paths": [
+                "product_function_architecture.json",
+                "flowguard/product_architecture_modelability.json",
+            ],
+            "pm_model_fit_review": "PM accepted the Product FlowGuard model as the product basis.",
+            "product_goal_coverage": "The model covers the requested product goal.",
+            "unmodeled_or_ambiguous_behavior": [],
+            "next_action": "reviewer_product_architecture_challenge",
+        }
+
+    def process_route_model_decision_body(self) -> dict:
+        return {
+            "decided_by_role": "project_manager",
+            "decision": "accept_process_route_model",
+            "source_paths": [
+                "routes/route-001/flow.draft.json",
+                "flowguard/route_process_check.json",
+            ],
+            "serial_execution_line_review": "PM accepted the route as one ordered execution line.",
+            "recursive_node_entry_review": "Non-leaf local loops are represented before child execution.",
+            "leaf_worker_readiness_review": "Leaves are worker-ready or promoted before dispatch.",
+            "parent_and_final_backward_review_policy": "Parent and final backward reviews are required.",
+            "model_miss_repair_policy": "Model misses require model update, same-class search, supplemental nodes, and stale gate reruns.",
+            "next_action": "product_officer_route_product_check",
         }
 
     def write_current_node_acceptance_plan(
@@ -1581,13 +1674,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_a",
             completed_by_agent_id=agent_id,
             result_body_text="reviewable result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": packet_id, "result_envelope_path": result_path})
-        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
-        packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
             "current_node_reviewer_passes_result",
@@ -1652,17 +1744,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role=completed_by_role,
             completed_by_agent_id=completed_by_agent_id,
             result_body_text="reviewable result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
             strict_role=completed_by_role == "worker_a",
         )
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         if not record_result_return:
             return run_root, packet_path, result_path
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": packet_id, "result_envelope_path": result_path})
-        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.absorb_current_node_results_with_pm(root, [result_path])
         if deliver_review_card:
             self.deliver_expected_card(root, "reviewer.worker_result_review")
-            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         return run_root, packet_path, result_path
 
     def apply_until_action(self, root: Path, expected_action_type: str, max_steps: int = 12) -> dict:
@@ -2602,6 +2693,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                     self.route_product_pass_body(),
                 ),
             )
+        self.deliver_expected_card(root, "pm.process_route_model_decision")
+        router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
         self.deliver_expected_card(root, "product_officer.route_product_check")
         router.record_external_event(
             root,
@@ -2708,6 +2801,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.role_report_envelope(root, "flowguard/route_process_check", self.route_process_pass_body()),
         )
 
+        self.deliver_expected_card(root, "pm.process_route_model_decision")
+        router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
         self.deliver_expected_card(root, "product_officer.route_product_check")
         with self.assertRaisesRegex(router.RouterError, "route_model_review_verdict=pass"):
             router.record_external_event(
@@ -4410,8 +4505,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "reviewer_reports_material_sufficient")
-        self.apply_next_packet_action(root, "relay_material_scan_results_to_reviewer")
-        self.open_results_for_reviewer(root, material_index_path)
+        self.absorb_material_scan_results_with_pm(root, material_index_path)
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -4530,22 +4624,22 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "worker_scan_results_returned")
 
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "relay_material_scan_results_to_reviewer")
+        self.assertEqual(action["action_type"], "relay_material_scan_results_to_pm")
         self.assertTrue(action["combined_ledger_check_and_relay"])
         self.assertTrue(action["ledger_check_receipt_required"])
         self.assertFalse(action["sealed_body_reads_allowed"])
 
-        router.apply_action(root, "relay_material_scan_results_to_reviewer")
+        router.apply_action(root, "relay_material_scan_results_to_pm")
 
         state_after_results = read_json(router.run_state_path(run_root))
         self.assertEqual(state_after_results["ledger_checks"], ledger_checks_before + 2)
         self.assertEqual(state_after_results["ledger_check_requests"], ledger_requests_before + 2)
         self.assertFalse(state_after_results.get("ledger_check_requested"))
-        self.assertTrue(state_after_results["flags"]["material_scan_results_relayed_to_reviewer"])
+        self.assertTrue(state_after_results["flags"]["material_scan_results_relayed_to_pm"])
 
         index = read_json(material_index_path)
         relayed_result = packet_runtime.load_envelope(root, index["packets"][0]["result_envelope_path"])
-        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "human_like_reviewer")
+        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "project_manager")
         self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
 
     def test_material_scan_packet_body_event_requires_packet_ledger_open_receipt(self) -> None:
@@ -4648,8 +4742,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.open_packets_and_write_results(root, material_index_path, result_text="research needed")
         router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         router.record_external_event(root, "worker_scan_results_returned")
-        self.apply_next_packet_action(root, "relay_material_scan_results_to_reviewer")
-        self.open_results_for_reviewer(root, material_index_path)
+        self.absorb_material_scan_results_with_pm(root, material_index_path)
         self.deliver_expected_card(root, "reviewer.material_sufficiency")
         router.record_external_event(
             root,
@@ -4740,16 +4833,25 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             {"completed_by_role": "worker_a", "answers_decision_question": True},
         )
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "relay_research_result_to_reviewer")
+        self.assertEqual(action["action_type"], "relay_research_result_to_pm")
         self.assertTrue(action["combined_ledger_check_and_relay"])
         self.assertTrue(action["ledger_check_receipt_required"])
         self.assertFalse(action["sealed_body_reads_allowed"])
-        router.apply_action(root, "relay_research_result_to_reviewer")
+        router.apply_action(root, "relay_research_result_to_pm")
         state_after_research_result = read_json(router.run_state_path(run_root))
         self.assertEqual(state_after_research_result["ledger_checks"], ledger_checks_before_research + 2)
         self.assertEqual(state_after_research_result["ledger_check_requests"], ledger_requests_before_research + 2)
         self.assertFalse(state_after_research_result.get("ledger_check_requested"))
-        self.open_results_for_reviewer(root, research_index_path)
+        self.open_results_for_pm(root, research_index_path)
+        router.record_external_event(
+            root,
+            "pm_records_research_result_disposition",
+            {
+                "decided_by_role": "project_manager",
+                "decision": "absorbed",
+                "decision_reason": "PM absorbed research results for reviewer direct-source gate.",
+            },
+        )
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -4831,6 +4933,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "product_flowguard_officer", "passed": True},
             ),
         )
+
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "pm.product_behavior_model_decision")
+        self.ack_system_card_action(root, action)
+        router.record_external_event(root, "pm_accepts_product_behavior_model", self.product_behavior_model_decision_body())
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -5935,7 +6043,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_a",
             completed_by_agent_id="agent-worker-a",
             result_body_text="worker a result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         results["node-batch-worker-a"] = result_a["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(
@@ -5956,7 +6064,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_b",
             completed_by_agent_id="agent-worker-b",
             result_body_text="worker b result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         results["node-batch-worker-b"] = result_b["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(
@@ -5965,13 +6073,22 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             {"packet_id": "node-batch-worker-b", "result_envelope_path": results["node-batch-worker-b"]},
         )
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "relay_current_node_result_to_reviewer")
+        self.assertEqual(action["action_type"], "relay_current_node_result_to_pm")
         self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-a", "node-batch-worker-b"])
-        router.apply_action(root, "relay_current_node_result_to_reviewer")
+        router.apply_action(root, "relay_current_node_result_to_pm")
 
-        self.deliver_expected_card(root, "reviewer.worker_result_review")
         for result_path in results.values():
-            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
+            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="project_manager")
+        router.record_external_event(
+            root,
+            "pm_records_current_node_result_disposition",
+            {
+                "decided_by_role": "project_manager",
+                "decision": "absorbed",
+                "decision_reason": "PM absorbed parallel worker results for the formal node-completion gate.",
+            },
+        )
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
         router.record_external_event(
             root,
             "current_node_reviewer_passes_result",
@@ -6099,7 +6216,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_a",
             completed_by_agent_id="agent-worker-a-1",
             result_body_text="reviewable result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
 
@@ -6107,10 +6224,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.record_external_event(root, "pm_completes_current_node_from_reviewed_result")
 
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-002", "result_envelope_path": result_path})
-        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
-        relayed_result = read_json(root / result_path)
-        packet_runtime.read_result_body_for_role(root, relayed_result, role="human_like_reviewer")
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_completes_current_node_from_reviewed_result")
@@ -6188,13 +6303,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 completed_by_role="worker_a",
                 completed_by_agent_id=agent_id,
                 result_body_text=f"{node_id} result",
-                next_recipient="human_like_reviewer",
+                next_recipient="project_manager",
             )
             result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
             router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": packet_id, "result_envelope_path": result_path})
-            self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+            self.absorb_current_node_results_with_pm(root, [result_path])
             self.deliver_expected_card(root, "reviewer.worker_result_review")
-            packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
             router.record_external_event(
                 root,
                 "current_node_reviewer_passes_result",
@@ -6255,23 +6369,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "relay_current_node_result_to_reviewer")
+        self.assertEqual(action["action_type"], "relay_current_node_result_to_pm")
         self.assertTrue(action["combined_ledger_check_and_relay"])
         self.assertTrue(action["ledger_check_receipt_required"])
         self.assertFalse(action["sealed_body_reads_allowed"])
         self.assertTrue(any(path.endswith("packet_ledger.json") for path in action["allowed_reads"]))
         self.assertTrue(any(path.endswith("packet_ledger.json") for path in action["allowed_writes"]))
 
-        router.apply_action(root, "relay_current_node_result_to_reviewer")
+        router.apply_action(root, "relay_current_node_result_to_pm")
 
         state_after = read_json(router.run_state_path(run_root))
         self.assertEqual(state_after["ledger_checks"], ledger_checks_before + 1)
         self.assertEqual(state_after["ledger_check_requests"], ledger_requests_before + 1)
         self.assertFalse(state_after.get("ledger_check_requested"))
-        self.assertTrue(state_after["flags"]["current_node_result_relayed_to_reviewer"])
+        self.assertTrue(state_after["flags"]["current_node_result_relayed_to_pm"])
 
         relayed_result = packet_runtime.load_envelope(root, result_path)
-        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "human_like_reviewer")
+        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "project_manager")
         self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
 
     def test_current_node_packet_and_result_accept_safe_envelope_aliases(self) -> None:
@@ -6309,7 +6423,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_a",
             completed_by_agent_id="agent-worker-aliases",
             result_body_text="reviewable result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         result_file = root / result_path
@@ -6320,12 +6434,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result_file.write_text(json.dumps(result_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-aliases", "result_envelope_path": result_path})
-        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
         relayed_result = packet_runtime.load_envelope(root, result_path)
         self.assertIn("result_body_path", relayed_result)
-        self.assertEqual(relayed_result["next_recipient"], "human_like_reviewer")
-        packet_runtime.read_result_body_for_role(root, relayed_result, role="human_like_reviewer")
+        self.assertEqual(relayed_result["next_recipient"], "project_manager")
 
         router.record_external_event(
             root,
@@ -6367,7 +6480,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.record_external_event(root, "current_node_reviewer_blocks_result")
 
         self.deliver_expected_card(root, "reviewer.worker_result_review")
-        packet_runtime.read_result_body_for_role(root, packet_runtime.load_envelope(root, result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
             "current_node_reviewer_passes_result",
@@ -6798,7 +6910,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 completed_by_role=envelope["to_role"],
                 completed_by_agent_id=envelope["to_role"],
                 result_body_text="material scan result with role-name agent id",
-                next_recipient="human_like_reviewer",
+                next_recipient="project_manager",
             )
         router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         with self.assertRaises(router.RouterError) as raised:
@@ -6828,7 +6940,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 completed_by_role=envelope["to_role"],
                 completed_by_agent_id=f"agent-fixed-{envelope['to_role']}",
                 result_body_text="material scan result with corrected agent id",
-                next_recipient="human_like_reviewer",
+                next_recipient="project_manager",
             )
         router.record_external_event(root, "worker_scan_results_returned")
 
@@ -6840,7 +6952,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_blocked"])
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "relay_material_scan_results_to_reviewer")
+        self.assertEqual(action["action_type"], "relay_material_scan_results_to_pm")
 
     def test_repair_transaction_recheck_blocker_registers_followup_blocker(self) -> None:
         root = self.make_project()
@@ -7443,13 +7555,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_a",
             completed_by_agent_id="agent-worker-quality",
             result_body_text="reviewable result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-quality", "result_envelope_path": result_path})
-        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
-        packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(
             root,
             "current_node_reviewer_passes_result",
@@ -7556,13 +7667,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             completed_by_role="worker_a",
             completed_by_agent_id="agent-worker-a-2",
             result_body_text="blocked result",
-            next_recipient="human_like_reviewer",
+            next_recipient="project_manager",
         )
         result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-003", "result_envelope_path": result_path})
-        self.apply_until_action(root, "relay_current_node_result_to_reviewer")
+        self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
-        packet_runtime.read_result_body_for_role(root, read_json(root / result_path), role="human_like_reviewer")
         router.record_external_event(root, "current_node_reviewer_blocks_result")
         self.close_model_miss_triage(root, output_name="decisions/route_mutation_model_miss_valid")
         router.record_external_event(
@@ -7921,8 +8031,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.open_packets_and_write_results(root, material_index_path, result_text="insufficient material")
         router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         router.record_external_event(root, "worker_scan_results_returned")
-        self.apply_next_packet_action(root, "relay_material_scan_results_to_reviewer")
-        self.open_results_for_reviewer(root, material_index_path)
+        self.absorb_material_scan_results_with_pm(root, material_index_path)
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "reviewer.material_sufficiency")
 
@@ -8238,6 +8347,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
         self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_current_node_dispatch"]["flag"], "current_node_dispatch_blocked")
         self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_node_acceptance_plan"]["flag"], "node_acceptance_plan_review_blocked")
+        self.assertTrue(router.EXTERNAL_EVENTS["product_officer_model_report"]["legacy"])
 
     def test_model_miss_review_block_flags_stay_in_sync(self) -> None:
         expected_flags = set(router.MODEL_MISS_REVIEW_BLOCK_FLAGS)

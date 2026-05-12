@@ -43,13 +43,13 @@ ALLOWED_STAGES = {
     "repair",
 }
 FALLBACK_STAGES = (
-    ("intake", "Start & Scope"),
-    ("product", "Product Map"),
-    ("modeling", "FlowGuard Model"),
-    ("route", "Route Plan"),
-    ("execution", "Build / Execute"),
-    ("verification", "Review & QA"),
-    ("completion", "Completion"),
+    ("intake", "Temporary Placeholder<br/>Product Goal"),
+    ("product", "Product Behavior Model"),
+    ("modeling", "Product Review"),
+    ("route", "Route Draft"),
+    ("execution", "Serial Process Model"),
+    ("verification", "Route Review"),
+    ("completion", "Route Activation"),
     ("repair", "Repair Return"),
 )
 
@@ -194,21 +194,21 @@ def _all_route_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _route_node_depth(node: dict[str, Any]) -> int:
-    raw = node.get("depth") or node.get("route_depth")
+    raw = node["depth"] if "depth" in node else node.get("route_depth")
     try:
         depth = int(raw)
     except (TypeError, ValueError):
         depth = 1
-    return max(1, depth)
+    return max(0, depth)
 
 
 def _route_display_depth(route: dict[str, Any]) -> int:
     display_plan = route.get("display_plan") if isinstance(route.get("display_plan"), dict) else {}
-    raw = route.get("display_depth") or display_plan.get("display_depth") or 2
+    raw = route.get("display_depth") or display_plan.get("display_depth") or 1
     try:
         depth = int(raw)
     except (TypeError, ValueError):
-        depth = 2
+        depth = 1
     return max(1, depth)
 
 
@@ -224,10 +224,23 @@ def _node_kind(node: dict[str, Any]) -> str:
     return "leaf"
 
 
+def _is_route_root_node(node: dict[str, Any]) -> bool:
+    explicit = str(node.get("node_kind") or node.get("kind") or "").strip().lower()
+    if explicit == "root":
+        return True
+    raw_depth = node["depth"] if "depth" in node else node.get("route_depth")
+    try:
+        return int(raw_depth) == 0
+    except (TypeError, ValueError):
+        return False
+
+
 def _display_depth_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
     display_depth = _route_display_depth(route)
     visible: list[dict[str, Any]] = []
     for node in _all_route_nodes(route):
+        if _is_route_root_node(node):
+            continue
         if _route_node_depth(node) <= display_depth or _truthy(node.get("user_visible")):
             visible.append(node)
     return visible
@@ -247,25 +260,25 @@ def _route_active_path(
                 node_id = str(item.get("node_id") or item.get("id") or "")
                 node = nodes_by_id.get(node_id, {})
                 node_kind = str(item.get("node_kind") or (_node_kind(node) if node else "") or "")
-                path.append(
-                    {
-                        "node_id": node_id,
-                        "label": str(item.get("label") or item.get("title") or _node_label(node) or node_id),
-                        "depth": int(item.get("depth") or _route_node_depth(node) or 1),
-                        "node_kind": node_kind,
-                    }
-                )
+                path_item = {
+                    "node_id": node_id,
+                    "label": str(item.get("label") or item.get("title") or _node_label(node) or node_id),
+                    "depth": int(item.get("depth") or _route_node_depth(node) or 1),
+                    "node_kind": node_kind,
+                }
+                if not _is_route_root_node({**node, **path_item}):
+                    path.append(path_item)
             elif item:
                 node_id = str(item)
                 node = nodes_by_id.get(node_id, {})
-                path.append(
-                    {
-                        "node_id": node_id,
-                        "label": _node_label(node) if node else node_id,
-                        "depth": _route_node_depth(node) if node else 1,
-                        "node_kind": _node_kind(node) if node else "",
-                    }
-                )
+                path_item = {
+                    "node_id": node_id,
+                    "label": _node_label(node) if node else node_id,
+                    "depth": _route_node_depth(node) if node else 1,
+                    "node_kind": _node_kind(node) if node else "",
+                }
+                if not _is_route_root_node({**node, **path_item}):
+                    path.append(path_item)
         return [item for item in path if item.get("node_id")]
 
     if not active_node:
@@ -292,7 +305,7 @@ def _route_active_path(
         )
         parent_id = current.get("parent_node_id")
         current = by_id.get(str(parent_id)) if parent_id else None
-    return list(reversed(reversed_path))
+    return [item for item in reversed(reversed_path) if item.get("node_kind") != "root" and item.get("depth") != 0]
 
 
 def _hidden_leaf_progress(route: dict[str, Any]) -> dict[str, Any]:
@@ -436,7 +449,7 @@ def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[s
 
 
 def _use_route_node_layout(nodes: list[dict[str, Any]]) -> bool:
-    return 2 <= len(nodes) <= 8
+    return bool(nodes)
 
 
 def _node_status(node: dict[str, Any], active_node: str | None) -> str:
@@ -531,7 +544,7 @@ def _build_route_node_mermaid(
     mermaid_ids = {node_id: f"n{index + 1:02d}" for index, node_id in enumerate(node_ids)}
     lines = [
         "flowchart LR",
-        f"  %% FlowPilot realtime route sign. Source: route={active_route}, version={route_version}, node={active_node_label}",
+        f"  %% FlowPilot temporary placeholder route sign. Replace with canonical route when available. Source: route={active_route}, version={route_version}, node={active_node_label}",
     ]
     done_ids: list[str] = []
     pending_ids: list[str] = []
@@ -685,8 +698,8 @@ def _build_stage_mermaid(
             "  route --> execution",
             "  execution --> verification",
             "  verification --> completion",
-            '  verification -- "needs change" --> repair',
-            "  repair --> modeling",
+            '  verification -- "needs route repair" --> repair',
+            "  repair --> execution",
         ]
     )
     if return_path["required"]:
@@ -778,6 +791,19 @@ def build_chat_markdown(
         "```",
         "",
     ]
+    status_items = []
+    if active_route:
+        status_items.append(f"route `{active_route}`")
+    if active_node:
+        status_items.append(f"node `{active_node}`")
+    if current_stage:
+        status_items.append(f"stage `{current_stage}`")
+    if status_items:
+        lines.extend(["Current status: " + ", ".join(status_items), ""])
+    elif source_status != "ok":
+        lines.extend(["Current status: waiting for a healthy FlowPilot route source.", ""])
+    else:
+        lines.extend(["Current status: temporary placeholder until the PM-approved route exists.", ""])
     if active_path:
         path_labels = [
             f"{item.get('label') or item.get('node_id')} ({item.get('node_id')})"
@@ -1032,11 +1058,13 @@ def generate(
         if source_health["status"] != "ok"
         else "pending_visible_display",
         "source_health": source_health,
-        "same_graph_for_chat_and_ui": True,
+        "same_graph_for_chat_and_ui": False,
+        "chat_mermaid_is_shallow_route_projection": True,
+        "cockpit_ui_should_render_full_route_tree": True,
         "simplified_flowpilot_english_mermaid": True,
         "user_visible_display_text": {
             "clean": True,
-            "content": "title_mermaid_current_path_and_hidden_leaf_progress",
+            "content": "title_mermaid_current_status_current_path_and_hidden_leaf_progress",
             "contains_internal_display_evidence": False,
             "internal_evidence_location": "display_packet_and_user_dialog_display_ledger",
         },
@@ -1044,7 +1072,7 @@ def generate(
             "enabled": False,
             "satisfies_user_route_sign_gate": False,
         },
-        "stage_count_target": "6-8",
+        "stage_count_target": "startup_placeholder_only; canonical_route_renders_real_route_nodes",
         "layout": route_sign["layout"],
         "display_depth": route_sign["display_depth"],
         "active_path": route_sign["active_path"],

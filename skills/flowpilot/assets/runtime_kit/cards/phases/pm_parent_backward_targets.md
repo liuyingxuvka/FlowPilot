@@ -23,6 +23,14 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 If the active node has children, assess composition risk from the active route,
 frontier, node acceptance plan, and child evidence pointers.
 
+Before a parent/module can close, explicitly check that every ordered child in
+the current process model was reached or intentionally superseded. If a child,
+bug class, or evidence obligation was omitted, first decide whether the
+Process FlowGuard model missed that class of work. When it did, update the
+model, search for same-class omissions across sibling children, add repair or
+supplemental nodes as needed, and rerun the stale local gates before parent
+completion.
+
 Build local parent backward replay targets when composition risk is high or
 when the PM cannot justify a low-risk waiver from current evidence. For a
 low-risk waiver, write the waiver reason and cited source paths before the

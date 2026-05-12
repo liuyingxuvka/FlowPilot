@@ -7,7 +7,7 @@ required_return: System-card ACKs go directly to Router through the card check-i
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must wait for Router status or call flowpilot_router.py for the next action.
 runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
-# Reviewer Worker Result Review
+# Reviewer PM Node-Completion Package Review
 
 ## Role Capability Reminder
 
@@ -31,22 +31,26 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Review a worker result or a router-supplied packet batch before PM may use it.
-When Router provides `batch_id`, `packet_ids`, or a packet index, open every
-sealed result in that batch through the runtime and return one batch-level
-review. Do not pass the batch after inspecting only the first or easiest result.
-The sealed review body must identify `batch_id`, `packet_count`,
-`reviewed_packet_ids`, `per_packet_findings`, and `overall_passed`.
+Review the PM-built node-completion package after PM has received and
+dispositioned the worker result batch. You are not the default recipient for raw
+worker result bodies. Treat worker result envelopes and packet-runtime audits as
+traceability evidence for PM's package; judge whether PM's accepted evidence can
+actually close the current node.
 
-Open the sealed result body through `flowpilot_runtime.py open-result` with a
-concrete `--agent-id` before judging substance. Use the unified runtime as the live result-open entrypoint. This runtime session is the reviewer read receipt; do not replace
-it with an ordinary file read, chat summary, or self-attested worker claim.
+When Router provides `batch_id`, `packet_ids`, or a packet index, verify that PM
+opened each relayed result body through the runtime and recorded a PM
+disposition before this gate. The sealed review body must identify `batch_id`,
+`packet_count`, `reviewed_packet_ids`, `per_packet_findings`, and
+`overall_passed`.
 
 Check:
 
 - packet envelope and result envelope exist;
 - packet ledger shows the worker opened the packet through the runtime after
   Controller relay and the result envelope was absorbed into the ledger;
+- PM opened each result body through the runtime after Controller relayed the
+  result to `project_manager`, and PM recorded an absorbed disposition before
+  this reviewer gate;
 - router or packet-runtime validation has accepted required envelope fields,
   Controller relay signatures, body hashes, result author role, and packet
   target role;
@@ -74,7 +78,8 @@ Check:
   file existence, hashes, report prose, or screenshots alone do not prove the
   result is usable or good enough from the final user's point of view.
 
-Return pass, needs repair, needs more material, or invalid role origin.
+Return pass, needs repair, needs more material, or invalid role origin for the
+PM-built node-completion package.
 If validation was already performed by the router or packet runtime, skip only
 the mechanical envelope parsing that is backed by a `router_owned_check_proof`
 sidecar. That proof must have `reviewer_replacement_scope: mechanical_only`,
@@ -94,13 +99,13 @@ state and submit the runtime-generated envelope directly to Router. Controller
 may later see only Router-exposed metadata with the report path and hash.
 
 The body must use these exact field names. Include every required field even
-when the worker result is blocked.
+when the PM-built node-completion package is blocked.
 
 ```json
 {
   "schema_version": "flowpilot.reviewer_review_report.v1",
   "run_id": "<current run id>",
-  "report_type": "worker_result_review",
+  "report_type": "pm_node_completion_package_review",
   "reviewed_by_role": "human_like_reviewer",
   "passed": false,
   "direct_evidence_paths_checked": [],
@@ -137,6 +142,7 @@ when the worker result is blocked.
 }
 ```
 
-If the worker result passes, set `passed: true` and keep `blockers: []`. If it
-needs repair, more material, or has invalid role origin, set `passed: false`,
-record the reason in `blockers`, and still include all fields above.
+If the PM-built node-completion package passes, set `passed: true` and keep
+`blockers: []`. If it needs repair, more material, or has invalid role origin,
+set `passed: false`, record the reason in `blockers`, and still include all
+fields above.

@@ -47,3 +47,7 @@ PM decision-support.
 
 Pass only when the effective children compose into the parent goal and the
 parent-level user-facing outcome remains credible.
+Block when a child or child class appears omitted. The block must name whether
+this looks like a route execution miss, a Product FlowGuard model miss, a
+Process FlowGuard model miss, stale evidence, or an implementation bug, and
+it must point PM to the rerun target instead of approving a partial parent.

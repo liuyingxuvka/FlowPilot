@@ -37,9 +37,9 @@
     "completed_by_role": "<same-as-completed_by_role>",
     "required": true
   },
-  "next_recipient": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+  "next_recipient": "<project_manager|process_flowguard_officer|product_flowguard_officer>",
   "return_to": "controller",
-  "next_holder": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+  "next_holder": "<project_manager|process_flowguard_officer|product_flowguard_officer>",
   "body_visibility": "sealed_target_role_only",
   "controller_visibility": "envelope_only",
   "controller_relay": {

@@ -24,7 +24,7 @@
     "role_echo_required_in_subagent_responses": true
   },
   "active_packet_id": "<packet-id-or-null>",
-  "active_packet_status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
+  "active_packet_status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
   "active_packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
   "packets": [
     {
@@ -121,7 +121,9 @@
       "reviewer_dispatch_path": "<legacy-reviewer-dispatch-evidence-path-or-null>",
       "reviewer_dispatch_decision": "not_required",
       "assigned_worker_role": "<worker_a|worker_b|authorized_non_controller|null>",
-      "worker_result_path": "<legacy-node-result-path-or-null>",
+      "worker_result_path": "<worker-result-envelope-path-or-null>",
+      "pm_result_disposition_path": "<pm-package-result-disposition-path-or-null>",
+      "pm_formal_gate_package_path": "<pm-built-review-gate-package-path-or-null>",
       "result_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_envelope.json",
       "result_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/result_body.md",
       "result_body_hash": "<sha256-of-result-body-or-null>",
@@ -142,7 +144,7 @@
         "private_role_to_role_delivery_detected": false,
         "recipient_must_verify_before_body_open": true
       },
-      "result_body_opened_by_role": "<reviewer-or-pm-role-or-null>",
+      "result_body_opened_by_role": "<pm-role-or-null-for-pm-issued-worker-results>",
       "result_body_opened_after_controller_relay_check": false,
       "result_body_stale_after_route_mutation": false,
       "result_envelope": {
@@ -151,7 +153,7 @@
         "expected_role_from_packet_envelope": "<packet-envelope-to_role>",
         "completed_role_matches_packet_to_role": false,
         "completed_agent_id_belongs_to_role": false,
-        "next_recipient": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>"
+        "next_recipient": "<project_manager|process_flowguard_officer|product_flowguard_officer>"
       },
       "mail_chain_audit": {
         "required_at_every_subnode_and_major_node": true,
@@ -167,7 +169,7 @@
       "review_decision_path": "<review-decision-path-or-null>",
       "role_origin_audit": {
         "required_for_every_packet": true,
-        "reviewer_must_check_before_pass": true,
+        "reviewer_must_check_pm_formal_gate_package_before_pass": true,
         "packet_envelope_checked": false,
         "packet_runtime_physical_files_checked": false,
         "controller_context_body_exclusion_checked": false,
@@ -193,7 +195,7 @@
         "pm_reissue_or_repair_required": false,
         "contaminated_evidence_disposition": "<none|discarded|quarantined|superseded|pending>"
       },
-      "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
+      "next_controller_action": "<ask-pm|send-to-reviewer|send-to-worker|send-worker-result-to-pm|ask-pm-for-result-disposition|send-pm-gate-package-to-reviewer|send-review-to-pm|write-controlled-stop|block>",
       "ambiguous_worker_state_blocks_controller_execution": true,
       "controller_origin_evidence_allowed": false
     }

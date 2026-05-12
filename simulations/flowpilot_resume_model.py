@@ -127,9 +127,13 @@ class State:
     reviewer_dispatch_allowed: bool = False
     existing_worker_result_found: bool = False
     existing_worker_result_routed_to_reviewer: bool = False
+    existing_worker_result_routed_to_pm: bool = False
     fresh_worker_packet_sent: bool = False
     worker_result_returned: bool = False
     worker_result_routed_to_reviewer: bool = False
+    worker_result_routed_to_pm: bool = False
+    pm_result_disposition_recorded: bool = False
+    pm_formal_gate_released_to_reviewer: bool = False
     reviewer_result_passed: bool = False
 
     pm_node_decision_prompt_delivered: bool = False
@@ -286,7 +290,7 @@ def _next_required_mail(state: State) -> str:
     if (
         state.reviewer_dispatch_allowed
         and state.work_branch == "existing_result"
-        and not state.existing_worker_result_routed_to_reviewer
+        and not state.existing_worker_result_routed_to_pm
     ):
         return "mail"
     if (
@@ -297,7 +301,7 @@ def _next_required_mail(state: State) -> str:
         return "mail"
     if (
         state.fresh_worker_packet_sent
-        and not state.worker_result_routed_to_reviewer
+        and not state.worker_result_routed_to_pm
     ):
         return "mail"
     return "none"
@@ -609,14 +613,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if (
         state.work_branch == "existing_result"
-        and not state.existing_worker_result_routed_to_reviewer
+        and not state.existing_worker_result_routed_to_pm
     ):
         yield Transition(
-            "existing_worker_result_routed_to_reviewer_after_ledger",
+            "existing_worker_result_routed_to_pm_after_ledger",
             _mail(
                 state,
-                existing_worker_result_routed_to_reviewer=True,
-                holder="reviewer",
+                existing_worker_result_routed_to_pm=True,
+                holder="pm",
             ),
         )
         return
@@ -626,20 +630,35 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _mail(state, fresh_worker_packet_sent=True, holder="worker"),
         )
         return
-    if state.work_branch == "fresh_worker" and not state.worker_result_routed_to_reviewer:
+    if state.work_branch == "fresh_worker" and not state.worker_result_routed_to_pm:
         yield Transition(
-            "fresh_worker_result_routed_to_reviewer_after_ledger",
+            "fresh_worker_result_routed_to_pm_after_ledger",
             _mail(
                 state,
                 worker_result_returned=True,
-                worker_result_routed_to_reviewer=True,
-                holder="reviewer",
+                worker_result_routed_to_pm=True,
+                holder="pm",
             ),
+        )
+        return
+    if (
+        state.existing_worker_result_routed_to_pm
+        or state.worker_result_routed_to_pm
+    ) and not state.pm_result_disposition_recorded:
+        yield Transition(
+            "pm_records_resume_result_disposition",
+            replace(state, pm_result_disposition_recorded=True, holder="pm"),
+        )
+        return
+    if state.pm_result_disposition_recorded and not state.pm_formal_gate_released_to_reviewer:
+        yield Transition(
+            "pm_releases_resume_formal_gate_to_reviewer",
+            replace(state, pm_formal_gate_released_to_reviewer=True, holder="reviewer"),
         )
         return
     if not state.reviewer_result_passed:
         yield Transition(
-            "reviewer_passes_reviewed_worker_result",
+            "reviewer_passes_pm_formal_resume_gate",
             replace(state, reviewer_result_passed=True, holder="controller"),
         )
         return
@@ -904,8 +923,8 @@ def invariant_failures(state: State) -> list[str]:
     if state.mail_deliveries and not state.packet_body_identity_boundaries_verified:
         failures.append("mail delivered without verified packet recipient identity boundary")
     if (
-        state.existing_worker_result_routed_to_reviewer
-        or state.worker_result_routed_to_reviewer
+        state.existing_worker_result_routed_to_pm
+        or state.worker_result_routed_to_pm
     ) and not state.result_body_identity_boundaries_verified:
         failures.append("worker result routed without verified completed-by identity boundary")
     if state.mail_deliveries > state.ledger_check_requests:
@@ -917,18 +936,26 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.fresh_worker_packet_sent and not state.reviewer_dispatch_allowed:
         failures.append("worker packet sent before router direct dispatch approval")
-    if state.existing_worker_result_routed_to_reviewer and not (
+    if state.existing_worker_result_routed_to_pm and not (
         state.existing_worker_result_found and state.reviewer_dispatch_allowed
     ):
-        failures.append("existing worker result routed without router direct dispatch")
-    if state.worker_result_routed_to_reviewer and not (
+        failures.append("existing worker result routed to PM without router direct dispatch")
+    if state.worker_result_routed_to_pm and not (
         state.fresh_worker_packet_sent and state.reviewer_dispatch_allowed
     ):
-        failures.append("fresh worker result routed without worker packet and router direct dispatch")
-    if state.reviewer_result_passed and not (
-        state.existing_worker_result_routed_to_reviewer or state.worker_result_routed_to_reviewer
+        failures.append("fresh worker result routed to PM without worker packet and router direct dispatch")
+    if state.existing_worker_result_routed_to_reviewer or state.worker_result_routed_to_reviewer:
+        failures.append("worker result routed directly to reviewer before PM disposition")
+    if state.pm_result_disposition_recorded and not (
+        state.existing_worker_result_routed_to_pm or state.worker_result_routed_to_pm
     ):
-        failures.append("reviewer passed a worker result that was not routed through packet mail")
+        failures.append("PM disposition recorded before worker result returned to PM")
+    if state.pm_formal_gate_released_to_reviewer and not state.pm_result_disposition_recorded:
+        failures.append("PM released reviewer gate before result disposition")
+    if state.reviewer_result_passed and not (
+        state.pm_formal_gate_released_to_reviewer and state.pm_result_disposition_recorded
+    ):
+        failures.append("reviewer passed resume gate before PM disposition and formal gate release")
     if state.route_progress_recorded and not (
         state.reviewer_result_passed
         and state.pm_node_decision_prompt_delivered
@@ -1320,7 +1347,7 @@ def hazard_states() -> dict[str, State]:
         "existing_result_used_without_dispatch": _with_pm_decision(
             work_branch="existing_result",
             existing_worker_result_found=True,
-            existing_worker_result_routed_to_reviewer=True,
+            existing_worker_result_routed_to_pm=True,
             reviewer_dispatch_allowed=False,
             mail_deliveries=1,
             ledger_check_requests=1,
@@ -1333,7 +1360,9 @@ def hazard_states() -> dict[str, State]:
             reviewer_dispatch_allowed=True,
             work_branch="existing_result",
             existing_worker_result_found=True,
-            existing_worker_result_routed_to_reviewer=True,
+            existing_worker_result_routed_to_pm=True,
+            pm_result_disposition_recorded=True,
+            pm_formal_gate_released_to_reviewer=True,
             reviewer_result_passed=True,
             pm_node_decision_prompt_delivered=True,
             route_progress_recorded=True,

@@ -16,7 +16,8 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Reviewer has returned a material or result report.
+Reviewer has returned a formal material, research, node-completion, or route
+gate report.
 
 PM must decide from the reviewed report only:
 
@@ -26,4 +27,5 @@ PM must decide from the reviewed report only:
 - mutate route;
 - stop for user.
 
-Do not treat raw worker output as accepted evidence.
+Do not treat raw worker output as accepted evidence. Worker package results
+must have a PM disposition before they appear in any formal reviewer gate.

@@ -117,8 +117,9 @@
       "<same-as-to_role>"
     ],
     "controller_can_read_body": false,
-    "reviewer_can_read_body_after_result_return": true,
-    "pm_can_read_body_for_reissue_or_completion": true,
+    "reviewer_can_read_body_only_when_packet_addressed_to_reviewer": true,
+    "reviewer_reviews_pm_formal_gate_package_after_result_disposition": true,
+    "pm_can_read_worker_result_body_for_disposition": true,
     "recipient_must_verify_controller_relay_before_body_open": true
   },
   "integrity_policy": {

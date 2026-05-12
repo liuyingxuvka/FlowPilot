@@ -1,0 +1,101 @@
+{
+  "schema_version": "flowpilot.route_action_policy_registry.v1",
+  "authority": "router",
+  "purpose": "Router-owned policy rows for computing legal_next_actions before PM route movement decisions, validating submitted PM actions, and validating commits.",
+  "router_must_compute_before_pm_decision": true,
+  "router_must_validate_before_event_acceptance": true,
+  "router_must_validate_before_commit": true,
+  "pm_may_choose_only_from_legal_next_actions": true,
+  "route_actions": [
+    {
+      "action_id": "continue_current_child",
+      "actor_roles": ["router", "project_manager"],
+      "router_events": [],
+      "transaction_type": "route_progression",
+      "requires": ["active_child_exists", "child_chain_incomplete"],
+      "forbids": ["parent_closure_requested"],
+      "commit_targets": ["run_state", "status_summary"]
+    },
+    {
+      "action_id": "enter_next_child",
+      "actor_roles": ["router"],
+      "router_events": [],
+      "transaction_type": "route_progression",
+      "requires": ["active_parent_or_module", "child_chain_incomplete"],
+      "forbids": ["effective_children_all_completed"],
+      "commit_targets": ["frontier", "run_state", "status_summary"]
+    },
+    {
+      "action_id": "wait_for_child_result",
+      "actor_roles": ["router"],
+      "router_events": ["worker_current_node_result_returned", "current_node_reviewer_passes_result", "current_node_reviewer_blocks_result"],
+      "transaction_type": "result_absorption",
+      "requires": ["active_packet_or_review_wait"],
+      "forbids": ["no_active_packet_or_review_wait"],
+      "commit_targets": ["packet_ledger", "run_state", "status_summary"]
+    },
+    {
+      "action_id": "request_child_repair",
+      "actor_roles": ["project_manager"],
+      "router_events": ["pm_records_control_blocker_repair_decision", "pm_mutates_route_after_review_block"],
+      "transaction_type": "control_blocker_repair",
+      "requires": ["child_blocker_or_stale_child_evidence"],
+      "forbids": ["no_child_scoped_repair_target"],
+      "commit_targets": ["repair_transaction", "blocker_index", "run_state", "status_summary"]
+    },
+    {
+      "action_id": "build_parent_backward_targets",
+      "actor_roles": ["project_manager"],
+      "router_events": ["pm_builds_parent_backward_targets"],
+      "transaction_type": "route_progression",
+      "requires": ["active_parent_or_module", "child_chain_closed_current"],
+      "forbids": ["child_chain_incomplete", "stale_child_completion_ledger"],
+      "commit_targets": ["run_state", "status_summary"]
+    },
+    {
+      "action_id": "review_parent_backward_replay",
+      "actor_roles": ["human_like_reviewer"],
+      "router_events": ["reviewer_passes_parent_backward_replay", "reviewer_blocks_parent_backward_replay"],
+      "transaction_type": "reviewer_gate_result",
+      "requires": ["parent_backward_targets_built", "child_chain_closed_current"],
+      "forbids": ["parent_backward_targets_missing", "child_chain_incomplete"],
+      "commit_targets": ["run_state", "blocker_index", "status_summary"]
+    },
+    {
+      "action_id": "record_parent_segment_decision",
+      "actor_roles": ["project_manager"],
+      "router_events": ["pm_records_parent_segment_decision"],
+      "transaction_type": "route_progression",
+      "requires": ["active_parent_or_module", "parent_backward_replay_passed", "child_chain_closed_current"],
+      "forbids": ["parent_backward_replay_not_passed", "child_chain_incomplete", "stale_evidence_unresolved"],
+      "commit_targets": ["run_state", "status_summary"]
+    },
+    {
+      "action_id": "complete_parent_node",
+      "actor_roles": ["project_manager"],
+      "router_events": ["pm_completes_parent_node_from_backward_replay"],
+      "transaction_type": "route_progression",
+      "requires": ["active_parent_or_module", "parent_segment_decision_continue", "child_chain_closed_current", "route_frontier_ledger_versions_match"],
+      "forbids": ["non_continue_parent_segment_decision", "child_chain_incomplete", "stale_legal_action_snapshot"],
+      "commit_targets": ["frontier", "run_state", "status_summary"]
+    },
+    {
+      "action_id": "mutate_route",
+      "actor_roles": ["project_manager"],
+      "router_events": ["pm_mutates_route_after_review_block"],
+      "transaction_type": "route_mutation",
+      "requires": ["route_mutation_needed", "stale_evidence_policy_applied"],
+      "forbids": ["stale_evidence_policy_missing"],
+      "commit_targets": ["route", "frontier", "stale_evidence", "run_state", "status_summary"]
+    },
+    {
+      "action_id": "terminal_closure",
+      "actor_roles": ["project_manager"],
+      "router_events": [],
+      "transaction_type": "route_progression",
+      "requires": ["all_route_nodes_completed", "final_gates_passed", "no_active_blocker", "no_stale_evidence"],
+      "forbids": ["open_route_work", "active_blocker_present", "stale_evidence_present"],
+      "commit_targets": ["frontier", "run_state", "status_summary"]
+    }
+  ]
+}

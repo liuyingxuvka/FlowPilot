@@ -8,9 +8,9 @@ read result bodies, execute packet bodies, implement, install dependencies for a
 worker node, create worker evidence, approve reviewer gates, approve PM gates,
 or advance from its own evidence.
 This heartbeat is a stable launcher, not a route-specific work prompt. Current
-work comes only from PM decisions and reviewer-approved packets loaded from the
-current run. Heartbeat and manual mid-run wakeups use the same router resume
-path; do not self-classify old work-chain state as alive.
+work comes only from PM decisions and reviewer-approved formal gate packages
+loaded from the current run. Heartbeat and manual mid-run wakeups use the same
+router resume path; do not self-classify old work-chain state as alive.
 
 Route: `route-001`
 
@@ -42,7 +42,7 @@ Notice text: `<complete-message-or-nonterminal-resume-message>`
 
 Next chunk: `<next-bounded-chunk>`
 
-Packet recovery state: `<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-review|reviewer-decision-needs-pm|ambiguous-blocked|complete>`
+Packet recovery state: `<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>`
 
 PM completion runway: `<current-position-to-project-completion>`
 
@@ -87,11 +87,13 @@ Wakeup sequence:
    when controller relay signature, holder chain, prior router direct-dispatch
    preflight, body open record, and worker identity are clear. If unclear, ask PM for
    repair/reissue/quarantine; Controller must not finish it.
-9. If a worker result exists, sign and route only the `RESULT_ENVELOPE` to
-   reviewer. Controller must not read or execute packet/result bodies. If
-   reviewer passes after mail-chain, envelope/body hash, and role-origin checks,
-   route the decision to PM. If reviewer blocks, route the block to PM for
-   repair, restart, reissue, or route mutation.
+9. If a worker result exists, sign and route only the `RESULT_ENVELOPE` to PM.
+   Controller must not read or execute packet/result bodies. PM opens the
+   result body, records a package-result disposition, and only an absorbed
+   result may be included in a PM-built formal gate package for reviewer
+   inspection. If reviewer passes the formal gate package, route the decision
+   to PM. If reviewer blocks, route the block to PM for repair, restart,
+   reissue, or route mutation.
 10. Continue the internal packet loop only when PM says `stop_for_user: false`;
    otherwise write the controlled stop notice.
 11. If the holder, worker identity, prior router direct-dispatch preflight, relay signature,

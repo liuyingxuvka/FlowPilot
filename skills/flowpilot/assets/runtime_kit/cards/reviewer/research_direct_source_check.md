@@ -31,8 +31,10 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Personally check the worker research report against original sources or
-experiment outputs.
+Personally check the PM-built research source-check package against original
+sources or experiment outputs. The worker research report is PM intake material:
+verify that PM opened it through the runtime, recorded an absorbed disposition,
+and released a formal research package for this gate before you judge it.
 
 Pass only when:
 
@@ -42,4 +44,6 @@ Pass only when:
 - the PM can safely absorb the result, mutate the route, ask the user, or
   block.
 
-Worker summaries and PM summaries are pointers, not approval evidence.
+Worker summaries and PM summaries are pointers, not approval evidence. Your pass
+must rest on direct source or experiment-output checks plus the PM disposition
+record for the research result.

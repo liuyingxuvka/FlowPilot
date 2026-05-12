@@ -52,10 +52,12 @@ REQUIRED_LABELS = (
     "existing_worker_result_envelope_found",
     "pm_requests_fresh_worker_packet",
     "controller_instructed_to_check_packet_ledger",
-    "existing_worker_result_routed_to_reviewer_after_ledger",
+    "existing_worker_result_routed_to_pm_after_ledger",
     "fresh_worker_packet_sent_after_ledger",
-    "fresh_worker_result_routed_to_reviewer_after_ledger",
-    "reviewer_passes_reviewed_worker_result",
+    "fresh_worker_result_routed_to_pm_after_ledger",
+    "pm_records_resume_result_disposition",
+    "pm_releases_resume_formal_gate_to_reviewer",
+    "reviewer_passes_pm_formal_resume_gate",
     "pm_node_decision_card_delivered",
     "pm_records_progress_from_reviewed_packet",
     "reentry_loop_complete",
@@ -96,7 +98,8 @@ def _state_id(state: model.State) -> str:
         f"{state.capability_lifecycle_flags_current},"
         f"{state.officer_lifecycle_flags_current}|"
         f"pm={state.pm_decision_prompt_delivered},{state.pm_decision_returned}|"
-        f"review={state.reviewer_dispatch_allowed},{state.reviewer_result_passed}|"
+        f"review={state.reviewer_dispatch_allowed},{state.pm_result_disposition_recorded},"
+        f"{state.pm_formal_gate_released_to_reviewer},{state.reviewer_result_passed}|"
         f"progress={state.route_progress_recorded},{state.route_progress_source}|"
         f"prompt_counts={state.prompt_deliveries}/"
         f"{state.manifest_check_requests}/{state.manifest_checks}|"
