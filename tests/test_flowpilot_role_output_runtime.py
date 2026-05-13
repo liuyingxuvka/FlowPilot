@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -223,6 +224,106 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             )
 
         self.assertFalse((root / ".flowpilot" / "runs" / "run-test" / "role_outputs").exists())
+
+    def test_cli_submit_output_to_router_returns_next_action_for_control_blocker(self) -> None:
+        root = self.make_project()
+        blocker = {
+            "blocker_id": "control-blocker-test",
+            "handling_lane": "pm_repair_decision_required",
+            "target_role": "project_manager",
+        }
+        next_action = {
+            "action_type": "handle_control_blocker",
+            "to_role": "project_manager",
+            "blocker_id": "control-blocker-test",
+        }
+        envelope = {
+            "schema_version": role_output_runtime.ROLE_OUTPUT_ENVELOPE_SCHEMA,
+            "event_name": "reviewer_reports_startup_facts",
+            "body_ref": {"path": ".flowpilot/runs/run-test/reviews/startup_fact_report.json", "hash": "abc"},
+        }
+
+        with (
+            mock.patch.object(
+                flowpilot_runtime.role_output_runtime,
+                "validate_direct_router_submission_authority",
+                return_value={"ok": True, "authority_source": "current_router_wait"},
+            ),
+            mock.patch.object(flowpilot_runtime.role_output_runtime, "submit_output", return_value=envelope),
+            mock.patch.object(
+                flowpilot_runtime.flowpilot_router,
+                "record_external_event",
+                side_effect=router.RouterError("event blocked", control_blocker=blocker),
+            ),
+            mock.patch.object(flowpilot_runtime.flowpilot_router, "next_action", return_value=next_action),
+            mock.patch("builtins.print") as printed,
+        ):
+            exit_code = flowpilot_runtime.main(
+                [
+                    "--root",
+                    str(root),
+                    "submit-output-to-router",
+                    "--output-type",
+                    "startup_fact_report",
+                    "--role",
+                    "human_like_reviewer",
+                    "--agent-id",
+                    "agent-reviewer-cli",
+                    "--body-json",
+                    "{}",
+                    "--event-name",
+                    "reviewer_reports_startup_facts",
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        payload = json.loads(printed.call_args.args[0])
+        self.assertTrue(payload["ok"])
+        self.assertTrue(payload["blocked"])
+        self.assertEqual(payload["event"], "reviewer_reports_startup_facts")
+        self.assertEqual(payload["control_blocker"]["blocker_id"], "control-blocker-test")
+        self.assertEqual(payload["next_action"]["action_type"], "handle_control_blocker")
+        self.assertEqual(payload["next_action_source"], "router")
+
+    def test_cli_submit_output_to_router_preserves_plain_router_errors(self) -> None:
+        root = self.make_project()
+        envelope = {
+            "schema_version": role_output_runtime.ROLE_OUTPUT_ENVELOPE_SCHEMA,
+            "event_name": "reviewer_reports_startup_facts",
+            "body_ref": {"path": ".flowpilot/runs/run-test/reviews/startup_fact_report.json", "hash": "abc"},
+        }
+
+        with (
+            mock.patch.object(
+                flowpilot_runtime.role_output_runtime,
+                "validate_direct_router_submission_authority",
+                return_value={"ok": True, "authority_source": "current_router_wait"},
+            ),
+            mock.patch.object(flowpilot_runtime.role_output_runtime, "submit_output", return_value=envelope),
+            mock.patch.object(
+                flowpilot_runtime.flowpilot_router,
+                "record_external_event",
+                side_effect=router.RouterError("plain router error"),
+            ),
+        ):
+            with self.assertRaisesRegex(router.RouterError, "plain router error"):
+                flowpilot_runtime.main(
+                    [
+                        "--root",
+                        str(root),
+                        "submit-output-to-router",
+                        "--output-type",
+                        "startup_fact_report",
+                        "--role",
+                        "human_like_reviewer",
+                        "--agent-id",
+                        "agent-reviewer-cli",
+                        "--body-json",
+                        "{}",
+                        "--event-name",
+                        "reviewer_reports_startup_facts",
+                    ]
+                )
 
     def test_router_validates_runtime_receipt_when_loading_role_output(self) -> None:
         root = self.make_project()

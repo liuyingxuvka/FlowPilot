@@ -36,6 +36,44 @@ def _read_body_json(root: Path, raw_json: str, body_file: str) -> dict[str, Any]
     return None
 
 
+def _record_router_event_or_blocked_next_action(root: Path, event_name: str, envelope: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return {
+            "blocked": False,
+            "router_result": flowpilot_router.record_external_event(root, event_name, envelope),
+        }
+    except flowpilot_router.RouterError as exc:
+        blocker = getattr(exc, "control_blocker", None)
+        if not isinstance(blocker, dict):
+            raise
+        next_action: dict[str, Any] | None = None
+        next_action_error: dict[str, str] | None = None
+        try:
+            next_action = flowpilot_router.next_action(root)
+        except Exception as next_exc:  # pragma: no cover - defensive fallback, original blocker still returned
+            next_action_error = {
+                "error_type": type(next_exc).__name__,
+                "message": str(next_exc),
+            }
+        result: dict[str, Any] = {
+            "blocked": True,
+            "router_result": {
+                "ok": False,
+                "event": event_name,
+                "router_error": str(exc),
+                "control_blocker": blocker,
+            },
+            "router_error": str(exc),
+            "control_blocker": blocker,
+            "next_action": next_action,
+            "next_action_source": "router" if next_action is not None else "unavailable",
+            "controller_next_step_source": "router_next_action_after_control_blocker",
+        }
+        if next_action_error is not None:
+            result["next_action_error"] = next_action_error
+        return result
+
+
 def _receive_card(root: Path, args: argparse.Namespace) -> dict[str, Any]:
     opened = card_runtime.open_card(
         root,
@@ -419,14 +457,14 @@ def main(argv: list[str] | None = None) -> int:
         event_name = str(args.event_name or envelope.get("event_name") or "").strip()
         if not event_name:
             raise role_output_runtime.RoleOutputRuntimeError("submit-output-to-router requires event_name")
-        router_result = flowpilot_router.record_external_event(root, event_name, envelope)
+        router_handoff = _record_router_event_or_blocked_next_action(root, event_name, envelope)
         result = {
             "ok": True,
             "command": "submit-output-to-router",
             "event": event_name,
             "authority": authority,
             "envelope": envelope,
-            "router_result": router_result,
+            **router_handoff,
         }
     elif args.command == "progress-output":
         result = role_output_runtime.update_output_progress(
