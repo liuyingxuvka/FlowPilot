@@ -8617,3 +8617,120 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future Product or Process officer gate changes synchronized across FlowGuard model scenarios, Router gate contracts, card wording, canonical artifacts, compatibility aliases, and focused runtime tests.
+
+
+## current-node-completion-router-compat-repair-20260513 - Repair batch-registered current-node completion context
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A FlowPilot PM role-work packet reported that PM completion from an already-reviewed current-node result failed when the current-node packet had been registered through the active batch path instead of the legacy latest-event payload path.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T14:15:00+02:00
+- Ended: 2026-05-13T14:25:52+02:00
+- Commands OK: True
+
+### Runtime Files
+- skills/flowpilot/assets/flowpilot_router.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py`.
+- OK: targeted router context lookup check for live run metadata.
+- OK: temporary-copy `pm_completes_current_node_from_reviewed_result` rehearsal.
+- OK: `python simulations\run_meta_checks.py`.
+
+### Findings
+- Router current-node packet and result context lookup now falls back to the active current-node batch index when legacy/latest event payload metadata lacks `packet_id` or explicit envelope paths.
+- The fallback is scoped to context reconstruction after the strict legacy path reports missing packet identity, so normal packet registration validation still requires explicit packet identity.
+- The live repaired packet/result context resolved from envelopes only; sealed packet/result body contents were not exposed to Controller.
+
+### Counterexamples
+- `batch_registered_current_node_completion_context_missing_packet_id`
+
+### Friction Points
+- None.
+
+### Skipped Steps
+- Capability model checks were not run because this repair changes current-node completion context resolution, not skill/capability routing.
+
+### Next Actions
+- PM can retry the already-authorized `pm_completes_current_node_from_reviewed_result` event for `leaf-functional-framing-and-concept-brief` without reissuing worker work or rereading sealed result bodies.
+
+
+## flowpilot-unified-role-recovery-20260513 - Unify heartbeat and mid-run role recovery
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot controller can observe a missing, cancelled, timed-out, or unaddressable background role during an active route. Recovery must preempt normal waits/work and use the same recovery ladder as heartbeat/manual resume.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T14:35:00+02:00
+- Ended: 2026-05-13T16:26:19+02:00
+- Commands OK: True
+
+### Planning Files
+- docs/flowpilot_unified_role_recovery_plan.md
+
+### Model Files
+- simulations/flowpilot_role_recovery_model.py
+- simulations/run_flowpilot_role_recovery_checks.py
+- simulations/flowpilot_role_recovery_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/runtime_kit/cards/roles/controller.md
+- skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_crew_rehydration_freshness.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python -m py_compile simulations\flowpilot_role_recovery_model.py simulations\run_flowpilot_role_recovery_checks.py`.
+- OK: `python simulations\run_flowpilot_role_recovery_checks.py`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_role_recovery_model.py simulations\run_flowpilot_role_recovery_checks.py`.
+- OK: targeted resume/router regression tests for resume preemption and heartbeat resume entry.
+- OK: targeted mid-run role liveness fault runtime test.
+- OK: `python simulations\run_flowpilot_resume_checks.py` in a background process.
+- OK: `python simulations\run_meta_checks.py` in a background process.
+- OK: `python simulations\run_capability_checks.py` in a background process.
+- OK: `python -m pytest -q tests\test_flowpilot_role_output_runtime.py`.
+- OK: `python -m pytest -q tests\test_flowpilot_card_instruction_coverage.py`.
+- OK: `python -m pytest -q tests\test_flowpilot_router_runtime.py -k "role_liveness_fault or resume_reentry or heartbeat_alive_status_still_enters_router_resume_path or crew_rehydration"`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_role_recovery_model.py simulations\run_flowpilot_role_recovery_checks.py tests\test_flowpilot_router_runtime.py`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- Heartbeat/manual resume and mid-run liveness faults now enter one role-recovery transaction path instead of separate recovery concepts.
+- Recovery actions are selected before normal control blockers, route work, packet work, and gate waits unless an explicit user stop/cancel is present.
+- Targeted recovery first records current state, then attempts old-role restore, targeted replacement, slot reconciliation, and full crew recycle escalation when capacity or close failures block targeted recovery.
+- Recovery reports carry memory/context injection, packet ownership reconciliation, role binding epoch advancement, crew generation, superseded agent ids, and stale output quarantine evidence before PM is asked to continue.
+- Existing PM resume decision machinery is reused after recovery so the controller does not silently continue after a restored or replaced role.
+- Controller and PM cards now explicitly require immediate role-liveness fault recording, unified recovery-first handling, and report review before continuation.
+
+### Counterexamples
+- `mid_run_fault_treated_as_wait`
+- `heartbeat_bypasses_unified_recovery`
+- `normal_work_preempts_recovery`
+- `targeted_replace_before_restore`
+- `capacity_full_without_full_recycle`
+- `full_recycle_without_targeted_attempt`
+- `failed_full_recycle_marked_ready`
+- `ready_without_memory_injection`
+- `pm_continue_without_packet_reconciliation`
+- `stale_generation_output_accepted`
+- `controller_auto_continues_after_recovery`
+- `recovery_blocks_user_stop`
+
+### Friction Points
+- A single broad pytest invocation across the router runtime, role-output runtime, and card-coverage tests exceeded the local command timeout and hit a Windows stdout flush error. The same coverage area was split into focused pytest runs, and those completed successfully.
+- The new abstract model intentionally skips production conformance replay until a dedicated router adapter is added; runtime behavior is covered by focused router tests for this change.
+
+### Skipped Steps
+- Remote GitHub sync was not performed, per user instruction.
+- Full router runtime pytest was not treated as a blocking gate because it exceeded the local command timeout; focused recovery, resume, role-output, and card-coverage tests passed.
+
+### Next Actions
+- If role recovery grows beyond controller-hosted recovery actions, add a production conformance adapter for `flowpilot_role_recovery_model.py`.
+- Keep future resume, heartbeat, and mid-run liveness changes on the same transaction/report path so recovery remains preemptive and PM-reviewed.

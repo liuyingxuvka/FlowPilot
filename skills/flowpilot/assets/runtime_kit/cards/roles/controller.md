@@ -69,6 +69,12 @@ Allowed actions:
   instead of asking the holder to chat through every mechanical retry. The
   notice is controller-visible metadata only; after reading it, call Router or
   relay the named envelope exactly as instructed.
+- if any background role is missing, cancelled, unknown, timed out, no longer
+  addressable, or otherwise cannot be found, immediately record
+  `controller_reports_role_liveness_fault` with the affected role key and then
+  follow the router's unified role-recovery actions. This recovery preempts
+  normal waits, packets, gates, route advancement, and control blockers because
+  the blocked work may depend on the lost role.
 
 Forbidden actions:
 
@@ -82,6 +88,10 @@ Forbidden actions:
 - do not infer packet completion from holder chat while an active-holder lease
   is open. Only a router-authored next-action notice, PM blocker, timeout, or
   explicit router action can end Controller's wait.
+- do not wait for unrelated work to finish before role recovery. A role
+  liveness fault is a recovery-first control-plane event unless the user
+  explicitly stops/cancels the run or the router is already performing terminal
+  cleanup.
 
 ## Router Control Blockers
 

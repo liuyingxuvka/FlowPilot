@@ -2,6 +2,44 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.0 - 2026-05-13
+
+### Added
+
+- Added FlowGuard models and check runners for model-driven recursive route
+  governance, legal next-action selection, PM package absorption, parent-child
+  lifecycle checks, dynamic return paths, terminal summaries, and expanded
+  model-mesh evidence.
+- Added route action policy coverage and runtime cards for PM-owned process
+  route model decisions, product behavior model decisions, parent backward
+  targets, reviewer gates, and terminal replay expectations.
+- Added role-output authority coverage for terminal summary emission and
+  explicit PM/reviewer/worker output routing through runtime-generated
+  envelopes and receipts.
+
+### Changed
+
+- Upgraded the FlowPilot router so PM package-result disposition, route
+  mutation, terminal summary generation, and model-driven next-action
+  selection stay tied to current route/frontier evidence and registry-backed
+  actions.
+- Strengthened PM, reviewer, officer, and worker runtime cards so role
+  authority, output contracts, stale-evidence handling, and source/route
+  version boundaries are explicit in formal packets and reviews.
+- Refreshed route sign helpers, templates, packet ledgers, heartbeat/manual
+  resume records, and review-release templates to match the current run-scoped
+  control-plane model.
+
+### Fixed
+
+- Fixed resume priority so PM resume decisions can take precedence over stale
+  control-blocker handling only after current-run state, frontier, packet, and
+  role-memory evidence are loaded.
+- Hardened PM result routing so worker and reviewer outputs cannot bypass PM
+  disposition, output-contract catalog checks, or terminal authority gates.
+- Expanded install and coverage checks to catch missing PM result-routing
+  coverage and stale FlowGuard result evidence before release.
+
 ## 0.8.0 - 2026-05-12
 
 ### Added

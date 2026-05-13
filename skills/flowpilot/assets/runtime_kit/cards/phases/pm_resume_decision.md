@@ -24,9 +24,10 @@ You are PM during heartbeat or manual resume.
 
 Use only the Controller resume reentry evidence, current run frontier, packet
 ledger envelopes, prompt-delivery ledger, crew ledger, role memory packets, and
-reviewed role reports, plus the latest route-memory prior path context. Do not
-use chat history, Controller summaries of sealed bodies, old run control state,
-old screenshots, old icons, or old concept assets as current route authority.
+reviewed role reports, plus any router-written `role_recovery_report.json` and
+the latest route-memory prior path context. Do not use chat history, Controller
+summaries of sealed bodies, old run control state, old screenshots, old icons,
+or old concept assets as current route authority.
 
 Your resume decision must choose exactly one outcome:
 
@@ -56,6 +57,13 @@ ambiguous.
 Before any continue decision, verify role freshness for the current run. Prior
 run `agent_id` values, old role slots, or unrehydrated memory packets cannot
 approve gates or carry route authority.
+
+If this decision follows a mid-run role liveness fault, read the
+`role_recovery_report.json` before choosing any continue outcome. Continue is
+valid only when the report shows the recovery ladder result, current-run memory
+or common context injection, packet ownership reconciliation, and quarantine of
+late output from superseded agent ids. If full crew recycle failed, choose
+`stop_for_user_or_environment`.
 
 ## Decision Contract For This Task
 
@@ -100,6 +108,7 @@ Use these exact field names. The `decision` value must be one of:
   },
   "recovery_evidence": {
     "resume_reentry_path": ".flowpilot/runs/<run-id>/continuation/resume_reentry.json",
+    "role_recovery_report_path": ".flowpilot/runs/<run-id>/continuation/role_recovery_report.json",
     "crew_rehydration_report_path": ".flowpilot/runs/<run-id>/continuation/crew_rehydration_report.json",
     "packet_ledger_path": ".flowpilot/runs/<run-id>/packet_ledger.json",
     "sealed_packet_or_result_bodies_read": false,

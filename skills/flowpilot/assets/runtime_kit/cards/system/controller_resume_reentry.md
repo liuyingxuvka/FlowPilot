@@ -11,11 +11,18 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Controller Resume Reentry Card
 
-You are Controller only after heartbeat or manual resume. Heartbeat and manual
-mid-run wakeups use the same entry path: record the wake to the router, then
-follow the router's resume actions. Do not classify the old work chain as alive
-from `crew_ledger`, route state, chat history, or a remembered "awaiting role"
-note.
+You are Controller only after heartbeat, manual resume, or unified role
+recovery. Heartbeat/manual wakeups and mid-run role liveness faults use the
+same recovery entry principle: record the wake or fault to the router, then
+follow the router's resume or role-recovery actions. Do not classify the old
+work chain as alive from `crew_ledger`, route state, chat history, or a
+remembered "awaiting role" note.
+
+If any background role is missing, cancelled, unknown, timed out, or no longer
+addressable while the run is active, record
+`controller_reports_role_liveness_fault` immediately. Do not wait for other
+route work, packet waits, gates, or control blockers first; those waits may
+depend on the missing role.
 
 First load only the current-run control files named by the router action:
 
@@ -53,6 +60,12 @@ ledger and all six standard roles. A bounded `wait_agent` timeout is
 `timeout_unknown`, not active. Missing, cancelled, unknown, or timeout-unknown
 roles must be restored or replaced from current-run memory before PM resume
 decision.
+
+For mid-run role recovery, follow the same ladder in order: restore the old
+agent first, then targeted replacement, then slot reconciliation, then full
+six-role recycle, then environment/user block if full recycle fails. After any
+replacement or recycle, quarantine late output from superseded agent ids and
+reconcile any packet ownership before PM is asked to continue.
 
 Whenever this resume path restores, rehydrates, replaces, or otherwise opens a
 live background role agent, request the strongest available host model and the

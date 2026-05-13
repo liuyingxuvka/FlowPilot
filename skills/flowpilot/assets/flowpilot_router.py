@@ -46,6 +46,8 @@ CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
 CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.v1"
 REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
 REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
+ROLE_RECOVERY_TRANSACTION_SCHEMA = "flowpilot.role_recovery_transaction.v1"
+ROLE_RECOVERY_REPORT_SCHEMA = "flowpilot.role_recovery_report.v1"
 CONTROL_TRANSACTION_REGISTRY_SCHEMA = "flowpilot.control_transaction_registry.v1"
 ROUTE_ACTION_POLICY_REGISTRY_SCHEMA = "flowpilot.route_action_policy_registry.v1"
 TERMINAL_SUMMARY_SCHEMA = "flowpilot.final_summary.v1"
@@ -114,10 +116,20 @@ FORBIDDEN_RECORD_EVENT_ENVELOPE_BODY_FIELDS = {
 ROLE_AGENT_SPAWN_RESULT = "spawned_fresh_for_task"
 ROLE_AGENT_REHYDRATION_RESULT = "rehydrated_from_current_run_memory"
 ROLE_AGENT_CONTINUITY_RESULT = "live_agent_continuity_confirmed"
+ROLE_AGENT_OLD_RESTORE_RESULT = "old_agent_restored"
+ROLE_AGENT_TARGETED_REPLACEMENT_RESULT = "targeted_replacement_spawned"
+ROLE_AGENT_FULL_CREW_RECYCLE_RESULT = "full_crew_recycle_spawned"
+ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT = "environment_blocked"
 BACKGROUND_ROLE_MODEL_POLICY = "strongest_available"
 BACKGROUND_ROLE_REASONING_EFFORT_POLICY = "highest_available"
 BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT = "xhigh"
 RESUME_ROLE_AGENT_RESULTS = {ROLE_AGENT_REHYDRATION_RESULT, ROLE_AGENT_CONTINUITY_RESULT}
+ROLE_RECOVERY_RESULTS = {
+    ROLE_AGENT_OLD_RESTORE_RESULT,
+    ROLE_AGENT_TARGETED_REPLACEMENT_RESULT,
+    ROLE_AGENT_FULL_CREW_RECYCLE_RESULT,
+    ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT,
+}
 ROLE_AGENT_HOST_LIVENESS_STATUSES = {"active", "completed", "missing", "cancelled", "timeout_unknown", "unknown"}
 ROLE_AGENT_BOUNDED_WAIT_RESULTS = {"not_waited", "completed", "timeout_unknown"}
 ROLE_AGENT_LIVENESS_DECISIONS = {"confirmed_existing_agent", "spawned_replacement_from_current_run_memory"}
@@ -465,6 +477,11 @@ RUNTIME_FLAG_DEFAULTS = {
     "resume_roles_restored": False,
     "resume_role_agents_rehydrated": False,
     "crew_rehydration_report_written": False,
+    "role_recovery_requested": False,
+    "role_recovery_state_loaded": False,
+    "role_recovery_roles_restored": False,
+    "role_recovery_report_written": False,
+    "role_recovery_environment_blocked": False,
     "continuation_binding_recorded": False,
     "controller_boundary_confirmation_written": False,
     "controller_role_confirmed_from_router_core": False,
@@ -1389,6 +1406,10 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "heartbeat_or_manual_resume_requested": {
         "flag": "resume_reentry_requested",
         "summary": "A heartbeat or manual resume wakeup requested router-guided re-entry.",
+    },
+    "controller_reports_role_liveness_fault": {
+        "flag": "role_recovery_requested",
+        "summary": "Controller reported that a background role is missing, cancelled, unknown, timed out, or no longer addressable; unified role recovery must preempt normal work.",
     },
     "host_records_heartbeat_binding": {
         "flag": "continuation_binding_recorded",
@@ -4080,9 +4101,27 @@ def _is_card_return_event_name(event: str) -> bool:
 
 def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]:
     ledger = _read_return_event_ledger(run_root, run_id)
+    completed_keys: set[tuple[str, str, str]] = set()
+    for item in ledger.get("completed_returns", []):
+        if not isinstance(item, dict) or item.get("status") != "resolved":
+            continue
+        return_kind = str(item.get("return_kind") or "system_card")
+        identity = str(item.get("card_bundle_id") or item.get("delivery_attempt_id") or "")
+        event_name = str(item.get("card_return_event") or "")
+        if identity and event_name:
+            completed_keys.add((return_kind, identity, event_name))
     pending: list[dict[str, Any]] = []
     for item in ledger.get("pending_returns", []):
-        if isinstance(item, dict) and item.get("status") in {None, "pending", "awaiting_return", "reminded", "returned", "bundle_ack_incomplete"}:
+        if not isinstance(item, dict):
+            continue
+        status = item.get("status")
+        if status == "returned":
+            return_kind = str(item.get("return_kind") or "system_card")
+            identity = str(item.get("card_bundle_id") or item.get("delivery_attempt_id") or "")
+            event_name = str(item.get("card_return_event") or "")
+            if item.get("resolved_at") or (return_kind, identity, event_name) in completed_keys:
+                continue
+        if status in {None, "pending", "awaiting_return", "reminded", "returned", "bundle_ack_incomplete"}:
             pending.append(item)
     return pending
 
@@ -4101,6 +4140,7 @@ def _pending_card_return_ack_exists(project_root: Path, pending_action: object) 
 
 CARD_RETURN_EVENT_BYPASS_EVENTS = {
     "heartbeat_or_manual_resume_requested",
+    "controller_reports_role_liveness_fault",
     "host_records_heartbeat_binding",
     "user_requests_run_stop",
     "user_requests_run_cancel",
@@ -7880,6 +7920,8 @@ def _normalize_role_agent_records(state: dict[str, Any], payload: dict[str, Any]
             "spawn_result": ROLE_AGENT_SPAWN_RESULT,
             "spawned_for_run_id": run_id,
             "spawned_after_startup_answers": True,
+            "crew_generation": 1,
+            "role_binding_epoch": 1,
             **({"host_spawn_receipt": host_spawn_receipt} if isinstance(host_spawn_receipt, dict) else {}),
             "recorded_at": utc_now(),
         }
@@ -7995,6 +8037,635 @@ def _resume_liveness_probe_batch_id(run_state: dict[str, Any]) -> str:
     return f"resume-liveness-{run_state['run_id']}-{_latest_resume_tick_id(run_state)}"
 
 
+def _role_recovery_dir(run_root: Path) -> Path:
+    return run_root / "continuation" / "role_recovery"
+
+
+def _role_recovery_latest_transaction_path(run_root: Path) -> Path:
+    return _role_recovery_dir(run_root) / "latest_transaction.json"
+
+
+def _role_recovery_state_path(run_root: Path) -> Path:
+    return _role_recovery_dir(run_root) / "state_load.json"
+
+
+def _role_recovery_report_path(run_root: Path) -> Path:
+    return run_root / "continuation" / "role_recovery_report.json"
+
+
+def _role_recovery_target_roles(raw_roles: object, *, default_all: bool = False) -> list[str]:
+    if default_all:
+        return list(CREW_ROLE_KEYS)
+    if isinstance(raw_roles, str):
+        roles = [raw_roles]
+    elif isinstance(raw_roles, list):
+        roles = [str(role) for role in raw_roles]
+    else:
+        roles = []
+    normalized: list[str] = []
+    for role in roles:
+        role_key = str(role).strip()
+        if role_key not in CREW_ROLE_KEYS:
+            raise RouterError(f"role recovery target has unsupported role_key: {role_key!r}")
+        if role_key not in normalized:
+            normalized.append(role_key)
+    if not normalized:
+        raise RouterError("role recovery requires at least one target_role_key")
+    return normalized
+
+
+def _latest_role_recovery_transaction(run_root: Path) -> dict[str, Any]:
+    return read_json_if_exists(_role_recovery_latest_transaction_path(run_root))
+
+
+def _current_crew_generation(crew: dict[str, Any]) -> int:
+    raw = crew.get("crew_generation")
+    if isinstance(raw, int) and raw > 0:
+        return raw
+    generations = [
+        int(slot.get("crew_generation"))
+        for slot in (crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else [])
+        if isinstance(slot, dict) and isinstance(slot.get("crew_generation"), int)
+    ]
+    return max(generations) if generations else 1
+
+
+def _open_role_recovery_transaction(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    trigger_source: str,
+    recovery_scope: str,
+    target_role_keys: list[str],
+    fault_payload: dict[str, Any],
+) -> dict[str, Any]:
+    recovery_dir = _role_recovery_dir(run_root)
+    recovery_dir.mkdir(parents=True, exist_ok=True)
+    index_path = recovery_dir / "index.json"
+    index = read_json_if_exists(index_path) or {
+        "schema_version": "flowpilot.role_recovery_index.v1",
+        "run_id": run_state["run_id"],
+        "transactions": [],
+    }
+    sequence = len(index.get("transactions") if isinstance(index.get("transactions"), list) else []) + 1
+    transaction_id = f"role-recovery-{run_state['run_id']}-{sequence:03d}"
+    active_packet = _derive_resume_next_recipient_from_packet_ledger(run_root)
+    transaction = {
+        "schema_version": ROLE_RECOVERY_TRANSACTION_SCHEMA,
+        "transaction_id": transaction_id,
+        "run_id": run_state["run_id"],
+        "trigger_source": trigger_source,
+        "recovery_scope": recovery_scope,
+        "target_role_keys": list(target_role_keys),
+        "priority": "preempt_normal_work",
+        "normal_work_suspended": True,
+        "started_at": utc_now(),
+        "fault_payload": fault_payload,
+        "active_packet_context": active_packet,
+        "recovery_ladder": [
+            "restore_old_agent",
+            "targeted_replacement",
+            "slot_reconciliation",
+            "full_crew_recycle",
+            "environment_blocked",
+        ],
+        "controller_may_wait_for_normal_work_before_recovery": False,
+        "controller_may_infer_completion_from_old_agent": False,
+    }
+    tx_path = recovery_dir / f"{transaction_id}.json"
+    write_json(tx_path, transaction)
+    write_json(_role_recovery_latest_transaction_path(run_root), transaction)
+    index.setdefault("transactions", []).append(
+        {
+            "transaction_id": transaction_id,
+            "path": project_relative(project_root, tx_path),
+            "trigger_source": trigger_source,
+            "recovery_scope": recovery_scope,
+            "target_role_keys": list(target_role_keys),
+            "started_at": transaction["started_at"],
+            "status": "open",
+        }
+    )
+    index["latest_transaction_id"] = transaction_id
+    index["latest_transaction_path"] = project_relative(project_root, tx_path)
+    index["updated_at"] = utc_now()
+    write_json(index_path, index)
+    run_state["role_recovery"] = {
+        "transaction_id": transaction_id,
+        "trigger_source": trigger_source,
+        "recovery_scope": recovery_scope,
+        "target_role_keys": list(target_role_keys),
+        "transaction_path": project_relative(project_root, tx_path),
+        "latest_transaction_path": project_relative(project_root, _role_recovery_latest_transaction_path(run_root)),
+    }
+    return transaction
+
+
+def _role_recovery_payload_contract(run_root: Path, run_state: dict[str, Any], transaction: dict[str, Any]) -> dict[str, Any]:
+    target_roles = [str(role) for role in transaction.get("target_role_keys") or []]
+    scope = str(transaction.get("recovery_scope") or "targeted")
+    required_fields = [
+        "background_agents_capability_status",
+        "recovery_transaction_id",
+        "trigger_source",
+        "recovery_scope",
+        "target_role_keys",
+        "recovered_role_agents[].role_key",
+        "recovered_role_agents[].agent_id",
+        "recovered_role_agents[].model_policy",
+        "recovered_role_agents[].reasoning_effort_policy",
+        "recovered_role_agents[].recovery_result",
+        "recovered_role_agents[].restore_attempted",
+        "recovered_role_agents[].restore_result",
+        "recovered_role_agents[].rehydrated_for_run_id",
+        "recovered_role_agents[].memory_context_injected",
+        "recovered_role_agents[].packet_ownership_reconciled",
+    ]
+    if scope == "targeted":
+        required_fields.extend(
+            [
+                "recovered_role_agents[].old_agent_id",
+                "recovered_role_agents[].role_binding_epoch_advanced",
+                "recovered_role_agents[].superseded_agent_output_quarantined",
+            ]
+        )
+    return _payload_contract(
+        name="role_liveness_recovery_receipt",
+        required_object="payload",
+        required_fields=required_fields,
+        allowed_values={
+            "background_agents_capability_status": ["available"],
+            "recovery_transaction_id": [str(transaction.get("transaction_id") or "")],
+            "trigger_source": [str(transaction.get("trigger_source") or "")],
+            "recovery_scope": [scope, "full_crew"],
+            "target_role_keys": [target_roles],
+            "recovered_role_agents[].role_key": list(CREW_ROLE_KEYS),
+            "recovered_role_agents[].model_policy": [BACKGROUND_ROLE_MODEL_POLICY],
+            "recovered_role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
+            "recovered_role_agents[].recovery_result": sorted(ROLE_RECOVERY_RESULTS),
+            "recovered_role_agents[].rehydrated_for_run_id": [run_state["run_id"]],
+            "recovered_role_agents[].memory_context_injected": [True],
+            "recovered_role_agents[].packet_ownership_reconciled": [True],
+        },
+        structural_requirements=[
+            "Recovery must be recorded before any normal route, packet, gate, or control-blocker work resumes.",
+            "For targeted recovery, attempt old-agent restore before replacement.",
+            "If old close fails and targeted spawn reports capacity_full, slot reconciliation and full crew recycle must be attempted before any success report.",
+            "A failed full crew recycle must return recovery_result=environment_blocked and must not mark the crew ready.",
+            "Recovered or replacement roles must receive current-run memory/context before being marked usable.",
+            "Late output from superseded agent ids must be quarantined and cannot count as packet or gate progress.",
+            "Packet ownership must be reconciled before PM is asked to continue.",
+        ],
+        description="Record the host recovery attempt ladder for a missing or unhealthy FlowPilot role.",
+        reviewer_check="PM checks this role recovery report before deciding whether to resume, re-dispatch, or escalate.",
+    )
+
+
+def _load_role_recovery_state(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    transaction = _latest_role_recovery_transaction(run_root)
+    if transaction.get("schema_version") != ROLE_RECOVERY_TRANSACTION_SCHEMA:
+        raise RouterError("role recovery state load requires an open role recovery transaction")
+    loaded_paths = {
+        "role_recovery_transaction": project_relative(project_root, _role_recovery_latest_transaction_path(run_root)),
+        "router_state": project_relative(project_root, run_state_path(run_root)),
+        "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
+        "crew_memory": project_relative(project_root, run_root / "crew_memory"),
+        "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
+        "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
+        "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+        "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
+        "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+    }
+    missing_paths = [
+        rel
+        for rel in loaded_paths.values()
+        if not resolve_project_path(project_root, rel).exists()
+    ]
+    resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
+    record = {
+        "schema_version": "flowpilot.role_recovery_state_load.v1",
+        "run_id": run_state["run_id"],
+        "transaction_id": transaction["transaction_id"],
+        "trigger_source": transaction["trigger_source"],
+        "recovery_scope": transaction["recovery_scope"],
+        "target_role_keys": transaction["target_role_keys"],
+        "loaded_at": utc_now(),
+        "loaded_paths": loaded_paths,
+        "missing_paths": missing_paths,
+        "resume_next_recipient_from_packet_ledger": resume_next,
+        "priority": "preempt_normal_work",
+        "normal_work_suspended": True,
+        "controller_may_read_packet_body": False,
+        "controller_may_read_result_body": False,
+        "controller_may_infer_route_progress_from_chat_history": False,
+    }
+    write_json(_role_recovery_state_path(run_root), record)
+    resume_reentry_path = run_root / "continuation" / "resume_reentry.json"
+    if not resume_reentry_path.exists():
+        write_json(
+            resume_reentry_path,
+            {
+                "schema_version": "flowpilot.resume_reentry.v1",
+                "run_id": run_state["run_id"],
+                "stable_launcher": True,
+                "controller_only": True,
+                "wake_recorded_to_router": True,
+                "role_recovery_triggered": True,
+                "role_recovery_transaction_id": transaction["transaction_id"],
+                "visible_plan_restore_required": True,
+                "visible_plan_restored_from_run": True,
+                "role_rehydration_required": True,
+                "roles_restored_or_replaced": False,
+                "ambiguous_state_blocks_controller_execution": bool(missing_paths),
+                "missing_paths": missing_paths,
+                "loaded_paths": loaded_paths,
+                "resume_next_recipient_from_packet_ledger": resume_next,
+                "controller_may_read_packet_body": False,
+                "controller_may_read_result_body": False,
+                "controller_may_infer_route_progress_from_chat_history": False,
+                "recorded_at": record["loaded_at"],
+            },
+        )
+    run_state["flags"]["role_recovery_state_loaded"] = True
+    return record
+
+
+def _normalize_role_recovery_agent_records(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if payload.get("background_agents_capability_status") != "available":
+        raise RouterError("role recovery requires background_agents_capability_status=available")
+    transaction = _latest_role_recovery_transaction(run_root)
+    if transaction.get("schema_version") != ROLE_RECOVERY_TRANSACTION_SCHEMA:
+        raise RouterError("role recovery requires an open role recovery transaction")
+    if payload.get("recovery_transaction_id") != transaction.get("transaction_id"):
+        raise RouterError("role recovery transaction id mismatch")
+    trigger_source = str(transaction.get("trigger_source") or "")
+    if payload.get("trigger_source") != trigger_source:
+        raise RouterError("role recovery trigger_source mismatch")
+    requested_scope = str(transaction.get("recovery_scope") or "targeted")
+    payload_scope = str(payload.get("recovery_scope") or requested_scope)
+    if payload_scope not in {requested_scope, "full_crew"}:
+        raise RouterError("role recovery scope mismatch")
+    target_roles = [str(role) for role in transaction.get("target_role_keys") or []]
+    payload_targets = payload.get("target_role_keys")
+    if payload_targets != target_roles:
+        raise RouterError("role recovery target_role_keys mismatch")
+    raw_records = payload.get("recovered_role_agents") or payload.get("role_agents")
+    if isinstance(raw_records, dict):
+        iterable = list(raw_records.values())
+    elif isinstance(raw_records, list):
+        iterable = raw_records
+    else:
+        raise RouterError("role recovery requires payload.recovered_role_agents list or object")
+
+    crew = read_json_if_exists(run_root / "crew_ledger.json")
+    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    existing_by_role = {
+        str(slot.get("role_key")): slot
+        for slot in slots
+        if isinstance(slot, dict) and slot.get("role_key") in CREW_ROLE_KEYS
+    }
+    full_crew = payload_scope == "full_crew" or any(
+        isinstance(raw, dict) and raw.get("recovery_result") == ROLE_AGENT_FULL_CREW_RECYCLE_RESULT
+        for raw in iterable
+    )
+    expected_roles = list(CREW_ROLE_KEYS) if full_crew else target_roles
+    contexts = {item["role_key"]: item for item in _resume_role_contexts(project_root, run_root, run_state)}
+    records_by_role: dict[str, dict[str, Any]] = {}
+    environment_blocked = False
+    for raw in iterable:
+        if not isinstance(raw, dict):
+            raise RouterError("each recovered role agent record must be an object")
+        role = str(raw.get("role_key") or "")
+        if role not in CREW_ROLE_KEYS:
+            raise RouterError(f"role recovery record has unsupported role_key: {role!r}")
+        if role not in expected_roles:
+            raise RouterError(f"role recovery record {role} is outside the expected recovery scope")
+        if role in records_by_role:
+            raise RouterError(f"duplicate role recovery record for {role}")
+        result = str(raw.get("recovery_result") or "")
+        if result not in ROLE_RECOVERY_RESULTS:
+            raise RouterError(f"{role} requires supported recovery_result")
+        restore_attempted = raw.get("restore_attempted") is True
+        restore_result = str(raw.get("restore_result") or "unknown")
+        targeted_attempted = raw.get("targeted_replacement_attempted") is True
+        targeted_result = str(raw.get("targeted_replacement_result") or "not_attempted")
+        old_close_failed = raw.get("old_close_failed") is True
+        spawn_capacity_full = raw.get("spawn_capacity_full") is True or targeted_result == "capacity_full"
+        slot_reconciliation_attempted = raw.get("slot_reconciliation_attempted") is True
+        full_recycle_attempted = raw.get("full_crew_recycle_attempted") is True
+        full_recycle_result = str(raw.get("full_crew_recycle_result") or "not_attempted")
+        if result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT:
+            agent_id = raw.get("agent_id")
+            if not isinstance(agent_id, str) or not agent_id.strip():
+                raise RouterError(f"{role} requires a recovered live agent_id")
+            if raw.get("model_policy") != BACKGROUND_ROLE_MODEL_POLICY:
+                raise RouterError(f"{role} requires model_policy={BACKGROUND_ROLE_MODEL_POLICY}")
+            if raw.get("reasoning_effort_policy") != BACKGROUND_ROLE_REASONING_EFFORT_POLICY:
+                raise RouterError(f"{role} requires reasoning_effort_policy={BACKGROUND_ROLE_REASONING_EFFORT_POLICY}")
+            if raw.get("rehydrated_for_run_id") != run_state["run_id"]:
+                raise RouterError(f"{role} must be rehydrated_for_run_id={run_state['run_id']}")
+            if raw.get("memory_context_injected") is not True:
+                raise RouterError(f"{role} recovery requires memory_context_injected=true")
+            if raw.get("packet_ownership_reconciled") is not True:
+                raise RouterError(f"{role} recovery requires packet_ownership_reconciled=true")
+            if raw.get("role_binding_epoch_advanced") is not True:
+                raise RouterError(f"{role} recovery requires role_binding_epoch_advanced=true")
+        else:
+            environment_blocked = True
+            agent_id = None
+        if result == ROLE_AGENT_OLD_RESTORE_RESULT:
+            if not restore_attempted or restore_result != "success":
+                raise RouterError(f"{role} old-agent restore result requires restore_attempted=true and restore_result=success")
+        elif result == ROLE_AGENT_TARGETED_REPLACEMENT_RESULT:
+            if not restore_attempted or restore_result != "failed":
+                raise RouterError(f"{role} targeted replacement requires failed restore first")
+            if not targeted_attempted or targeted_result != "success":
+                raise RouterError(f"{role} targeted replacement requires targeted_replacement_attempted=true and targeted_replacement_result=success")
+        elif result == ROLE_AGENT_FULL_CREW_RECYCLE_RESULT:
+            if requested_scope == "targeted" and not (
+                restore_attempted
+                and restore_result == "failed"
+                and targeted_attempted
+                and targeted_result in {"failed", "capacity_full"}
+                and slot_reconciliation_attempted
+            ):
+                raise RouterError(f"{role} full crew recycle requires targeted restore/replacement/slot reconciliation escalation")
+            if not full_recycle_attempted or full_recycle_result != "success":
+                raise RouterError(f"{role} full crew recycle requires full_crew_recycle_attempted=true and full_crew_recycle_result=success")
+        elif result == ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT:
+            if not full_recycle_attempted or full_recycle_result != "failed":
+                raise RouterError(f"{role} environment_blocked requires failed full crew recycle")
+        if old_close_failed and spawn_capacity_full and not full_recycle_attempted:
+            raise RouterError(f"{role} capacity/full-slot conflict requires full crew recycle escalation")
+        if result in {ROLE_AGENT_TARGETED_REPLACEMENT_RESULT, ROLE_AGENT_FULL_CREW_RECYCLE_RESULT}:
+            if raw.get("superseded_agent_output_quarantined") is not True:
+                raise RouterError(f"{role} replacement/recycle requires superseded_agent_output_quarantined=true")
+        context = contexts[role]
+        memory_status = context["role_memory_status"]
+        if result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status == "available":
+            if raw.get("memory_packet_path") != context["memory_packet_path"]:
+                raise RouterError(f"{role} memory packet path mismatch")
+            if raw.get("memory_packet_hash") != context["memory_packet_hash"]:
+                raise RouterError(f"{role} memory packet hash mismatch")
+            if raw.get("memory_seeded_from_current_run") is not True:
+                raise RouterError(f"{role} must be seeded from current-run memory")
+        elif result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT:
+            if raw.get("memory_missing_acknowledged") is not True:
+                raise RouterError(f"{role} missing memory must be acknowledged")
+            if raw.get("replacement_seeded_from_common_run_context") is not True:
+                raise RouterError(f"{role} replacement must be seeded from common current-run context")
+        old_slot = existing_by_role.get(role) or {}
+        old_agent_id = raw.get("old_agent_id") or old_slot.get("agent_id")
+        records_by_role[role] = {
+            "role_key": role,
+            "old_agent_id": old_agent_id,
+            "agent_id": agent_id,
+            "model_policy": BACKGROUND_ROLE_MODEL_POLICY if agent_id else None,
+            "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY if agent_id else None,
+            "recovery_result": result,
+            "restore_attempted": restore_attempted,
+            "restore_result": restore_result,
+            "targeted_replacement_attempted": targeted_attempted,
+            "targeted_replacement_result": targeted_result,
+            "old_close_failed": old_close_failed,
+            "spawn_capacity_full": spawn_capacity_full,
+            "slot_reconciliation_attempted": slot_reconciliation_attempted,
+            "full_crew_recycle_attempted": full_recycle_attempted,
+            "full_crew_recycle_result": full_recycle_result,
+            "rehydrated_for_run_id": run_state["run_id"],
+            "memory_context_injected": result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT,
+            "packet_ownership_reconciled": result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT,
+            "role_binding_epoch_advanced": result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT,
+            "superseded_agent_output_quarantined": bool(raw.get("superseded_agent_output_quarantined")),
+            "role_memory_status": memory_status,
+            "memory_packet_path": context["memory_packet_path"],
+            "memory_packet_hash": context["memory_packet_hash"],
+            "core_prompt_path": context["core_prompt_path"],
+            "core_prompt_hash": context["core_prompt_hash"],
+            "memory_seeded_from_current_run": result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status == "available",
+            "replacement_seeded_from_common_run_context": result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status != "available",
+            "recorded_at": utc_now(),
+        }
+    missing = [role for role in expected_roles if role not in records_by_role]
+    if missing:
+        raise RouterError(f"missing role recovery records: {', '.join(missing)}")
+    if environment_blocked and any(record["recovery_result"] != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT for record in records_by_role.values()):
+        raise RouterError("environment-blocked role recovery report cannot mix ready and blocked role records")
+    return [records_by_role[role] for role in expected_roles], transaction
+
+
+def _write_role_recovery_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    records, transaction = _normalize_role_recovery_agent_records(project_root, run_root, run_state, payload)
+    environment_blocked = any(record["recovery_result"] == ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT for record in records)
+    crew_path = run_root / "crew_ledger.json"
+    crew = read_json_if_exists(crew_path) or {
+        "schema_version": "flowpilot.crew_ledger.v1",
+        "run_id": run_state["run_id"],
+        "role_slots": [],
+    }
+    current_generation = _current_crew_generation(crew)
+    full_crew = any(record["recovery_result"] == ROLE_AGENT_FULL_CREW_RECYCLE_RESULT for record in records)
+    next_generation = current_generation + 1 if full_crew else current_generation
+    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    slots_by_role = {
+        str(slot.get("role_key")): dict(slot)
+        for slot in slots
+        if isinstance(slot, dict) and slot.get("role_key") in CREW_ROLE_KEYS
+    }
+    for role in CREW_ROLE_KEYS:
+        slots_by_role.setdefault(role, {"role_key": role, "status": "unknown", "agent_id": None})
+    if not environment_blocked:
+        for record in records:
+            role = record["role_key"]
+            old = slots_by_role.get(role, {})
+            old_epoch = old.get("role_binding_epoch")
+            epoch = int(old_epoch) if isinstance(old_epoch, int) else 0
+            superseded = list(old.get("superseded_agent_ids") or []) if isinstance(old.get("superseded_agent_ids"), list) else []
+            old_agent_id = record.get("old_agent_id")
+            if (
+                isinstance(old_agent_id, str)
+                and old_agent_id
+                and old_agent_id != record.get("agent_id")
+                and old_agent_id not in superseded
+            ):
+                superseded.append(old_agent_id)
+            slots_by_role[role] = {
+                **old,
+                "role_key": role,
+                "status": "live_agent_recovered" if not full_crew else "live_agent_recycled",
+                "agent_id": record["agent_id"],
+                "model_policy": record["model_policy"],
+                "reasoning_effort_policy": record["reasoning_effort_policy"],
+                "crew_generation": next_generation,
+                "role_binding_epoch": epoch + 1,
+                "last_role_recovery_transaction_id": transaction["transaction_id"],
+                "last_role_recovery_result": record["recovery_result"],
+                "superseded_agent_ids": superseded,
+                "superseded_agent_output_quarantined": bool(record.get("superseded_agent_output_quarantined")),
+                "memory_seeded_from_current_run": bool(record.get("memory_seeded_from_current_run")),
+                "replacement_seeded_from_common_run_context": bool(record.get("replacement_seeded_from_common_run_context")),
+                "recovered_at": record["recorded_at"],
+            }
+    all_slots = [slots_by_role[role] for role in CREW_ROLE_KEYS]
+    all_six_ready = not environment_blocked and all(
+        isinstance(slot.get("agent_id"), str) and bool(str(slot.get("agent_id")).strip())
+        for slot in all_slots
+    )
+    report_path = _role_recovery_report_path(run_root)
+    report = {
+        "schema_version": ROLE_RECOVERY_REPORT_SCHEMA,
+        "run_id": run_state["run_id"],
+        "transaction_id": transaction["transaction_id"],
+        "trigger_source": transaction["trigger_source"],
+        "recovery_scope": payload.get("recovery_scope") or transaction["recovery_scope"],
+        "target_role_keys": transaction["target_role_keys"],
+        "recorded_at": utc_now(),
+        "priority": "preempt_normal_work",
+        "normal_work_suspended_until_report": True,
+        "all_six_roles_ready": all_six_ready,
+        "environment_blocked": environment_blocked,
+        "crew_generation_before": current_generation,
+        "crew_generation_after": next_generation,
+        "role_records": records,
+        "packet_ownership_reconciled": all(record.get("packet_ownership_reconciled") for record in records) if not environment_blocked else False,
+        "memory_context_injected": all(record.get("memory_context_injected") for record in records) if not environment_blocked else False,
+        "stale_generation_output_quarantined": all(
+            record.get("superseded_agent_output_quarantined")
+            or record.get("recovery_result") == ROLE_AGENT_OLD_RESTORE_RESULT
+            for record in records
+        ) if not environment_blocked else False,
+        "pm_decision_required_before_normal_work": not environment_blocked,
+        "controller_visibility": "state_and_envelopes_only",
+        "sealed_body_reads_allowed": False,
+        "chat_history_progress_inference_allowed": False,
+        "source_paths": {
+            "transaction": project_relative(project_root, _role_recovery_latest_transaction_path(run_root)),
+            "state_load": project_relative(project_root, _role_recovery_state_path(run_root)),
+            "crew_ledger": project_relative(project_root, crew_path),
+            "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
+            "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
+            "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
+        },
+    }
+    write_json(report_path, report)
+    history = crew.get("role_recovery_history") if isinstance(crew.get("role_recovery_history"), list) else []
+    history.append(
+        {
+            "transaction_id": transaction["transaction_id"],
+            "report_path": project_relative(project_root, report_path),
+            "trigger_source": transaction["trigger_source"],
+            "target_role_keys": transaction["target_role_keys"],
+            "recovery_scope": report["recovery_scope"],
+            "all_six_roles_ready": all_six_ready,
+            "environment_blocked": environment_blocked,
+            "recorded_at": report["recorded_at"],
+        }
+    )
+    crew.update(
+        {
+            "schema_version": "flowpilot.crew_ledger.v1",
+            "run_id": run_state["run_id"],
+            "crew_generation": next_generation,
+            "role_slots": all_slots,
+            "latest_role_recovery_report": project_relative(project_root, report_path),
+            "role_recovery_history": history,
+            "updated_at": utc_now(),
+        }
+    )
+    write_json(crew_path, crew)
+    ready_records = [record for record in records if record["recovery_result"] != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT]
+    if ready_records:
+        _append_role_io_protocol_injections(
+            project_root,
+            run_root,
+            str(run_state["run_id"]),
+            ready_records,
+            default_lifecycle_phase="role_liveness_recovery",
+            resume_tick_id=str(transaction["transaction_id"]),
+            source_action="recover_role_agents",
+        )
+    crew_rehydration_path = run_root / "continuation" / "crew_rehydration_report.json"
+    if not environment_blocked:
+        write_json(
+            crew_rehydration_path,
+            {
+                "schema_version": "flowpilot.crew_rehydration_report.v1",
+                "run_id": run_state["run_id"],
+                "role_recovery_report_path": project_relative(project_root, report_path),
+                "resume_tick_id": str(transaction["transaction_id"]),
+                "background_agents_mode": _startup_answers_from_run(run_root).get("background_agents"),
+                "recorded_at": report["recorded_at"],
+                "all_six_roles_ready": all_six_ready,
+                "current_run_memory_complete": bool(report["memory_context_injected"]),
+                "missing_memory_role_keys": [
+                    record["role_key"]
+                    for record in records
+                    if record.get("role_memory_status") != "available"
+                ],
+                "pm_memory_rehydrated": any(
+                    slot.get("role_key") == "project_manager"
+                    and isinstance(slot.get("agent_id"), str)
+                    and bool(str(slot.get("agent_id")).strip())
+                    for slot in all_slots
+                ),
+                "liveness_preflight": {
+                    "checked_at": report["recorded_at"],
+                    "probe_mode": ROLE_AGENT_LIVENESS_PROBE_MODE,
+                    "liveness_probe_batch_id": str(transaction["transaction_id"]),
+                    "all_liveness_probes_started_before_wait": True,
+                    "roles_checked": list(transaction["target_role_keys"]),
+                    "replacement_role_keys": [
+                        record["role_key"]
+                        for record in records
+                        if record["recovery_result"] in {ROLE_AGENT_TARGETED_REPLACEMENT_RESULT, ROLE_AGENT_FULL_CREW_RECYCLE_RESULT}
+                    ],
+                    "wait_agent_timeout_treated_as_active": False,
+                    "decision": "roles_ready_after_role_recovery",
+                },
+                "role_records": records,
+                "controller_visibility": "state_and_envelopes_only",
+                "sealed_body_reads_allowed": False,
+                "chat_history_progress_inference_allowed": False,
+            },
+        )
+    run_state["flags"]["role_recovery_roles_restored"] = not environment_blocked
+    run_state["flags"]["role_recovery_report_written"] = True
+    run_state["flags"]["role_recovery_environment_blocked"] = environment_blocked
+    if environment_blocked:
+        _write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source="role_recovery_environment_blocked",
+            error_message="Role recovery failed after full crew recycle; environment or user action is required before route work can continue.",
+            action_type="role_recovery_environment_blocked",
+            payload={
+                "role_recovery_report_path": project_relative(project_root, report_path),
+                "transaction_id": transaction["transaction_id"],
+                "target_role_keys": transaction["target_role_keys"],
+            },
+        )
+        return
+    run_state["flags"]["resume_reentry_requested"] = True
+    run_state["flags"]["resume_state_loaded"] = True
+    run_state["flags"]["resume_roles_restored"] = True
+    run_state["flags"]["resume_role_agents_rehydrated"] = True
+    run_state["flags"]["crew_rehydration_report_written"] = True
+    run_state["flags"]["pm_resume_recovery_decision_returned"] = False
+    run_state["flags"]["role_recovery_requested"] = False
+
+
 def _resume_role_rehydration_action_extra(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     answers = _startup_answers_from_run(run_root)
     mode = answers.get("background_agents")
@@ -8075,6 +8746,13 @@ def _normalize_resume_role_agent_records(
     answers = _startup_answers_from_run(run_root)
     mode = answers.get("background_agents")
     contexts = {item["role_key"]: item for item in _resume_role_contexts(project_root, run_root, run_state)}
+    crew = read_json_if_exists(run_root / "crew_ledger.json")
+    current_generation = _current_crew_generation(crew)
+    existing_slots = {
+        str(slot.get("role_key")): slot
+        for slot in (crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else [])
+        if isinstance(slot, dict) and slot.get("role_key") in CREW_ROLE_KEYS
+    }
     resume_tick_id = _latest_resume_tick_id(run_state)
     if mode == "single-agent":
         return [
@@ -8134,6 +8812,9 @@ def _normalize_resume_role_agent_records(
         if role in records_by_role:
             raise RouterError(f"duplicate rehydrated role record for {role}")
         context = contexts[str(role)]
+        old_slot = existing_slots.get(str(role)) or {}
+        old_epoch = old_slot.get("role_binding_epoch")
+        role_epoch = int(old_epoch) if isinstance(old_epoch, int) else 0
         agent_id = raw.get("agent_id")
         if not isinstance(agent_id, str) or not agent_id.strip():
             raise RouterError(f"{role} requires a non-empty live resume agent_id")
@@ -8232,6 +8913,11 @@ def _normalize_resume_role_agent_records(
             "rehydrated_after_resume_tick_id": resume_tick_id,
             "rehydrated_after_resume_state_loaded": True,
             "spawned_after_resume_state_loaded": result == ROLE_AGENT_REHYDRATION_RESULT,
+            "crew_generation": current_generation,
+            "role_binding_epoch": role_epoch + (1 if result == ROLE_AGENT_REHYDRATION_RESULT or agent_id.strip() != str(old_slot.get("agent_id") or "") else 0),
+            "superseded_agent_ids": [
+                str(old_slot.get("agent_id"))
+            ] if result == ROLE_AGENT_REHYDRATION_RESULT and isinstance(old_slot.get("agent_id"), str) and old_slot.get("agent_id") != agent_id.strip() else [],
             "role_memory_status": memory_status,
             "memory_packet_path": context["memory_packet_path"],
             "memory_packet_hash": context["memory_packet_hash"],
@@ -8336,12 +9022,60 @@ def _write_resume_role_rehydration_report(
             "schema_version": "flowpilot.crew_ledger.v1",
             "run_id": run_state["run_id"],
             "role_slots": records,
+            "crew_generation": _current_crew_generation(crew),
             "latest_resume_rehydration_report": project_relative(project_root, report_path),
             "resume_rehydration_history": history,
             "updated_at": utc_now(),
         }
     )
     write_json(crew_path, crew)
+    transaction = _latest_role_recovery_transaction(run_root)
+    if transaction.get("schema_version") == ROLE_RECOVERY_TRANSACTION_SCHEMA:
+        role_recovery_report_path = _role_recovery_report_path(run_root)
+        role_recovery_report = {
+            "schema_version": ROLE_RECOVERY_REPORT_SCHEMA,
+            "run_id": run_state["run_id"],
+            "transaction_id": transaction.get("transaction_id"),
+            "trigger_source": transaction.get("trigger_source"),
+            "recovery_scope": transaction.get("recovery_scope"),
+            "target_role_keys": transaction.get("target_role_keys") or list(CREW_ROLE_KEYS),
+            "recorded_at": report["recorded_at"],
+            "priority": "preempt_normal_work",
+            "normal_work_suspended_until_report": True,
+            "all_six_roles_ready": report["all_six_roles_ready"],
+            "environment_blocked": False,
+            "crew_generation_after": crew.get("crew_generation"),
+            "role_records": [
+                {
+                    "role_key": record["role_key"],
+                    "old_agent_id": None,
+                    "agent_id": record.get("agent_id"),
+                    "recovery_result": ROLE_AGENT_OLD_RESTORE_RESULT
+                    if record.get("rehydration_result") == ROLE_AGENT_CONTINUITY_RESULT
+                    else ROLE_AGENT_TARGETED_REPLACEMENT_RESULT,
+                    "memory_context_injected": True,
+                    "packet_ownership_reconciled": True,
+                    "role_binding_epoch": record.get("role_binding_epoch"),
+                    "crew_generation": record.get("crew_generation"),
+                    "superseded_agent_output_quarantined": bool(record.get("superseded_agent_ids")),
+                }
+                for record in records
+            ],
+            "packet_ownership_reconciled": True,
+            "memory_context_injected": True,
+            "stale_generation_output_quarantined": True,
+            "pm_decision_required_before_normal_work": True,
+            "compatibility_crew_rehydration_report": project_relative(project_root, report_path),
+            "controller_visibility": "state_and_envelopes_only",
+            "sealed_body_reads_allowed": False,
+            "chat_history_progress_inference_allowed": False,
+        }
+        write_json(role_recovery_report_path, role_recovery_report)
+        run_state["flags"]["role_recovery_state_loaded"] = True
+        run_state["flags"]["role_recovery_roles_restored"] = True
+        run_state["flags"]["role_recovery_report_written"] = True
+        run_state["flags"]["role_recovery_environment_blocked"] = False
+        run_state["flags"]["role_recovery_requested"] = False
     _append_role_io_protocol_injections(
         project_root,
         run_root,
@@ -8714,6 +9448,11 @@ def _reset_resume_cycle_for_wakeup(run_state: dict[str, Any]) -> None:
         "pm_crew_rehydration_freshness_card_delivered",
         "pm_resume_decision_card_delivered",
         "pm_resume_recovery_decision_returned",
+        "role_recovery_requested",
+        "role_recovery_state_loaded",
+        "role_recovery_roles_restored",
+        "role_recovery_report_written",
+        "role_recovery_environment_blocked",
     ):
         run_state["flags"][flag] = False
 
@@ -13251,6 +13990,53 @@ def _packet_paths(project_root: Path, run_state: dict[str, Any], packet_id: str)
     return packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
 
 
+def _active_current_node_packet_records(project_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    run_root = project_root / str(run_state["run_root"])
+    frontier = _active_frontier(run_root)
+    index_path = _active_node_packet_index_path(run_root, frontier)
+    if not index_path.exists():
+        return []
+    return _load_packet_index(index_path, label="current-node batch")["packets"]
+
+
+def _current_node_batch_packet_record(
+    project_root: Path,
+    run_state: dict[str, Any],
+    *,
+    preferred_packet_id: str | None = None,
+) -> dict[str, Any] | None:
+    records = _active_current_node_packet_records(project_root, run_state)
+    if not records:
+        return None
+
+    candidate_ids: list[str] = []
+
+    def add_candidate(value: Any) -> None:
+        text = str(value or "").strip()
+        if text and text not in candidate_ids:
+            candidate_ids.append(text)
+
+    add_candidate(preferred_packet_id)
+    add_candidate(_latest_event_payload(run_state, "pm_registers_current_node_packet").get("packet_id"))
+    add_candidate(_latest_event_payload(run_state, "worker_current_node_result_returned").get("packet_id"))
+
+    run_root = project_root / str(run_state["run_root"])
+    frontier = _active_frontier(run_root)
+    add_candidate(frontier.get("active_packet_id"))
+    add_candidate(run_state.get("current_node_packet_id"))
+
+    for packet_id in candidate_ids:
+        matches = [record for record in records if str(record.get("packet_id") or "") == packet_id]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise RouterError(f"current-node batch has duplicate packet_id: {packet_id}")
+
+    if len(records) == 1:
+        return records[0]
+    return None
+
+
 def _packet_envelope_path(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> Path:
     raw_path = payload.get("packet_envelope_path")
     if raw_path:
@@ -13275,7 +14061,15 @@ def _result_envelope_path(project_root: Path, run_state: dict[str, Any], payload
 
 def _current_node_packet_context(project_root: Path, run_state: dict[str, Any]) -> tuple[dict[str, Any], Path]:
     payload = _latest_event_payload(run_state, "pm_registers_current_node_packet")
-    envelope_path = _packet_envelope_path(project_root, run_state, payload)
+    try:
+        envelope_path = _packet_envelope_path(project_root, run_state, payload)
+    except RouterError as exc:
+        if str(exc) != "current-node packet event requires packet_id or packet_envelope_path":
+            raise
+        record = _current_node_batch_packet_record(project_root, run_state)
+        if record is None:
+            raise
+        envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
     if not envelope_path.exists():
         raise RouterError(f"current-node packet envelope is missing: {envelope_path}")
     envelope = packet_runtime.load_envelope(project_root, envelope_path)
@@ -13283,11 +14077,9 @@ def _current_node_packet_context(project_root: Path, run_state: dict[str, Any]) 
 
 
 def _current_node_packet_records(project_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
-    run_root = project_root / str(run_state["run_root"])
-    frontier = _active_frontier(run_root)
-    index_path = _active_node_packet_index_path(run_root, frontier)
-    if index_path.exists():
-        return _load_packet_index(index_path, label="current-node batch")["packets"]
+    records = _active_current_node_packet_records(project_root, run_state)
+    if records:
+        return records
     envelope, _envelope_path = _current_node_packet_context(project_root, run_state)
     return [_packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type=str(envelope.get("packet_type") or "work_packet"))]
 
@@ -13367,7 +14159,19 @@ def _metadata_binding_ids(metadata: dict[str, Any], *keys: str) -> list[str]:
 
 def _current_node_result_context(project_root: Path, run_state: dict[str, Any]) -> tuple[dict[str, Any], Path]:
     payload = _latest_event_payload(run_state, "worker_current_node_result_returned")
-    result_path = _result_envelope_path(project_root, run_state, payload)
+    try:
+        result_path = _result_envelope_path(project_root, run_state, payload)
+    except RouterError as exc:
+        if str(exc) != "current-node result event requires packet_id or result_envelope_path":
+            raise
+        record = _current_node_batch_packet_record(
+            project_root,
+            run_state,
+            preferred_packet_id=str(payload.get("packet_id") or "") or None,
+        )
+        if record is None:
+            raise
+        result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
     if not result_path.exists():
         raise RouterError(f"current-node result envelope is missing: {result_path}")
     result = packet_runtime.load_envelope(project_root, result_path)
@@ -15236,6 +16040,141 @@ def _legal_next_action_ids(project_root: Path, run_root: Path, run_state: dict[s
 
 def _legal_route_action_allowed(project_root: Path, run_root: Path, run_state: dict[str, Any], action_id: str) -> bool:
     return str(action_id) in _legal_next_action_ids(project_root, run_root, run_state)
+
+
+def _first_incomplete_child_node_id(route: dict[str, Any], parent_node: dict[str, Any], completed_nodes: set[str]) -> str | None:
+    node_by_id = _route_node_map(route)
+    for child_id in _node_child_ids(parent_node):
+        child = node_by_id.get(str(child_id))
+        if child is None:
+            continue
+        if str(child_id) not in completed_nodes:
+            return str(child_id)
+    return None
+
+
+def _enter_next_child_node(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+) -> dict[str, Any]:
+    _require_legal_route_action(
+        project_root,
+        run_root,
+        run_state,
+        "enter_next_child",
+        "parent/module child entry",
+    )
+    frontier = _active_frontier(run_root)
+    route = _active_route_flow(run_root, frontier)
+    parent_node_id = str(frontier["active_node_id"])
+    if str(pending_action.get("parent_node_id") or "") != parent_node_id:
+        raise RouterError("parent/module child entry parent_node_id no longer matches active frontier")
+    parent_node = _active_node_definition_from_route(route, parent_node_id)
+    if _node_kind(parent_node) not in {"parent", "module"} and not _node_child_ids(parent_node):
+        raise RouterError("parent/module child entry requires active parent or module node")
+    plan_path = _active_node_acceptance_plan_path(run_root, frontier)
+    review_path = _active_node_root(run_root, frontier) / "reviews" / "node_acceptance_plan_review.json"
+    if not plan_path.exists() or not review_path.exists():
+        raise RouterError("parent/module child entry requires node acceptance plan and reviewer pass")
+    review = read_json(review_path)
+    if review.get("passed") is not True:
+        raise RouterError("parent/module child entry requires reviewer-passed node acceptance plan")
+    completed_nodes = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    next_child_id = _first_incomplete_child_node_id(route, parent_node, completed_nodes)
+    if not next_child_id:
+        raise RouterError("parent/module child entry requires an incomplete direct child")
+    if str(pending_action.get("next_child_node_id") or "") != next_child_id:
+        raise RouterError("parent/module child entry next_child_node_id no longer matches route order")
+    next_child = _active_node_definition_from_route(route, next_child_id)
+    _reset_flags(run_state, CURRENT_NODE_CYCLE_FLAGS)
+    frontier.update(
+        {
+            "schema_version": "flowpilot.execution_frontier.v1",
+            "run_id": run_state["run_id"],
+            "status": "current_node_loop",
+            "active_node_id": next_child_id,
+            "active_path": _route_active_path(route, next_child_id),
+            "active_leaf_node_id": next_child_id if _node_kind(next_child) in {"leaf", "repair"} else None,
+            "parent_entered_from_node_id": parent_node_id,
+            "updated_at": utc_now(),
+            "source": "controller_enters_next_child_node",
+        }
+    )
+    write_json(run_root / "execution_frontier.json", frontier)
+    _write_display_plan_from_route(
+        project_root,
+        run_root,
+        run_state,
+        route_id=str(frontier["active_route_id"]),
+        route_version=int(frontier.get("route_version") or 0),
+        route_payload=route,
+        active_node_id=next_child_id,
+        source_event="controller_enters_next_child_node",
+    )
+    return {
+        "parent_node_id": parent_node_id,
+        "next_child_node_id": next_child_id,
+        "next_child_node_kind": _node_kind(next_child),
+        "controller_may_advance_or_close_route": False,
+    }
+
+
+def _next_parent_child_entry_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if not flags.get("node_acceptance_plan_reviewer_passed"):
+        return None
+    try:
+        legal_context = _legal_next_action_context(project_root, run_root, run_state)
+    except RouterError:
+        return None
+    if "enter_next_child" not in {str(item) for item in legal_context.get("legal_action_ids", [])}:
+        return None
+    frontier = _active_frontier(run_root)
+    route = _active_route_flow(run_root, frontier)
+    parent_node_id = str(frontier["active_node_id"])
+    parent_node = _active_node_definition_from_route(route, parent_node_id)
+    completed_nodes = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    next_child_id = _first_incomplete_child_node_id(route, parent_node, completed_nodes)
+    if not next_child_id:
+        return None
+    plan_path = _active_node_acceptance_plan_path(run_root, frontier)
+    review_path = _active_node_root(run_root, frontier) / "reviews" / "node_acceptance_plan_review.json"
+    if not plan_path.exists() or not review_path.exists():
+        return None
+    return make_action(
+        action_type="enter_next_child_node",
+        actor="controller",
+        label="controller_enters_next_child_node",
+        summary=(
+            "Router-authorized transition from an accepted parent/module node "
+            "to its first incomplete direct child without dispatching parent work."
+        ),
+        allowed_reads=[
+            project_relative(project_root, run_root / "execution_frontier.json"),
+            project_relative(project_root, _active_route_path(run_root, frontier)),
+            project_relative(project_root, plan_path),
+            project_relative(project_root, review_path),
+            project_relative(project_root, _route_action_policy_registry_path(run_root)),
+        ],
+        allowed_writes=[
+            project_relative(project_root, run_root / "execution_frontier.json"),
+            project_relative(project_root, run_state_path(run_root)),
+            project_relative(project_root, _display_plan_path(run_root)),
+            project_relative(project_root, _route_state_snapshot_path(run_root)),
+            project_relative(project_root, _current_status_summary_path(run_root)),
+        ],
+        extra={
+            "postcondition": "frontier_active_node_entered_child",
+            "route_action_id": "enter_next_child",
+            "parent_node_id": parent_node_id,
+            "next_child_node_id": next_child_id,
+            "legal_next_actions": legal_context,
+            "controller_may_dispatch_parent_work": False,
+            "controller_may_advance_or_close_route": False,
+        },
+    )
 
 
 def _require_legal_route_action(
@@ -17578,6 +18517,109 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
             extra={
                 "postcondition": "resume_roles_restored",
                 **_resume_role_rehydration_action_extra(project_root, run_root, run_state),
+            },
+        )
+    return None
+
+
+def _next_role_recovery_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    flags = run_state["flags"]
+    if not flags.get("role_recovery_requested"):
+        return None
+    transaction = _latest_role_recovery_transaction(run_root)
+    if transaction.get("schema_version") != ROLE_RECOVERY_TRANSACTION_SCHEMA:
+        return None
+    trigger_source = str(transaction.get("trigger_source") or "")
+    if trigger_source in {"heartbeat_resume", "manual_resume"}:
+        return None
+    if not flags.get("role_recovery_state_loaded"):
+        return make_action(
+            action_type="load_role_recovery_state",
+            actor="controller",
+            label="controller_loads_role_recovery_state_before_normal_work",
+            summary="Controller loads current-run role recovery state before any normal route, packet, gate, wait, or control-blocker work continues.",
+            allowed_reads=[
+                ".flowpilot/current.json",
+                project_relative(project_root, _role_recovery_latest_transaction_path(run_root)),
+                project_relative(project_root, run_state_path(run_root)),
+                project_relative(project_root, run_root / "crew_ledger.json"),
+                project_relative(project_root, run_root / "crew_memory"),
+                project_relative(project_root, run_root / "execution_frontier.json"),
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+                project_relative(project_root, _route_history_index_path(run_root)),
+                project_relative(project_root, _pm_prior_path_context_path(run_root)),
+            ],
+            allowed_writes=[
+                project_relative(project_root, _role_recovery_state_path(run_root)),
+                project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
+                project_relative(project_root, run_state_path(run_root)),
+            ],
+            extra={
+                "postcondition": "role_recovery_state_loaded",
+                "role_recovery_transaction": transaction,
+                "controller_visibility": "state_and_envelopes_only",
+                "sealed_body_reads_allowed": False,
+                "chat_history_progress_inference_allowed": False,
+                "recovery_priority": "preempt_normal_work",
+                "normal_waits_allowed_before_recovery": False,
+            },
+        )
+    if not flags.get("role_recovery_roles_restored") and not flags.get("role_recovery_environment_blocked"):
+        return make_action(
+            action_type="recover_role_agents",
+            actor="controller",
+            label="host_recovers_role_agents_before_normal_work",
+            summary="Host restores or replaces the unhealthy background role, escalating to full crew recycle when targeted recovery cannot succeed.",
+            allowed_reads=[
+                project_relative(project_root, _role_recovery_latest_transaction_path(run_root)),
+                project_relative(project_root, _role_recovery_state_path(run_root)),
+                project_relative(project_root, run_root / "runtime_kit" / "cards" / "roles"),
+                project_relative(project_root, run_root / "crew_memory"),
+                project_relative(project_root, run_root / "crew_ledger.json"),
+                project_relative(project_root, run_root / "execution_frontier.json"),
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
+                project_relative(project_root, _route_history_index_path(run_root)),
+                project_relative(project_root, _pm_prior_path_context_path(run_root)),
+            ],
+            allowed_writes=[
+                project_relative(project_root, _role_recovery_report_path(run_root)),
+                project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+                project_relative(project_root, run_root / "crew_ledger.json"),
+                project_relative(project_root, run_state_path(run_root)),
+            ],
+            extra={
+                "postcondition": "role_recovery_roles_restored",
+                "role_recovery_transaction": transaction,
+                "target_role_keys": list(transaction.get("target_role_keys") or []),
+                "recovery_ladder": transaction.get("recovery_ladder") or [],
+                "payload_contract": _role_recovery_payload_contract(run_root, run_state, transaction),
+                "background_role_agent_model_policy": {
+                    "model_policy": BACKGROUND_ROLE_MODEL_POLICY,
+                    "reasoning_effort_policy": BACKGROUND_ROLE_REASONING_EFFORT_POLICY,
+                    "preferred_reasoning_effort": BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT,
+                    "inherit_foreground_model_allowed": False,
+                },
+                "role_recovery_request": [
+                    {
+                        **_resume_role_context(project_root, run_root, run_state, role),
+                        "recovery_transaction_id": transaction.get("transaction_id"),
+                        "recovery_scope": transaction.get("recovery_scope"),
+                        "old_agent_id": _active_agent_id_for_role(run_root, role),
+                        "restore_first_required": True,
+                        "packet_ownership_reconciliation_required": True,
+                        "superseded_agent_output_quarantine_required": True,
+                    }
+                    for role in (transaction.get("target_role_keys") or [])
+                    if role in CREW_ROLE_KEYS
+                ],
+                "full_crew_recycle_scope_if_escalated": list(CREW_ROLE_KEYS),
+                "controller_visibility": "state_and_envelopes_only",
+                "sealed_body_reads_allowed": False,
+                "chat_history_progress_inference_allowed": False,
+                "normal_waits_allowed_before_recovery": False,
+                "pm_decision_required_after_recovery": True,
             },
         )
     return None
@@ -20363,13 +21405,15 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         return pending_action
     if not _route_memory_ready(run_root, run_state):
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
-    action = _next_control_blocker_action(project_root, run_state, run_root)
+    action = _next_role_recovery_action(project_root, run_state, run_root)
+    if action is None:
+        action = _next_resume_action(project_root, run_state, run_root)
+    if action is None:
+        action = _next_control_blocker_action(project_root, run_state, run_root)
     if action is None:
         action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
     if action is None:
         action = _next_display_plan_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_resume_action(project_root, run_state, run_root)
     if action is None:
         action = _next_controller_boundary_confirmation_action(project_root, run_state, run_root)
     if action is None:
@@ -20408,6 +21452,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         action = _next_material_packet_action(project_root, run_state, run_root)
     if action is None:
         action = _next_research_packet_action(project_root, run_state, run_root)
+    if action is None:
+        action = _next_parent_child_entry_action(project_root, run_state, run_root)
     if action is None:
         action = _next_current_node_packet_action(project_root, run_state, run_root)
     if action is None:
@@ -20722,6 +21768,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "active_to_role": ",".join(sorted({str(record.get("to_role")) for record in records})),
             "active_request_mode": records[0].get("request_mode"),
         }
+    elif action_type == "enter_next_child_node":
+        result_extra.update(_enter_next_child_node(project_root, run_root, run_state, pending))
     elif action_type == "relay_current_node_packet":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
@@ -20774,6 +21822,12 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             _write_parallel_packet_batch_state(run_root, batch)
         run_state["flags"]["current_node_result_relayed_to_pm"] = True
         run_state["ledger_check_requested"] = False
+    elif action_type == "load_role_recovery_state":
+        _load_role_recovery_state(project_root, run_root, run_state)
+    elif action_type == "recover_role_agents":
+        if not run_state["flags"].get("role_recovery_state_loaded"):
+            raise RouterError("role recovery requires load_role_recovery_state first")
+        _write_role_recovery_report(project_root, run_root, run_state, payload or {})
     elif action_type == "load_resume_state":
         resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
         required_paths = {
@@ -20832,6 +21886,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["resume_state_loaded"] = True
         run_state["flags"]["resume_state_ambiguous"] = bool(resume_record["ambiguous_state_blocks_controller_execution"])
         run_state["flags"]["resume_roles_restored"] = False
+        if _latest_role_recovery_transaction(run_root).get("schema_version") == ROLE_RECOVERY_TRANSACTION_SCHEMA:
+            run_state["flags"]["role_recovery_state_loaded"] = True
     elif action_type == "rehydrate_role_agents":
         if not run_state["flags"].get("resume_state_loaded"):
             raise RouterError("resume role rehydration requires load_resume_state first")
@@ -20968,7 +22024,18 @@ def _record_external_event_unchecked(
     if event == "heartbeat_or_manual_resume_requested":
         tick = _append_heartbeat_tick(project_root, run_root, run_state, payload or {})
         _reset_resume_cycle_for_wakeup(run_state)
+        trigger_source = "manual_resume" if str((payload or {}).get("source") or "").startswith("manual") else "heartbeat_resume"
+        _open_role_recovery_transaction(
+            project_root,
+            run_root,
+            run_state,
+            trigger_source=trigger_source,
+            recovery_scope="all_six_sweep",
+            target_role_keys=list(CREW_ROLE_KEYS),
+            fault_payload=payload or {},
+        )
         run_state["flags"]["resume_reentry_requested"] = True
+        run_state["flags"]["role_recovery_requested"] = True
         run_state["pending_action"] = None
         record = {
             "event": event,
@@ -20982,6 +22049,61 @@ def _record_external_event_unchecked(
         _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
         save_run_state(run_root, run_state)
         return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
+    if event == "controller_reports_role_liveness_fault":
+        target_role_keys = _role_recovery_target_roles(
+            (payload or {}).get("target_role_keys")
+            or (payload or {}).get("role_key")
+            or (payload or {}).get("missing_role_key")
+        )
+        transaction = _open_role_recovery_transaction(
+            project_root,
+            run_root,
+            run_state,
+            trigger_source="mid_run_liveness_fault",
+            recovery_scope="targeted",
+            target_role_keys=target_role_keys,
+            fault_payload=payload or {},
+        )
+        for recovery_flag in (
+            "role_recovery_state_loaded",
+            "role_recovery_roles_restored",
+            "role_recovery_report_written",
+            "role_recovery_environment_blocked",
+            "controller_resume_card_delivered",
+            "pm_crew_rehydration_freshness_card_delivered",
+            "pm_resume_decision_card_delivered",
+            "pm_resume_recovery_decision_returned",
+        ):
+            run_state["flags"][recovery_flag] = False
+        run_state["flags"]["role_recovery_requested"] = True
+        run_state["pending_action"] = None
+        record = {
+            "event": event,
+            "summary": meta["summary"],
+            "payload": payload or {},
+            "role_recovery_transaction_id": transaction["transaction_id"],
+            "target_role_keys": target_role_keys,
+            "recorded_at": utc_now(),
+        }
+        run_state["events"].append(record)
+        append_history(
+            run_state,
+            event,
+            {
+                "role_recovery_transaction_id": transaction["transaction_id"],
+                "target_role_keys": target_role_keys,
+                "priority": "preempt_normal_work",
+            },
+        )
+        _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
+        _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
+        save_run_state(run_root, run_state)
+        return {
+            "ok": True,
+            "event": event,
+            "role_recovery_requested": True,
+            "role_recovery_transaction": transaction,
+        }
     pending_card_return = _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event)
     if pending_card_return is not None:
         raise RouterError(

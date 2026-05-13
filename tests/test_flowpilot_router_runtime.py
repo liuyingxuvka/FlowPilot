@@ -3775,6 +3775,29 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
         self.assertNotEqual(next_action["action_type"], "check_card_return_event")
 
+        duplicate_open = card_runtime.open_card(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role="human_like_reviewer",
+            agent_id=str(action["target_agent_id"]),
+        )
+        card_runtime.submit_card_ack(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role="human_like_reviewer",
+            agent_id=str(action["target_agent_id"]),
+            receipt_paths=[str(duplicate_open["read_receipt_path"])],
+        )
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        self.assertEqual(return_ledger["pending_returns"][0]["status"], "returned")
+        self.assertIsNone(
+            router._pending_card_return_blocker_for_event(
+                run_root,
+                run_root.name,
+                "pm_issues_material_and_capability_scan_packets",
+            )
+        )
+
     def test_initial_pm_system_cards_are_delivered_as_same_role_bundle(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
