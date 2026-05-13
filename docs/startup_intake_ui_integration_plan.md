@@ -34,6 +34,22 @@ mailbox, user intake packet, role slots, and Controller core.
 | 8 | Update prompt and install checks. | `SKILL.md`, `scripts/check_install.py`, tests | Local install self-check covers the UI startup path. |
 | 9 | Sync local install after tests. | install script / installed skill path | Local installed FlowPilot matches repository source. |
 
+## BOM Compatibility Repair Checklist
+
+This is a targeted follow-up to the startup intake UI integration. The issue is
+control-plane compatibility: Windows PowerShell 5 writes `Set-Content
+-Encoding UTF8` files with a UTF-8 BOM, while Python `json.loads` on text read
+with `encoding="utf-8"` rejects a leading BOM.
+
+| Step | Optimization point | Concrete change | Files expected | Done when |
+| --- | --- | --- | --- | --- |
+| 1 | Model the encoding boundary before production edits. | Add BOM fields and known-bad encoding states to the startup intake UI FlowGuard model. | `simulations/flowpilot_startup_intake_ui_model.py`, runner results | The safe plan passes and BOM hazard mutations fail. |
+| 2 | Fix UI source output. | Replace PowerShell `Set-Content -Encoding UTF8` for startup UI artifacts with a no-BOM UTF-8 writer. | `skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1` | Headless UI output starts with `{` for JSON files, not `EF BB BF`. |
+| 3 | Keep Router compatible with old UI artifacts. | Read JSON with a BOM-tolerant codec while still writing canonical no-BOM JSON. | `skills/flowpilot/assets/flowpilot_router.py` | A legacy BOM JSON result parses without manual byte editing. |
+| 4 | Avoid body marker leakage into PM packet text. | Strip a leading UTF-8 BOM when reading the sealed body into PM-bound packet body text. | `skills/flowpilot/assets/flowpilot_router.py` | Old BOM body files do not inject `\ufeff` into the PM packet text. |
+| 5 | Add focused regressions. | Test UI headless output bytes and Router BOM JSON fallback. | `tests/test_flowpilot_router_runtime.py` | Tests fail before the repair and pass after it. |
+| 6 | Sync installation and local git only. | Run install sync/check and commit scoped repair. | local install, local git | Installed FlowPilot matches repo; no GitHub push. |
+
 ## Hazard Checklist
 
 | Hazard id | Possible regression | FlowGuard/model expectation |
@@ -48,6 +64,11 @@ mailbox, user intake packet, role slots, and Controller core.
 | H8 | Reviewer startup or live review relies on chat text instead of UI result/receipt/envelope evidence. | Fail if reviewer pass does not reference UI record, receipt, and hash evidence. |
 | H9 | Existing old three-question payload path remains the only legal startup path. | Fail if UI-confirmed startup cannot advance through reused post-answer boot actions. |
 | H10 | Long-running model/test work overwrites peer-agent changes or unrelated dirty files. | Verification plan avoids broad formatters and only touches scoped files. |
+| H11 | UI JSON result/receipt/envelope is written with a UTF-8 BOM and Router rejects it before startup answers can be recorded. | Fail if confirmed UI artifacts are not Router-readable without a manual byte rewrite. |
+| H12 | Only one JSON artifact is fixed, while receipt or envelope still has BOM and fails later in validation. | Fail unless result, receipt, and envelope share the no-BOM/BOM-compatible contract. |
+| H13 | Router relies only on a UI source fix and cannot read older already-generated BOM artifacts. | Fail if legacy BOM JSON artifacts cannot be parsed by the Router compatibility reader. |
+| H14 | A UTF-8 BOM from the body file becomes a visible `\ufeff` character in the PM-bound packet text. | Fail if PM packet body construction can leak a leading encoding marker. |
+| H15 | Encoding repair normalizes or rewrites the user's request semantics instead of only handling the BOM marker. | Fail if body hash verification is bypassed or if body text becomes Controller-visible. |
 
 ## Model-First Acceptance
 

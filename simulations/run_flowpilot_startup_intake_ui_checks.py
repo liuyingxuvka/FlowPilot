@@ -19,6 +19,12 @@ HAZARD_EXPECTED_FAILURES = {
     "cancel_continues_to_run": "UI cancel still allowed startup side effects",
     "controller_body_leak": "Controller-visible startup state leaked user request body",
     "accepted_without_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
+    "ui_result_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
+    "ui_receipt_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
+    "ui_envelope_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
+    "legacy_bom_json_without_router_fallback": "Router startup intake JSON reader is not BOM-compatible",
+    "body_bom_leaks_to_pm_packet": "PM intake packet leaked leading UTF-8 BOM marker",
+    "bom_repair_bypasses_body_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
     "invalid_toggle_value": "background agent toggle did not map to a startup answer enum",
     "single_agent_starts_roles": "background agents started despite UI single-agent choice",
     "manual_creates_heartbeat": "heartbeat created despite UI manual continuation choice",
@@ -33,6 +39,9 @@ def _state_id(state: model.State) -> str:
         f"status={state.status}|router={state.router_loaded}|ui={state.ui_opened},{state.ui_result}|"
         f"artifacts={state.receipt_written},{state.envelope_written},{state.body_written},"
         f"{state.body_path_recorded},{state.body_hash_verified}|"
+        f"encoding={state.result_json_no_bom},{state.receipt_json_no_bom},{state.envelope_json_no_bom},"
+        f"router_sig={state.router_json_reader_bom_tolerant},verified={state.artifact_encoding_contract_verified},"
+        f"body_bom={state.body_has_leading_bom},pm_strip={state.pm_packet_body_bom_stripped}|"
         f"answers={state.startup_answers_recorded},{state.startup_answer_values_valid},"
         f"{state.background_agents},{state.scheduled_continuation},{state.display_surface}|"
         f"run={state.run_shell_created}|request_ref={state.user_request_ref_recorded}|"

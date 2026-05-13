@@ -7,6 +7,8 @@ Risk purpose:
 - Guard against Controller seeing user request body text, startup continuing
   after UI cancel, option toggles drifting from existing startup enums, and
   reviewer startup checks relying on chat history instead of UI records.
+- Guard against Windows PowerShell UTF-8 BOM artifacts breaking Router JSON
+  parsing or leaking an encoding marker into the PM-bound intake packet.
 - Run with `python simulations/run_flowpilot_startup_intake_ui_checks.py`
   before changing FlowPilot startup protocol code and after each meaningful
   startup integration edit.
@@ -32,6 +34,7 @@ REQUIRED_LABELS = (
     "ui_confirmed_with_all_artifacts",
     "ui_cancelled_before_run",
     "startup_answers_recorded_from_ui",
+    "ui_artifact_encoding_contract_verified",
     "run_shell_created_after_ui_confirm",
     "sealed_user_request_ref_recorded",
     "pm_intake_packet_created_from_sealed_body_ref",
@@ -41,7 +44,7 @@ REQUIRED_LABELS = (
     "startup_ui_path_complete",
 )
 
-MAX_SEQUENCE_LENGTH = 16
+MAX_SEQUENCE_LENGTH = 17
 
 
 @dataclass(frozen=True)
@@ -68,6 +71,13 @@ class State:
     body_path_recorded: bool = False
     body_text_in_controller_visible_state: bool = False
     controller_read_body: bool = False
+    result_json_no_bom: bool = False
+    receipt_json_no_bom: bool = False
+    envelope_json_no_bom: bool = False
+    router_json_reader_bom_tolerant: bool = False
+    artifact_encoding_contract_verified: bool = False
+    body_has_leading_bom: bool = False
+    pm_packet_body_bom_stripped: bool = False
 
     startup_answers_recorded: bool = False
     startup_answer_values_valid: bool = False
@@ -166,6 +176,11 @@ def _confirm_state(state: State, *, background: str, continuation: str, display:
         body_written=True,
         body_hash_verified=True,
         body_path_recorded=True,
+        result_json_no_bom=True,
+        receipt_json_no_bom=True,
+        envelope_json_no_bom=True,
+        router_json_reader_bom_tolerant=True,
+        pm_packet_body_bom_stripped=True,
         background_agents=background,
         scheduled_continuation=continuation,
         display_surface=display,
@@ -208,6 +223,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
     if state.ui_result == "confirmed" and not state.startup_answers_recorded:
+        if not state.artifact_encoding_contract_verified:
+            return (
+                Transition(
+                    "ui_artifact_encoding_contract_verified",
+                    replace(state, artifact_encoding_contract_verified=True),
+                ),
+            )
         return (
             Transition(
                 "startup_answers_recorded_from_ui",
@@ -325,8 +347,19 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         and state.body_written
         and state.body_path_recorded
         and state.body_hash_verified
+        and state.artifact_encoding_contract_verified
     ):
         return InvariantResult.fail("startup answers accepted without complete UI receipt/envelope/body hash evidence")
+    if state.ui_result == "confirmed" and not (
+        state.result_json_no_bom
+        and state.receipt_json_no_bom
+        and state.envelope_json_no_bom
+    ):
+        return InvariantResult.fail("startup UI JSON artifacts must be UTF-8 without BOM")
+    if state.ui_result == "confirmed" and not state.router_json_reader_bom_tolerant:
+        return InvariantResult.fail("Router startup intake JSON reader is not BOM-compatible")
+    if state.pm_intake_packet_created and state.body_has_leading_bom and not state.pm_packet_body_bom_stripped:
+        return InvariantResult.fail("PM intake packet leaked leading UTF-8 BOM marker")
     if state.startup_answers_recorded:
         if state.background_agents not in STARTUP_ENUMS["background_agents"]:
             return InvariantResult.fail("background agent toggle did not map to a startup answer enum")
@@ -381,6 +414,8 @@ def hazard_states() -> dict[str, State]:
         display="cockpit",
     )
     recorded = replace(base, startup_answers_recorded=True, startup_answer_values_valid=True)
+    encoded = replace(base, artifact_encoding_contract_verified=True)
+    recorded = replace(encoded, startup_answers_recorded=True, startup_answer_values_valid=True)
     return {
         "controller_before_ui_confirm": replace(initial_state(), controller_core_loaded=True),
         "cancel_continues_to_run": replace(
@@ -393,6 +428,17 @@ def hazard_states() -> dict[str, State]:
         ),
         "controller_body_leak": replace(recorded, body_text_in_controller_visible_state=True),
         "accepted_without_hash": replace(recorded, body_hash_verified=False),
+        "ui_result_json_bom_breaks_router": replace(recorded, result_json_no_bom=False),
+        "ui_receipt_json_bom_breaks_router": replace(recorded, receipt_json_no_bom=False),
+        "ui_envelope_json_bom_breaks_router": replace(recorded, envelope_json_no_bom=False),
+        "legacy_bom_json_without_router_fallback": replace(recorded, router_json_reader_bom_tolerant=False),
+        "body_bom_leaks_to_pm_packet": replace(
+            recorded,
+            pm_intake_packet_created=True,
+            body_has_leading_bom=True,
+            pm_packet_body_bom_stripped=False,
+        ),
+        "bom_repair_bypasses_body_hash": replace(recorded, body_hash_verified=False),
         "invalid_toggle_value": replace(recorded, background_agents="yes"),
         "single_agent_starts_roles": replace(
             recorded,
@@ -432,6 +478,7 @@ def approved_plan_state() -> State:
         ),
         startup_answers_recorded=True,
         startup_answer_values_valid=True,
+        artifact_encoding_contract_verified=True,
         run_shell_created=True,
         user_request_ref_recorded=True,
         pm_intake_packet_created=True,

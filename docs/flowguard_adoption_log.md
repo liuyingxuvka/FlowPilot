@@ -9050,3 +9050,77 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Future router scheduling changes should update both the parent-child lifecycle model and a concrete runtime next-node regression before changing production routing code.
+
+## 2026-05-13 - Startup Intake UI BOM Compatibility Repair
+
+### Trigger
+- A FlowPilot startup UI run exposed a control-plane compatibility issue:
+  Windows PowerShell-generated startup intake JSON could carry a UTF-8 BOM,
+  causing Router/Python JSON parsing to fail before the startup contract could
+  continue.
+
+### Model Files
+- simulations/flowpilot_startup_intake_ui_model.py
+- simulations/run_flowpilot_startup_intake_ui_checks.py
+- simulations/flowpilot_startup_intake_ui_results.json
+
+### Runtime Files
+- docs/startup_intake_ui_integration_plan.md
+- skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1
+- skills/flowpilot/assets/flowpilot_router.py
+- tests/test_flowpilot_router_runtime.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python simulations\run_flowpilot_startup_intake_ui_checks.py --json-out simulations\flowpilot_startup_intake_ui_results.json`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_startup_intake_ui_model.py simulations\run_flowpilot_startup_intake_ui_checks.py tests\test_flowpilot_router_runtime.py`.
+- OK: `powershell -STA -NoProfile -ExecutionPolicy Bypass -File skills\flowpilot\assets\ui\startup_intake\flowpilot_startup_intake.ps1 -SmokeTest`.
+- OK: headless UI output check confirmed result, receipt, envelope, and body files do not start with `EF BB BF`.
+- OK: focused startup intake BOM unittest selection passed.
+- OK: focused startup router tests passed.
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_card_runtime`.
+- OK: `python scripts\check_install.py`.
+- OK: `python simulations\run_flowpilot_startup_control_checks.py`.
+- OK: `python simulations\run_prompt_isolation_checks.py`.
+- OK: `python simulations\run_startup_pm_review_checks.py`.
+- OK: `python simulations\run_meta_checks.py`.
+- OK: `python simulations\run_capability_checks.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- The startup UI writes result, receipt, envelope, and body artifacts as UTF-8
+  without BOM.
+- Router `read_json` tolerates legacy BOM-prefixed JSON artifacts with
+  `utf-8-sig`.
+- PM intake packet construction strips a leading body BOM marker after byte hash
+  verification, preventing a visible `\ufeff` marker from entering the PM-bound
+  packet text.
+- UI body hashing no longer depends on host availability of PowerShell
+  `Get-FileHash`; it uses .NET SHA256.
+- The startup intake UI model now catches partial artifact fixes, legacy BOM
+  compatibility gaps, body BOM leakage, and hash-bypass regressions.
+
+### Counterexamples
+- ui_result_json_bom_breaks_router
+- ui_receipt_json_bom_breaks_router
+- ui_envelope_json_bom_breaks_router
+- legacy_bom_json_without_router_fallback
+- body_bom_leaks_to_pm_packet
+- bom_repair_bypasses_body_hash
+
+### Friction Points
+- The new UI regression exposed that `Get-FileHash` may be unavailable in some
+  PowerShell subprocess contexts, so hashing moved to .NET SHA256.
+- Other local agents had concurrent FlowPilot changes; this repair stayed
+  scoped and preserved their work.
+
+### Skipped Steps
+- No sealed startup request body was read by Controller.
+- No live `.flowpilot` route state was mutated.
+- No remote GitHub sync or push was performed, per user instruction.
+
+### Next Actions
+- Keep startup UI artifact encoding as an explicit control-plane contract
+  whenever the startup UI output schema changes.
