@@ -16,11 +16,12 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
     def test_actual_runtime_cards_have_router_return_instruction_coverage(self) -> None:
         cards = model.collect_card_facts(ROOT)
         router_facts = model.collect_router_facts(ROOT)
+        packet_prompts = model.collect_packet_prompt_facts(ROOT)
         state = model.State()
         steps = 0
 
         while state.status == "checking":
-            transitions = tuple(model.next_safe_states(state, cards, router_facts))
+            transitions = tuple(model.next_safe_states(state, cards, router_facts, packet_prompts))
             self.assertEqual(len(transitions), 1)
             state = transitions[0].state
             steps += 1
@@ -34,6 +35,11 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for name, card in model.hazard_cards().items():
             with self.subTest(name=name):
                 self.assertTrue(model.card_failures(card))
+
+    def test_hazard_packet_prompts_are_rejected(self) -> None:
+        for name, packet_prompts in model.hazard_packet_prompts().items():
+            with self.subTest(name=name):
+                self.assertTrue(model.packet_prompt_failures(packet_prompts))
 
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = [

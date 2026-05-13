@@ -1,8 +1,8 @@
 {
   "actual_card_graph": {
-    "active_card_count": 60,
-    "card_count": 65,
-    "checked_count": 65,
+    "active_card_count": 62,
+    "card_count": 67,
+    "checked_count": 67,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
@@ -33,7 +33,9 @@
       "card_instruction_checked:pm.parent_segment_decision",
       "card_instruction_checked:pm.phase_map",
       "card_instruction_checked:pm.prior_path_context",
+      "card_instruction_checked:pm.process_route_model_decision",
       "card_instruction_checked:pm.product_architecture",
+      "card_instruction_checked:pm.product_behavior_model_decision",
       "card_instruction_checked:pm.research_absorb_or_mutate",
       "card_instruction_checked:pm.research_package",
       "card_instruction_checked:pm.resume_decision",
@@ -83,13 +85,15 @@
       "packet_body_direct_ack_guidance": true,
       "packet_body_forbids_controller_ack": true,
       "packet_body_names_router_notice": true,
+      "packet_body_post_ack_execution_guidance": true,
       "packet_body_result_submission_guidance": true,
       "packet_runtime_direct_ack_identity_guidance": true,
+      "packet_runtime_post_ack_execution_guidance": true,
       "result_body_direct_completion_guidance": true,
       "stale_controller_ack_guidance": false
     },
     "router_sequence_manifest_errors": [],
-    "state_count": 67,
+    "state_count": 69,
     "status": "complete"
   },
   "hazard_checks": {
@@ -102,6 +106,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -114,15 +119,53 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
           "hazard.good: active router card is not manifest registered"
+        ]
+      },
+      "event_card_ack_replaces_disposition": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "pm.event.reviewer_report",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
+          "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": false,
+          "identity_boundary": true,
+          "kind": "event",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
+          "router_active": true,
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
+        },
+        "detected": true,
+        "failures": [
+          "pm.event.reviewer_report: event card does not bind post-ACK processing to Router-authorized event handling"
         ]
       },
       "missing_action_guidance": {
@@ -133,6 +176,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -145,11 +189,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -164,6 +211,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -176,11 +224,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -195,6 +246,7 @@
           "controller_router_notice_guidance": false,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -207,11 +259,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "controller",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -226,6 +281,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": false,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -238,11 +294,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -257,6 +316,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": false,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -269,11 +329,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -288,6 +351,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": false,
           "kind": "phase",
           "live_context_guidance": true,
@@ -300,11 +364,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -319,6 +386,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": false,
@@ -331,11 +399,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -350,6 +421,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -362,11 +434,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -382,6 +457,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -394,11 +470,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -413,6 +492,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -425,11 +505,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -444,6 +527,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -456,11 +540,14 @@
           "pm_history_context_guidance": false,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -475,6 +562,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -487,11 +575,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": false,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -506,6 +597,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -518,18 +610,21 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": false,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
           "worker_a.core: missing worker/officer PM Note soft guidance"
         ]
       },
-      "missing_required_return": {
+      "missing_post_ack_receipt_guidance": {
         "card": {
           "action_guidance": true,
           "card_id": "hazard.good",
@@ -537,6 +632,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -549,11 +645,49 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": false,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
+          "router_active": true,
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
+        },
+        "detected": true,
+        "failures": [
+          "hazard.good: missing ACK-is-receipt-only post-ACK guidance"
+        ]
+      },
+      "missing_required_return": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "hazard.good",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
+          "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": false,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -568,6 +702,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -580,15 +715,53 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
           "hazard.good: next_step_source does not name flowpilot_router.py"
+        ]
+      },
+      "role_card_starts_work_after_ack": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "pm.core",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
+          "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
+          "identity_boundary": true,
+          "kind": "role_core",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "role_card_post_ack_wait_guidance": false,
+          "router_active": true,
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
+        },
+        "detected": true,
+        "failures": [
+          "pm.core: role card does not say to wait for authorized task/event/packet work after ACK"
         ]
       },
       "stale_controller_ack_guidance": {
@@ -599,6 +772,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -611,15 +785,53 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": true,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": true
+          "stale_controller_ack_guidance": true,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
           "hazard.good: stale prompt still teaches Controller-routed ACK handling"
+        ]
+      },
+      "work_card_stops_after_ack": {
+        "card": {
+          "action_guidance": true,
+          "card_id": "pm.product_architecture",
+          "chat_body_suppression": true,
+          "controller_router_notice_guidance": true,
+          "direct_router_ack_guidance": true,
+          "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
+          "identity_boundary": true,
+          "kind": "phase",
+          "live_context_guidance": true,
+          "manifest_registered": true,
+          "next_step_mentions_router": true,
+          "next_step_source": true,
+          "output_contract_guidance": true,
+          "path": "cards/hazard/good.md",
+          "pm_control_blocker_repair_guidance": true,
+          "pm_history_context_guidance": true,
+          "pm_minimum_complexity_guidance": true,
+          "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
+          "recipient_role_matches": true,
+          "required_return": true,
+          "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
+          "router_active": true,
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": false
+        },
+        "detected": true,
+        "failures": [
+          "pm.product_architecture: work card does not say to continue assigned work after ACK"
         ]
       },
       "wrong_recipient_role": {
@@ -630,6 +842,7 @@
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
           "envelope_only_return": true,
+          "event_card_post_ack_authority_guidance": true,
           "identity_boundary": true,
           "kind": "phase",
           "live_context_guidance": true,
@@ -642,11 +855,14 @@
           "pm_history_context_guidance": true,
           "pm_minimum_complexity_guidance": true,
           "pm_note_guidance": true,
+          "post_ack_receipt_guidance": true,
           "recipient_role_matches": false,
           "required_return": true,
           "role": "project_manager",
+          "role_card_post_ack_wait_guidance": true,
           "router_active": true,
-          "stale_controller_ack_guidance": false
+          "stale_controller_ack_guidance": false,
+          "work_card_post_ack_execution_guidance": true
         },
         "detected": true,
         "failures": [
@@ -665,8 +881,10 @@
           "packet_body_direct_ack_guidance": true,
           "packet_body_forbids_controller_ack": false,
           "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": true,
           "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
           "result_body_direct_completion_guidance": true,
           "stale_controller_ack_guidance": false
         }
@@ -680,8 +898,27 @@
           "packet_body_direct_ack_guidance": false,
           "packet_body_forbids_controller_ack": true,
           "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": true,
           "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_packet_post_ack_execution_guidance": {
+        "detected": true,
+        "failures": [
+          "packet body template does not teach ACK-is-receipt-only post-ACK execution"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": false,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
           "result_body_direct_completion_guidance": true,
           "stale_controller_ack_guidance": false
         }
@@ -695,8 +932,10 @@
           "packet_body_direct_ack_guidance": true,
           "packet_body_forbids_controller_ack": true,
           "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": false,
           "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
           "result_body_direct_completion_guidance": true,
           "stale_controller_ack_guidance": false
         }
@@ -710,8 +949,10 @@
           "packet_body_direct_ack_guidance": true,
           "packet_body_forbids_controller_ack": true,
           "packet_body_names_router_notice": false,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": true,
           "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
           "result_body_direct_completion_guidance": true,
           "stale_controller_ack_guidance": false
         }
@@ -725,8 +966,27 @@
           "packet_body_direct_ack_guidance": true,
           "packet_body_forbids_controller_ack": true,
           "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": true,
           "packet_runtime_direct_ack_identity_guidance": false,
+          "packet_runtime_post_ack_execution_guidance": true,
+          "result_body_direct_completion_guidance": true,
+          "stale_controller_ack_guidance": false
+        }
+      },
+      "missing_packet_runtime_post_ack_execution_guidance": {
+        "detected": true,
+        "failures": [
+          "packet runtime identity boundary does not teach post-ACK packet execution"
+        ],
+        "packet_prompts": {
+          "packet_body_direct_ack_guidance": true,
+          "packet_body_forbids_controller_ack": true,
+          "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
+          "packet_body_result_submission_guidance": true,
+          "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": false,
           "result_body_direct_completion_guidance": true,
           "stale_controller_ack_guidance": false
         }
@@ -740,8 +1000,10 @@
           "packet_body_direct_ack_guidance": true,
           "packet_body_forbids_controller_ack": true,
           "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": true,
           "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
           "result_body_direct_completion_guidance": false,
           "stale_controller_ack_guidance": false
         }
@@ -755,8 +1017,10 @@
           "packet_body_direct_ack_guidance": true,
           "packet_body_forbids_controller_ack": true,
           "packet_body_names_router_notice": true,
+          "packet_body_post_ack_execution_guidance": true,
           "packet_body_result_submission_guidance": true,
           "packet_runtime_direct_ack_identity_guidance": true,
+          "packet_runtime_post_ack_execution_guidance": true,
           "result_body_direct_completion_guidance": true,
           "stale_controller_ack_guidance": true
         }

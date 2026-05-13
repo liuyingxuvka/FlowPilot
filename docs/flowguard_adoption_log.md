@@ -8471,3 +8471,50 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future role-output additions in runtime_kit/contracts/contract_index.json with runtime_channel=role_output_runtime and run role-output runtime checks before release.
+
+
+## ack-after-receipt-guidance-20260513 - Strengthen FlowPilot post-ACK card and packet work guidance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Changing ACK receipt semantics and runtime prompts affects stateful FlowPilot protocol flow, role authority, packet handoff, and Router waits.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T05:03:50+00:00
+- Ended: 2026-05-13T05:03:50+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/card_instruction_coverage_model.py
+- simulations/flowpilot_event_contract_model.py
+- simulations/flowpilot_command_refinement_model.py
+
+### Commands
+- OK (0.000s): `python -m flowguard schema-version`
+- OK (0.000s): `python simulations/run_card_instruction_coverage_checks.py --json-out .flowpilot/tmp/ack_after_receipt_post_worker_guidance_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_card_instruction_coverage -v`
+- OK (0.000s): `python simulations/run_flowpilot_event_contract_checks.py --json-out .flowpilot/tmp/ack_after_receipt_event_contract_results.json`
+- OK (0.000s): `python simulations/run_command_refinement_checks.py --json-out .flowpilot/tmp/ack_after_receipt_command_refinement_results.json`
+- OK (0.000s): `python scripts/check_runtime_card_capability_reminders.py`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+- OK (0.000s): `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- Card instruction coverage now models post-ACK receipt semantics separately for role cards, work/system cards, event cards, packet bodies, and packet runtime identity boundaries.
+- Known-bad hazards for role-card task start, work-card stop after ACK, event-card ACK-as-disposition, and packet ACK-without-execution are rejected.
+- Runtime cards now carry type-specific post_ack identity text, and Router card check-in text states that ACK is receipt only, not completion.
+- The first targeted unittest run exposed worker-packet dispatch guidance drift on three PM cards; those cards were repaired and final tests passed.
+
+### Counterexamples
+- ack_consumed_semantic_wait_lost remains detected by the event-contract model.
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Full meta/capability graph reruns were skipped because this change did not alter project-control transitions or capability routing; targeted card, packet, ACK-event, bundle, install, and audit checks passed.
+
+### Next Actions
+- Keep future card or packet prompt changes under card_instruction_coverage_model hazards before editing production prompts.

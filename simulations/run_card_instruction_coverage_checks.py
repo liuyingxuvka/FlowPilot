@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from dataclasses import asdict
 from pathlib import Path
@@ -82,7 +83,15 @@ def check_hazards() -> dict[str, object]:
     return {"ok": ok, "hazards": results, "packet_prompt_hazards": packet_results}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--json-out",
+        default=str(RESULTS_PATH),
+        help="Write results to this JSON path. Defaults to simulations/card_instruction_coverage_results.json.",
+    )
+    args = parser.parse_args(argv)
+
     actual = explore_actual_cards()
     hazards = check_hazards()
     result = {
@@ -90,7 +99,11 @@ def main() -> int:
         "actual_card_graph": actual,
         "hazard_checks": hazards,
     }
-    RESULTS_PATH.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    results_path = Path(args.json_out)
+    if not results_path.is_absolute():
+        results_path = PROJECT_ROOT / results_path
+    results_path.parent.mkdir(parents=True, exist_ok=True)
+    results_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["ok"] else 1
 

@@ -2289,6 +2289,16 @@ def _card_checkin_instruction(
         "--agent-id",
         agent_id or "<agent-id>",
     ]
+    post_ack_policy = (
+        "ACK is receipt only; ACK is not completion. After ACK, follow the card body's "
+        "post-ACK rule: role cards wait for authorized phase, event, work packet, or "
+        "output-contract authority; work cards continue assigned work; event cards use "
+        "Router-authorized event handling."
+    )
+    bundle_post_ack_policy = (
+        "Bundle ACK is receipt only and never a combined role output; after the bundle ACK, "
+        "apply per-member post-ACK rules."
+    )
     return {
         "schema_version": "flowpilot.card_checkin_instruction.v1",
         "required": True,
@@ -2300,12 +2310,15 @@ def _card_checkin_instruction(
         "ack_submission_mode": "direct_to_router",
         "controller_ack_handoff_allowed": False,
         "expected_outcome": "runtime writes the read receipt and direct Router ACK envelope",
+        "post_ack_policy": post_ack_policy,
+        "bundle_post_ack_policy": bundle_post_ack_policy if bundle else None,
         "do_not_handwrite_ack": True,
         "do_not_record_as_external_event": True,
         "plain_instruction": (
             f"Run {command_name} from the project root to open this card through the runtime and submit "
             f"{card_return_event} directly to Router. Do not hand-write the ACK, do not give the ACK to "
-            "Controller, and do not record it as a normal external event."
+            "Controller, and do not record it as a normal external event. "
+            f"{bundle_post_ack_policy if bundle else post_ack_policy}"
         ),
     }
 

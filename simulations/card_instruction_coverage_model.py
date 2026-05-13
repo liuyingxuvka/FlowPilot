@@ -91,6 +91,45 @@ PACKET_RUNTIME_DIRECT_ACK_TERMS = (
     "packet ack and packet completion report go directly to router",
     "controller_next_action_notice.json",
 )
+ROUTER_CHECKIN_POST_ACK_TERMS = (
+    "ack is receipt only",
+    "ack is not completion",
+    "post-ack rule",
+)
+ROUTER_BUNDLE_POST_ACK_TERMS = (
+    "bundle ack is receipt only",
+    "per-member post-ack rules",
+)
+POST_ACK_RECEIPT_TERMS = (
+    "ack is receipt only",
+    "ack is not completion",
+)
+ROLE_CARD_POST_ACK_TERMS = (
+    "after role-card ack",
+    "wait for a phase card",
+    "event card",
+    "work packet",
+    "router-authorized output contract",
+)
+WORK_CARD_POST_ACK_TERMS = (
+    "after work-card ack",
+    "continue the work assigned by this card",
+    "formal output or blocker",
+    "router-directed runtime path",
+)
+EVENT_CARD_POST_ACK_TERMS = (
+    "after event-card ack",
+    "process this event card",
+    "router-authorized output event",
+    "protocol blocker",
+)
+PACKET_POST_ACK_EXECUTION_TERMS = (
+    "packet ack is receipt only",
+    "ack is not completion",
+    "after ack",
+    "execute this packet body",
+    "sealed result",
+)
 PM_HISTORY_CONTEXT_REQUIRED_CARD_IDS = frozenset(
     {
         "pm.prior_path_context",
@@ -204,6 +243,10 @@ class CardFacts:
     next_step_source: bool
     next_step_mentions_router: bool
     direct_router_ack_guidance: bool
+    post_ack_receipt_guidance: bool
+    role_card_post_ack_wait_guidance: bool
+    work_card_post_ack_execution_guidance: bool
+    event_card_post_ack_authority_guidance: bool
     stale_controller_ack_guidance: bool
     controller_router_notice_guidance: bool
     live_context_guidance: bool
@@ -222,6 +265,8 @@ class RouterFacts:
     external_card_flag_errors: tuple[str, ...]
     sequence_manifest_errors: tuple[str, ...]
     live_context_errors: tuple[str, ...]
+    card_checkin_post_ack_guidance: bool
+    bundle_checkin_post_ack_guidance: bool
     orphan_card_files: tuple[str, ...]
 
 
@@ -231,8 +276,10 @@ class PacketPromptFacts:
     packet_body_result_submission_guidance: bool
     packet_body_forbids_controller_ack: bool
     packet_body_names_router_notice: bool
+    packet_body_post_ack_execution_guidance: bool
     result_body_direct_completion_guidance: bool
     packet_runtime_direct_ack_identity_guidance: bool
+    packet_runtime_post_ack_execution_guidance: bool
     stale_controller_ack_guidance: bool
 
 
@@ -396,6 +443,65 @@ def _has_direct_router_ack_guidance(identity: dict[str, str], text: str) -> bool
     return all(term in lower for term in DIRECT_ROUTER_ACK_REQUIRED_TERMS)
 
 
+def _post_ack_text(identity: dict[str, str], text: str) -> str:
+    return (
+        f"{identity.get('required_return', '')}\n"
+        f"{identity.get('post_ack', '')}\n"
+        f"{identity.get(NEXT_STEP_SOURCE_FIELD, '')}\n"
+        f"{text}"
+    )
+
+
+def _has_post_ack_receipt_guidance(identity: dict[str, str], text: str) -> bool:
+    return _has_terms(_post_ack_text(identity, text), POST_ACK_RECEIPT_TERMS)
+
+
+def _card_post_ack_profile(card_id: str, kind: str, path: str) -> str:
+    del card_id
+    normalized_path = path.replace("\\", "/")
+    if kind == "role_core":
+        return "role"
+    if kind == "event" or normalized_path.startswith("cards/events/"):
+        return "event"
+    return "work"
+
+
+def _has_role_card_post_ack_wait_guidance(
+    card_id: str,
+    kind: str,
+    path: str,
+    identity: dict[str, str],
+    text: str,
+) -> bool:
+    if _card_post_ack_profile(card_id, kind, path) != "role":
+        return True
+    return _has_terms(_post_ack_text(identity, text), ROLE_CARD_POST_ACK_TERMS)
+
+
+def _has_work_card_post_ack_execution_guidance(
+    card_id: str,
+    kind: str,
+    path: str,
+    identity: dict[str, str],
+    text: str,
+) -> bool:
+    if _card_post_ack_profile(card_id, kind, path) != "work":
+        return True
+    return _has_terms(_post_ack_text(identity, text), WORK_CARD_POST_ACK_TERMS)
+
+
+def _has_event_card_post_ack_authority_guidance(
+    card_id: str,
+    kind: str,
+    path: str,
+    identity: dict[str, str],
+    text: str,
+) -> bool:
+    if _card_post_ack_profile(card_id, kind, path) != "event":
+        return True
+    return _has_terms(_post_ack_text(identity, text), EVENT_CARD_POST_ACK_TERMS)
+
+
 def _has_stale_controller_ack_guidance(text: str) -> bool:
     if any(pattern.search(text) for pattern in STALE_CONTROLLER_ACK_PATTERNS):
         return True
@@ -495,6 +601,8 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
         external_card_flag_errors=tuple(external_card_flag_errors),
         sequence_manifest_errors=tuple(sequence_manifest_errors),
         live_context_errors=tuple(live_context_errors),
+        card_checkin_post_ack_guidance=_has_terms(router_source, ROUTER_CHECKIN_POST_ACK_TERMS),
+        bundle_checkin_post_ack_guidance=_has_terms(router_source, ROUTER_BUNDLE_POST_ACK_TERMS),
         orphan_card_files=tuple(orphan_files),
     )
 
@@ -528,6 +636,28 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 direct_router_ack_guidance=_has_direct_router_ack_guidance(identity, text),
+                post_ack_receipt_guidance=_has_post_ack_receipt_guidance(identity, text),
+                role_card_post_ack_wait_guidance=_has_role_card_post_ack_wait_guidance(
+                    card_id,
+                    str(entry.get("kind", "")),
+                    path,
+                    identity,
+                    text,
+                ),
+                work_card_post_ack_execution_guidance=_has_work_card_post_ack_execution_guidance(
+                    card_id,
+                    str(entry.get("kind", "")),
+                    path,
+                    identity,
+                    text,
+                ),
+                event_card_post_ack_authority_guidance=_has_event_card_post_ack_authority_guidance(
+                    card_id,
+                    str(entry.get("kind", "")),
+                    path,
+                    identity,
+                    text,
+                ),
                 stale_controller_ack_guidance=_has_stale_controller_ack_guidance(text),
                 controller_router_notice_guidance=_has_controller_router_notice_guidance(expected_role, text),
                 live_context_guidance=_has_live_context_guidance(identity, text),
@@ -564,6 +694,28 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
                 next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 direct_router_ack_guidance=_has_direct_router_ack_guidance(identity, text),
+                post_ack_receipt_guidance=_has_post_ack_receipt_guidance(identity, text),
+                role_card_post_ack_wait_guidance=_has_role_card_post_ack_wait_guidance(
+                    f"unmanifested:{rel}",
+                    "unmanifested",
+                    rel,
+                    identity,
+                    text,
+                ),
+                work_card_post_ack_execution_guidance=_has_work_card_post_ack_execution_guidance(
+                    f"unmanifested:{rel}",
+                    "unmanifested",
+                    rel,
+                    identity,
+                    text,
+                ),
+                event_card_post_ack_authority_guidance=_has_event_card_post_ack_authority_guidance(
+                    f"unmanifested:{rel}",
+                    "unmanifested",
+                    rel,
+                    identity,
+                    text,
+                ),
                 stale_controller_ack_guidance=_has_stale_controller_ack_guidance(text),
                 controller_router_notice_guidance=_has_controller_router_notice_guidance(role, text),
                 live_context_guidance=_has_live_context_guidance(identity, text),
@@ -596,8 +748,10 @@ def collect_packet_prompt_facts(project_root: Path) -> PacketPromptFacts:
         packet_body_forbids_controller_ack="do not send packet acks or packet completion reports to controller"
         in normalized_packet_body,
         packet_body_names_router_notice="controller_next_action_notice.json" in packet_body,
+        packet_body_post_ack_execution_guidance=_has_terms(packet_body, PACKET_POST_ACK_EXECUTION_TERMS),
         result_body_direct_completion_guidance=_has_terms(result_body, RESULT_BODY_DIRECT_COMPLETION_TERMS),
         packet_runtime_direct_ack_identity_guidance=_has_terms(packet_runtime, PACKET_RUNTIME_DIRECT_ACK_TERMS),
+        packet_runtime_post_ack_execution_guidance=_has_terms(packet_runtime, PACKET_POST_ACK_EXECUTION_TERMS),
         stale_controller_ack_guidance=_has_stale_controller_ack_guidance(combined),
     )
 
@@ -622,6 +776,14 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: next_step_source does not name flowpilot_router.py")
     if not card.direct_router_ack_guidance:
         failures.append(f"{card.card_id}: missing direct Router system-card ACK guidance")
+    if not card.post_ack_receipt_guidance:
+        failures.append(f"{card.card_id}: missing ACK-is-receipt-only post-ACK guidance")
+    if not card.role_card_post_ack_wait_guidance:
+        failures.append(f"{card.card_id}: role card does not say to wait for authorized task/event/packet work after ACK")
+    if not card.work_card_post_ack_execution_guidance:
+        failures.append(f"{card.card_id}: work card does not say to continue assigned work after ACK")
+    if not card.event_card_post_ack_authority_guidance:
+        failures.append(f"{card.card_id}: event card does not bind post-ACK processing to Router-authorized event handling")
     if card.stale_controller_ack_guidance:
         failures.append(f"{card.card_id}: stale prompt still teaches Controller-routed ACK handling")
     if not card.controller_router_notice_guidance:
@@ -653,10 +815,14 @@ def packet_prompt_failures(packet_prompts: PacketPromptFacts) -> tuple[str, ...]
         failures.append("packet body template does not forbid Controller-routed packet ACK/completion")
     if not packet_prompts.packet_body_names_router_notice:
         failures.append("packet body template does not name controller_next_action_notice.json")
+    if not packet_prompts.packet_body_post_ack_execution_guidance:
+        failures.append("packet body template does not teach ACK-is-receipt-only post-ACK execution")
     if not packet_prompts.result_body_direct_completion_guidance:
         failures.append("result body template does not teach active-holder completion direct to Router")
     if not packet_prompts.packet_runtime_direct_ack_identity_guidance:
         failures.append("packet runtime identity boundary does not include direct Router ACK rule")
+    if not packet_prompts.packet_runtime_post_ack_execution_guidance:
+        failures.append("packet runtime identity boundary does not teach post-ACK packet execution")
     if packet_prompts.stale_controller_ack_guidance:
         failures.append("packet prompt surface still teaches Controller-routed ACK handling")
     return tuple(failures)
@@ -671,11 +837,16 @@ def next_safe_states(
     if state.status != "checking":
         return
     if state.index == 0:
-        router_failures = tuple(
+        router_failures_list = list(
             router_facts.sequence_manifest_errors
             + router_facts.external_card_flag_errors
             + router_facts.live_context_errors
         )
+        if not router_facts.card_checkin_post_ack_guidance:
+            router_failures_list.append("router card check-in instruction lacks ACK-is-receipt-only post-ACK guidance")
+        if not router_facts.bundle_checkin_post_ack_guidance:
+            router_failures_list.append("router bundle check-in instruction lacks per-member post-ACK guidance")
+        router_failures = tuple(router_failures_list)
         if router_failures:
             yield Transition("router_instruction_contract_failed", replace(state, status="blocked", failures=router_failures))
             return
@@ -742,6 +913,10 @@ def hazard_cards() -> dict[str, CardFacts]:
         next_step_source=True,
         next_step_mentions_router=True,
         direct_router_ack_guidance=True,
+        post_ack_receipt_guidance=True,
+        role_card_post_ack_wait_guidance=True,
+        work_card_post_ack_execution_guidance=True,
+        event_card_post_ack_authority_guidance=True,
         stale_controller_ack_guidance=False,
         controller_router_notice_guidance=True,
         live_context_guidance=True,
@@ -761,6 +936,25 @@ def hazard_cards() -> dict[str, CardFacts]:
         "missing_next_step_source": replace(good, next_step_source=False, next_step_mentions_router=False),
         "next_step_without_router": replace(good, next_step_mentions_router=False),
         "missing_direct_router_ack_guidance": replace(good, direct_router_ack_guidance=False),
+        "missing_post_ack_receipt_guidance": replace(good, post_ack_receipt_guidance=False),
+        "role_card_starts_work_after_ack": replace(
+            good,
+            card_id="pm.core",
+            kind="role_core",
+            role_card_post_ack_wait_guidance=False,
+        ),
+        "work_card_stops_after_ack": replace(
+            good,
+            card_id="pm.product_architecture",
+            kind="phase",
+            work_card_post_ack_execution_guidance=False,
+        ),
+        "event_card_ack_replaces_disposition": replace(
+            good,
+            card_id="pm.event.reviewer_report",
+            kind="event",
+            event_card_post_ack_authority_guidance=False,
+        ),
         "stale_controller_ack_guidance": replace(good, stale_controller_ack_guidance=True),
         "missing_controller_router_notice_guidance": replace(
             good,
@@ -805,8 +999,10 @@ def hazard_packet_prompts() -> dict[str, PacketPromptFacts]:
         packet_body_result_submission_guidance=True,
         packet_body_forbids_controller_ack=True,
         packet_body_names_router_notice=True,
+        packet_body_post_ack_execution_guidance=True,
         result_body_direct_completion_guidance=True,
         packet_runtime_direct_ack_identity_guidance=True,
+        packet_runtime_post_ack_execution_guidance=True,
         stale_controller_ack_guidance=False,
     )
     return {
@@ -814,10 +1010,15 @@ def hazard_packet_prompts() -> dict[str, PacketPromptFacts]:
         "missing_packet_result_submission_guidance": replace(good, packet_body_result_submission_guidance=False),
         "missing_packet_controller_ack_forbid": replace(good, packet_body_forbids_controller_ack=False),
         "missing_packet_router_notice_guidance": replace(good, packet_body_names_router_notice=False),
+        "missing_packet_post_ack_execution_guidance": replace(good, packet_body_post_ack_execution_guidance=False),
         "missing_result_direct_completion_guidance": replace(good, result_body_direct_completion_guidance=False),
         "missing_packet_runtime_direct_ack_identity_guidance": replace(
             good,
             packet_runtime_direct_ack_identity_guidance=False,
+        ),
+        "missing_packet_runtime_post_ack_execution_guidance": replace(
+            good,
+            packet_runtime_post_ack_execution_guidance=False,
         ),
         "stale_packet_controller_ack_guidance": replace(good, stale_controller_ack_guidance=True),
     }
