@@ -2514,7 +2514,7 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def read_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise RouterError(f"expected JSON object: {path}")
     return payload
@@ -7950,7 +7950,7 @@ def _build_user_intake_body_from_ref(project_root: Path, user_request_ref: dict[
         f"{json.dumps(metadata, indent=2, sort_keys=True)}\n"
         "```\n\n"
         "## User Work Request\n\n"
-        f"{body_path.read_text(encoding='utf-8').strip()}\n"
+        f"{body_path.read_text(encoding='utf-8-sig').strip()}\n"
     )
 
 
@@ -13050,6 +13050,30 @@ def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> 
     return effective
 
 
+def _effective_child_ids(node: dict[str, Any], nodes_by_id: dict[str, dict[str, Any]]) -> list[str]:
+    return [child_id for child_id in _node_child_ids(node) if child_id in nodes_by_id]
+
+
+def _ready_parent_scope_after_child_completion(
+    nodes_by_id: dict[str, dict[str, Any]],
+    completed: set[str],
+    current_node_id: str,
+) -> str | None:
+    current = nodes_by_id.get(str(current_node_id))
+    cursor = str(current.get("parent_node_id") or "") if current else ""
+    seen: set[str] = set()
+    while cursor and cursor in nodes_by_id and cursor not in seen:
+        seen.add(cursor)
+        node = nodes_by_id[cursor]
+        if not _is_route_root_node(node) and cursor not in completed and _node_kind(node) != "leaf":
+            child_ids = _effective_child_ids(node, nodes_by_id)
+            if child_ids and set(child_ids).issubset(completed):
+                return cursor
+        parent_id = node.get("parent_node_id")
+        cursor = str(parent_id) if parent_id else ""
+    return None
+
+
 def _next_effective_node_id(route: dict[str, Any], mutations: dict[str, Any], completed_nodes: list[str], current_node_id: str) -> str | None:
     effective_nodes = _effective_route_nodes(route, mutations)
     effective_ids = [str(node.get("node_id") or node.get("id")) for node in effective_nodes]
@@ -13061,11 +13085,14 @@ def _next_effective_node_id(route: dict[str, Any], mutations: dict[str, Any], co
         start = 0
     completed = set(completed_nodes)
     nodes_by_id = {str(node.get("node_id") or node.get("id")): node for node in effective_nodes}
+    ready_parent_id = _ready_parent_scope_after_child_completion(nodes_by_id, completed, current_node_id)
+    if ready_parent_id:
+        return ready_parent_id
     for node_id in effective_ids[start:] + effective_ids[:start]:
         if node_id not in completed:
             node = nodes_by_id.get(node_id) or {}
             if _node_kind(node) != "leaf":
-                child_ids = set(_node_child_ids(node))
+                child_ids = set(_effective_child_ids(node, nodes_by_id))
                 if child_ids and child_ids.issubset(completed):
                     return node_id
                 continue

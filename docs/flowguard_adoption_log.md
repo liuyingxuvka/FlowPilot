@@ -8982,3 +8982,71 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future startup intake changes aligned across the UI artifact schema, router payload validation, PM sealed packet creation, reviewer startup/live review card wording, and the FlowGuard startup-intake model.
+
+## 2026-05-13 - Parent Review Router Gate Repair
+
+### Trigger
+- A live FlowPilot run exposed a model miss: after the last child leaf in a
+  module completed, the router advanced into the next sibling module's leaf
+  before local parent backward replay and PM segment disposition ran.
+
+### Model Files
+- simulations/flowpilot_parent_child_lifecycle_model.py
+- simulations/run_flowpilot_parent_child_lifecycle_checks.py
+- simulations/flowpilot_parent_child_lifecycle_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/flowpilot_user_flow_diagram.py
+- scripts/flowpilot_user_flow_diagram.py
+- tests/test_flowpilot_router_runtime.py
+- tests/test_flowpilot_user_flow_diagram.py
+- docs/flowpilot_parent_review_router_repair_plan.md
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python simulations\run_flowpilot_parent_child_lifecycle_checks.py --json`.
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "next_effective_node_returns_parent_before_sibling_module_after_last_child"` -> 1 passed.
+- OK: `python -m pytest tests\test_flowpilot_user_flow_diagram.py -q -k "hidden_active_leaf_highlights_visible_parent_without_label_detail"` -> 1 passed.
+- OK: `python simulations\run_flowpilot_parent_child_lifecycle_checks.py`.
+- OK: `python simulations\run_flowpilot_legal_next_action_checks.py`.
+- OK: `python simulations\run_flowpilot_model_driven_recursive_route_checks.py`.
+- OK: `python simulations\run_flowpilot_route_display_checks.py`.
+- OK: `python -m pytest tests\test_flowpilot_user_flow_diagram.py -q` -> 18 passed.
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "next_effective_node_returns_parent_before_sibling_module_after_last_child or parent_backward_targets_require_current_child_completion_ledgers or parent_node_requires_backward_replay_before_completion or parent_backward_non_continue_decision_mutates_route_and_requires_rerun"` -> 4 passed.
+- OK: `python -m py_compile simulations\flowpilot_parent_child_lifecycle_model.py simulations\run_flowpilot_parent_child_lifecycle_checks.py skills\flowpilot\assets\flowpilot_router.py scripts\flowpilot_user_flow_diagram.py skills\flowpilot\assets\flowpilot_user_flow_diagram.py`.
+- OK: `python simulations\run_meta_checks.py`.
+- OK: `python simulations\run_capability_checks.py`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- The parent-child lifecycle model now has a positive scenario for last-child
+  completion returning to the nearest parent scope and negative hazards for
+  entering a sibling module leaf or selecting a non-nearest parent scope before
+  parent replay.
+- The router now checks the completed leaf's parent chain before scanning
+  sibling modules. A parent/module whose direct effective children are all
+  completed is reactivated for parent backward replay before sibling work.
+- Route signs now distinguish child-work-complete parent modules from truly
+  completed parent modules. Child-complete parents render as review-ready, not
+  done, until the parent itself is completed.
+- Local installed FlowPilot was synchronized from this checkout and audited
+  fresh. Remote GitHub sync was not performed.
+
+### Counterexamples
+- sibling_module_leaf_entered_before_parent_replay
+- non_nearest_parent_selected_for_child_replay
+
+### Friction Points
+- `python -m pytest tests\test_flowpilot_router_runtime.py tests\test_flowpilot_user_flow_diagram.py -q` exceeded the local 15-minute timeout with no failure output. Coverage was completed through focused router tests, full route-sign tests, model checks, meta/capability checks, and install/audit checks.
+- Other local agents had concurrent uncommitted startup-intake changes in the working tree. They were preserved and not reverted.
+
+### Skipped Steps
+- No live `.flowpilot` run state was repaired or frozen; the user explicitly scoped this pass to the FlowPilot implementation.
+- No remote GitHub sync or push was performed, per user instruction.
+
+### Next Actions
+- Future router scheduling changes should update both the parent-child lifecycle model and a concrete runtime next-node regression before changing production routing code.

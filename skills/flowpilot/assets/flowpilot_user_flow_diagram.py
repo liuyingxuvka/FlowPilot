@@ -416,14 +416,18 @@ def _node_status(
         return "done"
     if route is not None:
         nodes_by_id = _node_map(route)
+        completed = _completed_node_ids(frontier or {}, route)
+        if node_id in completed:
+            return "done"
         descendant_ids = _descendant_ids(node_id, nodes_by_id)
         for descendant_id in descendant_ids:
             descendant = nodes_by_id.get(descendant_id, {})
             if _normalize(descendant.get("status")) in {"blocked", "failed"}:
                 return "blocked"
         terminal_ids = _terminal_descendant_ids(node_id, nodes_by_id)
-        completed = _completed_node_ids(frontier or {}, route)
         if terminal_ids and terminal_ids.issubset(completed):
+            if _node_child_ids(node):
+                return "review"
             return "done"
     return "pending"
 
@@ -639,6 +643,7 @@ def _build_route_node_mermaid(
         f"  %% FlowPilot realtime route sign. Source: route={active_route}, version={route_version}, node={active_node_label}",
     ]
     done_ids: list[str] = []
+    review_ids: list[str] = []
     pending_ids: list[str] = []
     blocked_ids: list[str] = []
     active_ids: list[str] = []
@@ -658,6 +663,8 @@ def _build_route_node_mermaid(
             active_ids.append(mermaid_id)
         elif status == "done":
             done_ids.append(mermaid_id)
+        elif status == "review":
+            review_ids.append(mermaid_id)
         elif status == "blocked":
             blocked_ids.append(mermaid_id)
         elif status == "superseded":
@@ -752,6 +759,7 @@ def _build_route_node_mermaid(
             "",
             "  classDef active fill:#e6fbff,stroke:#00bcd4,stroke-width:4px,color:#0f172a;",
             "  classDef done fill:#ecfdf5,stroke:#10b981,color:#064e3b;",
+            "  classDef review fill:#fff7ed,stroke:#f97316,color:#7c2d12;",
             "  classDef pending fill:#f8fafc,stroke:#cbd5e1,color:#334155;",
             "  classDef blocked fill:#fef2f2,stroke:#ef4444,color:#7f1d1d;",
             "  classDef superseded fill:#f1f5f9,stroke:#94a3b8,stroke-dasharray: 4 3,color:#64748b;",
@@ -759,6 +767,7 @@ def _build_route_node_mermaid(
     )
     for class_line in (
         _class_line(done_ids, "done"),
+        _class_line(review_ids, "review"),
         _class_line(pending_ids, "pending"),
         _class_line(blocked_ids, "blocked"),
         _class_line(superseded_ids, "superseded"),

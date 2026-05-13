@@ -26,6 +26,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.PARENT_REPLAY_BEFORE_CHILD_ENTRY: "parent closure action requested before child subtree entry",
     model.PARENT_SEGMENT_BEFORE_CHILD_COMPLETION: "parent closure action requested before all effective children completed",
     model.PARENT_COMPLETE_BEFORE_CHILD_COMPLETION: "parent closure action requested before all effective children completed",
+    model.SIBLING_MODULE_LEAF_ENTERED_BEFORE_PARENT_REPLAY: "sibling module leaf entered before previous parent backward replay",
+    model.NON_NEAREST_PARENT_SELECTED_FOR_CHILD_REPLAY: "router selected a non-nearest parent scope for child completion replay",
     model.NON_LEAF_ACCEPTANCE_STUCK_ON_PARENT: "non-leaf acceptance passed but Router did not enter a child subtree",
     model.PARENT_DISPATCHES_WORKER_PACKET: "parent or module node attempted worker packet dispatch",
     model.DIRECT_CHILD_DONE_DESCENDANT_PENDING: "direct child completion was treated as subtree completion while descendants were pending",
@@ -45,6 +47,9 @@ def _state_id(state: model.State) -> str:
         f"{state.effective_children_all_completed},{state.child_completion_ledger_current}|"
         f"parent={state.parent_backward_targets_requested},{state.parent_backward_replay_requested},"
         f"{state.parent_segment_decision_recorded},{state.parent_completed}|"
+        f"after_child={state.last_child_completion_committed},{state.parent_review_ready_after_child_completion},"
+        f"{state.parent_scope_reactivated_for_replay},{state.sibling_module_leaf_entered_before_parent_replay},"
+        f"{state.nearest_parent_scope_selected}|"
         f"live={state.live_router_next_action_replayed},{state.live_router_next_action_known_to_model}|"
         f"reason={state.terminal_reason}"
     )
@@ -176,10 +181,12 @@ def _hazard_report() -> dict[str, object]:
 def _intended_report() -> dict[str, object]:
     parent_failures = model.lifecycle_failures(model.intended_parent_state())
     leaf_failures = model.lifecycle_failures(model.intended_leaf_state())
+    last_child_failures = model.lifecycle_failures(model.intended_last_child_returns_to_parent_review_state())
     return {
-        "ok": not parent_failures and not leaf_failures,
+        "ok": not parent_failures and not leaf_failures and not last_child_failures,
         "parent_failures": parent_failures,
         "leaf_failures": leaf_failures,
+        "last_child_returns_to_parent_review_failures": last_child_failures,
     }
 
 
@@ -217,4 +224,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

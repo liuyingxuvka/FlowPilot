@@ -25,11 +25,14 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 VALID_PARENT_CHILD_LIFECYCLE = "valid_parent_child_lifecycle"
 VALID_LEAF_LIFECYCLE = "valid_leaf_lifecycle"
+VALID_LAST_CHILD_RETURNS_TO_PARENT_REVIEW = "valid_last_child_returns_to_parent_review"
 
 PARENT_TARGETS_BEFORE_CHILD_ENTRY = "parent_targets_before_child_entry"
 PARENT_REPLAY_BEFORE_CHILD_ENTRY = "parent_replay_before_child_entry"
 PARENT_SEGMENT_BEFORE_CHILD_COMPLETION = "parent_segment_before_child_completion"
 PARENT_COMPLETE_BEFORE_CHILD_COMPLETION = "parent_complete_before_child_completion"
+SIBLING_MODULE_LEAF_ENTERED_BEFORE_PARENT_REPLAY = "sibling_module_leaf_entered_before_parent_replay"
+NON_NEAREST_PARENT_SELECTED_FOR_CHILD_REPLAY = "non_nearest_parent_selected_for_child_replay"
 NON_LEAF_ACCEPTANCE_STUCK_ON_PARENT = "non_leaf_acceptance_stuck_on_parent"
 PARENT_DISPATCHES_WORKER_PACKET = "parent_dispatches_worker_packet"
 DIRECT_CHILD_DONE_DESCENDANT_PENDING = "direct_child_done_descendant_pending"
@@ -42,12 +45,15 @@ LIVE_ROUTER_ACTION_NOT_IN_MODEL = "live_router_action_not_in_model"
 VALID_SCENARIOS = (
     VALID_PARENT_CHILD_LIFECYCLE,
     VALID_LEAF_LIFECYCLE,
+    VALID_LAST_CHILD_RETURNS_TO_PARENT_REVIEW,
 )
 NEGATIVE_SCENARIOS = (
     PARENT_TARGETS_BEFORE_CHILD_ENTRY,
     PARENT_REPLAY_BEFORE_CHILD_ENTRY,
     PARENT_SEGMENT_BEFORE_CHILD_COMPLETION,
     PARENT_COMPLETE_BEFORE_CHILD_COMPLETION,
+    SIBLING_MODULE_LEAF_ENTERED_BEFORE_PARENT_REPLAY,
+    NON_NEAREST_PARENT_SELECTED_FOR_CHILD_REPLAY,
     NON_LEAF_ACCEPTANCE_STUCK_ON_PARENT,
     PARENT_DISPATCHES_WORKER_PACKET,
     DIRECT_CHILD_DONE_DESCENDANT_PENDING,
@@ -98,6 +104,12 @@ class State:
     parent_segment_decision_requested: bool = False
     parent_segment_decision_recorded: bool = False
     parent_completed: bool = False
+
+    last_child_completion_committed: bool = False
+    parent_review_ready_after_child_completion: bool = False
+    parent_scope_reactivated_for_replay: bool = False
+    sibling_module_leaf_entered_before_parent_replay: bool = False
+    nearest_parent_scope_selected: bool = True
 
     parent_cycle_flags_visible_after_child_entry: bool = False
     live_router_next_action_replayed: bool = True
@@ -189,11 +201,37 @@ def _valid_leaf_state() -> State:
     )
 
 
+def _valid_last_child_returns_to_parent_review_state() -> State:
+    return State(
+        status="running",
+        scenario=VALID_LAST_CHILD_RETURNS_TO_PARENT_REVIEW,
+        active_node_kind="leaf",
+        route_activated=True,
+        child_frontier_entered=True,
+        child_cycle_flags_reset=True,
+        current_node_packet_registered=True,
+        worker_leaf_execution_started=True,
+        direct_children_completed=True,
+        descendant_leaves_completed=True,
+        effective_children_all_completed=True,
+        child_completion_ledger_current=True,
+        last_child_completion_committed=True,
+        parent_review_ready_after_child_completion=True,
+        parent_scope_reactivated_for_replay=True,
+        sibling_module_leaf_entered_before_parent_replay=False,
+        nearest_parent_scope_selected=True,
+        live_router_next_action_replayed=True,
+        live_router_next_action_known_to_model=True,
+    )
+
+
 def _scenario_state(scenario: str) -> State:
     if scenario == VALID_PARENT_CHILD_LIFECYCLE:
         return _valid_parent_state()
     if scenario == VALID_LEAF_LIFECYCLE:
         return _valid_leaf_state()
+    if scenario == VALID_LAST_CHILD_RETURNS_TO_PARENT_REVIEW:
+        return _valid_last_child_returns_to_parent_review_state()
 
     state = _valid_parent_state()
     updates: dict[str, object] = {"scenario": scenario}
@@ -248,6 +286,31 @@ def _scenario_state(scenario: str) -> State:
             effective_children_all_completed=False,
             child_completion_ledger_current=False,
             parent_completed=True,
+        )
+    elif scenario == SIBLING_MODULE_LEAF_ENTERED_BEFORE_PARENT_REPLAY:
+        state = _valid_last_child_returns_to_parent_review_state()
+        updates.update(
+            parent_scope_reactivated_for_replay=False,
+            sibling_module_leaf_entered_before_parent_replay=True,
+            parent_backward_targets_requested=False,
+            parent_backward_replay_requested=False,
+            parent_backward_replay_passed=False,
+            parent_segment_decision_requested=False,
+            parent_segment_decision_recorded=False,
+            parent_completed=False,
+        )
+    elif scenario == NON_NEAREST_PARENT_SELECTED_FOR_CHILD_REPLAY:
+        state = _valid_last_child_returns_to_parent_review_state()
+        updates.update(
+            parent_scope_reactivated_for_replay=True,
+            sibling_module_leaf_entered_before_parent_replay=False,
+            nearest_parent_scope_selected=False,
+            parent_backward_targets_requested=False,
+            parent_backward_replay_requested=False,
+            parent_backward_replay_passed=False,
+            parent_segment_decision_requested=False,
+            parent_segment_decision_recorded=False,
+            parent_completed=False,
         )
     elif scenario == NON_LEAF_ACCEPTANCE_STUCK_ON_PARENT:
         updates.update(
@@ -379,6 +442,19 @@ def lifecycle_failures(state: State) -> list[str]:
         failures.append("child frontier entered without resetting parent current-node cycle flags")
     if state.parent_cycle_flags_visible_after_child_entry:
         failures.append("parent current-node flags leaked into child execution")
+    if state.parent_review_ready_after_child_completion:
+        if not state.last_child_completion_committed:
+            failures.append("parent review readiness was claimed before last child completion commit")
+        if not state.effective_children_all_completed:
+            failures.append("parent review readiness was claimed before all effective children completed")
+        if not state.child_completion_ledger_current:
+            failures.append("parent review readiness requires current child completion ledger")
+        if state.sibling_module_leaf_entered_before_parent_replay:
+            failures.append("sibling module leaf entered before previous parent backward replay")
+        if not state.parent_scope_reactivated_for_replay:
+            failures.append("router did not reactivate completed parent scope for backward replay")
+        if not state.nearest_parent_scope_selected:
+            failures.append("router selected a non-nearest parent scope for child completion replay")
     if _parent_closure_requested(state):
         if not _is_non_leaf(state):
             failures.append("parent closure action requested for a leaf or repair node")
@@ -463,6 +539,9 @@ def intended_leaf_state() -> State:
     return _valid_leaf_state()
 
 
+def intended_last_child_returns_to_parent_review_state() -> State:
+    return _valid_last_child_returns_to_parent_review_state()
+
+
 def hazard_states() -> dict[str, State]:
     return {scenario: _scenario_state(scenario) for scenario in NEGATIVE_SCENARIOS}
-

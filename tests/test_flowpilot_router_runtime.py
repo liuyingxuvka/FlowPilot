@@ -4,6 +4,8 @@ import json
 import hashlib
 import contextlib
 import io
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -50,6 +52,119 @@ def read_json(path: Path) -> dict:
 class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def make_project(self) -> Path:
         return Path(tempfile.mkdtemp(prefix="flowpilot-router-"))
+
+    def test_startup_intake_ui_writes_utf8_without_bom(self) -> None:
+        if sys.platform != "win32" or shutil.which("powershell") is None:
+            self.skipTest("startup intake WPF smoke requires Windows PowerShell")
+        root = self.make_project()
+        output_dir = root / "startup-intake-output"
+        script = ROOT / "skills" / "flowpilot" / "assets" / "ui" / "startup_intake" / "flowpilot_startup_intake.ps1"
+        result = subprocess.run(
+            [
+                "powershell",
+                "-STA",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(script),
+                "-OutputDir",
+                str(output_dir),
+                "-HeadlessConfirmText",
+                "Check startup intake encoding",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        for name in (
+            "startup_intake_result.json",
+            "startup_intake_receipt.json",
+            "startup_intake_envelope.json",
+            "startup_intake_body.md",
+        ):
+            data = (output_dir / name).read_bytes()
+            self.assertFalse(data.startswith(b"\xef\xbb\xbf"), name)
+        for name in (
+            "startup_intake_result.json",
+            "startup_intake_receipt.json",
+            "startup_intake_envelope.json",
+        ):
+            self.assertEqual((output_dir / name).read_bytes()[:1], b"{", name)
+
+    def test_router_accepts_utf8_bom_json_control_artifact(self) -> None:
+        root = self.make_project()
+        path = root / "bom.json"
+        path.write_bytes(b"\xef\xbb\xbf" + json.dumps({"ok": True}).encode("utf-8"))
+        self.assertEqual(router.read_json(path), {"ok": True})
+
+    def test_startup_intake_body_bom_is_not_injected_into_pm_packet_body(self) -> None:
+        root = self.make_project()
+        body_path = root / "startup_intake_body.md"
+        body_path.write_bytes(b"\xef\xbb\xbfBuild with the existing requirements.")
+        body_hash = packet_runtime.sha256_file(body_path)
+        body = router._build_user_intake_body_from_ref(
+            root,
+            {
+                "body_path": self.rel(root, body_path),
+                "body_hash": body_hash,
+                "startup_intake_record_path": "startup_intake/startup_intake_record.json",
+                "startup_intake_receipt_path": "startup_intake/startup_intake_receipt.json",
+                "startup_intake_envelope_path": "startup_intake/startup_intake_envelope.json",
+            },
+            STARTUP_ANSWERS,
+        )
+        self.assertIn("Build with the existing requirements.", body)
+        self.assertNotIn("\ufeff", body)
+
+    def test_next_effective_node_returns_parent_before_sibling_module_after_last_child(self) -> None:
+        route = {
+            "route_id": "route-001",
+            "nodes": [
+                {
+                    "node_id": "route-root",
+                    "title": "Root",
+                    "node_kind": "root",
+                    "children": [
+                        {
+                            "node_id": "module-a",
+                            "title": "Module A",
+                            "node_kind": "module",
+                            "children": [
+                                {"node_id": "leaf-a1", "title": "A1", "node_kind": "leaf"},
+                                {"node_id": "leaf-a2", "title": "A2", "node_kind": "leaf"},
+                            ],
+                        },
+                        {
+                            "node_id": "module-b",
+                            "title": "Module B",
+                            "node_kind": "module",
+                            "children": [
+                                {"node_id": "leaf-b1", "title": "B1", "node_kind": "leaf"},
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+
+        next_node_id = router._next_effective_node_id(
+            route,
+            {},
+            ["leaf-a1", "leaf-a2"],
+            "leaf-a2",
+        )
+        self.assertEqual(next_node_id, "module-a")
+
+        next_node_after_parent_review = router._next_effective_node_id(
+            route,
+            {},
+            ["leaf-a1", "leaf-a2", "module-a"],
+            "module-a",
+        )
+        self.assertEqual(next_node_after_parent_review, "leaf-b1")
 
     def next_and_apply(self, root: Path, payload: dict | None = None) -> dict:
         action = self.next_after_display_sync(root)

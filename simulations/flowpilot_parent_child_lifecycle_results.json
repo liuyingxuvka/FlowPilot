@@ -5,12 +5,14 @@
     "direct_child_done_descendant_pending",
     "live_router_action_not_in_model",
     "non_leaf_acceptance_stuck_on_parent",
+    "non_nearest_parent_selected_for_child_replay",
     "parent_complete_before_child_completion",
     "parent_dispatches_worker_packet",
     "parent_flags_leak_to_child",
     "parent_replay_before_child_entry",
     "parent_segment_before_child_completion",
     "parent_targets_before_child_entry",
+    "sibling_module_leaf_entered_before_parent_replay",
     "stale_route_status_counts_as_child_done"
   ],
   "flowguard": {
@@ -19,7 +21,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=84",
+    "summary": "sequences=3 initial_states=1 traces=102",
     "violation_count": 0
   },
   "hazards": {
@@ -61,6 +63,13 @@
         "expected_failure": "non-leaf acceptance passed but Router did not enter a child subtree",
         "failures": [
           "non-leaf acceptance passed but Router did not enter a child subtree"
+        ]
+      },
+      "non_nearest_parent_selected_for_child_replay": {
+        "detected": true,
+        "expected_failure": "router selected a non-nearest parent scope for child completion replay",
+        "failures": [
+          "router selected a non-nearest parent scope for child completion replay"
         ]
       },
       "parent_complete_before_child_completion": {
@@ -115,6 +124,14 @@
           "parent closure action requested before current child completion ledger"
         ]
       },
+      "sibling_module_leaf_entered_before_parent_replay": {
+        "detected": true,
+        "expected_failure": "sibling module leaf entered before previous parent backward replay",
+        "failures": [
+          "sibling module leaf entered before previous parent backward replay",
+          "router did not reactivate completed parent scope for backward replay"
+        ]
+      },
       "stale_route_status_counts_as_child_done": {
         "detected": true,
         "expected_failure": "stale route status was used as child completion authority",
@@ -127,6 +144,7 @@
     "ok": true
   },
   "intended": {
+    "last_child_returns_to_parent_review_failures": [],
     "leaf_failures": [],
     "ok": true,
     "parent_failures": []
@@ -141,14 +159,15 @@
   },
   "safe_graph": {
     "accepted_scenarios": [
+      "valid_last_child_returns_to_parent_review",
       "valid_leaf_lifecycle",
       "valid_parent_child_lifecycle"
     ],
-    "edge_count": 28,
+    "edge_count": 34,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 12,
-    "state_count": 29
+    "rejected_state_count": 14,
+    "state_count": 35
   }
 }
