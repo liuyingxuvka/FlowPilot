@@ -78,6 +78,11 @@ CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA = "flowpilot.controller_boundary_confirm
 STARTUP_ANSWER_PROVENANCE = "explicit_user_reply"
 STARTUP_ANSWER_INTERPRETATION_PROVENANCE = "ai_interpreted_from_explicit_user_reply"
 STARTUP_ANSWER_INTERPRETATION_SCHEMA = "flowpilot.startup_answer_interpretation.v1"
+STARTUP_INTAKE_RESULT_SCHEMA = "flowpilot.startup_intake_result.v1"
+STARTUP_INTAKE_RECEIPT_SCHEMA = "flowpilot.startup_intake_receipt.v1"
+STARTUP_INTAKE_ENVELOPE_SCHEMA = "flowpilot.startup_intake_envelope.v1"
+STARTUP_INTAKE_RECORD_SCHEMA = "flowpilot.startup_intake_record.v1"
+USER_REQUEST_REF_SCHEMA = "flowpilot.user_request_ref.v1"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
 DISPLAY_CONFIRMATION_TARGET = "user_dialog"
@@ -529,6 +534,7 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
         "copy_runtime_kit",
         "fill_runtime_placeholders",
         "initialize_mailbox",
+        "record_user_request",
         "write_user_intake",
     }
 )
@@ -733,14 +739,14 @@ STARTUP_QUESTIONS = (
 
 BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
     {
-        "action_type": "ask_startup_questions",
+        "action_type": "open_startup_intake_ui",
         "flag": "startup_questions_asked",
-        "label": "startup_questions_asked_from_router",
-        "summary": "Ask the three FlowPilot startup questions, atomically record the waiting/stop boundary, and do not continue work in the same assistant turn.",
+        "label": "startup_intake_ui_opened_from_router",
+        "summary": "Open the native FlowPilot startup intake UI, then apply its confirmed or cancelled result without reading the body text in Controller context.",
         "actor": "bootloader",
-        "requires_user": True,
+        "requires_host_automation": True,
+        "requires_payload": "startup_intake_result",
         "terminal_for_turn": True,
-        "questions": STARTUP_QUESTIONS,
     },
     {
         "action_type": "write_startup_awaiting_answers_state",
@@ -7415,6 +7421,23 @@ def _next_boot_action(state: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def compute_bootloader_action(project_root: Path, state: dict[str, Any]) -> dict[str, Any] | None:
+    if state.get("status") == "startup_cancelled" or state.get("startup_state") == "startup_cancelled":
+        bootstrap_rel = project_relative(project_root, bootstrap_state_path(project_root, state))
+        return make_action(
+            action_type="startup_cancelled",
+            actor="bootloader",
+            label="startup_cancelled_by_ui",
+            summary="FlowPilot startup was cancelled from the native startup intake UI; no run, roles, heartbeat, Cockpit, or Controller may start.",
+            allowed_reads=[bootstrap_rel],
+            allowed_writes=[],
+            extra={
+                "apply_required": False,
+                "terminal": True,
+                "requires_user": False,
+                "requires_payload": None,
+                "startup_cancelled": True,
+            },
+        )
     if state.get("pending_action"):
         return state["pending_action"]
     boot_action = _next_boot_action(state)
@@ -7423,15 +7446,22 @@ def compute_bootloader_action(project_root: Path, state: dict[str, Any]) -> dict
     bootstrap_rel = project_relative(project_root, bootstrap_state_path(project_root, state))
     extra_fields = {
         "requires_user": bool(boot_action.get("requires_user", False)),
+        "requires_host_automation": bool(boot_action.get("requires_host_automation", False)),
         "terminal_for_turn": bool(boot_action.get("terminal_for_turn", False)),
         "requires_payload": boot_action.get("requires_payload"),
         "questions": boot_action.get("questions", []),
         "postcondition": boot_action["flag"],
     }
+    if boot_action["action_type"] == "open_startup_intake_ui":
+        extra_fields.update(_startup_intake_ui_action_extra(project_root, state))
     if boot_action["action_type"] == "emit_startup_banner":
         extra_fields.update(_startup_banner_display())
     if boot_action["action_type"] == "record_startup_answers":
         extra_fields["payload_contract"] = _startup_answers_payload_contract()
+    if boot_action["action_type"] == "record_user_request" and _confirmed_startup_intake(state) is not None:
+        extra_fields["requires_user"] = False
+        extra_fields["requires_payload"] = None
+        extra_fields["summary"] = "Record a sealed user request reference from the native startup intake UI artifacts."
     if boot_action["action_type"] == "start_role_slots":
         extra_fields.update(_role_spawn_action_extra(state))
     action = make_action(
@@ -7474,6 +7504,8 @@ def _set_boot_flag(project_root: Path, state: dict[str, Any], flag: str, label: 
 
 
 def _normalize_startup_question_stop_boundary(state: dict[str, Any]) -> bool:
+    if state.get("status") == "startup_cancelled" or state.get("startup_state") == "startup_cancelled":
+        return False
     flags = state.setdefault("flags", {})
     if not flags.get("startup_questions_asked"):
         return False
@@ -7502,6 +7534,224 @@ def _normalize_startup_question_stop_boundary(state: dict[str, Any]) -> bool:
         )
         changed = True
     return changed
+
+
+def _startup_intake_ui_launcher_ref(project_root: Path) -> str:
+    launcher = Path(__file__).resolve().parent / "ui" / "startup_intake" / "flowpilot_startup_intake.ps1"
+    try:
+        return project_relative(project_root, launcher)
+    except RouterError:
+        return str(launcher)
+
+
+def _startup_intake_output_dir_ref(project_root: Path, state: dict[str, Any]) -> str:
+    run_id = str(state.get("run_id") or _create_run_id())
+    output_dir = project_root / ".flowpilot" / "bootstrap" / "startup_intake" / run_id
+    return project_relative(project_root, output_dir)
+
+
+def _startup_intake_result_payload_contract(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+        "payload_key": "startup_intake_result",
+        "required": True,
+        "expected_shape": {
+            "startup_intake_result": {
+                "result_path": "<path returned by the native startup intake UI>",
+            }
+        },
+        "result_schema_version": STARTUP_INTAKE_RESULT_SCHEMA,
+        "receipt_schema_version": STARTUP_INTAKE_RECEIPT_SCHEMA,
+        "envelope_schema_version": STARTUP_INTAKE_ENVELOPE_SCHEMA,
+        "output_dir": _startup_intake_output_dir_ref(project_root, state),
+        "controller_body_boundary": {
+            "controller_may_read_body": False,
+            "body_text_must_not_be_in_payload": True,
+            "allowed_controller_view": "result/envelope paths, body hash, startup answers, and status only",
+        },
+    }
+
+
+def _startup_intake_ui_action_extra(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    launcher = _startup_intake_ui_launcher_ref(project_root)
+    output_dir = _startup_intake_output_dir_ref(project_root, state)
+    command = [
+        "powershell",
+        "-STA",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        launcher,
+        "-OutputDir",
+        output_dir,
+    ]
+    return {
+        "startup_intake_ui": {
+            "schema_version": "flowpilot.startup_intake_ui_launcher.v1",
+            "launcher_path": launcher,
+            "output_dir": output_dir,
+            "command": command,
+            "result_path_expected": f"{output_dir}/startup_intake_result.json",
+            "body_text_is_never_router_payload": True,
+            "cancel_result_is_terminal": True,
+        },
+        "payload_contract": _startup_intake_result_payload_contract(project_root, state),
+        "plain_instruction": (
+            "Open the native FlowPilot startup intake UI with the provided command. "
+            "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path. "
+            "Do not paste the user's work request into chat and do not include it in the Router payload."
+        ),
+    }
+
+
+def _confirmed_startup_intake(state: dict[str, Any]) -> dict[str, Any] | None:
+    intake = state.get("startup_intake")
+    if isinstance(intake, dict) and intake.get("status") == "confirmed":
+        return intake
+    return None
+
+
+_FORBIDDEN_STARTUP_INTAKE_BODY_KEYS = {
+    "body_text",
+    "content",
+    "prompt_text",
+    "raw_body",
+    "raw_text",
+    "request_text",
+    "text",
+    "user_prompt",
+    "user_request_text",
+}
+
+
+def _forbidden_startup_intake_body_fields(payload: Any, prefix: str = "") -> list[str]:
+    found: list[str] = []
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            key_path = f"{prefix}.{key}" if prefix else str(key)
+            if key in _FORBIDDEN_STARTUP_INTAKE_BODY_KEYS:
+                found.append(key_path)
+            found.extend(_forbidden_startup_intake_body_fields(value, key_path))
+    elif isinstance(payload, list):
+        for index, value in enumerate(payload):
+            found.extend(_forbidden_startup_intake_body_fields(value, f"{prefix}[{index}]"))
+    return found
+
+
+def _resolve_existing_project_file(project_root: Path, raw_path: Any, label: str) -> Path:
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        raise RouterError(f"startup intake {label} path is required")
+    path = resolve_project_path(project_root, raw_path.strip()).resolve()
+    project_relative(project_root, path)
+    if not path.exists() or not path.is_file():
+        raise RouterError(f"startup intake {label} file not found: {raw_path}")
+    return path
+
+
+def _same_project_file(project_root: Path, left: Any, right: Path) -> bool:
+    if not isinstance(left, str) or not left.strip():
+        return False
+    return resolve_project_path(project_root, left).resolve() == right.resolve()
+
+
+def _startup_intake_result_path_from_payload(payload: dict[str, Any]) -> str:
+    result_ref = payload.get("startup_intake_result")
+    if isinstance(result_ref, str):
+        return result_ref
+    if isinstance(result_ref, dict):
+        result_path = result_ref.get("result_path") or result_ref.get("path")
+        if isinstance(result_path, str) and result_path.strip():
+            return result_path
+    result_path = payload.get("result_path")
+    if isinstance(result_path, str) and result_path.strip():
+        return result_path
+    raise RouterError("open_startup_intake_ui requires payload.startup_intake_result.result_path")
+
+
+def _validate_startup_intake_result_payload(project_root: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    result_path = _resolve_existing_project_file(project_root, _startup_intake_result_path_from_payload(payload), "result")
+    result = read_json(result_path)
+    if result.get("schema_version") != STARTUP_INTAKE_RESULT_SCHEMA:
+        raise RouterError(f"startup intake result requires schema_version={STARTUP_INTAKE_RESULT_SCHEMA}")
+    leaked = _forbidden_startup_intake_body_fields(result)
+    if leaked:
+        raise RouterError(f"startup intake result contains forbidden body text fields: {', '.join(leaked)}")
+    status = result.get("status")
+    if status not in {"confirmed", "cancelled"}:
+        raise RouterError("startup intake result status must be confirmed or cancelled")
+    result_rel = project_relative(project_root, result_path)
+    receipt_path: Path | None = None
+    receipt: dict[str, Any] | None = None
+    if result.get("receipt_path"):
+        receipt_path = _resolve_existing_project_file(project_root, result.get("receipt_path"), "receipt")
+        receipt = read_json(receipt_path)
+        if receipt.get("schema_version") != STARTUP_INTAKE_RECEIPT_SCHEMA:
+            raise RouterError(f"startup intake receipt requires schema_version={STARTUP_INTAKE_RECEIPT_SCHEMA}")
+        leaked_receipt = _forbidden_startup_intake_body_fields(receipt)
+        if leaked_receipt:
+            raise RouterError(f"startup intake receipt contains forbidden body text fields: {', '.join(leaked_receipt)}")
+    if status == "cancelled":
+        return {
+            "schema_version": STARTUP_INTAKE_RECORD_SCHEMA,
+            "status": "cancelled",
+            "result_path": result_rel,
+            "receipt_path": project_relative(project_root, receipt_path) if receipt_path else None,
+            "controller_visibility": result.get("controller_visibility") or "cancel_status_only",
+            "body_text_included": False,
+            "recorded_at": result.get("recorded_at") or utc_now(),
+        }
+    if result.get("body_text_included") is not False or result.get("controller_may_read_body") is not False:
+        raise RouterError("startup intake confirmed result must be envelope-only for Controller")
+    envelope_path = _resolve_existing_project_file(project_root, result.get("envelope_path"), "envelope")
+    body_path = _resolve_existing_project_file(project_root, result.get("body_path"), "body")
+    if receipt_path is None or receipt is None:
+        raise RouterError("startup intake confirmed result requires receipt_path")
+    envelope = read_json(envelope_path)
+    if envelope.get("schema_version") != STARTUP_INTAKE_ENVELOPE_SCHEMA:
+        raise RouterError(f"startup intake envelope requires schema_version={STARTUP_INTAKE_ENVELOPE_SCHEMA}")
+    leaked_envelope = _forbidden_startup_intake_body_fields(envelope)
+    if leaked_envelope:
+        raise RouterError(f"startup intake envelope contains forbidden body text fields: {', '.join(leaked_envelope)}")
+    if envelope.get("body_text_included") is not False or envelope.get("controller_may_read_body") is not False:
+        raise RouterError("startup intake envelope must not expose body text to Controller")
+    body_hash = result.get("body_hash")
+    if not isinstance(body_hash, str) or not body_hash.strip():
+        raise RouterError("startup intake confirmed result requires body_hash")
+    actual_hash = packet_runtime.sha256_file(body_path)
+    if actual_hash != body_hash.lower():
+        raise RouterError("startup intake body hash mismatch")
+    if not _same_project_file(project_root, envelope.get("body_path"), body_path):
+        raise RouterError("startup intake envelope body_path does not match result")
+    if envelope.get("body_hash") != actual_hash:
+        raise RouterError("startup intake envelope body_hash does not match body")
+    if not _same_project_file(project_root, envelope.get("receipt_path"), receipt_path):
+        raise RouterError("startup intake envelope receipt_path does not match result")
+    if receipt.get("body_hash") != actual_hash:
+        raise RouterError("startup intake receipt body_hash does not match body")
+    if not _same_project_file(project_root, receipt.get("body_path"), body_path):
+        raise RouterError("startup intake receipt body_path does not match result")
+    startup_answers = _validate_startup_answers({"startup_answers": result.get("startup_answers")})
+    if envelope.get("startup_answers") != startup_answers or receipt.get("startup_answers") != startup_answers:
+        raise RouterError("startup intake startup_answers mismatch across result, receipt, and envelope")
+    return {
+        "schema_version": STARTUP_INTAKE_RECORD_SCHEMA,
+        "status": "confirmed",
+        "source": envelope.get("source") or "native_wpf_startup_intake",
+        "language": result.get("language") or envelope.get("language") or receipt.get("language"),
+        "result_path": result_rel,
+        "receipt_path": project_relative(project_root, receipt_path),
+        "envelope_path": project_relative(project_root, envelope_path),
+        "body_path": project_relative(project_root, body_path),
+        "body_hash": actual_hash,
+        "startup_answers": startup_answers,
+        "controller_visibility": "envelope_only",
+        "controller_may_read_body": False,
+        "body_text_included": False,
+        "reviewer_live_review_source": "startup_intake_record",
+        "reviewer_must_not_use_chat_history": True,
+        "recorded_at": result.get("recorded_at") or utc_now(),
+    }
 
 
 def _validate_startup_answer_interpretation(payload: dict[str, Any], answers: dict[str, str]) -> dict[str, Any] | None:
@@ -7605,6 +7855,103 @@ def _validate_user_request(payload: dict[str, Any]) -> dict[str, str]:
         "provenance": USER_REQUEST_PROVENANCE,
         "source": source.strip(),
     }
+
+
+def _copy_startup_intake_file(project_root: Path, run_root: Path, raw_path: str, target_name: str) -> Path:
+    source = _resolve_existing_project_file(project_root, raw_path, target_name)
+    target_dir = run_root / "startup_intake"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / target_name
+    if source.resolve() != target.resolve():
+        shutil.copy2(source, target)
+    return target
+
+
+def _materialize_startup_intake_record(project_root: Path, state: dict[str, Any], run_root: Path) -> dict[str, Any]:
+    intake = _confirmed_startup_intake(state)
+    if intake is None:
+        raise RouterError("cannot materialize startup intake record before confirmed UI intake")
+    result_path = _copy_startup_intake_file(project_root, run_root, str(intake["result_path"]), "startup_intake_result.json")
+    receipt_path = _copy_startup_intake_file(project_root, run_root, str(intake["receipt_path"]), "startup_intake_receipt.json")
+    envelope_path = _copy_startup_intake_file(project_root, run_root, str(intake["envelope_path"]), "startup_intake_envelope.json")
+    body_path = _copy_startup_intake_file(project_root, run_root, str(intake["body_path"]), "startup_intake_body.md")
+    body_hash = packet_runtime.sha256_file(body_path)
+    if body_hash != intake.get("body_hash"):
+        raise RouterError("startup intake copied body hash mismatch")
+    record = {
+        "schema_version": STARTUP_INTAKE_RECORD_SCHEMA,
+        "run_id": state.get("run_id"),
+        "status": "confirmed",
+        "source": intake.get("source") or "native_wpf_startup_intake",
+        "language": intake.get("language"),
+        "result_path": project_relative(project_root, result_path),
+        "receipt_path": project_relative(project_root, receipt_path),
+        "envelope_path": project_relative(project_root, envelope_path),
+        "body_path": project_relative(project_root, body_path),
+        "body_hash": body_hash,
+        "startup_answers": intake.get("startup_answers") or {},
+        "controller_visibility": "envelope_only",
+        "controller_may_read_body": False,
+        "body_text_included": False,
+        "reviewer_live_review_source": "startup_intake_record",
+        "reviewer_must_not_use_chat_history": True,
+        "materialized_at": utc_now(),
+    }
+    record_path = run_root / "startup_intake" / "startup_intake_record.json"
+    write_json(record_path, record)
+    record["record_path"] = project_relative(project_root, record_path)
+    return record
+
+
+def _user_request_ref_from_startup_intake(project_root: Path, state: dict[str, Any], intake_record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": USER_REQUEST_REF_SCHEMA,
+        "run_id": state.get("run_id"),
+        "provenance": "startup_intake_ui",
+        "source": intake_record.get("source") or "native_wpf_startup_intake",
+        "startup_intake_record_path": intake_record["record_path"],
+        "startup_intake_result_path": intake_record["result_path"],
+        "startup_intake_receipt_path": intake_record["receipt_path"],
+        "startup_intake_envelope_path": intake_record["envelope_path"],
+        "body_path": intake_record["body_path"],
+        "body_hash": intake_record["body_hash"],
+        "controller_visibility": "envelope_only",
+        "controller_may_read_body": False,
+        "body_text_included": False,
+        "pm_may_open_body_via_packet_runtime": True,
+        "reviewer_live_review_source": "startup_intake_record",
+        "reviewer_must_not_use_chat_history": True,
+        "recorded_at": utc_now(),
+    }
+
+
+def _build_user_intake_body_from_ref(project_root: Path, user_request_ref: dict[str, Any], startup_answers: dict[str, Any]) -> str:
+    body_path = _resolve_existing_project_file(project_root, user_request_ref.get("body_path"), "startup intake body")
+    body_hash = packet_runtime.sha256_file(body_path)
+    if body_hash != user_request_ref.get("body_hash"):
+        raise RouterError("startup intake body hash mismatch before user_intake packet")
+    metadata = {
+        "schema_version": "flowpilot.pm_startup_intake_context.v1",
+        "source": "native_startup_intake_ui",
+        "startup_intake_record_path": user_request_ref.get("startup_intake_record_path"),
+        "startup_intake_receipt_path": user_request_ref.get("startup_intake_receipt_path"),
+        "startup_intake_envelope_path": user_request_ref.get("startup_intake_envelope_path"),
+        "body_path": user_request_ref.get("body_path"),
+        "body_hash": user_request_ref.get("body_hash"),
+        "startup_answers": startup_answers,
+        "controller_may_read_body": False,
+        "reviewer_live_review_source": "startup_intake_record",
+    }
+    return (
+        "# FlowPilot Startup Intake\n\n"
+        "The user's work request came from the native startup intake UI. "
+        "Controller receives only the envelope and hash; Project Manager may read this packet body.\n\n"
+        "```json\n"
+        f"{json.dumps(metadata, indent=2, sort_keys=True)}\n"
+        "```\n\n"
+        "## User Work Request\n\n"
+        f"{body_path.read_text(encoding='utf-8').strip()}\n"
+    )
 
 
 def _display_text_hash(display_text: str) -> str:
@@ -9499,6 +9846,7 @@ def _invalidate_route_completion_if_dirty_before_closure(run_state: dict[str, An
 def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, bool]:
     answers = _startup_answers_from_run(run_root)
     required_answer_ids = {item["id"] for item in STARTUP_QUESTIONS}
+    startup_intake_context = _startup_intake_record_context(project_root, run_root, run_state)
     current = read_json_if_exists(project_root / ".flowpilot" / "current.json")
     index = read_json_if_exists(project_root / ".flowpilot" / "index.json")
     crew = read_json_if_exists(run_root / "crew_ledger.json")
@@ -9535,6 +9883,13 @@ def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str
     boundary_context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
     return {
         "controller_boundary_confirmed": boundary_context is not None or _legacy_pm_reset_boundary_confirmed(run_state),
+        "startup_intake_record_current": startup_intake_context is not None,
+        "startup_intake_receipt_envelope_hash_current": bool(
+            startup_intake_context and startup_intake_context.get("receipt_envelope_body_hash_current")
+        ),
+        "reviewer_live_review_uses_startup_intake_record": bool(
+            startup_intake_context and startup_intake_context.get("reviewer_must_not_use_chat_history")
+        ),
         "startup_answers_complete": required_answer_ids.issubset({key for key, value in answers.items() if value}),
         "current_pointer_matches_run": current.get("current_run_id") == run_state.get("run_id")
         and current.get("current_run_root") == run_state.get("run_root"),
@@ -9560,6 +9915,57 @@ def _startup_fact_checks(project_root: Path, run_root: Path, run_state: dict[str
         else continuation_binding.get("mode") == "manual_resume",
         "display_surface_recorded": bool(answers.get("display_surface")),
         "old_state_quarantined": not any(path.exists() for path in old_control_paths),
+    }
+
+
+def _startup_intake_record_context(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any] | None:
+    record_path = run_root / "startup_intake" / "startup_intake_record.json"
+    if not record_path.exists():
+        return None
+    record = read_json_if_exists(record_path)
+    if record.get("schema_version") != STARTUP_INTAKE_RECORD_SCHEMA:
+        return None
+    if record.get("run_id") != run_state.get("run_id"):
+        return None
+    if record.get("status") != "confirmed":
+        return None
+    if record.get("controller_may_read_body") is not False or record.get("body_text_included") is not False:
+        return None
+    try:
+        body_path = _resolve_existing_project_file(project_root, record.get("body_path"), "startup intake record body")
+        receipt_path = _resolve_existing_project_file(project_root, record.get("receipt_path"), "startup intake record receipt")
+        envelope_path = _resolve_existing_project_file(project_root, record.get("envelope_path"), "startup intake record envelope")
+        result_path = _resolve_existing_project_file(project_root, record.get("result_path"), "startup intake record result")
+    except RouterError:
+        return None
+    body_hash = packet_runtime.sha256_file(body_path)
+    if body_hash != record.get("body_hash"):
+        return None
+    receipt = read_json_if_exists(receipt_path)
+    envelope = read_json_if_exists(envelope_path)
+    result = read_json_if_exists(result_path)
+    receipt_envelope_body_hash_current = (
+        receipt.get("schema_version") == STARTUP_INTAKE_RECEIPT_SCHEMA
+        and envelope.get("schema_version") == STARTUP_INTAKE_ENVELOPE_SCHEMA
+        and result.get("schema_version") == STARTUP_INTAKE_RESULT_SCHEMA
+        and receipt.get("body_hash") == body_hash
+        and envelope.get("body_hash") == body_hash
+        and result.get("body_hash") == body_hash
+        and envelope.get("controller_may_read_body") is False
+        and result.get("controller_may_read_body") is False
+        and envelope.get("body_text_included") is False
+        and result.get("body_text_included") is False
+    )
+    return {
+        "record_path": record_path,
+        "record": record,
+        "result_path": result_path,
+        "receipt_path": receipt_path,
+        "envelope_path": envelope_path,
+        "body_path": body_path,
+        "body_hash": body_hash,
+        "receipt_envelope_body_hash_current": receipt_envelope_body_hash_current,
+        "reviewer_must_not_use_chat_history": record.get("reviewer_must_not_use_chat_history") is True,
     }
 
 
@@ -9805,6 +10211,17 @@ def _write_startup_mechanical_audit(
         _continuation_binding_path(run_root),
         run_state_path(run_root),
     ]
+    startup_intake_context = _startup_intake_record_context(project_root, run_root, run_state)
+    if startup_intake_context is not None:
+        evidence_paths.extend(
+            [
+                startup_intake_context["record_path"],
+                startup_intake_context["result_path"],
+                startup_intake_context["receipt_path"],
+                startup_intake_context["envelope_path"],
+                startup_intake_context["body_path"],
+            ]
+        )
     boundary_path = _controller_boundary_confirmation_path(run_root)
     if boundary_path.exists():
         evidence_paths.append(boundary_path)
@@ -9897,6 +10314,7 @@ def _startup_mechanical_audit_action_extra(
         "startup_mechanical_audit_hash": context["audit_hash"],
         "router_owned_check_proof_path": project_relative(project_root, context["proof_path"]),
         "router_owned_check_proof_hash": context["proof_hash"],
+        "startup_intake_record_path": _optional_source_path(project_root, run_root / "startup_intake" / "startup_intake_record.json"),
         "startup_display_surface_path": project_relative(project_root, display_path),
         "startup_display_surface_hash": packet_runtime.sha256_file(display_path),
         "reviewer_has_direct_display_evidence": True,
@@ -13769,6 +14187,11 @@ def _live_card_delivery_context(
         or _optional_source_path(project_root, run_root / "user_request.json")
         or ""
     )
+    startup_intake_record_path = str(
+        run_state.get("startup_intake_record_path")
+        or _optional_source_path(project_root, run_root / "startup_intake" / "startup_intake_record.json")
+        or ""
+    )
     source_paths = {
         "router_state": project_relative(project_root, run_state_path(run_root)),
         "execution_frontier": _optional_source_path(project_root, run_root / "execution_frontier.json"),
@@ -13777,6 +14200,7 @@ def _live_card_delivery_context(
         "route_history_index": _optional_source_path(project_root, _route_history_index_path(run_root)),
         "pm_prior_path_context": _optional_source_path(project_root, _pm_prior_path_context_path(run_root)),
         "user_request_path": user_request_path or None,
+        "startup_intake_record_path": startup_intake_record_path or None,
     }
     source_paths.update(_card_required_source_paths(project_root, run_root, card_id))
     return {
@@ -13786,9 +14210,13 @@ def _live_card_delivery_context(
         "to_role": str(entry.get("to_role") or card.get("audience") or ""),
         "current_task": {
             "user_request_path": user_request_path or None,
+            "startup_intake_record_path": startup_intake_record_path or None,
             "user_intake_packet_id": "user_intake" if (run_root / "mailbox" / "outbox" / "user_intake.json").exists() else None,
-            "task_authority": "router_recorded_user_request_and_user_intake",
+            "task_authority": "startup_intake_ui_record_and_user_intake"
+            if startup_intake_record_path
+            else "router_recorded_user_request_and_user_intake",
             "controller_summary_is_task_authority": False,
+            "reviewer_live_review_source": "startup_intake_record" if startup_intake_record_path else None,
         },
         "current_stage": {
             "current_phase": current_phase,
@@ -18222,11 +18650,32 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         return {"ok": True, "applied": action_type}
 
     action_meta = next((item for item in BOOT_ACTIONS if item["action_type"] == action_type), None)
+    if action_meta is None and action_type == "ask_startup_questions":
+        action_meta = {
+            "action_type": "ask_startup_questions",
+            "flag": "startup_questions_asked",
+            "label": "legacy_startup_questions_asked_from_router",
+        }
     if action_meta is None:
         raise RouterError(f"unknown bootloader action: {action_type}")
     flag = str(action_meta["flag"])
 
-    if action_type == "ask_startup_questions":
+    if action_type == "open_startup_intake_ui":
+        startup_intake = _validate_startup_intake_result_payload(project_root, payload)
+        state["startup_intake"] = startup_intake
+        result_extra["startup_intake"] = startup_intake
+        if startup_intake["status"] == "cancelled":
+            state["status"] = "startup_cancelled"
+            state["startup_state"] = "startup_cancelled"
+            state["pending_action"] = None
+        else:
+            state["startup_answers"] = startup_intake["startup_answers"]
+            state["startup_answer_interpretation"] = None
+            state["startup_state"] = "answers_complete"
+            state["flags"]["startup_state_written_awaiting_answers"] = True
+            state["flags"]["dialog_stopped_for_answers"] = True
+            state["flags"]["startup_answers_recorded"] = True
+    elif action_type == "ask_startup_questions":
         state["startup_state"] = "awaiting_answers_stopped"
         state["flags"]["startup_state_written_awaiting_answers"] = True
         state["flags"]["dialog_stopped_for_answers"] = True
@@ -18340,13 +18789,30 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         write_json(_role_io_protocol_ledger_path(run_root), _empty_role_io_protocol_ledger(str(state["run_id"])))
     elif action_type == "record_user_request":
         run_root = project_root / str(state["run_root"])
-        user_request = _validate_user_request(payload)
-        user_request_record = {
-            "schema_version": "flowpilot.user_request.v1",
-            "run_id": state["run_id"],
-            "user_request": user_request,
-            "recorded_at": utc_now(),
-        }
+        if _confirmed_startup_intake(state) is not None and not payload:
+            intake_record = _materialize_startup_intake_record(project_root, state, run_root)
+            user_request = _user_request_ref_from_startup_intake(project_root, state, intake_record)
+            user_request_record = {
+                "schema_version": "flowpilot.user_request.v1",
+                "run_id": state["run_id"],
+                "source": "startup_intake_ui",
+                "user_request_ref": user_request,
+                "startup_intake_record": intake_record,
+                "controller_may_read_body": False,
+                "body_text_included": False,
+                "recorded_at": utc_now(),
+            }
+            state["startup_intake"] = intake_record
+            state["startup_intake_record_path"] = intake_record["record_path"]
+            state["user_request_ref"] = user_request
+        else:
+            user_request = _validate_user_request(payload)
+            user_request_record = {
+                "schema_version": "flowpilot.user_request.v1",
+                "run_id": state["run_id"],
+                "user_request": user_request,
+                "recorded_at": utc_now(),
+            }
         write_json(run_root / "user_request.json", user_request_record)
         state["user_request"] = user_request
         state["user_request_path"] = project_relative(project_root, run_root / "user_request.json")
@@ -18355,6 +18821,27 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         user_request = state.get("user_request")
         if not isinstance(user_request, dict):
             raise RouterError("cannot write user_intake before record_user_request")
+        if user_request.get("schema_version") == USER_REQUEST_REF_SCHEMA:
+            body_text = _build_user_intake_body_from_ref(project_root, user_request, state.get("startup_answers") or {})
+            user_intake = packet_runtime.create_user_intake_packet(
+                project_root,
+                run_id=str(state["run_id"]),
+                packet_id="user_intake",
+                node_id="startup",
+                body_text=body_text,
+                startup_options=state.get("startup_answers") or {},
+                source="startup_intake_ui",
+                body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+                startup_intake_ref=user_request,
+            )
+            write_json(run_root / "mailbox" / "outbox" / "user_intake.json", user_intake)
+            result_extra["user_intake_source"] = "startup_intake_ui"
+            result_extra["controller_may_read_body"] = False
+            result_extra["reviewer_live_review_source"] = "startup_intake_record"
+            _set_boot_flag(project_root, state, flag, str(pending["label"]), {"action_type": action_type})
+            result = {"ok": True, "applied": action_type, "postcondition": flag}
+            result.update(result_extra)
+            return result
         user_intake = packet_runtime.create_user_intake_packet(
             project_root,
             run_id=str(state["run_id"]),
@@ -18739,6 +19226,16 @@ def _next_startup_mechanical_audit_action(project_root: Path, run_state: dict[st
     boundary_path = _controller_boundary_confirmation_path(run_root)
     if boundary_path.exists():
         allowed_reads.append(project_relative(project_root, boundary_path))
+    startup_intake_context = _startup_intake_record_context(project_root, run_root, run_state)
+    if startup_intake_context is not None:
+        allowed_reads.extend(
+            [
+                project_relative(project_root, startup_intake_context["record_path"]),
+                project_relative(project_root, startup_intake_context["result_path"]),
+                project_relative(project_root, startup_intake_context["receipt_path"]),
+                project_relative(project_root, startup_intake_context["envelope_path"]),
+            ]
+        )
     return make_action(
         action_type="write_startup_mechanical_audit",
         actor="controller",

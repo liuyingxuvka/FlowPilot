@@ -47,6 +47,10 @@ Cockpit/fallback behavior is real. Those facts remain reviewer-owned unless the
 audit cites a host receipt.
 
 Do not try to prove the original chat transcript or the user's private intent.
+For native startup intake runs, the startup UI record is the authority:
+`startup_intake/startup_intake_record.json`, its result, receipt, envelope, and
+body hash are the evidence to check. Do not search chat history for the work
+request or startup answers during live review.
 The router-accepted startup task contract is the authority for startup answers.
 If a requirement cannot be independently checked from current run files, host
 receipts, tools, or UI, report it as a finding for PM decision instead of
@@ -59,6 +63,8 @@ order, or proof-file existence; the router enforces those mechanically.
 Required checks:
 
 - all three startup answers are present;
+- the startup intake record, UI result, receipt, envelope, and body hash are
+  present and current;
 - `.flowpilot/current.json` points to the current run root;
 - `.flowpilot/index.json` includes the current run id;
 - the six FlowPilot role slots are fresh for this run or have explicit

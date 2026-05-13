@@ -8910,3 +8910,75 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future control-plane ledger writers on the same terminal-merge rule: same identity plus terminal proof means audit-only replay; genuinely new identity or unresolved work remains actionable.
+
+## 2026-05-13 - Startup Intake UI Prompt-Isolation Integration
+
+### Trigger
+- User approved replacing the old startup three-question boundary with a native desktop startup intake UI, but required the change to be modeled first so the Controller cannot start from or read the original chat prompt.
+
+### Model Files
+- simulations/flowpilot_startup_intake_ui_model.py
+- simulations/run_flowpilot_startup_intake_ui_checks.py
+- simulations/flowpilot_startup_intake_ui_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/packet_runtime.py
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md
+- skills/flowpilot/SKILL.md
+- scripts/check_install.py
+- tests/test_flowpilot_router_runtime.py
+- docs/startup_intake_ui_integration_plan.md
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python simulations\run_flowpilot_startup_intake_ui_checks.py --json-out simulations\flowpilot_startup_intake_ui_results.json`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py scripts\check_install.py simulations\flowpilot_startup_intake_ui_model.py simulations\run_flowpilot_startup_intake_ui_checks.py`.
+- OK: `powershell -STA -NoProfile -ExecutionPolicy Bypass -File skills\flowpilot\assets\ui\startup_intake\flowpilot_startup_intake.ps1 -SmokeTest`.
+- OK: headless confirm and cancel startup intake UI runs.
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_card_runtime` -> 22 tests passed.
+- OK: focused startup router tests -> 19 tests passed.
+- OK: `python scripts\check_install.py`.
+- OK: `python simulations\run_flowpilot_startup_control_checks.py`.
+- OK: `python simulations\run_prompt_isolation_checks.py`.
+- OK: `python simulations\run_startup_pm_review_checks.py`.
+- OK: `python simulations\run_meta_checks.py`.
+- OK: `python simulations\run_capability_checks.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- Boot now opens the native startup intake UI at the former startup question boundary.
+- Confirmed UI intake writes a body file plus result, receipt, and envelope artifacts; router state stores only references and hashes, not the body text.
+- Cancelled UI intake is terminal before run shell creation or role startup.
+- The PM intake packet is created from the sealed UI body reference, while Controller only sees the sealed reference.
+- Reviewer startup and live review context now points to the UI startup record, receipt, and envelope hash instead of searching chat history.
+- UI toggles map to the old startup answer enums, preserving downstream compatibility.
+- Local installed FlowPilot skill was synchronized from this checkout and audited fresh. Remote GitHub sync was not performed.
+
+### Counterexamples
+- controller_before_ui_confirm
+- controller_body_leak
+- accepted_without_hash
+- cancel_continues_to_run
+- invalid_toggle_value
+- manual_creates_heartbeat
+- single_agent_starts_roles
+- chat_opens_cockpit
+- ui_confirm_requires_old_chat
+- reviewer_uses_chat
+
+### Friction Points
+- Full `python -m unittest tests.test_flowpilot_router_runtime` exceeded the local timeout with no failure output, so startup coverage was validated through focused router tests and the existing full meta/capability model checks.
+- The formal UI asset was added under the skill asset tree; an older preview UI script remains a separate preview artifact.
+
+### Skipped Steps
+- No sealed startup request body was read by Controller.
+- No live `.flowpilot` route state was mutated.
+- No remote GitHub sync or push was performed, per user instruction.
+
+### Next Actions
+- Keep future startup intake changes aligned across the UI artifact schema, router payload validation, PM sealed packet creation, reviewer startup/live review card wording, and the FlowGuard startup-intake model.

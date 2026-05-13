@@ -1,4 +1,7 @@
 param(
+    [string]$OutputDir = "",
+    [string]$HeadlessConfirmText = "",
+    [switch]$HeadlessCancel,
     [switch]$SmokeTest
 )
 
@@ -28,13 +31,176 @@ Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName WindowsBase
 Add-Type -AssemblyName System.Xaml
 
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+function Find-RepoRoot {
+    $cursor = [System.IO.DirectoryInfo]::new($PSScriptRoot)
+    while ($null -ne $cursor) {
+        $brandIcon = Join-Path $cursor.FullName "assets\brand\flowpilot-icon-default.png"
+        $router = Join-Path $cursor.FullName "skills\flowpilot\assets\flowpilot_router.py"
+        if ((Test-Path -LiteralPath $brandIcon) -and (Test-Path -LiteralPath $router)) {
+            return $cursor.FullName
+        }
+        $cursor = $cursor.Parent
+    }
+    throw "Unable to locate FlowPilot repository root from $PSScriptRoot"
+}
+
+$RepoRoot = Find-RepoRoot
 $IconPath = Join-Path $RepoRoot "assets\brand\flowpilot-icon-default.png"
 if (-not (Test-Path -LiteralPath $IconPath)) {
     throw "Missing FlowPilot icon: $IconPath"
 }
 
 $IconUri = ([System.Uri]::new($IconPath)).AbsoluteUri
+$script:StartupIntakeCompleted = $false
+$script:ExitCode = 0
+
+function Get-UtcNow {
+    return [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
+}
+
+function Get-StartupIntakeOutputDir {
+    if (-not [string]::IsNullOrWhiteSpace($OutputDir)) {
+        return [System.IO.Path]::GetFullPath($OutputDir)
+    }
+    $stamp = [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssZ")
+    return Join-Path $RepoRoot ".flowpilot\bootstrap\startup_intake\$stamp"
+}
+
+function Get-ProjectRelativePath([string]$Path) {
+    $full = [System.IO.Path]::GetFullPath($Path)
+    $root = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\') + '\'
+    if ($full.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $full.Substring($root.Length).Replace('\', '/')
+    }
+    return $full
+}
+
+function Write-JsonFile([string]$Path, [hashtable]$Payload) {
+    $Payload | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $Path -Encoding UTF8
+}
+
+function Get-FileSha256([string]$Path) {
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+function New-StartupAnswerMap([bool]$AgentsEnabled, [bool]$ContinuationEnabled, [bool]$CockpitEnabled) {
+    return @{
+        background_agents = $(if ($AgentsEnabled) { "allow" } else { "single-agent" })
+        scheduled_continuation = $(if ($ContinuationEnabled) { "allow" } else { "manual" })
+        display_surface = $(if ($CockpitEnabled) { "cockpit" } else { "chat" })
+        provenance = "explicit_user_reply"
+    }
+}
+
+function Write-StartupIntakeResult(
+    [string]$Status,
+    [string]$BodyText,
+    [bool]$AgentsEnabled,
+    [bool]$ContinuationEnabled,
+    [bool]$CockpitEnabled,
+    [string]$Language
+) {
+    $outDir = Get-StartupIntakeOutputDir
+    New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+    $recordedAt = Get-UtcNow
+    $answers = New-StartupAnswerMap $AgentsEnabled $ContinuationEnabled $CockpitEnabled
+    $receiptPath = Join-Path $outDir "startup_intake_receipt.json"
+    $resultPath = Join-Path $outDir "startup_intake_result.json"
+
+    if ($Status -eq "cancelled") {
+        $receipt = @{
+            schema_version = "flowpilot.startup_intake_receipt.v1"
+            status = "cancelled"
+            ui_surface = "native_wpf_startup_intake"
+            language = $Language
+            startup_answers = $answers
+            confirmed_by_user = $false
+            cancelled_by_user = $true
+            recorded_at = $recordedAt
+        }
+        Write-JsonFile $receiptPath $receipt
+        $result = @{
+            schema_version = "flowpilot.startup_intake_result.v1"
+            status = "cancelled"
+            receipt_path = Get-ProjectRelativePath $receiptPath
+            controller_visibility = "cancel_status_only"
+            body_text_included = $false
+            recorded_at = $recordedAt
+        }
+        Write-JsonFile $resultPath $result
+        return $resultPath
+    }
+
+    if ([string]::IsNullOrWhiteSpace($BodyText)) {
+        throw "Work request cannot be empty."
+    }
+
+    $bodyPath = Join-Path $outDir "startup_intake_body.md"
+    $envelopePath = Join-Path $outDir "startup_intake_envelope.json"
+    Set-Content -LiteralPath $bodyPath -Value $BodyText -Encoding UTF8
+    $bodyHash = Get-FileSha256 $bodyPath
+
+    $receipt = @{
+        schema_version = "flowpilot.startup_intake_receipt.v1"
+        status = "confirmed"
+        ui_surface = "native_wpf_startup_intake"
+        language = $Language
+        startup_answers = $answers
+        confirmed_by_user = $true
+        cancelled_by_user = $false
+        body_path = Get-ProjectRelativePath $bodyPath
+        body_hash = $bodyHash
+        envelope_path = Get-ProjectRelativePath $envelopePath
+        body_text_included = $false
+        recorded_at = $recordedAt
+    }
+    Write-JsonFile $receiptPath $receipt
+
+    $envelope = @{
+        schema_version = "flowpilot.startup_intake_envelope.v1"
+        status = "confirmed"
+        source = "native_wpf_startup_intake"
+        language = $Language
+        startup_answers = $answers
+        body_path = Get-ProjectRelativePath $bodyPath
+        body_hash = $bodyHash
+        receipt_path = Get-ProjectRelativePath $receiptPath
+        body_visibility = "sealed_pm_only"
+        controller_visibility = "envelope_only"
+        controller_may_read_body = $false
+        body_text_included = $false
+        recorded_at = $recordedAt
+    }
+    Write-JsonFile $envelopePath $envelope
+
+    $result = @{
+        schema_version = "flowpilot.startup_intake_result.v1"
+        status = "confirmed"
+        startup_answers = $answers
+        language = $Language
+        receipt_path = Get-ProjectRelativePath $receiptPath
+        envelope_path = Get-ProjectRelativePath $envelopePath
+        body_path = Get-ProjectRelativePath $bodyPath
+        body_hash = $bodyHash
+        controller_visibility = "envelope_only"
+        controller_may_read_body = $false
+        body_text_included = $false
+        recorded_at = $recordedAt
+    }
+    Write-JsonFile $resultPath $result
+    return $resultPath
+}
+
+if ($HeadlessCancel) {
+    Write-StartupIntakeResult "cancelled" "" $true $true $true "en" | Write-Output
+    exit 0
+}
+
+if (-not [string]::IsNullOrWhiteSpace($HeadlessConfirmText)) {
+    Write-StartupIntakeResult "confirmed" $HeadlessConfirmText $true $true $true "en" | Write-Output
+    exit 0
+}
 
 $Xaml = @"
 <Window
@@ -425,7 +591,7 @@ $Names = @(
     "EnglishLanguage", "ChineseLanguage", "TitleText", "RequestLabel",
     "WorkRequest", "PlaceholderText", "AgentsTitle", "AgentsBody",
     "ContinuationTitle", "ContinuationBody", "CockpitTitle", "CockpitBody",
-    "ConfirmButton", "StatusText"
+    "AgentsToggle", "ContinuationToggle", "CockpitToggle", "ConfirmButton", "StatusText"
 )
 
 $Ui = @{}
@@ -446,7 +612,7 @@ $Copy = @{
         CockpitTitle = "Cockpit UI"
         CockpitBody = "Open the visual control surface instead of chat-only route signs."
         Confirm = "Confirm intake"
-        Confirmed = "Intake preview confirmed. No FlowPilot process has been started."
+        Confirmed = "Startup intake recorded."
     }
     zh = @{
         Window = "FlowPilot 启动注入"
@@ -460,7 +626,7 @@ $Copy = @{
         CockpitTitle = "Cockpit UI"
         CockpitBody = "打开可视化控制台，而不是只用聊天路线标识。"
         Confirm = "确认注入"
-        Confirmed = "注入预览已确认。当前没有启动 FlowPilot 流程。"
+        Confirmed = "启动注入已记录。"
     }
 }
 
@@ -499,7 +665,39 @@ $Ui.ChineseLanguage.Add_Checked({ Apply-Language })
 $Ui.WorkRequest.Add_TextChanged({ Update-Placeholder })
 $Ui.ConfirmButton.Add_Click({
     $Lang = Get-Language
-    $Ui.StatusText.Text = $Copy[$Lang].Confirmed
+    try {
+        $resultPath = Write-StartupIntakeResult `
+            "confirmed" `
+            $Ui.WorkRequest.Text `
+            ([bool]$Ui.AgentsToggle.IsChecked) `
+            ([bool]$Ui.ContinuationToggle.IsChecked) `
+            ([bool]$Ui.CockpitToggle.IsChecked) `
+            $Lang
+        $script:StartupIntakeCompleted = $true
+        $script:ExitCode = 0
+        $Ui.StatusText.Text = $Copy[$Lang].Confirmed
+        $Window.Tag = $resultPath
+        $Window.Close()
+    } catch {
+        $Ui.StatusText.Text = $_.Exception.Message
+    }
+})
+
+$Window.Add_Closing({
+    if (-not $script:StartupIntakeCompleted -and -not $SmokeTest) {
+        try {
+            Write-StartupIntakeResult `
+                "cancelled" `
+                "" `
+                ([bool]$Ui.AgentsToggle.IsChecked) `
+                ([bool]$Ui.ContinuationToggle.IsChecked) `
+                ([bool]$Ui.CockpitToggle.IsChecked) `
+                (Get-Language) | Out-Null
+            $script:ExitCode = 0
+        } catch {
+            $script:ExitCode = 1
+        }
+    }
 })
 
 Apply-Language
@@ -512,3 +710,4 @@ if ($SmokeTest) {
 }
 
 $Window.ShowDialog() | Out-Null
+exit $script:ExitCode

@@ -1691,17 +1691,31 @@ def create_user_intake_packet(
     body_text: str,
     run_id: str | None = None,
     startup_options: dict[str, Any] | None = None,
+    source: str = "user_chat_prompt",
+    body_visibility: str | None = None,
+    startup_intake_ref: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Preserve the user's initial prompt as the first PM-bound physical packet."""
 
+    resolved_body_visibility = body_visibility or USER_INTAKE_BODY_VISIBILITY
     metadata = {
-        "source": "user_chat_prompt",
+        "source": source,
         "controller_bootstrap_scope": startup_options or {},
         "controller_may_bootstrap_roles_heartbeat_and_ui": True,
+        "controller_may_read_user_intake_body": resolved_body_visibility == USER_INTAKE_BODY_VISIBILITY,
         "controller_must_not_make_pm_route_or_gate_decision": True,
         "pm_must_request_startup_reviewer_gate_before_opening_start_gate": True,
         "startup_gate_status": "not_open_until_pm_decision_after_reviewer_audit",
     }
+    if startup_intake_ref is not None:
+        metadata.update(
+            {
+                "startup_intake_ref": startup_intake_ref,
+                "controller_may_read_user_intake_body": False,
+                "reviewer_live_review_source": "startup_intake_record",
+                "reviewer_must_not_use_chat_history": True,
+            }
+        )
     return create_packet(
         project_root,
         run_id=run_id,
@@ -1711,7 +1725,7 @@ def create_user_intake_packet(
         node_id=node_id,
         body_text=body_text,
         packet_type="user_intake",
-        body_visibility=USER_INTAKE_BODY_VISIBILITY,
+        body_visibility=resolved_body_visibility,
         metadata=metadata,
         next_holder="project_manager",
     )

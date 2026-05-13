@@ -678,10 +678,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         while True:
             action = router.next_action(root)
             action_type = str(action["action_type"])
-            if action_type == "record_startup_answers":
+            if action_type == "open_startup_intake_ui":
+                router.apply_action(root, action_type, self.startup_intake_payload(root, startup_answers=startup_answers))
+            elif action_type == "record_startup_answers":
                 router.apply_action(root, action_type, {"startup_answers": startup_answers})
             elif action_type == "record_user_request":
-                router.apply_action(root, action_type, {"user_request": USER_REQUEST})
+                if action.get("requires_payload") == "user_request":
+                    router.apply_action(root, action_type, {"user_request": USER_REQUEST})
+                else:
+                    router.apply_action(root, action_type)
             elif action_type == "start_role_slots":
                 router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
             else:
@@ -690,6 +695,106 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 break
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
+
+    def startup_intake_payload(
+        self,
+        root: Path,
+        *,
+        startup_answers: dict | None = None,
+        body_text: str | None = None,
+        status: str = "confirmed",
+    ) -> dict:
+        startup_answers = startup_answers or STARTUP_ANSWERS
+        bootstrap = self.bootstrap_state(root)
+        output_dir = root / ".flowpilot" / "bootstrap" / "startup_intake" / str(bootstrap.get("run_id") or "test-run")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        receipt_path = output_dir / "startup_intake_receipt.json"
+        result_path = output_dir / "startup_intake_result.json"
+        recorded_at = "2026-05-13T00:00:00Z"
+        if status == "cancelled":
+            receipt = {
+                "schema_version": router.STARTUP_INTAKE_RECEIPT_SCHEMA,
+                "status": "cancelled",
+                "ui_surface": "native_wpf_startup_intake",
+                "language": "en",
+                "startup_answers": startup_answers,
+                "confirmed_by_user": False,
+                "cancelled_by_user": True,
+                "recorded_at": recorded_at,
+            }
+            receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            result = {
+                "schema_version": router.STARTUP_INTAKE_RESULT_SCHEMA,
+                "status": "cancelled",
+                "receipt_path": self.rel(root, receipt_path),
+                "controller_visibility": "cancel_status_only",
+                "body_text_included": False,
+                "recorded_at": recorded_at,
+            }
+            result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            return {"startup_intake_result": {"result_path": self.rel(root, result_path)}}
+
+        body_path = output_dir / "startup_intake_body.md"
+        envelope_path = output_dir / "startup_intake_envelope.json"
+        body_path.write_text(body_text or USER_REQUEST["text"], encoding="utf-8")
+        body_hash = hashlib.sha256(body_path.read_bytes()).hexdigest()
+        receipt = {
+            "schema_version": router.STARTUP_INTAKE_RECEIPT_SCHEMA,
+            "status": "confirmed",
+            "ui_surface": "native_wpf_startup_intake",
+            "language": "en",
+            "startup_answers": startup_answers,
+            "confirmed_by_user": True,
+            "cancelled_by_user": False,
+            "body_path": self.rel(root, body_path),
+            "body_hash": body_hash,
+            "envelope_path": self.rel(root, envelope_path),
+            "body_text_included": False,
+            "recorded_at": recorded_at,
+        }
+        receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        envelope = {
+            "schema_version": router.STARTUP_INTAKE_ENVELOPE_SCHEMA,
+            "status": "confirmed",
+            "source": "native_wpf_startup_intake",
+            "language": "en",
+            "startup_answers": startup_answers,
+            "body_path": self.rel(root, body_path),
+            "body_hash": body_hash,
+            "receipt_path": self.rel(root, receipt_path),
+            "body_visibility": "sealed_pm_only",
+            "controller_visibility": "envelope_only",
+            "controller_may_read_body": False,
+            "body_text_included": False,
+            "recorded_at": recorded_at,
+        }
+        envelope_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        result = {
+            "schema_version": router.STARTUP_INTAKE_RESULT_SCHEMA,
+            "status": "confirmed",
+            "startup_answers": startup_answers,
+            "language": "en",
+            "receipt_path": self.rel(root, receipt_path),
+            "envelope_path": self.rel(root, envelope_path),
+            "body_path": self.rel(root, body_path),
+            "body_hash": body_hash,
+            "controller_visibility": "envelope_only",
+            "controller_may_read_body": False,
+            "body_text_included": False,
+            "recorded_at": recorded_at,
+        }
+        result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return {"startup_intake_result": {"result_path": self.rel(root, result_path)}}
+
+    def enter_legacy_startup_answer_boundary(self, root: Path) -> None:
+        state_path = router.bootstrap_state_path(root)
+        bootstrap = read_json(state_path)
+        bootstrap["pending_action"] = {
+            "action_type": "ask_startup_questions",
+            "label": "legacy_startup_questions_asked_from_router",
+        }
+        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.assertEqual(router.apply_action(root, "ask_startup_questions")["applied"], "ask_startup_questions")
 
     def role_agent_payload(self, root: Path, startup_answers: dict | None = None) -> dict:
         startup_answers = startup_answers or STARTUP_ANSWERS
@@ -2580,7 +2685,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_run_until_wait_applies_only_safe_startup_action(self) -> None:
         root = self.make_project()
         result = router.run_until_wait(root, new_invocation=True)
-        self.assertEqual(result["action_type"], "ask_startup_questions")
+        self.assertEqual(result["action_type"], "open_startup_intake_ui")
         self.assertEqual(result["folded_command"], "run-until-wait")
         self.assertEqual(result["folded_applied_count"], 1)
         self.assertEqual([item["action_type"] for item in result["folded_applied_actions"]], ["load_router"])
@@ -2589,17 +2694,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_run_until_wait_folds_only_internal_bootloader_actions_after_banner(self) -> None:
         root = self.make_project()
         result = router.run_until_wait(root, new_invocation=True)
-        router.apply_action(root, "ask_startup_questions")
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "record_startup_answers")
-        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "emit_startup_banner")
         router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
 
         result = router.run_until_wait(root)
 
-        self.assertEqual(result["action_type"], "record_user_request")
+        self.assertEqual(result["action_type"], "start_role_slots")
+        self.assertTrue(result["requires_host_spawn"])
         self.assertEqual(result["folded_command"], "run-until-wait")
         self.assertEqual(
             [item["action_type"] for item in result["folded_applied_actions"]],
@@ -2610,27 +2713,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "copy_runtime_kit",
                 "fill_runtime_placeholders",
                 "initialize_mailbox",
+                "record_user_request",
+                "write_user_intake",
             ],
         )
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
         bootstrap = self.bootstrap_state(root)
         self.assertTrue(bootstrap["flags"]["run_shell_created"])
         self.assertTrue(bootstrap["flags"]["mailbox_initialized"])
-        self.assertFalse(bootstrap["flags"].get("user_request_recorded", False))
+        self.assertTrue(bootstrap["flags"].get("user_request_recorded", False))
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
         self.assertTrue((self.run_root_for(root) / "packet_ledger.json").exists())
 
     def test_run_until_wait_folds_user_intake_then_stops_before_role_boundary(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
-        router.apply_action(root, "ask_startup_questions")
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "record_startup_answers")
-        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
         action = router.next_action(root)
         router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
-        router.run_until_wait(root)
-        router.apply_action(root, "record_user_request", {"user_request": USER_REQUEST})
 
         result = router.run_until_wait(root)
 
@@ -2638,11 +2738,57 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(result["requires_host_spawn"])
         self.assertEqual(
             [item["action_type"] for item in result["folded_applied_actions"]],
-            ["write_user_intake"],
+            [
+                "create_run_shell",
+                "write_current_pointer",
+                "update_run_index",
+                "copy_runtime_kit",
+                "fill_runtime_placeholders",
+                "initialize_mailbox",
+                "record_user_request",
+                "write_user_intake",
+            ],
         )
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
         self.assertTrue((self.run_root_for(root) / "mailbox" / "outbox" / "user_intake.json").exists())
         self.assertFalse(self.bootstrap_state(root)["flags"].get("roles_started", False))
+
+    def test_startup_intake_cancel_is_terminal_before_run_shell(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        payload = self.startup_intake_payload(root, status="cancelled")
+        result = router.apply_action(root, "open_startup_intake_ui", payload)
+        self.assertEqual(result["startup_intake"]["status"], "cancelled")
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["status"], "startup_cancelled")
+        self.assertEqual(bootstrap["startup_state"], "startup_cancelled")
+        self.assertFalse(bootstrap["flags"]["run_shell_created"])
+        self.assertFalse((root / bootstrap["run_root"] / "run.json").exists())
+        self.assertFalse((root / bootstrap["run_root"] / "router_state.json").exists())
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "startup_cancelled")
+        self.assertTrue(action["terminal"])
+
+    def test_startup_intake_rejects_body_hash_mismatch(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        payload = self.startup_intake_payload(root)
+        result_path = root / payload["startup_intake_result"]["result_path"]
+        result = read_json(result_path)
+        (root / result["body_path"]).write_text("changed after receipt", encoding="utf-8")
+        with self.assertRaisesRegex(router.RouterError, "body hash mismatch"):
+            router.apply_action(root, "open_startup_intake_ui", payload)
+
+    def test_startup_intake_rejects_body_text_in_controller_payload(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        payload = self.startup_intake_payload(root)
+        result_path = root / payload["startup_intake_result"]["result_path"]
+        result = read_json(result_path)
+        result["body_text"] = USER_REQUEST["text"]
+        result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(router.RouterError, "forbidden body text fields"):
+            router.apply_action(root, "open_startup_intake_ui", payload)
 
     def test_startup_sequence_creates_prompt_isolated_run(self) -> None:
         root = self.make_project()
@@ -2652,11 +2798,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(bootstrap["router_loaded"])
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
         self.assertEqual(root / bootstrap["run_root"], run_root)
-        self.assertEqual(bootstrap["bootloader_actions"], 13)
-        self.assertEqual(bootstrap["router_action_requests"], 13)
+        self.assertEqual(bootstrap["bootloader_actions"], 12)
+        self.assertEqual(bootstrap["router_action_requests"], 12)
         self.assertIsNone(bootstrap["pending_action"])
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
-        self.assertEqual(bootstrap["user_request"], USER_REQUEST)
+        self.assertEqual(bootstrap["user_request"]["schema_version"], router.USER_REQUEST_REF_SCHEMA)
+        self.assertFalse(bootstrap["user_request"]["controller_may_read_body"])
         self.assertTrue(bootstrap["flags"]["role_core_prompts_injected"])
 
         self.assertTrue((run_root / "runtime_kit" / "manifest.json").exists())
@@ -2664,6 +2811,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "execution_frontier.json").exists())
         self.assertEqual(len(list((run_root / "crew_memory").glob("*.json"))), 6)
         self.assertTrue((run_root / "user_request.json").exists())
+        user_request_record = read_json(run_root / "user_request.json")
+        self.assertNotIn(USER_REQUEST["text"], json.dumps(user_request_record))
+        self.assertEqual(user_request_record["source"], "startup_intake_ui")
+        self.assertTrue((run_root / "startup_intake" / "startup_intake_record.json").exists())
         self.assertTrue((run_root / "mailbox" / "outbox" / "user_intake.json").exists())
         self.assertTrue((run_root / "role_core_prompt_delivery.json").exists())
         role_core_delivery = read_json(run_root / "role_core_prompt_delivery.json")
@@ -3068,26 +3219,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
 
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
 
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "record_startup_answers")
-        self.assertTrue(action["requires_user"])
-        self.assertEqual(action["requires_payload"], "startup_answers")
+        self.assertEqual(action["action_type"], "open_startup_intake_ui")
+        self.assertTrue(action["requires_host_automation"])
+        self.assertEqual(action["requires_payload"], "startup_intake_result")
         self.assertEqual(action["payload_contract"]["schema_version"], "flowpilot.payload_contract.v1")
-        self.assertIn("startup_answer_interpretation", " ".join(action["payload_contract"]["optional_fields"]))
-        self.assert_payload_contract_mentions(
-            action["payload_contract"],
-            "startup_answer_interpretation.schema_version",
-            "startup_answer_interpretation.raw_user_reply_text",
-            "startup_answer_interpretation.interpreted_by",
-            "startup_answer_interpretation.interpretation_provenance",
-            "startup_answer_interpretation.ambiguity_status",
-            "startup_answer_interpretation.interpreted_answers.background_agents",
-            "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
-            "startup_answer_interpretation.interpreted_answers.display_surface",
-            "flowpilot.startup_answer_interpretation.v1",
-        )
+        self.assertEqual(action["payload_contract"]["payload_key"], "startup_intake_result")
+        self.assertIn("flowpilot_startup_intake.ps1", action["startup_intake_ui"]["launcher_path"])
+        self.assertTrue(action["startup_intake_ui"]["body_text_is_never_router_payload"])
 
         with self.assertRaises(router.RouterError):
             router.apply_action(root, "emit_startup_banner")
@@ -3095,10 +3235,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.apply_action(root, "create_run_shell")
 
         bootstrap = self.bootstrap_state(root)
-        self.assertEqual(bootstrap["startup_state"], "awaiting_answers_stopped")
+        self.assertEqual(bootstrap["startup_state"], "none")
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
-        self.assertTrue(bootstrap["flags"]["startup_state_written_awaiting_answers"])
-        self.assertTrue(bootstrap["flags"]["dialog_stopped_for_answers"])
+        self.assertFalse(bootstrap["flags"]["startup_state_written_awaiting_answers"])
+        self.assertFalse(bootstrap["flags"]["dialog_stopped_for_answers"])
         self.assertIsNone(bootstrap["startup_answers"])
         self.assertIsNotNone(bootstrap["run_id"])
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
@@ -3108,9 +3248,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_startup_banner_action_and_result_are_user_visible(self) -> None:
         root = self.make_project()
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
-        self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
-        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "open_startup_intake_ui")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "emit_startup_banner")
@@ -3169,42 +3309,36 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("display-only data", result["display_text"])
         self.assertNotIn("flowpilot_router.py", result["display_text"])
 
-    def test_user_intake_requires_explicit_user_request_and_includes_it(self) -> None:
+    def test_user_intake_from_startup_ui_seals_request_for_controller(self) -> None:
         root = self.make_project()
-        while True:
-            action = router.next_action(root)
-            action_type = str(action["action_type"])
-            if action_type == "record_startup_answers":
-                router.apply_action(root, action_type, {"startup_answers": STARTUP_ANSWERS})
-            elif action_type == "record_user_request":
-                break
-            else:
-                router.apply_action(root, action_type, self.payload_for_action(action))
-
-        inferred_request = {**USER_REQUEST, "provenance": "inferred_by_assistant"}
-        with self.assertRaisesRegex(router.RouterError, "provenance=explicit_user_request"):
-            router.apply_action(root, "record_user_request", {"user_request": inferred_request})
-
-        router.apply_action(root, "record_user_request", {"user_request": USER_REQUEST})
-        self.assertEqual(router.next_action(root)["action_type"], "write_user_intake")
-        router.apply_action(root, "write_user_intake")
+        router.run_until_wait(root, new_invocation=True)
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        action = router.next_action(root)
+        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
+        result = router.run_until_wait(root)
+        self.assertEqual(result["action_type"], "start_role_slots")
 
         run_root = root / self.bootstrap_state(root)["run_root"]
+        user_request_record = read_json(run_root / "user_request.json")
+        self.assertNotIn(USER_REQUEST["text"], json.dumps(user_request_record))
+        self.assertFalse(user_request_record["controller_may_read_body"])
+        self.assertEqual(user_request_record["user_request_ref"]["schema_version"], router.USER_REQUEST_REF_SCHEMA)
+        packet_envelope = read_json(run_root / "mailbox" / "outbox" / "user_intake.json")
+        self.assertEqual(packet_envelope["body_visibility"], packet_runtime.SEALED_BODY_VISIBILITY)
+        self.assertFalse(packet_envelope["body_access"]["controller_can_read_body"])
         body = (run_root / "packets" / "user_intake" / "packet_body.md").read_text(encoding="utf-8")
-        body_payload = json.loads(body[body.index("{") :])
-        self.assertEqual(body_payload["user_request"], USER_REQUEST)
-        self.assertEqual(body_payload["startup_answers"], STARTUP_ANSWERS)
-        self.assertTrue((run_root / "user_request.json").exists())
+        self.assertIn(USER_REQUEST["text"], body)
+        self.assertIn("startup_intake_record_path", body)
 
     def test_background_agents_allow_requires_six_fresh_live_agent_records(self) -> None:
         root = self.make_project()
         while True:
             action = router.next_action(root)
             action_type = str(action["action_type"])
-            if action_type == "record_startup_answers":
-                router.apply_action(root, action_type, {"startup_answers": STARTUP_ANSWERS})
+            if action_type == "open_startup_intake_ui":
+                router.apply_action(root, action_type, self.startup_intake_payload(root))
             elif action_type == "record_user_request":
-                router.apply_action(root, action_type, {"user_request": USER_REQUEST})
+                router.apply_action(root, action_type)
             elif action_type == "start_role_slots":
                 break
             else:
@@ -3275,9 +3409,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_startup_answer_resume_normalizes_old_stop_boundary_state(self) -> None:
         root = self.make_project()
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
 
         state_path = router.bootstrap_state_path(root)
+        bootstrap = read_json(state_path)
+        bootstrap["pending_action"] = {
+            "action_type": "ask_startup_questions",
+            "label": "legacy_startup_questions_asked_from_router",
+        }
+        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True), encoding="utf-8")
+        self.assertEqual(router.apply_action(root, "ask_startup_questions")["applied"], "ask_startup_questions")
+
         bootstrap = read_json(state_path)
         bootstrap["flags"]["startup_state_written_awaiting_answers"] = False
         bootstrap["flags"]["dialog_stopped_for_answers"] = False
@@ -3342,7 +3483,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_record_startup_answers_rejects_naked_inferred_or_invalid_values(self) -> None:
         root = self.make_project()
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
+        self.enter_legacy_startup_answer_boundary(root)
         self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
 
         naked_answers = {key: value for key, value in STARTUP_ANSWERS.items() if key != "provenance"}
@@ -3371,7 +3512,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt(self) -> None:
         root = self.make_project()
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.assertEqual(self.next_and_apply(root)["applied"], "ask_startup_questions")
+        self.enter_legacy_startup_answer_boundary(root)
         self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
 
         with self.assertRaisesRegex(router.RouterError, "startup_answer_interpretation"):
@@ -3667,12 +3808,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(context["card_id"], "reviewer.startup_fact_check")
         self.assertEqual(context["to_role"], "human_like_reviewer")
         self.assertEqual(context["current_task"]["user_request_path"], f"{run_root.relative_to(root).as_posix()}/user_request.json")
+        self.assertEqual(
+            context["current_task"]["startup_intake_record_path"],
+            f"{run_root.relative_to(root).as_posix()}/startup_intake/startup_intake_record.json",
+        )
+        self.assertEqual(context["current_task"]["reviewer_live_review_source"], "startup_intake_record")
         self.assertFalse(context["current_task"]["controller_summary_is_task_authority"])
         self.assertIn("current_phase", context["current_stage"])
         self.assertIn("current_node_id", context["current_stage"])
         self.assertEqual(context["source_paths"]["execution_frontier"], f"{run_root.relative_to(root).as_posix()}/execution_frontier.json")
         self.assertEqual(context["source_paths"]["prompt_delivery_ledger"], f"{run_root.relative_to(root).as_posix()}/prompt_delivery_ledger.json")
         self.assertEqual(context["source_paths"]["display_surface"], f"{run_root.relative_to(root).as_posix()}/display/display_surface.json")
+        self.assertEqual(
+            context["source_paths"]["startup_intake_record_path"],
+            f"{run_root.relative_to(root).as_posix()}/startup_intake/startup_intake_record.json",
+        )
         self.assertTrue(second["reviewer_has_direct_display_evidence"])
 
         state = read_json(run_root / "router_state.json")
@@ -3998,6 +4148,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
         startup_audit = read_json(run_root / "startup" / "startup_mechanical_audit.json")
         self.assertTrue(startup_audit["mechanical_checks_passed"])
+        self.assertTrue(startup_audit["mechanical_checks"]["startup_intake_record_current"])
+        self.assertTrue(startup_audit["mechanical_checks"]["startup_intake_receipt_envelope_hash_current"])
+        self.assertTrue(startup_audit["mechanical_checks"]["reviewer_live_review_uses_startup_intake_record"])
+        self.assertIn(
+            f"{run_root.relative_to(root).as_posix()}/startup_intake/startup_intake_record.json",
+            {item["path"] for item in startup_audit["source_paths"]},
+        )
         self.assertFalse(startup_audit["self_attested_ai_claims_accepted_as_proof"])
         self.assertEqual(startup_audit["router_replacement_scope"], "mechanical_only")
         proof_path = root / startup_audit["router_owned_check_proof_path"]

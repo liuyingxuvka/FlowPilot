@@ -22,6 +22,11 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 
 Current task: read the `user_intake` mail after Controller ledger delivery.
+For native startup intake runs, treat
+`startup_intake/startup_intake_record.json` plus the delivered `user_intake`
+packet as the startup authority. Do not ask Controller to recover the user's
+work request from chat history; Controller may relay only paths, hashes,
+status, and envelopes.
 
 Allowed PM decisions:
 
