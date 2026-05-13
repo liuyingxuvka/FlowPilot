@@ -9,6 +9,8 @@ Risk purpose:
   reviewer startup checks relying on chat history instead of UI records.
 - Guard against Windows PowerShell UTF-8 BOM artifacts breaking Router JSON
   parsing or leaking an encoding marker into the PM-bound intake packet.
+- Guard against Windows PowerShell 5.1 parsing non-ASCII UTF-8 no-BOM `.ps1`
+  source under a legacy code page before the startup intake UI can open.
 - Run with `python simulations/run_flowpilot_startup_intake_ui_checks.py`
   before changing FlowPilot startup protocol code and after each meaningful
   startup integration edit.
@@ -30,6 +32,7 @@ STARTUP_ENUMS = {
 
 REQUIRED_LABELS = (
     "router_loaded",
+    "startup_ui_source_encoding_contract_verified",
     "startup_intake_ui_opened",
     "ui_confirmed_with_all_artifacts",
     "ui_cancelled_before_run",
@@ -71,6 +74,10 @@ class State:
     body_path_recorded: bool = False
     body_text_in_controller_visible_state: bool = False
     controller_read_body: bool = False
+    script_source_contains_non_ascii: bool = False
+    script_source_utf8_bom: bool = False
+    legacy_powershell_source_parse_safe: bool = False
+    source_encoding_contract_verified: bool = False
     result_json_no_bom: bool = False
     receipt_json_no_bom: bool = False
     envelope_json_no_bom: bool = False
@@ -187,9 +194,26 @@ def _confirm_state(state: State, *, background: str, continuation: str, display:
     )
 
 
+def _source_safe_state(state: State) -> State:
+    return replace(
+        state,
+        script_source_contains_non_ascii=True,
+        script_source_utf8_bom=True,
+        legacy_powershell_source_parse_safe=True,
+        source_encoding_contract_verified=True,
+    )
+
+
 def next_safe_states(state: State) -> tuple[Transition, ...]:
     if state.status == "new" and not state.router_loaded:
         return (Transition("router_loaded", replace(state, router_loaded=True)),)
+    if state.router_loaded and not state.source_encoding_contract_verified:
+        return (
+            Transition(
+                "startup_ui_source_encoding_contract_verified",
+                _source_safe_state(state),
+            ),
+        )
     if state.router_loaded and not state.ui_opened:
         return (
             Transition(
@@ -341,6 +365,12 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         return InvariantResult.fail("UI cancel still allowed startup side effects")
     if state.body_text_in_controller_visible_state or state.controller_read_body:
         return InvariantResult.fail("Controller-visible startup state leaked user request body")
+    if state.ui_opened and not state.source_encoding_contract_verified:
+        return InvariantResult.fail("startup UI opened before launcher source encoding contract was verified")
+    if state.source_encoding_contract_verified and state.script_source_contains_non_ascii and not state.script_source_utf8_bom:
+        return InvariantResult.fail("startup UI launcher source may not parse on legacy Windows PowerShell")
+    if state.ui_opened and not state.legacy_powershell_source_parse_safe:
+        return InvariantResult.fail("startup UI launcher source may not parse on legacy Windows PowerShell")
     if state.startup_answers_recorded and not (
         state.receipt_written
         and state.envelope_written
@@ -408,7 +438,7 @@ def invariant_failures(state: State) -> list[str]:
 
 def hazard_states() -> dict[str, State]:
     base = _confirm_state(
-        replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui"),
+        _source_safe_state(replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui")),
         background="allow",
         continuation="allow",
         display="cockpit",
@@ -427,6 +457,18 @@ def hazard_states() -> dict[str, State]:
             run_shell_created=True,
         ),
         "controller_body_leak": replace(recorded, body_text_in_controller_visible_state=True),
+        "ui_opened_before_source_encoding_check": replace(
+            initial_state(),
+            router_loaded=True,
+            ui_opened=True,
+            status="waiting_ui",
+        ),
+        "utf8_no_bom_script_source_legacy_powershell_parse_break": replace(
+            recorded,
+            script_source_contains_non_ascii=True,
+            script_source_utf8_bom=False,
+            legacy_powershell_source_parse_safe=False,
+        ),
         "accepted_without_hash": replace(recorded, body_hash_verified=False),
         "ui_result_json_bom_breaks_router": replace(recorded, result_json_no_bom=False),
         "ui_receipt_json_bom_breaks_router": replace(recorded, receipt_json_no_bom=False),
@@ -471,7 +513,7 @@ def hazard_states() -> dict[str, State]:
 def approved_plan_state() -> State:
     return replace(
         _confirm_state(
-            replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui"),
+            _source_safe_state(replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui")),
             background="allow",
             continuation="allow",
             display="cockpit",

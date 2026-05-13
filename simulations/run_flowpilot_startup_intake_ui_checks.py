@@ -18,6 +18,8 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_before_ui_confirm": "Controller loaded before confirmed UI intake and PM packet",
     "cancel_continues_to_run": "UI cancel still allowed startup side effects",
     "controller_body_leak": "Controller-visible startup state leaked user request body",
+    "ui_opened_before_source_encoding_check": "startup UI opened before launcher source encoding contract was verified",
+    "utf8_no_bom_script_source_legacy_powershell_parse_break": "startup UI launcher source may not parse on legacy Windows PowerShell",
     "accepted_without_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
     "ui_result_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
     "ui_receipt_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
@@ -37,6 +39,8 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|router={state.router_loaded}|ui={state.ui_opened},{state.ui_result}|"
+        f"source={state.script_source_contains_non_ascii},{state.script_source_utf8_bom},"
+        f"{state.legacy_powershell_source_parse_safe},{state.source_encoding_contract_verified}|"
         f"artifacts={state.receipt_written},{state.envelope_written},{state.body_written},"
         f"{state.body_path_recorded},{state.body_hash_verified}|"
         f"encoding={state.result_json_no_bom},{state.receipt_json_no_bom},{state.envelope_json_no_bom},"

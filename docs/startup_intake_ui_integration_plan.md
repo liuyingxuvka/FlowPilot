@@ -50,6 +50,25 @@ with `encoding="utf-8"` rejects a leading BOM.
 | 5 | Add focused regressions. | Test UI headless output bytes and Router BOM JSON fallback. | `tests/test_flowpilot_router_runtime.py` | Tests fail before the repair and pass after it. |
 | 6 | Sync installation and local git only. | Run install sync/check and commit scoped repair. | local install, local git | Installed FlowPilot matches repo; no GitHub push. |
 
+## PowerShell Source Encoding Repair Checklist
+
+This is a second targeted follow-up. The issue is source parsing compatibility:
+Windows PowerShell 5.1 may parse UTF-8 no-BOM `.ps1` source with the active ANSI
+code page. The startup intake UI script contains Chinese UI strings, so legacy
+code pages can reinterpret UTF-8 bytes as PowerShell smart quote tokens before
+the script can run.
+
+| Step | Optimization point | Concrete change | Files expected | Done when |
+| --- | --- | --- | --- | --- |
+| 1 | Paper plan and hazard inventory. | Record the exact source-encoding repair order and the bug classes the model must catch. | `docs/startup_intake_ui_integration_plan.md` | The checklist distinguishes `.ps1` source encoding from generated artifact encoding. |
+| 2 | Model the source parsing boundary before production edits. | Add launcher source encoding state and source-parse hazards to the startup intake UI FlowGuard model. | `simulations/flowpilot_startup_intake_ui_model.py`, runner results | Safe plan passes; UTF-8 no-BOM non-ASCII source hazard fails. |
+| 3 | Keep generated artifact invariants intact. | Ensure the upgraded model still requires result/receipt/envelope/body artifacts to be UTF-8 without BOM and Router to tolerate legacy BOM JSON. | startup intake UI model and runner | Source BOM safety cannot satisfy or weaken artifact no-BOM checks. |
+| 4 | Add focused source-encoding regression. | Test that non-ASCII startup UI `.ps1` source files carry a UTF-8 BOM while generated output remains no-BOM. | `tests/test_flowpilot_router_runtime.py` | The source test fails before script-source repair and passes after repair. |
+| 5 | Repair active and preview PowerShell source files. | Save both startup intake `.ps1` source files with a UTF-8 BOM; do not change their no-BOM output writers. | active UI script, docs preview script | Windows PowerShell 5.1 can parse the scripts under non-UTF-8 code pages. |
+| 6 | Verify incrementally. | Run the upgraded model, focused unit tests, and WPF smoke after each relevant slice. | model/test/smoke outputs | Each slice passes before moving to the next. |
+| 7 | Run broad checks in the background when practical. | Run slower FlowPilot regressions separately from the main edit loop. | model check logs/results | Broad model results are inspected before finalizing. |
+| 8 | Sync local installation and local git only. | Sync repo-owned installed FlowPilot, audit source freshness, stage, and commit locally. | installed skill, local git | Local install and local commit contain the repair; no GitHub push. |
+
 ## Hazard Checklist
 
 | Hazard id | Possible regression | FlowGuard/model expectation |
@@ -69,6 +88,12 @@ with `encoding="utf-8"` rejects a leading BOM.
 | H13 | Router relies only on a UI source fix and cannot read older already-generated BOM artifacts. | Fail if legacy BOM JSON artifacts cannot be parsed by the Router compatibility reader. |
 | H14 | A UTF-8 BOM from the body file becomes a visible `\ufeff` character in the PM-bound packet text. | Fail if PM packet body construction can leak a leading encoding marker. |
 | H15 | Encoding repair normalizes or rewrites the user's request semantics instead of only handling the BOM marker. | Fail if body hash verification is bypassed or if body text becomes Controller-visible. |
+| H16 | UTF-8 no-BOM `.ps1` source contains Chinese UI strings and is launched by Windows PowerShell 5.1 under a legacy code page. | Fail if the startup UI can open before the launcher source encoding contract proves legacy PowerShell parse safety. |
+| H17 | Source encoding repair is treated as equivalent to generated artifact encoding repair. | Fail if source BOM safety weakens result/receipt/envelope/body no-BOM artifact requirements. |
+| H18 | Only the active startup UI script is repaired while the docs preview script remains fragile. | Focused regression checks both known startup intake `.ps1` source files. |
+| H19 | A future edit adds non-ASCII UI copy to a `.ps1` source file without preserving source parse safety. | Fail if a non-ASCII startup UI PowerShell source is missing the UTF-8 BOM contract. |
+| H20 | The launch command changes to a host-specific workaround but leaves the repository source contract ambiguous. | Fail unless the model records a deterministic source parse contract independent of the current machine's code page. |
+| H21 | Long model regressions overwrite peer-agent work or canonical result files while another agent is active. | Background checks use scoped outputs/logs and final sync checks inspect git state before staging. |
 
 ## Model-First Acceptance
 
@@ -81,6 +106,8 @@ Before production code edits, the new FlowGuard model must show:
 - every hazard above has a corresponding known-bad mutation that fails;
 - the model preserves the existing old-flow compatibility boundary where
   startup answers gate the later bootloader actions.
+- the launcher source parse contract is checked before UI open, while
+  generated startup intake artifacts remain UTF-8 without BOM.
 
 ## Verification Plan
 

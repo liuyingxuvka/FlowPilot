@@ -501,6 +501,13 @@ RETIRED_PATHS = [
     "templates/flowpilot/watchdog/watchdog.template.json",
 ]
 
+STARTUP_INTAKE_PS1_SOURCE_FILES = [
+    "skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1",
+    "docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1",
+]
+
+UTF8_BOM = b"\xef\xbb\xbf"
+
 
 def main() -> int:
     result: dict[str, object] = {"ok": True, "checks": []}
@@ -524,6 +531,25 @@ def main() -> int:
         exists = (ROOT / relpath).exists()
         result["checks"].append({"name": f"file:{relpath}", "ok": exists})
         if not exists:
+            result["ok"] = False
+
+    for relpath in STARTUP_INTAKE_PS1_SOURCE_FILES:
+        path = ROOT / relpath
+        exists = path.exists()
+        data = path.read_bytes() if exists else b""
+        contains_non_ascii = any(byte >= 0x80 for byte in data)
+        has_utf8_bom = data.startswith(UTF8_BOM)
+        ok = exists and (not contains_non_ascii or has_utf8_bom)
+        result["checks"].append(
+            {
+                "name": f"powershell_source_encoding:{relpath}",
+                "ok": ok,
+                "exists": exists,
+                "contains_non_ascii": contains_non_ascii,
+                "utf8_bom": has_utf8_bom,
+            }
+        )
+        if not ok:
             result["ok"] = False
 
     skill_path = ROOT / "skills/flowpilot/SKILL.md"

@@ -9444,3 +9444,58 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep the reviewer-only model updated if future agents reintroduce Product/Process Officer default gates at root-contract or child-skill-manifest boundaries.
+
+
+## startup-intake-powershell-source-encoding-20260513 - Repair legacy Windows PowerShell source parsing for startup intake UI
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User reported another Windows agent could not open the startup UI because Windows PowerShell parsed UTF-8 no-BOM Chinese source text under a legacy code page and broke script syntax.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-13T20:00:00+00:00
+- Ended: 2026-05-13T20:11:00+00:00
+- Duration seconds: 660.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_startup_intake_ui_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_flowpilot_startup_intake_ui_checks.py --json-out simulations/flowpilot_startup_intake_ui_results.json`
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_powershell_sources_with_non_ascii_use_utf8_bom` failed before the source repair and passed after it
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_powershell_sources_with_non_ascii_use_utf8_bom tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_ui_writes_utf8_without_bom tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_router_accepts_utf8_bom_json_control_artifact tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_body_bom_is_not_injected_into_pm_packet_body`
+- OK: `powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1 -SmokeTest`
+- OK: `powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1 -SmokeTest`
+- OK: `python -m py_compile scripts/check_install.py simulations/flowpilot_startup_intake_ui_model.py simulations/run_flowpilot_startup_intake_ui_checks.py`
+- OK: `python scripts/check_install.py`
+- OK: `python simulations/run_flowpilot_startup_control_checks.py`
+- OK: `python simulations/run_prompt_isolation_checks.py`
+- OK: `python simulations/run_startup_pm_review_checks.py`
+- OK: `python simulations/run_meta_checks.py --force`
+- OK: `python simulations/run_capability_checks.py --force`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- The startup intake UI model now represents launcher source encoding separately from generated JSON/body artifact encoding.
+- The model catches the legacy Windows PowerShell hazard where non-ASCII UTF-8 no-BOM `.ps1` source can fail before any script-level encoding setup runs.
+- The approved repair plan passes with UTF-8 BOM source files while preserving no-BOM generated artifacts for downstream packet compatibility.
+- `scripts/check_install.py` now guards the active and preview startup UI PowerShell sources so future non-ASCII edits cannot silently reintroduce UTF-8 no-BOM source fragility.
+
+### Counterexamples
+- `ui_opened_before_source_encoding_check` was detected by the startup intake UI model.
+- `utf8_no_bom_script_source_legacy_powershell_parse_break` was detected by the startup intake UI model.
+
+### Friction Points
+- Long meta and capability simulations were run as hidden background PowerShell processes so installation sync and local checks could proceed in parallel.
+- Parallel agents introduced unrelated working-tree changes during validation; this repair kept its git scope limited to startup UI encoding, its model, tests, install check, and documentation.
+
+### Skipped Steps
+- No GitHub push or remote sync was run by user request.
+
+### Next Actions
+- Preserve the distinction between PowerShell source-file BOM requirements and generated artifact no-BOM requirements in future startup UI changes.

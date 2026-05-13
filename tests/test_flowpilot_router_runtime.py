@@ -53,6 +53,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def make_project(self) -> Path:
         return Path(tempfile.mkdtemp(prefix="flowpilot-router-"))
 
+    def test_startup_intake_powershell_sources_with_non_ascii_use_utf8_bom(self) -> None:
+        scripts = (
+            ROOT / "skills" / "flowpilot" / "assets" / "ui" / "startup_intake" / "flowpilot_startup_intake.ps1",
+            ROOT / "docs" / "ui" / "startup_intake_desktop_preview" / "flowpilot_startup_intake.ps1",
+        )
+        for script in scripts:
+            with self.subTest(script=script.relative_to(ROOT).as_posix()):
+                data = script.read_bytes()
+                self.assertTrue(any(byte >= 0x80 for byte in data), "test requires non-ASCII script source")
+                self.assertTrue(data.startswith(b"\xef\xbb\xbf"), "non-ASCII .ps1 source must be UTF-8 BOM for Windows PowerShell 5.1")
+
     def test_startup_intake_ui_writes_utf8_without_bom(self) -> None:
         if sys.platform != "win32" or shutil.which("powershell") is None:
             self.skipTest("startup intake WPF smoke requires Windows PowerShell")
