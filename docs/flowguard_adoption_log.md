@@ -9172,3 +9172,60 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep resume run-until-wait folding scoped to safe controller checks and rerun resume/meta/capability models before future heartbeat-control changes.
+
+
+## dial1-active-holder-fast-lane-20260513 - Add current-node active-holder fast lane for FlowPilot speed tier 1
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved speed tier 1 only, requiring a model-first implementation that removes avoidable Controller/PM relay waiting from current-node worker execution while preserving packet identity, route/frontier freshness, and reviewer/PM disposition gates.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T19:10:00+02:00
+- Ended: 2026-05-13T20:01:30+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_router_loop_model.py
+- simulations/run_flowpilot_router_loop_checks.py
+- simulations/flowpilot_router_loop_results.json
+- simulations/flowpilot_optimization_proposal_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> 1.0
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`
+- OK: `python simulations\run_flowpilot_optimization_proposal_checks.py --json-out simulations\flowpilot_optimization_proposal_results.json`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py simulations\flowpilot_router_loop_model.py simulations\run_flowpilot_router_loop_checks.py`
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py -k active_holder -q` -> 4 passed
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -k "current_node or run_until_wait_folds_manifest_check_before_card_boundary" -q` -> 13 passed
+- OK: project model checks for meta, capability, resume, prompt isolation, reviewer-only gate, and card instruction coverage
+- OK: `python scripts\smoke_autopilot.py --fast`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- Router current-node packet relay now issues active-holder leases to the current worker when a live agent id is known, avoiding an extra Controller/PM work-start round trip.
+- Worker result return through the active-holder path now produces a Router next-action notice to `project_manager` for result disposition instead of hardcoding reviewer delivery.
+- Router result validation now requires fast-lane mechanics and Controller notice evidence for packets that had an active-holder lease.
+- The model now catches project work starting before an active-holder lease and legacy result return that bypasses fast-lane mechanics.
+- A concurrent reviewer-only optimization left legacy officer events requiring removed default card-delivery flags; those events were marked legacy so old records remain accepted without blocking the new default path.
+
+### Counterexamples
+- current_node_packet_relayed_without_active_holder_lease
+- legacy_worker_result_return_without_fast_lane_mechanics
+- worker project work started before active-holder lease
+- worker result returned before active-holder mechanics pass
+- card instruction coverage failure from non-legacy removed officer events
+
+### Friction Points
+- Other local AI agents had concurrent FlowPilot speed-profile edits in the same repository; this work preserved their changes and fixed one smoke-test gap they exposed.
+- The broad `smoke_autopilot.py` run exceeded a foreground timeout before rerunning successfully with `--fast`.
+
+### Skipped Steps
+- The abstract router-loop model still has no production conformance replay adapter, so conformance replay remains skipped with reason rather than treated as passed.
+- No sealed card, packet, result, or report body was read by Controller.
+- No live `.flowpilot` route state was mutated.
+- No remote GitHub sync or push was performed, per user instruction.
+
+### Next Actions
+- Keep current-node speed work on the active-holder lease path and rerun router-loop plus current-node tests before extending speed tier 2 parallelization.
