@@ -75,12 +75,27 @@ function Get-ProjectRelativePath([string]$Path) {
     return $full
 }
 
+function Write-Utf8NoBomText([string]$Path, [string]$Value) {
+    $encoding = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($Path, $Value, $encoding)
+}
+
 function Write-JsonFile([string]$Path, [hashtable]$Payload) {
-    $Payload | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $Path -Encoding UTF8
+    $json = $Payload | ConvertTo-Json -Depth 20
+    Write-Utf8NoBomText -Path $Path -Value ($json + [Environment]::NewLine)
 }
 
 function Get-FileSha256([string]$Path) {
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    $stream = [System.IO.File]::OpenRead($Path)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hash = $sha.ComputeHash($stream)
+        return ([System.BitConverter]::ToString($hash)).Replace("-", "").ToLowerInvariant()
+    }
+    finally {
+        $sha.Dispose()
+        $stream.Dispose()
+    }
 }
 
 function New-StartupAnswerMap([bool]$AgentsEnabled, [bool]$ContinuationEnabled, [bool]$CockpitEnabled) {
@@ -138,7 +153,7 @@ function Write-StartupIntakeResult(
 
     $bodyPath = Join-Path $outDir "startup_intake_body.md"
     $envelopePath = Join-Path $outDir "startup_intake_envelope.json"
-    Set-Content -LiteralPath $bodyPath -Value $BodyText -Encoding UTF8
+    Write-Utf8NoBomText -Path $bodyPath -Value $BodyText
     $bodyHash = Get-FileSha256 $bodyPath
 
     $receipt = @{
@@ -206,11 +221,11 @@ $Xaml = @"
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="FlowPilot Startup Intake"
-    Width="800"
-    Height="640"
-    MinWidth="680"
-    MinHeight="560"
+    Title="FlowPilot"
+    Width="860"
+    Height="680"
+    MinWidth="780"
+    MinHeight="650"
     WindowStartupLocation="CenterScreen"
     Background="#FFFDF7"
     FontFamily="Segoe UI Variable Text, Segoe UI"
@@ -403,7 +418,7 @@ $Xaml = @"
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="36,32,36,22">
+        <Grid Grid.Row="0" Margin="38,44,38,24">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -422,22 +437,21 @@ $Xaml = @"
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
             <TextBlock
                 x:Name="TitleText"
-                Text="Start FlowPilot"
+                Text="FlowPilot"
                 Foreground="{StaticResource InkBrush}"
                 FontFamily="Segoe UI Variable Display, Segoe UI"
-                FontSize="30"
+                FontSize="28"
                 FontWeight="SemiBold" />
           </StackPanel>
 
           <Border
               Grid.Column="2"
-              BorderBrush="{StaticResource LineBrush}"
-              BorderThickness="1"
-              CornerRadius="17"
-              Padding="10,0"
+              BorderBrush="Transparent"
+              BorderThickness="0"
+              Padding="0"
               Height="36"
               VerticalAlignment="Top"
-              Background="#FFFDF7">
+              Background="Transparent">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <Viewbox Width="18" Height="18" Margin="0,0,7,0">
                 <Canvas Width="24" Height="24">
@@ -448,7 +462,7 @@ $Xaml = @"
                   <Path Data="M12 3 C9 6 9 18 12 21" Stroke="#141414" StrokeThickness="1.5" Fill="{x:Null}" />
                 </Canvas>
               </Viewbox>
-              <Border Background="#F2EFE9" CornerRadius="17" Padding="2">
+              <Border Background="Transparent" CornerRadius="17" Padding="2">
                 <StackPanel Orientation="Horizontal">
                   <RadioButton x:Name="EnglishLanguage" GroupName="Language" IsChecked="True" Content="English" Style="{StaticResource LanguageChoice}" />
                   <RadioButton x:Name="ChineseLanguage" GroupName="Language" Content="中文" Style="{StaticResource LanguageChoice}" />
@@ -462,15 +476,15 @@ $Xaml = @"
             Grid.Row="1"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled"
-            Padding="36,0,28,0">
-          <StackPanel>
-            <Border
-                BorderBrush="#E8E2DA"
-                BorderThickness="1"
-                CornerRadius="8"
-                Background="#FFFDF7"
-                Padding="18"
-                Margin="0,0,0,18">
+            Padding="38,0,30,0">
+          <Grid MinHeight="350">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" MinWidth="330" />
+              <ColumnDefinition Width="*" MinWidth="330" />
+            </Grid.ColumnDefinitions>
+            <Grid
+                Grid.Column="0"
+                Margin="0,0,18,0">
               <StackPanel>
                 <DockPanel Margin="0,0,0,10">
                   <TextBlock
@@ -485,7 +499,7 @@ $Xaml = @"
                 <Grid>
                   <TextBox
                       x:Name="WorkRequest"
-                      MinHeight="230"
+                      MinHeight="318"
                       AcceptsReturn="True"
                       TextWrapping="Wrap"
                       VerticalScrollBarVisibility="Auto"
@@ -507,16 +521,13 @@ $Xaml = @"
                 </Grid>
 
               </StackPanel>
-            </Border>
+            </Grid>
 
-            <Border
-                BorderBrush="{StaticResource LineBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Background="#FFFDF7"
-                Margin="0,0,0,18">
-              <StackPanel>
-                <Grid MinHeight="78" Margin="18,15">
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Top"
+                Margin="6,30,0,0">
+                <Grid MinHeight="82" Margin="0,0,0,26">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -528,9 +539,7 @@ $Xaml = @"
                   <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
                 </Grid>
 
-                <Border Height="1" Background="{StaticResource LineBrush}" />
-
-                <Grid MinHeight="78" Margin="18,15">
+                <Grid MinHeight="82" Margin="0,0,0,26">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -542,9 +551,7 @@ $Xaml = @"
                   <ToggleButton x:Name="ContinuationToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
                 </Grid>
 
-                <Border Height="1" Background="{StaticResource LineBrush}" />
-
-                <Grid MinHeight="78" Margin="18,15">
+                <Grid MinHeight="82" Margin="0">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -555,12 +562,11 @@ $Xaml = @"
                   </StackPanel>
                   <ToggleButton x:Name="CockpitToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
                 </Grid>
-              </StackPanel>
-            </Border>
-          </StackPanel>
+            </StackPanel>
+          </Grid>
         </ScrollViewer>
 
-        <Grid Grid.Row="2" Margin="36,4,36,30">
+        <Grid Grid.Row="2" Margin="38,34,38,26">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -577,7 +583,7 @@ $Xaml = @"
               Grid.Row="0"
               HorizontalAlignment="Center"
               Style="{StaticResource PrimaryButton}"
-              Content="Confirm intake" />
+              Content="Confirm" />
         </Grid>
       </Grid>
 </Window>
@@ -601,8 +607,8 @@ foreach ($Name in $Names) {
 
 $Copy = @{
     en = @{
-        Window = "FlowPilot Startup Intake"
-        Title = "Start FlowPilot"
+        Window = "FlowPilot"
+        Title = "FlowPilot"
         RequestLabel = "Work request"
         Placeholder = "Write the instructions you want the AI to follow."
         AgentsTitle = "Background agents"
@@ -611,12 +617,12 @@ $Copy = @{
         ContinuationBody = "Allow heartbeat or manual-resume setup for long work."
         CockpitTitle = "Cockpit UI"
         CockpitBody = "Open the visual control surface instead of chat-only route signs."
-        Confirm = "Confirm intake"
+        Confirm = "Confirm"
         Confirmed = "Startup intake recorded."
     }
     zh = @{
-        Window = "FlowPilot 启动注入"
-        Title = "启动 FlowPilot"
+        Window = "FlowPilot"
+        Title = "FlowPilot"
         RequestLabel = "工作要求"
         Placeholder = "请写下给 AI 的工作目标和具体命令。"
         AgentsTitle = "后台智能体"
@@ -625,7 +631,7 @@ $Copy = @{
         ContinuationBody = "允许为长任务设置心跳或手动恢复。"
         CockpitTitle = "Cockpit UI"
         CockpitBody = "打开可视化控制台，而不是只用聊天路线标识。"
-        Confirm = "确认注入"
+        Confirm = "确认"
         Confirmed = "启动注入已记录。"
     }
 }
