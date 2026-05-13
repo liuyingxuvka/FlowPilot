@@ -2,6 +2,43 @@
 
 Date: 2026-05-11
 
+## 2026-05-13 Dial-1 Implementation Slice
+
+This slice upgrades only the first speed tier: make the existing active-holder
+fast lane the default for current-node worker packets. It does not start the
+parallel reviewer/officer gate work.
+
+Current state after inspection:
+
+| Area | Already exists | Remaining concrete gap |
+| --- | --- | --- |
+| Packet runtime | Active-holder leases, ACK, safe progress, result submission, mechanical reject, same-holder retry, and Controller next-action notice are implemented and tested. | Current-node Router dispatch does not automatically issue the lease after relaying a worker packet. |
+| Router model | `flowpilot_router_loop_model.py` already models active-holder states and rejects wrong role, stale agent, stale packet/frontier, unsafe progress, early result, missing notice, and PM/Reviewer bypass. | Add explicit hazards for the current runtime gap: packet relayed without active-holder lease, and legacy result return after worker dispatch without a fast-lane mechanics pass. |
+| Router runtime | Current-node packets are registered, ledger-checked, Controller-relayed envelope-only, and batch-joined before PM disposition. | `relay_current_node_packet` stops after Controller envelope relay; it does not write lease metadata for the assigned worker. |
+| Tests | Packet-runtime fast-lane unit tests exist. Router current-node relay and batch tests exist. | Add Router tests proving current-node relay issues active-holder leases and direct-result return writes a PM-disposition notice. |
+
+### Implementation Order For This Slice
+
+| Order | Concrete optimization point | Current slow behavior | Change to make | Done when |
+| --- | --- | --- | --- | --- |
+| 1 | Current-node packet relay | Router asks Controller to relay worker packet envelopes, then the worker result is still modeled as a later Controller-mediated return event. | After each successful current-node packet relay, Router also issues an active-holder lease to that packet's `to_role` and current live agent id. | Packet ledger records `active_holder_lease_issued`, lease path/id, holder role, holder agent id, route version, and frontier version for every relayed current-node packet when a live agent id exists. |
+| 2 | Current-node worker result return | Worker can still write a result and submit `worker_current_node_result_returned` without proving it used the active-holder fast lane. | Direct-return path uses the issued lease: ACK/open/result submission is accepted only from the lease holder and writes `controller_next_action_notice.json`. | A current-node worker can submit through active-holder runtime, then Router accepts the ordinary `worker_current_node_result_returned` event and proceeds to PM disposition only after the notice and ledger audit exist. |
+| 3 | Controller next-action target | The generic packet-runtime notice currently names reviewer delivery, which is correct for reviewer-bound examples but wrong for current-node PM disposition. | Derive notice `next_action` from result `next_recipient`: project manager means `deliver_result_to_pm_for_disposition`; reviewer means `deliver_result_to_reviewer`. | Current-node fast-lane result notice points Controller to PM disposition, not reviewer review. Existing reviewer-bound packet tests still pass. |
+| 4 | Fallback | Some runs may have no live `agent_id` because single-agent continuity is explicitly authorized or the host cannot provide background agents. | If no concrete target agent id exists, keep the old Controller-mediated relay and record fast-lane fallback metadata instead of failing dispatch. | Existing single-agent or legacy Controller-mediated tests still pass; fallback is visible in action/runtime metadata and does not claim a lease was issued. |
+
+### Bug List This Slice Must Catch
+
+| Bug id | Possible bug introduced by this optimization | FlowGuard/model evidence | Runtime/test evidence |
+| --- | --- | --- | --- |
+| D1 | Router relays a current-node worker packet but forgets to issue the active-holder lease. | Add `current_node_packet_relayed_without_active_holder_lease` hazard; safe graph still requires `active_holder_lease_issued_for_current_worker`. | New Router test checks lease path/id exists in packet ledger after `relay_current_node_packet`. |
+| D2 | A worker result enters the route as if complete without active-holder mechanics passing. | Existing invariant rejects `worker result returned before active-holder mechanics pass`; add named hazard for the legacy return path. | New Router test submits through the lease; old plain result return remains fallback-only and cannot claim fast-lane completion. |
+| D3 | Lease is issued to the wrong live role or stale agent. | Existing hazards `active_holder_contact_by_wrong_role` and `active_holder_contact_by_stale_agent`. | Existing packet-runtime stale/wrong holder tests plus new Router test comparing lease holder to crew ledger agent id. |
+| D4 | Lease is issued before Router has completed direct-dispatch and write-grant checks. | Existing hazard `active_holder_lease_before_worker_dispatch`. | Router test checks relay still requires ledger check and grant before lease appears. |
+| D5 | Current-node fast-lane closure sends Controller to Reviewer instead of PM. | Existing model order requires PM disposition before formal reviewer gate; update plan hazard text to cover notice target. | New/current packet-runtime assertion for `next_recipient=project_manager` expects `deliver_result_to_pm_for_disposition`. |
+| D6 | Controller reads sealed packet/result body while handling the new notice. | Existing Controller body-boundary hazards. | Existing contamination and envelope-only tests continue to pass. |
+| D7 | Mechanical reject closes the lane or advances the route. | Existing `fast_lane_mechanical_pass_marks_node_complete` and mechanical retry path. | Existing mechanical reject test plus focused Router direct-return test. |
+| D8 | Fast-lane unavailable state blocks old supported runs. | Fallback remains outside the fast-lane success proof and does not mark lease fields. | Existing current-node relay tests still pass when no live target agent id exists. |
+
 ## Plain-Language Goal
 
 FlowPilot should stop making Controller handle every small mechanical retry

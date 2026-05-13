@@ -44,6 +44,9 @@ REQUIRED_LABELS = (
     "resume_state_clear_for_pm_decision",
     "ambiguous_resume_state_blocked_for_pm_recovery",
     "controller_instructed_to_check_prompt_manifest",
+    "status_summary_synced_after_pending_prompt_manifest_action",
+    "run_until_wait_folds_prompt_manifest_check_before_pm_card",
+    "heartbeat_prompt_manifest_checkpoint_boundary_stated",
     "pm_decision_card_delivered_with_controller_reminder",
     "pm_resume_decision_returned",
     "active_control_blocker_handled_after_pm_resume_decision",
@@ -98,6 +101,12 @@ def _state_id(state: model.State) -> str:
         f"{state.capability_lifecycle_flags_current},"
         f"{state.officer_lifecycle_flags_current}|"
         f"pm={state.pm_decision_prompt_delivered},{state.pm_decision_returned}|"
+        f"pm_manifest_boundary={state.heartbeat_prompt_continuation_boundary_stated},"
+        f"status_synced={state.pm_resume_pending_action_status_synced},"
+        f"summary_next={state.pm_resume_status_next_step_matches_manifest_check},"
+        f"folded={state.pm_resume_manifest_check_folded},"
+        f"stopped={state.run_until_wait_stopped_at_manifest_check},"
+        f"crossed={state.run_until_wait_crossed_true_wait_boundary}|"
         f"review={state.reviewer_dispatch_allowed},{state.pm_result_disposition_recorded},"
         f"{state.pm_formal_gate_released_to_reviewer},{state.reviewer_result_passed}|"
         f"progress={state.route_progress_recorded},{state.route_progress_source}|"

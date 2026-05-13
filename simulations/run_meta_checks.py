@@ -165,8 +165,6 @@ REQUIRED_LABELS = (
     "child_skill_gate_approvers_assigned",
     "child_skill_manifest_independent_validation_done",
     "child_skill_manifest_reviewer_reviewed",
-    "child_skill_manifest_process_officer_approved",
-    "child_skill_manifest_product_officer_approved",
     "child_skill_manifest_pm_approved_for_route",
     "flowguard_process_designed",
     "flowguard_officer_model_adversarial_probe_done",

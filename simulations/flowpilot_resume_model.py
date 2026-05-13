@@ -122,6 +122,12 @@ class State:
     pm_controller_reminder_included: bool = False
     pm_decision_returned: bool = False
     pm_decision_from_chat_history: bool = False
+    heartbeat_prompt_continuation_boundary_stated: bool = False
+    pm_resume_pending_action_status_synced: bool = False
+    pm_resume_status_next_step_matches_manifest_check: bool = False
+    pm_resume_manifest_check_folded: bool = False
+    run_until_wait_stopped_at_manifest_check: bool = False
+    run_until_wait_crossed_true_wait_boundary: bool = False
 
     reviewer_dispatch_prompt_delivered: bool = False
     reviewer_dispatch_allowed: bool = False
@@ -318,6 +324,32 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _request_manifest_check(state),
         )
         return
+    if (
+        next_prompt == "prompt"
+        and state.manifest_check_requested
+        and not state.pm_decision_prompt_delivered
+        and not state.pm_resume_pending_action_status_synced
+    ):
+        yield Transition(
+            "status_summary_synced_after_pending_prompt_manifest_action",
+            replace(
+                state,
+                pm_resume_pending_action_status_synced=True,
+                pm_resume_status_next_step_matches_manifest_check=True,
+            ),
+        )
+        return
+    if (
+        next_prompt == "prompt"
+        and state.manifest_check_requested
+        and not state.pm_decision_prompt_delivered
+        and not state.pm_resume_manifest_check_folded
+    ):
+        yield Transition(
+            "run_until_wait_folds_prompt_manifest_check_before_pm_card",
+            replace(state, pm_resume_manifest_check_folded=True),
+        )
+        return
 
     next_mail = _next_required_mail(state)
     if next_mail == "mail" and not state.ledger_check_requested:
@@ -364,6 +396,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 heartbeat_interval_minutes=1,
                 heartbeat_trigger_bound_to_current_run=True,
             ),
+        )
+        return
+    if (
+        state.entry_mode == "heartbeat"
+        and not state.heartbeat_prompt_continuation_boundary_stated
+    ):
+        yield Transition(
+            "heartbeat_prompt_manifest_checkpoint_boundary_stated",
+            replace(state, heartbeat_prompt_continuation_boundary_stated=True),
         )
         return
     if state.entry_mode in {"heartbeat", "manual"} and not state.active_control_blocker_scan_done:
@@ -792,6 +833,10 @@ def invariant_failures(state: State) -> list[str]:
         or state.controller_self_approved_pm_decision
     ):
         failures.append("Controller acted beyond relay-only authority")
+    if state.run_until_wait_stopped_at_manifest_check:
+        failures.append("run-until-wait stopped at prompt-manifest check instead of continuing to a real wait boundary")
+    if state.run_until_wait_crossed_true_wait_boundary:
+        failures.append("run-until-wait crossed a real role/user/host/payload/packet wait boundary")
     if state.chat_history_progress_inferred or state.pm_decision_from_chat_history:
         failures.append("resume inferred route progress or PM decision from chat history")
 
@@ -905,6 +950,27 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, and ambiguity clearance")
     if state.pm_decision_prompt_delivered and not state.pm_controller_reminder_included:
         failures.append("PM decision card omitted the Controller relay-only reminder")
+    if (
+        state.entry_mode == "heartbeat"
+        and (
+            state.pm_decision_requested
+            or state.pm_decision_prompt_delivered
+            or state.pm_decision_returned
+        )
+        and not state.heartbeat_prompt_continuation_boundary_stated
+    ):
+        failures.append("heartbeat resume prompt did not state that manifest check is an internal checkpoint before real wait boundaries")
+    if state.pm_resume_pending_action_status_synced and state.manifest_check_requests < 1:
+        failures.append("status summary claimed pending prompt-manifest action before Controller requested the check")
+    if state.pm_resume_manifest_check_folded and state.manifest_check_requests < 1:
+        failures.append("run-until-wait folded prompt-manifest check without a Controller manifest-check instruction")
+    if state.pm_decision_prompt_delivered and not state.pm_resume_manifest_check_folded:
+        failures.append("PM resume card delivered without folding the prompt-manifest controller check")
+    if state.pm_decision_prompt_delivered and not (
+        state.pm_resume_pending_action_status_synced
+        and state.pm_resume_status_next_step_matches_manifest_check
+    ):
+        failures.append("PM resume card delivered after a stale or mismatched pending-action status summary")
     if state.pm_decision_returned and not state.pm_decision_prompt_delivered:
         failures.append("PM decision returned before PM decision prompt card")
 
@@ -987,14 +1053,15 @@ INVARIANTS = (
             "state and ledgers, reconcile lifecycle flags, recover crew before PM "
             "decision, defer active control blockers until PM resume decision, "
             "keep Controller relay-only, and gate prompt/mail/project progress "
-            "through manifest, packet ledger, reviewer, and PM evidence."
+            "through manifest, packet ledger, reviewer, PM evidence, manifest-check "
+            "folding, true wait boundaries, and fresh derived status."
         ),
         predicate=resume_reentry_invariant,
     ),
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 44
+MAX_SEQUENCE_LENGTH = 50
 
 
 def build_workflow() -> Workflow:
@@ -1057,6 +1124,7 @@ def _ready_for_pm(**changes: object) -> State:
         capability_lifecycle_flags_current=True,
         officer_lifecycle_flags_current=True,
         ambiguous_state="clear",
+        heartbeat_prompt_continuation_boundary_stated=True,
     )
     return replace(base, **changes)
 
@@ -1071,6 +1139,9 @@ def _with_pm_decision(**changes: object) -> State:
         manifest_check_requests=1,
         manifest_checks=1,
         system_card_identity_boundaries_verified=True,
+        pm_resume_pending_action_status_synced=True,
+        pm_resume_status_next_step_matches_manifest_check=True,
+        pm_resume_manifest_check_folded=True,
     )
     return replace(base, **changes)
 
@@ -1288,6 +1359,27 @@ def hazard_states() -> dict[str, State]:
             prompt_deliveries=1,
             manifest_check_requests=1,
             manifest_checks=1,
+            pm_resume_pending_action_status_synced=True,
+            pm_resume_status_next_step_matches_manifest_check=True,
+            pm_resume_manifest_check_folded=True,
+        ),
+        "heartbeat_prompt_allows_manifest_checkpoint_stop": _with_pm_decision(
+            heartbeat_prompt_continuation_boundary_stated=False,
+        ),
+        "run_until_wait_stops_at_manifest_check": _ready_for_pm(
+            run_until_wait_stopped_at_manifest_check=True,
+        ),
+        "run_until_wait_crosses_true_wait_boundary": _ready_for_pm(
+            run_until_wait_crossed_true_wait_boundary=True,
+        ),
+        "pm_resume_card_without_manifest_fold": _with_pm_decision(
+            pm_resume_manifest_check_folded=False,
+        ),
+        "pm_resume_card_after_stale_status_summary": _with_pm_decision(
+            pm_resume_pending_action_status_synced=False,
+        ),
+        "pm_resume_card_after_wrong_summary_next_step": _with_pm_decision(
+            pm_resume_status_next_step_matches_manifest_check=False,
         ),
         "prompt_without_manifest_check": _ready_for_pm(
             prompt_deliveries=1,

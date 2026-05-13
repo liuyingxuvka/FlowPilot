@@ -1032,8 +1032,6 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.child_skill_gate_approvers_assigned
         and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
-        and state.child_skill_manifest_process_officer_approved
-        and state.child_skill_manifest_product_officer_approved
         and state.child_skill_manifest_pm_approved_for_route
         and state.child_skill_focused_interrogation_done
         and state.child_skill_contracts_loaded
@@ -1101,8 +1099,6 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.child_skill_gate_approvers_assigned
         and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
-        and state.child_skill_manifest_process_officer_approved
-        and state.child_skill_manifest_product_officer_approved
         and state.child_skill_manifest_pm_approved_for_route
         and state.child_skill_focused_interrogation_done
         and state.child_skill_contracts_loaded
@@ -1164,8 +1160,6 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.child_skill_gate_approvers_assigned
         and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
-        and state.child_skill_manifest_process_officer_approved
-        and state.child_skill_manifest_product_officer_approved
         and state.child_skill_manifest_pm_approved_for_route
         and state.child_skill_focused_interrogation_done
         and state.child_skill_contracts_loaded
@@ -3134,7 +3128,7 @@ class CapabilityRouterStep:
             yield _step(
                 state,
                 label="child_skill_manifest_independent_validation_done",
-                action="reviewer, process officer, product officer, and PM independently probe the child-skill manifest slices instead of accepting the extraction report",
+                action="PM and human-like reviewer independently probe the child-skill manifest slices instead of accepting the extraction report",
                 child_skill_manifest_independent_validation_done=True,
             )
             return
@@ -3145,24 +3139,6 @@ class CapabilityRouterStep:
                 label="child_skill_manifest_reviewer_reviewed",
                 action="human-like reviewer reviews human/product/visual/interaction child-skill gates before they enter the route",
                 child_skill_manifest_reviewer_reviewed=True,
-            )
-            return
-
-        if not state.child_skill_manifest_process_officer_approved:
-            yield _step(
-                state,
-                label="child_skill_manifest_process_officer_approved",
-                action="process FlowGuard officer approves child-skill process and conformance gates before route modeling",
-                child_skill_manifest_process_officer_approved=True,
-            )
-            return
-
-        if not state.child_skill_manifest_product_officer_approved:
-            yield _step(
-                state,
-                label="child_skill_manifest_product_officer_approved",
-                action="product FlowGuard officer approves product-function impact gates derived from child skills",
-                child_skill_manifest_product_officer_approved=True,
             )
             return
 
@@ -6053,8 +6029,6 @@ def child_skill_fidelity_before_capability_work(
         and state.child_skill_initial_gate_manifest_extracted
         and state.child_skill_gate_approvers_assigned
         and state.child_skill_manifest_reviewer_reviewed
-        and state.child_skill_manifest_process_officer_approved
-        and state.child_skill_manifest_product_officer_approved
         and state.child_skill_manifest_pm_approved_for_route
         and state.child_skill_focused_interrogation_done
         and _focused_interrogation_ready(
@@ -7090,27 +7064,9 @@ def actor_authority_gates_require_correct_role(
         and state.child_skill_gate_approvers_assigned
         and state.child_skill_manifest_independent_validation_done
         and state.child_skill_manifest_reviewer_reviewed
-        and state.child_skill_manifest_process_officer_approved
-        and state.child_skill_manifest_product_officer_approved
     ):
         return InvariantResult.fail(
-            "PM approved child-skill gate manifest before PM skill selection, minimum sufficient complexity review, discovery, extraction, approver assignment, and reviewer/officer approvals"
-        )
-    if state.child_skill_manifest_process_officer_approved and not (
-        state.child_skill_initial_gate_manifest_extracted
-        and state.child_skill_gate_approvers_assigned
-        and state.child_skill_manifest_independent_validation_done
-    ):
-        return InvariantResult.fail(
-            "process FlowGuard officer approved child-skill process gates before manifest extraction and approver assignment"
-        )
-    if state.child_skill_manifest_product_officer_approved and not (
-        state.child_skill_initial_gate_manifest_extracted
-        and state.child_skill_gate_approvers_assigned
-        and state.child_skill_manifest_independent_validation_done
-    ):
-        return InvariantResult.fail(
-            "product FlowGuard officer approved child-skill product gates before manifest extraction and approver assignment"
+            "PM approved child-skill gate manifest before PM skill selection, minimum sufficient complexity review, discovery, extraction, approver assignment, and reviewer approval"
         )
     if state.child_skill_manifest_reviewer_reviewed and not (
         state.child_skill_initial_gate_manifest_extracted

@@ -1613,6 +1613,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("worker dispatched before current-node write grant")
     if state.worker_project_write_performed and not state.write_grant_issued:
         failures.append("worker project write occurred before current-node write grant")
+    if state.worker_project_write_performed and not state.active_holder_lease_issued:
+        failures.append("worker project work started before active-holder lease")
     if state.worker_dispatched and not state.worker_packet_identity_boundary_present:
         failures.append("worker dispatched without packet recipient identity boundary")
     if state.active_holder_lease_issued and not (
@@ -2250,6 +2252,10 @@ def hazard_states() -> dict[str, State]:
             worker_dispatched=False,
             worker_packet_identity_boundary_present=False,
         ),
+        "current_node_packet_relayed_without_active_holder_lease": _active_holder_leased(
+            active_holder_lease_issued=False,
+            worker_project_write_performed=True,
+        ),
         "active_holder_contact_without_lease": _active_holder_leased(
             active_holder_lease_issued=False,
             active_holder_contact_attempted=True,
@@ -2312,6 +2318,11 @@ def hazard_states() -> dict[str, State]:
             worker_result_identity_boundary_present=True,
             worker_result_ledger_checked=False,
             fast_lane_controller_notice_written=True,
+        ),
+        "legacy_worker_result_return_without_fast_lane_mechanics": _active_holder_leased(
+            worker_result_returned=True,
+            worker_result_identity_boundary_present=True,
+            fast_lane_result_mechanics_passed=False,
         ),
         "reviewer_pass_without_routed_worker_result": _active_packet_loop(
             pm_formal_node_gate_package_released=False,

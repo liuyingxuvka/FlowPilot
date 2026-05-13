@@ -103,12 +103,10 @@ BARRIER_DEFINITIONS = (
         barrier_id="root_contract",
         required_obligations=(
             "reviewer_before_worker_evidence_use",
-            "flowguard_officer_model_gates",
         ),
         required_role_slices=(
             "project_manager",
             "human_like_reviewer",
-            "product_flowguard_officer",
         ),
         dependencies=("product_architecture",),
     ),
@@ -117,14 +115,11 @@ BARRIER_DEFINITIONS = (
         required_obligations=(
             "system_card_manifest_delivery",
             "packet_ledger_mail_delivery",
-            "flowguard_officer_model_gates",
             "route_frontier_and_current_node_loop",
         ),
         required_role_slices=(
             "project_manager",
             "human_like_reviewer",
-            "process_flowguard_officer",
-            "product_flowguard_officer",
         ),
         dependencies=("root_contract",),
     ),

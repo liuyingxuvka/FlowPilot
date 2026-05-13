@@ -2318,6 +2318,15 @@ def _write_controller_next_action_notice(
     return notice
 
 
+def _controller_next_action_for_result_recipient(next_recipient: object) -> str:
+    recipient = str(next_recipient or "").strip()
+    if recipient == "project_manager":
+        return "deliver_result_to_pm_for_disposition"
+    if recipient == "human_like_reviewer":
+        return "deliver_result_to_reviewer"
+    return "deliver_result_to_recorded_next_recipient"
+
+
 def active_holder_submit_existing_result(
     project_root: Path,
     *,
@@ -2395,7 +2404,7 @@ def active_holder_submit_existing_result(
         lease=lease,
         packet_envelope=packet_envelope,
         result_envelope=result_envelope,
-        next_action="deliver_result_to_reviewer",
+        next_action=_controller_next_action_for_result_recipient(result_envelope.get("next_recipient")),
     )
     lease["status"] = "closed"
     lease["closed_at"] = utc_now()

@@ -492,13 +492,6 @@ def _next_required_channel(state: State) -> str:
         and not state.root_contract_challenge_card_delivered
     ):
         return "prompt"
-    if (
-        state.root_contract_reviewer_challenged
-        and not state.root_contract_modelability_card_delivered
-    ):
-        return "prompt"
-    if state.root_contract_modelability_card_delivered and not state.root_contract_modelability_passed:
-        return "mail"
     if state.root_contract_frozen_by_pm and not state.pm_dependency_policy_card_delivered:
         return "prompt"
     if state.capabilities_manifest_written and not state.pm_child_skill_selection_card_delivered:
@@ -513,20 +506,6 @@ def _next_required_channel(state: State) -> str:
         and not state.reviewer_child_skill_gate_manifest_card_delivered
     ):
         return "prompt"
-    if (
-        state.child_skill_manifest_reviewer_passed
-        and not state.process_officer_child_skill_card_delivered
-    ):
-        return "prompt"
-    if state.process_officer_child_skill_card_delivered and not state.child_skill_process_officer_passed:
-        return "mail"
-    if (
-        state.child_skill_process_officer_passed
-        and not state.product_officer_child_skill_card_delivered
-    ):
-        return "prompt"
-    if state.product_officer_child_skill_card_delivered and not state.child_skill_product_officer_passed:
-        return "mail"
     if state.capability_evidence_synced and not state.pm_prior_path_context_card_delivered:
         return "prompt"
     if (
@@ -1033,23 +1012,6 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, root_contract_reviewer_challenged=True, holder="controller"),
         )
         return
-    if not state.root_contract_modelability_card_delivered:
-        yield Transition(
-            "product_officer_root_contract_modelability_card_delivered",
-            _prompt(state, root_contract_modelability_card_delivered=True, holder="officer"),
-        )
-        return
-    if not state.root_contract_modelability_passed:
-        yield Transition(
-            "product_officer_root_contract_modelability_passed",
-            _mail(
-                state,
-                root_contract_modelability_passed=True,
-                root_contract_officer_result_ledger_checked=True,
-                holder="controller",
-            ),
-        )
-        return
     if not state.root_contract_frozen_by_pm:
         yield Transition(
             "pm_freezes_root_contract",
@@ -1122,40 +1084,6 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "reviewer_passes_child_skill_gate_manifest",
             replace(state, child_skill_manifest_reviewer_passed=True, holder="controller"),
-        )
-        return
-    if not state.process_officer_child_skill_card_delivered:
-        yield Transition(
-            "process_officer_child_skill_conformance_model_card_delivered",
-            _prompt(state, process_officer_child_skill_card_delivered=True, holder="officer"),
-        )
-        return
-    if not state.child_skill_process_officer_passed:
-        yield Transition(
-            "process_officer_passes_child_skill_conformance_model",
-            _mail(
-                state,
-                child_skill_process_officer_passed=True,
-                child_skill_process_officer_result_ledger_checked=True,
-                holder="controller",
-            ),
-        )
-        return
-    if not state.product_officer_child_skill_card_delivered:
-        yield Transition(
-            "product_officer_child_skill_product_fit_card_delivered",
-            _prompt(state, product_officer_child_skill_card_delivered=True, holder="officer"),
-        )
-        return
-    if not state.child_skill_product_officer_passed:
-        yield Transition(
-            "product_officer_passes_child_skill_product_fit",
-            _mail(
-                state,
-                child_skill_product_officer_passed=True,
-                child_skill_product_officer_result_ledger_checked=True,
-                holder="controller",
-            ),
         )
         return
     if not state.child_skill_manifest_pm_approved_for_route:
@@ -1779,22 +1707,15 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("root contract reviewer challenge card delivered before root contract draft")
     if state.root_contract_reviewer_challenged and not state.root_contract_challenge_card_delivered:
         failures.append("reviewer challenged root contract before root contract challenge card")
-    if (
-        state.root_contract_modelability_card_delivered
-        and not state.root_contract_reviewer_challenged
-    ):
-        failures.append("root contract modelability card delivered before reviewer root contract challenge")
-    if state.root_contract_modelability_passed and not (
-        state.root_contract_modelability_card_delivered
-        and state.root_contract_officer_result_ledger_checked
-    ):
-        failures.append("root contract modelability result reached PM before officer card and packet-ledger check")
+    if state.root_contract_modelability_card_delivered:
+        failures.append("root contract Product Officer card emitted in reviewer-only flow")
+    if state.root_contract_modelability_passed:
+        failures.append("root contract Product Officer pass recorded in reviewer-only flow")
     if state.root_contract_frozen_by_pm and not (
         state.root_contract_draft_written
         and state.root_contract_reviewer_challenged
-        and state.root_contract_modelability_passed
     ):
-        failures.append("PM froze root contract before draft, reviewer challenge, and modelability pass")
+        failures.append("PM froze root contract before draft and reviewer challenge")
     if state.pm_dependency_policy_card_delivered and not state.root_contract_frozen_by_pm:
         failures.append("PM dependency policy card delivered before root contract freeze")
     if state.dependency_policy_recorded and not state.pm_dependency_policy_card_delivered:
@@ -1831,30 +1752,16 @@ def invariant_failures(state: State) -> list[str]:
         and state.child_skill_gate_manifest_written
     ):
         failures.append("reviewer passed child-skill manifest before review card and manifest")
-    if (
-        state.process_officer_child_skill_card_delivered
-        and not state.child_skill_manifest_reviewer_passed
-    ):
-        failures.append("process officer child-skill card delivered before reviewer manifest pass")
-    if state.child_skill_process_officer_passed and not (
-        state.process_officer_child_skill_card_delivered
-        and state.child_skill_manifest_reviewer_passed
-        and state.child_skill_process_officer_result_ledger_checked
-    ):
-        failures.append("process officer child-skill result reached PM before officer card, reviewer pass, and packet-ledger check")
-    if (
-        state.product_officer_child_skill_card_delivered
-        and not state.child_skill_process_officer_passed
-    ):
-        failures.append("product officer child-skill card delivered before process officer pass")
-    if state.child_skill_product_officer_passed and not (
-        state.product_officer_child_skill_card_delivered
-        and state.child_skill_process_officer_passed
-        and state.child_skill_product_officer_result_ledger_checked
-    ):
-        failures.append("product officer child-skill result reached PM before officer card, process officer pass, and packet-ledger check")
-    if state.child_skill_manifest_pm_approved_for_route and not state.child_skill_product_officer_passed:
-        failures.append("PM approved child-skill manifest before product officer pass")
+    if state.process_officer_child_skill_card_delivered:
+        failures.append("child-skill Process Officer card emitted in reviewer-only flow")
+    if state.child_skill_process_officer_passed:
+        failures.append("child-skill Process Officer pass recorded in reviewer-only flow")
+    if state.product_officer_child_skill_card_delivered:
+        failures.append("child-skill Product Officer card emitted in reviewer-only flow")
+    if state.child_skill_product_officer_passed:
+        failures.append("child-skill Product Officer pass recorded in reviewer-only flow")
+    if state.child_skill_manifest_pm_approved_for_route and not state.child_skill_manifest_reviewer_passed:
+        failures.append("PM approved child-skill manifest before reviewer pass")
     if state.capability_evidence_synced and not state.child_skill_manifest_pm_approved_for_route:
         failures.append("capability evidence synced before PM child-skill manifest approval")
     if state.pm_prior_path_context_card_delivered and not state.capability_evidence_synced:
@@ -2147,9 +2054,6 @@ def _root_contract_ready(**changes: object) -> State:
         root_contract_draft_written=True,
         root_contract_challenge_card_delivered=True,
         root_contract_reviewer_challenged=True,
-        root_contract_modelability_card_delivered=True,
-        root_contract_modelability_passed=True,
-        root_contract_officer_result_ledger_checked=True,
         root_contract_frozen_by_pm=True,
         **changes,
     )
@@ -2166,12 +2070,6 @@ def _step5_ready(**changes: object) -> State:
         child_skill_gate_manifest_written=True,
         reviewer_child_skill_gate_manifest_card_delivered=True,
         child_skill_manifest_reviewer_passed=True,
-        process_officer_child_skill_card_delivered=True,
-        child_skill_process_officer_passed=True,
-        child_skill_process_officer_result_ledger_checked=True,
-        product_officer_child_skill_card_delivered=True,
-        child_skill_product_officer_passed=True,
-        child_skill_product_officer_result_ledger_checked=True,
         child_skill_manifest_pm_approved_for_route=True,
         capability_evidence_synced=True,
         **changes,
@@ -2389,10 +2287,9 @@ def hazard_states() -> dict[str, State]:
             pm_root_contract_card_delivered=True,
             root_contract_draft_written=True,
         ),
-        "contract_frozen_without_root_modelability": _ready(
+        "contract_frozen_without_root_reviewer": _ready(
             root_contract_draft_written=True,
             root_contract_challenge_card_delivered=True,
-            root_contract_reviewer_challenged=True,
             root_contract_frozen_by_pm=True,
         ),
         "capabilities_manifest_without_dependency_policy": _root_contract_ready(
@@ -2405,7 +2302,7 @@ def hazard_states() -> dict[str, State]:
         "child_skill_gate_manifest_without_pm_selection": _root_contract_ready(
             child_skill_gate_manifest_written=True,
         ),
-        "child_skill_pm_approval_without_officers": _root_contract_ready(
+        "child_skill_pm_approval_without_reviewer": _root_contract_ready(
             child_skill_manifest_pm_approved_for_route=True,
         ),
         "capability_evidence_sync_without_pm_approval": _root_contract_ready(

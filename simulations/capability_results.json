@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 650122,
+    "edge_count": 646018,
     "invariant_failures": [],
     "labels": [
       "active_child_skill_bindings_written",
@@ -51,8 +51,6 @@
       "child_skill_manifest_independent_validation_done",
       "child_skill_manifest_only_evidence_rejected",
       "child_skill_manifest_pm_approved_for_route",
-      "child_skill_manifest_process_officer_approved",
-      "child_skill_manifest_product_officer_approved",
       "child_skill_manifest_reviewer_reviewed",
       "child_skill_node_gate_manifest_refined",
       "child_skill_original_standards_extracted",
@@ -312,7 +310,7 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 624663,
+    "state_count": 620559,
     "terminal_counts": {
       "blocked": 0,
       "complete": 4368
@@ -570,22 +568,22 @@
     "status": "OK"
   },
   "loop": {
-    "edge_count": 650122,
+    "edge_count": 646018,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 624663,
+    "state_count": 620559,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 650122,
+    "edge_count": 646018,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 624663,
+    "state_count": 620559,
     "status": "OK",
     "success_state_count": 4368
   }

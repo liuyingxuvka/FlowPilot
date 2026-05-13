@@ -9124,3 +9124,51 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Keep startup UI artifact encoding as an explicit control-plane contract
   whenever the startup UI output schema changes.
+
+
+## heartbeat-resume-manifest-check-fold-20260513 - Make FlowPilot heartbeat resume continue past prompt-manifest checks to the PM resume card
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Heartbeat/manual resume could rehydrate roles, reach check_prompt_manifest, and stop before PM resume decision; the fix changes resume control flow and required model-first validation.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T17:59:02+00:00
+- Ended: 2026-05-13T17:59:02+00:00
+- Duration seconds: 3900.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_resume_model.py
+- simulations/run_flowpilot_resume_checks.py
+- simulations/flowpilot_resume_results.json
+
+### Commands
+- OK (0.000s): `flowguard schema version check -> 1.0`
+- OK (0.000s): `run_flowpilot_resume_checks -> ok true; 517 states; 516 edges; hazards detected`
+- OK (0.000s): `focused router resume pytest selection -> 7 passed`
+- OK (0.000s): `run_capability_checks -> ok true; 620559 states; 646018 edges; hazards matched`
+- OK (0.000s): `run_meta_checks -> ok true; 622789 states; 642960 edges`
+- OK (0.000s): `install_flowpilot sync repo-owned -> ok true`
+- OK (0.000s): `audit_local_install_sync -> ok true`
+- OK (0.000s): `install_flowpilot check -> ok true`
+
+### Findings
+- check_prompt_manifest is modeled as an internal controller check before prompt delivery, not as a stop boundary.
+- Heartbeat startup guidance now explicitly tells resumed agents to continue the router loop after manifest checks and stop only at real wait boundaries.
+- Derived status is synchronized immediately after pending controller action computation so current_status_summary.json does not mislead resumed agents.
+
+### Counterexamples
+- run_until_wait_stops_at_manifest_check
+- run_until_wait_crosses_true_wait_boundary
+- pm_resume_card_without_manifest_fold
+- pm_resume_card_after_stale_status_summary
+- heartbeat_prompt_allows_manifest_checkpoint_stop
+
+### Friction Points
+- Windows background Start-Process attempts did not produce reliable logs; long model checks were rerun in foreground with extended timeouts and passed.
+
+### Skipped Steps
+- No remote GitHub sync or push was performed, per user instruction.
+
+### Next Actions
+- Keep resume run-until-wait folding scoped to safe controller checks and rerun resume/meta/capability models before future heartbeat-control changes.

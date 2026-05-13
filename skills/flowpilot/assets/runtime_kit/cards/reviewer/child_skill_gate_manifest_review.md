@@ -47,7 +47,8 @@ Check:
 - each child-skill gate has a real approver;
 - Controller is not an approver;
 - evidence expectations are concrete enough for route work;
+- process and product fit risks are represented in the manifest's evidence and
+  route projection rather than deferred to mandatory officer gates;
 - skipped child-skill steps are not silently waived;
-- officer checks are requested where process or product fit remains uncertain.
 
 Pass only after direct review.

@@ -40,4 +40,4 @@ Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 - controller self-approval forbidden;
 - skipped child-skill steps with reason.
 
-Do not route from a child skill until reviewer and officer checks pass.
+Do not route from a child skill until the Reviewer check passes.

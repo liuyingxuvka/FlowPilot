@@ -37,6 +37,7 @@ Personally challenge the root acceptance contract and standard scenario pack.
 Check:
 
 - root requirements preserve the user's acceptance floor;
+- requirements are clear enough to verify, test, or replay;
 - high-risk requirements have proof obligations;
 - standard scenarios cover meaningful risks;
 - report-only closure is rejected for requirements needing direct evidence;

@@ -536,6 +536,7 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
         "initialize_mailbox",
         "record_user_request",
         "write_user_intake",
+        "check_prompt_manifest",
     }
 )
 
@@ -1049,13 +1050,6 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "human_like_reviewer",
     },
     {
-        "flag": "product_officer_root_contract_card_delivered",
-        "label": "product_officer_root_contract_modelability_card_delivered",
-        "card_id": "product_officer.root_contract_modelability",
-        "requires_flag": "root_contract_reviewer_passed",
-        "to_role": "product_flowguard_officer",
-    },
-    {
         "flag": "pm_dependency_policy_card_delivered",
         "label": "pm_dependency_policy_phase_card_delivered",
         "card_id": "pm.dependency_policy",
@@ -1082,20 +1076,6 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "card_id": "reviewer.child_skill_gate_manifest_review",
         "requires_flag": "child_skill_gate_manifest_written",
         "to_role": "human_like_reviewer",
-    },
-    {
-        "flag": "process_officer_child_skill_card_delivered",
-        "label": "process_officer_child_skill_conformance_model_card_delivered",
-        "card_id": "process_officer.child_skill_conformance_model",
-        "requires_flag": "child_skill_manifest_reviewer_passed",
-        "to_role": "process_flowguard_officer",
-    },
-    {
-        "flag": "product_officer_child_skill_card_delivered",
-        "label": "product_officer_child_skill_product_fit_card_delivered",
-        "card_id": "product_officer.child_skill_product_fit",
-        "requires_flag": "child_skill_process_officer_passed",
-        "to_role": "product_flowguard_officer",
     },
     {
         "flag": "pm_prior_path_context_card_delivered",
@@ -1654,16 +1634,18 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "product_officer_passes_root_acceptance_contract_modelability": {
         "flag": "root_contract_modelability_passed",
         "requires_flag": "product_officer_root_contract_card_delivered",
+        "legacy": True,
         "summary": "Product FlowGuard Officer passed root contract modelability.",
     },
     "product_officer_blocks_root_acceptance_contract_modelability": {
         "flag": "root_contract_modelability_blocked",
         "requires_flag": "product_officer_root_contract_card_delivered",
+        "legacy": True,
         "summary": "Product FlowGuard Officer blocked root contract modelability.",
     },
     "pm_freezes_root_acceptance_contract": {
         "flag": "root_contract_frozen_by_pm",
-        "requires_flag": "root_contract_modelability_passed",
+        "requires_flag": "root_contract_reviewer_passed",
         "summary": "PM froze the reviewed root acceptance contract as the completion floor.",
     },
     "pm_records_dependency_policy": {
@@ -1699,26 +1681,30 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "process_officer_passes_child_skill_conformance_model": {
         "flag": "child_skill_process_officer_passed",
         "requires_flag": "process_officer_child_skill_card_delivered",
+        "legacy": True,
         "summary": "Process FlowGuard Officer passed child-skill conformance model review.",
     },
     "process_officer_blocks_child_skill_conformance_model": {
         "flag": "child_skill_process_officer_blocked",
         "requires_flag": "process_officer_child_skill_card_delivered",
+        "legacy": True,
         "summary": "Process FlowGuard Officer blocked child-skill conformance model review.",
     },
     "product_officer_passes_child_skill_product_fit": {
         "flag": "child_skill_product_officer_passed",
         "requires_flag": "product_officer_child_skill_card_delivered",
+        "legacy": True,
         "summary": "Product FlowGuard Officer passed child-skill product fit review.",
     },
     "product_officer_blocks_child_skill_product_fit": {
         "flag": "child_skill_product_officer_blocked",
         "requires_flag": "product_officer_child_skill_card_delivered",
+        "legacy": True,
         "summary": "Product FlowGuard Officer blocked child-skill product fit review.",
     },
     "pm_approves_child_skill_manifest_for_route": {
         "flag": "child_skill_manifest_pm_approved_for_route",
-        "requires_flag": "child_skill_product_officer_passed",
+        "requires_flag": "child_skill_manifest_reviewer_passed",
         "summary": "PM approved the child-skill manifest for route use.",
     },
     "capability_evidence_synced": {
@@ -9477,6 +9463,15 @@ def _active_packet_ledger_record(packet_ledger: dict[str, Any]) -> dict[str, Any
     return None
 
 
+def _packet_ledger_record_by_id(run_root: Path, packet_id: str) -> dict[str, Any] | None:
+    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json") or {}
+    packets = packet_ledger.get("packets") if isinstance(packet_ledger.get("packets"), list) else []
+    for record in reversed(packets):
+        if isinstance(record, dict) and str(record.get("packet_id") or "") == str(packet_id):
+            return record
+    return None
+
+
 def _derive_resume_next_recipient_from_packet_ledger(run_root: Path) -> dict[str, Any]:
     packet_ledger = read_json_if_exists(run_root / "packet_ledger.json") or {}
     record = _active_packet_ledger_record(packet_ledger)
@@ -9504,6 +9499,11 @@ def _derive_resume_next_recipient_from_packet_ledger(run_root: Path) -> dict[str
             next_recipient = "project_manager"
             controller_next_action = "relay_result_envelope_to_project_manager_for_disposition"
             reason = "Packet ledger says a result envelope is with Controller; under PM-first package absorption, Controller must relay it to PM for disposition before any reviewer gate."
+        elif status == "router-next-action-ready-for-controller":
+            notice = record.get("router_next_action_notice") if isinstance(record, dict) and isinstance(record.get("router_next_action_notice"), dict) else {}
+            next_recipient = str(notice.get("next_recipient") or result_recipient or "project_manager")
+            controller_next_action = str(notice.get("next_action") or "deliver_result_to_recorded_next_recipient")
+            reason = "Router accepted active-holder result mechanics and wrote a Controller-visible next-action notice."
         elif status in {"result-envelope-relayed", "result-body-opened-by-recipient"}:
             next_recipient = holder or result_recipient or "project_manager"
             controller_next_action = "wait_for_pm_result_disposition_or_formal_gate_release"
@@ -12583,7 +12583,6 @@ def _freeze_root_acceptance_contract(project_root: Path, run_root: Path, run_sta
         run_root / "standard_scenario_pack.json",
         run_root / "contract.md",
         run_root / "reviews" / "root_contract_challenge.json",
-        run_root / "flowguard" / "root_contract_modelability.json",
     ]
     missing = [project_relative(project_root, path) for path in required_paths if not path.exists()]
     if missing:
@@ -12823,8 +12822,6 @@ def _approve_child_skill_manifest_for_route(project_root: Path, run_root: Path, 
     required_paths = [
         manifest_path,
         run_root / "reviews" / "child_skill_gate_manifest_review.json",
-        run_root / "flowguard" / "child_skill_conformance_model.json",
-        run_root / "flowguard" / "child_skill_product_fit.json",
     ]
     missing = [project_relative(project_root, path) for path in required_paths if not path.exists()]
     if missing:
@@ -12840,8 +12837,10 @@ def _approve_child_skill_manifest_for_route(project_root: Path, run_root: Path, 
     manifest["approval"].update(
         {
             "reviewer_passed": True,
-            "process_officer_passed": True,
-            "product_officer_passed": True,
+            "process_officer_passed": False,
+            "process_officer_default_gate_removed": True,
+            "product_officer_passed": False,
+            "product_officer_default_gate_removed": True,
             "pm_approved_for_route": True,
             "approved_by_role": "project_manager",
             "approved_at": utc_now(),
@@ -16018,6 +16017,117 @@ def _relay_packet_records(
     return relayed_ids
 
 
+def _active_holder_frontier_version(frontier: dict[str, Any]) -> int:
+    return int(frontier.get("frontier_version") or frontier.get("route_version") or 0)
+
+
+def _current_node_active_holder_lease_plan(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    records: list[dict[str, Any]],
+    frontier: dict[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    route_version = int(frontier.get("route_version") or 0)
+    frontier_version = _active_holder_frontier_version(frontier)
+    planned: list[dict[str, Any]] = []
+    allowed_writes: list[str] = []
+    for record in records:
+        envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        holder_role = str(envelope.get("to_role") or record.get("to_role") or "")
+        target_agent_id = _active_agent_id_for_role(run_root, holder_role)
+        packet_dir = envelope_path.parent
+        item = {
+            "packet_id": str(envelope.get("packet_id") or record.get("packet_id") or ""),
+            "holder_role": holder_role,
+            "target_agent_id": target_agent_id,
+            "route_version": route_version,
+            "frontier_version": frontier_version,
+            "packet_envelope_path": project_relative(project_root, envelope_path),
+            "active_holder_lease_path": project_relative(project_root, packet_dir / "active_holder_lease.json"),
+            "active_holder_events_path": project_relative(project_root, packet_dir / "active_holder_events.jsonl"),
+            "mode": "lease_on_current_node_relay" if target_agent_id else "fallback_controller_relay_no_live_agent_id",
+        }
+        planned.append(item)
+        if target_agent_id:
+            allowed_writes.extend(
+                [
+                    item["active_holder_lease_path"],
+                    item["active_holder_events_path"],
+                ]
+            )
+    return (
+        {
+            "mode": "lease_on_current_node_relay",
+            "fallback_when_no_live_agent_id": True,
+            "controller_visibility": "lease_metadata_only",
+            "route_version": route_version,
+            "frontier_version": frontier_version,
+            "packets": planned,
+        },
+        sorted(set(allowed_writes)),
+    )
+
+
+def _issue_current_node_active_holder_leases(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    frontier = _active_frontier(run_root)
+    route_version = int(frontier.get("route_version") or 0)
+    frontier_version = _active_holder_frontier_version(frontier)
+    issued: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for record in records:
+        envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        holder_role = str(envelope.get("to_role") or record.get("to_role") or "")
+        target_agent_id = _active_agent_id_for_role(run_root, holder_role)
+        packet_id = str(envelope.get("packet_id") or record.get("packet_id") or "")
+        if not target_agent_id:
+            skipped.append(
+                {
+                    "packet_id": packet_id,
+                    "holder_role": holder_role,
+                    "reason": "no_live_agent_id_available_fallback_to_controller_relay",
+                }
+            )
+            continue
+        try:
+            lease = packet_runtime.issue_active_holder_lease(
+                project_root,
+                packet_envelope=envelope,
+                holder_role=holder_role,
+                holder_agent_id=target_agent_id,
+                route_version=route_version,
+                frontier_version=frontier_version,
+            )
+        except packet_runtime.PacketRuntimeError as exc:
+            raise RouterError(f"current-node active-holder lease failed for {packet_id}: {exc}") from exc
+        issued.append(
+            {
+                "packet_id": packet_id,
+                "holder_role": holder_role,
+                "holder_agent_id": target_agent_id,
+                "lease_path": lease["lease_path"],
+                "lease_id": lease["lease_id"],
+            }
+        )
+    summary = {
+        "schema_version": "flowpilot.current_node_active_holder_fast_lane.v1",
+        "mode": "lease_on_current_node_relay",
+        "issued": issued,
+        "skipped": skipped,
+        "fallback_when_no_live_agent_id": True,
+        "recorded_at": utc_now(),
+    }
+    run_state["current_node_active_holder_fast_lane"] = summary
+    return summary
+
+
 def _relay_result_records(
     project_root: Path,
     run_state: dict[str, Any],
@@ -17396,6 +17506,19 @@ def _validate_current_node_result_event(project_root: Path, run_state: dict[str,
         raise RouterError("current-node worker result must route to project_manager")
     if result.get("completed_by_role") == "controller":
         raise RouterError("Controller-origin current-node result is invalid")
+    packet_record = _packet_ledger_record_by_id(run_root, result_packet_id)
+    if isinstance(packet_record, dict) and packet_record.get("active_holder_lease_issued"):
+        if packet_record.get("fast_lane_result_mechanics_passed") is not True:
+            raise RouterError("current-node result requires active-holder mechanics pass before result event")
+        if packet_record.get("fast_lane_controller_notice_written") is not True:
+            raise RouterError("current-node result requires Router Controller next-action notice before result event")
+        notice = packet_record.get("router_next_action_notice")
+        if not isinstance(notice, dict):
+            raise RouterError("current-node active-holder result requires router_next_action_notice")
+        if notice.get("next_action") != "deliver_result_to_pm_for_disposition":
+            raise RouterError("current-node active-holder result notice must route Controller to PM disposition")
+        if notice.get("next_recipient") != "project_manager":
+            raise RouterError("current-node active-holder result notice must name project_manager as next_recipient")
     packet_path = resolve_project_path(project_root, str(expected_grant.get("packet_envelope_path") or ""))
     packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
     agent_role_map = _agent_role_map_from_crew_ledger(run_root)
@@ -19155,8 +19278,11 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         "load the current resume state, restore the visible plan, and request six-role liveness "
         "rehydration before any PM resume decision. Any restored or replacement background role "
         "agent must be explicitly requested with the strongest available host model and highest "
-        "available reasoning effort; do not rely on foreground model inheritance. Do not read "
-        "sealed packet/result/report bodies."
+        "available reasoning effort; do not rely on foreground model inheritance. After role "
+        "rehydration, continue the router loop instead of stopping at check_prompt_manifest: apply "
+        "check_prompt_manifest, return to router next/run-until-wait, deliver the PM resume card when "
+        "the router exposes it, and stop only at a real role, user, host, payload, packet, or "
+        "await_role_decision boundary. Do not read sealed packet/result/report bodies."
     )
     return make_action(
         action_type="create_heartbeat_automation",
@@ -20057,6 +20183,13 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 "current_node_write_grant_path": project_relative(project_root, grant_path),
                 "current_node_write_grant_hash": hashlib.sha256(grant_path.read_bytes()).hexdigest(),
             }
+        active_holder_plan, active_holder_allowed_writes = _current_node_active_holder_lease_plan(
+            project_root,
+            run_root,
+            run_state,
+            records,
+            frontier,
+        )
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="relay_current_node_packet",
@@ -20073,6 +20206,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                 allowed_writes=[
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
+                    *active_holder_allowed_writes,
                 ],
                 to_role=",".join(sorted({str(record.get("to_role")) for record in records})),
                 extra={
@@ -20082,6 +20216,7 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
                     "sealed_body_reads_allowed": False,
                     "combined_ledger_check_and_relay": True,
                     "ledger_check_receipt_required": True,
+                    "active_holder_fast_lane": active_holder_plan,
                     **grant_extra,
                 },
             )
@@ -20091,13 +20226,17 @@ def _next_current_node_packet_action(project_root: Path, run_state: dict[str, An
             label="current_node_packet_relayed_after_router_direct_preflight",
             summary="Directly relay current-node batch packet envelopes without opening their bodies.",
             allowed_reads=relay_allowed_reads,
-            allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
+            allowed_writes=[
+                project_relative(project_root, run_root / "packet_ledger.json"),
+                *active_holder_allowed_writes,
+            ],
             to_role=",".join(sorted({str(record.get("to_role")) for record in records})),
             extra={
                 "packet_ids": [record.get("packet_id") for record in records],
                 "postcondition": "current_node_packet_relayed",
                 "controller_visibility": "packet_envelope_only",
                 "sealed_body_reads_allowed": False,
+                "active_holder_fast_lane": active_holder_plan,
                 **grant_extra,
             },
         )
@@ -20902,7 +21041,7 @@ def _reconcile_pending_role_wait_from_packet_status(
         return None
     packet_ledger = read_json_if_exists(run_root / "packet_ledger.json")
     status = str(packet_ledger.get("active_packet_status") or "")
-    if status not in {"worker-result-needs-review", "result-envelope-returned"}:
+    if status not in {"worker-result-needs-review", "result-envelope-returned", "router-next-action-ready-for-controller"}:
         return None
     record = _active_packet_ledger_record(packet_ledger)
     if not isinstance(record, dict):
@@ -20917,7 +21056,7 @@ def _reconcile_pending_role_wait_from_packet_status(
     status_packet = read_json_if_exists(paths["controller_status_packet"])
     if status_packet.get("schema_version") != "flowpilot.controller_status_packet.v1":
         return None
-    if status_packet.get("status") != "result-envelope-returned":
+    if status_packet.get("status") not in {"result-envelope-returned", "router-next-action-ready-for-controller"}:
         return None
     result = packet_runtime.load_envelope(project_root, result_path)
     if result.get("next_recipient") != "project_manager":
@@ -22009,6 +22148,13 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
             raise RouterError("no legal next action control blocker was not materialized")
     run_state["pending_action"] = action
     append_history(run_state, "router_computed_next_controller_action", {"action_type": action["action_type"]})
+    _sync_derived_run_views(
+        project_root,
+        run_root,
+        run_state,
+        reason="after_router_computed_pending_controller_action",
+        update_display=True,
+    )
     save_run_state(run_root, run_state)
     return action
 
@@ -22324,6 +22470,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 received_from_role=str(envelope.get("from_role") or "project_manager"),
                 relayed_to_role=str(envelope.get("to_role")),
             )
+        lease_summary = _issue_current_node_active_holder_leases(project_root, run_root, run_state, records)
+        result_extra["active_holder_fast_lane"] = lease_summary
         _mark_parallel_batch_packets_relayed(run_root, "current_node")
         run_state["flags"]["current_node_packet_relayed"] = True
         run_state["ledger_check_requested"] = False

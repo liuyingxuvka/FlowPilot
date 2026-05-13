@@ -22,7 +22,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 
 Freeze the root acceptance contract after product architecture review and
-Product FlowGuard Officer modelability pass.
+Reviewer root-contract challenge pass.
 
 Write:
 
@@ -40,5 +40,4 @@ unnecessary implementation shape. Do not turn a complex route, tool choice,
 child skill, or artifact family into a hard requirement unless the user asked
 for it or the proof obligation cannot be met without it.
 
-Do not draft a route until reviewer and Product FlowGuard Officer checks pass
-for the frozen contract.
+Do not draft a route until the Reviewer check passes for the frozen contract.
