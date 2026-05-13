@@ -123,6 +123,85 @@ def _load_return_ledger(project_root: Path, envelope: dict[str, Any]) -> tuple[P
     return path, ledger
 
 
+def _return_record_identity(record: dict[str, Any]) -> tuple[str, str, str]:
+    return_kind = str(record.get("return_kind") or "system_card")
+    identity = str(record.get("card_bundle_id") or record.get("delivery_attempt_id") or "")
+    event_name = str(record.get("card_return_event") or "")
+    return return_kind, identity, event_name
+
+
+def _resolved_return_keys(completed_returns: list[Any]) -> set[tuple[str, str, str]]:
+    keys: set[tuple[str, str, str]] = set()
+    for item in completed_returns:
+        if not isinstance(item, dict) or item.get("status") != "resolved":
+            continue
+        identity = _return_record_identity(item)
+        if identity[1] and identity[2]:
+            keys.add(identity)
+    return keys
+
+
+def _return_has_terminal_proof(record: dict[str, Any], completed_keys: set[tuple[str, str, str]]) -> bool:
+    identity = _return_record_identity(record)
+    return bool(record.get("resolved_at")) or record.get("status") == "resolved" or identity in completed_keys
+
+
+def _record_terminal_replay_audit(record: dict[str, Any], *, ack_path: str, ack_hash: str, returned_at: str, status: str) -> None:
+    audit = record.setdefault("terminal_replay_ack", {})
+    if not isinstance(audit, dict):
+        audit = {}
+        record["terminal_replay_ack"] = audit
+    audit["count"] = int(audit.get("count") or 0) + 1
+    audit["last_ack_path"] = ack_path
+    audit["last_ack_hash"] = ack_hash
+    audit["last_status"] = status
+    audit["last_returned_at"] = returned_at
+
+
+def _upsert_completed_return_record(completed_returns: list[Any], record: dict[str, Any]) -> None:
+    identity = _return_record_identity(record)
+    for item in completed_returns:
+        if not isinstance(item, dict) or _return_record_identity(item) != identity:
+            continue
+        if item.get("status") == "resolved":
+            _record_terminal_replay_audit(
+                item,
+                ack_path=str(record.get("ack_path") or ""),
+                ack_hash=str(record.get("ack_hash") or ""),
+                returned_at=str(record.get("returned_at") or ""),
+                status=str(record.get("status") or ""),
+            )
+            return
+        item.update(record)
+        item["return_replay_count"] = int(item.get("return_replay_count") or 0) + 1
+        return
+    completed_returns.append(record)
+
+
+def _merge_pending_return_ack(
+    pending: dict[str, Any],
+    *,
+    completed_keys: set[tuple[str, str, str]],
+    next_status: str,
+    ack_path: str,
+    ack_hash: str,
+    returned_at: str,
+) -> None:
+    if _return_has_terminal_proof(pending, completed_keys):
+        _record_terminal_replay_audit(
+            pending,
+            ack_path=ack_path,
+            ack_hash=ack_hash,
+            returned_at=returned_at,
+            status=next_status,
+        )
+        return
+    pending["status"] = next_status
+    pending["ack_path"] = ack_path
+    pending["ack_hash"] = ack_hash
+    pending["returned_at"] = returned_at
+
+
 def _load_envelope(project_root: Path, envelope_path: str) -> tuple[Path, dict[str, Any]]:
     path = resolve_project_path(project_root, envelope_path)
     envelope = read_json(path)
@@ -523,7 +602,9 @@ def submit_card_ack(
     write_json(ledger_path, ledger)
     return_path, return_ledger = _load_return_ledger(project_root, envelope)
     completed = return_ledger.setdefault("completed_returns", [])
-    completed.append(
+    ack_rel_path = project_relative(project_root, ack_path)
+    _upsert_completed_return_record(
+        completed,
         {
             "card_return_event": ack["card_return_event"],
             "status": status,
@@ -531,26 +612,31 @@ def submit_card_ack(
             "agent_id": agent_id,
             "delivery_id": envelope.get("delivery_id"),
             "delivery_attempt_id": envelope.get("delivery_attempt_id"),
-            "ack_path": project_relative(project_root, ack_path),
+            "ack_path": ack_rel_path,
             "ack_hash": ack["ack_hash"],
             "ack_delivery_mode": ack["ack_delivery_mode"],
             "direct_router_ack_token_hash": direct_token_hash,
             "returned_at": returned_at,
-        }
+        },
     )
+    completed_keys = _resolved_return_keys(completed)
     for pending in return_ledger.setdefault("pending_returns", []):
         if (
             isinstance(pending, dict)
             and pending.get("delivery_attempt_id") == envelope.get("delivery_attempt_id")
             and pending.get("card_return_event") == ack["card_return_event"]
         ):
-            pending["status"] = "returned"
-            pending["ack_path"] = project_relative(project_root, ack_path)
-            pending["ack_hash"] = ack["ack_hash"]
-            pending["returned_at"] = returned_at
+            _merge_pending_return_ack(
+                pending,
+                completed_keys=completed_keys,
+                next_status="returned",
+                ack_path=ack_rel_path,
+                ack_hash=ack["ack_hash"],
+                returned_at=returned_at,
+            )
     return_ledger["updated_at"] = returned_at
     write_json(return_path, return_ledger)
-    return {"ok": True, "ack_envelope": ack, "ack_path": project_relative(project_root, ack_path)}
+    return {"ok": True, "ack_envelope": ack, "ack_path": ack_rel_path}
 
 
 def submit_card_bundle_ack(
@@ -675,7 +761,9 @@ def submit_card_bundle_ack(
     write_json(ledger_path, ledger)
     return_path, return_ledger = _load_return_ledger(project_root, envelope)
     completed = return_ledger.setdefault("completed_returns", [])
-    completed.append(
+    ack_rel_path = project_relative(project_root, ack_path)
+    _upsert_completed_return_record(
+        completed,
         {
             "return_kind": "system_card_bundle",
             "card_return_event": ack["card_return_event"],
@@ -684,13 +772,14 @@ def submit_card_bundle_ack(
             "agent_id": agent_id,
             "card_bundle_id": envelope.get("bundle_id"),
             "member_card_ids": ack["member_card_ids"],
-            "ack_path": project_relative(project_root, ack_path),
+            "ack_path": ack_rel_path,
             "ack_hash": ack["ack_hash"],
             "ack_delivery_mode": ack["ack_delivery_mode"],
             "direct_router_ack_token_hash": direct_token_hash,
             "returned_at": returned_at,
-        }
+        },
     )
+    completed_keys = _resolved_return_keys(completed)
     for pending in return_ledger.setdefault("pending_returns", []):
         if (
             isinstance(pending, dict)
@@ -698,13 +787,17 @@ def submit_card_bundle_ack(
             and pending.get("card_bundle_id") == envelope.get("bundle_id")
             and pending.get("card_return_event") == ack["card_return_event"]
         ):
-            pending["status"] = "returned"
-            pending["ack_path"] = project_relative(project_root, ack_path)
-            pending["ack_hash"] = ack["ack_hash"]
-            pending["returned_at"] = returned_at
+            _merge_pending_return_ack(
+                pending,
+                completed_keys=completed_keys,
+                next_status="returned",
+                ack_path=ack_rel_path,
+                ack_hash=ack["ack_hash"],
+                returned_at=returned_at,
+            )
     return_ledger["updated_at"] = returned_at
     write_json(return_path, return_ledger)
-    return {"ok": True, "ack_envelope": ack, "ack_path": project_relative(project_root, ack_path)}
+    return {"ok": True, "ack_envelope": ack, "ack_path": ack_rel_path}
 
 
 def validate_card_ack(project_root: Path, *, ack_path: str, envelope_path: str | None = None) -> dict[str, Any]:

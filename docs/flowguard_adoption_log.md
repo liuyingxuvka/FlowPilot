@@ -8774,3 +8774,139 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - If role recovery grows beyond controller-hosted recovery actions, add a production conformance adapter for `flowpilot_role_recovery_model.py`.
 - Keep future resume, heartbeat, and mid-run liveness changes on the same transaction/report path so recovery remains preemptive and PM-reviewed.
+
+## terminal-state-monotonicity-model-20260513 - Model duplicate ACK terminal-state downgrade hazards
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a model-first investigation of a live FlowPilot ACK control-plane issue before any runtime repair. The issue involved a card return ACK already resolved by Router, followed by a duplicate runtime check-in that wrote the raw pending return status back to `returned`.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T16:40:00+02:00
+- Ended: 2026-05-13T16:55:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_terminal_state_monotonicity_model.py
+- simulations/run_flowpilot_terminal_state_monotonicity_checks.py
+- simulations/flowpilot_terminal_state_monotonicity_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python -m py_compile simulations\flowpilot_terminal_state_monotonicity_model.py simulations\run_flowpilot_terminal_state_monotonicity_checks.py`.
+- OK: `python simulations\run_flowpilot_terminal_state_monotonicity_checks.py --json-out simulations\flowpilot_terminal_state_monotonicity_results.json`.
+- OK: `python simulations\run_flowpilot_event_idempotency_checks.py --json-out simulations\flowpilot_event_idempotency_results.json`.
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json`.
+
+### Findings
+- Existing event-idempotency coverage checked scoped event replay, but not terminal control-plane record downgrade after a duplicate or late input.
+- Existing card-envelope coverage checked ACK shape, receipt, and Router submission rules, but not whether a duplicate ACK may dirty a resolved pending return record.
+- The new terminal-state model catches same-class hazards where terminal facts are reopened by duplicate ACKs, incomplete bundle ACKs, stale gate blocks, stale control blockers, duplicate PM repair decisions, old repair-generation failures, or duplicate result returns.
+- Source audit found the Router pending-return selector is currently terminal-aware through `resolved_at` and completed-return records, while card runtime ACK writers can still dirty raw pending records by assigning `status = "returned"` after resolution.
+- Live metadata audit found one dirty terminal pending record in `.flowpilot/runs/run-20260513-034857/return_event_ledger.json`: pending index 57 for `reviewer_node_acceptance_plan_review-delivery-009-attempt-001`, with `resolved_at` present and raw `status` set back to `returned`.
+
+### Counterexamples
+- `resolved_card_return_reopened_by_duplicate_ack`
+- `resolved_bundle_return_reopened_by_duplicate_ack`
+- `resolved_bundle_return_downgraded_to_incomplete`
+- `pending_selector_ignores_resolved_at`
+- `pending_selector_ignores_completed_return`
+- `repair_channel_blocked_by_resolved_return`
+- `gate_pass_reopened_by_late_block`
+- `resolved_control_blocker_reactivated_by_stale_artifact`
+- `duplicate_pm_repair_created_new_blocker`
+- `old_repair_generation_failure_reopened_success`
+- `new_repair_generation_failure_swallowed`
+- `result_disposition_reopened_by_duplicate_result`
+- `same_identity_replay_writes_duplicate_side_effect`
+
+### Skipped Steps
+- No production Router, card runtime, route state, or live run mutation was performed; this pass was model and analysis only by user request.
+- No sealed card, packet, result, or report body was read.
+
+### Next Actions
+- Discuss a narrow shared terminal-merge rule for control-plane records before implementing any runtime repair.
+
+## terminal-state-monotonicity-runtime-20260513 - Implement monotonic duplicate ACK merge
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved the model-first repair for duplicate or late ACK/check-in events that could dirty an already resolved FlowPilot return wait and re-block PM or reviewer events.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T16:55:00+02:00
+- Ended: 2026-05-13T17:28:57+02:00
+- Commands OK: True
+
+### Planning Files
+- docs/control_plane_terminal_merge_plan.md
+
+### Model Files
+- simulations/flowpilot_terminal_state_monotonicity_model.py
+- simulations/run_flowpilot_terminal_state_monotonicity_checks.py
+- simulations/flowpilot_terminal_state_monotonicity_results.json
+- simulations/flowpilot_event_idempotency_results.json
+- simulations/flowpilot_card_envelope_results.json
+- simulations/flowpilot_control_plane_friction_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/card_runtime.py
+- tests/test_flowpilot_card_runtime.py
+- tests/test_flowpilot_router_runtime.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python -m py_compile skills\flowpilot\assets\card_runtime.py skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_terminal_state_monotonicity_model.py simulations\run_flowpilot_terminal_state_monotonicity_checks.py tests\test_flowpilot_card_runtime.py tests\test_flowpilot_router_runtime.py`.
+- OK: `python simulations\run_flowpilot_terminal_state_monotonicity_checks.py --json-out simulations\flowpilot_terminal_state_monotonicity_results.json`.
+- OK: `python simulations\run_flowpilot_event_idempotency_checks.py --json-out simulations\flowpilot_event_idempotency_results.json`.
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json`.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json`.
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py -q` -> 9 passed.
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "card_return or bundle_ack or control_blocker or repair_decision or gate_decision or result_disposition"` -> 20 passed, 128 deselected.
+- OK: `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "committed_system_card_relay_can_resolve_without_apply_roundtrip or incomplete_system_card_bundle_ack_waits_for_missing_receipts_then_recovers or pm_repair_decision_can_repeat_for_new_control_blocker or already_recorded_event_resolves_fatal_control_blocker_after_pm_repair_decision"` -> 4 passed, 144 deselected.
+- OK: `python -m pytest tests\test_flowpilot_control_gates.py -q` -> 19 passed.
+- OK: background `python simulations\run_meta_checks.py` -> exit 0.
+- OK: background `python simulations\run_capability_checks.py` -> exit 0.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py`.
+
+### Findings
+- Card and bundle ACK writers now merge duplicate acknowledgements monotonically. If a pending return already has terminal proof through `status=resolved`, `resolved_at`, or a matching resolved completed-return record, a later duplicate ACK is recorded as audit metadata instead of changing the pending record back to `returned`.
+- Real unresolved card and bundle returns still transition to `returned`, so the repair does not release unfinished work.
+- Completed-return records are upserted by return identity instead of appended blindly, which avoids duplicate side effects for the same card or bundle return.
+- The upgraded terminal-state model verifies the same rule across card ACK, bundle ACK, gate pass/block, control blocker resolution, PM repair decision, repair generation, and result disposition classes.
+- Existing Router scoped-identity behavior already covers the non-ACK ledger classes; this change only repaired the ACK writer path that could dirty raw pending-return records.
+- Local installed FlowPilot skill was synchronized from the repository and audited fresh. Remote GitHub sync was not performed.
+
+### Counterexamples
+- `resolved_card_return_reopened_by_duplicate_ack`
+- `resolved_bundle_return_reopened_by_duplicate_ack`
+- `resolved_bundle_return_downgraded_to_incomplete`
+- `pending_selector_ignores_resolved_at`
+- `pending_selector_ignores_completed_return`
+- `repair_channel_blocked_by_resolved_return`
+- `gate_pass_reopened_by_late_block`
+- `resolved_control_blocker_reactivated_by_stale_artifact`
+- `duplicate_pm_repair_created_new_blocker`
+- `old_repair_generation_failure_reopened_success`
+- `new_repair_generation_failure_swallowed`
+- `result_disposition_reopened_by_duplicate_result`
+- `same_identity_replay_writes_duplicate_side_effect`
+- `new_gate_identity_swallowed_by_old_pass`
+- `new_control_blocker_swallowed_by_old_resolution`
+- `new_result_identity_swallowed_by_old_disposition`
+- `real_unresolved_return_released_by_overbroad_terminal_merge`
+
+### Friction Points
+- Full `tests\test_flowpilot_router_runtime.py -q` exceeded the local command timeout, so related Router coverage was split into focused idempotency, return, repair, gate, and result-disposition selections that passed.
+- Long meta and capability checks were run in background. A duplicated background start was detected and cleaned up; the final meta and capability runs both exited 0.
+- A parallel agent has unrelated startup-intake UI changes in the workspace. Those files were preserved and intentionally excluded from this repair scope.
+
+### Skipped Steps
+- No sealed card, packet, result, or report body was read.
+- No live `.flowpilot` route state was mutated.
+- No remote GitHub sync or push was performed, per user instruction.
+
+### Next Actions
+- Keep future control-plane ledger writers on the same terminal-merge rule: same identity plus terminal proof means audit-only replay; genuinely new identity or unresolved work remains actionable.

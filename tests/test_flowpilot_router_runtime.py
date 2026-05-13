@@ -3789,7 +3789,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             receipt_paths=[str(duplicate_open["read_receipt_path"])],
         )
         return_ledger = read_json(run_root / "return_event_ledger.json")
-        self.assertEqual(return_ledger["pending_returns"][0]["status"], "returned")
+        self.assertEqual(return_ledger["pending_returns"][0]["status"], "resolved")
+        self.assertEqual(return_ledger["pending_returns"][0]["terminal_replay_ack"]["count"], 1)
         self.assertIsNone(
             router._pending_card_return_blocker_for_event(
                 run_root,

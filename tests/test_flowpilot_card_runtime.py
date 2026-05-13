@@ -259,6 +259,159 @@ def test_card_runtime_opens_bundle_and_submits_one_ack_with_per_card_receipts() 
     assert validation["receipt_ref_count"] == 2
 
 
+def test_duplicate_card_ack_after_resolved_is_audit_only() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_envelope(root, run_root, body_path)
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    return_ledger_path = run_root / "return_event_ledger.json"
+    write_json(
+        return_ledger_path,
+        {
+            "schema_version": card_runtime.RETURN_EVENT_LEDGER_SCHEMA,
+            "run_id": run_root.name,
+            "pending_returns": [
+                {
+                    "card_return_event": envelope["card_return_event"],
+                    "delivery_id": envelope["delivery_id"],
+                    "delivery_attempt_id": envelope["delivery_attempt_id"],
+                    "card_id": envelope["card_id"],
+                    "status": "resolved",
+                    "resolved_at": "2026-05-13T14:08:19Z",
+                }
+            ],
+            "completed_returns": [
+                {
+                    "card_return_event": envelope["card_return_event"],
+                    "delivery_id": envelope["delivery_id"],
+                    "delivery_attempt_id": envelope["delivery_attempt_id"],
+                    "card_id": envelope["card_id"],
+                    "status": "resolved",
+                    "checked_at": "2026-05-13T14:08:19Z",
+                }
+            ],
+        },
+    )
+    opened = card_runtime.open_card(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+    )
+    card_runtime.submit_card_ack(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+        receipt_paths=[opened["read_receipt_path"]],
+    )
+
+    ledger = json.loads(return_ledger_path.read_text(encoding="utf-8"))
+    pending = ledger["pending_returns"][0]
+    assert pending["status"] == "resolved"
+    assert pending["resolved_at"] == "2026-05-13T14:08:19Z"
+    assert pending["terminal_replay_ack"]["count"] == 1
+    assert ledger["completed_returns"][0]["status"] == "resolved"
+    assert ledger["completed_returns"][0]["terminal_replay_ack"]["count"] == 1
+    assert len(ledger["completed_returns"]) == 1
+
+
+def test_unresolved_card_ack_still_marks_pending_returned() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_envelope(root, run_root, body_path)
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    return_ledger_path = run_root / "return_event_ledger.json"
+    write_json(
+        return_ledger_path,
+        {
+            "schema_version": card_runtime.RETURN_EVENT_LEDGER_SCHEMA,
+            "run_id": run_root.name,
+            "pending_returns": [
+                {
+                    "card_return_event": envelope["card_return_event"],
+                    "delivery_id": envelope["delivery_id"],
+                    "delivery_attempt_id": envelope["delivery_attempt_id"],
+                    "card_id": envelope["card_id"],
+                    "status": "awaiting_return",
+                }
+            ],
+            "completed_returns": [],
+        },
+    )
+    opened = card_runtime.open_card(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+    )
+    card_runtime.submit_card_ack(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+        receipt_paths=[opened["read_receipt_path"]],
+    )
+
+    ledger = json.loads(return_ledger_path.read_text(encoding="utf-8"))
+    assert ledger["pending_returns"][0]["status"] == "returned"
+    assert "terminal_replay_ack" not in ledger["pending_returns"][0]
+    assert len(ledger["completed_returns"]) == 1
+
+
+def test_duplicate_bundle_ack_after_resolved_is_audit_only() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_bundle_envelope(root, run_root, body_path)
+    envelope = json.loads(envelope_path.read_text(encoding="utf-8"))
+    return_ledger_path = run_root / "return_event_ledger.json"
+    write_json(
+        return_ledger_path,
+        {
+            "schema_version": card_runtime.RETURN_EVENT_LEDGER_SCHEMA,
+            "run_id": run_root.name,
+            "pending_returns": [
+                {
+                    "return_kind": "system_card_bundle",
+                    "card_return_event": envelope["card_return_event"],
+                    "card_bundle_id": envelope["bundle_id"],
+                    "card_ids": envelope["card_ids"],
+                    "status": "resolved",
+                    "resolved_at": "2026-05-13T14:08:19Z",
+                }
+            ],
+            "completed_returns": [
+                {
+                    "return_kind": "system_card_bundle",
+                    "card_return_event": envelope["card_return_event"],
+                    "card_bundle_id": envelope["bundle_id"],
+                    "card_ids": envelope["card_ids"],
+                    "status": "resolved",
+                    "checked_at": "2026-05-13T14:08:19Z",
+                }
+            ],
+        },
+    )
+    opened = card_runtime.open_card_bundle(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+    )
+    card_runtime.submit_card_bundle_ack(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+        receipt_paths=opened["read_receipt_paths"],
+    )
+
+    ledger = json.loads(return_ledger_path.read_text(encoding="utf-8"))
+    pending = ledger["pending_returns"][0]
+    assert pending["status"] == "resolved"
+    assert pending["terminal_replay_ack"]["count"] == 1
+    assert ledger["completed_returns"][0]["status"] == "resolved"
+    assert ledger["completed_returns"][0]["terminal_replay_ack"]["count"] == 1
+    assert len(ledger["completed_returns"]) == 1
+
+
 def test_unified_runtime_receive_card_bundle_writes_all_receipts_and_ack() -> None:
     root, run_root, body_path = make_project()
     envelope_path = make_bundle_envelope(root, run_root, body_path)

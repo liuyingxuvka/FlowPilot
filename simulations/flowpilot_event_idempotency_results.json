@@ -117,7 +117,7 @@
     "state_count": 25
   },
   "source_audit": {
-    "external_event_count": 99,
+    "external_event_count": 109,
     "finding_count": 0,
     "findings": [],
     "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
