@@ -30,6 +30,11 @@ view. Closure is blocked by a hard user-intent failure, unusable outcome,
 semantic downgrade, missing proof, or unverifiable user-facing quality claim.
 Better but nonessential experience, simplicity, or quality opportunities must
 be dispositioned as PM suggestion items before closure.
+PM must also self-check hard low-quality-success risks. Closure is blocked
+when a task-specific hard part was closed only by artifact existence, report
+prose, a screenshot, a command run, or a clean ledger row instead of proof of
+depth. Nonessential quality improvements stay in PM suggestion disposition and
+do not become surprise hard blockers.
 
 Closure order:
 
@@ -100,6 +105,8 @@ paths from the router delivery envelope.
     "reviewed": true,
     "delivered_output_satisfies_user_intent": true,
     "user_facing_claims_have_evidence": true,
+    "hard_low_quality_success_risks_dispositioned": true,
+    "existence_only_hard_part_closures": [],
     "hard_user_intent_failures": [],
     "nonblocking_higher_standard_opportunities_dispositioned": true
   },

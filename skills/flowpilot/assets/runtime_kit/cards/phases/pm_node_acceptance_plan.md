@@ -37,6 +37,11 @@ route-memory prior path context. The plan must state:
   applicable: how the node changes the user's real outcome, what would make it
   unusable or semantically downgraded, and which evidence will prove that the
   user-facing claim is true;
+- low-quality-success self-check for this node: inherited hard parts from the
+  product architecture or root contract, the node-local hard part, the
+  thin-success shortcut most likely to make the node look complete while still
+  being low quality, warning signs PM and Reviewer should distrust, and proof
+  of depth that must appear in the worker/officer result;
 - inherited `skill_standard_projection`: every child-skill standard relevant
   to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
   `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
@@ -76,6 +81,9 @@ route-memory prior path context. The plan must state:
   serial child route, PM process decision, and Reviewer route challenge before
   dispatching those children;
 - forbidden low-standard or placeholder outcomes;
+- forbidden thin-success outcomes where an artifact, command, report,
+  screenshot, or ledger entry exists but the hard part was only handled
+  casually;
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.
 
@@ -120,6 +128,9 @@ The returned plan must include a complete `high_standard_recheck` object with
 `why_current_plan_meets_highest_reasonable_standard`. Use `decision:
 proceed` only when the plan already reaches the highest reasonable standard
 for this node without unnecessary complexity.
+It must also include a concrete low-quality-success mapping for this node:
+hard parts, thin-success shortcut, proof of depth, reviewer probe, and whether
+the concern is a hard current requirement or PM decision-support.
 Classify every higher-standard opportunity as hard current requirement,
 current-node improvement, future-route candidate, nonblocking note, or rejected
 with reason. Do not turn a nonessential improvement into a hard blocker unless

@@ -39,6 +39,11 @@ Resolve:
 - final-user intent and delivered-product usefulness claims, including the
   evidence that proves each current user-facing claim instead of merely proving
   that an artifact exists;
+- low-quality-success risks inherited from product architecture, root
+  contract, route nodes, and node acceptance plans. Each hard risk must have
+  terminal disposition: closed by proof of depth, superseded with reason,
+  waived by authority, or returned for repair. A hard part cannot be closed by
+  existence-only evidence, report prose, or a clean ledger row;
 - child-skill and review gates;
 - product/process FlowGuard gates;
 - minimum sufficient complexity dispositions for route nodes, skills, and
@@ -49,7 +54,8 @@ Resolve:
 - zero unresolved residual risks.
 
 If the final backward walk finds an omitted major node, omitted subtree,
-unclosed bug class, or stale evidence class, first decide whether the
+unclosed bug class, unresolved hard low-quality-success risk, or stale evidence
+class, first decide whether the
 Product/Process FlowGuard model missed the class. When it did, update the
 model, search the same class across the whole route, add supplemental or repair
 nodes, rerun stale gates, rebuild this ledger, and only then request terminal

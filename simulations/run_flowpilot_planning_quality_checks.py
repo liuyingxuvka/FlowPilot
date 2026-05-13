@@ -44,6 +44,13 @@ HAZARD_EXPECTED_FAILURES = {
     model.PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED: "PM left higher-standard improvement opportunity unclassified",
     model.PM_IMPROVEMENT_SCOPE_CREEP: "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement",
     model.PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING: "PM closure lacks final-user outcome replay",
+    model.PM_LOW_QUALITY_REVIEW_MISSING: "PM product architecture lacks low-quality-success review",
+    model.PM_LOW_QUALITY_REVIEW_GENERIC: "PM low-quality-success review is generic or lacks hard parts, thin shortcuts, and proof of depth",
+    model.HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER: "hard low-quality-success risk lacks an existing route or node owner",
+    model.LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT: "PM created unjustified route bloat from low-quality-success review",
+    model.NODE_PLAN_MISSING_LOW_QUALITY_MAPPING: "node acceptance plan lacks local low-quality-success mapping and proof of depth",
+    model.WORK_PACKET_MISSING_LOW_QUALITY_WARNING: "work packet lacks node low-quality-success warning",
+    model.PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING: "PM closure lacks low-quality-success risk disposition",
 }
 
 

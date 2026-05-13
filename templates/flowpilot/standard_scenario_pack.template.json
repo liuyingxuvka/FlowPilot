@@ -52,6 +52,19 @@
       "selection_or_skip_reason": "<reason>"
     },
     {
+      "scenario_id": "thin_success_or_existence_only_evidence",
+      "risk_family": "low_quality_success",
+      "description": "A hard part appears complete because an artifact exists, but proof of depth is missing; PM or reviewer must reject the thin success, request deeper evidence, or route repair.",
+      "default_required_when": [
+        "product_function_architecture.low_quality_success_review has hard_current_requirement items",
+        "user-facing quality claim",
+        "hard part could be hidden behind report-only or existence-only evidence"
+      ],
+      "fixture_paths": [],
+      "selected_for_current_route": "<true|false>",
+      "selection_or_skip_reason": "<reason>"
+    },
+    {
       "scenario_id": "stale_or_conflicting_frontier",
       "risk_family": "state_authority",
       "description": "State, frontier, index, and route disagree; the process must detect drift and block or repair before evidence closes.",

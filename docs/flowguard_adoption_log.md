@@ -9310,3 +9310,84 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep current-node speed work on the active-holder lease path and rerun router-loop plus current-node tests before extending speed tier 2 parallelization.
+
+
+## flowpilot-low-quality-success-hardening-20260513 - Fuse low-quality success prevention into existing FlowPilot PM and reviewer gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to prevent FlowPilot PM/reviewer planning from letting hard parts be handled thinly or casually, and required FlowGuard model validation before prompt/template changes.
+- Status: in_progress
+- Skill decision: use_flowguard
+- Started: 2026-05-13T18:31:53+00:00
+- Ended: 2026-05-13T18:31:53+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_planning_quality_model.py
+- simulations/flowpilot_reviewer_active_challenge_model.py
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Write the concrete optimization/risk table, upgrade planning/reviewer models, prove hazards are caught, then edit existing cards/templates without adding a new workflow.
+
+
+## flowpilot-low-quality-success-hardening-20260513 - Fuse low-quality success prevention into existing FlowPilot PM and reviewer gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior-bearing FlowPilot prompt and protocol quality change; user required model-first simulation before prompt edits
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-13T19:08:27+00:00
+- Ended: 2026-05-13T19:08:27+00:00
+- Duration seconds: 7200.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_planning_quality_model.py
+- simulations/flowpilot_reviewer_active_challenge_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK (0.000s): `python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_reviewer_active_challenge_checks.py --json-out simulations/flowpilot_reviewer_active_challenge_results.json`
+- OK (0.000s): `python simulations/run_meta_checks.py --force`
+- OK (0.000s): `python simulations/run_capability_checks.py --force`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_planning_quality.py tests/test_flowpilot_reviewer_active_challenge.py -q`
+- OK (0.000s): `python scripts/check_install.py`
+- OK (0.000s): `python -m pytest tests --ignore=tests/test_flowpilot_router_runtime.py -q`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+
+### Findings
+- Planning model now catches missing/generic low-quality-success review, unowned hard low-quality risks, route bloat, missing node mapping, missing work-packet warning, and missing closure disposition.
+- Reviewer active challenge model now catches missing low-quality-success challenge and existence-only evidence accepted for hard-part claims.
+- Prompt/template changes were fused into existing PM product architecture, root contract, route skeleton, node acceptance, packet/result, reviewer, final ledger, and closure gates without adding a new major flow.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- PowerShell background model launches with the Windows Python app alias required duplicate-process cleanup and a resolved Python path.
+
+### Skipped Steps
+- Whole-repo pytest from repository root is not a valid signal because backup tests shadow active tests; formal tests were run from tests/.
+- Full tests including tests/test_flowpilot_router_runtime.py exceeded the practical local timeout while another agent was actively running router-runtime tests. Non-router tests, target tests, install checks, and FlowGuard simulations passed.
+
+### Next Actions
+- When router runtime work by parallel agents settles, rerun tests/test_flowpilot_router_runtime.py separately before any remote release.

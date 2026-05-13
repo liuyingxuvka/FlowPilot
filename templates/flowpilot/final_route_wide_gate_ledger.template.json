@@ -27,6 +27,7 @@
     "stale_evidence_checked": false,
     "superseded_nodes_explained": false,
     "unused_complexity_disposition_checked": false,
+    "low_quality_success_risks_disposition_checked": false,
     "standard_scenarios_replayed": false,
     "residual_risk_triage_done": false,
     "unresolved_residual_risk_count_zero": false,
@@ -49,6 +50,7 @@
     "discarded_resource_count": 0,
     "unresolved_resource_count": 0,
     "unresolved_residual_risk_count": 0,
+    "unresolved_low_quality_success_risk_count": 0,
     "unresolved_count": null
   },
   "residual_risk_triage": {
@@ -104,6 +106,21 @@
       "disposition": "<used_for_current_gate|superseded|quarantined|discarded_with_reason|deferred_with_revisit_condition>",
       "reason": "<why-this-item-is-still-needed-or-how-it-was-resolved>",
       "unresolved_complexity": false
+    }
+  ],
+  "low_quality_success_risk_dispositions": [
+    {
+      "risk_id": "<low-quality-risk-id>",
+      "source": "<product_function_architecture|root_contract|route_node|node_acceptance_plan>",
+      "hard_part": "<task-specific-hard-part>",
+      "thin_success_shortcut": "<shortcut-that-would-look-complete-but-be-too-shallow>",
+      "classification": "<hard_current_requirement|current_scope_improvement|future_candidate|nonblocking_note|rejected_with_reason>",
+      "owner_node_id": "<node-id-or-null>",
+      "disposition": "<closed_by_proof_of_depth|superseded_with_reason|waived_by_authority|returned_for_repair|nonblocking_pm_note|rejected_with_reason>",
+      "proof_of_depth_evidence_refs": [],
+      "existence_only_evidence_rejected": true,
+      "unresolved": false,
+      "reason": "<why-this-disposition-is-valid>"
     }
   ],
   "entries": [

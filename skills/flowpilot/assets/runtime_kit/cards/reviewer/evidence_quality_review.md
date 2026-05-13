@@ -43,6 +43,9 @@ Check:
   experience claims are backed by evidence that proves the claim, not only by
   file existence, hashes, report prose, or a screenshot that shows an artifact
   exists;
+- low-quality-success hard parts have proof of depth. Evidence that only shows
+  a file, report, command, screenshot, or ledger row exists must not close a
+  hard-part claim unless it directly disproves the named thin-success shortcut;
 - old screenshots, old icons, old concept images, or old assets are not reused
   as current evidence;
 - completion report-only evidence is not closing a gate that needs direct

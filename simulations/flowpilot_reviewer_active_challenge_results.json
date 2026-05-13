@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=162",
+    "summary": "sequences=3 initial_states=1 traces=174",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -33,6 +33,13 @@
         "expected_failure": "reviewer pass leaves core commitments unverified and unblocked",
         "failures": [
           "reviewer pass leaves core commitments unverified and unblocked"
+        ]
+      },
+      "existence_only_hard_part_evidence_accepted": {
+        "detected": true,
+        "expected_failure": "reviewer accepted hard-part quality claim from existence-only evidence",
+        "failures": [
+          "reviewer accepted hard-part quality claim from existence-only evidence"
         ]
       },
       "final_replay_ledger_only": {
@@ -68,6 +75,13 @@
         "expected_failure": "reviewer did not block a hard final-user intent or product usefulness failure",
         "failures": [
           "reviewer did not block a hard final-user intent or product usefulness failure"
+        ]
+      },
+      "low_quality_success_challenge_missing": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe",
+        "failures": [
+          "reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe"
         ]
       },
       "missing_implicit_commitments": {
@@ -195,11 +209,11 @@
       "valid_simple_review",
       "valid_ui_review"
     ],
-    "edge_count": 54,
+    "edge_count": 58,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 22,
-    "state_count": 55
+    "rejected_state_count": 24,
+    "state_count": 59
   }
 }

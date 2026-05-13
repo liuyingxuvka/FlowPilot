@@ -51,6 +51,11 @@ Check:
   final-user usefulness, and experience or product quality, plus what evidence
   will prove that contribution;
 - node requirements are concrete and testable;
+- the plan contains a concrete low-quality-success mapping for this node:
+  inherited hard risk ids when applicable, task-specific hard part,
+  thin-success shortcut, warning signs, existence-only evidence to reject,
+  proof of depth, reviewer probe, and classification as hard requirement or PM
+  decision-support;
 - the plan states whether parent backward replay is structurally required;
 - if the active node has children, the plan blocks direct worker packet
   dispatch and routes execution into child subtree entry or parent backward
@@ -80,6 +85,10 @@ Check:
   concrete enough for PM to decide from, including ideal outcome,
   unacceptable outcomes, semantic downgrade risks, simpler equivalent paths,
   and any justified extra complexity.
+- if the low-quality-success mapping is generic, missing, or leaves a hard
+  risk without proof of depth, block the plan before packet dispatch. If it
+  names a better but nonessential improvement, return it as PM decision-support
+  rather than creating a hard blocker.
 
 ## Supporting Skill Fidelity Review
 

@@ -48,6 +48,9 @@ PM decision-support.
 
 Pass only when the effective children compose into the parent goal and the
 parent-level user-facing outcome remains credible.
+Also check that child results closed any parent-level low-quality-success hard
+parts with proof of depth rather than existence-only evidence; a parent that
+only aggregates thin child outputs must block.
 Block when a child or child class appears omitted. The block must name whether
 this looks like a route execution miss, a Product FlowGuard model miss, a
 Process FlowGuard model miss, stale evidence, or an implementation bug, and

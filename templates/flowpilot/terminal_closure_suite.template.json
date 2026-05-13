@@ -38,6 +38,14 @@
       "route_gap"
     ]
   },
+  "low_quality_success_triage": {
+    "source": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json#low_quality_success_risk_dispositions",
+    "required": true,
+    "unresolved_low_quality_success_risk_count": null,
+    "hard_risks_closed_by_proof_of_depth": false,
+    "existence_only_hard_part_closures_zero": false,
+    "nonessential_quality_improvements_dispositioned": false
+  },
   "defect_ledger": {
     "path": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
     "event_log_path": ".flowpilot/runs/<run-id>/defects/defect_events.jsonl",

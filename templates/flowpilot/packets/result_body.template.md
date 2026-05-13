@@ -60,6 +60,18 @@ the unopened envelope for PM reissue or repair.
 
 - <evidence-path-screenshot-log-model-result-or-output>
 
+## Proof of Depth
+
+When the source packet includes a `Low-Quality Success Guard`, explain how the
+work proved the named hard part instead of only producing existence-only
+evidence. Use `not applicable` only when the source packet explicitly says the
+guard classification is `none`.
+
+- hard_part_addressed: <hard-part-or-not-applicable>
+- thin_success_shortcut_avoided: <what-was-not-done-casually-or-not-applicable>
+- depth_evidence_refs: <paths-commands-screenshots-direct-review-or-not-applicable>
+- why_existence_only_evidence_is_not_the_claim: <brief-explanation-or-not-applicable>
+
 ## Findings
 
 - <finding-or-observation>

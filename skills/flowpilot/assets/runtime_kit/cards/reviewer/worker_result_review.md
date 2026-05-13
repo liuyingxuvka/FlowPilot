@@ -78,6 +78,11 @@ Check:
 - direct evidence proves user-facing quality claims when those claims are made;
   file existence, hashes, report prose, or screenshots alone do not prove the
   result is usable or good enough from the final user's point of view.
+- when the source packet includes a `Low-Quality Success Guard`, the result
+  contains `Proof of Depth` and the evidence directly addresses the named hard
+  part. Block if the result only proves that an artifact exists, a command ran,
+  a report was written, or a screenshot was produced while the thin-success
+  shortcut remains plausible.
 
 Return pass, needs repair, needs more material, or invalid role origin for the
 PM-built node-completion package.

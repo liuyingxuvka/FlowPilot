@@ -44,6 +44,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.FINAL_REPLAY_LEDGER_ONLY: "final replay used ledger cleanliness without delivered-product user-perspective replay",
     model.USER_FACING_EVIDENCE_EXISTS_ONLY: "reviewer accepted user-facing quality claims from existence-only evidence",
     model.REVIEWER_MADE_PM_ROUTE_DECISION: "reviewer made a PM-owned route or repair decision instead of decision-support",
+    model.LOW_QUALITY_SUCCESS_CHALLENGE_MISSING: "reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe",
+    model.EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED: "reviewer accepted hard-part quality claim from existence-only evidence",
 }
 
 

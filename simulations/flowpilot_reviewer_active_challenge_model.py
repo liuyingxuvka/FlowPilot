@@ -7,7 +7,8 @@ Risk intent brief:
   or exposed commitments being treated as decoration, hard failures being
   downgraded to residual notes, known evidence packages being treated as the
   full review boundary, final-user intent and product usefulness being omitted
-  from applicable challenges, PM losing useful higher-standard recommendations,
+  from applicable challenges, low-quality success being accepted because an
+  artifact merely exists, PM losing useful higher-standard recommendations,
   reviewer role creep into PM route decisions, and simple reviews being
   overloaded with irrelevant heavyweight probes.
 - Modeled state and side effects: reviewer scope restatement, explicit and
@@ -61,6 +62,8 @@ HARD_USER_INTENT_FAILURE_DOWNGRADED = "hard_user_intent_failure_downgraded"
 FINAL_REPLAY_LEDGER_ONLY = "final_replay_ledger_only"
 USER_FACING_EVIDENCE_EXISTS_ONLY = "user_facing_evidence_exists_only"
 REVIEWER_MADE_PM_ROUTE_DECISION = "reviewer_made_pm_route_decision"
+LOW_QUALITY_SUCCESS_CHALLENGE_MISSING = "low_quality_success_challenge_missing"
+EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED = "existence_only_hard_part_evidence_accepted"
 
 VALID_SCENARIOS = (
     VALID_UI_REVIEW,
@@ -92,6 +95,8 @@ NEGATIVE_SCENARIOS = (
     FINAL_REPLAY_LEDGER_ONLY,
     USER_FACING_EVIDENCE_EXISTS_ONLY,
     REVIEWER_MADE_PM_ROUTE_DECISION,
+    LOW_QUALITY_SUCCESS_CHALLENGE_MISSING,
+    EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -134,6 +139,12 @@ class State:
     user_facing_evidence_supports_claims: bool = False
     delivery_replay_required: bool = False
     delivered_product_replayed_from_user_perspective: bool = False
+    low_quality_success_applicability_decided: bool = False
+    low_quality_success_challenge_required: bool = False
+    low_quality_success_challenged: bool = False
+    thin_success_failure_hypothesis_recorded: bool = False
+    proof_of_depth_challenge_performed: bool = False
+    hard_part_claim_supported_by_depth_evidence: bool = False
 
     hard_issue_found: bool = False
     hard_issue_classified_blocker: bool = False
@@ -225,6 +236,12 @@ def _valid_review_state(scenario: str, task_family: str) -> State:
         user_facing_evidence_supports_claims=user_perspective_required,
         delivery_replay_required=delivery_replay_required,
         delivered_product_replayed_from_user_perspective=delivery_replay_required,
+        low_quality_success_applicability_decided=True,
+        low_quality_success_challenge_required=user_perspective_required,
+        low_quality_success_challenged=user_perspective_required,
+        thin_success_failure_hypothesis_recorded=user_perspective_required,
+        proof_of_depth_challenge_performed=user_perspective_required,
+        hard_part_claim_supported_by_depth_evidence=user_perspective_required,
         reviewer_passed=True,
         report_schema_complete=True,
     )
@@ -343,6 +360,15 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, user_facing_evidence_supports_claims=False)
     if scenario == REVIEWER_MADE_PM_ROUTE_DECISION:
         return replace(state, reviewer_made_pm_route_decision=True)
+    if scenario == LOW_QUALITY_SUCCESS_CHALLENGE_MISSING:
+        return replace(
+            state,
+            low_quality_success_challenged=False,
+            thin_success_failure_hypothesis_recorded=False,
+            proof_of_depth_challenge_performed=False,
+        )
+    if scenario == EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED:
+        return replace(state, hard_part_claim_supported_by_depth_evidence=False)
     return state
 
 
@@ -401,6 +427,24 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         and not state.delivered_product_replayed_from_user_perspective
     ):
         failures.append("final replay used ledger cleanliness without delivered-product user-perspective replay")
+    if state.reviewer_passed and not state.low_quality_success_applicability_decided:
+        failures.append("reviewer pass lacks low-quality-success applicability decision")
+    if (
+        state.reviewer_passed
+        and state.low_quality_success_challenge_required
+        and not (
+            state.low_quality_success_challenged
+            and state.thin_success_failure_hypothesis_recorded
+            and state.proof_of_depth_challenge_performed
+        )
+    ):
+        failures.append("reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe")
+    if (
+        state.reviewer_passed
+        and state.low_quality_success_challenge_required
+        and not state.hard_part_claim_supported_by_depth_evidence
+    ):
+        failures.append("reviewer accepted hard-part quality claim from existence-only evidence")
     if state.reviewer_passed and not state.report_schema_complete:
         failures.append("reviewer pass lacks independent challenge report fields")
 
@@ -524,6 +568,21 @@ def user_perspective_challenge_when_applicable(state: State, trace) -> Invariant
     return InvariantResult.pass_()
 
 
+def low_quality_success_challenged_when_applicable(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in reviewer_challenge_failures(state):
+        if (
+            "low-quality-success" in failure
+            or "thin-success" in failure
+            or "proof-of-depth" in failure
+            or "existence-only evidence" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 def reviewer_respects_pm_authority(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
@@ -584,6 +643,11 @@ INVARIANTS = (
         name="reviewer_respects_pm_authority",
         description="Reviewer may block or advise but must not take PM-owned route or repair decisions.",
         predicate=reviewer_respects_pm_authority,
+    ),
+    Invariant(
+        name="low_quality_success_challenged_when_applicable",
+        description="Applicable reviewer passes must challenge thin success and require proof of depth for hard-part quality claims.",
+        predicate=low_quality_success_challenged_when_applicable,
     ),
 )
 

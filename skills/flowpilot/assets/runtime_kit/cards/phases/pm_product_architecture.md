@@ -34,6 +34,9 @@ Include:
 - negative scope and explicit user prohibitions;
 - semantic fidelity risks and forbidden downgrades;
 - minimum sufficient complexity review;
+- low-quality-success review: identify task-specific hard parts, tempting
+  thin-success shortcuts, warning signs that the result merely looks complete,
+  and proof of depth needed to show those hard parts were genuinely solved;
 - highest achievable product target;
 - higher-standard opportunities classified as hard requirement, current-scope
   improvement, future candidate, or rejected/deferred with reason;
@@ -47,6 +50,15 @@ elements with no such support into negative scope or defer them with a revisit
 condition. If a simpler architecture can produce the same user-visible behavior
 with the same proof strength, choose it and record the rejected extra
 complexity.
+
+The low-quality-success review is not a generic "avoid bad output" note. For
+the user's actual task, name the hard parts that are easy to handle
+superficially, the casual shortcuts a worker or PM might take, the evidence
+that would be existence-only, and the proof of depth that would convince a
+skeptical reviewer. Classify each item as hard current requirement,
+current-scope improvement, future candidate, nonblocking note, or rejected with
+reason. Hard low-quality risks must later be owned by existing route nodes when
+possible; do not create new route nodes merely because a concern was named.
 
 Do not draft or activate a route from this card. Product FlowGuard Officer must
 turn this architecture into a concrete product behavior model, then PM must

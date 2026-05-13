@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=144",
+    "summary": "sequences=3 initial_states=1 traces=186",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -18,11 +18,32 @@
           "major route node lacks a concrete acceptance artifact"
         ]
       },
+      "hard_low_quality_risk_no_route_owner": {
+        "detected": true,
+        "expected_failure": "hard low-quality-success risk lacks an existing route or node owner",
+        "failures": [
+          "hard low-quality-success risk lacks an existing route or node owner"
+        ]
+      },
       "loop_verify_artifact_not_inherited": {
         "detected": true,
         "expected_failure": "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
         "failures": [
           "LOOP/VERIFY/ARTIFACT standards were not inherited into execution"
+        ]
+      },
+      "low_quality_risk_causes_route_bloat": {
+        "detected": true,
+        "expected_failure": "PM created unjustified route bloat from low-quality-success review",
+        "failures": [
+          "PM created unjustified route bloat from low-quality-success review"
+        ]
+      },
+      "node_plan_missing_low_quality_mapping": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks local low-quality-success mapping and proof of depth",
+        "failures": [
+          "node acceptance plan lacks local low-quality-success mapping and proof of depth"
         ]
       },
       "node_plan_missing_projection": {
@@ -45,6 +66,14 @@
         "failures": [
           "route complexity does not match selected planning profile",
           "complex implementation work was overmerged into one unverifiable node"
+        ]
+      },
+      "pm_closure_low_quality_risk_disposition_missing": {
+        "detected": true,
+        "expected_failure": "PM closure lacks low-quality-success risk disposition",
+        "failures": [
+          "PM closure lacks final-user outcome replay",
+          "PM closure lacks low-quality-success risk disposition"
         ]
       },
       "pm_closure_user_outcome_replay_missing": {
@@ -73,6 +102,20 @@
         "expected_failure": "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement",
         "failures": [
           "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement"
+        ]
+      },
+      "pm_low_quality_review_generic": {
+        "detected": true,
+        "expected_failure": "PM low-quality-success review is generic or lacks hard parts, thin shortcuts, and proof of depth",
+        "failures": [
+          "PM low-quality-success review is generic or lacks hard parts, thin shortcuts, and proof of depth"
+        ]
+      },
+      "pm_low_quality_review_missing": {
+        "detected": true,
+        "expected_failure": "PM product architecture lacks low-quality-success review",
+        "failures": [
+          "PM product architecture lacks low-quality-success review"
         ]
       },
       "pm_route_not_mapped_to_product_model": {
@@ -165,6 +208,13 @@
           "complex task route lacks a selected planning profile"
         ]
       },
+      "work_packet_missing_low_quality_warning": {
+        "detected": true,
+        "expected_failure": "work packet lacks node low-quality-success warning",
+        "failures": [
+          "work packet lacks node low-quality-success warning"
+        ]
+      },
       "work_packet_missing_projection": {
         "detected": true,
         "expected_failure": "work packet or result matrix lacks skill-standard projection",
@@ -187,11 +237,11 @@
       "valid_simple_route",
       "valid_ui_route"
     ],
-    "edge_count": 48,
+    "edge_count": 62,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 22,
-    "state_count": 49
+    "rejected_state_count": 29,
+    "state_count": 63
   }
 }

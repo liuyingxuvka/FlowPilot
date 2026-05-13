@@ -17,7 +17,10 @@
     "source": "product_function_architecture.high_standard_posture",
     "highest_reasonably_achievable_is_floor": true,
     "silent_semantic_downgrade_forbidden": true,
-    "rough_or_placeholder_completion_forbidden": true
+    "rough_or_placeholder_completion_forbidden": true,
+    "low_quality_success_review_source": "product_function_architecture.low_quality_success_review",
+    "hard_low_quality_success_risks_inherited": true,
+    "proof_of_depth_required_for_inherited_hard_parts": true
   },
   "minimum_sufficient_complexity_boundary": {
     "source": "product_function_architecture.minimum_sufficient_complexity_review",
@@ -37,6 +40,18 @@
       "standard_scenarios": [],
       "owner_role": "project_manager",
       "required_reviewer_or_officer": "<human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>"
+    }
+  ],
+  "inherited_low_quality_success_risks": [
+    {
+      "risk_id": "<low-quality-risk-id>",
+      "source": "product_function_architecture.low_quality_success_review",
+      "hard_part": "<task-specific-hard-part>",
+      "thin_success_shortcut": "<shortcut-that-would-look-complete-but-be-too-shallow>",
+      "classification": "<hard_current_requirement|current_scope_improvement|future_candidate|nonblocking_note|rejected_with_reason>",
+      "root_requirement_id": "<requirement-id-or-null>",
+      "proof_of_depth_required": "<evidence-needed-or-null>",
+      "expected_route_owner": "<existing-route-node-or-null-until-route-draft>"
     }
   ],
   "proof_matrix": [

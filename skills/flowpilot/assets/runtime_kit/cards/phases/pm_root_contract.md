@@ -34,6 +34,14 @@ The root contract is the completion floor. It records project-level hard
 requirements, high-risk requirements, proof obligations, scenario coverage, and
 what cannot be closed by a report alone.
 
+Carry forward hard items from
+`product_function_architecture.low_quality_success_review` when they affect the
+root result. The contract must preserve the task-specific hard part,
+thin-success shortcut to avoid, and proof of depth. Do not freeze a
+nonessential improvement as a hard root requirement unless it exposes a hard
+user-intent failure, missing proof, semantic downgrade, unusable outcome, or
+unverifiable user-facing claim.
+
 Apply Minimum Sufficient Complexity when freezing the contract. The root
 contract must freeze outcomes, hard risks, and proof obligations, not an
 unnecessary implementation shape. Do not turn a complex route, tool choice,

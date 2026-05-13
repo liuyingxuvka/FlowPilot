@@ -76,6 +76,12 @@ sealed result body with exactly these labels: `In-scope quality choice` and
 the worker should use the simplest high-quality approach inside the packet
 boundary, and report out-of-scope better ideas or route risks to PM without
 expanding the packet.
+The packet body must carry the node acceptance plan's low-quality-success warning.
+Name the node-local hard part, thin-success shortcut to avoid,
+existence-only evidence that is not enough, and proof of depth the result body
+must return. If the node plan has no such mapping, PM must repair the node
+acceptance plan before dispatch instead of relying on the worker to infer the
+hard part.
 The packet body must also require a `PM Suggestion Items` section. Worker
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition and never authorize current-gate blocking by themselves.
@@ -92,7 +98,9 @@ silently expanding the current node. For equivalent node outcomes, keep the
 smallest packet scope with fewer handoffs, artifacts, and validation branches.
 
 The PM recheck must cite reviewed evidence, remaining proof obligations, stale
-evidence decisions, and why the result is not placeholder or report-only work.
+evidence decisions, why the result is not placeholder or report-only work, and
+why any hard low-quality-success risk for this node was closed by proof of
+depth rather than existence-only evidence.
 
 Any packet, completion, repair, or mutation decision must include
 `prior_path_context_review` showing which completed nodes, superseded nodes,

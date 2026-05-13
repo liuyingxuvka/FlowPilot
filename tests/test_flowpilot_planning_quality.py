@@ -27,6 +27,13 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.PM_HIGHER_STANDARD_SELF_CHECK_MISSING]["detected"])
         self.assertTrue(hazards[model.PM_IMPROVEMENT_SCOPE_CREEP]["detected"])
         self.assertTrue(hazards[model.PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING]["detected"])
+        self.assertTrue(hazards[model.PM_LOW_QUALITY_REVIEW_MISSING]["detected"])
+        self.assertTrue(hazards[model.PM_LOW_QUALITY_REVIEW_GENERIC]["detected"])
+        self.assertTrue(hazards[model.HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER]["detected"])
+        self.assertTrue(hazards[model.LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT]["detected"])
+        self.assertTrue(hazards[model.NODE_PLAN_MISSING_LOW_QUALITY_MAPPING]["detected"])
+        self.assertTrue(hazards[model.WORK_PACKET_MISSING_LOW_QUALITY_WARNING]["detected"])
+        self.assertTrue(hazards[model.PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING]["detected"])
 
     def test_runtime_cards_and_templates_expose_planning_quality_contracts(self) -> None:
         route_card = (
@@ -105,6 +112,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         result_template = (ROOT / "templates" / "flowpilot" / "packets" / "result_body.template.md").read_text(
             encoding="utf-8"
         )
+        product_template = json.loads(
+            (ROOT / "templates" / "flowpilot" / "product_function_architecture.template.json").read_text(
+                encoding="utf-8"
+            )
+        )
         manifest_template = json.loads(
             (ROOT / "templates" / "flowpilot" / "child_skill_gate_manifest.template.json").read_text(
                 encoding="utf-8"
@@ -131,6 +143,8 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("interactive_software_ui_product", route_card)
         self.assertIn("PM user-intent self-check", route_card)
         self.assertIn("product usefulness failures", route_card)
+        self.assertIn("PM low-quality-success ownership check", route_card)
+        self.assertIn("unjustified route bloat", route_card)
         self.assertIn("skill_standard_contracts", child_manifest_card)
         for category in model.STANDARD_FIELDS:
             self.assertIn(category, child_manifest_card)
@@ -139,15 +153,25 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("work_packet_projection", node_plan_card)
         self.assertIn("final-user intent and product usefulness self-check", node_plan_card)
         self.assertIn("nonessential improvement", node_plan_card)
+        self.assertIn("low-quality-success self-check", node_plan_card)
+        self.assertIn("proof of depth", node_plan_card)
         self.assertIn("final-user intent and product usefulness assumptions", product_architecture_card)
+        self.assertIn("low-quality-success review", product_architecture_card)
+        self.assertIn("thin-success shortcuts", product_architecture_card)
         self.assertIn("final-user intent and delivered-product usefulness claims", final_ledger_card)
+        self.assertIn("low-quality-success risks", final_ledger_card)
         self.assertIn("final_user_outcome_replay", closure_card)
+        self.assertIn("hard low-quality-success risks", closure_card)
         self.assertIn("hard block", route_review_card)
         self.assertIn("Inherited Skill Standards", packet_template)
         self.assertIn("Active Child Skill Bindings", packet_template)
+        self.assertIn("Low-Quality Success Guard", packet_template)
         self.assertIn("Skill Standard Result Matrix", result_template)
         self.assertIn("Child Skill Use Evidence", result_template)
+        self.assertIn("Proof of Depth", result_template)
 
+        self.assertIn("low_quality_success_review", product_template)
+        self.assertIn("proof_of_depth_required", product_template["low_quality_success_review"]["hard_parts"][0])
         selected_skill = manifest_template["selected_skills"][0]
         self.assertIn("skill_standard_contract", selected_skill)
         standard = selected_skill["skill_standard_contract"]["standards"][0]
@@ -159,6 +183,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("skill_standard_projection", node_template)
         self.assertIn("active_child_skill_bindings", node_template)
         self.assertIn("work_packet_projection", node_template)
+        self.assertIn("local_low_quality_success_risk", node_template["pm_current_node_high_standard_recheck"])
+        self.assertIn(
+            "proof_of_depth_required",
+            node_template["pm_current_node_high_standard_recheck"]["local_low_quality_success_risk"],
+        )
 
         worker_contract = next(
             item

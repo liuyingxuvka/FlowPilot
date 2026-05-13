@@ -104,6 +104,17 @@ intent failure, unusable product outcome, semantic downgrade, or unproven
 user-facing quality claim is a blocker. A better but nonessential product,
 experience, or simplicity opportunity is PM decision-support.
 
+When the reviewed work has any hard part, decide whether low-quality success is
+applicable. If it is, challenge the most likely thin-success path: the place
+where the work could look done because a file, report, screenshot, command, or
+ledger row exists while the difficult part was handled casually. Your
+`failure_hypotheses` should include a thin-success hypothesis, and your
+`challenge_actions` should include a proof of depth probe or an explicit waiver
+with authority. Existence-only evidence cannot prove a hard-part quality claim
+unless it directly demonstrates the hard part; otherwise block or request
+better evidence. Nonessential quality improvements remain PM
+decision-support.
+
 Every review body must include an `independent_challenge` object with these
 exact fields:
 
@@ -113,10 +124,12 @@ exact fields:
   implicit commitments created by the artifact itself;
 - `failure_hypotheses`: plausible ways this review could be wrong,
   incomplete, unusable, stale, overclaimed, under-tested, falsely complete, or
-  misaligned with final-user intent when that perspective applies;
+  misaligned with final-user intent when that perspective applies, including
+  thin-success hypotheses for task-specific hard parts when low-quality success
+  is applicable;
 - `challenge_actions`: task-specific probes, source inspections, commands,
-  walkthroughs, counterexample checks, or reasoned waivers you personally
-  performed;
+  walkthroughs, counterexample checks, proof of depth probes, or reasoned
+  waivers you personally performed;
 - `blocking_findings`: current-gate blockers found by the challenge;
 - `non_blocking_findings`: notes that do not block the current gate;
 - `pass_or_block`: `pass`, `block`, `request_more_evidence`, or
@@ -159,6 +172,11 @@ does not by itself prove that a final user can understand, operate, trust, or
 benefit from the delivered result. For final replay, start from the delivered
 product or output and walk backward through the ledger; do not start and end
 with ledger cleanliness.
+
+Existence-only evidence is also not enough for a task-specific hard part. When
+PM, a worker, or an officer claims a hard part was solved, require proof of
+depth: direct inspection, a focused test, a model replay, a real walkthrough,
+or another artifact that would catch the named thin-success shortcut.
 
 Before pass decisions:
 

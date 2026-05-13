@@ -8,10 +8,12 @@ Risk intent brief:
   compiled into route/node/work-packet obligations, reviewer hard-requirement
   blindspots being recorded as harmless residual risk, product FlowGuard
   modeling being treated as an after-the-fact review instead of PM route input,
-  PM omitting final-user and higher-standard self-checks, nonblocking
-  improvement opportunities being turned into current-gate scope creep, repair
-  nodes failing to reconnect to the mainline, and simple tasks being
-  over-templated.
+  PM omitting final-user and higher-standard self-checks, PM naming generic
+  quality concerns without task-specific hard parts or proof of depth,
+  nonblocking improvement opportunities being turned into current-gate scope
+  creep, low-quality-success risks being left without route/node/work-packet
+  owners, repair nodes failing to reconnect to the mainline, and simple tasks
+  being over-templated.
 - Modeled state and side effects: PM planning profile selection, child-skill
   standard compilation, root product behavior model availability, PM route and
   node mapping to that model, process-officer route viability checks, reviewer
@@ -61,6 +63,13 @@ PM_HIGHER_STANDARD_SELF_CHECK_MISSING = "pm_higher_standard_self_check_missing"
 PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED = "pm_improvement_opportunity_unclassified"
 PM_IMPROVEMENT_SCOPE_CREEP = "pm_improvement_scope_creep"
 PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING = "pm_closure_user_outcome_replay_missing"
+PM_LOW_QUALITY_REVIEW_MISSING = "pm_low_quality_review_missing"
+PM_LOW_QUALITY_REVIEW_GENERIC = "pm_low_quality_review_generic"
+HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER = "hard_low_quality_risk_no_route_owner"
+LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT = "low_quality_risk_causes_route_bloat"
+NODE_PLAN_MISSING_LOW_QUALITY_MAPPING = "node_plan_missing_low_quality_mapping"
+WORK_PACKET_MISSING_LOW_QUALITY_WARNING = "work_packet_missing_low_quality_warning"
+PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING = "pm_closure_low_quality_risk_disposition_missing"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE, VALID_SIMPLE_ROUTE)
 NEGATIVE_SCENARIOS = (
@@ -86,6 +95,13 @@ NEGATIVE_SCENARIOS = (
     PM_IMPROVEMENT_OPPORTUNITY_UNCLASSIFIED,
     PM_IMPROVEMENT_SCOPE_CREEP,
     PM_CLOSURE_USER_OUTCOME_REPLAY_MISSING,
+    PM_LOW_QUALITY_REVIEW_MISSING,
+    PM_LOW_QUALITY_REVIEW_GENERIC,
+    HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER,
+    LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT,
+    NODE_PLAN_MISSING_LOW_QUALITY_MAPPING,
+    WORK_PACKET_MISSING_LOW_QUALITY_WARNING,
+    PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -136,6 +152,17 @@ class State:
     pm_improvement_opportunities_classified: bool = False
     pm_higher_standard_opportunity_found: bool = False
     pm_improvement_incorrectly_hard_blocker: bool = False
+    pm_low_quality_success_review_written: bool = False
+    pm_low_quality_review_task_specific: bool = False
+    pm_hard_parts_identified: bool = False
+    pm_thin_shortcuts_identified: bool = False
+    pm_proof_of_depth_defined: bool = False
+    hard_low_quality_risks_bound_to_route_nodes: bool = False
+    low_quality_review_caused_unjustified_route_node: bool = False
+    node_acceptance_low_quality_mapping_written: bool = False
+    node_acceptance_proof_of_depth_defined: bool = False
+    work_packet_carries_low_quality_warning: bool = False
+    final_low_quality_risks_disposition_done: bool = False
     closure_or_final_ledger_decision: bool = False
     closure_replays_final_user_outcome: bool = False
 
@@ -227,6 +254,16 @@ def _valid_ui_state() -> State:
         pm_user_intent_self_check_written=True,
         pm_higher_standard_self_check_written=True,
         pm_improvement_opportunities_classified=True,
+        pm_low_quality_success_review_written=True,
+        pm_low_quality_review_task_specific=True,
+        pm_hard_parts_identified=True,
+        pm_thin_shortcuts_identified=True,
+        pm_proof_of_depth_defined=True,
+        hard_low_quality_risks_bound_to_route_nodes=True,
+        node_acceptance_low_quality_mapping_written=True,
+        node_acceptance_proof_of_depth_defined=True,
+        work_packet_carries_low_quality_warning=True,
+        final_low_quality_risks_disposition_done=True,
         child_skill_selected=True,
         skill_standard_contract_compiled=True,
         skill_standard_fields=STANDARD_FIELDS,
@@ -346,6 +383,34 @@ def _scenario_state(scenario: str) -> State:
             closure_or_final_ledger_decision=True,
             closure_replays_final_user_outcome=False,
         )
+    if scenario == PM_LOW_QUALITY_REVIEW_MISSING:
+        return replace(state, pm_low_quality_success_review_written=False)
+    if scenario == PM_LOW_QUALITY_REVIEW_GENERIC:
+        return replace(
+            state,
+            pm_low_quality_review_task_specific=False,
+            pm_hard_parts_identified=False,
+            pm_thin_shortcuts_identified=False,
+            pm_proof_of_depth_defined=False,
+        )
+    if scenario == HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER:
+        return replace(state, hard_low_quality_risks_bound_to_route_nodes=False)
+    if scenario == LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT:
+        return replace(state, low_quality_review_caused_unjustified_route_node=True)
+    if scenario == NODE_PLAN_MISSING_LOW_QUALITY_MAPPING:
+        return replace(
+            state,
+            node_acceptance_low_quality_mapping_written=False,
+            node_acceptance_proof_of_depth_defined=False,
+        )
+    if scenario == WORK_PACKET_MISSING_LOW_QUALITY_WARNING:
+        return replace(state, work_packet_carries_low_quality_warning=False)
+    if scenario == PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            final_low_quality_risks_disposition_done=False,
+        )
     return state
 
 
@@ -387,12 +452,38 @@ def planning_failures(state: State) -> list[str]:
         failures.append("PM left higher-standard improvement opportunity unclassified")
     if state.pm_improvement_incorrectly_hard_blocker:
         failures.append("PM treated a nonblocking higher-standard improvement as a hard current-gate requirement")
+    if complex_task and not state.pm_low_quality_success_review_written:
+        failures.append("PM product architecture lacks low-quality-success review")
+    if complex_task and state.pm_low_quality_success_review_written and not (
+        state.pm_low_quality_review_task_specific
+        and state.pm_hard_parts_identified
+        and state.pm_thin_shortcuts_identified
+        and state.pm_proof_of_depth_defined
+    ):
+        failures.append("PM low-quality-success review is generic or lacks hard parts, thin shortcuts, and proof of depth")
+    if complex_task and not state.hard_low_quality_risks_bound_to_route_nodes:
+        failures.append("hard low-quality-success risk lacks an existing route or node owner")
+    if state.low_quality_review_caused_unjustified_route_node:
+        failures.append("PM created unjustified route bloat from low-quality-success review")
+    if complex_task and not (
+        state.node_acceptance_low_quality_mapping_written
+        and state.node_acceptance_proof_of_depth_defined
+    ):
+        failures.append("node acceptance plan lacks local low-quality-success mapping and proof of depth")
+    if complex_task and not state.work_packet_carries_low_quality_warning:
+        failures.append("work packet lacks node low-quality-success warning")
     if (
         complex_task
         and state.closure_or_final_ledger_decision
         and not state.closure_replays_final_user_outcome
     ):
         failures.append("PM closure lacks final-user outcome replay")
+    if (
+        complex_task
+        and state.closure_or_final_ledger_decision
+        and not state.final_low_quality_risks_disposition_done
+    ):
+        failures.append("PM closure lacks low-quality-success risk disposition")
 
     if state.child_skill_selected:
         if not state.skill_standard_contract_compiled:
@@ -540,6 +631,20 @@ def pm_self_checks_user_value_and_standard(state: State, trace) -> InvariantResu
     return InvariantResult.pass_()
 
 
+def low_quality_success_risks_are_owned(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in planning_failures(state):
+        if (
+            "low-quality-success" in failure
+            or "proof of depth" in failure
+            or "route bloat" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepts_only_valid_plans",
@@ -580,6 +685,11 @@ INVARIANTS = (
         name="pm_self_checks_user_value_and_standard",
         description="PM must self-check final-user value and classify higher-standard improvements without scope creep.",
         predicate=pm_self_checks_user_value_and_standard,
+    ),
+    Invariant(
+        name="low_quality_success_risks_are_owned",
+        description="PM must identify hard parts, bind low-quality-success risks to existing route/node owners, project them into node plans and worker packets, and disposition them before closure.",
+        predicate=low_quality_success_risks_are_owned,
     ),
 )
 

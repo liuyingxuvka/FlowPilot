@@ -31,6 +31,8 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertTrue(hazards[model.FINAL_REPLAY_LEDGER_ONLY]["detected"])
         self.assertTrue(hazards[model.USER_FACING_EVIDENCE_EXISTS_ONLY]["detected"])
         self.assertTrue(hazards[model.REVIEWER_MADE_PM_ROUTE_DECISION]["detected"])
+        self.assertTrue(hazards[model.LOW_QUALITY_SUCCESS_CHALLENGE_MISSING]["detected"])
+        self.assertTrue(hazards[model.EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED]["detected"])
 
     def test_runtime_cards_templates_and_contracts_expose_independent_challenge(self) -> None:
         reviewer_core = (
@@ -90,17 +92,25 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
             "final-user intent",
             "product usefulness",
             "Existence evidence is not enough",
+            "low-quality success",
+            "thin-success hypothesis",
+            "proof of depth",
+            "Existence-only evidence",
         ):
             self.assertIn(text, reviewer_core_flat)
 
         self.assertIn("independent_challenge", worker_review_card)
         self.assertIn("final-user usefulness", worker_review_card)
         self.assertIn("file existence", worker_review_card)
+        self.assertIn("Low-Quality Success Guard", worker_review_card)
+        self.assertIn("Proof of Depth", worker_review_card)
         self.assertIn("Reviewer Independent Challenge Context", packet_template)
         self.assertIn("starting points, not the outer boundary", packet_template_flat)
         self.assertIn("PM decision-support recommendations", packet_template_flat)
         self.assertIn("independent_challenge", human_review_template)
         self.assertIn("challenge_actions", human_review_template["independent_challenge"])
+        self.assertIn("low_quality_success_challenge", human_review_template)
+        self.assertIn("proof_of_depth_actions", human_review_template["low_quality_success_challenge"])
 
         reviewer_contracts = [
             item

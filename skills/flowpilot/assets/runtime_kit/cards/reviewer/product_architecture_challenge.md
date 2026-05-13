@@ -44,6 +44,10 @@ Check:
 - visible surfaces or workflow steps have a real purpose;
 - negative scope preserves user intent;
 - acceptance matrix can actually prove the target product;
+- PM's `low_quality_success_review` is task-specific, not generic: it names
+  hard parts, thin-success shortcuts, existence-only evidence to reject, proof
+  of depth, reviewer probes, and PM classification for hard requirements versus
+  decision-support improvements;
 - PM accepted the current Product FlowGuard behavior model after reading it,
   and the model's states, failure/recovery paths, forbidden downgrades, and
   completion evidence are consistent with the PM product architecture;

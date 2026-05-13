@@ -63,6 +63,11 @@ Check backward from the delivered product or final output:
   opportunities are recorded as PM decision-support; hard user-intent failures,
   unusable outcomes, semantic downgrades, or unproven user-facing quality
   claims block completion.
+- every hard low-quality-success risk inherited from product architecture,
+  root contract, or node plans has terminal disposition: closed by proof of
+  depth, superseded with reason, waived by authority, or returned for repair.
+  Completion blocks when a hard part was closed only by existence-only evidence
+  or when the thin-success shortcut remains plausible.
 
 Router-built ledgers can prove mechanical coverage only when backed by current
 hashes and run-bound artifacts. They do not prove that the delivered product or

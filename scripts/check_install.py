@@ -1055,6 +1055,9 @@ def main() -> int:
                     "final-user intent",
                     "product usefulness",
                     "Existence evidence is not enough",
+                    "low-quality success",
+                    "proof of depth",
+                    "Existence-only evidence",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": [
                     "final-user intent and product usefulness self-check",
@@ -1063,43 +1066,81 @@ def main() -> int:
                 "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": [
                     "final-user usefulness",
                     "file existence",
+                    "Low-Quality Success Guard",
+                    "Proof of Depth",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": [
                     "parent-level user-facing outcome",
+                    "proof of depth",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md": [
                     "not merely a clean ledger",
                     "hard user-intent failures",
+                    "low-quality-success risk",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md": [
                     "user-facing quality",
                     "file existence",
+                    "low-quality-success hard parts",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md": [
                     "final product usefulness",
                     "PM decision-support",
+                    "`low_quality_success_review`",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md": [
                     "final-user usefulness",
                     "evidence",
+                    "low-quality-success mapping",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md": [
                     "final-user intent and product usefulness assumptions",
+                    "low-quality-success review",
+                    "proof of depth",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": [
                     "final-user intent and product usefulness self-check",
                     "nonessential improvement",
+                    "low-quality-success self-check",
+                    "proof of depth",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": [
                     "PM user-intent self-check",
                     "product usefulness failures",
+                    "PM low-quality-success ownership check",
+                    "unjustified route bloat",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md": [
+                    "low-quality-success warning",
+                    "proof of depth",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md": [
                     "final-user intent and delivered-product usefulness claims",
+                    "low-quality-success risks",
                 ],
                 "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md": [
                     "final_user_outcome_replay",
                     "unverifiable user-facing quality claim",
+                    "hard low-quality-success risks",
+                ],
+                "templates/flowpilot/product_function_architecture.template.json": [
+                    "low_quality_success_review",
+                    "proof_of_depth_required",
+                ],
+                "templates/flowpilot/node_acceptance_plan.template.json": [
+                    "local_low_quality_success_risk",
+                    "proof_of_depth_required",
+                ],
+                "templates/flowpilot/packets/packet_body.template.md": [
+                    "Low-Quality Success Guard",
+                    "proof_of_depth_required",
+                ],
+                "templates/flowpilot/packets/result_body.template.md": [
+                    "Proof of Depth",
+                    "existence-only",
+                ],
+                "templates/flowpilot/final_route_wide_gate_ledger.template.json": [
+                    "low_quality_success_risk_dispositions",
                 ],
             }
             user_perspective_failures = []

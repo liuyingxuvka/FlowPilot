@@ -54,6 +54,23 @@
       "required_repair_or_route_change": "<repair, discovery, redesign, child-skill route, ask-user, or block>"
     }
   ],
+  "low_quality_success_review": {
+    "required": true,
+    "summary": "Task-specific review of hard parts that could be handled superficially while the result still appears complete.",
+    "hard_parts": [
+      {
+        "risk_id": "<low-quality-risk-id>",
+        "hard_part": "<specific-difficult-part-of-this-user-task>",
+        "thin_success_shortcut": "<how-it-could-be-done-casually-or-at-low-quality>",
+        "existence_only_evidence_to_reject": "<file-screenshot-report-or-ledger-proof-that-would-not-be-enough>",
+        "proof_of_depth_required": "<direct-evidence-test-review-or-artifact-that-proves-real-depth>",
+        "classification": "<hard_current_requirement|current_scope_improvement|future_candidate|nonblocking_note|rejected_with_reason>",
+        "route_owner_node_id": "<existing-node-id-or-null-until-route-draft>",
+        "reviewer_probe": "<task-specific-challenge-action-reviewer-should-run>"
+      }
+    ],
+    "scope_policy": "Hard low-quality risks must be owned by existing route or node boundaries when possible. Add a new node only when no existing node can own the needed discovery, modeling, implementation, or validation proof."
+  },
   "semantic_fidelity_policy": {
     "silent_downgrade_forbidden": true,
     "material_gap_default": "<insert_discovery_or_validation_node|stage_delivery_with_explicit_gap|ask_user|block>",

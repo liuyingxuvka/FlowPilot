@@ -59,6 +59,22 @@
       }
     ]
   },
+  "low_quality_success_challenge": {
+    "required_when_hard_part_claim_exists": true,
+    "applicable": "<true|false>",
+    "hard_part_claims_checked": [],
+    "thin_success_hypotheses": [],
+    "existence_only_evidence_rejected": [],
+    "proof_of_depth_actions": [
+      {
+        "action": "<direct-inspection-test-model-replay-walkthrough-or-waiver>",
+        "evidence_path": "<path-or-null>",
+        "result": "<observed-result>"
+      }
+    ],
+    "blockers": [],
+    "pm_decision_support_items": []
+  },
   "role_origin_audit": {
     "required_for_every_packet_review": true,
     "packet_id": "<packet-id-or-null>",

@@ -39,6 +39,17 @@
     "likely_low_quality_or_placeholder_failure": "<what-this-node-could-degenerate-into-if-held-to-a-low-standard>",
     "local_semantic_downgrade_risk": "<none|possible|active>",
     "material_or_evidence_gap": "<gap-or-null>",
+    "local_low_quality_success_risk": {
+      "required": true,
+      "inherited_risk_ids": [],
+      "task_specific_hard_part": "<what-this-node-could-handle-too-superficially>",
+      "thin_success_shortcut": "<how-the-node-could-look-complete-while-still-being-low-quality>",
+      "warning_signs": [],
+      "existence_only_evidence_to_reject": "<artifact-log-report-or-screenshot-that-would-not-be-enough>",
+      "proof_of_depth_required": "<direct-evidence-test-review-or-artifact-needed>",
+      "reviewer_probe": "<task-specific-challenge-action>",
+      "classification": "<hard_current_requirement|current_node_improvement|future_route_candidate|nonblocking_note|rejected_with_reason>"
+    },
     "pm_decision": "<raise_current_node|add_sibling_or_repair_node|insert_discovery_or_validation|ask_user|block|proceed>",
     "decision_reason": "<why-this-decision-preserves-the-global-quality-floor>"
   },
@@ -137,6 +148,8 @@
       "risk_level": "<low|medium|high>",
       "acceptance_statement": "<what must be true before this node can close>",
       "proof_required": "<automated_test|manual_experiment|screenshot|model_replay|artifact_audit|mixed>",
+      "low_quality_success_risk_id": "<low-quality-risk-id-or-null>",
+      "proof_of_depth_required": "<depth-proof-or-null>",
       "blocking_on_fail": true
     }
   ],

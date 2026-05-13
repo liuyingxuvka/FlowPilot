@@ -75,6 +75,12 @@ Check:
   role authority, real parallelism, failure isolation, recovery boundary, or a
   user-visible milestone should be merged, waived with reason, or treated as a
   nonblocking PM suggestion depending on risk;
+- every hard low-quality-success risk from product architecture or the root
+  contract is owned by an existing route node when possible, with proof of
+  depth named. Block if a hard risk is unowned. Treat a new risk-only node as
+  route bloat unless PM shows distinct evidence, role authority, failure
+  isolation, recovery boundary, or user-visible milestone value that an
+  existing node could not provide;
 - necessary convergence loops are present for the chosen profile, especially
   concept-to-implementation visual comparison, interaction validation, realtime
   state mapping, desktop integration, or release validation when those are

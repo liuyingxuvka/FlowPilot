@@ -72,6 +72,20 @@ completion reports to Controller; Router will write
 
 - <bounded acceptance condition for this packet only>
 
+## Low-Quality Success Guard
+
+Copy this section from
+`node_acceptance_plan.pm_current_node_high_standard_recheck.local_low_quality_success_risk`.
+If the node plan does not define it, return `blocked` for PM plan repair
+instead of guessing.
+
+- hard_part: <task-specific-hard-part-for-this-packet-or-none>
+- thin_success_shortcut_to_avoid: <casual-low-quality-path-that-would-look-complete-or-none>
+- existence_only_evidence_not_enough: <file-log-report-screenshot-ledger-proof-that-would-not-be-enough-or-none>
+- proof_of_depth_required: <direct-evidence-test-review-or-artifact-needed-or-none>
+- reviewer_probe_to_expect: <task-specific-reviewer-challenge-action-or-none>
+- classification: <hard_current_requirement|current_node_improvement|future_route_candidate|nonblocking_note|rejected_with_reason|none>
+
 ## Artifact-Backed Handoff Requirements
 
 The packet recipient's work product must be written to formal files or project
@@ -163,6 +177,11 @@ that makes them not applicable.
 ## Required Verification Or Evidence
 
 - <command-probe-screenshot-model-check-or-review-evidence>
+
+The result body must include `Proof of Depth` when this packet names a hard
+part or a low-quality-success guard. Artifact existence, a passing mechanical
+check, a screenshot, or report prose is not enough unless it directly proves
+the named hard part.
 
 ## Output Contract
 

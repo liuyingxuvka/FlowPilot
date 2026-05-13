@@ -73,6 +73,14 @@ Route requirements:
 - include a PM user-intent self-check: how the route preserves the user's real
   goal, final-user usefulness, and highest reasonable product standard without
   importing unnecessary nodes or validation surfaces;
+- include a PM low-quality-success ownership check: every hard item from
+  `product_function_architecture.low_quality_success_review` must be bound to
+  an existing route node or explicitly justified as needing a new node. The
+  route must name the owner node, the hard part, the thin-success shortcut to
+  avoid, and the proof of depth expected. Unowned hard low-quality-success
+  risks block activation. A new node created only because a risk was named, but
+  without distinct evidence, role authority, failure isolation, or user-visible
+  milestone value, is unjustified route bloat and should be merged or waived;
 - Router will not activate the route unless the Product Officer's product
   behavior model report already exists, the route receives a role-owned
   product-model review pass, and Process Officer returns
@@ -128,6 +136,9 @@ Route requirements:
   (worker leaf too broad or vague) and over-decomposition (extra nodes that add
   no evidence, failure isolation, role boundary, parallelism, or user-visible
   milestone);
+- record how hard low-quality-success risks were kept inside existing route
+  structure where possible. If a risk required new route structure, state why
+  the existing route nodes could not own the proof of depth;
 - record route-memory / PMK entries for the decomposition policy, visible
   projection, current active path policy, hidden leaf progress policy, and why
   each parent/module exists. Later route mutations must update this route
