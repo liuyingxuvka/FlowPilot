@@ -178,10 +178,21 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 "pending_action": {
                     "action_type": "await_role_decision",
                     "to_role": "product_flowguard_officer",
-                    "allowed_external_events": ["product_officer_blocks_product_architecture_modelability"],
+                    "allowed_external_events": [
+                        "product_officer_passes_product_architecture_modelability",
+                        "product_officer_blocks_product_architecture_modelability",
+                    ],
                 }
             },
         )
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "not currently allowed"):
+            role_output_runtime.validate_direct_router_submission_authority(
+                root,
+                output_type="officer_model_report",
+                role="product_flowguard_officer",
+                agent_id="agent-product-officer-legacy-event",
+                event_name="product_officer_model_report",
+            )
         authority = role_output_runtime.validate_direct_router_submission_authority(
             root,
             output_type="officer_model_report",

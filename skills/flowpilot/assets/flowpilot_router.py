@@ -19,7 +19,7 @@ import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import flowpilot_user_flow_diagram
 import card_runtime
@@ -1001,7 +1001,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "pm_product_behavior_model_decision_card_delivered",
         "label": "pm_product_behavior_model_decision_card_delivered",
         "card_id": "pm.product_behavior_model_decision",
-        "requires_flag": "product_architecture_modelability_passed",
+        "requires_flag": "product_behavior_model_submitted",
         "to_role": "project_manager",
     },
     {
@@ -1099,7 +1099,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "pm_process_route_model_decision_card_delivered",
         "label": "pm_process_route_model_decision_card_delivered",
         "card_id": "pm.process_route_model_decision",
-        "requires_flag": "process_officer_route_check_passed",
+        "requires_flag": "process_route_model_submitted",
         "to_role": "project_manager",
     },
     {
@@ -1266,16 +1266,19 @@ CARD_REQUIRED_SOURCE_PATHS = {
     },
     "reviewer.product_architecture_challenge": {
         "product_function_architecture": "product_function_architecture.json",
+        "product_behavior_model": "flowguard/product_behavior_model.json",
         "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
         "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
     },
     "pm.product_behavior_model_decision": {
         "product_function_architecture": "product_function_architecture.json",
+        "product_behavior_model": "flowguard/product_behavior_model.json",
         "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
     },
     "pm.root_contract": {
         "product_function_architecture": "product_function_architecture.json",
         "product_architecture_challenge": "reviews/product_architecture_challenge.json",
+        "product_behavior_model": "flowguard/product_behavior_model.json",
         "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
         "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
     },
@@ -1340,12 +1343,14 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
+        "process_route_model": "flowguard/process_route_model.json",
         "route_process_check": "flowguard/route_process_check.json",
     },
     "reviewer.route_challenge": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
+        "process_route_model": "flowguard/process_route_model.json",
         "route_process_check": "flowguard/route_process_check.json",
         "route_product_check": "flowguard/route_product_check.json",
     },
@@ -1362,7 +1367,7 @@ MAIL_SEQUENCE: tuple[dict[str, str], ...] = (
     },
 )
 
-EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
+EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "user_requests_run_stop": {
         "flag": "run_stopped_by_user",
         "summary": "The user explicitly stopped the active FlowPilot run; no further route work is authorized.",
@@ -1561,12 +1566,23 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "product_officer_passes_product_architecture_modelability": {
         "flag": "product_architecture_modelability_passed",
         "requires_flag": "product_officer_product_architecture_card_delivered",
-        "summary": "Product FlowGuard Officer passed product architecture modelability.",
+        "gate_id": "product_behavior_model",
+        "terminal_gate_outcome": True,
+        "summary": "Compatibility alias: Product FlowGuard Officer submitted the product behavior model.",
+    },
+    "product_officer_submits_product_behavior_model": {
+        "flag": "product_behavior_model_submitted",
+        "requires_flag": "product_officer_product_architecture_card_delivered",
+        "gate_id": "product_behavior_model",
+        "terminal_gate_outcome": True,
+        "summary": "Product FlowGuard Officer submitted the canonical product behavior model.",
     },
     "product_officer_model_report": {
         "flag": "legacy_product_officer_model_report_received",
         "requires_flag": "product_officer_product_architecture_card_delivered",
+        "gate_id": "product_behavior_model",
         "legacy": True,
+        "terminal_gate_outcome": False,
         "summary": "Legacy Product FlowGuard model-report status event retained only so old run artifacts remain registered in the event taxonomy.",
     },
     "pm_accepts_product_behavior_model": {
@@ -1582,7 +1598,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "product_officer_blocks_product_architecture_modelability": {
         "flag": "product_architecture_modelability_blocked",
         "requires_flag": "product_officer_product_architecture_card_delivered",
-        "summary": "Product FlowGuard Officer blocked product architecture modelability.",
+        "gate_id": "product_behavior_model",
+        "terminal_gate_outcome": True,
+        "summary": "Compatibility alias: Product FlowGuard Officer blocked the product behavior model.",
+    },
+    "product_officer_blocks_product_behavior_model": {
+        "flag": "product_behavior_model_blocked",
+        "requires_flag": "product_officer_product_architecture_card_delivered",
+        "gate_id": "product_behavior_model",
+        "terminal_gate_outcome": True,
+        "summary": "Product FlowGuard Officer blocked the canonical product behavior model.",
     },
     "pm_writes_root_acceptance_contract": {
         "flag": "root_contract_written_by_pm",
@@ -1682,7 +1707,16 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "process_officer_passes_route_check": {
         "flag": "process_officer_route_check_passed",
         "requires_flag": "process_officer_route_check_card_delivered",
-        "summary": "Process FlowGuard Officer passed the route process check.",
+        "gate_id": "process_route_model",
+        "terminal_gate_outcome": True,
+        "summary": "Compatibility alias: Process FlowGuard Officer submitted the process route model.",
+    },
+    "process_officer_submits_process_route_model": {
+        "flag": "process_route_model_submitted",
+        "requires_flag": "process_officer_route_check_card_delivered",
+        "gate_id": "process_route_model",
+        "terminal_gate_outcome": True,
+        "summary": "Process FlowGuard Officer submitted the canonical process route model.",
     },
     "pm_accepts_process_route_model": {
         "flag": "pm_process_route_model_accepted",
@@ -1697,12 +1731,30 @@ EXTERNAL_EVENTS: dict[str, dict[str, str]] = {
     "process_officer_requires_route_repair": {
         "flag": "process_officer_route_repair_required",
         "requires_flag": "process_officer_route_check_card_delivered",
-        "summary": "Process FlowGuard Officer reported that the route needs PM repair before activation.",
+        "gate_id": "process_route_model",
+        "terminal_gate_outcome": True,
+        "summary": "Compatibility alias: Process FlowGuard Officer requested process route model repair.",
+    },
+    "process_officer_requests_process_route_model_repair": {
+        "flag": "process_route_model_repair_required",
+        "requires_flag": "process_officer_route_check_card_delivered",
+        "gate_id": "process_route_model",
+        "terminal_gate_outcome": True,
+        "summary": "Process FlowGuard Officer requested repair of the canonical process route model.",
     },
     "process_officer_blocks_route_check": {
         "flag": "process_officer_route_check_blocked",
         "requires_flag": "process_officer_route_check_card_delivered",
-        "summary": "Process FlowGuard Officer blocked the route from activation.",
+        "gate_id": "process_route_model",
+        "terminal_gate_outcome": True,
+        "summary": "Compatibility alias: Process FlowGuard Officer blocked the process route model.",
+    },
+    "process_officer_blocks_process_route_model": {
+        "flag": "process_route_model_blocked",
+        "requires_flag": "process_officer_route_check_card_delivered",
+        "gate_id": "process_route_model",
+        "terminal_gate_outcome": True,
+        "summary": "Process FlowGuard Officer blocked the canonical process route model.",
     },
     "product_officer_passes_route_check": {
         "flag": "product_officer_route_check_passed",
@@ -1885,7 +1937,10 @@ PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS = (
     "pm_product_behavior_model_accepted",
     "pm_product_behavior_model_rebuild_requested",
     "product_architecture_reviewer_passed",
+    "product_behavior_model_submitted",
+    "product_behavior_model_blocked",
     "product_architecture_modelability_passed",
+    "product_architecture_modelability_blocked",
     "reviewer_product_architecture_card_delivered",
     "product_officer_product_architecture_card_delivered",
     "root_contract_written_by_pm",
@@ -1900,7 +1955,12 @@ PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS = (
     "child_skill_manifest_pm_approved_for_route",
     "capability_evidence_synced",
     "route_draft_written_by_pm",
+    "process_route_model_submitted",
+    "process_route_model_repair_required",
+    "process_route_model_blocked",
     "process_officer_route_check_passed",
+    "process_officer_route_repair_required",
+    "process_officer_route_check_blocked",
     "pm_process_route_model_decision_card_delivered",
     "pm_process_route_model_accepted",
     "pm_process_route_model_rebuild_requested",
@@ -1942,7 +2002,12 @@ CHILD_SKILL_GATE_REPAIR_RESET_FLAGS = (
     "process_officer_child_skill_card_delivered",
     "product_officer_child_skill_card_delivered",
     "route_draft_written_by_pm",
+    "process_route_model_submitted",
+    "process_route_model_repair_required",
+    "process_route_model_blocked",
     "process_officer_route_check_passed",
+    "process_officer_route_repair_required",
+    "process_officer_route_check_blocked",
     "pm_process_route_model_decision_card_delivered",
     "pm_process_route_model_accepted",
     "pm_process_route_model_rebuild_requested",
@@ -1952,8 +2017,12 @@ CHILD_SKILL_GATE_REPAIR_RESET_FLAGS = (
 )
 ROUTE_GATE_REPAIR_RESET_FLAGS = (
     "route_draft_written_by_pm",
+    "process_route_model_submitted",
+    "process_route_model_repair_required",
+    "process_route_model_blocked",
     "process_officer_route_check_passed",
     "process_officer_route_repair_required",
+    "process_officer_route_check_blocked",
     "pm_process_route_model_decision_card_delivered",
     "pm_process_route_model_accepted",
     "pm_process_route_model_rebuild_requested",
@@ -2021,6 +2090,13 @@ GATE_OUTCOME_BLOCK_EVENT_SPECS: dict[str, dict[str, Any]] = {
         "expected_role": "product_flowguard_officer",
         "path": "flowguard/product_architecture_modelability_block.json",
         "schema_version": "flowpilot.product_architecture_modelability_block.v1",
+        "checked_paths": ("product_function_architecture.json",),
+        "reset_flags": PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
+    },
+    "product_officer_blocks_product_behavior_model": {
+        "expected_role": "product_flowguard_officer",
+        "path": "flowguard/product_behavior_model_block.json",
+        "schema_version": "flowpilot.product_behavior_model_block.v1",
         "checked_paths": ("product_function_architecture.json",),
         "reset_flags": PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
     },
@@ -2108,13 +2184,31 @@ GATE_OUTCOME_BLOCK_EVENTS = frozenset(GATE_OUTCOME_BLOCK_EVENT_SPECS)
 GATE_OUTCOME_PASS_CLEAR_FLAGS: dict[str, tuple[str, ...]] = {
     "reviewer_passes_research_direct_source_check": ("research_review_blocked",),
     "reviewer_passes_product_architecture": ("product_architecture_reviewer_blocked",),
-    "product_officer_passes_product_architecture_modelability": ("product_architecture_modelability_blocked",),
+    "product_officer_passes_product_architecture_modelability": (
+        "product_behavior_model_blocked",
+        "product_architecture_modelability_blocked",
+    ),
+    "product_officer_submits_product_behavior_model": (
+        "product_behavior_model_blocked",
+        "product_architecture_modelability_blocked",
+    ),
     "reviewer_passes_root_acceptance_contract": ("root_contract_reviewer_blocked",),
     "product_officer_passes_root_acceptance_contract_modelability": ("root_contract_modelability_blocked",),
     "reviewer_passes_child_skill_gate_manifest": ("child_skill_manifest_reviewer_blocked",),
     "process_officer_passes_child_skill_conformance_model": ("child_skill_process_officer_blocked",),
     "product_officer_passes_child_skill_product_fit": ("child_skill_product_officer_blocked",),
-    "process_officer_passes_route_check": ("process_officer_route_repair_required", "process_officer_route_check_blocked"),
+    "process_officer_passes_route_check": (
+        "process_route_model_repair_required",
+        "process_route_model_blocked",
+        "process_officer_route_repair_required",
+        "process_officer_route_check_blocked",
+    ),
+    "process_officer_submits_process_route_model": (
+        "process_route_model_repair_required",
+        "process_route_model_blocked",
+        "process_officer_route_repair_required",
+        "process_officer_route_check_blocked",
+    ),
     "product_officer_passes_route_check": ("product_officer_route_check_blocked",),
     "reviewer_passes_route_check": ("reviewer_route_check_blocked",),
     "reviewer_passes_parent_backward_replay": ("parent_backward_replay_blocked",),
@@ -2129,6 +2223,199 @@ GATE_OUTCOME_PASS_CLEARS_EVENTS: dict[str, tuple[str, ...]] = {
     )
     for pass_event, clear_flags in GATE_OUTCOME_PASS_CLEAR_FLAGS.items()
 }
+
+GATE_CONTRACT_SCHEMA = "flowpilot.gate_contract.v1"
+GATE_CONTRACTS: dict[str, dict[str, Any]] = {
+    "product_behavior_model": {
+        "schema_version": GATE_CONTRACT_SCHEMA,
+        "gate_id": "product_behavior_model",
+        "card_id": "product_officer.product_architecture_modelability",
+        "required_flag": "product_behavior_model_submitted",
+        "wait_requires_flag": "product_officer_product_architecture_card_delivered",
+        "target_role": "product_flowguard_officer",
+        "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
+        "pass_events": (
+            "product_officer_submits_product_behavior_model",
+            "product_officer_passes_product_architecture_modelability",
+        ),
+        "block_events": (
+            "product_officer_blocks_product_behavior_model",
+            "product_officer_blocks_product_architecture_modelability",
+        ),
+        "legacy_non_completion_events": ("product_officer_model_report",),
+        "completion_rule": "pass_or_block_event_required",
+        "legacy_event_policy": "registered_metadata_only_not_gate_completion",
+        "canonical_artifact": "flowguard/product_behavior_model.json",
+        "compatibility_artifact": "flowguard/product_architecture_modelability.json",
+    },
+    "process_route_model": {
+        "schema_version": GATE_CONTRACT_SCHEMA,
+        "gate_id": "process_route_model",
+        "card_id": "process_officer.route_process_check",
+        "required_flag": "process_route_model_submitted",
+        "wait_requires_flag": "process_officer_route_check_card_delivered",
+        "target_role": "process_flowguard_officer",
+        "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
+        "pass_events": (
+            "process_officer_submits_process_route_model",
+            "process_officer_passes_route_check",
+        ),
+        "block_events": (
+            "process_officer_requests_process_route_model_repair",
+            "process_officer_blocks_process_route_model",
+            "process_officer_requires_route_repair",
+            "process_officer_blocks_route_check",
+        ),
+        "legacy_non_completion_events": (),
+        "completion_rule": "pass_repair_or_block_event_required",
+        "legacy_event_policy": "compatibility_aliases_satisfy_canonical_flags",
+        "canonical_artifact": "flowguard/process_route_model.json",
+        "compatibility_artifact": "flowguard/route_process_check.json",
+    },
+}
+GATE_CONTRACT_ALIASES = {
+    "product_architecture_modelability": "product_behavior_model",
+    "route_process_check": "process_route_model",
+}
+GATE_CONTRACTS_BY_CARD = {
+    str(contract["card_id"]): gate_id
+    for gate_id, contract in GATE_CONTRACTS.items()
+}
+GATE_CONTRACTS_BY_EVENT = {
+    event: gate_id
+    for gate_id, contract in GATE_CONTRACTS.items()
+    for event in (
+        *contract.get("pass_events", ()),
+        *contract.get("block_events", ()),
+        *contract.get("legacy_non_completion_events", ()),
+    )
+}
+
+
+def _public_gate_contract(contract: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(contract, dict):
+        return None
+    public = dict(contract)
+    for key in ("pass_events", "block_events", "legacy_non_completion_events"):
+        public[key] = list(public.get(key) or [])
+    return public
+
+
+def _gate_contract_for_id(gate_id: str | None) -> dict[str, Any] | None:
+    if not gate_id:
+        return None
+    key = str(gate_id)
+    return GATE_CONTRACTS.get(key) or GATE_CONTRACTS.get(GATE_CONTRACT_ALIASES.get(key, ""))
+
+
+def _gate_contract_for_card(card_id: str | None) -> dict[str, Any] | None:
+    if not card_id:
+        return None
+    return _gate_contract_for_id(GATE_CONTRACTS_BY_CARD.get(str(card_id)))
+
+
+def _gate_contract_for_event(event: str | None) -> dict[str, Any] | None:
+    if not event:
+        return None
+    return _gate_contract_for_id(GATE_CONTRACTS_BY_EVENT.get(str(event)))
+
+
+def _gate_contract_for_events(events: Iterable[str]) -> dict[str, Any] | None:
+    gate_ids = {
+        GATE_CONTRACTS_BY_EVENT[str(event)]
+        for event in events
+        if str(event) in GATE_CONTRACTS_BY_EVENT
+    }
+    if len(gate_ids) == 1:
+        return _gate_contract_for_id(next(iter(gate_ids)))
+    return None
+
+
+def _event_is_terminal_gate_outcome(event: str, meta: dict[str, Any]) -> bool:
+    if meta.get("legacy") or meta.get("terminal_gate_outcome") is False:
+        return False
+    contract = _gate_contract_for_event(event)
+    if contract is None:
+        return True
+    return event in set(contract.get("pass_events") or ()) | set(contract.get("block_events") or ())
+
+
+def _gate_completion_wait_group(group: list[tuple[str, dict[str, Any]]]) -> list[tuple[str, dict[str, Any]]]:
+    if not _gate_contract_for_events(event for event, _meta in group):
+        return group
+    terminal_group = [
+        (event, meta)
+        for event, meta in group
+        if _event_is_terminal_gate_outcome(event, meta)
+    ]
+    return terminal_group or group
+
+
+PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS = frozenset(
+    {
+        "product_officer_submits_product_behavior_model",
+        "product_officer_passes_product_architecture_modelability",
+    }
+)
+PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS = frozenset(
+    {
+        "product_officer_blocks_product_behavior_model",
+        "product_officer_blocks_product_architecture_modelability",
+    }
+)
+PROCESS_ROUTE_MODEL_PASS_EVENTS = frozenset(
+    {
+        "process_officer_submits_process_route_model",
+        "process_officer_passes_route_check",
+    }
+)
+PROCESS_ROUTE_MODEL_REPAIR_EVENTS = frozenset(
+    {
+        "process_officer_requests_process_route_model_repair",
+        "process_officer_requires_route_repair",
+    }
+)
+PROCESS_ROUTE_MODEL_BLOCK_EVENTS = frozenset(
+    {
+        "process_officer_blocks_process_route_model",
+        "process_officer_blocks_route_check",
+    }
+)
+
+
+def _sync_model_gate_alias_flags(run_state: dict[str, Any], event: str) -> None:
+    flags = run_state.setdefault("flags", {})
+    if event in PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS:
+        flags["product_behavior_model_submitted"] = True
+        flags["product_architecture_modelability_passed"] = True
+        flags["product_behavior_model_blocked"] = False
+        flags["product_architecture_modelability_blocked"] = False
+    elif event in PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS:
+        flags["product_behavior_model_submitted"] = False
+        flags["product_architecture_modelability_passed"] = False
+        flags["product_behavior_model_blocked"] = True
+        flags["product_architecture_modelability_blocked"] = True
+    elif event in PROCESS_ROUTE_MODEL_PASS_EVENTS:
+        flags["process_route_model_submitted"] = True
+        flags["process_officer_route_check_passed"] = True
+        flags["process_route_model_repair_required"] = False
+        flags["process_officer_route_repair_required"] = False
+        flags["process_route_model_blocked"] = False
+        flags["process_officer_route_check_blocked"] = False
+    elif event in PROCESS_ROUTE_MODEL_REPAIR_EVENTS:
+        flags["process_route_model_submitted"] = False
+        flags["process_officer_route_check_passed"] = False
+        flags["process_route_model_repair_required"] = True
+        flags["process_officer_route_repair_required"] = True
+        flags["process_route_model_blocked"] = False
+        flags["process_officer_route_check_blocked"] = False
+    elif event in PROCESS_ROUTE_MODEL_BLOCK_EVENTS:
+        flags["process_route_model_submitted"] = False
+        flags["process_officer_route_check_passed"] = False
+        flags["process_route_model_repair_required"] = False
+        flags["process_officer_route_repair_required"] = False
+        flags["process_route_model_blocked"] = True
+        flags["process_officer_route_check_blocked"] = True
 
 
 class RouterError(ValueError):
@@ -2741,8 +3028,9 @@ def _currently_allowed_external_events(run_state: dict[str, Any]) -> list[str]:
             return allowed
     groups = _pending_expected_external_event_groups(run_state)
     if groups:
-        allowed = [event for event, _meta in groups[0]]
-        if any(_event_wait_role(event, meta) == "project_manager" for event, meta in groups[0]):
+        group = _gate_completion_wait_group(groups[0])
+        allowed = [event for event, _meta in group]
+        if any(_event_wait_role(event, meta) == "project_manager" for event, meta in group):
             allowed.append(PM_ROLE_WORK_REQUEST_EVENT)
         return allowed
     return []
@@ -4157,6 +4445,8 @@ def make_action(
         "allowed_external_events": action.get("allowed_external_events", []),
         "postcondition": action.get("postcondition"),
     }
+    if action.get("gate_contract") is not None:
+        action["next_step_contract"]["gate_contract"] = action["gate_contract"]
     return action
 
 
@@ -9723,6 +10013,247 @@ def _write_research_capability_decision(project_root: Path, run_root: Path, run_
     )
 
 
+def _pm_role_work_target_gate_contract(payload: dict[str, Any]) -> dict[str, Any] | None:
+    raw_contract = payload.get("target_gate_contract") if isinstance(payload.get("target_gate_contract"), dict) else {}
+    gate_id = str(payload.get("target_gate_id") or raw_contract.get("gate_id") or "").strip()
+    if not gate_id:
+        return None
+    contract = _gate_contract_for_id(gate_id)
+    if contract is None:
+        raise RouterError(f"PM role-work target_gate_id is not registered: {gate_id}")
+    for field in ("card_id", "required_flag", "wait_requires_flag"):
+        supplied = raw_contract.get(field)
+        if supplied is not None and str(supplied) != str(contract.get(field)):
+            raise RouterError(f"PM role-work target_gate_contract.{field} does not match registered gate contract")
+    return _public_gate_contract(contract)
+
+
+def _pm_role_work_gate_mapping_candidates(decision_payload: dict[str, Any], record: dict[str, Any]) -> str:
+    mappings = decision_payload.get("mapped_gate_events")
+    request_id = str(record.get("request_id") or "")
+    gate_contract = record.get("target_gate_contract") if isinstance(record.get("target_gate_contract"), dict) else {}
+    gate_id = str(gate_contract.get("gate_id") or "")
+    if isinstance(mappings, dict):
+        for key in (request_id, gate_id):
+            mapped = str(mappings.get(key) or "").strip()
+            if mapped:
+                return mapped
+    return str(
+        decision_payload.get("mapped_gate_event")
+        or decision_payload.get("target_gate_event")
+        or decision_payload.get("gate_event")
+        or ""
+    ).strip()
+
+
+def _pm_role_work_gate_mapping_artifact_path(run_root: Path, gate_contract: dict[str, Any], mapped_event: str) -> Path:
+    gate_id = str(gate_contract.get("gate_id") or "gate")
+    if gate_id == "product_behavior_model":
+        if mapped_event in set(gate_contract.get("pass_events") or []):
+            return run_root / "flowguard" / "product_behavior_model.json"
+        if mapped_event in set(gate_contract.get("block_events") or []):
+            return run_root / "flowguard" / "product_behavior_model_block.json"
+    if gate_id == "process_route_model":
+        if mapped_event in set(gate_contract.get("pass_events") or []):
+            return run_root / "flowguard" / "process_route_model.json"
+        if mapped_event in set(gate_contract.get("block_events") or []):
+            return run_root / "flowguard" / "process_route_model_block.json"
+    return run_root / "flowguard" / f"{_safe_packet_id_component(gate_id)}_pm_role_work_gate_mapping.json"
+
+
+def _pm_role_work_gate_mapping_alias_specs(
+    run_root: Path,
+    gate_contract: dict[str, Any],
+    mapped_event: str,
+) -> list[tuple[Path, str, str]]:
+    gate_id = str(gate_contract.get("gate_id") or "gate")
+    if gate_id == "product_behavior_model":
+        if mapped_event in set(gate_contract.get("pass_events") or []):
+            return [
+                (
+                    run_root / "flowguard" / "product_architecture_modelability.json",
+                    "flowpilot.product_architecture_modelability.v1",
+                    "product_architecture_modelability",
+                )
+            ]
+        if mapped_event in set(gate_contract.get("block_events") or []):
+            return [
+                (
+                    run_root / "flowguard" / "product_architecture_modelability_block.json",
+                    "flowpilot.product_architecture_modelability_block.v1",
+                    "product_architecture_modelability_block",
+                )
+            ]
+    if gate_id == "process_route_model":
+        return [
+            (
+                run_root / "flowguard" / "route_process_check.json",
+                "flowpilot.route_process_check.v1",
+                "route_process_check",
+            )
+        ]
+    return []
+
+
+def _pm_role_work_gate_mappings_for_decision(
+    decision_payload: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    decision: str,
+) -> list[dict[str, Any]]:
+    if decision != "absorbed":
+        return []
+    mappings: list[dict[str, Any]] = []
+    for record in records:
+        gate_contract = record.get("target_gate_contract")
+        if not isinstance(gate_contract, dict):
+            continue
+        mapped_event = _pm_role_work_gate_mapping_candidates(decision_payload, record)
+        allowed_events = set(gate_contract.get("pass_events") or []) | set(gate_contract.get("block_events") or [])
+        if not mapped_event:
+            raise RouterError("gate-targeted PM role-work absorption requires mapped_gate_event")
+        if mapped_event not in allowed_events:
+            raise RouterError("mapped_gate_event must be one of the target gate pass/block events")
+        mappings.append(
+            {
+                "request_id": record.get("request_id"),
+                "packet_id": record.get("packet_id"),
+                "result_envelope_path": record.get("result_envelope_path"),
+                "result_envelope_hash": record.get("result_envelope_hash"),
+                "target_gate_contract": gate_contract,
+                "mapped_gate_event": mapped_event,
+            }
+        )
+    return mappings
+
+
+def _apply_pm_role_work_gate_mappings(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    decision_path: Path,
+    decision_record: dict[str, Any],
+    mappings: list[dict[str, Any]],
+) -> None:
+    if not mappings:
+        return
+    decision_hash = packet_runtime.sha256_file(decision_path)
+    for mapping in mappings:
+        mapped_event = str(mapping["mapped_gate_event"])
+        meta = EXTERNAL_EVENTS[mapped_event]
+        for clear_flag in GATE_OUTCOME_PASS_CLEAR_FLAGS.get(mapped_event, ()):
+            run_state.setdefault("flags", {})[clear_flag] = False
+        run_state.setdefault("flags", {})[meta["flag"]] = True
+        gate_contract = mapping["target_gate_contract"]
+        pass_events = set(gate_contract.get("pass_events") or [])
+        is_pass_mapping = mapped_event in pass_events
+        artifact_path = _pm_role_work_gate_mapping_artifact_path(run_root, gate_contract, mapped_event)
+        artifact = {
+                "schema_version": "flowpilot.pm_role_work_gate_mapping.v1",
+                "run_id": run_state["run_id"],
+                "gate_id": gate_contract.get("gate_id"),
+                "required_flag": gate_contract.get("required_flag"),
+                "reviewed_by_role": gate_contract.get("target_role"),
+                "passed": is_pass_mapping,
+                "mapped_gate_event": mapped_event,
+                "source_event": PM_ROLE_WORK_RESULT_DECISION_EVENT,
+                "pm_role_work_request_id": mapping.get("request_id"),
+                "packet_id": mapping.get("packet_id"),
+                "result_envelope_path": mapping.get("result_envelope_path"),
+                "result_envelope_hash": mapping.get("result_envelope_hash"),
+                "pm_decision_path": project_relative(project_root, decision_path),
+                "pm_decision_hash": decision_hash,
+                "sealed_result_body_read_by_controller": False,
+                "controller_visibility": "result_envelope_and_pm_mapping_only",
+                "recorded_at": decision_record["recorded_at"],
+        }
+        if gate_contract.get("gate_id") == "process_route_model":
+            if mapped_event in PROCESS_ROUTE_MODEL_PASS_EVENTS:
+                artifact["process_viability_verdict"] = "pass"
+            elif mapped_event in PROCESS_ROUTE_MODEL_REPAIR_EVENTS:
+                artifact["process_viability_verdict"] = "repair_required"
+            else:
+                artifact["process_viability_verdict"] = "blocked"
+        write_json(artifact_path, artifact)
+        for alias_path, schema_version, alias_kind in _pm_role_work_gate_mapping_alias_specs(
+            run_root,
+            gate_contract,
+            mapped_event,
+        ):
+            _write_compatibility_alias_artifact(
+                project_root,
+                artifact_path,
+                alias_path,
+                schema_version=schema_version,
+                alias_kind=alias_kind,
+            )
+        _sync_model_gate_alias_flags(run_state, mapped_event)
+        run_state.setdefault("events", []).append(
+            {
+                "event": mapped_event,
+                "summary": meta["summary"],
+                "payload": {
+                    "mapped_from_event": PM_ROLE_WORK_RESULT_DECISION_EVENT,
+                    "pm_role_work_request_id": mapping.get("request_id"),
+                    "packet_id": mapping.get("packet_id"),
+                    "target_gate_id": gate_contract.get("gate_id"),
+                    "gate_mapping_artifact_path": project_relative(project_root, artifact_path),
+                    "sealed_result_body_read_by_controller": False,
+                },
+                "recorded_at": decision_record["recorded_at"],
+            }
+        )
+
+
+def _pm_role_work_result_decision_payload_contract(
+    *,
+    name: str,
+    required_fields: list[str],
+    allowed_values: dict[str, list[Any]],
+    records: list[dict[str, Any]],
+    expected_request_id: str | None = None,
+    expected_batch_id: str | None = None,
+) -> dict[str, Any]:
+    contract = {
+        "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+        "name": name,
+        "required_fields": list(required_fields),
+        "allowed_values": dict(allowed_values),
+    }
+    if expected_request_id:
+        contract["expected_request_id"] = expected_request_id
+    if expected_batch_id:
+        contract["expected_batch_id"] = expected_batch_id
+    gate_contracts = [
+        record.get("target_gate_contract")
+        for record in records
+        if isinstance(record.get("target_gate_contract"), dict)
+    ]
+    if gate_contracts:
+        allowed_gate_events = sorted(
+            {
+                str(event)
+                for gate_contract in gate_contracts
+                for event in [
+                    *(gate_contract.get("pass_events") or []),
+                    *(gate_contract.get("block_events") or []),
+                ]
+                if str(event)
+            }
+        )
+        if "mapped_gate_event" not in contract["required_fields"]:
+            contract["required_fields"].append("mapped_gate_event")
+        contract["allowed_values"]["mapped_gate_event"] = allowed_gate_events
+        contract["gate_targeted_role_work"] = True
+        contract["target_gate_contracts"] = gate_contracts
+        contract["gate_mapping_rule"] = (
+            "Absorbing this role-work result can close the target gate only when PM maps it to "
+            "one concrete target gate pass/block event."
+        )
+    return contract
+
+
 def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise RouterError("PM role-work request payload must be an object")
@@ -9856,6 +10387,9 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
     selected_contract["task_family"] = process_binding["task_family"]
     selected_contract["required_result_next_recipient"] = process_binding["required_result_next_recipient"]
     selected_contract["absorbing_role"] = process_binding["absorbing_role"]
+    target_gate_contract = _pm_role_work_target_gate_contract(payload)
+    if target_gate_contract is not None:
+        selected_contract["target_gate_contract"] = target_gate_contract
     envelope = packet_runtime.create_packet(
         project_root,
         run_id=str(run_state["run_id"]),
@@ -9874,6 +10408,7 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
             "pm_role_work_request": True,
             "strict_process_contract_binding": True,
             "process_contract_binding": process_binding,
+            **({"target_gate_contract": target_gate_contract} if target_gate_contract is not None else {}),
         },
         output_contract=selected_contract,
     )
@@ -9899,6 +10434,7 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         "process_contract_binding": process_binding,
         "strict_process_contract_binding": True,
         "required_result_next_recipient": process_binding["required_result_next_recipient"],
+        "target_gate_contract": target_gate_contract,
         "controller_may_read_packet_body": False,
         "body_source": body_ref,
         "registered_at": utc_now(),
@@ -10097,6 +10633,7 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
         raise RouterError("PM may absorb role-work batch only after Controller relays every result to PM")
     if decision in {"canceled", "superseded"} and any(record.get("status") not in PM_ROLE_WORK_OPEN_STATUSES for record in records):
         raise RouterError("PM role-work result decision can cancel or supersede only unresolved requests")
+    gate_mappings = _pm_role_work_gate_mappings_for_decision(decision_payload, records, decision=decision)
     decision_record = {
         "schema_version": PM_ROLE_WORK_RESULT_DECISION_SCHEMA,
         "request_id": request_id or records[0].get("request_id"),
@@ -10105,6 +10642,7 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
         "decided_by_role": "project_manager",
         "decision": decision,
         "decision_reason": decision_payload.get("decision_reason") or "",
+        "gate_mappings": gate_mappings,
         "recorded_at": utc_now(),
         **_role_output_envelope_record(decision_payload),
     }
@@ -10120,6 +10658,9 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
             "decision_hash": packet_runtime.sha256_file(decision_path),
             "recorded_at": decision_record["recorded_at"],
         }
+        for mapping in gate_mappings:
+            if mapping.get("request_id") == record.get("request_id"):
+                record["pm_result_decision"]["gate_mapping"] = mapping
     if request_id and index.get("active_request_id") == request_id:
         index["active_request_id"] = None
     if batch_id and index.get("active_batch_id") == batch_id:
@@ -10133,6 +10674,14 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
             passed=True,
             reviewed_packet_ids=[str(record.get("packet_id")) for record in records],
         )
+    _apply_pm_role_work_gate_mappings(
+        project_root,
+        run_root,
+        run_state,
+        decision_path=decision_path,
+        decision_record=decision_record,
+        mappings=gate_mappings,
+    )
     return decision
 
 
@@ -10366,6 +10915,48 @@ def _write_role_gate_report(
     )
 
 
+def _write_compatibility_alias_artifact(
+    project_root: Path,
+    source_path: Path,
+    alias_path: Path,
+    *,
+    schema_version: str,
+    alias_kind: str,
+) -> None:
+    artifact = read_json(source_path)
+    artifact["schema_version"] = schema_version
+    artifact["compatibility_alias_kind"] = alias_kind
+    artifact["compatibility_alias_for"] = project_relative(project_root, source_path)
+    artifact["compatibility_alias_recorded_at"] = utc_now()
+    write_json(alias_path, artifact)
+
+
+def _write_product_behavior_model_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    canonical_path = _product_behavior_model_report_path(run_root)
+    _write_role_gate_report(
+        project_root,
+        run_root,
+        run_state,
+        payload,
+        expected_role="product_flowguard_officer",
+        path=canonical_path,
+        schema_version="flowpilot.product_behavior_model.v1",
+        checked_paths=[run_root / "product_function_architecture.json"],
+    )
+    _write_compatibility_alias_artifact(
+        project_root,
+        canonical_path,
+        _product_behavior_model_compatibility_report_path(run_root),
+        schema_version="flowpilot.product_architecture_modelability.v1",
+        alias_kind="product_architecture_modelability",
+    )
+
+
 def _write_pm_model_decision(
     project_root: Path,
     run_root: Path,
@@ -10428,7 +11019,7 @@ def _write_pm_product_behavior_model_decision(
         else "request_product_behavior_model_rebuild",
         source_paths=[
             run_root / "product_function_architecture.json",
-            run_root / "flowguard" / "product_architecture_modelability.json",
+            _require_product_behavior_model_report(project_root, run_root),
         ],
     )
     if not accepted:
@@ -10454,7 +11045,7 @@ def _write_pm_process_route_model_decision(
         expected_decision="accept_process_route_model" if accepted else "request_process_route_model_rebuild",
         source_paths=[
             _current_route_draft_path(run_root),
-            run_root / "flowguard" / "route_process_check.json",
+            _require_process_route_model_report(project_root, run_root),
         ],
     )
     if not accepted:
@@ -10601,17 +11192,18 @@ def _write_route_process_pass_report(
         raise RouterError("route process check requires " + ", ".join(f"{field}=true" for field in missing))
     checked_paths = [
         _current_route_draft_path(run_root),
-        _product_behavior_model_report_path(run_root),
+        _require_product_behavior_model_report(project_root, run_root),
         run_root / "root_acceptance_contract.json",
         run_root / "child_skill_gate_manifest.json",
     ]
     missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
     if missing_paths:
         raise RouterError(f"route process check is missing source paths: {', '.join(missing_paths)}")
+    canonical_path = _process_route_model_report_path(run_root)
     write_json(
-        _route_process_check_path(run_root),
+        canonical_path,
         {
-            "schema_version": "flowpilot.route_process_check.v1",
+            "schema_version": "flowpilot.process_route_model.v1",
             "run_id": run_state["run_id"],
             "reviewed_by_role": "process_flowguard_officer",
             "passed": True,
@@ -10627,6 +11219,13 @@ def _write_route_process_pass_report(
             "reported_at": utc_now(),
             **_role_output_envelope_record(payload),
         },
+    )
+    _write_compatibility_alias_artifact(
+        project_root,
+        canonical_path,
+        _route_process_check_path(run_root),
+        schema_version="flowpilot.route_process_check.v1",
+        alias_kind="route_process_check",
     )
 
 
@@ -10647,17 +11246,18 @@ def _write_route_process_issue_report(
         raise RouterError(f"route process issue report requires process_viability_verdict={expected_verdict}")
     checked_paths = [
         _current_route_draft_path(run_root),
-        _product_behavior_model_report_path(run_root),
+        _require_product_behavior_model_report(project_root, run_root),
         run_root / "root_acceptance_contract.json",
         run_root / "child_skill_gate_manifest.json",
     ]
     missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
     if missing_paths:
         raise RouterError(f"route process issue report is missing source paths: {', '.join(missing_paths)}")
+    canonical_path = _process_route_model_report_path(run_root)
     write_json(
-        _route_process_check_path(run_root),
+        canonical_path,
         {
-            "schema_version": "flowpilot.route_process_check.v1",
+            "schema_version": "flowpilot.process_route_model.v1",
             "run_id": run_state["run_id"],
             "reviewed_by_role": "process_flowguard_officer",
             "passed": False,
@@ -10673,9 +11273,19 @@ def _write_route_process_issue_report(
             **_role_output_envelope_record(payload),
         },
     )
+    _write_compatibility_alias_artifact(
+        project_root,
+        canonical_path,
+        _route_process_check_path(run_root),
+        schema_version="flowpilot.route_process_check.v1",
+        alias_kind="route_process_check",
+    )
     for flag in (
         "route_draft_written_by_pm",
         "process_officer_route_check_card_delivered",
+        "process_route_model_submitted",
+        "process_route_model_repair_required",
+        "process_route_model_blocked",
         "process_officer_route_check_passed",
         "pm_process_route_model_decision_card_delivered",
         "pm_process_route_model_accepted",
@@ -10689,7 +11299,7 @@ def _write_route_process_issue_report(
         run_state.setdefault("flags", {})[flag] = False
     run_state["route_process_viability"] = {
         "verdict": expected_verdict,
-        "report_path": project_relative(project_root, _route_process_check_path(run_root)),
+        "report_path": project_relative(project_root, canonical_path),
         "reported_at": utc_now(),
     }
 
@@ -10714,9 +11324,9 @@ def _write_route_product_pass_report(
         raise RouterError("route product check requires " + ", ".join(f"{field}=true" for field in missing))
     checked_paths = [
         _current_route_draft_path(run_root),
-        _product_behavior_model_report_path(run_root),
+        _require_product_behavior_model_report(project_root, run_root),
         run_root / "root_acceptance_contract.json",
-        _route_process_check_path(run_root),
+        _require_process_route_model_report(project_root, run_root),
         run_root / "flowguard" / "process_route_model_pm_decision.json",
     ]
     missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
@@ -12516,6 +13126,9 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
 def _reset_route_review_after_route_draft_repair(run_state: dict[str, Any]) -> None:
     for flag in (
         "process_officer_route_check_card_delivered",
+        "process_route_model_submitted",
+        "process_route_model_repair_required",
+        "process_route_model_blocked",
         "process_officer_route_check_passed",
         "process_officer_route_repair_required",
         "process_officer_route_check_blocked",
@@ -12536,6 +13149,9 @@ def _reset_route_hard_gate_approvals_for_recheck(run_state: dict[str, Any]) -> N
         "pm_route_skeleton_card_delivered",
         "route_draft_written_by_pm",
         "process_officer_route_check_card_delivered",
+        "process_route_model_submitted",
+        "process_route_model_repair_required",
+        "process_route_model_blocked",
         "process_officer_route_check_passed",
         "process_officer_route_repair_required",
         "process_officer_route_check_blocked",
@@ -12552,11 +13168,19 @@ def _reset_route_hard_gate_approvals_for_recheck(run_state: dict[str, Any]) -> N
 
 
 def _product_behavior_model_report_path(run_root: Path) -> Path:
+    return run_root / "flowguard" / "product_behavior_model.json"
+
+
+def _product_behavior_model_compatibility_report_path(run_root: Path) -> Path:
     return run_root / "flowguard" / "product_architecture_modelability.json"
 
 
 def _require_product_behavior_model_report(project_root: Path, run_root: Path) -> Path:
     path = _product_behavior_model_report_path(run_root)
+    if not path.exists():
+        compatibility_path = _product_behavior_model_compatibility_report_path(run_root)
+        if compatibility_path.exists():
+            path = compatibility_path
     if not path.exists():
         raise RouterError("route draft requires Product Officer product behavior model report")
     report = read_json(path)
@@ -12569,18 +13193,30 @@ def _route_process_check_path(run_root: Path) -> Path:
     return run_root / "flowguard" / "route_process_check.json"
 
 
+def _process_route_model_report_path(run_root: Path) -> Path:
+    return run_root / "flowguard" / "process_route_model.json"
+
+
+def _require_process_route_model_report(project_root: Path, run_root: Path) -> Path:
+    path = _process_route_model_report_path(run_root)
+    if not path.exists():
+        compatibility_path = _route_process_check_path(run_root)
+        if compatibility_path.exists():
+            path = compatibility_path
+    if not path.exists():
+        raise RouterError("route activation requires process route model report")
+    report = read_json(path)
+    if report.get("passed") is not True or report.get("process_viability_verdict") != "pass":
+        raise RouterError("route activation requires Process Officer process route model pass")
+    return path
+
+
 def _route_product_check_path(run_root: Path) -> Path:
     return run_root / "flowguard" / "route_product_check.json"
 
 
 def _require_route_process_pass(project_root: Path, run_root: Path) -> Path:
-    path = _route_process_check_path(run_root)
-    if not path.exists():
-        raise RouterError("route activation requires route_process_check.json")
-    report = read_json(path)
-    if report.get("passed") is not True or report.get("process_viability_verdict") != "pass":
-        raise RouterError("route activation requires Process Officer process_viability_verdict=pass")
-    return path
+    return _require_process_route_model_report(project_root, run_root)
 
 
 def _require_route_product_pass(project_root: Path, run_root: Path) -> Path:
@@ -17241,6 +17877,9 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             )
         card = manifest_card(manifest, entry["card_id"])
         delivery_extra = {"postcondition": entry["flag"]}
+        gate_contract = _public_gate_contract(_gate_contract_for_card(entry["card_id"]))
+        if gate_contract is not None:
+            delivery_extra["gate_contract"] = gate_contract
         if legal_context is not None:
             delivery_extra["legal_next_actions"] = legal_context
         delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
@@ -18168,16 +18807,16 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 summary="Controller relayed the full role-work result batch to PM and must wait for one PM batch disposition.",
                 allowed_external_events=[PM_ROLE_WORK_RESULT_DECISION_EVENT],
                 to_role="project_manager",
-                payload_contract={
-                    "schema_version": PAYLOAD_CONTRACT_SCHEMA,
-                    "name": "pm_role_work_batch_result_decision",
-                    "required_fields": ["decided_by_role", "batch_id", "decision"],
-                    "allowed_values": {
+                payload_contract=_pm_role_work_result_decision_payload_contract(
+                    name="pm_role_work_batch_result_decision",
+                    required_fields=["decided_by_role", "batch_id", "decision"],
+                    allowed_values={
                         "decided_by_role": ["project_manager"],
                         "decision": sorted(PM_ROLE_WORK_TERMINAL_DECISIONS),
                     },
-                    "expected_batch_id": index.get("active_batch_id"),
-                },
+                    records=batch_records,
+                    expected_batch_id=str(index.get("active_batch_id") or ""),
+                ),
             )
     active = _active_pm_role_work_request(index)
     if not isinstance(active, dict):
@@ -18318,16 +18957,16 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
             summary="Controller relayed the role-work result to PM and must wait for PM to absorb, cancel, or supersede it.",
             allowed_external_events=[PM_ROLE_WORK_RESULT_DECISION_EVENT],
             to_role="project_manager",
-            payload_contract={
-                "schema_version": PAYLOAD_CONTRACT_SCHEMA,
-                "name": "pm_role_work_result_decision",
-                "required_fields": ["decided_by_role", "request_id", "decision"],
-                "allowed_values": {
+            payload_contract=_pm_role_work_result_decision_payload_contract(
+                name="pm_role_work_result_decision",
+                required_fields=["decided_by_role", "request_id", "decision"],
+                allowed_values={
                     "decided_by_role": ["project_manager"],
                     "decision": sorted(PM_ROLE_WORK_TERMINAL_DECISIONS),
                 },
-                "expected_request_id": active.get("request_id"),
-            },
+                records=[active],
+                expected_request_id=str(active.get("request_id") or ""),
+            ),
         )
     return None
 
@@ -18408,6 +19047,7 @@ def _expected_role_decision_wait_action(
     allowed_reads_extra: list[str] | None = None,
     pm_work_request_channel: bool = True,
     producer_roles_override: list[str] | None = None,
+    gate_contract: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     role_output_events = list(allowed_external_events)
     route_action_event_present = any(_route_action_for_event(event) for event in role_output_events)
@@ -18475,6 +19115,9 @@ def _expected_role_decision_wait_action(
         extra["pm_role_work_request_event"] = PM_ROLE_WORK_REQUEST_EVENT
     if payload_contract is not None:
         extra["payload_contract"] = payload_contract
+    public_gate_contract = _public_gate_contract(gate_contract)
+    if public_gate_contract is not None:
+        extra["gate_contract"] = public_gate_contract
     if role_output_status_packet_path:
         extra["role_output_progress_status"] = {
             "controller_status_packet_path": role_output_status_packet_path,
@@ -18547,7 +19190,7 @@ def _pending_expected_external_event_groups(
     run_root: Path | None = None,
 ) -> list[list[tuple[str, dict[str, Any]]]]:
     flags = run_state["flags"]
-    grouped: dict[str, list[tuple[str, dict[str, str]]]] = {}
+    grouped: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     ordered_requires: list[str] = []
     active_node_has_children = _active_node_children_status(run_root)
     for event, meta in EXTERNAL_EVENTS.items():
@@ -18561,8 +19204,12 @@ def _pending_expected_external_event_groups(
             ordered_requires.append(required_flag)
         grouped[required_flag].append((event, meta))
 
-    def group_already_has_terminal_outcome(group: list[tuple[str, dict[str, str]]]) -> bool:
-        recorded_events = [event for event, meta in group if flags.get(meta["flag"])]
+    def group_already_has_terminal_outcome(group: list[tuple[str, dict[str, Any]]]) -> bool:
+        recorded_events = [
+            event
+            for event, meta in group
+            if flags.get(meta["flag"]) and _event_is_terminal_gate_outcome(event, meta)
+        ]
         if not recorded_events:
             return False
         recorded_blocks = [event for event in recorded_events if event in GATE_OUTCOME_BLOCK_EVENTS]
@@ -18576,7 +19223,7 @@ def _pending_expected_external_event_groups(
                 return False
         return True
 
-    pending: list[list[tuple[str, dict[str, str]]]] = []
+    pending: list[list[tuple[str, dict[str, Any]]]] = []
     for required_flag in ordered_requires:
         if not flags.get(required_flag):
             continue
@@ -18596,6 +19243,7 @@ def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict
     if not pending_groups:
         return None
     for group in pending_groups:
+        group = _gate_completion_wait_group(group)
         group_events = [event for event, _meta in group]
         allowed_events = _filter_events_by_legal_route_actions(project_root, run_root, run_state, group_events)
         if not allowed_events:
@@ -18620,6 +19268,7 @@ def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict
             to_role=role_label,
             payload_contract=_role_decision_payload_contract_for_events(project_root, run_root, allowed_events),
             pm_work_request_channel=not route_action_wait,
+            gate_contract=_gate_contract_for_events(allowed_events),
         )
     return None
 
@@ -18797,6 +19446,7 @@ def _commit_system_card_delivery_artifact(
         "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
         "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
         "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
+        "gate_contract": pending.get("gate_contract"),
         "delivery_context": delivery_context,
         "delivered_at": utc_now(),
     }
@@ -18857,6 +19507,7 @@ def _commit_system_card_delivery_artifact(
         "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
         "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
         "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+        "gate_contract": delivery.get("gate_contract"),
         "delivered_at": delivery["delivered_at"],
         "runtime_validates_mechanics_only": True,
         "semantic_understanding_validated_by_receipt": False,
@@ -18895,6 +19546,7 @@ def _commit_system_card_delivery_artifact(
             "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
             "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
             "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+            "gate_contract": delivery.get("gate_contract"),
             "requires_read_receipt": True,
             "card_return_event": delivery.get("card_return_event"),
             "card_checkin_instruction": delivery.get("card_checkin_instruction"),
@@ -20612,21 +21264,15 @@ def _record_external_event_unchecked(
             schema_version="flowpilot.product_architecture_review.v1",
             checked_paths=[
                 run_root / "product_function_architecture.json",
-                run_root / "flowguard" / "product_architecture_modelability.json",
+                _require_product_behavior_model_report(project_root, run_root),
                 run_root / "flowguard" / "product_behavior_model_pm_decision.json",
             ],
         )
-    elif event == "product_officer_passes_product_architecture_modelability":
-        _write_role_gate_report(
-            project_root,
-            run_root,
-            run_state,
-            payload,
-            expected_role="product_flowguard_officer",
-            path=run_root / "flowguard" / "product_architecture_modelability.json",
-            schema_version="flowpilot.product_architecture_modelability.v1",
-            checked_paths=[run_root / "product_function_architecture.json"],
-        )
+    elif event in {
+        "product_officer_submits_product_behavior_model",
+        "product_officer_passes_product_architecture_modelability",
+    }:
+        _write_product_behavior_model_report(project_root, run_root, run_state, payload)
     elif event == "pm_accepts_product_behavior_model":
         _write_pm_product_behavior_model_decision(project_root, run_root, run_state, payload, accepted=True)
     elif event == "pm_requests_product_behavior_model_rebuild":
@@ -20723,13 +21369,13 @@ def _record_external_event_unchecked(
         if repeatable_route_draft_repair:
             _reset_route_review_after_route_draft_repair(run_state)
         _write_route_draft(project_root, run_root, run_state, payload)
-    elif event == "process_officer_passes_route_check":
+    elif event in {"process_officer_submits_process_route_model", "process_officer_passes_route_check"}:
         _write_route_process_pass_report(project_root, run_root, run_state, payload)
     elif event == "pm_accepts_process_route_model":
         _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=True)
     elif event == "pm_requests_process_route_model_rebuild":
         _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=False)
-    elif event == "process_officer_requires_route_repair":
+    elif event in {"process_officer_requests_process_route_model_repair", "process_officer_requires_route_repair"}:
         _write_route_process_issue_report(
             project_root,
             run_root,
@@ -20737,7 +21383,7 @@ def _record_external_event_unchecked(
             payload,
             expected_verdict="repair_required",
         )
-    elif event == "process_officer_blocks_route_check":
+    elif event in {"process_officer_blocks_process_route_model", "process_officer_blocks_route_check"}:
         _write_route_process_issue_report(
             project_root,
             run_root,
@@ -20758,7 +21404,7 @@ def _record_external_event_unchecked(
             schema_version="flowpilot.route_review.v1",
             checked_paths=[
                 _current_route_draft_path(run_root),
-                run_root / "flowguard" / "route_process_check.json",
+                _require_process_route_model_report(project_root, run_root),
                 run_root / "flowguard" / "process_route_model_pm_decision.json",
                 run_root / "flowguard" / "route_product_check.json",
             ],
@@ -20848,6 +21494,7 @@ def _record_external_event_unchecked(
         "recorded_at": utc_now(),
     }
     run_state["flags"][flag] = True
+    _sync_model_gate_alias_flags(run_state, event)
     if event == "pm_accepts_product_behavior_model":
         run_state["flags"]["pm_product_behavior_model_rebuild_requested"] = False
     elif event == "pm_accepts_process_route_model":

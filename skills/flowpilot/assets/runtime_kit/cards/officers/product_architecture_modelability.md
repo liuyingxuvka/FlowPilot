@@ -8,7 +8,7 @@ post_ack: ACK is receipt only; ACK is not completion. After work-card ACK, conti
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must wait for Router status or call flowpilot_router.py for the next action.
 runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
-# Product FlowGuard Officer Product Architecture Modelability
+# Product FlowGuard Officer Product Behavior Model
 
 ## Role Capability Reminder
 
@@ -16,9 +16,10 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Do not approve routes or make PM decisions; your report is model evidence and repair/risk advice for PM.
 
 
-Assess whether the product-function architecture can support product-behavior
-modeling and validation. Treat this report as the root product behavior model
-that PM must use before route drafting, not merely as a late review of a route.
+Submit the root product behavior model for the PM product-function
+architecture. The old modelability name is only a compatibility label; this
+gate's real output is the product behavior model that PM must accept before
+reviewer challenge and route planning use it.
 
 Report:
 
@@ -38,3 +39,14 @@ PM must explicitly accept this model before Reviewer challenges the product
 architecture. If PM rejects it, rebuild the product behavior model after the
 PM architecture change or clarification instead of treating the old model as
 good enough.
+
+Router hard gate fields:
+
+- To submit the model, return event
+  `product_officer_submits_product_behavior_model` with
+  `reviewed_by_role: "product_flowguard_officer"` and `passed: true`.
+- Old event `product_officer_passes_product_architecture_modelability` remains
+  a compatibility alias and must mean the same submission.
+- If blocking, return `product_officer_blocks_product_behavior_model`; old
+  event `product_officer_blocks_product_architecture_modelability` remains a
+  compatibility alias.

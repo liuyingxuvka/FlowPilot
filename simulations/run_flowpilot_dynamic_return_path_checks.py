@@ -35,6 +35,40 @@ HAZARD_EXPECTED_FAILURES = {
     model.WRONG_ROLE_USES_WORK_AUTHORITY: "work authority role does not match submitting role",
     model.WRONG_CONTRACT_USES_WORK_AUTHORITY: "work authority contract does not match submitted output",
     model.STALE_WORK_AUTHORITY_USED: "work authority route or frontier is stale",
+    model.GATE_CARD_WITHOUT_COMPLETION_CONTRACT: "current gate card lacks a declared completion contract",
+    model.LEGACY_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG: (
+        "Router accepted an event that did not satisfy the current gate"
+    ),
+    model.PM_REPAIR_RESOLVES_BLOCKER_WITHOUT_GATE_EVENT: (
+        "control blocker was resolved without satisfying the current gate"
+    ),
+    model.PM_ROLE_WORK_RESULT_NOT_MAPPED_TO_CURRENT_GATE: "PM role-work result was not mapped to the current gate",
+    model.PRODUCT_BEHAVIOR_MODEL_GATE_USES_MODELABILITY_AS_CANONICAL_COMPLETION: (
+        "product behavior model gate used modelability as canonical completion"
+    ),
+    model.PRODUCT_BEHAVIOR_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS: (
+        "product behavior model compatibility alias did not set required flags"
+    ),
+    model.PRODUCT_BEHAVIOR_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE: (
+        "product behavior model submission allowed downstream flow before PM acceptance"
+    ),
+    model.PRODUCT_BEHAVIOR_MODEL_MISSING_CANONICAL_ARTIFACT: (
+        "product behavior model submission did not write canonical artifact"
+    ),
+    model.PRODUCT_BEHAVIOR_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE: "product behavior model block alias flags diverged",
+    model.PROCESS_ROUTE_MODEL_GATE_USES_ROUTE_CHECK_AS_CANONICAL_COMPLETION: (
+        "process route model gate used route process check as canonical completion"
+    ),
+    model.PROCESS_ROUTE_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS: (
+        "process route model compatibility alias did not set required flags"
+    ),
+    model.PROCESS_ROUTE_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE: (
+        "process route model submission allowed downstream flow before PM acceptance"
+    ),
+    model.PROCESS_ROUTE_MODEL_MISSING_CANONICAL_ARTIFACT: (
+        "process route model submission did not write canonical artifact"
+    ),
+    model.PROCESS_ROUTE_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE: "process route model block alias flags diverged",
 }
 
 
@@ -44,6 +78,18 @@ def _state_id(state: model.State) -> str:
         f"mode={state.contract_event_mode}|source={state.return_event_source}|event={state.return_event_name}|"
         f"registered={state.return_event_registered}|allowed={state.return_event_currently_allowed}|"
         f"mechanical={state.mechanical_role_output_valid}|accepted={state.router_accepted_event}|"
+        f"gate={state.current_gate_active},{state.current_gate_completion_contract_declared},"
+        f"{state.return_event_satisfies_current_gate},{state.current_gate_flag_satisfied}|"
+        f"product_model={state.compatibility_alias_sets_required_flags},"
+        f"{state.pm_acceptance_required_after_submission},{state.pm_acceptance_completed},"
+        f"{state.downstream_product_flow_allowed},"
+        f"{state.canonical_product_behavior_model_artifact_written},"
+        f"{state.compatibility_product_model_artifact_written},{state.block_alias_flags_aligned}|"
+        f"process_model={state.process_compatibility_alias_sets_required_flags},"
+        f"{state.pm_process_acceptance_required_after_submission},{state.pm_process_acceptance_completed},"
+        f"{state.downstream_route_challenge_flow_allowed},"
+        f"{state.canonical_process_route_model_artifact_written},"
+        f"{state.compatibility_process_route_check_artifact_written},{state.process_block_alias_flags_aligned}|"
         f"continue={state.current_run_allowed_to_continue}|reason={state.terminal_reason}"
     )
 
@@ -169,6 +215,51 @@ def _hazard_report() -> dict[str, object]:
     return {"ok": not failures, "hazards": hazards, "failures": failures}
 
 
+def _candidate_fix_plan() -> dict[str, object]:
+    return {
+        "name": "gate_alignment_contract",
+        "minimum_runtime_change_set": [
+            "Declare a machine-readable gate contract for every gate-bearing card or wait.",
+            "Attach the active gate contract to card envelopes and await_role_decision actions.",
+            "Keep legacy/general events registered for compatibility but mark them non-completing for gate waits.",
+            "Treat a gate group as complete only when a terminal gate outcome satisfies the active gate flag.",
+            "Map gate-targeted PM role-work results to a concrete gate pass/block event before continuation.",
+            "Use product behavior model submission as the canonical Product Officer gate while retaining modelability names as compatibility aliases.",
+            "Write a canonical product behavior model artifact and preserve the old product architecture modelability artifact as an alias.",
+            "Require PM product behavior model acceptance before reviewer challenge or route planning can use the model.",
+            "Use process route model submission as the canonical Process Officer route gate while retaining route process check names as compatibility aliases.",
+            "Write a canonical process route model artifact and preserve the old route process check artifact as an alias.",
+            "Require PM process route model acceptance before Product FlowGuard route fit review or Reviewer route challenge can use the model.",
+        ],
+        "risk_coverage": {
+            "gate_card_without_completion_contract": model.GATE_CARD_WITHOUT_COMPLETION_CONTRACT,
+            "legacy_event_cannot_close_gate": model.LEGACY_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG,
+            "repair_success_cannot_skip_gate": model.PM_REPAIR_RESOLVES_BLOCKER_WITHOUT_GATE_EVENT,
+            "role_work_result_must_map_to_gate": model.PM_ROLE_WORK_RESULT_NOT_MAPPED_TO_CURRENT_GATE,
+            "canonical_product_behavior_model_semantics": (
+                model.PRODUCT_BEHAVIOR_MODEL_GATE_USES_MODELABILITY_AS_CANONICAL_COMPLETION
+            ),
+            "compatibility_alias_flags": model.PRODUCT_BEHAVIOR_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS,
+            "pm_acceptance_not_skipped": model.PRODUCT_BEHAVIOR_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE,
+            "canonical_artifact_written": model.PRODUCT_BEHAVIOR_MODEL_MISSING_CANONICAL_ARTIFACT,
+            "block_alias_flags_aligned": model.PRODUCT_BEHAVIOR_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE,
+            "canonical_process_route_model_semantics": (
+                model.PROCESS_ROUTE_MODEL_GATE_USES_ROUTE_CHECK_AS_CANONICAL_COMPLETION
+            ),
+            "process_compatibility_alias_flags": model.PROCESS_ROUTE_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS,
+            "process_pm_acceptance_not_skipped": model.PROCESS_ROUTE_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE,
+            "process_canonical_artifact_written": model.PROCESS_ROUTE_MODEL_MISSING_CANONICAL_ARTIFACT,
+            "process_block_alias_flags_aligned": model.PROCESS_ROUTE_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE,
+        },
+        "accepted_runtime_shapes": [
+            model.VALID_CURRENT_GATE_EVENT_SATISFIES_FLAG,
+            model.VALID_PM_ROLE_WORK_RESULT_MAPPED_TO_CURRENT_GATE,
+            model.VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_COMPAT_ALIAS,
+            model.VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_COMPAT_ALIAS,
+        ],
+    }
+
+
 def run_checks(project_root: Path = PROJECT_ROOT) -> dict[str, object]:
     graph = _build_graph()
     safe_graph = _safe_graph_report(graph)
@@ -182,6 +273,7 @@ def run_checks(project_root: Path = PROJECT_ROOT) -> dict[str, object]:
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
         "live_run_projection": live_projection,
+        "candidate_fix_plan": _candidate_fix_plan(),
     }
     result["ok"] = all(section.get("ok", False) for section in (safe_graph, progress, explorer, hazards, live_projection))
     result["current_run_can_continue"] = bool(live_projection.get("current_run_can_continue"))

@@ -8518,3 +8518,102 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Keep future card or packet prompt changes under card_instruction_coverage_model hazards before editing production prompts.
+
+
+## dynamic-return-path-gate-alignment-20260513 - Model FlowPilot gate satisfaction for legacy/general officer events
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A recovered FlowPilot run showed `router_no_legal_next_action` blockers after a legacy/general product officer report was recorded before the concrete product architecture modelability gate event.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T07:29:35+02:00
+- Ended: 2026-05-13T07:29:35+02:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_dynamic_return_path_model.py
+- simulations/run_flowpilot_dynamic_return_path_checks.py
+
+### Commands
+- OK (0.000s): `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`.
+- OK (0.000s): `python -m py_compile simulations\flowpilot_dynamic_return_path_model.py simulations\run_flowpilot_dynamic_return_path_checks.py`.
+- OK (0.000s): `python simulations\run_flowpilot_dynamic_return_path_checks.py --project-root . --json-out simulations\flowpilot_dynamic_return_path_results.json`.
+
+### Findings
+- The dynamic-return-path model now represents current gate satisfaction separately from event registration, event recording, PM repair follow-up, and mechanical role-output validity.
+- New bad scenarios are rejected for gate cards without declared completion contracts, legacy/general events accepted without the required gate flag, repair outcomes that resolve a control blocker without satisfying the current gate, and PM role-work results that are not mapped to the current gate.
+- Metadata-only live projection classifies `run-20260513-034857` as currently continuable while preserving the historical gate-alignment findings from the two recovered `router_no_legal_next_action` blockers.
+
+### Counterexamples
+- `gate_card_without_completion_contract`
+- `legacy_event_accepted_without_required_gate_flag`
+- `pm_repair_resolves_blocker_without_gate_event`
+- `pm_role_work_result_not_mapped_to_current_gate`
+
+### Friction Points
+- The live projection intentionally reads only public metadata and does not inspect sealed packet/result/report bodies, so it can identify control-flow alignment risk but not judge report semantic quality.
+
+### Skipped Steps
+- Runtime Router, card, and contract code were intentionally not changed because the user requested model upgrade and repair-plan review before implementation.
+- Full meta/capability reruns were skipped because this pass changed the focused FlowGuard model and check harness only, not production control-flow transitions or capability routing.
+
+### Next Actions
+- Review the minimal bottom-level fix: make every gate-bearing card/event wait declare a concrete gate completion contract, require PM repair success events to satisfy the same gate, and map PM role-work results into the active gate before the Router computes continuation.
+
+
+## dynamic-return-path-gate-alignment-runtime-20260513 - Enforce FlowPilot gate contracts in Router runtime
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Implement the approved minimal bottom-level fix after the focused FlowGuard model caught legacy/general officer events, PM repair follow-ups, and unmapped PM role-work results that could bypass active gate satisfaction.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T07:30:00+02:00
+- Ended: 2026-05-13T08:15:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_dynamic_return_path_model.py
+- simulations/run_flowpilot_dynamic_return_path_checks.py
+- simulations/flowpilot_dynamic_return_path_results.json
+
+### Runtime Files
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/runtime_kit/cards/officers/product_architecture_modelability.md
+- skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md
+
+### Commands
+- OK: `python -m py_compile simulations\flowpilot_dynamic_return_path_model.py simulations\run_flowpilot_dynamic_return_path_checks.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_role_output_runtime.py`.
+- OK: `python simulations\run_flowpilot_dynamic_return_path_checks.py --project-root . --json-out simulations\flowpilot_dynamic_return_path_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_router_supplied_direct_submission_requires_current_wait_authority tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_legacy_product_officer_model_report_does_not_close_modelability_gate tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_gate_targeted_pm_role_work_result_requires_mapped_gate_event tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_product_architecture_and_root_contract_gate_route_skeleton tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_draft_requires_product_behavior_model_report tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_check_reports_require_hard_gate_verdict_fields tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel`.
+- OK: `python simulations\run_flowpilot_model_driven_recursive_route_checks.py`.
+- OK: `python simulations\run_meta_checks.py`.
+- OK: `python simulations\run_capability_checks.py`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+- Router now carries a machine-readable gate contract from gate-bearing card delivery into the generated wait action.
+- Legacy/general officer report events remain registered for compatibility, but they are marked non-terminal for active gate completion.
+- Product Officer modelability is now treated as the compatibility name for the canonical product behavior model gate.
+- Process route check is now treated as the compatibility name for the canonical process route model gate.
+- Canonical artifacts are written first, with old compatibility artifact paths mirrored for existing callers.
+- PM role-work results that target a gate must declare a concrete mapped gate event before the original gate can be satisfied.
+
+### Counterexamples
+- `legacy_event_accepted_without_required_gate_flag`
+- `pm_repair_resolves_blocker_without_gate_event`
+- `pm_role_work_result_not_mapped_to_current_gate`
+- `product_behavior_model_gate_uses_modelability_as_canonical_completion`
+- `process_route_model_gate_uses_route_check_as_canonical_completion`
+
+### Friction Points
+- Full meta and capability checks each needed more than the initial three-minute timeout. They were rerun separately with longer timeouts and passed.
+
+### Skipped Steps
+- No remote GitHub sync was performed, per user instruction.
+
+### Next Actions
+- Keep future Product or Process officer gate changes synchronized across FlowGuard model scenarios, Router gate contracts, card wording, canonical artifacts, compatibility aliases, and focused runtime tests.

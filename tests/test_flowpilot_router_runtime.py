@@ -877,10 +877,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.ack_system_card_action(root, action)
         router.record_external_event(
             root,
-            "product_officer_passes_product_architecture_modelability",
+            "product_officer_submits_product_behavior_model",
             self.role_report_envelope(
                 root,
-                "flowguard/product_architecture_modelability",
+                "flowguard/product_behavior_model",
                 {"reviewed_by_role": "product_flowguard_officer", "passed": True},
             ),
         )
@@ -1174,10 +1174,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "process_officer.route_process_check")
         router.record_external_event(
             root,
-            "process_officer_passes_route_check",
+            "process_officer_submits_process_route_model",
             self.role_report_envelope(
                 root,
-                "flowguard/route_process_check",
+                "flowguard/process_route_model",
                 self.route_process_pass_body(),
             ),
         )
@@ -1232,7 +1232,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "decision": "accept_product_behavior_model",
             "source_paths": [
                 "product_function_architecture.json",
-                "flowguard/product_architecture_modelability.json",
+                "flowguard/product_behavior_model.json",
             ],
             "pm_model_fit_review": "PM accepted the Product FlowGuard model as the product basis.",
             "product_goal_coverage": "The model covers the requested product goal.",
@@ -1246,7 +1246,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "decision": "accept_process_route_model",
             "source_paths": [
                 "routes/route-001/flow.draft.json",
-                "flowguard/route_process_check.json",
+                "flowguard/process_route_model.json",
             ],
             "serial_execution_line_review": "PM accepted the route as one ordered execution line.",
             "recursive_node_entry_review": "Non-leaf local loops are represented before child execution.",
@@ -2204,6 +2204,91 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(index["requests"][0]["status"], "absorbed")
         self.assertIsNone(index["active_request_id"])
 
+    def test_gate_targeted_pm_role_work_result_requires_mapped_gate_event(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-gate-targeted-role-work")
+        run_root = self.run_root_for(root)
+        state_path = router.run_state_path(run_root)
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/gate_targeted_model_miss_role_work",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+
+        request = self.pm_role_work_request_payload(
+            root,
+            request_id="gate-modelability-followup-001",
+            body_text="Assess product architecture modelability and return the result to PM.",
+        )
+        request["target_gate_id"] = "product_behavior_model"
+        router.record_external_event(root, "pm_registers_role_work_request", request)
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        self.assertEqual(index["requests"][0]["target_gate_contract"]["gate_id"], "product_behavior_model")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        router.apply_action(root, "relay_pm_role_work_request_packet")
+
+        result_path = self.open_role_work_packet_and_write_result(root, request_id="gate-modelability-followup-001")
+        router.record_external_event(
+            root,
+            "role_work_result_returned",
+            {
+                "request_id": "gate-modelability-followup-001",
+                "packet_id": "pm-role-work-gate-modelability-followup-001",
+                "result_envelope_path": result_path,
+            },
+        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_result_to_pm")
+        router.apply_action(root, "relay_pm_role_work_result_to_pm")
+        wait = self.next_after_display_sync(root)
+        self.assertIn("mapped_gate_event", wait["payload_contract"]["required_fields"])
+
+        with self.assertRaisesRegex(router.RouterError, "mapped_gate_event"):
+            router.record_external_event(
+                root,
+                "pm_records_role_work_result_decision",
+                {
+                    "decided_by_role": "project_manager",
+                    "request_id": "gate-modelability-followup-001",
+                    "decision": "absorbed",
+                    "decision_reason": "PM reviewed the officer result.",
+                },
+            )
+        router.record_external_event(
+            root,
+            "pm_records_role_work_result_decision",
+            {
+                "decided_by_role": "project_manager",
+                "request_id": "gate-modelability-followup-001",
+                "decision": "absorbed",
+                "decision_reason": "PM reviewed the officer result and maps it to the gate pass event.",
+                "mapped_gate_event": "product_officer_passes_product_architecture_modelability",
+            },
+        )
+
+        state = read_json(state_path)
+        self.assertTrue(state["flags"]["product_behavior_model_submitted"])
+        self.assertTrue(state["flags"]["product_architecture_modelability_passed"])
+        self.assertTrue((run_root / "flowguard" / "product_behavior_model.json").exists())
+        self.assertTrue((run_root / "flowguard" / "product_architecture_modelability.json").exists())
+        self.assertTrue(
+            any(
+                item.get("event") == "product_officer_passes_product_architecture_modelability"
+                and item.get("payload", {}).get("mapped_from_event") == "pm_records_role_work_result_decision"
+                for item in state["events"]
+                if isinstance(item, dict)
+            )
+        )
+
     def test_pm_role_work_batch_waits_for_all_officer_results_before_pm_relay(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-batch")
@@ -2776,6 +2861,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        (run_root / "flowguard" / "product_behavior_model.json").unlink()
         (run_root / "flowguard" / "product_architecture_modelability.json").unlink()
 
         self.deliver_expected_card(root, "pm.prior_path_context")
@@ -5087,6 +5173,103 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             )
         self.complete_route_checks(root)
         router.record_external_event(root, "pm_activates_reviewed_route")
+
+    def test_legacy_product_officer_model_report_does_not_close_modelability_gate(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "pm.product_architecture")
+        self.ack_system_card_action(root, action)
+        router.record_external_event(
+            root,
+            "pm_writes_product_function_architecture",
+            {
+                "user_task_map": [{"task_id": "task-001", "goal": "ship FlowPilot"}],
+                "product_capability_map": [{"capability_id": "cap-001", "behavior": "ship FlowPilot"}],
+                "feature_decisions": [{"feature_id": "feature-001", "decision": "must"}],
+                "highest_achievable_product_target": {"product_vision": "complete FlowPilot route control"},
+                "semantic_fidelity_policy": {"silent_downgrade_forbidden": True},
+                "functional_acceptance_matrix": [{"acceptance_id": "root-001"}],
+            },
+        )
+
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
+        self.assertEqual(action["gate_contract"]["gate_id"], "product_behavior_model")
+        self.ack_system_card_action(root, action)
+        wait = self.next_after_display_sync(root)
+        self.assertEqual(wait["action_type"], "await_role_decision")
+        self.assertEqual(wait["gate_contract"]["gate_id"], "product_behavior_model")
+        self.assertIn("product_officer_passes_product_architecture_modelability", wait["allowed_external_events"])
+        self.assertIn("product_officer_blocks_product_architecture_modelability", wait["allowed_external_events"])
+        self.assertNotIn("product_officer_model_report", wait["allowed_external_events"])
+
+        router.record_external_event(root, "product_officer_model_report", {"legacy_status": "received"})
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["legacy_product_officer_model_report_received"])
+        self.assertFalse(state["flags"]["product_architecture_modelability_passed"])
+
+        wait = self.next_after_display_sync(root)
+        self.assertEqual(wait["action_type"], "await_role_decision")
+        self.assertIn("product_officer_passes_product_architecture_modelability", wait["allowed_external_events"])
+        self.assertNotIn("product_officer_model_report", wait["allowed_external_events"])
+
+        router.record_external_event(
+            root,
+            "product_officer_passes_product_architecture_modelability",
+            self.role_report_envelope(
+                root,
+                "flowguard/product_architecture_modelability",
+                {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+            ),
+        )
+        action = self.deliver_expected_card(root, "pm.product_behavior_model_decision")
+        self.assertEqual(action["card_id"], "pm.product_behavior_model_decision")
+
+    def test_process_route_model_canonical_event_writes_compatibility_alias(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.complete_material_flow(root)
+        self.complete_root_contract_before_child_skill_gates(root)
+        self.complete_child_skill_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "nodes": [{"node_id": "node-001"}],
+                **self.prior_path_context_review(root, "Route draft considered prior context before process model."),
+            },
+        )
+
+        action = self.deliver_expected_card(root, "process_officer.route_process_check")
+        self.assertEqual(action["gate_contract"]["gate_id"], "process_route_model")
+        wait = self.next_after_display_sync(root)
+        self.assertEqual(wait["action_type"], "await_role_decision")
+        self.assertEqual(wait["gate_contract"]["gate_id"], "process_route_model")
+        self.assertIn("process_officer_submits_process_route_model", wait["allowed_external_events"])
+        self.assertIn("process_officer_passes_route_check", wait["allowed_external_events"])
+
+        router.record_external_event(
+            root,
+            "process_officer_submits_process_route_model",
+            self.role_report_envelope(root, "flowguard/process_route_model", self.route_process_pass_body()),
+        )
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["process_route_model_submitted"])
+        self.assertTrue(state["flags"]["process_officer_route_check_passed"])
+        self.assertTrue((run_root / "flowguard" / "process_route_model.json").exists())
+        self.assertTrue((run_root / "flowguard" / "route_process_check.json").exists())
+
+        action = self.deliver_expected_card(root, "pm.process_route_model_decision")
+        self.assertEqual(action["card_id"], "pm.process_route_model_decision")
 
     def test_route_activation_rejects_active_node_missing_from_reviewed_route(self) -> None:
         root = self.make_project()
