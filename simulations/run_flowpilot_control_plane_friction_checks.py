@@ -43,6 +43,8 @@ REQUIRED_LABELS = (
     "process_officer_passes_route_check_after_nonempty_route",
     "reviewer_blocks_child_skill_gate_manifest_for_repair",
     "pm_rewrites_child_skill_gate_after_block",
+    "role_event_arrives_after_valid_card_ack_before_ledger_resolved",
+    "router_pre_consumes_valid_card_ack_before_role_event",
     "router_consumes_gate_card_ack_and_preserves_semantic_wait",
     "reviewer_passes_repaired_child_skill_gate_and_clears_block",
     "reviewer_block_classified_as_node_local",
@@ -132,6 +134,14 @@ HAZARD_EXPECTED_FAILURES = {
     "optimized_transaction_without_hash_check": "optimized relay transaction skipped delivery, receipt, result-return, role, or hash evidence",
     "optimized_ack_without_role_check": "optimized card ack consumption skipped ack validation, role check, or hash check",
     "optimized_ack_without_hash_check": "optimized card ack consumption skipped ack validation, role check, or hash check",
+    "valid_card_ack_file_present_role_event_blocked": "valid card ACK file was present but role event was blocked before Router consumed the ACK",
+    "valid_card_bundle_ack_file_present_role_event_blocked": "valid card ACK file was present but role event was blocked before Router consumed the ACK",
+    "pre_event_ack_auto_consumed_without_validation": "pre-event card ACK consumption skipped validation or did not resolve ledger before accepting role event",
+    "pre_event_invalid_ack_accepted_role_event": "pre-event ACK reconciliation accepted a role event after an invalid or incomplete ACK",
+    "pre_event_incomplete_bundle_ack_accepted_role_event": "pre-event ACK reconciliation accepted a role event after an invalid or incomplete ACK",
+    "pre_event_ack_cleared_role_wait_authority": "pre-event ACK reconciliation cleared the role event wait authority",
+    "pre_event_ack_wrote_duplicate_completed_return": "pre-event ACK reconciliation wrote duplicate completed-return records",
+    "pre_event_ack_selected_wrong_pending_return": "pre-event ACK reconciliation consumed a non-matching pending return",
     "pending_wait_reconciled_from_chat": "pending wait reconciliation used chat or history instead of durable packet state",
     "pending_wait_reconciled_without_status_packet": "pending wait reconciliation skipped packet ledger, status packet, role, or hash evidence",
     "role_work_result_routed_to_reviewer": "PM role-work result did not route back to project_manager",
@@ -188,6 +198,15 @@ def _state_id(state: model.State) -> str:
         f"repair_flow={state.child_skill_gate_repair_flow_started},"
         f"{state.child_skill_gate_pm_rewrote_after_block},"
         f"ack={state.card_ack_consumed},{state.semantic_gate_wait_exposed_after_ack},"
+        f"pre_event_ack={state.pending_card_return_kind},"
+        f"{state.pending_card_return_ack_file_present},{state.pending_card_return_ack_valid},"
+        f"{state.pending_card_return_ack_role_checked},{state.pending_card_return_ack_hash_checked},"
+        f"{state.pending_card_return_bundle_receipts_complete},{state.card_return_ledger_resolved},"
+        f"{state.role_event_arrived_while_ack_pending},{state.pre_event_card_ack_auto_consumed},"
+        f"{state.role_event_blocked_by_unresolved_card_return},"
+        f"{state.pre_event_role_wait_authority_present},{state.pre_event_role_wait_authority_preserved},"
+        f"{state.role_event_accepted_after_pre_event_ack},"
+        f"{state.pre_event_ack_selected_matching_pending_return},{state.duplicate_completed_return_written},"
         f"block={state.gate_outcome_block_active},{state.gate_outcome_block_gate_key},"
         f"pass={state.gate_outcome_pass_recorded},{state.gate_outcome_pass_gate_key},"
         f"same_gen={state.gate_outcome_same_generation},"

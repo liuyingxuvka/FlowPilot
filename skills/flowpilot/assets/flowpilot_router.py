@@ -4130,6 +4130,8 @@ def _pending_card_return_ack_exists(project_root: Path, pending_action: object) 
     if not isinstance(pending_action, dict) or pending_action.get("action_type") not in {
         "await_card_return_event",
         "await_card_bundle_return_event",
+        "check_card_return_event",
+        "check_card_bundle_return_event",
         "deliver_system_card",
         "deliver_system_card_bundle",
     }:
@@ -21760,6 +21762,90 @@ def _pending_action_matches_card_return(pending_action: object, pending_return: 
     )
 
 
+def _preconsume_pending_card_return_ack_before_external_event(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+) -> dict[str, Any]:
+    pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
+    if not pending_returns:
+        return {"consumed": False, "reason": "no_pending_card_return"}
+    pending_return = pending_returns[0]
+    action = _next_pending_card_return_action(project_root, run_state, run_root)
+    if not isinstance(action, dict):
+        return {"consumed": False, "reason": "no_pending_card_return_action"}
+    if action.get("action_type") not in {"check_card_return_event", "check_card_bundle_return_event"}:
+        return {"consumed": False, "reason": "pending_ack_not_ready_for_pre_event_check"}
+    if not _pending_card_return_ack_exists(project_root, action):
+        return {"consumed": False, "reason": "pending_ack_file_missing"}
+
+    auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, action)
+    result = auto_ack.get("result") if isinstance(auto_ack.get("result"), dict) else {}
+    if auto_ack.get("consumed") and result.get("status") == "resolved":
+        current_pending = run_state.get("pending_action")
+        pending_action_cleared = False
+        if _pending_action_matches_card_return(current_pending, pending_return):
+            run_state["pending_action"] = None
+            pending_action_cleared = True
+        append_history(
+            run_state,
+            "router_pre_consumed_card_return_ack_before_external_event",
+            {
+                "event": event,
+                "action_type": action.get("action_type"),
+                "card_return_event": action.get("card_return_event"),
+                "expected_return_path": action.get("expected_return_path"),
+                "status": result.get("status"),
+                "pending_action_cleared": pending_action_cleared,
+            },
+        )
+        _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_pre_consumed_card_return_ack")
+        _sync_derived_run_views(
+            project_root,
+            run_root,
+            run_state,
+            reason="after_router_pre_consumed_card_return_ack",
+            update_display=True,
+        )
+        save_run_state(run_root, run_state)
+        return {"consumed": True, "result": result}
+
+    if auto_ack.get("consumed"):
+        append_history(
+            run_state,
+            "router_pre_event_card_return_ack_did_not_resolve",
+            {
+                "event": event,
+                "action_type": action.get("action_type"),
+                "card_return_event": action.get("card_return_event"),
+                "expected_return_path": action.get("expected_return_path"),
+                "status": result.get("status"),
+            },
+        )
+        save_run_state(run_root, run_state)
+        return {"consumed": False, "reason": "ack_did_not_resolve", "result": result}
+
+    if auto_ack.get("preserve_pending"):
+        return auto_ack
+
+    append_history(
+        run_state,
+        "router_deferred_invalid_card_ack_before_external_event",
+        {
+            "event": event,
+            "action_type": action.get("action_type"),
+            "card_return_event": action.get("card_return_event"),
+            "expected_return_path": action.get("expected_return_path"),
+            "reason": auto_ack.get("reason"),
+            "error": auto_ack.get("error"),
+        },
+    )
+    save_run_state(run_root, run_state)
+    return auto_ack
+
+
 def _record_card_return_event_from_external_entrypoint(project_root: Path, event: str) -> dict[str, Any]:
     del project_root
     raise RouterError(
@@ -22783,6 +22869,12 @@ def _record_external_event_unchecked(
             "role_recovery_requested": True,
             "role_recovery_transaction": transaction,
         }
+    _preconsume_pending_card_return_ack_before_external_event(
+        project_root,
+        run_root,
+        run_state,
+        event=event,
+    )
     pending_card_return = _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event)
     if pending_card_return is not None:
         raise RouterError(

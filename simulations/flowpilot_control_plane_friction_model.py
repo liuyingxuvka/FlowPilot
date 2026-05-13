@@ -47,7 +47,9 @@ Risk intent brief:
   evidence, and require the same review class to recheck before continuation;
   route mutations record why the current node cannot contain the repair and
   reopen route checks; optimized ack consumption validates exact ack, role, and
-  hash; pending waits reconcile only from durable packet/status evidence;
+  hash; a valid direct ACK file that already exists is consumed before a later
+  role event is blocked as an unresolved card return; pending waits reconcile
+  only from durable packet/status evidence;
   user-facing status summaries remain metadata-only and blocker-consistent;
   PM role-work and current-node worker results return to PM before formal
   reviewer gates; role memory is an index, never an approval authority; and a
@@ -205,6 +207,21 @@ class State:
     card_ack_validated: bool = False
     card_ack_role_checked: bool = False
     card_ack_hash_checked: bool = False
+    pending_card_return_kind: str = "none"  # none | system_card | system_card_bundle
+    pending_card_return_ack_file_present: bool = False
+    pending_card_return_ack_valid: bool = False
+    pending_card_return_ack_role_checked: bool = False
+    pending_card_return_ack_hash_checked: bool = False
+    pending_card_return_bundle_receipts_complete: bool = True
+    card_return_ledger_resolved: bool = False
+    role_event_arrived_while_ack_pending: bool = False
+    pre_event_card_ack_auto_consumed: bool = False
+    role_event_blocked_by_unresolved_card_return: bool = False
+    pre_event_role_wait_authority_present: bool = True
+    pre_event_role_wait_authority_preserved: bool = True
+    role_event_accepted_after_pre_event_ack: bool = False
+    pre_event_ack_selected_matching_pending_return: bool = True
+    duplicate_completed_return_written: bool = False
     pending_wait_reconciled: bool = False
     pending_wait_reconciliation_uses_packet_ledger: bool = False
     pending_wait_reconciliation_uses_status_packet: bool = False
@@ -622,6 +639,73 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 holder="project_manager",
                 child_skill_gate_pm_rewrote_after_block=True,
+            ),
+        )
+        return
+
+    if (
+        state.child_skill_gate_pm_rewrote_after_block
+        and not state.card_ack_consumed
+        and not state.role_event_arrived_while_ack_pending
+    ):
+        yield Transition(
+            "role_event_arrives_after_valid_card_ack_before_ledger_resolved",
+            _inc(
+                state,
+                holder="router",
+                pending_card_return_kind="system_card_bundle",
+                pending_card_return_ack_file_present=True,
+                pending_card_return_ack_valid=True,
+                pending_card_return_ack_role_checked=True,
+                pending_card_return_ack_hash_checked=True,
+                pending_card_return_bundle_receipts_complete=True,
+                card_return_ledger_resolved=False,
+                role_event_arrived_while_ack_pending=True,
+                role_event_blocked_by_unresolved_card_return=False,
+                pre_event_role_wait_authority_present=True,
+                pre_event_role_wait_authority_preserved=True,
+                role_event_accepted_after_pre_event_ack=False,
+                pre_event_ack_selected_matching_pending_return=True,
+                duplicate_completed_return_written=False,
+            ),
+        )
+        yield Transition(
+            "router_consumes_gate_card_ack_and_preserves_semantic_wait",
+            _inc(
+                state,
+                holder="controller",
+                pending_card_return_kind="system_card",
+                pending_card_return_ack_file_present=True,
+                pending_card_return_ack_valid=True,
+                pending_card_return_ack_role_checked=True,
+                pending_card_return_ack_hash_checked=True,
+                pending_card_return_bundle_receipts_complete=True,
+                card_return_ledger_resolved=True,
+                card_ack_consumed=True,
+                semantic_gate_wait_exposed_after_ack=True,
+            ),
+        )
+        return
+
+    if (
+        state.role_event_arrived_while_ack_pending
+        and state.pending_card_return_ack_file_present
+        and not state.pre_event_card_ack_auto_consumed
+    ):
+        yield Transition(
+            "router_pre_consumes_valid_card_ack_before_role_event",
+            _inc(
+                state,
+                holder="router",
+                pre_event_card_ack_auto_consumed=True,
+                card_return_ledger_resolved=True,
+                card_ack_consumed=True,
+                semantic_gate_wait_exposed_after_ack=True,
+                role_event_blocked_by_unresolved_card_return=False,
+                pre_event_role_wait_authority_preserved=True,
+                role_event_accepted_after_pre_event_ack=True,
+                pre_event_ack_selected_matching_pending_return=True,
+                duplicate_completed_return_written=False,
             ),
         )
         return
@@ -1258,6 +1342,83 @@ def optimized_ack_consumption_validates_receipt(state: State, trace) -> Invarian
     return InvariantResult.pass_()
 
 
+def valid_card_ack_file_precedes_unresolved_role_event_block(state: State, trace) -> InvariantResult:
+    del trace
+    valid_ack_file_exists = (
+        state.pending_card_return_ack_file_present
+        and state.pending_card_return_ack_valid
+        and state.pending_card_return_ack_role_checked
+        and state.pending_card_return_ack_hash_checked
+        and state.pending_card_return_bundle_receipts_complete
+    )
+    if (
+        state.role_event_arrived_while_ack_pending
+        and valid_ack_file_exists
+        and state.role_event_blocked_by_unresolved_card_return
+        and not state.pre_event_card_ack_auto_consumed
+    ):
+        return InvariantResult.fail(
+            "valid card ACK file was present but role event was blocked before Router consumed the ACK"
+        )
+    if (
+        state.role_event_arrived_while_ack_pending
+        and state.pre_event_card_ack_auto_consumed
+        and not (
+            valid_ack_file_exists
+            and state.card_return_ledger_resolved
+            and state.card_ack_consumed
+            and not state.role_event_blocked_by_unresolved_card_return
+        )
+    ):
+        return InvariantResult.fail(
+            "pre-event card ACK consumption skipped validation or did not resolve ledger before accepting role event"
+        )
+    return InvariantResult.pass_()
+
+
+def pre_event_ack_rejects_invalid_or_incomplete_ack(state: State, trace) -> InvariantResult:
+    del trace
+    invalid_or_incomplete_ack = (
+        state.pending_card_return_ack_file_present
+        and (
+            not state.pending_card_return_ack_valid
+            or not state.pending_card_return_ack_role_checked
+            or not state.pending_card_return_ack_hash_checked
+            or not state.pending_card_return_bundle_receipts_complete
+        )
+    )
+    if (
+        state.role_event_arrived_while_ack_pending
+        and invalid_or_incomplete_ack
+        and state.role_event_accepted_after_pre_event_ack
+    ):
+        return InvariantResult.fail(
+            "pre-event ACK reconciliation accepted a role event after an invalid or incomplete ACK"
+        )
+    return InvariantResult.pass_()
+
+
+def pre_event_ack_preserves_role_wait_authority(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.role_event_arrived_while_ack_pending
+        and state.pre_event_card_ack_auto_consumed
+        and state.pre_event_role_wait_authority_present
+        and not state.pre_event_role_wait_authority_preserved
+    ):
+        return InvariantResult.fail("pre-event ACK reconciliation cleared the role event wait authority")
+    return InvariantResult.pass_()
+
+
+def pre_event_ack_consumption_is_single_matched_resolution(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pre_event_card_ack_auto_consumed and not state.pre_event_ack_selected_matching_pending_return:
+        return InvariantResult.fail("pre-event ACK reconciliation consumed a non-matching pending return")
+    if state.pre_event_card_ack_auto_consumed and state.duplicate_completed_return_written:
+        return InvariantResult.fail("pre-event ACK reconciliation wrote duplicate completed-return records")
+    return InvariantResult.pass_()
+
+
 def pending_wait_reconciliation_uses_durable_packet_state(state: State, trace) -> InvariantResult:
     del trace
     if state.pending_wait_reconciled and state.pending_wait_reconciliation_from_chat:
@@ -1562,6 +1723,26 @@ INVARIANTS = (
         predicate=optimized_ack_consumption_validates_receipt,
     ),
     Invariant(
+        name="valid_card_ack_file_precedes_unresolved_role_event_block",
+        description="A valid direct ACK already on disk is consumed before Router blocks a later role event for unresolved card return.",
+        predicate=valid_card_ack_file_precedes_unresolved_role_event_block,
+    ),
+    Invariant(
+        name="pre_event_ack_rejects_invalid_or_incomplete_ack",
+        description="Pre-event ACK reconciliation never accepts invalid, wrong-role, wrong-hash, or incomplete bundle ACKs.",
+        predicate=pre_event_ack_rejects_invalid_or_incomplete_ack,
+    ),
+    Invariant(
+        name="pre_event_ack_preserves_role_wait_authority",
+        description="Pre-event ACK reconciliation does not clear the unrelated role-event wait that authorizes the incoming event.",
+        predicate=pre_event_ack_preserves_role_wait_authority,
+    ),
+    Invariant(
+        name="pre_event_ack_consumption_is_single_matched_resolution",
+        description="Pre-event ACK reconciliation consumes only the matching pending return and remains idempotent.",
+        predicate=pre_event_ack_consumption_is_single_matched_resolution,
+    ),
+    Invariant(
         name="pending_wait_reconciliation_uses_durable_packet_state",
         description="Stale role waits reconcile only from durable packet ledger/status evidence.",
         predicate=pending_wait_reconciliation_uses_durable_packet_state,
@@ -1712,6 +1893,21 @@ def _safe_base(**changes: object) -> State:
             card_ack_validated=True,
             card_ack_role_checked=True,
             card_ack_hash_checked=True,
+            pending_card_return_kind="system_card",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=True,
+            role_event_arrived_while_ack_pending=False,
+            pre_event_card_ack_auto_consumed=True,
+            role_event_blocked_by_unresolved_card_return=False,
+            pre_event_role_wait_authority_present=True,
+            pre_event_role_wait_authority_preserved=True,
+            role_event_accepted_after_pre_event_ack=False,
+            pre_event_ack_selected_matching_pending_return=True,
+            duplicate_completed_return_written=False,
             pending_wait_reconciled=True,
             pending_wait_reconciliation_uses_packet_ledger=True,
             pending_wait_reconciliation_uses_status_packet=True,
@@ -2085,6 +2281,111 @@ def hazard_states() -> dict[str, State]:
             card_ack_validated=True,
             card_ack_role_checked=True,
             card_ack_hash_checked=False,
+        ),
+        "valid_card_ack_file_present_role_event_blocked": _safe_base(
+            pending_card_return_kind="system_card",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=False,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=False,
+            role_event_blocked_by_unresolved_card_return=True,
+        ),
+        "valid_card_bundle_ack_file_present_role_event_blocked": _safe_base(
+            pending_card_return_kind="system_card_bundle",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=False,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=False,
+            role_event_blocked_by_unresolved_card_return=True,
+        ),
+        "pre_event_ack_auto_consumed_without_validation": _safe_base(
+            pending_card_return_kind="system_card_bundle",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=False,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=True,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=True,
+            role_event_blocked_by_unresolved_card_return=False,
+        ),
+        "pre_event_invalid_ack_accepted_role_event": _safe_base(
+            pending_card_return_kind="system_card",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=False,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=False,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=False,
+            role_event_blocked_by_unresolved_card_return=False,
+            role_event_accepted_after_pre_event_ack=True,
+        ),
+        "pre_event_incomplete_bundle_ack_accepted_role_event": _safe_base(
+            pending_card_return_kind="system_card_bundle",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=False,
+            card_return_ledger_resolved=False,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=False,
+            role_event_blocked_by_unresolved_card_return=False,
+            role_event_accepted_after_pre_event_ack=True,
+        ),
+        "pre_event_ack_cleared_role_wait_authority": _safe_base(
+            pending_card_return_kind="system_card_bundle",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=True,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=True,
+            card_ack_consumed=True,
+            role_event_blocked_by_unresolved_card_return=False,
+            pre_event_role_wait_authority_present=True,
+            pre_event_role_wait_authority_preserved=False,
+        ),
+        "pre_event_ack_wrote_duplicate_completed_return": _safe_base(
+            pending_card_return_kind="system_card_bundle",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=True,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=True,
+            card_ack_consumed=True,
+            role_event_blocked_by_unresolved_card_return=False,
+            duplicate_completed_return_written=True,
+        ),
+        "pre_event_ack_selected_wrong_pending_return": _safe_base(
+            pending_card_return_kind="system_card_bundle",
+            pending_card_return_ack_file_present=True,
+            pending_card_return_ack_valid=True,
+            pending_card_return_ack_role_checked=True,
+            pending_card_return_ack_hash_checked=True,
+            pending_card_return_bundle_receipts_complete=True,
+            card_return_ledger_resolved=True,
+            role_event_arrived_while_ack_pending=True,
+            pre_event_card_ack_auto_consumed=True,
+            card_ack_consumed=True,
+            role_event_blocked_by_unresolved_card_return=False,
+            pre_event_ack_selected_matching_pending_return=False,
         ),
         "pending_wait_reconciled_from_chat": _safe_base(
             pending_wait_reconciled=True,
@@ -2503,6 +2804,97 @@ def _router_control_blocker_status_matches(router_state: object, project_root: P
                 }
             )
     return not mismatches, mismatches
+
+
+def _return_ledger_records(ledger: object) -> list[dict[str, object]]:
+    if not isinstance(ledger, dict):
+        return []
+    records: list[dict[str, object]] = []
+    for key in ("pending_returns", "completed_returns"):
+        values = ledger.get(key)
+        if not isinstance(values, list):
+            continue
+        for item in values:
+            if isinstance(item, dict):
+                records.append({**item, "_ledger_section": key})
+    return records
+
+
+def _ack_record_has_complete_receipts(record: dict[str, object]) -> bool:
+    receipt_count = int(record.get("receipt_ref_count") or 0)
+    member_card_ids = record.get("member_card_ids") or record.get("card_ids") or []
+    if record.get("return_kind") == "system_card_bundle" or record.get("card_bundle_id"):
+        return isinstance(member_card_ids, list) and bool(member_card_ids) and receipt_count >= len(member_card_ids)
+    return receipt_count >= 1
+
+
+def _ack_record_is_valid_direct_ack(project_root: Path, record: dict[str, object]) -> bool:
+    ack_path = record.get("ack_path")
+    if not isinstance(ack_path, str) or not ack_path:
+        return False
+    resolved = project_root / ack_path
+    return bool(
+        resolved.exists()
+        and record.get("ack_hash")
+        and record.get("direct_router_ack_token_hash")
+        and _ack_record_has_complete_receipts(record)
+    )
+
+
+def _audit_valid_ack_file_blocked_role_event(project_root: Path, run_root: Path) -> dict[str, object]:
+    ledger, ledger_error = _read_json(run_root / "return_event_ledger.json")
+    if ledger_error:
+        return {
+            "valid_ack_file_blocked_role_event": False,
+            "blocked_valid_ack_count": 0,
+            "samples": [],
+            "read_error": ledger_error,
+        }
+    records = _return_ledger_records(ledger)
+    samples: list[dict[str, object]] = []
+    for blocker_path in sorted((run_root / "control_blocks").glob("control-blocker-*.json")):
+        blocker, blocker_error = _read_json(blocker_path)
+        if not isinstance(blocker, dict):
+            continue
+        error_code = str(blocker.get("error_code") or "")
+        if not error_code.startswith("event_blocked_by_unresolved_card_return"):
+            continue
+        blocker_created = _parse_time(blocker.get("created_at"))
+        if blocker_created is None:
+            continue
+        for record in records:
+            event_name = str(record.get("card_return_event") or "")
+            if not event_name or event_name not in error_code:
+                continue
+            returned_at = _parse_time(record.get("returned_at"))
+            resolved_at = _parse_time(record.get("resolved_at") or record.get("checked_at"))
+            ack_was_pending_when_blocked = bool(
+                returned_at is not None
+                and returned_at <= blocker_created
+                and (resolved_at is None or resolved_at > blocker_created)
+            )
+            if not ack_was_pending_when_blocked or not _ack_record_is_valid_direct_ack(project_root, record):
+                continue
+            samples.append(
+                {
+                    "blocker_id": blocker.get("blocker_id"),
+                    "blocker_path": _rel_run_path(run_root, blocker_path),
+                    "originating_event": blocker.get("originating_event"),
+                    "error_code": error_code,
+                    "card_return_event": event_name,
+                    "return_kind": record.get("return_kind") or "system_card",
+                    "ack_path": record.get("ack_path"),
+                    "ack_returned_at": returned_at.isoformat(),
+                    "ledger_resolved_at": resolved_at.isoformat() if resolved_at else None,
+                    "blocker_created_at": blocker_created.isoformat(),
+                    "ledger_section": record.get("_ledger_section"),
+                }
+            )
+    return {
+        "valid_ack_file_blocked_role_event": bool(samples),
+        "blocked_valid_ack_count": len(samples),
+        "samples": samples,
+    }
 
 
 def _resolution_event_name(value: object) -> str | None:
@@ -3505,6 +3897,17 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             evidence={"mismatches": control_blocker_mismatches},
         )
 
+    pre_event_ack = _audit_valid_ack_file_blocked_role_event(root, run_root)
+    if pre_event_ack.get("valid_ack_file_blocked_role_event"):
+        _add_finding(
+            findings,
+            code="valid_card_ack_file_present_role_event_blocked",
+            severity="error",
+            summary="role event was blocked as an unresolved card return even though a valid direct ACK file was already present",
+            invariant="valid_card_ack_file_precedes_unresolved_role_event_block",
+            evidence=pre_event_ack,
+        )
+
     pm_repair_recorded, pm_repair_followup_matchable, pm_repair_followup_evidence = (
         _active_pm_repair_followup_event_matchable(router_state)
     )
@@ -3754,6 +4157,20 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         gate_outcome_clear_target_matches_pass_gate=bool(
             gate_lifecycle.get("gate_outcome_clear_target_matches_pass_gate")
         ),
+        pending_card_return_kind=(
+            str((pre_event_ack.get("samples") or [{}])[0].get("return_kind") or "none")
+            if pre_event_ack.get("valid_ack_file_blocked_role_event")
+            else "none"
+        ),
+        pending_card_return_ack_file_present=bool(pre_event_ack.get("valid_ack_file_blocked_role_event")),
+        pending_card_return_ack_valid=bool(pre_event_ack.get("valid_ack_file_blocked_role_event")),
+        pending_card_return_ack_role_checked=True,
+        pending_card_return_ack_hash_checked=True,
+        pending_card_return_bundle_receipts_complete=True,
+        card_return_ledger_resolved=not bool(pre_event_ack.get("valid_ack_file_blocked_role_event")),
+        role_event_arrived_while_ack_pending=bool(pre_event_ack.get("valid_ack_file_blocked_role_event")),
+        pre_event_card_ack_auto_consumed=False,
+        role_event_blocked_by_unresolved_card_return=bool(pre_event_ack.get("valid_ack_file_blocked_role_event")),
         terminal_continuation_cleanup_recorded=terminal_cleanup_recorded,
         terminal_host_automation_cleanup_proven=terminal_cleanup_proven,
         role_output_envelopes_recorded=role_output_envelope_count > 0,

@@ -1117,6 +1117,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.apply_startup_heartbeat_if_requested(root)
         return self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
+    def deliver_startup_fact_check_card_without_ack(self, root: Path) -> dict:
+        self.apply_startup_heartbeat_if_requested(root)
+        action = self.next_after_display_sync(root)
+        while action["action_type"] in {
+            "confirm_controller_core_boundary",
+            "check_prompt_manifest",
+            "write_startup_mechanical_audit",
+            "write_display_surface_status",
+        }:
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
+        return action
+
     def deliver_initial_pm_cards_and_user_intake(self, root: Path) -> None:
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
@@ -4129,6 +4144,235 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "pm_issues_material_and_capability_scan_packets",
             )
         )
+
+    def test_record_external_event_preconsumes_valid_card_ack_before_blocking(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        open_result = card_runtime.open_card(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+        )
+        card_runtime.submit_card_ack(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+            receipt_paths=[str(open_result["read_receipt_path"])],
+        )
+
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertTrue(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["startup_fact_reported"])
+        self.assertIn(
+            "router_pre_consumed_card_return_ack_before_external_event",
+            [item.get("label") for item in state["history"] if isinstance(item, dict)],
+        )
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        pending = return_ledger["pending_returns"][0]
+        self.assertEqual(pending["status"], "resolved")
+        completed = [
+            item for item in return_ledger["completed_returns"]
+            if item.get("delivery_attempt_id") == action.get("delivery_attempt_id")
+        ]
+        self.assertEqual(len(completed), 1)
+
+    def test_record_external_event_preconsumes_valid_card_bundle_ack_and_preserves_role_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.deliver_startup_fact_check_card(root)
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "check_prompt_manifest")
+        router.apply_action(root, "check_prompt_manifest")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
+
+        opened = card_runtime.open_card_bundle(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+        )
+        card_runtime.submit_card_bundle_ack(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+            receipt_paths=[str(path) for path in opened["read_receipt_paths"]],
+        )
+
+        envelope = self.role_report_envelope(
+            root,
+            "startup/reviewer_startup_fact_report",
+            self.startup_fact_report_body(root),
+        )
+        result = router.record_external_event(root, "reviewer_reports_startup_facts", envelope)
+        self.assertTrue(result["ok"])
+
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_completed = [
+            item for item in return_ledger["completed_returns"]
+            if item.get("return_kind") == "system_card_bundle"
+            and item.get("card_bundle_id") == action.get("card_bundle_id")
+        ]
+        self.assertEqual(len(bundle_completed), 1)
+        bundle_pending = [
+            item for item in return_ledger["pending_returns"]
+            if item.get("return_kind") == "system_card_bundle"
+            and item.get("card_bundle_id") == action.get("card_bundle_id")
+        ][0]
+        self.assertEqual(bundle_pending["status"], "resolved")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["startup_fact_reported"])
+
+        duplicate = router.record_external_event(root, "reviewer_reports_startup_facts", envelope)
+        self.assertTrue(duplicate["already_recorded"])
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_completed = [
+            item for item in return_ledger["completed_returns"]
+            if item.get("return_kind") == "system_card_bundle"
+            and item.get("card_bundle_id") == action.get("card_bundle_id")
+        ]
+        self.assertEqual(len(bundle_completed), 1)
+
+    def test_record_external_event_does_not_preconsume_invalid_card_ack(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        open_result = card_runtime.open_card(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+        )
+        card_runtime.submit_card_ack(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+            receipt_paths=[str(open_result["read_receipt_path"])],
+        )
+        ack_path = root / action["expected_return_path"]
+        ack = read_json(ack_path)
+        ack["role_key"] = "project_manager"
+        ack["ack_hash"] = card_runtime.stable_json_hash(ack)
+        router.write_json(ack_path, ack)
+
+        with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                self.role_report_envelope(
+                    root,
+                    "startup/reviewer_startup_fact_report",
+                    self.startup_fact_report_body(root),
+                ),
+            )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_fact_reported"])
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        self.assertNotEqual(return_ledger["pending_returns"][0].get("status"), "resolved")
+
+    def test_record_external_event_does_not_preconsume_incomplete_bundle_ack(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.deliver_startup_fact_check_card(root)
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "check_prompt_manifest")
+        router.apply_action(root, "check_prompt_manifest")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
+
+        role = str(action["to_role"])
+        agent_id = str(action["target_agent_id"])
+        opened = card_runtime.open_card_bundle(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+        )
+        envelope_path = root / action["card_bundle_envelope_path"]
+        envelope = read_json(envelope_path)
+        receipt_refs = []
+        for receipt_path in opened["read_receipt_paths"][:-1]:
+            receipt = read_json(root / receipt_path)
+            receipt_refs.append(
+                {
+                    "receipt_path": receipt_path,
+                    "receipt_hash": receipt["receipt_hash"],
+                    "card_id": receipt["card_id"],
+                    "delivery_id": receipt["delivery_id"],
+                    "delivery_attempt_id": receipt["delivery_attempt_id"],
+                    "card_hash": receipt["card_hash"],
+                    "opened_at": receipt["opened_at"],
+                }
+            )
+        incomplete_ack = {
+            "schema_version": card_runtime.CARD_BUNDLE_ACK_ENVELOPE_SCHEMA,
+            "run_id": envelope["run_id"],
+            "resume_tick_id": envelope["resume_tick_id"],
+            "role_key": role,
+            "agent_id": agent_id,
+            "card_return_event": envelope["card_return_event"],
+            "status": "acknowledged",
+            "card_bundle_id": envelope["bundle_id"],
+            "card_bundle_envelope_path": action["card_bundle_envelope_path"],
+            "card_bundle_envelope_hash": card_runtime.stable_json_hash(envelope),
+            "ack_delivery_mode": "direct_to_router",
+            "submitted_to": "router",
+            "controller_ack_handoff_used": False,
+            "direct_router_ack_token": envelope["direct_router_ack_token"],
+            "direct_router_ack_token_hash": envelope["direct_router_ack_token_hash"],
+            "acknowledged_bundle": envelope["bundle_id"],
+            "acknowledged_envelopes": [envelope["bundle_id"]],
+            "member_card_ids": envelope["card_ids"][:-1],
+            "receipt_refs": receipt_refs,
+            "body_visibility": "ack_envelope_only",
+            "contains_card_body": False,
+            "runtime_validates_mechanics_only": True,
+            "semantic_understanding_validated": False,
+            "returned_at": card_runtime.utc_now(),
+        }
+        incomplete_ack["ack_hash"] = card_runtime.stable_json_hash(incomplete_ack)
+        router.write_json(root / action["expected_return_path"], incomplete_ack)
+
+        with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_startup_facts",
+                self.role_report_envelope(
+                    root,
+                    "startup/reviewer_startup_fact_report",
+                    self.startup_fact_report_body(root),
+                ),
+            )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_fact_reported"])
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_pending = [
+            item for item in return_ledger["pending_returns"]
+            if item.get("return_kind") == "system_card_bundle"
+            and item.get("card_bundle_id") == action.get("card_bundle_id")
+        ][0]
+        self.assertEqual(bundle_pending["status"], "bundle_ack_incomplete")
 
     def test_initial_pm_system_cards_are_delivered_as_same_role_bundle(self) -> None:
         root = self.make_project()

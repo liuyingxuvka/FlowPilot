@@ -9569,3 +9569,72 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - If the local active FlowPilot run is resumed, reconcile its existing material-scan phase-context audit finding separately from this route-skeleton optimization.
 - Keep the Product route check card/event marked as compatibility-only unless a future route explicitly opts into that extra review.
+
+## 2026-05-13 - Direct ACK Pre-Event Race Model Upgrade
+
+### Trigger
+- Investigated a live FlowPilot control-plane stop where a valid PM card-bundle ACK file existed before a reviewer role event, but Router still blocked the role event as an unresolved card return.
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+
+### Commands
+- OK: `python -m py_compile simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp\flowpilot_control_plane_friction_model_ack_preconsume.json`
+- EXPECTED_FINDING: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out tmp\flowpilot_control_plane_friction_live_ack_preconsume.json`
+
+### Findings
+- Added abstract state and hazards for direct card ACK files that are present and valid before a later role event reaches Router while the return ledger is still unresolved.
+- Added coverage for both single-card ACK and card-bundle ACK paths.
+- Added a guard against accepting a pre-event ACK without role/hash/bundle-receipt validation and without resolving the return ledger before processing the role event.
+- Added live audit projection that catches historical blockers where `ack_returned_at <= blocker_created_at < ledger_resolved_at`.
+
+### Live Evidence
+- Run `run-20260513-211725` produced `valid_card_ack_file_present_role_event_blocked`.
+- The PM card-bundle ACK was returned at `2026-05-13T23:28:08+02:00`.
+- Router blocker artifacts were created at `2026-05-13T23:28:25+02:00` and `2026-05-13T23:28:26+02:00`.
+- The return ledger was only resolved at `2026-05-13T23:35:02+02:00`.
+
+### Minimal Repair Direction
+- Move validated pending card-return ACK reconciliation into the Router event-ingress path before unresolved-card-return blocker creation.
+- Reuse the existing card ACK and card-bundle ACK validation rules before marking the return ledger resolved.
+- Preserve blocking behavior for missing, invalid, wrong-role, wrong-hash, or incomplete bundle ACKs.
+
+## 2026-05-13 - Direct ACK Pre-Event Repair Implementation
+
+### Trigger
+- Implemented the repair modeled above: Router now reconciles a valid direct card ACK before creating an unresolved-card-return blocker for a later normal role event.
+
+### Production Files
+- skills/flowpilot/assets/flowpilot_router.py
+- tests/test_flowpilot_router_runtime.py
+
+### Model and Planning Files
+- docs/direct_ack_pre_event_repair_plan.md
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+
+### Commands
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`
+- OK: targeted new router tests for valid single-card ACK, valid card-bundle ACK, invalid ACK rejection, and incomplete bundle ACK rejection.
+- OK: adjacent router card-return regression tests for committed system-card relay, PM card bundle delivery, and incomplete bundle recovery.
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py -q`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp\flowpilot_control_plane_friction_after_router_fix.json`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py`
+- OK: `python simulations\run_flowpilot_event_contract_checks.py --json-out tmp\flowpilot_event_contract_after_ack_preconsume.json`
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: background `python simulations\run_meta_checks.py`; stderr was empty, no `ok:false` markers were present, progress and loop/stuck reviews were OK with 622789 states and 642960 edges.
+
+### Findings
+- The first runtime test pass exposed that `_pending_card_return_ack_exists` did not recognize `check_card_return_event` or `check_card_bundle_return_event` actions. The helper was extended to include those action types before trusting the new ingress reconciliation.
+- Valid ACKs now resolve the return ledger before the incoming role event is evaluated for unresolved card-return blocking.
+- Invalid ACKs and incomplete bundle ACKs still preserve blocking behavior.
+- The implementation preserves unrelated role-event wait authority by clearing `pending_action` only when it matches the consumed card return.
+
+### Skipped Steps
+- No remote GitHub push was performed.
+- The default live audit still reports historical pre-fix local run artifacts; that is expected and does not represent the post-fix runtime path.
