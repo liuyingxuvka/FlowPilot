@@ -3731,6 +3731,7 @@ def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
         "delivered_cards": [],
         "delivered_mail": [],
         "events": [],
+        "quarantined_role_reports": [],
         "flags": {
             "controller_core_loaded": True,
             **RUNTIME_FLAG_DEFAULTS,
@@ -3767,6 +3768,7 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
     state.setdefault("resolved_control_blockers", [])
     state.setdefault("protocol_blockers", [])
     state.setdefault("gate_decisions", [])
+    state.setdefault("quarantined_role_reports", [])
     state.setdefault("active_control_blocker", None)
     state.setdefault("latest_control_blocker_path", None)
     state.setdefault("events", [])
@@ -21846,6 +21848,174 @@ def _preconsume_pending_card_return_ack_before_external_event(
     return auto_ack
 
 
+def _system_card_delivery_flag(card_id: object) -> str:
+    raw = str(card_id or "").strip()
+    if not raw:
+        return ""
+    for entry in SYSTEM_CARD_SEQUENCE:
+        if entry.get("card_id") == raw:
+            return str(entry.get("flag") or "")
+    return ""
+
+
+def _pending_return_card_delivery_flags(pending_return: dict[str, Any]) -> set[str]:
+    flags: set[str] = set()
+    if pending_return.get("return_kind") == "system_card_bundle":
+        raw_card_ids = pending_return.get("card_ids")
+        card_ids = raw_card_ids if isinstance(raw_card_ids, list) else []
+    else:
+        card_ids = [pending_return.get("card_id")]
+    for card_id in card_ids:
+        flag = _system_card_delivery_flag(card_id)
+        if flag:
+            flags.add(flag)
+    return flags
+
+
+def _role_list(value: object) -> set[str]:
+    return {part.strip() for part in str(value or "").split(",") if part.strip()}
+
+
+def _pending_card_return_matches_event_dependency(
+    pending_return: dict[str, Any],
+    event: str,
+    run_state: dict[str, Any],
+) -> bool:
+    expected_role = _record_event_expected_role(event, run_state)
+    target_role = str(pending_return.get("target_role") or "")
+    target_roles = _role_list(target_role)
+    expected_roles = _role_list(expected_role)
+    role_matches = any(
+        _record_event_from_role_matches(event, target, expected_role)
+        or _record_event_from_role_matches(event, expected, target_role)
+        for target in target_roles
+        for expected in (expected_roles or {expected_role})
+    )
+    if not role_matches:
+        return False
+    required_flag = str((EXTERNAL_EVENTS.get(event) or {}).get("requires_flag") or "")
+    if required_flag:
+        return required_flag in _pending_return_card_delivery_flags(pending_return)
+    return True
+
+
+def _next_quarantined_role_report_path(run_root: Path, event: str) -> Path:
+    quarantine_dir = run_root / "quarantined_role_reports"
+    safe_event = _safe_delivery_component(event)
+    index = 1
+    while True:
+        candidate = quarantine_dir / f"{safe_event}-{index:04d}.json"
+        if not candidate.exists():
+            return candidate
+        index += 1
+
+
+def _clear_stale_role_wait_for_quarantined_report(
+    run_state: dict[str, Any],
+    pending_return: dict[str, Any],
+    event: str,
+) -> str:
+    pending_action = run_state.get("pending_action")
+    if _pending_action_matches_card_return(pending_action, pending_return):
+        run_state["pending_action"] = None
+        return "matching_card_return_wait"
+    if isinstance(pending_action, dict) and pending_action.get("action_type") == "await_role_decision":
+        raw_allowed = pending_action.get("allowed_external_events")
+        if isinstance(raw_allowed, list) and event in raw_allowed:
+            run_state["pending_action"] = None
+            return "pre_ack_role_decision_wait"
+    return "not_cleared"
+
+
+def _quarantine_missing_ack_report_before_external_event(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    payload: dict[str, Any] | None,
+    envelope_path: str | None,
+    envelope_hash: str | None,
+    pending_return: dict[str, Any],
+) -> dict[str, Any] | None:
+    if not _pending_card_return_matches_event_dependency(pending_return, event, run_state):
+        return None
+
+    quarantine_path = _next_quarantined_role_report_path(run_root, event)
+    relative_quarantine_path = project_relative(project_root, quarantine_path)
+    expected_role = _record_event_expected_role(event, run_state)
+    report_payload = payload or {}
+    payload_hash = _stable_identity_hash(report_payload)
+    record = {
+        "schema_version": "flowpilot.quarantined_role_report.v1",
+        "status": "quarantined_audit_only",
+        "reason": "missing_valid_card_ack_before_report",
+        "event": event,
+        "expected_role": expected_role,
+        "payload_hash": payload_hash,
+        "payload": report_payload,
+        "envelope_path": envelope_path,
+        "envelope_hash": envelope_hash,
+        "pending_return": {
+            "return_kind": pending_return.get("return_kind") or "system_card",
+            "card_return_event": pending_return.get("card_return_event"),
+            "target_role": pending_return.get("target_role"),
+            "target_agent_id": pending_return.get("target_agent_id"),
+            "card_id": pending_return.get("card_id"),
+            "card_ids": pending_return.get("card_ids") or [],
+            "delivery_attempt_id": pending_return.get("delivery_attempt_id"),
+            "delivery_attempt_ids": pending_return.get("delivery_attempt_ids") or [],
+            "card_bundle_id": pending_return.get("card_bundle_id"),
+            "expected_return_path": pending_return.get("expected_return_path"),
+            "status": pending_return.get("status"),
+        },
+        "recovery": {
+            "required_next_step": "same_role_opens_card_submits_ack_then_resubmits_fresh_report",
+            "old_report_may_be_used_as_acceptance_evidence": False,
+            "same_event_must_be_submitted_again_after_valid_ack": True,
+        },
+        "recorded_at": utc_now(),
+    }
+    write_json(quarantine_path, record)
+
+    pending_action_cleared = _clear_stale_role_wait_for_quarantined_report(run_state, pending_return, event)
+    next_action = _next_pending_card_return_action(project_root, run_state, run_root)
+    if isinstance(next_action, dict):
+        run_state["pending_action"] = next_action
+    summary = {
+        "event": event,
+        "quarantine_path": relative_quarantine_path,
+        "expected_role": expected_role,
+        "pending_card_return_event": pending_return.get("card_return_event"),
+        "expected_return_path": pending_return.get("expected_return_path"),
+        "pending_action_cleared": pending_action_cleared,
+        "next_action_type": next_action.get("action_type") if isinstance(next_action, dict) else None,
+    }
+    quarantined = run_state.setdefault("quarantined_role_reports", [])
+    if isinstance(quarantined, list):
+        quarantined.append(summary)
+    append_history(run_state, "router_quarantined_pre_ack_role_report_for_same_role_ack_recovery", summary)
+    _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_quarantined_pre_ack_role_report")
+    _sync_derived_run_views(
+        project_root,
+        run_root,
+        run_state,
+        reason="after_router_quarantined_pre_ack_role_report",
+        update_display=True,
+    )
+    save_run_state(run_root, run_state)
+    return {
+        "ok": False,
+        "event": event,
+        "waiting": True,
+        "recoverable": True,
+        "report_quarantined": True,
+        "quarantine_path": relative_quarantine_path,
+        "recovery": record["recovery"],
+        "next_required_action": next_action if isinstance(next_action, dict) else None,
+    }
+
+
 def _record_card_return_event_from_external_entrypoint(project_root: Path, event: str) -> dict[str, Any]:
     del project_root
     raise RouterError(
@@ -22877,6 +23047,18 @@ def _record_external_event_unchecked(
     )
     pending_card_return = _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event)
     if pending_card_return is not None:
+        recovered = _quarantine_missing_ack_report_before_external_event(
+            project_root,
+            run_root,
+            run_state,
+            event=event,
+            payload=payload,
+            envelope_path=envelope_path,
+            envelope_hash=envelope_hash,
+            pending_return=pending_card_return,
+        )
+        if recovered is not None:
+            return recovered
         raise RouterError(
             "event blocked by unresolved card return: "
             f"waiting for {pending_card_return.get('card_return_event')} "

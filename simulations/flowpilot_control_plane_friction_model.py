@@ -222,6 +222,17 @@ class State:
     role_event_accepted_after_pre_event_ack: bool = False
     pre_event_ack_selected_matching_pending_return: bool = True
     duplicate_completed_return_written: bool = False
+    missing_ack_report_arrived: bool = False
+    missing_ack_report_quarantined: bool = False
+    same_role_ack_recovery_requested: bool = False
+    missing_ack_report_event_flag_set: bool = False
+    quarantined_report_used_as_evidence: bool = False
+    old_pre_ack_report_revived: bool = False
+    report_submitted_after_valid_ack: bool = True
+    pending_return_dependency_matches_report: bool = True
+    missing_ack_generic_pm_blocker_created: bool = False
+    repeated_ack_recovery_failed: bool = False
+    pm_escalated_after_repeated_ack_failure: bool = False
     pending_wait_reconciled: bool = False
     pending_wait_reconciliation_uses_packet_ledger: bool = False
     pending_wait_reconciliation_uses_status_packet: bool = False
@@ -670,6 +681,31 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         yield Transition(
+            "role_event_arrives_before_missing_card_ack",
+            _inc(
+                state,
+                holder="router",
+                pending_card_return_kind="system_card",
+                pending_card_return_ack_file_present=False,
+                pending_card_return_ack_valid=False,
+                pending_card_return_ack_role_checked=False,
+                pending_card_return_ack_hash_checked=False,
+                pending_card_return_bundle_receipts_complete=True,
+                card_return_ledger_resolved=False,
+                role_event_arrived_while_ack_pending=True,
+                role_event_blocked_by_unresolved_card_return=False,
+                pending_return_dependency_matches_report=True,
+                missing_ack_report_arrived=True,
+                missing_ack_report_quarantined=False,
+                same_role_ack_recovery_requested=False,
+                missing_ack_report_event_flag_set=False,
+                quarantined_report_used_as_evidence=False,
+                old_pre_ack_report_revived=False,
+                report_submitted_after_valid_ack=False,
+                missing_ack_generic_pm_blocker_created=False,
+            ),
+        )
+        yield Transition(
             "router_consumes_gate_card_ack_and_preserves_semantic_wait",
             _inc(
                 state,
@@ -683,6 +719,66 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 card_return_ledger_resolved=True,
                 card_ack_consumed=True,
                 semantic_gate_wait_exposed_after_ack=True,
+            ),
+        )
+        return
+
+    if (
+        state.missing_ack_report_arrived
+        and not state.missing_ack_report_quarantined
+        and state.pending_return_dependency_matches_report
+    ):
+        yield Transition(
+            "router_quarantines_pre_ack_report_and_requests_same_role_ack_recovery",
+            _inc(
+                state,
+                holder="router",
+                missing_ack_report_quarantined=True,
+                same_role_ack_recovery_requested=True,
+                missing_ack_report_event_flag_set=False,
+                missing_ack_generic_pm_blocker_created=False,
+                role_event_blocked_by_unresolved_card_return=False,
+            ),
+        )
+        return
+
+    if (
+        state.missing_ack_report_quarantined
+        and state.same_role_ack_recovery_requested
+        and not state.card_return_ledger_resolved
+    ):
+        yield Transition(
+            "same_role_reads_card_and_submits_valid_ack_after_quarantine",
+            _inc(
+                state,
+                holder="router",
+                pending_card_return_ack_file_present=True,
+                pending_card_return_ack_valid=True,
+                pending_card_return_ack_role_checked=True,
+                pending_card_return_ack_hash_checked=True,
+                pending_card_return_bundle_receipts_complete=True,
+                card_return_ledger_resolved=True,
+                card_ack_consumed=True,
+                semantic_gate_wait_exposed_after_ack=True,
+            ),
+        )
+        return
+
+    if (
+        state.missing_ack_report_quarantined
+        and state.card_return_ledger_resolved
+        and state.card_ack_consumed
+        and not state.role_event_accepted_after_pre_event_ack
+    ):
+        yield Transition(
+            "same_role_resubmits_fresh_report_after_valid_ack",
+            _inc(
+                state,
+                holder="router",
+                role_event_accepted_after_pre_event_ack=True,
+                report_submitted_after_valid_ack=True,
+                old_pre_ack_report_revived=False,
+                missing_ack_report_event_flag_set=True,
             ),
         )
         return
@@ -1419,6 +1515,72 @@ def pre_event_ack_consumption_is_single_matched_resolution(state: State, trace) 
     return InvariantResult.pass_()
 
 
+def missing_ack_report_must_quarantine_and_recover(state: State, trace) -> InvariantResult:
+    del trace
+    ack_missing = state.missing_ack_report_arrived and not state.pending_card_return_ack_file_present
+    if ack_missing and state.missing_ack_report_event_flag_set:
+        return InvariantResult.fail("missing-ACK report was accepted before the card ACK existed")
+    if (
+        state.missing_ack_report_arrived
+        and state.pending_return_dependency_matches_report
+        and state.same_role_ack_recovery_requested
+        and not state.missing_ack_report_quarantined
+    ):
+        return InvariantResult.fail("missing-ACK report recovery requested reread without quarantining the premature report")
+    return InvariantResult.pass_()
+
+
+def quarantined_report_is_audit_only(state: State, trace) -> InvariantResult:
+    del trace
+    if state.missing_ack_report_quarantined and state.quarantined_report_used_as_evidence:
+        return InvariantResult.fail("quarantined pre-ACK report was used as acceptance evidence")
+    if state.missing_ack_report_quarantined and state.old_pre_ack_report_revived:
+        return InvariantResult.fail("old pre-ACK report was revived after ACK instead of requiring a fresh report")
+    return InvariantResult.pass_()
+
+
+def accepted_report_must_follow_valid_ack(state: State, trace) -> InvariantResult:
+    del trace
+    if state.role_event_accepted_after_pre_event_ack and not (
+        state.card_return_ledger_resolved
+        and state.card_ack_consumed
+        and state.report_submitted_after_valid_ack
+        and not state.old_pre_ack_report_revived
+    ):
+        return InvariantResult.fail("accepted report did not follow a valid resolved card ACK")
+    return InvariantResult.pass_()
+
+
+def recoverable_missing_ack_uses_same_role_recovery_first(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.missing_ack_report_arrived
+        and state.pending_return_dependency_matches_report
+        and not state.repeated_ack_recovery_failed
+        and state.missing_ack_generic_pm_blocker_created
+    ):
+        return InvariantResult.fail("first recoverable missing-ACK report escalated to a generic PM/control blocker")
+    if (
+        state.missing_ack_report_arrived
+        and state.pending_return_dependency_matches_report
+        and state.repeated_ack_recovery_failed
+        and not state.pm_escalated_after_repeated_ack_failure
+    ):
+        return InvariantResult.fail("repeated missing-ACK recovery failure did not escalate to PM")
+    return InvariantResult.pass_()
+
+
+def missing_ack_recovery_is_dependency_scoped(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.missing_ack_report_arrived
+        and not state.pending_return_dependency_matches_report
+        and state.missing_ack_report_quarantined
+    ):
+        return InvariantResult.fail("unrelated pending card return quarantined a report with no matching dependency")
+    return InvariantResult.pass_()
+
+
 def pending_wait_reconciliation_uses_durable_packet_state(state: State, trace) -> InvariantResult:
     del trace
     if state.pending_wait_reconciled and state.pending_wait_reconciliation_from_chat:
@@ -1743,6 +1905,31 @@ INVARIANTS = (
         predicate=pre_event_ack_consumption_is_single_matched_resolution,
     ),
     Invariant(
+        name="missing_ack_report_must_quarantine_and_recover",
+        description="A report that arrives before its required card ACK is quarantined and routed to same-role ACK recovery.",
+        predicate=missing_ack_report_must_quarantine_and_recover,
+    ),
+    Invariant(
+        name="quarantined_report_is_audit_only",
+        description="A pre-ACK quarantined report cannot become acceptance evidence or be revived after ACK.",
+        predicate=quarantined_report_is_audit_only,
+    ),
+    Invariant(
+        name="accepted_report_must_follow_valid_ack",
+        description="Accepted reports after a missing-ACK recovery must be fresh submissions after a valid ACK is resolved.",
+        predicate=accepted_report_must_follow_valid_ack,
+    ),
+    Invariant(
+        name="recoverable_missing_ack_uses_same_role_recovery_first",
+        description="The first recoverable missing-ACK report uses same-role recovery before PM escalation.",
+        predicate=recoverable_missing_ack_uses_same_role_recovery_first,
+    ),
+    Invariant(
+        name="missing_ack_recovery_is_dependency_scoped",
+        description="Missing-ACK report quarantine applies only when the pending card return matches the reporting role dependency.",
+        predicate=missing_ack_recovery_is_dependency_scoped,
+    ),
+    Invariant(
         name="pending_wait_reconciliation_uses_durable_packet_state",
         description="Stale role waits reconcile only from durable packet ledger/status evidence.",
         predicate=pending_wait_reconciliation_uses_durable_packet_state,
@@ -1908,6 +2095,17 @@ def _safe_base(**changes: object) -> State:
             role_event_accepted_after_pre_event_ack=False,
             pre_event_ack_selected_matching_pending_return=True,
             duplicate_completed_return_written=False,
+            missing_ack_report_arrived=False,
+            missing_ack_report_quarantined=False,
+            same_role_ack_recovery_requested=False,
+            missing_ack_report_event_flag_set=False,
+            quarantined_report_used_as_evidence=False,
+            old_pre_ack_report_revived=False,
+            report_submitted_after_valid_ack=True,
+            pending_return_dependency_matches_report=True,
+            missing_ack_generic_pm_blocker_created=False,
+            repeated_ack_recovery_failed=False,
+            pm_escalated_after_repeated_ack_failure=False,
             pending_wait_reconciled=True,
             pending_wait_reconciliation_uses_packet_ledger=True,
             pending_wait_reconciliation_uses_status_packet=True,
@@ -2386,6 +2584,60 @@ def hazard_states() -> dict[str, State]:
             card_ack_consumed=True,
             role_event_blocked_by_unresolved_card_return=False,
             pre_event_ack_selected_matching_pending_return=False,
+        ),
+        "missing_ack_report_accepted_without_ack": _safe_base(
+            pending_card_return_ack_file_present=False,
+            card_return_ledger_resolved=False,
+            role_event_arrived_while_ack_pending=True,
+            missing_ack_report_arrived=True,
+            missing_ack_report_event_flag_set=True,
+            role_event_accepted_after_pre_event_ack=True,
+            report_submitted_after_valid_ack=False,
+        ),
+        "missing_ack_recovery_without_quarantine": _safe_base(
+            pending_card_return_ack_file_present=False,
+            card_return_ledger_resolved=False,
+            role_event_arrived_while_ack_pending=True,
+            missing_ack_report_arrived=True,
+            missing_ack_report_quarantined=False,
+            same_role_ack_recovery_requested=True,
+        ),
+        "quarantined_report_used_as_evidence": _safe_base(
+            missing_ack_report_arrived=True,
+            missing_ack_report_quarantined=True,
+            quarantined_report_used_as_evidence=True,
+        ),
+        "old_pre_ack_report_revived_after_ack": _safe_base(
+            missing_ack_report_arrived=True,
+            missing_ack_report_quarantined=True,
+            card_return_ledger_resolved=True,
+            card_ack_consumed=True,
+            role_event_accepted_after_pre_event_ack=True,
+            old_pre_ack_report_revived=True,
+            report_submitted_after_valid_ack=False,
+        ),
+        "first_missing_ack_escalated_to_pm_blocker": _safe_base(
+            pending_card_return_ack_file_present=False,
+            card_return_ledger_resolved=False,
+            missing_ack_report_arrived=True,
+            pending_return_dependency_matches_report=True,
+            repeated_ack_recovery_failed=False,
+            missing_ack_generic_pm_blocker_created=True,
+        ),
+        "unrelated_pending_ack_quarantined_report": _safe_base(
+            pending_card_return_ack_file_present=False,
+            card_return_ledger_resolved=False,
+            missing_ack_report_arrived=True,
+            missing_ack_report_quarantined=True,
+            pending_return_dependency_matches_report=False,
+        ),
+        "repeated_missing_ack_recovery_not_escalated": _safe_base(
+            pending_card_return_ack_file_present=False,
+            card_return_ledger_resolved=False,
+            missing_ack_report_arrived=True,
+            pending_return_dependency_matches_report=True,
+            repeated_ack_recovery_failed=True,
+            pm_escalated_after_repeated_ack_failure=False,
         ),
         "pending_wait_reconciled_from_chat": _safe_base(
             pending_wait_reconciled=True,

@@ -9638,3 +9638,38 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - No remote GitHub push was performed.
 - The default live audit still reports historical pre-fix local run artifacts; that is expected and does not represent the post-fix runtime path.
+
+## 2026-05-14 - Missing ACK Report Recovery Model and Repair
+
+### Trigger
+- Designed and implemented a safer recovery rule for role reports that arrive before their required system-card ACK exists or validates.
+
+### Production Files
+- skills/flowpilot/assets/flowpilot_router.py
+- tests/test_flowpilot_router_runtime.py
+
+### Model and Planning Files
+- docs/missing_ack_report_recovery_plan.md
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+
+### Commands
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py`
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp\flowpilot_control_plane_friction_missing_ack_after_code.json`
+- OK: targeted router tests for valid pre-event ACK reconciliation, missing same-role ACK report quarantine, fresh post-ACK resubmission, invalid same-role ACK quarantine, and unrelated incomplete bundle blocking.
+- OK: `python -m pytest tests\test_flowpilot_card_runtime.py -q`
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_role_output_runtime.py -q`
+- OK: `python simulations\run_flowpilot_event_contract_checks.py --json-out tmp\flowpilot_event_contract_missing_ack_recovery.json`
+- OK: `python simulations\run_flowpilot_card_envelope_checks.py`
+- OK: background `python simulations\run_meta_checks.py`; stderr was empty, progress and loop/stuck reviews were OK with 622789 states and 642960 edges.
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+- The upgraded control-plane model now catches seven bug classes: accepting a report before ACK, recovering without quarantine, using a quarantined report as evidence, reviving an old pre-ACK report, escalating the first recoverable case to generic PM blocking, quarantining unrelated pending ACKs, and failing to escalate repeated recovery failures.
+- Router now quarantines same-role, same-card-dependency reports that arrive before a valid ACK; the event is not recorded and its flag is not set.
+- The recovery action points back to the pending card-return path, requiring the role to open the card, submit a valid ACK, and resubmit a fresh report.
+- Unrelated pending card returns still use the existing unresolved-card-return blocker instead of being quarantined.
+
+### Skipped Steps
+- Full `tests\test_flowpilot_router_runtime.py` exceeded the local 5-minute command timeout, so verification used the new targeted router tests, adjacent runtime tests, FlowGuard checks, event-contract checks, card-envelope checks, meta checks, and install checks.
+- No remote GitHub push was performed.

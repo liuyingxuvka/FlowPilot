@@ -4249,7 +4249,91 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ]
         self.assertEqual(len(bundle_completed), 1)
 
-    def test_record_external_event_does_not_preconsume_invalid_card_ack(self) -> None:
+    def test_record_external_event_quarantines_missing_same_role_ack_report(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report_pre_ack",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["report_quarantined"])
+        self.assertTrue(result["recoverable"])
+        quarantine_path = root / result["quarantine_path"]
+        self.assertTrue(quarantine_path.exists())
+        quarantine = read_json(quarantine_path)
+        self.assertEqual(quarantine["status"], "quarantined_audit_only")
+        self.assertFalse(quarantine["recovery"]["old_report_may_be_used_as_acceptance_evidence"])
+        self.assertEqual(quarantine["pending_return"]["delivery_attempt_id"], action["delivery_attempt_id"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_fact_reported"])
+        self.assertIsNone(state.get("active_control_blocker"))
+        self.assertEqual(state["pending_action"]["action_type"], "await_card_return_event")
+        self.assertEqual(state["quarantined_role_reports"][0]["quarantine_path"], result["quarantine_path"])
+        self.assertIn(
+            "router_quarantined_pre_ack_role_report_for_same_role_ack_recovery",
+            [item.get("label") for item in state["history"] if isinstance(item, dict)],
+        )
+
+    def test_quarantined_pre_ack_report_requires_fresh_report_after_ack(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        quarantined = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report_pre_ack",
+                self.startup_fact_report_body(root),
+            ),
+        )
+        self.assertTrue(quarantined["report_quarantined"])
+
+        open_result = card_runtime.open_card(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+        )
+        card_runtime.submit_card_ack(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=str(action["to_role"]),
+            agent_id=str(action["target_agent_id"]),
+            receipt_paths=[str(open_result["read_receipt_path"])],
+        )
+        router.next_action(root)
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_fact_reported"])
+        self.assertEqual(len([item for item in state["events"] if item.get("event") == "reviewer_reports_startup_facts"]), 0)
+
+        accepted = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report_post_ack",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertTrue(accepted["ok"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["startup_fact_reported"])
+        self.assertEqual(len([item for item in state["events"] if item.get("event") == "reviewer_reports_startup_facts"]), 1)
+
+    def test_record_external_event_quarantines_invalid_same_role_card_ack_report(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
@@ -4273,19 +4357,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ack["ack_hash"] = card_runtime.stable_json_hash(ack)
         router.write_json(ack_path, ack)
 
-        with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
-            router.record_external_event(
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
                 root,
-                "reviewer_reports_startup_facts",
-                self.role_report_envelope(
-                    root,
-                    "startup/reviewer_startup_fact_report",
-                    self.startup_fact_report_body(root),
-                ),
-            )
+                "startup/reviewer_startup_fact_report",
+                self.startup_fact_report_body(root),
+            ),
+        )
 
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["report_quarantined"])
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["startup_fact_reported"])
+        self.assertEqual(state["pending_action"]["action_type"], "check_card_return_event")
         return_ledger = read_json(run_root / "return_event_ledger.json")
         self.assertNotEqual(return_ledger["pending_returns"][0].get("status"), "resolved")
 
@@ -4366,6 +4452,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["startup_fact_reported"])
+        self.assertEqual(state.get("quarantined_role_reports"), [])
         return_ledger = read_json(run_root / "return_event_ledger.json")
         bundle_pending = [
             item for item in return_ledger["pending_returns"]
