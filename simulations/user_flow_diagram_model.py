@@ -11,6 +11,12 @@ The user-visible display text must also be clean. Controller instructions,
 display-gate evidence rules, source/audit metadata, confirmation details, and
 other internal control-plane text belong in display packets or ledgers, not in
 the chat or Cockpit route sign body.
+
+Risk purpose: this FlowGuard model guards the shared chat/Cockpit route sign
+against stale or misleading display projections. Future agents should update
+and run it with `python simulations/run_user_flow_diagram_checks.py` before
+changing route-sign rendering, visible active-node projection, placeholder
+semantics, or repair-edge display behavior.
 """
 
 from __future__ import annotations
@@ -45,10 +51,21 @@ class State:
     cockpit_open: bool = False
     chat_display_required: bool = False
     return_edge_required: bool = False
+    canonical_route_available: bool = False
+    startup_placeholder: bool = False
+    shallow_route_projection: bool = False
     simplified_mermaid_generated: bool = False
     english_flowpilot_labels: bool = False
     raw_flowguard_graph_used: bool = False
     active_node_highlighted: bool = False
+    visible_active_graph_highlighted: bool = False
+    active_path_summary_contains_node: bool = False
+    graph_labels_surface_neutral: bool = False
+    status_text_embedded_in_graph_label: bool = False
+    hidden_leaf_detail_embedded_in_graph_label: bool = False
+    canonical_comment_says_placeholder: bool = False
+    startup_placeholder_repair_loop_visible: bool = False
+    descendant_state_aggregation_valid: bool = False
     return_edge_present: bool = False
     display_packet_written: bool = False
     display_packet_carries_internal_evidence: bool = False
@@ -112,6 +129,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     cockpit_open=cockpit_open,
                     chat_display_required=trigger_requires_chat(trigger, cockpit_open),
                     return_edge_required=trigger_requires_return_edge(trigger),
+                    canonical_route_available=trigger != "startup",
+                    startup_placeholder=trigger == "startup",
+                    shallow_route_projection=trigger != "startup",
                 ),
             )
         return
@@ -123,6 +143,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 simplified_mermaid_generated=True,
                 english_flowpilot_labels=True,
                 active_node_highlighted=True,
+                visible_active_graph_highlighted=True,
+                active_path_summary_contains_node=True,
+                graph_labels_surface_neutral=True,
+                descendant_state_aggregation_valid=True,
                 display_packet_written=True,
                 display_packet_carries_internal_evidence=True,
                 user_visible_display_text_clean=True,
@@ -177,6 +201,52 @@ def invariant_failures(state: State) -> list[str]:
     if state.display_trigger in DISPLAY_TRIGGERS and state.raw_flowguard_graph_used:
         failures.append("raw FlowGuard Mermaid was used as the user-facing route sign")
     if (
+        state.canonical_route_available
+        and state.simplified_mermaid_generated
+        and state.canonical_comment_says_placeholder
+    ):
+        failures.append("canonical route sign was labeled as a temporary placeholder")
+    if (
+        state.startup_placeholder
+        and state.simplified_mermaid_generated
+        and state.startup_placeholder_repair_loop_visible
+        and not state.return_edge_required
+    ):
+        failures.append("startup placeholder displayed a default repair loop")
+    if state.simplified_mermaid_generated:
+        if not state.graph_labels_surface_neutral:
+            failures.append("shared route graph labels were not surface-neutral")
+        if state.status_text_embedded_in_graph_label:
+            failures.append("shared route graph labels embedded status text")
+        if state.hidden_leaf_detail_embedded_in_graph_label:
+            failures.append("shared route graph labels embedded hidden leaf detail")
+    if (
+        state.canonical_route_available
+        and state.shallow_route_projection
+        and state.simplified_mermaid_generated
+        and not state.descendant_state_aggregation_valid
+    ):
+        failures.append("shallow route projection did not aggregate descendant state")
+    if (
+        state.canonical_route_available
+        and state.shallow_route_projection
+        and (
+            state.chat_mermaid_displayed
+            or state.cockpit_route_sign_displayed
+            or state.reviewer_passed
+            or state.node_work_started
+            or state.node_advanced
+        )
+        and not state.visible_active_graph_highlighted
+    ):
+        failures.append("hidden active node had no highlighted visible graph ancestor")
+    if (
+        state.active_path_summary_contains_node
+        and not state.visible_active_graph_highlighted
+        and (state.reviewer_passed or state.node_work_started or state.node_advanced)
+    ):
+        failures.append("active node visibility was satisfied by summary text only")
+    if (
         state.display_trigger in DISPLAY_TRIGGERS
         and not state.cockpit_open
         and not state.chat_display_required
@@ -229,9 +299,15 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="major_node_entry",
             chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -246,6 +322,7 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="startup",
             chat_display_required=True,
+            startup_placeholder=True,
             raw_flowguard_graph_used=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
@@ -262,9 +339,15 @@ def hazard_states() -> dict[str, State]:
             display_trigger="review_failure",
             chat_display_required=True,
             return_edge_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -280,9 +363,14 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="startup",
             chat_display_required=True,
+            startup_placeholder=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -296,8 +384,13 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="completion",
             chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -313,9 +406,14 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="startup",
             chat_display_required=True,
+            startup_placeholder=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -329,9 +427,15 @@ def hazard_states() -> dict[str, State]:
             display_trigger="major_node_entry",
             cockpit_open=False,
             chat_display_required=False,
+            canonical_route_available=True,
+            shallow_route_projection=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -346,9 +450,14 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="startup",
             chat_display_required=True,
+            startup_placeholder=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -366,9 +475,14 @@ def hazard_states() -> dict[str, State]:
             display_trigger="startup",
             cockpit_open=False,
             chat_display_required=True,
+            startup_placeholder=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -384,9 +498,14 @@ def hazard_states() -> dict[str, State]:
             current_node_resolved=True,
             display_trigger="startup",
             chat_display_required=True,
+            startup_placeholder=True,
             simplified_mermaid_generated=True,
             english_flowpilot_labels=True,
             active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
             display_packet_written=True,
             display_packet_carries_internal_evidence=True,
             router_display_text_returned=True,
@@ -398,6 +517,176 @@ def hazard_states() -> dict[str, State]:
             reviewer_checked_route_match=True,
             reviewer_passed=True,
             node_work_started=True,
+        ),
+        "hidden_active_leaf_no_visible_parent_highlight": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="leaf_node_entry",
+            chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            visible_active_graph_highlighted=False,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+        ),
+        "summary_only_active_visibility": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="major_node_entry",
+            chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+        ),
+        "graph_label_status_text": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="major_node_entry",
+            chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=False,
+            status_text_embedded_in_graph_label=True,
+            descendant_state_aggregation_valid=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+        ),
+        "graph_label_hidden_leaf_detail": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="leaf_node_entry",
+            chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=False,
+            hidden_leaf_detail_embedded_in_graph_label=True,
+            descendant_state_aggregation_valid=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+        ),
+        "canonical_placeholder_wording": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="major_node_entry",
+            chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            canonical_comment_says_placeholder=True,
+            descendant_state_aggregation_valid=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+        ),
+        "startup_placeholder_default_repair_loop": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="startup",
+            chat_display_required=True,
+            startup_placeholder=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            startup_placeholder_repair_loop_visible=True,
+            descendant_state_aggregation_valid=True,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
+        ),
+        "broken_descendant_state_aggregation": State(
+            route_frontier_loaded=True,
+            current_node_resolved=True,
+            display_trigger="major_node_entry",
+            chat_display_required=True,
+            canonical_route_available=True,
+            shallow_route_projection=True,
+            simplified_mermaid_generated=True,
+            english_flowpilot_labels=True,
+            active_node_highlighted=True,
+            visible_active_graph_highlighted=True,
+            active_path_summary_contains_node=True,
+            graph_labels_surface_neutral=True,
+            descendant_state_aggregation_valid=False,
+            display_packet_written=True,
+            display_packet_carries_internal_evidence=True,
+            router_display_text_returned=True,
+            user_visible_display_text_clean=True,
+            chat_mermaid_displayed=True,
+            reviewer_checked_display=True,
+            reviewer_checked_chat_surface=True,
+            reviewer_checked_route_match=True,
+            reviewer_passed=True,
         ),
     }
 

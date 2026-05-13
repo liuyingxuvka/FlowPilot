@@ -2,14 +2,13 @@
 
 ```mermaid
 flowchart LR
-  startup["Startup Gate"]
+  startup["Start & Scope"]
   product["Product Map"]
   modeling["FlowGuard Model"]
-  route["Route Plan<br/>Now: node-001-start"]
+  route["Route Plan"]
   execution["Build / Execute"]
   verification["Review & QA"]
   completion["Completion"]
-  repair["Repair Return"]
 
   startup --> product
   product --> modeling
@@ -17,6 +16,4 @@ flowchart LR
   route --> execution
   execution --> verification
   verification --> completion
-  verification -- "returns for repair" --> repair
-  repair --> route
 ```

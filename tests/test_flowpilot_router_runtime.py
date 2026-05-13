@@ -768,6 +768,41 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "rehydrated_role_agents": records,
         }
 
+    def role_recovery_agent_payload(self, root: Path, action: dict, *, role: str = "worker_a") -> dict:
+        request = next(item for item in action["role_recovery_request"] if item["role_key"] == role)
+        transaction = action["role_recovery_transaction"]
+        return {
+            "background_agents_capability_status": "available",
+            "recovery_transaction_id": transaction["transaction_id"],
+            "trigger_source": transaction["trigger_source"],
+            "recovery_scope": transaction["recovery_scope"],
+            "target_role_keys": transaction["target_role_keys"],
+            "recovered_role_agents": [
+                {
+                    "role_key": role,
+                    "old_agent_id": request["old_agent_id"],
+                    "agent_id": f"recovered-{transaction['transaction_id']}-{role}",
+                    "model_policy": "strongest_available",
+                    "reasoning_effort_policy": "highest_available",
+                    "recovery_result": "targeted_replacement_spawned",
+                    "restore_attempted": True,
+                    "restore_result": "failed",
+                    "targeted_replacement_attempted": True,
+                    "targeted_replacement_result": "success",
+                    "slot_reconciliation_attempted": False,
+                    "full_crew_recycle_attempted": False,
+                    "rehydrated_for_run_id": transaction["run_id"],
+                    "memory_context_injected": True,
+                    "packet_ownership_reconciled": True,
+                    "role_binding_epoch_advanced": True,
+                    "superseded_agent_output_quarantined": True,
+                    "memory_packet_path": request["memory_packet_path"],
+                    "memory_packet_hash": request["memory_packet_hash"],
+                    "memory_seeded_from_current_run": True,
+                }
+            ],
+        }
+
     def bootstrap_state(self, root: Path) -> dict:
         return read_json(router.bootstrap_state_path(root))
 
@@ -2694,7 +2729,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("# FlowPilot Route Sign", action["display_text"])
         self.assertIn("```mermaid", action["display_text"])
         self.assertIn("route=route-001", action["display_text"])
-        self.assertIn("Now: node-001", action["display_text"])
+        self.assertIn("class n01 active;", action["display_text"])
+        self.assertNotIn("Now: node-001", action["display_text"])
         self.assertNotIn("- node-001 - in_progress", action["display_text"])
         router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         display_packet = read_json(run_root / "diagrams" / "user-flow-diagram-display.json")
@@ -2704,7 +2740,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIsNone(display_packet["replacement_rule"])
         route_sign = (run_root / "diagrams" / "user-flow-diagram.mmd").read_text(encoding="utf-8")
         self.assertIn("route=route-001", route_sign)
-        self.assertIn("Now: node-001", route_sign)
+        self.assertIn("class n01 active;", route_sign)
+        self.assertNotIn("Now: node-001", route_sign)
         self.assertNotIn("route=unknown", route_sign)
         visible_sync = read_json(router.run_state_path(run_root))["visible_plan_sync"]
         self.assertEqual(visible_sync["display_text_format"], "markdown_mermaid")
@@ -6012,6 +6049,90 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                     "decision": "continue_current_packet_loop",
                     "explicit_recovery_evidence_recorded": True,
                     **self.prior_path_context_review(root, "PM resumes after current-run state and roles were rehydrated."),
+                    "controller_reminder": {
+                        "controller_only": True,
+                        "controller_may_read_sealed_bodies": False,
+                        "controller_may_infer_from_chat_history": False,
+                        "controller_may_advance_or_close_route": False,
+                    },
+                },
+            ),
+        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+        self.assertEqual(action["blocker_id"], blocker["blocker_id"])
+
+    def test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has a deferred blocker while worker_a is missing",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+
+        result = router.record_external_event(
+            root,
+            "controller_reports_role_liveness_fault",
+            {
+                "role_key": "worker_a",
+                "host_liveness_status": "missing",
+                "detected_by": "controller",
+            },
+        )
+
+        self.assertTrue(result["role_recovery_requested"])
+        transaction = result["role_recovery_transaction"]
+        self.assertEqual(transaction["trigger_source"], "mid_run_liveness_fault")
+        self.assertEqual(transaction["target_role_keys"], ["worker_a"])
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_role_recovery_state")
+        self.assertEqual(action["recovery_priority"], "preempt_normal_work")
+        router.apply_action(root, "load_role_recovery_state")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "recover_role_agents")
+        self.assertEqual(action["target_role_keys"], ["worker_a"])
+        self.assertIn("restore_old_agent", action["recovery_ladder"])
+        self.assertIn("full_crew_recycle", action["recovery_ladder"])
+        self.assertFalse(action["normal_waits_allowed_before_recovery"])
+        router.apply_action(root, "recover_role_agents", self.role_recovery_agent_payload(root, action, role="worker_a"))
+
+        report = read_json(run_root / "continuation" / "role_recovery_report.json")
+        self.assertEqual(report["schema_version"], "flowpilot.role_recovery_report.v1")
+        self.assertTrue(report["all_six_roles_ready"])
+        self.assertTrue(report["pm_decision_required_before_normal_work"])
+        self.assertEqual(report["role_records"][0]["recovery_result"], "targeted_replacement_spawned")
+        crew = read_json(run_root / "crew_ledger.json")
+        worker_slot = next(slot for slot in crew["role_slots"] if slot["role_key"] == "worker_a")
+        self.assertEqual(worker_slot["last_role_recovery_result"], "targeted_replacement_spawned")
+        self.assertTrue(worker_slot["superseded_agent_output_quarantined"])
+
+        self.deliver_expected_card(root, "controller.resume_reentry")
+        self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
+        self.deliver_expected_card(root, "pm.resume_decision")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
+
+        router.record_external_event(
+            root,
+            "pm_resume_recovery_decision_returned",
+            self.role_decision_envelope(
+                root,
+                "continuation/pm_resume_decision_after_role_recovery",
+                {
+                    "decision_owner": "project_manager",
+                    "decision": "continue_current_packet_loop",
+                    "explicit_recovery_evidence_recorded": True,
+                    **self.prior_path_context_review(root, "PM reviewed the role recovery report before continuing."),
                     "controller_reminder": {
                         "controller_only": True,
                         "controller_may_read_sealed_bodies": False,

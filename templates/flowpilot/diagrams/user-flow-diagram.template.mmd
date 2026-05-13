@@ -1,13 +1,12 @@
 flowchart LR
   %% FlowPilot realtime route sign. This is the user-facing graph, not raw FlowGuard Mermaid.
-  startup["Startup Gate"]
+  startup["Start & Scope"]
   product["Product Map"]
   modeling["FlowGuard Model"]
   route["Route Plan"]
   execution["Build / Execute"]
   verification["Review & QA"]
   completion["Completion"]
-  repair["Repair Return"]
 
   startup --> product
   product --> modeling
@@ -15,12 +14,8 @@ flowchart LR
   route --> execution
   execution --> verification
   verification --> completion
-  verification -- "returns for repair" --> repair
-  repair --> route
 
-  classDef active fill:#e6fbff,stroke:#00bcd4,stroke-width:3px,color:#0f172a;
+  classDef active fill:#e6fbff,stroke:#00bcd4,stroke-width:4px,color:#0f172a;
   classDef normal fill:#f8fafc,stroke:#cbd5e1,color:#334155;
-  classDef repair fill:#fff7ed,stroke:#fb923c,color:#7c2d12;
   class startup,product,modeling,route,execution,verification,completion normal;
-  class repair repair;
-  class route active;
+  class startup active;

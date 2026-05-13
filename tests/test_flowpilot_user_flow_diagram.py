@@ -138,7 +138,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertFalse(payload["is_placeholder"])
         self.assertIsNone(payload["replacement_rule"])
         self.assertIn("FlowPilot Route Sign", payload["markdown"])
-        self.assertIn("Now: node-006-final-verification", payload["mermaid"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "node-006-final-verification")
+        self.assertIn("class n06 active;", payload["mermaid"])
+        self.assertNotIn("Now:", payload["mermaid"])
         self.assertNotIn("FlowGuard Model<br/>Now", payload["mermaid"])
 
     def test_startup_route_sign_is_explicit_placeholder_until_route_exists(self) -> None:
@@ -165,6 +167,108 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(display_packet["route_source_kind"], "none")
         self.assertEqual(display_packet["route_node_count"], 0)
         self.assertIn("FlowPilot Route Sign", payload["markdown"])
+        self.assertNotIn("Repair Return", payload["mermaid"])
+        self.assertNotIn("returns for repair", payload["mermaid"])
+        self.assertIn("Start & Scope", payload["mermaid"])
+
+    def test_hidden_active_leaf_highlights_visible_parent_without_label_detail(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-hidden-active-"))
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(run_root / "state.json", {"active_route_id": "route-001"})
+        _write_json(
+            run_root / "routes" / "route-001" / "flow.json",
+            {
+                "route_id": "route-001",
+                "route_version": 2,
+                "nodes": [
+                    {
+                        "node_id": "route-root",
+                        "title": "Root",
+                        "node_kind": "root",
+                        "children": [
+                            {
+                                "node_id": "module-product-design-contract",
+                                "title": "Product and design contract",
+                                "node_kind": "module",
+                                "children": [
+                                    {"node_id": "leaf-kb-preflight-and-assumptions", "title": "Run KB preflight", "node_kind": "leaf"},
+                                    {"node_id": "leaf-functional-framing-and-concept-brief", "title": "Write concept brief", "node_kind": "leaf"},
+                                ],
+                            },
+                            {
+                                "node_id": "module-runtime-authority",
+                                "title": "Runtime authority and source model",
+                                "node_kind": "module",
+                                "children": [
+                                    {
+                                        "node_id": "leaf-flowguard-runtime-source-model",
+                                        "title": "Model runtime source projection with FlowGuard",
+                                        "node_kind": "leaf",
+                                    },
+                                    {"node_id": "leaf-runtime-adapter-fixtures", "title": "Runtime adapter fixtures", "node_kind": "leaf"},
+                                ],
+                            },
+                            {
+                                "node_id": "module-cockpit-ui",
+                                "title": "Cockpit UI implementation",
+                                "node_kind": "module",
+                                "children": [
+                                    {"node_id": "leaf-route-map-and-detail-inspector", "title": "Route map inspector", "node_kind": "leaf"}
+                                ],
+                            },
+                        ],
+                    }
+                ],
+            },
+        )
+        _write_json(
+            run_root / "execution_frontier.json",
+            {
+                "active_route_id": "route-001",
+                "active_node_id": "leaf-flowguard-runtime-source-model",
+                "route_version": 2,
+                "frontier_version": 4,
+                "active_path": [
+                    {"id": "route-root", "label": "Root", "node_kind": "root"},
+                    {"id": "module-runtime-authority", "label": "Runtime authority and source model", "node_kind": "module"},
+                    {
+                        "id": "leaf-flowguard-runtime-source-model",
+                        "label": "Model runtime source projection with FlowGuard",
+                        "node_kind": "leaf",
+                    },
+                ],
+                "completed_nodes": [
+                    "leaf-kb-preflight-and-assumptions",
+                    "leaf-functional-framing-and-concept-brief",
+                ],
+            },
+        )
+
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="leaf_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=True,
+            mark_ui_displayed=False,
+            reviewer_check=True,
+        )
+
+        self.assertTrue(payload["ok"], json.dumps(payload.get("review"), indent=2))
+        self.assertFalse(payload["is_placeholder"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "module-runtime-authority")
+        self.assertFalse(payload["active_highlight"]["visible_node_is_active_node"])
+        self.assertIn("Runtime authority and source model", payload["mermaid"])
+        self.assertIn("class n01 done;", payload["mermaid"])
+        self.assertIn("class n02 active;", payload["mermaid"])
+        self.assertNotIn("Now:", payload["mermaid"])
+        self.assertNotIn("Next:", payload["mermaid"])
+        self.assertNotIn("Done:", payload["mermaid"])
+        self.assertNotIn('["Model runtime source projection with FlowGuard"]', payload["mermaid"])
+        self.assertNotIn("temporary placeholder", payload["mermaid"])
+        self.assertIn("leaf-flowguard-runtime-source-model", payload["markdown"])
 
     def test_major_node_entry_requires_chat_route_sign(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")
@@ -219,7 +323,8 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(payload["run_id"], "run-test")
         self.assertEqual(payload["active_route"], "route-001")
         self.assertEqual(payload["active_node"], "node-004-desktop-implementation")
-        self.assertIn("node-004-desktop-implementation", payload["mermaid"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "node-004-desktop-implementation")
+        self.assertIn("class n04 active;", payload["mermaid"])
 
     def test_draft_route_with_node_id_aliases_is_not_user_visible_by_default(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-draft-"))
@@ -382,9 +487,12 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(payload["display_depth"], 1)
         self.assertEqual(payload["hidden_leaf_progress"]["hidden_leaf_count"], 1)
         self.assertEqual([item["node_id"] for item in payload["active_path"]], ["parent-001", "module-001", "leaf-001"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "parent-001")
         self.assertIn("Parent", payload["mermaid"])
+        self.assertIn("class n01 active;", payload["mermaid"])
         self.assertNotIn("Module<br/>", payload["mermaid"])
         self.assertNotIn("Deep Leaf<br/>", payload["mermaid"])
+        self.assertNotIn("Now:", payload["mermaid"])
         self.assertIn("Current path: Parent (parent-001) > Module (module-001) > Deep Leaf (leaf-001)", payload["markdown"])
         self.assertIn("Hidden leaf progress: 0/1 complete", payload["markdown"])
 
@@ -438,7 +546,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(payload["route_node_count"], 20)
         self.assertIn("Real module 1", payload["mermaid"])
         self.assertIn("Real module 19", payload["mermaid"])
-        self.assertIn("Now: module-10", payload["mermaid"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "module-10")
+        self.assertIn("class n10 active;", payload["mermaid"])
+        self.assertNotIn("Now:", payload["mermaid"])
         self.assertNotIn("Root<br/>", payload["mermaid"])
         self.assertNotIn("Product Behavior Model", payload["mermaid"])
         self.assertIn("Current status:", payload["markdown"])
@@ -605,7 +715,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             reviewer_check=False,
         )
 
-        self.assertIn("Now: node-004-desktop-implementation-repair", payload["mermaid"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "node-004-desktop-implementation-repair")
+        self.assertIn("class n07 active;", payload["mermaid"])
+        self.assertNotIn("Now:", payload["mermaid"])
         self.assertIn('returns for repair', payload["mermaid"])
         self.assertIn("n04 --> n07", payload["mermaid"])
         self.assertNotIn("n06 --> n07", payload["mermaid"])
@@ -649,8 +761,10 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             reviewer_check=False,
         )
 
-        self.assertIn("Now: node-004-desktop-implementation-v2", payload["mermaid"])
-        self.assertIn("Superseded: node-004-desktop-implementation", payload["mermaid"])
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "node-004-desktop-implementation-v2")
+        self.assertIn("class n07 active;", payload["mermaid"])
+        self.assertNotIn("Now:", payload["mermaid"])
+        self.assertNotIn("Superseded:", payload["mermaid"])
         self.assertIn("superseded by", payload["mermaid"])
         self.assertNotIn("returns for repair", payload["mermaid"])
 
