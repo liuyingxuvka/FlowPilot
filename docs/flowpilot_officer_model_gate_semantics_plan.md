@@ -11,7 +11,9 @@ PM must accept before reviewer challenge and route planning use it.
 
 The Process FlowGuard Officer route gate is no longer merely a route process
 check. It is the canonical process route model submission that PM must accept
-before Product FlowGuard route fit review and Reviewer route challenge use it.
+before Reviewer route challenge uses it. The default route-draft path no longer
+requires a second Product FlowGuard route-product review after PM accepts the
+process route model.
 
 This plan intentionally preserves the broader gate-alignment repair in
 `docs/flowpilot_gate_alignment_repair_plan.md`: every gate-bearing card or wait

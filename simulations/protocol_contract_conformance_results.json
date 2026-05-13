@@ -153,6 +153,7 @@
         "recovery_evidence.crew_rehydration_report_path",
         "recovery_evidence.packet_ledger_path",
         "recovery_evidence.resume_reentry_path",
+        "recovery_evidence.role_recovery_report_path",
         "recovery_evidence.sealed_packet_or_result_bodies_read",
         "run_id",
         "schema_version"
@@ -224,6 +225,7 @@
         "parent_backward_replay_blocked",
         "product_architecture_modelability_blocked",
         "product_architecture_reviewer_blocked",
+        "product_behavior_model_blocked",
         "product_officer_route_check_blocked",
         "research_review_blocked",
         "reviewer_route_check_blocked",

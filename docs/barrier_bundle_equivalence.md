@@ -11,7 +11,12 @@ backward replay still exist.
 The Reviewer-only speed profile intentionally changes two default pre-route
 gates: `root_contract` and `child_skill_manifest` now require PM and Reviewer
 role slices only. Product and Process Officer checks are no longer default
-requirements for those two barriers.
+requirements for those two barriers. The route-skeleton speed profile keeps the
+Process FlowGuard Officer's serial route model but removes the Product
+FlowGuard Officer's second route-product check from the default route draft
+chain. Final closure requires PM and Reviewer role slices, plus the final
+ledger and terminal backward replay, without adding fresh FlowGuard officer
+role slices at closure time.
 
 ## Non-Negotiable Rule
 
@@ -73,5 +78,7 @@ checked. The bundle format allows one barrier to attest to a set of required
 checks, but the bundle is valid only if every required obligation and role slice
 for the active profile is present. The Reviewer-only profile deliberately
 removes Product/Process Officer default gate slices from `root_contract` and
-`child_skill_manifest`; other barriers continue to preserve their required
-role-scoped evidence.
+`child_skill_manifest`; the route-skeleton profile removes only the Product
+Officer's second route-product check while preserving the Process Officer route
+model and Reviewer route challenge. Other barriers continue to preserve their
+required role-scoped evidence.

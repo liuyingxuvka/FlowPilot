@@ -1459,16 +1459,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.deliver_expected_card(root, "pm.process_route_model_decision")
         router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
-        self.deliver_expected_card(root, "product_officer.route_product_check")
-        router.record_external_event(
-            root,
-            "product_officer_passes_route_check",
-            self.role_report_envelope(
-                root,
-                "flowguard/route_product_check",
-                self.route_product_pass_body(),
-            ),
-        )
         self.deliver_expected_card(root, "reviewer.route_challenge")
         router.record_external_event(
             root,
@@ -1529,7 +1519,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "leaf_worker_readiness_review": "Leaves are worker-ready or promoted before dispatch.",
             "parent_and_final_backward_review_policy": "Parent and final backward reviews are required.",
             "model_miss_repair_policy": "Model misses require model update, same-class search, supplemental nodes, and stale gate reruns.",
-            "next_action": "product_officer_route_product_check",
+            "next_action": "reviewer_route_challenge",
         }
 
     def write_current_node_acceptance_plan(
@@ -3180,16 +3170,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             )
         self.deliver_expected_card(root, "pm.process_route_model_decision")
         router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
-        self.deliver_expected_card(root, "product_officer.route_product_check")
-        router.record_external_event(
-            root,
-            "product_officer_passes_route_check",
-            self.role_report_envelope(
-                root,
-                "flowguard/route_product_check",
-                self.route_product_pass_body(),
-            ),
-        )
 
         with self.assertRaisesRegex(router.RouterError, "reviewer_route_check_card_delivered"):
             router.record_external_event(
@@ -3281,23 +3261,22 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
         self.deliver_expected_card(root, "process_officer.route_process_check")
-        router.record_external_event(
-            root,
-            "process_officer_passes_route_check",
-            self.role_report_envelope(root, "flowguard/route_process_check", self.route_process_pass_body()),
-        )
-
-        self.deliver_expected_card(root, "pm.process_route_model_decision")
-        router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
-        self.deliver_expected_card(root, "product_officer.route_product_check")
-        with self.assertRaisesRegex(router.RouterError, "route_model_review_verdict=pass"):
+        with self.assertRaisesRegex(router.RouterError, "product_behavior_model_checked=true"):
             router.record_external_event(
                 root,
-                "product_officer_passes_route_check",
+                "process_officer_passes_route_check",
                 self.role_report_envelope(
                     root,
-                    "flowguard/route_product_check_missing_verdict",
-                    {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                    "flowguard/route_process_check_missing_product_coverage",
+                    {
+                        "reviewed_by_role": "process_flowguard_officer",
+                        "passed": True,
+                        "process_viability_verdict": "pass",
+                        "repair_return_policy_checked": True,
+                        "serial_execution_model_checked": True,
+                        "all_effective_nodes_reachable_in_order": True,
+                        "recursive_child_routes_serialized": True,
+                    },
                 ),
             )
 

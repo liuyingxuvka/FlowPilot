@@ -163,7 +163,6 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         new_role_mask = state.role_slice_mask | _mask_for_roles(required_roles)
         if barrier_id == "final_closure":
             new_mask |= ALL_OBLIGATION_MASK
-            new_role_mask |= ALL_ROLE_MASK
         return (
             Transition(
                 f"{barrier_id}_barrier_bundle_passed",

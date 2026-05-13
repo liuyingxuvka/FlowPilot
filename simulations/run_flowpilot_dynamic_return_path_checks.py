@@ -229,7 +229,7 @@ def _candidate_fix_plan() -> dict[str, object]:
             "Require PM product behavior model acceptance before reviewer challenge or route planning can use the model.",
             "Use process route model submission as the canonical Process Officer route gate while retaining route process check names as compatibility aliases.",
             "Write a canonical process route model artifact and preserve the old route process check artifact as an alias.",
-            "Require PM process route model acceptance before Product FlowGuard route fit review or Reviewer route challenge can use the model.",
+            "Require PM process route model acceptance before Reviewer route challenge can use the model.",
         ],
         "risk_coverage": {
             "gate_card_without_completion_contract": model.GATE_CARD_WITHOUT_COMPLETION_CONTRACT,

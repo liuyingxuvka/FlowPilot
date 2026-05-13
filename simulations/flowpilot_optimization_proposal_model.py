@@ -99,13 +99,9 @@ class State:
     product_architecture_reviewer_passed: bool = False
     product_architecture_officer_passed: bool = False
     root_contract_reviewer_passed: bool = False
-    root_contract_officer_passed: bool = False
     child_manifest_reviewer_passed: bool = False
-    child_manifest_process_officer_passed: bool = False
-    child_manifest_product_officer_passed: bool = False
     route_reviewer_passed: bool = False
     route_process_officer_passed: bool = False
-    route_product_officer_passed: bool = False
     pm_waited_for_all_parallel_passes: bool = False
     advanced_after_first_parallel_pass: bool = False
 
@@ -195,13 +191,9 @@ def baseline_state() -> State:
         product_architecture_reviewer_passed=True,
         product_architecture_officer_passed=True,
         root_contract_reviewer_passed=True,
-        root_contract_officer_passed=True,
         child_manifest_reviewer_passed=True,
-        child_manifest_process_officer_passed=True,
-        child_manifest_product_officer_passed=True,
         route_reviewer_passed=True,
         route_process_officer_passed=True,
-        route_product_officer_passed=True,
         pm_waited_for_all_parallel_passes=True,
         root_contract_freeze_separate=True,
     )
@@ -234,13 +226,9 @@ def safe_phase1_state() -> State:
         product_architecture_reviewer_passed=True,
         product_architecture_officer_passed=True,
         root_contract_reviewer_passed=True,
-        root_contract_officer_passed=True,
         child_manifest_reviewer_passed=True,
-        child_manifest_process_officer_passed=True,
-        child_manifest_product_officer_passed=True,
         route_reviewer_passed=True,
         route_process_officer_passed=True,
-        route_product_officer_passed=True,
         pm_waited_for_all_parallel_passes=True,
         root_contract_freeze_separate=True,
     )
@@ -326,13 +314,9 @@ def _all_parallel_gate_passes(state: State) -> bool:
         state.product_architecture_reviewer_passed
         and state.product_architecture_officer_passed
         and state.root_contract_reviewer_passed
-        and state.root_contract_officer_passed
         and state.child_manifest_reviewer_passed
-        and state.child_manifest_process_officer_passed
-        and state.child_manifest_product_officer_passed
         and state.route_reviewer_passed
         and state.route_process_officer_passed
-        and state.route_product_officer_passed
     )
 
 
@@ -531,10 +515,10 @@ def hazard_states() -> dict[str, State]:
             pm_waited_for_all_parallel_passes=False,
             advanced_after_first_parallel_pass=True,
         ),
-        "parallel_gate_missing_product_officer": replace(
+        "parallel_gate_missing_product_architecture_officer": replace(
             safe,
             parallel_gate_checks_used=True,
-            child_manifest_product_officer_passed=False,
+            product_architecture_officer_passed=False,
         ),
         "artifact_merge_collapses_responsibility": replace(
             safe,

@@ -23,8 +23,11 @@ REQUIRED_LABELS = tuple(
 
 HAZARD_EXPECTED_FAILURES = {
     model.MISSING_PRODUCT_MODEL: "PM route draft requires Product Officer product behavior model report",
-    model.MISSING_ROUTE_MODEL_REVIEW: "route activation requires passed product-model route review",
+    model.PROCESS_PASS_WITHOUT_PRODUCT_COVERAGE: "Process Officer route pass must check product behavior model coverage",
     model.MISSING_PROCESS_VERDICT: "route activation requires Process Officer process_viability_verdict=pass",
+    model.MISSING_PM_PROCESS_ACCEPTANCE: "route activation requires PM-accepted process route model",
+    model.MISSING_REVIEWER_CHALLENGE: "route activation requires Reviewer route challenge pass",
+    model.REVIEWER_BEFORE_PM_PROCESS_ACCEPTANCE: "Reviewer route challenge requires PM-accepted process route model",
     model.REPAIR_REQUIRED_IGNORED: "route activation requires Process Officer process_viability_verdict=pass",
     model.BLOCKED_IGNORED: "route activation requires Process Officer process_viability_verdict=pass",
     model.REPAIR_MISSING_MAINLINE_RETURN: "repair mutation requires a mainline return target",

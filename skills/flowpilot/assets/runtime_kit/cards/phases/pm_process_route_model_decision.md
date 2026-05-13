@@ -22,8 +22,7 @@ Read the PM route draft and the Process FlowGuard Officer's route process
 check.
 
 Decide whether the route process model is good enough to become the serial
-execution basis for Product FlowGuard route fit review and Reviewer route
-challenge.
+execution basis for Reviewer route challenge.
 
 Accept only when Process FlowGuard has modeled the route as one executable
 serial line:

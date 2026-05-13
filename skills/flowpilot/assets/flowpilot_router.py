@@ -1106,17 +1106,10 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "project_manager",
     },
     {
-        "flag": "product_officer_route_check_card_delivered",
-        "label": "product_officer_route_product_check_card_delivered",
-        "card_id": "product_officer.route_product_check",
-        "requires_flag": "pm_process_route_model_accepted",
-        "to_role": "product_flowguard_officer",
-    },
-    {
         "flag": "reviewer_route_check_card_delivered",
         "label": "reviewer_route_challenge_card_delivered",
         "card_id": "reviewer.route_challenge",
-        "requires_flag": "product_officer_route_check_passed",
+        "requires_flag": "pm_process_route_model_accepted",
         "to_role": "human_like_reviewer",
     },
     {
@@ -1355,7 +1348,7 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
         "process_route_model": "flowguard/process_route_model.json",
         "route_process_check": "flowguard/route_process_check.json",
-        "route_product_check": "flowguard/route_product_check.json",
+        "product_behavior_model": "flowguard/product_behavior_model.json",
     },
 }
 
@@ -1734,7 +1727,7 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "pm_accepts_process_route_model": {
         "flag": "pm_process_route_model_accepted",
         "requires_flag": "pm_process_route_model_decision_card_delivered",
-        "summary": "PM accepted the Process FlowGuard serial route execution model before product and reviewer route challenge.",
+        "summary": "PM accepted the Process FlowGuard serial route execution model before Reviewer route challenge.",
     },
     "pm_requests_process_route_model_rebuild": {
         "flag": "pm_process_route_model_rebuild_requested",
@@ -1772,12 +1765,14 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "product_officer_passes_route_check": {
         "flag": "product_officer_route_check_passed",
         "requires_flag": "product_officer_route_check_card_delivered",
-        "summary": "Product FlowGuard Officer passed the route product check.",
+        "legacy": True,
+        "summary": "Compatibility event: Product FlowGuard Officer passed the legacy route product check.",
     },
     "product_officer_blocks_route_check": {
         "flag": "product_officer_route_check_blocked",
         "requires_flag": "product_officer_route_check_card_delivered",
-        "summary": "Product FlowGuard Officer blocked the route product check.",
+        "legacy": True,
+        "summary": "Compatibility event: Product FlowGuard Officer blocked the legacy route product check.",
     },
     "reviewer_passes_route_check": {
         "flag": "reviewer_route_check_passed",
@@ -1792,7 +1787,7 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "pm_activates_reviewed_route": {
         "flag": "route_activated_by_pm",
         "requires_flag": "reviewer_route_check_passed",
-        "summary": "PM activated route after required officer and reviewer checks.",
+        "summary": "PM activated route after Product Officer product model, Process Officer route model, and Reviewer route challenge.",
     },
     "pm_writes_node_acceptance_plan": {
         "flag": "node_acceptance_plan_written",
@@ -2176,7 +2171,12 @@ GATE_OUTCOME_BLOCK_EVENT_SPECS: dict[str, dict[str, Any]] = {
         "expected_role": "human_like_reviewer",
         "path": "reviews/route_challenge_block.json",
         "schema_version": "flowpilot.route_review_block.v1",
-        "checked_paths": ("__current_route_draft__", "flowguard/route_process_check.json", "flowguard/route_product_check.json"),
+        "checked_paths": (
+            "__current_route_draft__",
+            "flowguard/route_process_check.json",
+            "flowguard/process_route_model_pm_decision.json",
+            "flowguard/product_behavior_model.json",
+        ),
         "reset_flags": ROUTE_GATE_REPAIR_RESET_FLAGS,
     },
     "reviewer_blocks_parent_backward_replay": {
@@ -17585,7 +17585,6 @@ def _route_payload_from_reviewed_draft(project_root: Path, run_root: Path, paylo
 def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _require_product_behavior_model_report(project_root, run_root)
     _require_route_process_pass(project_root, run_root)
-    _require_route_product_pass(project_root, run_root)
     if not run_state["flags"].get("reviewer_route_check_passed"):
         raise RouterError("route activation requires reviewer-passed route challenge")
     route_payload, draft_path = _route_payload_from_reviewed_draft(project_root, run_root, payload)
@@ -23206,9 +23205,9 @@ def _record_external_event_unchecked(
             schema_version="flowpilot.route_review.v1",
             checked_paths=[
                 _current_route_draft_path(run_root),
+                _require_product_behavior_model_report(project_root, run_root),
                 _require_process_route_model_report(project_root, run_root),
                 run_root / "flowguard" / "process_route_model_pm_decision.json",
-                run_root / "flowguard" / "route_product_check.json",
             ],
         )
     elif event == "pm_registers_current_node_packet":

@@ -146,14 +146,16 @@ Route requirements:
 - worker-capable nodes must close with all checklist items complete;
 - human manual checks belong in final reports or review gates, not as fake
   unfinished worker nodes;
-- Process FlowGuard must produce a serial route execution model and PM must
-  explicitly accept it before Product FlowGuard route fit review and Reviewer
+- Process FlowGuard must produce a serial route execution model that checks
+  product-behavior coverage, and PM must explicitly accept it before Reviewer
   route challenge can proceed;
-- officer, PM model-decision, and reviewer route checks are required before
-  activation.
+- Product FlowGuard owns the upstream product behavior model; the default route
+  draft path does not require a second Product FlowGuard route-product check;
+- Process Officer, PM model-decision, and Reviewer route checks are required
+  before activation.
 
-Do not activate a route until Process Officer, Product Officer, and Reviewer
-checks pass.
+Do not activate a route until Process Officer and Reviewer checks pass after
+the upstream Product Officer product behavior model is available.
 
 Return `prior_path_context_review` with the route-memory source paths and how
 prior completed, superseded, stale, blocked, or experimental work affects this

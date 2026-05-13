@@ -17,7 +17,7 @@
       "Require PM product behavior model acceptance before reviewer challenge or route planning can use the model.",
       "Use process route model submission as the canonical Process Officer route gate while retaining route process check names as compatibility aliases.",
       "Write a canonical process route model artifact and preserve the old route process check artifact as an alias.",
-      "Require PM process route model acceptance before Product FlowGuard route fit review or Reviewer route challenge can use the model."
+      "Require PM process route model acceptance before Reviewer route challenge can use the model."
     ],
     "name": "gate_alignment_contract",
     "risk_coverage": {
@@ -1707,71 +1707,32 @@
     "current_finding_count": 0,
     "current_findings": [],
     "current_run_can_continue": true,
-    "current_run_id": "run-20260513-034857",
-    "current_run_root": ".flowpilot/runs/run-20260513-034857",
-    "historical_gate_alignment_finding_count": 3,
+    "current_run_id": "run-20260513-164058",
+    "current_run_root": ".flowpilot/runs/run-20260513-164058",
+    "historical_gate_alignment_finding_count": 1,
     "historical_gate_alignment_findings": [
       {
         "allowed_resolution_events": [
-          "pm_registers_role_work_request",
-          "pm_records_control_blocker_followup_blocker",
-          "pm_records_control_blocker_protocol_blocker"
+          "router_direct_material_scan_dispatch_recheck_passed",
+          "router_direct_material_scan_dispatch_recheck_blocked",
+          "router_protocol_blocker_material_scan_dispatch_recheck"
         ],
-        "control_blocker": ".flowpilot\\runs\\run-20260513-034857\\control_blocks\\control-blocker-0001-20260513T044946197966Z.json",
+        "control_blocker": ".flowpilot\\runs\\run-20260513-164058\\control_blocks\\control-blocker-0001-20260513T173633704275Z.json",
         "error_code": "controller_has_no_legal_next_action_pm_repair_or_routing_decision_is_required_before_any_further",
         "kind": "resolved_no_legal_next_action_without_gate_event",
         "model_meaning": "A control blocker was needed because the Router had no legal next action. If the resolution event is not the current gate event, the repair may only have created a follow-up path rather than satisfying the blocked gate.",
-        "pm_repair_rerun_target": "pm_registers_role_work_request",
+        "pm_repair_rerun_target": "router_direct_material_scan_dispatch_recheck_passed",
         "resolved": true,
-        "resolved_by_event": "pm_registers_role_work_request"
-      },
-      {
-        "allowed_resolution_events": [
-          "product_officer_passes_product_architecture_modelability",
-          "pm_records_control_blocker_followup_blocker",
-          "pm_records_control_blocker_protocol_blocker"
-        ],
-        "control_blocker": ".flowpilot\\runs\\run-20260513-034857\\control_blocks\\control-blocker-0002-20260513T050316328254Z.json",
-        "error_code": "controller_has_no_legal_next_action_pm_repair_or_routing_decision_is_required_before_any_further",
-        "kind": "resolved_no_legal_next_action_with_gate_event",
-        "model_meaning": "A control blocker was needed because the Router had no legal next action. If the resolution event is not the current gate event, the repair may only have created a follow-up path rather than satisfying the blocked gate.",
-        "pm_repair_rerun_target": "product_officer_passes_product_architecture_modelability",
-        "resolved": true,
-        "resolved_by_event": "product_officer_passes_product_architecture_modelability"
-      },
-      {
-        "gate_events": [
-          "product_officer_blocks_product_architecture_modelability",
-          "product_officer_blocks_product_behavior_model",
-          "product_officer_passes_product_architecture_modelability",
-          "product_officer_submits_product_behavior_model"
-        ],
-        "gate_flag": "product_architecture_modelability_passed",
-        "kind": "legacy_product_officer_report_preceded_gate_specific_resolution",
-        "legacy_events": [
-          "product_officer_model_report"
-        ],
-        "legacy_flag": "legacy_product_officer_model_report_received",
-        "model_meaning": "The run recovered, but it shows the exact class this model protects: a legacy/general officer report was recorded before the concrete gate event that actually satisfied product_architecture_modelability."
+        "resolved_by_event": "router_direct_material_scan_dispatch_recheck_passed"
       }
     ],
-    "mitigated_path_count": 1,
-    "mitigated_paths": [
-      {
-        "contract_id": "flowpilot.output_contract.officer_model_report.v1",
-        "kind": "pm_role_work_result_contract",
-        "packet_id": "pm-rwr-product-architecture-model-report-recovery-001",
-        "path": ".flowpilot\\runs\\run-20260513-034857\\packet_batches\\pm-role-work-batch-pm-rwr-product-architecture-model-report-recovery-001.json",
-        "required_result_next_recipient": "project_manager",
-        "status": "result_returned",
-        "strict_process_contract_binding": true
-      }
-    ],
+    "mitigated_path_count": 0,
+    "mitigated_paths": [],
     "ok": true,
     "risk_surface_count": 5,
     "risk_surfaces": [
       {
-        "card_envelope": ".flowpilot\\runs\\run-20260513-034857\\mailbox\\system_cards\\product_officer_product_architecture_modelability-delivery-001-attempt-001.json",
+        "card_envelope": ".flowpilot\\runs\\run-20260513-164058\\mailbox\\system_cards\\product_officer_product_architecture_modelability-delivery-001-attempt-001.json",
         "card_id": "product_officer.product_architecture_modelability",
         "kind": "gate_card_without_declared_completion_contract",
         "model_meaning": "A gate-bearing system card was delivered without a metadata-level completion contract that names the concrete Router event or gate flag it must satisfy."

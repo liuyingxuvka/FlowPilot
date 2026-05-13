@@ -9499,3 +9499,73 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Preserve the distinction between PowerShell source-file BOM requirements and generated artifact no-BOM requirements in future startup UI changes.
+
+
+## route-skeleton-reviewer-only-optimization-20260513 - Remove redundant Product route review and final-closure officer slices
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowPilot speed tier 2 optimization with a concrete FlowGuard-first plan before removing redundant Officer checks from route skeleton and final closure.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-13T20:45:00+02:00
+- Ended: 2026-05-13T22:50:00+02:00
+- Duration seconds: 7500.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_route_hard_gate_model.py
+- simulations/router_next_recipient_model.py
+- simulations/barrier_equivalence_model.py
+- simulations/flowpilot_optimization_proposal_model.py
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_flowpilot_route_hard_gate_checks.py`
+- OK: `python simulations/run_router_next_recipient_checks.py`
+- OK: `python simulations/run_barrier_equivalence_checks.py`
+- OK: `python simulations/run_flowpilot_optimization_proposal_checks.py --json-out simulations/flowpilot_optimization_proposal_results.json`
+- OK: `python simulations/run_flowpilot_dynamic_return_path_checks.py`
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations/flowpilot_control_plane_friction_results.json`
+- OK: `python simulations/run_card_instruction_coverage_checks.py`
+- OK: `python simulations/run_protocol_contract_conformance_checks.py`
+- OK: `python simulations/run_meta_checks.py --force`
+- OK: `python simulations/run_capability_checks.py --force`
+- OK: `python -m py_compile skills/flowpilot/assets/flowpilot_router.py skills/flowpilot/assets/barrier_bundle.py simulations/flowpilot_route_hard_gate_model.py simulations/router_next_recipient_model.py simulations/barrier_equivalence_model.py simulations/flowpilot_optimization_proposal_model.py simulations/flowpilot_control_plane_friction_model.py`
+- OK: `python -m unittest tests.test_flowpilot_barrier_bundle`
+- OK: `python -m unittest tests.test_flowpilot_meta_route_sign`
+- OK: targeted `tests.test_flowpilot_router_runtime` route/closure subset, 17 tests
+- OK: targeted `tests.test_flowpilot_router_runtime` affected route hard-gate subset, 4 tests
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- Route skeleton no longer has a default Product Officer route fit review between PM Process route model acceptance and Reviewer route challenge.
+- The remaining product-side protection is upstream: Product Officer product behavior model plus PM product behavior model acceptance, then Process Officer checks route coverage against that product model.
+- Reviewer route challenge now depends on the PM-accepted Process route model and Product behavior model context instead of a second Product route check.
+- Final closure barrier role slices now require PM and Reviewer only; FlowGuard Officer slices are not required at final closure while all legacy obligations remain preserved.
+- The compatibility Product route check card and event remain legacy-compatible but are no longer on the default system-card path.
+
+### Counterexamples
+- Missing Product behavior model before PM route draft was detected.
+- Process route pass without product-model coverage was detected.
+- Reviewer route challenge before PM process-route acceptance was detected.
+- Route activation without Reviewer challenge was detected.
+- Final closure missing required obligations was detected.
+- Hidden/default route Product Officer wait reintroduction was detected by router next-recipient and route hard-gate models.
+
+### Friction Points
+- Default control-plane live audit found an existing local `.flowpilot/current.json` active-run inconsistency in material-scan phase context. The abstract control-plane model was rerun with `--skip-live-audit` and passed; the local active-run issue was not caused by this optimization.
+- Full `tests.test_flowpilot_router_runtime` exceeded the practical 15-minute local timeout, so verification used route/closure-focused subsets plus the broader model suite and installer checks.
+- Long meta and capability simulations remained expensive and were run with extended timeouts.
+
+### Skipped Steps
+- No live `.flowpilot` run artifacts were mutated to rewrite historical prompt-delivery records.
+- The full router-runtime unittest module did not complete within the local 15-minute timeout.
+
+### Next Actions
+- If the local active FlowPilot run is resumed, reconcile its existing material-scan phase-context audit finding separately from this route-skeleton optimization.
+- Keep the Product route check card/event marked as compatibility-only unless a future route explicitly opts into that extra review.

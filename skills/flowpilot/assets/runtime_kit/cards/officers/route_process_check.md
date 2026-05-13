@@ -20,7 +20,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 Submit the process route model for the PM route draft as the Process FlowGuard
 Officer. The old route process check name is only a compatibility label; this
 gate's real output is the serial process route model that PM must accept before
-Product FlowGuard route fit review and Reviewer route challenge use it.
+Reviewer route challenge uses it.
 
 Model only the process shape and route viability against the product behavior
 model:

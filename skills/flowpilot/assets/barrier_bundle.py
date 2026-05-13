@@ -134,7 +134,6 @@ BARRIER_DEFINITIONS = (
             "project_manager",
             "human_like_reviewer",
             "process_flowguard_officer",
-            "product_flowguard_officer",
         ),
         dependencies=("child_skill_manifest",),
     ),
@@ -176,8 +175,6 @@ BARRIER_DEFINITIONS = (
         required_role_slices=(
             "project_manager",
             "human_like_reviewer",
-            "process_flowguard_officer",
-            "product_flowguard_officer",
         ),
         dependencies=("parent_backward",),
         requires_all_legacy_obligations=True,

@@ -33,9 +33,9 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Review the PM route draft after Process FlowGuard has produced a serial route
-model, PM has accepted that process model, and Product FlowGuard has passed
-route product fit.
+Review the PM route draft after Product FlowGuard has produced the product
+behavior model, Process FlowGuard has produced a serial route model, and PM has
+accepted that process model.
 
 Independently challenge whether the route is understandable, executable, and
 faithful to the user's current request and frozen contract. Treat officer
@@ -43,7 +43,8 @@ reports as pointers, not as your own inspection.
 
 Check:
 
-- the active route draft is the same draft the officers checked;
+- the active route draft is the same draft the Process FlowGuard Officer
+  checked;
 - the process route is a single ordered execution line, including ordered
   children for every parent/module and ordered deeper children as needed;
 - the selected planning profile matches the task type and stated quality level;

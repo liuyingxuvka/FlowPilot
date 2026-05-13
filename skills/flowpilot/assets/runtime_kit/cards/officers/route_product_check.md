@@ -11,6 +11,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 # Route Product Check
 
+This is a compatibility card for older runs that already delivered the route
+Product FlowGuard Officer check. New default route drafting no longer delivers
+this card; Product FlowGuard remains the owner of the product behavior model
+during product architecture, while Process FlowGuard route modeling and
+Reviewer route challenge cover the default route draft path.
+
 ## Role Capability Reminder
 
 - When more evidence, worker work, reviewer review, or PM choice is needed, return a structured blocker or PM suggestion for PM to route.

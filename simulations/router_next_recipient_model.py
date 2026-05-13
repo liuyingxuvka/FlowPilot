@@ -25,7 +25,6 @@ LEGACY_OBLIGATIONS = (
     "controller_boundary",
     "pm_route_draft",
     "process_officer_route_check",
-    "product_officer_route_check",
     "reviewer_route_challenge",
     "reviewed_route_activation",
     "single_owner_worker_packet",
@@ -45,8 +44,7 @@ REQUIRED_LABELS = (
     "pm_writes_route_draft",
     "router_dispatches_route_process_check_to_process_officer",
     "process_officer_returns_route_check",
-    "router_dispatches_route_product_check_to_product_officer",
-    "product_officer_returns_route_check",
+    "pm_accepts_process_route_model",
     "router_dispatches_route_challenge_to_reviewer",
     "reviewer_returns_route_challenge_pass",
     "pm_activates_reviewed_route_from_draft",
@@ -225,188 +223,177 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         ),
         4: Transition(
-            "router_dispatches_route_product_check_to_product_officer",
-            "product_flowguard_officer",
+            "pm_accepts_process_route_model",
+            "project_manager",
             replace(
                 state,
                 step=5,
-                last_action="router_dispatches_route_product_check_to_product_officer",
-                last_recipient="product_flowguard_officer",
+                last_action="pm_accepts_process_route_model",
+                last_recipient="project_manager",
             ),
         ),
         5: Transition(
-            "product_officer_returns_route_check",
-            "controller",
-            replace(
-                state,
-                step=6,
-                obligations=_add(state, "product_officer_route_check"),
-                last_action="product_officer_returns_route_check",
-                last_recipient="controller",
-            ),
-        ),
-        6: Transition(
             "router_dispatches_route_challenge_to_reviewer",
             "human_like_reviewer",
             replace(
                 state,
-                step=7,
+                step=6,
                 last_action="router_dispatches_route_challenge_to_reviewer",
                 last_recipient="human_like_reviewer",
             ),
         ),
-        7: Transition(
+        6: Transition(
             "reviewer_returns_route_challenge_pass",
             "controller",
             replace(
                 state,
-                step=8,
+                step=7,
                 obligations=_add(state, "reviewer_route_challenge"),
                 last_action="reviewer_returns_route_challenge_pass",
                 last_recipient="controller",
             ),
         ),
-        8: Transition(
+        7: Transition(
             "pm_activates_reviewed_route_from_draft",
             "project_manager",
             replace(
                 state,
-                step=9,
+                step=8,
                 obligations=_add(state, "reviewed_route_activation"),
                 route_activation_source="reviewed_draft",
                 last_action="pm_activates_reviewed_route_from_draft",
                 last_recipient="project_manager",
             ),
         ),
-        9: Transition(
+        8: Transition(
             "pm_creates_worker_packet_with_single_owner",
             "project_manager",
             replace(
                 state,
-                step=10,
+                step=9,
                 obligations=_add(state, "single_owner_worker_packet"),
                 packet_owner="worker_a",
                 last_action="pm_creates_worker_packet_with_single_owner",
                 last_recipient="project_manager",
             ),
         ),
-        10: Transition(
+        9: Transition(
             "reviewer_allows_worker_dispatch",
             "human_like_reviewer",
             replace(
                 state,
-                step=11,
+                step=10,
                 obligations=_add(state, "reviewer_before_worker_dispatch"),
                 reviewer_dispatch_allowed=True,
                 last_action="reviewer_allows_worker_dispatch",
                 last_recipient="human_like_reviewer",
             ),
         ),
-        11: Transition(
+        10: Transition(
             "controller_relays_worker_packet_to_owner",
             "worker_a",
-            replace(state, step=12, last_action="controller_relays_worker_packet_to_owner", last_recipient="worker_a"),
+            replace(state, step=11, last_action="controller_relays_worker_packet_to_owner", last_recipient="worker_a"),
         ),
-        12: Transition(
+        11: Transition(
             "worker_owner_returns_result",
             "controller",
-            replace(state, step=13, last_action="worker_owner_returns_result", last_recipient="controller"),
+            replace(state, step=12, last_action="worker_owner_returns_result", last_recipient="controller"),
         ),
-        13: Transition(
+        12: Transition(
             "controller_relays_result_to_reviewer",
             "human_like_reviewer",
             replace(
                 state,
-                step=14,
+                step=13,
                 last_action="controller_relays_result_to_reviewer",
                 last_recipient="human_like_reviewer",
             ),
         ),
-        14: Transition(
+        13: Transition(
             "reviewer_blocks_result_with_control_plane_reissue_lane",
             "controller",
             replace(
                 state,
-                step=15,
+                step=14,
                 rejection_lane="control_plane_reissue",
                 obligations=_add(state, "worker_result_reviewer_review"),
                 last_action="reviewer_blocks_result_with_control_plane_reissue_lane",
                 last_recipient="controller",
             ),
         ),
-        15: Transition(
+        14: Transition(
             "router_routes_reissue_to_original_responsible_role",
             "worker_a",
             replace(
                 state,
-                step=16,
+                step=15,
                 obligations=_add(state, "rejection_routes_to_reissue_or_pm_repair"),
                 reissue_target="worker_a",
                 last_action="router_routes_reissue_to_original_responsible_role",
                 last_recipient="worker_a",
             ),
         ),
-        16: Transition(
+        15: Transition(
             "responsible_role_reissues_control_output",
             "controller",
             replace(
                 state,
-                step=17,
+                step=16,
                 last_action="responsible_role_reissues_control_output",
                 last_recipient="controller",
             ),
         ),
-        17: Transition(
+        16: Transition(
             "controller_relays_reissued_result_to_reviewer",
             "human_like_reviewer",
             replace(
                 state,
-                step=18,
+                step=17,
                 last_action="controller_relays_reissued_result_to_reviewer",
                 last_recipient="human_like_reviewer",
             ),
         ),
-        18: Transition(
+        17: Transition(
             "reviewer_passes_reissued_result",
             "controller",
             replace(
                 state,
-                step=19,
+                step=18,
                 result_reviewed_by_reviewer=True,
                 last_action="reviewer_passes_reissued_result",
                 last_recipient="controller",
             ),
         ),
-        19: Transition(
+        18: Transition(
             "resume_loads_ledger_and_derives_next_recipient",
             "controller",
             replace(
                 state,
-                step=20,
+                step=19,
                 obligations=_add(state, "resume_next_recipient_from_ledger"),
                 resume_next_derived_from_ledger=True,
                 last_action="resume_loads_ledger_and_derives_next_recipient",
                 last_recipient="controller",
             ),
         ),
-        20: Transition(
+        19: Transition(
             "parent_replay_failure_routes_pm_segment_decision",
             "project_manager",
             replace(
                 state,
-                step=21,
+                step=20,
                 obligations=_add(state, "parent_replay_failure_pm_decision"),
                 parent_segment_pm_decision_recorded=True,
                 last_action="parent_replay_failure_routes_pm_segment_decision",
                 last_recipient="project_manager",
             ),
         ),
-        21: Transition(
+        20: Transition(
             "pm_segment_decision_marks_stale_and_rewrites_frontier",
             "project_manager",
             replace(
                 state,
-                step=22,
+                step=21,
                 obligations=_add(state, "repair_marks_stale_and_rewrites_frontier"),
                 stale_evidence_marked=True,
                 frontier_rewritten_after_repair=True,
@@ -415,12 +402,12 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 last_recipient="project_manager",
             ),
         ),
-        22: Transition(
+        21: Transition(
             "ui_snapshot_built_from_active_canonical_sources",
             "ui_host",
             replace(
                 state,
-                step=23,
+                step=22,
                 obligations=_add(state, "ui_snapshot_from_active_canonical_sources"),
                 ui_active_run_resolved=True,
                 ui_snapshot_from_canonical=True,
@@ -428,12 +415,12 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 last_recipient="ui_host",
             ),
         ),
-        23: Transition(
+        22: Transition(
             "completion_recorded_after_explicit_next_actions",
             "project_manager",
             replace(
                 state,
-                step=24,
+                step=23,
                 status="complete",
                 last_action="completion_recorded_after_explicit_next_actions",
                 last_recipient="project_manager",
@@ -461,18 +448,18 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("same worker packet assigned to more than one owner")
     if state.packet_owner not in {"none", "worker_a", "worker_b"}:
         failures.append("worker packet owner is not a known worker role")
-    if state.packet_owner != "none" and state.step >= 12 and not state.reviewer_dispatch_allowed:
+    if state.packet_owner != "none" and state.step >= 11 and not state.reviewer_dispatch_allowed:
         failures.append("worker packet relayed before router direct dispatch approval")
     if state.rejection_lane == "control_plane_reissue":
         if state.reissue_target == "unknown":
             failures.append("control-plane reissue has no target role")
         if not state.reissue_target_matches_owner:
             failures.append("control-plane reissue was routed to the wrong role")
-    if state.rejection_lane == "pm_repair_decision_required" and not state.pm_repair_decision_recorded and state.step > 15:
+    if state.rejection_lane == "pm_repair_decision_required" and not state.pm_repair_decision_recorded and state.step > 14:
         failures.append("project repair proceeded without PM repair decision")
-    if state.step >= 20 and not state.resume_next_derived_from_ledger:
+    if state.step >= 19 and not state.resume_next_derived_from_ledger:
         failures.append("resume continued without deriving next recipient from ledger")
-    if state.step >= 22 and not state.parent_segment_pm_decision_recorded:
+    if state.step >= 21 and not state.parent_segment_pm_decision_recorded:
         failures.append("parent replay repair proceeded without PM segment decision")
     if state.frontier_rewritten_after_repair and not state.stale_evidence_marked:
         failures.append("frontier rewritten without marking affected evidence stale")
@@ -522,7 +509,7 @@ def is_success(state: State) -> bool:
 
 def _covered_prefix_state() -> State:
     return State(
-        step=23,
+        step=22,
         status="running",
         obligations=ALL_OBLIGATIONS,
         last_action="ui_snapshot_built_from_active_canonical_sources",

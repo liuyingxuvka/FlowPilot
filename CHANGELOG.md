@@ -2,6 +2,30 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.1 - 2026-05-13
+
+### Changed
+
+- Simplified the route-skeleton default speed profile so PM-accepted Process
+  route models now flow directly to Reviewer route challenge without a second
+  Product Officer route fit review.
+- Kept Product protection upstream through the Product Officer product behavior
+  model and PM product-model acceptance, while Process route checks now verify
+  route coverage against that product model.
+- Reduced final-closure role slices to PM and Reviewer while preserving all
+  legacy completion obligations, final ledger, and backward replay checks.
+- Marked Product route check events as legacy compatibility paths instead of
+  default route-skeleton gates.
+
+### Fixed
+
+- Updated FlowGuard route hard-gate, next-recipient, barrier equivalence,
+  optimization proposal, and control-plane friction models so reintroduced
+  hidden Product route waits, missing product-model coverage, missing PM
+  process acceptance, and missing Reviewer route challenge are detected.
+- Refreshed route cards, runtime source-path requirements, and router tests to
+  match the reviewer-only route challenge handoff.
+
 ## 0.9.0 - 2026-05-13
 
 ### Added

@@ -2162,6 +2162,29 @@ def _delivery_source_values(delivery: dict[str, Any] | None) -> set[str]:
     return {str(value).replace("\\", "/") for value in values if isinstance(value, str)}
 
 
+def _legacy_route_challenge_missing_sources(
+    *,
+    card_id: str,
+    run_id: str,
+    missing: list[str],
+    source_values: set[str],
+    project_root: Path,
+) -> list[str]:
+    if card_id != "reviewer.route_challenge":
+        return missing
+    run_prefix = f".flowpilot/runs/{run_id}"
+    product_model_path = f"{run_prefix}/flowguard/product_behavior_model.json"
+    legacy_route_product_path = f"{run_prefix}/flowguard/route_product_check.json"
+    if (
+        product_model_path in missing
+        and legacy_route_product_path in source_values
+        and (project_root / product_model_path).exists()
+        and (project_root / legacy_route_product_path).exists()
+    ):
+        return [path for path in missing if path != product_model_path]
+    return missing
+
+
 def _read_text(path: Path) -> tuple[str, str | None]:
     try:
         return path.read_text(encoding="utf-8"), None
@@ -2934,17 +2957,12 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
             f"{run_prefix}/capabilities/capability_sync.json",
             f"{run_prefix}/routes/route-001/flow.draft.json",
         ),
-        "product_officer.route_product_check": (
-            f"{run_prefix}/root_acceptance_contract.json",
-            f"{run_prefix}/child_skill_gate_manifest.json",
-            f"{run_prefix}/flowguard/route_process_check.json",
-            f"{run_prefix}/routes/route-001/flow.draft.json",
-        ),
         "reviewer.route_challenge": (
             f"{run_prefix}/root_acceptance_contract.json",
             f"{run_prefix}/child_skill_gate_manifest.json",
             f"{run_prefix}/flowguard/route_process_check.json",
-            f"{run_prefix}/flowguard/route_product_check.json",
+            f"{run_prefix}/flowguard/process_route_model_pm_decision.json",
+            f"{run_prefix}/flowguard/product_behavior_model.json",
             f"{run_prefix}/routes/route-001/flow.draft.json",
         ),
     }
@@ -2967,7 +2985,6 @@ def _expected_card_phases() -> dict[str, str]:
         "pm.prior_path_context": "prior_path_context",
         "pm.route_skeleton": "route_skeleton",
         "process_officer.route_process_check": "route_skeleton",
-        "product_officer.route_product_check": "route_skeleton",
         "reviewer.route_challenge": "route_skeleton",
     }
 
@@ -2990,6 +3007,13 @@ def _audit_card_delivery_context(
         delivered_any = True
         source_values = _delivery_source_values(delivery)
         missing = [path for path in required_paths if path not in source_values]
+        missing = _legacy_route_challenge_missing_sources(
+            card_id=card_id,
+            run_id=run_id,
+            missing=missing,
+            source_values=source_values,
+            project_root=project_root,
+        )
         if missing:
             missing_sources.append(
                 {
