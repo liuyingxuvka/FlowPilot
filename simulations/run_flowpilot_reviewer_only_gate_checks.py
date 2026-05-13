@@ -45,6 +45,8 @@ HAZARD_EXPECTED_FAILURES = {
     "child_reviewer_omits_skill_standards": "Reviewer child-skill pass omitted skill standard contract check",
     "child_reviewer_omits_evidence_obligations": "Reviewer child-skill pass omitted evidence obligation check",
     "pm_consultation_tail_required": "PM consultation was reintroduced as a required gate tail",
+    "role_body_boundary_broken": "Reviewer-only gate simplification broke role/body boundary isolation",
+    "legacy_officer_event_handlers_removed": "Reviewer-only gate simplification removed legacy officer event compatibility",
     "route_ready_without_root_freeze": "route became ready before PM froze root contract",
     "route_ready_without_child_manifest_approval": "route became ready before PM approved child-skill manifest",
 }
@@ -77,6 +79,7 @@ def _state_id(state: model.State) -> str:
         f"{state.reviewer_child_checks_skipped_steps},"
         f"{state.reviewer_child_rejects_self_approval}|consult="
         f"{state.pm_consultation_used},{state.pm_consultation_required_for_gate}|"
+        f"compat={state.role_body_boundary_preserved},{state.legacy_officer_events_preserved}|"
         f"route={state.route_ready}"
     )
 

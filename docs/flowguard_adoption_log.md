@@ -9125,6 +9125,87 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep startup UI artifact encoding as an explicit control-plane contract
   whenever the startup UI output schema changes.
 
+## 2026-05-13 - Reviewer-Only Root And Child Gate Simplification
+
+### Trigger
+- The user approved removing Product/Process Officer participation from the
+  default `root_contract` and `child_skill_manifest` gates, while requiring a
+  FlowGuard-first optimization pass before implementation.
+
+### Model Files
+- `simulations/flowpilot_reviewer_only_gate_model.py`
+- `simulations/run_flowpilot_reviewer_only_gate_checks.py`
+- `simulations/flowpilot_reviewer_only_gate_results.json`
+
+### Runtime Files
+- `docs/reviewer_only_gate_simplification_plan.md`
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python simulations\run_flowpilot_reviewer_only_gate_checks.py`.
+- OK: `python simulations\run_prompt_isolation_checks.py`.
+- OK: `python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\flowpilot_router_loop_results.json`.
+- OK in background: `python simulations\run_meta_checks.py --force`.
+- OK in background: `python simulations\run_capability_checks.py --force`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py skills\flowpilot\assets\barrier_bundle.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_reviewer_only_gate_model.py simulations\run_flowpilot_reviewer_only_gate_checks.py scripts\check_install.py`.
+- OK: focused Reviewer-only router tests for root contract and child-skill manifest gates.
+- OK: focused active-holder/current-node router tests preserving parallel changes.
+- OK: `python -m pytest tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_barrier_bundle.py -q`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- Timed out: `python -m pytest tests\test_flowpilot_router_runtime.py -q` did not finish within 20 minutes, so it was not counted as passed.
+
+### Findings
+- The Reviewer-only model now catches all listed risks R1-R14, including
+  hidden officer artifact requirements, removed-officer card emission,
+  missing Reviewer evidence burden, broken role/body isolation, and removed
+  legacy officer event compatibility.
+- The target Reviewer-only plan passes with root freeze and child-skill
+  approval requiring Reviewer pass but no Product/Process Officer default
+  gate.
+- Runtime tests explicitly prove root freeze does not create or require
+  `flowguard/root_contract_modelability.json`, and child-skill approval does
+  not create or require `flowguard/child_skill_conformance_model.json` or
+  `flowguard/child_skill_product_fit.json`.
+- Local installed `flowpilot` skill remained fresh against the repo-owned
+  source after sync/audit.
+
+### Counterexamples
+- root_freeze_without_reviewer
+- root_freeze_waits_for_product_officer
+- root_freeze_requires_product_officer_artifact
+- root_product_officer_card_emitted
+- child_approval_without_reviewer
+- child_approval_waits_for_process_officer
+- child_approval_waits_for_product_officer
+- child_approval_requires_process_officer_artifact
+- child_approval_requires_product_officer_artifact
+- child_process_officer_card_emitted
+- child_product_officer_card_emitted
+- root_reviewer_omits_verifiability
+- root_reviewer_omits_proof_obligations
+- child_reviewer_omits_skill_standards
+- child_reviewer_omits_evidence_obligations
+- pm_consultation_tail_required
+- role_body_boundary_broken
+- legacy_officer_event_handlers_removed
+- route_ready_without_root_freeze
+- route_ready_without_child_manifest_approval
+
+### Skipped Steps
+- No remote GitHub push or release action was performed, per user instruction.
+- Full router runtime module completion remains unverified because the module
+  exceeded the 20-minute local command limit; focused route-critical tests
+  were used instead.
+
+### Next Actions
+- Future Reviewer-only gate changes should update this dedicated model before
+  changing Router sequencing or gate file prerequisites.
+
 
 ## heartbeat-resume-manifest-check-fold-20260513 - Make FlowPilot heartbeat resume continue past prompt-manifest checks to the PM resume card
 

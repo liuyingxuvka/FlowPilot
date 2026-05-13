@@ -92,6 +92,8 @@ class State:
 
     pm_consultation_used: bool = False
     pm_consultation_required_for_gate: bool = False
+    role_body_boundary_preserved: bool = True
+    legacy_officer_events_preserved: bool = True
     route_ready: bool = False
 
 
@@ -216,6 +218,10 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.pm_consultation_required_for_gate:
         failures.append("PM consultation was reintroduced as a required gate tail")
+    if not state.role_body_boundary_preserved:
+        failures.append("Reviewer-only gate simplification broke role/body boundary isolation")
+    if not state.legacy_officer_events_preserved:
+        failures.append("Reviewer-only gate simplification removed legacy officer event compatibility")
     if state.route_ready and not state.pm_root_contract_frozen:
         failures.append("route became ready before PM froze root contract")
     if state.route_ready and not state.pm_child_manifest_approved:
@@ -325,6 +331,8 @@ def hazard_states() -> dict[str, State]:
         "child_reviewer_omits_skill_standards": replace(base, reviewer_child_checks_skill_standards=False),
         "child_reviewer_omits_evidence_obligations": replace(base, reviewer_child_checks_evidence_obligations=False),
         "pm_consultation_tail_required": replace(base, pm_consultation_required_for_gate=True),
+        "role_body_boundary_broken": replace(base, role_body_boundary_preserved=False),
+        "legacy_officer_event_handlers_removed": replace(base, legacy_officer_events_preserved=False),
         "route_ready_without_root_freeze": replace(base, pm_root_contract_frozen=False),
         "route_ready_without_child_manifest_approval": replace(base, pm_child_manifest_approved=False),
     }
@@ -367,6 +375,8 @@ def optimization_plan() -> dict[str, object]:
             "R8",
             "R9",
             "R10",
+            "R11",
+            "R12",
             "R13",
             "R14",
         ],

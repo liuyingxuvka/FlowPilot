@@ -5504,6 +5504,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_activates_reviewed_route")
         router.record_external_event(root, "pm_freezes_root_acceptance_contract")
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"].get("product_officer_root_contract_card_delivered", False))
+        self.assertFalse(state["flags"].get("root_contract_modelability_passed", False))
+        self.assertFalse((run_root / "flowguard" / "root_contract_modelability.json").exists())
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -5734,6 +5738,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(manifest_after_review["approval"]["reviewer_passed"])
         self.assertFalse(manifest_after_review["approval"]["pm_approved_for_route"])
         router.record_external_event(root, "pm_approves_child_skill_manifest_for_route")
+        manifest_after_approval = read_json(run_root / "child_skill_gate_manifest.json")
+        self.assertTrue(manifest_after_approval["approval"]["reviewer_passed"])
+        self.assertFalse(manifest_after_approval["approval"]["process_officer_passed"])
+        self.assertTrue(manifest_after_approval["approval"]["process_officer_default_gate_removed"])
+        self.assertFalse(manifest_after_approval["approval"]["product_officer_passed"])
+        self.assertTrue(manifest_after_approval["approval"]["product_officer_default_gate_removed"])
+        self.assertFalse((run_root / "flowguard" / "child_skill_conformance_model.json").exists())
+        self.assertFalse((run_root / "flowguard" / "child_skill_product_fit.json").exists())
         router.record_external_event(root, "capability_evidence_synced")
         self.assertTrue((run_root / "capabilities" / "capability_sync.json").exists())
 

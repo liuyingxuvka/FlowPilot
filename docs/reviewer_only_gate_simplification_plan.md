@@ -41,8 +41,8 @@ elsewhere, but that consultation is not a required condition for either gate.
 | R8 | Reviewer-only simplification drops child-skill hard-standard/evidence scrutiny. | Reviewer checklist must cover skill standards, evidence obligations, approvers, skipped steps, and self-approval rejection. |
 | R9 | Old officer events become silently necessary for new-run completion. | Reviewer-only success path must complete with no officer pass flags. |
 | R10 | Route work starts before root contract freeze or child-skill manifest approval. | Route-ready state requires both PM root freeze and PM child-skill approval. |
-| R11 | Removed gate bodies are merged into Controller or PM chat instead of staying role-scoped. | Existing packet/body boundary models and Router tests remain in the validation suite. |
-| R12 | Existing runs already mid-officer-gate break unexpectedly. | Runtime changes should preserve legacy event handlers and only change default next-card sequencing. |
+| R11 | Removed gate bodies are merged into Controller or PM chat instead of staying role-scoped. | Reviewer-only model fails if role/body boundary isolation is not preserved; existing packet/body boundary models and Router tests remain in the validation suite. |
+| R12 | Existing runs already mid-officer-gate break unexpectedly. | Reviewer-only model fails if legacy officer event compatibility is removed; runtime changes preserve legacy event handlers and only change default next-card sequencing. |
 | R13 | Root freeze event no longer waits for Product Officer, but `_freeze_root_acceptance_contract` still requires `flowguard/root_contract_modelability.json`. | Reviewer-only model has a hidden-officer-artifact hazard; runtime tests must freeze with no root modelability file. |
 | R14 | Child-skill PM approval no longer waits for officers, but `_approve_child_skill_manifest_for_route` still requires child-skill officer report files. | Reviewer-only model has hidden-officer-artifact hazards; runtime tests must approve with no child-skill officer files. |
 
