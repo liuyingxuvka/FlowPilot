@@ -9391,3 +9391,56 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - When router runtime work by parallel agents settles, rerun tests/test_flowpilot_router_runtime.py separately before any remote release.
+
+
+## flowpilot-reviewer-only-gate-runtime-alignment-20260513 - Validate reviewer-only gates and align runtime tests with active-holder fast lane
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowPilot speed tier 2 reviewer-only gate simplification with FlowGuard proof before implementation, while preserving parallel agent optimizations.
+- Status: completed
+- Skill decision: use_flowguard
+- Started: 2026-05-13T00:00:00+00:00
+- Ended: 2026-05-13T00:00:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_reviewer_only_gate_model.py
+- simulations/barrier_bundle_model.py
+- simulations/prompt_isolation_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations/run_flowpilot_reviewer_only_gate_checks.py`
+- OK: `python simulations/run_barrier_equivalence_checks.py`
+- OK: `python simulations/run_prompt_isolation_checks.py`
+- OK: `python simulations/run_meta_checks.py --force`
+- OK: `python simulations/run_capability_checks.py --force`
+- OK: `python -m pytest tests/test_flowpilot_barrier_bundle.py -q`
+- OK: `python -m pytest tests/test_flowpilot_card_instruction_coverage.py -q`
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py` by ordered chunks covering all 156 collected tests
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/check_install.py`
+
+### Findings
+- Reviewer-only model catches root freeze without Reviewer, hidden Product Officer waits or artifacts, hidden child-skill Process/Product Officer waits or artifacts, removed card emissions, route readiness before required PM approval, and weakened Reviewer checklist coverage.
+- The reviewer-only target plan passes with root contract freeze and child-skill manifest approval depending on PM authored artifacts plus Reviewer pass only.
+- Runtime validation exposed two stale current-node tests that bypassed the parallel active-holder fast lane; tests now use the active-holder helper instead of direct `write_result`.
+- Runtime validation exposed two Product Officer block specs whose reset lists included their own blocked flag; the reset lists now preserve the freshly recorded block.
+
+### Counterexamples
+- Known-bad reviewer-only hazards R1-R14 were detected by `run_flowpilot_reviewer_only_gate_checks.py`.
+
+### Friction Points
+- Full router-runtime pytest in one process exceeded the practical local timeout, so the 156 tests were run in ordered chunks.
+- Long FlowGuard meta and capability checks are expensive on this Windows/Python setup and should remain long-running validation steps.
+
+### Skipped Steps
+- No GitHub push or remote sync was run by user request.
+
+### Next Actions
+- Keep the reviewer-only model updated if future agents reintroduce Product/Process Officer default gates at root-contract or child-skill-manifest boundaries.

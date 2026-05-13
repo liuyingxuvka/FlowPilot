@@ -2104,14 +2104,22 @@ GATE_OUTCOME_BLOCK_EVENT_SPECS: dict[str, dict[str, Any]] = {
         "path": "flowguard/product_architecture_modelability_block.json",
         "schema_version": "flowpilot.product_architecture_modelability_block.v1",
         "checked_paths": ("product_function_architecture.json",),
-        "reset_flags": PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
+        "reset_flags": tuple(
+            flag
+            for flag in PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS
+            if flag != "product_architecture_modelability_blocked"
+        ),
     },
     "product_officer_blocks_product_behavior_model": {
         "expected_role": "product_flowguard_officer",
         "path": "flowguard/product_behavior_model_block.json",
         "schema_version": "flowpilot.product_behavior_model_block.v1",
         "checked_paths": ("product_function_architecture.json",),
-        "reset_flags": PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
+        "reset_flags": tuple(
+            flag
+            for flag in PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS
+            if flag != "product_behavior_model_blocked"
+        ),
     },
     "reviewer_blocks_root_acceptance_contract": {
         "expected_role": "human_like_reviewer",

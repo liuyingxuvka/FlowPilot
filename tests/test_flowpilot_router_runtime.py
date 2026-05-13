@@ -8194,17 +8194,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-quality", "packet_envelope_path": packet_path})
         self.apply_until_action(root, "relay_current_node_packet")
-        relayed_packet = read_json(root / packet_path)
-        packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
-        result = packet_runtime.write_result(
+        agent_id, result_path = self.submit_current_node_result_via_active_holder(
             root,
-            packet_envelope=read_json(root / packet_path),
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-quality",
+            packet_id="node-packet-quality",
             result_body_text="reviewable result",
-            next_recipient="project_manager",
         )
-        result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-quality", "result_envelope_path": result_path})
         self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
@@ -8217,7 +8211,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {"agent-worker-quality": "worker_a"},
+                    "agent_role_map": {agent_id: "worker_a"},
                 },
             ),
         )
@@ -8306,17 +8300,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-003", "packet_envelope_path": packet_path})
         self.apply_until_action(root, "relay_current_node_packet")
-        relayed_packet = read_json(root / packet_path)
-        packet_runtime.read_packet_body_for_role(root, relayed_packet, role="worker_a")
-        result = packet_runtime.write_result(
+        _, result_path = self.submit_current_node_result_via_active_holder(
             root,
-            packet_envelope=read_json(root / packet_path),
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-2",
+            packet_id="node-packet-003",
             result_body_text="blocked result",
-            next_recipient="project_manager",
         )
-        result_path = result["result_body_path"].replace("result_body.md", "result_envelope.json")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-003", "result_envelope_path": result_path})
         self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
