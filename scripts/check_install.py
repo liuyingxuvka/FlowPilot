@@ -110,6 +110,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_router.py",
     "skills/flowpilot/assets/packet_runtime.py",
     "skills/flowpilot/assets/role_output_runtime.py",
+    "skills/flowpilot/assets/brand/flowpilot-icon-default.png",
     "skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1",
     "skills/flowpilot/assets/runtime_kit/manifest.json",
     "skills/flowpilot/assets/runtime_kit/README.md",

@@ -105,6 +105,38 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ):
             self.assertEqual((output_dir / name).read_bytes()[:1], b"{", name)
 
+    def test_startup_intake_ui_runs_from_installed_skill_without_repo_assets(self) -> None:
+        if sys.platform != "win32" or shutil.which("powershell") is None:
+            self.skipTest("startup intake WPF smoke requires Windows PowerShell")
+        root = self.make_project()
+        install_root = root / "skills-install" / "flowpilot"
+        shutil.copytree(ROOT / "skills" / "flowpilot", install_root)
+        output_dir = root / "startup-intake-output"
+        script = install_root / "assets" / "ui" / "startup_intake" / "flowpilot_startup_intake.ps1"
+
+        result = subprocess.run(
+            [
+                "powershell",
+                "-STA",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(script),
+                "-OutputDir",
+                str(output_dir),
+                "-HeadlessConfirmText",
+                "Check startup intake installed skill asset lookup",
+            ],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        self.assertTrue((output_dir / "startup_intake_result.json").is_file())
+
     def test_router_accepts_utf8_bom_json_control_artifact(self) -> None:
         root = self.make_project()
         path = root / "bom.json"

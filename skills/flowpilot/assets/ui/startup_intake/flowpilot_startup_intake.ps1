@@ -31,7 +31,7 @@ Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName WindowsBase
 Add-Type -AssemblyName System.Xaml
 
-function Find-RepoRoot {
+function Find-FlowPilotRepoRoot {
     $cursor = [System.IO.DirectoryInfo]::new($PSScriptRoot)
     while ($null -ne $cursor) {
         $brandIcon = Join-Path $cursor.FullName "assets\brand\flowpilot-icon-default.png"
@@ -41,11 +41,36 @@ function Find-RepoRoot {
         }
         $cursor = $cursor.Parent
     }
-    throw "Unable to locate FlowPilot repository root from $PSScriptRoot"
+    return $null
 }
 
-$RepoRoot = Find-RepoRoot
-$IconPath = Join-Path $RepoRoot "assets\brand\flowpilot-icon-default.png"
+function Find-FlowPilotSkillRoot {
+    $cursor = [System.IO.DirectoryInfo]::new($PSScriptRoot)
+    while ($null -ne $cursor) {
+        $brandIcon = Join-Path $cursor.FullName "assets\brand\flowpilot-icon-default.png"
+        $router = Join-Path $cursor.FullName "assets\flowpilot_router.py"
+        if ((Test-Path -LiteralPath $brandIcon) -and (Test-Path -LiteralPath $router)) {
+            return $cursor.FullName
+        }
+        $cursor = $cursor.Parent
+    }
+    return $null
+}
+
+$RepoRoot = Find-FlowPilotRepoRoot
+$SkillRoot = Find-FlowPilotSkillRoot
+if ([string]::IsNullOrWhiteSpace($RepoRoot) -and [string]::IsNullOrWhiteSpace($SkillRoot)) {
+    throw "Unable to locate FlowPilot repository or skill root from $PSScriptRoot"
+}
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    $RepoRoot = $SkillRoot
+}
+
+$IconPath = if (-not [string]::IsNullOrWhiteSpace($SkillRoot)) {
+    Join-Path $SkillRoot "assets\brand\flowpilot-icon-default.png"
+} else {
+    Join-Path $RepoRoot "assets\brand\flowpilot-icon-default.png"
+}
 if (-not (Test-Path -LiteralPath $IconPath)) {
     throw "Missing FlowPilot icon: $IconPath"
 }

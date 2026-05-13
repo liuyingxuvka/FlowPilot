@@ -94,6 +94,14 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
             "https://raw.githubusercontent.com/liuyingxuvka/FlowGuard/main/pyproject.toml",
         )
 
+    def test_flowpilot_skill_package_includes_startup_intake_icon(self) -> None:
+        flowpilot = self.dependency("flowpilot")
+
+        self.assertEqual(flowpilot["repo_path"], "skills/flowpilot")
+        self.assertTrue(
+            (ROOT / "skills" / "flowpilot" / "assets" / "brand" / "flowpilot-icon-default.png").is_file()
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
