@@ -23,6 +23,10 @@ All notable changes to FlowPilot will be documented in this file.
   mutation, terminal summary generation, and model-driven next-action
   selection stay tied to current route/frontier evidence and registry-backed
   actions.
+- Simplified the root-contract and child-skill-manifest default gates to the
+  reviewer-only speed profile: PM-authored artifacts plus human-like reviewer
+  approval now unblock those pre-route steps without mandatory Product or
+  Process Officer detours.
 - Strengthened PM, reviewer, officer, and worker runtime cards so role
   authority, output contracts, stale-evidence handling, and source/route
   version boundaries are explicit in formal packets and reviews.
@@ -35,6 +39,9 @@ All notable changes to FlowPilot will be documented in this file.
 - Fixed resume priority so PM resume decisions can take precedence over stale
   control-blocker handling only after current-run state, frontier, packet, and
   role-memory evidence are loaded.
+- Fixed gate-block reset handling so Product Officer block events preserve
+  their freshly recorded blocked state, and aligned router runtime validation
+  with the active-holder packet-result fast lane.
 - Hardened PM result routing so worker and reviewer outputs cannot bypass PM
   disposition, output-contract catalog checks, or terminal authority gates.
 - Expanded install and coverage checks to catch missing PM result-routing
