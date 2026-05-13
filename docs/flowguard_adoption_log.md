@@ -8657,6 +8657,46 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - PM can retry the already-authorized `pm_completes_current_node_from_reviewed_result` event for `leaf-functional-framing-and-concept-brief` without reissuing worker work or rereading sealed result bodies.
 
 
+## card-return-resolved-duplicate-ack-repair-20260513 - Prevent duplicate ACK from reopening a resolved return wait
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The live FlowPilot run produced a control blocker after a reviewer card ACK had already been resolved, because a later duplicate runtime check-in set the pending return status back to `returned` and blocked subsequent PM/reviewer events.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-13T16:20:00+02:00
+- Ended: 2026-05-13T16:31:00+02:00
+- Commands OK: True
+
+### Runtime Files
+- skills/flowpilot/assets/flowpilot_router.py
+- tests/test_flowpilot_router_runtime.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_committed_system_card_relay_can_resolve_without_apply_roundtrip`.
+- OK: `python simulations\run_meta_checks.py`.
+- OK: `python simulations\run_capability_checks.py`.
+
+### Findings
+- Router pending-return selection now ignores a `returned` pending entry when the same card or bundle return already has a resolved completed-return record or a `resolved_at` marker.
+- A duplicate runtime card check-in can still update acknowledgement metadata, but it no longer blocks unrelated role events after the original return has been validated.
+- The live run's PM control-blocker repair event no longer has a pending card-return blocker after the patch.
+
+### Counterexamples
+- `resolved_card_return_reopened_by_duplicate_ack`
+
+### Friction Points
+- The live run exposed a race/order hazard between runtime ACK submission and Router return-ledger status classification that existing tests did not cover.
+
+### Skipped Steps
+- No sealed card, packet, result, or report body was read for this repair.
+- No remote GitHub sync or push was performed.
+
+### Next Actions
+- Keep future card-runtime changes aligned with Router pending-return classification so receipt retries remain idempotent.
+
+
 ## flowpilot-unified-role-recovery-20260513 - Unify heartbeat and mid-run role recovery
 
 - Project: FlowGuardProjectAutopilot_20260430
