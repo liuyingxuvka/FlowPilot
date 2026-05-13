@@ -41,12 +41,12 @@ $Xaml = @"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="FlowPilot Startup Intake"
-    Width="820"
-    Height="680"
+    Width="800"
+    Height="640"
     MinWidth="680"
     MinHeight="560"
     WindowStartupLocation="CenterScreen"
-    Background="#F6F1E8"
+    Background="#FFFDF7"
     FontFamily="Segoe UI Variable Text, Segoe UI"
     TextOptions.TextFormattingMode="Display"
     TextOptions.TextRenderingMode="ClearType"
@@ -55,10 +55,10 @@ $Xaml = @"
     ResizeMode="CanResizeWithGrip">
   <Window.Resources>
     <SolidColorBrush x:Key="InkBrush" Color="#141414" />
-    <SolidColorBrush x:Key="MutedBrush" Color="#6B655D" />
-    <SolidColorBrush x:Key="LineBrush" Color="#D8CFC1" />
-    <SolidColorBrush x:Key="PanelBrush" Color="#FFFDF7" />
-    <SolidColorBrush x:Key="FieldBrush" Color="#FBF9F4" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#706A62" />
+    <SolidColorBrush x:Key="LineBrush" Color="#E2DCD2" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="FieldBrush" Color="#FBFAF7" />
     <SolidColorBrush x:Key="AccentBrush" Color="#B9821D" />
 
     <Style x:Key="PrimaryButton" TargetType="Button">
@@ -96,11 +96,83 @@ $Xaml = @"
       </Setter>
     </Style>
 
-    <Style x:Key="LanguageCombo" TargetType="ComboBox">
-      <Setter Property="Height" Value="34" />
-      <Setter Property="MinWidth" Value="112" />
-      <Setter Property="Padding" Value="8,3" />
-      <Setter Property="FontSize" Value="13" />
+    <Style x:Key="LanguageChoice" TargetType="RadioButton">
+      <Setter Property="Height" Value="30" />
+      <Setter Property="MinWidth" Value="68" />
+      <Setter Property="Foreground" Value="#625C55" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border
+                x:Name="ChoiceBorder"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                BorderThickness="1"
+                CornerRadius="15"
+                Padding="10,0">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="ChoiceBorder" Property="Background" Value="#141414" />
+                <Setter TargetName="ChoiceBorder" Property="BorderBrush" Value="#141414" />
+                <Setter Property="Foreground" Value="#FFFDF7" />
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="ChoiceBorder" Property="BorderBrush" Value="#CFC7BA" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ScrollBarPageButton" TargetType="RepeatButton">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RepeatButton">
+            <Border Background="Transparent" />
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ScrollBarThumb" TargetType="Thumb">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Thumb">
+            <Border Background="#CBC3B8" CornerRadius="4" />
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="ScrollBar">
+      <Setter Property="Width" Value="10" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Grid Background="Transparent" Width="10">
+              <Track x:Name="PART_Track" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollBarPageButton}" />
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb Style="{StaticResource ScrollBarThumb}" />
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollBarPageButton}" />
+                </Track.IncreaseRepeatButton>
+              </Track>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="SwitchToggle" TargetType="ToggleButton">
@@ -126,7 +198,7 @@ $Xaml = @"
                   FontWeight="Bold"
                   HorizontalAlignment="Left"
                   VerticalAlignment="Center"
-                  Margin="14,0,0,0" />
+                  Margin="15,0,0,0" />
               <Ellipse
                   x:Name="Knob"
                   Width="30"
@@ -158,57 +230,36 @@ $Xaml = @"
     </Style>
   </Window.Resources>
 
-  <Border Background="#F6F1E8" Padding="26">
-    <Border
-        Background="{StaticResource PanelBrush}"
-        BorderBrush="#E2D8C9"
-        BorderThickness="1"
-        CornerRadius="10"
-        Padding="0">
-      <Border.Effect>
-        <DropShadowEffect BlurRadius="26" ShadowDepth="8" Opacity="0.17" Color="#000000" />
-      </Border.Effect>
-
-      <Grid Background="{StaticResource PanelBrush}" ClipToBounds="True">
+  <Grid Background="{StaticResource PanelBrush}" ClipToBounds="True">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="32,30,32,20">
+        <Grid Grid.Row="0" Margin="36,32,36,22">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
 
-          <Border
+          <Image
               Grid.Column="0"
-              Width="64"
-              Height="64"
-              BorderBrush="#141414"
-              BorderThickness="1"
-              CornerRadius="32"
-              Background="#FFFDF7"
-              Margin="0,0,16,0">
-            <Image Source="$IconUri" Width="48" Height="48" RenderOptions.BitmapScalingMode="HighQuality" />
-          </Border>
+              Source="$IconUri"
+              Width="56"
+              Height="56"
+              RenderOptions.BitmapScalingMode="HighQuality"
+              Margin="0,0,16,0"
+              VerticalAlignment="Center" />
 
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock
-                x:Name="EyebrowText"
-                Text="FlowPilot Intake"
-                Foreground="#7E5411"
-                FontSize="11"
-                FontWeight="Bold"
-                Margin="0,0,0,6" />
             <TextBlock
                 x:Name="TitleText"
                 Text="Start FlowPilot"
                 Foreground="{StaticResource InkBrush}"
                 FontFamily="Segoe UI Variable Display, Segoe UI"
-                FontSize="31"
+                FontSize="30"
                 FontWeight="SemiBold" />
           </StackPanel>
 
@@ -231,10 +282,12 @@ $Xaml = @"
                   <Path Data="M12 3 C9 6 9 18 12 21" Stroke="#141414" StrokeThickness="1.5" Fill="{x:Null}" />
                 </Canvas>
               </Viewbox>
-              <ComboBox x:Name="LanguageSelect" Style="{StaticResource LanguageCombo}" SelectedIndex="0">
-                <ComboBoxItem Content="English" />
-                <ComboBoxItem Content="中文" />
-              </ComboBox>
+              <Border Background="#F2EFE9" CornerRadius="17" Padding="2">
+                <StackPanel Orientation="Horizontal">
+                  <RadioButton x:Name="EnglishLanguage" GroupName="Language" IsChecked="True" Content="English" Style="{StaticResource LanguageChoice}" />
+                  <RadioButton x:Name="ChineseLanguage" GroupName="Language" Content="中文" Style="{StaticResource LanguageChoice}" />
+                </StackPanel>
+              </Border>
             </StackPanel>
           </Border>
         </Grid>
@@ -243,10 +296,10 @@ $Xaml = @"
             Grid.Row="1"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled"
-            Padding="32,0,32,0">
+            Padding="36,0,28,0">
           <StackPanel>
             <Border
-                BorderBrush="{StaticResource LineBrush}"
+                BorderBrush="#E8E2DA"
                 BorderThickness="1"
                 CornerRadius="8"
                 Background="#FFFDF7"
@@ -261,13 +314,6 @@ $Xaml = @"
                       FontSize="14"
                       FontWeight="SemiBold"
                       DockPanel.Dock="Left" />
-                  <TextBlock
-                      x:Name="RequestHint"
-                      Text="This becomes the sealed intake body."
-                      Foreground="{StaticResource MutedBrush}"
-                      FontSize="12"
-                      HorizontalAlignment="Right"
-                      DockPanel.Dock="Right" />
                 </DockPanel>
 
                 <Grid>
@@ -286,7 +332,7 @@ $Xaml = @"
                       SpellCheck.IsEnabled="True" />
                   <TextBlock
                       x:Name="PlaceholderText"
-                      Text="Describe the goal, constraints, source materials, and acceptance criteria for this FlowPilot run."
+                      Text="Write the instructions you want the AI to follow."
                       Foreground="#8D857A"
                       FontSize="14"
                       Margin="18,15,18,0"
@@ -294,13 +340,6 @@ $Xaml = @"
                       IsHitTestVisible="False" />
                 </Grid>
 
-                <TextBlock
-                    x:Name="LimitText"
-                    Text="No length limit"
-                    Foreground="{StaticResource MutedBrush}"
-                    FontSize="12"
-                    HorizontalAlignment="Right"
-                    Margin="0,9,0,0" />
               </StackPanel>
             </Border>
 
@@ -355,26 +394,26 @@ $Xaml = @"
           </StackPanel>
         </ScrollViewer>
 
-        <Grid Grid.Row="2" Margin="32,0,32,30">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-          </Grid.ColumnDefinitions>
+        <Grid Grid.Row="2" Margin="36,4,36,30">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
           <TextBlock
               x:Name="StatusText"
-              Grid.Column="0"
-              VerticalAlignment="Center"
+              Grid.Row="1"
+              HorizontalAlignment="Center"
               Foreground="{StaticResource MutedBrush}"
-              FontSize="12.5" />
+              FontSize="12.5"
+              Margin="0,10,0,0" />
           <Button
               x:Name="ConfirmButton"
-              Grid.Column="1"
+              Grid.Row="0"
+              HorizontalAlignment="Center"
               Style="{StaticResource PrimaryButton}"
               Content="Confirm intake" />
         </Grid>
       </Grid>
-    </Border>
-  </Border>
 </Window>
 "@
 
@@ -382,8 +421,8 @@ $Reader = [System.Xml.XmlReader]::Create([System.IO.StringReader]::new($Xaml))
 $Window = [Windows.Markup.XamlReader]::Load($Reader)
 
 $Names = @(
-    "LanguageSelect", "EyebrowText", "TitleText", "RequestLabel", "RequestHint",
-    "WorkRequest", "PlaceholderText", "LimitText", "AgentsTitle", "AgentsBody",
+    "EnglishLanguage", "ChineseLanguage", "TitleText", "RequestLabel",
+    "WorkRequest", "PlaceholderText", "AgentsTitle", "AgentsBody",
     "ContinuationTitle", "ContinuationBody", "CockpitTitle", "CockpitBody",
     "ConfirmButton", "StatusText"
 )
@@ -396,12 +435,9 @@ foreach ($Name in $Names) {
 $Copy = @{
     en = @{
         Window = "FlowPilot Startup Intake"
-        Eyebrow = "FlowPilot Intake"
         Title = "Start FlowPilot"
         RequestLabel = "Work request"
-        RequestHint = "This becomes the sealed intake body."
-        Placeholder = "Describe the goal, constraints, source materials, and acceptance criteria for this FlowPilot run."
-        Limit = "No length limit"
+        Placeholder = "Write the instructions you want the AI to follow."
         AgentsTitle = "Background agents"
         AgentsBody = "Allow the six-role crew when the host supports it."
         ContinuationTitle = "Scheduled continuation"
@@ -413,12 +449,9 @@ $Copy = @{
     }
     zh = @{
         Window = "FlowPilot 启动注入"
-        Eyebrow = "FlowPilot 注入"
         Title = "启动 FlowPilot"
         RequestLabel = "工作要求"
-        RequestHint = "这里会成为隔离后的需求正文。"
-        Placeholder = "写下这次 FlowPilot 工作的目标、限制、材料来源和验收标准。"
-        Limit = "不限制长度"
+        Placeholder = "请写下给 AI 的工作目标和具体命令。"
         AgentsTitle = "后台智能体"
         AgentsBody = "宿主支持时允许启用六角色团队。"
         ContinuationTitle = "定时继续"
@@ -431,7 +464,7 @@ $Copy = @{
 }
 
 function Get-Language {
-    if ($Ui.LanguageSelect.SelectedIndex -eq 1) { return "zh" }
+    if ($Ui.ChineseLanguage.IsChecked) { return "zh" }
     return "en"
 }
 
@@ -447,12 +480,9 @@ function Apply-Language {
     $Lang = Get-Language
     $T = $Copy[$Lang]
     $Window.Title = $T.Window
-    $Ui.EyebrowText.Text = $T.Eyebrow
     $Ui.TitleText.Text = $T.Title
     $Ui.RequestLabel.Text = $T.RequestLabel
-    $Ui.RequestHint.Text = $T.RequestHint
     $Ui.PlaceholderText.Text = $T.Placeholder
-    $Ui.LimitText.Text = $T.Limit
     $Ui.AgentsTitle.Text = $T.AgentsTitle
     $Ui.AgentsBody.Text = $T.AgentsBody
     $Ui.ContinuationTitle.Text = $T.ContinuationTitle
@@ -463,7 +493,8 @@ function Apply-Language {
     $Ui.StatusText.Text = ""
 }
 
-$Ui.LanguageSelect.Add_SelectionChanged({ Apply-Language })
+$Ui.EnglishLanguage.Add_Checked({ Apply-Language })
+$Ui.ChineseLanguage.Add_Checked({ Apply-Language })
 $Ui.WorkRequest.Add_TextChanged({ Update-Placeholder })
 $Ui.ConfirmButton.Add_Click({
     $Lang = Get-Language
