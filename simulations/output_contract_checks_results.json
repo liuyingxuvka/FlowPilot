@@ -1,0 +1,34 @@
+{
+  "checks": {
+    "flowguard_explorer": "pass",
+    "hazard_invariants": "pass",
+    "negative_scenarios": "pass",
+    "progress": "pass",
+    "safe_graph": "pass"
+  },
+  "counts": {
+    "accepted": 6,
+    "edges": 84,
+    "rejected": 6,
+    "states": 85
+  },
+  "missing_labels": [],
+  "negative_scenarios": {
+    "forbidden_envelope_body_field": "rejected:forbidden_envelope_body_field",
+    "hidden_router_requirement_absent_from_contract": "rejected:hidden_router_requirement_absent_from_contract",
+    "mismatched_contract": "rejected:mismatched_contract",
+    "missing_contract": "rejected:missing_contract",
+    "missing_report_contract_delivery": "rejected:missing_report_contract_delivery",
+    "missing_required_body_field": "rejected:missing_required_body_field",
+    "valid_final_report": "accepted",
+    "valid_gate_decision": "accepted",
+    "valid_implementation": "accepted",
+    "valid_model_miss_officer_report": "accepted",
+    "valid_model_miss_triage": "accepted",
+    "valid_review": "accepted"
+  },
+  "ok": true,
+  "skipped_checks": {
+    "conformance_replay": "skipped_with_reason: abstract output-contract model has no production replay adapter in the requested new-file scope"
+  }
+}

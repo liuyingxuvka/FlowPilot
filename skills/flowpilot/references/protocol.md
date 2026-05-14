@@ -159,13 +159,22 @@ long-form public explanation lives in `docs/protocol.md`.
     `await_role_decision` are controlled wait records under daemon ownership,
     not reasons to stop the Controller role or spend the current foreground
     turn waiting on a role.
-26. If the user selected manual resume, record `manual-resume` mode and do not
+26. Before loading Controller core, formal startup always starts or attaches
+    the built-in Router daemon. There is no user option to disable this
+    daemon. Startup must fail rather than load Controller core unless it can
+    observe the live daemon lock, `runtime/router_daemon_status.json`, and
+    `runtime/controller_action_ledger.json`. After Controller core loads,
+    Controller follows daemon status and the Controller action ledger; direct
+    `flowpilot_router.py next/apply/run-until-wait` calls are diagnostics,
+    tests, or explicit repair/recovery tools rather than the normal runtime
+    metronome.
+27. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
-27. Record the controlled-stop notice policy: completed routes emit a
+28. Record the controlled-stop notice policy: completed routes emit a
     completion notice; controlled nonterminal stops emit a resume notice that
     says whether to wait for heartbeat or type `continue FlowPilot`.
-28. Ask the project manager for the initial route-design decision.
-29. Ask the process FlowGuard officer to use FlowGuard as process designer for
+29. Ask the project manager for the initial route-design decision.
+30. Ask the process FlowGuard officer to use FlowGuard as process designer for
     the active route.
 30. Generate a candidate route tree from the approved product-function
     architecture, contract, and PM-approved child-skill gate manifest.
@@ -259,8 +268,8 @@ long-form public explanation lives in `docs/protocol.md`.
     mechanical checks pass. The controller then relays only Router-authorized
     envelope metadata. Reviewer and PM formal outputs are submitted directly to
     Router through `flowpilot_runtime.py submit-output-to-router`; Controller
-    waits for Router status before the next relay and continues internally when
-    `stop_for_user: false`.
+    follows Router daemon status and the Controller action ledger before the
+    next relay and continues internally when `stop_for_user: false`.
     The installed runtime is `skills/flowpilot/assets/packet_runtime.py`; the
     repository wrapper is `scripts/flowpilot_packets.py`. Missing physical
     files or body text in controller context blocks dispatch.

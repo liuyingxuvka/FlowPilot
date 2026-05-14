@@ -30,6 +30,17 @@ This repository publishes the FlowPilot Codex skill, prompt-isolated router,
 runtime cards, packet runtime, reusable `.flowpilot/` templates, FlowGuard
 simulations, validation scripts, documentation, and minimal examples.
 
+## Product Preview
+
+| Canonical icon | Native startup intake UI |
+| --- | --- |
+| <img src="./assets/brand/flowpilot-icon-default.png" alt="FlowPilot canonical black hexagram icon" width="150" /> | <img src="./assets/readme-screenshots/startup-intake.png" alt="FlowPilot native startup intake UI with a work request field and toggles for background agents, scheduled continuation, and Cockpit UI" width="560" /> |
+
+The startup intake UI is a bootloader surface. It captures the work request and
+the three startup choices as files, then hands the router a result path. The
+Controller sees only envelope/hash metadata; the user request body is sealed for
+the PM intake packet.
+
 ## Current Status
 
 - Current source version in this checkout: **v0.9.2**.
@@ -39,9 +50,11 @@ simulations, validation scripts, documentation, and minimal examples.
 - Release shape: source package only, no binary app bundle.
 - First concrete host: Codex-compatible skill runtime.
 - Core dependency: the real Python package **`flowguard`** must be importable.
-- Current display surface: chat route signs. The old native Cockpit prototype
-  is not part of the active source tree and should not be reused as current UI
-  evidence.
+- Current UI surface: a Windows WPF startup intake dialog is included in the
+  skill assets; chat route signs remain the fallback progress display when no
+  Cockpit/control surface is open.
+- Current visual identity: `assets/brand/flowpilot-icon-default.png` is the
+  canonical FlowPilot icon.
 
 ## Four Control Pillars
 
@@ -51,12 +64,27 @@ FlowPilot's current design is best understood as four connected mechanisms.
 | --- | --- | --- |
 | **1. FlowGuard finite-state simulation** | Models the development process and, when needed, the target product/function behavior as executable finite-state systems. | Turns "the agent should be careful" into explicit states, allowed transitions, invariants, progress checks, stuck-state checks, and counterexample traces. |
 | **2. Packet mail control plane** | Sends work as physical packet envelopes and bodies, with hashes, role origin, holder state, and no-read/no-execute controller relay rules. | Prevents authority collapse where one agent writes, routes, reviews, and accepts its own work from informal chat context. |
-| **3. Role authority system** | Separates Project Manager, Human-like Reviewer, Process FlowGuard Officer, Product FlowGuard Officer, Worker A, Worker B, and Controller duties. | Makes gate approval visible: PM owns route and completion decisions, reviewers inspect, officers model, workers execute bounded tasks, and Controller only relays. |
-| **4. Router rhythm** | Uses a prompt-isolated router as the metronome for startup, next action selection, card delivery, packet loop re-entry, route signs, and heartbeat/manual resume. | Keeps every continuation tied to current run state instead of letting the agent infer the next move from memory or chat history. |
+| **3. Role authority system** | Separates Project Manager, Human-like Reviewer, Process FlowGuard Officer, Product FlowGuard Officer, Worker A, Worker B, and Controller duties. | Makes gate approval visible: PM owns route and completion decisions, reviewers inspect, officers model, workers execute bounded tasks, and Controller only relays envelopes. |
+| **4. Router rhythm** | Uses a prompt-isolated router as the metronome for startup, next action selection, card delivery, packet loop re-entry, route signs, and heartbeat/manual resume. | Keeps every continuation tied to current run state instead of letting the agent infer the next move from memory, chat history, or another role's prompt context. |
 
 These four pieces are meant to work together. FlowGuard defines the state
 model, packet mail preserves clean handoffs, roles keep authority separate,
 and the router controls the cadence of what may happen next.
+
+## Why Separate Workers And A Router
+
+The separate workers are not decorative personas. They are context boundaries:
+the PM can plan and decide, the reviewer can challenge, officers can model,
+and workers can execute bounded tasks without inheriting each other's prompt
+surface. That separation reduces prompt contamination, where planning language,
+review criteria, model assumptions, and worker instructions blur into one
+uncheckable context.
+
+The Controller and router are the clean relay layer. The Controller can move
+packet envelopes, update status, and ask the router for the next legal action,
+but it must not read sealed packet bodies or approve its own work. This is the
+mechanism that lets long work continue from files instead of from a model's
+memory of the conversation.
 
 ## What FlowPilot Is
 
@@ -215,21 +243,27 @@ gate, route sign, resume step, or status action is allowed next. The assistant
 does not load old route files or old prompt bodies unless the router names
 them.
 
-On startup, FlowPilot asks exactly three questions and then stops:
+On startup, the current router path opens the native startup intake UI when the
+host can run it. The UI records:
 
-1. May it use the standard background-agent role crew where the host permits?
-2. May it set up scheduled continuation/heartbeat where the host permits?
-3. Should it use Cockpit UI if available, or chat route signs?
+1. the work request body;
+2. whether background-agent roles are allowed where the host permits;
+3. whether scheduled continuation/heartbeat is allowed where the host permits;
+4. whether the run should use a Cockpit/control surface when available or chat
+   route signs otherwise.
 
-Only after the user's later reply answers all three may the router emit the
-startup banner, create the run, record the user request packet, and continue.
+The UI writes receipt, envelope, sealed body, and result files. Only after the
+router validates that result may it emit the startup banner, create the run,
+materialize the PM-bound user intake packet, and continue. If the UI is
+cancelled, startup stops before a run, roles, heartbeat, or Controller state is
+created.
 
 ## Lifecycle At A Glance
 
 ```mermaid
 flowchart LR
-  A["User asks: Use FlowPilot"] --> B["Router asks startup questions and stops"]
-  B --> C["Explicit answers"]
+  A["User asks: Use FlowPilot"] --> B["Router opens startup intake UI"]
+  B --> C["Confirmed UI result with sealed request"]
   C --> D["Run-scoped .flowpilot state"]
   D --> E["Packet mail to PM"]
   E --> F["Material intake and product/function architecture"]
@@ -252,6 +286,13 @@ frontier, packet ledger, role memory, route files, evidence, and PM decisions.
 
 FlowPilot is an orchestrator. It should route domain work to the right skill
 instead of copying every domain prompt into itself.
+
+In practice, FlowPilot is the project-level controller when several companion
+skills must cooperate. FlowGuard and `model-first-function-flow` handle
+model-first validation, `grill-me` supplies interrogation discipline, and UI or
+design skills are selected only when the PM maps their standards into route
+gates. The point is to coordinate skills without mixing all of their prompts
+into one shared context.
 
 The dependency manifest is `flowpilot.dependencies.json`.
 
@@ -333,12 +374,14 @@ python scripts\install_flowpilot.py --sync-repo-owned
 To invoke FlowPilot in a Codex-compatible host, use a direct request:
 
 ```text
-Use FlowPilot. Ask the startup questions first.
+Use FlowPilot.
 ```
 
-The correct first response is only the startup questions. FlowPilot should not
-create a run, start agents, inspect files, open UI, set heartbeat, or plan
-project work until the later user reply answers those questions.
+The current startup path should open the native startup intake UI when the host
+can run it. FlowPilot should not create a run, start role agents, set heartbeat,
+or plan project work until the router has received and validated the UI result.
+If the UI cannot be opened, the router-controlled fallback must preserve the
+same startup-answer and sealed-request boundary.
 
 ## Verification
 
@@ -430,6 +473,16 @@ FlowPilot 是一个面向大型 AI Agent 软件项目的 **模型化项目控制
 
 本仓库发布 FlowPilot Codex 技能、prompt-isolated router、runtime cards、packet runtime、可复用 `.flowpilot/` 模板、FlowGuard 模拟、验证脚本、文档和最小示例。
 
+## 产品预览
+
+| 标准图标 | 原生 startup intake UI |
+| --- | --- |
+| <img src="./assets/brand/flowpilot-icon-default.png" alt="FlowPilot 标准黑色六角星图标" width="150" /> | <img src="./assets/readme-screenshots/startup-intake.png" alt="FlowPilot 原生 startup intake UI，包含工作要求输入框和后台智能体、定时继续、Cockpit UI 开关" width="560" /> |
+
+startup intake UI 是启动阶段的 bootloader 界面。它把工作要求和三个启动选择记录成文件，
+再把 result path 交给 router。Controller 只能看到 envelope/hash 元数据；用户请求正文
+会被封装到 PM intake packet 里。
+
 ## 当前状态
 
 - 当前 checkout 的源码版本：**v0.9.2**。
@@ -439,7 +492,9 @@ FlowPilot 是一个面向大型 AI Agent 软件项目的 **模型化项目控制
 - 发布形态：只有源码包，没有二进制应用包。
 - 第一个具体宿主：兼容 Codex skill 的运行时。
 - 核心依赖：真实 Python 包 **`flowguard`** 必须可以 import。
-- 当前显示界面：聊天里的 route signs。旧的原生 Cockpit 原型不在 active source tree 中，也不应作为当前 UI 证据复用。
+- 当前 UI 界面：skill assets 中包含 Windows WPF startup intake dialog；当没有打开
+  Cockpit/control surface 时，chat route signs 仍然是 fallback progress display。
+- 当前视觉标识：`assets/brand/flowpilot-icon-default.png` 是 FlowPilot 的标准图标。
 
 ## 四个控制支柱
 
@@ -449,10 +504,21 @@ FlowPilot 是一个面向大型 AI Agent 软件项目的 **模型化项目控制
 | --- | --- | --- |
 | **1. FlowGuard 有限状态模拟** | 把开发流程，以及必要时的产品/功能行为，建模成可执行的有限状态系统。 | 把“Agent 应该小心”变成显式状态、允许转移、不变量、进展检查、卡死检查和反例轨迹。 |
 | **2. Packet / Mail 控制平面** | 用真实 packet envelope/body 发送工作，带 hash、角色来源、holder 状态和 controller 不读不执行的转交规则。 | 防止一个 Agent 在非正式聊天上下文里同时写计划、路由、审查和接受自己的工作。 |
-| **3. 角色权威系统** | 拆开 Project Manager、Human-like Reviewer、Process FlowGuard Officer、Product FlowGuard Officer、Worker A、Worker B 和 Controller 的职责。 | 让关卡批准权可见：PM 管路线和完成，Reviewer 检查，Officer 建模，Worker 执行有边界任务，Controller 只转交。 |
-| **4. Router 节拍器** | 用 prompt-isolated router 控制 startup、下一步选择、card delivery、packet loop re-entry、route signs 和 heartbeat/manual resume。 | 让每次继续都绑定到当前 run 的状态，而不是让 Agent 从记忆或聊天历史里猜下一步。 |
+| **3. 角色权威系统** | 拆开 Project Manager、Human-like Reviewer、Process FlowGuard Officer、Product FlowGuard Officer、Worker A、Worker B 和 Controller 的职责。 | 让关卡批准权可见：PM 管路线和完成，Reviewer 检查，Officer 建模，Worker 执行有边界任务，Controller 只转交 envelope。 |
+| **4. Router 节拍器** | 用 prompt-isolated router 控制 startup、下一步选择、card delivery、packet loop re-entry、route signs 和 heartbeat/manual resume。 | 让每次继续都绑定到当前 run 的状态，而不是让 Agent 从记忆、聊天历史或另一个角色的 prompt context 里猜下一步。 |
 
 这四个机制必须一起看。FlowGuard 定义状态模型，packet mail 保持清晰交接，角色系统隔离权威，router 控制下一步节奏。
+
+## 为什么要拆分 Worker 和 Router
+
+不同 worker 不是装饰性角色，而是上下文边界：PM 负责规划和决策，Reviewer 负责挑战，
+Officer 负责建模，Worker 执行有边界的任务，并且不继承彼此的 prompt surface。这样可以
+减少 prompt contamination：规划语言、审查标准、模型假设和执行指令不会混成一团不可检查的
+上下文。
+
+Controller 和 router 是干净的转交层。Controller 可以移动 packet envelope、更新状态、
+询问 router 下一个合法动作，但不能读取 sealed packet body，也不能批准自己的工作。这个机制
+让长项目可以从文件持续推进，而不是依赖模型对聊天历史的记忆。
 
 ## FlowPilot 是什么
 
@@ -586,20 +652,23 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 
 router 是节拍器。它决定下一个被允许的 card、packet handoff、startup gate、route sign、resume step 或 status action。除非 router 点名，assistant 不应加载旧路线文件或旧 prompt body。
 
-启动时，FlowPilot 只问三个问题，然后立刻停止：
+启动时，当前 router 路径会在宿主可运行时打开原生 startup intake UI。这个 UI 会记录：
 
-1. 是否允许在宿主支持时使用标准 background-agent role crew？
-2. 是否允许在宿主支持时设置 scheduled continuation / heartbeat？
-3. 如果 Cockpit UI 可用，是否使用 Cockpit，否则是否用 chat route signs？
+1. 工作要求正文；
+2. 宿主支持时是否允许 background-agent roles；
+3. 宿主支持时是否允许 scheduled continuation / heartbeat；
+4. 如果 Cockpit/control surface 可用是否使用它，否则使用 chat route signs。
 
-只有之后用户明确回答了三个问题，router 才能显示 startup banner、创建 run、记录 user request packet，然后继续。
+UI 会写入 receipt、envelope、sealed body 和 result 文件。只有 router 验证这个 result 之后，
+才可以显示 startup banner、创建 run、生成发给 PM 的 user intake packet，然后继续。如果 UI
+被取消，startup 会在创建 run、roles、heartbeat 或 Controller state 之前停止。
 
 ## 生命周期概览
 
 ```mermaid
 flowchart LR
-  A["用户要求 Use FlowPilot"] --> B["Router 提问 startup questions 并停止"]
-  B --> C["用户明确回答"]
+  A["用户要求 Use FlowPilot"] --> B["Router 打开 startup intake UI"]
+  B --> C["确认后的 UI result 和 sealed request"]
   C --> D["Run-scoped .flowpilot state"]
   D --> E["Packet mail to PM"]
   E --> F["材料理解和产品/功能架构"]
@@ -619,6 +688,11 @@ flowchart LR
 ## 子技能和伴随能力
 
 FlowPilot 是编排器。它应该把领域工作路由到正确技能，而不是把每个领域 prompt 都复制进自己。
+
+实际使用时，FlowPilot 是多个伴随技能协作时的项目级控制器。FlowGuard 和
+`model-first-function-flow` 负责 model-first 验证，`grill-me` 提供自我盘问纪律，
+UI/design 类技能只有在 PM 把它们的标准映射进 route gates 时才会进入路线。重点是协调技能，
+而不是把所有技能的 prompt 混进同一个上下文。
 
 依赖 manifest 是 `flowpilot.dependencies.json`。
 
@@ -692,10 +766,13 @@ python scripts\install_flowpilot.py --sync-repo-owned
 在兼容 Codex 的宿主中启动 FlowPilot，用直接请求：
 
 ```text
-Use FlowPilot. Ask the startup questions first.
+Use FlowPilot.
 ```
 
-正确的第一步回复应该只有 startup questions。直到之后用户回答这些问题之前，FlowPilot 不应该创建 run、启动 agents、检查文件、打开 UI、设置 heartbeat 或规划项目工作。
+当前 startup 路径应在宿主可以运行时打开原生 startup intake UI。在 router 收到并验证 UI
+result 之前，FlowPilot 不应该创建 run、启动 role agents、设置 heartbeat 或规划项目工作。
+如果 UI 无法打开，router 控制的 fallback 也必须保持同样的 startup-answer 和 sealed-request
+边界。
 
 ## 验证
 

@@ -1,0 +1,121 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=78",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "blocked_ignored": {
+        "detected": true,
+        "expected_failure": "route activation requires Process Officer process_viability_verdict=pass",
+        "failures": [
+          "PM process-model acceptance requires Process Officer process_viability_verdict=pass",
+          "route activation requires Process Officer process_viability_verdict=pass",
+          "PM cannot continue normally after process verdict blocked"
+        ]
+      },
+      "missing_pm_process_acceptance": {
+        "detected": true,
+        "expected_failure": "route activation requires PM-accepted process route model",
+        "failures": [
+          "Reviewer route challenge requires PM-accepted process route model",
+          "route activation requires PM-accepted process route model"
+        ]
+      },
+      "missing_process_verdict": {
+        "detected": true,
+        "expected_failure": "route activation requires Process Officer process_viability_verdict=pass",
+        "failures": [
+          "PM process-model acceptance requires Process Officer process_viability_verdict=pass",
+          "route activation requires Process Officer process_viability_verdict=pass"
+        ]
+      },
+      "missing_product_model": {
+        "detected": true,
+        "expected_failure": "PM route draft requires Product Officer product behavior model report",
+        "failures": [
+          "PM route draft requires Product Officer product behavior model report"
+        ]
+      },
+      "missing_reviewer_challenge": {
+        "detected": true,
+        "expected_failure": "route activation requires Reviewer route challenge pass",
+        "failures": [
+          "route activation requires Reviewer route challenge pass"
+        ]
+      },
+      "process_pass_without_product_coverage": {
+        "detected": true,
+        "expected_failure": "Process Officer route pass must check product behavior model coverage",
+        "failures": [
+          "Process Officer route pass must check product behavior model coverage"
+        ]
+      },
+      "repair_missing_mainline_return": {
+        "detected": true,
+        "expected_failure": "repair mutation requires a mainline return target",
+        "failures": [
+          "repair mutation requires a mainline return target"
+        ]
+      },
+      "repair_required_ignored": {
+        "detected": true,
+        "expected_failure": "route activation requires Process Officer process_viability_verdict=pass",
+        "failures": [
+          "PM process-model acceptance requires Process Officer process_viability_verdict=pass",
+          "route activation requires Process Officer process_viability_verdict=pass",
+          "PM cannot continue normally after process verdict repair_required"
+        ]
+      },
+      "repair_without_process_recheck": {
+        "detected": true,
+        "expected_failure": "repair route requires fresh Process Officer recheck before continuing",
+        "failures": [
+          "repair route requires fresh Process Officer recheck before continuing",
+          "repair mutation must clear stale route approvals before continuing"
+        ]
+      },
+      "reviewer_before_pm_process_acceptance": {
+        "detected": true,
+        "expected_failure": "Reviewer route challenge requires PM-accepted process route model",
+        "failures": [
+          "Reviewer route challenge requires PM-accepted process route model",
+          "route activation requires PM-accepted process route model"
+        ]
+      },
+      "router_semantic_overreach": {
+        "detected": true,
+        "expected_failure": "Router must not judge semantic product-model coverage itself",
+        "failures": [
+          "Router must not judge semantic product-model coverage itself"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_initial_route",
+      "valid_repair_route"
+    ],
+    "edge_count": 26,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 27
+  }
+}

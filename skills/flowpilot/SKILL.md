@@ -52,16 +52,15 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 
 After applying a wait-boundary action, prefer `run-until-wait`. It may apply only replay-proven safe internal router actions and must stop again before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
 
-When daemon mode is active, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached.
+Formal startup always starts or attaches the built-in one-second Router daemon before Controller core loads. There is no startup option to disable it. If startup cannot observe a live daemon lock, `runtime/router_daemon_status.json`, and `runtime/controller_action_ledger.json`, startup must fail instead of entering Controller core.
 
-Router-ready state preempts foreground waits. After Controller relays a
-router-authored card, card bundle, packet, result envelope, status packet, or
-next-action notice, do not wait on a role or subagent before calling Router
-with `next` or `run-until-wait`. If Router exposes a real
-`await_card_return_event`, `await_card_bundle_return_event`, or
-`await_role_decision`, record that controlled wait and stop or resume through
-heartbeat/manual continuation; do not spend the foreground turn waiting for
-ordinary role chat.
+During formal runtime, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached. `next`, `apply`, and `run-until-wait` remain diagnostic, test, and explicit repair tools, not the normal metronome that keeps a run alive.
+
+Router-ready state preempts foreground waits. After Controller relays or
+observes router-authored work, scan daemon status and the Controller action
+ledger before waiting on any role or subagent. If Router exposes a real
+controlled wait, write the receipt and stay attached to daemon status; do not
+spend the foreground turn waiting for ordinary role chat.
 
 When the router returns `open_startup_intake_ui`, open the native startup intake UI with the command and output directory in the action envelope. After the UI closes, apply that same pending action with only `payload.startup_intake_result.result_path`. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
 
@@ -85,7 +84,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 ## Controller Boundary
 
-After the router loads Controller core, the main assistant is Controller only. Controller may call the router, check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, scan the Controller action ledger, write Controller receipts, and wait for router next-action notices.
+After the router loads Controller core, the main assistant is Controller only. Controller may check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, scan the Router daemon status and Controller action ledger, and write Controller receipts. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit repair/recovery; normal progress comes from the daemon-owned status and ledger.
 
 Controller must not:
 
@@ -101,7 +100,7 @@ When the router returns a control blocker, Controller may deliver only the publi
 
 When the user asks to stop or cancel the active run, record `user_requests_run_stop` or `user_requests_run_cancel`, then follow the terminal lifecycle action. Do not continue route work after that.
 
-All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Their ACKs go directly from the addressed role to Router through the card check-in command; Controller does not receive or relay those ACKs. Current packet completions go directly to Router through the active-holder lease, and formal file-backed role outputs go through `flowpilot_runtime.py submit-output-to-router`. Controller waits for Router status or next-action notices, then relays only Router-authorized metadata. Role-to-role work uses packet/mail ledgers, not shared prompt context.
+All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Their ACKs go directly from the addressed role to Router through the card check-in command; Controller does not receive or relay those ACKs. Current packet completions go directly to Router through the active-holder lease, and formal file-backed role outputs go through `flowpilot_runtime.py submit-output-to-router`. Controller follows Router daemon status and the Controller action ledger, then relays only Router-authorized metadata. Role-to-role work uses packet/mail ledgers, not shared prompt context.
 
 ## Runtime Kit
 

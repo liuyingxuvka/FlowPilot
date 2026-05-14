@@ -16,6 +16,7 @@
     "sync_terminal_state_files",
     "refresh_terminal_evidence",
     "rebuild_final_ledger_if_evidence_changed",
+    "verify_self_interrogation_index_clean",
     "run_lifecycle_reconciliation",
     "pause_or_delete_heartbeat",
     "archive_crew_and_role_memory",
@@ -80,6 +81,14 @@
     "required": true,
     "terminal_completion_event_written": false,
     "stream_is_audit_trail_not_gate_approval": true
+  },
+  "self_interrogation_review": {
+    "index_path": ".flowpilot/runs/<run-id>/self_interrogation_index.json",
+    "required": true,
+    "record_count": 0,
+    "issue_count": 0,
+    "unresolved_hard_finding_count": 0,
+    "clean": false
   },
   "terminal_human_backward_replay": {
     "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",

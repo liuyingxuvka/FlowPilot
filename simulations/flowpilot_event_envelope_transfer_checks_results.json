@@ -1,0 +1,125 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=4 initial_states=1 traces=160",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "hazards": {
+      "accepted_forbidden_body_field": {
+        "detected": true,
+        "expected_failure": "accepted envelope without all hard checks",
+        "failures": [
+          "accepted envelope without all hard checks",
+          "envelope ref path let Controller read sealed body"
+        ],
+        "state": "scenario=valid_reviewer_envelope_ref|status=accepted|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:False|runtime_ref=True|packets=False|duplicate=False:False|reason=none"
+      },
+      "accepted_outside_allowed_event": {
+        "detected": true,
+        "expected_failure": "accepted envelope without all hard checks",
+        "failures": [
+          "accepted envelope without all hard checks"
+        ],
+        "state": "scenario=valid_reviewer_envelope_ref|status=accepted|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:False,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=False:False|reason=none"
+      },
+      "accepted_without_hash_check": {
+        "detected": true,
+        "expected_failure": "accepted envelope without all hard checks",
+        "failures": [
+          "accepted envelope without all hard checks"
+        ],
+        "state": "scenario=valid_reviewer_envelope_ref|status=accepted|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:False,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=False:False|reason=none"
+      },
+      "accepted_wrong_role": {
+        "detected": true,
+        "expected_failure": "accepted envelope without all hard checks",
+        "failures": [
+          "accepted envelope without all hard checks"
+        ],
+        "state": "scenario=valid_reviewer_envelope_ref|status=accepted|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:False,vis:True,body:True|runtime_ref=True|packets=False|duplicate=False:False|reason=none"
+      },
+      "duplicate_side_effect": {
+        "detected": true,
+        "expected_failure": "duplicate same envelope wrote a duplicate side effect",
+        "failures": [
+          "duplicate same envelope wrote a duplicate side effect"
+        ],
+        "state": "scenario=duplicate_same_envelope|status=already_recorded|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=True:True|reason=none"
+      },
+      "manual_packets_accepted": {
+        "detected": true,
+        "expected_failure": "manual reconstruction with hidden material packets was accepted",
+        "failures": [
+          "manual reconstruction with hidden material packets was accepted"
+        ],
+        "state": "scenario=manual_packets_nested_or_dropped|status=accepted|mode=manual_reconstruction|event=pm_issues_material_and_capability_scan_packets|role=project_manager->project_manager|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=False|packets=False|duplicate=False:False|reason=none"
+      },
+      "manual_receipt_accepted": {
+        "detected": true,
+        "expected_failure": "manual reconstruction with renamed runtime receipt was accepted",
+        "failures": [
+          "manual reconstruction with renamed runtime receipt was accepted"
+        ],
+        "state": "scenario=manual_receipt_field_renamed|status=accepted|mode=manual_reconstruction|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=False|packets=False|duplicate=False:False|reason=none"
+      },
+      "ref_controller_mutated_envelope": {
+        "detected": true,
+        "expected_failure": "envelope ref path let Controller mutate envelope fields",
+        "failures": [
+          "envelope ref path let Controller mutate envelope fields"
+        ],
+        "state": "scenario=valid_reviewer_envelope_ref|status=accepted|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=False:False|reason=none"
+      }
+    },
+    "ok": true
+  },
+  "model": "flowpilot_event_envelope_transfer",
+  "model_boundary": "record-event envelope transfer; semantic body review remains out of scope",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_state_count": 4,
+    "already_recorded_state_count": 1,
+    "edge_count": 32,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 33
+  },
+  "scenario_checks": {
+    "ok": true,
+    "scenarios": {
+      "duplicate_same_envelope_idempotent": {
+        "duplicate": "scenario=duplicate_same_envelope|status=already_recorded|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=True:False|reason=idempotent_duplicate",
+        "ok": true
+      },
+      "known_manual_reconstruction_failures_rejected": {
+        "manual_packets": "scenario=manual_packets_nested_or_dropped|status=rejected|mode=manual_reconstruction|event=pm_issues_material_and_capability_scan_packets|role=project_manager->project_manager|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=False|packets=False|duplicate=False:False|reason=material_packets_not_visible_at_payload_top_level",
+        "manual_receipt": "scenario=manual_receipt_field_renamed|status=rejected|mode=manual_reconstruction|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=False|packets=False|duplicate=False:False|reason=runtime_receipt_ref_missing_or_not_preserved",
+        "ok": true
+      },
+      "material_full_payload_and_ref_equivalent": {
+        "full": "scenario=valid_material_full_payload|status=accepted|mode=full_payload|event=pm_issues_material_and_capability_scan_packets|role=project_manager->project_manager|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=False|packets=True|duplicate=False:False|reason=accepted",
+        "ok": true,
+        "ref": "scenario=valid_material_envelope_ref|status=accepted|mode=envelope_ref|event=pm_issues_material_and_capability_scan_packets|role=project_manager->project_manager|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=False|packets=True|duplicate=False:False|reason=accepted"
+      },
+      "reviewer_full_payload_and_ref_equivalent": {
+        "full": "scenario=valid_reviewer_full_payload|status=accepted|mode=full_payload|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=False:False|reason=accepted",
+        "ok": true,
+        "ref": "scenario=valid_reviewer_envelope_ref|status=accepted|mode=envelope_ref|event=reviewer_reports_startup_facts|role=human_like_reviewer->human_like_reviewer|checks=path:True,file:True,hash:True,schema:True,event:True,allowed:True,role:True,vis:True,body:True|runtime_ref=True|packets=False|duplicate=False:False|reason=accepted"
+      }
+    }
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=144",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "blocked_handoff_without_summary": {
+        "caught": true,
+        "expected": "terminal lifecycle observed before final summary was saved and registered",
+        "failures": [
+          "terminal lifecycle observed before final summary was saved and registered"
+        ]
+      },
+      "cancelled_run_without_summary": {
+        "caught": true,
+        "expected": "terminal lifecycle observed before final summary was saved and registered",
+        "failures": [
+          "terminal lifecycle observed before final summary was saved and registered"
+        ]
+      },
+      "controller_approves_gate_after_summary": {
+        "caught": true,
+        "expected": "Controller approved or reopened a gate in terminal summary mode",
+        "failures": [
+          "Controller approved or reopened a gate in terminal summary mode"
+        ]
+      },
+      "controller_continues_route_work_after_summary": {
+        "caught": true,
+        "expected": "Controller continued route work in terminal summary mode",
+        "failures": [
+          "Controller continued route work in terminal summary mode"
+        ]
+      },
+      "controller_originates_project_evidence_after_summary": {
+        "caught": true,
+        "expected": "Controller originated project evidence in terminal summary mode",
+        "failures": [
+          "Controller originated project evidence in terminal summary mode"
+        ]
+      },
+      "controller_reads_outside_run_root": {
+        "caught": true,
+        "expected": "Controller read outside current run root during terminal summary",
+        "failures": [
+          "Controller read outside current run root during terminal summary"
+        ]
+      },
+      "controller_writes_non_summary_file_after_summary": {
+        "caught": true,
+        "expected": "Controller wrote non-summary files in terminal summary mode",
+        "failures": [
+          "Controller wrote non-summary files in terminal summary mode"
+        ]
+      },
+      "read_all_files_before_terminal": {
+        "caught": true,
+        "expected": "terminal summary card delivered before Router knew terminal mode",
+        "failures": [
+          "terminal summary card delivered before Router knew terminal mode",
+          "Controller read all run files before run was terminal"
+        ]
+      },
+      "read_all_files_without_summary_card": {
+        "caught": true,
+        "expected": "Controller read all run files before terminal summary authorization",
+        "failures": [
+          "Controller read all run files before terminal summary authorization"
+        ]
+      },
+      "stopped_run_without_summary": {
+        "caught": true,
+        "expected": "terminal lifecycle observed before final summary was saved and registered",
+        "failures": [
+          "terminal lifecycle observed before final summary was saved and registered"
+        ]
+      },
+      "summary_card_before_terminal_mode": {
+        "caught": true,
+        "expected": "terminal summary card delivered before Router knew terminal mode",
+        "failures": [
+          "terminal summary card delivered before Router knew terminal mode"
+        ]
+      },
+      "summary_display_does_not_match_saved_content": {
+        "caught": true,
+        "expected": "terminal lifecycle observed before final summary was saved and registered",
+        "failures": [
+          "terminal lifecycle observed before final summary was saved and registered"
+        ]
+      },
+      "summary_missing_flowpilot_attribution": {
+        "caught": true,
+        "expected": "final summary markdown missing first-line FlowPilot GitHub attribution",
+        "failures": [
+          "final summary markdown missing first-line FlowPilot GitHub attribution"
+        ]
+      },
+      "summary_not_registered_in_index": {
+        "caught": true,
+        "expected": "terminal lifecycle observed before final summary was saved and registered",
+        "failures": [
+          "terminal lifecycle observed before final summary was saved and registered"
+        ]
+      },
+      "summary_requested_again_after_complete": {
+        "caught": true,
+        "expected": "terminal summary requested again after summary was already complete",
+        "failures": [
+          "terminal summary requested again after summary was already complete"
+        ]
+      },
+      "terminal_lifecycle_without_summary": {
+        "caught": true,
+        "expected": "terminal lifecycle observed before final summary was saved and registered",
+        "failures": [
+          "terminal lifecycle observed before final summary was saved and registered"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_count": 0,
+    "stuck_samples": []
+  },
+  "safe_graph": {
+    "edge_count": 20,
+    "invariant_failures": [],
+    "labels": [
+      "controller_reads_current_run_root_all_files",
+      "controller_writes_and_displays_terminal_summary",
+      "router_delivers_terminal_summary_card",
+      "router_detects_terminal_mode_blocked_handoff",
+      "router_detects_terminal_mode_cancelled_by_user",
+      "router_detects_terminal_mode_closed",
+      "router_detects_terminal_mode_stopped_by_user",
+      "router_observes_terminal_lifecycle_after_summary"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 21,
+    "success_state_count": 4
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=120",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "defer_without_target": {
+        "detected": true,
+        "expected_failure": "PM deferred a suggestion without naming a downstream node or gate",
+        "failures": [
+          "PM deferred a suggestion without naming a downstream node or gate"
+        ]
+      },
+      "duplicate_skill_maintenance_system": {
+        "detected": true,
+        "expected_failure": "FlowPilot maintenance suggestion did not link to existing skill-improvement report",
+        "failures": [
+          "FlowPilot maintenance suggestion did not link to existing skill-improvement report"
+        ]
+      },
+      "ledger_leaks_sealed_body": {
+        "detected": true,
+        "expected_failure": "suggestion ledger contains sealed body content",
+        "failures": [
+          "suggestion ledger contains sealed body content"
+        ]
+      },
+      "mutate_without_stale_handling": {
+        "detected": true,
+        "expected_failure": "PM route mutation omitted route-version or stale-evidence handling",
+        "failures": [
+          "PM route mutation omitted route-version or stale-evidence handling"
+        ]
+      },
+      "no_suggestion_heavy_report": {
+        "detected": true,
+        "expected_failure": "no-suggestion case wrote a heavy empty report",
+        "failures": [
+          "no-suggestion case wrote a heavy empty report"
+        ]
+      },
+      "officer_maintenance_blocks_project": {
+        "detected": true,
+        "expected_failure": "FlowPilot maintenance suggestion blocked current project completion",
+        "failures": [
+          "FlowPilot maintenance suggestion blocked current project completion"
+        ]
+      },
+      "pm_closes_with_undisposed_suggestion": {
+        "detected": true,
+        "expected_failure": "PM closed or advanced without disposing the suggestion",
+        "failures": [
+          "PM closed or advanced without disposing the suggestion"
+        ]
+      },
+      "reject_without_reason": {
+        "detected": true,
+        "expected_failure": "PM rejected a suggestion without a reason",
+        "failures": [
+          "PM rejected a suggestion without a reason"
+        ]
+      },
+      "repair_without_reviewer_recheck": {
+        "detected": true,
+        "expected_failure": "current-gate blocker repair closed without same review-class recheck",
+        "failures": [
+          "current-gate blocker repair closed without same review-class recheck",
+          "gate closed while current-gate blocker remained unresolved"
+        ]
+      },
+      "reviewer_hard_blocker_downgraded": {
+        "detected": true,
+        "expected_failure": "reviewer hard blocker was downgraded to a soft note",
+        "failures": [
+          "reviewer hard blocker was downgraded to a soft note"
+        ]
+      },
+      "reviewer_preference_blocks_gate": {
+        "detected": true,
+        "expected_failure": "reviewer blocked a gate without minimum-standard failure",
+        "failures": [
+          "reviewer blocked a gate without minimum-standard failure"
+        ]
+      },
+      "route_change_without_impact_triage": {
+        "detected": true,
+        "expected_failure": "PM suggestion disposition lacks impact triage",
+        "failures": [
+          "PM suggestion disposition lacks impact triage"
+        ]
+      },
+      "waive_without_authority": {
+        "detected": true,
+        "expected_failure": "PM waived a suggestion without authority and reason",
+        "failures": [
+          "PM waived a suggestion without authority and reason",
+          "gate closed while current-gate blocker remained unresolved"
+        ]
+      },
+      "worker_note_blocks_gate": {
+        "detected": true,
+        "expected_failure": "worker advisory note was treated as a gate blocker",
+        "failures": [
+          "worker advisory note was treated as a gate blocker",
+          "current-gate blocker repair closed without same review-class recheck",
+          "gate closed while current-gate blocker remained unresolved"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_no_suggestion_lightweight",
+      "valid_officer_model_mutates_route",
+      "valid_reviewer_blocker_repaired",
+      "valid_reviewer_improvement_deferred",
+      "valid_skill_maintenance_recorded",
+      "valid_worker_note_rejected"
+    ],
+    "edge_count": 40,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 14,
+    "state_count": 41
+  }
+}

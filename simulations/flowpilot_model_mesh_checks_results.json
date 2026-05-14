@@ -1,0 +1,536 @@
+{
+  "contract_refinement": {
+    "accepted_scenarios": [
+      "valid_blocked_current_state",
+      "valid_conformance_can_continue",
+      "valid_live_can_continue",
+      "valid_missing_conformance_boundary"
+    ],
+    "bad_accepts": [],
+    "bad_rejects": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "abstract_green_used_to_continue",
+      "collapsed_repair_outcomes",
+      "control_transaction_partial_commit_accepted",
+      "control_transaction_registry_missing",
+      "coverage_parse_errors_ignored",
+      "current_authority_mismatch",
+      "hidden_active_blocker",
+      "install_requires_safe_continue",
+      "installed_skill_stale_accepted",
+      "known_hazard_without_live_projection",
+      "legal_next_action_conformance_failed",
+      "legal_next_action_policy_missing",
+      "legal_next_action_projection_missing",
+      "missing_conformance_claims_runtime",
+      "packet_role_origin_unchecked",
+      "parent_child_lifecycle_conformance_missed",
+      "parent_child_lifecycle_replay_skipped",
+      "parent_repair_leaf_event",
+      "sealed_body_opened_by_mesh",
+      "skipped_live_audit_used_to_continue",
+      "stale_run_result_used",
+      "unregistered_model_authoritative"
+    ]
+  },
+  "coverage": {
+    "graph": {
+      "accepted_state_count": 4,
+      "edge_count": 52,
+      "labels_seen": [
+        "accept_valid_blocked_current_state",
+        "accept_valid_conformance_can_continue",
+        "accept_valid_live_can_continue",
+        "accept_valid_missing_conformance_boundary",
+        "reject_abstract_green_used_to_continue",
+        "reject_collapsed_repair_outcomes",
+        "reject_control_transaction_partial_commit_accepted",
+        "reject_control_transaction_registry_missing",
+        "reject_coverage_parse_errors_ignored",
+        "reject_current_authority_mismatch",
+        "reject_hidden_active_blocker",
+        "reject_install_requires_safe_continue",
+        "reject_installed_skill_stale_accepted",
+        "reject_known_hazard_without_live_projection",
+        "reject_legal_next_action_conformance_failed",
+        "reject_legal_next_action_policy_missing",
+        "reject_legal_next_action_projection_missing",
+        "reject_missing_conformance_claims_runtime",
+        "reject_packet_role_origin_unchecked",
+        "reject_parent_child_lifecycle_conformance_missed",
+        "reject_parent_child_lifecycle_replay_skipped",
+        "reject_parent_repair_leaf_event",
+        "reject_sealed_body_opened_by_mesh",
+        "reject_skipped_live_audit_used_to_continue",
+        "reject_stale_run_result_used",
+        "reject_unregistered_model_authoritative",
+        "select_abstract_green_used_to_continue",
+        "select_collapsed_repair_outcomes",
+        "select_control_transaction_partial_commit_accepted",
+        "select_control_transaction_registry_missing",
+        "select_coverage_parse_errors_ignored",
+        "select_current_authority_mismatch",
+        "select_hidden_active_blocker",
+        "select_install_requires_safe_continue",
+        "select_installed_skill_stale_accepted",
+        "select_known_hazard_without_live_projection",
+        "select_legal_next_action_conformance_failed",
+        "select_legal_next_action_policy_missing",
+        "select_legal_next_action_projection_missing",
+        "select_missing_conformance_claims_runtime",
+        "select_packet_role_origin_unchecked",
+        "select_parent_child_lifecycle_conformance_missed",
+        "select_parent_child_lifecycle_replay_skipped",
+        "select_parent_repair_leaf_event",
+        "select_sealed_body_opened_by_mesh",
+        "select_skipped_live_audit_used_to_continue",
+        "select_stale_run_result_used",
+        "select_unregistered_model_authoritative",
+        "select_valid_blocked_current_state",
+        "select_valid_conformance_can_continue",
+        "select_valid_live_can_continue",
+        "select_valid_missing_conformance_boundary"
+      ],
+      "missing_labels": [],
+      "ok": true,
+      "rejected_state_count": 22,
+      "state_count": 53,
+      "terminal_state_count": 26,
+      "violations": []
+    },
+    "negative_reject_labels_seen": [
+      "reject_abstract_green_used_to_continue",
+      "reject_collapsed_repair_outcomes",
+      "reject_control_transaction_partial_commit_accepted",
+      "reject_control_transaction_registry_missing",
+      "reject_coverage_parse_errors_ignored",
+      "reject_current_authority_mismatch",
+      "reject_hidden_active_blocker",
+      "reject_install_requires_safe_continue",
+      "reject_installed_skill_stale_accepted",
+      "reject_known_hazard_without_live_projection",
+      "reject_legal_next_action_conformance_failed",
+      "reject_legal_next_action_policy_missing",
+      "reject_legal_next_action_projection_missing",
+      "reject_missing_conformance_claims_runtime",
+      "reject_packet_role_origin_unchecked",
+      "reject_parent_child_lifecycle_conformance_missed",
+      "reject_parent_child_lifecycle_replay_skipped",
+      "reject_parent_repair_leaf_event",
+      "reject_sealed_body_opened_by_mesh",
+      "reject_skipped_live_audit_used_to_continue",
+      "reject_stale_run_result_used",
+      "reject_unregistered_model_authoritative"
+    ],
+    "ok": true,
+    "required_negative_count": 22
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=78",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_state_count": 4,
+    "edge_count": 52,
+    "labels_seen": [
+      "accept_valid_blocked_current_state",
+      "accept_valid_conformance_can_continue",
+      "accept_valid_live_can_continue",
+      "accept_valid_missing_conformance_boundary",
+      "reject_abstract_green_used_to_continue",
+      "reject_collapsed_repair_outcomes",
+      "reject_control_transaction_partial_commit_accepted",
+      "reject_control_transaction_registry_missing",
+      "reject_coverage_parse_errors_ignored",
+      "reject_current_authority_mismatch",
+      "reject_hidden_active_blocker",
+      "reject_install_requires_safe_continue",
+      "reject_installed_skill_stale_accepted",
+      "reject_known_hazard_without_live_projection",
+      "reject_legal_next_action_conformance_failed",
+      "reject_legal_next_action_policy_missing",
+      "reject_legal_next_action_projection_missing",
+      "reject_missing_conformance_claims_runtime",
+      "reject_packet_role_origin_unchecked",
+      "reject_parent_child_lifecycle_conformance_missed",
+      "reject_parent_child_lifecycle_replay_skipped",
+      "reject_parent_repair_leaf_event",
+      "reject_sealed_body_opened_by_mesh",
+      "reject_skipped_live_audit_used_to_continue",
+      "reject_stale_run_result_used",
+      "reject_unregistered_model_authoritative",
+      "select_abstract_green_used_to_continue",
+      "select_collapsed_repair_outcomes",
+      "select_control_transaction_partial_commit_accepted",
+      "select_control_transaction_registry_missing",
+      "select_coverage_parse_errors_ignored",
+      "select_current_authority_mismatch",
+      "select_hidden_active_blocker",
+      "select_install_requires_safe_continue",
+      "select_installed_skill_stale_accepted",
+      "select_known_hazard_without_live_projection",
+      "select_legal_next_action_conformance_failed",
+      "select_legal_next_action_policy_missing",
+      "select_legal_next_action_projection_missing",
+      "select_missing_conformance_claims_runtime",
+      "select_packet_role_origin_unchecked",
+      "select_parent_child_lifecycle_conformance_missed",
+      "select_parent_child_lifecycle_replay_skipped",
+      "select_parent_repair_leaf_event",
+      "select_sealed_body_opened_by_mesh",
+      "select_skipped_live_audit_used_to_continue",
+      "select_stale_run_result_used",
+      "select_unregistered_model_authoritative",
+      "select_valid_blocked_current_state",
+      "select_valid_conformance_can_continue",
+      "select_valid_live_can_continue",
+      "select_valid_missing_conformance_boundary"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 22,
+    "state_count": 53,
+    "terminal_state_count": 26,
+    "violations": []
+  },
+  "hazard_review": {
+    "hazards": [
+      {
+        "expected_failures": [
+          "current_state_not_classified",
+          "evidence_tier_below_required_runtime_confidence"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "current_state_not_classified",
+          "evidence_tier_below_required_runtime_confidence"
+        ],
+        "ok": true,
+        "scenario": "abstract_green_used_to_continue"
+      },
+      {
+        "expected_failures": [
+          "repair_outcome_events_collapsed"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "repair_outcome_events_collapsed"
+        ],
+        "ok": true,
+        "scenario": "collapsed_repair_outcomes"
+      },
+      {
+        "expected_failures": [
+          "control_transaction_commit_scope_incomplete"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "control_transaction_commit_scope_incomplete"
+        ],
+        "ok": true,
+        "scenario": "control_transaction_partial_commit_accepted"
+      },
+      {
+        "expected_failures": [
+          "control_transaction_registry_not_authoritative"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "control_transaction_registry_not_authoritative"
+        ],
+        "ok": true,
+        "scenario": "control_transaction_registry_missing"
+      },
+      {
+        "expected_failures": [
+          "coverage_parse_errors_must_block_green_result"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "coverage_parse_errors_must_block_green_result"
+        ],
+        "ok": true,
+        "scenario": "coverage_parse_errors_ignored"
+      },
+      {
+        "expected_failures": [
+          "current_authorities_disagree"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "current_authorities_disagree"
+        ],
+        "ok": true,
+        "scenario": "current_authority_mismatch"
+      },
+      {
+        "expected_failures": [
+          "active_blocker_cannot_be_safe_to_continue"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "active_blocker_cannot_be_safe_to_continue"
+        ],
+        "ok": true,
+        "scenario": "hidden_active_blocker"
+      },
+      {
+        "expected_failures": [
+          "install_check_must_accept_classified_blocked_state"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "install_check_must_accept_classified_blocked_state"
+        ],
+        "ok": true,
+        "scenario": "install_requires_safe_continue"
+      },
+      {
+        "expected_failures": [
+          "installed_skill_not_synced_with_repo_model"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "installed_skill_not_synced_with_repo_model"
+        ],
+        "ok": true,
+        "scenario": "installed_skill_stale_accepted"
+      },
+      {
+        "expected_failures": [
+          "known_hazard_lacks_live_projection"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "known_hazard_lacks_live_projection"
+        ],
+        "ok": true,
+        "scenario": "known_hazard_without_live_projection"
+      },
+      {
+        "expected_failures": [
+          "legal_next_action_conformance_failed"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "legal_next_action_conformance_failed"
+        ],
+        "ok": true,
+        "scenario": "legal_next_action_conformance_failed"
+      },
+      {
+        "expected_failures": [
+          "legal_next_action_conformance_failed",
+          "legal_next_action_policy_not_registered",
+          "legal_next_action_projection_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "legal_next_action_conformance_failed",
+          "legal_next_action_policy_not_registered",
+          "legal_next_action_projection_missing"
+        ],
+        "ok": true,
+        "scenario": "legal_next_action_policy_missing"
+      },
+      {
+        "expected_failures": [
+          "legal_next_action_projection_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "legal_next_action_projection_missing"
+        ],
+        "ok": true,
+        "scenario": "legal_next_action_projection_missing"
+      },
+      {
+        "expected_failures": [
+          "evidence_tier_below_required_runtime_confidence",
+          "missing_conformance_adapter_cannot_claim_runtime_conformance"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "evidence_tier_below_required_runtime_confidence",
+          "missing_conformance_adapter_cannot_claim_runtime_conformance"
+        ],
+        "ok": true,
+        "scenario": "missing_conformance_claims_runtime"
+      },
+      {
+        "expected_failures": [
+          "packet_authority_not_verified_before_acceptance"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "packet_authority_not_verified_before_acceptance"
+        ],
+        "ok": true,
+        "scenario": "packet_role_origin_unchecked"
+      },
+      {
+        "expected_failures": [
+          "parent_child_lifecycle_conformance_failed"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "parent_child_lifecycle_conformance_failed"
+        ],
+        "ok": true,
+        "scenario": "parent_child_lifecycle_conformance_missed"
+      },
+      {
+        "expected_failures": [
+          "parent_child_lifecycle_conformance_replay_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "parent_child_lifecycle_conformance_replay_missing"
+        ],
+        "ok": true,
+        "scenario": "parent_child_lifecycle_replay_skipped"
+      },
+      {
+        "expected_failures": [
+          "repair_event_not_compatible_with_active_node"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "repair_event_not_compatible_with_active_node"
+        ],
+        "ok": true,
+        "scenario": "parent_repair_leaf_event"
+      },
+      {
+        "expected_failures": [
+          "mesh_must_not_open_sealed_bodies"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "mesh_must_not_open_sealed_bodies"
+        ],
+        "ok": true,
+        "scenario": "sealed_body_opened_by_mesh"
+      },
+      {
+        "expected_failures": [
+          "current_state_not_classified",
+          "live_required_but_audit_skipped"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "current_state_not_classified",
+          "live_required_but_audit_skipped"
+        ],
+        "ok": true,
+        "scenario": "skipped_live_audit_used_to_continue"
+      },
+      {
+        "expected_failures": [
+          "stale_or_foreign_model_result_cannot_authorize_continue"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "stale_or_foreign_model_result_cannot_authorize_continue"
+        ],
+        "ok": true,
+        "scenario": "stale_run_result_used"
+      },
+      {
+        "expected_failures": [
+          "unregistered_model_result_cannot_authorize_continue"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "unregistered_model_result_cannot_authorize_continue"
+        ],
+        "ok": true,
+        "scenario": "unregistered_model_authoritative"
+      }
+    ],
+    "ok": true
+  },
+  "live_run_projection": {
+    "blocking_reasons": [
+      "packet_authority_unchecked"
+    ],
+    "classification_ok": true,
+    "current_run_can_continue": false,
+    "decision": "blocked_by_cross_model_contradiction",
+    "findings": [
+      {
+        "current_run_can_continue": false,
+        "decision": "blocked_by_cross_model_contradiction",
+        "id": "flowpilot_model_mesh.packet_authority_unchecked",
+        "message": "Current FlowPilot run is not permitted to continue: packet_authority_unchecked",
+        "reason": "packet_authority_unchecked",
+        "run_id": "run-20260514-103907",
+        "severity": "blocking"
+      }
+    ],
+    "metadata_only": true,
+    "ok": true,
+    "permission": "blocked_or_insufficient",
+    "projected_failures": [],
+    "projected_state": {
+      "active_blocker_present": false,
+      "collapsed_repair_outcome_events": false,
+      "completed_agent_id_belongs_to_role": false,
+      "conformance_required": false,
+      "conformance_skipped": false,
+      "control_transaction_commit_scope_complete": true,
+      "control_transaction_registry_registered": true,
+      "control_transaction_registry_valid": true,
+      "coverage_parse_errors_ignored": false,
+      "current_authorities_agree": true,
+      "current_state_classified": true,
+      "decision": "blocked_by_cross_model_contradiction",
+      "evidence_tier": "live_current_green",
+      "install_requires_safe_to_continue": false,
+      "installed_skill_matches_repo": true,
+      "known_hazard_live_projection_available": true,
+      "legal_next_action_conformant": true,
+      "legal_next_action_policy_registered": true,
+      "legal_next_action_projected": true,
+      "live_audit_skipped": false,
+      "live_required": true,
+      "local_sync_required": false,
+      "missing_conformance_adapter": false,
+      "model_registered": true,
+      "model_result_fresh": true,
+      "model_result_ok": true,
+      "model_result_run_matches_current": true,
+      "packet_evidence_accepted": true,
+      "parent_child_lifecycle_conformant": true,
+      "parent_child_lifecycle_replayed": true,
+      "parent_repair_reuses_leaf_event": false,
+      "repair_event_node_compatible": true,
+      "required_tier": "live_current_green",
+      "role_origin_checked": false,
+      "safe_to_continue_claimed": false,
+      "scenario": "live_run_projection",
+      "sealed_body_opened_by_mesh": false,
+      "status": "selected",
+      "status_summary_reports_blocked": false
+    },
+    "run_id": "run-20260514-103907",
+    "run_root": ".flowpilot\\runs\\run-20260514-103907",
+    "sealed_body_opened_by_mesh": false
+  },
+  "model": "flowpilot_model_mesh",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "schema_version": 1
+}

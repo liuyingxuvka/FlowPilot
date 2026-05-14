@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=12 initial_states=1 traces=3535",
+    "summary": "sequences=12 initial_states=1 traces=2335",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -14,6 +14,7 @@
         "detected": true,
         "expected_failure": "ordinary wait exists without a live Router daemon",
         "failures": [
+          "Controller core loaded before formal startup daemon was live",
           "ordinary wait exists without a live Router daemon"
         ],
         "state": {
@@ -21,6 +22,8 @@
           "controller_action_pending": false,
           "controller_action_ready": false,
           "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": false,
           "controller_marked_done_without_receipt": false,
           "controller_receipt_present": false,
@@ -32,6 +35,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 1,
           "daemon_writer_count": 0,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -47,6 +51,53 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
+          "stop_requested": false
+        }
+      },
+      "controller_core_loaded_after_skipped_daemon_start": {
+        "detected": true,
+        "expected_failure": "Controller core loaded before formal startup daemon was live",
+        "failures": [
+          "Controller core loaded before formal startup daemon was live"
+        ],
+        "state": {
+          "controller_action_done": false,
+          "controller_action_pending": false,
+          "controller_action_ready": false,
+          "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
+          "controller_finaled_at_wait": false,
+          "controller_marked_done_without_receipt": false,
+          "controller_receipt_present": false,
+          "controller_receipt_valid": true,
+          "controller_rescanned_after_receipt": false,
+          "current_wait": "none",
+          "daemon_alive": false,
+          "daemon_lock_state": "none",
+          "daemon_mode_enabled": false,
+          "daemon_tick_seconds": 1,
+          "daemon_writer_count": 0,
+          "formal_startup_started": true,
+          "heartbeat_active": true,
+          "heartbeat_restarted_dead_daemon": false,
+          "heartbeat_restored_controller": false,
+          "heartbeat_restored_roles": false,
+          "heartbeat_started_second_daemon": false,
+          "heartbeat_woke": false,
+          "lifecycle": "active",
+          "mailbox_consumption_count": 0,
+          "mailbox_evidence_consumed": false,
+          "mailbox_evidence_present": false,
+          "mailbox_evidence_valid": true,
+          "mailbox_wait_tick_observed": false,
+          "roles_live": true,
+          "route_work_allowed": true,
+          "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": false,
           "stop_requested": false
         }
       },
@@ -61,6 +112,8 @@
           "controller_action_pending": true,
           "controller_action_ready": false,
           "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": false,
           "controller_marked_done_without_receipt": true,
           "controller_receipt_present": false,
@@ -72,6 +125,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 1,
           "daemon_writer_count": 1,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -87,6 +141,8 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
           "stop_requested": false
         }
       },
@@ -101,6 +157,8 @@
           "controller_action_pending": false,
           "controller_action_ready": false,
           "controller_attached": false,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": true,
           "controller_marked_done_without_receipt": false,
           "controller_receipt_present": false,
@@ -112,6 +170,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 1,
           "daemon_writer_count": 1,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -127,6 +186,53 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
+          "stop_requested": false
+        }
+      },
+      "controller_used_router_next_as_metronome": {
+        "detected": true,
+        "expected_failure": "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome",
+        "failures": [
+          "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome"
+        ],
+        "state": {
+          "controller_action_done": false,
+          "controller_action_pending": false,
+          "controller_action_ready": false,
+          "controller_attached": true,
+          "controller_called_router_next_as_metronome": true,
+          "controller_core_loaded": true,
+          "controller_finaled_at_wait": false,
+          "controller_marked_done_without_receipt": false,
+          "controller_receipt_present": false,
+          "controller_receipt_valid": true,
+          "controller_rescanned_after_receipt": false,
+          "current_wait": "none",
+          "daemon_alive": true,
+          "daemon_lock_state": "live",
+          "daemon_mode_enabled": true,
+          "daemon_tick_seconds": 1,
+          "daemon_writer_count": 1,
+          "formal_startup_started": true,
+          "heartbeat_active": true,
+          "heartbeat_restarted_dead_daemon": false,
+          "heartbeat_restored_controller": false,
+          "heartbeat_restored_roles": false,
+          "heartbeat_started_second_daemon": false,
+          "heartbeat_woke": false,
+          "lifecycle": "active",
+          "mailbox_consumption_count": 0,
+          "mailbox_evidence_consumed": false,
+          "mailbox_evidence_present": false,
+          "mailbox_evidence_valid": true,
+          "mailbox_wait_tick_observed": false,
+          "roles_live": true,
+          "route_work_allowed": true,
+          "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
           "stop_requested": false
         }
       },
@@ -141,6 +247,8 @@
           "controller_action_pending": false,
           "controller_action_ready": false,
           "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": false,
           "controller_marked_done_without_receipt": false,
           "controller_receipt_present": false,
@@ -152,6 +260,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 1,
           "daemon_writer_count": 1,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -167,6 +276,8 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
           "stop_requested": false
         }
       },
@@ -174,6 +285,7 @@
         "detected": true,
         "expected_failure": "multiple Router daemon writers exist for one run",
         "failures": [
+          "Controller core loaded before formal startup daemon was live",
           "multiple Router daemon writers exist for one run"
         ],
         "state": {
@@ -181,6 +293,8 @@
           "controller_action_pending": false,
           "controller_action_ready": false,
           "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": false,
           "controller_marked_done_without_receipt": false,
           "controller_receipt_present": false,
@@ -192,6 +306,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 1,
           "daemon_writer_count": 2,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -207,6 +322,54 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
+          "stop_requested": false
+        }
+      },
+      "formal_startup_continued_after_daemon_failure": {
+        "detected": true,
+        "expected_failure": "formal startup continued after Router daemon startup failure",
+        "failures": [
+          "Controller core loaded before formal startup daemon was live",
+          "formal startup continued after Router daemon startup failure"
+        ],
+        "state": {
+          "controller_action_done": false,
+          "controller_action_pending": false,
+          "controller_action_ready": false,
+          "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
+          "controller_finaled_at_wait": false,
+          "controller_marked_done_without_receipt": false,
+          "controller_receipt_present": false,
+          "controller_receipt_valid": true,
+          "controller_rescanned_after_receipt": false,
+          "current_wait": "none",
+          "daemon_alive": false,
+          "daemon_lock_state": "none",
+          "daemon_mode_enabled": false,
+          "daemon_tick_seconds": 1,
+          "daemon_writer_count": 0,
+          "formal_startup_started": true,
+          "heartbeat_active": true,
+          "heartbeat_restarted_dead_daemon": false,
+          "heartbeat_restored_controller": false,
+          "heartbeat_restored_roles": false,
+          "heartbeat_started_second_daemon": false,
+          "heartbeat_woke": false,
+          "lifecycle": "active",
+          "mailbox_consumption_count": 0,
+          "mailbox_evidence_consumed": false,
+          "mailbox_evidence_present": false,
+          "mailbox_evidence_valid": true,
+          "mailbox_wait_tick_observed": false,
+          "roles_live": true,
+          "route_work_allowed": true,
+          "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": true,
+          "startup_daemon_step_completed": false,
           "stop_requested": false
         }
       },
@@ -214,6 +377,7 @@
         "detected": true,
         "expected_failure": "heartbeat started a second Router daemon while one was live",
         "failures": [
+          "Controller core loaded before formal startup daemon was live",
           "multiple Router daemon writers exist for one run",
           "heartbeat started a second Router daemon while one was live"
         ],
@@ -222,6 +386,8 @@
           "controller_action_pending": false,
           "controller_action_ready": false,
           "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": false,
           "controller_marked_done_without_receipt": false,
           "controller_receipt_present": false,
@@ -233,6 +399,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 1,
           "daemon_writer_count": 2,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -248,6 +415,8 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
           "stop_requested": false
         }
       },
@@ -263,6 +432,8 @@
           "controller_action_pending": false,
           "controller_action_ready": false,
           "controller_attached": true,
+          "controller_called_router_next_as_metronome": false,
+          "controller_core_loaded": true,
           "controller_finaled_at_wait": false,
           "controller_marked_done_without_receipt": false,
           "controller_receipt_present": false,
@@ -274,6 +445,7 @@
           "daemon_mode_enabled": true,
           "daemon_tick_seconds": 0,
           "daemon_writer_count": 1,
+          "formal_startup_started": true,
           "heartbeat_active": true,
           "heartbeat_restarted_dead_daemon": false,
           "heartbeat_restored_controller": false,
@@ -289,6 +461,8 @@
           "roles_live": true,
           "route_work_allowed": true,
           "router_can_continue_after_evidence": false,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
           "stop_requested": false
         }
       }
@@ -303,12 +477,12 @@
     "stuck_state_count": 0
   },
   "safe_graph": {
-    "edge_count": 83,
+    "edge_count": 84,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 67,
+    "state_count": 68,
     "terminal_state_count": 16
   },
   "skipped_checks": {

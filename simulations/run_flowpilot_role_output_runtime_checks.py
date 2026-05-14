@@ -488,21 +488,21 @@ def _source_report(project_root: Path) -> dict[str, object]:
             controller_text,
             [
                 "Router-ready evidence preempts foreground role waits",
-                "return to Router with `next` or `run-until-wait` before waiting",
+                "scan daemon status and the Controller action ledger before",
             ],
         ),
         "skill launcher": (
             skill_text,
             [
                 "Router-ready state preempts foreground waits",
-                "do not wait on a role or subagent before calling Router",
+                "scan daemon status and the Controller action",
             ],
         ),
         "controller resume reentry card": (
             resume_text,
             [
                 "Router-ready evidence still preempts foreground role waits",
-                "return to Router before any foreground role wait",
+                "scan daemon status and clear",
             ],
         ),
     }

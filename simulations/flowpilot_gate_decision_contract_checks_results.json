@@ -1,0 +1,151 @@
+{
+  "doc_audit": {
+    "missing_snippets": [],
+    "ok": true,
+    "path": "docs/gate_decision_implementation_contract.md",
+    "required_snippet_count": 31
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=102",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "advisory_blocks_completion": {
+        "detected": true,
+        "expected_failure": "advisory GateDecision blocked completion",
+        "failures": [
+          "advisory GateDecision blocked completion"
+        ]
+      },
+      "delivery_evidence_unresolved": {
+        "detected": true,
+        "expected_failure": "delivery evidence GateDecision was unresolved at completion",
+        "failures": [
+          "delivery evidence GateDecision was unresolved at completion"
+        ]
+      },
+      "diagnostic_resource_blocks": {
+        "detected": true,
+        "expected_failure": "diagnostic temporary resource GateDecision blocked completion",
+        "failures": [
+          "diagnostic temporary resource GateDecision blocked completion"
+        ]
+      },
+      "documentation_forced_product_flowguard": {
+        "detected": true,
+        "expected_failure": "documentation-only GateDecision was forced through Product FlowGuard",
+        "failures": [
+          "documentation-only GateDecision was forced through Product FlowGuard"
+        ]
+      },
+      "local_defect_forces_mutation": {
+        "detected": true,
+        "expected_failure": "local defect GateDecision forced route mutation",
+        "failures": [
+          "local defect GateDecision forced route mutation"
+        ]
+      },
+      "low_risk_parent_replay_hard": {
+        "detected": true,
+        "expected_failure": "parent replay GateDecision is not risk based or waivable",
+        "failures": [
+          "parent replay GateDecision is not risk based or waivable"
+        ]
+      },
+      "missing_prompt_fields": {
+        "detected": true,
+        "expected_failure": "prompt contract omitted GateDecision fields",
+        "failures": [
+          "prompt contract omitted GateDecision fields"
+        ]
+      },
+      "mixed_without_reviewer": {
+        "detected": true,
+        "expected_failure": "mixed product/visual GateDecision lacks both proof paths",
+        "failures": [
+          "mixed product/visual GateDecision lacks both proof paths"
+        ]
+      },
+      "product_without_flowguard": {
+        "detected": true,
+        "expected_failure": "product/state GateDecision lacks Product FlowGuard proof",
+        "failures": [
+          "product/state GateDecision lacks Product FlowGuard proof"
+        ]
+      },
+      "reviewer_semantic_gap": {
+        "detected": true,
+        "expected_failure": "reviewer scope omitted semantic gate sufficiency",
+        "failures": [
+          "reviewer scope omitted semantic gate sufficiency"
+        ]
+      },
+      "route_mutation_without_stale_invalidation": {
+        "detected": true,
+        "expected_failure": "route mutation GateDecision did not invalidate stale evidence",
+        "failures": [
+          "route mutation GateDecision did not invalidate stale evidence"
+        ]
+      },
+      "router_missing_fields": {
+        "detected": true,
+        "expected_failure": "router mechanical contract omitted GateDecision checks",
+        "failures": [
+          "router mechanical contract omitted GateDecision checks"
+        ]
+      },
+      "router_semantic_overreach": {
+        "detected": true,
+        "expected_failure": "router overreached into semantic gate judgment",
+        "failures": [
+          "router overreached into semantic gate judgment"
+        ]
+      },
+      "skip_without_reason": {
+        "detected": true,
+        "expected_failure": "skip or waiver GateDecision lacked a concrete reason",
+        "failures": [
+          "skip or waiver GateDecision lacked a concrete reason"
+        ]
+      },
+      "stage_advance_split_refresh": {
+        "detected": true,
+        "expected_failure": "stage advance GateDecision did not require atomic state refresh",
+        "failures": [
+          "stage advance GateDecision did not require atomic state refresh"
+        ]
+      },
+      "visual_flowguard_only": {
+        "detected": true,
+        "expected_failure": "visual-quality GateDecision lacks reviewer walkthrough proof",
+        "failures": [
+          "visual-quality GateDecision lacks reviewer walkthrough proof"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_state_count": 1,
+    "edge_count": 34,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 16,
+    "state_count": 35
+  }
+}

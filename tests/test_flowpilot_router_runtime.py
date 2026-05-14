@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -50,6 +51,21 @@ def read_json(path: Path) -> dict:
 
 
 class FlowPilotRouterRuntimeTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._startup_daemon_patch = mock.patch.object(
+            router,
+            "_spawn_startup_router_daemon_process",
+            side_effect=self._fake_startup_daemon_spawn,
+        )
+        self._startup_daemon_patch.start()
+
+    def tearDown(self) -> None:
+        self._startup_daemon_patch.stop()
+
+    def _fake_startup_daemon_spawn(self, project_root: Path, run_root: Path) -> dict:
+        result = router.run_router_daemon(project_root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
+        return {"pid": 0, "mode": "test_inline_daemon_tick", "result": result}
+
     def make_project(self) -> Path:
         return Path(tempfile.mkdtemp(prefix="flowpilot-router-"))
 
@@ -932,6 +948,35 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 break
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
+
+    def boot_to_router_daemon_start(self, root: Path, startup_answers: dict | None = None) -> Path:
+        startup_answers = startup_answers or STARTUP_ANSWERS
+        while True:
+            action = router.next_action(root)
+            action_type = str(action["action_type"])
+            if action_type == "start_router_daemon":
+                return self.run_root_for(root)
+            if action_type == "open_startup_intake_ui":
+                router.apply_action(root, action_type, self.startup_intake_payload(root, startup_answers=startup_answers))
+            elif action_type == "record_startup_answers":
+                router.apply_action(root, action_type, {"startup_answers": startup_answers})
+            elif action_type == "record_user_request":
+                if action.get("requires_payload") == "user_request":
+                    router.apply_action(root, action_type, {"user_request": USER_REQUEST})
+                else:
+                    router.apply_action(root, action_type)
+            elif action_type == "start_role_slots":
+                router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
+            elif action_type == "create_heartbeat_automation":
+                router.apply_action(root, action_type, self.heartbeat_binding_payload(root))
+            else:
+                router.apply_action(root, action_type, self.payload_for_action(action))
+
+    def release_startup_daemon_for_explicit_daemon_test(self, root: Path) -> None:
+        try:
+            router.stop_router_daemon(root, reason="test_reset_before_explicit_daemon")
+        except router.RouterError:
+            pass
 
     def startup_intake_payload(
         self,
@@ -3205,10 +3250,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
         action = router.next_action(root)
+        self.assertEqual(action["action_type"], "start_router_daemon")
+        self.assertTrue(action["formal_startup_daemon_required"])
+        router.apply_action(root, "start_router_daemon")
+        action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_controller_core")
         router.apply_action(root, "load_controller_core")
         run_state = read_json(router.run_state_path(run_root))
         self.assertTrue(run_state["flags"]["controller_core_loaded"])
+        self.assertTrue(run_state["flags"]["formal_router_daemon_started"])
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
         self.assertEqual(continuation["mode"], "scheduled_heartbeat")
         self.assertTrue(continuation["heartbeat_active"])
@@ -3225,11 +3275,71 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         run_root = self.run_root_for(root)
         action = router.next_action(root)
+        self.assertEqual(action["action_type"], "start_router_daemon")
+        self.assertFalse(action["daemon_off_option_allowed"])
+        router.apply_action(root, "start_router_daemon")
+        action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_controller_core")
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
         self.assertEqual(continuation["mode"], "manual_resume")
         self.assertFalse(continuation["heartbeat_active"])
         self.assertFalse(continuation["host_automation_verified"])
+
+    def test_formal_startup_starts_router_daemon_before_controller_core(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "start_router_daemon")
+        self.assertTrue(action["startup_readiness_contract"]["failure_blocks_controller_core"])
+        result = router.apply_action(root, "start_router_daemon")
+        self.assertTrue(result["router_daemon_ready"])
+        self.assertFalse(result["attached_existing_daemon"])
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["daemon_mode_enabled"])
+        self.assertTrue(state["flags"]["formal_router_daemon_started"])
+        self.assertEqual(read_json(run_root / "runtime" / "router_daemon.lock")["status"], "active")
+        self.assertEqual(read_json(run_root / "runtime" / "router_daemon_status.json")["tick_interval_seconds"], 1)
+        self.assertEqual(
+            read_json(run_root / "runtime" / "controller_action_ledger.json")["schema_version"],
+            router.CONTROLLER_ACTION_LEDGER_SCHEMA,
+        )
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+        router.apply_action(root, "load_controller_core")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["controller_core_loaded"])
+
+    def test_formal_startup_daemon_failure_blocks_controller_core(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+
+        with mock.patch.object(router, "_spawn_startup_router_daemon_process", side_effect=router.RouterError("daemon launch failed")):
+            with self.assertRaisesRegex(router.RouterError, "daemon launch failed"):
+                router.apply_action(root, "start_router_daemon")
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["controller_core_loaded"])
+        self.assertTrue(state["flags"]["router_daemon_start_failed"])
+        self.assertEqual(router.next_action(root)["action_type"], "start_router_daemon")
+
+    def test_formal_startup_attaches_same_run_live_daemon_without_duplicate_spawn(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
+
+        with mock.patch.object(
+            router,
+            "_spawn_startup_router_daemon_process",
+            side_effect=AssertionError("startup should attach to the existing daemon"),
+        ):
+            result = router.apply_action(root, "start_router_daemon")
+
+        self.assertTrue(result["router_daemon_ready"])
+        self.assertTrue(result["attached_existing_daemon"])
+        self.assertEqual(read_json(run_root / "runtime" / "router_daemon.lock")["status"], "active")
 
     def test_run_until_wait_folds_manifest_check_before_card_boundary(self) -> None:
         root = self.make_project()
@@ -3266,6 +3376,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_router_daemon_observation_initializes_lock_status_and_ledger(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
 
         result = router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
 
@@ -3289,6 +3400,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
 
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
@@ -3366,6 +3478,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_router_daemon_tick_consumes_card_ack_without_manual_next(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
         while True:
             action = self.next_after_display_sync(root)
             if action["action_type"] in {
@@ -3400,6 +3513,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             with self.subTest(variant=variant):
                 root = self.make_project()
                 run_root = self.boot_to_controller(root)
+                self.release_startup_daemon_for_explicit_daemon_test(root)
                 action = self.deliver_startup_fact_check_card_without_ack(root)
                 open_result = card_runtime.open_card(
                     root,
@@ -3434,6 +3548,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_router_daemon_incomplete_bundle_ack_waits_without_advancing(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
         self.deliver_startup_fact_check_card(root)
         manifest_action = self.next_after_display_sync(root)
         self.assertEqual(manifest_action["action_type"], "check_prompt_manifest")
@@ -3511,6 +3626,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_router_daemon_duplicate_stale_card_ack_is_idempotent(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
         action = self.deliver_startup_fact_check_card_without_ack(root)
         self.submit_system_card_ack_without_router_next(root, action)
 
@@ -3570,13 +3686,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(bootstrap["router_loaded"])
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
         self.assertEqual(root / bootstrap["run_root"], run_root)
-        self.assertEqual(bootstrap["bootloader_actions"], 12)
-        self.assertEqual(bootstrap["router_action_requests"], 12)
+        self.assertEqual(bootstrap["bootloader_actions"], 13)
+        self.assertEqual(bootstrap["router_action_requests"], 13)
         self.assertIsNone(bootstrap["pending_action"])
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
         self.assertEqual(bootstrap["user_request"]["schema_version"], router.USER_REQUEST_REF_SCHEMA)
         self.assertFalse(bootstrap["user_request"]["controller_may_read_body"])
         self.assertTrue(bootstrap["flags"]["role_core_prompts_injected"])
+        self.assertTrue(bootstrap["flags"]["router_daemon_started"])
 
         self.assertTrue((run_root / "runtime_kit" / "manifest.json").exists())
         self.assertTrue((run_root / "packet_ledger.json").exists())
@@ -4561,7 +4678,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(second["controller_after_relay_policy"]["foreground_wait_agent_allowed"])
         self.assertFalse(second["controller_after_relay_policy"]["foreground_role_chat_wait_allowed"])
         self.assertTrue(second["next_step_contract"]["router_ready_preempts_foreground_wait"])
-        self.assertTrue(second["next_step_contract"]["controller_must_return_to_router_before_foreground_role_wait"])
+        self.assertTrue(second["next_step_contract"]["controller_must_scan_daemon_before_foreground_role_wait"])
+        self.assertEqual(second["next_step_contract"]["normal_router_progress_source"], "router_daemon_status_and_controller_action_ledger")
         self.assertFalse(second["next_step_contract"]["foreground_wait_agent_allowed"])
         self.assertTrue(second["direct_router_ack_token_hash"])
         self.assertTrue(second["card_checkin_instruction"]["do_not_handwrite_ack"])
@@ -4686,7 +4804,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["artifact_committed"])
         self.assertTrue(action["relay_allowed"])
         self.assertTrue(action["controller_after_relay_policy"]["router_ready_preempts_foreground_wait"])
-        self.assertEqual(action["controller_after_relay_policy"]["allowed_router_reentry_commands"], ["next", "run-until-wait"])
+        self.assertEqual(action["controller_after_relay_policy"]["allowed_router_reentry_commands"], [])
+        self.assertEqual(action["controller_after_relay_policy"]["diagnostic_router_reentry_commands"], ["next", "run-until-wait"])
         self.assertFalse(action["apply_required"])
         self.assertEqual(action["card_return_event"], "reviewer_card_ack")
 
@@ -7278,7 +7397,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
-        router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
 
         try:
             router.record_external_event(root, "heartbeat_or_manual_resume_requested")
@@ -7303,7 +7421,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
-        router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
         lock_path = run_root / "runtime" / "router_daemon.lock"
         lock = read_json(lock_path)
         lock["last_tick_at"] = "2000-01-01T00:00:00Z"

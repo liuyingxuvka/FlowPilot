@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_persistent_router_daemon_results.json"
 
 REQUIRED_LABELS = (
-    "start_daemon_mode_with_one_second_tick",
+    "formal_startup_starts_builtin_router_daemon",
+    "controller_core_loaded_after_builtin_daemon_start",
     "router_issues_controller_action_to_ledger",
     "controller_executes_action_and_writes_receipt",
     "router_reconciles_controller_receipt_and_requires_rescan",
@@ -32,10 +33,13 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
+    "controller_core_loaded_after_skipped_daemon_start": "Controller core loaded before formal startup daemon was live",
+    "formal_startup_continued_after_daemon_failure": "formal startup continued after Router daemon startup failure",
     "ack_wait_without_daemon": "ordinary wait exists without a live Router daemon",
     "duplicate_router_writers": "multiple Router daemon writers exist for one run",
     "duplicate_ack_consumption": "mailbox evidence was consumed more than once",
     "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
+    "controller_used_router_next_as_metronome": "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome",
     "controller_stopped_at_ordinary_wait": "Controller stopped at an ordinary daemon-owned wait",
     "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
     "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
@@ -44,9 +48,13 @@ HAZARD_EXPECTED_FAILURES = {
 
 def _state_id(state: model.State) -> str:
     return (
-        f"life={state.lifecycle}|daemon={state.daemon_mode_enabled},"
+        f"life={state.lifecycle}|formal={state.formal_startup_started},"
+        f"startup_daemon={state.startup_daemon_step_completed},"
+        f"startup_failed={state.startup_daemon_failed}|daemon={state.daemon_mode_enabled},"
         f"{state.daemon_alive},{state.daemon_lock_state},{state.daemon_writer_count},"
-        f"tick={state.daemon_tick_seconds}|controller={state.controller_attached},"
+        f"tick={state.daemon_tick_seconds}|core={state.controller_core_loaded}|"
+        f"controller={state.controller_attached},"
+        f"metronome={state.controller_called_router_next_as_metronome},"
         f"finaled={state.controller_finaled_at_wait}|roles={state.roles_live}|"
         f"heartbeat={state.heartbeat_active},{state.heartbeat_woke}|"
         f"wait={state.current_wait}|mail={state.mailbox_evidence_present},"

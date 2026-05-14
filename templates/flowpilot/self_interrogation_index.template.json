@@ -1,0 +1,16 @@
+{
+  "schema_version": "flowpilot.self_interrogation_index.v1",
+  "run_id": "run-001",
+  "updated_at": "<iso-8601>",
+  "records": [
+    {
+      "record_id": "<stable-record-id>",
+      "scope": "<startup|product_architecture|node_entry|repair|completion|role_result>",
+      "route_id": "route-001",
+      "route_version": 1,
+      "node_id": "<node-id-or-null>",
+      "owner_role": "<role-that-wrote-record>",
+      "record_path": ".flowpilot/runs/run-001/self_interrogation/<record-id>.json"
+    }
+  ]
+}

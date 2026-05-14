@@ -10008,8 +10008,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The role-output runtime model now rejects a Controller path that foreground-waits on a role after Router-ready evidence exists.
-- Router relay/wait actions now carry `controller_after_relay_policy` and `next_step_contract` fields that force Controller to return to Router with `next` or `run-until-wait` before waiting.
-- Controller, resume, skill, and protocol guidance now say Router-ready evidence, resolved ACKs, status packets, result notices, and pending next actions preempt foreground role waits.
+- Superseded historical note: this relay/wait contract has been replaced by the formal Router daemon plus Controller action ledger contract; `next` and `run-until-wait` are diagnostics or explicit repair tools, not the normal runtime metronome.
+- Controller, resume, skill, and protocol guidance now say Router daemon status, resolved ACKs, status packets, result notices, and pending ledger actions preempt foreground role waits.
 - Liveness waits remain recovery-only and do not become ordinary two-minute work waits.
 - The installed local FlowPilot skill is source-fresh against the repository after sync.
 

@@ -1,0 +1,162 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=126",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "active_node_not_executable": {
+        "detected": true,
+        "expected_failure": "active node is not executable before route use",
+        "failures": [
+          "active node is not executable before route use"
+        ]
+      },
+      "capability_change_without_product_check": {
+        "detected": true,
+        "expected_failure": "product capability change lacks Product FlowGuard check",
+        "failures": [
+          "product capability change lacks Product FlowGuard check"
+        ]
+      },
+      "changed_route_without_reviewer": {
+        "detected": true,
+        "expected_failure": "changed route was used before Reviewer approval",
+        "failures": [
+          "changed route was used before Reviewer approval"
+        ]
+      },
+      "controller_direct_implementation": {
+        "detected": true,
+        "expected_failure": "Controller performed product work before route gate",
+        "failures": [
+          "Controller performed product work before route gate"
+        ]
+      },
+      "in_progress_repair_before_review_failure": {
+        "detected": true,
+        "expected_failure": "in-progress capability gap used a repair node before reviewed failure",
+        "failures": [
+          "in-progress capability gap used a repair node before reviewed failure",
+          "repair node lacks reviewed failure trigger",
+          "repair node lacks stale evidence reset",
+          "repair node lacks mainline return",
+          "repair node lacks rerun obligations"
+        ]
+      },
+      "node_entry_repair_before_work": {
+        "detected": true,
+        "expected_failure": "node-entry capability gap used a repair node before node work started",
+        "failures": [
+          "node-entry capability gap used a repair node before node work started",
+          "repair node lacks reviewed failure trigger",
+          "repair node lacks stale evidence reset",
+          "repair node lacks mainline return",
+          "repair node lacks rerun obligations"
+        ]
+      },
+      "ordinary_node_missing_fields": {
+        "detected": true,
+        "expected_failure": "added ordinary node lacks owner input output evidence or acceptance fields",
+        "failures": [
+          "added ordinary node lacks owner input output evidence or acceptance fields"
+        ]
+      },
+      "planning_repair_node_created": {
+        "detected": true,
+        "expected_failure": "planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion",
+        "failures": [
+          "planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion",
+          "root planning created a repair node before any child execution",
+          "repair node lacks reviewed failure trigger",
+          "repair node lacks rerun obligations"
+        ]
+      },
+      "process_before_product_for_capability_change": {
+        "detected": true,
+        "expected_failure": "Process FlowGuard ran before Product FlowGuard for a product capability change",
+        "failures": [
+          "Process FlowGuard ran before Product FlowGuard for a product capability change"
+        ]
+      },
+      "repair_node_missing_fields": {
+        "detected": true,
+        "expected_failure": "repair node lacks target reason input output evidence return or recheck fields",
+        "failures": [
+          "repair node lacks target reason input output evidence return or recheck fields"
+        ]
+      },
+      "repair_without_mainline_return": {
+        "detected": true,
+        "expected_failure": "repair node lacks mainline return",
+        "failures": [
+          "repair node lacks mainline return"
+        ]
+      },
+      "repair_without_stale_reset": {
+        "detected": true,
+        "expected_failure": "repair node lacks stale evidence reset",
+        "failures": [
+          "repair node lacks stale evidence reset"
+        ]
+      },
+      "root_repair_before_child_execution": {
+        "detected": true,
+        "expected_failure": "root planning created a repair node before any child execution",
+        "failures": [
+          "planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion",
+          "root planning created a repair node before any child execution",
+          "repair node lacks reviewed failure trigger",
+          "repair node lacks target reason input output evidence return or recheck fields",
+          "repair node lacks stale evidence reset",
+          "repair node lacks mainline return",
+          "repair node lacks rerun obligations"
+        ]
+      },
+      "stale_approval_reused_after_change": {
+        "detected": true,
+        "expected_failure": "old approval was reused after route or product change",
+        "failures": [
+          "old approval was reused after route or product change"
+        ]
+      },
+      "structure_change_without_process_check": {
+        "detected": true,
+        "expected_failure": "route structure change lacks Process FlowGuard check",
+        "failures": [
+          "route structure change lacks Process FlowGuard check"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_in_progress_replan",
+      "valid_node_entry_replan",
+      "valid_planning_capability_expansion",
+      "valid_planning_replan",
+      "valid_review_failure_local_patch",
+      "valid_review_failure_repair"
+    ],
+    "edge_count": 42,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 15,
+    "state_count": 43
+  }
+}

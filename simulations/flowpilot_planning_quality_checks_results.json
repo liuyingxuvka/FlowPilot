@@ -1,0 +1,276 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=204",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "artifactless_major_node": {
+        "detected": true,
+        "expected_failure": "major route node lacks a concrete acceptance artifact",
+        "failures": [
+          "major route node lacks a concrete acceptance artifact"
+        ]
+      },
+      "hard_low_quality_risk_no_route_owner": {
+        "detected": true,
+        "expected_failure": "hard low-quality-success risk lacks an existing route or node owner",
+        "failures": [
+          "hard low-quality-success risk lacks an existing route or node owner"
+        ]
+      },
+      "loop_verify_artifact_not_inherited": {
+        "detected": true,
+        "expected_failure": "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
+        "failures": [
+          "LOOP/VERIFY/ARTIFACT standards were not inherited into execution"
+        ]
+      },
+      "low_quality_risk_causes_route_bloat": {
+        "detected": true,
+        "expected_failure": "PM created unjustified route bloat from low-quality-success review",
+        "failures": [
+          "PM created unjustified route bloat from low-quality-success review"
+        ]
+      },
+      "node_plan_missing_low_quality_mapping": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks local low-quality-success mapping and proof of depth",
+        "failures": [
+          "node acceptance plan lacks local low-quality-success mapping and proof of depth"
+        ]
+      },
+      "node_plan_missing_projection": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks skill-standard projection",
+        "failures": [
+          "node acceptance plan lacks skill-standard projection"
+        ]
+      },
+      "node_plan_not_mapped_to_product_model": {
+        "detected": true,
+        "expected_failure": "node acceptance plan is not mapped to a product model segment",
+        "failures": [
+          "node acceptance plan is not mapped to a product model segment"
+        ]
+      },
+      "overmerged_complex_implementation_node": {
+        "detected": true,
+        "expected_failure": "route complexity does not match selected planning profile",
+        "failures": [
+          "route complexity does not match selected planning profile",
+          "complex implementation work was overmerged into one unverifiable node"
+        ]
+      },
+      "pm_closure_low_quality_risk_disposition_missing": {
+        "detected": true,
+        "expected_failure": "PM closure lacks low-quality-success risk disposition",
+        "failures": [
+          "PM closure lacks final-user outcome replay",
+          "PM closure lacks low-quality-success risk disposition"
+        ]
+      },
+      "pm_closure_user_outcome_replay_missing": {
+        "detected": true,
+        "expected_failure": "PM closure lacks final-user outcome replay",
+        "failures": [
+          "PM closure lacks final-user outcome replay"
+        ]
+      },
+      "pm_higher_standard_self_check_missing": {
+        "detected": true,
+        "expected_failure": "PM plan lacks higher-standard improvement-space self-check",
+        "failures": [
+          "PM plan lacks higher-standard improvement-space self-check"
+        ]
+      },
+      "pm_improvement_opportunity_unclassified": {
+        "detected": true,
+        "expected_failure": "PM left higher-standard improvement opportunity unclassified",
+        "failures": [
+          "PM left higher-standard improvement opportunity unclassified"
+        ]
+      },
+      "pm_improvement_scope_creep": {
+        "detected": true,
+        "expected_failure": "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement",
+        "failures": [
+          "PM treated a nonblocking higher-standard improvement as a hard current-gate requirement"
+        ]
+      },
+      "pm_low_quality_review_generic": {
+        "detected": true,
+        "expected_failure": "PM low-quality-success review is generic or lacks hard parts, thin shortcuts, and proof of depth",
+        "failures": [
+          "PM low-quality-success review is generic or lacks hard parts, thin shortcuts, and proof of depth"
+        ]
+      },
+      "pm_low_quality_review_missing": {
+        "detected": true,
+        "expected_failure": "PM product architecture lacks low-quality-success review",
+        "failures": [
+          "PM product architecture lacks low-quality-success review"
+        ]
+      },
+      "pm_route_not_mapped_to_product_model": {
+        "detected": true,
+        "expected_failure": "PM route is not mapped to the product behavior model",
+        "failures": [
+          "PM route is not mapped to the product behavior model"
+        ]
+      },
+      "pm_user_intent_self_check_missing": {
+        "detected": true,
+        "expected_failure": "PM plan lacks final-user intent and product usefulness self-check",
+        "failures": [
+          "PM plan lacks final-user intent and product usefulness self-check"
+        ]
+      },
+      "process_officer_route_viability_missing": {
+        "detected": true,
+        "expected_failure": "Process FlowGuard Officer did not validate route viability against the product model",
+        "failures": [
+          "Process FlowGuard Officer did not validate route viability against the product model"
+        ]
+      },
+      "process_support_skill_ignored": {
+        "detected": true,
+        "expected_failure": "PM child-skill selection did not evaluate process-support skill candidates",
+        "failures": [
+          "PM child-skill selection did not evaluate process-support skill candidates"
+        ]
+      },
+      "product_model_missing": {
+        "detected": true,
+        "expected_failure": "route planning lacks a product behavior model from the Product FlowGuard Officer",
+        "failures": [
+          "route planning lacks a product behavior model from the Product FlowGuard Officer"
+        ]
+      },
+      "profile_without_convergence_loop": {
+        "detected": true,
+        "expected_failure": "interactive UI route lacks required convergence loop",
+        "failures": [
+          "interactive UI route lacks required convergence loop"
+        ]
+      },
+      "repair_node_no_mainline_return": {
+        "detected": true,
+        "expected_failure": "repair node lacks a defined return to the mainline product route",
+        "failures": [
+          "repair node lacks a defined return to the mainline product route"
+        ]
+      },
+      "reviewer_passes_hard_blindspot": {
+        "detected": true,
+        "expected_failure": "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate",
+        "failures": [
+          "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate"
+        ]
+      },
+      "role_skill_binding_missing": {
+        "detected": true,
+        "expected_failure": "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
+        "failures": [
+          "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check"
+        ]
+      },
+      "role_skill_use_self_attested": {
+        "detected": true,
+        "expected_failure": "selected role skill use was self-attested without evidence",
+        "failures": [
+          "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
+          "selected role skill use was self-attested without evidence"
+        ]
+      },
+      "simple_task_formal_flowpilot_profile": {
+        "detected": true,
+        "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
+        "failures": [
+          "small/simple task entered formal FlowPilot instead of staying outside FlowPilot"
+        ]
+      },
+      "simple_task_overtemplated": {
+        "detected": true,
+        "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
+        "failures": [
+          "Skill Standard Contract lacks source paths",
+          "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
+          "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
+          "node acceptance plan lacks skill-standard projection",
+          "work packet or result matrix lacks skill-standard projection",
+          "reviewer gate is not bound to skill-standard projection",
+          "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
+          "small/simple task entered formal FlowPilot instead of staying outside FlowPilot"
+        ]
+      },
+      "skill_contract_missing_fields": {
+        "detected": true,
+        "expected_failure": "Skill Standard Contract omits required fields",
+        "failures": [
+          "Skill Standard Contract omits required fields"
+        ]
+      },
+      "skill_contract_not_mapped": {
+        "detected": true,
+        "expected_failure": "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
+        "failures": [
+          "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations"
+        ]
+      },
+      "skill_selected_no_contract": {
+        "detected": true,
+        "expected_failure": "selected child skill lacks a compiled Skill Standard Contract",
+        "failures": [
+          "selected child skill lacks a compiled Skill Standard Contract"
+        ]
+      },
+      "ui_without_planning_profile": {
+        "detected": true,
+        "expected_failure": "complex task route lacks a selected planning profile",
+        "failures": [
+          "complex task route lacks a selected planning profile"
+        ]
+      },
+      "work_packet_missing_low_quality_warning": {
+        "detected": true,
+        "expected_failure": "work packet lacks node low-quality-success warning",
+        "failures": [
+          "work packet lacks node low-quality-success warning"
+        ]
+      },
+      "work_packet_missing_projection": {
+        "detected": true,
+        "expected_failure": "work packet or result matrix lacks skill-standard projection",
+        "failures": [
+          "work packet or result matrix lacks skill-standard projection"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_ui_route"
+    ],
+    "edge_count": 68,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 33,
+    "state_count": 69
+  }
+}

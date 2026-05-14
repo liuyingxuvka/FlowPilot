@@ -1,0 +1,41 @@
+{
+  "schema_version": "flowpilot.self_interrogation_record.v1",
+  "record_id": "<stable-record-id>",
+  "run_id": "run-001",
+  "route_id": "route-001",
+  "route_version": 1,
+  "node_id": "<node-id-or-null>",
+  "scope": "<startup|product_architecture|node_entry|repair|completion|role_result>",
+  "owner_role": "<project_manager|human_like_reviewer|worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+  "source_event": "<event-that-produced-this-record>",
+  "source_artifact_path": ".flowpilot/runs/run-001/<source-artifact>.json",
+  "findings": [
+    {
+      "finding_id": "<stable-finding-id>",
+      "severity": "<hard_blocker|current_gate_blocker|nonblocking_note|note>",
+      "category": "<risk-category>",
+      "summary": "<finding-summary>",
+      "downstream_obligation": "<what PM must do with this finding>",
+      "blocks_current_gate_until_disposition": true,
+      "disposition": {
+        "status": "<incorporated_into_artifact|defer_to_named_node|entered_pm_suggestion_ledger|reject_with_reason|waive_with_authority|no_action_needed>",
+        "decided_by_role": "project_manager",
+        "decided_at": "<iso-8601>",
+        "reason": "<required for reject/waive>",
+        "target_node_or_gate_id": "<required for defer_to_named_node>",
+        "suggestion_id": "<required for entered_pm_suggestion_ledger>",
+        "artifact_path": "<required for incorporated_into_artifact>",
+        "waiver_authority_role": "<required for waive_with_authority>",
+        "residual_risk_statement": "<what remains after disposition>"
+      }
+    }
+  ],
+  "unresolved_hard_finding_count": 0,
+  "pm_disposition_summary": {
+    "status": "complete",
+    "dispositioned_by_role": "project_manager",
+    "summary": "<how PM used, deferred, rejected, or waived the findings>"
+  },
+  "downstream_artifact_paths": [],
+  "pm_suggestion_ledger_ids": []
+}

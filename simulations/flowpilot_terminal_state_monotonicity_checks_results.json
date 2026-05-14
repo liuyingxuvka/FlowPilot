@@ -1,0 +1,699 @@
+{
+  "architecture_candidate": {
+    "minimal_runtime_change_set_for_later_discussion": [
+      "Introduce one small merge helper for control records: effective_status(existing, incoming, identity) plus merge_terminal_record(existing, incoming).",
+      "Use that helper in card_runtime card ACK and bundle ACK writers before assigning pending return status.",
+      "Keep Router pending-return selection on effective status: raw returned is pending only when no resolved_at and no matching resolved completed-return proof exist.",
+      "Upsert completed_returns by identity instead of appending unbounded duplicate terminal records.",
+      "Apply the same helper shape to gate/blocker/repair/result ledgers where terminal records and late events share an identity.",
+      "Add focused runtime tests for duplicate card ACK, duplicate bundle ACK, incomplete bundle ACK after resolved, stale gate block after pass, duplicate PM repair, old repair generation replay, and new generation acceptance.",
+      "Keep a negative path: unresolved records without terminal proof must remain blocking."
+    ],
+    "name": "terminal_state_monotone_control_record_merge",
+    "principles": [
+      "Terminal wins: resolved, passed, completed, closed, or superseded records cannot be downgraded by the same identity.",
+      "Merge by scoped identity, not by event name alone: run, role, delivery/gate/blocker/transaction/generation, and relevant hash decide whether input is replay or new work.",
+      "Writers and readers both compute effective status; raw status is never the only pending/blocking predicate.",
+      "Same identity replay appends audit metadata only and creates no new blocker, transaction, dispatch, or gate release.",
+      "New identity remains routable even when an older identity in the same event family is terminal.",
+      "Old generation inputs are quarantined or audit-only after a newer generation reaches terminal state.",
+      "Repair-channel liveness is protected: stale terminal records cannot block PM/reviewer repair decisions."
+    ],
+    "what_this_avoids": [
+      "No broad new state machine framework.",
+      "No new approval role or extra PM/reviewer ceremony.",
+      "No blanket bypass of unresolved-return checks.",
+      "No status-field proliferation; the existing resolved_at/completed-return/gate-key/transaction identity fields are enough if status is merged consistently."
+    ]
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=84",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "hazards": {
+      "duplicate_pm_repair_created_new_blocker": {
+        "detected": true,
+        "expected_failure": "same-identity replay wrote a new side effect",
+        "failures": [
+          "same-identity replay wrote a new side effect"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": true,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": true,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "pm_repair_decision",
+          "repair_channel_blocked": false,
+          "scenario": "duplicate_pm_repair_decision",
+          "stale_block_reactivated": false,
+          "status": "already_recorded",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "gate_pass_reopened_by_late_block": {
+        "detected": true,
+        "expected_failure": "terminal-proven record still blocked downstream events",
+        "failures": [
+          "terminal-proven record still blocked downstream events",
+          "stale block was reactivated after terminal pass or resolution"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "gate_outcome",
+          "repair_channel_blocked": false,
+          "scenario": "stale_gate_block_after_pass",
+          "stale_block_reactivated": true,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "new_control_blocker_swallowed_by_old_resolution": {
+        "detected": true,
+        "expected_failure": "new scoped identity was swallowed by an old terminal record",
+        "failures": [
+          "new scoped identity was swallowed by an old terminal record",
+          "new scoped identity did not get its own side effect",
+          "new scoped identity was treated as same-identity replay"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": true,
+          "incoming_same_identity": false,
+          "new_blocker_created": false,
+          "new_identity_swallowed": true,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "control_blocker",
+          "repair_channel_blocked": false,
+          "scenario": "new_control_blocker_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "new_gate_identity_swallowed_by_old_pass": {
+        "detected": true,
+        "expected_failure": "new scoped identity was swallowed by an old terminal record",
+        "failures": [
+          "new scoped identity was swallowed by an old terminal record",
+          "new scoped identity did not get its own side effect",
+          "new scoped identity was treated as same-identity replay"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": true,
+          "incoming_same_identity": false,
+          "new_blocker_created": false,
+          "new_identity_swallowed": true,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "gate_outcome",
+          "repair_channel_blocked": false,
+          "scenario": "new_gate_block_new_gate_after_pass",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "new_repair_generation_failure_swallowed": {
+        "detected": true,
+        "expected_failure": "new scoped identity was swallowed by an old terminal record",
+        "failures": [
+          "new scoped identity was swallowed by an old terminal record",
+          "new scoped identity did not get its own side effect",
+          "new scoped identity was treated as same-identity replay"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": true,
+          "incoming_same_identity": false,
+          "new_blocker_created": false,
+          "new_identity_swallowed": true,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "repair_transaction",
+          "repair_channel_blocked": false,
+          "scenario": "new_repair_failure_new_generation",
+          "stale_block_reactivated": false,
+          "status": "already_recorded",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "new_result_identity_swallowed_by_old_disposition": {
+        "detected": true,
+        "expected_failure": "new scoped identity was swallowed by an old terminal record",
+        "failures": [
+          "new scoped identity was swallowed by an old terminal record",
+          "new scoped identity did not get its own side effect",
+          "new scoped identity was treated as same-identity replay"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": true,
+          "incoming_same_identity": false,
+          "new_blocker_created": false,
+          "new_identity_swallowed": true,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "result_disposition",
+          "repair_channel_blocked": false,
+          "scenario": "new_result_return_new_result_after_disposition",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "old_repair_generation_failure_reopened_success": {
+        "detected": true,
+        "expected_failure": "terminal-proven record blocked the repair channel",
+        "failures": [
+          "terminal-proven record blocked the repair channel",
+          "old generation event reactivated after newer terminal generation"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": true,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": true,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "repair_transaction",
+          "repair_channel_blocked": true,
+          "scenario": "old_repair_failure_after_success",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "pending_selector_ignores_completed_return": {
+        "detected": true,
+        "expected_failure": "terminal-proven record still blocked downstream events",
+        "failures": [
+          "terminal-proven record still blocked downstream events",
+          "pending selector ignored terminal proof"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": false,
+          "record_kind": "system_card_return",
+          "repair_channel_blocked": false,
+          "scenario": "card_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": false,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "pending_selector_ignores_resolved_at": {
+        "detected": true,
+        "expected_failure": "terminal-proven record still blocked downstream events",
+        "failures": [
+          "terminal-proven record still blocked downstream events",
+          "pending selector ignored terminal proof"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": false,
+          "record_kind": "system_card_return",
+          "repair_channel_blocked": false,
+          "scenario": "card_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "real_unresolved_return_released_by_overbroad_terminal_merge": {
+        "detected": true,
+        "expected_failure": "unresolved nonterminal control record was released",
+        "failures": [
+          "unresolved nonterminal control record was released",
+          "real unresolved control record did not remain blocking"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": false,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": false,
+          "record_kind": "system_card_return",
+          "repair_channel_blocked": false,
+          "scenario": "unresolved_card_return_still_blocks",
+          "stale_block_reactivated": false,
+          "status": "valid_blocking",
+          "terminal_marker_present": false,
+          "terminal_reason": "none",
+          "terminal_status_before": false,
+          "unresolved_item_released": true,
+          "writer_preserved_terminal": true
+        }
+      },
+      "repair_channel_blocked_by_resolved_return": {
+        "detected": true,
+        "expected_failure": "terminal-proven record blocked the repair channel",
+        "failures": [
+          "terminal-proven record blocked the repair channel"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "system_card_return",
+          "repair_channel_blocked": true,
+          "scenario": "card_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "resolved_bundle_return_downgraded_to_incomplete": {
+        "detected": true,
+        "expected_failure": "terminal control-plane record was downgraded by same-identity replay",
+        "failures": [
+          "terminal control-plane record was downgraded by same-identity replay",
+          "terminal-proven record still blocked downstream events"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "system_card_bundle_return",
+          "repair_channel_blocked": false,
+          "scenario": "bundle_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": false
+        }
+      },
+      "resolved_bundle_return_reopened_by_duplicate_ack": {
+        "detected": true,
+        "expected_failure": "terminal control-plane record was downgraded by same-identity replay",
+        "failures": [
+          "terminal control-plane record was downgraded by same-identity replay",
+          "terminal-proven record still blocked downstream events"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "system_card_bundle_return",
+          "repair_channel_blocked": false,
+          "scenario": "bundle_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": false
+        }
+      },
+      "resolved_card_return_reopened_by_duplicate_ack": {
+        "detected": true,
+        "expected_failure": "terminal control-plane record was downgraded by same-identity replay",
+        "failures": [
+          "terminal control-plane record was downgraded by same-identity replay",
+          "terminal-proven record still blocked downstream events"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "system_card_return",
+          "repair_channel_blocked": false,
+          "scenario": "card_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": false
+        }
+      },
+      "resolved_control_blocker_reactivated_by_stale_artifact": {
+        "detected": true,
+        "expected_failure": "terminal-proven record blocked the repair channel",
+        "failures": [
+          "terminal-proven record blocked the repair channel",
+          "stale block was reactivated after terminal pass or resolution"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "control_blocker",
+          "repair_channel_blocked": true,
+          "scenario": "stale_control_blocker_after_resolved",
+          "stale_block_reactivated": true,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      },
+      "result_disposition_reopened_by_duplicate_result": {
+        "detected": true,
+        "expected_failure": "terminal control-plane record was downgraded by same-identity replay",
+        "failures": [
+          "terminal control-plane record was downgraded by same-identity replay",
+          "terminal-proven record still blocked downstream events"
+        ],
+        "state": {
+          "audit_record_written": false,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": true,
+          "duplicate_side_effect_written": false,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "result_disposition",
+          "repair_channel_blocked": false,
+          "scenario": "duplicate_result_after_pm_disposition",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": false
+        }
+      },
+      "same_identity_replay_writes_duplicate_side_effect": {
+        "detected": true,
+        "expected_failure": "duplicate side effect written for terminal replay",
+        "failures": [
+          "duplicate side effect written for terminal replay"
+        ],
+        "state": {
+          "audit_record_written": true,
+          "completed_terminal_record_present": true,
+          "downstream_blocked": false,
+          "duplicate_side_effect_written": true,
+          "incoming_from_old_generation": false,
+          "incoming_new_identity": false,
+          "incoming_same_identity": true,
+          "new_blocker_created": false,
+          "new_identity_swallowed": false,
+          "new_side_effect_written": false,
+          "old_generation_reactivated": false,
+          "pending_selector_uses_terminal_proof": true,
+          "record_kind": "system_card_return",
+          "repair_channel_blocked": false,
+          "scenario": "card_ack_duplicate_after_resolved",
+          "stale_block_reactivated": false,
+          "status": "audit_only",
+          "terminal_marker_present": true,
+          "terminal_reason": "none",
+          "terminal_status_before": true,
+          "unresolved_item_released": false,
+          "writer_preserved_terminal": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "live_metadata_audit": {
+    "dirty_terminal_pending_record_count": 1,
+    "dirty_terminal_pending_records": [
+      {
+        "blocked_by_terminal_aware_selector": false,
+        "card_return_event": "reviewer_card_ack",
+        "identity": {
+          "delivery_or_bundle_id": "reviewer_node_acceptance_plan_review-delivery-009-attempt-001",
+          "event": "reviewer_card_ack",
+          "return_kind": "system_card"
+        },
+        "path": ".flowpilot/runs/run-20260513-034857/return_event_ledger.json",
+        "pending_index": 57,
+        "raw_status": "returned",
+        "resolved_at": "2026-05-13T14:08:19Z",
+        "would_block_if_query_used_status_only": true
+      }
+    ],
+    "interpretation": "These are metadata-only findings. A dirty raw pending record is not necessarily an active blocker if the Router selector computes effective status from resolved_at/completed-return proof.",
+    "ok": true,
+    "return_event_ledger_count": 14,
+    "skipped": false
+  },
+  "model": "flowpilot_terminal_state_monotonicity",
+  "model_boundary": "control-plane terminal-state merge/idempotency; no production mutation and no sealed body inspection",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_new_identity": [
+      "new_control_blocker_after_resolved",
+      "new_gate_block_new_gate_after_pass",
+      "new_pm_repair_decision_new_blocker",
+      "new_repair_failure_new_generation",
+      "new_result_return_new_result_after_disposition"
+    ],
+    "audit_only_or_already_recorded": [
+      "bundle_ack_duplicate_after_resolved",
+      "card_ack_duplicate_after_resolved",
+      "duplicate_pm_repair_decision",
+      "duplicate_result_after_pm_disposition",
+      "incomplete_bundle_ack_after_resolved",
+      "old_repair_failure_after_success",
+      "stale_control_blocker_after_resolved",
+      "stale_gate_block_after_pass"
+    ],
+    "edge_count": 28,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 29,
+    "terminal_state_count": 14,
+    "valid_blocking": [
+      "unresolved_card_return_still_blocks"
+    ]
+  },
+  "same_class_findings": [
+    {
+      "class": "terminal_pending_return_downgrade",
+      "failure": "resolved return is written back to returned or bundle_ack_incomplete",
+      "where": "card and bundle ACK ledgers"
+    },
+    {
+      "class": "status_only_pending_query",
+      "failure": "raw returned status overrides resolved_at/completed-return proof",
+      "where": "Router pending-return selection and no-legal-next checks"
+    },
+    {
+      "class": "stale_gate_or_blocker_reactivation",
+      "failure": "late old block remains active after matching pass/resolution",
+      "where": "gate outcome blocks and control blockers"
+    },
+    {
+      "class": "same_identity_side_effect_replay",
+      "failure": "duplicate event creates a new blocker, transaction, or gate release",
+      "where": "PM repair decisions, result returns, and repair transactions"
+    },
+    {
+      "class": "old_generation_event_replay",
+      "failure": "old generation failure reopens a newer successful generation",
+      "where": "repair rechecks and replacement generations"
+    },
+    {
+      "class": "new_identity_swallowed_by_old_terminal",
+      "failure": "global terminal flag suppresses a legitimate new scoped event",
+      "where": "new blocker, gate, generation, or result under same event family"
+    },
+    {
+      "class": "overbroad_terminal_bypass",
+      "failure": "a real unresolved item is released because the merge helper treats a raw field as terminal proof",
+      "where": "pending returns, blockers, gates, and result waits without terminal proof"
+    }
+  ],
+  "skipped_checks": {
+    "production_mutation": "skipped_with_reason: this FlowGuard runner is read-only and never mutates production code or live run state",
+    "sealed_body_replay": "skipped_with_reason: model and live audit use metadata only"
+  },
+  "source_audit": {
+    "card_runtime_path": "skills/flowpilot/assets/card_runtime.py",
+    "finding_count": 0,
+    "findings": [],
+    "ok": true,
+    "router_card_return_checks_write_resolved_completion": true,
+    "router_path": "skills/flowpilot/assets/flowpilot_router.py",
+    "router_pending_selector_uses_completed_keys": true,
+    "router_pending_selector_uses_resolved_at": true
+  }
+}

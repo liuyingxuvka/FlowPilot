@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -85,6 +86,8 @@ CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
 CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
+ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
+ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
 CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
 ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
@@ -668,6 +671,8 @@ RUNTIME_FLAG_DEFAULTS = {
     "model_miss_triage_controlled_stop_recorded": False,
     "terminal_summary_card_delivered": False,
     "terminal_summary_written": False,
+    "formal_router_daemon_started": False,
+    "router_daemon_start_failed": False,
 }
 
 SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
@@ -681,6 +686,7 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
         "initialize_mailbox",
         "record_user_request",
         "write_user_intake",
+        "start_router_daemon",
         "check_prompt_manifest",
     }
 )
@@ -1018,10 +1024,17 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "actor": "bootloader",
     },
     {
+        "action_type": "start_router_daemon",
+        "flag": "router_daemon_started",
+        "label": "formal_router_daemon_started_before_controller_core",
+        "summary": "Start or attach the built-in one-second Router daemon and verify its lock, status, and Controller action ledger before Controller core can load.",
+        "actor": "bootloader",
+    },
+    {
         "action_type": "load_controller_core",
         "flag": "controller_core_loaded",
         "label": "controller_core_loaded",
-        "summary": "End bootloader startup and enter the Controller-led router loop.",
+        "summary": "End bootloader startup and attach Controller to the Router daemon action ledger.",
         "actor": "bootloader",
     },
 )
@@ -4797,6 +4810,165 @@ def _ensure_daemon_runtime_state(
     )
 
 
+def _formal_router_daemon_ready(project_root: Path, run_root: Path) -> bool:
+    lock = read_json_if_exists(_router_daemon_lock_path(run_root))
+    status = read_json_if_exists(_router_daemon_status_path(run_root))
+    ledger = read_json_if_exists(_controller_action_ledger_path(run_root))
+    return (
+        _router_daemon_lock_is_live(lock)
+        and status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA
+        and bool(status.get("daemon_mode_enabled"))
+        and status.get("tick_interval_seconds") == ROUTER_DAEMON_TICK_SECONDS
+        and bool((status.get("lock") or {}).get("live"))
+        and ledger.get("schema_version") == CONTROLLER_ACTION_LEDGER_SCHEMA
+        and status.get("run_root") == project_relative(project_root, run_root)
+    )
+
+
+def _tail_text(path: Path, *, max_chars: int = 2000) -> str:
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    return text[-max_chars:]
+
+
+def _spawn_startup_router_daemon_process(project_root: Path, run_root: Path) -> dict[str, Any]:
+    _runtime_dir(run_root).mkdir(parents=True, exist_ok=True)
+    stdout_path = _runtime_dir(run_root) / "router_daemon.startup.out.txt"
+    stderr_path = _runtime_dir(run_root) / "router_daemon.startup.err.txt"
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--root",
+        str(project_root),
+        "--json",
+        "daemon",
+    ]
+    creationflags = 0
+    start_new_session = os.name != "nt"
+    if os.name == "nt":
+        start_new_session = False
+        creationflags = (
+            getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+    stdout_handle = stdout_path.open("a", encoding="utf-8")
+    stderr_handle = stderr_path.open("a", encoding="utf-8")
+    try:
+        process = subprocess.Popen(
+            command,
+            cwd=str(project_root),
+            stdin=subprocess.DEVNULL,
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+            start_new_session=start_new_session,
+            creationflags=creationflags,
+        )
+    finally:
+        stdout_handle.close()
+        stderr_handle.close()
+    _append_router_daemon_event(
+        run_root,
+        "formal_router_daemon_process_spawned",
+        {
+            "pid": process.pid,
+            "stdout_path": project_relative(project_root, stdout_path),
+            "stderr_path": project_relative(project_root, stderr_path),
+        },
+    )
+    return {
+        "pid": process.pid,
+        "command": command,
+        "stdout_path": project_relative(project_root, stdout_path),
+        "stderr_path": project_relative(project_root, stderr_path),
+    }
+
+
+def _start_or_attach_formal_router_daemon(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    lock_path = _router_daemon_lock_path(run_root)
+    status_path = _router_daemon_status_path(run_root)
+    ledger_path = _controller_action_ledger_path(run_root)
+    _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="formal_daemon_starting")
+    if _formal_router_daemon_ready(project_root, run_root):
+        attached_existing = True
+        spawn_info: dict[str, Any] | None = None
+    else:
+        lock = read_json_if_exists(lock_path)
+        if _router_daemon_lock_is_live(lock):
+            raise RouterError(
+                "cannot start Controller core: a live Router daemon lock exists but startup readiness artifacts are incomplete"
+            )
+        if lock.get("status") == "active":
+            raise RouterError("cannot start Controller core: Router daemon lock is stale; repair or replace stale lock explicitly")
+        try:
+            spawn_info = _spawn_startup_router_daemon_process(project_root, run_root)
+        except Exception as exc:
+            run_state["daemon_mode_enabled"] = False
+            run_state["flags"]["router_daemon_start_failed"] = True
+            append_history(run_state, "formal_router_daemon_start_failed", {"error": str(exc)})
+            save_run_state(run_root, run_state)
+            raise RouterError(f"formal Router daemon failed to start: {exc}") from exc
+        attached_existing = False
+        deadline = time.monotonic() + ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS
+        while time.monotonic() < deadline:
+            if _formal_router_daemon_ready(project_root, run_root):
+                break
+            time.sleep(ROUTER_DAEMON_STARTUP_POLL_SECONDS)
+        if not _formal_router_daemon_ready(project_root, run_root):
+            run_state["daemon_mode_enabled"] = False
+            run_state["flags"]["router_daemon_start_failed"] = True
+            stderr_tail = _tail_text(resolve_project_path(project_root, str(spawn_info.get("stderr_path") or "")))
+            append_history(
+                run_state,
+                "formal_router_daemon_start_timeout",
+                {
+                    "timeout_seconds": ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS,
+                    "stderr_tail": stderr_tail,
+                },
+            )
+            save_run_state(run_root, run_state)
+            raise RouterError(
+                "formal Router daemon failed readiness check before Controller core load"
+                + (f"; stderr tail: {stderr_tail}" if stderr_tail else "")
+            )
+
+    latest_state, latest_root = load_run_state(project_root, load_bootstrap_state(project_root, create_if_missing=False))
+    if latest_state is not None and latest_root is not None:
+        run_root = latest_root
+        run_state.clear()
+        run_state.update(latest_state)
+    run_state["daemon_mode_enabled"] = True
+    run_state["router_daemon_status_path"] = project_relative(project_root, status_path)
+    run_state["controller_action_ledger_path"] = project_relative(project_root, ledger_path)
+    run_state["flags"]["formal_router_daemon_started"] = True
+    run_state["flags"]["router_daemon_start_failed"] = False
+    append_history(
+        run_state,
+        "formal_router_daemon_ready_before_controller_core",
+        {
+            "attached_existing_daemon": attached_existing,
+            "lock_path": project_relative(project_root, lock_path),
+            "status_path": project_relative(project_root, status_path),
+            "controller_action_ledger_path": project_relative(project_root, ledger_path),
+        },
+    )
+    save_run_state(run_root, run_state)
+    return {
+        "router_daemon_ready": True,
+        "attached_existing_daemon": attached_existing,
+        "spawn_info": spawn_info,
+        "lock_path": project_relative(project_root, lock_path),
+        "status_path": project_relative(project_root, status_path),
+        "controller_action_ledger_path": project_relative(project_root, ledger_path),
+    }
+
+
 def _mark_router_daemon_terminal(project_root: Path, run_root: Path, run_state: dict[str, Any], *, reason: str) -> dict[str, Any]:
     lock = _release_router_daemon_lock(project_root, run_root, reason=reason, status="terminal_stopped")
     return _write_router_daemon_status(
@@ -4839,7 +5011,8 @@ def _ensure_startup_run_state(project_root: Path, bootstrap_state: dict[str, Any
         write_json(run_root / "execution_frontier.json", _create_empty_execution_frontier(run_id))
     if not _continuation_binding_path(run_root).exists():
         _write_initial_continuation_binding(project_root, run_root, run_state)
-    _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="manual_router_loop")
+    startup_lifecycle = "daemon_active" if run_state.get("daemon_mode_enabled") else "manual_router_loop"
+    _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status=startup_lifecycle)
     save_run_state(run_root, run_state)
     return run_state, run_root
 
@@ -5566,8 +5739,10 @@ def make_action(
         policy = {
             "schema_version": "flowpilot.router_ready_preemption.v1",
             "router_ready_preempts_foreground_wait": True,
-            "controller_must_return_to_router_before_foreground_role_wait": True,
-            "allowed_router_reentry_commands": ["next", "run-until-wait"],
+            "controller_must_scan_daemon_before_foreground_role_wait": True,
+            "normal_router_progress_source": "router_daemon_status_and_controller_action_ledger",
+            "allowed_router_reentry_commands": [],
+            "diagnostic_router_reentry_commands": ["next", "run-until-wait"],
             "foreground_wait_agent_allowed": False,
             "foreground_role_chat_wait_allowed": False,
             "controlled_wait_records_allowed": [
@@ -5581,7 +5756,8 @@ def make_action(
         }
         action["controller_after_relay_policy"] = policy
         action["next_step_contract"]["router_ready_preempts_foreground_wait"] = True
-        action["next_step_contract"]["controller_must_return_to_router_before_foreground_role_wait"] = True
+        action["next_step_contract"]["controller_must_scan_daemon_before_foreground_role_wait"] = True
+        action["next_step_contract"]["normal_router_progress_source"] = "router_daemon_status_and_controller_action_ledger"
         action["next_step_contract"]["foreground_wait_agent_allowed"] = False
         action["next_step_contract"]["foreground_role_chat_wait_allowed"] = False
     return action
@@ -8810,6 +8986,8 @@ def compute_bootloader_action(project_root: Path, state: dict[str, Any]) -> dict
         "questions": boot_action.get("questions", []),
         "postcondition": boot_action["flag"],
     }
+    additional_allowed_reads: list[str] = []
+    additional_allowed_writes: list[str] = []
     if boot_action["action_type"] == "open_startup_intake_ui":
         extra_fields.update(_startup_intake_ui_action_extra(project_root, state))
     if boot_action["action_type"] == "emit_startup_banner":
@@ -8822,6 +9000,43 @@ def compute_bootloader_action(project_root: Path, state: dict[str, Any]) -> dict
         extra_fields["summary"] = "Record a sealed user request reference from the native startup intake UI artifacts."
     if boot_action["action_type"] == "start_role_slots":
         extra_fields.update(_role_spawn_action_extra(state))
+    if boot_action["action_type"] == "start_router_daemon":
+        run_state, run_root = _ensure_startup_run_state(project_root, state)
+        extra_fields.update(
+            {
+                "formal_startup_daemon_required": True,
+                "daemon_off_option_allowed": False,
+                "tick_interval_seconds": ROUTER_DAEMON_TICK_SECONDS,
+                "lock_path": project_relative(project_root, _router_daemon_lock_path(run_root)),
+                "status_path": project_relative(project_root, _router_daemon_status_path(run_root)),
+                "controller_action_ledger_path": project_relative(project_root, _controller_action_ledger_path(run_root)),
+                "startup_readiness_contract": {
+                    "requires_live_lock": True,
+                    "requires_status_file": True,
+                    "requires_controller_action_ledger": True,
+                    "failure_blocks_controller_core": True,
+                },
+            }
+        )
+        additional_allowed_reads.extend(
+            [
+                project_relative(project_root, run_state_path(run_root)),
+                project_relative(project_root, _router_daemon_lock_path(run_root)),
+                project_relative(project_root, _router_daemon_status_path(run_root)),
+                project_relative(project_root, _controller_action_ledger_path(run_root)),
+            ]
+        )
+        additional_allowed_writes.extend(
+            [
+                project_relative(project_root, run_state_path(run_root)),
+                project_relative(project_root, _router_daemon_lock_path(run_root)),
+                project_relative(project_root, _router_daemon_status_path(run_root)),
+                project_relative(project_root, _controller_action_ledger_path(run_root)),
+                project_relative(project_root, _router_daemon_event_log_path(run_root)),
+                project_relative(project_root, _runtime_dir(run_root) / "router_daemon.startup.out.txt"),
+                project_relative(project_root, _runtime_dir(run_root) / "router_daemon.startup.err.txt"),
+            ]
+        )
     heartbeat_action: dict[str, Any] | None = None
     if boot_action["action_type"] == "create_heartbeat_automation":
         run_state, run_root = _ensure_startup_run_state(project_root, state)
@@ -8847,8 +9062,8 @@ def compute_bootloader_action(project_root: Path, state: dict[str, Any]) -> dict
         actor=str((heartbeat_action or boot_action)["actor"]),
         label=str((heartbeat_action or boot_action)["label"]),
         summary=str((heartbeat_action or boot_action)["summary"]),
-        allowed_reads=[bootstrap_rel] + list((heartbeat_action or {}).get("allowed_reads") or []),
-        allowed_writes=[bootstrap_rel] + list((heartbeat_action or {}).get("allowed_writes") or []),
+        allowed_reads=[bootstrap_rel] + list((heartbeat_action or {}).get("allowed_reads") or []) + additional_allowed_reads,
+        allowed_writes=[bootstrap_rel] + list((heartbeat_action or {}).get("allowed_writes") or []) + additional_allowed_writes,
         card_id=boot_action.get("card_id"),
         extra=extra_fields,
     )
@@ -21167,10 +21382,15 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
                 source_action="inject_role_core_prompts",
             ),
         )
+    elif action_type == "start_router_daemon":
+        run_state, run_root = _ensure_startup_run_state(project_root, state)
+        result_extra.update(_start_or_attach_formal_router_daemon(project_root, run_root, run_state))
     elif action_type == "load_controller_core":
         run_state, run_root = _ensure_startup_run_state(project_root, state)
         if _scheduled_continuation_requested(_startup_answers_from_run(run_root)) and not _host_heartbeat_binding_ready(run_root, run_state):
             raise RouterError("cannot load Controller core before startup heartbeat binding is recorded")
+        if not _formal_router_daemon_ready(project_root, run_root):
+            raise RouterError("cannot load Controller core before the formal Router daemon is live and ready")
         run_state["status"] = "controller_ready"
         run_state["holder"] = "controller"
         run_state["flags"]["controller_core_loaded"] = True
@@ -26354,6 +26574,26 @@ def _router_daemon_tick(
     _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_active")
     receipt_summary = _reconcile_controller_receipts(project_root, run_root, run_state)
     current_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else None
+    if not observe_only and not run_state.get("flags", {}).get("controller_core_loaded"):
+        status = _write_router_daemon_status(
+            project_root,
+            run_root,
+            run_state,
+            lifecycle_status="daemon_waiting_for_controller_core",
+            current_action=None,
+            lock=lock,
+            recovery_hints=[],
+        )
+        save_run_state(run_root, run_state)
+        return {
+            "tick_at": status["last_tick_at"],
+            "observe_only": False,
+            "action_type": None,
+            "controller_action_id": None,
+            "waiting_for_controller_core": True,
+            "receipt_summary": receipt_summary,
+            "terminal": bool(status.get("run_lifecycle_status")),
+        }
     if observe_only:
         if isinstance(current_action, dict):
             _write_controller_action_entry(project_root, run_root, run_state, current_action)

@@ -1707,36 +1707,15 @@
     "current_finding_count": 0,
     "current_findings": [],
     "current_run_can_continue": true,
-    "current_run_id": "run-20260513-164058",
-    "current_run_root": ".flowpilot/runs/run-20260513-164058",
-    "historical_gate_alignment_finding_count": 1,
-    "historical_gate_alignment_findings": [
-      {
-        "allowed_resolution_events": [
-          "router_direct_material_scan_dispatch_recheck_passed",
-          "router_direct_material_scan_dispatch_recheck_blocked",
-          "router_protocol_blocker_material_scan_dispatch_recheck"
-        ],
-        "control_blocker": ".flowpilot\\runs\\run-20260513-164058\\control_blocks\\control-blocker-0001-20260513T173633704275Z.json",
-        "error_code": "controller_has_no_legal_next_action_pm_repair_or_routing_decision_is_required_before_any_further",
-        "kind": "resolved_no_legal_next_action_without_gate_event",
-        "model_meaning": "A control blocker was needed because the Router had no legal next action. If the resolution event is not the current gate event, the repair may only have created a follow-up path rather than satisfying the blocked gate.",
-        "pm_repair_rerun_target": "router_direct_material_scan_dispatch_recheck_passed",
-        "resolved": true,
-        "resolved_by_event": "router_direct_material_scan_dispatch_recheck_passed"
-      }
-    ],
+    "current_run_id": "run-20260514-063423",
+    "current_run_root": ".flowpilot/runs/run-20260514-063423",
+    "historical_gate_alignment_finding_count": 0,
+    "historical_gate_alignment_findings": [],
     "mitigated_path_count": 0,
     "mitigated_paths": [],
     "ok": true,
-    "risk_surface_count": 5,
+    "risk_surface_count": 4,
     "risk_surfaces": [
-      {
-        "card_envelope": ".flowpilot\\runs\\run-20260513-164058\\mailbox\\system_cards\\product_officer_product_architecture_modelability-delivery-001-attempt-001.json",
-        "card_id": "product_officer.product_architecture_modelability",
-        "kind": "gate_card_without_declared_completion_contract",
-        "model_meaning": "A gate-bearing system card was delivered without a metadata-level completion contract that names the concrete Router event or gate flag it must satisfy."
-      },
       {
         "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
         "kind": "router_supplied_contract_needs_dynamic_lease",

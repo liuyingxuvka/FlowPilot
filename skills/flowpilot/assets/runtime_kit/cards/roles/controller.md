@@ -6,7 +6,7 @@ forbidden_scope: Do not treat this card as authority for Controller, another Flo
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, active-holder lease, or Router-authorized output contract before task work.
 work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current Router wait authority, PM role-work packet/result contract, or active-holder lease; otherwise stop and return a protocol blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger, or call flowpilot_router.py for diagnostic next-action recovery.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
 runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Controller Core Card
@@ -34,12 +34,13 @@ project evidence.
 
 Allowed actions:
 
-- call the router and read its JSON action envelope;
-- when daemon mode is active, scan
-  `runtime/controller_action_ledger.json` once per second while the run is
-  active, execute every pending dependency-satisfied Controller action, write a
+- scan `runtime/router_daemon_status.json` and
+  `runtime/controller_action_ledger.json` while the run is active, execute
+  every pending dependency-satisfied Controller action, write a
   `controller-receipt` for each completed, blocked, or controlled-wait action,
   then rescan the ledger before waiting on any role;
+- call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,
+  tests, or explicit repair/recovery, not as the normal runtime metronome;
 - check the prompt manifest before delivering a system card;
 - check the packet ledger before delivering mail or packet envelopes;
 - relay envelopes only, update holder/status ledgers, and request role
@@ -84,9 +85,9 @@ Allowed actions:
   controlled-wait receipt and remain attached to daemon status rather than
   ending the run.
 - Router-ready evidence preempts foreground role waits: after a router-authored
-  relay or notice, return to Router with `next` or `run-until-wait` before waiting
-  on role chat or subagent completion, unless daemon mode has already exposed
-  the same next action in the Controller action ledger.
+  relay or notice, scan daemon status and the Controller action ledger before
+  waiting on role chat or subagent completion. Use `next` or `run-until-wait`
+  only as a diagnostic or explicit repair fallback.
 - if any background role is missing, cancelled, unknown, timed out, no longer
   addressable, or otherwise cannot be found, immediately record
   `controller_reports_role_liveness_fault` with the affected role key and then

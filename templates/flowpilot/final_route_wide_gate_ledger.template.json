@@ -13,7 +13,8 @@
     "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
     "standard_scenario_pack": ".flowpilot/runs/<run-id>/standard_scenario_pack.json",
     "capabilities": ".flowpilot/runs/<run-id>/capabilities.json",
-    "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json"
+    "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
+    "self_interrogation_index": ".flowpilot/runs/<run-id>/self_interrogation_index.json"
   },
   "current_route_scanned": false,
   "effective_nodes_resolved": false,
@@ -23,7 +24,8 @@
     "parent_backward_replays_collected": false,
     "product_process_gates_collected": false,
     "generated_resource_lineage_collected": false,
-    "final_completion_gates_collected": false
+    "final_completion_gates_collected": false,
+    "self_interrogation_dispositions_collected": false
   },
   "evidence_integrity": {
     "generated_resource_lineage_resolved": false,
@@ -38,6 +40,7 @@
     "requirement_direct_evidence_checked": false,
     "requirement_waiver_authority_checked": false,
     "requirement_stale_status_checked": false,
+    "self_interrogation_index_clean": false,
     "unresolved_residual_risk_count_zero": false,
     "waivers_have_required_role": false,
     "blocked_items_have_pm_repair_or_stop_decision": false
@@ -64,6 +67,9 @@
     "unresolved_resource_count": 0,
     "unresolved_residual_risk_count": 0,
     "unresolved_low_quality_success_risk_count": 0,
+    "self_interrogation_record_count": 0,
+    "self_interrogation_issue_count": 0,
+    "self_interrogation_unresolved_hard_finding_count": 0,
     "unresolved_count": null
   },
   "residual_risk_triage": {
