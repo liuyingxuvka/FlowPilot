@@ -9738,3 +9738,58 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - No remote GitHub push was performed.
 - Full `tests\test_flowpilot_router_runtime.py` was not run because it is large and has previously exceeded local timeouts; verification used the upgraded FlowGuard model suite, targeted router tests, packet-runtime tests, install checks, and model checks for adjacent concurrent changes.
+
+## 2026-05-14 - Requirement Traceability Upgrade
+
+### Trigger
+- Began a model-first upgrade to give FlowPilot OpenSpec-like requirement traceability while keeping FlowPilot standalone and full-protocol-only.
+
+### Planning Files
+- docs/flowpilot_requirement_traceability_upgrade_plan.md
+
+### Model Files
+- simulations/flowpilot_requirement_traceability_model.py
+- simulations/run_flowpilot_requirement_traceability_checks.py
+- simulations/flowpilot_requirement_traceability_results.json
+- simulations/flowpilot_planning_quality_model.py
+- simulations/run_flowpilot_planning_quality_checks.py
+- simulations/flowpilot_planning_quality_results.json
+
+### Production and Prompt Files
+- skills/flowpilot/assets/flowpilot_router.py
+- templates/flowpilot/product_function_architecture.template.json
+- templates/flowpilot/root_acceptance_contract.template.json
+- templates/flowpilot/routes/route-001/flow.template.json
+- templates/flowpilot/node_acceptance_plan.template.json
+- templates/flowpilot/final_route_wide_gate_ledger.template.json
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md
+- skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_requirement_traceability_model.py simulations\run_flowpilot_requirement_traceability_checks.py simulations\flowpilot_planning_quality_model.py simulations\run_flowpilot_planning_quality_checks.py`
+- OK: `python simulations\run_flowpilot_requirement_traceability_checks.py --json-out simulations\flowpilot_requirement_traceability_results.json`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py --json-out simulations\flowpilot_planning_quality_results.json`
+- OK: JSON parsing checks for the updated FlowPilot templates.
+- OK: targeted router tests for product architecture/root contract/route skeleton, node acceptance plan traceability, final ledger, and node acceptance repair.
+- OK: background `python simulations\run_meta_checks.py`; progress and loop/stuck reviews were OK with 622789 states and 642960 edges.
+- OK: background `python simulations\run_capability_checks.py`; status was OK and known capability hazards matched expected failures.
+- OK: `python scripts\check_install.py --json`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The new traceability model catches missing stable requirement IDs, unmapped product capabilities, root requirements without source/change/supersession metadata, route nodes referencing unknown requirements, node plans without direct evidence mapping, stale mutation evidence, incomplete final ledger closure, unauthorized external spec authority, and forbidden light/simple FlowPilot profiles.
+- The planning-quality model now treats small/simple formal FlowPilot as a hazard; FlowPilot remains full protocol whenever invoked.
+- Product architecture, root contract, route skeleton, node acceptance plan, and final route ledger artifacts now carry requirement trace fields through the existing FlowPilot process instead of adding a parallel change-pack process.
+- Router writers now normalize trace fields for product/root/route/node artifacts and validate node-plan and final-ledger traceability before accepting those artifacts.
+- The installed local FlowPilot skill is source-fresh against this repository after local sync.
+
+### Skipped Steps
+- Full `tests\test_flowpilot_router_runtime.py` exceeded a 10-minute command timeout in this mixed worktree; verification used targeted router tests, template checks, upgraded FlowGuard models, meta/capability checks, and install sync checks.
+- No remote GitHub push was performed.

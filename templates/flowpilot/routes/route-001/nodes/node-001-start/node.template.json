@@ -7,7 +7,7 @@
   "expected_artifacts": [
     ".flowpilot/runs/<run-id>/material_intake_packet.json",
     ".flowpilot/runs/<run-id>/local_skill_inventory.json",
-    ".flowpilot/pm_material_understanding.json",
+    ".flowpilot/runs/<run-id>/pm_material_understanding.json",
     ".flowpilot/runs/<run-id>/research/<research-package-id>/research_package.json",
     ".flowpilot/runs/<run-id>/research/<research-package-id>/worker_report.json",
     ".flowpilot/runs/<run-id>/research/<research-package-id>/reviewer_report.json",

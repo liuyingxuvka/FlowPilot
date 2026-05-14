@@ -73,7 +73,7 @@
     {
       "id": "packet_ledger_mail_delivery",
       "legacy_obligation": "PM, reviewer, officers, workers, and user intake move through ledger-checked packet/mail delivery, not broad prompt context.",
-      "missing_work": "Extend sealed-envelope coverage from worker/material/research packets to generalized async officer modeling packets.",
+      "missing_work": "Generic PM role-work packets now provide the base sealed-envelope path; still add dedicated officer-model report contract coverage as modeling packet families grow.",
       "new_enforcement": [
         "skills/flowpilot/assets/packet_runtime.py",
         "scripts/flowpilot_packets.py",
@@ -112,7 +112,7 @@
     {
       "id": "reviewer_before_worker_evidence_use",
       "legacy_obligation": "Worker output is only a pointer until the reviewer personally checks it and returns a report to PM.",
-      "missing_work": "Extend exact node/version matching to repair packets and officer packets.",
+      "missing_work": "Extend exact node/version matching to repair packets and dedicated officer-model reports.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/reviewer/dispatch_request.md",
         "skills/flowpilot/assets/runtime_kit/cards/reviewer/current_node_dispatch.md",
@@ -126,7 +126,7 @@
     {
       "id": "flowguard_officer_model_gates",
       "legacy_obligation": "Process and product FlowGuard officers own modelability, model execution, risk tiers, and confidence boundaries before PM uses model results.",
-      "missing_work": "Product architecture, root-contract modelability, and route-draft process/product checks are runtime-gated. Still add generalized officer request/report cards for process/product modeling packets beyond these route-draft gates.",
+      "missing_work": "Product architecture, root-contract modelability, route-draft process/product checks, and the generic PM role-work request channel are runtime-gated. Still add dedicated process/product officer report lifecycle coverage beyond these route-draft gates.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
         "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",

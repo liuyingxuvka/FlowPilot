@@ -312,7 +312,8 @@ obvious sources are missing, large sources are not scoped honestly, summaries
 are shallow, contradictions or uncertainty are hidden, or the packet would
 mislead route design.
 
-The project manager then writes `.flowpilot/pm_material_understanding.json`.
+The project manager then writes
+`.flowpilot/runs/<run-id>/pm_material_understanding.json`.
 It is an interpretive handoff: source-claim matrix, open questions, material
 complexity (`simple`, `normal`, or `messy/raw`), route consequence, and whether
 formal discovery, cleanup, modeling, validation, research, or reconciliation

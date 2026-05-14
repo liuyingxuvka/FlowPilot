@@ -296,7 +296,7 @@ A reviewer block returns to intake; the PM cannot override a current material
 sufficiency gap.
 
 After reviewer approval, the project manager writes
-`.flowpilot/pm_material_understanding.json`. This is interpretive, not merely a
+`.flowpilot/runs/<run-id>/pm_material_understanding.json`. This is interpretive, not merely a
 second inventory: it maps claims to sources, lists open questions, classifies
 material complexity, and decides whether the next route can proceed directly or
 must insert discovery, cleanup, spreadsheet analysis, data modeling, research,

@@ -9,7 +9,7 @@
     "startup_self_interrogation_path": "<path-or-null>",
     "material_intake_packet_path": ".flowpilot/runs/<run-id>/material_intake_packet.json",
     "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
-    "pm_material_understanding_path": ".flowpilot/pm_material_understanding.json",
+    "pm_material_understanding_path": ".flowpilot/runs/<run-id>/pm_material_understanding.json",
     "draft_floor_source": "<chat|file|user-brief|other>",
     "known_product_context_paths": [],
     "external_spec_import_paths": [],

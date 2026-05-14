@@ -31,3 +31,24 @@ Active-holder ACK, progress, and result submission SHALL be accepted only when r
 #### Scenario: Wrong holder submits a result
 - **WHEN** a role that is not the current active holder submits a direct result for a packet
 - **THEN** the Router rejects the result and records a protocol blocker or recovery path
+
+### Requirement: Role returns use only Router-authorized events
+Role ACK, progress, and result returns SHALL be accepted only when the submitted event is present in the Router's current `allowed_external_events` for that run, packet or request, role, and result target. Prompt or card wording alone SHALL NOT create event authority.
+
+#### Scenario: Stale event name is submitted
+- **WHEN** a role submits a result with an event name that is not in the current `allowed_external_events`
+- **THEN** the Router rejects the return and records a correction or recovery action instead of absorbing the result
+
+### Requirement: Role-work results match the registered request
+PM role-work result absorption SHALL bind the result to the registered request by run id, request id, target role, output contract id, and result target.
+
+#### Scenario: Wrong request id returns
+- **WHEN** a result envelope names a request id different from the open PM role-work request
+- **THEN** the Router leaves the original request unresolved and rejects or quarantines the mismatched result
+
+### Requirement: Prompt promises match runtime capability
+PM and role cards SHALL advertise active-holder, dependency-continuation, partial-batch, or role-work return behavior only when the Router runtime and event capability registry support the same behavior.
+
+#### Scenario: Card promises unsupported active-holder behavior
+- **WHEN** a card instructs a role to use an active-holder return path that the runtime cannot authorize
+- **THEN** validation blocks the card/runtime update until the capability registry, runtime, and prompt wording are aligned

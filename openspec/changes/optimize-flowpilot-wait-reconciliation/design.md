@@ -90,6 +90,17 @@ Alternative considered: rely on runtime validation alone. Runtime validation is
 necessary, but prompt/runtime drift is already a known FlowPilot risk and must
 be modeled and tested.
 
+### Decision 6: Second-perspective cleanup is alignment, not a new controller
+
+The OpenSpec/FlowGuard pass is used as an independent review lens over the
+existing FlowPilot implementation. It may repair stale paths, missing scenarios,
+task evidence wording, and equivalence notes, but it does not promote OpenSpec
+to the FlowPilot control plane or reopen unrelated runtime slices.
+
+Alternative considered: re-plan the full FlowPilot controller under OpenSpec.
+That would mix a verification pass with a control-plane migration and hide the
+smaller concrete drift found by the audit.
+
 ## Risks / Trade-offs
 
 - Stale result consumed twice -> Mitigation: packet-id keyed reconciliation,

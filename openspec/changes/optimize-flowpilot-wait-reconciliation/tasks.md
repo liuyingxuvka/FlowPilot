@@ -62,3 +62,10 @@
 - [x] 8.3 Re-run `scripts/check_install.py` after local install sync.
 - [x] 8.4 Update the FlowGuard adoption note with commands, results, findings, skipped checks, and next action.
 - [x] 8.5 Stage and commit local git changes only; do not push to GitHub.
+
+## 9. OpenSpec/FlowGuard Second-Perspective Cleanup
+
+- [x] 9.1 Repair run-scoped `pm_material_understanding.json` path drift in docs, templates, and installed-skill references.
+- [x] 9.2 Add OpenSpec scenarios for Router-authorized return events, wrong role-work request matching, and prompt/runtime capability drift.
+- [x] 9.3 Refresh legacy equivalence notes so PM role-work is counted as the generic packet path while dedicated officer-report lifecycle coverage remains explicit future work.
+- [x] 9.4 Re-run OpenSpec validation, focused FlowGuard checks, local install sync, install audits, and local Git staging/commit for the cleanup.
