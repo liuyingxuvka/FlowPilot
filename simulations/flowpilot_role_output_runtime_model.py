@@ -222,6 +222,9 @@ class State:
     direct_router_submission: bool = False
     router_receives_role_output_envelope: bool = False
     controller_waits_router_status: bool = False
+    router_ready_evidence_available: bool = False
+    controller_reentered_router_before_foreground_wait: bool = False
+    controller_foreground_waits_role_after_router_ready: bool = False
     compact_envelope_refs_used: bool = False
     progress_updates_runtime_written: bool = True
     progress_value_numeric: bool = True
@@ -502,6 +505,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 direct_router_submission=True,
                 router_receives_role_output_envelope=True,
                 controller_waits_router_status=True,
+                router_ready_evidence_available=True,
+                controller_reentered_router_before_foreground_wait=True,
             ),
         )
         return
@@ -603,6 +608,10 @@ def accepted_outputs_submit_directly_to_router(state: State, trace) -> Invariant
         return InvariantResult.fail("accepted role output was not received by Router")
     if not state.controller_waits_router_status:
         return InvariantResult.fail("accepted role output left Controller waiting on a role instead of Router")
+    if state.router_ready_evidence_available and not state.controller_reentered_router_before_foreground_wait:
+        return InvariantResult.fail("accepted role output left Router-ready evidence unconsumed before foreground wait")
+    if state.router_ready_evidence_available and state.controller_foreground_waits_role_after_router_ready:
+        return InvariantResult.fail("accepted role output waited on role after Router-ready evidence existed")
     return InvariantResult.pass_()
 
 
@@ -842,6 +851,8 @@ def _accepted_base(**changes: object) -> State:
         direct_router_submission=True,
         router_receives_role_output_envelope=True,
         controller_waits_router_status=True,
+        router_ready_evidence_available=True,
+        controller_reentered_router_before_foreground_wait=True,
         compact_envelope_refs_used=True,
         router_decision="accept",
     )
@@ -867,6 +878,11 @@ def hazard_states() -> dict[str, State]:
         "missing_direct_router_submission": _accepted_base(direct_router_submission=False),
         "missing_router_receipt": _accepted_base(router_receives_role_output_envelope=False),
         "controller_waits_role_instead_of_router": _accepted_base(controller_waits_router_status=False),
+        "router_ready_next_action_waited_on_role": _accepted_base(
+            router_ready_evidence_available=True,
+            controller_reentered_router_before_foreground_wait=False,
+            controller_foreground_waits_role_after_router_ready=True,
+        ),
         "semantic_auto_approval": _accepted_base(runtime_claimed_semantic_approval=True),
         "missing_default_progress_status": _accepted_base(runtime_progress_status_initialized=False),
         "missing_progress_prompt": _accepted_base(progress_prompt_included=False),

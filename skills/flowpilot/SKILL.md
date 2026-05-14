@@ -52,6 +52,15 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 
 After applying a wait-boundary action, prefer `run-until-wait`. It may apply only replay-proven safe internal router actions and must stop again before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
 
+Router-ready state preempts foreground waits. After Controller relays a
+router-authored card, card bundle, packet, result envelope, status packet, or
+next-action notice, do not wait on a role or subagent before calling Router
+with `next` or `run-until-wait`. If Router exposes a real
+`await_card_return_event`, `await_card_bundle_return_event`, or
+`await_role_decision`, record that controlled wait and stop or resume through
+heartbeat/manual continuation; do not spend the foreground turn waiting for
+ordinary role chat.
+
 When the router returns `open_startup_intake_ui`, open the native startup intake UI with the command and output directory in the action envelope. After the UI closes, apply that same pending action with only `payload.startup_intake_result.result_path`. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
 
 The UI result replaces the old chat three-question startup boundary. The router maps the UI toggles to canonical startup answer enum fields and seals the work request body behind a path/hash record. The startup UI record is the authority for activation; reviewer live review checks `startup_intake/startup_intake_record.json`, its receipt/envelope/hash evidence, and independently observable startup facts requested by the router, not private chat authenticity or chat history.

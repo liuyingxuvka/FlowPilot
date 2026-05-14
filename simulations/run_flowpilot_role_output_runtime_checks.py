@@ -83,6 +83,7 @@ HAZARD_EXPECTED_FAILURES = {
     "missing_direct_router_submission": "without direct Router submission",
     "missing_router_receipt": "was not received by Router",
     "controller_waits_role_instead_of_router": "left Controller waiting on a role instead of Router",
+    "router_ready_next_action_waited_on_role": "Router-ready evidence unconsumed before foreground wait",
     "semantic_auto_approval": "replaced semantic gate approval",
     "missing_default_progress_status": "without default progress status",
     "missing_progress_prompt": "without shared progress prompt",
@@ -147,7 +148,10 @@ def _state_id(state: model.State) -> str:
         f"{state.compat_output_alias_valid}|"
         f"runtime={state.runtime_receipt_written}|hash={state.body_hash_verified}|"
         f"direct_router={state.direct_router_submission},{state.router_receives_role_output_envelope},"
-        f"{state.controller_waits_router_status}|"
+        f"{state.controller_waits_router_status}|router_ready="
+        f"{state.router_ready_evidence_available},"
+        f"{state.controller_reentered_router_before_foreground_wait},"
+        f"{state.controller_foreground_waits_role_after_router_ready}|"
         f"progress={state.runtime_progress_status_initialized},{state.progress_prompt_included},"
         f"{state.progress_visibility_grant},{state.progress_updates_runtime_written},"
         f"{state.progress_value_numeric},{state.progress_message_metadata_only}|"
@@ -473,6 +477,39 @@ def _source_report(project_root: Path) -> dict[str, object]:
         failures.append("PM output contract catalog missing role-output progress_status guidance")
     if "submit-output-to-router" not in catalog_text:
         failures.append("PM output contract catalog missing submit-output-to-router guidance")
+
+    controller_card = project_root / "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md"
+    controller_text = controller_card.read_text(encoding="utf-8") if controller_card.exists() else ""
+    skill_text = (project_root / "skills/flowpilot/SKILL.md").read_text(encoding="utf-8")
+    resume_card = project_root / "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md"
+    resume_text = resume_card.read_text(encoding="utf-8") if resume_card.exists() else ""
+    required_router_first_snippets = {
+        "controller card": (
+            controller_text,
+            [
+                "Router-ready evidence preempts foreground role waits",
+                "return to Router with `next` or `run-until-wait` before waiting",
+            ],
+        ),
+        "skill launcher": (
+            skill_text,
+            [
+                "Router-ready state preempts foreground waits",
+                "do not wait on a role or subagent before calling Router",
+            ],
+        ),
+        "controller resume reentry card": (
+            resume_text,
+            [
+                "Router-ready evidence still preempts foreground role waits",
+                "return to Router before any foreground role wait",
+            ],
+        ),
+    }
+    for source_name, (text, snippets) in required_router_first_snippets.items():
+        for snippet in snippets:
+            if snippet not in text:
+                failures.append(f"{source_name} missing Router-ready preemption guidance: {snippet}")
 
     runtime_output_types: set[str] = set()
     binding_report: dict[str, object] = {

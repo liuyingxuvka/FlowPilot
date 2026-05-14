@@ -82,3 +82,10 @@ If an active-holder packet lease is open, wait for the packet-id-specific
 Router-authored `controller_next_action_notice.json` before relaying or
 requesting anything else. That notice is Controller-visible metadata only; it
 does not authorize Controller to read sealed packet or result bodies.
+
+Router-ready evidence still preempts foreground role waits during resume. If
+resume state, packet ledgers, return ledgers, status packets, or
+`controller_next_action_notice.json` show that Router can expose the next
+action, return to Router before any foreground role wait. Use bounded
+`wait_agent` only for Router-requested liveness/recovery preflight; a timeout
+is `timeout_unknown`, not active continuity.

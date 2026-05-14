@@ -9837,3 +9837,47 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - No remote GitHub push was performed.
 - No broad production-code rewrite was performed; this pass was limited to alignment, specs, templates, docs, local install sync, and local Git preparation.
+
+## 2026-05-14 - Router-Ready Controller Wait Preemption
+
+### Trigger
+- User reported FlowPilot Controller waiting two to three minutes on roles after relaying cards even when Router already had the next instruction.
+- User approved an OpenSpec plus FlowGuard repair and requested local installed skill sync plus local git sync.
+
+### Files Updated
+- simulations/flowpilot_role_output_runtime_model.py
+- simulations/run_flowpilot_role_output_runtime_checks.py
+- skills/flowpilot/SKILL.md
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/runtime_kit/cards/roles/controller.md
+- skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md
+- skills/flowpilot/references/protocol.md
+- tests/test_flowpilot_router_runtime.py
+- openspec/changes/preempt-controller-stale-role-waits/
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `openspec validate preempt-controller-stale-role-waits --strict --json`
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py --json-out simulations\flowpilot_role_output_runtime_results.json`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_role_output_runtime_model.py simulations\run_flowpilot_role_output_runtime_checks.py`
+- OK: targeted Router runtime tests for `run_until_wait`, system-card delivery, committed relay resolution, and resume reentry preemption: 7 passed.
+- OK: `python -m pytest tests\test_flowpilot_role_output_runtime.py -q`: 14 passed.
+- OK: `python simulations\run_meta_checks.py`: progress and loop/stuck reviews OK with 622789 states and 642960 edges.
+- OK: `python simulations\run_capability_checks.py`: progress, loop/stuck, and expected hazard reviews OK with 620559 states and 646018 edges.
+- OK: card-envelope, router-loop, decision-liveness, and dynamic-return-path FlowGuard checks.
+- OK: `python scripts\check_install.py`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+
+### Findings
+- The role-output runtime model now rejects a Controller path that foreground-waits on a role after Router-ready evidence exists.
+- Router relay/wait actions now carry `controller_after_relay_policy` and `next_step_contract` fields that force Controller to return to Router with `next` or `run-until-wait` before waiting.
+- Controller, resume, skill, and protocol guidance now say Router-ready evidence, resolved ACKs, status packets, result notices, and pending next actions preempt foreground role waits.
+- Liveness waits remain recovery-only and do not become ordinary two-minute work waits.
+- The installed local FlowPilot skill is source-fresh against the repository after sync.
+
+### Skipped Steps
+- Full `tests\test_flowpilot_router_runtime.py` exceeded a 10-minute timeout; a broad keyword subset also exceeded a 5-minute timeout.
+- Verification used focused router tests, the full role-output runtime test module, FlowGuard models, install checks, and OpenSpec strict validation.
+- No remote GitHub push was performed.

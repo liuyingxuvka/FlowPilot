@@ -69,6 +69,12 @@ Allowed actions:
   instead of asking the holder to chat through every mechanical retry. The
   notice is controller-visible metadata only; after reading it, call Router or
   relay the named envelope exactly as instructed.
+- Router-ready evidence preempts foreground role waits. After any
+  router-authored card, card bundle, packet, result envelope, status packet, or
+  `controller_next_action_notice.json` is relayed or observed, return to Router with `next` or `run-until-wait` before waiting on role chat, `wait_agent`, or
+  subagent completion. If Router exposes a real `await_card_return_event`,
+  `await_card_bundle_return_event`, or `await_role_decision`, record that
+  controlled wait and stop or resume through heartbeat/manual continuation.
 - if any background role is missing, cancelled, unknown, timed out, no longer
   addressable, or otherwise cannot be found, immediately record
   `controller_reports_role_liveness_fault` with the affected role key and then
@@ -88,6 +94,11 @@ Forbidden actions:
 - do not infer packet completion from holder chat while an active-holder lease
   is open. Only a router-authored next-action notice, PM blocker, timeout, or
   explicit router action can end Controller's wait.
+- do not keep the foreground turn blocked on ordinary role/subagent waiting
+  when Router-ready evidence, a pending router action, a resolved direct ACK,
+  a returned result envelope, or `controller_next_action_notice.json` exists.
+  Bounded `wait_agent` checks are liveness/recovery only when Router requests
+  them; timeout is `timeout_unknown`, never active work proof.
 - do not wait for unrelated work to finish before role recovery. A role
   liveness fault is a recovery-first control-plane event unless the user
   explicitly stops/cancels the run or the router is already performing terminal

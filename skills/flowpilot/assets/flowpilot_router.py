@@ -559,6 +559,17 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
     }
 )
 
+ROUTER_READY_PREEMPTION_ACTION_TYPES = frozenset(
+    {
+        "await_card_return_event",
+        "await_card_bundle_return_event",
+        "check_card_return_event",
+        "check_card_bundle_return_event",
+        "deliver_system_card",
+        "deliver_system_card_bundle",
+    }
+)
+
 CURRENT_NODE_CYCLE_FLAGS = (
     "pm_current_node_card_delivered",
     "pm_node_started_event_delivered",
@@ -4510,6 +4521,34 @@ def make_action(
     }
     if action.get("gate_contract") is not None:
         action["next_step_contract"]["gate_contract"] = action["gate_contract"]
+    relay_or_wait_boundary = (
+        action_type in ROUTER_READY_PREEMPTION_ACTION_TYPES
+        or action_type.startswith("relay_")
+        or action_type == "await_role_decision"
+        or bool(action.get("relay_allowed"))
+    )
+    if actor == "controller" and relay_or_wait_boundary:
+        policy = {
+            "schema_version": "flowpilot.router_ready_preemption.v1",
+            "router_ready_preempts_foreground_wait": True,
+            "controller_must_return_to_router_before_foreground_role_wait": True,
+            "allowed_router_reentry_commands": ["next", "run-until-wait"],
+            "foreground_wait_agent_allowed": False,
+            "foreground_role_chat_wait_allowed": False,
+            "controlled_wait_records_allowed": [
+                "await_card_return_event",
+                "await_card_bundle_return_event",
+                "await_role_decision",
+            ],
+            "liveness_wait_allowed_only_when_router_requests_recovery": True,
+            "timeout_unknown_is_not_active": True,
+            "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
+        }
+        action["controller_after_relay_policy"] = policy
+        action["next_step_contract"]["router_ready_preempts_foreground_wait"] = True
+        action["next_step_contract"]["controller_must_return_to_router_before_foreground_role_wait"] = True
+        action["next_step_contract"]["foreground_wait_agent_allowed"] = False
+        action["next_step_contract"]["foreground_role_chat_wait_allowed"] = False
     return action
 
 

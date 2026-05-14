@@ -4057,6 +4057,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(second["card_checkin_instruction"]["controller_ack_handoff_allowed"])
         self.assertEqual(second["ack_submission_mode"], "direct_to_router")
         self.assertFalse(second["controller_ack_handoff_allowed"])
+        self.assertTrue(second["controller_after_relay_policy"]["router_ready_preempts_foreground_wait"])
+        self.assertFalse(second["controller_after_relay_policy"]["foreground_wait_agent_allowed"])
+        self.assertFalse(second["controller_after_relay_policy"]["foreground_role_chat_wait_allowed"])
+        self.assertTrue(second["next_step_contract"]["router_ready_preempts_foreground_wait"])
+        self.assertTrue(second["next_step_contract"]["controller_must_return_to_router_before_foreground_role_wait"])
+        self.assertFalse(second["next_step_contract"]["foreground_wait_agent_allowed"])
         self.assertTrue(second["direct_router_ack_token_hash"])
         self.assertTrue(second["card_checkin_instruction"]["do_not_handwrite_ack"])
         self.assertIn("--envelope-path", second["card_checkin_instruction"]["command"])
@@ -4127,6 +4133,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(relay_action["action_type"], "deliver_system_card")
         self.assertEqual(relay_action["card_envelope_path"], second["card_envelope_path"])
         self.assertTrue(relay_action["relay_allowed"])
+        self.assertTrue(relay_action["controller_after_relay_policy"]["router_ready_preempts_foreground_wait"])
+        self.assertFalse(relay_action["controller_after_relay_policy"]["foreground_role_chat_wait_allowed"])
         with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
             router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         with self.assertRaisesRegex(router.RouterError, "legacy record-event ACK path is disabled"):
@@ -4177,6 +4185,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
         self.assertTrue(action["artifact_committed"])
         self.assertTrue(action["relay_allowed"])
+        self.assertTrue(action["controller_after_relay_policy"]["router_ready_preempts_foreground_wait"])
+        self.assertEqual(action["controller_after_relay_policy"]["allowed_router_reentry_commands"], ["next", "run-until-wait"])
         self.assertFalse(action["apply_required"])
         self.assertEqual(action["card_return_event"], "reviewer_card_ack")
 
@@ -6789,6 +6799,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
+        self.assertTrue(action["controller_after_relay_policy"]["router_ready_preempts_foreground_wait"])
+        self.assertFalse(action["controller_after_relay_policy"]["foreground_wait_agent_allowed"])
+        self.assertTrue(action["controller_after_relay_policy"]["liveness_wait_allowed_only_when_router_requests_recovery"])
 
         router.record_external_event(
             root,
