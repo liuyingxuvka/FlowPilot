@@ -64,11 +64,14 @@ Risk intent brief:
   Controller-facing plain-language reminder that is not itself user-visible;
   compact progress summaries include bounded route-level progress facts;
   display/status Controller work remains nonblocking; external keepalive work
-  still requires lightweight confirmation; stateful Controller receipts cannot
-  clear or advance a hard pending action until the Router can verify the
-  declared postcondition evidence; and role-output events cannot be accepted
-  from a prepared/progress status surface without a file-backed body path plus
-  replayable body hash.
+  still requires lightweight confirmation; Controller delivery receipts only
+  close Controller-owned delivery work and must become target-role waits rather
+  than role completion; stateful Controller receipts cannot clear or advance a
+  hard pending action until the Router can verify or reclaim the declared
+  postcondition evidence; daemon ticks cannot escalate a half-complete
+  Controller receipt when valid Router-owned artifacts already exist; and
+  role-output events cannot be accepted from a prepared/progress status surface
+  without a file-backed body path plus replayable body hash.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -116,6 +119,15 @@ class State:
     stateful_controller_postcondition_declared: bool = False
     stateful_controller_postcondition_evidence_written: bool = False
     stateful_controller_advanced_from_receipt: bool = False
+    controller_delivery_receipt_done: bool = False
+    controller_delivery_target_role_wait_started: bool = False
+    controller_delivery_used_as_role_completion: bool = False
+    controller_delivery_missing_role_output_blocker: bool = False
+    router_owned_artifact_exists: bool = False
+    router_owned_artifact_proof_valid: bool = False
+    router_owned_postcondition_reclaimed_from_artifact: bool = False
+    router_tick_saw_receipt_before_flag: bool = False
+    router_tick_escalated_before_reclaim: bool = False
     controller_display_work_soft_recorded: bool = False
     controller_display_work_hard_postcondition: bool = False
     controller_display_work_escalated_to_pm: bool = False
@@ -434,6 +446,37 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 holder="controller",
                 stateful_controller_receipt_done=True,
                 stateful_controller_postcondition_declared=True,
+                stateful_controller_postcondition_evidence_written=True,
+                stateful_controller_advanced_from_receipt=True,
+            ),
+        )
+        return
+
+    if not state.controller_delivery_receipt_done:
+        yield Transition(
+            "controller_delivery_done_starts_target_role_wait",
+            _inc(
+                state,
+                holder="controller",
+                controller_delivery_receipt_done=True,
+                controller_delivery_target_role_wait_started=True,
+                controller_delivery_used_as_role_completion=False,
+                controller_delivery_missing_role_output_blocker=False,
+            ),
+        )
+        return
+
+    if not state.router_owned_postcondition_reclaimed_from_artifact:
+        yield Transition(
+            "router_reclaims_valid_router_owned_artifact_before_blocker",
+            _inc(
+                state,
+                holder="router",
+                router_owned_artifact_exists=True,
+                router_owned_artifact_proof_valid=True,
+                router_tick_saw_receipt_before_flag=True,
+                router_owned_postcondition_reclaimed_from_artifact=True,
+                router_tick_escalated_before_reclaim=False,
                 stateful_controller_postcondition_evidence_written=True,
                 stateful_controller_advanced_from_receipt=True,
             ),
@@ -1274,6 +1317,41 @@ def stateful_controller_receipts_require_postcondition_evidence(
     return InvariantResult.pass_()
 
 
+def controller_delivery_receipts_do_not_complete_target_work(state: State, trace) -> InvariantResult:
+    del trace
+    if state.controller_delivery_used_as_role_completion:
+        return InvariantResult.fail(
+            "Controller delivery receipt was treated as target-role completion"
+        )
+    if state.controller_delivery_missing_role_output_blocker:
+        return InvariantResult.fail(
+            "Router created a missing role-output blocker from a Controller delivery receipt"
+        )
+    if state.controller_delivery_receipt_done and not state.controller_delivery_target_role_wait_started:
+        return InvariantResult.fail(
+            "Controller delivery receipt did not transition to a target-role wait"
+        )
+    return InvariantResult.pass_()
+
+
+def router_owned_artifacts_are_reclaimed_before_blocker(state: State, trace) -> InvariantResult:
+    del trace
+    durable_artifact_valid = state.router_owned_artifact_exists and state.router_owned_artifact_proof_valid
+    if (
+        durable_artifact_valid
+        and state.router_tick_saw_receipt_before_flag
+        and not state.router_owned_postcondition_reclaimed_from_artifact
+    ):
+        return InvariantResult.fail(
+            "valid Router-owned artifact/proof existed but Router did not reclaim the postcondition"
+        )
+    if durable_artifact_valid and state.router_tick_escalated_before_reclaim:
+        return InvariantResult.fail(
+            "daemon tick escalated a half-complete Controller receipt before durable artifact reclaim"
+        )
+    return InvariantResult.pass_()
+
+
 def controller_display_work_remains_nonblocking(state: State, trace) -> InvariantResult:
     del trace
     if state.controller_display_work_hard_postcondition:
@@ -2011,6 +2089,16 @@ INVARIANTS = (
         predicate=stateful_controller_receipts_require_postcondition_evidence,
     ),
     Invariant(
+        name="controller_delivery_receipts_do_not_complete_target_work",
+        description="Controller delivery receipts only close Controller-owned delivery work and transition to target-role waits.",
+        predicate=controller_delivery_receipts_do_not_complete_target_work,
+    ),
+    Invariant(
+        name="router_owned_artifacts_are_reclaimed_before_blocker",
+        description="Valid Router-owned artifacts and proofs are reclaimed before daemon ticks escalate a missing postcondition blocker.",
+        predicate=router_owned_artifacts_are_reclaimed_before_blocker,
+    ),
+    Invariant(
         name="controller_display_work_remains_nonblocking",
         description="Controller display/status work may be soft-recorded but cannot hard-block route progress or escalate to PM repair.",
         predicate=controller_display_work_remains_nonblocking,
@@ -2272,6 +2360,15 @@ def _safe_base(**changes: object) -> State:
             stateful_controller_postcondition_declared=True,
             stateful_controller_postcondition_evidence_written=True,
             stateful_controller_advanced_from_receipt=True,
+            controller_delivery_receipt_done=True,
+            controller_delivery_target_role_wait_started=True,
+            controller_delivery_used_as_role_completion=False,
+            controller_delivery_missing_role_output_blocker=False,
+            router_owned_artifact_exists=True,
+            router_owned_artifact_proof_valid=True,
+            router_owned_postcondition_reclaimed_from_artifact=True,
+            router_tick_saw_receipt_before_flag=True,
+            router_tick_escalated_before_reclaim=False,
             controller_display_work_soft_recorded=True,
             controller_display_work_hard_postcondition=False,
             controller_display_work_escalated_to_pm=False,
@@ -2519,6 +2616,36 @@ def hazard_states() -> dict[str, State]:
             stateful_controller_postcondition_declared=True,
             stateful_controller_postcondition_evidence_written=False,
             stateful_controller_advanced_from_receipt=True,
+        ),
+        "controller_delivery_receipt_treated_as_role_completion": _safe_base(
+            controller_delivery_receipt_done=True,
+            controller_delivery_target_role_wait_started=False,
+            controller_delivery_used_as_role_completion=True,
+            controller_delivery_missing_role_output_blocker=False,
+        ),
+        "controller_delivery_receipt_missing_role_output_blocker": _safe_base(
+            controller_delivery_receipt_done=True,
+            controller_delivery_target_role_wait_started=False,
+            controller_delivery_used_as_role_completion=False,
+            controller_delivery_missing_role_output_blocker=True,
+        ),
+        "valid_router_owned_artifact_not_reclaimed_before_blocker": _safe_base(
+            router_owned_artifact_exists=True,
+            router_owned_artifact_proof_valid=True,
+            router_owned_postcondition_reclaimed_from_artifact=False,
+            router_tick_saw_receipt_before_flag=True,
+            router_tick_escalated_before_reclaim=True,
+            stateful_controller_receipt_done=True,
+            stateful_controller_postcondition_declared=True,
+            stateful_controller_postcondition_evidence_written=False,
+            stateful_controller_advanced_from_receipt=False,
+        ),
+        "daemon_tick_semicomplete_receipt_escalates_before_reclaim": _safe_base(
+            router_owned_artifact_exists=True,
+            router_owned_artifact_proof_valid=True,
+            router_owned_postcondition_reclaimed_from_artifact=False,
+            router_tick_saw_receipt_before_flag=True,
+            router_tick_escalated_before_reclaim=True,
         ),
         "role_output_event_missing_file_backed_body": _safe_base(
             role_output_event_submitted=True,
@@ -4281,16 +4408,48 @@ def _audit_role_output_hashes(project_root: Path, run_root: Path) -> tuple[bool,
     return not mismatches, mismatches, envelope_count
 
 
+def _valid_startup_mechanical_audit_artifact(project_root: Path, run_root: Path) -> dict[str, object]:
+    audit_path = run_root / "startup" / "startup_mechanical_audit.json"
+    proof_path = run_root / "startup" / "startup_mechanical_audit.json.proof.json"
+    audit, audit_error = _read_json(audit_path)
+    proof, proof_error = _read_json(proof_path)
+    audit_hash = hashlib.sha256(audit_path.read_bytes()).hexdigest() if audit_path.exists() else None
+    proof_matches_audit = bool(
+        isinstance(proof, dict)
+        and audit_hash
+        and proof.get("audit_sha256") == audit_hash
+    )
+    valid = bool(
+        isinstance(audit, dict)
+        and audit.get("schema_version") == "flowpilot.startup_mechanical_audit.v1"
+        and audit.get("run_id") == run_root.name
+        and isinstance(proof, dict)
+        and proof.get("schema_version") == "flowpilot.router_owned_check_proof.v1"
+        and proof_matches_audit
+    )
+    return {
+        "valid": valid,
+        "audit_path": ".flowpilot/runs/" + run_root.name + "/startup/startup_mechanical_audit.json",
+        "proof_path": ".flowpilot/runs/" + run_root.name + "/startup/startup_mechanical_audit.json.proof.json",
+        "audit_exists": audit_path.exists(),
+        "proof_exists": proof_path.exists(),
+        "audit_read_error": audit_error,
+        "proof_read_error": proof_error,
+        "proof_matches_audit": proof_matches_audit,
+        "audit_hash": audit_hash,
+    }
+
+
 def _audit_evidence_closure_blockers(
     project_root: Path, run_root: Path
-) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
-    del project_root
+) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
     display_gaps: list[dict[str, object]] = []
+    durable_reclaim_gaps: list[dict[str, object]] = []
     stateful_gaps: list[dict[str, object]] = []
     role_output_gaps: list[dict[str, object]] = []
     control_blocks_root = run_root / "control_blocks"
     if not control_blocks_root.exists():
-        return display_gaps, stateful_gaps, role_output_gaps
+        return display_gaps, durable_reclaim_gaps, stateful_gaps, role_output_gaps
 
     for blocker_path in sorted(control_blocks_root.glob("control-blocker-*.json")):
         if (
@@ -4321,13 +4480,20 @@ def _audit_evidence_closure_blockers(
             source == "controller_action_receipt_missing_stateful_postcondition"
             or "postcondition" in error_code
         )
-        if is_postcondition_gap and str(blocker.get("originating_action_type") or "") == "sync_display_plan":
+        originating_action_type = str(blocker.get("originating_action_type") or "")
+        if is_postcondition_gap and originating_action_type == "sync_display_plan":
             display_gaps.append(item)
+        elif is_postcondition_gap and originating_action_type == "write_startup_mechanical_audit":
+            artifact = _valid_startup_mechanical_audit_artifact(project_root, run_root)
+            if artifact["valid"]:
+                durable_reclaim_gaps.append({**item, "router_owned_artifact": artifact})
+            else:
+                stateful_gaps.append({**item, "router_owned_artifact": artifact})
         elif is_postcondition_gap:
             stateful_gaps.append(item)
         if error_code == "role_event_requires_a_file_backed_body_path":
             role_output_gaps.append(item)
-    return display_gaps, stateful_gaps, role_output_gaps
+    return display_gaps, durable_reclaim_gaps, stateful_gaps, role_output_gaps
 
 
 def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
@@ -4609,7 +4775,12 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             evidence={"mismatches": control_blocker_mismatches},
         )
 
-    display_receipt_gaps, stateful_receipt_gaps, role_output_body_gaps = _audit_evidence_closure_blockers(root, run_root)
+    (
+        display_receipt_gaps,
+        durable_reclaim_gaps,
+        stateful_receipt_gaps,
+        role_output_body_gaps,
+    ) = _audit_evidence_closure_blockers(root, run_root)
     if display_receipt_gaps:
         _add_finding(
             findings,
@@ -4627,6 +4798,15 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             summary="stateful Controller receipt was marked done while Router-visible postcondition evidence was missing",
             invariant="stateful_controller_receipts_require_postcondition_evidence",
             evidence={"blockers": stateful_receipt_gaps},
+        )
+    if durable_reclaim_gaps:
+        _add_finding(
+            findings,
+            code="valid_router_owned_artifact_not_reclaimed_before_blocker",
+            severity="error",
+            summary="valid Router-owned artifact/proof existed but Router escalated before reclaiming the postcondition",
+            invariant="router_owned_artifacts_are_reclaimed_before_blocker",
+            evidence={"blockers": durable_reclaim_gaps},
         )
     if role_output_body_gaps:
         _add_finding(
@@ -4851,8 +5031,17 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         controller_display_work_escalated_to_pm=bool(display_receipt_gaps),
         stateful_controller_receipt_done=True,
         stateful_controller_postcondition_declared=True,
-        stateful_controller_postcondition_evidence_written=not bool(stateful_receipt_gaps),
-        stateful_controller_advanced_from_receipt=not bool(stateful_receipt_gaps),
+        stateful_controller_postcondition_evidence_written=not bool(stateful_receipt_gaps or durable_reclaim_gaps),
+        stateful_controller_advanced_from_receipt=not bool(stateful_receipt_gaps or durable_reclaim_gaps),
+        controller_delivery_receipt_done=True,
+        controller_delivery_target_role_wait_started=True,
+        controller_delivery_used_as_role_completion=False,
+        controller_delivery_missing_role_output_blocker=False,
+        router_owned_artifact_exists=bool(durable_reclaim_gaps),
+        router_owned_artifact_proof_valid=bool(durable_reclaim_gaps),
+        router_owned_postcondition_reclaimed_from_artifact=not bool(durable_reclaim_gaps),
+        router_tick_saw_receipt_before_flag=bool(durable_reclaim_gaps),
+        router_tick_escalated_before_reclaim=bool(durable_reclaim_gaps),
         control_blocker_lane=active_blocker_lane if pm_repair_recorded else "none",
         control_blocker_target_role="project_manager" if pm_repair_recorded else "none",
         pm_repair_decision_recorded=pm_repair_recorded,
@@ -4970,7 +5159,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 40
+MAX_SEQUENCE_LENGTH = 42
 
 
 __all__ = [

@@ -5358,6 +5358,88 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             [item.get("label") for item in state["history"] if isinstance(item, dict)],
         )
 
+    def test_missing_system_card_ack_wait_reminds_original_envelope_without_duplicate_delivery(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report_pre_ack_reminder",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertFalse(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        wait = state["pending_action"]
+        self.assertEqual(wait["action_type"], "await_card_return_event")
+        self.assertEqual(wait["missing_ack_recovery"], "remind_target_role_to_ack_original_committed_card")
+        self.assertEqual(wait["reminder_target"], "original_committed_card")
+        self.assertFalse(wait["duplicate_system_card_delivery_allowed"])
+        self.assertTrue(wait["reissue_allowed_only_if_original_invalid_lost_stale_or_role_replaced"])
+        self.assertEqual(wait["original_envelope_path"], action["card_envelope_path"])
+        self.assertEqual(wait["original_expected_return_path"], action["expected_return_path"])
+        self.assertTrue(wait["ack_is_read_receipt_only"])
+        self.assertTrue(wait["target_work_completion_evidence_required_separately"])
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        scope = return_ledger["pending_returns"][0]["ack_clearance_scope"]
+        self.assertIn("gate_or_node_boundary_transition", scope["required_before"])
+        self.assertIn("formal_work_packet_relay_to_target_role", scope["required_before"])
+
+    def test_formal_work_packet_ack_preflight_blocks_target_pending_card_ack(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        pending_return = {
+            "card_return_event": "worker_card_ack",
+            "status": "pending",
+            "card_id": "worker.test",
+            "delivery_id": "worker-test-delivery",
+            "delivery_attempt_id": "worker-test-delivery-attempt",
+            "target_role": "worker_a",
+            "target_agent_id": "agent-worker-a",
+            "card_envelope_path": f"{run_root.relative_to(root).as_posix()}/mailbox/system_cards/worker-test.json",
+            "card_envelope_hash": "0" * 64,
+            "expected_receipt_path": f"{run_root.relative_to(root).as_posix()}/runtime_receipts/card_reads/worker-test.receipt.json",
+            "expected_return_path": f"{run_root.relative_to(root).as_posix()}/mailbox/outbox/card_acks/worker-test.ack.json",
+            "ack_clearance_scope": {
+                "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
+                "target_role": "worker_a",
+                "required_before": [
+                    "gate_or_node_boundary_transition",
+                    "formal_work_packet_relay_to_target_role",
+                ],
+                "ack_is_read_receipt_only": True,
+                "target_work_completion_evidence_required_separately": True,
+            },
+        }
+        ledger_path = run_root / "return_event_ledger.json"
+        ledger = read_json(ledger_path) if ledger_path.exists() else {"pending_returns": [], "completed_returns": []}
+        ledger.setdefault("pending_returns", []).append(pending_return)
+        router.write_json(ledger_path, ledger)
+        packet_action = router.make_action(
+            action_type="relay_material_scan_packets",
+            actor="controller",
+            label="test_material_packet_relay",
+            summary="Relay test material packet.",
+            to_role="worker_a",
+            extra={"postcondition": "material_scan_packets_relayed"},
+        )
+
+        blocked = router._apply_formal_work_packet_ack_preflight(root, state, run_root, packet_action)
+
+        self.assertEqual(blocked["action_type"], "await_card_return_event")
+        self.assertEqual(blocked["ack_clearance_reason"], "formal_work_packet_preflight")
+        self.assertEqual(blocked["blocked_formal_work_packet"]["action_type"], "relay_material_scan_packets")
+        self.assertFalse(blocked["formal_work_packet_ack_preflight"]["passed"])
+        self.assertEqual(blocked["formal_work_packet_ack_preflight"]["pending_return_count"], 1)
+        self.assertEqual(blocked["missing_ack_recovery"], "remind_target_role_to_ack_original_committed_card")
+        self.assertFalse(blocked["duplicate_system_card_delivery_allowed"])
+
     def test_quarantined_pre_ack_report_requires_fresh_report_after_ack(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -5808,6 +5890,27 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["pm_material_packets_issued"])
+
+    def test_material_work_packet_records_target_ack_preflight_passed(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        action = router.next_action(root)
+        self.assertEqual(action["card_id"], "pm.material_scan")
+        self.ack_system_card_action(root, action)
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "relay_material_scan_packets")
+        preflight = action["formal_work_packet_ack_preflight"]
+        self.assertTrue(preflight["passed"])
+        self.assertEqual(preflight["target_roles"], ["worker_a", "worker_b"])
+        self.assertEqual(preflight["pending_return_count"], 0)
+        self.assertTrue(action["ack_is_read_receipt_only"])
+        self.assertTrue(action["target_work_completion_evidence_required_separately"])
 
     def test_reviewer_startup_findings_go_to_pm_without_control_blocker(self) -> None:
         root = self.make_project()

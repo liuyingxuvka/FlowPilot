@@ -25,7 +25,10 @@ Risk intent brief:
   bundle receipt replacing per-card receipts, same-role bundle crossing
   run/role/agent/resume boundaries, unsafe bundle dependencies, hidden
   dependency parallelization, Controller body reads, Controller batch mutation,
-  and dead-end waiting after an interruption.
+  gate or node movement before current-scope ACK clearance, formal work-packet
+  relay before the target role clears required system cards, duplicate system
+  card delivery for a merely missing ACK, ACKs being treated as target-role
+  work completion, and dead-end waiting after an interruption.
 - Hard invariants: Controller never reads card bodies; Router advancement
   requires current-run/current-role/current-agent/current-hash runtime receipts
   referenced by a current direct Router ack/report envelope; same-role card bundles are
@@ -33,8 +36,12 @@ Risk intent brief:
   evidence and the bundle does not hide an external boundary; cross-role
   parallel delivery is allowed only with Router-authored dependency and join
   metadata; role I/O protocol acknowledgement is required after
-  heartbeat/manual resume or replacement; read receipts are mechanical proof
-  only and never replace PM/reviewer/officer judgement.
+  heartbeat/manual resume or replacement; gate/node movement and formal
+  work-packet relay wait for scoped/target-role ACK clearance; a missing ACK
+  reminds the role to complete the original card or bundle ACK loop unless the
+  original artifact is invalid, stale, lost, or tied to a replaced identity;
+  read receipts and ACKs are mechanical proof only and never replace
+  PM/reviewer/officer judgement or worker result completion.
 - Blindspot: this is a focused protocol model. It does not judge whether a
   role understood a card after opening it.
 """
@@ -119,6 +126,16 @@ class State:
     expected_return_missing_detected: bool = False
     await_expected_return: bool = False
     return_reminder_issued: bool = False
+    ack_clearance_scope_recorded: bool = False
+    gate_boundary_transition_requested: bool = False
+    gate_boundary_ack_clearance_checked: bool = False
+    gate_boundary_ack_clearance_passed: bool = False
+    formal_work_packet_requested: bool = False
+    formal_work_packet_ack_clearance_checked: bool = False
+    formal_work_packet_ack_clearance_passed: bool = False
+    formal_work_packet_relayed: bool = False
+    missing_ack_reminder_reuses_original_envelope: bool = False
+    duplicate_system_card_reissued_for_missing_ack: bool = False
     ack_report_returned: bool = False
     ack_current_run: bool = False
     ack_current_role: bool = False
@@ -186,6 +203,8 @@ class State:
 
     pm_decision_gate_kept: bool = False
     read_receipt_used_as_semantic_gate: bool = False
+    card_ack_used_as_target_work_completion: bool = False
+    target_work_completion_wait_preserved: bool = False
     router_advanced: bool = False
 
 
@@ -224,6 +243,7 @@ class CardEnvelopeStep:
         "card_delivery_ledger",
         "card_read_receipts",
         "pending_return_ledger",
+        "ack_clearance_scope",
         "ack_report_envelopes",
         "same_role_bundle_eligibility",
         "batch_dependency_graph",
@@ -237,6 +257,9 @@ class CardEnvelopeStep:
         "pending_return_record",
         "ack_report_envelope",
         "receipt_coverage_check",
+        "ack_clearance_check",
+        "ack_reminder",
+        "formal_work_packet_relay",
         "same_role_bundle_ack_join",
         "batch_join_receipt",
         "resume_recovery_decision",
@@ -312,6 +335,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 direct_ack_token_frontier_optional_when_missing=True,
                 expected_return_path_recorded=True,
                 pending_return_recorded=True,
+                ack_clearance_scope_recorded=True,
             ),
         )
         return
@@ -355,7 +379,38 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.expected_return_missing_detected and not state.return_reminder_issued:
         yield Transition(
             "router_issues_missing_return_reminder",
-            _inc(state, return_reminder_issued=True),
+            _inc(
+                state,
+                return_reminder_issued=True,
+                missing_ack_reminder_reuses_original_envelope=True,
+            ),
+        )
+        return
+
+    if state.expected_return_missing_detected and not state.gate_boundary_ack_clearance_checked:
+        yield Transition(
+            "router_blocks_gate_boundary_on_missing_scope_ack",
+            _inc(
+                state,
+                gate_boundary_transition_requested=True,
+                gate_boundary_ack_clearance_checked=True,
+                gate_boundary_ack_clearance_passed=False,
+                missing_ack_reminder_reuses_original_envelope=True,
+            ),
+        )
+        return
+
+    if state.expected_return_missing_detected and not state.formal_work_packet_ack_clearance_checked:
+        yield Transition(
+            "router_blocks_formal_work_packet_on_target_missing_ack",
+            _inc(
+                state,
+                formal_work_packet_requested=True,
+                formal_work_packet_ack_clearance_checked=True,
+                formal_work_packet_ack_clearance_passed=False,
+                formal_work_packet_relayed=False,
+                missing_ack_reminder_reuses_original_envelope=True,
+            ),
         )
         return
 
@@ -444,6 +499,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 required_card_coverage_checked=True,
                 required_card_coverage_passed=True,
                 check_card_return_apply_required=True,
+            ),
+        )
+        return
+
+    if state.gate_boundary_transition_requested and not state.gate_boundary_ack_clearance_passed:
+        yield Transition(
+            "router_clears_gate_boundary_after_scope_ack",
+            _inc(state, gate_boundary_ack_clearance_passed=True),
+        )
+        return
+
+    if state.formal_work_packet_requested and not state.formal_work_packet_ack_clearance_passed:
+        yield Transition(
+            "router_clears_formal_work_packet_after_target_ack",
+            _inc(
+                state,
+                formal_work_packet_ack_clearance_passed=True,
+                formal_work_packet_relayed=True,
+                target_work_completion_wait_preserved=True,
             ),
         )
         return
@@ -772,6 +846,36 @@ def pending_return_wait_has_recovery_path(state: State, trace) -> InvariantResul
     return InvariantResult.pass_()
 
 
+def scoped_ack_clearance_blocks_gate_and_work(state: State, trace) -> InvariantResult:
+    del trace
+    if state.card_envelope_issued and not state.ack_clearance_scope_recorded:
+        return InvariantResult.fail("system-card pending return lacked ACK clearance scope metadata")
+    if (
+        state.gate_boundary_transition_requested
+        and state.router_advanced
+        and not state.gate_boundary_ack_clearance_passed
+    ):
+        return InvariantResult.fail("Router crossed a route gate before current-scope system-card ACK clearance")
+    if (
+        state.formal_work_packet_relayed
+        and not (
+            state.formal_work_packet_ack_clearance_checked
+            and state.formal_work_packet_ack_clearance_passed
+            and _ack_valid(state)
+        )
+    ):
+        return InvariantResult.fail("formal work packet was relayed before target-role system-card ACK clearance")
+    if state.expected_return_missing_detected and state.return_reminder_issued and not (
+        state.missing_ack_reminder_reuses_original_envelope
+    ):
+        return InvariantResult.fail("missing system-card ACK recovery did not remind against the original committed envelope")
+    if state.duplicate_system_card_reissued_for_missing_ack:
+        return InvariantResult.fail("missing system-card ACK triggered duplicate card delivery instead of original-card reminder")
+    if state.redelivery_attempt_issued and not state.stale_delivery_superseded:
+        return InvariantResult.fail("system-card redelivery was not limited to stale, lost, invalid, or replaced delivery recovery")
+    return InvariantResult.pass_()
+
+
 def role_io_ack_required_for_resume_and_replacement(state: State, trace) -> InvariantResult:
     del trace
     if state.card_read_receipt_written and (state.resume_tick_active or state.role_replacement_active):
@@ -829,6 +933,10 @@ def read_receipt_is_not_semantic_gate(state: State, trace) -> InvariantResult:
     del trace
     if state.read_receipt_used_as_semantic_gate:
         return InvariantResult.fail("system-card read receipt replaced semantic PM/reviewer/officer judgement")
+    if state.card_ack_used_as_target_work_completion:
+        return InvariantResult.fail("system-card ACK was treated as target-role work completion")
+    if state.formal_work_packet_relayed and not state.target_work_completion_wait_preserved:
+        return InvariantResult.fail("formal work packet relay did not preserve target-role work completion wait")
     if state.router_advanced and not state.pm_decision_gate_kept:
         return InvariantResult.fail("Router advanced without preserving PM decision gate")
     return InvariantResult.pass_()
@@ -871,6 +979,11 @@ INVARIANTS = (
         pending_return_wait_has_recovery_path,
     ),
     Invariant(
+        "scoped_ack_clearance_blocks_gate_and_work",
+        "Gate movement and formal work packets require scoped system-card ACK clearance and reminder-only missing-ACK recovery.",
+        scoped_ack_clearance_blocks_gate_and_work,
+    ),
+    Invariant(
         "role_io_ack_required_for_resume_and_replacement",
         "Resume and replacement require current role I/O acknowledgement before card or mail handling.",
         role_io_ack_required_for_resume_and_replacement,
@@ -904,7 +1017,7 @@ INVARIANTS = (
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 21
+MAX_SEQUENCE_LENGTH = 25
 
 REQUIRED_LABELS = (
     "legacy_prompt_delivery_shape_recorded_without_v2_receipt",
@@ -916,12 +1029,16 @@ REQUIRED_LABELS = (
     "router_detects_missing_expected_return_and_waits",
     "heartbeat_or_manual_resume_loads_pending_return",
     "router_issues_missing_return_reminder",
+    "router_blocks_gate_boundary_on_missing_scope_ack",
+    "router_blocks_formal_work_packet_on_target_missing_ack",
     "router_reissues_stale_delivery_attempt_before_role_ack",
     "role_runtime_open_card_writes_current_receipt",
     "role_returns_card_ack_envelope_referencing_read_receipts",
     "router_rejects_card_ack_received_at_legacy_external_event_entrypoint",
     "prompt_coverage_confirms_direct_router_ack_instructions",
     "router_checks_ack_report_and_required_card_receipt_coverage",
+    "router_clears_gate_boundary_after_scope_ack",
+    "router_clears_formal_work_packet_after_target_ack",
     "router_issues_guarded_same_role_system_card_bundle",
     "router_records_incomplete_same_role_bundle_ack_and_waits_for_missing_receipts",
     "router_returns_same_role_bundle_recovery_wait_for_same_role",
@@ -974,6 +1091,7 @@ def target_v2_state() -> State:
         direct_ack_token_frontier_optional_when_missing=True,
         expected_return_path_recorded=True,
         pending_return_recorded=True,
+        ack_clearance_scope_recorded=True,
         controller_relayed_card_envelope=True,
         controller_envelope_only=True,
         card_read_receipt_written=True,
@@ -992,6 +1110,14 @@ def target_v2_state() -> State:
         expected_return_missing_detected=True,
         await_expected_return=True,
         return_reminder_issued=True,
+        gate_boundary_transition_requested=True,
+        gate_boundary_ack_clearance_checked=True,
+        gate_boundary_ack_clearance_passed=True,
+        formal_work_packet_requested=True,
+        formal_work_packet_ack_clearance_checked=True,
+        formal_work_packet_ack_clearance_passed=True,
+        formal_work_packet_relayed=True,
+        missing_ack_reminder_reuses_original_envelope=True,
         ack_report_returned=True,
         ack_current_run=True,
         ack_current_role=True,
@@ -1045,6 +1171,7 @@ def target_v2_state() -> State:
         manual_resume_loaded_pending_return=True,
         recovery_action_available=True,
         pm_decision_gate_kept=True,
+        target_work_completion_wait_preserved=True,
         router_advanced=True,
     )
 
@@ -1197,6 +1324,34 @@ def hazard_states() -> dict[str, State]:
             return_reminder_issued=False,
             redelivery_attempt_issued=False,
             router_advanced=False,
+        ),
+        "gate_boundary_advanced_before_scope_ack": replace(
+            safe,
+            gate_boundary_transition_requested=True,
+            gate_boundary_ack_clearance_checked=True,
+            gate_boundary_ack_clearance_passed=False,
+            router_advanced=True,
+        ),
+        "formal_work_packet_relayed_before_target_ack": replace(
+            safe,
+            ack_report_returned=False,
+            formal_work_packet_requested=True,
+            formal_work_packet_ack_clearance_checked=True,
+            formal_work_packet_ack_clearance_passed=False,
+            formal_work_packet_relayed=True,
+        ),
+        "missing_ack_duplicate_system_card_reissued": replace(
+            safe,
+            expected_return_missing_detected=True,
+            return_reminder_issued=False,
+            duplicate_system_card_reissued_for_missing_ack=True,
+            redelivery_attempt_issued=True,
+            stale_delivery_superseded=False,
+        ),
+        "card_ack_treated_as_target_work_completion": replace(
+            safe,
+            card_ack_used_as_target_work_completion=True,
+            target_work_completion_wait_preserved=False,
         ),
         "wrong_role_receipt": replace(safe, receipt_current_role=False),
         "wrong_role_ack_report": replace(safe, ack_current_role=False),

@@ -84,6 +84,7 @@ ROUTER_DAEMON_EVENT_LOG_SCHEMA = "flowpilot.router_daemon_event_log.v1"
 CONTROLLER_ACTION_LEDGER_SCHEMA = "flowpilot.controller_action_ledger.v1"
 CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
 CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
+ROUTER_OWNERSHIP_LEDGER_SCHEMA = "flowpilot.router_ownership_ledger.v1"
 CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
@@ -4211,6 +4212,7 @@ def new_run_state(run_id: str, run_root_rel: str, *, controller_core_loaded: boo
         "daemon_mode_enabled": False,
         "router_daemon_status_path": None,
         "controller_action_ledger_path": None,
+        "router_ownership_ledger_path": None,
         "manifest_check_requests": 0,
         "manifest_checks": 0,
         "ledger_check_requests": 0,
@@ -4262,6 +4264,7 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
     state.setdefault("daemon_mode_enabled", False)
     state.setdefault("router_daemon_status_path", None)
     state.setdefault("controller_action_ledger_path", None)
+    state.setdefault("router_ownership_ledger_path", None)
     state.setdefault("delivered_cards", [])
     state.setdefault("delivered_mail", [])
     state.setdefault("control_blockers", [])
@@ -4299,6 +4302,10 @@ def _router_daemon_event_log_path(run_root: Path) -> Path:
 
 def _controller_action_ledger_path(run_root: Path) -> Path:
     return _runtime_dir(run_root) / "controller_action_ledger.json"
+
+
+def _router_ownership_ledger_path(run_root: Path) -> Path:
+    return _runtime_dir(run_root) / "router_ownership_ledger.json"
 
 
 def _controller_actions_dir(run_root: Path) -> Path:
@@ -4475,10 +4482,161 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "label": entry.get("label"),
         "status": entry.get("status"),
         "to_role": entry.get("to_role"),
+        "completion_class": entry.get("completion_class"),
         "action_path": entry.get("action_path"),
         "expected_receipt_path": entry.get("expected_receipt_path"),
         "updated_at": entry.get("updated_at"),
     }
+
+
+def _router_ownership_counts(entries: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {
+        "controller_receipt_done": 0,
+        "router_reclaim_pending": 0,
+        "router_reclaimed": 0,
+        "waiting_for_role": 0,
+        "blocked": 0,
+    }
+    for item in entries:
+        state = str(item.get("router_state") or "unknown")
+        counts[state] = counts.get(state, 0) + 1
+    counts["total"] = len(entries)
+    return counts
+
+
+def _empty_router_ownership_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": ROUTER_OWNERSHIP_LEDGER_SCHEMA,
+        "run_id": run_state.get("run_id"),
+        "run_root": project_relative(project_root, run_root),
+        "updated_at": utc_now(),
+        "entries": [],
+        "counts": _router_ownership_counts([]),
+        "controller_may_record_only_local_receipts": True,
+        "router_only_fields": [
+            "router_state",
+            "workflow_owner",
+            "postcondition",
+            "artifact_refs",
+            "blocker_source",
+        ],
+    }
+
+
+def _read_router_ownership_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    path = _router_ownership_ledger_path(run_root)
+    ledger = read_json_if_exists(path)
+    if ledger.get("schema_version") != ROUTER_OWNERSHIP_LEDGER_SCHEMA:
+        return _empty_router_ownership_ledger(project_root, run_root, run_state)
+    entries = ledger.get("entries") if isinstance(ledger.get("entries"), list) else []
+    ledger["entries"] = [item for item in entries if isinstance(item, dict)]
+    ledger["counts"] = _router_ownership_counts(ledger["entries"])
+    return ledger
+
+
+def _write_router_ownership_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any], ledger: dict[str, Any]) -> dict[str, Any]:
+    entries = ledger.get("entries") if isinstance(ledger.get("entries"), list) else []
+    ledger.update(
+        {
+            "schema_version": ROUTER_OWNERSHIP_LEDGER_SCHEMA,
+            "run_id": run_state.get("run_id"),
+            "run_root": project_relative(project_root, run_root),
+            "updated_at": utc_now(),
+            "entries": [item for item in entries if isinstance(item, dict)],
+        }
+    )
+    ledger["counts"] = _router_ownership_counts(ledger["entries"])
+    write_json(_router_ownership_ledger_path(run_root), ledger)
+    run_state["router_ownership_ledger_path"] = project_relative(project_root, _router_ownership_ledger_path(run_root))
+    return ledger
+
+
+def _ensure_router_ownership_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    ledger = _read_router_ownership_ledger(project_root, run_root, run_state)
+    return _write_router_ownership_ledger(project_root, run_root, run_state, ledger)
+
+
+def _router_ownership_ledger_summary(run_root: Path) -> dict[str, Any]:
+    ledger = read_json_if_exists(_router_ownership_ledger_path(run_root))
+    if ledger.get("schema_version") != ROUTER_OWNERSHIP_LEDGER_SCHEMA:
+        return {"exists": False, "counts": _router_ownership_counts([]), "entries": []}
+    entries = [item for item in (ledger.get("entries") or []) if isinstance(item, dict)]
+    return {
+        "exists": True,
+        "path": str(_router_ownership_ledger_path(run_root)),
+        "updated_at": ledger.get("updated_at"),
+        "counts": ledger.get("counts") or _router_ownership_counts(entries),
+        "entries": [
+            {
+                "entry_id": item.get("entry_id"),
+                "action_id": item.get("action_id"),
+                "action_type": item.get("action_type"),
+                "router_state": item.get("router_state"),
+                "workflow_owner": item.get("workflow_owner"),
+                "postcondition": item.get("postcondition"),
+                "updated_at": item.get("updated_at"),
+            }
+            for item in entries
+        ],
+    }
+
+
+def _record_router_ownership_entry(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    action_id: str,
+    action_type: str,
+    router_state: str,
+    workflow_owner: str,
+    postcondition: str = "",
+    source: str,
+    receipt_path: str | None = None,
+    artifact_refs: dict[str, Any] | None = None,
+    details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    ledger = _read_router_ownership_ledger(project_root, run_root, run_state)
+    entry_id = action_id or f"{action_type}:{postcondition or router_state}"
+    entry = {
+        "entry_id": entry_id,
+        "schema_version": "flowpilot.router_ownership_entry.v1",
+        "run_id": run_state.get("run_id"),
+        "action_id": action_id,
+        "action_type": action_type,
+        "router_state": router_state,
+        "workflow_owner": workflow_owner,
+        "postcondition": postcondition,
+        "source": source,
+        "receipt_path": receipt_path,
+        "artifact_refs": artifact_refs or {},
+        "details": details or {},
+        "updated_at": utc_now(),
+        "controller_may_write_this_entry": False,
+    }
+    entries = [item for item in ledger.get("entries", []) if isinstance(item, dict) and item.get("entry_id") != entry_id]
+    entries.append(entry)
+    ledger["entries"] = entries
+    _write_router_ownership_ledger(project_root, run_root, run_state, ledger)
+    return entry
+
+
+def _controller_action_completion_class(action: dict[str, Any]) -> dict[str, str]:
+    action_type = str(action.get("action_type") or "")
+    postcondition = _pending_action_postcondition(action)
+    if action_type == "write_startup_mechanical_audit":
+        return {
+            "kind": "router_owned_durable_artifact",
+            "artifact_kind": "startup_mechanical_audit",
+            "postcondition": postcondition or "startup_mechanical_audit_written",
+        }
+    if action_type in {"write_display_surface_status", "sync_display_plan"}:
+        return {"kind": "display_status", "artifact_kind": "", "postcondition": postcondition}
+    if action_type in {"deliver_system_card", "deliver_system_card_bundle"} or action.get("to_role"):
+        return {"kind": "role_delivery_wait", "artifact_kind": "", "postcondition": postcondition}
+    if postcondition:
+        return {"kind": "stateful_host_postcondition", "artifact_kind": "", "postcondition": postcondition}
+    return {"kind": "controller_local_receipt", "artifact_kind": "", "postcondition": ""}
 
 
 def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
@@ -4584,6 +4742,7 @@ def _write_controller_action_entry(
         }
     entry["updated_at"] = now
     entry["last_seen_at"] = now
+    entry["completion_class"] = _controller_action_completion_class(action)
     entry["action"] = {**action, "controller_action_id": action_id, "controller_receipt_path": project_relative(project_root, receipt_path)}
     entry["expected_receipt_path"] = project_relative(project_root, receipt_path)
     write_json(action_path, entry)
@@ -4739,6 +4898,108 @@ def _pending_action_postcondition_satisfied(run_state: dict[str, Any], postcondi
     return bool(flags.get(postcondition))
 
 
+def _reclaim_router_owned_postcondition_from_artifact(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    action_class = _controller_action_completion_class(pending_action)
+    if action_class.get("kind") != "router_owned_durable_artifact":
+        return {
+            "applied": False,
+            "reason": "not_router_owned_durable_artifact",
+            "action_class": action_class,
+        }
+
+    action_type = str(pending_action.get("action_type") or "")
+    action_id = str(pending_action.get("controller_action_id") or "")
+    postcondition = str(action_class.get("postcondition") or _pending_action_postcondition(pending_action) or "")
+    receipt_path = str(pending_action.get("controller_receipt_path") or "")
+
+    if action_class.get("artifact_kind") == "startup_mechanical_audit":
+        context = _startup_mechanical_audit_context(project_root, run_root, run_state)
+        if context is None:
+            _record_router_ownership_entry(
+                project_root,
+                run_root,
+                run_state,
+                action_id=action_id,
+                action_type=action_type,
+                router_state="router_reclaim_pending",
+                workflow_owner="router",
+                postcondition=postcondition,
+                source="controller_receipt_reconciliation",
+                receipt_path=receipt_path,
+                details={
+                    "reason": "startup_mechanical_audit_missing_or_invalid",
+                    "controller_receipt_payload": receipt_payload,
+                },
+            )
+            return {
+                "applied": False,
+                "reason": "startup_mechanical_audit_missing_or_invalid",
+                "action_class": action_class,
+            }
+
+        run_state.setdefault("flags", {})[postcondition] = True
+        run_state["startup_mechanical_audit"] = {
+            "path": project_relative(project_root, context["audit_path"]),
+            "sha256": context["audit_hash"],
+            "proof_path": project_relative(project_root, context["proof_path"]),
+            "proof_sha256": context["proof_hash"],
+            "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
+            "reclaimed_from_durable_artifact": True,
+        }
+        entry = _record_router_ownership_entry(
+            project_root,
+            run_root,
+            run_state,
+            action_id=action_id,
+            action_type=action_type,
+            router_state="router_reclaimed",
+            workflow_owner="router",
+            postcondition=postcondition,
+            source="controller_receipt_reconciliation",
+            receipt_path=receipt_path,
+            artifact_refs={
+                "artifact_kind": action_class.get("artifact_kind"),
+                "startup_mechanical_audit_path": project_relative(project_root, context["audit_path"]),
+                "startup_mechanical_audit_hash": context["audit_hash"],
+                "router_owned_check_proof_path": project_relative(project_root, context["proof_path"]),
+                "router_owned_check_proof_hash": context["proof_hash"],
+            },
+            details={
+                "controller_receipt_payload": receipt_payload,
+                "controller_receipt_did_not_mark_workflow_complete": True,
+            },
+        )
+        append_history(
+            run_state,
+            "router_reclaimed_controller_receipt_artifact_postcondition",
+            {
+                "action_type": action_type,
+                "controller_action_id": action_id,
+                "postcondition": postcondition,
+                "router_ownership_entry_id": entry.get("entry_id"),
+            },
+        )
+        return {
+            "applied": True,
+            "postcondition": postcondition,
+            "source": "router_owned_artifact_reclaim",
+            "action_class": action_class,
+            "router_ownership_entry_id": entry.get("entry_id"),
+        }
+
+    return {
+        "applied": False,
+        "reason": "unsupported_router_owned_artifact",
+        "action_class": action_class,
+    }
+
+
 def _apply_stateful_receipt_postcondition(
     project_root: Path,
     run_root: Path,
@@ -4747,6 +5008,15 @@ def _apply_stateful_receipt_postcondition(
     receipt_payload: dict[str, Any],
 ) -> dict[str, Any]:
     action_type = str(pending_action.get("action_type") or "")
+    durable_reclaim = _reclaim_router_owned_postcondition_from_artifact(
+        project_root,
+        run_root,
+        run_state,
+        pending_action,
+        receipt_payload,
+    )
+    if durable_reclaim.get("applied") or durable_reclaim.get("action_class", {}).get("kind") == "router_owned_durable_artifact":
+        return durable_reclaim
     if action_type == "rehydrate_role_agents":
         _write_resume_role_rehydration_report(project_root, run_root, run_state, receipt_payload)
         return {"applied": True, "postcondition": "resume_roles_restored"}
@@ -4831,6 +5101,25 @@ def _reconcile_pending_controller_action_receipt(
         )
     if status != "done":
         return {"changed": False, "unsupported_receipt_status": status}
+
+    action_class = _controller_action_completion_class(pending_action)
+    _record_router_ownership_entry(
+        project_root,
+        run_root,
+        run_state,
+        action_id=str(receipt.get("action_id") or ""),
+        action_type=action_type,
+        router_state="controller_receipt_done",
+        workflow_owner="router",
+        postcondition=str(action_class.get("postcondition") or _pending_action_postcondition(pending_action) or ""),
+        source="controller_receipt_reconciliation",
+        receipt_path=project_relative(project_root, _controller_receipt_path(run_root, str(receipt.get("action_id") or ""))),
+        details={
+            "action_class": action_class,
+            "controller_receipt_is_local_evidence_only": True,
+            "controller_receipt_payload": payload,
+        },
+    )
 
     postcondition = _pending_action_postcondition(pending_action)
     if postcondition and not _pending_action_postcondition_satisfied(run_state, postcondition):
@@ -4964,6 +5253,7 @@ def _write_router_daemon_status(
         if isinstance(current_action, dict)
         else None,
         "controller_action_ledger": _controller_action_ledger_summary(run_root),
+        "router_ownership_ledger": _router_ownership_ledger_summary(run_root),
         "recovery_hints": recovery_hints or [],
         "controller_should_watch_action_ledger": True,
         "router_owns_waiting": True,
@@ -5014,6 +5304,7 @@ def _ensure_daemon_runtime_state(
     _controller_actions_dir(run_root).mkdir(parents=True, exist_ok=True)
     _controller_receipts_dir(run_root).mkdir(parents=True, exist_ok=True)
     _ensure_controller_action_ledger(project_root, run_root, run_state)
+    _ensure_router_ownership_ledger(project_root, run_root, run_state)
     return _write_router_daemon_status(
         project_root,
         run_root,
@@ -5837,8 +6128,15 @@ def _committed_card_artifact_extra(
     }
 
 
-def _next_pending_card_return_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
+def _next_pending_card_return_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    pending_records: list[dict[str, Any]] | None = None,
+    *,
+    clearance_reason: str = "router_progress",
+) -> dict[str, Any] | None:
+    pending_returns = list(pending_records) if pending_records is not None else _pending_return_records(run_root, str(run_state["run_id"]))
     if not pending_returns:
         return None
     record = pending_returns[0]
@@ -5893,6 +6191,10 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
                     "expected_return_path": expected_return_path,
                     "card_bundle_envelope_path": envelope_path,
                     "expected_receipt_paths": record.get("expected_receipt_paths") or [],
+                    "ack_clearance_reason": clearance_reason,
+                    "ack_clearance_scope": record.get("ack_clearance_scope"),
+                    "ack_is_read_receipt_only": True,
+                    "target_work_completion_evidence_required_separately": True,
                     "controller_visibility": "ack_envelope_and_receipts_only",
                     "sealed_body_reads_allowed": False,
                     **committed_extra,
@@ -5910,8 +6212,9 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
             actor="controller",
             label=f"controller_waits_for_card_bundle_return_{_safe_delivery_component(str(record.get('card_bundle_id') or 'pending'))}",
             summary=(
-                f"Relay the committed system-card bundle to {record.get('target_role')} if needed, then wait{status_hint} "
-                f"for {record.get('card_return_event')} after the role opens every bundled card through runtime."
+                f"Confirm the original committed system-card bundle reached {record.get('target_role')} if needed, then remind the role "
+                f"to complete {record.get('card_return_event')}{status_hint} by opening every bundled card through runtime and ACKing "
+                "the original bundle. Do not issue a duplicate bundle unless the original committed artifact is invalid, lost, stale, or tied to a replaced role."
             ),
             allowed_reads=[
                 envelope_path,
@@ -5936,15 +6239,17 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
                 "missing_card_ids": record.get("missing_card_ids") or [],
                 "incomplete_ack_path": record.get("incomplete_ack_path"),
                 "incomplete_ack_hash": record.get("incomplete_ack_hash"),
+                "ack_clearance_reason": clearance_reason,
                 "waiting_for_role": record.get("target_role"),
                 "waiting_for_agent_id": record.get("target_agent_id"),
                 "controller_visibility": "pending_return_metadata_only",
                 "sealed_body_reads_allowed": False,
+                **_original_card_ack_reminder_policy(record, bundle=True),
                 **committed_extra,
                 "next_recovery_actions": [
                     "role_uses_open-card-bundle_then_ack-card-bundle",
-                    "controller_reminds_role_if_still_live",
-                    "router_reissues_bundle_after_resume_or_replacement",
+                    "controller_reminds_role_to_ack_original_committed_bundle_if_still_live",
+                    "router_reissues_bundle_only_if_original_invalid_lost_stale_or_role_replaced",
                     "router_records_protocol_blocker_if_bundle_ack_is_invalid",
                 ],
             },
@@ -5986,6 +6291,10 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
                 "expected_return_path": expected_return_path,
                 "card_envelope_path": envelope_path,
                 "expected_receipt_path": record.get("expected_receipt_path"),
+                "ack_clearance_reason": clearance_reason,
+                "ack_clearance_scope": record.get("ack_clearance_scope"),
+                "ack_is_read_receipt_only": True,
+                "target_work_completion_evidence_required_separately": True,
                 "controller_visibility": "ack_envelope_and_receipts_only",
                 "sealed_body_reads_allowed": False,
                 **committed_extra,
@@ -6002,8 +6311,9 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
         actor="controller",
         label=f"controller_waits_for_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
         summary=(
-            f"Relay the committed system-card envelope to {record.get('target_role')} if needed, then wait "
-            f"for {record.get('card_return_event')} after the role opens the card through runtime."
+            f"Confirm the original committed system-card envelope reached {record.get('target_role')} if needed, then remind the role "
+            f"to complete {record.get('card_return_event')} by opening the original card through runtime and ACKing it. "
+            "Do not issue a duplicate card unless the original committed artifact is invalid, lost, stale, or tied to a replaced role."
         ),
         allowed_reads=[
             envelope_path,
@@ -6023,19 +6333,98 @@ def _next_pending_card_return_action(project_root: Path, run_state: dict[str, An
             "expected_return_path": expected_return_path,
             "card_envelope_path": envelope_path,
             "expected_receipt_path": record.get("expected_receipt_path"),
+            "ack_clearance_reason": clearance_reason,
             "waiting_for_role": record.get("target_role"),
             "waiting_for_agent_id": record.get("target_agent_id"),
             "controller_visibility": "pending_return_metadata_only",
             "sealed_body_reads_allowed": False,
+            **_original_card_ack_reminder_policy(record, bundle=False),
             **committed_extra,
             "next_recovery_actions": [
                 "role_uses_open-card_then_ack-card",
-                "controller_reminds_role_if_still_live",
-                "router_reissues_envelope_after_resume_or_replacement",
+                "controller_reminds_role_to_ack_original_committed_card_if_still_live",
+                "router_reissues_card_only_if_original_invalid_lost_stale_or_role_replaced",
                 "router_records_protocol_blocker_if_ack_is_invalid",
             ],
         },
     )
+
+
+FORMAL_WORK_PACKET_RELAY_ACTION_TYPES = {
+    "relay_material_scan_packets",
+    "relay_research_packet",
+    "relay_current_node_packet",
+    "relay_pm_role_work_request_packet",
+}
+
+
+def _roles_from_action_to_role(action: dict[str, Any]) -> set[str]:
+    raw = str(action.get("to_role") or "")
+    roles = {role.strip() for role in raw.split(",") if role.strip()}
+    return roles
+
+
+def _apply_formal_work_packet_ack_preflight(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    if action.get("action_type") not in FORMAL_WORK_PACKET_RELAY_ACTION_TYPES:
+        return action
+    target_roles = _roles_from_action_to_role(action)
+    if not target_roles:
+        return action
+    pending = [
+        record
+        for record in _pending_return_records(run_root, str(run_state["run_id"]))
+        if str(record.get("target_role") or "") in target_roles
+    ]
+    preflight = {
+        "schema_version": "flowpilot.formal_work_packet_ack_preflight.v1",
+        "target_roles": sorted(target_roles),
+        "source_ledger_path": project_relative(project_root, _return_event_ledger_path(run_root)),
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
+    }
+    if pending:
+        wait_action = _next_pending_card_return_action(
+            project_root,
+            run_state,
+            run_root,
+            pending,
+            clearance_reason="formal_work_packet_preflight",
+        )
+        if wait_action is None:
+            return action
+        blocked_packet = {
+            "action_type": action.get("action_type"),
+            "label": action.get("label"),
+            "to_role": action.get("to_role"),
+            "target_roles": sorted(target_roles),
+        }
+        wait_action["blocked_formal_work_packet"] = blocked_packet
+        wait_action["formal_work_packet_ack_preflight"] = {
+            **preflight,
+            "passed": False,
+            "pending_return_count": len(pending),
+            "blocked_packet": blocked_packet,
+        }
+        wait_action["next_step_contract"]["formal_work_packet_ack_preflight"] = wait_action[
+            "formal_work_packet_ack_preflight"
+        ]
+        return wait_action
+    action["formal_work_packet_ack_preflight"] = {
+        **preflight,
+        "passed": True,
+        "pending_return_count": 0,
+    }
+    action["ack_is_read_receipt_only"] = True
+    action["target_work_completion_evidence_required_separately"] = True
+    action["next_step_contract"]["formal_work_packet_ack_preflight"] = action["formal_work_packet_ack_preflight"]
+    action["next_step_contract"]["ack_is_read_receipt_only"] = True
+    action["next_step_contract"]["target_work_completion_evidence_required_separately"] = True
+    return action
 
 
 def append_history(state: dict[str, Any], label: str, details: dict[str, Any] | None = None) -> None:
@@ -6159,6 +6548,14 @@ def make_action(
     }
     if action.get("gate_contract") is not None:
         action["next_step_contract"]["gate_contract"] = action["gate_contract"]
+    if action.get("ack_clearance_scope") is not None:
+        action["next_step_contract"]["ack_clearance_scope"] = action["ack_clearance_scope"]
+    if "ack_is_read_receipt_only" in action:
+        action["next_step_contract"]["ack_is_read_receipt_only"] = bool(action.get("ack_is_read_receipt_only"))
+    if "target_work_completion_evidence_required_separately" in action:
+        action["next_step_contract"]["target_work_completion_evidence_required_separately"] = bool(
+            action.get("target_work_completion_evidence_required_separately")
+        )
     relay_or_wait_boundary = (
         action_type in ROUTER_READY_PREEMPTION_ACTION_TYPES
         or action_type.startswith("relay_")
@@ -16615,6 +17012,51 @@ def _live_card_delivery_context(
     }
 
 
+def _card_ack_clearance_scope(
+    delivery_context: dict[str, Any] | None,
+    *,
+    card_id: str | None,
+    target_role: str,
+) -> dict[str, Any]:
+    context = delivery_context if isinstance(delivery_context, dict) else {}
+    stage = context.get("current_stage") if isinstance(context.get("current_stage"), dict) else {}
+    current_node_id = stage.get("current_node_id")
+    return {
+        "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
+        "card_id": card_id,
+        "target_role": target_role,
+        "current_phase": stage.get("current_phase"),
+        "card_phase": stage.get("card_phase"),
+        "current_node_id": current_node_id,
+        "current_route_id": stage.get("current_route_id"),
+        "route_version": stage.get("route_version"),
+        "boundary_kind": "node" if current_node_id else "route_or_startup",
+        "required_before": [
+            "gate_or_node_boundary_transition",
+            "formal_work_packet_relay_to_target_role",
+        ],
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
+    }
+
+
+def _original_card_ack_reminder_policy(record: dict[str, Any], *, bundle: bool = False) -> dict[str, Any]:
+    envelope_key = "card_bundle_envelope_path" if bundle else "card_envelope_path"
+    receipt_key = "expected_receipt_paths" if bundle else "expected_receipt_path"
+    return {
+        "missing_ack_recovery": "remind_target_role_to_ack_original_committed_card",
+        "reminder_target": "original_committed_card_bundle" if bundle else "original_committed_card",
+        "original_envelope_path": record.get(envelope_key),
+        "original_expected_return_path": record.get("expected_return_path"),
+        "original_expected_receipt_path": record.get(receipt_key),
+        "duplicate_system_card_delivery_allowed": False,
+        "reissue_allowed_only_if_original_invalid_lost_stale_or_role_replaced": True,
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
+        "ack_clearance_scope": record.get("ack_clearance_scope"),
+    }
+
+
 def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload_if_present(project_root, payload)
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="route draft")
@@ -24587,11 +25029,17 @@ def _commit_system_card_delivery_artifact(
     }
     envelope["envelope_hash"] = card_runtime.stable_json_hash(envelope)
     write_json(envelope_path, envelope)
+    ack_clearance_scope = _card_ack_clearance_scope(
+        delivery_context,
+        card_id=card_id,
+        target_role=str(pending["to_role"]),
+    )
     delivery["card_envelope_hash"] = envelope["envelope_hash"]
     delivery["resource_lifecycle"] = "committed_artifact"
     delivery["artifact_committed"] = True
     delivery["relay_allowed"] = True
     delivery["apply_required"] = False
+    delivery["ack_clearance_scope"] = ack_clearance_scope
     run_state["delivered_cards"].append(delivery)
     run_state["flags"][card_entry["flag"]] = True
     run_state["manifest_check_requested"] = False
@@ -24620,6 +25068,7 @@ def _commit_system_card_delivery_artifact(
             "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
             "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
             "gate_contract": delivery.get("gate_contract"),
+            "ack_clearance_scope": ack_clearance_scope,
             "requires_read_receipt": True,
             "card_return_event": delivery.get("card_return_event"),
             "card_checkin_instruction": delivery.get("card_checkin_instruction"),
@@ -24651,6 +25100,7 @@ def _commit_system_card_delivery_artifact(
             "expected_return_path": project_relative(project_root, expected_return_path),
             "card_checkin_instruction": delivery.get("card_checkin_instruction"),
             "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
+            "ack_clearance_scope": ack_clearance_scope,
             "sent_at": delivery["delivered_at"],
         }
     )
@@ -24700,6 +25150,7 @@ def _commit_system_card_bundle_delivery_artifact(
     delivered_at = utc_now()
     envelope_cards: list[dict[str, Any]] = []
     deliveries: list[dict[str, Any]] = []
+    ack_clearance_scopes: list[dict[str, Any]] = []
     for index, member in enumerate(cards):
         if not isinstance(member, dict):
             raise RouterError("system card bundle member must be an object")
@@ -24716,6 +25167,12 @@ def _commit_system_card_bundle_delivery_artifact(
         body_hash = str(member.get("body_hash") or "")
         if not body_path_raw or not body_hash:
             raise RouterError(f"system card bundle member {card_id} missing body path or hash")
+        ack_clearance_scope = _card_ack_clearance_scope(
+            delivery_context,
+            card_id=card_id,
+            target_role=role,
+        )
+        ack_clearance_scopes.append(ack_clearance_scope)
         envelope_card = {
             "card_id": card_id,
             "path": card["path"],
@@ -24728,6 +25185,7 @@ def _commit_system_card_bundle_delivery_artifact(
             "expected_receipt_path": project_relative(project_root, expected_receipt_path),
             "card_return_event": member.get("card_return_event") or _card_return_event_for_card(card_id),
             "delivery_context": delivery_context,
+            "ack_clearance_scope": ack_clearance_scope,
         }
         envelope_cards.append(envelope_card)
         deliveries.append(
@@ -24765,6 +25223,7 @@ def _commit_system_card_bundle_delivery_artifact(
                 "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
                 "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
                 "delivery_context": delivery_context,
+                "ack_clearance_scope": ack_clearance_scope,
                 "delivered_at": delivered_at,
             }
         )
@@ -24853,6 +25312,7 @@ def _commit_system_card_bundle_delivery_artifact(
                 "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
                 "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
                 "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
+                "ack_clearance_scope": delivery.get("ack_clearance_scope"),
                 "requires_read_receipt": True,
                 "card_return_event": delivery.get("card_return_event"),
                 "bundle_return_event": pending.get("card_return_event"),
@@ -24870,6 +25330,20 @@ def _commit_system_card_bundle_delivery_artifact(
     card_ledger["updated_at"] = utc_now()
     write_json(_card_ledger_path(run_root), card_ledger)
     return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+    bundle_ack_clearance_scope = {
+        "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
+        "return_kind": "system_card_bundle",
+        "card_bundle_id": bundle_id,
+        "card_ids": [delivery.get("card_id") for delivery in deliveries],
+        "target_role": role,
+        "member_scopes": ack_clearance_scopes,
+        "required_before": [
+            "gate_or_node_boundary_transition",
+            "formal_work_packet_relay_to_target_role",
+        ],
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
+    }
     return_ledger.setdefault("pending_returns", []).append(
         {
             "return_kind": "system_card_bundle",
@@ -24890,6 +25364,7 @@ def _commit_system_card_bundle_delivery_artifact(
             "expected_return_path": expected_return_path_raw,
             "card_checkin_instruction": pending.get("card_checkin_instruction"),
             "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
+            "ack_clearance_scope": bundle_ack_clearance_scope,
             "sent_at": delivered_at,
         }
     )
@@ -25480,6 +25955,9 @@ def _auto_commit_system_card_delivery_action(
     committed = {
         **planned,
         **committed_extra,
+        "ack_clearance_scope": record.get("ack_clearance_scope"),
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
         "summary": (
             f"Relay committed system card envelope {planned.get('card_id')} to {planned.get('to_role')}; "
             f"the role must open it through runtime and return {planned.get('card_return_event')}."
@@ -25495,6 +25973,9 @@ def _auto_commit_system_card_delivery_action(
         "artifact_committed": True,
         "relay_allowed": True,
         "apply_required": False,
+        "ack_clearance_scope": committed.get("ack_clearance_scope"),
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
     }
     run_state["pending_action"] = committed
     append_history(
@@ -25569,6 +26050,9 @@ def _auto_commit_system_card_bundle_delivery_action(
         **planned,
         **committed_extra,
         "card_bundle_envelope_hash": record.get("card_bundle_envelope_hash"),
+        "ack_clearance_scope": record.get("ack_clearance_scope"),
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
         "summary": (
             f"Relay committed system-card bundle {planned.get('card_bundle_id')} to {planned.get('to_role')}; "
             f"the role must open it through runtime and return {planned.get('card_return_event')}."
@@ -25584,6 +26068,9 @@ def _auto_commit_system_card_bundle_delivery_action(
         "artifact_committed": True,
         "relay_allowed": True,
         "apply_required": False,
+        "ack_clearance_scope": committed.get("ack_clearance_scope"),
+        "ack_is_read_receipt_only": True,
+        "target_work_completion_evidence_required_separately": True,
     }
     run_state["pending_action"] = committed
     append_history(
@@ -25820,6 +26307,7 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         action = _next_control_blocker_action(project_root, run_state, run_root)
         if action is None:
             raise RouterError("no legal next action control blocker was not materialized")
+    action = _apply_formal_work_packet_ack_preflight(project_root, run_state, run_root, action)
     run_state["pending_action"] = action
     append_history(run_state, "router_computed_next_controller_action", {"action_type": action["action_type"]})
     _sync_derived_run_views(

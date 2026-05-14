@@ -10377,3 +10377,109 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If future work changes project-control flow more deeply, rerun meta/capability checks to completion and preserve their final artifacts before reporting them.
+
+
+## controller-ledger-durable-claim - Controller receipt and Router-owned artifact reclaim model upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: run-20260514-194920 exposed that Controller action receipts, Router-owned startup audit artifacts, and daemon tick timing were still conflated in the control-plane model.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T22:05:00+02:00
+- Ended: 2026-05-14T22:18:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Model Controller table rows as Controller-owned work receipts, not target-role completion.
+- Require Controller delivery receipts to transition into target-role waits instead of route completion or missing-report blockers.
+- Require valid Router-owned artifacts plus proof to be reclaimed before daemon ticks escalate a missing postcondition blocker.
+
+### Model Files
+- `simulations/flowpilot_control_plane_friction_model.py`
+- `simulations/run_flowpilot_control_plane_friction_checks.py`
+- `simulations/flowpilot_control_plane_friction_results.json`
+- `simulations/flowpilot_control_plane_friction_checks_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_checks_results.json` passed.
+- Live audit against the current run now reports `valid_router_owned_artifact_not_reclaimed_before_blocker` for run-20260514-194920.
+
+### Findings
+- The prior model caught "Controller done but postcondition missing" but did not ask whether the missing postcondition was recoverable from an already-valid Router-owned artifact.
+- The prior model did not represent the user's distinction between "Controller delivered the work item" and "the target role completed the work".
+- The daemon tick race needs a durable reclaim barrier before PM repair escalation.
+
+### Counterexamples
+- `controller_delivery_receipt_treated_as_role_completion`
+- `controller_delivery_receipt_missing_role_output_blocker`
+- `valid_router_owned_artifact_not_reclaimed_before_blocker`
+- `daemon_tick_semicomplete_receipt_escalates_before_reclaim`
+
+### Skipped Steps
+- Production Router behavior was not changed in this pass; the user requested model upgrade and a minimal root repair plan.
+- Startup placeholder/route-sign display timing was intentionally not changed.
+
+### Next Actions
+- Implement a central action-completion ownership table that separates Controller receipt closure, target-role completion, and Router-owned artifact reclaim.
+- Add a durable reclaim barrier before pending Controller receipt reconciliation can create a PM repair blocker.
+
+
+## enforce-gate-scoped-card-ack-clearance - Gate-scoped system-card ACK clearance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot auto-advance needed a precise contract for when system-card ACK receipts are checked, without treating ACK as target work completion or duplicating already-committed system cards.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T22:20:00+02:00
+- Ended: 2026-05-14T22:47:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Treat system-card ACK as a read receipt only, not proof that a target role completed the real work.
+- Clear required ACKs at gate/node boundaries and before formal work packets for the target role.
+- Recover missing ACKs by reminding the role to ACK the original committed card or bundle, not by duplicating the system-card delivery.
+
+### Model Files
+- `simulations/flowpilot_card_envelope_model.py`
+- `simulations/run_flowpilot_card_envelope_checks.py`
+- `simulations/flowpilot_card_envelope_results.json`
+
+### Runtime Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `tests/test_flowpilot_router_runtime.py`
+- `openspec/changes/enforce-gate-scoped-card-ack-clearance/`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate enforce-gate-scoped-card-ack-clearance --strict` passed.
+- `openspec validate reconcile-controller-router-ledgers --strict` passed for compatible peer-agent OpenSpec work preserved in the same working tree.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_card_envelope_model.py simulations\run_flowpilot_card_envelope_checks.py tests\test_flowpilot_router_runtime.py` passed.
+- `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_results.json` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json` passed for compatible peer-agent control-plane changes.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_checks_results.json` passed for the secondary peer-agent result artifact.
+- Focused Router ACK tests passed: `3 passed, 197 deselected`.
+- Focused Router card/system/startup tests passed: `13 passed, 187 deselected, 2 subtests passed`.
+- Focused PM/material Router tests passed: `4 passed, 196 deselected`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\audit_local_install_sync.py --json` passed with installed FlowPilot source-fresh.
+
+### Findings
+- The card-envelope model now catches gate transition before required ACK clearance, formal work packet dispatch before target-role ACK preflight, duplicate system-card delivery on missing ACK, and treating ACK as work completion.
+- Router pending-return records now carry ACK scope and read-receipt metadata so later waits can distinguish Controller/role delivery from real target work completion.
+- Formal work-packet dispatch now checks target-role pending system-card ACKs first and emits a lightweight reminder to ACK the original artifact when needed.
+
+### Counterexamples
+- `gate_boundary_before_required_ack_clearance`
+- `formal_work_packet_sent_before_target_ack_preflight`
+- `duplicate_system_card_delivery_on_missing_ack`
+- `ack_treated_as_target_work_completion`
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally not run because the user explicitly said to skip the two heavyweight models for this task.
+- No remote push, release, or publish action was performed.
+
+### Next Actions
+- Keep ACK clearance scope tied to gates/nodes and formal work-packet targets instead of scanning unrelated historical cards.
+- Reissue a system card only when the original artifact is invalid, lost, stale, or bound to a replaced role identity.

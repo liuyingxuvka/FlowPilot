@@ -44,6 +44,10 @@ HAZARD_EXPECTED_FAILURES = {
     "advanced_during_missing_receipt_wait": "required system card coverage passed without valid read receipt and ack/report envelope",
     "advanced_during_missing_return_wait": "required system card coverage passed without valid read receipt and ack/report envelope",
     "pending_return_without_recovery": "pending return wait had no heartbeat/manual resume recovery action",
+    "gate_boundary_advanced_before_scope_ack": "Router crossed a route gate before current-scope system-card ACK clearance",
+    "formal_work_packet_relayed_before_target_ack": "formal work packet was relayed before target-role system-card ACK clearance",
+    "missing_ack_duplicate_system_card_reissued": "missing system-card ACK triggered duplicate card delivery instead of original-card reminder",
+    "card_ack_treated_as_target_work_completion": "system-card ACK was treated as target-role work completion",
     "wrong_role_receipt": "card read receipt did not match current run, role, agent, hash, delivery, and I/O ack",
     "wrong_role_ack_report": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
     "old_run_receipt": "card read receipt did not match current run, role, agent, hash, delivery, and I/O ack",
@@ -129,7 +133,19 @@ def _state_id(state: model.State) -> str:
         f"{state.packet_direct_router_ack_prompt_present},"
         f"{state.packet_direct_router_result_prompt_present},"
         f"{state.controller_waits_on_router_notice_prompt_present}|"
-        f"advanced={state.router_advanced}"
+        f"advanced={state.router_advanced}|"
+        f"ack_clearance={state.ack_clearance_scope_recorded},"
+        f"{state.gate_boundary_transition_requested},"
+        f"{state.gate_boundary_ack_clearance_checked},"
+        f"{state.gate_boundary_ack_clearance_passed},"
+        f"{state.formal_work_packet_requested},"
+        f"{state.formal_work_packet_ack_clearance_checked},"
+        f"{state.formal_work_packet_ack_clearance_passed},"
+        f"{state.formal_work_packet_relayed},"
+        f"{state.missing_ack_reminder_reuses_original_envelope},"
+        f"{state.duplicate_system_card_reissued_for_missing_ack},"
+        f"{state.card_ack_used_as_target_work_completion},"
+        f"{state.target_work_completion_wait_preserved}"
     )
 
 

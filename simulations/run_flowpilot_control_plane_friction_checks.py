@@ -17,6 +17,8 @@ REQUIRED_LABELS = (
     "select_expanded_safe_flow",
     "select_optimized_transaction_flow",
     "controller_applies_stateful_postcondition_before_done_receipt",
+    "controller_delivery_done_starts_target_role_wait",
+    "router_reclaims_valid_router_owned_artifact_before_blocker",
     "controller_display_work_soft_recorded_without_hard_gate",
     "external_keepalive_action_confirmed_with_light_marker",
     "pm_writes_research_package_with_scope_fields",
@@ -94,6 +96,10 @@ HAZARD_EXPECTED_FAILURES = {
     "external_keepalive_unconfirmed": "external keepalive action lacked lightweight completion confirmation",
     "stateful_receipt_done_without_postcondition_evidence": "stateful controller receipt was marked done before Router-visible postcondition evidence existed",
     "stateful_receipt_advanced_without_postcondition_evidence": "stateful controller receipt was marked done before Router-visible postcondition evidence existed",
+    "controller_delivery_receipt_treated_as_role_completion": "Controller delivery receipt was treated as target-role completion",
+    "controller_delivery_receipt_missing_role_output_blocker": "Router created a missing role-output blocker from a Controller delivery receipt",
+    "valid_router_owned_artifact_not_reclaimed_before_blocker": "valid Router-owned artifact/proof existed but Router did not reclaim the postcondition",
+    "daemon_tick_semicomplete_receipt_escalates_before_reclaim": "valid Router-owned artifact/proof existed but Router did not reclaim the postcondition",
     "role_output_event_missing_file_backed_body": "role output event was accepted without a file-backed body path and verified body hash",
     "role_output_status_prepared_used_as_decision": "role output status/progress was used as role event evidence",
     "pm_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
@@ -199,6 +205,15 @@ def _state_id(state: model.State) -> str:
         f"{state.stateful_controller_postcondition_declared},"
         f"{state.stateful_controller_postcondition_evidence_written},"
         f"{state.stateful_controller_advanced_from_receipt}|"
+        f"controller_delivery={state.controller_delivery_receipt_done},"
+        f"{state.controller_delivery_target_role_wait_started},"
+        f"{state.controller_delivery_used_as_role_completion},"
+        f"{state.controller_delivery_missing_role_output_blocker}|"
+        f"router_owned_reclaim={state.router_owned_artifact_exists},"
+        f"{state.router_owned_artifact_proof_valid},"
+        f"{state.router_owned_postcondition_reclaimed_from_artifact},"
+        f"{state.router_tick_saw_receipt_before_flag},"
+        f"{state.router_tick_escalated_before_reclaim}|"
         f"display_work={state.controller_display_work_soft_recorded},"
         f"{state.controller_display_work_hard_postcondition},"
         f"{state.controller_display_work_escalated_to_pm}|"
