@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import sys
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +21,64 @@ PROOF_PATH = ROOT / "results.proof.json"
 GRAPH_STATE_LIMIT = 900_000
 CHECK_STATE_LIMIT = 900_000
 PROOF_SCHEMA = 1
+PROGRESS_STEPS = 10
+
+
+def _progress_enabled() -> bool:
+    return os.environ.get("FLOWGUARD_PROGRESS") != "0"
+
+
+class _GraphBuildProgress:
+    def __init__(self, check_name: str, max_states: int, steps: int = PROGRESS_STEPS) -> None:
+        self.check_name = check_name
+        self.max_states = max(1, max_states)
+        self.enabled = _progress_enabled()
+        self.thresholds = self._thresholds(self.max_states, steps)
+        self.index = 0
+        if self.enabled:
+            self._emit(
+                "start",
+                f"phase=reachable_graph states=0/{self.max_states} progress_steps={steps}",
+            )
+
+    @staticmethod
+    def _thresholds(max_states: int, steps: int) -> tuple[tuple[int, int], ...]:
+        by_threshold: dict[int, int] = {}
+        for bucket in range(1, max(1, steps) + 1):
+            threshold = max(1, (max_states * bucket + steps - 1) // steps)
+            by_threshold[threshold] = int(bucket * 100 / steps)
+        return tuple(sorted(by_threshold.items()))
+
+    def _emit(self, event: str, detail: str) -> None:
+        print(
+            f"[flowpilot-flowguard] {event} check={self.check_name} {detail}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+    def observe(self, state_count: int, edge_count: int) -> None:
+        if not self.enabled:
+            return
+        while self.index < len(self.thresholds) and state_count >= self.thresholds[self.index][0]:
+            _threshold, percent = self.thresholds[self.index]
+            self._emit(
+                "progress",
+                f"{percent}% states={state_count}/{self.max_states} edges={edge_count}",
+            )
+            self.index += 1
+
+    def complete(self, state_count: int, edge_count: int) -> None:
+        if self.enabled:
+            self._emit("complete", f"states={state_count} edges={edge_count}")
+
+
+def _emit_proof_reuse(check_name: str, path: Path) -> None:
+    if _progress_enabled():
+        print(
+            f"[flowpilot-flowguard] proof_reused check={check_name} path={path}",
+            file=sys.stderr,
+            flush=True,
+        )
 
 
 def _sha256_bytes(value: bytes) -> str:
@@ -625,6 +685,7 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
     edge_count = 0
     invariant_failures: list[dict] = []
     terminal_counts = {"complete": 0, "blocked": 0}
+    progress = _GraphBuildProgress("meta", max_states)
 
     while queue:
         state = queue.popleft()
@@ -652,8 +713,10 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
                 if len(states) > max_states:
                     raise RuntimeError(f"state graph exceeded {max_states} states")
                 queue.append(next_state)
+                progress.observe(len(states), edge_count)
             edges[state_index].append((label, seen[next_state]))
 
+    progress.complete(len(states), edge_count)
     return {
         "states": states,
         "edges": edges,
@@ -808,6 +871,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.fast and not args.force:
         valid, reason = _valid_proof(input_fingerprint)
         if valid:
+            _emit_proof_reuse("meta", PROOF_PATH)
             print(f"FlowGuard meta proof reused: {PROOF_PATH}")
             return 0
         print(f"FlowGuard meta proof not reused: {reason}")

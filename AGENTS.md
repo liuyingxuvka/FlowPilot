@@ -18,6 +18,30 @@ Before implementation work, read:
 
 Use real FlowGuard. Do not create a fake mini-framework.
 
+Long-running FlowGuard checks in this repository use a stable background log
+contract. Default to `tmp/flowguard_background/` and use the command base name
+for these artifacts:
+
+- `<name>.out.txt` for stdout;
+- `<name>.err.txt` for stderr and progress;
+- `<name>.combined.txt` for human-readable merged output;
+- `<name>.exit.txt` for the process exit code;
+- `<name>.meta.json` for command, start/end time, status, and proof-reuse
+  metadata.
+
+For the heavyweight project checks, use these base names:
+
+- `run_meta_checks` for `python simulations/run_meta_checks.py`;
+- `run_capability_checks` for
+  `python simulations/run_capability_checks.py`.
+
+Before reporting a long check as complete, inspect the actual artifacts and
+report the log root, stdout/stderr/combined paths, exit code, latest update
+time, completion status, and whether a valid proof was reused. A path-only
+report, an in-progress log, or a missing exit artifact is not completion
+evidence. Progress lines are liveness evidence only; pass/fail still comes from
+the executable check result and exit code.
+
 Before changing behavior-bearing protocol, route, or skill logic, verify:
 
 ```powershell

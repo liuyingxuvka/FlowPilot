@@ -9881,3 +9881,36 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Full `tests\test_flowpilot_router_runtime.py` exceeded a 10-minute timeout; a broad keyword subset also exceeded a 5-minute timeout.
 - Verification used focused router tests, the full role-output runtime test module, FlowGuard models, install checks, and OpenSpec strict validation.
 - No remote GitHub push was performed.
+
+
+## standardize-flowguard-background-logs - Standardize FlowPilot FlowGuard background progress logs and legacy runner progress
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot project-control FlowGuard checks needed fixed logs, progress, and exit evidence
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T07:59:58+00:00
+- Ended: 2026-05-14T07:59:58+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `python simulations\\run_meta_checks.py --force; python simulations\\run_capability_checks.py --force`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
