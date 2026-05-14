@@ -11,6 +11,8 @@ The observed failure is in this boundary: a Controller receipt for `write_startu
 - Keep Controller action completion separate from Router workflow completion.
 - Add Router-owned reconciliation before every next-action/blocker decision.
 - Reclaim valid Router-owned durable artifacts from the current run before declaring a missing stateful postcondition.
+- Gate missing-ACK recovery on Controller delivery facts so Router does not remind a target role before Controller has confirmed delivery of the original committed system card or bundle.
+- Keep Router-owned workflow state readable by Router only; Controller reads its own action ledger and receives Controller-safe recovery facts, not the Router ownership ledger table.
 - Make the startup mechanical audit failure class executable in focused tests and FlowGuard checks.
 - Keep the recurring daemon tick lightweight by inspecting only known current-run action and artifact paths.
 
@@ -41,6 +43,14 @@ The observed failure is in this boundary: a Controller receipt for `write_startu
 4. **Use known artifact paths, not broad scans.**
    The daemon tick will read only the pending action, controller receipt, Router ownership ledger, and registered artifact/proof paths. It will not scan the repository or require screenshots.
 
+5. **Check Controller delivery before target-role ACK reminders.**
+   A missing ACK can mean the target role forgot to open the card, but it can also mean Controller never delivered the original committed envelope. Router therefore classifies the recovery from the Controller action ledger and committed artifact facts: confirmed delivery may remind the target role; unconfirmed, blocked, skipped, missing, or invalid delivery routes recovery back to Controller delivery/reissue first.
+
+   Alternative considered: always remind the target role when an ACK is missing. That is faster in the happy path but creates a false blame path when Controller never completed the delivery action.
+
+6. **Do not expose Router's internal ownership ledger to Controller.**
+   The Router ownership ledger remains a Router-only source of workflow decisions. Controller-facing status carries the Controller action ledger and safe recovery facts only.
+
 ## Risks / Trade-offs
 
 - **Risk:** Router could accept stale or wrong-run evidence.  
@@ -48,6 +58,9 @@ The observed failure is in this boundary: a Controller receipt for `write_startu
 
 - **Risk:** The Router ownership ledger becomes another source of drift.  
   **Mitigation:** Rebuild or refresh entries from durable Controller receipts and known artifacts before next-action decisions; do not trust it alone.
+
+- **Risk:** Missing-ACK recovery could incorrectly blame the target role when Controller delivery never happened.
+  **Mitigation:** Before target-role reminders, Router checks matching Controller delivery actions and committed envelope/bundle artifacts. Unconfirmed Controller delivery returns a Controller recovery task instead of a target-role reminder.
 
 - **Risk:** A real incomplete stateful host action could be hidden by generic reclaim.  
   **Mitigation:** Only registered Router-owned durable artifacts can be reclaimed this way. Existing hard blockers remain for unsupported stateful actions like incomplete role rehydration.

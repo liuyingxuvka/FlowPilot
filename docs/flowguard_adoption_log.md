@@ -10483,3 +10483,65 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Keep ACK clearance scope tied to gates/nodes and formal work-packet targets instead of scanning unrelated historical cards.
 - Reissue a system card only when the original artifact is invalid, lost, stale, or bound to a replaced role identity.
+
+
+## controller-delivery-before-ack-reminder - Controller delivery fact gate for missing ACK recovery
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The user identified a remaining gap in missing-ACK recovery: Router could remind a target role before first proving Controller actually delivered the original committed card or bundle.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T22:58:00+02:00
+- Ended: 2026-05-14T23:32:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Preserve the two-ledger boundary: Controller may mark only Controller-local delivery work, while Router owns workflow state.
+- Prevent false target-role blame when a missing ACK is caused by unconfirmed Controller delivery or a missing/invalid committed envelope.
+- Keep Router ownership ledger internal to Router while exposing Controller-safe delivery recovery facts.
+
+### Model Files
+- `simulations/flowpilot_card_envelope_model.py`
+- `simulations/run_flowpilot_card_envelope_checks.py`
+- `simulations/flowpilot_card_envelope_results.json`
+- `simulations/flowpilot_card_envelope_checks_results.json`
+- `simulations/flowpilot_control_plane_friction_checks_results.json`
+
+### Runtime Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `tests/test_flowpilot_router_runtime.py`
+- `openspec/changes/reconcile-controller-router-ledgers/`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_card_envelope_model.py simulations\run_flowpilot_card_envelope_checks.py` passed.
+- `python simulations\run_flowpilot_card_envelope_checks.py` passed and refreshed `flowpilot_card_envelope_results.json`.
+- `python simulations\run_flowpilot_card_envelope_checks.py --json-out simulations\flowpilot_card_envelope_checks_results.json` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_checks_results.json --skip-live-audit` passed.
+- `openspec validate reconcile-controller-router-ledgers --strict` passed.
+- Focused Router tests passed: `4 passed, 198 deselected`; expanded related Router tests passed: `14 passed, 188 deselected`; daemon visibility regression passed: `5 passed, 197 deselected`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\install_flowpilot.py --check --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\check_install.py` passed.
+
+### Findings
+- The card-envelope model now catches missing-ACK recovery that skips Controller delivery fact checking.
+- The model now catches target-role reminders before Controller delivery is confirmed and reminders while Controller delivery reissue is still required.
+- Runtime missing-ACK wait actions now carry `controller_delivery_fact` and only allow target-role ACK reminders when the matching Controller delivery is done or the run lacks a legacy/manual Controller action record.
+- If the committed card/bundle artifact is missing or invalid, or the matching Controller delivery action is pending/blocked/skipped, the wait action routes recovery back to Controller delivery confirmation/reissue first.
+- Daemon status no longer exposes Router ownership ledger entries to Controller.
+
+### Counterexamples
+- `missing_ack_recovery_skipped_controller_delivery_fact`
+- `missing_ack_target_reminded_before_controller_delivery_confirmed`
+- `missing_ack_target_reminded_while_controller_reissue_required`
+
+### Friction Points
+- The full `tests\test_flowpilot_router_runtime.py` run was attempted but timed out after 15 minutes, so final validation used focused affected subsets plus model, OpenSpec, install, and audit checks.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally not run because the user explicitly said to skip the two heavyweight models.
+- The control-plane friction check used `--skip-live-audit` because this validation targets the abstract repair and the current repo may contain stopped historical FlowPilot runs.
+- No remote push, release, or publish action was performed.
+
+### Next Actions
+- Keep future missing-ACK changes inside the Controller delivery fact gate instead of adding separate reminder exceptions.
+- Keep Controller-facing daemon/status files free of Router internal workflow ledger entries.

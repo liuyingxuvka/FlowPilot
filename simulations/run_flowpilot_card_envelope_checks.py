@@ -47,6 +47,9 @@ HAZARD_EXPECTED_FAILURES = {
     "gate_boundary_advanced_before_scope_ack": "Router crossed a route gate before current-scope system-card ACK clearance",
     "formal_work_packet_relayed_before_target_ack": "formal work packet was relayed before target-role system-card ACK clearance",
     "missing_ack_duplicate_system_card_reissued": "missing system-card ACK triggered duplicate card delivery instead of original-card reminder",
+    "missing_ack_recovery_skipped_controller_delivery_fact": "missing system-card ACK recovery skipped Controller delivery fact check",
+    "missing_ack_target_reminded_before_controller_delivery_confirmed": "target role was reminded for missing ACK before Controller delivery was confirmed",
+    "missing_ack_target_reminded_while_controller_reissue_required": "target role was reminded while Controller delivery reissue was still required",
     "card_ack_treated_as_target_work_completion": "system-card ACK was treated as target-role work completion",
     "wrong_role_receipt": "card read receipt did not match current run, role, agent, hash, delivery, and I/O ack",
     "wrong_role_ack_report": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
@@ -102,6 +105,11 @@ def _state_id(state: model.State) -> str:
         f"{state.pending_return_recorded}|"
         f"legacy_field={state.legacy_return_event_field_used}|"
         f"controller={state.controller_relayed_card_envelope},{state.controller_envelope_only},"
+        f"delivery_fact={state.controller_delivery_fact_checked},"
+        f"{state.controller_delivery_receipt_recorded},"
+        f"{state.controller_delivery_reissue_requested_before_target_reminder},"
+        f"{state.target_role_ack_reminder_issued},"
+        f"{state.target_role_ack_reminder_blocked_until_controller_delivery_done},"
         f"read_body={state.controller_read_card_body},mutated={state.controller_mutated_batch}|"
         f"receipt={state.card_read_receipt_written},{state.receipt_current_run},"
         f"{state.receipt_current_role},{state.receipt_current_agent},"

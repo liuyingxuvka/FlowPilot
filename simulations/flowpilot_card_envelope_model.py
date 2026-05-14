@@ -35,7 +35,9 @@ Risk intent brief:
   allowed only when every member card keeps manifest/hash/delivery/receipt
   evidence and the bundle does not hide an external boundary; cross-role
   parallel delivery is allowed only with Router-authored dependency and join
-  metadata; role I/O protocol acknowledgement is required after
+  metadata; missing-ACK recovery first checks Controller delivery facts and
+  cannot remind the target role while Controller delivery is unconfirmed; role
+  I/O protocol acknowledgement is required after
   heartbeat/manual resume or replacement; gate/node movement and formal
   work-packet relay wait for scoped/target-role ACK clearance; a missing ACK
   reminds the role to complete the original card or bundle ACK loop unless the
@@ -105,6 +107,11 @@ class State:
     pending_return_recorded: bool = False
     controller_relayed_card_envelope: bool = False
     controller_envelope_only: bool = False
+    controller_delivery_fact_checked: bool = False
+    controller_delivery_receipt_recorded: bool = False
+    controller_delivery_reissue_requested_before_target_reminder: bool = False
+    target_role_ack_reminder_issued: bool = False
+    target_role_ack_reminder_blocked_until_controller_delivery_done: bool = False
     controller_read_card_body: bool = False
     controller_mutated_batch: bool = False
     controller_skipped_envelope: bool = False
@@ -347,6 +354,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 controller_relayed_card_envelope=True,
                 controller_envelope_only=True,
+                controller_delivery_receipt_recorded=True,
             ),
         )
         return
@@ -376,6 +384,29 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if state.expected_return_missing_detected and not state.controller_delivery_fact_checked:
+        yield Transition(
+            "router_checks_controller_delivery_fact_before_missing_ack_recovery",
+            _inc(state, controller_delivery_fact_checked=True),
+        )
+        return
+
+    if (
+        state.expected_return_missing_detected
+        and state.controller_delivery_fact_checked
+        and not state.controller_delivery_receipt_recorded
+        and not state.controller_delivery_reissue_requested_before_target_reminder
+    ):
+        yield Transition(
+            "controller_reissues_or_confirms_delivery_before_target_ack_reminder",
+            _inc(
+                state,
+                controller_delivery_reissue_requested_before_target_reminder=True,
+                target_role_ack_reminder_blocked_until_controller_delivery_done=True,
+            ),
+        )
+        return
+
     if state.expected_return_missing_detected and not state.return_reminder_issued:
         yield Transition(
             "router_issues_missing_return_reminder",
@@ -383,6 +414,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 return_reminder_issued=True,
                 missing_ack_reminder_reuses_original_envelope=True,
+                target_role_ack_reminder_issued=True,
             ),
         )
         return
@@ -869,6 +901,16 @@ def scoped_ack_clearance_blocks_gate_and_work(state: State, trace) -> InvariantR
         state.missing_ack_reminder_reuses_original_envelope
     ):
         return InvariantResult.fail("missing system-card ACK recovery did not remind against the original committed envelope")
+    if state.expected_return_missing_detected and state.return_reminder_issued and not state.controller_delivery_fact_checked:
+        return InvariantResult.fail("missing system-card ACK recovery skipped Controller delivery fact check")
+    if (
+        state.controller_delivery_reissue_requested_before_target_reminder
+        and state.target_role_ack_reminder_issued
+        and not state.controller_delivery_receipt_recorded
+    ):
+        return InvariantResult.fail("target role was reminded while Controller delivery reissue was still required")
+    if state.target_role_ack_reminder_issued and not state.controller_delivery_receipt_recorded:
+        return InvariantResult.fail("target role was reminded for missing ACK before Controller delivery was confirmed")
     if state.duplicate_system_card_reissued_for_missing_ack:
         return InvariantResult.fail("missing system-card ACK triggered duplicate card delivery instead of original-card reminder")
     if state.redelivery_attempt_issued and not state.stale_delivery_superseded:
@@ -1028,6 +1070,7 @@ REQUIRED_LABELS = (
     "controller_relays_card_envelope_only",
     "router_detects_missing_expected_return_and_waits",
     "heartbeat_or_manual_resume_loads_pending_return",
+    "router_checks_controller_delivery_fact_before_missing_ack_recovery",
     "router_issues_missing_return_reminder",
     "router_blocks_gate_boundary_on_missing_scope_ack",
     "router_blocks_formal_work_packet_on_target_missing_ack",
@@ -1094,6 +1137,9 @@ def target_v2_state() -> State:
         ack_clearance_scope_recorded=True,
         controller_relayed_card_envelope=True,
         controller_envelope_only=True,
+        controller_delivery_fact_checked=True,
+        controller_delivery_receipt_recorded=True,
+        target_role_ack_reminder_issued=True,
         card_read_receipt_written=True,
         receipt_current_run=True,
         receipt_current_role=True,
@@ -1347,6 +1393,33 @@ def hazard_states() -> dict[str, State]:
             duplicate_system_card_reissued_for_missing_ack=True,
             redelivery_attempt_issued=True,
             stale_delivery_superseded=False,
+        ),
+        "missing_ack_recovery_skipped_controller_delivery_fact": replace(
+            safe,
+            expected_return_missing_detected=True,
+            controller_delivery_fact_checked=False,
+            controller_delivery_receipt_recorded=True,
+            return_reminder_issued=True,
+            target_role_ack_reminder_issued=True,
+        ),
+        "missing_ack_target_reminded_before_controller_delivery_confirmed": replace(
+            safe,
+            expected_return_missing_detected=True,
+            controller_delivery_fact_checked=True,
+            controller_delivery_receipt_recorded=False,
+            controller_delivery_reissue_requested_before_target_reminder=False,
+            return_reminder_issued=True,
+            target_role_ack_reminder_issued=True,
+        ),
+        "missing_ack_target_reminded_while_controller_reissue_required": replace(
+            safe,
+            expected_return_missing_detected=True,
+            controller_delivery_fact_checked=True,
+            controller_delivery_receipt_recorded=False,
+            controller_delivery_reissue_requested_before_target_reminder=True,
+            target_role_ack_reminder_blocked_until_controller_delivery_done=True,
+            return_reminder_issued=True,
+            target_role_ack_reminder_issued=True,
         ),
         "card_ack_treated_as_target_work_completion": replace(
             safe,

@@ -10,6 +10,8 @@ This change separates Controller-local completion from Router-owned workflow com
 - Classify Controller actions so a Controller receipt can mean either local delivery completion, Router-owned artifact reclaim needed, lightweight display/status completion, or true stateful host completion.
 - Reconcile Controller receipts, Router-owned artifacts, and role-output waits before every daemon next-action decision.
 - Reclaim valid Router-owned startup mechanical audit artifacts from disk before creating a stateful postcondition blocker.
+- Before a missing system-card ACK reminder reaches the target role, check whether Controller delivery of the original committed envelope or bundle is actually confirmed; if not, route recovery back to Controller delivery/reissue first.
+- Keep the Router ownership ledger internal to Router; Controller-facing daemon status exposes only the Controller action ledger and a boolean that the Router ledger is not Controller-visible.
 - Preserve existing startup route-sign/display timing; this change does not move the startup display action earlier.
 - Keep heavyweight `run_meta_checks.py` and `run_capability_checks.py` out of this validation pass per the user's instruction.
 

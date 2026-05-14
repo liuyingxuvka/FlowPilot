@@ -5253,7 +5253,7 @@ def _write_router_daemon_status(
         if isinstance(current_action, dict)
         else None,
         "controller_action_ledger": _controller_action_ledger_summary(run_root),
-        "router_ownership_ledger": _router_ownership_ledger_summary(run_root),
+        "router_internal_ownership_ledger_visible_to_controller": False,
         "recovery_hints": recovery_hints or [],
         "controller_should_watch_action_ledger": True,
         "router_owns_waiting": True,
@@ -6201,25 +6201,40 @@ def _next_pending_card_return_action(
                     "apply_required": True,
                 },
             )
-        status_hint = " after an incomplete bundle ACK" if ack_is_unchanged_incomplete else ""
         committed_extra = _committed_card_bundle_artifact_extra(
             project_root,
             record,
             relay_allowed_if_ready=True,
         )
+        delivery_fact = _controller_delivery_fact_for_pending_return(
+            project_root,
+            run_root,
+            record,
+            bundle=True,
+            committed_extra=committed_extra,
+        )
+        status_hint = " after an incomplete bundle ACK" if ack_is_unchanged_incomplete else ""
+        if delivery_fact.get("target_role_ack_reminder_allowed"):
+            summary = (
+                f"Confirm the original committed system-card bundle reached {record.get('target_role')} if needed, then remind the role "
+                f"to complete {record.get('card_return_event')}{status_hint} by opening every bundled card through runtime and ACKing "
+                "the original bundle. Do not issue a duplicate bundle unless the original committed artifact is invalid, lost, stale, or tied to a replaced role."
+            )
+        else:
+            summary = (
+                f"The {record.get('card_return_event')} ACK is missing{status_hint}, but Controller delivery is not confirmed. "
+                "Confirm or reissue delivery of the original committed system-card bundle before reminding the target role."
+            )
         return make_action(
             action_type="await_card_bundle_return_event",
             actor="controller",
             label=f"controller_waits_for_card_bundle_return_{_safe_delivery_component(str(record.get('card_bundle_id') or 'pending'))}",
-            summary=(
-                f"Confirm the original committed system-card bundle reached {record.get('target_role')} if needed, then remind the role "
-                f"to complete {record.get('card_return_event')}{status_hint} by opening every bundled card through runtime and ACKing "
-                "the original bundle. Do not issue a duplicate bundle unless the original committed artifact is invalid, lost, stale, or tied to a replaced role."
-            ),
+            summary=summary,
             allowed_reads=[
                 envelope_path,
                 project_relative(project_root, _return_event_ledger_path(run_root)),
                 project_relative(project_root, _card_ledger_path(run_root)),
+                *[str(path) for path in delivery_fact.get("controller_read_paths") or []],
             ],
             allowed_writes=[
                 project_relative(project_root, _return_event_ledger_path(run_root)),
@@ -6244,11 +6259,12 @@ def _next_pending_card_return_action(
                 "waiting_for_agent_id": record.get("target_agent_id"),
                 "controller_visibility": "pending_return_metadata_only",
                 "sealed_body_reads_allowed": False,
-                **_original_card_ack_reminder_policy(record, bundle=True),
+                **_original_card_ack_reminder_policy(record, bundle=True, delivery_fact=delivery_fact),
                 **committed_extra,
                 "next_recovery_actions": [
-                    "role_uses_open-card-bundle_then_ack-card-bundle",
-                    "controller_reminds_role_to_ack_original_committed_bundle_if_still_live",
+                    "controller_confirms_or_reissues_original_committed_bundle_delivery_first",
+                    "role_uses_open-card-bundle_then_ack-card-bundle_after_delivery_confirmed",
+                    "controller_reminds_role_to_ack_original_committed_bundle_if_delivery_confirmed",
                     "router_reissues_bundle_only_if_original_invalid_lost_stale_or_role_replaced",
                     "router_records_protocol_blocker_if_bundle_ack_is_invalid",
                 ],
@@ -6306,19 +6322,34 @@ def _next_pending_card_return_action(
         record,
         relay_allowed_if_ready=True,
     )
+    delivery_fact = _controller_delivery_fact_for_pending_return(
+        project_root,
+        run_root,
+        record,
+        bundle=False,
+        committed_extra=committed_extra,
+    )
+    if delivery_fact.get("target_role_ack_reminder_allowed"):
+        summary = (
+            f"Confirm the original committed system-card envelope reached {record.get('target_role')} if needed, then remind the role "
+            f"to complete {record.get('card_return_event')} by opening the original card through runtime and ACKing it. "
+            "Do not issue a duplicate card unless the original committed artifact is invalid, lost, stale, or tied to a replaced role."
+        )
+    else:
+        summary = (
+            f"The {record.get('card_return_event')} ACK is missing, but Controller delivery is not confirmed. "
+            "Confirm or reissue delivery of the original committed system-card envelope before reminding the target role."
+        )
     return make_action(
         action_type="await_card_return_event",
         actor="controller",
         label=f"controller_waits_for_card_return_{_safe_delivery_component(str(record.get('delivery_attempt_id') or 'pending'))}",
-        summary=(
-            f"Confirm the original committed system-card envelope reached {record.get('target_role')} if needed, then remind the role "
-            f"to complete {record.get('card_return_event')} by opening the original card through runtime and ACKing it. "
-            "Do not issue a duplicate card unless the original committed artifact is invalid, lost, stale, or tied to a replaced role."
-        ),
+        summary=summary,
         allowed_reads=[
             envelope_path,
             project_relative(project_root, _return_event_ledger_path(run_root)),
             project_relative(project_root, _card_ledger_path(run_root)),
+            *[str(path) for path in delivery_fact.get("controller_read_paths") or []],
         ],
         allowed_writes=[
             project_relative(project_root, _return_event_ledger_path(run_root)),
@@ -6338,11 +6369,12 @@ def _next_pending_card_return_action(
             "waiting_for_agent_id": record.get("target_agent_id"),
             "controller_visibility": "pending_return_metadata_only",
             "sealed_body_reads_allowed": False,
-            **_original_card_ack_reminder_policy(record, bundle=False),
+            **_original_card_ack_reminder_policy(record, bundle=False, delivery_fact=delivery_fact),
             **committed_extra,
             "next_recovery_actions": [
-                "role_uses_open-card_then_ack-card",
-                "controller_reminds_role_to_ack_original_committed_card_if_still_live",
+                "controller_confirms_or_reissues_original_committed_card_delivery_first",
+                "role_uses_open-card_then_ack-card_after_delivery_confirmed",
+                "controller_reminds_role_to_ack_original_committed_card_if_delivery_confirmed",
                 "router_reissues_card_only_if_original_invalid_lost_stale_or_role_replaced",
                 "router_records_protocol_blocker_if_ack_is_invalid",
             ],
@@ -17040,10 +17072,168 @@ def _card_ack_clearance_scope(
     }
 
 
-def _original_card_ack_reminder_policy(record: dict[str, Any], *, bundle: bool = False) -> dict[str, Any]:
+def _delivery_identity(value: Any) -> str:
+    return str(value or "").strip().replace("\\", "/")
+
+
+def _controller_delivery_action_matches_pending_return(action: dict[str, Any], record: dict[str, Any], *, bundle: bool) -> bool:
+    action_type = str(action.get("action_type") or "")
+    if bundle:
+        if action_type != "deliver_system_card_bundle":
+            return False
+        if record.get("card_bundle_id") and action.get("card_bundle_id") == record.get("card_bundle_id"):
+            return True
+        if _delivery_identity(record.get("card_bundle_envelope_path")) and (
+            _delivery_identity(record.get("card_bundle_envelope_path"))
+            == _delivery_identity(action.get("card_bundle_envelope_path"))
+        ):
+            return True
+        record_attempts = {
+            str(item)
+            for item in (record.get("delivery_attempt_ids") or [])
+            if str(item)
+        }
+        action_attempts = {
+            str(item)
+            for item in (action.get("delivery_attempt_ids") or [])
+            if str(item)
+        }
+        return bool(record_attempts and action_attempts and record_attempts.intersection(action_attempts))
+
+    if action_type != "deliver_system_card":
+        return False
+    if record.get("delivery_attempt_id") and action.get("delivery_attempt_id") == record.get("delivery_attempt_id"):
+        return True
+    if record.get("card_id") and action.get("card_id") == record.get("card_id"):
+        if record.get("expected_return_path") and action.get("expected_return_path") == record.get("expected_return_path"):
+            return True
+        if _delivery_identity(record.get("card_envelope_path")) and (
+            _delivery_identity(record.get("card_envelope_path")) == _delivery_identity(action.get("card_envelope_path"))
+        ):
+            return True
+    return False
+
+
+def _matching_controller_delivery_actions(
+    project_root: Path,
+    run_root: Path,
+    record: dict[str, Any],
+    *,
+    bundle: bool,
+) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return matches
+    for path in sorted(action_dir.glob("*.json")):
+        entry = read_json_if_exists(path)
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+        if not _controller_delivery_action_matches_pending_return(action, record, bundle=bundle):
+            continue
+        receipt_path = str(entry.get("receipt_path") or entry.get("expected_receipt_path") or "")
+        matches.append(
+            {
+                "action_id": entry.get("action_id"),
+                "action_type": entry.get("action_type"),
+                "status": entry.get("status") or "pending",
+                "action_path": project_relative(project_root, path),
+                "receipt_path": receipt_path,
+                "updated_at": entry.get("updated_at"),
+                "completed_at": entry.get("completed_at"),
+            }
+        )
+    return matches
+
+
+def _controller_delivery_fact_for_pending_return(
+    project_root: Path,
+    run_root: Path,
+    record: dict[str, Any],
+    *,
+    bundle: bool,
+    committed_extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    extra = committed_extra
+    if extra is None:
+        extra = (
+            _committed_card_bundle_artifact_extra(project_root, record, relay_allowed_if_ready=True)
+            if bundle
+            else _committed_card_artifact_extra(project_root, record, relay_allowed_if_ready=True)
+        )
+    matches = _matching_controller_delivery_actions(project_root, run_root, record, bundle=bundle)
+    statuses = {str(item.get("status") or "pending") for item in matches}
+    artifact_committed = bool(extra.get("artifact_committed"))
+    if not artifact_committed:
+        status = "committed_artifact_missing_or_invalid"
+        target_allowed = False
+        reissue_reason = "original_committed_artifact_missing_or_invalid"
+    elif "done" in statuses:
+        status = "controller_delivery_done"
+        target_allowed = True
+        reissue_reason = ""
+    elif "blocked" in statuses:
+        status = "controller_delivery_blocked"
+        target_allowed = False
+        reissue_reason = "controller_delivery_blocked"
+    elif "skipped" in statuses and not (statuses - {"skipped"}):
+        status = "controller_delivery_skipped"
+        target_allowed = False
+        reissue_reason = "controller_delivery_skipped"
+    elif matches:
+        status = "controller_delivery_unconfirmed"
+        target_allowed = False
+        reissue_reason = "controller_delivery_not_marked_done"
+    else:
+        status = "controller_delivery_fact_unrecorded"
+        target_allowed = True
+        reissue_reason = ""
+
+    controller_read_paths: list[str] = []
+    for item in matches:
+        for key in ("action_path", "receipt_path"):
+            value = str(item.get(key) or "")
+            if value and value not in controller_read_paths:
+                controller_read_paths.append(value)
+
+    return {
+        "schema_version": "flowpilot.controller_delivery_fact.v1",
+        "return_kind": "system_card_bundle" if bundle else "system_card",
+        "card_id": None if bundle else record.get("card_id"),
+        "card_bundle_id": record.get("card_bundle_id") if bundle else None,
+        "delivery_attempt_id": None if bundle else record.get("delivery_attempt_id"),
+        "delivery_attempt_ids": record.get("delivery_attempt_ids") if bundle else None,
+        "card_envelope_path": record.get("card_bundle_envelope_path") if bundle else record.get("card_envelope_path"),
+        "expected_return_path": record.get("expected_return_path"),
+        "artifact_committed": artifact_committed,
+        "artifact_exists": bool(extra.get("artifact_exists")),
+        "artifact_hash_verified": bool(extra.get("artifact_hash_verified")),
+        "matching_controller_actions": matches,
+        "controller_read_paths": controller_read_paths,
+        "controller_delivery_fact_status": status,
+        "controller_delivery_done": status == "controller_delivery_done",
+        "controller_delivery_fact_unrecorded": status == "controller_delivery_fact_unrecorded",
+        "target_role_ack_reminder_allowed": target_allowed,
+        "target_role_ack_reminder_blocked_until_controller_delivery_done": not target_allowed,
+        "controller_delivery_reissue_required": not target_allowed,
+        "controller_delivery_reissue_reason": reissue_reason,
+        "controller_must_not_remind_target_before_delivery_done": True,
+    }
+
+
+def _original_card_ack_reminder_policy(
+    record: dict[str, Any],
+    *,
+    bundle: bool = False,
+    delivery_fact: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     envelope_key = "card_bundle_envelope_path" if bundle else "card_envelope_path"
     receipt_key = "expected_receipt_paths" if bundle else "expected_receipt_path"
-    return {
+    target_allowed = True
+    if delivery_fact is not None:
+        target_allowed = bool(delivery_fact.get("target_role_ack_reminder_allowed"))
+    policy = {
         "missing_ack_recovery": "remind_target_role_to_ack_original_committed_card",
         "reminder_target": "original_committed_card_bundle" if bundle else "original_committed_card",
         "original_envelope_path": record.get(envelope_key),
@@ -17054,7 +17244,19 @@ def _original_card_ack_reminder_policy(record: dict[str, Any], *, bundle: bool =
         "ack_is_read_receipt_only": True,
         "target_work_completion_evidence_required_separately": True,
         "ack_clearance_scope": record.get("ack_clearance_scope"),
+        "controller_delivery_fact": delivery_fact or {},
+        "target_role_ack_reminder_allowed": target_allowed,
+        "controller_delivery_reissue_required_before_target_ack_reminder": not target_allowed,
     }
+    if not target_allowed:
+        policy.update(
+            {
+                "missing_ack_recovery": "confirm_or_reissue_controller_delivery_before_target_ack_reminder",
+                "reminder_target": "controller_delivery_task",
+                "target_role_ack_reminder_allowed": False,
+            }
+        )
+    return policy
 
 
 def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:

@@ -22,6 +22,10 @@ FlowPilot SHALL maintain a Router-owned ledger for workflow ownership, waiting, 
 - **WHEN** the Controller ledger says an action is done but Router-owned evidence has not yet been reclaimed
 - **THEN** Router keeps the workflow item in a reclaim-pending or waiting state instead of treating the Controller receipt as final completion
 
+#### Scenario: Controller cannot read Router workflow ledger
+- **WHEN** Router writes daemon status for Controller
+- **THEN** Controller can see the Controller action ledger and safe recovery facts, but not the Router ownership ledger entries or workflow-state table
+
 ### Requirement: Router reconciles before choosing next action or blocker
 FlowPilot SHALL run a reconciliation barrier before every daemon next-action decision, manual next-action decision, and control-blocker creation.
 
@@ -32,6 +36,17 @@ FlowPilot SHALL run a reconciliation barrier before every daemon next-action dec
 #### Scenario: Unsupported stateful host action remains incomplete
 - **WHEN** Controller has a done receipt for a stateful host action that has no registered durable reclaim path and its postcondition remains false
 - **THEN** Router creates the existing stateful postcondition blocker
+
+### Requirement: Missing ACK recovery checks Controller delivery first
+FlowPilot SHALL check Controller delivery facts before reminding a target role about a missing system-card ACK.
+
+#### Scenario: Controller delivery not confirmed
+- **WHEN** a system-card ACK is missing and the matching Controller delivery action is pending, blocked, skipped, missing a valid committed artifact, or otherwise not confirmed done
+- **THEN** Router returns a Controller delivery confirmation or reissue recovery action and MUST NOT remind the target role yet
+
+#### Scenario: Controller delivery confirmed
+- **WHEN** a system-card ACK is missing and the matching Controller delivery action is confirmed done with the original committed envelope or bundle still valid
+- **THEN** Router may remind the target role to open and ACK the original committed card or bundle, without issuing a duplicate system card
 
 ### Requirement: Reconciliation stays lightweight
 FlowPilot SHALL keep recurring daemon reconciliation scoped to the current run's known ledger entries and registered artifact paths.

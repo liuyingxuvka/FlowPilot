@@ -3469,6 +3469,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(status["schema_version"], router.ROUTER_DAEMON_STATUS_SCHEMA)
         self.assertTrue(status["daemon_mode_enabled"])
         self.assertEqual(status["tick_interval_seconds"], 1)
+        self.assertNotIn("router_ownership_ledger", status)
+        self.assertFalse(status["router_internal_ownership_ledger_visible_to_controller"])
+        self.assertTrue((run_root / "runtime" / "router_ownership_ledger.json").exists())
         self.assertEqual(ledger["schema_version"], router.CONTROLLER_ACTION_LEDGER_SCHEMA)
 
         with self.assertRaisesRegex(router.RouterError, "already active"):
@@ -5383,12 +5386,83 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(wait["reissue_allowed_only_if_original_invalid_lost_stale_or_role_replaced"])
         self.assertEqual(wait["original_envelope_path"], action["card_envelope_path"])
         self.assertEqual(wait["original_expected_return_path"], action["expected_return_path"])
+        self.assertTrue(wait["target_role_ack_reminder_allowed"])
+        self.assertEqual(wait["controller_delivery_fact"]["controller_delivery_fact_status"], "controller_delivery_fact_unrecorded")
         self.assertTrue(wait["ack_is_read_receipt_only"])
         self.assertTrue(wait["target_work_completion_evidence_required_separately"])
         return_ledger = read_json(run_root / "return_event_ledger.json")
         scope = return_ledger["pending_returns"][0]["ack_clearance_scope"]
         self.assertIn("gate_or_node_boundary_transition", scope["required_before"])
         self.assertIn("formal_work_packet_relay_to_target_role", scope["required_before"])
+
+    def test_missing_system_card_ack_wait_confirms_controller_delivery_before_target_reminder(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        state = read_json(router.run_state_path(run_root))
+        router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report_pre_ack_controller_delivery_unconfirmed",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertFalse(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        wait = state["pending_action"]
+        self.assertEqual(wait["action_type"], "await_card_return_event")
+        self.assertEqual(wait["missing_ack_recovery"], "confirm_or_reissue_controller_delivery_before_target_ack_reminder")
+        self.assertEqual(wait["reminder_target"], "controller_delivery_task")
+        self.assertFalse(wait["target_role_ack_reminder_allowed"])
+        self.assertTrue(wait["controller_delivery_reissue_required_before_target_ack_reminder"])
+        fact = wait["controller_delivery_fact"]
+        self.assertEqual(fact["controller_delivery_fact_status"], "controller_delivery_unconfirmed")
+        self.assertFalse(fact["target_role_ack_reminder_allowed"])
+        self.assertEqual(fact["controller_delivery_reissue_reason"], "controller_delivery_not_marked_done")
+        self.assertTrue(fact["matching_controller_actions"])
+
+    def test_missing_system_card_ack_after_controller_delivery_done_reminds_target_role(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        state = read_json(router.run_state_path(run_root))
+        router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=action["controller_action_id"],
+            status="done",
+            payload={"delivery_relayed": True},
+        )
+        router.save_run_state(run_root, state)
+
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_startup_fact_report_pre_ack_controller_delivery_done",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertFalse(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        wait = state["pending_action"]
+        self.assertEqual(wait["missing_ack_recovery"], "remind_target_role_to_ack_original_committed_card")
+        self.assertEqual(wait["reminder_target"], "original_committed_card")
+        self.assertTrue(wait["target_role_ack_reminder_allowed"])
+        self.assertFalse(wait["controller_delivery_reissue_required_before_target_ack_reminder"])
+        self.assertEqual(wait["controller_delivery_fact"]["controller_delivery_fact_status"], "controller_delivery_done")
 
     def test_formal_work_packet_ack_preflight_blocks_target_pending_card_ack(self) -> None:
         root = self.make_project()
@@ -5437,7 +5511,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(blocked["blocked_formal_work_packet"]["action_type"], "relay_material_scan_packets")
         self.assertFalse(blocked["formal_work_packet_ack_preflight"]["passed"])
         self.assertEqual(blocked["formal_work_packet_ack_preflight"]["pending_return_count"], 1)
-        self.assertEqual(blocked["missing_ack_recovery"], "remind_target_role_to_ack_original_committed_card")
+        self.assertEqual(blocked["missing_ack_recovery"], "confirm_or_reissue_controller_delivery_before_target_ack_reminder")
+        self.assertFalse(blocked["target_role_ack_reminder_allowed"])
+        self.assertEqual(blocked["controller_delivery_fact"]["controller_delivery_fact_status"], "committed_artifact_missing_or_invalid")
         self.assertFalse(blocked["duplicate_system_card_delivery_allowed"])
 
     def test_quarantined_pre_ack_report_requires_fresh_report_after_ack(self) -> None:
