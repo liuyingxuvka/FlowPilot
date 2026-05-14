@@ -18,7 +18,7 @@ recipient_role: <same-as-result-envelope-next_recipient>
 recipient_identity: I completed this as `<completed_by_role>` for this packet result only; the next recipient must read it only as the result envelope recipient.
 allowed_scope: Read and review only this result body, its result envelope, and the source packet evidence after verifying Controller relay and completed_by_role identity.
 forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass Router, hide unresolved issues, or relabel this result.
-required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, officer response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path.
+required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, officer response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path. Result envelopes land in the Router mailbox; the Router daemon consumes valid evidence on its one-second tick, and result producers do not advance route state directly.
 ---
 
 # Result Body

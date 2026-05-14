@@ -1259,10 +1259,16 @@ def _pm_control_blocker_card_events(*texts: str) -> frozenset[str]:
 
 
 def _pm_control_blocker_allowed_events(router: Any) -> frozenset[str]:
+    policy_row = router._control_blocker_policy_row(  # noqa: SLF001 - source conformance probe
+        "reviewer_reports_startup_facts",
+        "pm_repair_decision_required",
+    )
     policy = router._control_blocker_policy(  # noqa: SLF001 - source conformance probe
         "pm_repair_decision_required",
         responsible_role="project_manager",
         event="reviewer_reports_startup_facts",
+        policy_row=policy_row,
+        target_role="project_manager",
     )
     raw = policy.get("allowed_resolution_events")
     if not isinstance(raw, list):

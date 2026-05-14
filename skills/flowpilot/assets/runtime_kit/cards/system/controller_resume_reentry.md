@@ -28,6 +28,8 @@ First load only the current-run control files named by the router action:
 
 - `.flowpilot/current.json`;
 - the active run `router_state.json`;
+- `runtime/router_daemon_status.json`;
+- `runtime/controller_action_ledger.json`;
 - `prompt_delivery_ledger.json`;
 - `packet_ledger.json`;
 - `execution_frontier.json`;
@@ -45,6 +47,10 @@ Also check continuation authority:
 - startup answers allow heartbeat or manual resume for this run;
 - latest heartbeat/manual-resume evidence belongs to this run;
 - role memory count and role freshness are visible to PM.
+- Router daemon status belongs to this run. If the daemon lock is live, attach
+  Controller to the existing action ledger instead of starting a second Router
+  writer. If the daemon lock is stale or missing, restart the daemon from
+  current-run persisted state before role recovery or route work.
 
 Do not read `packet_body.md`, `result_body.md`, old route files, old screenshots,
 old icons, old concept assets, or chat history as route authority.
@@ -84,8 +90,9 @@ requesting anything else. That notice is Controller-visible metadata only; it
 does not authorize Controller to read sealed packet or result bodies.
 
 Router-ready evidence still preempts foreground role waits during resume. If
-resume state, packet ledgers, return ledgers, status packets, or
-`controller_next_action_notice.json` show that Router can expose the next
-action, return to Router before any foreground role wait. Use bounded
+resume state, daemon status, packet ledgers, return ledgers, status packets,
+Controller receipts, or `controller_next_action_notice.json` show that Router
+can expose or has already exposed the next action, return to Router before any foreground role wait
+and clear the Controller action ledger. Use bounded
 `wait_agent` only for Router-requested liveness/recovery preflight; a timeout
 is `timeout_unknown`, not active continuity.

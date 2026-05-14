@@ -25,6 +25,8 @@
       "load_current_run_state",
       "rehydrate_or_restore_roles",
       "read_packet_and_result_envelopes_only",
+      "check_router_daemon_status_and_lock",
+      "reattach_controller_action_ledger",
       "verify_controller_relay_history",
       "sign_controller_relay_without_reading_body",
       "relay_pm_decision",
@@ -43,6 +45,7 @@
       "advance_route_from_controller_evidence",
       "read_packet_body",
       "read_result_body",
+      "start_second_router_daemon_when_live_lock_exists",
       "execute_packet_body",
       "execute_result_body"
     ],
@@ -54,6 +57,8 @@
       "load_current_pointer_and_active_run",
       "load_state_frontier_route_crew_memory_latest_heartbeat_packet_ledger_and_relay_history",
       "verify_heartbeat_bound_to_current_run_and_thread_or_workspace",
+      "check_router_daemon_status_lock_and_controller_action_ledger",
+      "restart_stale_or_missing_daemon_before_role_or_route_recovery",
       "restore_visible_plan_from_current_run",
       "run_six_role_liveness_preflight_and_check_current_awaited_role",
       "rehydrate_or_restore_required_roles_before_declaring_wait_or_alive",
@@ -68,6 +73,15 @@
       "continue_waiting_on_missing_cancelled_or_unknown_agent",
       "rewrite_heartbeat_prompt_with_route_specific_work"
     ]
+  },
+  "router_daemon_recovery": {
+    "daemon_status_path": ".flowpilot/runs/run-001/runtime/router_daemon_status.json",
+    "daemon_lock_path": ".flowpilot/runs/run-001/runtime/router_daemon.lock",
+    "controller_action_ledger_path": ".flowpilot/runs/run-001/runtime/controller_action_ledger.json",
+    "check_before_role_liveness": true,
+    "attach_when_live": true,
+    "restart_from_persisted_run_state_when_missing_or_stale": true,
+    "start_second_writer_when_live_lock_exists": false
   },
   "continuation": {
     "host_probe_done": false,

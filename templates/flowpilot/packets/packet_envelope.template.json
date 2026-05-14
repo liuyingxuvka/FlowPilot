@@ -26,6 +26,13 @@
     "use_when_router_issues_lease": true,
     "fallback_to_controller_relay_when_no_live_agent": true
   },
+  "router_mailbox_return": {
+    "ack_and_result_events_go_to_router_mailbox": true,
+    "router_daemon_consumes_valid_evidence_on_tick": true,
+    "tick_interval_seconds": 1,
+    "role_may_not_directly_advance_route_state": true,
+    "controller_body_reads_forbidden": true
+  },
   "output_contract": {
     "schema_version": "flowpilot.output_contract.v1",
     "contract_id": "<system-registry-contract-id>",
@@ -111,6 +118,7 @@
     "display_chat_mermaid_when_required",
     "emit_holder_change_status_update",
     "wait_for_role_return",
+    "write_controller_receipt_and_rescan_action_ledger",
     "return_envelope_to_pm_on_blocker"
   ],
   "controller_forbidden_actions": [

@@ -53,17 +53,17 @@ REQUIRED_RISK_FAMILY_MASK = (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Tick:
     """One heartbeat/autopilot decision step."""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Action:
     name: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class State:
     status: str = "new"  # new | running | blocked | complete
     flowpilot_enabled: bool = False
@@ -175,6 +175,14 @@ class State:
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
     controller_core_loaded: bool = False
+    router_daemon_started: bool = False
+    router_daemon_lock_acquired: bool = False
+    router_daemon_tick_seconds: int = 0
+    router_daemon_status_written: bool = False
+    controller_action_ledger_initialized: bool = False
+    controller_action_watch_active: bool = False
+    router_daemon_recovered_on_resume: bool = False
+    terminal_router_daemon_stopped: bool = False
     pm_initial_route_decision_recorded: bool = False
     pm_child_skill_selection_manifest_written: bool = False
     pm_child_skill_minimum_sufficient_complexity_review_written: bool = False
@@ -2214,6 +2222,22 @@ class AutopilotStep:
                 stable_heartbeat_launcher_recorded=True,
                 heartbeat_bound_to_current_run=True,
                 heartbeat_same_name_only_checked=False,
+                active_node="load_controller_core",
+            )
+            return
+
+        if not state.router_daemon_started and not state.terminal_router_daemon_stopped:
+            yield _step(
+                state,
+                label="persistent_router_daemon_started_before_controller_core",
+                action="start the persistent Router daemon with one run-scoped lock, one-second ticks, a status file, and an initialized Controller action ledger before loading Controller core",
+                router_daemon_started=True,
+                router_daemon_lock_acquired=True,
+                router_daemon_tick_seconds=1,
+                router_daemon_status_written=True,
+                controller_action_ledger_initialized=True,
+                controller_action_watch_active=True,
+                terminal_router_daemon_stopped=False,
                 active_node="load_controller_core",
             )
             return
@@ -4524,6 +4548,19 @@ class AutopilotStep:
                     active_node="reconcile_lifecycle",
                 )
                 return
+            if not state.terminal_router_daemon_stopped:
+                yield _step(
+                    state,
+                    label="terminal_router_daemon_stopped",
+                    action="stop the persistent Router daemon, release its run lock, stop Controller action watching, and write terminal daemon status before final route shutdown",
+                    router_daemon_started=False,
+                    router_daemon_lock_acquired=False,
+                    router_daemon_tick_seconds=0,
+                    controller_action_watch_active=False,
+                    terminal_router_daemon_stopped=True,
+                    active_node="terminal_router_daemon_stopped",
+                )
+                return
             if not state.terminal_lifecycle_frontier_written:
                 yield _step(
                     state,
@@ -4606,6 +4643,25 @@ class AutopilotStep:
                     label="heartbeat_loaded_packet_ledger",
                     action="continuation turn loads packet_ledger.json before asking PM or dispatching worker work",
                     heartbeat_loaded_packet_ledger=True,
+                    active_node="heartbeat_load_crew_memory",
+                )
+                return
+            if (
+                not state.router_daemon_recovered_on_resume
+                and not state.terminal_router_daemon_stopped
+            ):
+                yield _step(
+                    state,
+                    label="heartbeat_checked_or_restarted_persistent_router_daemon",
+                    action="continuation turn checks the persistent Router daemon lock/status, restarts only a dead or stale daemon, and rescans the Controller action ledger before role recovery or PM resume",
+                    router_daemon_started=True,
+                    router_daemon_lock_acquired=True,
+                    router_daemon_tick_seconds=1,
+                    router_daemon_status_written=True,
+                    controller_action_ledger_initialized=True,
+                    controller_action_watch_active=True,
+                    router_daemon_recovered_on_resume=True,
+                    terminal_router_daemon_stopped=False,
                     active_node="heartbeat_load_crew_memory",
                 )
                 return
@@ -6259,10 +6315,31 @@ def stable_heartbeat_prompt_not_route_state(state: State, trace) -> InvariantRes
 
 def startup_continuation_bootstraps_before_controller_core(state: State, trace) -> InvariantResult:
     del trace
+    if state.terminal_router_daemon_stopped:
+        if (
+            state.router_daemon_started
+            or state.router_daemon_lock_acquired
+            or state.controller_action_watch_active
+        ):
+            return InvariantResult.fail("terminal Router daemon stop left daemon, lock, or Controller watch active")
+        return InvariantResult.pass_()
     if state.controller_core_loaded and not _continuation_ready(state):
         return InvariantResult.fail(
             "Controller core loaded before startup continuation was bound to heartbeat or manual resume"
         )
+    if state.controller_core_loaded and not state.terminal_router_daemon_stopped and not (
+        state.router_daemon_started
+        and state.router_daemon_lock_acquired
+        and state.router_daemon_tick_seconds == 1
+        and state.router_daemon_status_written
+        and state.controller_action_ledger_initialized
+        and state.controller_action_watch_active
+    ):
+        return InvariantResult.fail(
+            "Controller core loaded before persistent Router daemon and Controller action ledger were ready"
+        )
+    if state.router_daemon_started and state.router_daemon_tick_seconds != 1:
+        return InvariantResult.fail("persistent Router daemon did not use a fixed one-second tick")
     if state.controller_core_loaded and state.host_continuation_supported and not _automated_continuation_configured(state):
         return InvariantResult.fail(
             "Controller core loaded before scheduled-continuation heartbeat was fully configured"
@@ -6761,10 +6838,13 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.crew_memory_packets_written == CREW_SIZE
     ):
         return InvariantResult.fail("startup was ratified before all role memory packets were written")
-    if state.heartbeat_pm_decision_requested and not (
+    if state.heartbeat_pm_decision_requested and not state.terminal_router_daemon_stopped and not (
         state.heartbeat_loaded_state
         and state.heartbeat_loaded_frontier
         and state.heartbeat_loaded_packet_ledger
+        and state.router_daemon_recovered_on_resume
+        and state.router_daemon_started
+        and state.controller_action_watch_active
         and state.heartbeat_loaded_crew_memory
         and state.heartbeat_host_rehydrate_requested
         and state.heartbeat_restored_crew
@@ -6787,6 +6867,8 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("checkpoint written before role memory refresh after meaningful role work")
     if state.crew_archived and not state.crew_memory_archived:
         return InvariantResult.fail("crew ledger archived before role memory archive")
+    if state.status == "complete" and not state.terminal_router_daemon_stopped:
+        return InvariantResult.fail("route completed before stopping the persistent Router daemon")
     return InvariantResult.pass_()
 
 

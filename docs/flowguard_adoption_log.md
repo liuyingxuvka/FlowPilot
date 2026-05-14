@@ -1175,6 +1175,32 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - none recorded
 
+
+## controller-wait-boundary-audit - Audit FlowPilot Controller stop at role ACK wait boundary
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User observed that stopping the foreground Controller at a role wait can stop background agents and halt FlowPilot progress
+- Status: read-only audit completed
+- Skill decision: used_flowguard read_only_audit
+- Started: 2026-05-14T10:50:00+00:00
+- Ended: 2026-05-14T10:50:00+00:00
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `openspec list --json`
+- OK: inspected `HANDOFF.md`, `docs/flowguard_preflight_findings.md`, current run router/lifecycle records, router wait code, and related OpenSpec artifacts
+- OK: `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_record_external_event_does_not_preconsume_incomplete_bundle_ack tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_user_intake_mail_requires_packet_ledger_check_after_pm_cards`
+
+### Findings
+- The stopped run did receive both direct Router ACKs. PM bundle ACK returned at `2026-05-14T10:45:15Z`.
+- The Router would have advanced to `check_packet_ledger` after a subsequent `next`/`run-until-wait`; focused tests confirm that path.
+- The live failure mode is a host/protocol liveness mismatch: current Controller guidance treats ordinary card/bundle waits as controlled stops for heartbeat/manual resume, but the current host workflow may not preserve useful background-agent progress once the foreground Controller turn ends.
+- A durable fix should model and require either bounded artifact-based foreground polling until ACK consumption, or proven host continuation/role-rehydration before allowing Controller to end a nonterminal card/bundle wait.
+
+### Skipped Steps
+- No production code was changed in this audit.
+- Full FlowGuard suites were not rerun because the task was diagnostic and two focused runtime tests directly covered the observed ACK continuation path.
+
 ## 2026-05-14 - Unified Blocker Repair Policy
 
 ### Trigger
@@ -10024,3 +10050,75 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - none recorded
+
+## daemonize-flowpilot-router - Persistent Router daemon and Controller action ledger
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Controller could stop at a nonterminal role wait after all card ACK evidence had already reached Router, leaving no foreground actor to call Router again.
+- Status: completed with focused follow-up coverage still tracked in OpenSpec
+- Skill decision: used_flowguard
+- Started: 2026-05-14T13:00:00+02:00
+- Ended: 2026-05-14T16:35:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_persistent_router_daemon_model.py
+- simulations/run_flowpilot_persistent_router_daemon_checks.py
+- simulations/meta_model.py
+- simulations/run_meta_checks.py
+- simulations/capability_model.py
+- simulations/run_capability_checks.py
+- simulations/flowpilot_resume_model.py
+- simulations/run_flowpilot_resume_checks.py
+- simulations/flowpilot_protocol_contract_conformance_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python simulations/run_flowpilot_persistent_router_daemon_checks.py --json-out simulations/flowpilot_persistent_router_daemon_results.json`
+- OK: `python simulations/run_flowpilot_resume_checks.py`
+- OK: `python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json`
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json`
+- OK: `python simulations/run_flowpilot_event_contract_checks.py --json-out simulations/flowpilot_event_contract_results.json`
+- OK: `python simulations/run_protocol_contract_conformance_checks.py --json-out simulations/protocol_contract_conformance_results.json`
+- OK: all `simulations/run_*_checks.py` scripts passed after the protocol conformance probe was corrected.
+- OK: background `python simulations/run_meta_checks.py --force`: exit 0, 1,949,768 states, 2,010,668 edges, 0 invariant failures, proof reuse `not_reused_force`.
+- OK: background `python simulations/run_capability_checks.py --force`: exit 0, 1,959,064 states, 2,036,034 edges, 0 invariant failures, proof reuse `not_reused_force`.
+- OK: `python -m py_compile skills/flowpilot/assets/flowpilot_router.py tests/test_flowpilot_router_runtime.py`
+- OK: focused daemon, heartbeat, and run-until-wait runtime tests: 12 passed.
+- OK: prompt/source checks: card instruction coverage, role-output runtime, startup-control, protocol conformance, and `python scripts/check_install.py`.
+- OK: local install sync and audit: `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`.
+
+### Findings
+- Router now has a per-run daemon mode with a fixed one-second tick, a run-scoped single-writer lock, daemon status, daemon event log, and stale-lock recovery path.
+- Controller-visible work now persists in `runtime/controller_action_ledger.json` with per-action files and required Controller receipts; Router does not mark Controller work done without a valid receipt.
+- Daemon ticks call the existing Router decision path, so valid card ACK, bundle ACK, report, packet ACK, result envelope, and return-ledger evidence can be reconciled without a foreground manual `next`.
+- Controller, heartbeat/manual resume, PM/reviewer/worker/officer role cards, packet templates, and protocol text now say role ACKs/results go to the Router mailbox; the daemon consumes valid evidence and roles do not advance route state directly.
+- Local installed FlowPilot is source-fresh against the repository after the final sync.
+
+### Counterexamples
+- `pm_bundle_ack_available_but_no_daemon_consumes_it`
+- `duplicate_router_daemon_writers_for_one_run`
+- `controller_action_marked_done_without_receipt`
+- `controller_stops_at_nonterminal_daemon_wait`
+- `heartbeat_starts_second_router_instead_of_attaching`
+
+### Friction Points
+- Prompt/source scanners rely on exact Router-ready wait-preemption phrases, so daemon wording had to preserve those existing strings while adding ledger/daemon wording.
+- `skills/flowpilot/SKILL.md` must remain a small launcher; earlier wording exceeded the self-check line threshold and was shortened.
+- Full broad router-runtime selection remains slower than the focused smoke subset, so this pass used focused runtime tests plus full FlowGuard model coverage.
+
+### Skipped Steps
+- No remote GitHub push, tag, or release action was performed.
+- OpenSpec still tracks targeted follow-up tests for malformed daemon ACKs, multi-action ledger edge cases, resume stale-daemon scenarios, Route Sign sourcing, and focused card/packet runtime compatibility.
+
+### Next Actions
+- Add the remaining focused tests listed in `openspec/changes/daemonize-flowpilot-router/tasks.md` before archiving the change.
+- Keep future wait/recovery changes modeled first in the persistent daemon model and rerun meta/capability checks when project-control flow changes.
+
+### Finalization Update
+- Status: completed.
+- OpenSpec: `daemonize-flowpilot-router` is complete and passes strict validation.
+- Follow-up tests added and passed for malformed daemon ACK variants, incomplete bundle ACK waits, duplicate stale ACK idempotency, multi-action Controller ledger receipts, live daemon resume, stale/missing daemon recovery, and Route Sign/status sourcing.
+- Local install: `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/install_flowpilot.py --check --json` all passed with installed FlowPilot source-fresh.
+- Heavy meta/capability checks were not rerun during finalization because the user explicitly narrowed validation scope and the heavy FlowGuard models/flag logic had not changed after their prior successful run.
+- Future rule: rerun heavyweight meta/capability checks only when project-control flow, skill/capability routing, heavy FlowGuard models, or runner semantics change.

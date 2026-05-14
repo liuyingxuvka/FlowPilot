@@ -24,6 +24,7 @@ REQUIRED_LABELS = (
     "current_run_root_loaded",
     "old_run_control_state_rejected",
     "router_state_loaded",
+    "persistent_router_daemon_checked_or_restarted",
     "packet_ledger_loaded",
     "prompt_ledger_loaded",
     "execution_frontier_loaded",
@@ -82,7 +83,14 @@ def _state_id(state: model.State) -> str:
         f"after_pm={state.control_blocker_handled_after_pm_resume_decision}|"
         f"ptr={state.current_pointer_loaded},{state.current_pointer_valid}|"
         f"run={state.run_root_loaded},{state.run_root_matches_pointer}|"
-        f"router={state.router_state_loaded}|packet={state.packet_ledger_loaded}|"
+        f"router={state.router_state_loaded}|"
+        f"daemon={state.router_daemon_status_loaded},"
+        f"{state.router_daemon_liveness_checked},"
+        f"{state.router_daemon_restarted_if_dead},"
+        f"{state.router_daemon_duplicate_lock_rejected},"
+        f"ledger={state.controller_action_ledger_loaded},"
+        f"{state.controller_action_ledger_rescanned}|"
+        f"packet={state.packet_ledger_loaded}|"
         f"prompt={state.prompt_ledger_loaded}|frontier={state.frontier_loaded}|"
         f"visible_plan={state.visible_plan_restored_from_run}|"
         f"crew={state.crew_memory_loaded},{state.host_role_rehydrate_requested},"

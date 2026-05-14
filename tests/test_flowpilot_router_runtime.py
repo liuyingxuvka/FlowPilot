@@ -865,6 +865,39 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             )
         )
 
+    def submit_system_card_ack_without_router_next(self, root: Path, action: dict) -> None:
+        role = str(action["to_role"])
+        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or f"{role}-agent"
+        if action["action_type"] == "deliver_system_card_bundle":
+            open_result = card_runtime.open_card_bundle(
+                root,
+                envelope_path=str(action["card_bundle_envelope_path"]),
+                role=role,
+                agent_id=agent_id,
+            )
+            card_runtime.submit_card_bundle_ack(
+                root,
+                envelope_path=str(action["card_bundle_envelope_path"]),
+                role=role,
+                agent_id=agent_id,
+                receipt_paths=[str(path) for path in open_result["read_receipt_paths"]],
+            )
+            return
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        open_result = card_runtime.open_card(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+        )
+        card_runtime.submit_card_ack(
+            root,
+            envelope_path=str(action["card_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+            receipt_paths=[str(open_result["read_receipt_path"])],
+        )
+
     def deliver_user_intake_mail(self, root: Path) -> None:
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "check_packet_ledger")
@@ -3230,6 +3263,268 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
 
+    def test_router_daemon_observation_initializes_lock_status_and_ledger(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        result = router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["tick_interval_seconds"], 1)
+        lock = read_json(run_root / "runtime" / "router_daemon.lock")
+        status = read_json(run_root / "runtime" / "router_daemon_status.json")
+        ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        self.assertEqual(lock["schema_version"], router.ROUTER_DAEMON_LOCK_SCHEMA)
+        self.assertEqual(lock["status"], "active")
+        self.assertEqual(status["schema_version"], router.ROUTER_DAEMON_STATUS_SCHEMA)
+        self.assertTrue(status["daemon_mode_enabled"])
+        self.assertEqual(status["tick_interval_seconds"], 1)
+        self.assertEqual(ledger["schema_version"], router.CONTROLLER_ACTION_LEDGER_SCHEMA)
+
+        with self.assertRaisesRegex(router.RouterError, "already active"):
+            router.run_router_daemon(root, max_ticks=1, observe_only=True)
+        stopped = router.stop_router_daemon(root, reason="test_cleanup")
+        self.assertEqual(stopped["lock_status"], "released")
+
+    def test_router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        self.assertEqual(result["tick_count"], 1)
+        action_id = result["ticks"][0]["controller_action_id"]
+        self.assertTrue(action_id)
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
+        self.assertEqual(action_record["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
+        self.assertIn(action_record["status"], {"pending", "waiting"})
+        receipt_result = router.record_controller_action_receipt(
+            root,
+            action_id=action_id,
+            status="done",
+            payload={"test_receipt": True},
+        )
+        self.assertTrue(receipt_result["ok"])
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
+        self.assertEqual(action_record["status"], "done")
+        ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        self.assertGreaterEqual(ledger["counts"]["done"], 1)
+
+    def test_controller_action_ledger_handles_multiple_receipts_and_duplicates(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+
+        first_action = router.make_action(
+            action_type="check_prompt_manifest",
+            actor="controller",
+            label="test_multi_action_first",
+            summary="Test first ledger action.",
+        )
+        second_action = router.make_action(
+            action_type="write_startup_mechanical_audit",
+            actor="controller",
+            label="test_multi_action_second",
+            summary="Test dependent ledger action.",
+            extra={"dependencies": ["test_multi_action_first"]},
+        )
+        blocked_action = router.make_action(
+            action_type="write_display_surface_status",
+            actor="controller",
+            label="test_multi_action_blocked",
+            summary="Test blocked ledger action.",
+        )
+        first = router._write_controller_action_entry(root, run_root, state, first_action)  # type: ignore[attr-defined]
+        second = router._write_controller_action_entry(root, run_root, state, second_action)  # type: ignore[attr-defined]
+        blocked = router._write_controller_action_entry(root, run_root, state, blocked_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        self.assertEqual(ledger["counts"]["pending"], 3)
+        second_record = read_json(run_root / "runtime" / "controller_actions" / f"{second['action_id']}.json")
+        self.assertEqual(second_record["dependencies"], ["test_multi_action_first"])
+
+        router.record_controller_action_receipt(root, action_id=first["action_id"], status="done")
+        router.record_controller_action_receipt(root, action_id=first["action_id"], status="done")
+        router.record_controller_action_receipt(root, action_id=second["action_id"], status="done")
+        router.record_controller_action_receipt(
+            root,
+            action_id=blocked["action_id"],
+            status="blocked",
+            payload={"reason": "test-blocked"},
+        )
+
+        ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        self.assertEqual(ledger["counts"]["done"], 2)
+        self.assertEqual(ledger["counts"]["blocked"], 1)
+        first_record = read_json(run_root / "runtime" / "controller_actions" / f"{first['action_id']}.json")
+        blocked_record = read_json(run_root / "runtime" / "controller_actions" / f"{blocked['action_id']}.json")
+        self.assertEqual(first_record["status"], "done")
+        self.assertEqual(blocked_record["status"], "blocked")
+        self.assertEqual(blocked_record["blocked_payload"], {"reason": "test-blocked"})
+
+    def test_router_daemon_tick_consumes_card_ack_without_manual_next(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        while True:
+            action = self.next_after_display_sync(root)
+            if action["action_type"] in {
+                "confirm_controller_core_boundary",
+                "check_prompt_manifest",
+                "write_startup_mechanical_audit",
+                "write_display_surface_status",
+            }:
+                router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+                continue
+            self.assertIn(action["action_type"], {"deliver_system_card", "deliver_system_card_bundle"})
+            break
+
+        self.submit_system_card_ack_without_router_next(root, action)
+        before = read_json(router.run_state_path(run_root))
+        self.assertEqual(before["pending_action"]["action_type"], action["action_type"])
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        self.assertEqual(result["tick_count"], 1)
+        after = read_json(router.run_state_path(run_root))
+        labels = [item["label"] for item in after["history"] if isinstance(item, dict)]
+        self.assertIn("router_auto_consumed_card_return_ack", labels)
+        self.assertNotEqual((after.get("pending_action") or {}).get("action_id"), action.get("action_id"))
+
+    def test_router_daemon_invalid_card_ack_variants_do_not_advance(self) -> None:
+        variants = {
+            "wrong_role": lambda ack: ack.update({"role_key": "project_manager"}),
+            "wrong_hash": lambda ack: ack.update({"card_envelope_hash": "0" * 64}),
+        }
+        for variant, mutate in variants.items():
+            with self.subTest(variant=variant):
+                root = self.make_project()
+                run_root = self.boot_to_controller(root)
+                action = self.deliver_startup_fact_check_card_without_ack(root)
+                open_result = card_runtime.open_card(
+                    root,
+                    envelope_path=str(action["card_envelope_path"]),
+                    role=str(action["to_role"]),
+                    agent_id=str(action["target_agent_id"]),
+                )
+                card_runtime.submit_card_ack(
+                    root,
+                    envelope_path=str(action["card_envelope_path"]),
+                    role=str(action["to_role"]),
+                    agent_id=str(action["target_agent_id"]),
+                    receipt_paths=[str(open_result["read_receipt_path"])],
+                )
+                ack_path = root / action["expected_return_path"]
+                ack = read_json(ack_path)
+                mutate(ack)
+                ack["ack_hash"] = card_runtime.stable_json_hash(ack)
+                router.write_json(ack_path, ack)
+
+                result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+                self.assertEqual(result["ticks"][0]["action_type"], "check_card_return_event")
+                state = read_json(router.run_state_path(run_root))
+                self.assertFalse(state["flags"]["startup_fact_reported"])
+                self.assertEqual(state["pending_action"]["action_type"], "check_card_return_event")
+                labels = [item["label"] for item in state["history"] if isinstance(item, dict)]
+                self.assertIn("router_deferred_invalid_card_ack_to_explicit_check", labels)
+                return_ledger = read_json(run_root / "return_event_ledger.json")
+                self.assertNotEqual(return_ledger["pending_returns"][0].get("status"), "resolved")
+
+    def test_router_daemon_incomplete_bundle_ack_waits_without_advancing(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_startup_fact_check_card(root)
+        manifest_action = self.next_after_display_sync(root)
+        self.assertEqual(manifest_action["action_type"], "check_prompt_manifest")
+        router.apply_action(root, "check_prompt_manifest")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
+
+        role = str(action["to_role"])
+        agent_id = str(action["target_agent_id"])
+        opened = card_runtime.open_card_bundle(
+            root,
+            envelope_path=str(action["card_bundle_envelope_path"]),
+            role=role,
+            agent_id=agent_id,
+        )
+        envelope = read_json(root / action["card_bundle_envelope_path"])
+        receipt_refs = []
+        for receipt_path in opened["read_receipt_paths"][:-1]:
+            receipt = read_json(root / receipt_path)
+            receipt_refs.append(
+                {
+                    "receipt_path": receipt_path,
+                    "receipt_hash": receipt["receipt_hash"],
+                    "card_id": receipt["card_id"],
+                    "delivery_id": receipt["delivery_id"],
+                    "delivery_attempt_id": receipt["delivery_attempt_id"],
+                    "card_hash": receipt["card_hash"],
+                    "opened_at": receipt["opened_at"],
+                }
+            )
+        incomplete_ack = {
+            "schema_version": card_runtime.CARD_BUNDLE_ACK_ENVELOPE_SCHEMA,
+            "run_id": envelope["run_id"],
+            "resume_tick_id": envelope["resume_tick_id"],
+            "role_key": role,
+            "agent_id": agent_id,
+            "card_return_event": envelope["card_return_event"],
+            "status": "acknowledged",
+            "card_bundle_id": envelope["bundle_id"],
+            "card_bundle_envelope_path": action["card_bundle_envelope_path"],
+            "card_bundle_envelope_hash": card_runtime.stable_json_hash(envelope),
+            "ack_delivery_mode": "direct_to_router",
+            "submitted_to": "router",
+            "controller_ack_handoff_used": False,
+            "direct_router_ack_token": envelope["direct_router_ack_token"],
+            "direct_router_ack_token_hash": envelope["direct_router_ack_token_hash"],
+            "acknowledged_bundle": envelope["bundle_id"],
+            "acknowledged_envelopes": [envelope["bundle_id"]],
+            "member_card_ids": envelope["card_ids"][:-1],
+            "receipt_refs": receipt_refs,
+            "body_visibility": "ack_envelope_only",
+            "contains_card_body": False,
+            "runtime_validates_mechanics_only": True,
+            "semantic_understanding_validated": False,
+            "returned_at": card_runtime.utc_now(),
+        }
+        incomplete_ack["ack_hash"] = card_runtime.stable_json_hash(incomplete_ack)
+        router.write_json(root / action["expected_return_path"], incomplete_ack)
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        self.assertEqual(result["ticks"][0]["action_type"], "await_card_bundle_return_event")
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["pending_action"]["action_type"], "await_card_bundle_return_event")
+        self.assertTrue(state["pending_action"]["bundle_ack_incomplete"])
+        self.assertEqual(state["pending_action"]["missing_card_ids"], [opened["cards"][-1]["card_id"]])
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        bundle_pending = [
+            item
+            for item in return_ledger["pending_returns"]
+            if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
+        ][0]
+        self.assertEqual(bundle_pending["status"], "bundle_ack_incomplete")
+
+    def test_router_daemon_duplicate_stale_card_ack_is_idempotent(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        self.submit_system_card_ack_without_router_next(root, action)
+
+        router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+        router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        return_ledger = read_json(run_root / "return_event_ledger.json")
+        completed = [
+            item
+            for item in return_ledger["completed_returns"]
+            if item.get("delivery_attempt_id") == action["delivery_attempt_id"]
+        ]
+        self.assertEqual(len(completed), 1)
+
     def test_startup_intake_cancel_is_terminal_before_run_shell(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
@@ -3368,6 +3663,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("class n01 active;", action["display_text"])
         self.assertNotIn("Now: node-001", action["display_text"])
         self.assertNotIn("- node-001 - in_progress", action["display_text"])
+        self.assertTrue(action["current_status_summary_exists"])
+        self.assertTrue(action["router_daemon_status_exists"])
+        self.assertEqual(action["user_visible_status_source"]["status_summary_source"], "current_status_summary")
+        self.assertEqual(action["user_visible_status_source"]["daemon_status_source"], "router_daemon_status")
+        self.assertTrue(action["user_visible_status_source"]["controller_must_show_status_from_current_status_summary"])
         router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         display_packet = read_json(run_root / "diagrams" / "user-flow-diagram-display.json")
         self.assertTrue(display_packet["canonical_route_available"])
@@ -6973,6 +7273,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             decision["source_paths"]["crew_rehydration_report"],
             self.rel(root, run_root / "continuation" / "crew_rehydration_report.json"),
         )
+
+    def test_resume_reentry_attaches_to_live_router_daemon_and_ledger(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
+
+        try:
+            router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+            action = router.next_action(root)
+            self.assertEqual(action["action_type"], "load_resume_state")
+            recovery = action["router_daemon_resume_recovery"]
+            self.assertTrue(recovery["router_daemon_lock_live"])
+            self.assertEqual(recovery["decision"], "attach_controller_to_live_daemon")
+            self.assertIn(self.rel(root, run_root / "runtime" / "router_daemon_status.json"), action["allowed_reads"])
+            self.assertIn(self.rel(root, run_root / "runtime" / "controller_action_ledger.json"), action["allowed_reads"])
+
+            router.apply_action(root, "load_resume_state")
+            resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
+            self.assertTrue(resume_evidence["router_daemon_liveness_checked"])
+            self.assertFalse(resume_evidence["router_daemon_restarted_if_dead"])
+            self.assertTrue(resume_evidence["controller_action_ledger_loaded"])
+            self.assertTrue(resume_evidence["controller_action_ledger_rescanned"])
+        finally:
+            router.stop_router_daemon(root, reason="test_cleanup")
+
+    def test_resume_reentry_marks_stale_or_missing_daemon_for_restart(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=False)
+        lock_path = run_root / "runtime" / "router_daemon.lock"
+        lock = read_json(lock_path)
+        lock["last_tick_at"] = "2000-01-01T00:00:00Z"
+        router.write_json(lock_path, lock)
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        recovery = action["router_daemon_resume_recovery"]
+        self.assertFalse(recovery["router_daemon_lock_live"])
+        self.assertEqual(recovery["decision"], "restart_router_daemon_from_current_state")
+
+        router.apply_action(root, "load_resume_state")
+        resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
+        self.assertTrue(resume_evidence["router_daemon_liveness_checked"])
+        self.assertTrue(resume_evidence["router_daemon_restarted_if_dead"])
+        self.assertTrue(resume_evidence["controller_action_ledger_loaded"])
+        router.stop_router_daemon(root, reason="test_cleanup")
 
     def test_resume_reentry_preempts_active_control_blocker_until_pm_decision(self) -> None:
         root = self.make_project()

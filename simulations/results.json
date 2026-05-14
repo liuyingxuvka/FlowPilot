@@ -1,6 +1,7 @@
 {
   "graph": {
-    "edge_count": 669052,
+    "edge_count": 2010668,
+    "invariant_failure_count": 0,
     "invariant_failures": [],
     "labels": [
       "active_child_skill_bindings_written",
@@ -112,6 +113,7 @@
       "fresh_six_live_subagents_started",
       "generated_resource_ledger_initialized",
       "heartbeat_asked_project_manager",
+      "heartbeat_checked_or_restarted_persistent_router_daemon",
       "heartbeat_host_spawn_or_rehydrate_six_roles",
       "heartbeat_injected_current_run_memory_into_roles",
       "heartbeat_loaded_crew_memory",
@@ -173,6 +175,7 @@
       "parent_focused_interrogation_completed",
       "parent_product_function_model_checked",
       "parent_subtree_review_checked",
+      "persistent_router_daemon_started_before_controller_core",
       "pm_blocker_recovery_option_recorded",
       "pm_blocker_return_gate_recorded",
       "pm_child_skill_minimum_sufficient_complexity_review_written",
@@ -285,6 +288,7 @@
       "terminal_human_backward_review_map_built",
       "terminal_human_backward_root_acceptance_reviewed",
       "terminal_lifecycle_frontier_written",
+      "terminal_router_daemon_stopped",
       "terminal_state_and_evidence_refreshed",
       "top_level_control_state_absent_or_quarantined",
       "unfinished_current_node_recovery_checked",
@@ -303,30 +307,33 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 648877,
+    "shard_count": 12,
+    "shard_depth": 80,
+    "sharded": true,
+    "state_count": 1949768,
     "terminal_counts": {
-      "blocked": 13032,
-      "complete": 1280
+      "blocked": 39096,
+      "complete": 3840
     }
   },
   "loop": {
-    "edge_count": 669052,
+    "edge_count": 2010668,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
-    "state_count": 648877,
+    "state_count": 1949768,
     "status": "OK",
     "stuck_state_count": 0,
     "stuck_state_samples": [],
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 669052,
+    "edge_count": 2010668,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,
-    "state_count": 648877,
+    "state_count": 1949768,
     "status": "OK",
-    "success_state_count": 1280
+    "success_state_count": 3840
   }
 }

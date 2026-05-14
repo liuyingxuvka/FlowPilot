@@ -23,6 +23,8 @@ GRAPH_STATE_LIMIT = 900_000
 CHECK_STATE_LIMIT = 900_000
 PROOF_SCHEMA = 1
 PROGRESS_STEPS = 10
+MAX_INVARIANT_FAILURE_SAMPLES = 200
+GRAPH_SHARD_DEPTH = 90
 
 
 def _progress_enabled() -> bool:
@@ -251,6 +253,7 @@ REQUIRED_LABELS = (
     "host_continuation_capability_supported",
     "host_continuation_capability_unsupported_manual_resume",
     "heartbeat_schedule_created",
+    "persistent_router_daemon_started_before_controller_core",
     "pm_initial_capability_decision_recorded",
     "flowguard_process_designed",
     "flowguard_officer_model_adversarial_probe_done",
@@ -275,6 +278,7 @@ REQUIRED_LABELS = (
     "heartbeat_loaded_state",
     "heartbeat_loaded_execution_frontier",
     "heartbeat_loaded_packet_ledger",
+    "heartbeat_checked_or_restarted_persistent_router_daemon",
     "heartbeat_loaded_crew_memory",
     "heartbeat_host_spawn_or_rehydrate_six_roles",
     "heartbeat_restored_six_agent_crew",
@@ -439,6 +443,7 @@ REQUIRED_LABELS = (
     "terminal_closure_suite_run",
     "terminal_state_and_evidence_refreshed",
     "lifecycle_reconciliation_completed",
+    "terminal_router_daemon_stopped",
     "terminal_lifecycle_frontier_written",
     "crew_memory_archived_at_terminal",
     "crew_archived_at_terminal",
@@ -523,6 +528,14 @@ def _state_id(state: model.State) -> str:
         f"{state.officer_model_report_provenance_policy_recorded},"
         f"{state.controller_coordination_boundary_recorded},"
         f"{state.independent_approval_protocol_recorded}|"
+        f"router_daemon={state.router_daemon_started},"
+        f"{state.router_daemon_lock_acquired},"
+        f"{state.router_daemon_tick_seconds},"
+        f"{state.router_daemon_status_written},"
+        f"{state.controller_action_ledger_initialized},"
+        f"{state.controller_action_watch_active},"
+        f"{state.router_daemon_recovered_on_resume},"
+        f"{state.terminal_router_daemon_stopped}|"
         f"contract={state.contract_frozen}|"
         f"child_manifest={state.child_skill_route_design_discovery_started},"
         f"{state.child_skill_initial_gate_manifest_extracted},"
@@ -769,17 +782,23 @@ def _state_id(state: model.State) -> str:
     )
 
 
-def _build_reachable_graph(max_states: int = 5000) -> dict:
-    initial = model.initial_state()
+def _build_reachable_graph(
+    max_states: int = 5000,
+    *,
+    initial_state: model.State | None = None,
+    progress_name: str = "capability",
+) -> dict:
+    initial = initial_state or model.initial_state()
     queue: deque[model.State] = deque([initial])
     seen = {initial: 0}
     states = [initial]
-    edges: list[list[tuple[str, int]]] = [[]]
+    edges: list[list[int]] = [[]]
     labels: set[str] = set()
     edge_count = 0
     invariant_failures: list[dict] = []
+    invariant_failure_count = 0
     terminal_counts = {"complete": 0, "blocked": 0}
-    progress = _GraphBuildProgress("capability", max_states)
+    progress = _GraphBuildProgress(progress_name, max_states)
 
     while queue:
         state = queue.popleft()
@@ -789,13 +808,15 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
         for invariant in model.INVARIANTS:
             result = invariant.predicate(state, None)
             if not result.ok:
-                invariant_failures.append(
-                    {
-                        "invariant": invariant.name,
-                        "state": _state_id(state),
-                        "reason": result.message,
-                    }
-                )
+                invariant_failure_count += 1
+                if len(invariant_failures) < MAX_INVARIANT_FAILURE_SAMPLES:
+                    invariant_failures.append(
+                        {
+                            "invariant": invariant.name,
+                            "state": _state_id(state),
+                            "reason": result.message,
+                        }
+                    )
 
         for label, next_state in model.next_states(state):
             labels.add(label)
@@ -808,7 +829,7 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
                     raise RuntimeError(f"state graph exceeded {max_states} states")
                 queue.append(next_state)
                 progress.observe(len(states), edge_count)
-            edges[state_index].append((label, seen[next_state]))
+            edges[state_index].append(seen[next_state])
 
     progress.complete(len(states), edge_count)
     return {
@@ -817,6 +838,7 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
         "labels": labels,
         "edge_count": edge_count,
         "invariant_failures": invariant_failures,
+        "invariant_failure_count": invariant_failure_count,
         "terminal_counts": terminal_counts,
     }
 
@@ -824,15 +846,17 @@ def _build_reachable_graph(max_states: int = 5000) -> dict:
 def _graph_report_from_graph(graph: dict) -> dict:
     labels = graph["labels"]
     invariant_failures = graph["invariant_failures"]
+    invariant_failure_count = graph["invariant_failure_count"]
 
     missing_labels = sorted(set(REQUIRED_LABELS) - labels)
     return {
-        "ok": not invariant_failures and not missing_labels,
+        "ok": invariant_failure_count == 0 and not missing_labels,
         "state_count": len(graph["states"]),
         "edge_count": graph["edge_count"],
         "labels": sorted(labels),
         "missing_labels": missing_labels,
         "invariant_failures": invariant_failures,
+        "invariant_failure_count": invariant_failure_count,
         "terminal_counts": graph["terminal_counts"],
     }
 
@@ -842,10 +866,10 @@ def explore_state_graph(max_states: int = 5000) -> dict:
     return _graph_report_from_graph(graph)
 
 
-def _reverse_reachable(edges: list[list[tuple[str, int]]], starts: set[int]) -> set[int]:
+def _reverse_reachable(edges: list[list[int]], starts: set[int]) -> set[int]:
     reverse: list[list[int]] = [[] for _ in edges]
     for source, outgoing in enumerate(edges):
-        for _label, target in outgoing:
+        for target in outgoing:
             reverse[target].append(source)
     reachable = set(starts)
     queue: deque[int] = deque(starts)
@@ -858,9 +882,9 @@ def _reverse_reachable(edges: list[list[tuple[str, int]]], starts: set[int]) -> 
     return reachable
 
 
-def _check_progress(graph: dict) -> dict:
+def _check_progress(graph: dict, *, require_success: bool = True) -> dict:
     states: list[model.State] = graph["states"]
-    edges: list[list[tuple[str, int]]] = graph["edges"]
+    edges: list[list[int]] = graph["edges"]
     success = {index for index, state in enumerate(states) if model.is_success(state)}
     terminal = {index for index, state in enumerate(states) if model.is_terminal(state)}
     can_reach_terminal = _reverse_reachable(edges, terminal)
@@ -869,9 +893,10 @@ def _check_progress(graph: dict) -> dict:
         for index, state in enumerate(states)
         if not model.is_terminal(state) and index not in can_reach_terminal
     ]
+    ok = (bool(success) or not require_success) and not no_terminal_path
     return {
-        "ok": bool(success) and not no_terminal_path,
-        "status": "OK" if bool(success) and not no_terminal_path else "VIOLATION",
+        "ok": ok,
+        "status": "OK" if ok else "VIOLATION",
         "state_count": len(states),
         "edge_count": graph["edge_count"],
         "success_state_count": len(success),
@@ -880,7 +905,7 @@ def _check_progress(graph: dict) -> dict:
     }
 
 
-def _tarjan_scc(edges: list[list[tuple[str, int]]]) -> list[list[int]]:
+def _tarjan_scc(edges: list[list[int]]) -> list[list[int]]:
     index = 0
     stack: list[int] = []
     on_stack: set[int] = set()
@@ -896,7 +921,7 @@ def _tarjan_scc(edges: list[list[tuple[str, int]]]) -> list[list[int]]:
         stack.append(node)
         on_stack.add(node)
 
-        for _label, target in edges[node]:
+        for target in edges[node]:
             if target not in indices:
                 strongconnect(target)
                 lowlinks[node] = min(lowlinks[node], lowlinks[target])
@@ -921,7 +946,7 @@ def _tarjan_scc(edges: list[list[tuple[str, int]]]) -> list[list[int]]:
 
 def _check_loops(graph: dict) -> dict:
     states: list[model.State] = graph["states"]
-    edges: list[list[tuple[str, int]]] = graph["edges"]
+    edges: list[list[int]] = graph["edges"]
     stuck = [
         _state_id(states[index])
         for index, outgoing in enumerate(edges)
@@ -935,7 +960,7 @@ def _check_loops(graph: dict) -> dict:
         has_outgoing_to_other_component = any(
             target not in members
             for index in members
-            for _label, target in edges[index]
+            for target in edges[index]
         )
         if not has_outgoing_to_other_component:
             closed_nonterminal_components.append(
@@ -955,19 +980,26 @@ def _check_loops(graph: dict) -> dict:
     }
 
 
-def _check_hazard_cases(graph: dict) -> dict:
-    default_success_state = next(
-        (state for state in graph["states"] if model.is_success(state)),
-        None,
-    )
-    ui_success_state = next(
-        (
-            state
-            for state in graph["states"]
-            if model.is_success(state) and state.task_kind == "ui"
-        ),
-        None,
-    )
+def _check_hazard_cases(
+    graph: dict | None = None,
+    *,
+    default_success_state: model.State | None = None,
+    ui_success_state: model.State | None = None,
+) -> dict:
+    if graph is not None and default_success_state is None:
+        default_success_state = next(
+            (state for state in graph["states"] if model.is_success(state)),
+            None,
+        )
+    if graph is not None and ui_success_state is None:
+        ui_success_state = next(
+            (
+                state
+                for state in graph["states"]
+                if model.is_success(state) and state.task_kind == "ui"
+            ),
+            None,
+        )
     if default_success_state is None:
         return {
             "ok": False,
@@ -1028,6 +1060,158 @@ def _check_hazard_cases(graph: dict) -> dict:
     }
 
 
+def _prefix_shards(depth: int) -> tuple[list[model.State], set[str], list[dict], int, dict[str, int], int]:
+    states = [model.initial_state()]
+    labels: set[str] = set()
+    invariant_failures: list[dict] = []
+    invariant_failure_count = 0
+    terminal_counts = {"complete": 0, "blocked": 0}
+    edge_count = 0
+
+    for _depth in range(depth):
+        next_frontier: list[model.State] = []
+        seen_next: set[model.State] = set()
+        for state in states:
+            if state.status in terminal_counts:
+                terminal_counts[state.status] += 1
+            for invariant in model.INVARIANTS:
+                result = invariant.predicate(state, None)
+                if not result.ok:
+                    invariant_failure_count += 1
+                    if len(invariant_failures) < MAX_INVARIANT_FAILURE_SAMPLES:
+                        invariant_failures.append(
+                            {
+                                "invariant": invariant.name,
+                                "state": _state_id(state),
+                                "reason": result.message,
+                            }
+                        )
+            outgoing = model.next_states(state)
+            if not outgoing:
+                if state not in seen_next:
+                    seen_next.add(state)
+                    next_frontier.append(state)
+                continue
+            for label, next_state in outgoing:
+                labels.add(label)
+                edge_count += 1
+                if next_state not in seen_next:
+                    seen_next.add(next_state)
+                    next_frontier.append(next_state)
+        states = next_frontier
+        if not states:
+            break
+
+    return states, labels, invariant_failures, invariant_failure_count, terminal_counts, edge_count
+
+
+def _run_sharded_graph_checks() -> tuple[dict, dict, dict, model.State | None, model.State | None]:
+    (
+        shards,
+        labels,
+        invariant_failures,
+        invariant_failure_count,
+        terminal_counts,
+        edge_count,
+    ) = _prefix_shards(GRAPH_SHARD_DEPTH)
+    total_state_count = 0
+    success_state_count = 0
+    nonterminal_without_terminal_path_count = 0
+    nonterminal_without_terminal_path_samples: list[str] = []
+    stuck_state_count = 0
+    stuck_state_samples: list[str] = []
+    nonterminating_component_count = 0
+    nonterminating_component_samples: list[list[str]] = []
+    default_success_state: model.State | None = None
+    ui_success_state: model.State | None = None
+
+    for index, shard_state in enumerate(shards, start=1):
+        graph = _build_reachable_graph(
+            max_states=GRAPH_STATE_LIMIT,
+            initial_state=shard_state,
+            progress_name=f"capability-shard-{index}/{len(shards)}",
+        )
+        labels.update(graph["labels"])
+        edge_count += graph["edge_count"]
+        total_state_count += len(graph["states"])
+        invariant_failure_count += graph["invariant_failure_count"]
+        for failure in graph["invariant_failures"]:
+            if len(invariant_failures) < MAX_INVARIANT_FAILURE_SAMPLES:
+                invariant_failures.append(failure)
+        for key, count in graph["terminal_counts"].items():
+            terminal_counts[key] = terminal_counts.get(key, 0) + count
+
+        if default_success_state is None:
+            default_success_state = next(
+                (state for state in graph["states"] if model.is_success(state)),
+                None,
+            )
+        if ui_success_state is None:
+            ui_success_state = next(
+                (
+                    state
+                    for state in graph["states"]
+                    if model.is_success(state) and state.task_kind == "ui"
+                ),
+                None,
+            )
+
+        progress = _check_progress(graph, require_success=False)
+        success_state_count += progress["success_state_count"]
+        nonterminal_without_terminal_path_count += progress["nonterminal_without_terminal_path_count"]
+        for sample in progress["nonterminal_without_terminal_path_samples"]:
+            if len(nonterminal_without_terminal_path_samples) < 20:
+                nonterminal_without_terminal_path_samples.append(sample)
+
+        loop = _check_loops(graph)
+        stuck_state_count += loop["stuck_state_count"]
+        for sample in loop["stuck_state_samples"]:
+            if len(stuck_state_samples) < 20:
+                stuck_state_samples.append(sample)
+        nonterminating_component_count += loop["nonterminating_component_count"]
+        for sample in loop["nonterminating_component_samples"]:
+            if len(nonterminating_component_samples) < 20:
+                nonterminating_component_samples.append(sample)
+
+    missing_labels = sorted(set(REQUIRED_LABELS) - labels)
+    graph_report = {
+        "ok": invariant_failure_count == 0 and not missing_labels,
+        "sharded": True,
+        "shard_depth": GRAPH_SHARD_DEPTH,
+        "shard_count": len(shards),
+        "state_count": total_state_count,
+        "edge_count": edge_count,
+        "labels": sorted(labels),
+        "missing_labels": missing_labels,
+        "invariant_failures": invariant_failures,
+        "invariant_failure_count": invariant_failure_count,
+        "terminal_counts": terminal_counts,
+    }
+    progress_ok = success_state_count > 0 and nonterminal_without_terminal_path_count == 0
+    progress_report = {
+        "ok": progress_ok,
+        "status": "OK" if progress_ok else "VIOLATION",
+        "state_count": total_state_count,
+        "edge_count": edge_count,
+        "success_state_count": success_state_count,
+        "nonterminal_without_terminal_path_count": nonterminal_without_terminal_path_count,
+        "nonterminal_without_terminal_path_samples": nonterminal_without_terminal_path_samples,
+    }
+    loop_ok = stuck_state_count == 0 and nonterminating_component_count == 0
+    loop_report = {
+        "ok": loop_ok,
+        "status": "OK" if loop_ok else "VIOLATION",
+        "state_count": total_state_count,
+        "edge_count": edge_count,
+        "stuck_state_count": stuck_state_count,
+        "stuck_state_samples": stuck_state_samples,
+        "nonterminating_component_count": nonterminating_component_count,
+        "nonterminating_component_samples": nonterminating_component_samples,
+        "unreachable_success": success_state_count == 0,
+    }
+    return graph_report, progress_report, loop_report, default_success_state, ui_success_state
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fast", action="store_true", help="reuse a valid result proof when possible")
@@ -1043,11 +1227,17 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         print(f"FlowGuard capability proof not reused: {reason}")
 
-    graph = _build_reachable_graph(max_states=GRAPH_STATE_LIMIT)
-    graph_report = _graph_report_from_graph(graph)
-    progress_report = _check_progress(graph)
-    loop_report = _check_loops(graph)
-    hazard_report = _check_hazard_cases(graph)
+    (
+        graph_report,
+        progress_report,
+        loop_report,
+        default_success_state,
+        ui_success_state,
+    ) = _run_sharded_graph_checks()
+    hazard_report = _check_hazard_cases(
+        default_success_state=default_success_state,
+        ui_success_state=ui_success_state,
+    )
     ok = (
         graph_report["ok"]
         and progress_report["ok"]

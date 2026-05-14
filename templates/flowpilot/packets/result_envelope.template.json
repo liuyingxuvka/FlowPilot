@@ -19,6 +19,13 @@
     "lease_id": "<active-holder-lease-id-or-null>",
     "controller_visibility": "metadata_only"
   },
+  "router_mailbox_return": {
+    "result_event_goes_to_router_mailbox": true,
+    "router_daemon_consumes_valid_evidence_on_tick": true,
+    "tick_interval_seconds": 1,
+    "role_may_not_directly_advance_route_state": true,
+    "controller_body_reads_forbidden": true
+  },
   "completed_at": "<iso-8601-timestamp>",
   "completed_by_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
   "completed_by_agent_id": "<agent-id-or-single-agent-role-continuity-id>",
@@ -97,6 +104,7 @@
     "relay_result_envelope_to_next_recipient",
     "emit_holder_change_status_update",
     "wait_for_next_role_return",
+    "write_controller_receipt_and_rescan_action_ledger",
     "ask_pm_for_repair_or_next_packet_on_blocker"
   ],
   "controller_forbidden_actions": [

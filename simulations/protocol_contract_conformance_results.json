@@ -73,6 +73,7 @@
         "prior_path_context_review",
         "prior_path_context_review.reviewed",
         "prior_path_context_review.source_paths",
+        "recovery_option",
         "repair_action",
         "repair_transaction",
         "repair_transaction.plan_kind",
@@ -80,6 +81,7 @@
         "repair_transaction.replacement_packet_specs_path",
         "repair_transaction.replacement_packets",
         "rerun_target",
+        "return_gate",
         "run_id",
         "schema_version"
       ],
@@ -101,9 +103,11 @@
         "decided_by_role",
         "decision",
         "prior_path_context_review",
+        "recovery_option",
         "repair_action",
         "repair_transaction",
-        "rerun_target"
+        "rerun_target",
+        "return_gate"
       ],
       "pm_resume_action_contract_fields": [
         "controller_reminder.controller_may_advance_or_close_route",

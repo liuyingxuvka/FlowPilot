@@ -76,6 +76,12 @@ class State:
     old_run_control_state_reused: bool = False
 
     router_state_loaded: bool = False
+    router_daemon_status_loaded: bool = False
+    router_daemon_liveness_checked: bool = False
+    router_daemon_restarted_if_dead: bool = False
+    router_daemon_duplicate_lock_rejected: bool = False
+    controller_action_ledger_loaded: bool = False
+    controller_action_ledger_rescanned: bool = False
     packet_ledger_loaded: bool = False
     prompt_ledger_loaded: bool = False
     frontier_loaded: bool = False
@@ -244,6 +250,8 @@ def _loaded_current_run_state(state: State) -> bool:
         and state.old_run_scan_done
         and state.old_run_control_state_quarantined
         and state.router_state_loaded
+        and state.router_daemon_liveness_checked
+        and state.controller_action_ledger_rescanned
         and state.packet_ledger_loaded
         and state.prompt_ledger_loaded
         and state.frontier_loaded
@@ -446,6 +454,20 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if not state.router_state_loaded:
         yield Transition("router_state_loaded", replace(state, router_state_loaded=True))
+        return
+    if not state.router_daemon_liveness_checked:
+        yield Transition(
+            "persistent_router_daemon_checked_or_restarted",
+            replace(
+                state,
+                router_daemon_status_loaded=True,
+                router_daemon_liveness_checked=True,
+                router_daemon_restarted_if_dead=True,
+                router_daemon_duplicate_lock_rejected=True,
+                controller_action_ledger_loaded=True,
+                controller_action_ledger_rescanned=True,
+            ),
+        )
         return
     if not state.packet_ledger_loaded:
         yield Transition("packet_ledger_loaded", replace(state, packet_ledger_loaded=True))
@@ -812,6 +834,18 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("router_state loaded before current run root and old-state rejection")
     if state.packet_ledger_loaded and not state.router_state_loaded:
         failures.append("packet ledger loaded before router_state")
+    if (
+        state.packet_ledger_loaded
+        or state.crew_memory_loaded
+        or state.pm_decision_requested
+    ) and not (
+        state.router_daemon_status_loaded
+        and state.router_daemon_liveness_checked
+        and state.router_daemon_duplicate_lock_rejected
+        and state.controller_action_ledger_loaded
+        and state.controller_action_ledger_rescanned
+    ):
+        failures.append("resume advanced before persistent Router daemon and Controller action ledger were checked")
     if state.prompt_ledger_loaded and not state.packet_ledger_loaded:
         failures.append("prompt ledger loaded before packet ledger")
     if state.frontier_loaded and not state.prompt_ledger_loaded:
@@ -1098,6 +1132,12 @@ def _ready_for_pm(**changes: object) -> State:
         old_run_scan_done=True,
         old_run_control_state_quarantined=True,
         router_state_loaded=True,
+        router_daemon_status_loaded=True,
+        router_daemon_liveness_checked=True,
+        router_daemon_restarted_if_dead=True,
+        router_daemon_duplicate_lock_rejected=True,
+        controller_action_ledger_loaded=True,
+        controller_action_ledger_rescanned=True,
         packet_ledger_loaded=True,
         prompt_ledger_loaded=True,
         frontier_loaded=True,
@@ -1166,6 +1206,24 @@ def hazard_states() -> dict[str, State]:
             stable_launcher_entered=True,
             current_pointer_loaded=True,
             current_pointer_valid=True,
+        ),
+        "packet_ledger_loaded_without_router_daemon_check": State(
+            status="running",
+            entry_mode="heartbeat",
+            stable_launcher_entered=True,
+            resume_wake_recorded_to_router=True,
+            heartbeat_trigger_evidence_loaded=True,
+            heartbeat_interval_minutes=1,
+            heartbeat_trigger_bound_to_current_run=True,
+            active_control_blocker_scan_done=True,
+            current_pointer_loaded=True,
+            current_pointer_valid=True,
+            run_root_loaded=True,
+            run_root_matches_pointer=True,
+            old_run_scan_done=True,
+            old_run_control_state_quarantined=True,
+            router_state_loaded=True,
+            packet_ledger_loaded=True,
         ),
         "heartbeat_continues_without_one_minute_trigger": State(
             status="running",

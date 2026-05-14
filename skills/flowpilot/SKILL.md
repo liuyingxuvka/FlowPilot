@@ -52,6 +52,8 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 
 After applying a wait-boundary action, prefer `run-until-wait`. It may apply only replay-proven safe internal router actions and must stop again before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
 
+When daemon mode is active, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached.
+
 Router-ready state preempts foreground waits. After Controller relays a
 router-authored card, card bundle, packet, result envelope, status packet, or
 next-action notice, do not wait on a role or subagent before calling Router
@@ -83,7 +85,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 ## Controller Boundary
 
-After the router loads Controller core, the main assistant is Controller only. Controller may call the router, check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, and wait for router next-action notices.
+After the router loads Controller core, the main assistant is Controller only. Controller may call the router, check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, scan the Controller action ledger, write Controller receipts, and wait for router next-action notices.
 
 Controller must not:
 

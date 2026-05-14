@@ -147,14 +147,18 @@ long-form public explanation lives in `docs/protocol.md`.
     never active. The controller may relay only PM packets after router
     direct-dispatch preflight, reviewer result-review decisions, worker
     results, visible-plan sync, and status/control-stop notices.
-    Router-ready state preempts foreground waits: after a router-authored
-    card, bundle, packet, result envelope, status packet, resolved direct ACK,
-    or `controller_next_action_notice.json`, Controller returns to Router with
-    `next` or `run-until-wait` before waiting on role chat or subagent
-    foreground completion. Ordinary `await_card_return_event`,
-    `await_card_bundle_return_event`, and `await_role_decision` are controlled
-    wait records for heartbeat/manual resume, not reasons to spend the current
-    foreground turn waiting on a role.
+    Router-owned waiting preempts foreground waits. The persistent Router
+    daemon ticks every one second, consumes valid Router-mailbox ACK/result
+    evidence, writes `runtime/router_daemon_status.json`, and exposes
+    Controller work through `runtime/controller_action_ledger.json`. After a
+    router-authored card, bundle, packet, result envelope, status packet,
+    resolved direct ACK, or `controller_next_action_notice.json`, Controller
+    clears pending ledger actions and writes Controller receipts before
+    waiting on role chat or subagent foreground completion. Ordinary
+    `await_card_return_event`, `await_card_bundle_return_event`, and
+    `await_role_decision` are controlled wait records under daemon ownership,
+    not reasons to stop the Controller role or spend the current foreground
+    turn waiting on a role.
 26. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 27. Record the controlled-stop notice policy: completed routes emit a
