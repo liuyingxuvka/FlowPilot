@@ -2,6 +2,26 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.2 - 2026-05-14
+
+### Fixed
+
+- Fixed startup intake icon packaging so the local skill install receives the
+  current repo-owned icon asset.
+- Kept Controller execution alive when a role-output RouterError carries a
+  control blocker, returning the Router-selected next action instead of
+  dropping the chain until a later resume.
+- Reconciled valid direct card ACKs at Router event ingress before blocking a
+  later role report for an unresolved card return.
+- Added same-role missing-ACK report recovery: premature dependency-matched
+  role reports are quarantined as audit-only, the role is sent back through the
+  card ACK path, and only a fresh post-ACK report is accepted.
+
+### Changed
+
+- Expanded FlowGuard control-plane coverage for direct ACK races, control
+  blocker handoff recovery, and missing-ACK report quarantine hazards.
+
 ## 0.9.1 - 2026-05-13
 
 ### Changed
