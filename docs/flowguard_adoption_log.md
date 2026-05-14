@@ -10194,3 +10194,186 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Local install: `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/install_flowpilot.py --check --json` all passed with installed FlowPilot source-fresh.
 - Heavy meta/capability checks were not rerun during finalization because the user explicitly narrowed validation scope and the heavy FlowGuard models/flag logic had not changed after their prior successful run.
 - Future rule: rerun heavyweight meta/capability checks only when project-control flow, skill/capability routing, heavy FlowGuard models, or runner semantics change.
+
+## flowpilot-control-plane-evidence-closure - Stateful receipt and role-output evidence model miss
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: run-20260514-181747 reached startup but blocked before route work because Controller/PM progress surfaces looked complete while Router-visible evidence was not closed.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T20:35:00+02:00
+- Ended: 2026-05-14T20:58:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Model and catch control-plane cases where a receipt, status packet, or progress update claims completion before the Router can verify the concrete state mutation, postcondition evidence, or file-backed role-output body.
+- Preserve the Controller's envelope/status-only boundary while making every stateful completion claim resolve through one Router-visible evidence contract.
+- Focused protected harms: false route advancement, repeated control blockers, PM decisions accepted from prepared/progress status, and display/status actions that appear done without durable postcondition evidence.
+
+### Model Files
+- `simulations/flowpilot_control_plane_friction_model.py`
+- `simulations/run_flowpilot_control_plane_friction_checks.py`
+- `simulations/flowpilot_control_plane_friction_results.json`
+- `simulations/flowpilot_control_plane_friction_checks_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_checks_results.json` passed.
+- Live audit against the active `.flowpilot/current.json` intentionally failed with two errors: `stateful_receipt_done_without_postcondition_evidence` and `role_output_event_missing_file_backed_body`.
+- `python scripts\check_install.py` passed.
+
+### Findings
+- The prior control-plane friction model did not express a generic evidence-closure rule for stateful Controller receipts.
+- The prior model covered role-output progress/status metadata but did not force role-output event acceptance to require a file-backed body path and replayable body hash.
+- The active run now projects into invariant failures for missing postcondition evidence and missing file-backed role-output body evidence.
+
+### Counterexamples
+- `stateful_receipt_done_without_postcondition_evidence`
+- `stateful_receipt_advanced_without_postcondition_evidence`
+- `role_output_event_missing_file_backed_body`
+- `role_output_status_prepared_used_as_decision`
+
+### Skipped Steps
+- Runtime repair was not implemented in this pass; the user requested the model upgrade and a minimal root repair plan derived from the model findings.
+- Heavy meta/capability checks were not rerun because this pass changed the focused control-plane friction model and result artifacts, not production project-control flow or skill/capability routing.
+
+### Next Actions
+- Implement a central Router-visible postcondition evidence registry for stateful Controller actions.
+- Route PM/control role-output events through the role-output runtime so status/progress packets cannot be accepted as event evidence.
+
+
+## simplify-controller-user-status - Make FlowPilot Controller user updates plain-language and status summaries progress-fact oriented
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior change affects Controller user-facing status, Router action contracts, and current status display data
+- Status: in_progress
+- Skill decision: used_flowguard
+- Started: 2026-05-14T18:47:05+00:00
+- Ended: 2026-05-14T18:47:05+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- none recorded
+
+
+## tier-controller-completion-evidence - Four-tier Router completion evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot Router auto-advance exposed that display/status sync work was treated like a hard completion gate, causing PM repair before real route work started.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T21:00:00+02:00
+- Ended: 2026-05-14T22:00:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Split Controller/Router work into four evidence tiers: Router-owned state writes, soft display/status sync, lightweight external continuation confirmations, and strict file-backed role decisions.
+- Keep display/status work from blocking Router progress or creating PM repair requirements.
+- Preserve strong evidence for actual process-changing decisions.
+
+### Model Files
+- `simulations/flowpilot_control_plane_friction_model.py`
+- `simulations/run_flowpilot_control_plane_friction_checks.py`
+- `simulations/flowpilot_control_plane_friction_results.json`
+- `simulations/flowpilot_control_plane_friction_checks_results.json`
+
+### Runtime Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `tests/test_flowpilot_router_runtime.py`
+- `openspec/changes/tier-controller-completion-evidence/`
+
+### Commands
+- `openspec validate tier-controller-completion-evidence --strict --json` passed.
+- `openspec validate simplify-controller-user-status --strict --json` passed for the parallel AI change preserved in this commit.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py tests\test_flowpilot_router_runtime.py` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_results.json` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\flowpilot_control_plane_friction_checks_results.json` passed.
+- Focused Router tests for display sync, run-until-wait, stateful receipt blockers, file-backed role output, controller reporting policy, and progress summary passed: `13 passed, 184 deselected`.
+- `python -m pytest tests\test_flowpilot_role_output_runtime.py -q` passed: `14 passed`.
+- `python -m pytest tests\test_flowpilot_output_contracts.py tests\test_flowpilot_card_instruction_coverage.py -q` passed: `10 passed, 67 subtests passed`.
+- `python simulations\run_flowpilot_role_output_runtime_checks.py` passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\audit_local_install_sync.py --json` passed with installed FlowPilot source-fresh.
+
+### Findings
+- Display/status synchronization should be a soft projection that the Router can perform and record without PM repair escalation.
+- The Router can safely fold nonblocking `sync_display_plan` work in `run_until_wait` because boundary actions still stop on user, payload, card, host automation, or explicit display-confirmation requirements.
+- External continuation actions still need a lightweight hard marker, while PM/reviewer/worker decisions still need file-backed body evidence and replayable hashes.
+
+### Counterexamples
+- `display_work_hard_postcondition_gate`
+- `display_work_escalated_to_pm_repair`
+- `external_keepalive_unconfirmed`
+- `stateful_receipt_done_without_postcondition_evidence`
+- `role_output_event_missing_file_backed_body`
+
+### Skipped Steps
+- Full `tests\test_flowpilot_router_runtime.py tests\test_flowpilot_role_output_runtime.py` run was stopped after 10 minutes; focused affected subsets and role-output suite passed.
+- Heavy background `python simulations\run_meta_checks.py` and `python simulations\run_capability_checks.py` were launched under `tmp/flowguard_background/`, but the user explicitly authorized not waiting for final exit artifacts in this turn. Their in-progress logs were treated as nonblocking, not as hard pass evidence.
+
+### Next Actions
+- For future Router actions, classify the action into one of the four evidence tiers before adding completion gates.
+- Do not add screenshot or heavy proof requirements for display/status-only Controller work unless that work becomes a real process boundary.
+
+
+## simplify-controller-user-status - Make FlowPilot Controller user updates plain-language and status summaries progress-fact oriented
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Behavior change affects Controller user-facing status, Router action contracts, and current status display data
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T19:43:17+00:00
+- Ended: 2026-05-14T19:43:17+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+
+### Commands
+- OK (0.000s): `python -m py_compile skills\\flowpilot\\assets\\flowpilot_router.py simulations\\flowpilot_control_plane_friction_model.py simulations\\run_flowpilot_control_plane_friction_checks.py`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_progress_summary_counts_nested_active_path tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_display_plan_is_controller_synced_projection_from_pm_plan tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_banner_action_and_result_are_user_visible`
+- OK (0.000s): `python simulations\\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations\\flowpilot_control_plane_friction_results.json`
+- OK (0.000s): `python scripts\\install_flowpilot.py --sync-repo-owned --force --skip-self-check --json`
+- OK (0.000s): `python scripts\\audit_local_install_sync.py --json`
+- OK (0.000s): `python scripts\\install_flowpilot.py --check --json`
+- OK (0.000s): `python scripts\\check_install.py`
+
+### Findings
+- Controller card now tells Controller to use plain language for user status and hide internal event/action/packet/ledger/hash/contract/path metadata by default.
+- Router actions now carry a controller_user_reporting_policy, also projected into next_step_contract, without adding that reminder to display_text.
+- current_status_summary.json now includes progress_summary with active path level counts, completed counts, current indexes and labels, overall node counts, elapsed seconds when available, and public metadata-only flags.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- The heavyweight meta/capability background logs were overwritten by a same-name rerun from an existing background script, so final log completion was not used as evidence.
+
+### Skipped Steps
+- Did not wait for the current run_meta_checks/run_capability_checks background rerun to finish because the user explicitly instructed to ignore the two big models and treat them as passed for this task.
+
+### Next Actions
+- If future work changes project-control flow more deeply, rerun meta/capability checks to completion and preserve their final artifacts before reporting them.

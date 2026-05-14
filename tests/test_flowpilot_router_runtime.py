@@ -3970,12 +3970,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "sync_display_plan")
         self.assertEqual(action["display_kind"], "startup_waiting_state")
+        self.assertIsNone(action.get("postcondition"))
+        self.assertIsNone(action["next_step_contract"]["postcondition"])
         self.assertFalse(action["display_required"])
         self.assertFalse(action["requires_user_dialog_display_confirmation"])
         self.assertTrue(action["user_visible_display_suppressed"])
         self.assertEqual(action["internal_display_reason"], "waiting_for_pm_route_before_canonical_route")
         self.assertNotIn("display_text", action)
         self.assertNotIn("payload_template", action)
+        policy = action["controller_user_reporting_policy"]
+        self.assertEqual(policy["schema_version"], router.CONTROLLER_USER_REPORTING_POLICY_SCHEMA)
+        self.assertTrue(policy["plain_language_required"])
+        self.assertIn("plain language", policy["reminder"])
+        self.assertEqual(action["next_step_contract"]["controller_user_reporting_policy"], policy)
         self.assertEqual(action["native_plan_projection"]["items"][0]["id"], "await_pm_route")
         result = router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         self.assertEqual(result["host_action"], "replace_visible_plan")
@@ -3992,6 +3999,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(visible_sync["display_required"])
         self.assertTrue(visible_sync["user_visible_display_suppressed"])
         self.assertNotIn("user_dialog_display_confirmation", visible_sync)
+        self.assertTrue(read_json(router.run_state_path(run_root))["flags"]["visible_plan_synced"])
         waiting_snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(waiting_snapshot["schema_version"], "flowpilot.route_state_snapshot.v1")
         self.assertTrue(waiting_snapshot["authority"]["current_pointer_matches_run"])
@@ -4014,6 +4022,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.activate_route(root)
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "sync_display_plan")
+        self.assertIsNone(action.get("postcondition"))
+        self.assertIsNone(action["next_step_contract"]["postcondition"])
         self.assertEqual(action["native_plan_projection"]["items"][0]["status"], "in_progress")
         self.assertEqual(action["display_kind"], "route_map")
         self.assertEqual(action["display_text_format"], "markdown_mermaid")
@@ -4026,11 +4036,33 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("class n01 active;", action["display_text"])
         self.assertNotIn("Now: node-001", action["display_text"])
         self.assertNotIn("- node-001 - in_progress", action["display_text"])
+        self.assertNotIn(action["controller_user_reporting_policy"]["reminder"], action["display_text"])
         self.assertTrue(action["current_status_summary_exists"])
         self.assertTrue(action["router_daemon_status_exists"])
         self.assertEqual(action["user_visible_status_source"]["status_summary_source"], "current_status_summary")
         self.assertEqual(action["user_visible_status_source"]["daemon_status_source"], "router_daemon_status")
         self.assertTrue(action["user_visible_status_source"]["controller_must_show_status_from_current_status_summary"])
+        self.assertEqual(
+            action["next_step_contract"]["controller_user_reporting_policy"],
+            action["controller_user_reporting_policy"],
+        )
+        status_summary = read_json(run_root / "display" / "current_status_summary.json")
+        progress = status_summary["progress_summary"]
+        self.assertEqual(progress["schema_version"], "flowpilot.progress_summary.v1")
+        self.assertEqual(progress["state"], status_summary["state_kind"])
+        self.assertEqual(progress["level_count"], 1)
+        self.assertEqual(progress["overall_total_nodes"], 1)
+        self.assertEqual(progress["overall_completed_nodes"], 0)
+        self.assertEqual(progress["levels"][0]["level"], 1)
+        self.assertEqual(progress["levels"][0]["total_nodes"], 1)
+        self.assertEqual(progress["levels"][0]["completed_nodes"], 0)
+        self.assertEqual(progress["levels"][0]["current_index"], 1)
+        self.assertEqual(progress["levels"][0]["current_node_id"], "node-001")
+        self.assertTrue(progress["metadata_only"])
+        self.assertTrue(progress["sealed_body_fields_excluded"])
+        self.assertTrue(progress["diagnostic_paths_excluded"])
+        self.assertTrue(progress["hash_fields_excluded"])
+        self.assertTrue(progress["elapsed_seconds"] is None or progress["elapsed_seconds"] >= 0)
         router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
         display_packet = read_json(run_root / "diagrams" / "user-flow-diagram-display.json")
         self.assertTrue(display_packet["canonical_route_available"])
@@ -4046,6 +4078,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(visible_sync["display_text_format"], "markdown_mermaid")
         self.assertTrue(visible_sync["route_sign_display_required"])
         self.assertEqual(visible_sync["route_sign_node_count"], 1)
+        self.assertTrue(read_json(router.run_state_path(run_root))["flags"]["visible_plan_synced"])
         active_snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(active_snapshot["route"]["nodes"][0]["id"], "node-001")
         self.assertTrue(active_snapshot["route"]["nodes"][0]["is_active"])
@@ -4060,6 +4093,89 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         node_plan = read_json(run_root / "display_plan.json")
         self.assertEqual(node_plan["source_event"], "pm_writes_node_acceptance_plan")
         self.assertEqual(node_plan["current_node"]["checklist"][0]["id"], "node-001-req")
+
+    def test_run_until_wait_folds_nonblocking_display_sync(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        first = router.next_action(root)
+        self.assertEqual(first["action_type"], "sync_display_plan")
+        self.assertFalse(first["requires_user_dialog_display_confirmation"])
+        self.assertIsNone(first.get("postcondition"))
+
+        result = router.run_until_wait(root, max_steps=3)
+
+        self.assertEqual(result["folded_command"], "run-until-wait")
+        self.assertGreaterEqual(result["folded_applied_count"], 1)
+        self.assertEqual(result["folded_applied_actions"][0]["action_type"], "sync_display_plan")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["visible_plan_synced"])
+        self.assertIn("visible_plan_sync", state)
+
+    def test_progress_summary_counts_nested_active_path(self) -> None:
+        root = self.make_project()
+        run_root = root / ".flowpilot" / "runs" / "run-progress"
+        run_root.mkdir(parents=True)
+        route = {
+            "route_id": "route-progress",
+            "nodes": [
+                {
+                    "node_id": "route-root",
+                    "node_kind": "root",
+                    "depth": 0,
+                    "child_node_ids": ["parent-done", "parent-current"],
+                },
+                {"node_id": "parent-done", "title": "Finished parent", "status": "completed"},
+                {
+                    "node_id": "parent-current",
+                    "title": "Current parent",
+                    "child_node_ids": ["child-done", "child-current"],
+                },
+                {
+                    "node_id": "child-done",
+                    "parent_node_id": "parent-current",
+                    "title": "Finished child",
+                    "status": "completed",
+                },
+                {
+                    "node_id": "child-current",
+                    "parent_node_id": "parent-current",
+                    "title": "Current child",
+                    "child_node_ids": ["leaf-done", "leaf-current"],
+                },
+                {
+                    "node_id": "leaf-done",
+                    "parent_node_id": "child-current",
+                    "title": "Finished leaf",
+                    "status": "completed",
+                },
+                {"node_id": "leaf-current", "parent_node_id": "child-current", "title": "Current leaf"},
+            ],
+        }
+        progress = router._build_progress_summary(  # type: ignore[attr-defined]
+            run_root,
+            {"run_id": "run-progress"},
+            route=route,
+            frontier={"completed_nodes": ["parent-done", "child-done", "leaf-done"]},
+            active_node_id="leaf-current",
+            state_kind="running",
+        )
+
+        self.assertEqual(progress["level_count"], 3)
+        self.assertEqual(progress["overall_total_nodes"], 6)
+        self.assertEqual(progress["overall_completed_nodes"], 3)
+        self.assertEqual([level["current_index"] for level in progress["levels"]], [2, 2, 2])
+        self.assertEqual([level["total_nodes"] for level in progress["levels"]], [2, 2, 2])
+        self.assertEqual([level["completed_nodes"] for level in progress["levels"]], [1, 1, 1])
+        self.assertEqual([level["current_label"] for level in progress["levels"]], [
+            "Current parent",
+            "Current child",
+            "Current leaf",
+        ])
+        self.assertIsNone(progress["elapsed_seconds"])
+        self.assertTrue(progress["metadata_only"])
+        self.assertTrue(progress["sealed_body_fields_excluded"])
+        self.assertTrue(progress["diagnostic_paths_excluded"])
 
     def test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress(self) -> None:
         root = self.make_project()
@@ -4397,6 +4513,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["requires_user_dialog_display_confirmation"])
         self.assertEqual(action["required_render_target"], "user_dialog")
         self.assertEqual(action["requires_payload"], "display_confirmation")
+        self.assertTrue(action["controller_user_reporting_policy"]["plain_language_required"])
+        self.assertEqual(
+            action["next_step_contract"]["controller_user_reporting_policy"],
+            action["controller_user_reporting_policy"],
+        )
         self.assertEqual(
             action["payload_template"],
             {
@@ -4425,6 +4546,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("Startup answers are recorded.", action["display_text"])
         self.assertNotIn("display-only data", action["display_text"])
         self.assertNotIn("flowpilot_router.py", action["display_text"])
+        self.assertNotIn(action["controller_user_reporting_policy"]["reminder"], action["display_text"])
 
         with self.assertRaisesRegex(router.RouterError, "display_confirmation"):
             router.apply_action(root, "emit_startup_banner")

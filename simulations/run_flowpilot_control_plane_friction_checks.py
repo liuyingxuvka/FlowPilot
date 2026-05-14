@@ -16,6 +16,9 @@ REQUIRED_LABELS = (
     "controller_boundary_confirmed_envelope_only",
     "select_expanded_safe_flow",
     "select_optimized_transaction_flow",
+    "controller_applies_stateful_postcondition_before_done_receipt",
+    "controller_display_work_soft_recorded_without_hard_gate",
+    "external_keepalive_action_confirmed_with_light_marker",
     "pm_writes_research_package_with_scope_fields",
     "pm_records_research_capability_decision_preserving_package_scope",
     "worker_packet_materialized_with_research_scope",
@@ -62,6 +65,7 @@ REQUIRED_LABELS = (
     "target_role_updates_progress_status_via_runtime",
     "controller_waits_for_role_output_with_status_packet_read",
     "target_role_updates_role_output_progress_via_runtime",
+    "role_output_event_submitted_with_file_backed_body",
     "user_stop_requested",
     "run_lifecycle_reconciled_all_authorities",
     "route_state_snapshot_refreshed_after_lifecycle_change",
@@ -85,6 +89,13 @@ HAZARD_EXPECTED_FAILURES = {
     "product_architecture_delivery_missing_material_context": "product architecture card was delivered without PM material-understanding source paths",
     "protocol_blocker_file_unregistered": "protocol blocker file existed without router-visible blocker registration",
     "control_blocker_index_stale_after_artifact_update": "router control blocker index disagreed with control blocker artifact status",
+    "display_work_hard_postcondition_gate": "display/status controller work was treated as a hard postcondition gate",
+    "display_work_escalated_to_pm_repair": "display/status controller work was treated as a hard postcondition gate",
+    "external_keepalive_unconfirmed": "external keepalive action lacked lightweight completion confirmation",
+    "stateful_receipt_done_without_postcondition_evidence": "stateful controller receipt was marked done before Router-visible postcondition evidence existed",
+    "stateful_receipt_advanced_without_postcondition_evidence": "stateful controller receipt was marked done before Router-visible postcondition evidence existed",
+    "role_output_event_missing_file_backed_body": "role output event was accepted without a file-backed body path and verified body hash",
+    "role_output_status_prepared_used_as_decision": "role output status/progress was used as role event evidence",
     "pm_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
     "pm_repair_followup_event_not_normalized": "PM repair follow-up event could not be matched by normalized router resolution logic",
     "fatal_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
@@ -111,6 +122,13 @@ HAZARD_EXPECTED_FAILURES = {
     "status_summary_stale": "status summary was published stale against frontier or packet state",
     "status_summary_leaks_sealed_or_source_fields": "status summary exposed sealed body, evidence table, source, or hash details",
     "status_summary_hides_unresolved_blocker": "status summary hid an unresolved blocker or pending repair state",
+    "controller_user_reporting_policy_missing": "Controller user reporting policy was missing",
+    "router_action_user_reporting_reminder_missing": "Router action lacked Controller plain-language user reporting reminder",
+    "controller_user_report_internal_metadata_exposed": "Controller user report exposed internal action, packet, ledger, hash, contract, or diagnostic metadata",
+    "router_action_user_reporting_reminder_displayed": "Router action user reporting reminder leaked into user-visible display text",
+    "status_summary_missing_progress_facts": "status summary omitted compact progress facts",
+    "status_summary_progress_counts_invalid": "status summary progress facts had inconsistent node counts",
+    "status_summary_progress_exposes_internal_metadata": "status summary progress facts exposed internal metadata",
     "route_process_check_on_empty_route_draft": "route process check was delivered for an empty route draft",
     "route_process_check_on_shadow_route_draft": "route process check used a shadow route draft instead of the canonical route source",
     "route_draft_repair_kept_stale_route_checks": "route draft repair left stale route-check flags active",
@@ -177,6 +195,15 @@ def _state_id(state: model.State) -> str:
         f"{state.research_package_has_decision_question},"
         f"{state.research_package_has_allowed_sources},"
         f"{state.research_package_has_stop_conditions}|cap={state.research_capability_decision_recorded}|"
+        f"stateful_receipt={state.stateful_controller_receipt_done},"
+        f"{state.stateful_controller_postcondition_declared},"
+        f"{state.stateful_controller_postcondition_evidence_written},"
+        f"{state.stateful_controller_advanced_from_receipt}|"
+        f"display_work={state.controller_display_work_soft_recorded},"
+        f"{state.controller_display_work_hard_postcondition},"
+        f"{state.controller_display_work_escalated_to_pm}|"
+        f"keepalive={state.external_keepalive_confirmation_required},"
+        f"{state.external_keepalive_confirmed}|"
         f"packet={state.worker_packet_written},{state.worker_packet_preserves_research_fields},"
         f"material_dispatch={state.material_dispatch_requested},"
         f"{state.material_dispatch_reviewed},{state.material_dispatch_allowed},"
@@ -245,6 +272,15 @@ def _state_id(state: model.State) -> str:
         f"{state.route_draft_single_canonical_source},{state.route_draft_shadow_source_used},"
         f"{state.route_process_check_card_delivered},{state.route_process_check_passed},"
         f"{state.route_draft_repaired_after_check},{state.route_review_flags_reset_after_draft_repair}|"
+        f"user_report={state.controller_user_reporting_policy_present},"
+        f"{state.router_action_user_reporting_reminder_present},"
+        f"{state.user_report_plain_language},{state.user_report_internal_metadata_exposed},"
+        f"{state.router_action_user_reporting_reminder_displayed_to_user}|"
+        f"progress_summary={state.status_summary_progress_facts_present},"
+        f"{state.status_summary_progress_level_count_valid},"
+        f"{state.status_summary_progress_counts_valid},"
+        f"{state.status_summary_progress_elapsed_valid_or_null},"
+        f"{state.status_summary_progress_metadata_only}|"
         f"review_block={state.review_block_observed},{state.review_block_scope},"
         f"same_node_repair={state.pm_selected_same_node_repair},{state.same_node_repair_path_routable},"
         f"{state.fresh_repair_evidence_written},{state.stale_blocked_evidence_reused_as_pass},"
@@ -280,7 +316,11 @@ def _state_id(state: model.State) -> str:
         f"{state.role_output_status_visibility_grant},{state.role_output_progress_observed},"
         f"{state.role_output_progress_runtime_written},{state.role_output_progress_numeric},"
         f"{state.role_output_progress_nonnegative},{state.role_output_status_message_safe},"
-        f"used_as_decision={state.progress_status_used_as_decision_evidence}"
+        f"used_as_decision={state.progress_status_used_as_decision_evidence},"
+        f"event={state.role_output_event_submitted},{state.role_output_event_accepted},"
+        f"{state.role_output_file_backed_body_path_present},{state.role_output_body_hash_verified},"
+        f"status_used={state.role_output_status_prepared_only},"
+        f"{state.role_output_status_used_as_event_evidence}"
     )
 
 

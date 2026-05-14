@@ -58,8 +58,17 @@ Risk intent brief:
   current gate blocker; direct Router ACK consumption preserves the semantic
   reviewer pass/block wait; PM repair authority cannot impersonate reviewer
   event authority; no-legal-next blockers wait for currently receivable role
-  output; and duplicate PM repair decisions are idempotent for the same
-  blocker.
+  output; duplicate PM repair decisions are idempotent for the same blocker;
+  Controller user reports do not expose internal action, packet, ledger, hash,
+  contract, or diagnostic-path metadata by default; Router actions carry a
+  Controller-facing plain-language reminder that is not itself user-visible;
+  compact progress summaries include bounded route-level progress facts;
+  display/status Controller work remains nonblocking; external keepalive work
+  still requires lightweight confirmation; stateful Controller receipts cannot
+  clear or advance a hard pending action until the Router can verify the
+  declared postcondition evidence; and role-output events cannot be accepted
+  from a prepared/progress status surface without a file-backed body path plus
+  replayable body hash.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -103,6 +112,15 @@ class State:
     controller_read_sealed_body: bool = False
     role_identity_checked: bool = False
     hash_verified: bool = False
+    stateful_controller_receipt_done: bool = False
+    stateful_controller_postcondition_declared: bool = False
+    stateful_controller_postcondition_evidence_written: bool = False
+    stateful_controller_advanced_from_receipt: bool = False
+    controller_display_work_soft_recorded: bool = False
+    controller_display_work_hard_postcondition: bool = False
+    controller_display_work_escalated_to_pm: bool = False
+    external_keepalive_confirmation_required: bool = False
+    external_keepalive_confirmed: bool = False
 
     pm_research_package_written: bool = False
     research_package_has_decision_question: bool = False
@@ -188,6 +206,16 @@ class State:
     status_summary_fresh_against_frontier_and_packet: bool = False
     status_summary_metadata_only: bool = True
     status_summary_blocker_state_consistent: bool = True
+    controller_user_reporting_policy_present: bool = False
+    router_action_user_reporting_reminder_present: bool = False
+    user_report_plain_language: bool = True
+    user_report_internal_metadata_exposed: bool = False
+    router_action_user_reporting_reminder_displayed_to_user: bool = False
+    status_summary_progress_facts_present: bool = False
+    status_summary_progress_level_count_valid: bool = True
+    status_summary_progress_counts_valid: bool = True
+    status_summary_progress_elapsed_valid_or_null: bool = True
+    status_summary_progress_metadata_only: bool = True
 
     review_block_observed: bool = False
     review_block_scope: str = "none"  # none | node_local | route_invalidating
@@ -304,6 +332,12 @@ class State:
     role_output_progress_nonnegative: bool = True
     role_output_status_message_safe: bool = True
     progress_status_used_as_decision_evidence: bool = False
+    role_output_status_prepared_only: bool = False
+    role_output_status_used_as_event_evidence: bool = False
+    role_output_event_submitted: bool = False
+    role_output_event_accepted: bool = False
+    role_output_file_backed_body_path_present: bool = True
+    role_output_body_hash_verified: bool = True
 
 
 class Transition(NamedTuple):
@@ -374,13 +408,61 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.controller_boundary_confirmed:
         yield Transition(
             "controller_boundary_confirmed_envelope_only",
-            _inc(state, status="running", controller_boundary_confirmed=True),
+            _inc(
+                state,
+                status="running",
+                controller_boundary_confirmed=True,
+                controller_user_reporting_policy_present=True,
+                router_action_user_reporting_reminder_present=True,
+                user_report_plain_language=True,
+                user_report_internal_metadata_exposed=False,
+                router_action_user_reporting_reminder_displayed_to_user=False,
+            ),
         )
         return
 
     if state.mode == "unknown":
         yield Transition("select_expanded_safe_flow", _inc(state, mode="expanded"))
         yield Transition("select_optimized_transaction_flow", _inc(state, mode="optimized"))
+        return
+
+    if not state.stateful_controller_receipt_done:
+        yield Transition(
+            "controller_applies_stateful_postcondition_before_done_receipt",
+            _inc(
+                state,
+                holder="controller",
+                stateful_controller_receipt_done=True,
+                stateful_controller_postcondition_declared=True,
+                stateful_controller_postcondition_evidence_written=True,
+                stateful_controller_advanced_from_receipt=True,
+            ),
+        )
+        return
+
+    if not state.controller_display_work_soft_recorded:
+        yield Transition(
+            "controller_display_work_soft_recorded_without_hard_gate",
+            _inc(
+                state,
+                holder="controller",
+                controller_display_work_soft_recorded=True,
+                controller_display_work_hard_postcondition=False,
+                controller_display_work_escalated_to_pm=False,
+            ),
+        )
+        return
+
+    if not state.external_keepalive_confirmed:
+        yield Transition(
+            "external_keepalive_action_confirmed_with_light_marker",
+            _inc(
+                state,
+                holder="controller",
+                external_keepalive_confirmation_required=True,
+                external_keepalive_confirmed=True,
+            ),
+        )
         return
 
     if not state.pm_research_package_written:
@@ -620,6 +702,11 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 status_summary_fresh_against_frontier_and_packet=True,
                 status_summary_metadata_only=True,
                 status_summary_blocker_state_consistent=True,
+                status_summary_progress_facts_present=True,
+                status_summary_progress_level_count_valid=True,
+                status_summary_progress_counts_valid=True,
+                status_summary_progress_elapsed_valid_or_null=True,
+                status_summary_progress_metadata_only=True,
             ),
         )
         return
@@ -1001,6 +1088,22 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.role_output_event_submitted:
+        yield Transition(
+            "role_output_event_submitted_with_file_backed_body",
+            _inc(
+                state,
+                holder="project_manager",
+                role_output_event_submitted=True,
+                role_output_event_accepted=True,
+                role_output_file_backed_body_path_present=True,
+                role_output_body_hash_verified=True,
+                role_output_status_prepared_only=False,
+                role_output_status_used_as_event_evidence=False,
+            ),
+        )
+        return
+
     if not state.stop_requested:
         yield Transition("user_stop_requested", _inc(state, holder="controller", stop_requested=True))
         return
@@ -1143,6 +1246,78 @@ def control_blocker_indexes_match_artifacts(state: State, trace) -> InvariantRes
     del trace
     if state.control_blocker_artifact_status_written and not state.control_blocker_router_index_matches_artifact:
         return InvariantResult.fail("router control blocker index disagreed with control blocker artifact status")
+    return InvariantResult.pass_()
+
+
+def stateful_controller_receipts_require_postcondition_evidence(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    if (
+        state.stateful_controller_receipt_done
+        and state.stateful_controller_postcondition_declared
+        and not state.stateful_controller_postcondition_evidence_written
+    ):
+        return InvariantResult.fail(
+            "stateful controller receipt was marked done before Router-visible postcondition evidence existed"
+        )
+    if state.stateful_controller_advanced_from_receipt and not (
+        state.stateful_controller_receipt_done
+        and (
+            not state.stateful_controller_postcondition_declared
+            or state.stateful_controller_postcondition_evidence_written
+        )
+    ):
+        return InvariantResult.fail(
+            "stateful controller action advanced without a verified receipt and postcondition evidence"
+        )
+    return InvariantResult.pass_()
+
+
+def controller_display_work_remains_nonblocking(state: State, trace) -> InvariantResult:
+    del trace
+    if state.controller_display_work_hard_postcondition:
+        return InvariantResult.fail(
+            "display/status controller work was treated as a hard postcondition gate"
+        )
+    if state.controller_display_work_escalated_to_pm:
+        return InvariantResult.fail(
+            "display/status controller work was escalated to PM repair"
+        )
+    return InvariantResult.pass_()
+
+
+def external_keepalive_actions_require_light_confirmation(state: State, trace) -> InvariantResult:
+    del trace
+    if state.external_keepalive_confirmation_required and not state.external_keepalive_confirmed:
+        return InvariantResult.fail(
+            "external keepalive action lacked lightweight completion confirmation"
+        )
+    return InvariantResult.pass_()
+
+
+def role_output_events_require_file_backed_body(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        (
+            state.role_output_event_submitted
+            or state.role_output_event_accepted
+            or state.pm_repair_decision_recorded
+        )
+        and not (
+            state.role_output_file_backed_body_path_present
+            and state.role_output_body_hash_verified
+        )
+    ):
+        return InvariantResult.fail(
+            "role output event was accepted without a file-backed body path and verified body hash"
+        )
+    if state.role_output_status_used_as_event_evidence or (
+        state.role_output_status_prepared_only and state.role_output_event_accepted
+    ):
+        return InvariantResult.fail(
+            "role output status/progress was used as role event evidence"
+        )
     return InvariantResult.pass_()
 
 
@@ -1348,6 +1523,16 @@ def status_summary_is_public_and_fresh(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("status summary exposed sealed body, evidence table, source, or hash details")
     if state.status_summary_published and not state.status_summary_blocker_state_consistent:
         return InvariantResult.fail("status summary hid an unresolved blocker or pending repair state")
+    if state.status_summary_published and not state.status_summary_progress_facts_present:
+        return InvariantResult.fail("status summary omitted compact progress facts")
+    if state.status_summary_published and not state.status_summary_progress_level_count_valid:
+        return InvariantResult.fail("status summary progress facts had an invalid level count")
+    if state.status_summary_published and not state.status_summary_progress_counts_valid:
+        return InvariantResult.fail("status summary progress facts had inconsistent node counts")
+    if state.status_summary_published and not state.status_summary_progress_elapsed_valid_or_null:
+        return InvariantResult.fail("status summary elapsed runtime was neither valid nor null")
+    if state.status_summary_published and not state.status_summary_progress_metadata_only:
+        return InvariantResult.fail("status summary progress facts exposed internal metadata")
     if (
         state.partial_batch_active
         and state.partial_batch_results_returned > 0
@@ -1368,6 +1553,21 @@ def status_summary_is_public_and_fresh(state: State, trace) -> InvariantResult:
         return InvariantResult.fail(
             "status summary named a completed role instead of the remaining partial-batch role"
         )
+    return InvariantResult.pass_()
+
+
+def controller_user_reporting_policy_is_plain(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "new" and not state.controller_user_reporting_policy_present:
+        return InvariantResult.fail("Controller user reporting policy was missing")
+    if state.status != "new" and not state.router_action_user_reporting_reminder_present:
+        return InvariantResult.fail("Router action lacked Controller plain-language user reporting reminder")
+    if state.controller_user_reporting_policy_present and not state.user_report_plain_language:
+        return InvariantResult.fail("Controller user reporting policy did not require plain language")
+    if state.user_report_internal_metadata_exposed:
+        return InvariantResult.fail("Controller user report exposed internal action, packet, ledger, hash, contract, or diagnostic metadata")
+    if state.router_action_user_reporting_reminder_displayed_to_user:
+        return InvariantResult.fail("Router action user reporting reminder leaked into user-visible display text")
     return InvariantResult.pass_()
 
 
@@ -1806,6 +2006,26 @@ INVARIANTS = (
         predicate=control_blocker_indexes_match_artifacts,
     ),
     Invariant(
+        name="stateful_controller_receipts_require_postcondition_evidence",
+        description="Controller done receipts for stateful actions must close a Router-visible postcondition evidence contract before advancement.",
+        predicate=stateful_controller_receipts_require_postcondition_evidence,
+    ),
+    Invariant(
+        name="controller_display_work_remains_nonblocking",
+        description="Controller display/status work may be soft-recorded but cannot hard-block route progress or escalate to PM repair.",
+        predicate=controller_display_work_remains_nonblocking,
+    ),
+    Invariant(
+        name="external_keepalive_actions_require_light_confirmation",
+        description="External keepalive actions use lightweight hard confirmation because missing them can break autonomous continuation.",
+        predicate=external_keepalive_actions_require_light_confirmation,
+    ),
+    Invariant(
+        name="role_output_events_require_file_backed_body",
+        description="Role-output events require file-backed bodies and verified hashes; status/progress packets are never decision evidence.",
+        predicate=role_output_events_require_file_backed_body,
+    ),
+    Invariant(
         name="pm_repair_followup_events_are_matchable",
         description="PM repair decisions store follow-up resolution events in a router-matchable form.",
         predicate=pm_repair_followup_events_are_matchable,
@@ -1899,6 +2119,11 @@ INVARIANTS = (
         name="status_summary_is_public_and_fresh",
         description="Compact status summaries are fresh and user-facing metadata only.",
         predicate=status_summary_is_public_and_fresh,
+    ),
+    Invariant(
+        name="controller_user_reporting_policy_is_plain",
+        description="Controller user-facing reports use plain language and hide internal control-plane metadata by default.",
+        predicate=controller_user_reporting_policy_is_plain,
     ),
     Invariant(
         name="route_checks_require_nonempty_route_nodes",
@@ -2043,6 +2268,15 @@ def _safe_base(**changes: object) -> State:
             status="running",
             controller_boundary_confirmed=True,
             mode="expanded",
+            stateful_controller_receipt_done=True,
+            stateful_controller_postcondition_declared=True,
+            stateful_controller_postcondition_evidence_written=True,
+            stateful_controller_advanced_from_receipt=True,
+            controller_display_work_soft_recorded=True,
+            controller_display_work_hard_postcondition=False,
+            controller_display_work_escalated_to_pm=False,
+            external_keepalive_confirmation_required=True,
+            external_keepalive_confirmed=True,
             pm_research_package_written=True,
             research_package_has_decision_question=True,
             research_package_has_allowed_sources=True,
@@ -2130,6 +2364,16 @@ def _safe_base(**changes: object) -> State:
             status_summary_fresh_against_frontier_and_packet=True,
             status_summary_metadata_only=True,
             status_summary_blocker_state_consistent=True,
+            controller_user_reporting_policy_present=True,
+            router_action_user_reporting_reminder_present=True,
+            user_report_plain_language=True,
+            user_report_internal_metadata_exposed=False,
+            router_action_user_reporting_reminder_displayed_to_user=False,
+            status_summary_progress_facts_present=True,
+            status_summary_progress_level_count_valid=True,
+            status_summary_progress_counts_valid=True,
+            status_summary_progress_elapsed_valid_or_null=True,
+            status_summary_progress_metadata_only=True,
             role_identity_checked=True,
             hash_verified=True,
             optimized_card_ack_transaction=True,
@@ -2185,6 +2429,12 @@ def _safe_base(**changes: object) -> State:
             model_miss_pm_decision_from_single_report=True,
             role_memory_delta_written=True,
             role_memory_used_for_authority=False,
+            role_output_status_prepared_only=False,
+            role_output_status_used_as_event_evidence=False,
+            role_output_event_submitted=True,
+            role_output_event_accepted=True,
+            role_output_file_backed_body_path_present=True,
+            role_output_body_hash_verified=True,
         ),
         **changes,
     )
@@ -2243,6 +2493,43 @@ def hazard_states() -> dict[str, State]:
         "control_blocker_index_stale_after_artifact_update": _safe_base(
             control_blocker_artifact_status_written=True,
             control_blocker_router_index_matches_artifact=False,
+        ),
+        "display_work_hard_postcondition_gate": _safe_base(
+            controller_display_work_soft_recorded=True,
+            controller_display_work_hard_postcondition=True,
+            controller_display_work_escalated_to_pm=False,
+        ),
+        "display_work_escalated_to_pm_repair": _safe_base(
+            controller_display_work_soft_recorded=True,
+            controller_display_work_hard_postcondition=True,
+            controller_display_work_escalated_to_pm=True,
+        ),
+        "external_keepalive_unconfirmed": _safe_base(
+            external_keepalive_confirmation_required=True,
+            external_keepalive_confirmed=False,
+        ),
+        "stateful_receipt_done_without_postcondition_evidence": _safe_base(
+            stateful_controller_receipt_done=True,
+            stateful_controller_postcondition_declared=True,
+            stateful_controller_postcondition_evidence_written=False,
+            stateful_controller_advanced_from_receipt=False,
+        ),
+        "stateful_receipt_advanced_without_postcondition_evidence": _safe_base(
+            stateful_controller_receipt_done=True,
+            stateful_controller_postcondition_declared=True,
+            stateful_controller_postcondition_evidence_written=False,
+            stateful_controller_advanced_from_receipt=True,
+        ),
+        "role_output_event_missing_file_backed_body": _safe_base(
+            role_output_event_submitted=True,
+            role_output_event_accepted=True,
+            role_output_file_backed_body_path_present=False,
+            role_output_body_hash_verified=False,
+        ),
+        "role_output_status_prepared_used_as_decision": _safe_base(
+            role_output_status_prepared_only=True,
+            role_output_status_used_as_event_evidence=True,
+            role_output_event_accepted=True,
         ),
         "pm_repair_followup_event_unmatchable": _safe_base(
             control_blocker_lane="pm_repair_decision_required",
@@ -2388,6 +2675,27 @@ def hazard_states() -> dict[str, State]:
         "status_summary_hides_unresolved_blocker": _safe_base(
             status_summary_published=True,
             status_summary_blocker_state_consistent=False,
+        ),
+        "controller_user_reporting_policy_missing": _safe_base(
+            controller_user_reporting_policy_present=False,
+        ),
+        "router_action_user_reporting_reminder_missing": _safe_base(
+            router_action_user_reporting_reminder_present=False,
+        ),
+        "controller_user_report_internal_metadata_exposed": _safe_base(
+            user_report_internal_metadata_exposed=True,
+        ),
+        "router_action_user_reporting_reminder_displayed": _safe_base(
+            router_action_user_reporting_reminder_displayed_to_user=True,
+        ),
+        "status_summary_missing_progress_facts": _safe_base(
+            status_summary_progress_facts_present=False,
+        ),
+        "status_summary_progress_counts_invalid": _safe_base(
+            status_summary_progress_counts_valid=False,
+        ),
+        "status_summary_progress_exposes_internal_metadata": _safe_base(
+            status_summary_progress_metadata_only=False,
         ),
         "route_process_check_on_empty_route_draft": _safe_base(
             route_draft_has_nodes=False,
@@ -3973,6 +4281,55 @@ def _audit_role_output_hashes(project_root: Path, run_root: Path) -> tuple[bool,
     return not mismatches, mismatches, envelope_count
 
 
+def _audit_evidence_closure_blockers(
+    project_root: Path, run_root: Path
+) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
+    del project_root
+    display_gaps: list[dict[str, object]] = []
+    stateful_gaps: list[dict[str, object]] = []
+    role_output_gaps: list[dict[str, object]] = []
+    control_blocks_root = run_root / "control_blocks"
+    if not control_blocks_root.exists():
+        return display_gaps, stateful_gaps, role_output_gaps
+
+    for blocker_path in sorted(control_blocks_root.glob("control-blocker-*.json")):
+        if (
+            blocker_path.name.endswith(".sealed_repair_packet.json")
+            or ".pm_repair_decision." in blocker_path.name
+        ):
+            continue
+        blocker, error = _read_json(blocker_path)
+        if not isinstance(blocker, dict):
+            continue
+        if blocker.get("schema_version") != "flowpilot.control_blocker.v1":
+            continue
+        rel_path = ".flowpilot/runs/" + run_root.name + "/" + blocker_path.relative_to(run_root).as_posix()
+        error_code = str(blocker.get("error_code") or "")
+        source = str(blocker.get("source") or "")
+        item = {
+            "path": rel_path,
+            "blocker_id": blocker.get("blocker_id"),
+            "error_code": error_code,
+            "source": source,
+            "originating_action_type": blocker.get("originating_action_type"),
+            "originating_event": blocker.get("originating_event"),
+            "handling_lane": blocker.get("handling_lane"),
+            "delivery_status": blocker.get("delivery_status"),
+            "read_error": error,
+        }
+        is_postcondition_gap = (
+            source == "controller_action_receipt_missing_stateful_postcondition"
+            or "postcondition" in error_code
+        )
+        if is_postcondition_gap and str(blocker.get("originating_action_type") or "") == "sync_display_plan":
+            display_gaps.append(item)
+        elif is_postcondition_gap:
+            stateful_gaps.append(item)
+        if error_code == "role_event_requires_a_file_backed_body_path":
+            role_output_gaps.append(item)
+    return display_gaps, stateful_gaps, role_output_gaps
+
+
 def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     """Project the current .flowpilot run into this model's invariants.
 
@@ -4252,6 +4609,35 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             evidence={"mismatches": control_blocker_mismatches},
         )
 
+    display_receipt_gaps, stateful_receipt_gaps, role_output_body_gaps = _audit_evidence_closure_blockers(root, run_root)
+    if display_receipt_gaps:
+        _add_finding(
+            findings,
+            code="display_work_escalated_to_pm_repair",
+            severity="error",
+            summary="display/status Controller work was escalated to PM repair instead of remaining nonblocking",
+            invariant="controller_display_work_remains_nonblocking",
+            evidence={"blockers": display_receipt_gaps},
+        )
+    if stateful_receipt_gaps:
+        _add_finding(
+            findings,
+            code="stateful_receipt_done_without_postcondition_evidence",
+            severity="error",
+            summary="stateful Controller receipt was marked done while Router-visible postcondition evidence was missing",
+            invariant="stateful_controller_receipts_require_postcondition_evidence",
+            evidence={"blockers": stateful_receipt_gaps},
+        )
+    if role_output_body_gaps:
+        _add_finding(
+            findings,
+            code="role_output_event_missing_file_backed_body",
+            severity="error",
+            summary="role-output event was attempted without a file-backed body path",
+            invariant="role_output_events_require_file_backed_body",
+            evidence={"blockers": role_output_body_gaps},
+        )
+
     pre_event_ack = _audit_valid_ack_file_blocked_role_event(root, run_root)
     if pre_event_ack.get("valid_ack_file_blocked_role_event"):
         _add_finding(
@@ -4460,9 +4846,20 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         protocol_blocker_registered_in_router_state=not bool(unregistered_protocol_blockers),
         control_blocker_artifact_status_written=bool(control_blocker_mismatches),
         control_blocker_router_index_matches_artifact=control_blocker_index_synced,
+        controller_display_work_soft_recorded=True,
+        controller_display_work_hard_postcondition=bool(display_receipt_gaps),
+        controller_display_work_escalated_to_pm=bool(display_receipt_gaps),
+        stateful_controller_receipt_done=True,
+        stateful_controller_postcondition_declared=True,
+        stateful_controller_postcondition_evidence_written=not bool(stateful_receipt_gaps),
+        stateful_controller_advanced_from_receipt=not bool(stateful_receipt_gaps),
         control_blocker_lane=active_blocker_lane if pm_repair_recorded else "none",
         control_blocker_target_role="project_manager" if pm_repair_recorded else "none",
         pm_repair_decision_recorded=pm_repair_recorded,
+        role_output_event_submitted=bool(pm_repair_recorded or role_output_body_gaps),
+        role_output_event_accepted=bool(pm_repair_recorded),
+        role_output_file_backed_body_path_present=not bool(role_output_body_gaps),
+        role_output_body_hash_verified=not bool(role_output_body_gaps),
         control_blocker_followup_event_matchable=pm_repair_followup_matchable,
         pm_repair_reissue_spec_written=bool(
             pm_repair_liveness.get("reissue_spec_written")

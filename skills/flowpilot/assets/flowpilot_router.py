@@ -84,6 +84,7 @@ ROUTER_DAEMON_EVENT_LOG_SCHEMA = "flowpilot.router_daemon_event_log.v1"
 CONTROLLER_ACTION_LEDGER_SCHEMA = "flowpilot.controller_action_ledger.v1"
 CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
 CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
+CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
@@ -691,6 +692,7 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
         "write_user_intake",
         "start_router_daemon",
         "check_prompt_manifest",
+        "sync_display_plan",
     }
 )
 
@@ -6041,6 +6043,33 @@ def append_history(state: dict[str, Any], label: str, details: dict[str, Any] | 
     history.append({"at": utc_now(), "label": label, "details": details or {}})
 
 
+def _controller_user_reporting_policy() -> dict[str, Any]:
+    return {
+        "schema_version": CONTROLLER_USER_REPORTING_POLICY_SCHEMA,
+        "plain_language_required": True,
+        "reminder": (
+            "If this action is mentioned to the user, explain it in plain "
+            "language instead of copying internal action names or metadata."
+        ),
+        "allowed_user_report_points": [
+            "what_is_happening_now",
+            "what_flowpilot_is_waiting_for",
+            "whether_user_needs_to_act",
+        ],
+        "hide_internal_metadata_by_default": [
+            "event_names",
+            "packet_ids",
+            "ledger_names",
+            "hashes",
+            "action_ids",
+            "contract_names",
+            "diagnostic_file_paths",
+        ],
+        "technical_details_allowed_when_user_asks": True,
+        "sealed_body_boundary_unchanged": True,
+    }
+
+
 def make_action(
     *,
     action_type: str,
@@ -6055,6 +6084,7 @@ def make_action(
     to_role: str | None = None,
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    user_reporting_policy = _controller_user_reporting_policy()
     action: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "action_id": f"{label}:{utc_now()}",
@@ -6109,6 +6139,7 @@ def make_action(
             )
     resolved_recipient = str(action.get("to_role") or actor)
     action.setdefault("why_this_role", summary)
+    action["controller_user_reporting_policy"] = user_reporting_policy
     action["next_step_contract"] = {
         "schema_version": "flowpilot.next_step_contract.v1",
         "controller_has_explicit_next": True,
@@ -6124,6 +6155,7 @@ def make_action(
         "apply_required": bool(action.get("apply_required", True)),
         "allowed_external_events": action.get("allowed_external_events", []),
         "postcondition": action.get("postcondition"),
+        "controller_user_reporting_policy": user_reporting_policy,
     }
     if action.get("gate_contract") is not None:
         action["next_step_contract"]["gate_contract"] = action["gate_contract"]
@@ -15489,6 +15521,143 @@ def _current_status_summary_path(run_root: Path) -> Path:
     return run_root / "display" / "current_status_summary.json"
 
 
+def _run_elapsed_seconds(run_root: Path, run_state: dict[str, Any]) -> int | None:
+    timestamps: list[datetime] = []
+
+    def add_timestamp(raw: object) -> None:
+        parsed = _parse_utc_timestamp(raw)
+        if parsed is not None:
+            timestamps.append(parsed)
+
+    for key in ("created_at", "started_at"):
+        add_timestamp(run_state.get(key))
+    history = run_state.get("history")
+    if isinstance(history, list):
+        for item in history:
+            if isinstance(item, dict):
+                add_timestamp(item.get("at"))
+    bootstrap = read_json_if_exists(run_root / "bootstrap" / "startup_state.json")
+    for key in ("created_at", "started_at"):
+        add_timestamp(bootstrap.get(key))
+    bootstrap_history = bootstrap.get("history")
+    if isinstance(bootstrap_history, list):
+        for item in bootstrap_history:
+            if isinstance(item, dict):
+                add_timestamp(item.get("at"))
+    if not timestamps:
+        return None
+    started_at = min(timestamps)
+    return max(0, int((datetime.now(timezone.utc) - started_at).total_seconds()))
+
+
+def _route_progress_parent_map(nodes: list[dict[str, Any]]) -> dict[str, str]:
+    parent_by_id: dict[str, str] = {}
+    for node in nodes:
+        node_id = _node_identifier(node)
+        raw_parent = node.get("parent_node_id") or node.get("parent_id")
+        if node_id and raw_parent:
+            parent_by_id[node_id] = str(raw_parent)
+    for node in nodes:
+        node_id = _node_identifier(node)
+        if not node_id:
+            continue
+        for child_id in _node_child_ids(node):
+            parent_by_id.setdefault(str(child_id), node_id)
+    return parent_by_id
+
+
+def _route_progress_completed_ids(
+    nodes: list[dict[str, Any]],
+    frontier: dict[str, Any],
+) -> set[str]:
+    completed = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    for node in nodes:
+        node_id = _node_identifier(node)
+        if not node_id:
+            continue
+        if _plan_item_status(node.get("status"), active=False) == "completed":
+            completed.add(node_id)
+    return completed
+
+
+def _route_progress_path_nodes(
+    nodes_by_id: dict[str, dict[str, Any]],
+    parent_by_id: dict[str, str],
+    active_node_id: str,
+) -> list[dict[str, Any]]:
+    if not active_node_id or active_node_id not in nodes_by_id:
+        return []
+    path_ids: list[str] = []
+    seen: set[str] = set()
+    cursor: str | None = active_node_id
+    while cursor and cursor in nodes_by_id and cursor not in seen:
+        seen.add(cursor)
+        path_ids.append(cursor)
+        cursor = parent_by_id.get(cursor)
+    return [
+        nodes_by_id[node_id]
+        for node_id in reversed(path_ids)
+        if not _is_route_root_node(nodes_by_id[node_id])
+    ]
+
+
+def _build_progress_summary(
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    route: dict[str, Any],
+    frontier: dict[str, Any],
+    active_node_id: str,
+    state_kind: str,
+) -> dict[str, Any]:
+    nodes = [node for node in _route_nodes(route) if not _is_route_root_node(node)]
+    nodes_by_id = {_node_identifier(node): node for node in nodes if _node_identifier(node)}
+    completed_ids = _route_progress_completed_ids(nodes, frontier)
+    parent_by_id = _route_progress_parent_map(_route_nodes(route))
+    active_path = _route_progress_path_nodes(nodes_by_id, parent_by_id, active_node_id)
+    route_order = {_node_identifier(node): index for index, node in enumerate(nodes)}
+    levels: list[dict[str, Any]] = []
+
+    for level_index, node in enumerate(active_path, start=1):
+        node_id = _node_identifier(node)
+        parent_id = parent_by_id.get(node_id)
+        siblings = [
+            candidate
+            for candidate in nodes
+            if parent_by_id.get(_node_identifier(candidate)) == parent_id
+        ]
+        siblings.sort(key=lambda item: route_order.get(_node_identifier(item), 0))
+        sibling_ids = [_node_identifier(item) for item in siblings]
+        current_index = sibling_ids.index(node_id) + 1 if node_id in sibling_ids else None
+        levels.append(
+            {
+                "level": level_index,
+                "total_nodes": len(siblings),
+                "completed_nodes": sum(1 for item_id in sibling_ids if item_id in completed_ids),
+                "current_index": current_index,
+                "current_node_id": node_id,
+                "current_label": str(node.get("title") or node.get("label") or node_id),
+            }
+        )
+
+    route_node_ids = set(nodes_by_id)
+    return {
+        "schema_version": "flowpilot.progress_summary.v1",
+        "state": state_kind,
+        "level_count": len(levels),
+        "levels": levels,
+        "overall_completed_nodes": len(completed_ids & route_node_ids),
+        "overall_total_nodes": len(route_node_ids),
+        "elapsed_seconds": _run_elapsed_seconds(run_root, run_state),
+        "metadata_only": True,
+        "sealed_body_fields_excluded": True,
+        "evidence_table_excluded": True,
+        "source_fields_excluded": True,
+        "diagnostic_paths_excluded": True,
+        "hash_fields_excluded": True,
+    }
+
+
 def _route_node_label(route: dict[str, Any], node_id: str) -> str:
     for node in _iter_route_nodes(route):
         candidate = str(node.get("node_id") or node.get("id") or "")
@@ -15612,6 +15781,14 @@ def _build_current_status_summary(
         "state_kind": state_kind,
         "headline": labels[state_kind],
         "current_work": current_work,
+        "progress_summary": _build_progress_summary(
+            run_root,
+            run_state,
+            route=route,
+            frontier=frontier,
+            active_node_id=active_node_id,
+            state_kind=state_kind,
+        ),
         "route": {
             "route_id": active_route_id or route.get("route_id"),
             "route_version": frontier.get("route_version") or route.get("route_version"),
@@ -15807,6 +15984,7 @@ def _write_route_state_snapshot(
 
 def _mark_display_plan_dirty(run_state: dict[str, Any]) -> None:
     run_state["visible_plan_sync"] = {}
+    run_state.setdefault("flags", {})["visible_plan_synced"] = False
 
 
 def _write_display_plan_from_route(
@@ -16031,6 +16209,7 @@ def _sync_derived_run_views(
             "synced_at": utc_now(),
             "host_action": "derived_pre_route_phase_projection",
         }
+        run_state.setdefault("flags", {})["visible_plan_synced"] = True
 
 
 def _write_display_plan_from_pm_payload(
@@ -22196,7 +22375,6 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
         allowed_reads=allowed_reads,
         allowed_writes=allowed_writes,
         extra={
-            "postcondition": "visible_plan_synced",
             **sync_payload,
         },
     )
@@ -26203,6 +26381,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         }
         if confirmation is not None:
             run_state["visible_plan_sync"]["user_dialog_display_confirmation"] = confirmation
+        run_state.setdefault("flags", {})["visible_plan_synced"] = True
     elif action_type == "write_display_surface_status":
         confirmation = _display_confirmation_for_action(payload, pending)
         _write_display_surface_status(project_root, run_root, run_state, confirmation, payload or {})
