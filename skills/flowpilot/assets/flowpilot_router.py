@@ -4699,6 +4699,214 @@ def _reconcile_controller_receipts(project_root: Path, run_root: Path, run_state
     return {"reconciled_receipts": reconciled, "blocked_receipts": blocked, "ledger_counts": ledger.get("counts")}
 
 
+def _pending_controller_action_id(pending_action: dict[str, Any]) -> str:
+    action_id = str(pending_action.get("controller_action_id") or "").strip()
+    if action_id:
+        return action_id
+    return _controller_action_id_for_action(pending_action)
+
+
+def _pending_action_postcondition(pending_action: dict[str, Any]) -> str:
+    postcondition = pending_action.get("postcondition")
+    if isinstance(postcondition, str) and postcondition.strip():
+        return postcondition.strip()
+    contract = pending_action.get("next_step_contract")
+    if isinstance(contract, dict):
+        postcondition = contract.get("postcondition")
+        if isinstance(postcondition, str) and postcondition.strip():
+            return postcondition.strip()
+    return ""
+
+
+def _receipt_for_pending_controller_action(run_root: Path, pending_action: dict[str, Any]) -> dict[str, Any]:
+    action_id = _pending_controller_action_id(pending_action)
+    if not action_id:
+        return {}
+    receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id))
+    if receipt.get("schema_version") != CONTROLLER_RECEIPT_SCHEMA:
+        return {}
+    if str(receipt.get("action_id") or "") != action_id:
+        return {}
+    return receipt
+
+
+def _pending_action_postcondition_satisfied(run_state: dict[str, Any], postcondition: str) -> bool:
+    if not postcondition:
+        return True
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    return bool(flags.get(postcondition))
+
+
+def _apply_stateful_receipt_postcondition(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    action_type = str(pending_action.get("action_type") or "")
+    if action_type == "rehydrate_role_agents":
+        _write_resume_role_rehydration_report(project_root, run_root, run_state, receipt_payload)
+        return {"applied": True, "postcondition": "resume_roles_restored"}
+    return {
+        "applied": False,
+        "reason": "unsupported_stateful_controller_receipt",
+        "action_type": action_type,
+    }
+
+
+def _clear_pending_after_reconciled_controller_receipt(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    pending_action: dict[str, Any],
+    receipt: dict[str, Any],
+    applied_postcondition: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    run_state["pending_action"] = None
+    append_history(
+        run_state,
+        "router_reconciled_pending_controller_action_receipt",
+        {
+            "action_type": pending_action.get("action_type"),
+            "label": pending_action.get("label"),
+            "controller_action_id": receipt.get("action_id"),
+            "receipt_status": receipt.get("status"),
+            "applied_postcondition": applied_postcondition or {},
+        },
+    )
+    _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_receipt_reconciliation")
+    _sync_derived_run_views(
+        project_root,
+        run_root,
+        run_state,
+        reason="after_controller_receipt_reconciliation",
+        update_display=True,
+    )
+    save_run_state(run_root, run_state)
+    return {"changed": True, "cleared_pending": True, "receipt_status": receipt.get("status")}
+
+
+def _reconcile_pending_controller_action_receipt(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    pending_action = run_state.get("pending_action")
+    if not isinstance(pending_action, dict):
+        return {"changed": False}
+    receipt = _receipt_for_pending_controller_action(run_root, pending_action)
+    if not receipt:
+        return {"changed": False}
+    status = str(receipt.get("status") or "")
+    if status == "waiting":
+        return {"changed": False, "waiting_receipt": True}
+    payload = receipt.get("payload") if isinstance(receipt.get("payload"), dict) else {}
+    action_type = str(pending_action.get("action_type") or receipt.get("action_type") or "")
+    if status == "blocked":
+        _write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source="controller_action_receipt_blocked",
+            error_message=f"Controller reported active action {action_type} blocked before Router could continue.",
+            action_type=action_type,
+            payload={
+                "controller_action_id": receipt.get("action_id"),
+                "controller_receipt_payload": payload,
+                "pending_action_label": pending_action.get("label"),
+            },
+        )
+        return {"changed": True, "blocked": True, "receipt_status": status}
+    if status == "skipped":
+        return _clear_pending_after_reconciled_controller_receipt(
+            project_root,
+            run_root,
+            run_state,
+            pending_action=pending_action,
+            receipt=receipt,
+        )
+    if status != "done":
+        return {"changed": False, "unsupported_receipt_status": status}
+
+    postcondition = _pending_action_postcondition(pending_action)
+    if postcondition and not _pending_action_postcondition_satisfied(run_state, postcondition):
+        try:
+            applied = _apply_stateful_receipt_postcondition(
+                project_root,
+                run_root,
+                run_state,
+                pending_action,
+                payload,
+            )
+        except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
+            _write_control_blocker(
+                project_root,
+                run_root,
+                run_state,
+                source="controller_action_receipt_incomplete_for_stateful_action",
+                error_message=(
+                    f"Controller receipt for {action_type} was marked done, but Router could not apply "
+                    f"required postcondition {postcondition}: {exc}"
+                ),
+                action_type=action_type,
+                payload={
+                    "controller_action_id": receipt.get("action_id"),
+                    "postcondition": postcondition,
+                    "controller_receipt_payload": payload,
+                    "pending_action_label": pending_action.get("label"),
+                },
+            )
+            return {
+                "changed": True,
+                "blocked": True,
+                "receipt_status": status,
+                "postcondition": postcondition,
+            }
+        if not applied.get("applied") or not _pending_action_postcondition_satisfied(run_state, postcondition):
+            _write_control_blocker(
+                project_root,
+                run_root,
+                run_state,
+                source="controller_action_receipt_missing_stateful_postcondition",
+                error_message=(
+                    f"Controller receipt for {action_type} was marked done, but Router postcondition "
+                    f"{postcondition} is still not satisfied."
+                ),
+                action_type=action_type,
+                payload={
+                    "controller_action_id": receipt.get("action_id"),
+                    "postcondition": postcondition,
+                    "controller_receipt_payload": payload,
+                    "pending_action_label": pending_action.get("label"),
+                    "apply_result": applied,
+                },
+            )
+            return {
+                "changed": True,
+                "blocked": True,
+                "receipt_status": status,
+                "postcondition": postcondition,
+            }
+        return _clear_pending_after_reconciled_controller_receipt(
+            project_root,
+            run_root,
+            run_state,
+            pending_action=pending_action,
+            receipt=receipt,
+            applied_postcondition=applied,
+        )
+
+    return _clear_pending_after_reconciled_controller_receipt(
+        project_root,
+        run_root,
+        run_state,
+        pending_action=pending_action,
+        receipt=receipt,
+    )
+
+
 def _pending_wait_summary(run_state: dict[str, Any]) -> dict[str, Any]:
     pending = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
     return {
@@ -7615,10 +7823,13 @@ def _validate_wait_event_producer_binding(
 
 
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    if _resume_reentry_gate_pending(run_state):
-        return None
     active = run_state.get("active_control_blocker")
     if not isinstance(active, dict):
+        return None
+    if (
+        _resume_reentry_gate_pending(run_state)
+        and active.get("originating_action_type") not in {"load_resume_state", "rehydrate_role_agents"}
+    ):
         return None
     record = _control_blocker_record(project_root, active)
     artifact_rel = str(record.get("blocker_artifact_path") or active.get("blocker_artifact_path") or "")
@@ -21643,6 +21854,9 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
             },
         )
     if not flags.get("resume_roles_restored"):
+        active_blocker = run_state.get("active_control_blocker")
+        if isinstance(active_blocker, dict) and active_blocker.get("originating_action_type") == "rehydrate_role_agents":
+            return None
         return make_action(
             action_type="rehydrate_role_agents",
             actor="controller",
@@ -23961,6 +24175,97 @@ def _try_reconcile_pm_role_work_results(
     return changed
 
 
+def _run_state_has_event(run_state: dict[str, Any], event: str) -> bool:
+    return any(
+        isinstance(item, dict) and item.get("event") == event
+        for item in (run_state.get("events") or [])
+    )
+
+
+def _startup_fact_canonical_report_is_valid(run_root: Path, run_state: dict[str, Any]) -> bool:
+    report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
+    return (
+        report.get("schema_version") == "flowpilot.startup_fact_report.v1"
+        and report.get("run_id") == run_state.get("run_id")
+        and report.get("reviewed_by_role") == "human_like_reviewer"
+        and report.get("status") in {"pass", "findings"}
+    )
+
+
+def _role_output_ledger_outputs(run_root: Path) -> list[dict[str, Any]]:
+    ledger = read_json_if_exists(run_root / "role_output_ledger.json")
+    outputs = ledger.get("outputs") if isinstance(ledger.get("outputs"), list) else []
+    return [item for item in outputs if isinstance(item, dict)]
+
+
+def _try_reconcile_startup_fact_role_output_ledger(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    event = "reviewer_reports_startup_facts"
+    meta = EXTERNAL_EVENTS[event]
+    flag = str(meta["flag"])
+    flags = run_state.setdefault("flags", {})
+    required_flag = str(meta.get("requires_flag") or "")
+    changed = False
+    reconciled = 0
+    skipped_invalid = 0
+    if flags.get(flag) and _run_state_has_event(run_state, event):
+        return {"changed": False, "reconciled": 0, "skipped_invalid": 0}
+    for record in _role_output_ledger_outputs(run_root):
+        envelope = record.get("envelope")
+        if not isinstance(envelope, dict):
+            continue
+        if str(envelope.get("event_name") or "") != event:
+            continue
+        if required_flag and not flags.get(required_flag):
+            continue
+        try:
+            role_output_runtime.validate_envelope_runtime_receipt(project_root, envelope)
+        except role_output_runtime.RoleOutputRuntimeError:
+            skipped_invalid += 1
+            continue
+        _preconsume_pending_card_return_ack_before_external_event(
+            project_root,
+            run_root,
+            run_state,
+            event=event,
+        )
+        if _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event) is not None:
+            continue
+        if not _startup_fact_canonical_report_is_valid(run_root, run_state):
+            try:
+                _write_startup_fact_report(project_root, run_root, run_state, envelope)
+            except (RouterError, role_output_runtime.RoleOutputRuntimeError, OSError, json.JSONDecodeError):
+                skipped_invalid += 1
+                continue
+        if _run_state_has_event(run_state, event):
+            if not flags.get(flag):
+                flags[flag] = True
+                append_history(
+                    run_state,
+                    "router_synced_startup_fact_flag_from_role_output_ledger",
+                    {
+                        "event": event,
+                        "output_id": record.get("output_id"),
+                        "canonical_report_path": project_relative(project_root, run_root / "startup" / "startup_fact_report.json"),
+                    },
+                )
+                changed = True
+                reconciled += 1
+            break
+        if _record_router_reconciled_external_event(project_root, run_root, run_state, event, envelope):
+            changed = True
+            reconciled += 1
+            break
+    return {
+        "changed": changed,
+        "reconciled": reconciled,
+        "skipped_invalid": skipped_invalid,
+    }
+
+
 def _reconcile_durable_wait_evidence(
     project_root: Path,
     run_root: Path,
@@ -23968,6 +24273,8 @@ def _reconcile_durable_wait_evidence(
 ) -> dict[str, Any]:
     batch_reconciliation = _refresh_all_parallel_packet_batches_from_durable_results(project_root, run_root, run_state)
     changed = bool(batch_reconciliation.get("changed"))
+    role_output_reconciliation = _try_reconcile_startup_fact_role_output_ledger(project_root, run_root, run_state)
+    changed = bool(role_output_reconciliation.get("changed")) or changed
     changed = _try_reconcile_material_scan_body_delivery(project_root, run_root, run_state) or changed
     changed = _try_reconcile_material_scan_results(project_root, run_root, run_state) or changed
     changed = _try_reconcile_current_node_results(project_root, run_root, run_state) or changed
@@ -23981,9 +24288,10 @@ def _reconcile_durable_wait_evidence(
                 "changed": changed,
                 "controller_visibility": "metadata_only",
                 "batches": batch_reconciliation.get("batches"),
+                "role_output_reconciliation": role_output_reconciliation,
             },
         )
-    return {**batch_reconciliation, "changed": changed}
+    return {**batch_reconciliation, "changed": changed, "role_output_reconciliation": role_output_reconciliation}
 
 
 def _commit_system_card_delivery_artifact(
@@ -25121,6 +25429,8 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         append_history(run_state, "router_computed_terminal_lifecycle_action", {"action_type": terminal_action["action_type"]})
         save_run_state(run_root, run_state)
         return terminal_action
+    _reconcile_controller_receipts(project_root, run_root, run_state)
+    receipt_reconciliation = _reconcile_pending_controller_action_receipt(project_root, run_root, run_state)
     durable_reconciliation = _reconcile_durable_wait_evidence(project_root, run_root, run_state)
     pending_action = run_state.get("pending_action")
     if (
@@ -25147,6 +25457,16 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         )
         save_run_state(run_root, run_state)
         pending_action = None
+    elif durable_reconciliation.get("changed") or receipt_reconciliation.get("changed"):
+        _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_durable_reconciliation_barrier")
+        _sync_derived_run_views(
+            project_root,
+            run_root,
+            run_state,
+            reason="after_router_durable_reconciliation_barrier",
+            update_display=True,
+        )
+        save_run_state(run_root, run_state)
     stale_pending = _pending_role_decision_staleness(run_state, pending_action)
     reconciled_pending = None
     if stale_pending:

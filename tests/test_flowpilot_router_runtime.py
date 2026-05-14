@@ -402,6 +402,46 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         envelope_path, envelope_hash = self.write_event_envelope(root, name, envelope)
         return envelope, envelope_path, envelope_hash
 
+    def submit_startup_fact_runtime_output_to_ledger(self, root: Path, name: str = "startup/reviewer_startup_fact_report") -> dict:
+        run_root = self.run_root_for(root)
+        envelope, _, _ = self.startup_fact_runtime_envelope(root, name)
+        ledger_path = run_root / "role_output_ledger.json"
+        body_ref = envelope["body_ref"]
+        receipt_ref = envelope["runtime_receipt_ref"]
+        ledger_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": role_output_runtime.ROLE_OUTPUT_LEDGER_SCHEMA,
+                    "run_id": run_root.name,
+                    "outputs": [
+                        {
+                            "output_id": "test-startup-fact-report-runtime-receipt",
+                            "run_id": run_root.name,
+                            "role": "human_like_reviewer",
+                            "agent_id": "agent-human_like_reviewer",
+                            "output_type": "startup_fact_report",
+                            "output_contract_id": "flowpilot.output_contract.startup_fact_report.v1",
+                            "body_path": body_ref["path"],
+                            "body_hash": body_ref["hash"],
+                            "envelope": envelope,
+                            "receipt_path": receipt_ref["path"],
+                            "receipt_hash": receipt_ref["hash"],
+                            "controller_visibility": "ledger_metadata_only",
+                            "controller_may_read_body": False,
+                            "recorded_at": "2026-05-14T00:00:00Z",
+                        }
+                    ],
+                    "created_at": "2026-05-14T00:00:00Z",
+                    "updated_at": "2026-05-14T00:00:00Z",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return envelope
+
     def material_scan_event_envelope(self, root: Path, name: str = "material/pm_material_scan") -> tuple[dict, str, str]:
         payload = self.material_scan_file_backed_payload(root)
         envelope = {
@@ -3513,6 +3553,116 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(first_record["status"], "done")
         self.assertEqual(blocked_record["status"], "blocked")
         self.assertEqual(blocked_record["blocked_payload"], {"reason": "test-blocked"})
+
+    def test_completed_pending_controller_action_receipt_is_not_returned_again(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="test_metadata_only_host_action",
+            actor="controller",
+            label="test_metadata_only_host_action",
+            summary="Test metadata-only action already completed by Controller.",
+        )
+        state["pending_action"] = action
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"completed_by_test": True},
+        )
+
+        next_action = self.next_after_display_sync(root)
+
+        self.assertNotEqual(next_action["action_type"], "test_metadata_only_host_action")
+        state = read_json(router.run_state_path(run_root))
+        self.assertNotEqual((state.get("pending_action") or {}).get("controller_action_id"), entry["action_id"])
+        labels = [item["label"] for item in state["history"] if isinstance(item, dict)]
+        self.assertIn("router_reconciled_pending_controller_action_receipt", labels)
+
+    def test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["controller_role_confirmed"] = True
+        state["flags"]["controller_boundary_confirmation_written"] = True
+        state["flags"]["resume_reentry_requested"] = True
+        state["flags"]["resume_state_loaded"] = True
+        state["flags"]["resume_roles_restored"] = False
+        action = router.make_action(
+            action_type="rehydrate_role_agents",
+            actor="controller",
+            label="host_rehydrates_resume_roles_before_pm_decision",
+            summary="Test rehydrate action with incomplete receipt.",
+            extra={"postcondition": "resume_roles_restored"},
+        )
+        state["pending_action"] = action
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"roles_rehydrated": 6},
+        )
+
+        next_action = self.next_after_display_sync(root)
+
+        self.assertEqual(next_action["action_type"], "handle_control_blocker")
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["resume_roles_restored"])
+        self.assertEqual(state["active_control_blocker"]["originating_action_type"], "rehydrate_role_agents")
+        self.assertNotEqual((state.get("pending_action") or {}).get("action_type"), "rehydrate_role_agents")
+
+    def test_startup_fact_role_output_ledger_is_reconciled_by_router_tick(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        self.deliver_startup_fact_check_card(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+        router.stop_router_daemon(root, reason="test_release_before_role_output_reconciliation")
+
+        self.submit_startup_fact_runtime_output_to_ledger(root)
+        before = read_json(router.run_state_path(run_root))
+        self.assertFalse(before["flags"]["startup_fact_reported"])
+
+        router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        after = read_json(router.run_state_path(run_root))
+        self.assertTrue(after["flags"]["startup_fact_reported"])
+        self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
+        events = [item for item in after["events"] if isinstance(item, dict) and item.get("event") == "reviewer_reports_startup_facts"]
+        self.assertEqual(len(events), 1)
+        self.assertNotEqual((after.get("pending_action") or {}).get("label"), wait_action["label"])
+
+    def test_startup_fact_canonical_artifact_drift_syncs_flag_once(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_startup_fact_check_card(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+        envelope = self.submit_startup_fact_runtime_output_to_ledger(root)
+        state = read_json(router.run_state_path(run_root))
+        router._write_startup_fact_report(root, run_root, state, envelope)  # type: ignore[attr-defined]
+        state["flags"]["startup_fact_reported"] = False
+        state["events"] = [
+            item
+            for item in state["events"]
+            if not isinstance(item, dict) or item.get("event") != "reviewer_reports_startup_facts"
+        ]
+        state["pending_action"] = wait_action
+        router.save_run_state(run_root, state)
+
+        router.next_action(root)
+        router.next_action(root)
+
+        after = read_json(router.run_state_path(run_root))
+        self.assertTrue(after["flags"]["startup_fact_reported"])
+        events = [item for item in after["events"] if isinstance(item, dict) and item.get("event") == "reviewer_reports_startup_facts"]
+        self.assertEqual(len(events), 1)
 
     def test_foreground_controller_standby_waits_on_live_daemon_role_wait(self) -> None:
         root = self.make_project()

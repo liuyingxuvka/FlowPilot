@@ -3,6 +3,78 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## reconcile-daemon-durable-evidence-20260514 - Reconcile durable Router evidence before pending replay
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The live FlowPilot run could stop at a second-layer wait when
+  Router state still carried stale pending/action flags even though durable
+  role outputs or Controller receipts already existed on disk.
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-14T16:45:00+02:00
+- Ended: 2026-05-14T20:20:00+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_daemon_reconciliation_model.py
+- simulations/run_flowpilot_daemon_reconciliation_checks.py
+- simulations/flowpilot_daemon_reconciliation_results.json
+- simulations/flowpilot_persistent_router_daemon_model.py
+- simulations/flowpilot_role_output_runtime_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`:
+  `1.0`
+- OK: `openspec validate reconcile-daemon-durable-evidence --strict --json`
+- OK: `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json`
+- OK: `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json`
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py`
+- OK: compile check for Router, tests, and daemon reconciliation model files.
+- OK: focused new router reconciliation tests: 5 passed.
+- OK: adjacent daemon standby/runtime tests: 7 passed.
+- OK: install checks and local installed-skill sync.
+- OK: background `python simulations\run_meta_checks.py`: exit 0,
+  1,949,768 states, 2,010,668 edges, proof reuse mentioned in output.
+- OK: background `python simulations\run_capability_checks.py`: exit 0,
+  24 shards complete, proof reuse mentioned in output.
+
+### Findings
+- Router now runs a durable reconciliation barrier before returning pending
+  Controller actions or computing stale-pending fallback actions.
+- Completed, blocked, and skipped Controller receipts clear pending actions
+  instead of being replayed; incomplete stateful rehydration receipts become
+  repair blockers.
+- Valid startup fact role-output ledger entries are reconciled into canonical
+  report artifacts, Router flags, and run events idempotently.
+- Canonical startup fact artifacts can repair stale Router flags/events once
+  without duplicating role work.
+- Local installed FlowPilot is source-fresh after repository sync.
+
+### Counterexamples
+- `completed_controller_action_repeated`
+- `blocked_receipt_repeated_instead_of_blocker`
+- `submitted_role_output_left_in_ledger`
+- `canonical_artifact_flag_not_synced`
+- `computed_from_pending_before_reconciliation`
+- `receipt_and_role_output_interleaving_starves_role_output`
+
+### Friction Points
+- The earlier daemon model covered foreground no-manual-next progress but did
+  not separate durable disk evidence from stale in-memory Router flags, so this
+  second-layer drift needed a dedicated reconciliation model.
+
+### Skipped Steps
+- No remote GitHub push, tag, or release action was performed.
+- No unrelated peer-agent changes were reverted.
+
+### Next Actions
+- Keep durable-evidence reconciliation ahead of pending-action replay for
+  future Router daemon changes.
+- When adding a new durable evidence source, add a model hazard for stale
+  Router state plus a runtime reconciliation test.
+
 ## flowpilot-model-mesh-runner-integration-20260512 - Upgrade mesh coverage ingestion and derive runtime repair recommendation
 
 - Project: FlowGuardProjectAutopilot_20260430
