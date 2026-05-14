@@ -8898,6 +8898,24 @@ def _display_plan_user_dialog_fields(plan_projection: dict[str, Any]) -> dict[st
     )
 
 
+def _startup_waiting_internal_display_fields() -> dict[str, Any]:
+    return {
+        "display_kind": "startup_waiting_state",
+        "display_required": False,
+        "display_text_format": "internal_state",
+        "controller_must_display_text_before_apply": False,
+        "requires_user_dialog_display_confirmation": False,
+        "generated_files_alone_satisfy_chat_display": False,
+        "user_visible_display_suppressed": True,
+        "internal_display_reason": "waiting_for_pm_route_before_canonical_route",
+        "controller_display_rule": (
+            "Do not paste a FlowPilot Startup Status waiting card into the user dialog. "
+            "This sync is internal host-plan state only; startup user visibility is handled by "
+            "the startup FlowPilot Route Sign display."
+        ),
+    }
+
+
 def _display_route_sign_user_dialog_fields(route_sign: dict[str, Any]) -> dict[str, Any]:
     display_text = route_sign.get("markdown")
     if not isinstance(display_text, str) or not display_text.strip():
@@ -14115,16 +14133,21 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
     status_summary_digest = hashlib.sha256(status_summary_path.read_bytes()).hexdigest() if status_summary_path.exists() else None
     route_sign = _route_map_route_sign_payload(project_root, write=False, mark_chat_displayed=False)
     route_sign_available = _route_sign_has_canonical_route(route_sign)
+    display_kind = _display_plan_display_kind(projection)
     dialog_fields = (
         _display_route_sign_user_dialog_fields(route_sign)
         if route_sign_available
-        else _display_plan_user_dialog_fields(projection)
+        else (
+            _startup_waiting_internal_display_fields()
+            if display_kind == "startup_waiting_state"
+            else _display_plan_user_dialog_fields(projection)
+        )
     )
     display_degraded_reason = None
     if not route_sign_available:
         display_degraded_reason = (
             "startup_waiting_for_pm_route"
-            if _display_plan_display_kind(projection) == "startup_waiting_state"
+            if display_kind == "startup_waiting_state"
             else "canonical_route_source_unavailable"
         )
     return {
@@ -24729,7 +24752,9 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             }
         )
     elif action_type == "sync_display_plan":
-        confirmation = _display_confirmation_for_action(payload, pending)
+        confirmation = None
+        if pending.get("requires_user_dialog_display_confirmation"):
+            confirmation = _display_confirmation_for_action(payload, pending)
         sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
         if not sync_payload["display_plan_exists"]:
             write_json(_display_plan_path(run_root), _waiting_for_pm_display_plan(run_state))
@@ -24751,7 +24776,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "route_sign_source_route_path": route_sign.get("source_route_path"),
                 "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
             }
-        _append_user_dialog_display_ledger(project_root, run_root, confirmation)
+        if confirmation is not None:
+            _append_user_dialog_display_ledger(project_root, run_root, confirmation)
         run_state["visible_plan_sync"] = {
             "display_plan_path": sync_payload["display_plan_path"],
             "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
@@ -24772,10 +24798,14 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "route_sign_layout": sync_payload.get("route_sign_layout"),
             "route_sign_source_route_path": sync_payload.get("route_sign_source_route_path"),
             "route_sign_source_frontier_path": sync_payload.get("route_sign_source_frontier_path"),
+            "display_required": sync_payload.get("display_required"),
+            "user_visible_display_suppressed": sync_payload.get("user_visible_display_suppressed", False),
+            "internal_display_reason": sync_payload.get("internal_display_reason"),
             "synced_at": utc_now(),
             "host_action": sync_payload["host_action"],
-            "user_dialog_display_confirmation": confirmation,
         }
+        if confirmation is not None:
+            run_state["visible_plan_sync"]["user_dialog_display_confirmation"] = confirmation
     elif action_type == "write_display_surface_status":
         confirmation = _display_confirmation_for_action(payload, pending)
         _write_display_surface_status(project_root, run_root, run_state, confirmation, payload or {})
@@ -24819,7 +24849,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     result.update(result_extra)
     if action_type == "sync_display_plan":
         result.update(_display_plan_sync_payload(project_root, run_root, run_state))
-        result["user_dialog_display_confirmation"] = run_state["visible_plan_sync"]["user_dialog_display_confirmation"]
+        if "user_dialog_display_confirmation" in run_state["visible_plan_sync"]:
+            result["user_dialog_display_confirmation"] = run_state["visible_plan_sync"]["user_dialog_display_confirmation"]
     return result
 
 

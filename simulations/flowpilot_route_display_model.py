@@ -6,6 +6,9 @@ Risk intent brief:
 - Protect the canonical source-of-truth boundary: drafts and repair candidates
   are internal review artifacts, while the user-visible route map may only read
   the last committed ``flow.json`` or a snapshot explicitly built from it.
+- Keep the startup waiting-for-PM-route status internal so the user sees the
+  startup banner and Route Sign placeholder, not a low-information waiting
+  status card.
 - Critical durable state: draft route, route check results, committed route,
   execution frontier, route_state_snapshot, display_plan, route-sign files,
   Cockpit/chat receipts, and the previous committed visible route.
@@ -60,6 +63,8 @@ class State:
     steps: int = 0
 
     startup_displayed: bool = False
+    internal_waiting_state_recorded: bool = False
+    startup_waiting_status_card_visible: bool = False
     route_phase: str = "startup"  # startup | draft | review | committed | node_entry | node_complete | repair_return
     draft_route_exists: bool = False
     draft_review_passed: bool = False
@@ -255,10 +260,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.route_phase == "startup" and not state.startup_displayed:
         yield Transition(
-            "startup_no_committed_route_displays_waiting_state_with_ledger",
+            "startup_no_committed_route_displays_route_sign_with_internal_waiting_state",
             _inc(
                 state,
                 startup_displayed=True,
+                internal_waiting_state_recorded=True,
+                startup_waiting_status_card_visible=False,
                 diagram_written=False,
                 mermaid_source_available=False,
                 mermaid_route_unknown=True,
@@ -428,6 +435,19 @@ def startup_placeholder_has_explicit_identity_and_replacement_rule(state: State,
     return InvariantResult.pass_()
 
 
+def startup_waiting_state_is_internal_only(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.startup_waiting_status_card_visible
+        and state.startup_displayed
+        and not state.committed_route_exists
+    ):
+        return InvariantResult.fail("startup waiting status card was shown to the user before PM route activation")
+    if state.startup_displayed and not state.committed_route_exists and not state.internal_waiting_state_recorded:
+        return InvariantResult.fail("startup display lacked an internal waiting-for-PM-route record")
+    return InvariantResult.pass_()
+
+
 def canonical_route_replaces_placeholder_identity(state: State, trace) -> InvariantResult:
     del trace
     canonical_visible = (
@@ -546,6 +566,11 @@ INVARIANTS = (
         name="startup_placeholder_has_explicit_identity_and_replacement_rule",
         description="Startup placeholder route signs are explicitly marked and carry their replacement rule.",
         predicate=startup_placeholder_has_explicit_identity_and_replacement_rule,
+    ),
+    Invariant(
+        name="startup_waiting_state_is_internal_only",
+        description="Waiting-for-PM-route state is internal and does not become a user-visible status card.",
+        predicate=startup_waiting_state_is_internal_only,
     ),
     Invariant(
         name="canonical_route_replaces_placeholder_identity",
@@ -693,6 +718,7 @@ def hazard_states() -> dict[str, State]:
         "startup_placeholder_missing_identity": State(
             status="running",
             startup_displayed=True,
+            internal_waiting_state_recorded=True,
             visible_source_kind="waiting",
             chat_display_kind="mermaid",
             user_dialog_display_ledger_recorded=True,
@@ -702,6 +728,7 @@ def hazard_states() -> dict[str, State]:
         "startup_placeholder_missing_replacement_rule": State(
             status="running",
             startup_displayed=True,
+            internal_waiting_state_recorded=True,
             visible_source_kind="waiting",
             chat_display_kind="mermaid",
             display_role="startup_placeholder",
@@ -710,6 +737,18 @@ def hazard_states() -> dict[str, State]:
             user_dialog_display_ledger_recorded=True,
             mermaid_route_unknown=True,
             mermaid_node_unknown=True,
+        ),
+        "startup_waiting_status_card_visible": State(
+            status="running",
+            startup_displayed=True,
+            internal_waiting_state_recorded=True,
+            startup_waiting_status_card_visible=True,
+            visible_source_kind="waiting",
+            display_role="startup_placeholder",
+            is_placeholder=True,
+            replacement_rule="replace_when_canonical_route_available",
+            chat_display_kind="mermaid",
+            user_dialog_display_ledger_recorded=True,
         ),
         "canonical_route_keeps_placeholder_identity": _safe_visible_route_base(
             display_role="startup_placeholder",
@@ -768,7 +807,7 @@ def current_implementation_failure_trace() -> dict[str, object]:
     )
     return {
         "labels": [
-            "startup_no_committed_route_displays_waiting_state_with_ledger",
+            "startup_no_committed_route_displays_route_sign_with_internal_waiting_state",
             "pm_writes_internal_route_draft_without_visible_projection",
             "current_router_writes_display_plan_from_flow_draft",
             "current_route_sign_generator_accepts_flow_draft_fallback",

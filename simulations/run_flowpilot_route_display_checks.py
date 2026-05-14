@@ -13,7 +13,7 @@ import flowpilot_route_display_model as model
 
 
 REQUIRED_LABELS = (
-    "startup_no_committed_route_displays_waiting_state_with_ledger",
+    "startup_no_committed_route_displays_route_sign_with_internal_waiting_state",
     "pm_writes_internal_route_draft_without_visible_projection",
     "process_product_reviewer_checks_draft_without_visible_projection",
     "pm_activates_reviewed_route_as_committed_flow_json",
@@ -40,6 +40,7 @@ HAZARD_EXPECTED_FAILURES = {
     "route_draft_keeps_startup_unknown_mermaid": "committed route existed but user-visible Mermaid still showed route=unknown or node=unknown",
     "startup_placeholder_missing_identity": "startup placeholder route sign lacked explicit placeholder identity",
     "startup_placeholder_missing_replacement_rule": "startup placeholder route sign lacked explicit canonical-route replacement rule",
+    "startup_waiting_status_card_visible": "startup waiting status card was shown to the user before PM route activation",
     "canonical_route_keeps_placeholder_identity": "canonical route display kept startup placeholder semantics",
     "canonical_route_missing_identity": "canonical route display lacked explicit canonical identity",
     "chat_fallback_bullet_list_after_route_draft": "chat fallback displayed bullet list instead of Mermaid route sign",
@@ -57,6 +58,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|phase={state.route_phase}|startup={state.startup_displayed}|steps={state.steps}|"
+        f"internal_wait={state.internal_waiting_state_recorded},waiting_card={state.startup_waiting_status_card_visible}|"
         f"route={state.route_source_exists},{state.route_source_kind},canon={state.route_source_is_canonical},"
         f"visible_source={state.visible_source_kind},draft={state.draft_route_exists},"
         f"committed={state.committed_route_exists},repair={state.repair_candidate_exists},"
@@ -190,6 +192,7 @@ def _architecture_candidate() -> dict[str, object]:
             "display_plan.json remains a native visible-plan projection, not the only user-facing route map",
             "Mermaid/chat route sign and Cockpit route map share canonical route/frontier/snapshot semantics",
             "Startup Mermaid may be displayed as a placeholder only when it has explicit placeholder identity and replacement metadata",
+            "Startup waiting-for-PM-route state remains internal instead of producing a separate user-visible status card",
             "draft routes are internal-only until PM activates a reviewed flow.json route",
             "route_state_snapshot.route.nodes is the stable fallback when route file aliases drift",
             "display receipt is required; generated files alone do not satisfy user visibility",
