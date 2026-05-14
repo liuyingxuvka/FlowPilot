@@ -14,14 +14,16 @@ Risk intent brief:
   launch before Controller core load, no daemon at a wait, duplicate Router
   writers, duplicate ACK observation, Router marking Controller work done
   without a receipt, Controller acting as the normal Router metronome,
-  Controller stopping at ordinary waits, heartbeat starting a second live
+  Controller stopping at ordinary waits, foreground Controller ending while a
+  live daemon-owned role wait is active, heartbeat starting a second live
   daemon, and terminal stop leaving daemon/Controller/roles active.
 - Hard invariants: formal startup must start a live one-second Router daemon
   before Controller core loads; active ordinary waits have a live daemon; one
   daemon writer owns a run; mailbox evidence is consumed at most once;
   Controller-required work is done only with a Controller receipt; Controller
   follows the daemon-owned ledger instead of manually ticking the Router during
-  normal runtime; Controller stays attached to the ledger during ordinary waits;
+  normal runtime; Controller stays attached to the ledger and keeps a foreground
+  standby loop active during ordinary daemon-owned role waits;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.
 """
@@ -59,6 +61,11 @@ class State:
     controller_attached: bool = False
     controller_called_router_next_as_metronome: bool = False
     controller_finaled_at_wait: bool = False
+    foreground_standby_active: bool = False
+    foreground_standby_polling_daemon_status: bool = False
+    foreground_standby_polling_action_ledger: bool = False
+    foreground_standby_timeout_count: int = 0
+    foreground_controller_ended_turn_while_daemon_waiting: bool = False
     roles_live: bool = False
     heartbeat_active: bool = False
     current_wait: str = "none"  # none | ack | report | controller_receipt | user | terminal
@@ -175,6 +182,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 daemon_writer_count=0,
                 controller_core_loaded=False,
                 controller_attached=False,
+                foreground_standby_active=False,
+                foreground_standby_polling_daemon_status=False,
+                foreground_standby_polling_action_ledger=False,
                 roles_live=False,
                 heartbeat_active=False,
                 current_wait="terminal",
@@ -208,11 +218,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_action_done=False,
                 controller_receipt_present=False,
                 controller_rescanned_after_receipt=False,
+                foreground_standby_active=False,
             ),
         )
         yield Transition(
             "router_enters_ack_wait_owned_by_daemon",
-            _step(state, current_wait="ack"),
+            _step(
+                state,
+                current_wait="ack",
+                foreground_standby_active=True,
+                foreground_standby_polling_daemon_status=True,
+                foreground_standby_polling_action_ledger=True,
+            ),
         )
         yield Transition(
             "user_requests_terminal_stop",
@@ -241,6 +258,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_action_ready=False,
                 current_wait="none",
                 controller_rescanned_after_receipt=True,
+                foreground_standby_active=False,
             ),
         )
         return
@@ -250,6 +268,20 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             yield Transition(
                 "daemon_wait_tick_keeps_checking_mailbox",
                 _step(state, mailbox_wait_tick_observed=True),
+            )
+        if state.foreground_standby_active and not state.mailbox_wait_tick_observed:
+            yield Transition(
+                "foreground_controller_standby_poll_tick_keeps_turn_open",
+                _step(
+                    state,
+                    mailbox_wait_tick_observed=True,
+                    foreground_standby_timeout_count=state.foreground_standby_timeout_count + 1,
+                ),
+            )
+        if state.foreground_standby_active and state.foreground_standby_timeout_count == 0:
+            yield Transition(
+                "foreground_controller_bounded_timeout_reenters_standby",
+                _step(state, foreground_standby_timeout_count=state.foreground_standby_timeout_count + 1),
             )
         yield Transition(
             "role_writes_expected_mailbox_evidence",
@@ -280,6 +312,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_can_continue_after_evidence=True,
                 current_wait="none",
                 mailbox_wait_tick_observed=False,
+                foreground_standby_active=False,
             ),
         )
         return
@@ -346,6 +379,12 @@ def hazard_states() -> dict[str, State]:
             current_wait="ack",
             controller_attached=False,
             controller_finaled_at_wait=True,
+        ),
+        "foreground_controller_ended_during_live_daemon_wait": replace(
+            safe_active,
+            current_wait="report",
+            foreground_standby_active=False,
+            foreground_controller_ended_turn_while_daemon_waiting=True,
         ),
         "controller_core_loaded_after_skipped_daemon_start": replace(
             safe_active,
@@ -422,6 +461,12 @@ def invariant_failures(state: State) -> list[str]:
     if state.lifecycle == "active" and state.daemon_mode_enabled and state.current_wait in {"ack", "report"}:
         if not state.controller_attached or state.controller_finaled_at_wait:
             failures.append("Controller stopped at an ordinary daemon-owned wait")
+        if not state.foreground_standby_active or state.foreground_controller_ended_turn_while_daemon_waiting:
+            failures.append("Foreground Controller ended instead of staying in standby for a live daemon-owned role wait")
+        if state.controller_called_router_next_as_metronome:
+            failures.append("Foreground standby used diagnostic Router next/run-until-wait instead of daemon status and action ledger")
+        if not state.foreground_standby_polling_daemon_status or not state.foreground_standby_polling_action_ledger:
+            failures.append("Foreground standby did not poll daemon status and Controller action ledger")
     if state.heartbeat_started_second_daemon:
         failures.append("heartbeat started a second Router daemon while one was live")
     if state.lifecycle == "terminal":
@@ -457,6 +502,9 @@ INVARIANTS = (
     _invariant("mailbox_evidence_consumed_once", "mailbox evidence was consumed more than once"),
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),
     _invariant("controller_stays_attached_at_ordinary_wait", "Controller stopped at an ordinary daemon-owned wait"),
+    _invariant("foreground_controller_standby_keeps_turn_open", "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait"),
+    _invariant("foreground_standby_does_not_use_router_metronome", "Foreground standby used diagnostic Router next/run-until-wait instead of daemon status and action ledger"),
+    _invariant("foreground_standby_polls_daemon_and_ledger", "Foreground standby did not poll daemon status and Controller action ledger"),
     _invariant("heartbeat_does_not_start_second_daemon", "heartbeat started a second Router daemon while one was live"),
     _invariant("terminal_cleanup_stops_runtime", "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active"),
 )

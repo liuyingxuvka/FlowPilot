@@ -88,6 +88,9 @@ ROUTER_DAEMON_TICK_SECONDS = 1
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
 ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
+FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
+FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS = 300.0
+FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
 CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
 ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
@@ -4823,6 +4826,193 @@ def _formal_router_daemon_ready(project_root: Path, run_root: Path) -> bool:
         and ledger.get("schema_version") == CONTROLLER_ACTION_LEDGER_SCHEMA
         and status.get("run_root") == project_relative(project_root, run_root)
     )
+
+
+def _foreground_standby_pending_action_ids(ledger: dict[str, Any]) -> list[str]:
+    actions = ledger.get("actions") if isinstance(ledger.get("actions"), list) else []
+    return [
+        str(item.get("action_id"))
+        for item in actions
+        if isinstance(item, dict)
+        and item.get("action_id")
+        and item.get("status") in {"pending", "in_progress"}
+    ]
+
+
+def _foreground_standby_waiting_action_ids(ledger: dict[str, Any]) -> list[str]:
+    actions = ledger.get("actions") if isinstance(ledger.get("actions"), list) else []
+    return [
+        str(item.get("action_id"))
+        for item in actions
+        if isinstance(item, dict) and item.get("action_id") and item.get("status") == "waiting"
+    ]
+
+
+def _build_foreground_controller_standby_snapshot(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    started_at: str,
+    start_monotonic: float,
+    poll_count: int,
+    max_seconds: float,
+    poll_seconds: float,
+) -> dict[str, Any]:
+    lock_path = _router_daemon_lock_path(run_root)
+    status_path = _router_daemon_status_path(run_root)
+    ledger_path = _controller_action_ledger_path(run_root)
+    lock = read_json_if_exists(lock_path)
+    daemon_status = read_json_if_exists(status_path)
+    ledger = read_json_if_exists(ledger_path)
+    lock_live = _router_daemon_lock_is_live(lock)
+    status_ok = daemon_status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA
+    daemon_live = (
+        lock_live
+        and status_ok
+        and bool(daemon_status.get("daemon_mode_enabled"))
+        and daemon_status.get("run_root") == project_relative(project_root, run_root)
+    )
+    ledger_ok = ledger.get("schema_version") == CONTROLLER_ACTION_LEDGER_SCHEMA
+    pending_action_ids = _foreground_standby_pending_action_ids(ledger) if ledger_ok else []
+    waiting_action_ids = _foreground_standby_waiting_action_ids(ledger) if ledger_ok else []
+    current_wait = daemon_status.get("current_wait") if isinstance(daemon_status.get("current_wait"), dict) else {}
+    current_action = daemon_status.get("current_action") if isinstance(daemon_status.get("current_action"), dict) else {}
+    pending_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    run_lifecycle = str(run_state.get("status") or "")
+    terminal = (
+        daemon_status.get("lifecycle_status") == "terminal_stopped"
+        or bool(daemon_status.get("run_lifecycle_status"))
+        or run_lifecycle in RUN_TERMINAL_STATUSES
+    )
+    user_required = bool(pending_action.get("requires_user") or pending_action.get("requires_user_dialog_display_confirmation"))
+    if terminal:
+        standby_state = "terminal"
+    elif user_required:
+        standby_state = "user_input_required"
+    elif not daemon_live:
+        standby_state = "daemon_stale_or_missing"
+    elif pending_action_ids:
+        standby_state = "controller_action_ready"
+    elif current_wait.get("waiting_for_role") or current_wait.get("action_type") == "await_role_decision":
+        standby_state = "waiting_for_role"
+    else:
+        standby_state = "daemon_alive_no_controller_action"
+    elapsed = max(0.0, time.monotonic() - start_monotonic)
+    return {
+        "schema_version": FOREGROUND_CONTROLLER_STANDBY_SCHEMA,
+        "ok": True,
+        "command": "controller-standby",
+        "run_id": run_state.get("run_id"),
+        "run_root": project_relative(project_root, run_root),
+        "started_at": started_at,
+        "observed_at": utc_now(),
+        "elapsed_seconds": round(elapsed, 3),
+        "max_seconds": max_seconds,
+        "poll_seconds": poll_seconds,
+        "poll_count": poll_count,
+        "standby_state": standby_state,
+        "controller_must_continue_standby": standby_state in {"waiting_for_role", "daemon_alive_no_controller_action"},
+        "normal_router_progress_source": "router_daemon_status_and_controller_action_ledger",
+        "diagnostic_router_reentry_commands": ["next", "run-until-wait"],
+        "standby_does_not_drive_router_progress": True,
+        "metadata_only": True,
+        "sealed_body_reads_allowed": False,
+        "router_daemon": {
+            "lock_path": project_relative(project_root, lock_path),
+            "status_path": project_relative(project_root, status_path),
+            "lock_exists": lock_path.exists(),
+            "lock_live": lock_live,
+            "lock_status": lock.get("status"),
+            "lock_last_tick_at": lock.get("last_tick_at"),
+            "status_exists": status_path.exists(),
+            "status_ok": status_ok,
+            "daemon_live": daemon_live,
+            "lifecycle_status": daemon_status.get("lifecycle_status"),
+            "last_tick_at": daemon_status.get("last_tick_at"),
+            "tick_interval_seconds": daemon_status.get("tick_interval_seconds"),
+        },
+        "controller_action_ledger": {
+            "path": project_relative(project_root, ledger_path),
+            "exists": ledger_path.exists(),
+            "schema_ok": ledger_ok,
+            "updated_at": ledger.get("updated_at"),
+            "counts": ledger.get("counts") if ledger_ok else _controller_action_counts([]),
+            "pending_action_ids": pending_action_ids,
+            "waiting_action_ids": waiting_action_ids,
+        },
+        "current_wait": {
+            "action_type": current_wait.get("action_type"),
+            "label": current_wait.get("label"),
+            "waiting_for_role": current_wait.get("waiting_for_role"),
+            "allowed_external_events": current_wait.get("allowed_external_events") or [],
+            "expected_return_path": current_wait.get("expected_return_path"),
+        },
+        "current_action": {
+            "action_type": current_action.get("action_type"),
+            "label": current_action.get("label"),
+            "controller_action_id": current_action.get("controller_action_id"),
+            "apply_required": current_action.get("apply_required"),
+        }
+        if current_action
+        else None,
+        "exit_policy": {
+            "returns_on_controller_action": True,
+            "returns_on_terminal": True,
+            "returns_on_user_required": True,
+            "returns_on_daemon_stale_or_missing": True,
+            "returns_on_bounded_timeout": True,
+        },
+    }
+
+
+def foreground_controller_standby(
+    project_root: Path,
+    *,
+    max_seconds: float = FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS,
+    poll_seconds: float = FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS,
+) -> dict[str, Any]:
+    if max_seconds < 0:
+        raise RouterError("controller standby requires max_seconds >= 0")
+    if poll_seconds <= 0:
+        raise RouterError("controller standby requires poll_seconds > 0")
+    project_root = project_root.resolve()
+    started_at = utc_now()
+    start_monotonic = time.monotonic()
+    poll_count = 0
+    while True:
+        bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+        run_state, run_root = load_run_state(project_root, bootstrap)
+        if run_state is None or run_root is None:
+            raise RouterError("controller standby requires an active FlowPilot run")
+        snapshot = _build_foreground_controller_standby_snapshot(
+            project_root,
+            run_root,
+            run_state,
+            started_at=started_at,
+            start_monotonic=start_monotonic,
+            poll_count=poll_count,
+            max_seconds=max_seconds,
+            poll_seconds=poll_seconds,
+        )
+        if snapshot["standby_state"] in {
+            "controller_action_ready",
+            "terminal",
+            "user_input_required",
+            "daemon_stale_or_missing",
+        }:
+            return snapshot
+        elapsed = time.monotonic() - start_monotonic
+        if elapsed >= max_seconds:
+            snapshot["standby_state"] = "timeout_still_waiting"
+            snapshot["controller_must_continue_standby"] = bool(
+                snapshot["router_daemon"]["daemon_live"]
+                and not snapshot["controller_action_ledger"]["pending_action_ids"]
+            )
+            return snapshot
+        poll_count += 1
+        remaining = max_seconds - elapsed
+        time.sleep(min(poll_seconds, max(0.0, remaining)))
 
 
 def _tail_text(path: Path, *, max_chars: int = 2000) -> str:
@@ -27407,6 +27597,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     daemon_stop_parser = sub.add_parser("daemon-stop", help="Stop or release the current run's Router daemon lock")
     daemon_stop_parser.add_argument("--reason", default="manual_stop")
     daemon_stop_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    standby_parser = sub.add_parser("controller-standby", help="Keep foreground Controller waiting on Router daemon status and action ledger")
+    standby_parser.add_argument("--max-seconds", type=float, default=FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS)
+    standby_parser.add_argument("--poll-seconds", type=float, default=FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS)
+    standby_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     receipt_parser = sub.add_parser("controller-receipt", help="Record a Controller action ledger receipt")
     receipt_parser.add_argument("--action-id", required=True)
     receipt_parser.add_argument("--status", required=True, choices=sorted(CONTROLLER_RECEIPT_STATUSES))
@@ -27465,6 +27659,12 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "daemon-stop":
             result = stop_router_daemon(root, reason=str(getattr(args, "reason", "manual_stop") or "manual_stop"))
+        elif args.command == "controller-standby":
+            result = foreground_controller_standby(
+                root,
+                max_seconds=float(getattr(args, "max_seconds", FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS)),
+                poll_seconds=float(getattr(args, "poll_seconds", FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS)),
+            )
         elif args.command == "controller-receipt":
             payload = json.loads(args.payload_json) if args.payload_json else {}
             result = record_controller_action_receipt(root, action_id=args.action_id, status=args.status, payload=payload)

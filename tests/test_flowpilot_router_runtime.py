@@ -978,6 +978,45 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         except router.RouterError:
             pass
 
+    def force_startup_fact_role_wait(self, root: Path) -> dict:
+        run_root = self.run_root_for(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        ledger_path = runtime_dir / "controller_action_ledger.json"
+        if ledger_path.exists():
+            ledger_path.unlink()
+        state = read_json(router.run_state_path(run_root))
+        wait_action = router.make_action(
+            action_type="await_role_decision",
+            actor="controller",
+            label="controller_waits_for_reviewer_startup_facts",
+            summary="Controller waits for reviewer startup fact report through Router-directed runtime output.",
+            to_role="human_like_reviewer",
+            extra={
+                "waiting_for_role": "human_like_reviewer",
+                "allowed_external_events": ["reviewer_reports_startup_facts"],
+                "expected_return_path": "startup/startup_fact_report.json",
+            },
+        )
+        state["pending_action"] = wait_action
+        state["daemon_mode_enabled"] = True
+        lock = router._acquire_router_daemon_lock(root, run_root, state)  # type: ignore[attr-defined]
+        router._write_controller_action_entry(root, run_root, state, wait_action)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=wait_action,
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+        return wait_action
+
     def startup_intake_payload(
         self,
         root: Path,
@@ -3474,6 +3513,63 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(first_record["status"], "done")
         self.assertEqual(blocked_record["status"], "blocked")
         self.assertEqual(blocked_record["blocked_payload"], {"reason": "test-blocked"})
+
+    def test_foreground_controller_standby_waits_on_live_daemon_role_wait(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+        self.assertIn("reviewer_reports_startup_facts", wait_action["allowed_external_events"])
+
+        standby = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01)
+
+        self.assertEqual(standby["schema_version"], router.FOREGROUND_CONTROLLER_STANDBY_SCHEMA)
+        self.assertEqual(standby["standby_state"], "timeout_still_waiting")
+        self.assertTrue(standby["controller_must_continue_standby"])
+        self.assertTrue(standby["router_daemon"]["daemon_live"])
+        self.assertEqual(standby["current_wait"]["waiting_for_role"], "human_like_reviewer")
+        self.assertEqual(standby["normal_router_progress_source"], "router_daemon_status_and_controller_action_ledger")
+        self.assertTrue(standby["standby_does_not_drive_router_progress"])
+        self.assertFalse(standby["sealed_body_reads_allowed"])
+
+    def test_foreground_controller_standby_wakes_on_controller_action_ledger(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=False)
+        action_id = result["ticks"][0]["controller_action_id"]
+        self.assertTrue(action_id)
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "controller_action_ready")
+        self.assertIn(action_id, standby["controller_action_ledger"]["pending_action_ids"])
+        self.assertFalse(standby["controller_must_continue_standby"])
+
+    def test_foreground_controller_standby_exits_on_stale_or_missing_daemon(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        router.stop_router_daemon(root, reason="test_standby_missing_daemon")
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "daemon_stale_or_missing")
+        self.assertFalse(standby["router_daemon"]["daemon_live"])
+        self.assertFalse(standby["controller_must_continue_standby"])
+
+    def test_foreground_controller_standby_does_not_compute_router_next(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+
+        with mock.patch.object(router, "compute_controller_action", side_effect=AssertionError("standby must not drive Router")):
+            standby = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "timeout_still_waiting")
+        self.assertEqual(standby["diagnostic_router_reentry_commands"], ["next", "run-until-wait"])
 
     def test_router_daemon_tick_consumes_card_ack_without_manual_next(self) -> None:
         root = self.make_project()

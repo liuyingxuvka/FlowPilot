@@ -489,6 +489,7 @@ def _source_report(project_root: Path) -> dict[str, object]:
             [
                 "Router-ready evidence preempts foreground role waits",
                 "scan daemon status and the Controller action ledger before",
+                "flowpilot_router.py controller-standby",
             ],
         ),
         "skill launcher": (
@@ -496,6 +497,7 @@ def _source_report(project_root: Path) -> dict[str, object]:
             [
                 "Router-ready state preempts foreground waits",
                 "scan daemon status and the Controller action",
+                "controller-standby",
             ],
         ),
         "controller resume reentry card": (
@@ -503,6 +505,7 @@ def _source_report(project_root: Path) -> dict[str, object]:
             [
                 "Router-ready evidence still preempts foreground role waits",
                 "scan daemon status and clear",
+                "controller-standby",
             ],
         ),
     }

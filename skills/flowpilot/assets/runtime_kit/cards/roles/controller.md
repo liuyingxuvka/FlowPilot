@@ -39,6 +39,13 @@ Allowed actions:
   every pending dependency-satisfied Controller action, write a
   `controller-receipt` for each completed, blocked, or controlled-wait action,
   then rescan the ledger before waiting on any role;
+- when daemon status shows a live `await_card_return_event`,
+  `await_card_bundle_return_event`, or `await_role_decision` and the action
+  ledger has no executable Controller action, call
+  `flowpilot_router.py controller-standby` and keep the foreground turn open
+  until that command returns a Controller action, terminal/user-required state,
+  daemon repair state, or bounded `timeout_still_waiting` that must re-enter
+  standby;
 - call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,
   tests, or explicit repair/recovery, not as the normal runtime metronome;
 - check the prompt manifest before delivering a system card;
@@ -114,7 +121,7 @@ Forbidden actions:
   them; timeout is `timeout_unknown`, never active work proof.
 - do not final or stop the Controller role because the daemon is currently
   waiting. A nonterminal wait means "stay attached to daemon status and the
-  action ledger," not "FlowPilot has no more work."
+  action ledger through `controller-standby`," not "FlowPilot has no more work."
 - do not wait for unrelated work to finish before role recovery. A role
   liveness fault is a recovery-first control-plane event unless the user
   explicitly stops/cancels the run or the router is already performing terminal

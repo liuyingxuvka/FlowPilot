@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot persistent Router daemon model."""
+"""Run checks for the FlowPilot daemon durable reconciliation model."""
 
 from __future__ import annotations
 
@@ -10,70 +10,64 @@ from typing import Any
 
 from flowguard import Explorer
 
-import flowpilot_persistent_router_daemon_model as model
+import flowpilot_daemon_reconciliation_model as model
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "flowpilot_persistent_router_daemon_results.json"
+RESULTS_PATH = ROOT / "flowpilot_daemon_reconciliation_results.json"
 
 REQUIRED_LABELS = (
-    "formal_startup_starts_builtin_router_daemon",
-    "controller_core_loaded_after_builtin_daemon_start",
-    "router_issues_controller_action_to_ledger",
-    "controller_executes_action_and_writes_receipt",
-    "router_reconciles_controller_receipt_and_requires_rescan",
-    "router_enters_ack_wait_owned_by_daemon",
-    "daemon_wait_tick_keeps_checking_mailbox",
-    "foreground_controller_standby_poll_tick_keeps_turn_open",
-    "foreground_controller_bounded_timeout_reenters_standby",
-    "role_writes_expected_mailbox_evidence",
-    "daemon_consumes_mailbox_evidence_once",
-    "daemon_continues_after_consumed_evidence",
-    "heartbeat_wakes_and_finds_live_daemon",
-    "user_requests_terminal_stop",
-    "terminal_stop_reconciles_daemon_controller_roles",
+    "daemon_tick_starts_durable_reconciliation_barrier",
+    "role_output_submitted_while_router_waits",
+    "heartbeat_opens_rehydrate_pending_action",
+    "heartbeat_opens_rehydrate_pending_action_after_role_output",
+    "role_output_submitted_while_rehydrate_pending",
+    "controller_writes_complete_rehydrate_receipt",
+    "controller_writes_incomplete_rehydrate_receipt",
+    "controller_writes_blocked_rehydrate_receipt",
+    "daemon_applies_complete_receipt_and_clears_pending",
+    "daemon_converts_incomplete_receipt_to_control_blocker",
+    "daemon_surfaces_blocked_receipt_as_control_blocker",
+    "daemon_reconciles_role_output_to_router_event",
+    "daemon_idempotently_ignores_already_recorded_role_output",
+    "daemon_computes_next_action_after_reconciliation",
+    "daemon_returns_control_blocker_after_reconciliation",
+    "terminal_stop_after_reconciliation_contract_checked",
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "controller_core_loaded_after_skipped_daemon_start": "Controller core loaded before formal startup daemon was live",
-    "formal_startup_continued_after_daemon_failure": "formal startup continued after Router daemon startup failure",
-    "ack_wait_without_daemon": "ordinary wait exists without a live Router daemon",
-    "duplicate_router_writers": "multiple Router daemon writers exist for one run",
-    "duplicate_ack_consumption": "mailbox evidence was consumed more than once",
-    "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
-    "controller_used_router_next_as_metronome": "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome",
-    "controller_stopped_at_ordinary_wait": "Controller stopped at an ordinary daemon-owned wait",
-    "foreground_controller_ended_during_live_daemon_wait": "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
-    "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
-    "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
+    "completed_controller_action_repeated": "daemon repeated a completed or blocked Controller action instead of clearing or blocking",
+    "done_receipt_without_stateful_postconditions": "stateful Controller receipt was marked done without applying Router postconditions",
+    "incomplete_stateful_receipt_silently_done": "incomplete stateful Controller receipt was accepted without a control blocker",
+    "submitted_role_output_left_in_ledger": "submitted expected role output was left only in durable storage",
+    "canonical_artifact_flag_not_synced": "canonical role-output artifact existed without synced Router event flag",
+    "stale_snapshot_overwrites_role_output_event": "daemon saved a stale router_state snapshot over newer durable role output",
+    "computed_from_pending_before_reconciliation": "daemon computed next action from stale pending_action before durable reconciliation",
+    "role_wait_not_cleared_after_event": "expected role wait remained current after Router recorded the role output",
+    "duplicate_role_output_consumption": "role output durable evidence was consumed more than once",
+    "blocked_receipt_repeated_instead_of_blocker": "daemon repeated a completed or blocked Controller action instead of clearing or blocking",
+    "invalid_role_output_silently_accepted": "invalid or unauthorized role output was accepted as a Router event",
+    "receipt_and_role_output_interleaving_starves_role_output": "submitted expected role output was left only in durable storage",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
-        f"life={state.lifecycle}|formal={state.formal_startup_started},"
-        f"startup_daemon={state.startup_daemon_step_completed},"
-        f"startup_failed={state.startup_daemon_failed}|daemon={state.daemon_mode_enabled},"
-        f"{state.daemon_alive},{state.daemon_lock_state},{state.daemon_writer_count},"
-        f"tick={state.daemon_tick_seconds}|core={state.controller_core_loaded}|"
-        f"controller={state.controller_attached},"
-        f"metronome={state.controller_called_router_next_as_metronome},"
-        f"finaled={state.controller_finaled_at_wait},"
-        f"standby={state.foreground_standby_active},"
-        f"poll_daemon={state.foreground_standby_polling_daemon_status},"
-        f"poll_ledger={state.foreground_standby_polling_action_ledger},"
-        f"standby_timeouts={state.foreground_standby_timeout_count},"
-        f"ended_wait={state.foreground_controller_ended_turn_while_daemon_waiting}|"
-        f"roles={state.roles_live}|"
-        f"heartbeat={state.heartbeat_active},{state.heartbeat_woke}|"
-        f"wait={state.current_wait}|mail={state.mailbox_evidence_present},"
-        f"{state.mailbox_evidence_valid},{state.mailbox_evidence_consumed},"
-        f"wait_tick={state.mailbox_wait_tick_observed},"
-        f"count={state.mailbox_consumption_count}|"
-        f"action={state.controller_action_pending},{state.controller_action_ready},"
-        f"done={state.controller_action_done},receipt={state.controller_receipt_present},"
-        f"rescan={state.controller_rescanned_after_receipt}|"
-        f"stop={state.stop_requested}|route={state.route_work_allowed}"
+        f"life={state.lifecycle}|daemon={state.daemon_alive}|"
+        f"barrier={state.reconciliation_barrier_started}|"
+        f"pending={state.pending_action_kind},{state.pending_action_status},"
+        f"returned_again={state.pending_action_returned_again}|"
+        f"compute={state.next_action_computed},before_reconcile={state.computed_before_reconciliation}|"
+        f"receipt={state.controller_receipt_status},{state.controller_receipt_payload_quality},"
+        f"reconciled={state.controller_receipt_reconciled},cleared={state.pending_cleared_after_receipt},"
+        f"post={state.stateful_postconditions_applied},blocker={state.control_blocker_written}|"
+        f"role_output={state.role_output_ledger_submitted},valid={state.role_output_envelope_valid},"
+        f"expected={state.role_output_event_expected},artifact={state.canonical_artifact_exists},"
+        f"reconciled={state.role_output_reconciled},event={state.router_event_recorded},"
+        f"flag={state.router_event_flag_synced},scoped={state.scoped_event_recorded},"
+        f"count={state.role_output_consumption_count},wait_cleared={state.role_wait_cleared_after_event}|"
+        f"stale={state.stale_daemon_snapshot_loaded},{state.stale_snapshot_saved_after_external_event}|"
+        f"invalid_accept={state.invalid_role_output_accepted}"
     )
 
 
@@ -206,9 +200,9 @@ def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
     explorer = _run_flowguard_explorer()
     hazards = _hazard_report()
     skipped_checks: dict[str, str] = {
-        "conformance_replay": (
-            "skipped_with_reason: this abstract daemon model validates the "
-            "planned control contract before production code is changed"
+        "production_conformance_replay": (
+            "skipped_with_reason: this model is a model-miss design check; "
+            "production replay should be added with the Router fix"
         )
     }
     if not json_out_requested:

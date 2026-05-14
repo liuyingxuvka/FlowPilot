@@ -157,8 +157,11 @@ long-form public explanation lives in `docs/protocol.md`.
     waiting on role chat or subagent foreground completion. Ordinary
     `await_card_return_event`, `await_card_bundle_return_event`, and
     `await_role_decision` are controlled wait records under daemon ownership,
-    not reasons to stop the Controller role or spend the current foreground
-    turn waiting on a role.
+    not reasons to stop the Controller role. The foreground Controller must
+    use `flowpilot_router.py controller-standby` to keep watching daemon
+    status and `runtime/controller_action_ledger.json` until a Controller
+    action, terminal/user-required state, daemon repair state, or bounded
+    timeout is returned.
 26. Before loading Controller core, formal startup always starts or attaches
     the built-in Router daemon. There is no user option to disable this
     daemon. Startup must fail rather than load Controller core unless it can
@@ -167,7 +170,7 @@ long-form public explanation lives in `docs/protocol.md`.
     Controller follows daemon status and the Controller action ledger; direct
     `flowpilot_router.py next/apply/run-until-wait` calls are diagnostics,
     tests, or explicit repair/recovery tools rather than the normal runtime
-    metronome.
+    metronome. Foreground waiting uses `controller-standby`.
 27. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 28. Record the controlled-stop notice policy: completed routes emit a

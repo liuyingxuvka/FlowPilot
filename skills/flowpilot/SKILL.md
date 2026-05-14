@@ -58,9 +58,9 @@ During formal runtime, Router owns ordinary waiting through `runtime/router_daem
 
 Router-ready state preempts foreground waits. After Controller relays or
 observes router-authored work, scan daemon status and the Controller action
-ledger before waiting on any role or subagent. If Router exposes a real
-controlled wait, write the receipt and stay attached to daemon status; do not
-spend the foreground turn waiting for ordinary role chat.
+ledger before waiting on any role or subagent. If Router exposes a live
+controlled role wait, call `controller-standby` and keep the foreground turn
+attached to daemon status; do not final, stop, or wait on ordinary role chat.
 
 When the router returns `open_startup_intake_ui`, open the native startup intake UI with the command and output directory in the action envelope. After the UI closes, apply that same pending action with only `payload.startup_intake_result.result_path`. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
 
@@ -84,7 +84,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 ## Controller Boundary
 
-After the router loads Controller core, the main assistant is Controller only. Controller may check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, scan the Router daemon status and Controller action ledger, and write Controller receipts. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit repair/recovery; normal progress comes from the daemon-owned status and ledger.
+After the router loads Controller core, the main assistant is Controller only. Controller may check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, scan the Router daemon status and Controller action ledger, wait through `controller-standby`, and write Controller receipts. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit repair/recovery; normal progress comes from the daemon-owned status and ledger.
 
 Controller must not:
 

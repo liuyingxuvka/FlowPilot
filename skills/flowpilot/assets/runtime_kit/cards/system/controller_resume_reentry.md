@@ -93,6 +93,9 @@ Router-ready evidence still preempts foreground role waits during resume. If
 resume state, daemon status, packet ledgers, return ledgers, status packets,
 Controller receipts, or `controller_next_action_notice.json` show that Router
 can expose or has already exposed the next action, scan daemon status and clear
-the Controller action ledger before any foreground role wait. Use bounded
-`wait_agent` only for Router-requested liveness/recovery preflight; a timeout
-is `timeout_unknown`, not active continuity.
+the Controller action ledger before any foreground role wait. If the daemon is
+live and only waiting for a role output, call `flowpilot_router.py
+controller-standby` and keep the foreground turn open instead of ending the
+Controller response. Use bounded `wait_agent` only for Router-requested
+liveness/recovery preflight; a timeout is `timeout_unknown`, not active
+continuity.
