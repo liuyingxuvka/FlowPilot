@@ -9793,3 +9793,47 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - Full `tests\test_flowpilot_router_runtime.py` exceeded a 10-minute command timeout in this mixed worktree; verification used targeted router tests, template checks, upgraded FlowGuard models, meta/capability checks, and install sync checks.
 - No remote GitHub push was performed.
+
+## 2026-05-14 - OpenSpec Second-Perspective Cleanup
+
+### Trigger
+- Used OpenSpec as a second review lens over the existing FlowPilot wait-reconciliation work, while keeping FlowPilot as the control plane and FlowGuard as the executable validation layer.
+
+### Files Updated
+- docs/protocol.md
+- skills/flowpilot/references/protocol.md
+- templates/flowpilot/product_function_architecture.template.json
+- templates/flowpilot/routes/route-001/nodes/node-001-start/node.template.json
+- docs/legacy_to_router_equivalence.md
+- docs/legacy_to_router_equivalence.json
+- openspec/changes/optimize-flowpilot-wait-reconciliation/design.md
+- openspec/changes/optimize-flowpilot-wait-reconciliation/tasks.md
+- openspec/changes/optimize-flowpilot-wait-reconciliation/specs/dependency-aware-continuation/spec.md
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `openspec status --change "optimize-flowpilot-wait-reconciliation" --json`
+- OK: `openspec instructions apply --change "optimize-flowpilot-wait-reconciliation" --json`
+- OK: `rg -n "\.flowpilot/pm_material_understanding\.json" docs templates skills openspec` returned no stale top-level path matches.
+- OK: `openspec validate optimize-flowpilot-wait-reconciliation --strict --json`
+- OK: `python simulations/run_flowpilot_requirement_traceability_checks.py --json-out tmp/openspec_flowguard_requirement_traceability.json`
+- OK: `python simulations/run_flowpilot_event_contract_checks.py --json-out tmp/openspec_flowguard_event_contract.json`
+- OK: `python simulations/run_flowpilot_event_capability_registry_checks.py --json-out tmp/openspec_flowguard_event_capability.json`
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp/openspec_flowguard_control_plane.json`
+- OK: `python simulations/run_flowpilot_parallel_packet_batch_checks.py --json`
+- OK: `python simulations/run_flowpilot_decision_liveness_checks.py --json-out tmp/openspec_flowguard_decision_liveness.json`
+- OK: `python simulations/run_flowpilot_router_loop_checks.py --json-out tmp/openspec_flowguard_router_loop.json`
+- OK: `python scripts/check_install.py --json`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+
+### Findings
+- The stale top-level `.flowpilot/pm_material_understanding.json` references in docs and templates were aligned to `.flowpilot/runs/<run-id>/pm_material_understanding.json`.
+- OpenSpec coverage now explicitly names Router-authorized return events, role-work result/request matching, and prompt/runtime capability drift.
+- Legacy equivalence notes now treat PM role-work as the generic sealed-envelope packet path while preserving dedicated officer-model report lifecycle coverage as remaining future work.
+- The installed local FlowPilot skill is source-fresh against this repository after sync.
+
+### Skipped Steps
+- No remote GitHub push was performed.
+- No broad production-code rewrite was performed; this pass was limited to alignment, specs, templates, docs, local install sync, and local Git preparation.
