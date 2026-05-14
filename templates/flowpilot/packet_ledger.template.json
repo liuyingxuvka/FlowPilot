@@ -26,6 +26,23 @@
   "active_packet_id": "<packet-id-or-null>",
   "active_packet_status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
   "active_packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
+  "parallel_packet_batches": {
+    "schema_version": "flowpilot.parallel_packet_batch_member_status.v1",
+    "controller_visibility": "metadata_only",
+    "active_batch_id": "<batch-id-or-null>",
+    "active_batch_kind": "<material_scan|research|current_node|pm_role_work|null>",
+    "join_policy": "<all_results_before_pm_absorption|all_results_before_review>",
+    "dependency_class": "<blocking|advisory|prep-only>",
+    "packet_count": 0,
+    "results_returned": 0,
+    "returned_roles": [],
+    "missing_roles": [],
+    "returned_packet_ids": [],
+    "missing_packet_ids": [],
+    "partial_results_returned": false,
+    "all_results_returned": false,
+    "status_summary_must_exclude_body_content": true
+  },
   "packets": [
     {
       "packet_id": "<packet-id>",

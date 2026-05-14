@@ -11,7 +11,27 @@
     "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
     "pm_material_understanding_path": ".flowpilot/pm_material_understanding.json",
     "draft_floor_source": "<chat|file|user-brief|other>",
-    "known_product_context_paths": []
+    "known_product_context_paths": [],
+    "external_spec_import_paths": [],
+    "external_spec_import_policy": "External OpenSpec/OpenSpark/SparkKey-style files are advisory material only until PM imports them into this FlowPilot artifact with source_requirement_ids."
+  },
+  "requirement_trace": {
+    "schema_version": "flowpilot.requirement_trace.v1",
+    "pm_owned": true,
+    "flowpilot_standalone": true,
+    "external_tools_required": false,
+    "full_protocol_required_when_flowpilot_invoked": true,
+    "requirement_id_policy": "Assign stable req-* ids to important explicit user requirements, PM-added hard requirements, hard low-quality-success risks, and proof obligations. Preserve ids through root contract, route nodes, node plans, mutations, and final ledger.",
+    "source_registry": [
+      {
+        "source_requirement_id": "<req-user-001>",
+        "source_type": "<user_request|material|pm_added_high_risk|pm_added_quality_floor|external_advisory_import>",
+        "source_path": "<path-or-chat-reference>",
+        "statement": "<requirement-or-commitment>",
+        "status": "<active|superseded|rejected|deferred>",
+        "superseded_by": []
+      }
+    ]
   },
   "high_standard_posture": {
     "flowpilot_invocation_means_important_project": true,
@@ -59,8 +79,9 @@
     "summary": "Task-specific review of hard parts that could be handled superficially while the result still appears complete.",
     "hard_parts": [
       {
-        "risk_id": "<low-quality-risk-id>",
-        "hard_part": "<specific-difficult-part-of-this-user-task>",
+      "risk_id": "<low-quality-risk-id>",
+      "source_requirement_ids": [],
+      "hard_part": "<specific-difficult-part-of-this-user-task>",
         "thin_success_shortcut": "<how-it-could-be-done-casually-or-at-low-quality>",
         "existence_only_evidence_to_reject": "<file-screenshot-report-or-ledger-proof-that-would-not-be-enough>",
         "proof_of_depth_required": "<direct-evidence-test-review-or-artifact-that-proves-real-depth>",
@@ -87,6 +108,7 @@
   "user_task_map": [
     {
       "task_id": "<task-id>",
+      "source_requirement_ids": [],
       "user_or_actor": "<user-or-actor>",
       "trigger": "<when-this-task-starts>",
       "goal": "<desired-outcome>",
@@ -97,6 +119,7 @@
   "product_capability_map": [
     {
       "capability_id": "<capability-id>",
+      "source_requirement_ids": [],
       "supports_tasks": [],
       "behavior": "<what-the-product-must-do>",
       "state_or_data_needed": [],
@@ -108,6 +131,7 @@
   "feature_decisions": [
     {
       "feature_id": "<feature-id>",
+      "source_requirement_ids": [],
       "decision": "<must|should|optional|reject>",
       "reason": "<why-this-decision-is-correct>",
       "acceptance_impact": "<criterion-or-null>",
@@ -118,6 +142,7 @@
     {
       "surface": "<surface-name>",
       "element_id": "<visible-element-id>",
+      "source_requirement_ids": [],
       "visible_text_or_control": "<label-control-status-card-alert-empty-state>",
       "rationale": "<user-decision-system-state-or-evidence-purpose>",
       "remove_if_no_purpose": true,
@@ -127,6 +152,7 @@
   "missing_feature_review": [
     {
       "gap_id": "<gap-id>",
+      "source_requirement_ids": [],
       "user_task_or_failure_mode": "<task-or-failure-mode>",
       "missing_capability": "<capability-or-feature>",
       "decision": "<add_to_must|add_to_should|defer_with_reason|reject_with_reason>",
@@ -143,7 +169,9 @@
   "functional_acceptance_matrix": [
     {
       "acceptance_id": "<acceptance-id>",
+      "source_requirement_ids": [],
       "covers_tasks": [],
+      "covers_capabilities": [],
       "inputs": [],
       "expected_outputs": [],
       "state_transitions": [],

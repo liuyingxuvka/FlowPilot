@@ -33,6 +33,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.BLOCKER_OUTCOME_USES_SUCCESS_EVENT: "repair non-success outcome uses success-only business event",
     model.PROTOCOL_OUTCOME_USES_SUCCESS_EVENT: "repair outcome event is not eligible for protocol_blocker row",
     model.PM_REPAIR_EVENT_AS_RERUN_TARGET: "event capability cannot be used as repair rerun target",
+    model.ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED: "event capability precondition is not currently receivable",
 }
 
 

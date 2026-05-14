@@ -63,7 +63,14 @@ class State:
     controller_envelope_only: bool = True
     controller_read_sealed_body: bool = False
 
+    member_status_tracking_enabled: bool = True
     results_returned: int = 0
+    partial_result_recorded: bool = False
+    partial_result_count: int = 0
+    partial_result_visible_to_status: bool = True
+    missing_role_summary_valid: bool = True
+    non_dependent_action_executed: bool = False
+    non_dependent_action_depends_on_missing_blocker: bool = False
     blocked_packet_count: int = 0
     batch_joined: bool = False
     dynamic_wait_producer_binding_valid: bool = True
@@ -118,6 +125,26 @@ def returned_batch_state() -> State:
     return replace(relayed_batch_state(), results_returned=TOTAL_PACKETS, batch_joined=True)
 
 
+def partial_returned_batch_state() -> State:
+    return replace(
+        relayed_batch_state(),
+        results_returned=1,
+        partial_result_recorded=True,
+        partial_result_count=1,
+        partial_result_visible_to_status=True,
+        missing_role_summary_valid=True,
+        batch_joined=False,
+    )
+
+
+def non_dependent_continued_state() -> State:
+    return replace(
+        partial_returned_batch_state(),
+        non_dependent_action_executed=True,
+        non_dependent_action_depends_on_missing_blocker=False,
+    )
+
+
 def reviewed_batch_state() -> State:
     return replace(
         returned_batch_state(),
@@ -153,6 +180,20 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition("reissue_batch_with_lineage", repaired_batch_state())
         return
     if state.status == "running" and state.packets_relayed == TOTAL_PACKETS and state.results_returned == 0:
+        yield Transition("record_one_batch_result_without_join", partial_returned_batch_state())
+        return
+    if (
+        state.status == "running"
+        and state.packets_relayed == TOTAL_PACKETS
+        and state.partial_result_recorded
+        and state.results_returned < state.packet_count
+    ):
+        if not state.non_dependent_action_executed:
+            yield Transition(
+                "continue_non_dependent_action_during_partial_batch_wait",
+                non_dependent_continued_state(),
+            )
+            return
         yield Transition("wait_for_all_batch_results", returned_batch_state())
         return
     if state.status == "running" and state.batch_joined and not state.batch_review_done:
@@ -226,6 +267,21 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("router assigned a second open packet to a busy role")
     if not state.controller_envelope_only or state.controller_read_sealed_body:
         failures.append("Controller read sealed body or lost envelope-only boundary")
+    if state.partial_result_recorded and not state.member_status_tracking_enabled:
+        failures.append("partial batch result was recorded without member-level status tracking")
+    if state.partial_result_recorded and (
+        state.partial_result_count <= 0 or state.results_returned < state.partial_result_count
+    ):
+        failures.append("partial batch result was not reflected in member returned count")
+    if state.partial_result_recorded and not state.partial_result_visible_to_status:
+        failures.append("partial batch result was hidden from status accounting")
+    if state.partial_result_recorded and not state.missing_role_summary_valid:
+        failures.append("partial batch missing-role summary was stale")
+    if (
+        state.non_dependent_action_executed
+        and state.non_dependent_action_depends_on_missing_blocker
+    ):
+        failures.append("non-dependent batch continuation depended on a missing blocking result")
     if state.batch_joined and state.results_returned != state.packet_count:
         failures.append("batch joined before every packet result returned")
     if not state.dynamic_wait_producer_binding_valid:
@@ -278,7 +334,7 @@ INVARIANTS = (
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 7
+MAX_SEQUENCE_LENGTH = 9
 
 
 def build_workflow() -> Workflow:
@@ -327,4 +383,44 @@ def hazard_states() -> dict[str, State]:
         "repair_lineage_lost": replace(safe, repair_reissued=True, repair_lineage_recorded=False),
         "prompt_runtime_drift": replace(safe, prompt_advertises_batch=True, runtime_supports_batch=False),
         "static_event_producer_wait": replace(safe, dynamic_wait_producer_binding_valid=False),
+        "partial_result_without_member_status": replace(
+            safe,
+            partial_result_recorded=True,
+            partial_result_count=1,
+            results_returned=1,
+            member_status_tracking_enabled=False,
+        ),
+        "partial_result_count_not_reflected": replace(
+            safe,
+            partial_result_recorded=True,
+            partial_result_count=1,
+            results_returned=0,
+        ),
+        "partial_result_hidden_from_status": replace(
+            safe,
+            partial_result_recorded=True,
+            partial_result_count=1,
+            results_returned=1,
+            partial_result_visible_to_status=False,
+        ),
+        "partial_missing_role_summary_stale": replace(
+            safe,
+            partial_result_recorded=True,
+            partial_result_count=1,
+            results_returned=1,
+            missing_role_summary_valid=False,
+        ),
+        "non_dependent_continuation_depends_on_missing_blocker": replace(
+            safe,
+            partial_result_recorded=True,
+            partial_result_count=1,
+            results_returned=1,
+            batch_joined=False,
+            batch_review_done=False,
+            batch_review_passed=False,
+            pm_absorbed_batch=False,
+            stage_advanced=False,
+            non_dependent_action_executed=True,
+            non_dependent_action_depends_on_missing_blocker=True,
+        ),
     }

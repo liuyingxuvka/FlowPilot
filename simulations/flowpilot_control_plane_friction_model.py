@@ -239,6 +239,16 @@ class State:
     pending_wait_reconciliation_role_verified: bool = False
     pending_wait_reconciliation_hash_verified: bool = False
     pending_wait_reconciliation_from_chat: bool = False
+    stale_wait_pending: bool = False
+    durable_result_evidence_exists: bool = False
+    stale_wait_reissued_without_reconciliation: bool = False
+    partial_batch_active: bool = False
+    partial_batch_packet_count: int = 0
+    partial_batch_results_returned: int = 0
+    partial_batch_result_refreshed_from_members: bool = True
+    partial_batch_missing_role_summary_accurate: bool = True
+    status_summary_waiting_role_matches_partial_batch: bool = True
+    duplicate_reconciliation_incremented_count: bool = False
     pm_role_work_result_normalized: bool = False
     pm_role_work_result_routes_to_pm: bool = True
     current_node_result_routes_to_pm: bool = True
@@ -470,6 +480,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     pending_wait_reconciliation_role_verified=True,
                     pending_wait_reconciliation_hash_verified=True,
                     pending_wait_reconciliation_from_chat=False,
+                    stale_wait_pending=True,
+                    durable_result_evidence_exists=True,
+                    stale_wait_reissued_without_reconciliation=False,
+                    partial_batch_active=True,
+                    partial_batch_packet_count=2,
+                    partial_batch_results_returned=1,
+                    partial_batch_result_refreshed_from_members=True,
+                    partial_batch_missing_role_summary_accurate=True,
+                    status_summary_waiting_role_matches_partial_batch=True,
+                    duplicate_reconciliation_incremented_count=False,
                 ),
             )
             return
@@ -1328,6 +1348,26 @@ def status_summary_is_public_and_fresh(state: State, trace) -> InvariantResult:
         return InvariantResult.fail("status summary exposed sealed body, evidence table, source, or hash details")
     if state.status_summary_published and not state.status_summary_blocker_state_consistent:
         return InvariantResult.fail("status summary hid an unresolved blocker or pending repair state")
+    if (
+        state.partial_batch_active
+        and state.partial_batch_results_returned > 0
+        and not state.partial_batch_result_refreshed_from_members
+    ):
+        return InvariantResult.fail(
+            "partial batch returned result was not reflected in member returned count"
+        )
+    if state.partial_batch_active and not state.partial_batch_missing_role_summary_accurate:
+        return InvariantResult.fail(
+            "partial batch missing-role summary was stale"
+        )
+    if (
+        state.status_summary_published
+        and state.partial_batch_active
+        and not state.status_summary_waiting_role_matches_partial_batch
+    ):
+        return InvariantResult.fail(
+            "status summary named a completed role instead of the remaining partial-batch role"
+        )
     return InvariantResult.pass_()
 
 
@@ -1583,6 +1623,18 @@ def missing_ack_recovery_is_dependency_scoped(state: State, trace) -> InvariantR
 
 def pending_wait_reconciliation_uses_durable_packet_state(state: State, trace) -> InvariantResult:
     del trace
+    if state.stale_wait_reissued_without_reconciliation:
+        return InvariantResult.fail(
+            "stale wait was reissued after durable packet result already existed"
+        )
+    if (
+        state.stale_wait_pending
+        and state.durable_result_evidence_exists
+        and not state.pending_wait_reconciled
+    ):
+        return InvariantResult.fail(
+            "pending wait had durable result evidence but was not reconciled before waiting"
+        )
     if state.pending_wait_reconciled and state.pending_wait_reconciliation_from_chat:
         return InvariantResult.fail("pending wait reconciliation used chat or history instead of durable packet state")
     if state.pending_wait_reconciled and not (
@@ -1593,6 +1645,10 @@ def pending_wait_reconciliation_uses_durable_packet_state(state: State, trace) -
     ):
         return InvariantResult.fail(
             "pending wait reconciliation skipped packet ledger, status packet, role, or hash evidence"
+        )
+    if state.duplicate_reconciliation_incremented_count:
+        return InvariantResult.fail(
+            "duplicate wait reconciliation incremented a packet result more than once"
         )
     return InvariantResult.pass_()
 
@@ -2112,6 +2168,16 @@ def _safe_base(**changes: object) -> State:
             pending_wait_reconciliation_role_verified=True,
             pending_wait_reconciliation_hash_verified=True,
             pending_wait_reconciliation_from_chat=False,
+            stale_wait_pending=True,
+            durable_result_evidence_exists=True,
+            stale_wait_reissued_without_reconciliation=False,
+            partial_batch_active=True,
+            partial_batch_packet_count=2,
+            partial_batch_results_returned=1,
+            partial_batch_result_refreshed_from_members=True,
+            partial_batch_missing_role_summary_accurate=True,
+            status_summary_waiting_role_matches_partial_batch=True,
+            duplicate_reconciliation_incremented_count=False,
             pm_role_work_result_normalized=True,
             pm_role_work_result_routes_to_pm=True,
             current_node_result_routes_to_pm=True,
@@ -2649,6 +2715,43 @@ def hazard_states() -> dict[str, State]:
             pending_wait_reconciliation_uses_status_packet=False,
             pending_wait_reconciliation_role_verified=True,
             pending_wait_reconciliation_hash_verified=True,
+        ),
+        "pending_wait_not_reconciled_despite_existing_result": _safe_base(
+            stale_wait_pending=True,
+            durable_result_evidence_exists=True,
+            pending_wait_reconciled=False,
+        ),
+        "stale_wait_reissued_after_existing_result": _safe_base(
+            stale_wait_pending=True,
+            durable_result_evidence_exists=True,
+            pending_wait_reconciled=False,
+            stale_wait_reissued_without_reconciliation=True,
+        ),
+        "partial_batch_result_count_not_refreshed": _safe_base(
+            partial_batch_active=True,
+            partial_batch_packet_count=2,
+            partial_batch_results_returned=1,
+            partial_batch_result_refreshed_from_members=False,
+        ),
+        "partial_batch_missing_role_summary_stale": _safe_base(
+            partial_batch_active=True,
+            partial_batch_packet_count=2,
+            partial_batch_results_returned=1,
+            partial_batch_missing_role_summary_accurate=False,
+        ),
+        "status_summary_waits_for_completed_partial_batch_role": _safe_base(
+            status_summary_published=True,
+            partial_batch_active=True,
+            partial_batch_packet_count=2,
+            partial_batch_results_returned=1,
+            status_summary_waiting_role_matches_partial_batch=False,
+        ),
+        "duplicate_result_reconciliation_incremented_count": _safe_base(
+            pending_wait_reconciled=True,
+            partial_batch_active=True,
+            partial_batch_packet_count=2,
+            partial_batch_results_returned=1,
+            duplicate_reconciliation_incremented_count=True,
         ),
         "role_work_result_routed_to_reviewer": _safe_base(
             pm_role_work_result_normalized=True,

@@ -32,6 +32,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.MATERIAL_REPAIR_SUCCESS_ONLY: "material repair outcome table did not route success, blocker, and protocol outcomes",
     model.DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER: "duplicate PM repair decision created new blocker or transaction",
     model.POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT: "invalid wait was persisted and only repaired by post-write cleanup",
+    model.INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT: "incoming role event was accepted outside current allowed_external_events",
 }
 
 
@@ -41,6 +42,8 @@ def _state_id(state: model.State) -> str:
         f"pending={state.pending_wait_written},{state.allowed_external_events}|"
         f"registered={state.allowed_events_registered}|receivable={state.allowed_events_currently_receivable}|"
         f"ack={state.direct_ack_consumed},{state.semantic_wait_written_after_ack},{state.semantic_wait_valid_after_ack}|"
+        f"incoming={state.incoming_event},{state.incoming_event_allowed_by_current_wait},"
+        f"{state.incoming_event_accepted}|"
         f"repair={state.repair_success_event},{state.repair_blocker_event},{state.repair_protocol_event}|"
         f"dup={state.duplicate_pm_repair_decision_seen},{state.duplicate_repair_created_new_blocker},"
         f"{state.duplicate_repair_created_new_transaction}|reason={state.terminal_reason}"

@@ -161,6 +161,12 @@ class State:
     active_holder_packet_opened_through_runtime: bool = False
     active_holder_progress_recorded: bool = False
     active_holder_progress_controller_safe: bool = True
+    active_holder_packet_family: str = "current_node"  # current_node | material_scan | research | pm_role_work
+    generalized_packet_registered: bool = False
+    generalized_packet_relayed: bool = False
+    generalized_packet_identity_boundary_present: bool = True
+    generalized_packet_live_holder_known: bool = True
+    generalized_result_target_is_pm: bool = True
     fast_lane_initial_result_submitted: bool = False
     fast_lane_mechanical_reject_recorded: bool = False
     fast_lane_result_resubmitted: bool = False
@@ -605,6 +611,12 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         active_holder_packet_opened_through_runtime=False,
         active_holder_progress_recorded=False,
         active_holder_progress_controller_safe=True,
+        active_holder_packet_family="current_node",
+        generalized_packet_registered=False,
+        generalized_packet_relayed=False,
+        generalized_packet_identity_boundary_present=True,
+        generalized_packet_live_holder_known=True,
+        generalized_result_target_is_pm=True,
         fast_lane_initial_result_submitted=False,
         fast_lane_mechanical_reject_recorded=False,
         fast_lane_result_resubmitted=False,
@@ -1617,7 +1629,9 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("worker project work started before active-holder lease")
     if state.worker_dispatched and not state.worker_packet_identity_boundary_present:
         failures.append("worker dispatched without packet recipient identity boundary")
-    if state.active_holder_lease_issued and not (
+    if state.active_holder_packet_family not in {"current_node", "material_scan", "research", "pm_role_work"}:
+        failures.append("active-holder lease used unsupported packet family")
+    if state.active_holder_lease_issued and state.active_holder_packet_family == "current_node" and not (
         state.current_node_packet_registered
         and state.write_grant_issued
         and state.reviewer_dispatch_allowed
@@ -1625,6 +1639,21 @@ def invariant_failures(state: State) -> list[str]:
         and state.worker_packet_identity_boundary_present
     ):
         failures.append("active-holder lease issued before current worker dispatch and write grant")
+    if state.active_holder_lease_issued and state.active_holder_packet_family != "current_node" and not (
+        state.generalized_packet_registered
+        and state.generalized_packet_relayed
+        and state.generalized_packet_identity_boundary_present
+        and state.generalized_packet_live_holder_known
+    ):
+        failures.append(
+            "generalized active-holder lease issued before packet registration, relay, identity boundary, or live holder"
+        )
+    if (
+        state.active_holder_lease_issued
+        and state.active_holder_packet_family in {"material_scan", "research", "pm_role_work"}
+        and not state.generalized_result_target_is_pm
+    ):
+        failures.append("generalized active-holder result did not return to PM disposition path")
     if state.active_holder_contact_attempted and not state.active_holder_lease_issued:
         failures.append("active-holder contact attempted without an issued lease")
     if state.active_holder_contact_attempted and not state.active_holder_contact_is_current_holder:
@@ -2046,6 +2075,24 @@ def _active_holder_leased(**changes: object) -> State:
     return replace(base, **changes)
 
 
+def _generalized_active_holder_leased(packet_family: str, **changes: object) -> State:
+    base = State(
+        status="running",
+        holder="worker",
+        route_version=1,
+        controller_boundary_confirmed=True,
+        route_activated=True,
+        active_holder_lease_issued=True,
+        active_holder_packet_family=packet_family,
+        generalized_packet_registered=True,
+        generalized_packet_relayed=True,
+        generalized_packet_identity_boundary_present=True,
+        generalized_packet_live_holder_known=True,
+        generalized_result_target_is_pm=True,
+    )
+    return replace(base, **changes)
+
+
 def _node_completed(**changes: object) -> State:
     return _reviewer_passed(
         pm_node_completion_card_delivered=True,
@@ -2279,6 +2326,26 @@ def hazard_states() -> dict[str, State]:
         "active_holder_contact_action_not_allowed": _active_holder_leased(
             active_holder_contact_attempted=True,
             active_holder_contact_action_allowed=False,
+        ),
+        "material_active_holder_lease_without_packet_registration": _generalized_active_holder_leased(
+            "material_scan",
+            generalized_packet_registered=False,
+        ),
+        "research_active_holder_contact_by_wrong_role": _generalized_active_holder_leased(
+            "research",
+            active_holder_contact_attempted=True,
+            active_holder_contact_is_current_holder=False,
+        ),
+        "pm_role_work_active_holder_without_live_holder": _generalized_active_holder_leased(
+            "pm_role_work",
+            generalized_packet_live_holder_known=False,
+        ),
+        "generalized_active_holder_result_not_to_pm": _generalized_active_holder_leased(
+            "material_scan",
+            generalized_result_target_is_pm=False,
+        ),
+        "active_holder_unknown_packet_family": _generalized_active_holder_leased(
+            "legacy_unknown",
         ),
         "fast_lane_progress_leaks_controller_visible_content": _active_holder_leased(
             active_holder_contact_attempted=True,

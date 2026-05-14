@@ -198,7 +198,7 @@ PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES = {
     "worker_a",
     "worker_b",
 }
-PM_ROLE_WORK_REQUEST_MODES = {"blocking", "advisory"}
+PM_ROLE_WORK_REQUEST_MODES = {"blocking", "advisory", "prep-only"}
 PM_ROLE_WORK_REQUEST_KINDS = {
     "model_miss",
     "evidence",
@@ -227,10 +227,29 @@ PM_PACKAGE_RESULT_DECISIONS = {
 PARALLEL_PACKET_BATCH_OPEN_STATUSES = {
     "registered",
     "packets_relayed",
+    "partial_results_returned",
     "results_joined",
     "results_relayed_to_reviewer",
     "results_relayed_to_pm",
     "reviewed",
+}
+PARALLEL_PACKET_BATCH_RESULT_RETURNED_STATUSES = {
+    "result_returned",
+    "result_relayed_to_pm",
+    "result_relayed_to_reviewer",
+    "reviewed",
+    "absorbed",
+}
+PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES = {
+    "results_relayed_to_pm",
+    "results_relayed_to_reviewer",
+    "reviewed",
+    "review_blocked",
+    "pm_absorbed",
+    "absorbed",
+    "canceled",
+    "blocked",
+    "route_or_node_mutation_required",
 }
 PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
     "current_node_work": {
@@ -11494,7 +11513,7 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         raise RouterError("PM role-work request must target a FlowPilot role other than PM or Controller")
     request_mode = str(payload.get("request_mode") or payload.get("mode") or "").strip()
     if request_mode not in PM_ROLE_WORK_REQUEST_MODES:
-        raise RouterError("PM role-work request requires request_mode=blocking or advisory")
+        raise RouterError("PM role-work request requires request_mode=blocking, advisory, or prep-only")
     request_kind = str(payload.get("request_kind") or payload.get("kind") or "").strip()
     if request_kind not in PM_ROLE_WORK_REQUEST_KINDS:
         raise RouterError("PM role-work request has unsupported request_kind")
@@ -11589,6 +11608,7 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         "requested_by_role": "project_manager",
         "to_role": to_role,
         "request_mode": request_mode,
+        "dependency_class": request_mode,
         "request_kind": request_kind,
         "status": "open",
         "packet_id": packet_id,
@@ -12019,6 +12039,29 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
     root_requirements = payload.get("functional_acceptance_matrix")
     if not isinstance(root_requirements, list):
         raise RouterError("functional_acceptance_matrix must be a list when provided")
+    requirement_trace = payload.get("requirement_trace") if isinstance(payload.get("requirement_trace"), dict) else {}
+    if not requirement_trace:
+        source_registry = [
+            {
+                "source_requirement_id": str(item.get("source_requirement_id") or item.get("requirement_id") or item.get("acceptance_id") or f"req-{index:03d}"),
+                "source_type": str(item.get("source") or "product_function_architecture"),
+                "source_path": project_relative(project_root, material_understanding_path),
+                "statement": str(item.get("goal") or item.get("behavior") or item.get("acceptance_statement") or item.get("acceptance_id") or f"Requirement {index}"),
+                "status": "active",
+                "superseded_by": [],
+            }
+            for index, item in enumerate(root_requirements, start=1)
+            if isinstance(item, dict)
+        ]
+        requirement_trace = {
+            "schema_version": "flowpilot.requirement_trace.v1",
+            "pm_owned": True,
+            "flowpilot_standalone": True,
+            "external_tools_required": False,
+            "full_protocol_required_when_flowpilot_invoked": True,
+            "source_registry": source_registry,
+            "legacy_inferred_from_functional_acceptance_matrix": True,
+        }
     architecture = {
         "schema_version": "flowpilot.product_function_architecture.v1",
         "run_id": run_state["run_id"],
@@ -12033,6 +12076,7 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
             "pm_material_understanding": project_relative(project_root, material_understanding_path),
         },
         "source_material_review": run_state.get("material_review"),
+        "requirement_trace": requirement_trace,
         "high_standard_posture": payload.get("high_standard_posture") or {"highest_reasonably_achievable_is_floor": True},
         "unacceptable_result_review": payload.get("unacceptable_result_review") or [],
         "user_task_map": payload.get("user_task_map"),
@@ -12535,6 +12579,32 @@ def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_stat
     scenario_ids = payload.get("selected_scenario_ids")
     if not isinstance(scenario_ids, list) or not scenario_ids:
         raise RouterError("root contract requires a non-empty selected_scenario_ids list")
+    traced_requirements: list[dict[str, Any]] = []
+    source_ids_by_requirement: dict[str, list[str]] = {}
+    for item in root_requirements:
+        if not isinstance(item, dict):
+            continue
+        traced = dict(item)
+        requirement_id = str(traced.get("requirement_id") or f"root-{len(traced_requirements) + 1:03d}")
+        traced["requirement_id"] = requirement_id
+        source_ids = _string_list(traced.get("source_requirement_ids")) or [requirement_id]
+        traced["source_requirement_ids"] = source_ids
+        traced.setdefault("change_status", "ADDED")
+        traced.setdefault("supersedes_requirement_ids", [])
+        traced.setdefault("changed_reason", "Initial PM root-contract import from product-function architecture.")
+        traced.setdefault("approval_owner_role", "project_manager")
+        source_ids_by_requirement[requirement_id] = source_ids
+        traced_requirements.append(traced)
+    traced_proof_matrix: list[dict[str, Any]] = []
+    for item in proof_matrix:
+        if not isinstance(item, dict):
+            continue
+        traced = dict(item)
+        requirement_id = str(traced.get("requirement_id") or "")
+        traced.setdefault("source_requirement_ids", source_ids_by_requirement.get(requirement_id, [requirement_id] if requirement_id else []))
+        traced_proof_matrix.append(traced)
+    root_requirements = traced_requirements
+    proof_matrix = traced_proof_matrix
     contract = {
         "schema_version": "flowpilot.root_acceptance_contract.v1",
         "run_id": run_state["run_id"],
@@ -12545,12 +12615,21 @@ def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_stat
         "source_paths": {
             "product_function_architecture": project_relative(project_root, architecture_path),
         },
+        "requirement_traceability_policy": {
+            "schema_version": "flowpilot.root_requirement_traceability.v1",
+            "source": "product_function_architecture.requirement_trace",
+            "stable_source_requirement_ids_required": True,
+            "change_status_required": True,
+            "external_spec_material_advisory_until_pm_imported": True,
+            "completion_requires_final_trace_closure": True,
+        },
         "root_requirements": root_requirements,
         "proof_matrix": proof_matrix,
         "standard_scenario_pack": {
             "required": True,
             "path": project_relative(project_root, run_root / "standard_scenario_pack.json"),
             "selected_scenario_ids": scenario_ids,
+            "covers_requirement_ids": _root_requirement_ids({"root_requirements": root_requirements}),
         },
         "completion_policy": {
             "unresolved_residual_risks_allowed": False,
@@ -12567,6 +12646,7 @@ def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_stat
         "created_at": utc_now(),
         "updated_at": utc_now(),
         "selected_scenario_ids": scenario_ids,
+        "covers_requirement_ids": _root_requirement_ids({"root_requirements": root_requirements}),
         "selection_reason": payload.get("scenario_selection_reason") or "Selected from root acceptance contract risk coverage.",
     }
     write_json(run_root / "root_acceptance_contract.json", contract)
@@ -13407,6 +13487,49 @@ def _status_summary_waiting_for(pending_action: dict[str, Any]) -> str | None:
     return None
 
 
+def _current_status_active_batch_summary(run_root: Path) -> dict[str, Any] | None:
+    summaries: list[dict[str, Any]] = []
+    for batch_kind in ("material_scan", "research", "current_node", "pm_role_work"):
+        try:
+            batch = _active_parallel_packet_batch(run_root, batch_kind)
+        except (RouterError, OSError, json.JSONDecodeError):
+            continue
+        if not batch:
+            continue
+        member_status = batch.get("member_status") if isinstance(batch.get("member_status"), dict) else {}
+        if not member_status:
+            member_status = {
+                "packet_count": len(batch.get("packets") or []),
+                "results_returned": (batch.get("counts") or {}).get("results_returned", 0),
+                "missing_roles": [],
+                "returned_roles": [],
+                "partial_results_returned": False,
+                "all_results_returned": False,
+            }
+        summaries.append(
+            {
+                "batch_kind": batch_kind,
+                "batch_id": batch.get("batch_id"),
+                "status": batch.get("status"),
+                "packet_count": member_status.get("packet_count"),
+                "results_returned": member_status.get("results_returned"),
+                "missing_roles": member_status.get("missing_roles") or [],
+                "returned_roles": member_status.get("returned_roles") or [],
+                "partial_results_returned": bool(member_status.get("partial_results_returned")),
+                "all_results_returned": bool(member_status.get("all_results_returned")),
+                "controller_visibility": "metadata_only",
+            }
+        )
+    if not summaries:
+        return None
+    active_partial = [item for item in summaries if item.get("partial_results_returned")]
+    return {
+        "controller_visibility": "metadata_only",
+        "active_partial_batches": active_partial,
+        "batches": summaries,
+    }
+
+
 def _build_current_status_summary(
     run_root: Path,
     run_state: dict[str, Any],
@@ -13477,6 +13600,7 @@ def _build_current_status_summary(
             "active_packet_id": packet_ledger.get("active_packet_id"),
             "status": packet_ledger.get("active_packet_status"),
             "holder": packet_ledger.get("active_packet_holder"),
+            "active_batch": _current_status_active_batch_summary(run_root),
         },
         "next_step": {
             "action_type": pending_action.get("action_type"),
@@ -14305,7 +14429,17 @@ def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, 
     route_payload["source_product_behavior_model"] = project_relative(project_root, product_model_path)
     route_payload["source_product_behavior_model_hash"] = hashlib.sha256(product_model_path.read_bytes()).hexdigest()
     route_payload["prior_path_context_review"] = prior_review
-    route_payload["nodes"] = draft.get("nodes") or payload.get("nodes") or []
+    root_requirement_ids = _root_requirement_ids(contract)
+    route_payload["requirement_traceability_policy"] = {
+        "schema_version": "flowpilot.route_requirement_traceability.v1",
+        "source_root_contract": project_relative(project_root, contract_path),
+        "source_product_architecture": project_relative(project_root, run_root / "product_function_architecture.json"),
+        "full_protocol_required_when_flowpilot_invoked": True,
+        "light_or_simple_profiles_forbidden": True,
+        "every_node_requires_requirement_or_risk_rationale": True,
+        "external_spec_material_advisory_until_pm_imported": True,
+    }
+    route_payload["nodes"] = _route_nodes_with_requirement_trace(draft.get("nodes") or payload.get("nodes") or [], root_requirement_ids)
     route_payload["written_by_role"] = "project_manager"
     route_payload["written_at"] = str(payload.get("written_at") or utc_now())
     route_payload["router_preservation"] = {
@@ -14778,6 +14912,7 @@ def _write_parallel_packet_batch(
         item["batch_id"] = batch_id
         item["batch_kind"] = batch_kind
         item.setdefault("status", "registered")
+        item.setdefault("dependency_class", "blocking")
         record.update(item)
         normalized_records.append(item)
     batch = {
@@ -14849,6 +14984,149 @@ def _write_parallel_packet_batch_state(run_root: Path, batch: dict[str, Any]) ->
     write_json(_parallel_packet_batch_path(run_root, str(batch["batch_id"])), batch)
 
 
+def _parallel_batch_record_result_exists(
+    project_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+) -> tuple[bool, Path]:
+    result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
+    return result_path.exists(), result_path
+
+
+def _parallel_packet_batch_member_summary(
+    project_root: Path,
+    run_state: dict[str, Any],
+    batch: dict[str, Any],
+) -> dict[str, Any]:
+    returned_roles: list[str] = []
+    missing_roles: list[str] = []
+    returned_packet_ids: list[str] = []
+    missing_packet_ids: list[str] = []
+    packet_count = 0
+    for record in batch.get("packets") or []:
+        if not isinstance(record, dict):
+            continue
+        packet_count += 1
+        packet_id = str(record.get("packet_id") or "")
+        role = str(record.get("to_role") or packet_id or "unknown")
+        result_exists, _result_path = _parallel_batch_record_result_exists(project_root, run_state, record)
+        status = str(record.get("status") or "")
+        if result_exists or status in PARALLEL_PACKET_BATCH_RESULT_RETURNED_STATUSES:
+            returned_roles.append(role)
+            if packet_id:
+                returned_packet_ids.append(packet_id)
+        else:
+            missing_roles.append(role)
+            if packet_id:
+                missing_packet_ids.append(packet_id)
+    returned_roles = sorted(set(returned_roles))
+    missing_roles = sorted(set(missing_roles))
+    returned_packet_ids = sorted(set(returned_packet_ids))
+    missing_packet_ids = sorted(set(missing_packet_ids))
+    return {
+        "batch_id": batch.get("batch_id"),
+        "batch_kind": batch.get("batch_kind"),
+        "packet_count": packet_count,
+        "results_returned": len(returned_packet_ids),
+        "missing_count": len(missing_packet_ids),
+        "returned_roles": returned_roles,
+        "missing_roles": missing_roles,
+        "returned_packet_ids": returned_packet_ids,
+        "missing_packet_ids": missing_packet_ids,
+        "all_results_returned": packet_count > 0 and len(returned_packet_ids) == packet_count,
+        "partial_results_returned": 0 < len(returned_packet_ids) < packet_count,
+        "controller_visibility": "metadata_only",
+    }
+
+
+def _refresh_parallel_packet_batch_from_durable_results(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    batch_kind: str,
+) -> dict[str, Any]:
+    batch = _active_parallel_packet_batch(run_root, batch_kind)
+    if not batch:
+        return {"batch_kind": batch_kind, "active": False, "changed": False}
+    before = json.dumps(batch, sort_keys=True)
+    returned = 0
+    relayed = 0
+    for record in batch.get("packets") or []:
+        if not isinstance(record, dict):
+            continue
+        if str(record.get("status") or "") in {"packet_relayed", *PARALLEL_PACKET_BATCH_RESULT_RETURNED_STATUSES}:
+            relayed += 1
+        result_exists, result_path = _parallel_batch_record_result_exists(project_root, run_state, record)
+        if not result_exists:
+            continue
+        returned += 1
+        record["result_envelope_path"] = project_relative(project_root, result_path)
+        record["result_envelope_hash"] = packet_runtime.sha256_file(result_path)
+        if str(record.get("status") or "") not in PARALLEL_PACKET_BATCH_RESULT_RETURNED_STATUSES:
+            record["status"] = "result_returned"
+        record.setdefault("result_returned_at", utc_now())
+        try:
+            result = packet_runtime.load_envelope(project_root, result_path)
+        except (OSError, json.JSONDecodeError, packet_runtime.PacketRuntimeError):
+            result = {}
+        if isinstance(result, dict):
+            if result.get("result_body_path"):
+                record["result_body_path"] = result.get("result_body_path")
+            if result.get("result_body_hash"):
+                record["result_body_hash"] = result.get("result_body_hash")
+    summary = _parallel_packet_batch_member_summary(project_root, run_state, batch)
+    counts = batch.setdefault("counts", {})
+    counts["registered"] = summary["packet_count"]
+    counts["relayed"] = max(int(counts.get("relayed") or 0), relayed)
+    counts["results_returned"] = summary["results_returned"]
+    previous_member_status = batch.get("member_status") if isinstance(batch.get("member_status"), dict) else {}
+    member_status = {
+        "schema_version": "flowpilot.parallel_packet_batch_member_status.v1",
+        "controller_visibility": "metadata_only",
+        "returned_roles": summary["returned_roles"],
+        "missing_roles": summary["missing_roles"],
+        "returned_packet_ids": summary["returned_packet_ids"],
+        "missing_packet_ids": summary["missing_packet_ids"],
+        "results_returned": summary["results_returned"],
+        "packet_count": summary["packet_count"],
+        "partial_results_returned": summary["partial_results_returned"],
+        "all_results_returned": summary["all_results_returned"],
+    }
+    comparable_previous = {key: value for key, value in previous_member_status.items() if key != "updated_at"}
+    member_status["updated_at"] = (
+        previous_member_status.get("updated_at")
+        if comparable_previous == member_status and previous_member_status.get("updated_at")
+        else utc_now()
+    )
+    batch["member_status"] = member_status
+    if summary["all_results_returned"] and str(batch.get("status") or "") not in PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES:
+        batch["status"] = "results_joined"
+        batch.setdefault("joined_at", utc_now())
+    elif summary["partial_results_returned"] and str(batch.get("status") or "") not in PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES:
+        batch["status"] = "partial_results_returned"
+    changed = before != json.dumps(batch, sort_keys=True)
+    if changed:
+        _write_parallel_packet_batch_state(run_root, batch)
+    return {**summary, "active": True, "changed": changed, "batch_status": batch.get("status")}
+
+
+def _refresh_all_parallel_packet_batches_from_durable_results(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    summaries = {
+        batch_kind: _refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, batch_kind)
+        for batch_kind in ("material_scan", "research", "current_node", "pm_role_work")
+    }
+    return {
+        "schema_version": "flowpilot.parallel_packet_batch_reconciliation.v1",
+        "changed": any(bool(summary.get("changed")) for summary in summaries.values()),
+        "batches": summaries,
+        "reconciled_at": utc_now(),
+    }
+
+
 def _mark_parallel_batch_packets_relayed(run_root: Path, batch_kind: str) -> None:
     batch = _active_parallel_packet_batch(run_root, batch_kind)
     if not batch:
@@ -14863,23 +15141,7 @@ def _mark_parallel_batch_packets_relayed(run_root: Path, batch_kind: str) -> Non
 
 
 def _mark_parallel_batch_results_joined(project_root: Path, run_root: Path, run_state: dict[str, Any], batch_kind: str) -> None:
-    batch = _active_parallel_packet_batch(run_root, batch_kind)
-    if not batch:
-        return
-    returned = 0
-    for record in batch["packets"]:
-        if not isinstance(record, dict):
-            continue
-        result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
-        if result_path.exists():
-            returned += 1
-            record["status"] = "result_returned"
-            record["result_returned_at"] = utc_now()
-    batch["counts"]["results_returned"] = returned
-    if returned == len(batch["packets"]):
-        batch["status"] = "results_joined"
-        batch["joined_at"] = utc_now()
-    _write_parallel_packet_batch_state(run_root, batch)
+    _refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, batch_kind)
 
 
 def _mark_parallel_batch_reviewed(run_root: Path, batch_kind: str, *, passed: bool, reviewed_packet_ids: list[str]) -> None:
@@ -16140,6 +16402,126 @@ def _issue_current_node_active_holder_leases(
     return summary
 
 
+def _packet_active_holder_lease_plan(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    packet_family: str,
+    mode: str,
+) -> tuple[dict[str, Any], list[str]]:
+    try:
+        frontier = _active_frontier(run_root)
+    except RouterError:
+        frontier = read_json_if_exists(run_root / "execution_frontier.json") or {}
+    route_version = int(frontier.get("route_version") or 0)
+    frontier_version = _active_holder_frontier_version(frontier)
+    planned: list[dict[str, Any]] = []
+    allowed_writes: list[str] = []
+    for record in records:
+        envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        holder_role = str(envelope.get("to_role") or record.get("to_role") or "")
+        target_agent_id = _active_agent_id_for_role(run_root, holder_role)
+        packet_dir = envelope_path.parent
+        item = {
+            "packet_id": str(envelope.get("packet_id") or record.get("packet_id") or ""),
+            "packet_family": packet_family,
+            "holder_role": holder_role,
+            "target_agent_id": target_agent_id,
+            "route_version": route_version,
+            "frontier_version": frontier_version,
+            "packet_envelope_path": project_relative(project_root, envelope_path),
+            "active_holder_lease_path": project_relative(project_root, packet_dir / "active_holder_lease.json"),
+            "active_holder_events_path": project_relative(project_root, packet_dir / "active_holder_events.jsonl"),
+            "mode": mode if target_agent_id else "fallback_controller_relay_no_live_agent_id",
+        }
+        planned.append(item)
+        if target_agent_id:
+            allowed_writes.extend([item["active_holder_lease_path"], item["active_holder_events_path"]])
+    return (
+        {
+            "schema_version": "flowpilot.packet_active_holder_fast_lane.v1",
+            "mode": mode,
+            "packet_family": packet_family,
+            "fallback_when_no_live_agent_id": True,
+            "controller_visibility": "lease_metadata_only",
+            "route_version": route_version,
+            "frontier_version": frontier_version,
+            "packets": planned,
+        },
+        sorted(set(allowed_writes)),
+    )
+
+
+def _issue_packet_active_holder_leases(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    packet_family: str,
+    mode: str,
+) -> dict[str, Any]:
+    try:
+        frontier = _active_frontier(run_root)
+    except RouterError:
+        frontier = read_json_if_exists(run_root / "execution_frontier.json") or {}
+    route_version = int(frontier.get("route_version") or 0)
+    frontier_version = _active_holder_frontier_version(frontier)
+    issued: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for record in records:
+        envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        holder_role = str(envelope.get("to_role") or record.get("to_role") or "")
+        target_agent_id = _active_agent_id_for_role(run_root, holder_role)
+        packet_id = str(envelope.get("packet_id") or record.get("packet_id") or "")
+        if not target_agent_id:
+            skipped.append(
+                {
+                    "packet_id": packet_id,
+                    "packet_family": packet_family,
+                    "holder_role": holder_role,
+                    "reason": "no_live_agent_id_available_fallback_to_controller_relay",
+                }
+            )
+            continue
+        try:
+            lease = packet_runtime.issue_active_holder_lease(
+                project_root,
+                packet_envelope=envelope,
+                holder_role=holder_role,
+                holder_agent_id=target_agent_id,
+                route_version=route_version,
+                frontier_version=frontier_version,
+            )
+        except packet_runtime.PacketRuntimeError as exc:
+            raise RouterError(f"{packet_family} active-holder lease failed for {packet_id}: {exc}") from exc
+        issued.append(
+            {
+                "packet_id": packet_id,
+                "packet_family": packet_family,
+                "holder_role": holder_role,
+                "holder_agent_id": target_agent_id,
+                "lease_path": lease["lease_path"],
+                "lease_id": lease["lease_id"],
+            }
+        )
+    summary = {
+        "schema_version": "flowpilot.packet_active_holder_fast_lane.v1",
+        "mode": mode,
+        "packet_family": packet_family,
+        "issued": issued,
+        "skipped": skipped,
+        "fallback_when_no_live_agent_id": True,
+        "recorded_at": utc_now(),
+    }
+    run_state.setdefault("packet_active_holder_fast_lanes", {})[packet_family] = summary
+    return summary
+
+
 def _relay_result_records(
     project_root: Path,
     run_state: dict[str, Any],
@@ -16998,6 +17380,39 @@ def _write_node_acceptance_plan(
     if high_standard.get("controller_can_downgrade_standard") is True:
         raise RouterError("Controller cannot downgrade node standards")
     node = _active_node_definition(run_root, frontier)
+    contract = read_json_if_exists(run_root / "root_acceptance_contract.json")
+    root_requirement_ids = _root_requirement_ids(contract) if isinstance(contract, dict) else []
+    route_node_requirement_ids = _string_list(node.get("covers_requirement_ids")) or root_requirement_ids
+    route_node_scenario_ids = _string_list(node.get("covers_scenario_ids"))
+    route_node_capability_ids = _string_list(node.get("source_product_capability_ids"))
+    node_requirement_ids = [
+        str(item.get("requirement_id"))
+        for item in node_requirements
+        if isinstance(item, dict) and item.get("requirement_id")
+    ]
+    traced_node_requirements: list[dict[str, Any]] = []
+    for item in node_requirements:
+        if not isinstance(item, dict):
+            continue
+        traced = dict(item)
+        traced.setdefault("source_requirement_ids", route_node_requirement_ids)
+        traced.setdefault("covers_root_requirement_ids", route_node_requirement_ids)
+        traced.setdefault("covers_scenario_ids", route_node_scenario_ids)
+        traced.setdefault("source_product_capability_ids", route_node_capability_ids)
+        traced.setdefault("change_status", "UNCHANGED")
+        traced.setdefault("supersedes_requirement_ids", [])
+        traced_node_requirements.append(traced)
+    traced_experiment_plan: list[dict[str, Any]] = []
+    for item in experiment_plan:
+        if not isinstance(item, dict):
+            continue
+        traced = dict(item)
+        traced.setdefault("covers_requirements", node_requirement_ids or route_node_requirement_ids)
+        traced.setdefault("covers_root_requirement_ids", route_node_requirement_ids)
+        traced.setdefault("covers_product_requirement_ids", _string_list(traced.get("covers_product_requirement_ids")))
+        traced_experiment_plan.append(traced)
+    node_requirements = traced_node_requirements
+    experiment_plan = traced_experiment_plan
     child_ids = _node_child_ids(node)
     payload_leaf_gate = payload.get("leaf_readiness_gate") if isinstance(payload.get("leaf_readiness_gate"), dict) else None
     if payload_leaf_gate is not None:
@@ -17035,6 +17450,18 @@ def _write_node_acceptance_plan(
             "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
             "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
         },
+        "requirement_traceability": {
+            "schema_version": "flowpilot.node_requirement_traceability.v1",
+            "source_route_node_id": active_node_id,
+            "source_route_node_covers_requirement_ids": route_node_requirement_ids,
+            "source_route_node_covers_scenario_ids": route_node_scenario_ids,
+            "source_product_capability_ids": route_node_capability_ids,
+            "full_protocol_required_when_flowpilot_invoked": True,
+            "all_covered_requirements_must_close_or_be_triaged": True,
+            "closure_by_report_only_forbidden": True,
+            "external_spec_material_advisory_until_pm_imported": True,
+            "legacy_trace_defaults_inferred_by_router": "requirement_traceability" not in payload,
+        },
         "prior_path_context_review": prior_review,
         "node_structure": {
             "node_kind": _node_kind(node),
@@ -17059,6 +17486,8 @@ def _write_node_acceptance_plan(
             "required_before_chunk_execution": True,
             "required_before_node_checkpoint": True,
             "reviewer_or_officer_direct_check_required": True,
+            "all_covered_requirements_closed_or_triaged": False,
+            "unresolved_requirement_ids": route_node_requirement_ids,
         },
         "written_by_role": "project_manager",
         "source_event": source_event,
@@ -17080,9 +17509,13 @@ def _write_node_acceptance_plan(
         "active_child_skill_bindings",
         "work_packet_projection",
         "result_matrix_requirements",
+        "inherited_root_requirements",
     ]:
         if optional_field in payload:
             plan[optional_field] = payload.get(optional_field)
+    issues = _node_acceptance_traceability_issues(plan)
+    if issues:
+        raise RouterError("node acceptance plan traceability invalid: " + "; ".join(str(issue["message"]) for issue in issues[:5]))
     write_json(_active_node_acceptance_plan_path(run_root, frontier), plan)
     _update_display_plan_current_node(
         project_root,
@@ -17596,6 +18029,20 @@ def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[
     route_payload["route_id"] = route_id
     route_version = int(payload.get("route_version") or route_payload.get("route_version") or 1)
     route_payload["route_version"] = route_version
+    contract = read_json(run_root / "root_acceptance_contract.json")
+    route_payload["nodes"] = _route_nodes_with_requirement_trace(route_payload.get("nodes") or [], _root_requirement_ids(contract))
+    route_payload.setdefault(
+        "requirement_traceability_policy",
+        {
+            "schema_version": "flowpilot.route_requirement_traceability.v1",
+            "source_root_contract": project_relative(project_root, run_root / "root_acceptance_contract.json"),
+            "source_product_architecture": project_relative(project_root, run_root / "product_function_architecture.json"),
+            "full_protocol_required_when_flowpilot_invoked": True,
+            "light_or_simple_profiles_forbidden": True,
+            "every_node_requires_requirement_or_risk_rationale": True,
+            "external_spec_material_advisory_until_pm_imported": True,
+        },
+    )
     route_nodes = _iter_route_nodes(route_payload)
     first_node = route_nodes[0] if route_nodes else {}
     active_node_id = str(
@@ -18017,6 +18464,132 @@ def _root_requirement_ids(contract: dict[str, Any]) -> list[str]:
     return ids
 
 
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item or "").strip()]
+
+
+def _route_nodes_with_requirement_trace(nodes: Any, root_requirement_ids: list[str]) -> list[dict[str, Any]]:
+    traced_nodes: list[dict[str, Any]] = []
+    if not isinstance(nodes, list):
+        return traced_nodes
+    for index, item in enumerate(nodes, start=1):
+        if not isinstance(item, dict):
+            continue
+        node = dict(item)
+        node_id = str(node.get("node_id") or node.get("id") or f"node-{index:03d}")
+        node.setdefault("node_id", node_id)
+        node.setdefault("covers_requirement_ids", root_requirement_ids)
+        node.setdefault("covers_scenario_ids", [])
+        node.setdefault("source_product_capability_ids", [])
+        node.setdefault("why_this_node_exists", f"Node {node_id} owns mapped FlowPilot requirements or route proof obligations.")
+        node.setdefault("why_not_merged", "PM preserves this node while it owns distinct evidence, role authority, failure isolation, recovery, or user-visible milestone value.")
+        node.setdefault("why_not_split", "PM splits this node only when a child boundary adds distinct proof, role authority, recovery, or user-visible milestone value.")
+        traced_nodes.append(node)
+    return traced_nodes
+
+
+def _node_acceptance_traceability_issues(payload: dict[str, Any]) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    trace = payload.get("requirement_traceability") if isinstance(payload.get("requirement_traceability"), dict) else {}
+    if not trace:
+        issues.append(_artifact_issue("requirement_traceability", "missing node requirement traceability object", "project_manager"))
+        return issues
+    for field in (
+        "source_route_node_id",
+        "source_route_node_covers_requirement_ids",
+        "full_protocol_required_when_flowpilot_invoked",
+        "all_covered_requirements_must_close_or_be_triaged",
+        "closure_by_report_only_forbidden",
+    ):
+        if trace.get(field) in (None, "", []):
+            issues.append(_artifact_issue(f"requirement_traceability.{field}", "missing required traceability field", "project_manager"))
+    if trace.get("full_protocol_required_when_flowpilot_invoked") is not True:
+        issues.append(_artifact_issue("requirement_traceability.full_protocol_required_when_flowpilot_invoked", "FlowPilot formal node plan must keep full protocol", "project_manager"))
+    if trace.get("closure_by_report_only_forbidden") is not True:
+        issues.append(_artifact_issue("requirement_traceability.closure_by_report_only_forbidden", "covered requirements cannot close by report-only evidence", "project_manager"))
+    node_requirements = payload.get("node_requirements")
+    if isinstance(node_requirements, list):
+        for index, item in enumerate(node_requirements, start=1):
+            if isinstance(item, dict) and not (_string_list(item.get("source_requirement_ids")) or _string_list(item.get("covers_root_requirement_ids"))):
+                issues.append(_artifact_issue(f"node_requirements[{index}].source_requirement_ids", "node requirement must map to source/root requirement ids", "project_manager"))
+    experiments = payload.get("experiment_plan")
+    if isinstance(experiments, list):
+        for index, item in enumerate(experiments, start=1):
+            if isinstance(item, dict) and not (_string_list(item.get("covers_requirements")) or _string_list(item.get("covers_root_requirement_ids"))):
+                issues.append(_artifact_issue(f"experiment_plan[{index}].covers_requirements", "experiment must name covered requirement ids", "project_manager"))
+    advance_gate = payload.get("advance_gate") if isinstance(payload.get("advance_gate"), dict) else {}
+    if "all_covered_requirements_closed_or_triaged" not in advance_gate:
+        issues.append(_artifact_issue("advance_gate.all_covered_requirements_closed_or_triaged", "advance gate must track covered requirement closure", "project_manager"))
+    return issues
+
+
+def _requirement_trace_closure_from_root_replay(contract: dict[str, Any], root_replay: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    requirements_by_id = {
+        str(item.get("requirement_id")): item
+        for item in contract.get("root_requirements") or []
+        if isinstance(item, dict) and item.get("requirement_id")
+    }
+    closure: list[dict[str, Any]] = []
+    for replay in root_replay:
+        requirement_id = str(replay.get("requirement_id") or "")
+        requirement = requirements_by_id.get(requirement_id, {})
+        closure.append(
+            {
+                "requirement_id": requirement_id,
+                "source_requirement_ids": _string_list(requirement.get("source_requirement_ids")) or [requirement_id],
+                "change_status": str(requirement.get("change_status") or "UNCHANGED"),
+                "status": "resolved",
+                "owner_node_ids": _string_list(replay.get("owner_node_ids")),
+                "covering_entry_ids": [f"root_contract:{requirement_id}"],
+                "evidence_paths": replay.get("evidence_paths") or [],
+                "direct_evidence_required": True,
+                "direct_evidence_checked": True,
+                "standard_scenario_ids": replay.get("standard_scenarios") or replay.get("standard_scenario_ids") or [],
+                "stale_evidence_refs": [],
+                "superseded_by_requirement_ids": _string_list(requirement.get("superseded_by_requirement_ids")),
+                "waiver_authority": None,
+                "unresolved_reason": None,
+            }
+        )
+    return closure
+
+
+def _final_ledger_traceability_issues(payload: dict[str, Any]) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    closure = payload.get("requirement_trace_closure")
+    if not isinstance(closure, list) or not closure:
+        issues.append(_artifact_issue("requirement_trace_closure", "final ledger requires requirement trace closure rows", "project_manager"))
+        return issues
+    for index, item in enumerate(closure, start=1):
+        if not isinstance(item, dict):
+            issues.append(_artifact_issue(f"requirement_trace_closure[{index}]", "closure row must be an object", "project_manager"))
+            continue
+        if not item.get("requirement_id"):
+            issues.append(_artifact_issue(f"requirement_trace_closure[{index}].requirement_id", "missing requirement id", "project_manager"))
+        if item.get("status") not in {"resolved", "superseded", "waived"}:
+            issues.append(_artifact_issue(f"requirement_trace_closure[{index}].status", "effective requirement must be resolved, superseded, or waived", "project_manager"))
+        if item.get("status") == "resolved" and (not item.get("evidence_paths") or item.get("direct_evidence_checked") is not True):
+            issues.append(_artifact_issue(f"requirement_trace_closure[{index}].evidence_paths", "resolved requirement needs direct checked evidence", "project_manager"))
+        if item.get("status") == "waived" and not item.get("waiver_authority"):
+            issues.append(_artifact_issue(f"requirement_trace_closure[{index}].waiver_authority", "waived requirement needs waiver authority", "project_manager"))
+    counts = payload.get("counts") if isinstance(payload.get("counts"), dict) else {}
+    if int(counts.get("unresolved_requirement_count", 0) or 0) != 0:
+        issues.append(_artifact_issue("counts.unresolved_requirement_count", "final ledger requires unresolved_requirement_count=0", "project_manager"))
+    integrity = payload.get("evidence_integrity") if isinstance(payload.get("evidence_integrity"), dict) else {}
+    for field in (
+        "requirement_trace_checked",
+        "every_effective_requirement_closure_row_present",
+        "requirement_direct_evidence_checked",
+        "requirement_waiver_authority_checked",
+        "requirement_stale_status_checked",
+    ):
+        if integrity.get(field) is not True:
+            issues.append(_artifact_issue(f"evidence_integrity.{field}", "final ledger traceability integrity field must be true", "project_manager"))
+    return issues
+
+
 def _validated_root_replay(payload: dict[str, Any], required_ids: list[str]) -> list[dict[str, Any]]:
     replay = payload.get("root_contract_replay")
     if not isinstance(replay, list) or not replay:
@@ -18056,6 +18629,8 @@ def _build_source_of_truth_final_entries(
                 "entry_id": f"root_contract:{replay['requirement_id']}",
                 "route_version": route_version,
                 "gate_family": "root_acceptance",
+                "covers_requirement_ids": [str(replay["requirement_id"])],
+                "covers_scenario_ids": replay.get("standard_scenarios") or replay.get("standard_scenario_ids") or [],
                 "required_approver": "human_like_reviewer",
                 "status": "approved",
                 "source_of_truth_paths": replay.get("evidence_paths") or [],
@@ -18071,6 +18646,8 @@ def _build_source_of_truth_final_entries(
                 "route_version": route_version,
                 "node_id": node_id,
                 "gate_family": "route_node",
+                "covers_requirement_ids": _string_list(node.get("covers_requirement_ids")),
+                "covers_scenario_ids": _string_list(node.get("covers_scenario_ids")),
                 "required_approver": "project_manager",
                 "status": "approved" if node_id in (frontier.get("completed_nodes") or []) or node_id == frontier.get("active_node_id") else "pending_review",
                 "source_of_truth_paths": [
@@ -18210,6 +18787,16 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
     route = read_json(route_path)
     mutations = read_json_if_exists(run_root / "routes" / route_id / "mutations.json")
     root_replay = _validated_root_replay(payload, _root_requirement_ids(contract))
+    requirement_trace_closure = _requirement_trace_closure_from_root_replay(contract, root_replay)
+    effective_requirement_count = len(requirement_trace_closure)
+    resolved_requirement_count = sum(1 for item in requirement_trace_closure if item.get("status") == "resolved")
+    superseded_requirement_count = sum(1 for item in requirement_trace_closure if item.get("status") == "superseded")
+    waived_requirement_count = sum(1 for item in requirement_trace_closure if item.get("status") == "waived")
+    unresolved_requirement_count = sum(
+        1
+        for item in requirement_trace_closure
+        if item.get("status") not in {"resolved", "superseded", "waived"}
+    )
     entries = _build_source_of_truth_final_entries(
         project_root,
         run_root,
@@ -18236,6 +18823,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "segment_id": str(entry["entry_id"]),
             "source_entry_id": str(entry["entry_id"]),
             "gate_family": entry.get("gate_family"),
+            "requirement_trace_closure_refs": entry.get("covers_requirement_ids") or [],
             "status": "not_reviewed",
             "requires_pm_segment_decision": True,
         }
@@ -18258,7 +18846,13 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "evidence_ledger": project_relative(project_root, run_root / "evidence" / "evidence_ledger.json"),
             "generated_resource_ledger": project_relative(project_root, run_root / "generated_resource_ledger.json"),
             "quality_package": project_relative(project_root, run_root / "quality" / "quality_package.json"),
+            "product_function_architecture": project_relative(project_root, run_root / "product_function_architecture.json")
+            if (run_root / "product_function_architecture.json").exists()
+            else None,
             "root_acceptance_contract": project_relative(project_root, run_root / "root_acceptance_contract.json"),
+            "standard_scenario_pack": project_relative(project_root, run_root / "standard_scenario_pack.json")
+            if (run_root / "standard_scenario_pack.json").exists()
+            else None,
             "child_skill_gate_manifest": project_relative(project_root, run_root / "child_skill_gate_manifest.json"),
             "route_mutations": project_relative(project_root, run_root / "routes" / route_id / "mutations.json")
             if (run_root / "routes" / route_id / "mutations.json").exists()
@@ -18293,9 +18887,19 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "residual_risk_triage_done": True,
             "unresolved_residual_risk_count_zero": True,
             "blocked_items_have_pm_repair_or_stop_decision": True,
+            "requirement_trace_checked": True,
+            "every_effective_requirement_closure_row_present": True,
+            "requirement_direct_evidence_checked": True,
+            "requirement_waiver_authority_checked": True,
+            "requirement_stale_status_checked": True,
         },
         "counts": {
             "effective_node_count": len(_effective_route_nodes(route, mutations)),
+            "effective_requirement_count": effective_requirement_count,
+            "resolved_requirement_count": resolved_requirement_count,
+            "superseded_requirement_count": superseded_requirement_count,
+            "waived_requirement_count": waived_requirement_count,
+            "unresolved_requirement_count": unresolved_requirement_count,
             "gate_count": len(entries),
             "stale_count": stale_count,
             "generated_resource_count": int(generated_ledger.get("resource_count", 0) or 0),
@@ -18310,6 +18914,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         "entries": entries,
         "gate_decisions": gate_decisions,
         "root_contract_replay": root_replay,
+        "requirement_trace_closure": requirement_trace_closure,
         "frozen_contract_replay": {
             "status": "replayed",
             "root_acceptance_contract_path": project_relative(project_root, run_root / "root_acceptance_contract.json"),
@@ -18325,6 +18930,12 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         },
         "completion_allowed": False,
     }
+    traceability_issues = _final_ledger_traceability_issues(ledger)
+    if traceability_issues:
+        raise RouterError(
+            "final ledger traceability invalid: "
+            + "; ".join(str(issue["message"]) for issue in traceability_issues[:5])
+        )
     write_json(final_ledger_path, ledger)
     write_json(
         terminal_map_path,
@@ -18341,6 +18952,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "segments": terminal_segments,
             "coverage": {
                 "effective_nodes_total": len(_effective_route_nodes(route, mutations)),
+                "requirement_trace_closure_total": effective_requirement_count,
                 "segments_total": len(terminal_segments),
                 "segments_reviewed": 0,
                 "effective_nodes_reviewed_by_human": 0,
@@ -19969,6 +20581,14 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
         and not flags.get("material_scan_packets_relayed")
     ):
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
+        active_holder_plan, active_holder_allowed_writes = _packet_active_holder_lease_plan(
+            project_root,
+            run_root,
+            run_state,
+            index["packets"],
+            packet_family="material_scan",
+            mode="lease_on_material_scan_relay",
+        )
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="relay_material_scan_packets",
@@ -19982,6 +20602,7 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
                 allowed_writes=[
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
+                    *active_holder_allowed_writes,
                 ],
                 to_role="worker_a,worker_b",
                 extra={
@@ -19991,6 +20612,7 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
                     "combined_ledger_check_and_relay": True,
                     "ledger_check_receipt_required": True,
                     "packet_ids": [record.get("packet_id") for record in index["packets"]],
+                    "active_holder_fast_lane": active_holder_plan,
                 },
             )
         return make_action(
@@ -19999,14 +20621,53 @@ def _next_material_packet_action(project_root: Path, run_state: dict[str, Any], 
             label="material_scan_packets_relayed_after_router_direct_preflight",
             summary="Directly relay material scan packet envelopes to workers without opening bodies.",
             allowed_reads=[project_relative(project_root, _material_scan_index_path(run_root))],
-            allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
+            allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json"), *active_holder_allowed_writes],
             to_role="worker_a,worker_b",
             extra={
                 "postcondition": "material_scan_packets_relayed",
                 "controller_visibility": "packet_envelopes_only",
                 "sealed_body_reads_allowed": False,
+                "active_holder_fast_lane": active_holder_plan,
             },
         )
+    if (
+        flags.get("material_scan_packets_relayed")
+        and not flags.get("worker_scan_results_returned")
+    ):
+        summary = _refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, "material_scan")
+        if summary.get("partial_results_returned"):
+            missing_roles = [str(role) for role in summary.get("missing_roles") or [] if role]
+            allowed_event = (
+                "worker_scan_results_returned"
+                if flags.get("worker_packets_delivered")
+                else "worker_scan_packet_bodies_delivered_after_dispatch"
+            )
+            return _expected_role_decision_wait_action(
+                project_root,
+                run_state,
+                run_root,
+                label="controller_waits_for_remaining_material_scan_batch_results",
+                summary="Controller has some material scan result envelopes and must wait only for the missing batch member(s).",
+                allowed_external_events=[allowed_event],
+                to_role=",".join(missing_roles) if missing_roles else "worker_a,worker_b",
+                allowed_reads_extra=[
+                    project_relative(project_root, _parallel_packet_batch_path(run_root, str(summary.get("batch_id")))),
+                ]
+                if summary.get("batch_id")
+                else None,
+                payload_contract={
+                    "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                    "name": "material_scan_partial_batch_result",
+                    "required_fields": ["packet_id", "result_envelope_path"],
+                    "batch_id": summary.get("batch_id"),
+                    "batch_join_policy": "all_results_before_pm_absorption",
+                    "packet_count": summary.get("packet_count"),
+                    "results_returned": summary.get("results_returned"),
+                    "missing_roles": missing_roles,
+                    "controller_visibility": "metadata_only",
+                },
+                producer_roles_override=missing_roles,
+            )
     if flags.get("worker_scan_results_returned") and not flags.get("material_scan_results_relayed_to_pm"):
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         if not run_state.get("ledger_check_requested"):
@@ -20074,6 +20735,14 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
     flags = run_state["flags"]
     if flags.get("research_capability_decision_recorded") and not flags.get("research_packet_relayed"):
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
+        active_holder_plan, active_holder_allowed_writes = _packet_active_holder_lease_plan(
+            project_root,
+            run_root,
+            run_state,
+            index["packets"],
+            packet_family="research",
+            mode="lease_on_research_packet_relay",
+        )
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="relay_research_packet",
@@ -20087,6 +20756,7 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
                 allowed_writes=[
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
+                    *active_holder_allowed_writes,
                 ],
                 to_role=",".join(sorted({str(record.get("to_role") or "worker_a") for record in index["packets"]})),
                 extra={
@@ -20096,6 +20766,7 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
                     "combined_ledger_check_and_relay": True,
                     "ledger_check_receipt_required": True,
                     "packet_ids": [record.get("packet_id") for record in index["packets"]],
+                    "active_holder_fast_lane": active_holder_plan,
                 },
             )
         return make_action(
@@ -20104,14 +20775,49 @@ def _next_research_packet_action(project_root: Path, run_state: dict[str, Any], 
             label="research_packet_relayed_to_worker",
             summary="Relay research batch packet envelopes without opening their bodies.",
             allowed_reads=[project_relative(project_root, _research_packet_index_path(run_root))],
-            allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
+            allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json"), *active_holder_allowed_writes],
             to_role=",".join(sorted({str(record.get("to_role") or "worker_a") for record in index["packets"]})),
             extra={
                 "postcondition": "research_packet_relayed",
                 "controller_visibility": "packet_envelope_only",
                 "sealed_body_reads_allowed": False,
+                "active_holder_fast_lane": active_holder_plan,
             },
         )
+    if (
+        flags.get("research_packet_relayed")
+        and flags.get("worker_research_report_card_delivered")
+        and not flags.get("worker_research_report_returned")
+    ):
+        summary = _refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, "research")
+        if summary.get("partial_results_returned"):
+            missing_roles = [str(role) for role in summary.get("missing_roles") or [] if role]
+            return _expected_role_decision_wait_action(
+                project_root,
+                run_state,
+                run_root,
+                label="controller_waits_for_remaining_research_batch_results",
+                summary="Controller has some research result envelopes and must wait only for the missing batch member(s).",
+                allowed_external_events=["worker_research_report_returned"],
+                to_role=",".join(missing_roles) if missing_roles else "worker_a,worker_b",
+                allowed_reads_extra=[
+                    project_relative(project_root, _parallel_packet_batch_path(run_root, str(summary.get("batch_id")))),
+                ]
+                if summary.get("batch_id")
+                else None,
+                payload_contract={
+                    "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+                    "name": "research_partial_batch_result",
+                    "required_fields": ["packet_id", "result_envelope_path", "answers_decision_question"],
+                    "batch_id": summary.get("batch_id"),
+                    "batch_join_policy": "all_results_before_pm_absorption",
+                    "packet_count": summary.get("packet_count"),
+                    "results_returned": summary.get("results_returned"),
+                    "missing_roles": missing_roles,
+                    "controller_visibility": "metadata_only",
+                },
+                producer_roles_override=missing_roles,
+            )
     if flags.get("worker_research_report_returned") and not flags.get("research_result_relayed_to_pm"):
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         if not run_state.get("ledger_check_requested"):
@@ -20372,6 +21078,34 @@ def _role_output_status_packet_path_for_wait(
     return project_relative(project_root, path)
 
 
+def _pm_role_work_record_is_nonblocking(record: dict[str, Any]) -> bool:
+    return str(record.get("request_mode") or "blocking") in {"advisory", "prep-only"}
+
+
+def _pm_role_work_records_are_nonblocking(records: list[dict[str, Any]]) -> bool:
+    return bool(records) and all(_pm_role_work_record_is_nonblocking(record) for record in records)
+
+
+def _pm_role_work_records_dependency_class(records: list[dict[str, Any]]) -> str:
+    modes = sorted({str(record.get("request_mode") or "blocking") for record in records})
+    if len(modes) == 1:
+        return modes[0]
+    if modes and all(mode in {"advisory", "prep-only"} for mode in modes):
+        return "advisory_or_prep_only"
+    return "blocking"
+
+
+def _unresolved_advisory_pm_role_work_records(run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    return [
+        record
+        for record in index.get("requests", [])
+        if isinstance(record, dict)
+        and str(record.get("request_mode") or "") == "advisory"
+        and record.get("status") in PM_ROLE_WORK_OPEN_STATUSES
+    ]
+
+
 def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     index = _load_pm_role_work_request_index(run_root, run_state)
     batch_records = _active_pm_role_work_batch_records(index)
@@ -20380,6 +21114,15 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
         packet_ids = [record.get("packet_id") for record in batch_records]
         to_roles = ",".join(sorted({str(record.get("to_role") or "") for record in batch_records if record.get("to_role")}))
         if any(record.get("status") == "open" for record in batch_records):
+            open_records = [record for record in batch_records if record.get("status") == "open"]
+            active_holder_plan, active_holder_allowed_writes = _packet_active_holder_lease_plan(
+                project_root,
+                run_root,
+                run_state,
+                open_records,
+                packet_family="pm_role_work",
+                mode="lease_on_pm_role_work_request_relay",
+            )
             allowed_reads = [
                 project_relative(project_root, run_root / "packet_ledger.json"),
                 project_relative(project_root, index_path),
@@ -20396,6 +21139,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                         project_relative(project_root, run_state_path(run_root)),
                         project_relative(project_root, run_root / "packet_ledger.json"),
                         project_relative(project_root, index_path),
+                        *active_holder_allowed_writes,
                     ],
                     to_role=to_roles,
                     extra={
@@ -20409,6 +21153,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                         "combined_ledger_check_and_relay": True,
                         "ledger_check_receipt_required": True,
                         "pm_work_requests": project_relative(project_root, index_path),
+                        "active_holder_fast_lane": active_holder_plan,
                     },
                 )
             return make_action(
@@ -20420,6 +21165,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 allowed_writes=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, index_path),
+                    *active_holder_allowed_writes,
                 ],
                 to_role=to_roles,
                 extra={
@@ -20431,6 +21177,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     "controller_visibility": "packet_envelopes_only",
                     "sealed_body_reads_allowed": False,
                     "pm_work_requests": project_relative(project_root, index_path),
+                    "active_holder_fast_lane": active_holder_plan,
                 },
             )
         if (
@@ -20442,7 +21189,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 for record in batch_records
                 if not resolve_project_path(project_root, str(record.get("result_envelope_path") or "")).exists()
             ]
-            return _expected_role_decision_wait_action(
+            action = _expected_role_decision_wait_action(
                 project_root,
                 run_state,
                 run_root,
@@ -20460,6 +21207,10 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 },
                 producer_roles_override=missing_roles,
             )
+            if _pm_role_work_records_are_nonblocking(batch_records):
+                action["nonblocking_wait"] = True
+                action["dependency_class"] = _pm_role_work_records_dependency_class(batch_records)
+            return action
         if all(record.get("status") == "result_returned" for record in batch_records):
             allowed_reads = [
                 project_relative(project_root, run_root / "packet_ledger.json"),
@@ -20515,7 +21266,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 },
             )
         if all(record.get("status") == "result_relayed_to_pm" for record in batch_records):
-            return _expected_role_decision_wait_action(
+            action = _expected_role_decision_wait_action(
                 project_root,
                 run_state,
                 run_root,
@@ -20534,12 +21285,24 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     expected_batch_id=str(index.get("active_batch_id") or ""),
                 ),
             )
+            if _pm_role_work_records_are_nonblocking(batch_records):
+                action["nonblocking_wait"] = True
+                action["dependency_class"] = _pm_role_work_records_dependency_class(batch_records)
+            return action
     active = _active_pm_role_work_request(index)
     if not isinstance(active, dict):
         return None
     index_path = _pm_role_work_request_index_path(run_root)
     packet_ids = [active.get("packet_id")]
     if active.get("status") == "open":
+        active_holder_plan, active_holder_allowed_writes = _packet_active_holder_lease_plan(
+            project_root,
+            run_root,
+            run_state,
+            [active],
+            packet_family="pm_role_work",
+            mode="lease_on_pm_role_work_request_relay",
+        )
         allowed_reads = [
             project_relative(project_root, run_root / "packet_ledger.json"),
             project_relative(project_root, index_path),
@@ -20556,6 +21319,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, index_path),
+                    *active_holder_allowed_writes,
                 ],
                 to_role=str(active.get("to_role") or ""),
                 extra={
@@ -20568,6 +21332,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     "ledger_check_receipt_required": True,
                     "packet_ids": packet_ids,
                     "pm_work_requests": project_relative(project_root, index_path),
+                    "active_holder_fast_lane": active_holder_plan,
                 },
             )
         return make_action(
@@ -20579,6 +21344,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
             allowed_writes=[
                 project_relative(project_root, run_root / "packet_ledger.json"),
                 project_relative(project_root, index_path),
+                *active_holder_allowed_writes,
             ],
             to_role=str(active.get("to_role") or ""),
             extra={
@@ -20588,6 +21354,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 "controller_visibility": "packet_envelope_only",
                 "sealed_body_reads_allowed": False,
                 "pm_work_requests": project_relative(project_root, index_path),
+                "active_holder_fast_lane": active_holder_plan,
             },
         )
     if active.get("status") == "result_returned":
@@ -20646,7 +21413,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
         allowed_reads = [project_relative(project_root, run_state_path(run_root))]
         if status_packet_path:
             allowed_reads.append(status_packet_path)
-        return _expected_role_decision_wait_action(
+        action = _expected_role_decision_wait_action(
             project_root,
             run_state,
             run_root,
@@ -20664,8 +21431,12 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 "expected_next_recipient": "project_manager",
             },
         )
+        if _pm_role_work_record_is_nonblocking(active):
+            action["nonblocking_wait"] = True
+            action["dependency_class"] = str(active.get("request_mode") or "advisory")
+        return action
     if active.get("status") == "result_relayed_to_pm":
-        return _expected_role_decision_wait_action(
+        action = _expected_role_decision_wait_action(
             project_root,
             run_state,
             run_root,
@@ -20684,6 +21455,10 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 expected_request_id=str(active.get("request_id") or ""),
             ),
         )
+        if _pm_role_work_record_is_nonblocking(active):
+            action["nonblocking_wait"] = True
+            action["dependency_class"] = str(active.get("request_mode") or "advisory")
+        return action
     return None
 
 
@@ -21113,6 +21888,203 @@ def _reconcile_pending_role_wait_from_packet_status(
         "result_envelope_path": payload["result_envelope_path"],
         "packet_status": status,
     }
+
+
+def _record_router_reconciled_external_event(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    event: str,
+    payload: dict[str, Any],
+) -> bool:
+    meta = EXTERNAL_EVENTS[event]
+    flag = str(meta["flag"])
+    repeatable = event in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}
+    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+    if _scoped_event_is_recorded(run_state, scoped_identity):
+        return False
+    if run_state.setdefault("flags", {}).get(flag) and not repeatable:
+        return False
+    run_state["flags"][flag] = True
+    run_state.setdefault("events", []).append(
+        {
+            "event": event,
+            "summary": meta["summary"],
+            "payload": payload,
+            "recorded_at": utc_now(),
+            "reconciled_by_router": True,
+        }
+    )
+    _mark_scoped_event_recorded(run_state, scoped_identity)
+    append_history(
+        run_state,
+        f"router_reconciled_{event}",
+        {
+            "event": event,
+            "payload": payload,
+            "controller_visibility": "metadata_only",
+        },
+    )
+    return True
+
+
+def _try_reconcile_material_scan_body_delivery(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if flags.get("worker_packets_delivered") or not flags.get("material_scan_packets_relayed"):
+        return False
+    try:
+        material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
+        _validate_packet_bodies_opened_by_targets(project_root, run_state, material_index["packets"])
+    except (RouterError, packet_runtime.PacketRuntimeError, OSError, json.JSONDecodeError):
+        return False
+    return _record_router_reconciled_external_event(
+        project_root,
+        run_root,
+        run_state,
+        "worker_scan_packet_bodies_delivered_after_dispatch",
+        {
+            "packet_ids": [record.get("packet_id") for record in material_index["packets"] if isinstance(record, dict)],
+            "reconciled_from_packet_receipts": True,
+        },
+    )
+
+
+def _try_reconcile_material_scan_results(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if flags.get("worker_scan_results_returned") or not flags.get("material_scan_packets_relayed"):
+        return False
+    material_index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
+    summary = _refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, "material_scan")
+    if not summary.get("all_results_returned"):
+        return bool(summary.get("changed"))
+    _try_reconcile_material_scan_body_delivery(project_root, run_root, run_state)
+    if not run_state["flags"].get("worker_packets_delivered"):
+        return bool(summary.get("changed"))
+    _validate_results_exist_for_packets(project_root, run_state, material_index["packets"], next_recipient="project_manager")
+    payload = {
+        "packet_ids": [record.get("packet_id") for record in material_index["packets"] if isinstance(record, dict)],
+        "batch_id": summary.get("batch_id"),
+        "results_returned": summary.get("results_returned"),
+        "reconciled_from_result_envelopes": True,
+    }
+    return _record_router_reconciled_external_event(
+        project_root,
+        run_root,
+        run_state,
+        "worker_scan_results_returned",
+        payload,
+    ) or bool(summary.get("changed"))
+
+
+def _try_reconcile_current_node_results(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if flags.get("current_node_worker_result_returned") or not flags.get("current_node_packet_relayed"):
+        return False
+    changed = False
+    for record in _current_node_packet_records(project_root, run_state):
+        result_exists, result_path = _parallel_batch_record_result_exists(project_root, run_state, record)
+        if not result_exists:
+            continue
+        payload = {
+            "packet_id": str(record.get("packet_id") or ""),
+            "result_envelope_path": project_relative(project_root, result_path),
+            "result_envelope_hash": packet_runtime.sha256_file(result_path),
+            "reconciled_from_result_envelope": True,
+        }
+        try:
+            _validate_current_node_result_event(project_root, run_state, payload)
+        except (RouterError, packet_runtime.PacketRuntimeError):
+            continue
+        changed = _record_router_reconciled_external_event(
+            project_root,
+            run_root,
+            run_state,
+            "worker_current_node_result_returned",
+            payload,
+        ) or changed
+    if changed:
+        _mark_parallel_batch_results_joined(project_root, run_root, run_state, "current_node")
+    return changed
+
+
+def _try_reconcile_pm_role_work_results(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> bool:
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    candidates = [
+        {
+            "request_id": str(record.get("request_id") or ""),
+            "packet_id": str(record.get("packet_id") or ""),
+            "result_envelope_path": str(record.get("result_envelope_path") or ""),
+        }
+        for record in index.get("requests", [])
+        if isinstance(record, dict)
+        and record.get("status") == "packet_relayed"
+        and record.get("request_id")
+        and record.get("packet_id")
+        and resolve_project_path(project_root, str(record.get("result_envelope_path") or "")).exists()
+    ]
+    changed = False
+    for item in candidates:
+        result_path = resolve_project_path(project_root, item["result_envelope_path"])
+        payload = {
+            "request_id": item["request_id"],
+            "packet_id": item["packet_id"],
+            "result_envelope_path": project_relative(project_root, result_path),
+            "result_envelope_hash": packet_runtime.sha256_file(result_path),
+            "reconciled_from_result_envelope": True,
+        }
+        try:
+            _write_role_work_result_returned(project_root, run_root, run_state, payload)
+        except (RouterError, packet_runtime.PacketRuntimeError):
+            continue
+        changed = _record_router_reconciled_external_event(
+            project_root,
+            run_root,
+            run_state,
+            ROLE_WORK_RESULT_RETURNED_EVENT,
+            payload,
+        ) or changed
+    return changed
+
+
+def _reconcile_durable_wait_evidence(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    batch_reconciliation = _refresh_all_parallel_packet_batches_from_durable_results(project_root, run_root, run_state)
+    changed = bool(batch_reconciliation.get("changed"))
+    changed = _try_reconcile_material_scan_body_delivery(project_root, run_root, run_state) or changed
+    changed = _try_reconcile_material_scan_results(project_root, run_root, run_state) or changed
+    changed = _try_reconcile_current_node_results(project_root, run_root, run_state) or changed
+    changed = _try_reconcile_pm_role_work_results(project_root, run_root, run_state) or changed
+    if changed:
+        run_state["parallel_batch_reconciliation"] = batch_reconciliation
+        append_history(
+            run_state,
+            "router_reconciled_durable_wait_evidence",
+            {
+                "changed": changed,
+                "controller_visibility": "metadata_only",
+                "batches": batch_reconciliation.get("batches"),
+            },
+        )
+    return {**batch_reconciliation, "changed": changed}
 
 
 def _commit_system_card_delivery_artifact(
@@ -22250,7 +23222,32 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         append_history(run_state, "router_computed_terminal_lifecycle_action", {"action_type": terminal_action["action_type"]})
         save_run_state(run_root, run_state)
         return terminal_action
+    durable_reconciliation = _reconcile_durable_wait_evidence(project_root, run_root, run_state)
     pending_action = run_state.get("pending_action")
+    if (
+        durable_reconciliation.get("changed")
+        and isinstance(pending_action, dict)
+        and pending_action.get("action_type") == "await_role_decision"
+    ):
+        run_state["pending_action"] = None
+        append_history(
+            run_state,
+            "router_cleared_pending_role_wait_after_durable_reconciliation",
+            {
+                "label": pending_action.get("label"),
+                "allowed_external_events": pending_action.get("allowed_external_events"),
+            },
+        )
+        _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_durable_wait_reconciliation")
+        _sync_derived_run_views(
+            project_root,
+            run_root,
+            run_state,
+            reason="after_router_durable_wait_reconciliation",
+            update_display=True,
+        )
+        save_run_state(run_root, run_state)
+        pending_action = None
     stale_pending = _pending_role_decision_staleness(run_state, pending_action)
     reconciled_pending = None
     if stale_pending:
@@ -22328,7 +23325,24 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
             )
             save_run_state(run_root, run_state)
     elif pending_action:
-        return pending_action
+        if (
+            isinstance(pending_action, dict)
+            and pending_action.get("action_type") == "await_role_decision"
+            and pending_action.get("nonblocking_wait") is True
+        ):
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_rechecks_before_nonblocking_role_wait",
+                {
+                    "label": pending_action.get("label"),
+                    "dependency_class": pending_action.get("dependency_class"),
+                    "allowed_external_events": pending_action.get("allowed_external_events"),
+                },
+            )
+            save_run_state(run_root, run_state)
+        else:
+            return pending_action
     if not _route_memory_ready(run_root, run_state):
         _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
     action = _next_role_recovery_action(project_root, run_state, run_root)
@@ -22579,6 +23593,14 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         index = _load_packet_index(_material_scan_index_path(run_root), label="material scan")
         _relay_packet_records(project_root, run_state, index["packets"], controller_agent_id="controller")
         _mark_parallel_batch_packets_relayed(run_root, "material_scan")
+        result_extra["active_holder_fast_lane"] = _issue_packet_active_holder_leases(
+            project_root,
+            run_root,
+            run_state,
+            index["packets"],
+            packet_family="material_scan",
+            mode="lease_on_material_scan_relay",
+        )
         run_state["flags"]["material_scan_packets_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type in {"relay_material_scan_results_to_pm", "relay_material_scan_results_to_reviewer"}:
@@ -22612,6 +23634,14 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         index = _load_packet_index(_research_packet_index_path(run_root), label="research")
         _relay_packet_records(project_root, run_state, index["packets"], controller_agent_id="controller")
         _mark_parallel_batch_packets_relayed(run_root, "research")
+        result_extra["active_holder_fast_lane"] = _issue_packet_active_holder_leases(
+            project_root,
+            run_root,
+            run_state,
+            index["packets"],
+            packet_family="research",
+            mode="lease_on_research_packet_relay",
+        )
         run_state["flags"]["research_packet_relayed"] = True
         run_state["ledger_check_requested"] = False
     elif action_type in {"relay_research_result_to_pm", "relay_research_result_to_reviewer"}:
@@ -22653,6 +23683,14 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             record["status"] = "packet_relayed"
             record["packet_relayed_at"] = utc_now()
         _mark_parallel_batch_packets_relayed(run_root, "pm_role_work")
+        result_extra["active_holder_fast_lane"] = _issue_packet_active_holder_leases(
+            project_root,
+            run_root,
+            run_state,
+            records,
+            packet_family="pm_role_work",
+            mode="lease_on_pm_role_work_request_relay",
+        )
         index["active_request_id"] = records[0].get("request_id")
         _write_pm_role_work_request_index(run_root, index)
         run_state["flags"]["pm_role_work_request_packet_relayed"] = True
@@ -24239,6 +25277,31 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
         ):
             if field not in prior:
                 issues.append(_artifact_issue(f"prior_path_context_review.{field}", "missing required field", "project_manager"))
+        issues.extend(_node_acceptance_traceability_issues(payload))
+    elif artifact_type == "final_route_wide_gate_ledger":
+        required_top = (
+            "schema_version",
+            "run_id",
+            "pm_owned",
+            "status",
+            "source_paths",
+            "evidence_integrity",
+            "counts",
+            "entries",
+            "root_contract_replay",
+            "requirement_trace_closure",
+        )
+        for field in required_top:
+            if field not in payload or payload.get(field) in (None, "", []):
+                issues.append(_artifact_issue(field, "missing required field", "project_manager"))
+        if payload.get("pm_owned") is not True:
+            issues.append(_artifact_issue("pm_owned", "final ledger must be PM-owned", "project_manager"))
+        if payload.get("status") != "clean":
+            issues.append(_artifact_issue("status", "final ledger must be clean", "project_manager"))
+        counts = payload.get("counts") if isinstance(payload.get("counts"), dict) else {}
+        if int(counts.get("unresolved_count", 0) or 0) != 0:
+            issues.append(_artifact_issue("counts.unresolved_count", "final ledger requires unresolved_count=0", "project_manager"))
+        issues.extend(_final_ledger_traceability_issues(payload))
     elif artifact_type == "packet_envelope":
         envelope = packet_runtime.normalize_envelope_aliases(payload)
         for field in ("schema_version", "packet_id", "from_role", "to_role", "node_id", "body_path", "body_hash", "body_visibility"):
@@ -24340,7 +25403,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     envelope_parser.add_argument("--to-role", default="controller")
     envelope_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     validate_parser = sub.add_parser("validate-artifact", help="Validate a FlowPilot artifact before or during record-event")
-    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "packet_envelope", "result_envelope", "role_output_envelope", "gate_decision"])
+    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "final_route_wide_gate_ledger", "packet_envelope", "result_envelope", "role_output_envelope", "gate_decision"])
     validate_parser.add_argument("--path", required=True)
     validate_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     reconcile_parser = sub.add_parser("reconcile-run", help="Rebuild derived indexes and live-run views for the current run")

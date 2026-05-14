@@ -34,6 +34,18 @@ The root contract is the completion floor. It records project-level hard
 requirements, high-risk requirements, proof obligations, scenario coverage, and
 what cannot be closed by a report alone.
 
+Preserve requirement traceability from product architecture:
+
+- every root requirement must name `source_requirement_ids`;
+- every root requirement must record `change_status` as `ADDED`, `MODIFIED`,
+  `REMOVED`, or `UNCHANGED`;
+- if a root requirement replaces an earlier requirement, name
+  `supersedes_requirement_ids` and explain `changed_reason`;
+- proof-matrix rows and selected standard scenarios must point back to the
+  same requirement ids;
+- external spec-like material remains advisory unless PM imported it into the
+  product architecture trace registry first.
+
 Carry forward hard items from
 `product_function_architecture.low_quality_success_review` when they affect the
 root result. The contract must preserve the task-specific hard part,

@@ -39,6 +39,8 @@ GENERIC_PROTOCOL_EVENT = "pm_records_control_blocker_protocol_blocker"
 MATERIAL_SUCCESS_EVENT = "router_direct_material_scan_dispatch_recheck_passed"
 MATERIAL_BLOCKER_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
 MATERIAL_PROTOCOL_EVENT = "router_protocol_blocker_material_scan_dispatch_recheck"
+MATERIAL_PARTIAL_RESULT_EVENT = "worker_scan_results_returned"
+ROLE_WORK_RESULT_EVENT = "role_work_result_returned"
 
 REGISTERED_EXTERNAL_EVENTS = frozenset(
     {
@@ -50,6 +52,8 @@ REGISTERED_EXTERNAL_EVENTS = frozenset(
         MATERIAL_SUCCESS_EVENT,
         MATERIAL_BLOCKER_EVENT,
         MATERIAL_PROTOCOL_EVENT,
+        MATERIAL_PARTIAL_RESULT_EVENT,
+        ROLE_WORK_RESULT_EVENT,
     }
 )
 CURRENTLY_RECEIVABLE_EVENTS = frozenset(
@@ -61,6 +65,8 @@ CURRENTLY_RECEIVABLE_EVENTS = frozenset(
         MATERIAL_SUCCESS_EVENT,
         MATERIAL_BLOCKER_EVENT,
         MATERIAL_PROTOCOL_EVENT,
+        MATERIAL_PARTIAL_RESULT_EVENT,
+        ROLE_WORK_RESULT_EVENT,
     }
 )
 INTERNAL_ROUTER_ACTIONS = frozenset({INTERNAL_ROUTER_ACTION})
@@ -73,6 +79,7 @@ VALID_REVIEWER_MATERIAL_RERUN = "valid_reviewer_material_rerun"
 VALID_MATERIAL_REPAIR_OUTCOME_TABLE = "valid_material_repair_outcome_table"
 VALID_DIRECT_ACK_PRESERVES_SEMANTIC_WAIT = "valid_direct_ack_preserves_semantic_wait"
 VALID_DUPLICATE_PM_REPAIR_IDEMPOTENT = "valid_duplicate_pm_repair_idempotent"
+VALID_DYNAMIC_PARTIAL_BATCH_RESULT_EVENT = "valid_dynamic_partial_batch_result_event"
 
 INTERNAL_ROUTER_ACTION_AS_PM_RERUN_TARGET = "internal_router_action_as_pm_rerun_target"
 UNKNOWN_STRING_AS_PM_RERUN_TARGET = "unknown_string_as_pm_rerun_target"
@@ -84,6 +91,7 @@ GENERIC_REPAIR_COLLAPSED_OUTCOMES = "generic_repair_collapsed_outcomes"
 MATERIAL_REPAIR_SUCCESS_ONLY = "material_repair_success_only"
 DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER = "duplicate_pm_repair_created_new_blocker"
 POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT = "postwrite_cleanup_only_for_invalid_wait"
+INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT = "incoming_event_outside_allowed_wait"
 
 VALID_SCENARIOS = (
     VALID_ROUTE_DRAFT_RERUN,
@@ -91,6 +99,7 @@ VALID_SCENARIOS = (
     VALID_MATERIAL_REPAIR_OUTCOME_TABLE,
     VALID_DIRECT_ACK_PRESERVES_SEMANTIC_WAIT,
     VALID_DUPLICATE_PM_REPAIR_IDEMPOTENT,
+    VALID_DYNAMIC_PARTIAL_BATCH_RESULT_EVENT,
 )
 NEGATIVE_SCENARIOS = (
     INTERNAL_ROUTER_ACTION_AS_PM_RERUN_TARGET,
@@ -103,6 +112,7 @@ NEGATIVE_SCENARIOS = (
     MATERIAL_REPAIR_SUCCESS_ONLY,
     DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER,
     POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT,
+    INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -153,6 +163,9 @@ class State:
     duplicate_pm_repair_decision_seen: bool = False
     duplicate_repair_created_new_blocker: bool = False
     duplicate_repair_created_new_transaction: bool = False
+    incoming_event: str = "none"
+    incoming_event_allowed_by_current_wait: bool = True
+    incoming_event_accepted: bool = False
 
     terminal_reason: str = "none"
 
@@ -251,6 +264,18 @@ def _scenario_state(scenario: str) -> State:
             repair_success_event=PM_ROUTE_DRAFT_EVENT,
             repair_blocker_event=GENERIC_BLOCKER_EVENT,
             repair_protocol_event=GENERIC_PROTOCOL_EVENT,
+        )
+    if scenario == VALID_DYNAMIC_PARTIAL_BATCH_RESULT_EVENT:
+        return State(
+            status="running",
+            scenario=scenario,
+            pending_wait_written=True,
+            allowed_external_events=(MATERIAL_PARTIAL_RESULT_EVENT,),
+            allowed_events_registered=True,
+            allowed_events_currently_receivable=True,
+            incoming_event=MATERIAL_PARTIAL_RESULT_EVENT,
+            incoming_event_allowed_by_current_wait=True,
+            incoming_event_accepted=True,
         )
 
     if scenario == INTERNAL_ROUTER_ACTION_AS_PM_RERUN_TARGET:
@@ -381,6 +406,18 @@ def _scenario_state(scenario: str) -> State:
             invalid_wait_ever_persisted=True,
             cleanup_after_bad_persist=True,
         )
+    if scenario == INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT:
+        return State(
+            status="running",
+            scenario=scenario,
+            pending_wait_written=True,
+            allowed_external_events=(MATERIAL_PARTIAL_RESULT_EVENT,),
+            allowed_events_registered=True,
+            allowed_events_currently_receivable=True,
+            incoming_event=ROLE_WORK_RESULT_EVENT,
+            incoming_event_allowed_by_current_wait=False,
+            incoming_event_accepted=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -451,6 +488,14 @@ def event_contract_failures(state: State) -> list[str]:
         state.duplicate_repair_created_new_blocker or state.duplicate_repair_created_new_transaction
     ):
         failures.append("duplicate PM repair decision created new blocker or transaction")
+
+    if state.incoming_event_accepted:
+        if state.incoming_event not in REGISTERED_EXTERNAL_EVENTS:
+            failures.append("incoming role event is not registered")
+        if state.incoming_event not in state.allowed_external_events:
+            failures.append("incoming role event was accepted outside current allowed_external_events")
+        if not state.incoming_event_allowed_by_current_wait:
+            failures.append("incoming role event was accepted outside current allowed_external_events")
 
     if state.invalid_wait_ever_persisted and state.cleanup_after_bad_persist:
         failures.append("invalid wait was persisted and only repaired by post-write cleanup")

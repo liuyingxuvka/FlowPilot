@@ -167,9 +167,16 @@
           "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate"
         ]
       },
+      "simple_task_formal_flowpilot_profile": {
+        "detected": true,
+        "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
+        "failures": [
+          "small/simple task entered formal FlowPilot instead of staying outside FlowPilot"
+        ]
+      },
       "simple_task_overtemplated": {
         "detected": true,
-        "expected_failure": "simple task was over-templated instead of using a justified lightweight profile",
+        "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
         "failures": [
           "Skill Standard Contract lacks source paths",
           "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
@@ -177,7 +184,7 @@
           "node acceptance plan lacks skill-standard projection",
           "work packet or result matrix lacks skill-standard projection",
           "reviewer gate is not bound to skill-standard projection",
-          "simple task was over-templated instead of using a justified lightweight profile"
+          "small/simple task entered formal FlowPilot instead of staying outside FlowPilot"
         ]
       },
       "skill_contract_missing_fields": {
@@ -234,14 +241,13 @@
   },
   "safe_graph": {
     "accepted_scenarios": [
-      "valid_simple_route",
       "valid_ui_route"
     ],
     "edge_count": 62,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 29,
+    "rejected_state_count": 30,
     "state_count": 63
   }
 }

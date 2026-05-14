@@ -18,6 +18,17 @@
     "route_sign_review": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
   },
   "purpose": "Written at node entry after the current-node FlowPilot Route Sign has been refreshed, visibly displayed, and the PM has rechecked this node against the run's highest-achievable product target. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
+  "requirement_traceability": {
+    "schema_version": "flowpilot.node_requirement_traceability.v1",
+    "source_route_node_id": "<node-id>",
+    "source_route_node_covers_requirement_ids": [],
+    "source_route_node_covers_scenario_ids": [],
+    "source_product_capability_ids": [],
+    "full_protocol_required_when_flowpilot_invoked": true,
+    "all_covered_requirements_must_close_or_be_triaged": true,
+    "closure_by_report_only_forbidden": true,
+    "external_spec_material_advisory_until_pm_imported": true
+  },
   "route_sign_entry_gate": {
     "required_before_plan_approval": true,
     "trigger": "<major_node_entry|parent_node_entry|leaf_node_entry|pm_work_brief>",
@@ -87,6 +98,9 @@
   "inherited_root_requirements": [
     {
       "requirement_id": "<root-requirement-id>",
+      "source_requirement_ids": [],
+      "source_product_capability_ids": [],
+      "source_change_status": "<ADDED|MODIFIED|REMOVED|UNCHANGED>",
       "coverage_in_this_node": "<none|partial|primary>",
       "reason": "<why-this-node-must-or-need-not-cover-it>"
     }
@@ -97,6 +111,8 @@
     "standards": [
       {
         "standard_id": "<standard-id>",
+        "source_requirement_ids": [],
+        "covers_requirement_ids": [],
         "source_skill": "<skill-name>",
         "source_path": "<path-to-skill-or-reference>",
         "category": "<MUST|DEFAULT|FORBID|VERIFY|LOOP|ARTIFACT|WAIVER>",
@@ -111,6 +127,8 @@
   "active_child_skill_bindings": [
     {
       "binding_id": "<skill-name>:<node-id>:<slice-id>",
+      "source_requirement_ids": [],
+      "covers_requirement_ids": [],
       "source_skill": "<skill-name>",
       "source_path": "<path-to-SKILL.md>",
       "referenced_paths": [],
@@ -130,6 +148,7 @@
     {
       "packet_id_or_slice": "<packet-id-or-slice>",
       "recipient_role": "<worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+      "covers_requirement_ids": [],
       "inherited_standard_ids": [],
       "result_matrix_required": true,
       "result_matrix_required_fields": [
@@ -144,6 +163,12 @@
   "node_requirements": [
     {
       "requirement_id": "<node-requirement-id>",
+      "source_requirement_ids": [],
+      "covers_root_requirement_ids": [],
+      "covers_scenario_ids": [],
+      "source_product_capability_ids": [],
+      "change_status": "<ADDED|MODIFIED|UNCHANGED>",
+      "supersedes_requirement_ids": [],
       "source": "<route_gate|child_skill_manifest|pm_runway|reviewer_block|implementation_fact>",
       "risk_level": "<low|medium|high>",
       "acceptance_statement": "<what must be true before this node can close>",
@@ -159,6 +184,8 @@
       "source_research_package_id": "<research-package-id-or-null>",
       "source_research_package_path": "<path-or-null>",
       "covers_requirements": [],
+      "covers_root_requirement_ids": [],
+      "covers_product_requirement_ids": [],
       "hypothesis_to_attack": "<how this requirement could falsely appear complete>",
       "standard_scenario_id": "<scenario-id-or-null>",
       "fixture_or_setup": "<fixture-setup-or-null>",
@@ -177,6 +204,9 @@
     "required_before_chunk_execution": true,
     "required_before_node_checkpoint": true,
     "all_required_experiments_passed_or_triaged": false,
+    "all_covered_requirements_closed_or_triaged": false,
+    "unresolved_requirement_ids": [],
+    "requirement_trace_closure_path": "<path-or-null>",
     "parent_backward_replay_passed_when_required": false,
     "pm_parent_segment_decision_recorded_when_required": false,
     "risk_triage_path": "<path-or-null>",

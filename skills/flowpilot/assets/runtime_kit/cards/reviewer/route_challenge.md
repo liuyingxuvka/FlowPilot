@@ -48,6 +48,13 @@ Check:
 - the process route is a single ordered execution line, including ordered
   children for every parent/module and ordered deeper children as needed;
 - the selected planning profile matches the task type and stated quality level;
+- the selected planning profile does not create a light/simple FlowPilot mode.
+  Formal FlowPilot use must keep the full protocol; if PM treats a small task
+  as a reason to waive core gates, block the route;
+- every route node lists `covers_requirement_ids`, `covers_scenario_ids`,
+  `source_product_capability_ids`, `why_this_node_exists`, `why_not_merged`,
+  and `why_not_split`, and those requirement ids exist in the frozen root
+  contract or PM-imported product trace registry;
 - route nodes and checklists are not over-simplified, overmerged, or too coarse
   to produce stage-level acceptance artifacts;
 - the route is not artificially capped at two levels. Complex parent/module
@@ -92,6 +99,9 @@ Check:
 - user hard requirements, frozen contract items, required child-skill gates,
   and selected-profile convergence duties are not downgraded into residual
   blindspots. Any such blindspot is a hard block, not a pass-with-note;
+- route mutations, if present, list impacted requirements, stale evidence,
+  superseded ids, and required model/check reruns before any affected evidence
+  is reused;
 - FlowPilot can tell Controller the next role at each major boundary.
 
 The report body must include `independent_challenge` from the human-like

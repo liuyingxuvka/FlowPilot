@@ -51,6 +51,8 @@ GENERIC_PROTOCOL_EVENT = "pm_records_control_blocker_protocol_blocker"
 MATERIAL_SUCCESS_EVENT = "router_direct_material_scan_dispatch_recheck_passed"
 MATERIAL_BLOCKER_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
 MATERIAL_PROTOCOL_EVENT = "router_protocol_blocker_material_scan_dispatch_recheck"
+MATERIAL_PARTIAL_RESULT_EVENT = "worker_scan_results_returned"
+ROLE_WORK_RESULT_EVENT = "role_work_result_returned"
 
 ACK_EVENTS = frozenset({ACK_EVENT})
 PARENT_REPAIR_SAFE_EVENTS = frozenset(
@@ -180,6 +182,22 @@ EVENT_CAPABILITIES: dict[str, EventCapability] = {
         repair_origins=("material_dispatch",),
         outcome_rows=("protocol_blocker",),
     ),
+    MATERIAL_PARTIAL_RESULT_EVENT: EventCapability(
+        event_name=MATERIAL_PARTIAL_RESULT_EVENT,
+        producer_role=WORKER,
+        node_kinds=NODE_KINDS,
+        repair_origins=("none", "material_dispatch"),
+        rerun_target=False,
+        outcome_rows=(),
+    ),
+    ROLE_WORK_RESULT_EVENT: EventCapability(
+        event_name=ROLE_WORK_RESULT_EVENT,
+        producer_role=WORKER,
+        node_kinds=NODE_KINDS,
+        repair_origins=REPAIR_ORIGINS,
+        rerun_target=False,
+        outcome_rows=(),
+    ),
     PM_REPAIR_EVENT: EventCapability(
         event_name=PM_REPAIR_EVENT,
         producer_role=PROJECT_MANAGER,
@@ -197,6 +215,8 @@ VALID_GENERIC_REPAIR_OUTCOME_TABLE = "valid_generic_repair_outcome_table"
 VALID_PARENT_REPAIR_OUTCOME_TABLE = "valid_parent_repair_outcome_table"
 VALID_MATERIAL_REPAIR_OUTCOME_TABLE = "valid_material_repair_outcome_table"
 VALID_WORKER_LEAF_RESULT_WAIT = "valid_worker_leaf_result_wait"
+VALID_MATERIAL_PARTIAL_BATCH_RESULT_WAIT = "valid_material_partial_batch_result_wait"
+VALID_PM_ROLE_WORK_RESULT_WAIT = "valid_pm_role_work_result_wait"
 
 UNREGISTERED_EVENT_ACCEPTED = "unregistered_event_accepted"
 FALSE_PRECONDITION_WAIT_ACCEPTED = "false_precondition_wait_accepted"
@@ -209,6 +229,7 @@ COLLAPSED_REPAIR_OUTCOMES_ON_BUSINESS_EVENT = "collapsed_repair_outcomes_on_busi
 BLOCKER_OUTCOME_USES_SUCCESS_EVENT = "blocker_outcome_uses_success_event"
 PROTOCOL_OUTCOME_USES_SUCCESS_EVENT = "protocol_outcome_uses_success_event"
 PM_REPAIR_EVENT_AS_RERUN_TARGET = "pm_repair_event_as_rerun_target"
+ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED = "role_work_result_wait_unreceivable_accepted"
 
 VALID_SCENARIOS = (
     VALID_LEAF_CURRENT_PACKET_WAIT,
@@ -217,6 +238,8 @@ VALID_SCENARIOS = (
     VALID_PARENT_REPAIR_OUTCOME_TABLE,
     VALID_MATERIAL_REPAIR_OUTCOME_TABLE,
     VALID_WORKER_LEAF_RESULT_WAIT,
+    VALID_MATERIAL_PARTIAL_BATCH_RESULT_WAIT,
+    VALID_PM_ROLE_WORK_RESULT_WAIT,
 )
 NEGATIVE_SCENARIOS = (
     UNREGISTERED_EVENT_ACCEPTED,
@@ -230,6 +253,7 @@ NEGATIVE_SCENARIOS = (
     BLOCKER_OUTCOME_USES_SUCCESS_EVENT,
     PROTOCOL_OUTCOME_USES_SUCCESS_EVENT,
     PM_REPAIR_EVENT_AS_RERUN_TARGET,
+    ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -338,6 +362,24 @@ def _scenario_state(scenario: str) -> State:
             target_role=WORKER,
             wait_events=(WORKER_RESULT_EVENT,),
             rerun_target=WORKER_RESULT_EVENT,
+        )
+    if scenario == VALID_MATERIAL_PARTIAL_BATCH_RESULT_WAIT:
+        return State(
+            status="running",
+            scenario=scenario,
+            active_node_kind="pre_route",
+            repair_origin="none",
+            target_role=WORKER,
+            wait_events=(MATERIAL_PARTIAL_RESULT_EVENT,),
+        )
+    if scenario == VALID_PM_ROLE_WORK_RESULT_WAIT:
+        return State(
+            status="running",
+            scenario=scenario,
+            active_node_kind="leaf",
+            repair_origin="none",
+            target_role=WORKER,
+            wait_events=(ROLE_WORK_RESULT_EVENT,),
         )
 
     if scenario == UNREGISTERED_EVENT_ACCEPTED:
@@ -449,6 +491,16 @@ def _scenario_state(scenario: str) -> State:
             target_role=PROJECT_MANAGER,
             rerun_target=PM_REPAIR_EVENT,
             wait_events=(PM_REPAIR_EVENT,),
+        )
+    if scenario == ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED:
+        return State(
+            status="running",
+            scenario=scenario,
+            active_node_kind="leaf",
+            repair_origin="none",
+            target_role=WORKER,
+            currently_receivable=False,
+            wait_events=(ROLE_WORK_RESULT_EVENT,),
         )
     raise ValueError(f"unknown scenario: {scenario}")
 

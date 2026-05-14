@@ -9673,3 +9673,68 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - Full `tests\test_flowpilot_router_runtime.py` exceeded the local 5-minute command timeout, so verification used the new targeted router tests, adjacent runtime tests, FlowGuard checks, event-contract checks, card-envelope checks, meta checks, and install checks.
 - No remote GitHub push was performed.
+
+## 2026-05-14 - Wait Reconciliation Optimization Model-First Upgrade
+
+### Trigger
+- Began a model-first optimization for FlowPilot wait latency: stale waits, partial batch accounting, dependency-aware continuation, active-holder fast-lane expansion, and dynamic event authority.
+
+### Planning Files
+- docs/flowpilot_wait_reconciliation_optimization_plan.md
+- openspec/changes/optimize-flowpilot-wait-reconciliation/
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/run_flowpilot_control_plane_friction_checks.py
+- simulations/flowpilot_parallel_packet_batch_model.py
+- simulations/run_flowpilot_parallel_packet_batch_checks.py
+- simulations/flowpilot_decision_liveness_model.py
+- simulations/run_flowpilot_decision_liveness_checks.py
+- simulations/flowpilot_router_loop_model.py
+- simulations/run_flowpilot_router_loop_checks.py
+- simulations/flowpilot_event_contract_model.py
+- simulations/run_flowpilot_event_contract_checks.py
+- simulations/flowpilot_event_capability_registry_model.py
+- simulations/run_flowpilot_event_capability_registry_checks.py
+
+### Production and Prompt Files
+- skills/flowpilot/assets/flowpilot_router.py
+- tests/test_flowpilot_router_runtime.py
+- docs/schema.md
+- templates/flowpilot/packet_ledger.template.json
+- templates/flowpilot/packets/controller_status_packet.template.json
+- templates/flowpilot/packets/packet_envelope.template.json
+- templates/flowpilot/packets/result_envelope.template.json
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: background model run set in `tmp/wait_opt_model_runs_2/` for control-plane, parallel-batch, and router-loop checks.
+- OK: background decision-liveness rerun in `tmp/wait_opt_model_runs_3/decision.json`.
+- OK: background event-contract and event-capability reruns in `tmp/wait_opt_event_model_runs/`.
+- OK: final model reruns in `tmp/wait_opt_final_model_runs/` for control-plane, decision-liveness, router-loop, event-contract, and event-capability checks.
+- OK: `python simulations\run_flowpilot_parallel_packet_batch_checks.py`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py`.
+- OK: targeted router tests for stale material-result reconciliation, material partial-batch missing-role summary, PM role-work result reconciliation, advisory nonblocking wait, model-miss role-work channel, PM role-work batch join, current-node batch join, and insufficient-material event handling.
+- OK: targeted packet-runtime active-holder tests for close-with-controller-notice, wrong/stale contact rejection, and mechanical reject preserving the holder.
+- OK: targeted router tests for expanded active-holder lease issuance on material scan, research, and PM role-work packets.
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py` and `python simulations\run_flowpilot_requirement_traceability_checks.py` for the concurrently present planning/traceability changes.
+- OK: `python scripts\check_install.py --json` before local install sync.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`; installed `flowpilot` digest changed to match the repository source digest.
+- OK: `python scripts\check_install.py --json` after local install sync.
+
+### Findings
+- The model suite now catches stale waits after durable result evidence exists, partial batch returned-count drift, stale missing-role status, duplicate reconciliation count increments, unsafe non-dependent continuation, active-holder misuse outside current-node packets, and incoming role events outside current `allowed_external_events`.
+- The intended optimized design passed the upgraded model checks before production Router edits began.
+- Router now reconciles durable result evidence before reissuing waits, refreshes partial batch status from packet/result ledgers, and records reconciliation events idempotently.
+- Partial material, research, current-node, and PM role-work batches now expose metadata-only returned/missing role summaries and wait only for the missing roles.
+- Active-holder leases are now issued for material scan, research, and PM role-work packets when a live holder is known; the existing Controller relay path remains the fallback.
+- Advisory and prep-only PM role-work waits are retained as recheckable nonblocking waits instead of freezing unrelated work or disappearing from terminal accountability.
+- During final status inspection, concurrent planning-quality and requirement-traceability edits were present in the same worktree and in `flowpilot_router.py`; they were preserved and separately smoke-checked instead of reverted.
+
+### Skipped Steps
+- No remote GitHub push was performed.
+- Full `tests\test_flowpilot_router_runtime.py` was not run because it is large and has previously exceeded local timeouts; verification used the upgraded FlowGuard model suite, targeted router tests, packet-runtime tests, install checks, and model checks for adjacent concurrent changes.

@@ -71,8 +71,37 @@ Markdown files are English summaries for review.
 - packet control-plane status: active packet id, holder, PM decision path,
   router direct-dispatch path, worker result path, review decision path, and
   next legal controller relay action.
+- parallel packet batch reconciliation status: active batch id/kind, join
+  policy, dependency class, returned and missing packet ids/roles, and whether
+  all blocking results have returned. This status is metadata-only and must not
+  include packet body text, result body text, findings, commands, or
+  recommendations.
 
 It should not store the whole history.
+
+## Parallel Packet Batches
+
+Router records material scan, research, current-node, and PM role-work packet
+batches under `runs/<run-id>/packet_batches/`. Each active batch has a
+member-status block keyed by packet id and role:
+
+- `packet_count`, `results_returned`, `returned_packet_ids`, and
+  `missing_packet_ids`;
+- `returned_roles` and `missing_roles` for status summaries;
+- `dependency_class`: `blocking`, `advisory`, or `prep-only`;
+- `join_policy`, usually `all_results_before_pm_absorption`;
+- `partial_results_returned` and `all_results_returned`.
+
+Partial status may drive accurate waiting and display, but it cannot advance a
+protected PM/reviewer gate by itself. Blocking batches require every blocking
+member result before PM disposition or reviewer gate release. Advisory and
+prep-only role-work requests may allow unrelated route work to continue, but
+they remain unresolved until PM absorbs, cancels, supersedes, or explicitly
+carries the result forward before terminal closure.
+
+Router may reconcile already-written packet/result envelopes before emitting a
+wait. Reconciliation is idempotent by batch id, packet id, request id, role, and
+result envelope hash. Controller-visible summaries must remain metadata-only.
 
 ## Route Memory
 

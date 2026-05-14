@@ -47,8 +47,11 @@ Register current-node work as one router-owned packet batch with `batch_id` and
 plus bounded `product_flowguard_officer` or `process_flowguard_officer` packets
 when modeling work belongs inside the active node and can start now. Router
 records every packet in the batch, gives each packet its own write grant, waits
-for every result, then relays the result envelopes back to PM. PM must open the
-relayed result bodies through the runtime and record a disposition:
+only for the missing member(s) when a partial batch returns, then relays the
+complete blocking result envelope set back to PM. Partial status is
+metadata-only and may name returned/missing roles, but it does not authorize PM
+or reviewer gate movement. PM must open the relayed result bodies through the
+runtime and record a disposition:
 `absorbed`, `rework_requested`, `canceled`, `blocked`, or
 `route_or_node_mutation_required`. Only an absorbed result may become part of a
 PM-built node-completion review package. PM may complete the node only after the

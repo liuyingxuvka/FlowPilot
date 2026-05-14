@@ -28,6 +28,11 @@ function architecture, approved child-skill gate manifest, and latest
 route-memory prior path context. The plan must state:
 
 - active route id, route version, and node id;
+- requirement traceability for this node: copy the active route node's
+  `covers_requirement_ids`, `covers_scenario_ids`, and
+  `source_product_capability_ids`; every node requirement, experiment,
+  work-packet projection, and selected child-skill binding must state which
+  requirement ids it covers;
 - prior path context files read and how completed, superseded, stale, blocked,
   or experimental history affects this node;
 - concrete node requirements and proof obligations;
@@ -61,6 +66,11 @@ route-memory prior path context. The plan must state:
   is missing for a selected child skill;
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
+- direct evidence closure rules: report prose, file existence, or a clean
+  ledger row is not enough to close a covered requirement unless the root
+  contract explicitly allowed that evidence type. Name direct evidence,
+  scenario replay, reviewer/officer check, waiver authority, or unresolved
+  reason for every covered requirement;
 - whether the node has children and therefore requires parent backward replay;
 - whether the active node is a parent/module, leaf, or repair node. If it has
   children, this plan must mark the node as not worker-dispatchable and route
@@ -116,6 +126,9 @@ Examples of weakening to avoid:
 For a repair node, include the mainline node or parent segment it returns to
 and the product-model, process-model, reviewer, or evidence checks that become
 stale and must rerun before mainline work resumes.
+Also list impacted requirement ids, superseded requirement ids, stale evidence
+refs, and required rerun models/checks. Old evidence cannot close a changed or
+superseded requirement.
 
 The returned plan must include a complete `prior_path_context_review` object
 with `reviewed`, `source_paths`, `completed_nodes_considered`,

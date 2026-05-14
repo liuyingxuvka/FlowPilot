@@ -97,10 +97,16 @@ class State:
     request_registered: bool = False
     request_recipient_role: str = "none"
     request_output_contract_id: str = "none"
-    request_mode: str = "none"  # none | blocking | advisory
+    request_mode: str = "none"  # none | blocking | advisory | prep-only
     request_kind: str = "none"  # none | model_miss | evidence | review | implementation
     request_status: str = "none"  # none | open | returned | absorbed | canceled | superseded
     request_marked_as_generic_channel: bool = False
+    ready_non_dependent_action_available: bool = False
+    non_dependent_action_recorded: bool = False
+    non_dependent_action_blocked_by_unresolved_request: bool = False
+    non_dependent_action_depends_on_unresolved_request: bool = False
+    prep_only_request_blocks_gate: bool = False
+    advisory_carried_forward_by_pm_closure_decision: bool = False
 
     request_packet_created: bool = False
     request_packet_relayed: bool = False
@@ -187,6 +193,7 @@ def _register_pm_work_request(
     mode: str,
     kind: str,
     decision: str | None = None,
+    ready_non_dependent_action_available: bool = False,
 ) -> Transition:
     return Transition(
         label,
@@ -204,6 +211,7 @@ def _register_pm_work_request(
             request_kind=kind,
             request_status="open",
             request_marked_as_generic_channel=True,
+            ready_non_dependent_action_available=ready_non_dependent_action_available,
         ),
     )
 
@@ -220,6 +228,12 @@ def _clear_absorbed_request(state: State, **changes: object) -> State:
         request_kind="none",
         request_status="none",
         request_marked_as_generic_channel=False,
+        ready_non_dependent_action_available=False,
+        non_dependent_action_recorded=False,
+        non_dependent_action_blocked_by_unresolved_request=False,
+        non_dependent_action_depends_on_unresolved_request=False,
+        prep_only_request_blocks_gate=False,
+        advisory_carried_forward_by_pm_closure_decision=False,
         request_packet_created=False,
         request_packet_relayed=False,
         result_returned=False,
@@ -250,6 +264,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if state.request_registered and state.request_status == "open":
+        if state.ready_non_dependent_action_available and not state.non_dependent_action_recorded:
+            yield Transition(
+                "router_continues_non_dependent_work_while_request_pending",
+                replace(
+                    state,
+                    holder="controller",
+                    non_dependent_action_recorded=True,
+                    non_dependent_action_depends_on_unresolved_request=False,
+                ),
+            )
+            return
         if not state.request_packet_created:
             yield Transition(
                 "pm_role_work_request_packet_created",
@@ -369,6 +394,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 contract=CONTRACT_REVIEW,
                 mode="advisory",
                 kind="review",
+                ready_non_dependent_action_available=True,
             )
         yield _register_pm_work_request(
             state,
@@ -461,10 +487,24 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM work request registered without a valid recipient role")
     if state.request_registered and not _request_has_contract(state):
         failures.append("PM work request registered without an output contract")
-    if state.request_registered and state.request_mode not in {"blocking", "advisory"}:
-        failures.append("PM work request registered without blocking/advisory mode")
+    if state.request_registered and state.request_mode not in {"blocking", "advisory", "prep-only"}:
+        failures.append("PM work request registered without blocking/advisory/prep-only mode")
     if state.request_registered and not state.request_marked_as_generic_channel:
         failures.append("PM role work was special-cased instead of using the generic request channel")
+    if (
+        _request_unresolved(state)
+        and state.non_dependent_action_blocked_by_unresolved_request
+        and state.request_mode in {"advisory", "prep-only"}
+    ):
+        failures.append("advisory or prep-only work froze unrelated non-dependent action")
+    if (
+        state.non_dependent_action_recorded
+        and state.non_dependent_action_depends_on_unresolved_request
+        and _request_unresolved(state)
+    ):
+        failures.append("non-dependent continuation depended on unresolved PM work request")
+    if state.request_mode == "prep-only" and state.prep_only_request_blocks_gate:
+        failures.append("prep-only request blocked a protected gate")
 
     if state.decision_recorded and not state.pm_decision_context_open:
         failures.append("PM decision recorded outside a PM decision context")
@@ -515,6 +555,7 @@ def invariant_failures(state: State) -> list[str]:
         and state.request_registered
         and state.request_mode == "advisory"
         and state.request_status not in {"absorbed", "canceled", "superseded"}
+        and not state.advisory_carried_forward_by_pm_closure_decision
     ):
         failures.append("terminal closure recorded with unresolved advisory role work request")
     if state.model_miss_triage_closed and state.decision not in REPAIR_AUTHORIZING_DECISIONS:
@@ -636,6 +677,9 @@ def hazard_states() -> dict[str, State]:
         "pm_work_request_without_output_contract": _valid_open_request(
             request_output_contract_id="none",
         ),
+        "pm_work_request_without_dependency_class": _valid_open_request(
+            request_mode="none",
+        ),
         "duplicate_open_pm_work_request_id": _valid_open_request(
             duplicate_open_request_id=True,
         ),
@@ -666,6 +710,35 @@ def hazard_states() -> dict[str, State]:
             result_ledger_checked=True,
             result_routed_to_pm=True,
             terminal_closure_recorded=True,
+        ),
+        "advisory_pending_freezes_non_dependent_action": _open_pm_context(
+            request_id="pm-advisory-001",
+            request_registered=True,
+            request_recipient_role="human_like_reviewer",
+            request_output_contract_id=CONTRACT_REVIEW,
+            request_mode="advisory",
+            request_kind="review",
+            request_status="open",
+            request_marked_as_generic_channel=True,
+            ready_non_dependent_action_available=True,
+            non_dependent_action_recorded=False,
+            non_dependent_action_blocked_by_unresolved_request=True,
+        ),
+        "non_dependent_action_depends_on_unresolved_request": _valid_open_request(
+            ready_non_dependent_action_available=True,
+            non_dependent_action_recorded=True,
+            non_dependent_action_depends_on_unresolved_request=True,
+        ),
+        "prep_only_request_blocks_gate": _open_pm_context(
+            request_id="pm-prep-001",
+            request_registered=True,
+            request_recipient_role="worker_b",
+            request_output_contract_id=CONTRACT_WORKER_RESEARCH,
+            request_mode="prep-only",
+            request_kind="evidence",
+            request_status="open",
+            request_marked_as_generic_channel=True,
+            prep_only_request_blocks_gate=True,
         ),
         "role_work_result_routed_without_ledger_check": _valid_open_request(
             request_packet_created=True,

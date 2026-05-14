@@ -27,6 +27,11 @@ reviewed material only.
 Include:
 
 - user task map and target users;
+- `requirement_trace`: assign stable `req-*` ids to important explicit user
+  requirements, PM-added hard requirements, hard low-quality-success risks,
+  proof obligations, and any external advisory material PM imports. External
+  OpenSpec/OpenSpark/SparkKey-style files are only source material until PM
+  imports them here; they never become route authority by themselves;
 - final-user intent and product usefulness assumptions, including what would
   make the result feel incomplete, unusable, misleading, or below the user's
   real goal;
@@ -42,6 +47,13 @@ Include:
   improvement, future candidate, or rejected/deferred with reason;
 - functional acceptance matrix;
 - evidence and validation implications for the root contract.
+
+Every user task, product capability, feature decision, missing-feature
+decision, low-quality-success hard part, and functional acceptance row must
+carry `source_requirement_ids` when it exists because of a user requirement,
+PM-added hard risk, or imported advisory source. If an item has no supporting
+requirement id, either put it in negative scope/deferred scope or record why it
+is only PM decision-support.
 
 Use Minimum Sufficient Complexity here. Every accepted capability, feature,
 surface, and visible element must be tied to a user task, a hard acceptance

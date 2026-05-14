@@ -33,11 +33,13 @@ Route requirements:
 - fresh current run only;
 - select a `planning_profile` before drafting. At minimum classify the task as
   one of `interactive_software_ui_product`, `software_engineering`,
-  `research_writing`, `release_delivery`, `debug_repair`,
-  `simple_repair`, or `long_running_multi_role`. Record why the profile fits
-  the user's quality level and why a lighter profile would lose required proof
-  strength. For a small task, use `simple_repair` with an explicit waiver
-  instead of importing heavyweight UI/product loops;
+  `research_writing`, `release_delivery`, `debug_repair`, or
+  `long_running_multi_role`. The profile chooses domain-specific modules, not
+  a lighter FlowPilot mode. A formal FlowPilot run always keeps the full
+  protocol, six-role authority, PM-owned contracts, reviewer/officer gates,
+  node acceptance, mutation invalidation, and final route-wide closure. If a
+  task is too small to justify that, the correct decision is not to use
+  FlowPilot for it, not to create a light/simple FlowPilot path;
 - if the selected profile is `research_writing`, treat the final paper,
   report, proposal, review, white paper, or slide/report deck as a
   document-as-product, not ordinary text generation. The route must include or
@@ -73,6 +75,12 @@ Route requirements:
 - include a PM user-intent self-check: how the route preserves the user's real
   goal, final-user usefulness, and highest reasonable product standard without
   importing unnecessary nodes or validation surfaces;
+- include a requirement traceability map: every route node must list
+  `covers_requirement_ids`, `covers_scenario_ids`,
+  `source_product_capability_ids`, `why_this_node_exists`, `why_not_merged`,
+  and `why_not_split`. A node with no requirement, risk, role-boundary,
+  recovery, evidence, or user-visible milestone rationale should be merged,
+  waived, or removed before review;
 - include a PM low-quality-success ownership check: every hard item from
   `product_function_architecture.low_quality_success_review` must be bound to
   an existing route node or explicitly justified as needing a new node. The
@@ -143,6 +151,9 @@ Route requirements:
   projection, current active path policy, hidden leaf progress policy, and why
   each parent/module exists. Later route mutations must update this route
   memory instead of relying on chat;
+- for route mutations, list impacted requirement ids, impacted nodes, stale
+  evidence, superseded requirement relationships, and required rerun models or
+  checks. Old evidence must not close a changed or superseded requirement;
 - worker-capable nodes must close with all checklist items complete;
 - human manual checks belong in final reports or review gates, not as fake
   unfinished worker nodes;

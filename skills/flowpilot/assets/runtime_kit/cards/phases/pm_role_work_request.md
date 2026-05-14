@@ -29,7 +29,11 @@ question, or prepare information before PM decides. PM may submit one request or
 one `batch_id` with `requests[]`/`packets[]`. A batch means every listed request
 can start now inside the current PM decision boundary. Router records the batch,
 relays each addressed envelope, waits for every result, and then PM records one
-batch disposition. The channel is generic; do not special-case
+batch disposition for blocking work. For `advisory` and `prep-only` work,
+Router may continue non-dependent actions while the role-work request remains
+open, but terminal closure still requires PM to absorb, cancel, supersede, or
+explicitly carry the advisory result forward through the current runtime
+contract. The channel is generic; do not special-case
 `product_flowguard_officer`, `process_flowguard_officer`, reviewer, or worker
 requests.
 
@@ -38,7 +42,7 @@ The request must include:
 - `requested_by_role`: `project_manager`
 - `request_id`: stable unique id for this PM request
 - `to_role`: one of the live FlowPilot roles other than PM or Controller
-- `request_mode`: `blocking` or `advisory`
+- `request_mode`: `blocking`, `advisory`, or `prep-only`
 - `request_kind`: bounded reason for the work
 - `output_contract_id`: contract selected from `runtime_kit/contracts/contract_index.json`
 - `packet_body_path` and `packet_body_hash`: sealed PM-authored request body
@@ -46,9 +50,11 @@ The request must include:
 Controller may relay the packet and result envelopes only. Controller may not
 read the request body, result body, or decide from their content.
 
-After every target role in the active batch returns `role_work_result_returned`,
-PM must record `pm_records_role_work_result_decision` with `batch_id` for a
-batch or `request_id` for a single request, and `decision` set to `absorbed`,
+After every target role in a blocking active batch returns
+`role_work_result_returned`, PM must record
+`pm_records_role_work_result_decision` with `batch_id` for a batch or
+`request_id` for a single request, and `decision` set to `absorbed`,
 `canceled`, or `superseded`. Blocking batches must be resolved before the
-dependent PM decision can close. Advisory batches must be absorbed, canceled, or
-superseded before terminal closure.
+dependent PM decision can close. Advisory and prep-only batches do not freeze
+unrelated work, but they must be absorbed, canceled, superseded, or explicitly
+carried by PM before terminal closure.

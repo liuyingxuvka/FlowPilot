@@ -12,19 +12,20 @@ Risk intent brief:
   quality concerns without task-specific hard parts or proof of depth,
   nonblocking improvement opportunities being turned into current-gate scope
   creep, low-quality-success risks being left without route/node/work-packet
-  owners, repair nodes failing to reconnect to the mainline, and simple tasks
-  being over-templated.
+  owners, repair nodes failing to reconnect to the mainline, and small/simple
+  tasks being pulled into formal FlowPilot instead of staying outside it.
 - Modeled state and side effects: PM planning profile selection, child-skill
   standard compilation, root product behavior model availability, PM route and
   node mapping to that model, process-officer route viability checks, reviewer
-  blocking, and simple-task waiver discipline.
-- Hard invariants: accepted routes must have a matching planning profile or a
-  simple-task waiver, skill standards must expose MUST/DEFAULT/FORBID/VERIFY/
+  blocking, and the rule that formal FlowPilot uses the full protocol only.
+- Hard invariants: accepted routes must have a matching full-protocol planning
+  profile, skill standards must expose MUST/DEFAULT/FORBID/VERIFY/
   LOOP/ARTIFACT/WAIVER, inherited standards must be visible at route, node,
   packet, reviewer, and result-matrix boundaries, PM route drafts must be based
   on the product behavior model, process-officer checks must validate route
-  viability against that model including repair return-to-mainline, and hard
-  requirement blindspots cannot pass.
+  viability against that model including repair return-to-mainline, hard
+  requirement blindspots cannot pass, and small/simple tasks cannot create a
+  light/simple FlowPilot profile.
 - Blindspot: this model checks the process contract shape. Runtime cards,
   templates, and tests must still be updated and validated after the model
   passes.
@@ -39,7 +40,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 VALID_UI_ROUTE = "valid_ui_route"
-VALID_SIMPLE_ROUTE = "valid_simple_route"
+VALID_SIMPLE_ROUTE = "simple_task_formal_flowpilot_profile"
 
 UI_WITHOUT_PROFILE = "ui_without_planning_profile"
 PROFILE_WITHOUT_CONVERGENCE_LOOP = "profile_without_convergence_loop"
@@ -71,8 +72,9 @@ NODE_PLAN_MISSING_LOW_QUALITY_MAPPING = "node_plan_missing_low_quality_mapping"
 WORK_PACKET_MISSING_LOW_QUALITY_WARNING = "work_packet_missing_low_quality_warning"
 PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING = "pm_closure_low_quality_risk_disposition_missing"
 
-VALID_SCENARIOS = (VALID_UI_ROUTE, VALID_SIMPLE_ROUTE)
+VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
+    VALID_SIMPLE_ROUTE,
     UI_WITHOUT_PROFILE,
     PROFILE_WITHOUT_CONVERGENCE_LOOP,
     SKILL_SELECTED_NO_CONTRACT,
@@ -517,11 +519,13 @@ def planning_failures(state: State) -> list[str]:
         failures.append("reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate")
 
     if state.task_class == "simple_bug" and (
-        state.simple_task_overtemplated
-        or (state.child_skill_selected and not state.simple_task_profile_waiver)
+        state.planning_profile_selected
+        or state.simple_task_profile_waiver
+        or state.simple_task_overtemplated
+        or state.child_skill_selected
         or state.required_convergence_loop_planned
     ):
-        failures.append("simple task was over-templated instead of using a justified lightweight profile")
+        failures.append("small/simple task entered formal FlowPilot instead of staying outside FlowPilot")
 
     return failures
 
@@ -587,12 +591,12 @@ def reviewer_blocks_hard_blindspots(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
-def simple_tasks_stay_lightweight(state: State, trace) -> InvariantResult:
+def small_tasks_do_not_enter_formal_flowpilot(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
         return InvariantResult.pass_()
     for failure in planning_failures(state):
-        if "simple task was over-templated" in failure:
+        if "small/simple task entered formal FlowPilot" in failure:
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()
 
@@ -667,9 +671,9 @@ INVARIANTS = (
         predicate=reviewer_blocks_hard_blindspots,
     ),
     Invariant(
-        name="simple_tasks_stay_lightweight",
-        description="Simple tasks must not receive heavyweight UI/product planning loops without justification.",
-        predicate=simple_tasks_stay_lightweight,
+        name="small_tasks_do_not_enter_formal_flowpilot",
+        description="Small/simple tasks must stay outside formal FlowPilot instead of creating light/simple profiles.",
+        predicate=small_tasks_do_not_enter_formal_flowpilot,
     ),
     Invariant(
         name="product_model_drives_route_planning",

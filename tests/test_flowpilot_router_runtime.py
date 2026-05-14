@@ -2519,6 +2519,84 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(index["requests"][0]["status"], "absorbed")
         self.assertIsNone(index["active_request_id"])
 
+    def test_pm_role_work_existing_result_reconciles_before_wait(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-reconcile")
+        run_root = self.run_root_for(root)
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_role_work_reconcile",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+
+        router.record_external_event(root, "pm_registers_role_work_request", self.pm_role_work_request_payload(root))
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        router.apply_action(root, "relay_pm_role_work_request_packet")
+        index_after_relay = read_json(run_root / "pm_work_requests" / "index.json")
+        packet_id = index_after_relay["requests"][0]["packet_id"]
+        lease = self.active_holder_lease_for_packet(root, packet_id)
+        self.assertEqual(lease["holder_role"], "product_flowguard_officer")
+
+        self.open_role_work_packet_and_write_result(root)
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_result_to_pm")
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["pm_role_work_result_returned"])
+        self.assertTrue(
+            any(
+                item.get("event") == "role_work_result_returned"
+                and item.get("reconciled_by_router") is True
+                for item in state["events"]
+                if isinstance(item, dict)
+            )
+        )
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        self.assertEqual(index["requests"][0]["status"], "result_returned")
+
+    def test_advisory_pm_role_work_wait_is_marked_nonblocking(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-advisory")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_role_work_advisory",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+
+        router.record_external_event(
+            root,
+            "pm_registers_role_work_request",
+            self.pm_role_work_request_payload(
+                root,
+                request_id="model-miss-advisory-001",
+                request_mode="advisory",
+            ),
+        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        router.apply_action(root, "relay_pm_role_work_request_packet")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["allowed_external_events"], ["role_work_result_returned"])
+        self.assertTrue(action["nonblocking_wait"])
+        self.assertEqual(action["dependency_class"], "advisory")
+
     def test_gate_targeted_pm_role_work_result_requires_mapped_gate_event(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-gate-targeted-role-work")
@@ -5678,12 +5756,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["ledger_check_receipt_required"])
         self.assertFalse(action["sealed_body_reads_allowed"])
         router.apply_action(root, "relay_research_packet")
+        research_index_path = run_root / "research" / "research_packet.json"
+        research_packet_id = read_json(research_index_path)["packets"][0]["packet_id"]
+        research_lease = self.active_holder_lease_for_packet(root, research_packet_id)
+        self.assertEqual(research_lease["holder_role"], "worker_a")
         state_after_research_packet = read_json(router.run_state_path(run_root))
         self.assertEqual(state_after_research_packet["ledger_checks"], ledger_checks_before_research + 1)
         self.assertEqual(state_after_research_packet["ledger_check_requests"], ledger_requests_before_research + 1)
         self.assertFalse(state_after_research_packet.get("ledger_check_requested"))
-
-        research_index_path = run_root / "research" / "research_packet.json"
         self.open_packets_and_write_results(root, research_index_path, result_text="research report result")
         router.record_external_event(
             root,
@@ -7953,6 +8033,107 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_results_to_pm")
+
+    def test_material_scan_existing_results_reconcile_before_stale_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(
+            root,
+            "pm_issues_material_and_capability_scan_packets",
+            {
+                "packets": [
+                    {
+                        "packet_id": "material-scan-reconcile-a",
+                        "to_role": "worker_a",
+                        "body_text": "Inspect local materials.",
+                    },
+                    {
+                        "packet_id": "material-scan-reconcile-b",
+                        "to_role": "worker_b",
+                        "body_text": "Inspect repository state.",
+                    },
+                ]
+            },
+        )
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        lease_a = self.active_holder_lease_for_packet(root, "material-scan-reconcile-a")
+        lease_b = self.active_holder_lease_for_packet(root, "material-scan-reconcile-b")
+        self.assertEqual(lease_a["holder_role"], "worker_a")
+        self.assertEqual(lease_b["holder_role"], "worker_b")
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        self.open_packets_and_write_results(root, material_index_path)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_material_scan_results_to_pm")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["worker_packets_delivered"])
+        self.assertTrue(state["flags"]["worker_scan_results_returned"])
+        self.assertTrue(
+            any(
+                item.get("event") == "worker_scan_results_returned"
+                and item.get("reconciled_by_router") is True
+                for item in state["events"]
+                if isinstance(item, dict)
+            )
+        )
+
+    def test_material_scan_partial_batch_status_names_missing_role(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(
+            root,
+            "pm_issues_material_and_capability_scan_packets",
+            {
+                "packets": [
+                    {
+                        "packet_id": "material-scan-partial-a",
+                        "to_role": "worker_a",
+                        "body_text": "Inspect local materials.",
+                    },
+                    {
+                        "packet_id": "material-scan-partial-b",
+                        "to_role": "worker_b",
+                        "body_text": "Inspect repository state.",
+                    },
+                ]
+            },
+        )
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        for record in material_index["packets"]:
+            envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+            packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+            if envelope["to_role"] == "worker_a":
+                packet_runtime.write_result(
+                    root,
+                    packet_envelope=envelope,
+                    completed_by_role="worker_a",
+                    completed_by_agent_id="worker-a-agent",
+                    result_body_text="worker A material scan result",
+                    next_recipient="project_manager",
+                )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["label"], "controller_waits_for_remaining_material_scan_batch_results")
+        self.assertEqual(action["to_role"], "worker_b")
+        self.assertEqual(action["allowed_external_events"], ["worker_scan_results_returned"])
+
+        batch_ref = read_json(run_root / "packet_batches" / "active_material_scan.json")
+        batch = read_json(root / batch_ref["batch_path"])
+        self.assertEqual(batch["counts"]["results_returned"], 1)
+        self.assertEqual(batch["member_status"]["returned_roles"], ["worker_a"])
+        self.assertEqual(batch["member_status"]["missing_roles"], ["worker_b"])
+        status = read_json(run_root / "display" / "current_status_summary.json")
+        partial = status["packet"]["active_batch"]["active_partial_batches"][0]
+        self.assertEqual(partial["missing_roles"], ["worker_b"])
+        self.assertEqual(partial["returned_roles"], ["worker_a"])
 
     def test_repair_transaction_recheck_blocker_registers_followup_blocker(self) -> None:
         root = self.make_project()

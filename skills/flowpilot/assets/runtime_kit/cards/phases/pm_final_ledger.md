@@ -31,6 +31,11 @@ source of truth for completion.
 
 Resolve:
 
+- requirement trace closure for every effective root requirement and every
+  imported product requirement that remains active. Each row must name source
+  requirement ids, change status, owner nodes, covering ledger entries, direct
+  evidence paths, standard scenarios, stale evidence refs, waiver authority,
+  supersession, and unresolved reason;
 - effective and superseded nodes;
 - every major node, parent/module, child subtree, promoted former leaf, repair
   node, and supplemental node in the current route. Before project completion,
@@ -50,7 +55,9 @@ Resolve:
   artifacts that were considered, superseded, deferred, or discarded;
 - generated-resource lineage;
 - stale, invalid, missing, waived, blocked, or superseded evidence;
+- old evidence that attempts to close a changed or superseded requirement;
 - zero unresolved count;
+- zero unresolved requirement count;
 - zero unresolved residual risks.
 
 If the final backward walk finds an omitted major node, omitted subtree,
@@ -77,3 +84,7 @@ Do not let unused complexity survive as a completion note. Extra nodes, skills,
 resources, reports, or validation branches must either prove a current gate,
 be explicitly superseded, be quarantined, or be discarded with a concrete
 reason before unresolved count can be zero.
+
+Do not complete from ledger existence alone. Completion requires direct
+evidence or approved disposition for each effective requirement, plus terminal
+Reviewer backward replay from delivered output back to root intent.

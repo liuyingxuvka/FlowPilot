@@ -7,6 +7,18 @@
   "route_version": 0,
   "node_id": "<node-id>",
   "source_packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
+  "batch_membership": {
+    "batch_id": "<batch-id-or-null>",
+    "batch_kind": "<material_scan|research|current_node|pm_role_work|null>",
+    "dependency_class": "<blocking|advisory|prep-only>",
+    "result_counts_toward_batch_join": true,
+    "result_may_not_advance_blocking_gate_alone": true
+  },
+  "active_holder_submission": {
+    "submitted_through_active_holder_lease": false,
+    "lease_id": "<active-holder-lease-id-or-null>",
+    "controller_visibility": "metadata_only"
+  },
   "completed_at": "<iso-8601-timestamp>",
   "completed_by_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
   "completed_by_agent_id": "<agent-id-or-single-agent-role-continuity-id>",

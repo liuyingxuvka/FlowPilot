@@ -23,6 +23,7 @@ CONTRACT_INDEX_PATH = RUNTIME_KIT_ROOT / "contracts" / "contract_index.json"
 REQUIRED_LABELS = (
     "pm_decision_context_opened_with_always_available_work_request_channel",
     "pm_opens_advisory_role_work_request_before_final_decision",
+    "router_continues_non_dependent_work_while_request_pending",
     "pm_requests_model_miss_officer_analysis_via_generic_work_request",
     "pm_requests_evidence_before_modeling_via_generic_work_request",
     "pm_role_work_request_packet_created",
@@ -50,12 +51,16 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_context_without_work_request_channel": "PM decision context opened without always-available role-work-request channel",
     "pm_work_request_without_recipient": "PM work request registered without a valid recipient role",
     "pm_work_request_without_output_contract": "PM work request registered without an output contract",
+    "pm_work_request_without_dependency_class": "PM work request registered without blocking/advisory/prep-only mode",
     "duplicate_open_pm_work_request_id": "duplicate open PM work request id would overwrite request ledger state",
     "controller_spawned_work_without_pm_request": "Controller spawned role work without a PM work request",
     "controller_reads_pm_work_request_body": "Controller read a sealed PM work-request or result body",
     "pm_work_request_special_cased_outside_generic_channel": "PM role work was special-cased instead of using the generic request channel",
     "blocking_request_ignored_by_pm_final_decision": "PM recorded dependent final decision while blocking role work request was unresolved",
     "advisory_result_unresolved_at_terminal_closure": "terminal closure recorded with unresolved advisory role work request",
+    "advisory_pending_freezes_non_dependent_action": "advisory or prep-only work froze unrelated non-dependent action",
+    "non_dependent_action_depends_on_unresolved_request": "non-dependent continuation depended on unresolved PM work request",
+    "prep_only_request_blocks_gate": "prep-only request blocked a protected gate",
     "role_work_result_routed_without_ledger_check": "role work result routed to PM before packet-ledger check",
     "role_work_result_wrong_request_id": "role work result returned for the wrong PM request id",
     "role_work_result_wrong_role": "role work result returned from the wrong recipient role",
@@ -73,6 +78,12 @@ def _state_id(state: model.State) -> str:
         f"request={state.request_id},{state.request_registered},{state.request_recipient_role},"
         f"{state.request_output_contract_id},{state.request_mode},{state.request_kind},"
         f"{state.request_status},generic={state.request_marked_as_generic_channel}|"
+        f"ready={state.ready_non_dependent_action_available},"
+        f"{state.non_dependent_action_recorded},"
+        f"{state.non_dependent_action_blocked_by_unresolved_request},"
+        f"{state.non_dependent_action_depends_on_unresolved_request},"
+        f"prep_blocks={state.prep_only_request_blocks_gate},"
+        f"advisory_carry={state.advisory_carried_forward_by_pm_closure_decision}|"
         f"packet={state.request_packet_created},{state.request_packet_relayed}|"
         f"result={state.result_returned},{state.result_request_id_matches},"
         f"{state.result_from_expected_role},{state.result_ledger_checked},"

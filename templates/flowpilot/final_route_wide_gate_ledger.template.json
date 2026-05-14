@@ -9,6 +9,9 @@
     "state": ".flowpilot/runs/<run-id>/state.json",
     "execution_frontier": ".flowpilot/runs/<run-id>/execution_frontier.json",
     "active_flow": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json",
+    "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
+    "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
+    "standard_scenario_pack": ".flowpilot/runs/<run-id>/standard_scenario_pack.json",
     "capabilities": ".flowpilot/runs/<run-id>/capabilities.json",
     "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json"
   },
@@ -30,6 +33,11 @@
     "low_quality_success_risks_disposition_checked": false,
     "standard_scenarios_replayed": false,
     "residual_risk_triage_done": false,
+    "requirement_trace_checked": false,
+    "every_effective_requirement_closure_row_present": false,
+    "requirement_direct_evidence_checked": false,
+    "requirement_waiver_authority_checked": false,
+    "requirement_stale_status_checked": false,
     "unresolved_residual_risk_count_zero": false,
     "waivers_have_required_role": false,
     "blocked_items_have_pm_repair_or_stop_decision": false
@@ -46,6 +54,11 @@
     "superseded_count": 0,
     "stale_count": 0,
     "generated_resource_count": 0,
+    "effective_requirement_count": 0,
+    "resolved_requirement_count": 0,
+    "superseded_requirement_count": 0,
+    "waived_requirement_count": 0,
+    "unresolved_requirement_count": 0,
     "consumed_resource_count": 0,
     "discarded_resource_count": 0,
     "unresolved_resource_count": 0,
@@ -123,6 +136,24 @@
       "reason": "<why-this-disposition-is-valid>"
     }
   ],
+  "requirement_trace_closure": [
+    {
+      "requirement_id": "<root-or-product-requirement-id>",
+      "source_requirement_ids": [],
+      "change_status": "<ADDED|MODIFIED|REMOVED|UNCHANGED>",
+      "status": "<resolved|superseded|waived|blocked|unresolved>",
+      "owner_node_ids": [],
+      "covering_entry_ids": [],
+      "evidence_paths": [],
+      "direct_evidence_required": true,
+      "direct_evidence_checked": false,
+      "standard_scenario_ids": [],
+      "stale_evidence_refs": [],
+      "superseded_by_requirement_ids": [],
+      "waiver_authority": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|null>",
+      "unresolved_reason": "<reason-or-null>"
+    }
+  ],
   "entries": [
     {
       "entry_id": "<route-node-or-gate-id>",
@@ -130,6 +161,8 @@
       "node_id": "<node-id>",
       "gate_id": "<gate-id>",
       "gate_family": "<child_skill|human_review|parent_backward_replay|product_model|process_model|verification|resource_lineage|lifecycle|completion>",
+      "covers_requirement_ids": [],
+      "covers_scenario_ids": [],
       "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
       "status": "<approved|waived|blocked|superseded|stale|unresolved>",
       "evidence_paths": [],
@@ -191,6 +224,7 @@
       {
         "segment_id": "root-acceptance",
         "segment_type": "root_acceptance",
+        "requirement_trace_closure_refs": [],
         "source_entries": [],
         "node_acceptance_plan_paths": [],
         "reviewer_manual_checks": [],
@@ -201,6 +235,7 @@
       {
         "segment_id": "parent-nodes",
         "segment_type": "parent_or_module_nodes",
+        "requirement_trace_closure_refs": [],
         "source_entries": [],
         "local_parent_backward_replay_paths": [],
         "node_acceptance_plan_paths": [],
@@ -212,6 +247,7 @@
       {
         "segment_id": "leaf-nodes",
         "segment_type": "leaf_nodes",
+        "requirement_trace_closure_refs": [],
         "source_entries": [],
         "node_acceptance_plan_paths": [],
         "reviewer_manual_checks": [],

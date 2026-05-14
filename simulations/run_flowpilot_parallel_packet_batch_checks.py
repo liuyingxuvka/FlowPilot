@@ -14,6 +14,8 @@ import flowpilot_parallel_packet_batch_model as model
 REQUIRED_LABELS = (
     "register_parallel_packet_batch",
     "relay_every_batch_packet",
+    "record_one_batch_result_without_join",
+    "continue_non_dependent_action_during_partial_batch_wait",
     "wait_for_all_batch_results",
     "review_full_batch",
     "pm_absorbs_reviewed_batch",
@@ -32,6 +34,11 @@ HAZARD_EXPECTED_FAILURES = {
     "repair_lineage_lost": "replacement batch lost parent batch or packet lineage",
     "prompt_runtime_drift": "prompt advertises batch parallelism but runtime remains single active request",
     "static_event_producer_wait": "dynamic batch wait rejected a valid remaining event producer role",
+    "partial_result_without_member_status": "partial batch result was recorded without member-level status tracking",
+    "partial_result_count_not_reflected": "partial batch result was not reflected in member returned count",
+    "partial_result_hidden_from_status": "partial batch result was hidden from status accounting",
+    "partial_missing_role_summary_stale": "partial batch missing-role summary was stale",
+    "non_dependent_continuation_depends_on_missing_blocker": "non-dependent batch continuation depended on a missing blocking result",
 }
 
 
@@ -39,10 +46,14 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|registered={state.batch_registered}|"
         f"packets={state.packet_count}|relay={state.packets_relayed}|"
-        f"results={state.results_returned}|joined={state.batch_joined}|"
+        f"results={state.results_returned}|partial={state.partial_result_recorded},"
+        f"{state.partial_result_count},{state.partial_result_visible_to_status},"
+        f"{state.missing_role_summary_valid}|joined={state.batch_joined}|"
         f"review={state.batch_review_done},{state.reviewed_packet_count},{state.batch_review_passed}|"
         f"pm={state.pm_absorbed_batch}|advanced={state.stage_advanced}|"
         f"officer_join={state.officer_packets_counted_in_join}|"
+        f"nondep={state.non_dependent_action_executed},"
+        f"{state.non_dependent_action_depends_on_missing_blocker}|"
         f"dynamic_wait={state.dynamic_wait_producer_binding_valid}|"
         f"overload={state.role_overload_accepted}|old={state.old_single_packet_bypass_used}|"
         f"body={state.controller_read_sealed_body}|drift={state.prompt_advertises_batch},{state.runtime_supports_batch}"

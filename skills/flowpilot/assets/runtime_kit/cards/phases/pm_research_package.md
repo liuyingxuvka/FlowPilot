@@ -41,10 +41,19 @@ inspection, experiments, or implementation-grounded research. Use
 `product_flowguard_officer` for product behavior/modelability questions and
 `process_flowguard_officer` for process/state/route questions. Do not ask an
 officer to make PM decisions or reviewer approvals. Router waits for every
-batch result, including officer results, before relaying result envelopes back
-to PM. PM must open the relayed result bodies through the runtime and record
+batch result, including officer results, before relaying the complete blocking
+research result set back to PM. Router also tracks partial returns by member and
+may expose only metadata about returned and missing roles, so it waits only for
+the missing member(s) while non-dependent work may continue. PM must open the
+relayed result bodies through the runtime and record
 `pm_records_research_result_disposition`. Only an absorbed PM disposition
 releases a formal research source-check package to the reviewer.
+
+Each research packet is a blocking dependency for the research source-check gate
+unless Router supplies a different dependency class in the live request. Packet
+bodies must tell target roles to use the Router-issued active-holder lease when
+present and to submit result envelope/status metadata through the authorized
+runtime path and current `allowed_external_events`.
 
 Any research worker packet created from the package must include the registry
 `output_contract` `flowpilot.output_contract.worker_research_result.v1` in both

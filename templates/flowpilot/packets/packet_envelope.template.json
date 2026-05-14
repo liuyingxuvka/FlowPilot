@@ -11,6 +11,21 @@
   "from_role": "project_manager",
   "to_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
   "output_contract_id": "<packet-envelope-output_contract.contract_id>",
+  "batch_membership": {
+    "batch_id": "<batch-id-or-null>",
+    "batch_kind": "<material_scan|research|current_node|pm_role_work|null>",
+    "join_policy": "<all_results_before_pm_absorption|all_results_before_review>",
+    "dependency_class": "<blocking|advisory|prep-only>",
+    "blocks_gate_ids": [],
+    "router_tracks_member_status": true,
+    "partial_batch_status_is_metadata_only": true
+  },
+  "active_holder_return_path": {
+    "lease_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/active_holder_lease.json",
+    "events_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/active_holder_events.jsonl",
+    "use_when_router_issues_lease": true,
+    "fallback_to_controller_relay_when_no_live_agent": true
+  },
   "output_contract": {
     "schema_version": "flowpilot.output_contract.v1",
     "contract_id": "<system-registry-contract-id>",

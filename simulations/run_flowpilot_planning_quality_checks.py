@@ -22,6 +22,7 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
+    model.VALID_SIMPLE_ROUTE: "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
     model.UI_WITHOUT_PROFILE: "complex task route lacks a selected planning profile",
     model.PROFILE_WITHOUT_CONVERGENCE_LOOP: "interactive UI route lacks required convergence loop",
     model.SKILL_SELECTED_NO_CONTRACT: "selected child skill lacks a compiled Skill Standard Contract",
@@ -33,7 +34,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.REVIEWER_PASSES_HARD_BLINDSPOT: "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate",
     model.OVERMERGED_COMPLEX_IMPLEMENTATION_NODE: "route complexity does not match selected planning profile",
     model.ARTIFACTLESS_MAJOR_NODE: "major route node lacks a concrete acceptance artifact",
-    model.SIMPLE_TASK_OVERTEMPLATED: "simple task was over-templated instead of using a justified lightweight profile",
+    model.SIMPLE_TASK_OVERTEMPLATED: "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
     model.PRODUCT_MODEL_MISSING: "route planning lacks a product behavior model from the Product FlowGuard Officer",
     model.PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL: "PM route is not mapped to the product behavior model",
     model.PROCESS_OFFICER_ROUTE_VIABILITY_MISSING: "Process FlowGuard Officer did not validate route viability against the product model",
