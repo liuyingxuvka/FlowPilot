@@ -31,15 +31,24 @@ FlowGuard cannot model it.
 If the repair phase was entered because Controller delivered a router
 `control_blocker`, read the blocker artifact first. Treat
 `control_plane_reissue` as a malformed control-plane output that should be
-reissued by the responsible role unless the artifact also shows contamination.
-Treat `pm_repair_decision_required` as a PM decision point. Treat
+reissued by the responsible role unless the policy row shows the direct retry
+budget is exhausted or the artifact also shows contamination. Treat
+`pm_repair_decision_required` as a PM decision point. Treat
 `fatal_protocol_violation` as a stop condition until PM or the user records an
-explicit recovery decision.
+explicit recovery decision. Always follow the artifact's `policy_row_id`,
+`pm_recovery_options`, `return_policy`, and `hard_stop_conditions`.
 
 Before choosing repair or mutation, read the latest route-memory prior path
 context and the reviewer block source path. Do not create a repair node from
 the current block alone if older completed, failed, superseded, stale, or
 experimental history changes the correct repair shape.
+
+If PM runs a focused repair-strategy self-interrogation, write a
+`flowpilot.self_interrogation_record.v1` with scope `repair` and register it
+in `self_interrogation_index.json`. Hard/current findings from that record
+must be incorporated into the repair, deferred to a named node/gate, entered
+into the PM suggestion ledger, rejected with reason, or waived with authority
+before the affected gate is re-run.
 
 First classify the block by phase. A planning-phase, route-root, parent/module,
 or node-entry gap before executable child work is not a repair-node case. PM
@@ -145,6 +154,8 @@ Use these exact field names and one of the allowed `decision` values:
     "source_paths": []
   },
   "repair_action": "<action taken or why none was needed>",
+  "recovery_option": "<same_gate_repair|rollback_to_prior_gate|supplemental_node|repair_node|route_mutation|evidence_quarantine|allowed_waiver|user_stop|protocol_dead_end|rerun_self_interrogation|record_disposition|convert_findings_to_repair>",
+  "return_gate": "<gate/event/terminal-stop to retry or enter after this decision>",
   "rerun_target": "<success event to recheck, such as router_direct_material_scan_dispatch_recheck_passed>",
   "repair_transaction": {
     "plan_kind": "<event_replay|packet_reissue|route_mutation>",
@@ -166,3 +177,11 @@ that target and event in `rerun_target`, and set `repair_transaction.plan_kind`
 to `event_replay`. If the repair creates replacement packets, set
 `repair_transaction.plan_kind` to `packet_reissue`; do not write packet specs as
 loose side files without committing them through the router transaction.
+
+PM may recover by same-gate repair, rollback, supplemental node, repair node,
+route mutation, evidence quarantine, allowed waiver, user stop, or protocol
+dead-end only when the policy row allows it. A waiver is not valid for
+hard-stop conditions. Self-interrogation blockers may use
+`rerun_self_interrogation`, `record_disposition`, or
+`convert_findings_to_repair`, but the original gate must be retried after the
+record/index is clean or the route has been legally changed.

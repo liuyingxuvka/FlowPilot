@@ -76,12 +76,15 @@ who must check the evidence. PM's own skill use must leave the same reviewable
 evidence trail as worker skill use; self-attestation is not enough.
 
 If Controller delivers a router `control_blocker` artifact, read the artifact
-path before deciding. `control_plane_reissue` usually means the named role must
-reissue a malformed envelope/report without changing project substance.
-`pm_repair_decision_required` means PM must decide whether to reissue, repair,
-mutate, quarantine, stop for the user, or request more evidence.
-`fatal_protocol_violation` means normal route work stays stopped until PM or
-the user records an explicit recovery decision.
+path and its `policy_row_id` before deciding. The policy row gives the first
+handler, direct retry budget, retry count, PM recovery options, return policy,
+and hard-stop conditions. `control_plane_reissue` usually means the named role
+gets a bounded same-role reissue first; when the retry budget is exhausted,
+the same blocker escalates to PM. `pm_repair_decision_required` means PM must
+decide whether to reissue, repair, roll back, add supplemental work, create a
+repair node, mutate the route, quarantine evidence, stop for the user, or
+request more evidence. `fatal_protocol_violation` means normal route work
+stays stopped until PM or the user records an explicit recovery decision.
 For any `pm_repair_decision_required` router `control_blocker`, use the
 `pm_records_control_blocker_repair_decision` event and contract
 `flowpilot.output_contract.pm_control_blocker_repair_decision.v1`. Do not use
@@ -89,8 +92,11 @@ ordinary phase events such as `pm_requests_startup_repair` to resolve the
 router control blocker unless a later router action explicitly routes that
 separate phase event after the blocker is resolved.
 That decision must open a repair transaction. A single rerun event is only the
-success outcome, not the repair itself. Packet reissues must be committed by
-the router as one generation before reviewer recheck.
+success outcome, not the repair itself. It must name `recovery_option` and
+`return_gate`; PM may move around a blocker only by choosing a legal recovery
+path and returning to a named gate or terminal stop. Do not mark the blocked
+gate passed directly from PM prose. Packet reissues must be committed by the
+router as one generation before reviewer recheck.
 
 Before any route draft, node plan, repair, route mutation, resume continuation,
 final ledger, or closure decision, read the latest current-run route-memory
@@ -216,6 +222,27 @@ paths, but must not copy sealed body content.
 Before building the final route-wide ledger or approving terminal closure, PM
 must confirm `pm_suggestion_ledger.jsonl` has no pending dispositions, no open
 current-gate blockers, and no malformed authority basis.
+
+## Self-Interrogation Records
+
+Grill-me/self-interrogation results that produce a meaningful finding must not
+remain only in prose. Write a `flowpilot.self_interrogation_record.v1` artifact
+under `.flowpilot/runs/<run-id>/self_interrogation/` and register it in
+`.flowpilot/runs/<run-id>/self_interrogation_index.json`.
+
+Use scopes `startup`, `product_architecture`, `node_entry`, `repair`,
+`completion`, or `role_result`. For each hard or current-gate finding, PM must
+record one final disposition before the protected gate advances:
+`incorporated_into_artifact`, `defer_to_named_node`,
+`entered_pm_suggestion_ledger`, `reject_with_reason`,
+`waive_with_authority`, or `no_action_needed`. Router checks only the record
+shape and unresolved count; PM owns the judgment.
+
+Root contract freeze requires clean `startup` and `product_architecture`
+records. Current-node packet registration and relay require a clean
+`node_entry` record for the active node and route version. Final ledger and
+terminal closure require the index to be clean with zero unresolved hard or
+current findings.
 
 ## Output Contract Authority
 

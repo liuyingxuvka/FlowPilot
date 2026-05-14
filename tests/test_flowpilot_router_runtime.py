@@ -891,6 +891,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                     router.apply_action(root, action_type)
             elif action_type == "start_role_slots":
                 router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
+            elif action_type == "create_heartbeat_automation":
+                router.apply_action(root, action_type, self.heartbeat_binding_payload(root))
             else:
                 router.apply_action(root, action_type, self.payload_for_action(action))
             if action_type == "load_controller_core":
@@ -1163,6 +1165,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"approved_by_role": "project_manager", "decision": "approved"},
             ),
         )
+        self.write_self_interrogation_record(
+            root,
+            "startup",
+            source_path=run_root / "test_role_outputs" / "startup" / "pm_startup_activation.json",
+        )
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
 
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
@@ -1211,6 +1218,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
 
     def complete_root_contract_before_child_skill_gates(self, root: Path) -> None:
+        run_root = self.run_root_for(root)
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.product_architecture")
@@ -1260,6 +1268,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "reviews/product_architecture_challenge",
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
+        )
+        self.write_self_interrogation_record(
+            root,
+            "product_architecture",
+            source_path=run_root / "product_function_architecture.json",
         )
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
@@ -1630,6 +1643,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
         )
+        frontier = read_json(self.run_root_for(root) / "execution_frontier.json")
+        self.write_self_interrogation_record(
+            root,
+            "node_entry",
+            node_id=str(frontier["active_node_id"]),
+            route_version=int(frontier.get("route_version") or 1),
+            source_path=self.run_root_for(root)
+            / "routes"
+            / str(frontier["active_route_id"])
+            / "nodes"
+            / str(frontier["active_node_id"])
+            / "node_acceptance_plan.json",
+        )
 
     def complete_parent_backward_replay_if_due(self, root: Path) -> None:
         action = router.next_action(root)
@@ -1808,6 +1834,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "source_paths": [],
             },
             "repair_action": "PM reviewed the delivered control blocker and recorded the recovery decision.",
+            "recovery_option": "same_gate_repair",
+            "return_gate": rerun_target,
             "rerun_target": rerun_target,
             "repair_transaction": {
                 "plan_kind": "event_replay",
@@ -1928,6 +1956,97 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             encoding="utf-8",
         )
         return ledger_path
+
+    def write_self_interrogation_record(
+        self,
+        root: Path,
+        scope: str,
+        *,
+        clean: bool = True,
+        node_id: str | None = None,
+        route_version: int = 1,
+        source_path: Path | None = None,
+        record_id: str | None = None,
+    ) -> Path:
+        run_root = self.run_root_for(root)
+        if source_path is None:
+            source_path = run_root / "self_interrogation" / "sources" / f"{scope}_source.json"
+            source_path.parent.mkdir(parents=True, exist_ok=True)
+            source_path.write_text(json.dumps({"scope": scope}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if node_id is None and scope in {"node_entry", "repair", "role_result"}:
+            frontier = read_json(run_root / "execution_frontier.json")
+            node_id = str(frontier.get("active_node_id") or "node-001")
+            route_version = int(frontier.get("route_version") or route_version)
+        record_id = record_id or f"{scope}-{node_id or 'run'}-self-check"
+        record_path = run_root / "self_interrogation" / f"{record_id}.json"
+        finding_id = f"{record_id}-finding-001"
+        disposition = {
+            "status": "reject_with_reason" if clean else "pending",
+            "decided_by_role": "project_manager" if clean else None,
+            "decided_at": "2026-05-10T00:00:00Z" if clean else None,
+            "reason": "PM reviewed this self-interrogation finding and rejected it for this test route." if clean else None,
+            "target_node_or_gate_id": None,
+            "suggestion_id": None,
+            "artifact_path": None,
+            "waiver_authority_role": None,
+            "residual_risk_statement": "No residual route impact for this test fixture." if clean else None,
+        }
+        record = {
+            "schema_version": "flowpilot.self_interrogation_record.v1",
+            "record_id": record_id,
+            "run_id": run_root.name,
+            "route_id": "route-001",
+            "route_version": route_version,
+            "node_id": node_id,
+            "scope": scope,
+            "owner_role": "project_manager",
+            "source_event": f"test_records_{scope}_self_interrogation",
+            "source_artifact_path": self.rel(root, source_path),
+            "findings": [
+                {
+                    "finding_id": finding_id,
+                    "severity": "hard_blocker",
+                    "category": "test_fixture",
+                    "summary": "Self-interrogation test fixture finding.",
+                    "downstream_obligation": "PM must disposition before the protected gate.",
+                    "blocks_current_gate_until_disposition": True,
+                    "disposition": disposition,
+                }
+            ],
+            "unresolved_hard_finding_count": 0 if clean else 1,
+            "pm_disposition_summary": {
+                "status": "complete" if clean else "pending",
+                "dispositioned_by_role": "project_manager" if clean else None,
+                "summary": "Fixture finding was dispositioned." if clean else "Fixture finding is still pending.",
+            },
+            "downstream_artifact_paths": [self.rel(root, source_path)] if clean else [],
+            "pm_suggestion_ledger_ids": [],
+        }
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        record_path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+        index_path = run_root / "self_interrogation_index.json"
+        index = read_json(index_path) if index_path.exists() else {
+            "schema_version": "flowpilot.self_interrogation_index.v1",
+            "run_id": run_root.name,
+            "records": [],
+        }
+        records = [item for item in index.get("records", []) if isinstance(item, dict) and item.get("record_id") != record_id]
+        records.append(
+            {
+                "record_id": record_id,
+                "scope": scope,
+                "route_id": "route-001",
+                "route_version": route_version,
+                "node_id": node_id,
+                "owner_role": "project_manager",
+                "record_path": self.rel(root, record_path),
+            }
+        )
+        index["records"] = records
+        index["updated_at"] = "2026-05-10T00:00:00Z"
+        index_path.write_text(json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return record_path
 
     def pm_suggestion_entry(self, root: Path, *, clean: bool) -> dict:
         run_root = self.run_root_for(root)
@@ -3005,6 +3124,79 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
         self.assertTrue((self.run_root_for(root) / "mailbox" / "outbox" / "user_intake.json").exists())
         self.assertFalse(self.bootstrap_state(root)["flags"].get("roles_started", False))
+
+    def test_scheduled_startup_heartbeat_is_bootloader_boundary_before_controller_core(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        router.apply_action(
+            root,
+            "open_startup_intake_ui",
+            self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
+        )
+        action = router.next_action(root)
+        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
+        action = router.run_until_wait(root)
+        self.assertEqual(action["action_type"], "start_role_slots")
+        router.apply_action(root, "start_role_slots", self.role_agent_payload(root, HEARTBEAT_STARTUP_ANSWERS))
+
+        run_root = self.run_root_for(root)
+        run_state = read_json(router.run_state_path(run_root))
+        self.assertFalse(run_state["flags"]["controller_core_loaded"])
+        self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "create_heartbeat_automation")
+        self.assertEqual(action["actor"], "bootloader")
+        self.assertEqual(action["postcondition"], "continuation_binding_recorded")
+        self.assertTrue(action["requires_host_automation"])
+        self.assertEqual(action["automation_update_request"]["kind"], "heartbeat")
+        self.assertNotIn("otherwise keep the run alive", action["automation_update_request"]["prompt"])
+        self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", action["automation_update_request"]["prompt"])
+        self.assertIn("continue the router loop instead of stopping at check_prompt_manifest", action["automation_update_request"]["prompt"])
+        self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", action["automation_update_request"]["prompt"])
+        self.assertEqual(action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
+        self.assertEqual(action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
+        self.assertTrue(action["proof_required_before_apply"])
+        self.assertEqual(action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
+        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
+        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
+        with self.assertRaisesRegex(router.RouterError, "host_automation_proof"):
+            router.apply_action(
+                root,
+                "create_heartbeat_automation",
+                {
+                    "route_heartbeat_interval_minutes": 1,
+                    "host_automation_id": "codex-test-heartbeat",
+                    "host_automation_verified": True,
+                },
+            )
+
+        router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+        router.apply_action(root, "load_controller_core")
+        run_state = read_json(router.run_state_path(run_root))
+        self.assertTrue(run_state["flags"]["controller_core_loaded"])
+        continuation = read_json(run_root / "continuation" / "continuation_binding.json")
+        self.assertEqual(continuation["mode"], "scheduled_heartbeat")
+        self.assertTrue(continuation["heartbeat_active"])
+
+    def test_manual_startup_skips_heartbeat_before_controller_core(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root, startup_answers=STARTUP_ANSWERS))
+        action = router.next_action(root)
+        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
+        action = router.run_until_wait(root)
+        self.assertEqual(action["action_type"], "start_role_slots")
+        router.apply_action(root, "start_role_slots", self.role_agent_payload(root, STARTUP_ANSWERS))
+
+        run_root = self.run_root_for(root)
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+        continuation = read_json(run_root / "continuation" / "continuation_binding.json")
+        self.assertEqual(continuation["mode"], "manual_resume")
+        self.assertFalse(continuation["heartbeat_active"])
+        self.assertFalse(continuation["host_automation_verified"])
 
     def test_run_until_wait_folds_manifest_check_before_card_boundary(self) -> None:
         root = self.make_project()
@@ -5901,6 +6093,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             ),
         )
+        self.write_self_interrogation_record(
+            root,
+            "product_architecture",
+            source_path=run_root / "product_function_architecture.json",
+        )
 
         router.apply_action(root, str(router.next_action(root)["action_type"]))
         action = router.next_action(root)
@@ -6991,30 +7188,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "create_heartbeat_automation")
-        self.assertTrue(action["requires_host_automation"])
-        self.assertEqual(action["automation_update_request"]["kind"], "heartbeat")
-        self.assertNotIn("otherwise keep the run alive", action["automation_update_request"]["prompt"])
-        self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", action["automation_update_request"]["prompt"])
-        self.assertIn("continue the router loop instead of stopping at check_prompt_manifest", action["automation_update_request"]["prompt"])
-        self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", action["automation_update_request"]["prompt"])
-        self.assertEqual(action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
-        self.assertEqual(action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
-        self.assertTrue(action["proof_required_before_apply"])
-        self.assertEqual(action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
-        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
-        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
-        with self.assertRaisesRegex(router.RouterError, "host_automation_proof"):
-            router.apply_action(
-                root,
-                "create_heartbeat_automation",
-                {
-                    "route_heartbeat_interval_minutes": 1,
-                    "host_automation_id": "codex-test-heartbeat",
-                    "host_automation_verified": True,
-                },
-            )
-        router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
+        self.assertNotEqual(action["action_type"], "create_heartbeat_automation")
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         self.complete_startup_activation(root)
 
         binding_path = run_root / "continuation" / "continuation_binding.json"
@@ -7703,6 +7878,47 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
         self.assertIsNone(state["active_control_blocker"])
 
+    def test_control_plane_reissue_retry_budget_escalates_to_pm(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-control-reissue-budget")
+
+        blockers: list[dict] = []
+        for attempt in range(3):
+            with self.assertRaises(router.RouterError) as raised:
+                router.record_external_event(
+                    root,
+                    "current_node_reviewer_passes_result",
+                    self.role_report_envelope(
+                        root,
+                        f"reviews/current_node_result_missing_passed_budget_{attempt}",
+                        {
+                            "reviewed_by_role": "human_like_reviewer",
+                            "agent_role_map": {"agent-worker-a": "worker_a"},
+                        },
+                    ),
+                )
+            blocker = raised.exception.control_blocker
+            self.assertIsInstance(blocker, dict)
+            blockers.append(blocker)
+            if attempt < 2:
+                self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
+                self.assertEqual(blocker["target_role"], "human_like_reviewer")
+                self.assertEqual(blocker["direct_retry_attempts_used"], attempt)
+                self.assertFalse(blocker["direct_retry_budget_exhausted"])
+                self.assertTrue(self.handle_pending_control_blocker(root))
+            else:
+                self.assertEqual(blocker["handling_lane"], "pm_repair_decision_required")
+                self.assertEqual(blocker["target_role"], "project_manager")
+                self.assertEqual(blocker["policy_row_id"], "mechanical_control_plane_reissue")
+                self.assertEqual(blocker["direct_retry_attempts_used"], 2)
+                self.assertTrue(blocker["direct_retry_budget_exhausted"])
+                self.assertEqual(blocker["allowed_resolution_events"], ["pm_records_control_blocker_repair_decision"])
+
+        state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
+        attempts = state["blocker_repair_attempts"][blockers[-1]["attempt_key"]]
+        self.assertTrue(attempts["direct_retry_budget_exhausted"])
+        self.assertEqual(attempts["latest_target_role"], "project_manager")
+
     def test_already_recorded_event_can_resolve_delivered_control_blocker(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-control-reissue-race")
@@ -7836,6 +8052,38 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIsNone(state["active_control_blocker"])
         self.assertIsNone(state["latest_control_blocker_path"])
         self.assertEqual(len(state["resolved_control_blockers"]), 1)
+
+    def test_fatal_control_blocker_rejects_pm_ordinary_waiver(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["continuation_binding_recorded"] = True
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="envelope payload leaked role body fields to Controller: passed",
+            event="host_records_heartbeat_binding",
+            payload={"from_role": "host", "passed": True},
+        )
+        self.assertEqual(blocker["policy_row_id"], "fatal_protocol_violation")
+        self.assertTrue(blocker["hard_stop_conditions"])
+
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        body = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        body["recovery_option"] = "allowed_waiver"
+        body["return_gate"] = "host_records_heartbeat_binding"
+        with self.assertRaisesRegex(router.RouterError, "not allowed by blocker policy"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(root, "control_blocks/fatal_pm_waiver_rejected", body),
+            )
 
     def test_router_packet_audit_rejection_routes_pm_repair_decision(self) -> None:
         root = self.make_project()
@@ -9351,6 +9599,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["counts"]["gate_decision_count"], 1)
         self.assertEqual(ledger["gate_decisions"][0]["gate_id"], "final-quality-gate")
         self.assertEqual(ledger["source_paths"]["gate_decision_ledger"], self.rel(root, run_root / "gate_decisions" / "gate_decision_ledger.json"))
+        self.assertEqual(ledger["source_paths"]["self_interrogation_index"], self.rel(root, run_root / "self_interrogation_index.json"))
+        self.assertTrue(ledger["evidence_integrity"]["self_interrogation_index_clean"])
+        self.assertGreaterEqual(ledger["counts"]["self_interrogation_record_count"], 3)
+        self.assertEqual(ledger["counts"]["self_interrogation_unresolved_hard_finding_count"], 0)
 
     def test_closure_lifecycle_blocks_when_ledgers_are_dirty_after_terminal_replay(self) -> None:
         root = self.make_project()
@@ -9396,6 +9648,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "pm_terminal_closure_decision_role_output",
             "current_ledgers_clean",
             "pm_suggestion_ledger_clean",
+            "self_interrogation_index_clean",
             "prior_path_context_review.controller_summary_used_as_evidence",
         )
 
@@ -9417,6 +9670,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         closure = read_json(run_root / "closure" / "terminal_closure_suite.json")
         self.assertEqual(closure["decision"], "approve_terminal_closure")
         self.assertEqual(closure["prior_path_context_review"]["reviewed"], True)
+        self.assertTrue(closure["self_interrogation_review"]["clean"])
         self.assertEqual(closure["status"], "closed")
         frontier = read_json(run_root / "execution_frontier.json")
         self.assertEqual(frontier["status"], "closed")
@@ -9446,6 +9700,105 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")
+
+    def test_root_contract_freeze_requires_clean_self_interrogation_records(self) -> None:
+        root = self.make_project()
+        run_root = root / ".flowpilot" / "runs" / "run-001"
+        (run_root / "reviews").mkdir(parents=True, exist_ok=True)
+        (run_root / "contract.md").write_text("# contract\n", encoding="utf-8")
+        (run_root / "standard_scenario_pack.json").write_text(json.dumps({"schema_version": "flowpilot.standard_scenario_pack.v1"}) + "\n", encoding="utf-8")
+        (run_root / "reviews" / "root_contract_challenge.json").write_text(json.dumps({"passed": True}) + "\n", encoding="utf-8")
+        (run_root / "root_acceptance_contract.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.root_acceptance_contract.v1",
+                    "completion_policy": {"unresolved_residual_risks_allowed": False},
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        state = {"run_id": "run-001", "flags": {}}
+
+        with self.assertRaisesRegex(router.RouterError, "self-interrogation index is missing"):
+            router._freeze_root_acceptance_contract(root, run_root, state)  # type: ignore[attr-defined]
+
+        (root / ".flowpilot").mkdir(exist_ok=True)
+        (root / ".flowpilot" / "current.json").write_text(
+            json.dumps({"current_run_root": ".flowpilot/runs/run-001"}) + "\n",
+            encoding="utf-8",
+        )
+        self.write_self_interrogation_record(root, "startup", source_path=run_root / "contract.md")
+        self.write_self_interrogation_record(root, "product_architecture", clean=False, source_path=run_root / "root_acceptance_contract.json")
+
+        with self.assertRaisesRegex(router.RouterError, "unresolved for a hard/current"):
+            router._freeze_root_acceptance_contract(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.write_self_interrogation_record(root, "product_architecture", source_path=run_root / "root_acceptance_contract.json")
+        router._freeze_root_acceptance_contract(root, run_root, state)  # type: ignore[attr-defined]
+        self.assertEqual(read_json(run_root / "root_acceptance_contract.json")["status"], "frozen")
+
+    def test_current_node_packet_rejects_unresolved_node_entry_self_interrogation(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.deliver_current_node_cards(root)
+        run_root = self.run_root_for(root)
+        self.write_self_interrogation_record(
+            root,
+            "node_entry",
+            clean=False,
+            node_id="node-001",
+            source_path=run_root / "routes" / "route-001" / "nodes" / "node-001" / "node_acceptance_plan.json",
+        )
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="node-packet-dirty-self-interrogation",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="current node work",
+            metadata={"route_version": 1},
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "current-node packet registration requires clean self-interrogation records") as raised:
+            router.record_external_event(
+                root,
+                "pm_registers_current_node_packet",
+                {
+                    "packet_id": "node-packet-dirty-self-interrogation",
+                    "packet_envelope_path": packet["body_path"].replace("packet_body.md", "packet_envelope.json"),
+                },
+            )
+        blocker = raised.exception.control_blocker
+        self.assertIsInstance(blocker, dict)
+        self.assertEqual(blocker["policy_row_id"], "self_interrogation_repair")
+        self.assertEqual(blocker["target_role"], "project_manager")
+        self.assertIn("rerun_self_interrogation", blocker["pm_recovery_options"])
+        self.assertEqual(blocker["return_policy"]["default_return_gate"], "blocked_self_interrogation_gate")
+
+    def test_final_ledger_rejects_dirty_self_interrogation_index(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-self-interrogation-ledger")
+        self.complete_evidence_quality_package(root)
+        run_root = self.run_root_for(root)
+        self.write_self_interrogation_record(
+            root,
+            "node_entry",
+            clean=False,
+            node_id="node-001",
+            source_path=run_root / "routes" / "route-001" / "nodes" / "node-001" / "node_acceptance_plan.json",
+        )
+
+        self.deliver_expected_card(root, "pm.final_ledger")
+        with self.assertRaisesRegex(router.RouterError, "final route-wide ledger requires clean self-interrogation records"):
+            router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
 
     def test_final_ledger_rejects_dirty_pm_suggestion_ledger(self) -> None:
         root = self.make_project()

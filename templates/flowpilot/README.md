@@ -120,6 +120,22 @@ for review.
    disposition fields, while role authority stays distinct: reviewers block
    only minimum-standard failures, workers never block gates, and officer
    blockers require formal model-gate findings.
+   Grill-me/self-interrogation output is durable evidence, not disposable
+   prose. PM writes `self_interrogation/*.json` records and registers them in
+   `self_interrogation_index.json` for startup, product architecture, current
+   node entry, repair, completion, and meaningful role-result findings. Hard or
+   current-gate findings must be incorporated, deferred to a named node/gate,
+   entered into the PM suggestion ledger, rejected with reason, or waived with
+   authority before protected gates advance.
+   Router control blockers use the run's `blocker_repair_policy` snapshot.
+   Mechanical handoff blockers first return to the responsible role for at
+   most two direct repair attempts. When that budget is exhausted, or when the
+   blocker concerns product substance, route structure, evidence, protocol,
+   terminal closure, or self-interrogation disposition, Controller delivers the
+   blocker to PM. PM may repair, roll back, add supplemental work, create a
+   repair node, mutate the route, quarantine evidence, record an allowed
+   waiver, or stop for the user, but the blocked gate is never marked passed
+   directly; PM must name the gate or terminal stop that follows.
 25. Before any parent/composite node closes, write
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the
@@ -294,6 +310,15 @@ for review.
   worker, and FlowGuard officer suggestions that require PM disposition. The
   ledger records source role, classification, evidence refs, PM disposition,
   and closure without copying sealed packet or result body content.
+- `blocker_repair_policy.template.json`: run-visible policy table that maps
+  blocker families to the first handler, direct retry budget, PM escalation,
+  allowed recovery options, return-gate policy, and hard-stop conditions.
+- `self_interrogation_record.template.json`: durable record for grill-me or
+  self-interrogation findings, PM disposition, downstream artifact bindings,
+  and unresolved hard/current finding count.
+- `self_interrogation_index.template.json`: run-level index that lets Router
+  find self-interrogation records mechanically before root freeze, node packet
+  dispatch, final ledger, and terminal closure.
 - `pause_snapshot.template.json`: controlled-pause snapshot with current
   route/node, blockers, pending rechecks, evidence caveats, heartbeat/agent
   lifecycle, and cleanup boundary for fresh restarts.

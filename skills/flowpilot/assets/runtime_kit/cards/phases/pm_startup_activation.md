@@ -36,6 +36,12 @@ Before approving, verify that the reviewer report covers:
 - display-surface evidence;
 - old-state and old-asset quarantine.
 
+Write or update a `flowpilot.self_interrogation_record.v1` with scope
+`startup` and register it in `self_interrogation_index.json`. Any hard startup
+finding must have a PM disposition before the later root contract freeze:
+incorporate, defer to a named gate/node, enter the PM suggestion ledger, reject
+with reason, waive with authority, or stop for the user.
+
 If the report is clean, approve startup activation through the role-output
 runtime with output type `pm_startup_activation_approval`.
 
@@ -56,6 +62,14 @@ contract can legally carry the repair, write a file-backed
 button. Use it only when no legal repair route exists. It must explain why no
 existing path applies, list attempted legal paths, state why continuing is
 unsafe, define resume conditions, and stop all work beyond startup.
+
+If startup is blocked by a router `control_blocker`, read the blocker policy
+row first. Mechanical first-handler reissues may go back to the responsible
+role within the retry budget. Any exhausted retry budget, self-interrogation
+gap, startup evidence ambiguity, protocol contamination, or no-legal-path
+condition returns to PM. PM may repair startup, roll back to a startup fact
+gate, add bounded evidence work, quarantine stale startup evidence, or declare
+protocol dead-end, but must name the return gate or terminal stop.
 
 ## Decision Contract For This Task
 

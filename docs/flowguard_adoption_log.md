@@ -1175,6 +1175,116 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - none recorded
 
+## 2026-05-14 - Unified Blocker Repair Policy
+
+### Trigger
+- User requested a small, concrete blocker-repair upgrade where every blocker has a first handler, bounded direct retries, PM escalation after retry exhaustion, PM recovery options, return-gate recording, and hard-stop handling while preserving parallel-agent changes.
+
+### Files Updated
+- openspec/changes/unify-blocker-repair-policy/
+- skills/flowpilot/assets/flowpilot_router.py
+- skills/flowpilot/assets/runtime_kit/cards/roles/controller.md
+- skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md
+- skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md
+- templates/flowpilot/blocker_repair_policy.template.json
+- templates/flowpilot/runs/run-001/run.template.json
+- templates/flowpilot/state.template.json
+- templates/flowpilot/README.md
+- simulations/meta_model.py
+- simulations/capability_model.py
+- simulations/run_meta_checks.py
+- simulations/run_capability_checks.py
+- tests/test_flowpilot_router_runtime.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `openspec validate unify-blocker-repair-policy --strict`
+- OK: `openspec status --change unify-blocker-repair-policy --json`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\meta_model.py simulations\capability_model.py simulations\run_meta_checks.py simulations\run_capability_checks.py`
+- OK: targeted blocker-policy router tests: 6 passed.
+- OK: targeted existing PM repair decision router tests: 6 passed.
+- OK: `python simulations/run_meta_checks.py` with background log root `tmp/flowguard_background/`, exit code 0, status completed, proof_reuse false; stdout `tmp/flowguard_background/run_meta_checks.out.txt`, stderr `tmp/flowguard_background/run_meta_checks.err.txt`, combined `tmp/flowguard_background/run_meta_checks.combined.txt`, exit `tmp/flowguard_background/run_meta_checks.exit.txt`; latest update 2026-05-14T12:16:25.5523183+02:00.
+- OK: `python simulations/run_capability_checks.py` with background log root `tmp/flowguard_background/`, exit code 0, status completed, proof_reuse false; stdout `tmp/flowguard_background/run_capability_checks.out.txt`, stderr `tmp/flowguard_background/run_capability_checks.err.txt`, combined `tmp/flowguard_background/run_capability_checks.combined.txt`, exit `tmp/flowguard_background/run_capability_checks.exit.txt`; latest update 2026-05-14T12:19:13.8769425+02:00.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+- Router now attaches a blocker repair policy row and run-visible policy snapshot to control blockers.
+- Mechanical control-plane blockers first return to the responsible role, then escalate to PM after the direct retry budget is exhausted.
+- PM-handled blockers now require an allowed recovery option and a return gate or terminal stop before the blocked path can continue.
+- Fatal hard-stop blockers reject ordinary PM waiver handling.
+- Self-interrogation blockers are PM-handled blockers with recovery options to rerun, record disposition, or convert findings into repair work.
+- PM and Controller cards now tell roles to read the policy row, retry count, recovery options, return policy, and hard-stop conditions instead of treating blocker review as a silent pass.
+- Local installed FlowPilot skill digest matches repository source after sync.
+
+### Counterexamples
+- exhausted direct blocker retries did not escalate to PM
+- PM-handled blocker lacked recovery option, return gate, or silent-pass prohibition
+- router hard rejection did not attach a blocker repair policy row and run-visible policy snapshot
+
+### Friction Points
+- Full `tests/test_flowpilot_router_runtime.py` exceeded the local 10-minute timeout; focused blocker and PM repair decision tests plus FlowGuard meta/capability checks were used.
+- Existing parallel-agent changes were present across several FlowPilot files; this pass preserved them and avoided any rollback.
+
+### Skipped Steps
+- No remote GitHub push, tag, or release action was performed.
+
+### Next Actions
+- Keep future blocker additions table-driven: add a policy row first, then route first-handler, retry budget, PM recovery option, return gate, and hard-stop handling from that row.
+
+## 2026-05-14 - Startup Heartbeat Before Controller Core
+
+### Trigger
+- User confirmed that scheduled continuation heartbeat should be bootstrapped during startup before entering the Controller main loop, and requested OpenSpec plus FlowGuard repair with local installed skill sync.
+
+### Files Updated
+- openspec/changes/move-heartbeat-before-controller-core/
+- skills/flowpilot/assets/flowpilot_router.py
+- tests/test_flowpilot_router_runtime.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `openspec validate move-heartbeat-before-controller-core --strict --json`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\meta_model.py simulations\capability_model.py`
+- OK: targeted startup heartbeat/manual-resume/router tests: 4 passed.
+- OK: `python simulations/run_meta_checks.py` with background log root `tmp/flowguard_background/`, exit code 0, status completed, proof_reuse false; stdout `tmp/flowguard_background/run_meta_checks.out.txt`, stderr `tmp/flowguard_background/run_meta_checks.err.txt`, combined `tmp/flowguard_background/run_meta_checks.combined.txt`, exit `tmp/flowguard_background/run_meta_checks.exit.txt`; latest update 2026-05-14T12:16:25.5523183+02:00.
+- OK: `python simulations/run_capability_checks.py` with background log root `tmp/flowguard_background/`, exit code 0, status completed, proof_reuse false; stdout `tmp/flowguard_background/run_capability_checks.out.txt`, stderr `tmp/flowguard_background/run_capability_checks.err.txt`, combined `tmp/flowguard_background/run_capability_checks.combined.txt`, exit `tmp/flowguard_background/run_capability_checks.exit.txt`; latest update 2026-05-14T12:19:13.8769425+02:00.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+- Scheduled startup now emits `create_heartbeat_automation` from the bootloader before `load_controller_core`.
+- Controller core loading now requires a ready host heartbeat binding for scheduled continuation and then marks `controller_core_loaded`.
+- Manual-resume startup still bypasses heartbeat creation and enters Controller core with manual continuation binding.
+- Meta and capability models now reject loading Controller core before continuation readiness.
+- Installed local FlowPilot skill digest matches repository source after sync.
+
+### Counterexamples
+- controller_core_loaded_without_continuation_binding
+- scheduled_startup_without_host_heartbeat_binding
+- manual_resume_startup_created_heartbeat
+
+### Friction Points
+- Full `tests/test_flowpilot_router_runtime.py` exceeded the local 15-minute timeout, so focused startup/router tests plus FlowGuard meta/capability checks and install checks were used.
+- A broader startup keyword subset exposed an existing `pm.material_scan` await-role ordering failure that appears tied to parallel startup/card-boundary work, not this heartbeat bootstrap change.
+
+### Skipped Steps
+- No remote GitHub push, tag, or release action was performed.
+- Existing parallel-agent file changes were preserved and not reverted.
+
+### Next Actions
+- Treat heartbeat creation as startup bootstrap ownership unless a future design explicitly moves continuation binding into another pre-Controller host boundary.
+
 
 ## flowpilot-control-plane-event-contract - Validate Router external event waits before persistence
 

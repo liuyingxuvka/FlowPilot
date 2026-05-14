@@ -152,6 +152,7 @@ REQUIRED_LABELS = (
     "top_level_control_state_absent_or_quarantined",
     "showcase_floor_committed",
     "visible_self_interrogation_completed",
+    "startup_self_interrogation_record_written",
     "contract_frozen",
     "six_agent_crew_policy_written",
     "project_manager_spawned_fresh_for_task",
@@ -213,6 +214,8 @@ REQUIRED_LABELS = (
     "product_function_architecture_product_officer_approved",
     "product_architecture_reviewer_adversarial_probe_done",
     "product_function_architecture_reviewer_challenged",
+    "product_architecture_self_interrogation_record_written",
+    "product_architecture_self_interrogation_findings_dispositioned",
     "dependency_plan_recorded",
     "host_continuation_capability_supported",
     "host_continuation_capability_unsupported_manual_resume",
@@ -275,6 +278,8 @@ REQUIRED_LABELS = (
     "node_visible_roadmap_emitted",
     "parent_focused_interrogation_completed",
     "node_focused_interrogation_completed",
+    "node_self_interrogation_record_written",
+    "node_self_interrogation_findings_dispositioned",
     "node_product_function_model_checked",
     "current_node_high_standard_recheck_written",
     "node_acceptance_plan_written",
@@ -299,6 +304,12 @@ REQUIRED_LABELS = (
     "controller_mail_relay_chain_audit_done",
     "packet_envelope_body_audit_done",
     "packet_role_origin_audit_done",
+    "blocker_repair_policy_snapshot_written",
+    "control_blocker_policy_row_attached",
+    "control_blocker_first_handler_delivered",
+    "control_blocker_retry_budget_escalated_to_pm",
+    "pm_blocker_recovery_option_recorded",
+    "pm_blocker_return_gate_recorded",
     "reviewer_child_skill_use_evidence_checked",
     "node_human_inspection_context_loaded",
     "node_human_neutral_observation_written",
@@ -341,6 +352,8 @@ REQUIRED_LABELS = (
     "final_human_reviewer_independent_probe_done",
     "final_human_inspection_passed",
     "completion_self_interrogation_completed",
+    "completion_self_interrogation_record_written",
+    "completion_self_interrogation_findings_dispositioned",
     "high_value_work_found_and_route_expanded",
     "no_obvious_high_value_work_remaining",
     "final_route_wide_gate_ledger_current_route_scanned",
@@ -354,6 +367,8 @@ REQUIRED_LABELS = (
     "final_route_wide_gate_ledger_stale_evidence_checked",
     "final_route_wide_gate_ledger_superseded_nodes_explained",
     "final_route_wide_gate_ledger_unresolved_count_zero",
+    "final_route_wide_gate_ledger_self_interrogation_collected",
+    "self_interrogation_index_clean",
     "final_residual_risk_triage_done",
     "final_residual_risk_unresolved_count_zero",
     "final_route_wide_gate_ledger_pm_built",
@@ -417,7 +432,9 @@ def _state_id(state: model.State) -> str:
         f"{state.startup_self_interrogation_layer_count},"
         f"{state.startup_self_interrogation_questions_per_layer},"
         f"{state.startup_self_interrogation_layers},"
-        f"{state.startup_self_interrogation_pm_ratified}|"
+        f"{state.startup_self_interrogation_pm_ratified},"
+        f"{state.startup_self_interrogation_record_written},"
+        f"{state.startup_self_interrogation_findings_dispositioned}|"
         f"quality_seed={state.quality_candidate_pool_seeded},"
         f"{state.validation_strategy_seeded}|"
         f"material={state.material_sources_scanned},"
@@ -459,7 +476,9 @@ def _state_id(state: model.State) -> str:
         f"{state.product_architecture_officer_adversarial_probe_done},"
         f"{state.product_function_architecture_product_officer_approved},"
         f"{state.product_architecture_reviewer_adversarial_probe_done},"
-        f"{state.product_function_architecture_reviewer_challenged}|"
+        f"{state.product_function_architecture_reviewer_challenged},"
+        f"{state.product_architecture_self_interrogation_record_written},"
+        f"{state.product_architecture_self_interrogation_findings_dispositioned}|"
         f"user_flow={state.visible_user_flow_diagram_emitted}|"
         f"crew={state.crew_policy_written},{state.crew_count},"
         f"{state.project_manager_ready},{state.reviewer_ready},"
@@ -554,7 +573,9 @@ def _state_id(state: model.State) -> str:
         f"{state.parent_focused_interrogation_scope_id}|"
         f"node_focused={state.node_focused_interrogation_done},"
         f"{state.node_focused_interrogation_questions},"
-        f"{state.node_focused_interrogation_scope_id}|"
+        f"{state.node_focused_interrogation_scope_id},"
+        f"{state.node_self_interrogation_record_written},"
+        f"{state.node_self_interrogation_findings_dispositioned}|"
         f"node_product={state.node_product_function_model_checked},"
         f"{state.node_product_function_model_product_officer_approved}|"
         f"node_acceptance={state.current_node_high_standard_recheck_written},"
@@ -643,6 +664,8 @@ def _state_id(state: model.State) -> str:
         f"{state.final_route_wide_gate_ledger_stale_evidence_checked},"
         f"{state.final_route_wide_gate_ledger_superseded_nodes_explained},"
         f"{state.final_route_wide_gate_ledger_unresolved_count_zero},"
+        f"{state.final_route_wide_gate_ledger_self_interrogation_collected},"
+        f"{state.self_interrogation_index_clean},"
         f"{state.final_residual_risk_triage_done},"
         f"{state.final_residual_risk_unresolved_count_zero},"
         f"{state.final_route_wide_gate_ledger_pm_built},"
@@ -665,7 +688,9 @@ def _state_id(state: model.State) -> str:
         f"{state.completion_self_interrogation_questions},"
         f"{state.completion_self_interrogation_layer_count},"
         f"{state.completion_self_interrogation_questions_per_layer},"
-        f"{state.completion_self_interrogation_layers}|"
+        f"{state.completion_self_interrogation_layers},"
+        f"{state.completion_self_interrogation_record_written},"
+        f"{state.completion_self_interrogation_findings_dispositioned}|"
         f"high_value={state.high_value_work_review}|standards={state.standard_expansions}|"
         f"issue={state.issue}|sidecar={state.child_node_sidecar_scan_done},"
         f"{state.sidecar_need},{state.subagent_pool_exists},"

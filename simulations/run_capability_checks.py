@@ -154,6 +154,7 @@ REQUIRED_LABELS = (
     "top_level_control_state_absent_or_quarantined",
     "showcase_floor_committed",
     "visible_self_interrogation_completed",
+    "self_interrogation_record_written",
     "contract_frozen",
     "six_agent_crew_policy_written",
     "project_manager_spawned_fresh_for_task",
@@ -215,6 +216,8 @@ REQUIRED_LABELS = (
     "product_function_architecture_product_officer_approved",
     "product_architecture_reviewer_adversarial_probe_done",
     "product_function_architecture_reviewer_challenged",
+    "product_architecture_self_interrogation_record_written",
+    "product_architecture_self_interrogation_findings_dispositioned",
     "capabilities_manifest_written",
     "pm_child_skill_selection_manifest_written",
     "pm_child_skill_selection_scope_decisions_recorded",
@@ -225,6 +228,8 @@ REQUIRED_LABELS = (
     "child_skill_manifest_reviewer_reviewed",
     "child_skill_manifest_pm_approved_for_route",
     "child_skill_focused_interrogation_completed",
+    "node_self_interrogation_record_written",
+    "node_self_interrogation_findings_dispositioned",
     "child_skill_contracts_loaded",
     "child_skill_exact_source_verified",
     "child_skill_substitutes_rejected",
@@ -362,6 +367,12 @@ REQUIRED_LABELS = (
     "controller_mail_relay_chain_audit_done",
     "packet_envelope_body_audit_done",
     "packet_role_origin_audit_done",
+    "blocker_repair_policy_snapshot_written",
+    "control_blocker_policy_row_attached",
+    "control_blocker_first_handler_delivered",
+    "control_blocker_retry_budget_escalated_to_pm",
+    "pm_blocker_recovery_option_recorded",
+    "pm_blocker_return_gate_recorded",
     "implementation_human_review_context_loaded",
     "implementation_human_neutral_observation_written",
     "implementation_human_manual_experiments_run",
@@ -396,6 +407,8 @@ REQUIRED_LABELS = (
     "final_human_reviewer_independent_probe_done",
     "final_human_inspection_passed",
     "completion_self_interrogation_completed",
+    "completion_self_interrogation_record_written",
+    "completion_self_interrogation_findings_dispositioned",
     "high_value_capability_gap_found",
     "no_obvious_high_value_work_remaining",
     "final_route_wide_gate_ledger_current_route_scanned",
@@ -408,6 +421,8 @@ REQUIRED_LABELS = (
     "final_route_wide_gate_ledger_stale_evidence_checked",
     "final_route_wide_gate_ledger_superseded_nodes_explained",
     "final_route_wide_gate_ledger_unresolved_count_zero",
+    "final_route_wide_gate_ledger_self_interrogation_collected",
+    "self_interrogation_index_clean",
     "final_residual_risk_triage_done",
     "final_residual_risk_unresolved_count_zero",
     "final_route_wide_gate_ledger_pm_built",
@@ -446,7 +461,9 @@ def _state_id(state: model.State) -> str:
         f"self={state.self_interrogation_done},{state.visible_self_interrogation_done},"
         f"{state.self_interrogation_questions},{state.self_interrogation_layer_count},"
         f"{state.self_interrogation_questions_per_layer},{state.self_interrogation_layers},"
-        f"{state.self_interrogation_pm_ratified}|"
+        f"{state.self_interrogation_pm_ratified},"
+        f"{state.self_interrogation_record_written},"
+        f"{state.self_interrogation_findings_dispositioned}|"
         f"quality_seed={state.quality_candidate_pool_seeded},"
         f"{state.validation_strategy_seeded}|"
         f"material={state.material_sources_scanned},"
@@ -488,7 +505,9 @@ def _state_id(state: model.State) -> str:
         f"{state.product_architecture_officer_adversarial_probe_done},"
         f"{state.product_function_architecture_product_officer_approved},"
         f"{state.product_architecture_reviewer_adversarial_probe_done},"
-        f"{state.product_function_architecture_reviewer_challenged}|"
+        f"{state.product_function_architecture_reviewer_challenged},"
+        f"{state.product_architecture_self_interrogation_record_written},"
+        f"{state.product_architecture_self_interrogation_findings_dispositioned}|"
         f"crew={state.crew_policy_written},{state.crew_count},"
         f"{state.project_manager_ready},{state.reviewer_ready},"
         f"{state.process_flowguard_officer_ready},"
@@ -518,7 +537,9 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_current_gates_role_approved}|"
         f"child_skill_focused={state.child_skill_focused_interrogation_done},"
         f"{state.child_skill_focused_interrogation_questions},"
-        f"{state.child_skill_focused_interrogation_scope_id}|"
+        f"{state.child_skill_focused_interrogation_scope_id},"
+        f"{state.node_self_interrogation_record_written},"
+        f"{state.node_self_interrogation_findings_dispositioned}|"
         f"child_skill={state.child_skill_contracts_loaded},"
         f"{state.child_skill_exact_source_verified},"
         f"{state.child_skill_substitutes_rejected},"
@@ -718,6 +739,8 @@ def _state_id(state: model.State) -> str:
         f"{state.final_route_wide_gate_ledger_stale_evidence_checked},"
         f"{state.final_route_wide_gate_ledger_superseded_nodes_explained},"
         f"{state.final_route_wide_gate_ledger_unresolved_count_zero},"
+        f"{state.final_route_wide_gate_ledger_self_interrogation_collected},"
+        f"{state.self_interrogation_index_clean},"
         f"{state.final_residual_risk_triage_done},"
         f"{state.final_residual_risk_unresolved_count_zero},"
         f"{state.final_route_wide_gate_ledger_pm_built},"
@@ -739,7 +762,9 @@ def _state_id(state: model.State) -> str:
         f"{state.completion_self_interrogation_questions},"
         f"{state.completion_self_interrogation_layer_count},"
         f"{state.completion_self_interrogation_questions_per_layer},"
-        f"{state.completion_self_interrogation_layers}|"
+        f"{state.completion_self_interrogation_layers},"
+        f"{state.completion_self_interrogation_record_written},"
+        f"{state.completion_self_interrogation_findings_dispositioned}|"
         f"high_value={state.high_value_work_review}|standards={state.standard_expansions}"
     )
 

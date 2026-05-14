@@ -30,6 +30,15 @@ view. Closure is blocked by a hard user-intent failure, unusable outcome,
 semantic downgrade, missing proof, or unverifiable user-facing quality claim.
 Better but nonessential experience, simplicity, or quality opportunities must
 be dispositioned as PM suggestion items before closure.
+Closure also requires `self_interrogation_index.json` to be clean. Do not
+approve terminal closure while any startup, product-architecture, node-entry,
+repair, completion, or role-result self-interrogation record has an unresolved
+hard/current finding.
+If terminal closure is blocked by a router `control_blocker`, read the policy
+row and treat it as PM recovery work. PM may rebuild terminal evidence, roll
+back to the final ledger or affected replay segment, quarantine stale evidence,
+mutate the route, or stop for the user. Do not close the run by waiver when the
+policy row lists hard-stop conditions.
 PM must also self-check hard low-quality-success risks. Closure is blocked
 when a task-specific hard part was closed only by artifact existence, report
 prose, a screenshot, a command run, or a clean ledger row instead of proof of
@@ -99,7 +108,9 @@ paths from the router delivery envelope.
     "execution_frontier_current": true,
     "crew_ledger_current": true,
     "continuation_binding_current": true,
-    "current_ledgers_clean": true
+    "current_ledgers_clean": true,
+    "pm_suggestion_ledger_clean": true,
+    "self_interrogation_index_clean": true
   },
   "final_user_outcome_replay": {
     "reviewed": true,

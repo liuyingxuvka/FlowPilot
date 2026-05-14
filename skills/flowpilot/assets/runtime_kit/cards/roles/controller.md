@@ -113,12 +113,16 @@ plane, not a sealed role body and not project evidence.
 For `control_plane_reissue`, deliver the blocker artifact to the
 `responsible_role_for_reissue` named by the router and request the same role to
 reissue the rejected envelope, report, or ledger event with the missing
-control-plane fields fixed. Quote only `error_code`, `error_message`,
-`source_paths`, and `blocker_artifact_path`. Do not ask for project-content
-repair.
+control-plane fields fixed. Quote only controller-visible fields such as
+`blocker_id`, `policy_row_id`, `direct_retry_budget`,
+`direct_retry_attempts_used`, `error_code`, `blocker_artifact_path`, and the
+sealed repair packet path/hash. Do not ask for project-content repair. If the
+router says `direct_retry_budget_exhausted: true`, deliver to PM instead of the
+responsible role.
 
 For `pm_repair_decision_required` or `fatal_protocol_violation`, deliver only
-the public blocker id plus sealed repair packet path/hash to Project Manager.
+the public blocker id, policy row id, allowed recovery options, return policy,
+hard-stop conditions, and sealed repair packet path/hash to Project Manager.
 Do not read or restate sealed repair details, and do not contact a worker or
 reviewer directly about project repair unless PM later issues a
 router-authorized packet or decision envelope.

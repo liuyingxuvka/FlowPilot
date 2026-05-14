@@ -95,6 +95,8 @@ class State:
     startup_self_interrogation_questions_per_layer: int = 0
     startup_self_interrogation_layers: int = 0
     startup_self_interrogation_pm_ratified: bool = False
+    startup_self_interrogation_record_written: bool = False
+    startup_self_interrogation_findings_dispositioned: bool = False
     quality_candidate_pool_seeded: bool = False
     validation_strategy_seeded: bool = False
     material_sources_scanned: bool = False
@@ -139,6 +141,8 @@ class State:
     product_function_architecture_product_officer_approved: bool = False
     product_architecture_reviewer_adversarial_probe_done: bool = False
     product_function_architecture_reviewer_challenged: bool = False
+    product_architecture_self_interrogation_record_written: bool = False
+    product_architecture_self_interrogation_findings_dispositioned: bool = False
     visible_user_flow_diagram_emitted: bool = False
     user_flow_diagram_refreshed: bool = False
     user_flow_diagram_chat_display_required: bool = False
@@ -170,6 +174,7 @@ class State:
     independent_approval_protocol_recorded: bool = False
     crew_memory_policy_written: bool = False
     crew_memory_packets_written: int = 0
+    controller_core_loaded: bool = False
     pm_initial_route_decision_recorded: bool = False
     pm_child_skill_selection_manifest_written: bool = False
     pm_child_skill_minimum_sufficient_complexity_review_written: bool = False
@@ -300,6 +305,8 @@ class State:
     node_focused_interrogation_done: bool = False
     node_focused_interrogation_questions: int = 0
     node_focused_interrogation_scope_id: str = ""
+    node_self_interrogation_record_written: bool = False
+    node_self_interrogation_findings_dispositioned: bool = False
     node_product_function_model_checked: bool = False
     node_product_function_model_product_officer_approved: bool = False
     current_node_high_standard_recheck_written: bool = False
@@ -334,6 +341,17 @@ class State:
     router_hard_rejection_seen: bool = False
     control_blocker_artifact_written: bool = False
     control_blocker_handling_lane: str = "none"  # none | control_plane_reissue | pm_repair_decision_required | fatal_protocol_violation
+    blocker_repair_policy_snapshot_written: bool = False
+    blocker_policy_row_attached: bool = False
+    control_blocker_first_handler: str = "none"  # none | responsible_role | project_manager
+    control_blocker_direct_retry_budget: int = 0
+    control_blocker_direct_retry_attempts: int = 0
+    control_blocker_retry_budget_exhausted: bool = False
+    control_blocker_escalated_to_pm: bool = False
+    pm_blocker_recovery_option_recorded: bool = False
+    pm_blocker_return_gate_recorded: bool = False
+    pm_blocker_hard_stop_checked: bool = False
+    pm_blocker_silent_pass_forbidden: bool = False
     control_blocker_delivered_to_responsible_role: bool = False
     control_blocker_delivered_to_pm: bool = False
     packet_envelope_body_audit_done: bool = False
@@ -402,6 +420,8 @@ class State:
     completion_self_interrogation_layer_count: int = 0
     completion_self_interrogation_questions_per_layer: int = 0
     completion_self_interrogation_layers: int = 0
+    completion_self_interrogation_record_written: bool = False
+    completion_self_interrogation_findings_dispositioned: bool = False
     completion_visible_roadmap_emitted: bool = False
     final_feature_matrix_review_done: bool = False
     final_acceptance_matrix_review_done: bool = False
@@ -427,6 +447,8 @@ class State:
     final_route_wide_gate_ledger_stale_evidence_checked: bool = False
     final_route_wide_gate_ledger_superseded_nodes_explained: bool = False
     final_route_wide_gate_ledger_unresolved_count_zero: bool = False
+    final_route_wide_gate_ledger_self_interrogation_collected: bool = False
+    self_interrogation_index_clean: bool = False
     final_residual_risk_triage_done: bool = False
     final_residual_risk_unresolved_count_zero: bool = False
     final_route_wide_gate_ledger_pm_built: bool = False
@@ -570,6 +592,8 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "node_acceptance_plan_written": False,
             "active_node_leaf_readiness_gate_passed": False,
             "active_node_parent_dispatch_blocked": False,
+            "node_self_interrogation_record_written": False,
+            "node_self_interrogation_findings_dispositioned": False,
             "active_child_skill_bindings_written": False,
             "active_child_skill_binding_scope_limited": False,
             "child_skill_stricter_standard_precedence_bound": False,
@@ -595,6 +619,8 @@ def _reset_final_route_wide_gate_ledger() -> dict[str, object]:
         "final_route_wide_gate_ledger_superseded_nodes_explained": False,
         "evidence_credibility_triage_done": False,
         "final_route_wide_gate_ledger_unresolved_count_zero": False,
+        "final_route_wide_gate_ledger_self_interrogation_collected": False,
+        "self_interrogation_index_clean": False,
         "final_residual_risk_triage_done": False,
         "final_residual_risk_unresolved_count_zero": False,
         "defect_ledger_zero_blocking": False,
@@ -634,12 +660,76 @@ def _full_interrogation_ready(
     )
 
 
+def _startup_self_interrogation_disposition_ready(state: State) -> bool:
+    return (
+        state.visible_self_interrogation_done
+        and _full_interrogation_ready(
+            total_questions=state.startup_self_interrogation_questions,
+            layer_count=state.startup_self_interrogation_layer_count,
+            questions_per_layer=state.startup_self_interrogation_questions_per_layer,
+            risk_family_mask=state.startup_self_interrogation_layers,
+        )
+        and state.startup_self_interrogation_record_written
+        and state.startup_self_interrogation_pm_ratified
+        and state.startup_self_interrogation_findings_dispositioned
+    )
+
+
+def _product_architecture_self_interrogation_disposition_ready(state: State) -> bool:
+    return (
+        state.product_architecture_self_interrogation_record_written
+        and state.product_architecture_self_interrogation_findings_dispositioned
+    )
+
+
+def _root_self_interrogation_gate_ready(state: State) -> bool:
+    return (
+        _startup_self_interrogation_disposition_ready(state)
+        and _product_architecture_self_interrogation_disposition_ready(state)
+    )
+
+
 def _focused_interrogation_ready(*, total_questions: int, scope_id: str) -> bool:
     return (
         bool(scope_id)
         and MIN_FOCUSED_GRILLME_QUESTIONS
         <= total_questions
         <= MAX_FOCUSED_GRILLME_QUESTIONS
+    )
+
+
+def _node_self_interrogation_gate_ready(state: State) -> bool:
+    return (
+        state.node_focused_interrogation_done
+        and _focused_interrogation_ready(
+            total_questions=state.node_focused_interrogation_questions,
+            scope_id=state.node_focused_interrogation_scope_id,
+        )
+        and state.node_self_interrogation_record_written
+        and state.node_self_interrogation_findings_dispositioned
+    )
+
+
+def _completion_self_interrogation_gate_ready(state: State) -> bool:
+    return (
+        state.completion_self_interrogation_done
+        and _full_interrogation_ready(
+            total_questions=state.completion_self_interrogation_questions,
+            layer_count=state.completion_self_interrogation_layer_count,
+            questions_per_layer=state.completion_self_interrogation_questions_per_layer,
+            risk_family_mask=state.completion_self_interrogation_layers,
+        )
+        and state.completion_self_interrogation_record_written
+        and state.completion_self_interrogation_findings_dispositioned
+    )
+
+
+def _self_interrogation_index_final_ready(state: State) -> bool:
+    return (
+        _root_self_interrogation_gate_ready(state)
+        and _completion_self_interrogation_gate_ready(state)
+        and state.final_route_wide_gate_ledger_self_interrogation_collected
+        and state.self_interrogation_index_clean
     )
 
 
@@ -898,6 +988,8 @@ def _final_route_wide_gate_ledger_ready(state: State) -> bool:
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.evidence_credibility_triage_done
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_route_wide_gate_ledger_self_interrogation_collected
+        and state.self_interrogation_index_clean
         and state.final_residual_risk_triage_done
         and state.final_residual_risk_unresolved_count_zero
         and state.defect_ledger_zero_blocking
@@ -994,6 +1086,8 @@ class AutopilotStep:
         "startup_self_interrogation_questions_per_layer",
         "startup_self_interrogation_layers",
         "startup_self_interrogation_pm_ratified",
+        "startup_self_interrogation_record_written",
+        "startup_self_interrogation_findings_dispositioned",
         "quality_candidate_pool_seeded",
         "validation_strategy_seeded",
         "material_sources_scanned",
@@ -1036,6 +1130,8 @@ class AutopilotStep:
         "product_function_architecture_product_officer_approved",
         "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
+        "product_architecture_self_interrogation_record_written",
+        "product_architecture_self_interrogation_findings_dispositioned",
         "visible_user_flow_diagram_emitted",
         "user_flow_diagram_refreshed",
         "user_flow_diagram_shallow_projection_policy_recorded",
@@ -1067,6 +1163,7 @@ class AutopilotStep:
         "independent_approval_protocol_recorded",
         "crew_memory_policy_written",
         "crew_memory_packets_written",
+        "controller_core_loaded",
         "pm_initial_route_decision_recorded",
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
@@ -1165,6 +1262,8 @@ class AutopilotStep:
         "node_focused_interrogation_done",
         "node_focused_interrogation_questions",
         "node_focused_interrogation_scope_id",
+        "node_self_interrogation_record_written",
+        "node_self_interrogation_findings_dispositioned",
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
         "current_node_high_standard_recheck_written",
@@ -1249,6 +1348,8 @@ class AutopilotStep:
         "completion_self_interrogation_layer_count",
         "completion_self_interrogation_questions_per_layer",
         "completion_self_interrogation_layers",
+        "completion_self_interrogation_record_written",
+        "completion_self_interrogation_findings_dispositioned",
         "completion_visible_roadmap_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
@@ -1274,6 +1375,8 @@ class AutopilotStep:
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
+        "final_route_wide_gate_ledger_self_interrogation_collected",
+        "self_interrogation_index_clean",
         "final_residual_risk_triage_done",
         "final_residual_risk_unresolved_count_zero",
         "final_route_wide_gate_ledger_pm_built",
@@ -1317,6 +1420,8 @@ class AutopilotStep:
         "startup_self_interrogation_questions_per_layer",
         "startup_self_interrogation_layers",
         "startup_self_interrogation_pm_ratified",
+        "startup_self_interrogation_record_written",
+        "startup_self_interrogation_findings_dispositioned",
         "quality_candidate_pool_seeded",
         "validation_strategy_seeded",
         "material_sources_scanned",
@@ -1359,6 +1464,8 @@ class AutopilotStep:
         "product_function_architecture_product_officer_approved",
         "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
+        "product_architecture_self_interrogation_record_written",
+        "product_architecture_self_interrogation_findings_dispositioned",
         "visible_user_flow_diagram_emitted",
         "user_flow_diagram_refreshed",
         "user_flow_diagram_chat_display_required",
@@ -1494,6 +1601,8 @@ class AutopilotStep:
         "node_focused_interrogation_done",
         "node_focused_interrogation_questions",
         "node_focused_interrogation_scope_id",
+        "node_self_interrogation_record_written",
+        "node_self_interrogation_findings_dispositioned",
         "node_product_function_model_checked",
         "node_product_function_model_product_officer_approved",
         "current_node_high_standard_recheck_written",
@@ -1568,6 +1677,8 @@ class AutopilotStep:
         "completion_self_interrogation_layer_count",
         "completion_self_interrogation_questions_per_layer",
         "completion_self_interrogation_layers",
+        "completion_self_interrogation_record_written",
+        "completion_self_interrogation_findings_dispositioned",
         "completion_visible_roadmap_emitted",
         "final_feature_matrix_review_done",
         "final_acceptance_matrix_review_done",
@@ -1592,6 +1703,8 @@ class AutopilotStep:
         "final_route_wide_gate_ledger_stale_evidence_checked",
         "final_route_wide_gate_ledger_superseded_nodes_explained",
         "final_route_wide_gate_ledger_unresolved_count_zero",
+        "final_route_wide_gate_ledger_self_interrogation_collected",
+        "self_interrogation_index_clean",
         "final_residual_risk_triage_done",
         "final_residual_risk_unresolved_count_zero",
         "final_route_wide_gate_ledger_pm_built",
@@ -1900,6 +2013,16 @@ class AutopilotStep:
             )
             return
 
+        if not state.startup_self_interrogation_record_written:
+            yield _step(
+                state,
+                label="startup_self_interrogation_record_written",
+                action="write a durable startup self-interrogation record with findings, source event, scope, and PM disposition slots before later route gates can use it",
+                startup_self_interrogation_record_written=True,
+                active_node="establish_six_agent_crew",
+            )
+            return
+
         if not state.crew_policy_written:
             yield _step(
                 state,
@@ -2053,6 +2176,54 @@ class AutopilotStep:
                 action="write compact role memory packets for all six roles before route work",
                 crew_memory_policy_written=True,
                 crew_memory_packets_written=CREW_SIZE,
+                active_node="bootstrap_continuation",
+            )
+            return
+
+        if not state.continuation_probe_done:
+            yield _step(
+                state,
+                label="host_continuation_capability_supported",
+                action="during startup bootstrap, probe host automation capability, record host-kind continuation evidence, and confirm real heartbeat setup is supported before Controller core loads",
+                continuation_probe_done=True,
+                continuation_host_kind_recorded=True,
+                continuation_evidence_written=True,
+                host_continuation_supported=True,
+                active_node="create_startup_heartbeat_before_controller_core",
+            )
+            yield _step(
+                state,
+                label="host_continuation_capability_unsupported_manual_resume",
+                action="during startup bootstrap, record manual-resume mode when host automation is unavailable or not requested, without creating heartbeat automation before Controller core loads",
+                continuation_probe_done=True,
+                continuation_host_kind_recorded=True,
+                continuation_evidence_written=True,
+                host_continuation_supported=False,
+                manual_resume_mode_recorded=True,
+                active_node="load_controller_core",
+            )
+            return
+
+        if state.host_continuation_supported and not state.heartbeat_schedule_created:
+            yield _step(
+                state,
+                label="heartbeat_schedule_created",
+                action="create one-minute route heartbeat as a stable launcher bound to the current run before loading Controller core",
+                heartbeat_schedule_created=True,
+                route_heartbeat_interval_minutes=1,
+                stable_heartbeat_launcher_recorded=True,
+                heartbeat_bound_to_current_run=True,
+                heartbeat_same_name_only_checked=False,
+                active_node="load_controller_core",
+            )
+            return
+
+        if not state.controller_core_loaded:
+            yield _step(
+                state,
+                label="controller_core_loaded_after_startup_continuation_bootstrap",
+                action="load Controller core only after startup continuation is either a bound heartbeat or recorded manual-resume mode",
+                controller_core_loaded=True,
                 active_node="pm_ratify_startup_self_interrogation",
             )
             return
@@ -2061,8 +2232,9 @@ class AutopilotStep:
             yield _step(
                 state,
                 label="startup_self_interrogation_pm_ratified",
-                action="project manager ratifies startup self-interrogation scope, risk layers, question count, and decision set before route/model gates",
+                action="project manager ratifies startup self-interrogation scope, risk layers, question count, decision set, and PM disposition of durable findings before route/model gates",
                 startup_self_interrogation_pm_ratified=True,
+                startup_self_interrogation_findings_dispositioned=True,
                 active_node="material_intake",
             )
             return
@@ -2515,11 +2687,31 @@ class AutopilotStep:
             )
             return
 
+        if not state.product_architecture_self_interrogation_record_written:
+            yield _step(
+                state,
+                label="product_architecture_self_interrogation_record_written",
+                action="PM writes a durable product-architecture self-interrogation record after officer and reviewer challenge so architecture doubts have a downstream destination",
+                product_architecture_self_interrogation_record_written=True,
+                active_node="freeze_contract",
+            )
+            return
+
+        if not state.product_architecture_self_interrogation_findings_dispositioned:
+            yield _step(
+                state,
+                label="product_architecture_self_interrogation_findings_dispositioned",
+                action="PM incorporates, defers, ledgers, rejects, or waives product-architecture self-interrogation findings before root contract freeze",
+                product_architecture_self_interrogation_findings_dispositioned=True,
+                active_node="freeze_contract",
+            )
+            return
+
         if not state.contract_frozen:
             yield _step(
                 state,
                 label="contract_frozen",
-                action="freeze high-ambition acceptance floor from the PM product-function architecture without limiting future standard increases",
+                action="freeze high-ambition acceptance floor from the PM product-function architecture after startup and product-architecture self-interrogation findings are durably dispositioned",
                 contract_frozen=True,
                 active_node="record_dependency_plan",
             )
@@ -3218,6 +3410,8 @@ class AutopilotStep:
                 completion_self_interrogation_layer_count=0,
                 completion_self_interrogation_questions_per_layer=0,
                 completion_self_interrogation_layers=0,
+                completion_self_interrogation_record_written=False,
+                completion_self_interrogation_findings_dispositioned=False,
                 completion_visible_roadmap_emitted=False,
                 high_value_work_review="unknown",
                 final_feature_matrix_review_done=False,
@@ -3918,6 +4112,24 @@ class AutopilotStep:
                     active_node="review_high_value_work",
                 )
                 return
+            if not state.completion_self_interrogation_record_written:
+                yield _step(
+                    state,
+                    label="completion_self_interrogation_record_written",
+                    action="write a durable completion self-interrogation record so final high-value-work decisions are traceable into the final ledger",
+                    completion_self_interrogation_record_written=True,
+                    active_node="review_high_value_work",
+                )
+                return
+            if not state.completion_self_interrogation_findings_dispositioned:
+                yield _step(
+                    state,
+                    label="completion_self_interrogation_findings_dispositioned",
+                    action="PM dispositions completion self-interrogation findings as exhausted, routed to repair, entered into the suggestion ledger, rejected, or explicitly waived before final ledger work",
+                    completion_self_interrogation_findings_dispositioned=True,
+                    active_node="review_high_value_work",
+                )
+                return
             if state.high_value_work_review == "unknown":
                 if state.standard_expansions < MAX_STANDARD_EXPANSIONS:
                     yield _step(
@@ -3973,6 +4185,8 @@ class AutopilotStep:
                         completion_self_interrogation_layer_count=0,
                         completion_self_interrogation_questions_per_layer=0,
                         completion_self_interrogation_layers=0,
+                        completion_self_interrogation_record_written=False,
+                        completion_self_interrogation_findings_dispositioned=False,
                         completion_visible_roadmap_emitted=False,
                         high_value_work_review="unknown",
                         standard_expansions=state.standard_expansions + 1,
@@ -4124,6 +4338,24 @@ class AutopilotStep:
                     label="final_route_wide_gate_ledger_unresolved_count_zero",
                     action="PM records zero unresolved current-route obligations before final reviewer replay",
                     final_route_wide_gate_ledger_unresolved_count_zero=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
+            if not state.final_route_wide_gate_ledger_self_interrogation_collected:
+                yield _step(
+                    state,
+                    label="final_route_wide_gate_ledger_self_interrogation_collected",
+                    action="PM cites the route self-interrogation index and collects startup, product-architecture, node, repair, role-result, and completion self-interrogation dispositions into the final ledger",
+                    final_route_wide_gate_ledger_self_interrogation_collected=True,
+                    active_node="final_route_wide_gate_ledger",
+                )
+                return
+            if not state.self_interrogation_index_clean:
+                yield _step(
+                    state,
+                    label="self_interrogation_index_clean",
+                    action="PM proves the self-interrogation index has no unresolved hard or current findings before final ledger build and terminal closure",
+                    self_interrogation_index_clean=True,
                     active_node="final_route_wide_gate_ledger",
                 )
                 return
@@ -4556,6 +4788,24 @@ class AutopilotStep:
                     node_focused_interrogation_done=True,
                     node_focused_interrogation_questions=DEFAULT_FOCUSED_GRILLME_QUESTIONS,
                     node_focused_interrogation_scope_id="active-leaf-node",
+                    active_node="check_node_product_function_model",
+                )
+                return
+            if not state.node_self_interrogation_record_written:
+                yield _step(
+                    state,
+                    label="node_self_interrogation_record_written",
+                    action="write a durable current-node self-interrogation record before node modeling, acceptance planning, or worker packet dispatch can rely on the grill-me result",
+                    node_self_interrogation_record_written=True,
+                    active_node="check_node_product_function_model",
+                )
+                return
+            if not state.node_self_interrogation_findings_dispositioned:
+                yield _step(
+                    state,
+                    label="node_self_interrogation_findings_dispositioned",
+                    action="PM binds current-node self-interrogation findings into the node acceptance plan, a later gate, the suggestion ledger, a rejection, or an explicit waiver before packet dispatch",
+                    node_self_interrogation_findings_dispositioned=True,
                     active_node="check_node_product_function_model",
                 )
                 return
@@ -5015,6 +5265,78 @@ class AutopilotStep:
                     active_node="load_human_inspection_context",
                 )
                 return
+            if not state.blocker_repair_policy_snapshot_written:
+                yield _step(
+                    state,
+                    label="blocker_repair_policy_snapshot_written",
+                    action="write the run-visible blocker repair policy table before any router control blocker is materialized",
+                    blocker_repair_policy_snapshot_written=True,
+                    active_node="exercise_control_blocker_policy",
+                )
+                return
+            if not state.router_hard_rejection_seen:
+                yield _step(
+                    state,
+                    label="control_blocker_policy_row_attached",
+                    action="router materializes a mechanical control blocker with policy row, first handler, retry budget, and return policy metadata",
+                    router_hard_rejection_seen=True,
+                    control_blocker_artifact_written=True,
+                    blocker_policy_row_attached=True,
+                    control_blocker_handling_lane="control_plane_reissue",
+                    control_blocker_first_handler="responsible_role",
+                    control_blocker_direct_retry_budget=2,
+                    control_blocker_direct_retry_attempts=0,
+                    active_node="deliver_control_blocker_first_handler",
+                )
+                return
+            if (
+                state.control_blocker_handling_lane == "control_plane_reissue"
+                and not state.control_blocker_delivered_to_responsible_role
+            ):
+                yield _step(
+                    state,
+                    label="control_blocker_first_handler_delivered",
+                    action="controller delivers the first mechanical blocker to the responsible role without opening sealed bodies or making a PM decision",
+                    control_blocker_delivered_to_responsible_role=True,
+                    active_node="retry_control_plane_reissue",
+                )
+                return
+            if (
+                state.control_blocker_delivered_to_responsible_role
+                and not state.control_blocker_retry_budget_exhausted
+            ):
+                yield _step(
+                    state,
+                    label="control_blocker_retry_budget_escalated_to_pm",
+                    action="after two failed direct reissue attempts, router escalates the same blocker family to PM instead of looping the responsible role",
+                    control_blocker_handling_lane="pm_repair_decision_required",
+                    control_blocker_direct_retry_attempts=2,
+                    control_blocker_retry_budget_exhausted=True,
+                    control_blocker_escalated_to_pm=True,
+                    control_blocker_delivered_to_pm=True,
+                    active_node="pm_control_blocker_recovery_decision",
+                )
+                return
+            if state.control_blocker_escalated_to_pm and not state.pm_blocker_recovery_option_recorded:
+                yield _step(
+                    state,
+                    label="pm_blocker_recovery_option_recorded",
+                    action="PM chooses a policy-listed recovery option instead of silently passing the blocked gate",
+                    pm_blocker_recovery_option_recorded=True,
+                    pm_blocker_hard_stop_checked=True,
+                    pm_blocker_silent_pass_forbidden=True,
+                    active_node="pm_control_blocker_return_gate",
+                )
+                return
+            if state.pm_blocker_recovery_option_recorded and not state.pm_blocker_return_gate_recorded:
+                yield _step(
+                    state,
+                    label="pm_blocker_return_gate_recorded",
+                    action="PM names the gate or terminal stop that follows the blocker recovery decision",
+                    pm_blocker_return_gate_recorded=True,
+                    active_node="load_human_inspection_context",
+                )
+                return
             if not state.reviewer_child_skill_use_evidence_checked:
                 yield _step(
                     state,
@@ -5178,6 +5500,10 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         return InvariantResult.fail(
             "final report emitted before startup grill-me seeded the improvement candidate pool and validation direction"
         )
+    if not _root_self_interrogation_gate_ready(state):
+        return InvariantResult.fail(
+            "final report emitted before startup and product-architecture self-interrogation records were durably dispositioned"
+        )
     if not _product_function_architecture_ready(state):
         return InvariantResult.fail(
             "final report emitted before PM-owned product-function architecture, product-officer approval, and reviewer challenge"
@@ -5256,6 +5582,10 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         and state.high_value_work_review == "exhausted"
     ):
         return InvariantResult.fail("final report emitted before completion grill-me exhausted obvious high-value work")
+    if not _self_interrogation_index_final_ready(state):
+        return InvariantResult.fail(
+            "final report emitted before self-interrogation records were collected into a clean final index"
+        )
     if not state.completion_visible_roadmap_emitted:
         return InvariantResult.fail("final report emitted before visible completion user flow diagram")
     if not (
@@ -5349,6 +5679,10 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
         return InvariantResult.fail("FlowPilot advanced before resolving the user's startup display surface answer")
     if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not state.preflow_visible_plan_cleared:
         return InvariantResult.fail("FlowPilot advanced before clearing the ordinary pre-FlowPilot visible plan")
+    if state.contract_frozen and not _root_self_interrogation_gate_ready(state):
+        return InvariantResult.fail(
+            "contract was frozen before startup and product-architecture self-interrogation findings were durably dispositioned"
+        )
     return InvariantResult.pass_()
 
 
@@ -5622,6 +5956,10 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             return InvariantResult.fail(
                 "chunk started before node focused grill-me had 20-50 questions and a scope id"
             )
+        if not _node_self_interrogation_gate_ready(state):
+            return InvariantResult.fail(
+                "chunk started before current-node self-interrogation findings were durably dispositioned"
+            )
         if not state.node_product_function_model_checked:
             return InvariantResult.fail("chunk started before active node product-function model check")
         if not state.current_node_high_standard_recheck_written:
@@ -5803,12 +6141,37 @@ def router_hard_rejection_requires_control_blocker_lane(state: State, trace) -> 
     lanes = {"control_plane_reissue", "pm_repair_decision_required", "fatal_protocol_violation"}
     if not state.control_blocker_artifact_written:
         return InvariantResult.fail("router hard rejection did not write a run-scoped control blocker artifact")
+    if not (state.blocker_repair_policy_snapshot_written and state.blocker_policy_row_attached):
+        return InvariantResult.fail("router hard rejection did not attach a blocker repair policy row and run-visible policy snapshot")
     if state.control_blocker_handling_lane not in lanes:
         return InvariantResult.fail("router hard rejection lacked a valid control blocker handling lane")
-    if state.control_blocker_handling_lane == "control_plane_reissue" and not state.control_blocker_delivered_to_responsible_role:
+    if (
+        state.control_blocker_handling_lane == "control_plane_reissue"
+        and not state.control_blocker_delivered_to_responsible_role
+        and state.active_node != "deliver_control_blocker_first_handler"
+    ):
         return InvariantResult.fail("control-plane reissue blocker was not routed back to the responsible role")
-    if state.control_blocker_handling_lane in {"pm_repair_decision_required", "fatal_protocol_violation"} and not state.control_blocker_delivered_to_pm:
+    if (
+        state.control_blocker_handling_lane in {"pm_repair_decision_required", "fatal_protocol_violation"}
+        and not state.control_blocker_delivered_to_pm
+        and state.active_node != "pm_control_blocker_recovery_decision"
+    ):
         return InvariantResult.fail("PM repair or fatal control blocker was not routed to Project Manager")
+    if (
+        state.control_blocker_first_handler == "responsible_role"
+        and state.control_blocker_direct_retry_attempts >= state.control_blocker_direct_retry_budget
+        and not (state.control_blocker_retry_budget_exhausted and state.control_blocker_escalated_to_pm)
+    ):
+        return InvariantResult.fail("exhausted direct blocker retries did not escalate to PM")
+    if state.control_blocker_delivered_to_pm and state.active_node not in {
+        "pm_control_blocker_recovery_decision",
+        "pm_control_blocker_return_gate",
+    } and not (
+        state.pm_blocker_recovery_option_recorded
+        and state.pm_blocker_return_gate_recorded
+        and state.pm_blocker_silent_pass_forbidden
+    ):
+        return InvariantResult.fail("PM-handled blocker lacked recovery option, return gate, or silent-pass prohibition")
     return InvariantResult.pass_()
 
 
@@ -5891,6 +6254,23 @@ def stable_heartbeat_prompt_not_route_state(state: State, trace) -> InvariantRes
         and state.stable_heartbeat_launcher_recorded
     ):
         return InvariantResult.fail("manual-resume route unexpectedly created a stable heartbeat launcher")
+    return InvariantResult.pass_()
+
+
+def startup_continuation_bootstraps_before_controller_core(state: State, trace) -> InvariantResult:
+    del trace
+    if state.controller_core_loaded and not _continuation_ready(state):
+        return InvariantResult.fail(
+            "Controller core loaded before startup continuation was bound to heartbeat or manual resume"
+        )
+    if state.controller_core_loaded and state.host_continuation_supported and not _automated_continuation_configured(state):
+        return InvariantResult.fail(
+            "Controller core loaded before scheduled-continuation heartbeat was fully configured"
+        )
+    if state.controller_core_loaded and state.manual_resume_mode_recorded and state.heartbeat_schedule_created:
+        return InvariantResult.fail(
+            "Controller core loaded after manual-resume startup that still created heartbeat automation"
+        )
     return InvariantResult.pass_()
 
 
@@ -6311,11 +6691,13 @@ def actor_authority_gates_require_correct_role(
         and state.final_route_wide_gate_ledger_stale_evidence_checked
         and state.final_route_wide_gate_ledger_superseded_nodes_explained
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_route_wide_gate_ledger_self_interrogation_collected
+        and state.self_interrogation_index_clean
         and state.final_residual_risk_triage_done
         and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
-            "PM built final route-wide gate ledger before current route scan, deep leaf and parent review gate collection, generated-resource lineage, stale-evidence check, superseded explanations, zero unresolved count, and zero unresolved residual risks"
+            "PM built final route-wide gate ledger before current route scan, deep leaf and parent review gate collection, generated-resource lineage, stale-evidence check, superseded explanations, clean self-interrogation index, zero unresolved count, and zero unresolved residual risks"
         )
     if state.final_route_wide_gate_ledger_reviewer_backward_checked and not (
         state.final_route_wide_gate_ledger_pm_built
@@ -6327,6 +6709,8 @@ def actor_authority_gates_require_correct_role(
         and state.terminal_human_backward_pm_segment_decisions_recorded
         and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_route_wide_gate_ledger_self_interrogation_collected
+        and state.self_interrogation_index_clean
         and state.final_residual_risk_unresolved_count_zero
     ):
         return InvariantResult.fail(
@@ -6339,6 +6723,8 @@ def actor_authority_gates_require_correct_role(
         and state.terminal_human_backward_repair_restart_policy_recorded
         and state.final_route_wide_gate_ledger_reviewer_backward_checked
         and state.final_route_wide_gate_ledger_unresolved_count_zero
+        and state.final_route_wide_gate_ledger_self_interrogation_collected
+        and state.self_interrogation_index_clean
         and state.final_residual_risk_triage_done
         and state.final_residual_risk_unresolved_count_zero
         and state.final_ledger_pm_independent_audit_done
@@ -6504,6 +6890,11 @@ INVARIANTS = (
         name="stable_heartbeat_prompt_not_route_state",
         description="Heartbeat automation stays a stable launcher while persisted route/frontier state carries next-jump changes.",
         predicate=stable_heartbeat_prompt_not_route_state,
+    ),
+    Invariant(
+        name="startup_continuation_bootstraps_before_controller_core",
+        description="Startup establishes heartbeat or manual-resume continuation before Controller core handoff.",
+        predicate=startup_continuation_bootstraps_before_controller_core,
     ),
     Invariant(
         name="heartbeat_continuation_is_lifecycle_state",

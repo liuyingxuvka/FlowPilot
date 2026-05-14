@@ -1,0 +1,112 @@
+{
+  "schema_version": "flowpilot.blocker_repair_policy.v1",
+  "run_id": "run-001",
+  "created_at": "<iso-8601-timestamp>",
+  "policy_scope": "new_control_blockers",
+  "rows": [
+    {
+      "policy_row_id": "mechanical_control_plane_reissue",
+      "blocker_family": "mechanical_control_plane",
+      "first_handler": "responsible_role",
+      "direct_retry_budget": 2,
+      "escalate_to": "project_manager",
+      "pm_recovery_options": [
+        "same_gate_repair",
+        "rollback_to_prior_gate",
+        "supplemental_node",
+        "repair_node",
+        "route_mutation",
+        "evidence_quarantine",
+        "allowed_waiver",
+        "user_stop",
+        "protocol_dead_end"
+      ],
+      "return_policy": {
+        "requires_named_return_gate": true,
+        "default_return_gate": "originating_event",
+        "blocked_gate_may_not_be_marked_passed_directly": true
+      },
+      "hard_stop_conditions": [],
+      "controller_boundary": "Controller may deliver policy row and sealed repair packet metadata only."
+    },
+    {
+      "policy_row_id": "pm_semantic_repair",
+      "blocker_family": "semantic_or_route_repair",
+      "first_handler": "project_manager",
+      "direct_retry_budget": 0,
+      "escalate_to": "project_manager",
+      "pm_recovery_options": [
+        "same_gate_repair",
+        "rollback_to_prior_gate",
+        "supplemental_node",
+        "repair_node",
+        "route_mutation",
+        "evidence_quarantine",
+        "allowed_waiver",
+        "user_stop",
+        "protocol_dead_end"
+      ],
+      "return_policy": {
+        "requires_named_return_gate": true,
+        "default_return_gate": "pm_selected_gate",
+        "blocked_gate_may_not_be_marked_passed_directly": true
+      },
+      "hard_stop_conditions": [],
+      "controller_boundary": "Controller delivers blocker metadata to PM and waits for a PM recovery decision."
+    },
+    {
+      "policy_row_id": "fatal_protocol_violation",
+      "blocker_family": "fatal_protocol_violation",
+      "first_handler": "project_manager",
+      "direct_retry_budget": 0,
+      "escalate_to": "project_manager",
+      "pm_recovery_options": [
+        "same_gate_repair",
+        "rollback_to_prior_gate",
+        "route_mutation",
+        "evidence_quarantine",
+        "user_stop",
+        "protocol_dead_end"
+      ],
+      "return_policy": {
+        "requires_named_return_gate": true,
+        "default_return_gate": "pm_selected_safe_recovery_gate",
+        "blocked_gate_may_not_be_marked_passed_directly": true
+      },
+      "hard_stop_conditions": [
+        "controller_body_access",
+        "private_role_to_role_relay",
+        "contaminated_evidence"
+      ],
+      "controller_boundary": "Controller stops normal route work and delivers sealed metadata to PM."
+    },
+    {
+      "policy_row_id": "self_interrogation_repair",
+      "blocker_family": "self_interrogation_disposition",
+      "first_handler": "project_manager",
+      "direct_retry_budget": 0,
+      "escalate_to": "project_manager",
+      "pm_recovery_options": [
+        "rerun_self_interrogation",
+        "record_disposition",
+        "convert_findings_to_repair",
+        "same_gate_repair",
+        "rollback_to_prior_gate",
+        "supplemental_node",
+        "route_mutation",
+        "evidence_quarantine",
+        "allowed_waiver",
+        "user_stop"
+      ],
+      "return_policy": {
+        "requires_named_return_gate": true,
+        "default_return_gate": "blocked_self_interrogation_gate",
+        "blocked_gate_may_not_be_marked_passed_directly": true
+      },
+      "hard_stop_conditions": [
+        "unresolved_hard_current_findings_require_repair_or_authorized_waiver"
+      ],
+      "controller_boundary": "Controller delivers blocker metadata to PM; PM owns grill-me rerun and disposition."
+    }
+  ]
+}

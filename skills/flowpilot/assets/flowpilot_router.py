@@ -44,6 +44,7 @@ DISPLAY_PLAN_SCHEMA = "flowpilot.display_plan.v1"
 ROUTE_STATE_SNAPSHOT_SCHEMA = "flowpilot.route_state_snapshot.v1"
 CONTROL_BLOCKER_SCHEMA = "flowpilot.control_blocker.v1"
 CONTROL_BLOCKER_REPAIR_PACKET_SCHEMA = "flowpilot.control_blocker_repair_packet.v1"
+BLOCKER_REPAIR_POLICY_SCHEMA = "flowpilot.blocker_repair_policy.v1"
 REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
 REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
 ROLE_RECOVERY_TRANSACTION_SCHEMA = "flowpilot.role_recovery_transaction.v1"
@@ -59,6 +60,8 @@ GATE_DECISION_SCHEMA = "flowpilot.gate_decision.v1"
 GATE_DECISION_RECORD_SCHEMA = "flowpilot.gate_decision_record.v1"
 GATE_DECISION_LEDGER_SCHEMA = "flowpilot.gate_decision_ledger.v1"
 PM_SUGGESTION_LEDGER_ENTRY_SCHEMA = "flowpilot.pm_suggestion_item.v1"
+SELF_INTERROGATION_INDEX_SCHEMA = "flowpilot.self_interrogation_index.v1"
+SELF_INTERROGATION_RECORD_SCHEMA = "flowpilot.self_interrogation_record.v1"
 PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT = "pm_records_control_blocker_repair_decision"
 PM_CONTROL_BLOCKER_FOLLOWUP_BLOCKER_EVENT = "pm_records_control_blocker_followup_blocker"
 PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT = "pm_records_control_blocker_protocol_blocker"
@@ -147,6 +150,103 @@ CONTROL_BLOCKER_LANES = {
 PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES = {
     "pm_repair_decision_required",
     "fatal_protocol_violation",
+}
+PM_BLOCKER_RECOVERY_OPTIONS = (
+    "same_gate_repair",
+    "rollback_to_prior_gate",
+    "supplemental_node",
+    "repair_node",
+    "route_mutation",
+    "evidence_quarantine",
+    "allowed_waiver",
+    "user_stop",
+    "protocol_dead_end",
+)
+BLOCKER_REPAIR_POLICY_ROWS: dict[str, dict[str, Any]] = {
+    "mechanical_control_plane_reissue": {
+        "policy_row_id": "mechanical_control_plane_reissue",
+        "blocker_family": "mechanical_control_plane",
+        "first_handler": "responsible_role",
+        "direct_retry_budget": 2,
+        "escalate_to": "project_manager",
+        "pm_recovery_options": PM_BLOCKER_RECOVERY_OPTIONS,
+        "return_policy": {
+            "requires_named_return_gate": True,
+            "default_return_gate": "originating_event",
+            "blocked_gate_may_not_be_marked_passed_directly": True,
+        },
+        "hard_stop_conditions": [],
+        "controller_boundary": "deliver policy row and sealed repair packet only; do not open sealed bodies or decide project substance",
+    },
+    "pm_semantic_repair": {
+        "policy_row_id": "pm_semantic_repair",
+        "blocker_family": "semantic_or_route_repair",
+        "first_handler": "project_manager",
+        "direct_retry_budget": 0,
+        "escalate_to": "project_manager",
+        "pm_recovery_options": PM_BLOCKER_RECOVERY_OPTIONS,
+        "return_policy": {
+            "requires_named_return_gate": True,
+            "default_return_gate": "pm_selected_gate",
+            "blocked_gate_may_not_be_marked_passed_directly": True,
+        },
+        "hard_stop_conditions": [],
+        "controller_boundary": "deliver blocker metadata only and wait for PM recovery decision",
+    },
+    "fatal_protocol_violation": {
+        "policy_row_id": "fatal_protocol_violation",
+        "blocker_family": "fatal_protocol_violation",
+        "first_handler": "project_manager",
+        "direct_retry_budget": 0,
+        "escalate_to": "project_manager",
+        "pm_recovery_options": (
+            "same_gate_repair",
+            "rollback_to_prior_gate",
+            "route_mutation",
+            "evidence_quarantine",
+            "user_stop",
+            "protocol_dead_end",
+        ),
+        "return_policy": {
+            "requires_named_return_gate": True,
+            "default_return_gate": "pm_selected_safe_recovery_gate",
+            "blocked_gate_may_not_be_marked_passed_directly": True,
+        },
+        "hard_stop_conditions": [
+            "controller_body_access",
+            "private_role_to_role_relay",
+            "contaminated_evidence",
+        ],
+        "controller_boundary": "stop normal route work and deliver sealed repair packet envelope to PM",
+    },
+    "self_interrogation_repair": {
+        "policy_row_id": "self_interrogation_repair",
+        "blocker_family": "self_interrogation_disposition",
+        "first_handler": "project_manager",
+        "direct_retry_budget": 0,
+        "escalate_to": "project_manager",
+        "pm_recovery_options": (
+            "rerun_self_interrogation",
+            "record_disposition",
+            "convert_findings_to_repair",
+            "same_gate_repair",
+            "rollback_to_prior_gate",
+            "supplemental_node",
+            "route_mutation",
+            "evidence_quarantine",
+            "allowed_waiver",
+            "user_stop",
+        ),
+        "return_policy": {
+            "requires_named_return_gate": True,
+            "default_return_gate": "blocked_self_interrogation_gate",
+            "blocked_gate_may_not_be_marked_passed_directly": True,
+        },
+        "hard_stop_conditions": [
+            "unresolved_hard_current_findings_require_repair_or_authorized_waiver",
+        ],
+        "controller_boundary": "deliver blocker metadata to PM; do not rerun grill-me or decide finding disposition",
+    },
 }
 PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES = {
     "request_officer_model_miss_analysis",
@@ -420,6 +520,21 @@ PM_SUGGESTION_CLOSURE_STATUSES_BY_DISPOSITION = {
 }
 PM_SUGGESTION_WORKER_ROLES = {"worker_a", "worker_b"}
 PM_SUGGESTION_OFFICER_ROLES = {"process_flowguard_officer", "product_flowguard_officer"}
+SELF_INTERROGATION_SCOPES = {
+    "startup",
+    "product_architecture",
+    "node_entry",
+    "repair",
+    "completion",
+    "role_result",
+}
+SELF_INTERROGATION_HARD_SEVERITIES = {"hard_blocker", "current_gate_blocker"}
+SELF_INTERROGATION_FINAL_DISPOSITIONS = {
+    *PM_SUGGESTION_FINAL_DISPOSITIONS,
+    "incorporated_into_artifact",
+    "entered_pm_suggestion_ledger",
+    "no_action_needed",
+}
 GATE_DECISION_ALLOWED_KINDS = {
     "quality",
     "repair",
@@ -875,6 +990,14 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "label": "six_roles_started_from_user_answer",
         "summary": "Start the six current-task roles and record same-action role core prompt delivery according to the user's background-agent answer.",
         "actor": "bootloader",
+    },
+    {
+        "action_type": "create_heartbeat_automation",
+        "flag": "continuation_binding_recorded",
+        "label": "host_bootstraps_startup_heartbeat_automation",
+        "summary": "Create the one-minute Codex heartbeat during startup bootstrap before Controller core handoff.",
+        "actor": "bootloader",
+        "requires_host_automation": True,
     },
     {
         "action_type": "inject_role_core_prompts",
@@ -2817,6 +2940,301 @@ def _pm_suggestion_ledger_status(run_root: Path) -> dict[str, Any]:
     }
 
 
+def _self_interrogation_index_path(run_root: Path) -> Path:
+    return run_root / "self_interrogation_index.json"
+
+
+def _self_interrogation_issue(
+    message: str,
+    *,
+    record_id: str = "",
+    record_path: str = "",
+    scope: str = "",
+) -> dict[str, str]:
+    issue = {"message": message}
+    if record_id:
+        issue["record_id"] = record_id
+    if record_path:
+        issue["record_path"] = record_path
+    if scope:
+        issue["scope"] = scope
+    return issue
+
+
+def _self_interrogation_entry_path(entry: dict[str, Any]) -> str:
+    return str(entry.get("record_path") or entry.get("path") or "")
+
+
+def _self_interrogation_final_status(status: str) -> bool:
+    return status in SELF_INTERROGATION_FINAL_DISPOSITIONS
+
+
+def _self_interrogation_record_issues(
+    project_root: Path,
+    run_root: Path,
+    record_path: Path,
+    record: dict[str, Any],
+    *,
+    expected_scope: str | None = None,
+    expected_node_id: str | None = None,
+    expected_route_version: int | None = None,
+) -> tuple[list[dict[str, str]], int]:
+    record_rel = project_relative(project_root, record_path)
+    record_id = str(record.get("record_id") or record_path.stem)
+    scope = str(record.get("scope") or "")
+    issues: list[dict[str, str]] = []
+    unresolved_hard_count = 0
+
+    def add(message: str) -> None:
+        issues.append(_self_interrogation_issue(message, record_id=record_id, record_path=record_rel, scope=scope))
+
+    if record.get("schema_version") != SELF_INTERROGATION_RECORD_SCHEMA:
+        add(f"schema_version must be {SELF_INTERROGATION_RECORD_SCHEMA}")
+    if not record.get("record_id"):
+        add("record_id is required")
+    if scope not in SELF_INTERROGATION_SCOPES:
+        add("scope must be a supported self-interrogation scope")
+    if expected_scope and scope != expected_scope:
+        add(f"scope must be {expected_scope}")
+    if not record.get("owner_role"):
+        add("owner_role is required")
+    if not record.get("source_event"):
+        add("source_event is required")
+    raw_source_path = str(record.get("source_artifact_path") or "")
+    if not raw_source_path:
+        add("source_artifact_path is required")
+    else:
+        source_path = resolve_project_path(project_root, raw_source_path)
+        if not source_path.exists():
+            add(f"source_artifact_path does not exist: {raw_source_path}")
+    if expected_node_id and scope in {"node_entry", "repair", "role_result"}:
+        if str(record.get("node_id") or "") != expected_node_id:
+            add(f"node_id must match active node {expected_node_id}")
+    if expected_route_version is not None and record.get("route_version") is not None:
+        try:
+            record_route_version = int(record.get("route_version"))
+        except (TypeError, ValueError):
+            add("route_version must be an integer when present")
+        else:
+            if record_route_version != expected_route_version:
+                add(f"route_version must match active route version {expected_route_version}")
+
+    findings = record.get("findings")
+    if not isinstance(findings, list):
+        add("findings must be a list")
+        findings = []
+    for index, finding in enumerate(findings, start=1):
+        if not isinstance(finding, dict):
+            add(f"findings[{index}] must be an object")
+            continue
+        finding_id = str(finding.get("finding_id") or f"finding-{index}")
+        severity = str(finding.get("severity") or "")
+        disposition = finding.get("disposition") if isinstance(finding.get("disposition"), dict) else {}
+        disposition_status = str(disposition.get("status") or "")
+        for field in ("finding_id", "severity", "category", "summary"):
+            if not finding.get(field):
+                add(f"finding {finding_id} missing {field}")
+        if not disposition_status:
+            add(f"finding {finding_id} missing disposition.status")
+        hard_or_current = severity in SELF_INTERROGATION_HARD_SEVERITIES or finding.get("blocks_current_gate_until_disposition") is True
+        if hard_or_current and not _self_interrogation_final_status(disposition_status):
+            unresolved_hard_count += 1
+            add(f"finding {finding_id} is unresolved for a hard/current self-interrogation finding")
+        if disposition_status == "reject_with_reason" and not disposition.get("reason"):
+            add(f"finding {finding_id} reject_with_reason requires reason")
+        if disposition_status == "waive_with_authority" and (
+            not disposition.get("reason") or not disposition.get("waiver_authority_role")
+        ):
+            add(f"finding {finding_id} waive_with_authority requires reason and waiver_authority_role")
+        if disposition_status == "defer_to_named_node" and not disposition.get("target_node_or_gate_id"):
+            add(f"finding {finding_id} defer_to_named_node requires target_node_or_gate_id")
+        if disposition_status == "entered_pm_suggestion_ledger" and not (
+            disposition.get("suggestion_id") or record.get("pm_suggestion_ledger_ids")
+        ):
+            add(f"finding {finding_id} entered_pm_suggestion_ledger requires a suggestion id")
+        if disposition_status == "incorporated_into_artifact" and not (
+            disposition.get("artifact_path") or record.get("downstream_artifact_paths")
+        ):
+            add(f"finding {finding_id} incorporated_into_artifact requires downstream artifact evidence")
+
+    try:
+        declared_unresolved = int(record.get("unresolved_hard_finding_count", 0) or 0)
+    except (TypeError, ValueError):
+        declared_unresolved = -1
+        add("unresolved_hard_finding_count must be an integer")
+    if declared_unresolved > 0:
+        unresolved_hard_count = max(unresolved_hard_count, declared_unresolved)
+        add("record declares unresolved hard/current self-interrogation findings")
+    disposition_summary = record.get("pm_disposition_summary")
+    if not isinstance(disposition_summary, dict):
+        add("pm_disposition_summary must be an object")
+    for field in ("downstream_artifact_paths", "pm_suggestion_ledger_ids"):
+        if not isinstance(record.get(field), list):
+            add(f"{field} must be a list")
+    if run_root.name and record.get("run_id") and str(record.get("run_id")) != run_root.name:
+        add("run_id must match current run")
+
+    return issues, unresolved_hard_count
+
+
+def _self_interrogation_status(
+    project_root: Path,
+    run_root: Path,
+    *,
+    scopes: Iterable[str] | None = None,
+    node_id: str | None = None,
+    route_version: int | None = None,
+    require_index: bool = True,
+    require_records: bool = True,
+) -> dict[str, Any]:
+    index_path = _self_interrogation_index_path(run_root)
+    index_rel = project_relative(project_root, index_path)
+    issues: list[dict[str, str]] = []
+    scope_filter = {str(scope) for scope in scopes} if scopes is not None else None
+    records: list[dict[str, Any]] = []
+    matched_scopes: set[str] = set()
+    unresolved_hard_count = 0
+
+    if not index_path.exists():
+        if require_index:
+            issues.append(_self_interrogation_issue("self-interrogation index is missing", record_path=index_rel))
+        return {
+            "path": str(index_path),
+            "exists": False,
+            "record_count": 0,
+            "unresolved_hard_finding_count": unresolved_hard_count,
+            "issue_count": len(issues),
+            "clean": not issues,
+            "issues": issues,
+        }
+
+    index = read_json(index_path)
+    if index.get("schema_version") != SELF_INTERROGATION_INDEX_SCHEMA:
+        issues.append(_self_interrogation_issue(f"index schema_version must be {SELF_INTERROGATION_INDEX_SCHEMA}", record_path=index_rel))
+    raw_entries = index.get("records")
+    if raw_entries is None:
+        raw_entries = index.get("entries")
+    if not isinstance(raw_entries, list):
+        issues.append(_self_interrogation_issue("self-interrogation index records must be a list", record_path=index_rel))
+        raw_entries = []
+
+    for entry in raw_entries:
+        if not isinstance(entry, dict):
+            issues.append(_self_interrogation_issue("self-interrogation index entry must be an object", record_path=index_rel))
+            continue
+        entry_scope = str(entry.get("scope") or "")
+        if scope_filter is not None and entry_scope and entry_scope not in scope_filter:
+            continue
+        raw_record_path = _self_interrogation_entry_path(entry)
+        if not raw_record_path:
+            issues.append(_self_interrogation_issue("self-interrogation index entry requires record_path", record_path=index_rel, scope=entry_scope))
+            continue
+        record_path = resolve_project_path(project_root, raw_record_path)
+        record_rel = project_relative(project_root, record_path)
+        if not record_path.exists():
+            issues.append(_self_interrogation_issue("self-interrogation record path is missing", record_path=record_rel, scope=entry_scope))
+            continue
+        record = read_json(record_path)
+        record_scope = str(record.get("scope") or entry_scope)
+        if scope_filter is not None and record_scope not in scope_filter:
+            continue
+        if node_id and record_scope in {"node_entry", "repair", "role_result"}:
+            entry_node_id = str(entry.get("node_id") or "")
+            record_node_id = str(record.get("node_id") or entry_node_id)
+            if record_node_id != node_id:
+                continue
+        if route_version is not None:
+            raw_route_version = record.get("route_version", entry.get("route_version"))
+            if raw_route_version is not None:
+                try:
+                    if int(raw_route_version) != route_version:
+                        continue
+                except (TypeError, ValueError):
+                    issues.append(_self_interrogation_issue("route_version must be an integer", record_path=record_rel, scope=record_scope))
+                    continue
+        matched_scopes.add(record_scope)
+        record_issues, record_unresolved = _self_interrogation_record_issues(
+            project_root,
+            run_root,
+            record_path,
+            record,
+            expected_scope=record_scope,
+            expected_node_id=node_id,
+            expected_route_version=route_version,
+        )
+        issues.extend(record_issues)
+        unresolved_hard_count += record_unresolved
+        records.append(
+            {
+                "record_id": str(record.get("record_id") or record_path.stem),
+                "scope": record_scope,
+                "path": record_rel,
+                "unresolved_hard_finding_count": record_unresolved,
+            }
+        )
+
+    if require_records and not records:
+        if scope_filter:
+            issues.append(
+                _self_interrogation_issue(
+                    "missing required self-interrogation record scope(s): " + ", ".join(sorted(scope_filter)),
+                    record_path=index_rel,
+                )
+            )
+        else:
+            issues.append(_self_interrogation_issue("self-interrogation index has no records", record_path=index_rel))
+    if scope_filter:
+        missing_scopes = sorted(scope_filter - matched_scopes)
+        if missing_scopes:
+            issues.append(
+                _self_interrogation_issue(
+                    "missing required self-interrogation record scope(s): " + ", ".join(missing_scopes),
+                    record_path=index_rel,
+                )
+            )
+
+    return {
+        "path": str(index_path),
+        "exists": True,
+        "record_count": len(records),
+        "unresolved_hard_finding_count": unresolved_hard_count,
+        "issue_count": len(issues),
+        "clean": not issues and unresolved_hard_count == 0,
+        "issues": issues,
+        "records": records,
+    }
+
+
+def _format_self_interrogation_status_issue(status: dict[str, Any]) -> str:
+    issues = status.get("issues") if isinstance(status.get("issues"), list) else []
+    if not issues:
+        return "unknown issue"
+    first = issues[0] if isinstance(issues[0], dict) else {"message": str(issues[0])}
+    location = first.get("record_path") or status.get("path") or ""
+    return f"{first.get('message', 'unknown issue')} ({location})" if location else str(first.get("message") or "unknown issue")
+
+
+def _require_clean_self_interrogation(
+    project_root: Path,
+    run_root: Path,
+    *,
+    gate_name: str,
+    scopes: Iterable[str] | None = None,
+    node_id: str | None = None,
+    route_version: int | None = None,
+) -> dict[str, Any]:
+    status = _self_interrogation_status(
+        project_root,
+        run_root,
+        scopes=scopes,
+        node_id=node_id,
+        route_version=route_version,
+    )
+    if not status["clean"]:
+        raise RouterError(f"{gate_name} requires clean self-interrogation records: {_format_self_interrogation_status_issue(status)}")
+    return status
+
+
 def resolve_project_path(project_root: Path, raw_path: str) -> Path:
     path = Path(raw_path)
     return path if path.is_absolute() else project_root / path
@@ -3737,14 +4155,14 @@ def run_state_path(run_root: Path) -> Path:
     return run_root / "router_state.json"
 
 
-def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
+def new_run_state(run_id: str, run_root_rel: str, *, controller_core_loaded: bool = False) -> dict[str, Any]:
     return {
         "schema_version": RUN_STATE_SCHEMA,
         "run_id": run_id,
         "run_root": run_root_rel,
-        "status": "controller_ready",
+        "status": "controller_ready" if controller_core_loaded else "startup_bootstrap",
         "phase": "startup_intake",
-        "holder": "controller",
+        "holder": "controller" if controller_core_loaded else "bootloader",
         "pending_action": None,
         "manifest_check_requests": 0,
         "manifest_checks": 0,
@@ -3754,6 +4172,8 @@ def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
         "mail_deliveries": 0,
         "control_blockers": [],
         "resolved_control_blockers": [],
+        "blocker_repair_attempts": {},
+        "blocker_repair_policy_snapshot": None,
         "protocol_blockers": [],
         "gate_decisions": [],
         "active_control_blocker": None,
@@ -3763,7 +4183,7 @@ def new_run_state(run_id: str, run_root_rel: str) -> dict[str, Any]:
         "events": [],
         "quarantined_role_reports": [],
         "flags": {
-            "controller_core_loaded": True,
+            "controller_core_loaded": controller_core_loaded,
             **RUNTIME_FLAG_DEFAULTS,
             **{entry["flag"]: False for entry in SYSTEM_CARD_SEQUENCE},
             **{entry["flag"]: False for entry in MAIL_SEQUENCE},
@@ -3796,6 +4216,8 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
     state.setdefault("delivered_mail", [])
     state.setdefault("control_blockers", [])
     state.setdefault("resolved_control_blockers", [])
+    state.setdefault("blocker_repair_attempts", {})
+    state.setdefault("blocker_repair_policy_snapshot", None)
     state.setdefault("protocol_blockers", [])
     state.setdefault("gate_decisions", [])
     state.setdefault("quarantined_role_reports", [])
@@ -3807,6 +4229,37 @@ def load_run_state(project_root: Path, bootstrap_state: dict[str, Any] | None = 
 
 def save_run_state(run_root: Path, state: dict[str, Any]) -> None:
     write_json(run_state_path(run_root), state)
+
+
+def _ensure_startup_run_state(project_root: Path, bootstrap_state: dict[str, Any]) -> tuple[dict[str, Any], Path]:
+    run_id = str(bootstrap_state.get("run_id") or "")
+    run_root_rel = str(bootstrap_state.get("run_root") or "")
+    if not run_id or not run_root_rel:
+        raise RouterError("startup run state requires run shell first")
+    run_root = project_root / run_root_rel
+    path = run_state_path(run_root)
+    if path.exists():
+        run_state = read_json(path)
+        run_state.setdefault("flags", {})
+        for flag, default in RUNTIME_FLAG_DEFAULTS.items():
+            run_state["flags"].setdefault(flag, default)
+        for entry in SYSTEM_CARD_SEQUENCE:
+            run_state["flags"].setdefault(entry["flag"], False)
+        for entry in MAIL_SEQUENCE:
+            run_state["flags"].setdefault(entry["flag"], False)
+        for event in EXTERNAL_EVENTS.values():
+            run_state["flags"].setdefault(event["flag"], False)
+        run_state.setdefault("history", [])
+        run_state.setdefault("events", [])
+        run_state.setdefault("pending_action", None)
+    else:
+        run_state = new_run_state(run_id, run_root_rel, controller_core_loaded=False)
+    if not (run_root / "execution_frontier.json").exists():
+        write_json(run_root / "execution_frontier.json", _create_empty_execution_frontier(run_id))
+    if not _continuation_binding_path(run_root).exists():
+        _write_initial_continuation_binding(project_root, run_root, run_state)
+    save_run_state(run_root, run_state)
+    return run_state, run_root
 
 
 def load_manifest_from_run(run_root: Path) -> dict[str, Any]:
@@ -4954,6 +5407,7 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.continuation_binding_current",
             "lifecycle_reconciliation.current_ledgers_clean",
             "lifecycle_reconciliation.pm_suggestion_ledger_clean",
+            "lifecycle_reconciliation.self_interrogation_index_clean",
             "contract_self_check",
         ],
         allowed_values={
@@ -4970,12 +5424,13 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.continuation_binding_current": [True],
             "lifecycle_reconciliation.current_ledgers_clean": [True],
             "lifecycle_reconciliation.pm_suggestion_ledger_clean": [True],
+            "lifecycle_reconciliation.self_interrogation_index_clean": [True],
         },
         structural_requirements=[
             "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
-            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean lifecycle ledgers, and continuation binding are present.",
+            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean self-interrogation index, clean lifecycle ledgers, and continuation binding are present.",
         ],
         description=(
             "PM terminal closure approval. This is a role-output body contract; Controller may only "
@@ -5084,6 +5539,93 @@ def _control_blocker_error_code(message: str) -> str:
             cleaned.append("_")
     code = "".join(cleaned).strip("_")
     return code[:96] or "router_hard_rejection"
+
+
+def _blocker_repair_policy_snapshot_path(run_root: Path) -> Path:
+    return run_root / "control_blocks" / "blocker_repair_policy_snapshot.json"
+
+
+def _blocker_repair_policy_rows() -> list[dict[str, Any]]:
+    return [_json_safe(BLOCKER_REPAIR_POLICY_ROWS[key]) for key in sorted(BLOCKER_REPAIR_POLICY_ROWS)]
+
+
+def _write_blocker_repair_policy_snapshot(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> str:
+    path = _blocker_repair_policy_snapshot_path(run_root)
+    payload = {
+        "schema_version": BLOCKER_REPAIR_POLICY_SCHEMA,
+        "run_id": run_state.get("run_id"),
+        "created_at": utc_now(),
+        "policy_scope": "new_control_blockers",
+        "rows": _blocker_repair_policy_rows(),
+    }
+    write_json(path, payload)
+    rel = project_relative(project_root, path)
+    run_state["blocker_repair_policy_snapshot"] = rel
+    return rel
+
+
+def _control_blocker_policy_row(error_message: str, category: str) -> dict[str, Any]:
+    lowered = error_message.lower()
+    if "self-interrogation" in lowered or "self_interrogation" in lowered:
+        return dict(BLOCKER_REPAIR_POLICY_ROWS["self_interrogation_repair"])
+    if category == "control_plane_reissue":
+        return dict(BLOCKER_REPAIR_POLICY_ROWS["mechanical_control_plane_reissue"])
+    if category == "fatal_protocol_violation":
+        return dict(BLOCKER_REPAIR_POLICY_ROWS["fatal_protocol_violation"])
+    return dict(BLOCKER_REPAIR_POLICY_ROWS["pm_semantic_repair"])
+
+
+def _control_blocker_attempt_key(
+    *,
+    policy_row_id: str,
+    event: str | None,
+    action_type: str | None,
+    responsible_role: str,
+) -> str:
+    return "|".join(
+        (
+            policy_row_id,
+            event or "",
+            action_type or "",
+            responsible_role or "",
+        )
+    )
+
+
+def _control_blocker_direct_attempts_used(run_state: dict[str, Any], attempt_key: str) -> int:
+    active = run_state.get("active_control_blocker")
+    if not isinstance(active, dict) or active.get("attempt_key") != attempt_key:
+        return 0
+    if active.get("target_role") == "project_manager":
+        return int(active.get("direct_retry_attempts_used") or 0)
+    return int(active.get("direct_retry_attempts_used") or 0) + 1
+
+
+def _policy_first_handler_target(policy_row: dict[str, Any], responsible_role: str) -> str:
+    first_handler = str(policy_row.get("first_handler") or "project_manager")
+    if first_handler == "responsible_role":
+        return responsible_role
+    return first_handler
+
+
+def _pm_recovery_options_from_policy(policy_row: dict[str, Any]) -> list[str]:
+    raw = policy_row.get("pm_recovery_options")
+    if isinstance(raw, (list, tuple)):
+        return [str(item) for item in raw if str(item)]
+    return list(PM_BLOCKER_RECOVERY_OPTIONS)
+
+
+def _default_pm_recovery_option(active: dict[str, Any], requested_plan_kind: str) -> str:
+    policy_row_id = str(active.get("policy_row_id") or "")
+    if policy_row_id == "fatal_protocol_violation":
+        return "evidence_quarantine"
+    if policy_row_id == "self_interrogation_repair":
+        return "record_disposition"
+    if requested_plan_kind == "route_mutation":
+        return "route_mutation"
+    if requested_plan_kind == "packet_reissue":
+        return "same_gate_repair"
+    return "same_gate_repair"
 
 
 def _project_relative_if_possible(project_root: Path, path: Path) -> str:
@@ -5216,6 +5758,8 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
     semantic_pm_markers = (
         "controller-origin",
         "controller_origin_artifact",
+        "self-interrogation",
+        "self_interrogation",
         "wrong role",
         "wrong-role",
         "result_completed_by_wrong_role",
@@ -5251,6 +5795,8 @@ def _classify_control_blocker(message: str, *, event: str | None = None, action_
         "role output runtime envelope body hash is stale",
         "missing_quality_pack_check",
         "quality_pack_checks",
+        "self-interrogation",
+        "self_interrogation",
     )
     if any(marker in lowered for marker in mechanical_reissue_markers):
         return "control_plane_reissue"
@@ -5347,6 +5893,8 @@ def _should_materialize_control_blocker(
         "body_ref",
         "runtime_receipt_ref",
         "quality_pack_checks",
+        "self-interrogation",
+        "self_interrogation",
     )
     if any(marker in lowered for marker in material_markers):
         return True
@@ -5585,16 +6133,23 @@ def _control_blocker_allowed_resolution_events(category: str, event: str | None)
     return sorted(EXTERNAL_EVENTS)
 
 
-def _control_blocker_policy(category: str, *, responsible_role: str, event: str | None) -> dict[str, Any]:
-    if category == "control_plane_reissue":
-        target_role = responsible_role
+def _control_blocker_policy(
+    category: str,
+    *,
+    responsible_role: str,
+    event: str | None,
+    policy_row: dict[str, Any],
+    target_role: str,
+) -> dict[str, Any]:
+    if category == "control_plane_reissue" and target_role != "project_manager":
         instruction = (
             f"Deliver the sealed repair packet envelope to `{target_role}` and request a same-role reissue of the "
-            "rejected control-plane output. Controller may route the packet path and hash only."
+            "rejected control-plane output. Controller may route the packet path, hash, policy row, and retry count only."
         )
         allowed = [
             "read this control blocker artifact",
             "deliver sealed_repair_packet_path and sealed_repair_packet_hash to the responsible role",
+            "quote policy_row_id, direct_retry_budget, and direct_retry_attempts_used",
             "tell the responsible role to reissue the same control-plane output",
         ]
         forbidden = [
@@ -5605,7 +6160,6 @@ def _control_blocker_policy(category: str, *, responsible_role: str, event: str 
         ]
         pm_required = False
     elif category == "fatal_protocol_violation":
-        target_role = "project_manager"
         instruction = (
             "Stop normal route work and deliver this control blocker to `project_manager` for escalation. "
             "Controller may route the sealed repair packet envelope only and must not repair the route from chat."
@@ -5623,15 +6177,15 @@ def _control_blocker_policy(category: str, *, responsible_role: str, event: str 
         ]
         pm_required = True
     else:
-        target_role = "project_manager"
         instruction = (
             "Deliver the sealed repair packet envelope to `project_manager` for a repair decision. Controller must "
-            "not decide whether the work is substantively acceptable and must not inspect or restate the repair details."
+            "not decide whether the work is substantively acceptable and must not inspect or restate the repair details. "
+            "PM must choose a policy-listed recovery option and name the gate or terminal stop that follows."
         )
         allowed = [
             "read this control blocker artifact",
             "deliver sealed_repair_packet_path and sealed_repair_packet_hash to project_manager",
-            "quote blocker_id, error_code, handling_lane, and target_role",
+            "quote blocker_id, error_code, handling_lane, target_role, policy_row_id, return_policy, and pm_recovery_options",
         ]
         forbidden = [
             "open sealed packet/result/report bodies",
@@ -5647,6 +6201,8 @@ def _control_blocker_policy(category: str, *, responsible_role: str, event: str 
         "controller_allowed_actions": allowed,
         "controller_forbidden_actions": forbidden,
         "allowed_resolution_events": _control_blocker_allowed_resolution_events(category, event),
+        "policy_row_id": policy_row.get("policy_row_id"),
+        "blocker_family": policy_row.get("blocker_family"),
     }
 
 
@@ -5663,6 +6219,10 @@ def _write_control_blocker_repair_packet(
     event: str | None,
     action_type: str | None,
     payload: dict[str, Any] | None,
+    policy_row: dict[str, Any],
+    policy_snapshot_path: str,
+    direct_retry_attempts_used: int,
+    direct_retry_budget_exhausted: bool,
 ) -> dict[str, str]:
     packet_path = run_root / "control_blocks" / f"{blocker_id}.sealed_repair_packet.json"
     packet = {
@@ -5673,6 +6233,17 @@ def _write_control_blocker_repair_packet(
         "target_role": target_role,
         "responsible_role_for_reissue": responsible_role if category == "control_plane_reissue" else None,
         "handling_lane": category,
+        "policy_row_id": policy_row.get("policy_row_id"),
+        "blocker_family": policy_row.get("blocker_family"),
+        "first_handler": policy_row.get("first_handler"),
+        "direct_retry_budget": policy_row.get("direct_retry_budget"),
+        "direct_retry_attempts_used": direct_retry_attempts_used,
+        "direct_retry_budget_exhausted": direct_retry_budget_exhausted,
+        "escalate_to": policy_row.get("escalate_to"),
+        "pm_recovery_options": _pm_recovery_options_from_policy(policy_row),
+        "return_policy": _json_safe(policy_row.get("return_policy") or {}),
+        "hard_stop_conditions": [str(item) for item in (policy_row.get("hard_stop_conditions") or [])],
+        "blocker_repair_policy_snapshot_path": policy_snapshot_path,
         "originating_event": event,
         "originating_action_type": action_type,
         "error_code": _control_blocker_error_code(error_message),
@@ -5702,6 +6273,7 @@ def _supersede_prior_control_blockers(
     category: str,
     event: str | None,
     action_type: str | None,
+    attempt_key: str | None = None,
 ) -> None:
     control_root = run_root / "control_blocks"
     if not control_root.exists():
@@ -5713,10 +6285,14 @@ def _supersede_prior_control_blockers(
             continue
         if record.get("resolution_status") or record.get("blocker_id") == blocker_id:
             continue
-        if record.get("handling_lane") != category:
-            continue
-        if record.get("originating_event") != event or record.get("originating_action_type") != action_type:
-            continue
+        if attempt_key:
+            if record.get("attempt_key") != attempt_key:
+                continue
+        else:
+            if record.get("handling_lane") != category:
+                continue
+            if record.get("originating_event") != event or record.get("originating_action_type") != action_type:
+                continue
         record["resolution_status"] = "superseded_by_newer_control_blocker"
         record["superseded_by_blocker_id"] = blocker_id
         record["resolved_at"] = superseded_at
@@ -5735,11 +6311,41 @@ def _write_control_blocker(
     action_type: str | None = None,
     payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    category = _classify_control_blocker(error_message, event=event, action_type=action_type)
-    if category not in CONTROL_BLOCKER_LANES:
-        category = "pm_repair_decision_required"
+    base_category = _classify_control_blocker(error_message, event=event, action_type=action_type)
+    if base_category not in CONTROL_BLOCKER_LANES:
+        base_category = "pm_repair_decision_required"
     responsible_role = _infer_responsible_role(event, payload, error_message)
-    policy = _control_blocker_policy(category, responsible_role=responsible_role, event=event)
+    policy_row = _control_blocker_policy_row(error_message, base_category)
+    policy_row_id = str(policy_row.get("policy_row_id") or "pm_semantic_repair")
+    attempt_key = _control_blocker_attempt_key(
+        policy_row_id=policy_row_id,
+        event=event,
+        action_type=action_type,
+        responsible_role=responsible_role,
+    )
+    direct_retry_attempts_used = _control_blocker_direct_attempts_used(run_state, attempt_key)
+    direct_retry_budget = int(policy_row.get("direct_retry_budget") or 0)
+    first_handler = str(policy_row.get("first_handler") or "project_manager")
+    direct_retry_budget_exhausted = (
+        first_handler == "responsible_role"
+        and direct_retry_attempts_used >= direct_retry_budget
+    )
+    if direct_retry_budget_exhausted:
+        category = "pm_repair_decision_required"
+        target_role = str(policy_row.get("escalate_to") or "project_manager")
+    else:
+        category = base_category
+        target_role = _policy_first_handler_target(policy_row, responsible_role)
+    if target_role == "project_manager" and category == "control_plane_reissue":
+        category = "pm_repair_decision_required"
+    policy = _control_blocker_policy(
+        category,
+        responsible_role=responsible_role,
+        event=event,
+        policy_row=policy_row,
+        target_role=target_role,
+    )
+    policy_snapshot_path = _write_blocker_repair_policy_snapshot(project_root, run_root, run_state)
     index = len(run_state.setdefault("control_blockers", [])) + 1
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     blocker_id = f"control-blocker-{index:04d}-{stamp}"
@@ -5757,6 +6363,10 @@ def _write_control_blocker(
         event=event,
         action_type=action_type,
         payload=payload,
+        policy_row=policy_row,
+        policy_snapshot_path=policy_snapshot_path,
+        direct_retry_attempts_used=direct_retry_attempts_used,
+        direct_retry_budget_exhausted=direct_retry_budget_exhausted,
     )
     record = {
         "schema_version": CONTROL_BLOCKER_SCHEMA,
@@ -5766,13 +6376,27 @@ def _write_control_blocker(
         "source": source,
         "originating_event": event,
         "originating_action_type": action_type,
+        "originating_handling_lane": base_category,
         "handling_lane": category,
+        "policy_row_id": policy_row_id,
+        "blocker_family": policy_row.get("blocker_family"),
+        "first_handler": first_handler,
+        "attempt_key": attempt_key,
+        "direct_retry_budget": direct_retry_budget,
+        "direct_retry_attempts_used": direct_retry_attempts_used,
+        "direct_retry_budget_exhausted": direct_retry_budget_exhausted,
+        "escalate_to": policy_row.get("escalate_to"),
+        "pm_recovery_options": _pm_recovery_options_from_policy(policy_row),
+        "return_policy": _json_safe(policy_row.get("return_policy") or {}),
+        "hard_stop_conditions": [str(item) for item in (policy_row.get("hard_stop_conditions") or [])],
+        "controller_boundary": policy_row.get("controller_boundary"),
+        "blocker_repair_policy_snapshot_path": policy_snapshot_path,
         "error_code": _control_blocker_error_code(error_message),
         "controller_visible_summary": "Router rejected a control-plane payload. Deliver the sealed repair packet to the target role.",
         "blocker_artifact_path": artifact_rel,
         "sealed_repair_packet_path": repair_packet["sealed_repair_packet_path"],
         "sealed_repair_packet_hash": repair_packet["sealed_repair_packet_hash"],
-        "responsible_role_for_reissue": responsible_role if category == "control_plane_reissue" else None,
+        "responsible_role_for_reissue": responsible_role if base_category == "control_plane_reissue" else None,
         "target_role": policy["target_role"],
         "pm_decision_required": policy["pm_decision_required"],
         "controller_instruction": policy["controller_instruction"],
@@ -5796,10 +6420,24 @@ def _write_control_blocker(
         category=category,
         event=event,
         action_type=action_type,
+        attempt_key=attempt_key,
     )
     active = {
         "blocker_id": blocker_id,
         "handling_lane": category,
+        "originating_handling_lane": base_category,
+        "policy_row_id": policy_row_id,
+        "blocker_family": policy_row.get("blocker_family"),
+        "first_handler": first_handler,
+        "attempt_key": attempt_key,
+        "direct_retry_budget": direct_retry_budget,
+        "direct_retry_attempts_used": direct_retry_attempts_used,
+        "direct_retry_budget_exhausted": direct_retry_budget_exhausted,
+        "escalate_to": policy_row.get("escalate_to"),
+        "pm_recovery_options": _pm_recovery_options_from_policy(policy_row),
+        "return_policy": _json_safe(policy_row.get("return_policy") or {}),
+        "hard_stop_conditions": [str(item) for item in (policy_row.get("hard_stop_conditions") or [])],
+        "blocker_repair_policy_snapshot_path": policy_snapshot_path,
         "blocker_artifact_path": artifact_rel,
         "target_role": policy["target_role"],
         "responsible_role_for_reissue": record["responsible_role_for_reissue"],
@@ -5812,6 +6450,19 @@ def _write_control_blocker(
         "created_at": record["created_at"],
     }
     run_state["active_control_blocker"] = active
+    run_state.setdefault("blocker_repair_attempts", {})[attempt_key] = {
+        "policy_row_id": policy_row_id,
+        "blocker_family": policy_row.get("blocker_family"),
+        "originating_event": event,
+        "originating_action_type": action_type,
+        "responsible_role": responsible_role,
+        "direct_retry_budget": direct_retry_budget,
+        "direct_retry_attempts_used": direct_retry_attempts_used,
+        "direct_retry_budget_exhausted": direct_retry_budget_exhausted,
+        "latest_blocker_id": blocker_id,
+        "latest_target_role": policy["target_role"],
+        "updated_at": record["created_at"],
+    }
     run_state["latest_control_blocker_path"] = artifact_rel
     run_state["control_blockers"].append(active)
     run_state["pending_action"] = None
@@ -5821,6 +6472,9 @@ def _write_control_blocker(
         {
             "blocker_id": blocker_id,
             "handling_lane": category,
+            "policy_row_id": policy_row_id,
+            "direct_retry_attempts_used": direct_retry_attempts_used,
+            "direct_retry_budget_exhausted": direct_retry_budget_exhausted,
             "target_role": policy["target_role"],
             "originating_event": event,
             "originating_action_type": action_type,
@@ -5845,6 +6499,19 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
     fields = (
         "blocker_id",
         "handling_lane",
+        "originating_handling_lane",
+        "policy_row_id",
+        "blocker_family",
+        "first_handler",
+        "attempt_key",
+        "direct_retry_budget",
+        "direct_retry_attempts_used",
+        "direct_retry_budget_exhausted",
+        "escalate_to",
+        "pm_recovery_options",
+        "return_policy",
+        "hard_stop_conditions",
+        "blocker_repair_policy_snapshot_path",
         "blocker_artifact_path",
         "target_role",
         "responsible_role_for_reissue",
@@ -5864,6 +6531,8 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
         "pm_repair_decision_path",
         "pm_repair_decision_hash",
         "pm_repair_rerun_target",
+        "pm_recovery_option",
+        "pm_repair_return_gate",
         "repair_origin",
         "repair_transaction_id",
         "repair_transaction_path",
@@ -6035,6 +6704,16 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
             extra={
                 "blocker_id": record.get("blocker_id"),
                 "blocker_artifact_path": artifact_rel,
+                "policy_row_id": record.get("policy_row_id"),
+                "blocker_family": record.get("blocker_family"),
+                "first_handler": record.get("first_handler"),
+                "direct_retry_budget": record.get("direct_retry_budget"),
+                "direct_retry_attempts_used": record.get("direct_retry_attempts_used"),
+                "direct_retry_budget_exhausted": record.get("direct_retry_budget_exhausted"),
+                "pm_recovery_options": record.get("pm_recovery_options") or [],
+                "return_policy": record.get("return_policy") or {},
+                "hard_stop_conditions": record.get("hard_stop_conditions") or [],
+                "blocker_repair_policy_snapshot_path": record.get("blocker_repair_policy_snapshot_path"),
                 "sealed_repair_packet_path": record.get("sealed_repair_packet_path"),
                 "sealed_repair_packet_hash": record.get("sealed_repair_packet_hash"),
                 "handling_lane": lane,
@@ -6064,6 +6743,15 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
         extra={
             "allowed_external_events": allowed_resolution_events,
             "blocker_artifact_path": artifact_rel,
+            "policy_row_id": record.get("policy_row_id"),
+            "blocker_family": record.get("blocker_family"),
+            "first_handler": record.get("first_handler"),
+            "direct_retry_budget": record.get("direct_retry_budget"),
+            "direct_retry_attempts_used": record.get("direct_retry_attempts_used"),
+            "direct_retry_budget_exhausted": record.get("direct_retry_budget_exhausted"),
+            "pm_recovery_options": record.get("pm_recovery_options") or [],
+            "return_policy": record.get("return_policy") or {},
+            "hard_stop_conditions": record.get("hard_stop_conditions") or [],
             "target_role": target_role,
             "handling_lane": lane,
             "repair_transaction_id": record.get("repair_transaction_id"),
@@ -6317,6 +7005,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     active = run_state.get("active_control_blocker")
     if not isinstance(active, dict) or active.get("delivery_status") != "delivered":
         raise RouterError("control blocker repair decision requires a delivered active control blocker")
+    active_record = _control_blocker_record(project_root, active)
     blocker_id = str(decision.get("blocker_id") or "")
     if blocker_id != active.get("blocker_id"):
         raise RouterError("control blocker repair decision must reference the active blocker_id")
@@ -6349,6 +7038,22 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     requested_plan_kind = str(repair_transaction_request.get("plan_kind") or "").strip()
     if requested_plan_kind not in {"event_replay", "packet_reissue", "route_mutation"}:
         raise RouterError("repair_transaction.plan_kind must be event_replay, packet_reissue, or route_mutation")
+    policy_recovery_options = active_record.get("pm_recovery_options")
+    if not isinstance(policy_recovery_options, list):
+        policy_recovery_options = []
+    recovery_option = str(decision.get("recovery_option") or _default_pm_recovery_option(active_record, requested_plan_kind)).strip()
+    if not recovery_option:
+        raise RouterError("control blocker repair decision requires recovery_option")
+    if policy_recovery_options and recovery_option not in {str(item) for item in policy_recovery_options}:
+        raise RouterError("control blocker repair decision recovery_option is not allowed by blocker policy")
+    hard_stop_conditions = active_record.get("hard_stop_conditions")
+    if not isinstance(hard_stop_conditions, list):
+        hard_stop_conditions = []
+    if recovery_option == "allowed_waiver" and hard_stop_conditions:
+        raise RouterError("control blocker repair decision cannot waive a blocker with hard-stop conditions")
+    return_gate = str(decision.get("return_gate") or rerun_target).strip()
+    if not return_gate:
+        raise RouterError("control blocker repair decision requires return_gate or rerun_target")
     control_transaction = _validate_control_transaction_requirements(
         run_root,
         transaction_type="control_blocker_repair",
@@ -6435,6 +7140,10 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         "repair_transaction_id": transaction_id,
         "prior_path_context_review": prior_path_context_review,
         "repair_action": repair_action,
+        "recovery_option": recovery_option,
+        "return_gate": return_gate,
+        "policy_row_id": active_record.get("policy_row_id"),
+        "blocker_family": active_record.get("blocker_family"),
         "repair_origin": repair_origin,
         "rerun_target": rerun_target,
         "outcome_table": outcome_table,
@@ -6472,6 +7181,9 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         "generation_commit": generation_commit,
         "pm_repair_decision_path": project_relative(project_root, decision_path),
         "repair_origin": repair_origin,
+        "recovery_option": recovery_option,
+        "return_gate": return_gate,
+        "policy_row_id": active_record.get("policy_row_id"),
         "rerun_target": rerun_target,
         "outcome_table": outcome_table,
         "control_transaction": control_transaction,
@@ -6489,6 +7201,8 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         record["pm_repair_decision_path"] = decision_rel
         record["pm_repair_decision_hash"] = decision_hash
         record["pm_repair_rerun_target"] = rerun_target
+        record["pm_recovery_option"] = recovery_option
+        record["pm_repair_return_gate"] = return_gate
         record["repair_origin"] = repair_origin
         record["repair_transaction_id"] = transaction_id
         record["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
@@ -6501,6 +7215,8 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     active["pm_repair_decision_path"] = decision_rel
     active["pm_repair_decision_hash"] = decision_hash
     active["pm_repair_rerun_target"] = rerun_target
+    active["pm_recovery_option"] = recovery_option
+    active["pm_repair_return_gate"] = return_gate
     active["repair_origin"] = repair_origin
     active["repair_transaction_id"] = transaction_id
     active["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
@@ -7471,6 +8187,10 @@ def _next_boot_action(state: dict[str, Any]) -> dict[str, Any] | None:
             "actor": "bootloader",
         }
     for action in BOOT_ACTIONS:
+        if action["action_type"] == "create_heartbeat_automation" and not _scheduled_continuation_requested(
+            state.get("startup_answers") if isinstance(state.get("startup_answers"), dict) else {}
+        ):
+            continue
         if not state["flags"].get(action["flag"]):
             return action
     return None
@@ -7520,13 +8240,33 @@ def compute_bootloader_action(project_root: Path, state: dict[str, Any]) -> dict
         extra_fields["summary"] = "Record a sealed user request reference from the native startup intake UI artifacts."
     if boot_action["action_type"] == "start_role_slots":
         extra_fields.update(_role_spawn_action_extra(state))
+    heartbeat_action: dict[str, Any] | None = None
+    if boot_action["action_type"] == "create_heartbeat_automation":
+        run_state, run_root = _ensure_startup_run_state(project_root, state)
+        heartbeat_action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
+        if heartbeat_action is None:
+            raise RouterError("startup heartbeat action requested but no heartbeat binding action is available")
+        for key, value in heartbeat_action.items():
+            if key not in {
+                "action_id",
+                "action_type",
+                "actor",
+                "allowed_reads",
+                "allowed_writes",
+                "created_at",
+                "label",
+                "schema_version",
+                "source",
+                "summary",
+            }:
+                extra_fields[key] = value
     action = make_action(
         action_type=str(boot_action["action_type"]),
-        actor=str(boot_action["actor"]),
-        label=str(boot_action["label"]),
-        summary=str(boot_action["summary"]),
-        allowed_reads=[bootstrap_rel],
-        allowed_writes=[bootstrap_rel],
+        actor=str((heartbeat_action or boot_action)["actor"]),
+        label=str((heartbeat_action or boot_action)["label"]),
+        summary=str((heartbeat_action or boot_action)["summary"]),
+        allowed_reads=[bootstrap_rel] + list((heartbeat_action or {}).get("allowed_reads") or []),
+        allowed_writes=[bootstrap_rel] + list((heartbeat_action or {}).get("allowed_writes") or []),
         card_id=boot_action.get("card_id"),
         extra=extra_fields,
     )
@@ -9874,13 +10614,14 @@ def _reset_resume_cycle_for_wakeup(run_state: dict[str, Any]) -> None:
         run_state["flags"][flag] = False
 
 
-def _current_closure_state_clean(run_root: Path) -> bool:
+def _current_closure_state_clean(project_root: Path, run_root: Path) -> bool:
     evidence = read_json_if_exists(run_root / "evidence" / "evidence_ledger.json")
     generated = read_json_if_exists(run_root / "generated_resource_ledger.json")
     final_ledger = read_json_if_exists(run_root / "final_route_wide_gate_ledger.json")
     terminal = read_json_if_exists(run_root / "reviews" / "terminal_backward_replay.json")
     task_projection = read_json_if_exists(_task_completion_projection_path(run_root))
     pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
+    self_interrogation_status = _self_interrogation_status(project_root, run_root)
     return (
         evidence.get("unresolved_count") == 0
         and evidence.get("stale_count") == 0
@@ -9891,16 +10632,17 @@ def _current_closure_state_clean(run_root: Path) -> bool:
         and terminal.get("passed") is True
         and task_projection.get("task_status") == "ready_for_pm_terminal_closure"
         and pm_suggestion_status["clean"]
+        and self_interrogation_status["clean"]
     )
 
 
-def _invalidate_route_completion_if_dirty_before_closure(run_state: dict[str, Any], run_root: Path) -> None:
+def _invalidate_route_completion_if_dirty_before_closure(project_root: Path, run_state: dict[str, Any], run_root: Path) -> None:
     flags = run_state["flags"]
     if not flags.get("final_backward_replay_passed"):
         return
     if flags.get("pm_closure_approved"):
         return
-    if _current_closure_state_clean(run_root):
+    if _current_closure_state_clean(project_root, run_root):
         return
     _reset_flags(run_state, ROUTE_COMPLETION_FLAGS)
     append_history(
@@ -12721,6 +13463,12 @@ def _freeze_root_acceptance_contract(project_root: Path, run_root: Path, run_sta
     contract = read_json(run_root / "root_acceptance_contract.json")
     if contract.get("completion_policy", {}).get("unresolved_residual_risks_allowed") is not False:
         raise RouterError("root contract cannot allow unresolved residual risks")
+    _require_clean_self_interrogation(
+        project_root,
+        run_root,
+        gate_name="root contract freeze",
+        scopes=("startup", "product_architecture"),
+    )
     contract["status"] = "frozen"
     contract["frozen_by_role"] = "project_manager"
     contract["frozen_at"] = utc_now()
@@ -17888,6 +18636,14 @@ def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_
     if not plan_path.exists():
         raise RouterError("current-node packet requires node_acceptance_plan.json")
     plan = read_json(plan_path)
+    _require_clean_self_interrogation(
+        project_root,
+        run_root,
+        gate_name="current-node packet registration",
+        scopes=("node_entry",),
+        node_id=str(frontier["active_node_id"]),
+        route_version=int(frontier.get("route_version") or 0),
+    )
     active_node_definition = _active_node_definition(run_root, frontier)
     if _node_child_ids(active_node_definition):
         raise RouterError("current-node worker packet requires a leaf node; parent/module nodes must enter child subtree or parent backward replay")
@@ -18810,6 +19566,11 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
     if not pm_suggestion_status["clean"]:
         first_issue = pm_suggestion_status["issues"][0]["message"] if pm_suggestion_status["issues"] else "unknown issue"
         raise RouterError(f"final ledger requires clean PM suggestion ledger: {first_issue}")
+    self_interrogation_status = _require_clean_self_interrogation(
+        project_root,
+        run_root,
+        gate_name="final route-wide ledger",
+    )
     if unresolved_count != 0:
         raise RouterError("final ledger requires unresolved_count=0")
     if unresolved_resource_count != 0:
@@ -18904,6 +19665,9 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "pm_suggestion_ledger": project_relative(project_root, _pm_suggestion_ledger_path(run_root))
             if pm_suggestion_status["exists"]
             else None,
+            "self_interrogation_index": project_relative(project_root, _self_interrogation_index_path(run_root))
+            if self_interrogation_status["exists"]
+            else None,
         },
         "prior_path_context_review": prior_review,
         "current_route_scanned": True,
@@ -18917,6 +19681,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "final_completion_gates_collected": True,
             "gate_decisions_collected": True,
             "pm_suggestions_disposed": True,
+            "self_interrogation_dispositions_collected": True,
         },
         "evidence_integrity": {
             "generated_resource_lineage_resolved": True,
@@ -18931,6 +19696,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "requirement_direct_evidence_checked": True,
             "requirement_waiver_authority_checked": True,
             "requirement_stale_status_checked": True,
+            "self_interrogation_index_clean": True,
         },
         "counts": {
             "effective_node_count": len(_effective_route_nodes(route, mutations)),
@@ -18949,6 +19715,9 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "gate_decision_count": len(gate_decisions),
             "pm_suggestion_count": pm_suggestion_status["entry_count"],
             "pm_suggestion_issue_count": pm_suggestion_status["issue_count"],
+            "self_interrogation_record_count": self_interrogation_status["record_count"],
+            "self_interrogation_issue_count": self_interrogation_status["issue_count"],
+            "self_interrogation_unresolved_hard_finding_count": self_interrogation_status["unresolved_hard_finding_count"],
         },
         "entries": entries,
         "gate_decisions": gate_decisions,
@@ -19204,11 +19973,16 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
     if not pm_suggestion_status["clean"]:
         first_issue = pm_suggestion_status["issues"][0]["message"] if pm_suggestion_status["issues"] else "unknown issue"
         raise RouterError(f"terminal closure requires clean PM suggestion ledger: {first_issue}")
+    self_interrogation_status = _require_clean_self_interrogation(
+        project_root,
+        run_root,
+        gate_name="terminal closure",
+    )
     unresolved_role_work = _unresolved_pm_role_work_requests(run_root, run_state)
     if unresolved_role_work:
         request_ids = ", ".join(str(item.get("request_id")) for item in unresolved_role_work[:5])
         raise RouterError(f"terminal closure requires all PM role-work requests resolved first: {request_ids}")
-    if not _current_closure_state_clean(run_root):
+    if not _current_closure_state_clean(project_root, run_root):
         raise RouterError("terminal closure requires current clean evidence/resource/final ledgers")
     continuation = read_json(continuation_path)
     continuation["heartbeat_active"] = False
@@ -19233,6 +20007,9 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "pm_suggestion_ledger": project_relative(project_root, _pm_suggestion_ledger_path(run_root))
             if pm_suggestion_status["exists"]
             else None,
+            "self_interrogation_index": project_relative(project_root, _self_interrogation_index_path(run_root))
+            if self_interrogation_status["exists"]
+            else None,
         },
         "decision": decision,
         "prior_path_context_review": prior_review,
@@ -19240,6 +20017,12 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "entry_count": pm_suggestion_status["entry_count"],
             "issue_count": pm_suggestion_status["issue_count"],
             "clean": pm_suggestion_status["clean"],
+        },
+        "self_interrogation_review": {
+            "record_count": self_interrogation_status["record_count"],
+            "issue_count": self_interrogation_status["issue_count"],
+            "unresolved_hard_finding_count": self_interrogation_status["unresolved_hard_finding_count"],
+            "clean": self_interrogation_status["clean"],
         },
         "lifecycle": {
             "heartbeat_active": False,
@@ -19722,6 +20505,22 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
             },
         )
         result_extra["coalesced_postconditions"] = ["roles_started", "role_core_prompts_injected"]
+        _ensure_startup_run_state(project_root, state)
+    elif action_type == "create_heartbeat_automation":
+        run_state, run_root = _ensure_startup_run_state(project_root, state)
+        _write_host_heartbeat_binding(project_root, run_root, run_state, payload or {})
+        run_state["flags"]["continuation_binding_recorded"] = True
+        run_state["events"].append(
+            {
+                "event": "host_records_heartbeat_binding",
+                "summary": EXTERNAL_EVENTS["host_records_heartbeat_binding"]["summary"],
+                "payload": payload or {},
+                "recorded_at": utc_now(),
+                "source_action": action_type,
+                "startup_phase": "bootloader",
+            }
+        )
+        save_run_state(run_root, run_state)
     elif action_type == "inject_role_core_prompts":
         run_root = project_root / str(state["run_root"])
         write_json(
@@ -19734,10 +20533,12 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
             ),
         )
     elif action_type == "load_controller_core":
-        run_root = project_root / str(state["run_root"])
-        run_state = new_run_state(str(state["run_id"]), str(state["run_root"]))
-        write_json(run_root / "execution_frontier.json", _create_empty_execution_frontier(str(state["run_id"])))
-        _write_initial_continuation_binding(project_root, run_root, run_state)
+        run_state, run_root = _ensure_startup_run_state(project_root, state)
+        if _scheduled_continuation_requested(_startup_answers_from_run(run_root)) and not _host_heartbeat_binding_ready(run_root, run_state):
+            raise RouterError("cannot load Controller core before startup heartbeat binding is recorded")
+        run_state["status"] = "controller_ready"
+        run_state["holder"] = "controller"
+        run_state["flags"]["controller_core_loaded"] = True
         _refresh_route_memory(project_root, run_root, run_state, trigger="load_controller_core")
         write_json(run_state_path(run_root), run_state)
     else:
@@ -19930,6 +20731,8 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         return None
     if run_state["flags"].get("continuation_binding_recorded") and _host_heartbeat_binding_ready(run_root, run_state):
         return None
+    if run_state["flags"].get("controller_core_loaded"):
+        return None
     automation_id_hint = f"flowpilot-{run_state['run_id']}-heartbeat"
     automation_name = f"FlowPilot {run_state['run_id']} heartbeat"
     prompt = (
@@ -19948,9 +20751,9 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
     )
     return make_action(
         action_type="create_heartbeat_automation",
-        actor="controller",
-        label="host_creates_startup_heartbeat_automation",
-        summary="Create the one-minute Codex heartbeat for the current run, then record its host receipt before startup fact review.",
+        actor="bootloader",
+        label="host_bootstraps_startup_heartbeat_automation",
+        summary="Create the one-minute Codex heartbeat for the current run during startup bootstrap before Controller core handoff.",
         allowed_reads=[
             ".flowpilot/current.json",
             project_relative(project_root, run_state_path(run_root)),
@@ -23400,7 +24203,7 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         action = _next_startup_display_action(project_root, run_state, run_root)
     if action is None:
-        _invalidate_route_completion_if_dirty_before_closure(run_state, run_root)
+        _invalidate_route_completion_if_dirty_before_closure(project_root, run_state, run_root)
         action = _next_pending_card_return_action(project_root, run_state, run_root)
     if action is None:
         action = _next_system_card_bundle_action(project_root, run_state, run_root)
@@ -23790,6 +24593,15 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
         if not run_state.get("ledger_check_requested"):
             raise RouterError("current-node packet relay requires a current packet-ledger check")
+        frontier = _active_frontier(run_root)
+        _require_clean_self_interrogation(
+            project_root,
+            run_root,
+            gate_name="current-node packet relay",
+            scopes=("node_entry",),
+            node_id=str(frontier["active_node_id"]),
+            route_version=int(frontier.get("route_version") or 0),
+        )
         records = _current_node_packet_records(project_root, run_state)
         for record in records:
             envelope_path = _packet_envelope_path_from_record(project_root, run_state, record)
@@ -25341,6 +26153,17 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
         if int(counts.get("unresolved_count", 0) or 0) != 0:
             issues.append(_artifact_issue("counts.unresolved_count", "final ledger requires unresolved_count=0", "project_manager"))
         issues.extend(_final_ledger_traceability_issues(payload))
+    elif artifact_type == "self_interrogation_record":
+        record_issues, unresolved_hard_count = _self_interrogation_record_issues(
+            project_root,
+            project_root / ".flowpilot" / "runs" / str(payload.get("run_id") or ""),
+            path,
+            payload,
+        )
+        for issue in record_issues:
+            issues.append(_artifact_issue(str(issue.get("scope") or issue.get("record_id") or "self_interrogation_record"), str(issue.get("message") or "invalid self-interrogation record"), str(payload.get("owner_role") or "project_manager")))
+        if unresolved_hard_count != 0:
+            issues.append(_artifact_issue("unresolved_hard_finding_count", "self-interrogation record has unresolved hard/current findings", str(payload.get("owner_role") or "project_manager")))
     elif artifact_type == "packet_envelope":
         envelope = packet_runtime.normalize_envelope_aliases(payload)
         for field in ("schema_version", "packet_id", "from_role", "to_role", "node_id", "body_path", "body_hash", "body_visibility"):
@@ -25442,7 +26265,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     envelope_parser.add_argument("--to-role", default="controller")
     envelope_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     validate_parser = sub.add_parser("validate-artifact", help="Validate a FlowPilot artifact before or during record-event")
-    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "final_route_wide_gate_ledger", "packet_envelope", "result_envelope", "role_output_envelope", "gate_decision"])
+    validate_parser.add_argument("--type", required=True, choices=["node_acceptance_plan", "final_route_wide_gate_ledger", "self_interrogation_record", "packet_envelope", "result_envelope", "role_output_envelope", "gate_decision"])
     validate_parser.add_argument("--path", required=True)
     validate_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     reconcile_parser = sub.add_parser("reconcile-run", help="Rebuild derived indexes and live-run views for the current run")

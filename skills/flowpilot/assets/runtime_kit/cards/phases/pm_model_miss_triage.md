@@ -110,3 +110,9 @@ Use these exact field names:
 
 Router will not deliver `pm.review_repair` until this contract authorizes a
 model-backed repair or records an explicit out-of-scope FlowGuard reason.
+
+If the original block arrived through a router `control_blocker`, keep the
+blocker policy row in view while triaging. Model-miss triage decides whether
+repair may start; it does not consume the control blocker by itself. PM still
+records the final blocker recovery option, return gate, route mutation, or user
+stop through the control-blocker repair decision when Router requires it.

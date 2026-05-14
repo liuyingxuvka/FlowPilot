@@ -33,7 +33,9 @@
     "checkpoints_root": ".flowpilot/runs/run-001/checkpoints",
     "diagrams_root": ".flowpilot/runs/run-001/diagrams",
     "lifecycle_root": ".flowpilot/runs/run-001/lifecycle",
+    "blocker_repair_policy_snapshot": ".flowpilot/runs/run-001/control_blocks/blocker_repair_policy_snapshot.json",
     "pm_suggestion_ledger": ".flowpilot/runs/run-001/pm_suggestion_ledger.jsonl",
+    "self_interrogation_index": ".flowpilot/runs/run-001/self_interrogation_index.json",
     "flowpilot_skill_improvement_observations": ".flowpilot/runs/run-001/flowpilot_skill_improvement_observations.jsonl",
     "flowpilot_skill_improvement_report": ".flowpilot/runs/run-001/flowpilot_skill_improvement_report.json"
   },

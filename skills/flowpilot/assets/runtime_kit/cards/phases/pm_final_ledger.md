@@ -25,6 +25,16 @@ route.
 Before building it, read the latest route-memory prior path context and use it
 to make sure every completed, superseded, stale, repaired, blocked, and
 experiment-influenced path is represented.
+Also read `self_interrogation_index.json`. The final ledger must cite that
+index, record `self_interrogation_index_clean: true`, and show zero unresolved
+hard/current self-interrogation findings before terminal replay can become a
+closure path.
+If Router blocks ledger submission through a `control_blocker`, read the
+policy row. Ledger, stale-evidence, and self-interrogation blockers return to
+PM recovery; PM may rebuild the ledger, roll back to the affected node/gate,
+insert supplemental evidence work, quarantine stale evidence, mutate route, or
+stop for the user, but must name the return gate and cannot mark the terminal
+ledger clean by waiver when hard-stop conditions remain.
 
 Write `.flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json` as the
 source of truth for completion.
