@@ -34,6 +34,9 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.NODE_PLAN_MISSING_LOW_QUALITY_MAPPING]["detected"])
         self.assertTrue(hazards[model.WORK_PACKET_MISSING_LOW_QUALITY_WARNING]["detected"])
         self.assertTrue(hazards[model.PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING]["detected"])
+        self.assertTrue(hazards[model.PROCESS_SUPPORT_SKILL_IGNORED]["detected"])
+        self.assertTrue(hazards[model.ROLE_SKILL_BINDING_MISSING]["detected"])
+        self.assertTrue(hazards[model.ROLE_SKILL_USE_SELF_ATTESTED]["detected"])
 
     def test_runtime_cards_and_templates_expose_planning_quality_contracts(self) -> None:
         route_card = (
@@ -55,6 +58,16 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             / "cards"
             / "phases"
             / "pm_child_skill_gate_manifest.md"
+        ).read_text(encoding="utf-8")
+        child_selection_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_child_skill_selection.md"
         ).read_text(encoding="utf-8")
         node_plan_card = (
             ROOT
@@ -117,6 +130,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        pm_selection_template = json.loads(
+            (ROOT / "templates" / "flowpilot" / "pm_child_skill_selection.template.json").read_text(
+                encoding="utf-8"
+            )
+        )
         manifest_template = json.loads(
             (ROOT / "templates" / "flowpilot" / "child_skill_gate_manifest.template.json").read_text(
                 encoding="utf-8"
@@ -145,11 +163,16 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("product usefulness failures", route_card)
         self.assertIn("PM low-quality-success ownership check", route_card)
         self.assertIn("unjustified route bloat", route_card)
+        self.assertIn("deliverable_support", child_selection_card)
+        self.assertIn("process_support", child_selection_card)
         self.assertIn("skill_standard_contracts", child_manifest_card)
+        self.assertIn("role_skill_use_bindings", child_manifest_card)
         for category in model.STANDARD_FIELDS:
             self.assertIn(category, child_manifest_card)
         self.assertIn("skill_standard_projection", node_plan_card)
         self.assertIn("active_child_skill_bindings", node_plan_card)
+        self.assertIn("role_skill_use_bindings", node_plan_card)
+        self.assertIn("Role Skill Use Evidence", node_plan_card)
         self.assertIn("work_packet_projection", node_plan_card)
         self.assertIn("final-user intent and product usefulness self-check", node_plan_card)
         self.assertIn("nonessential improvement", node_plan_card)
@@ -165,14 +188,24 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("hard block", route_review_card)
         self.assertIn("Inherited Skill Standards", packet_template)
         self.assertIn("Active Child Skill Bindings", packet_template)
+        self.assertIn("Role Skill Use Bindings", packet_template)
         self.assertIn("Low-Quality Success Guard", packet_template)
         self.assertIn("Skill Standard Result Matrix", result_template)
         self.assertIn("Child Skill Use Evidence", result_template)
+        self.assertIn("Role Skill Use Evidence", result_template)
         self.assertIn("Proof of Depth", result_template)
 
         self.assertIn("low_quality_success_review", product_template)
         self.assertIn("proof_of_depth_required", product_template["low_quality_success_review"]["hard_parts"][0])
+        self.assertIn("selection_dimensions", pm_selection_template)
+        self.assertIn("process_support", pm_selection_template["selection_dimensions"])
+        skill_decision = pm_selection_template["skill_decisions"][0]
+        self.assertIn("support_dimensions", skill_decision)
+        self.assertIn("role_skill_use_candidates", skill_decision)
         selected_skill = manifest_template["selected_skills"][0]
+        self.assertIn("support_dimensions", selected_skill)
+        self.assertIn("role_skill_use_bindings", selected_skill)
+        self.assertFalse(selected_skill["role_skill_use_bindings"][0]["self_attestation_allowed"])
         self.assertIn("skill_standard_contract", selected_skill)
         standard = selected_skill["skill_standard_contract"]["standards"][0]
         self.assertIn("category", standard)
@@ -182,7 +215,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("expected_artifact_paths", standard)
         self.assertIn("skill_standard_projection", node_template)
         self.assertIn("active_child_skill_bindings", node_template)
+        self.assertIn("role_skill_use_bindings", node_template)
+        self.assertFalse(node_template["role_skill_use_bindings"][0]["self_attestation_allowed"])
         self.assertIn("work_packet_projection", node_template)
+        self.assertIn("role_skill_use_binding_ids", node_template["work_packet_projection"][0])
+        self.assertIn("role_skill_use_evidence_required", node_template["work_packet_projection"][0])
         self.assertIn("local_low_quality_success_risk", node_template["pm_current_node_high_standard_recheck"])
         self.assertIn(
             "proof_of_depth_required",
@@ -205,6 +242,23 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             "Child Skill Use Evidence",
             worker_contract["conditional_required_result_body_sections"][
                 "source_packet_declares_active_child_skill_bindings"
+            ],
+        )
+        self.assertIn(
+            "Role Skill Use Evidence",
+            worker_contract["conditional_required_result_body_sections"][
+                "source_packet_declares_role_skill_use_bindings"
+            ],
+        )
+        role_work_contract = next(
+            item
+            for item in contracts["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.pm_role_work_result.v1"
+        )
+        self.assertIn(
+            "Role Skill Use Evidence",
+            role_work_contract["conditional_required_result_body_sections"][
+                "source_request_declares_role_skill_use_bindings"
             ],
         )
 

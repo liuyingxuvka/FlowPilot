@@ -78,6 +78,16 @@ proof, screenshots, commands, or other task-specific probes inside your
 authorized scope. Treat self-attested AI claims as claims until corroborated by
 direct evidence or an approved waiver.
 
+When the PM selection, gate manifest, node acceptance plan, packet, or role
+work request declares `role_skill_use_bindings`, review the matching Role Skill
+Use Evidence as a hard evidence surface. The evidence must show that the named
+role opened the cited `SKILL.md` and referenced paths, used the declared
+FlowPilot-process or deliverable context, produced the affected output or gate,
+and supplied direct evidence rather than a self-attested claim. Missing
+bindings for PM/reviewer/officer process-support skill use, missing evidence,
+wrong role use, stale source paths, or unreviewed self-attestation block a pass
+unless PM records an explicit waiver with authority.
+
 When you find a hard blocker or a useful nonblocking suggestion, write it so PM
 can copy it into `pm_suggestion_ledger.jsonl` as a
 `flowpilot.pm_suggestion_item.v1` item. Use `current_gate_blocker` only when the

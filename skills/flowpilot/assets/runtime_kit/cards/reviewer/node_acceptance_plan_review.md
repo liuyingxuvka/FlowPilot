@@ -75,10 +75,15 @@ Check:
   current-node slice, packet projection, direct-use requirement, result
   evidence requirement, and the rule that stricter child-skill standards
   override the PM packet floor unless explicitly waived;
+- every child skill that supplies planning, specification, route design,
+  reviewer review, officer modeling, validation, or other process support for
+  this node has a `role_skill_use_bindings` row with `used_by_role`,
+  `use_context`, source `SKILL.md`, reference paths, affected output or gate,
+  Role Skill Use Evidence requirements, and reviewer/check authority;
 - every worker/officer packet that can be issued from the plan has a matching
   `work_packet_projection` and requires a result matrix row for each inherited
   standard id plus `Child Skill Use Evidence` for each active child-skill
-  binding;
+  binding and Role Skill Use Evidence for each applicable role-skill binding;
 - skipped checks are marked blocked, waived with authority, or not applicable;
 - worker reports alone cannot approve the node.
 - PM's `high_standard_recheck` and minimum sufficient complexity rationale are
@@ -99,6 +104,11 @@ preserved the binding requirements of those skills.
 Block the plan if a binding skill requirement is omitted, weakened, merged into
 an unverifiable generic phrase, deferred without a named later node, or marked
 complete without the evidence required by the skill.
+
+Block the plan if PM selected a process-support skill for PM, reviewer, or
+officer use but the plan leaves its use as prose instead of a reviewer-checkable
+role-skill binding. A PM planning skill, reviewer audit skill, or officer
+modeling-support skill needs evidence just like a worker execution skill does.
 
 Binding requirements include, when present: concrete counts or ranges, required
 ordering, default iteration or retry budgets, required artifacts, required

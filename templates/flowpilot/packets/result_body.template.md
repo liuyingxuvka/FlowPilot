@@ -123,6 +123,19 @@ Child Skill Bindings` section says no active child-skill bindings apply.
 | --- | --- | --- | --- | --- | --- | --- |
 | <binding-id-or-none> | <path-or-none> | <paths-or-none> | <scope-or-none> | <applied|waived|not_applicable> | <path-or-null> | <short-note> |
 
+## Role Skill Use Evidence
+
+For every role skill use binding declared in the source packet, role-work
+request, child-skill gate manifest, or node acceptance plan, include one row
+proving that the named role opened the source skill and references, used the
+skill only for the declared role context, and produced the affected output or
+gate evidence. Use `none` only when the source packet's `Role Skill Use
+Bindings` section says no role skill use bindings apply.
+
+| binding_id | used_by_role | use_context | source_skill_path_opened | referenced_paths_opened | affected_output_or_gate | evidence_path | stricter_standard_applied_or_waived | checker_role | note |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| <binding-id-or-none> | <role-or-none> | <context-or-none> | <path-or-none> | <paths-or-none> | <artifact-or-gate-or-none> | <path-or-null> | <applied|waived|not_applicable> | <role-or-none> | <short-note> |
+
 ## Contract Self-Check
 
 - source_output_contract_id: <packet-envelope-output_contract.contract_id>

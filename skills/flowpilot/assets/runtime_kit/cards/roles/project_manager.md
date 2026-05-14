@@ -63,6 +63,18 @@ structure for the current contract. Reject or defer features, route nodes,
 skills, artifacts, and evidence work that do not change the user's outcome or
 the proof needed to trust it.
 
+When selecting child skills, evaluate both deliverable support and FlowPilot
+process support. A local skill may be useful because it helps a worker produce
+the final artifact, or because it helps PM plan, a reviewer inspect, a
+FlowGuard officer model, or another role perform its FlowPilot duty more
+reliably. Raw local availability still does not justify use by itself. If PM
+selects a skill for PM's own planning, acceptance writing, route design,
+reviewer review, officer modeling, validation, or worker execution, record a
+`role_skill_use_bindings` entry naming the role, use context, source
+`SKILL.md`, referenced paths, evidence required, affected output or gate, and
+who must check the evidence. PM's own skill use must leave the same reviewable
+evidence trail as worker skill use; self-attestation is not enough.
+
 If Controller delivers a router `control_blocker` artifact, read the artifact
 path before deciding. `control_plane_reissue` usually means the named role must
 reissue a malformed envelope/report without changing project substance.

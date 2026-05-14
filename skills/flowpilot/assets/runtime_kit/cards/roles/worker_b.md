@@ -67,6 +67,14 @@ PM packet is the minimum floor: when the child skill has a stricter applicable
 standard, follow the child skill unless the packet includes an explicit PM
 waiver. Return `Child Skill Use Evidence` for every active binding.
 
+If the source packet or role-work request declares `Role Skill Use Bindings`
+for Worker B, open the cited `SKILL.md` and referenced paths before the bound
+part of the work. Use the skill only for the declared role context and output
+or gate. Return `Role Skill Use Evidence` for every binding, including the
+source paths opened, role context used, affected output or gate, evidence path,
+and whether a stricter skill standard was applied or explicitly waived. Do not
+claim selected skill use from memory or PM prose alone.
+
 In the sealed result body, include a soft `PM Note` with exactly these labels:
 `In-scope quality choice` and `PM consideration`. Use `none` when there is no
 useful note. The note is PM decision-support and does not authorize route

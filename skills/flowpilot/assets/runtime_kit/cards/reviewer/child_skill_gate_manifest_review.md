@@ -37,8 +37,17 @@ Personally review the PM child-skill gate manifest.
 Check:
 
 - selected skills follow product needs and frozen contract;
+- selected skills also consider FlowPilot process needs such as PM planning,
+  specification, acceptance writing, reviewer review, officer modeling, and
+  validation support;
 - raw inventory is not used as authority;
 - skipped references or skipped steps have reasons;
+- every selected or conditional skill use has `role_skill_use_bindings` when
+  the skill materially affects PM planning, route design, review, officer
+  modeling, validation, or worker execution;
+- each role-skill binding names the skill source path, `used_by_role`,
+  `use_context`, evidence required, affected output or gate, and reviewer/check
+  authority;
 - every selected or conditional skill has a compiled Skill Standard Contract
   with `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`, `ARTIFACT`, and `WAIVER`
   entries or explicit not-applicable reasons;
@@ -47,6 +56,8 @@ Check:
 - each child-skill gate has a real approver;
 - Controller is not an approver;
 - evidence expectations are concrete enough for route work;
+- role-skill evidence expectations are concrete enough to prevent PM, reviewer,
+  officer, or worker self-attestation from closing a selected-skill obligation;
 - process and product fit risks are represented in the manifest's evidence and
   route projection rather than deferred to mandatory officer gates;
 - skipped child-skill steps are not silently waived;

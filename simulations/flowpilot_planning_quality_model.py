@@ -71,6 +71,9 @@ LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT = "low_quality_risk_causes_route_bloat"
 NODE_PLAN_MISSING_LOW_QUALITY_MAPPING = "node_plan_missing_low_quality_mapping"
 WORK_PACKET_MISSING_LOW_QUALITY_WARNING = "work_packet_missing_low_quality_warning"
 PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING = "pm_closure_low_quality_risk_disposition_missing"
+PROCESS_SUPPORT_SKILL_IGNORED = "process_support_skill_ignored"
+ROLE_SKILL_BINDING_MISSING = "role_skill_binding_missing"
+ROLE_SKILL_USE_SELF_ATTESTED = "role_skill_use_self_attested"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -104,6 +107,9 @@ NEGATIVE_SCENARIOS = (
     NODE_PLAN_MISSING_LOW_QUALITY_MAPPING,
     WORK_PACKET_MISSING_LOW_QUALITY_WARNING,
     PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING,
+    PROCESS_SUPPORT_SKILL_IGNORED,
+    ROLE_SKILL_BINDING_MISSING,
+    ROLE_SKILL_USE_SELF_ATTESTED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -177,6 +183,12 @@ class State:
     standards_mapped_to_reviewer_gates: bool = False
     standards_mapped_to_expected_artifacts: bool = False
     loop_verify_artifact_inherited: bool = False
+    process_support_skill_candidate_available: bool = False
+    process_support_skill_decision_recorded: bool = False
+    role_skill_use_binding_written: bool = False
+    role_skill_use_evidence_required: bool = False
+    role_skill_use_evidence_reviewer_check_bound: bool = False
+    role_skill_use_self_attested_without_evidence: bool = False
 
     node_acceptance_plan_consumes_projection: bool = False
     work_packet_carries_projection: bool = False
@@ -275,6 +287,11 @@ def _valid_ui_state() -> State:
         standards_mapped_to_reviewer_gates=True,
         standards_mapped_to_expected_artifacts=True,
         loop_verify_artifact_inherited=True,
+        process_support_skill_candidate_available=True,
+        process_support_skill_decision_recorded=True,
+        role_skill_use_binding_written=True,
+        role_skill_use_evidence_required=True,
+        role_skill_use_evidence_reviewer_check_bound=True,
         node_acceptance_plan_consumes_projection=True,
         work_packet_carries_projection=True,
         result_matrix_required=True,
@@ -413,6 +430,26 @@ def _scenario_state(scenario: str) -> State:
             closure_or_final_ledger_decision=True,
             final_low_quality_risks_disposition_done=False,
         )
+    if scenario == PROCESS_SUPPORT_SKILL_IGNORED:
+        return replace(
+            state,
+            process_support_skill_candidate_available=True,
+            process_support_skill_decision_recorded=False,
+        )
+    if scenario == ROLE_SKILL_BINDING_MISSING:
+        return replace(
+            state,
+            role_skill_use_binding_written=False,
+            role_skill_use_evidence_required=False,
+            role_skill_use_evidence_reviewer_check_bound=False,
+        )
+    if scenario == ROLE_SKILL_USE_SELF_ATTESTED:
+        return replace(
+            state,
+            role_skill_use_self_attested_without_evidence=True,
+            role_skill_use_evidence_required=False,
+            role_skill_use_evidence_reviewer_check_bound=False,
+        )
     return state
 
 
@@ -510,6 +547,19 @@ def planning_failures(state: State) -> list[str]:
             failures.append("work packet or result matrix lacks skill-standard projection")
         if not state.reviewer_gate_bound_to_projection:
             failures.append("reviewer gate is not bound to skill-standard projection")
+    if (
+        state.process_support_skill_candidate_available
+        and not state.process_support_skill_decision_recorded
+    ):
+        failures.append("PM child-skill selection did not evaluate process-support skill candidates")
+    if state.child_skill_selected and not (
+        state.role_skill_use_binding_written
+        and state.role_skill_use_evidence_required
+        and state.role_skill_use_evidence_reviewer_check_bound
+    ):
+        failures.append("selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check")
+    if state.role_skill_use_self_attested_without_evidence:
+        failures.append("selected role skill use was self-attested without evidence")
 
     hard_blindspot = (
         state.residual_blindspot_touches_hard_requirement
@@ -649,6 +699,20 @@ def low_quality_success_risks_are_owned(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def role_skill_use_is_evidence_bound(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in planning_failures(state):
+        if (
+            "process-support skill" in failure
+            or "role-skill binding" in failure
+            or "self-attested" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepts_only_valid_plans",
@@ -694,6 +758,11 @@ INVARIANTS = (
         name="low_quality_success_risks_are_owned",
         description="PM must identify hard parts, bind low-quality-success risks to existing route/node owners, project them into node plans and worker packets, and disposition them before closure.",
         predicate=low_quality_success_risks_are_owned,
+    ),
+    Invariant(
+        name="role_skill_use_is_evidence_bound",
+        description="Process-support child skills must be considered by PM and bound to role-specific evidence and reviewer checks when selected.",
+        predicate=role_skill_use_is_evidence_bound,
     ),
 )
 

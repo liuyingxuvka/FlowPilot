@@ -144,13 +144,33 @@
       "reviewer_check_required": true
     }
   ],
+  "role_skill_use_bindings": [
+    {
+      "binding_id": "<skill-name>:<role>:<context>:<output-or-gate-id>",
+      "source_child_skill_gate_manifest_binding_id": "<binding-id>",
+      "used_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|followup_officer>",
+      "use_context": "<planning|route_design|acceptance_writing|execution|review|modeling|validation|followup>",
+      "source_skill": "<skill-name>",
+      "source_path": "<path-to-SKILL.md>",
+      "referenced_paths": [],
+      "applies_to_this_node": true,
+      "affected_output_or_gate": "<node-plan|packet-id|review-id|model-report-id|gate-id|closure-ledger>",
+      "must_open_source_skill": true,
+      "result_evidence_required": true,
+      "evidence_section": "Role Skill Use Evidence",
+      "reviewer_or_checker_role": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+      "self_attestation_allowed": false
+    }
+  ],
   "work_packet_projection": [
     {
       "packet_id_or_slice": "<packet-id-or-slice>",
       "recipient_role": "<worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
       "covers_requirement_ids": [],
       "inherited_standard_ids": [],
+      "role_skill_use_binding_ids": [],
       "result_matrix_required": true,
+      "role_skill_use_evidence_required": "<true-when-role_skill_use_binding_ids-is-nonempty-else-false>",
       "result_matrix_required_fields": [
         "standard_id",
         "status",

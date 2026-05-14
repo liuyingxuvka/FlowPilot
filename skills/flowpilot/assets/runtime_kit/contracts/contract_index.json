@@ -204,6 +204,9 @@
         ],
         "source_packet_declares_active_child_skill_bindings": [
           "Child Skill Use Evidence"
+        ],
+        "source_packet_declares_role_skill_use_bindings": [
+          "Role Skill Use Evidence"
         ]
       },
       "required_result_envelope_fields": [
@@ -245,6 +248,11 @@
         "PM Suggestion Items",
         "Contract Self-Check"
       ],
+      "conditional_required_result_body_sections": {
+        "source_request_declares_role_skill_use_bindings": [
+          "Role Skill Use Evidence"
+        ]
+      },
       "required_result_envelope_values": {
         "next_recipient": "project_manager",
         "body_visibility": "sealed_target_role_only"
@@ -275,6 +283,9 @@
       "conditional_required_result_body_sections": {
         "source_packet_declares_inherited_skill_standard_ids": [
           "Skill Standard Result Matrix"
+        ],
+        "source_packet_declares_role_skill_use_bindings": [
+          "Role Skill Use Evidence"
         ]
       },
       "required_result_envelope_values": {
@@ -315,6 +326,9 @@
       "conditional_required_result_body_sections": {
         "source_packet_declares_inherited_skill_standard_ids": [
           "Skill Standard Result Matrix"
+        ],
+        "source_packet_declares_role_skill_use_bindings": [
+          "Role Skill Use Evidence"
         ]
       },
       "required_report_body_fields": [
@@ -362,6 +376,11 @@
       ],
       "required_body_values": {
         "reviewed_by_role": "human_like_reviewer"
+      },
+      "conditional_required_body_fields": {
+        "source_packet_or_request_declares_role_skill_use_bindings": [
+          "role_skill_use_evidence"
+        ]
       },
       "batch_review_fields": [
         "batch_id",
@@ -417,6 +436,11 @@
         "pm_suggestion_items",
         "contract_self_check"
       ],
+      "conditional_required_body_fields": {
+        "source_packet_or_request_declares_role_skill_use_bindings": [
+          "role_skill_use_evidence"
+        ]
+      },
       "contract_self_check_required": true,
       "runtime_channel": "role_output_runtime",
       "output_type": "officer_model_report",

@@ -74,6 +74,13 @@ Check:
   and followed the stricter child-skill standard or cited an explicit PM
   waiver. Missing evidence, summary-only use, whole-skill use that ignores the
   node slice, or PM-floor downgrades block pass;
+- when the source packet, PM package, node plan, or gate manifest declares
+  `role_skill_use_bindings`, the formal output includes `Role Skill Use
+  Evidence` rows for every applicable binding, including PM, reviewer, officer,
+  or worker skill use. Missing source opening, missing affected-output evidence,
+  self-attested use without artifacts, skipped binding steps without waiver, or
+  unreviewed PM/officer/reviewer skill use blocks pass when the binding is a
+  current-gate obligation;
 - output satisfies packet acceptance slice;
 - direct evidence proves user-facing quality claims when those claims are made;
   file existence, hashes, report prose, or screenshots alone do not prove the

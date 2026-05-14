@@ -174,6 +174,18 @@ that makes them not applicable.
 
 - <binding-id-or-none>
 
+## Role Skill Use Bindings
+
+If the node acceptance plan, child-skill gate manifest, or PM role-work request
+declares role skill use bindings for this packet, open the cited `SKILL.md` and
+referenced paths before the bound work. Use the skill only for the named role
+context, output, or gate. Return a matching `Role Skill Use Evidence` row for
+every binding. Self-attested skill use is not enough. If no role skill use
+bindings apply, write `none` and cite the source field that makes them not
+applicable.
+
+- <role-skill-binding-id-or-none>
+
 ## Required Verification Or Evidence
 
 - <command-probe-screenshot-model-check-or-review-evidence>

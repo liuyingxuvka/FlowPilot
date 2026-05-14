@@ -26,6 +26,14 @@ Extract the initial gate manifest for PM-selected child skills.
 Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 
 - selected skills and supported capabilities;
+- whether each selected skill supports the deliverable, the FlowPilot process,
+  or both;
+- `role_skill_use_bindings` for every selected skill use that affects PM
+  planning, route design, acceptance writing, worker execution, reviewer
+  review, officer modeling, or validation. Each binding must name the
+  `used_by_role`, `use_context`, source `SKILL.md` path, referenced paths,
+  reason, evidence required, output or gate affected, and reviewer/check
+  authority;
 - references loaded now or deferred with reason;
 - a `skill_standard_contracts` section for every selected or conditional skill.
   PM must extract the child skill's hard standards into structured entries:
@@ -38,6 +46,9 @@ Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 - required gates;
 - required approver for each gate;
 - controller self-approval forbidden;
-- skipped child-skill steps with reason.
+- skipped child-skill steps with reason;
+- role-skill evidence obligations for PM, reviewer, officer, or worker uses.
 
 Do not route from a child skill until the Reviewer check passes.
+Do not let a role self-attest selected skill use as complete without the
+evidence named in the binding.

@@ -64,6 +64,23 @@ class FlowPilotOutputContractTests(unittest.TestCase):
                 "source_packet_declares_active_child_skill_bindings"
             ],
         )
+        self.assertIn(
+            "Role Skill Use Evidence",
+            worker_contract["conditional_required_result_body_sections"][
+                "source_packet_declares_role_skill_use_bindings"
+            ],
+        )
+        role_work_contract = next(
+            item
+            for item in registry["contracts"]
+            if item["contract_id"] == "flowpilot.output_contract.pm_role_work_result.v1"
+        )
+        self.assertIn(
+            "Role Skill Use Evidence",
+            role_work_contract["conditional_required_result_body_sections"][
+                "source_request_declares_role_skill_use_bindings"
+            ],
+        )
         startup_contract = next(
             item
             for item in registry["contracts"]

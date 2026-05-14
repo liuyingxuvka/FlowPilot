@@ -11,7 +11,12 @@
     "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
     "frozen_contract_path": ".flowpilot/runs/<run-id>/contract.md"
   },
-  "selection_rule": "Product capability needs choose skills. Local skill availability alone never creates route work.",
+  "selection_rule": "Product capability needs and FlowPilot process needs choose skills. Local skill availability alone never creates route work.",
+  "selection_dimensions": {
+    "deliverable_support": "Does the skill help produce, validate, or inspect the user-visible deliverable?",
+    "process_support": "Does the skill help PM, reviewer, officer, worker, or follow-up roles perform FlowPilot planning, modeling, review, validation, or evidence work?",
+    "raw_availability_is_not_a_reason": true
+  },
   "minimum_sufficient_complexity_rule": {
     "principle": "A child skill is required only when it closes a product, verification, safety, or workflow gap that the simpler main route cannot reliably close.",
     "raw_availability_is_not_a_reason": true,
@@ -21,8 +26,23 @@
     {
       "skill_name": "<skill-name>",
       "decision": "<required|conditional|deferred|rejected>",
-      "decision_reason": "<why this follows from the product capability map>",
+      "decision_reason": "<why this follows from deliverable-support or process-support need>",
+      "support_dimensions": {
+        "deliverable_support": "<required|conditional|not_applicable>",
+        "process_support": "<required|conditional|not_applicable>"
+      },
       "supported_product_capabilities": [],
+      "supported_flowpilot_process_contexts": [
+        "<pm_planning|pm_route_design|pm_acceptance_writing|worker_execution|reviewer_review|process_officer_modeling|product_officer_modeling|validation|followup>"
+      ],
+      "role_skill_use_candidates": [
+        {
+          "used_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|followup_officer>",
+          "use_context": "<planning|route_design|acceptance_writing|execution|review|modeling|validation|followup>",
+          "candidate_output_or_gate": "<affected-output-or-gate-id>",
+          "evidence_required": true
+        }
+      ],
       "simpler_path_without_skill": "<viable|not_viable|unknown>",
       "why_skill_complexity_is_justified": "<product-verification-safety-or-workflow-benefit-or-null>",
       "trigger_condition": "<when conditional or deferred becomes active>",

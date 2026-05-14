@@ -17,6 +17,27 @@
       "skill_name": "<skill-name>",
       "decision": "<required|conditional>",
       "supported_capabilities": [],
+      "support_dimensions": {
+        "deliverable_support": "<required|conditional|not_applicable>",
+        "process_support": "<required|conditional|not_applicable>"
+      },
+      "supported_flowpilot_process_contexts": [
+        "<pm_planning|pm_route_design|pm_acceptance_writing|worker_execution|reviewer_review|process_officer_modeling|product_officer_modeling|validation|followup>"
+      ],
+      "role_skill_use_bindings": [
+        {
+          "binding_id": "<skill-name>:<role>:<context>:<output-or-gate-id>",
+          "used_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|followup_officer>",
+          "use_context": "<planning|route_design|acceptance_writing|execution|review|modeling|validation|followup>",
+          "source_skill_path": "<path-to-SKILL.md>",
+          "referenced_paths": [],
+          "reason": "<why this role needs the skill for this FlowPilot duty or deliverable work>",
+          "evidence_required": true,
+          "affected_output_or_gate": "<artifact-or-gate-id>",
+          "reviewer_or_checker_role": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+          "self_attestation_allowed": false
+        }
+      ],
       "references_loaded_now": [],
       "references_deferred_with_reason": [],
       "skill_standard_contract": {

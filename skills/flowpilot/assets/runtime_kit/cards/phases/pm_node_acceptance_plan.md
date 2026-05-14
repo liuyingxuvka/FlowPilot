@@ -58,12 +58,21 @@ route-memory prior path context. The plan must state:
   selected standard ids, and result evidence required. The PM packet is the
   minimum floor; if the child skill has a stricter applicable requirement, the
   stricter child-skill requirement wins unless PM records an explicit waiver;
+- `role_skill_use_bindings`: for each selected child skill that supports this
+  node or gate through PM planning, specification, route design, reviewer
+  review, officer modeling, validation, or worker execution, name the exact
+  role, use context, source `SKILL.md`, referenced paths, selected standard
+  ids, affected output or gate, and Role Skill Use Evidence required. Include
+  PM's own planning skill use when it materially shapes acceptance criteria,
+  route structure, node proof, or validation expectations;
 - `work_packet_projection`: the exact inherited standard ids that must be
   copied into each worker/officer packet, plus the active child-skill bindings
   that must be copied into each worker packet with direct-use instructions,
   allowed source paths, result-matrix rows, and `Child Skill Use Evidence`
-  rows the recipient must return. Do not issue a work packet if this projection
-  is missing for a selected child skill;
+  rows the recipient must return. When a packet or role-output request carries
+  `role_skill_use_bindings`, also copy the Role Skill Use Evidence rows the
+  recipient must return. Do not issue a work packet if this projection is
+  missing for a selected child skill;
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
 - direct evidence closure rules: report prose, file existence, or a clean
@@ -104,10 +113,11 @@ only at the theme level. Read the skill body and any directly referenced
 required files, then preserve the skill's binding requirements in this node
 acceptance plan.
 
-Binding requirements include, when present: concrete counts or ranges,
-required ordering, default iteration or retry budgets, required artifacts,
-required evidence, forbidden substitutions, reviewer gates, final verdict
-rules, waiver or blocker rules, and explicit non-goals.
+Binding requirements include, when present: which formal role must use the
+skill, concrete counts or ranges, required ordering, default iteration or retry
+budgets, required artifacts, required evidence, forbidden substitutions,
+reviewer gates, final verdict rules, waiver or blocker rules, and explicit
+non-goals.
 
 Do not weaken a specific skill requirement into a generic phrase. If wording is
 compressed, preserve the same acceptance force. If a skill requirement is

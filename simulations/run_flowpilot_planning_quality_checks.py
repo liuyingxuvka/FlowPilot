@@ -52,6 +52,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.NODE_PLAN_MISSING_LOW_QUALITY_MAPPING: "node acceptance plan lacks local low-quality-success mapping and proof of depth",
     model.WORK_PACKET_MISSING_LOW_QUALITY_WARNING: "work packet lacks node low-quality-success warning",
     model.PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING: "PM closure lacks low-quality-success risk disposition",
+    model.PROCESS_SUPPORT_SKILL_IGNORED: "PM child-skill selection did not evaluate process-support skill candidates",
+    model.ROLE_SKILL_BINDING_MISSING: "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
+    model.ROLE_SKILL_USE_SELF_ATTESTED: "selected role skill use was self-attested without evidence",
 }
 
 

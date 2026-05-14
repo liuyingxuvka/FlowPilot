@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=186",
+    "summary": "sequences=3 initial_states=1 traces=204",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -139,6 +139,13 @@
           "Process FlowGuard Officer did not validate route viability against the product model"
         ]
       },
+      "process_support_skill_ignored": {
+        "detected": true,
+        "expected_failure": "PM child-skill selection did not evaluate process-support skill candidates",
+        "failures": [
+          "PM child-skill selection did not evaluate process-support skill candidates"
+        ]
+      },
       "product_model_missing": {
         "detected": true,
         "expected_failure": "route planning lacks a product behavior model from the Product FlowGuard Officer",
@@ -167,6 +174,21 @@
           "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate"
         ]
       },
+      "role_skill_binding_missing": {
+        "detected": true,
+        "expected_failure": "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
+        "failures": [
+          "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check"
+        ]
+      },
+      "role_skill_use_self_attested": {
+        "detected": true,
+        "expected_failure": "selected role skill use was self-attested without evidence",
+        "failures": [
+          "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
+          "selected role skill use was self-attested without evidence"
+        ]
+      },
       "simple_task_formal_flowpilot_profile": {
         "detected": true,
         "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
@@ -184,6 +206,7 @@
           "node acceptance plan lacks skill-standard projection",
           "work packet or result matrix lacks skill-standard projection",
           "reviewer gate is not bound to skill-standard projection",
+          "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
           "small/simple task entered formal FlowPilot instead of staying outside FlowPilot"
         ]
       },
@@ -243,11 +266,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 62,
+    "edge_count": 68,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 30,
-    "state_count": 63
+    "rejected_state_count": 33,
+    "state_count": 69
   }
 }

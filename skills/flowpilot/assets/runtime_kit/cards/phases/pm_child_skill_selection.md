@@ -21,7 +21,8 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Select child skills from product need, not from raw availability.
+Select child skills from product need and FlowPilot process need, not from raw
+availability.
 
 Read:
 
@@ -34,9 +35,29 @@ Write `.flowpilot/runs/<run-id>/pm_child_skill_selection.json` with each
 candidate skill classified as `required`, `conditional`, `deferred`, or
 `rejected`. Raw inventory must never be route authority.
 
+Evaluate two support dimensions for every candidate:
+
+- `deliverable_support`: whether the skill helps produce, inspect, validate, or
+  repair the final user-facing artifact or repository change;
+- `process_support`: whether the skill helps FlowPilot itself plan, specify,
+  decompose, model, review, verify, or write acceptance evidence more reliably.
+
+A skill can be selected for PM planning, reviewer review, Process FlowGuard
+Officer modeling, Product FlowGuard Officer product analysis, or worker
+execution. Do not reject a planning/specification/review/modeling skill only
+because it is not part of the final delivered product. Also do not select it
+only because it exists locally.
+
 Apply Minimum Sufficient Complexity to every candidate. `required` means the
 skill closes a product, verification, or safety gap that the simpler main route
 cannot reliably close. `conditional` must name the trigger. `deferred` and
 `rejected` are valid high-quality decisions when a skill would add handoffs,
 references, gates, or artifacts without changing the user's outcome or the
 proof needed to trust it.
+
+For every required or conditional skill, record any intended `role_use`:
+`project_manager`, `human_like_reviewer`, `process_flowguard_officer`,
+`product_flowguard_officer`, `worker_a`, or `worker_b`; the `use_context`
+(`planning`, `specification`, `route_design`, `execution`, `review`,
+`modeling`, or `validation`); and the evidence that will prove the assigned
+role actually used the skill.

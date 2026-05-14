@@ -40,6 +40,16 @@ modeling approach that answers PM's decision question. If a better idea would
 require broader product work, extra model families, new validation surfaces, or
 a changed acceptance target, do not execute it; report it to PM only.
 
+If the packet or role-work request declares `Role Skill Use Bindings` for
+Product FlowGuard Officer, open the cited local skill `SKILL.md` and referenced
+paths before the bound product-model, product-risk, validation, or consultation
+work. Use the skill only for the declared FlowPilot process or deliverable
+context and return `Role Skill Use Evidence` in the sealed report/result body.
+The evidence must name source paths opened, role context used, affected
+model/report/gate, evidence path, and any stricter skill standard applied or
+explicitly waived. Self-attested skill use is not enough for a gate or PM
+decision.
+
 Your packet may be one member of a PM-authored parallel batch. Complete only the
 product-model packet addressed to Product FlowGuard Officer. Use real
 FlowGuard or the packet-authorized modeling method inside the stated boundary,
