@@ -9,9 +9,10 @@ Risk intent brief:
 - Model-critical durable state: daemon lock/status, one-second daemon tick,
   mailbox evidence, ACK consumption, Controller action ledger entries,
   external-event wait row closure, Controller receipts, stateful Controller
-  postcondition evidence, heartbeat/manual resume recovery, role cohort
-  liveness, missing-deliverable repair issue/failure counts, and terminal
-  cleanup.
+  postcondition evidence, Router scheduler ledger parseability, atomic durable
+  ledger writes, daemon status/lock/process consistency, heartbeat/manual
+  resume recovery, role cohort liveness, missing-deliverable repair
+  issue/failure counts, and terminal cleanup.
 - Adversarial branches include formal startup skipping or failing daemon
   launch before Controller core load, no daemon at a wait, duplicate Router
   writers, duplicate ACK observation, Router marking Controller work done
@@ -19,7 +20,9 @@ Risk intent brief:
   Controller stopping at ordinary waits, foreground Controller ending while a
   live daemon-owned role wait is active, foreground Controller ending while
   the daemon is live but no Controller action is ready, heartbeat starting a
-  second live daemon, and terminal stop leaving daemon/Controller/roles active.
+  second live daemon, Router scheduler ledger corruption from partial writes,
+  daemon status claiming active after an error lock or missing process, and
+  terminal stop leaving daemon/Controller/roles active.
 - Hard invariants: formal startup must start a live one-second Router daemon
   before Controller core loads; active ordinary waits have a live daemon; one
   daemon writer owns a run; mailbox evidence is consumed at most once;
@@ -38,7 +41,9 @@ Risk intent brief:
   normal runtime; Controller stays attached to the ledger during all
   nonterminal daemon-live runtime, processes pending executable Controller
   actions, and keeps a foreground standby loop active during ordinary
-  daemon-owned role waits;
+  daemon-owned role waits; Router/Controller durable ledgers stay valid JSON
+  after every write, are written atomically, and daemon active status never
+  contradicts an error lock or missing process;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.
 """
@@ -69,9 +74,16 @@ class State:
     startup_daemon_failed: bool = False
     daemon_mode_enabled: bool = False
     daemon_alive: bool = False
-    daemon_lock_state: str = "none"  # none | live | stale | duplicate
+    daemon_lock_state: str = "none"  # none | live | stale | duplicate | error
     daemon_writer_count: int = 0
     daemon_tick_seconds: int = 0
+    router_scheduler_ledger_valid_json: bool = True
+    controller_action_ledger_valid_json: bool = True
+    durable_ledger_writes_atomic: bool = True
+    router_scheduler_single_writer: bool = True
+    daemon_status_active_after_lock_error: bool = False
+    daemon_status_active_without_process: bool = False
+    daemon_crashed_after_ledger_decode_error: bool = False
     controller_core_loaded: bool = False
     controller_attached: bool = False
     controller_called_router_next_as_metronome: bool = False
@@ -806,6 +818,37 @@ def hazard_states() -> dict[str, State]:
             daemon_writer_count=2,
             daemon_lock_state="duplicate",
         ),
+        "router_scheduler_ledger_corrupted_by_partial_write": replace(
+            safe_active,
+            router_scheduler_ledger_valid_json=False,
+            durable_ledger_writes_atomic=False,
+            daemon_crashed_after_ledger_decode_error=True,
+        ),
+        "controller_action_ledger_corrupted_by_partial_write": replace(
+            safe_active,
+            controller_action_ledger_valid_json=False,
+            durable_ledger_writes_atomic=False,
+        ),
+        "daemon_status_active_after_lock_error": replace(
+            safe_active,
+            daemon_alive=False,
+            daemon_lock_state="error",
+            daemon_writer_count=0,
+            daemon_status_active_after_lock_error=True,
+        ),
+        "daemon_status_active_without_process": replace(
+            safe_active,
+            daemon_alive=False,
+            daemon_lock_state="live",
+            daemon_writer_count=1,
+            daemon_status_active_without_process=True,
+        ),
+        "router_scheduler_ledger_multi_writer": replace(
+            safe_active,
+            router_scheduler_single_writer=False,
+            daemon_writer_count=2,
+            daemon_lock_state="duplicate",
+        ),
         "duplicate_ack_consumption": replace(
             safe_active,
             current_wait="none",
@@ -1166,6 +1209,20 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("multiple Router daemon writers exist for one run")
     if state.daemon_alive and state.daemon_tick_seconds != 1:
         failures.append("Router daemon tick is not fixed at one second")
+    if not state.router_scheduler_ledger_valid_json:
+        failures.append("Router scheduler ledger is not valid JSON after a durable write")
+    if not state.controller_action_ledger_valid_json:
+        failures.append("Controller action ledger is not valid JSON after a durable write")
+    if not state.durable_ledger_writes_atomic:
+        failures.append("runtime ledgers are written without atomic replace semantics")
+    if not state.router_scheduler_single_writer:
+        failures.append("Router scheduler ledger has more than one writer")
+    if state.daemon_crashed_after_ledger_decode_error:
+        failures.append("Router daemon crashed after reading an invalid scheduler ledger")
+    if state.daemon_status_active_after_lock_error:
+        failures.append("daemon status reported active after lock error")
+    if state.daemon_status_active_without_process:
+        failures.append("daemon status reported active without a live process")
     if state.controller_called_router_next_as_metronome:
         failures.append("Controller used diagnostic Router next/run-until-wait as the normal runtime metronome")
     if state.mailbox_consumption_count > 1:
@@ -1297,6 +1354,13 @@ INVARIANTS = (
     _invariant("ordinary_wait_has_live_daemon", "ordinary wait exists without a live Router daemon"),
     _invariant("single_router_writer", "multiple Router daemon writers exist for one run"),
     _invariant("fixed_one_second_tick", "Router daemon tick is not fixed at one second"),
+    _invariant("router_scheduler_ledger_stays_parseable", "Router scheduler ledger is not valid JSON after a durable write"),
+    _invariant("controller_action_ledger_stays_parseable", "Controller action ledger is not valid JSON after a durable write"),
+    _invariant("runtime_ledgers_use_atomic_replace", "runtime ledgers are written without atomic replace semantics"),
+    _invariant("router_scheduler_ledger_single_writer", "Router scheduler ledger has more than one writer"),
+    _invariant("daemon_does_not_crash_on_corrupted_scheduler_ledger", "Router daemon crashed after reading an invalid scheduler ledger"),
+    _invariant("daemon_status_matches_error_lock", "daemon status reported active after lock error"),
+    _invariant("daemon_status_matches_live_process", "daemon status reported active without a live process"),
     _invariant("daemon_wait_has_wait_target_metadata", "daemon-owned role wait lacks Router-authored wait target metadata"),
     _invariant("wait_target_names_role_evidence_and_reminder", "wait target metadata does not name role, evidence, and reminder text"),
     _invariant("report_reminder_requires_fresh_liveness_probe", "report reminder was sent without a fresh role liveness probe"),

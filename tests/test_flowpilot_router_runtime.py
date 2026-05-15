@@ -3634,6 +3634,85 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.assertEqual(record["dependencies"], [])
             self.assertTrue(record["router_scheduler_row_id"])
 
+    def test_runtime_ledgers_remain_valid_json_after_repeated_daemon_writes(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+
+        for _ in range(3):
+            result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+            self.assertEqual(result["tick_count"], 1)
+            for path in (
+                run_root / "runtime" / "router_scheduler_ledger.json",
+                run_root / "runtime" / "controller_action_ledger.json",
+                run_root / "runtime" / "router_daemon_status.json",
+                run_root / "runtime" / "router_daemon.lock",
+            ):
+                payload = read_json(path)
+                self.assertIsInstance(payload, dict)
+
+    def test_router_daemon_corrupted_scheduler_ledger_writes_error_status(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        scheduler_path.write_text(
+            '{"schema_version": "flowpilot.router_scheduler_ledger.v1"}\nBROKEN',
+            encoding="utf-8",
+        )
+
+        with self.assertRaises(router.RouterLedgerCorruptionError):
+            router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        lock = read_json(run_root / "runtime" / "router_daemon.lock")
+        status = read_json(run_root / "runtime" / "router_daemon_status.json")
+        self.assertEqual(lock["status"], "error")
+        self.assertEqual(status["lifecycle_status"], "daemon_error")
+        self.assertFalse(status["daemon_live"])
+        self.assertEqual(status["error"]["type"], "RouterLedgerCorruptionError")
+        self.assertFalse(status["router_scheduler_ledger"]["valid_json"])
+
+    def test_router_daemon_status_not_active_after_error_lock_or_missing_pid(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        state = read_json(router.run_state_path(run_root))
+        base_lock = {
+            "schema_version": router.ROUTER_DAEMON_LOCK_SCHEMA,
+            "run_id": state.get("run_id"),
+            "run_root": router.project_relative(root, run_root),
+            "created_at": router.utc_now(),
+            "last_tick_at": router.utc_now(),
+            "tick_interval_seconds": router.ROUTER_DAEMON_TICK_SECONDS,
+            "stale_after_seconds": router.ROUTER_DAEMON_LOCK_STALE_SECONDS,
+            "owner": router._router_daemon_owner(),  # type: ignore[attr-defined]
+        }
+
+        error_status = router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            lock={**base_lock, "status": "error"},
+        )
+        self.assertEqual(error_status["lifecycle_status"], "daemon_error")
+        self.assertFalse(error_status["lock"]["live"])
+
+        missing_pid_status = router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            lock={
+                **base_lock,
+                "status": "active",
+                "owner": {"pid": 999999999, "process_name": "missing-test-daemon"},
+            },
+        )
+        self.assertEqual(missing_pid_status["lifecycle_status"], "daemon_stale_or_missing")
+        self.assertFalse(missing_pid_status["lock"]["process_live"])
+        self.assertFalse(missing_pid_status["daemon_live"])
+
     def test_startup_reviewer_event_uses_current_scope_reconciliation(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

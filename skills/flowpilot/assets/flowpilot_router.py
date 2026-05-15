@@ -93,6 +93,9 @@ ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
 ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
 ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK = 16
+RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS = 5.0
+RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS = 30.0
+RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.02
 FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
 FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS = 300.0
 FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
@@ -2656,6 +2659,14 @@ class RouterError(ValueError):
         self.control_blocker = control_blocker
 
 
+class RouterLedgerCorruptionError(RouterError):
+    """Raised when a daemon-critical runtime ledger is not parseable."""
+
+    def __init__(self, path: Path, message: str):
+        self.path = path
+        super().__init__(f"runtime ledger is not valid JSON: {path} ({message})")
+
+
 def _active_model_miss_review_block_flags(run_state: dict[str, Any]) -> tuple[str, ...]:
     flags = run_state.get("flags", {})
     return tuple(flag for flag in MODEL_MISS_REVIEW_BLOCK_FLAGS if flags.get(flag))
@@ -2740,9 +2751,75 @@ def bootstrap_state_path(project_root: Path, state: dict[str, Any] | None = None
     return legacy_bootstrap_state_path(project_root)
 
 
-def write_json(path: Path, payload: dict[str, Any]) -> None:
+def _json_write_lock_path(path: Path) -> Path:
+    return path.with_name(path.name + ".write.lock")
+
+
+def _acquire_json_write_lock(path: Path) -> Path:
+    lock_path = _json_write_lock_path(path)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    deadline = time.monotonic() + RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            try:
+                age = time.time() - lock_path.stat().st_mtime
+            except OSError:
+                age = 0.0
+            if age > RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS:
+                try:
+                    lock_path.unlink()
+                except OSError:
+                    pass
+                continue
+            if time.monotonic() >= deadline:
+                raise RouterError(f"timed out waiting for JSON write lock: {path}")
+            time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
+            continue
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                        "path": str(path),
+                        "pid": os.getpid(),
+                        "created_at": utc_now(),
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+        return lock_path
+
+
+def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = True, verify: bool = True) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    lock_path = _acquire_json_write_lock(path)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
+    try:
+        body = json.dumps(payload, indent=2, sort_keys=sort_keys) + "\n"
+        with tmp_path.open("w", encoding="utf-8", newline="\n") as handle:
+            handle.write(body)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, path)
+        if verify:
+            read_json(path)
+    finally:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
+        try:
+            lock_path.unlink()
+        except OSError:
+            pass
+
+
+def write_json(path: Path, payload: dict[str, Any]) -> None:
+    write_json_atomic(path, payload, sort_keys=True, verify=True)
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -2756,6 +2833,24 @@ def read_json_if_exists(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return read_json(path)
+
+
+def read_daemon_critical_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return read_json(path)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        raise RouterLedgerCorruptionError(path, str(exc)) from exc
+
+
+def read_json_if_valid(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return read_json(path)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError):
+        return {}
 
 
 def _json_sha256(payload: dict[str, Any]) -> str:
@@ -4406,13 +4501,75 @@ def _lock_age_seconds(lock: dict[str, Any]) -> float | None:
     return (datetime.now(timezone.utc) - parsed).total_seconds()
 
 
-def _router_daemon_lock_is_live(lock: dict[str, Any]) -> bool:
-    if lock.get("schema_version") != ROUTER_DAEMON_LOCK_SCHEMA:
+def _process_is_live(pid: object) -> bool:
+    try:
+        value = int(pid)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
         return False
-    if lock.get("status") != "active":
+    if value <= 0:
         return False
+    if value == os.getpid():
+        return True
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            process_query_limited_information = 0x1000
+            still_active = 259
+            handle = ctypes.windll.kernel32.OpenProcess(process_query_limited_information, False, value)
+            if not handle:
+                return False
+            try:
+                exit_code = ctypes.c_ulong()
+                ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+                return bool(ok) and exit_code.value == still_active
+            finally:
+                ctypes.windll.kernel32.CloseHandle(handle)
+        except Exception:
+            return False
+    try:
+        os.kill(value, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def _router_daemon_lock_liveness(lock: dict[str, Any]) -> dict[str, Any]:
+    owner = lock.get("owner") if isinstance(lock.get("owner"), dict) else {}
     age = _lock_age_seconds(lock)
-    return age is not None and age <= ROUTER_DAEMON_LOCK_STALE_SECONDS
+    schema_ok = lock.get("schema_version") == ROUTER_DAEMON_LOCK_SCHEMA
+    status_active = lock.get("status") == "active"
+    fresh = age is not None and age <= ROUTER_DAEMON_LOCK_STALE_SECONDS
+    process_live = _process_is_live(owner.get("pid")) if isinstance(owner, dict) else False
+    reasons: list[str] = []
+    if not schema_ok:
+        reasons.append("invalid_or_missing_lock_schema")
+    if not status_active:
+        reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
+    if age is None:
+        reasons.append("missing_or_invalid_lock_timestamp")
+    elif not fresh:
+        reasons.append("lock_stale")
+    if not process_live:
+        reasons.append("owner_process_not_live")
+    return {
+        "live": bool(schema_ok and status_active and fresh and process_live),
+        "schema_ok": schema_ok,
+        "status_active": status_active,
+        "fresh": fresh,
+        "age_seconds": age,
+        "process_live": process_live,
+        "reasons": reasons,
+        "owner": owner,
+    }
+
+
+def _router_daemon_lock_is_live(lock: dict[str, Any]) -> bool:
+    return bool(_router_daemon_lock_liveness(lock).get("live"))
 
 
 def _acquire_router_daemon_lock(
@@ -4440,6 +4597,8 @@ def _acquire_router_daemon_lock(
     try:
         with path.open("x", encoding="utf-8") as handle:
             handle.write(json.dumps(lock, indent=2, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
         _append_router_daemon_event(run_root, "router_daemon_lock_acquired", {"lock_path": project_relative(project_root, path)})
         return lock
     except FileExistsError:
@@ -4617,7 +4776,7 @@ def _empty_router_scheduler_ledger(project_root: Path, run_root: Path, run_state
 
 def _read_router_scheduler_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     path = _router_scheduler_ledger_path(run_root)
-    ledger = read_json_if_exists(path)
+    ledger = read_daemon_critical_json_if_exists(path)
     if ledger.get("schema_version") != ROUTER_SCHEDULER_LEDGER_SCHEMA:
         return _empty_router_scheduler_ledger(project_root, run_root, run_state)
     rows = ledger.get("rows") if isinstance(ledger.get("rows"), list) else []
@@ -4652,12 +4811,24 @@ def _ensure_router_scheduler_ledger(project_root: Path, run_root: Path, run_stat
 
 
 def _router_scheduler_ledger_summary(run_root: Path) -> dict[str, Any]:
-    ledger = read_json_if_exists(_router_scheduler_ledger_path(run_root))
+    path = _router_scheduler_ledger_path(run_root)
+    try:
+        ledger = read_json_if_exists(path)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        return {
+            "exists": path.exists(),
+            "valid_json": False,
+            "error": str(exc),
+            "path": str(path),
+            "counts": _router_scheduler_row_counts([]),
+            "rows": [],
+        }
     if ledger.get("schema_version") != ROUTER_SCHEDULER_LEDGER_SCHEMA:
-        return {"exists": False, "counts": _router_scheduler_row_counts([]), "rows": []}
+        return {"exists": False, "valid_json": True, "counts": _router_scheduler_row_counts([]), "rows": []}
     rows = [row for row in (ledger.get("rows") or []) if isinstance(row, dict)]
     return {
         "exists": True,
+        "valid_json": True,
         "path": str(_router_scheduler_ledger_path(run_root)),
         "updated_at": ledger.get("updated_at"),
         "counts": ledger.get("counts") or _router_scheduler_row_counts(rows),
@@ -5122,8 +5293,7 @@ def _controller_action_ledger_has_prompt_header(ledger: dict[str, Any]) -> bool:
 
 
 def _write_controller_action_ledger(path: Path, ledger: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(ledger, indent=2) + "\n", encoding="utf-8")
+    write_json_atomic(path, ledger, sort_keys=False, verify=True)
 
 
 def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
@@ -5156,20 +5326,37 @@ def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_st
 def _ensure_controller_action_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     path = _controller_action_ledger_path(run_root)
     if path.exists():
-        ledger = read_json(path)
-        if _controller_action_ledger_has_prompt_header(ledger):
-            run_state["controller_action_ledger_path"] = project_relative(project_root, path)
-            return ledger
+        try:
+            ledger = read_json(path)
+            if _controller_action_ledger_has_prompt_header(ledger):
+                run_state["controller_action_ledger_path"] = project_relative(project_root, path)
+                return ledger
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError):
+            pass
     return _rebuild_controller_action_ledger(project_root, run_root, run_state)
 
 
 def _controller_action_ledger_summary(run_root: Path) -> dict[str, Any]:
-    ledger = read_json_if_exists(_controller_action_ledger_path(run_root))
+    path = _controller_action_ledger_path(run_root)
+    try:
+        ledger = read_json_if_exists(path)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        return {
+            "exists": path.exists(),
+            "valid_json": False,
+            "error": str(exc),
+            "path": str(path),
+            "counts": _controller_action_counts([]),
+            "actions": [],
+            "pending_action_ids": [],
+            "waiting_action_ids": [],
+        }
     if ledger.get("schema_version") != CONTROLLER_ACTION_LEDGER_SCHEMA:
-        return {"exists": False, "counts": _controller_action_counts([]), "actions": []}
+        return {"exists": False, "valid_json": True, "counts": _controller_action_counts([]), "actions": []}
     actions = ledger.get("actions") if isinstance(ledger.get("actions"), list) else []
     return {
         "exists": True,
+        "valid_json": True,
         "path": str(_controller_action_ledger_path(run_root)),
         "updated_at": ledger.get("updated_at"),
         "counts": ledger.get("counts") or _controller_action_counts([item for item in actions if isinstance(item, dict)]),
@@ -7303,34 +7490,48 @@ def _write_router_daemon_status(
     current_action: dict[str, Any] | None = None,
     recovery_hints: list[str] | None = None,
     lock: dict[str, Any] | None = None,
+    error: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     lock_payload = lock if isinstance(lock, dict) else read_json_if_exists(_router_daemon_lock_path(run_root))
+    lock_liveness = _router_daemon_lock_liveness(lock_payload)
+    effective_lifecycle_status = lifecycle_status
+    if lifecycle_status in {"daemon_active", "daemon_observing", "daemon_starting"}:
+        if lock_payload.get("status") == "error":
+            effective_lifecycle_status = "daemon_error"
+        elif not lock_liveness["live"]:
+            effective_lifecycle_status = "daemon_stale_or_missing"
     terminal_mode = _terminal_lifecycle_mode(run_state)
     current_wait = _pending_wait_summary(run_state, project_root=project_root)
     standby_required = _should_refresh_continuous_standby_row(
         run_state,
-        lifecycle_status=lifecycle_status,
+        lifecycle_status=effective_lifecycle_status,
         current_action=current_action,
     )
     standby_entry = None
     if standby_required:
         standby_entry = _ensure_continuous_standby_controller_action(project_root, run_root, run_state, current_wait)
+    lock_owner = lock_liveness.get("owner") if isinstance(lock_liveness.get("owner"), dict) else {}
     status = {
         "schema_version": ROUTER_DAEMON_STATUS_SCHEMA,
         "run_id": run_state.get("run_id"),
         "run_root": project_relative(project_root, run_root),
         "daemon_mode_enabled": bool(run_state.get("daemon_mode_enabled")),
-        "lifecycle_status": "terminal_stopped" if terminal_mode else lifecycle_status,
+        "lifecycle_status": "terminal_stopped" if terminal_mode else effective_lifecycle_status,
         "run_lifecycle_status": terminal_mode,
         "tick_interval_seconds": ROUTER_DAEMON_TICK_SECONDS,
         "last_tick_at": utc_now(),
-        "process": _router_daemon_owner(),
+        "process": lock_owner or _router_daemon_owner(),
         "lock": {
             "path": project_relative(project_root, _router_daemon_lock_path(run_root)),
             "status": lock_payload.get("status"),
             "last_tick_at": lock_payload.get("last_tick_at"),
-            "live": _router_daemon_lock_is_live(lock_payload),
+            "live": lock_liveness["live"],
+            "process_live": lock_liveness["process_live"],
+            "fresh": lock_liveness["fresh"],
+            "age_seconds": lock_liveness["age_seconds"],
+            "reasons": lock_liveness["reasons"],
         },
+        "daemon_live": bool(bool(run_state.get("daemon_mode_enabled")) and lock_liveness["live"]),
         "current_wait": current_wait,
         "continuous_standby_task": (
             (standby_entry.get("action") or {}).get("continuous_standby_task")
@@ -7352,6 +7553,7 @@ def _write_router_daemon_status(
         "router_scheduler_ledger": _router_scheduler_ledger_summary(run_root),
         "router_internal_ownership_ledger_visible_to_controller": False,
         "recovery_hints": recovery_hints or [],
+        "error": error,
         "controller_should_watch_action_ledger": True,
         "router_owns_waiting": True,
     }
@@ -19261,7 +19463,13 @@ def _build_current_status_summary(
     waiting_controller_action_ids = controller_ledger.get("waiting_action_ids") or []
     user_required = bool(pending_action.get("requires_user") or pending_action.get("requires_user_dialog_display_confirmation"))
     daemon_status_ok = daemon_status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA
-    daemon_stale_or_missing = bool(run_state.get("daemon_mode_enabled")) and not daemon_status_ok
+    daemon_lifecycle = str(daemon_status.get("lifecycle_status") or "")
+    daemon_lock_live = bool((daemon_status.get("lock") or {}).get("live")) if daemon_status_ok else False
+    daemon_stale_or_missing = bool(run_state.get("daemon_mode_enabled")) and (
+        not daemon_status_ok
+        or not daemon_lock_live
+        or daemon_lifecycle in {"daemon_error", "daemon_stale_or_missing"}
+    )
     controller_action_ready = state_kind == "controller_action_ready" or bool(pending_controller_action_ids)
     if terminal:
         foreground_required_mode = "terminal_return"
@@ -31694,11 +31902,11 @@ def run_router_daemon(
         raise RouterError("router daemon requires an active FlowPilot run")
     run_state["daemon_mode_enabled"] = True
     lock = _acquire_router_daemon_lock(project_root, run_root, run_state, replace_stale=replace_stale_lock)
-    _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_starting")
-    save_run_state(run_root, run_state)
     ticks: list[dict[str, Any]] = []
     error: Exception | None = None
     try:
+        _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_starting")
+        save_run_state(run_root, run_state)
         while True:
             tick = _router_daemon_tick(project_root, run_root, run_state, observe_only=observe_only)
             ticks.append(tick)
@@ -31709,7 +31917,36 @@ def run_router_daemon(
             time.sleep(ROUTER_DAEMON_TICK_SECONDS)
     except Exception as exc:
         error = exc
-        _release_router_daemon_lock(project_root, run_root, reason=f"daemon_error:{type(exc).__name__}", status="error")
+        lock = _release_router_daemon_lock(project_root, run_root, reason=f"daemon_error:{type(exc).__name__}", status="error")
+        _append_router_daemon_event(
+            run_root,
+            "router_daemon_error",
+            {
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            },
+        )
+        try:
+            _write_router_daemon_status(
+                project_root,
+                run_root,
+                run_state,
+                lifecycle_status="daemon_error",
+                current_action=run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else None,
+                recovery_hints=[
+                    "repair_or_replace_invalid_runtime_ledger_before_restarting_router_daemon",
+                    "restart_router_daemon_with_replace_stale_lock_after_repair_if_needed",
+                ],
+                lock=lock,
+                error={
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "path": str(exc.path) if isinstance(exc, RouterLedgerCorruptionError) else None,
+                },
+            )
+            save_run_state(run_root, run_state)
+        except Exception:
+            pass
         raise
     finally:
         if error is None and (release_lock_on_exit or (ticks and ticks[-1].get("terminal"))):

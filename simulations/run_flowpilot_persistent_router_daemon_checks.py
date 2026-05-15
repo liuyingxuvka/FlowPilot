@@ -55,6 +55,11 @@ HAZARD_EXPECTED_FAILURES = {
     "formal_startup_continued_after_daemon_failure": "formal startup continued after Router daemon startup failure",
     "ack_wait_without_daemon": "ordinary wait exists without a live Router daemon",
     "duplicate_router_writers": "multiple Router daemon writers exist for one run",
+    "router_scheduler_ledger_corrupted_by_partial_write": "Router scheduler ledger is not valid JSON after a durable write",
+    "controller_action_ledger_corrupted_by_partial_write": "Controller action ledger is not valid JSON after a durable write",
+    "daemon_status_active_after_lock_error": "daemon status reported active after lock error",
+    "daemon_status_active_without_process": "daemon status reported active without a live process",
+    "router_scheduler_ledger_multi_writer": "Router scheduler ledger has more than one writer",
     "duplicate_ack_consumption": "mailbox evidence was consumed more than once",
     "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
     "router_cleared_controller_receipt_without_internal_fact": "Router cleared Controller receipt without updating Router-owned internal action fact",
@@ -91,7 +96,13 @@ def _state_id(state: model.State) -> str:
         f"startup_daemon={state.startup_daemon_step_completed},"
         f"startup_failed={state.startup_daemon_failed}|daemon={state.daemon_mode_enabled},"
         f"{state.daemon_alive},{state.daemon_lock_state},{state.daemon_writer_count},"
-        f"tick={state.daemon_tick_seconds}|core={state.controller_core_loaded}|"
+        f"tick={state.daemon_tick_seconds}|ledgers={state.router_scheduler_ledger_valid_json},"
+        f"{state.controller_action_ledger_valid_json},atomic={state.durable_ledger_writes_atomic},"
+        f"scheduler_single_writer={state.router_scheduler_single_writer},"
+        f"decode_crash={state.daemon_crashed_after_ledger_decode_error},"
+        f"status_after_error={state.daemon_status_active_after_lock_error},"
+        f"status_no_process={state.daemon_status_active_without_process}|"
+        f"core={state.controller_core_loaded}|"
         f"controller={state.controller_attached},"
         f"metronome={state.controller_called_router_next_as_metronome},"
         f"finaled={state.controller_finaled_at_wait},"

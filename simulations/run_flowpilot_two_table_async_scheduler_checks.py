@@ -39,6 +39,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.STARTUP_UI_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
     model.STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
     model.DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP: "Router daemon waited for Controller core instead of driving startup work",
+    model.ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE: "Router scheduler ledger was not valid JSON after daemon table write",
+    model.CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE: "Controller action ledger was not valid JSON after Controller table write",
+    model.ROUTER_SCHEDULER_LEDGER_MULTI_WRITER: "Router scheduler ledger had more than one writer",
 }
 
 
@@ -46,7 +49,10 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|daemon={state.daemon_started},"
         f"{state.daemon_tick_seconds}|tables={state.router_scheduler_table_exists},"
-        f"{state.controller_action_table_exists},router_meta={state.router_table_has_dependency_metadata},"
+        f"{state.controller_action_table_exists},valid_json={state.router_scheduler_ledger_valid_json},"
+        f"{state.controller_action_ledger_valid_json},atomic={state.ledger_writes_atomic},"
+        f"scheduler_single_writer={state.router_scheduler_single_writer},"
+        f"router_meta={state.router_table_has_dependency_metadata},"
         f"controller_graph={state.controller_table_has_router_dependency_graph}|"
         f"prompt={state.controller_table_prompt_present},{state.controller_table_prompt_before_actions},"
         f"{state.controller_table_prompt_top_down_order},{state.controller_table_prompt_receipt_duty},"

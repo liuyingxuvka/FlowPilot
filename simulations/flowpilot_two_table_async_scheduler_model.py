@@ -24,20 +24,24 @@ Risk intent brief:
   current scope.
 - Model-critical state: Router scheduler rows, Controller rows, daemon tick,
   barriers, receipts, postconditions, startup prep cards/ACKs, Reviewer fact
-  review, and PM activation ACK semantics.
+  review, PM activation ACK semantics, and durable ledger file integrity.
 - Adversarial branches: hidden dependency metadata in Controller rows, retry
   duplicate side effects, Reviewer review before startup cleanup, route work
   before PM activation, daemon enqueue past a real barrier, missing table-local
   Controller prompt, startup UI/roles/heartbeat before daemon ownership,
-  pre-Controller-core daemon idling, standby completion after one monitor check,
-  foreground closure while FlowPilot is still running, standby ignoring new
-  Controller work, and redundant PM activation global join.
+  pre-Controller-core daemon idling, scheduler ledger partial writes that leave
+  invalid JSON, standby completion after one monitor check, foreground closure
+  while FlowPilot is still running, standby ignoring new Controller work, and
+  redundant PM activation global join.
 - Hard invariants: Router and Controller tables stay separate; daemon enqueues
   independent rows until barrier; barriers stop enqueueing; done receipts need
   required Router-visible postconditions before reconciliation; startup review
   uses current-scope reconciliation; startup external actions are daemon-owned
   after the minimal run shell exists; the Controller action ledger carries a
-  compact top-to-bottom table prompt; live waits keep a continuous Controller
+  compact top-to-bottom table prompt; ledger writes are atomic and leave both
+  table files parseable after every daemon/controller write; Router scheduler
+  ledger remains Router-single-writer;
+  live waits keep a continuous Controller
   standby row and Codex-plan sync duty; running FlowPilot keeps foreground
   Controller attached; PM activation uses same-role ACK only.
 - Blindspot: this is a focused control-plane model. Runtime tests must still
@@ -76,6 +80,9 @@ STANDBY_NEW_WORK_IGNORED = "standby_new_work_ignored"
 STARTUP_UI_BEFORE_DAEMON = "startup_ui_before_daemon"
 STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON = "startup_roles_or_heartbeat_before_daemon"
 DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP = "daemon_waits_for_controller_core_during_startup"
+ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE = "router_scheduler_ledger_partial_write"
+CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE = "controller_action_ledger_partial_write"
+ROUTER_SCHEDULER_LEDGER_MULTI_WRITER = "router_scheduler_ledger_multi_writer"
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
@@ -104,6 +111,9 @@ NEGATIVE_SCENARIOS = (
     STARTUP_UI_BEFORE_DAEMON,
     STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON,
     DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP,
+    ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE,
+    CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE,
+    ROUTER_SCHEDULER_LEDGER_MULTI_WRITER,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -128,6 +138,10 @@ class State:
     daemon_tick_seconds: int = 0
     router_scheduler_table_exists: bool = False
     controller_action_table_exists: bool = False
+    router_scheduler_ledger_valid_json: bool = True
+    controller_action_ledger_valid_json: bool = True
+    ledger_writes_atomic: bool = True
+    router_scheduler_single_writer: bool = True
     router_table_has_dependency_metadata: bool = False
     controller_table_has_router_dependency_graph: bool = False
     controller_table_prompt_present: bool = False
@@ -215,6 +229,10 @@ def scenario_state(scenario: str) -> State:
         "daemon_tick_seconds": 1,
         "router_scheduler_table_exists": True,
         "controller_action_table_exists": True,
+        "router_scheduler_ledger_valid_json": True,
+        "controller_action_ledger_valid_json": True,
+        "ledger_writes_atomic": True,
+        "router_scheduler_single_writer": True,
         "router_table_has_dependency_metadata": True,
         "controller_table_prompt_present": True,
         "controller_table_prompt_before_actions": True,
@@ -483,6 +501,37 @@ def scenario_state(scenario: str) -> State:
                 "daemon_waits_for_controller_core_without_startup_drive": True,
             },
         )
+    if scenario == ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "independent_row_enqueued": True,
+                "next_independent_row_enqueued": True,
+                "receipt_done": True,
+                "router_scheduler_ledger_valid_json": False,
+                "ledger_writes_atomic": False,
+            },
+        )
+    if scenario == CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "independent_row_enqueued": True,
+                "controller_action_ledger_valid_json": False,
+                "ledger_writes_atomic": False,
+            },
+        )
+    if scenario == ROUTER_SCHEDULER_LEDGER_MULTI_WRITER:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "independent_row_enqueued": True,
+                "router_scheduler_single_writer": False,
+            },
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -490,6 +539,14 @@ def scheduler_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.daemon_started and state.daemon_tick_seconds != 1:
         failures.append("Router daemon is not a one-second scheduling driver")
+    if state.router_scheduler_table_exists and not state.router_scheduler_ledger_valid_json:
+        failures.append("Router scheduler ledger was not valid JSON after daemon table write")
+    if state.controller_action_table_exists and not state.controller_action_ledger_valid_json:
+        failures.append("Controller action ledger was not valid JSON after Controller table write")
+    if (state.router_scheduler_table_exists or state.controller_action_table_exists) and not state.ledger_writes_atomic:
+        failures.append("runtime ledgers were written without atomic replace semantics")
+    if state.router_scheduler_table_exists and not state.router_scheduler_single_writer:
+        failures.append("Router scheduler ledger had more than one writer")
     if (
         state.minimal_run_shell_created
         and not state.daemon_first_driver_before_external_startup_actions

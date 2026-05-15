@@ -11234,3 +11234,63 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
 - Full `tests/test_flowpilot_router_runtime.py` was not run; final evidence uses focused affected subsets plus OpenSpec, install, and three lightweight FlowGuard/contract checks.
+
+## 2026-05-15 Runtime Ledger Persistence Model-Miss Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A fresh FlowPilot run started the Router daemon before startup UI, but the daemon later exited with `JSONDecodeError` after `runtime/router_scheduler_ledger.json` became a complete JSON document followed by a partial row fragment.
+- Status: completed_model_update_runtime_fix_pending
+- Skill decision: used_openspec_routing_then_flowguard
+
+### Model Evidence
+- Two-table scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Persistent daemon model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- OpenSpec change: `openspec/changes/harden-runtime-ledger-persistence/`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `openspec validate harden-runtime-ledger-persistence --strict` passed.
+
+### Findings
+- The previous focused models treated Controller and Router ledgers as abstract valid tables, so they did not catch file-level corruption or daemon status/lock/process disagreement.
+- The two-table model now rejects invalid Router scheduler ledger JSON, invalid Controller action ledger JSON, non-atomic ledger writes, and scheduler multi-writer access.
+- The persistent daemon model now rejects invalid durable ledgers, daemon crashes after scheduler ledger decode failures, daemon status claiming active after an error lock, and daemon status claiming active without a live process.
+- The minimal runtime repair should centralize daemon-critical JSON writes behind atomic replace/readback validation, keep Router scheduler ledger mutation Router-owned, and derive daemon liveness from lock freshness plus process evidence instead of trusting status alone.
+
+### Skipped Steps
+- No Router runtime implementation was changed in this model update.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped.
+
+## 2026-05-15 Runtime Ledger Persistence Runtime Repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Implement the OpenSpec/FlowGuard repair for daemon-critical runtime ledgers after the model update exposed partial JSON writes, scheduler multi-writer risk, and daemon status/lock/process mismatch.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_apply_then_flowguard
+
+### Model Evidence
+- Two-table scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Persistent daemon model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- OpenSpec change: `openspec/changes/harden-runtime-ledger-persistence/`
+
+### Commands
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py` passed.
+- `openspec validate harden-runtime-ledger-persistence --strict` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "runtime_ledgers_remain_valid_json or corrupted_scheduler_ledger or status_not_active_after_error_lock_or_missing_pid or router_daemon_observation_initializes_lock_status_and_ledger or router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles or router_daemon_queues_startup_rows_until_barrier_with_two_tables or foreground_controller_standby_exits_on_stale_or_missing_daemon or formal_startup_starts_router_daemon_before_controller_core" -q` passed with 8 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "foreground_controller_standby" -q` passed with 10 tests.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and synchronized the installed FlowPilot skill to the repository digest.
+- `python scripts\audit_local_install_sync.py --json` and `python scripts\install_flowpilot.py --check --json` passed.
+
+### Findings
+- Daemon-critical JSON writes now go through one atomic replace/readback path, including the Router scheduler ledger, Controller action ledger, daemon status, and normal JSON helper writes.
+- Invalid Router scheduler ledger JSON is no longer silently recreated; daemon scheduling fails into a Router-visible `daemon_error` status with repair evidence.
+- Daemon liveness is now derived from lock schema, lock status, freshness, and process evidence; an error lock or missing process cannot be reported as `daemon_active`.
+- Controller action ledger summaries remain tolerant enough for status reporting, while the Router scheduler ledger stays strict for daemon scheduling.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
