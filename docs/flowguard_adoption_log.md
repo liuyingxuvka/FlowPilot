@@ -11675,3 +11675,47 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - When the parallel reconciliation repair lands, rerun the daemon reconciliation check and then consider the heavyweight Meta/Capability checks when runtime cost is acceptable.
+
+## 2026-05-15 Daemon Projection Reconciliation Repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The model-miss review found Controller-boundary durable evidence was complete while Router flags stayed false, and the user requested a model-first repair plus a faster no-sleep loop when immediate work remains.
+- Status: focused_repair_synced_to_local_install
+- OpenSpec change: `harden-daemon-projection-reconciliation`
+
+### Model Evidence
+- Paper plan: `docs/flowpilot_daemon_projection_reconciliation_plan.md`
+- Updated model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Updated runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Pre-implementation model-only result: `simulations/flowpilot_daemon_reconciliation_model_only_results.json`
+- Final result: `simulations/flowpilot_daemon_reconciliation_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate harden-daemon-projection-reconciliation --strict` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out simulations\flowpilot_daemon_reconciliation_model_only_results.json` passed; known-bad projection and fast-loop hazards were detected.
+- `python skills\flowpilot\assets\flowpilot_router.py --root . reconcile-run --json` repaired the current stopped run's Controller-boundary projection.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` passed; live projection reported `finding_count: 0`.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "controller_boundary"` passed: 9 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "router_daemon"` passed: 17 tests.
+- `python scripts\check_install.py`, `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed; installed `flowpilot` is source-fresh.
+
+### Findings
+- Router now has an idempotent Controller-boundary projection sync helper that can rebuild flags from valid durable artifact/receipt/action/scheduler evidence even when `pending_action` is empty.
+- `compute_controller_action`, daemon ticks, and `reconcile-run` now run this projection sync before progress decisions.
+- The daemon outer loop now skips the one-second sleep after `max_actions_per_tick`, while preserving sleep for real waits such as `barrier` and `no_action`.
+- The live projection check now recognizes `startup_bootloader_controller_receipt` as the valid startup bootloader receipt owner and still rejects generic wrong owners.
+
+### Counterexamples
+- `controller_boundary_reconciled_artifact_left_flags_false`
+- `controller_boundary_reissued_after_reconciled_artifact`
+- `controller_boundary_returned_without_pending_action`
+- `daemon_sleeps_after_queue_budget_exhausted`
+- `daemon_fast_loops_after_barrier`
+- `daemon_fast_loops_after_no_action`
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because this was a focused daemon projection repair.
+
+### Next Actions
+- Run heavyweight Meta/Capability checks later if a broader project-control or capability-routing change is made, or before a release confidence claim.

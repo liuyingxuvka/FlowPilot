@@ -3902,6 +3902,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.assertEqual(record["dependencies"], [])
             self.assertTrue(record["router_scheduler_row_id"])
 
+    def test_router_daemon_immediately_continues_after_queue_budget_stop(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        calls: list[int] = []
+
+        def fake_queue(project_root: Path, run_root: Path, run_state: dict) -> dict:
+            del project_root, run_root, run_state
+            calls.append(1)
+            return {
+                "queued_count": router.ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK if len(calls) == 1 else 0,
+                "queued_actions": [],
+                "stop_reason": "max_actions_per_tick" if len(calls) == 1 else "no_action",
+                "current_action": None,
+            }
+
+        with (
+            mock.patch.object(router, "_router_daemon_fill_action_queue", side_effect=fake_queue),
+            mock.patch.object(router.time, "sleep") as sleep_mock,
+        ):
+            result = router.run_router_daemon(root, max_ticks=2, release_lock_on_exit=True)
+
+        self.assertEqual(result["tick_count"], 2)
+        self.assertEqual(len(calls), 2)
+        sleep_mock.assert_not_called()
+
+    def test_router_daemon_sleeps_after_real_queue_wait(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+
+        def fake_queue(project_root: Path, run_root: Path, run_state: dict) -> dict:
+            del project_root, run_root, run_state
+            return {
+                "queued_count": 1,
+                "queued_actions": [],
+                "stop_reason": "barrier",
+                "current_action": None,
+            }
+
+        with (
+            mock.patch.object(router, "_router_daemon_fill_action_queue", side_effect=fake_queue),
+            mock.patch.object(router.time, "sleep") as sleep_mock,
+        ):
+            result = router.run_router_daemon(root, max_ticks=2, release_lock_on_exit=True)
+
+        self.assertEqual(result["tick_count"], 2)
+        sleep_mock.assert_called_once_with(router.ROUTER_DAEMON_TICK_SECONDS)
+
     def test_startup_obligations_are_not_global_scheduler_barriers(self) -> None:
         root = self.make_project()
         run_root = root / "run"
@@ -4244,6 +4293,48 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "startup" / "controller_boundary_confirmation.json").exists())
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
         self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+
+    def test_controller_boundary_projection_reclaims_stale_flags_without_pending_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        receipt = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        self.assertTrue(receipt["ok"])
+
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["controller_role_confirmed"] = False
+        state["flags"]["controller_role_confirmed_from_router_core"] = False
+        state["flags"]["controller_boundary_confirmation_written"] = False
+        state["pending_action"] = None
+        state.pop("controller_boundary_confirmation", None)
+        router.save_run_state(run_root, state)
+
+        next_action = self.next_after_display_sync(root)
+
+        self.assertNotEqual(next_action["action_type"], "confirm_controller_core_boundary")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["controller_role_confirmed"])
+        self.assertTrue(state["flags"]["controller_role_confirmed_from_router_core"])
+        self.assertTrue(state["flags"]["controller_boundary_confirmation_written"])
+        self.assertNotEqual((state.get("pending_action") or {}).get("action_type"), "confirm_controller_core_boundary")
+        labels = [item["label"] for item in state["history"] if isinstance(item, dict)]
+        self.assertIn("router_reconciled_controller_boundary_projection", labels)
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item["row_id"] == action_record["router_scheduler_row_id"])
+        self.assertEqual(row["router_state"], "reconciled")
 
     def test_sync_display_plan_done_receipt_updates_router_fact_before_next_action(self) -> None:
         root = self.make_project()

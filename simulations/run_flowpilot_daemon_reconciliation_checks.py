@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 RESULTS_PATH = ROOT / "flowpilot_daemon_reconciliation_results.json"
 STARTUP_RECONCILIATION_SOURCE = "startup_daemon_bootloader_postcondition"
+STARTUP_BOOTLOADER_RECEIPT_SOURCE = "startup_bootloader_controller_receipt"
+STARTUP_RECONCILIATION_SOURCES = (STARTUP_RECONCILIATION_SOURCE, STARTUP_BOOTLOADER_RECEIPT_SOURCE)
 MISSING_POSTCONDITION_BLOCKER_SOURCE = "controller_action_receipt_missing_router_postcondition"
 CONTROLLER_BOUNDARY_RECONCILIATION_SOURCE = "router_owned_controller_boundary_confirmation_reclaim"
 
@@ -39,7 +41,10 @@ REQUIRED_LABELS = (
     "daemon_idempotently_ignores_already_recorded_role_output",
     "daemon_computes_next_action_after_reconciliation",
     "daemon_returns_control_blocker_after_reconciliation",
-    "terminal_stop_after_reconciliation_contract_checked",
+    "daemon_queue_stops_at_barrier_and_sleeps",
+    "daemon_queue_budget_exhausted_requests_immediate_tick",
+    "daemon_queue_finds_no_action_and_sleeps",
+    "terminal_stop_after_reconciliation_and_sleep_policy_checked",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -58,6 +63,9 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_boundary_reissued_after_reconciled_artifact": "Controller boundary confirmation was reissued after valid reconciled evidence",
     "controller_boundary_returned_without_pending_action": "Controller boundary action was exposed while pending_action was empty",
     "controller_boundary_action_scheduler_disagree": "Controller boundary action and scheduler reconciliation disagreed",
+    "daemon_sleeps_after_queue_budget_exhausted": "daemon slept after queue budget exhaustion instead of starting the next tick immediately",
+    "daemon_fast_loops_after_barrier": "daemon fast-looped after a real wait instead of sleeping",
+    "daemon_fast_loops_after_no_action": "daemon fast-looped after a real wait instead of sleeping",
     "role_wait_not_cleared_after_event": "expected role wait remained current after Router recorded the role output",
     "duplicate_role_output_consumption": "role output durable evidence was consumed more than once",
     "blocked_receipt_repeated_instead_of_blocker": "daemon repeated a completed or blocked Controller action instead of clearing or blocking",
@@ -86,6 +94,8 @@ def _state_id(state: model.State) -> str:
         f"flags={state.controller_boundary_flags_synced},"
         f"reissued={state.controller_boundary_reissued_after_reconcile},"
         f"without_pending={state.controller_boundary_action_returned_without_pending}|"
+        f"queue={state.queue_stop_reason},sleep={state.sleep_taken},"
+        f"immediate={state.immediate_tick_requested}|"
         f"role_output={state.role_output_ledger_submitted},valid={state.role_output_envelope_valid},"
         f"expected={state.role_output_event_expected},artifact={state.canonical_artifact_exists},"
         f"reconciled={state.role_output_reconciled},event={state.router_event_recorded},"
@@ -259,17 +269,37 @@ def _startup_reconciliation_satisfied(
     if not isinstance(row_reconciliation, dict):
         row_reconciliation = {}
 
-    action_satisfied = (
+    action_source = action_reconciliation.get("source")
+    row_source = row_reconciliation.get("source")
+    action_satisfied = bool(
         action.get("status") == "done"
         and action.get("router_reconciliation_status") == "reconciled"
-        and action_reconciliation.get("source") == STARTUP_RECONCILIATION_SOURCE
-        and action_reconciliation.get("bootstrap_flag_satisfied") is True
+        and (
+            (
+                action_source == STARTUP_RECONCILIATION_SOURCE
+                and action_reconciliation.get("bootstrap_flag_satisfied") is True
+            )
+            or (
+                action_source == STARTUP_BOOTLOADER_RECEIPT_SOURCE
+                and action_reconciliation.get("applied") is True
+                and bool(action_reconciliation.get("postcondition"))
+            )
+        )
     )
     row_satisfied = bool(
         row
         and row.get("router_state") == "reconciled"
-        and row_reconciliation.get("source") == STARTUP_RECONCILIATION_SOURCE
-        and row_reconciliation.get("bootstrap_flag_satisfied") is True
+        and (
+            (
+                row_source == STARTUP_RECONCILIATION_SOURCE
+                and row_reconciliation.get("bootstrap_flag_satisfied") is True
+            )
+            or (
+                row_source == STARTUP_BOOTLOADER_RECEIPT_SOURCE
+                and row_reconciliation.get("applied") is True
+                and bool(row_reconciliation.get("postcondition"))
+            )
+        )
     )
     return action_satisfied or row_satisfied, row
 
@@ -486,7 +516,7 @@ def _live_run_projection() -> dict[str, object]:
             )
         if (
             action.get("router_reconciliation_status") == "reconciled"
-            and action_reconciliation.get("source") not in ("", STARTUP_RECONCILIATION_SOURCE)
+            and action_reconciliation.get("source") not in ("", *STARTUP_RECONCILIATION_SOURCES)
         ):
             row_findings.append(
                 {
@@ -500,7 +530,7 @@ def _live_run_projection() -> dict[str, object]:
             row_reconciliation = row.get("reconciliation", {})
             if not isinstance(row_reconciliation, dict):
                 row_reconciliation = {}
-            if row_reconciliation.get("source") not in ("", STARTUP_RECONCILIATION_SOURCE):
+            if row_reconciliation.get("source") not in ("", *STARTUP_RECONCILIATION_SOURCES):
                 row_findings.append(
                     {
                         "id": "startup_scheduler_row_reconciled_by_wrong_owner",
@@ -557,13 +587,21 @@ def _live_run_projection() -> dict[str, object]:
     }
 
 
-def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
+def run_checks(*, json_out_requested: bool = False, skip_live_projection: bool = False) -> dict[str, object]:
     graph = _build_graph()
     safe = _safe_graph_report(graph)
     progress = _progress_report(graph)
     explorer = _run_flowguard_explorer()
     hazards = _hazard_report()
-    live_run_projection = _live_run_projection()
+    if skip_live_projection:
+        live_run_projection: dict[str, object] = {
+            "ok": True,
+            "classification_ok": False,
+            "skipped": True,
+            "skip_reason": "model_only_preimplementation_gate",
+        }
+    else:
+        live_run_projection = _live_run_projection()
     skipped_checks: dict[str, str] = {}
     if live_run_projection.get("skipped"):
         skipped_checks["live_run_projection"] = f"skipped_with_reason: {live_run_projection.get('skip_reason')}"
@@ -589,9 +627,14 @@ def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json-out", type=Path, default=RESULTS_PATH)
+    parser.add_argument(
+        "--skip-live-projection",
+        action="store_true",
+        help="run only the abstract model/hazard gate without auditing the current runtime",
+    )
     args = parser.parse_args()
 
-    result = run_checks(json_out_requested=bool(args.json_out))
+    result = run_checks(json_out_requested=bool(args.json_out), skip_live_projection=args.skip_live_projection)
     payload = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.json_out:
         args.json_out.write_text(payload, encoding="utf-8")

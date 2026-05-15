@@ -6249,6 +6249,156 @@ def _sync_controller_boundary_confirmation_from_artifact(
     }
 
 
+def _controller_boundary_flags_synced(run_state: dict[str, Any]) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    return bool(
+        flags.get("controller_role_confirmed")
+        and flags.get("controller_role_confirmed_from_router_core")
+        and flags.get("controller_boundary_confirmation_written")
+    )
+
+
+def _router_scheduler_row_for_controller_entry(run_root: Path, entry: dict[str, Any]) -> dict[str, Any]:
+    row_id = str(entry.get("router_scheduler_row_id") or "").strip()
+    if not row_id:
+        return {}
+    scheduler = read_json_if_exists(_router_scheduler_ledger_path(run_root))
+    for row in scheduler.get("rows", []) if isinstance(scheduler.get("rows"), list) else []:
+        if isinstance(row, dict) and row.get("row_id") == row_id:
+            return row
+    return {}
+
+
+def _done_controller_receipt_for_entry(run_root: Path, entry: dict[str, Any]) -> dict[str, Any]:
+    action_id = str(entry.get("action_id") or "").strip()
+    if not action_id:
+        return {}
+    receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id))
+    if receipt.get("schema_version") != CONTROLLER_RECEIPT_SCHEMA:
+        return {}
+    if receipt.get("status") != "done":
+        return {}
+    if str(receipt.get("action_id") or "") != action_id:
+        return {}
+    return receipt
+
+
+def _reconcile_controller_boundary_confirmation_projection(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
+    if context is None:
+        return {"changed": False, "reason": "controller_boundary_confirmation_missing_or_invalid"}
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return {"changed": False, "reason": "controller_action_dir_missing"}
+
+    flags_were_synced = _controller_boundary_flags_synced(run_state)
+    reconciled_actions: list[str] = []
+    pending_cleared = False
+    last_projection: dict[str, Any] | None = None
+
+    for action_path in sorted(action_dir.glob("*.json")):
+        entry = read_json_if_exists(action_path)
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if entry.get("action_type") != "confirm_controller_core_boundary":
+            continue
+        if entry.get("status") != "done":
+            continue
+        receipt = _done_controller_receipt_for_entry(run_root, entry)
+        if not receipt:
+            continue
+        action = dict(entry.get("action") if isinstance(entry.get("action"), dict) else {})
+        action_id = str(entry.get("action_id") or action.get("controller_action_id") or "").strip()
+        if not action_id:
+            continue
+        action.setdefault("action_type", "confirm_controller_core_boundary")
+        action.setdefault("controller_action_id", action_id)
+        action.setdefault("postcondition", "controller_role_confirmed")
+        if entry.get("router_scheduler_row_id"):
+            action.setdefault("router_scheduler_row_id", entry.get("router_scheduler_row_id"))
+        action.setdefault(
+            "controller_receipt_path",
+            project_relative(project_root, _controller_receipt_path(run_root, action_id)),
+        )
+        row = _router_scheduler_row_for_controller_entry(run_root, entry)
+        row_reconciled = bool(row.get("router_state") == "reconciled")
+        entry_reconciled = bool(entry.get("router_reconciliation_status") == "reconciled")
+        projection_missing = (
+            not _controller_boundary_flags_synced(run_state)
+            or not isinstance(run_state.get("controller_boundary_confirmation"), dict)
+            or not run_state.get("controller_boundary_confirmation", {}).get("path")
+        )
+        if entry_reconciled and row_reconciled and not projection_missing:
+            continue
+        applied = _sync_controller_boundary_confirmation_from_artifact(
+            project_root,
+            run_root,
+            run_state,
+            action,
+            receipt,
+            source=source,
+        )
+        if not applied.get("applied"):
+            continue
+        reconciliation = dict(applied)
+        reconciliation["projection_reconciliation_source"] = source
+        now = utc_now()
+        entry["status"] = "done"
+        entry["router_reconciliation_status"] = "reconciled"
+        entry["router_reconciled_at"] = now
+        entry["router_reconciliation"] = reconciliation
+        entry["updated_at"] = now
+        write_json(action_path, entry)
+        if entry.get("router_scheduler_row_id"):
+            _update_router_scheduler_row(
+                project_root,
+                run_root,
+                run_state,
+                row_id=str(entry["router_scheduler_row_id"]),
+                router_state="reconciled",
+                reconciliation=reconciliation,
+            )
+        pending = run_state.get("pending_action")
+        if isinstance(pending, dict) and (
+            pending.get("controller_action_id") == action_id
+            or pending.get("action_type") == "confirm_controller_core_boundary"
+        ):
+            run_state["pending_action"] = None
+            pending_cleared = True
+        reconciled_actions.append(action_id)
+        last_projection = reconciliation
+
+    changed = bool(reconciled_actions) or flags_were_synced != _controller_boundary_flags_synced(run_state)
+    if not changed:
+        return {"changed": False, "reason": "controller_boundary_projection_already_synced"}
+    ledger = _rebuild_controller_action_ledger(project_root, run_root, run_state)
+    append_history(
+        run_state,
+        "router_reconciled_controller_boundary_projection",
+        {
+            "source": source,
+            "reconciled_action_ids": reconciled_actions,
+            "pending_action_cleared": pending_cleared,
+            "controller_boundary_flags_synced": _controller_boundary_flags_synced(run_state),
+            "ledger_counts": ledger.get("counts"),
+            "projection": last_projection,
+        },
+    )
+    return {
+        "changed": True,
+        "reconciled_action_ids": reconciled_actions,
+        "pending_action_cleared": pending_cleared,
+        "controller_boundary_flags_synced": _controller_boundary_flags_synced(run_state),
+        "ledger_counts": ledger.get("counts"),
+    }
+
+
 def _mark_controller_deliverable_repair_resolved(
     project_root: Path,
     run_root: Path,
@@ -30871,6 +31021,12 @@ def compute_controller_action(
     _reconcile_controller_receipts(project_root, run_root, run_state)
     scheduled_reconciliation = _reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
     receipt_reconciliation = _reconcile_pending_controller_action_receipt(project_root, run_root, run_state)
+    boundary_projection = _reconcile_controller_boundary_confirmation_projection(
+        project_root,
+        run_root,
+        run_state,
+        source="next_action_reconciliation_barrier",
+    )
     if run_state.get("pending_action") is None:
         active_blocker_action = _next_control_blocker_action(project_root, run_state, run_root)
         if active_blocker_action is not None:
@@ -30915,7 +31071,12 @@ def compute_controller_action(
         )
         save_run_state(run_root, run_state)
         pending_action = None
-    elif durable_reconciliation.get("changed") or receipt_reconciliation.get("changed") or scheduled_reconciliation.get("changed"):
+    elif (
+        durable_reconciliation.get("changed")
+        or receipt_reconciliation.get("changed")
+        or scheduled_reconciliation.get("changed")
+        or boundary_projection.get("changed")
+    ):
         _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_durable_reconciliation_barrier")
         _sync_derived_run_views(
             project_root,
@@ -32818,6 +32979,13 @@ def _router_daemon_fill_action_queue(
     }
 
 
+def _router_daemon_tick_requests_immediate_next_tick(tick: dict[str, Any]) -> bool:
+    reason = str(tick.get("queue_stop_reason") or "").strip()
+    if not reason and isinstance(tick.get("startup_schedule"), dict):
+        reason = str(tick["startup_schedule"].get("queue_stop_reason") or "").strip()
+    return reason == "max_actions_per_tick"
+
+
 def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: bool = False) -> dict[str, Any]:
     if max_steps < 1:
         raise RouterError("run-until-wait requires max_steps >= 1")
@@ -32891,6 +33059,12 @@ def _router_daemon_tick(
     _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_active")
     receipt_summary = _reconcile_controller_receipts(project_root, run_root, run_state)
     scheduled_reconciliation = _reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
+    boundary_projection = _reconcile_controller_boundary_confirmation_projection(
+        project_root,
+        run_root,
+        run_state,
+        source="router_daemon_tick_projection_barrier",
+    )
     current_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else None
     if not observe_only and not run_state.get("flags", {}).get("controller_core_loaded"):
         startup_schedule = _startup_daemon_schedule_bootloader_action(
@@ -32911,7 +33085,9 @@ def _router_daemon_tick(
             "startup_driver_active": True,
             "receipt_summary": receipt_summary,
             "scheduled_reconciliation": scheduled_reconciliation,
+            "boundary_projection": boundary_projection,
             "startup_schedule": startup_schedule,
+            "queue_stop_reason": startup_schedule.get("queue_stop_reason"),
             "terminal": bool(startup_schedule.get("terminal")),
         }
     if observe_only:
@@ -32933,6 +33109,7 @@ def _router_daemon_tick(
             "controller_action_id": current_action.get("controller_action_id") if isinstance(current_action, dict) else None,
             "receipt_summary": receipt_summary,
             "scheduled_reconciliation": scheduled_reconciliation,
+            "boundary_projection": boundary_projection,
             "terminal": bool(status.get("run_lifecycle_status")),
         }
     queue_result = _router_daemon_fill_action_queue(project_root, run_root, run_state)
@@ -32953,6 +33130,7 @@ def _router_daemon_tick(
         "controller_action_id": current_action.get("controller_action_id") if isinstance(current_action, dict) else None,
         "receipt_summary": receipt_summary,
         "scheduled_reconciliation": scheduled_reconciliation,
+        "boundary_projection": boundary_projection,
         "queued_count": queue_result.get("queued_count"),
         "queued_actions": queue_result.get("queued_actions"),
         "queue_stop_reason": queue_result.get("stop_reason"),
@@ -33022,6 +33200,8 @@ def run_router_daemon(
                 break
             if max_ticks is not None and len(ticks) >= max_ticks:
                 break
+            if _router_daemon_tick_requests_immediate_next_tick(tick):
+                continue
             time.sleep(ROUTER_DAEMON_TICK_SECONDS)
     except Exception as exc:
         error = exc
@@ -33541,6 +33721,7 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
         "terminal_status_recovered_from_authority": False,
         "legacy_material_packet_contracts": 0,
         "non_current_running_index_entries": 0,
+        "controller_boundary_projection": {"changed": False, "reason": "not_run"},
     }
     status = str(run_state.get("status") or "")
     flags = run_state.setdefault("flags", {})
@@ -33598,6 +33779,12 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
     repaired["prompt_delivery_contexts"] = _repair_prompt_delivery_contexts(project_root, run_root, run_state)
     repaired["role_output_envelope_hashes"] = _repair_role_output_envelope_hashes(project_root, run_root)
     repaired["legacy_material_packet_contracts"] = _repair_legacy_material_packet_contracts(project_root, run_root)
+    repaired["controller_boundary_projection"] = _reconcile_controller_boundary_confirmation_projection(
+        project_root,
+        run_root,
+        run_state,
+        source="reconcile_current_run_projection_repair",
+    )
     _refresh_route_memory(project_root, run_root, run_state, trigger="reconcile_current_run")
     repaired["non_current_running_index_entries"] = _reconcile_non_current_running_index_entries(project_root, run_state)
     _sync_derived_run_views(project_root, run_root, run_state, reason="reconcile_current_run")

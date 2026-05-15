@@ -24,8 +24,9 @@ Risk intent brief:
   receipt/action/scheduler rows must rebuild Router flags before any next
   action is exposed; startup-daemon bootloader rows must have one
   reconciliation owner and must not be converted into PM repair blockers after
-  their postcondition is already satisfied; and stale daemon snapshots must
-  never erase newer durable evidence.
+  their postcondition is already satisfied; daemon queue budget exhaustion must
+  immediately start the next tick instead of sleeping; real waits must not
+  busy-loop; and stale daemon snapshots must never erase newer durable evidence.
 """
 
 from __future__ import annotations
@@ -67,7 +68,7 @@ class State:
     control_blocker_written: bool = False
     startup_row_reconciled: bool = False
     startup_postcondition_satisfied: bool = False
-    startup_reconciliation_owner: str = "none"  # none | startup_daemon | generic_receipt
+    startup_reconciliation_owner: str = "none"  # none | startup_daemon | startup_bootloader_controller_receipt | generic_receipt
     generic_receipt_reconciler_touched_startup_row: bool = False
     unsupported_startup_receipt_action: bool = False
 
@@ -78,6 +79,9 @@ class State:
     controller_boundary_flags_synced: bool = False
     controller_boundary_reissued_after_reconcile: bool = False
     controller_boundary_action_returned_without_pending: bool = False
+    queue_stop_reason: str = "none"  # none | barrier | no_action | pending_action_changed | max_actions_per_tick
+    sleep_taken: bool = False
+    immediate_tick_requested: bool = False
 
     role_output_ledger_submitted: bool = False
     role_output_envelope_valid: bool = True
@@ -191,7 +195,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 stateful_postconditions_applied=True,
                 startup_row_reconciled=True,
                 startup_postcondition_satisfied=True,
-                startup_reconciliation_owner="startup_daemon",
+                startup_reconciliation_owner="startup_bootloader_controller_receipt",
             ),
         )
         yield Transition(
@@ -441,9 +445,24 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.next_action_computed:
+    if state.next_action_computed and state.queue_stop_reason == "none":
         yield Transition(
-            "terminal_stop_after_reconciliation_contract_checked",
+            "daemon_queue_stops_at_barrier_and_sleeps",
+            _step(state, queue_stop_reason="barrier", sleep_taken=True),
+        )
+        yield Transition(
+            "daemon_queue_budget_exhausted_requests_immediate_tick",
+            _step(state, queue_stop_reason="max_actions_per_tick", immediate_tick_requested=True),
+        )
+        yield Transition(
+            "daemon_queue_finds_no_action_and_sleeps",
+            _step(state, queue_stop_reason="no_action", sleep_taken=True),
+        )
+        return
+
+    if state.next_action_computed and state.queue_stop_reason != "none":
+        yield Transition(
+            "terminal_stop_after_reconciliation_and_sleep_policy_checked",
             _step(state, lifecycle="terminal"),
         )
         return
@@ -652,6 +671,27 @@ def hazard_states() -> dict[str, State]:
             controller_boundary_flags_synced=False,
             next_action_computed=True,
         ),
+        "daemon_sleeps_after_queue_budget_exhausted": replace(
+            safe,
+            next_action_computed=True,
+            queue_stop_reason="max_actions_per_tick",
+            sleep_taken=True,
+            immediate_tick_requested=False,
+        ),
+        "daemon_fast_loops_after_barrier": replace(
+            safe,
+            next_action_computed=True,
+            queue_stop_reason="barrier",
+            sleep_taken=False,
+            immediate_tick_requested=True,
+        ),
+        "daemon_fast_loops_after_no_action": replace(
+            safe,
+            next_action_computed=True,
+            queue_stop_reason="no_action",
+            sleep_taken=False,
+            immediate_tick_requested=True,
+        ),
         "role_wait_not_cleared_after_event": replace(
             safe,
             pending_action_kind="await_role_decision",
@@ -751,7 +791,10 @@ def invariant_failures(state: State) -> list[str]:
     if state.controller_receipt_action_class == "startup_bootloader":
         if state.startup_row_reconciled and not state.startup_postcondition_satisfied:
             failures.append("startup bootloader row was reconciled without its postcondition")
-        if state.startup_row_reconciled and state.startup_reconciliation_owner != "startup_daemon":
+        if state.startup_row_reconciled and state.startup_reconciliation_owner not in {
+            "startup_daemon",
+            "startup_bootloader_controller_receipt",
+        }:
             failures.append("startup bootloader row was reconciled by the wrong owner")
         if state.startup_row_reconciled and state.control_blocker_written:
             failures.append("startup bootloader row produced a control blocker after it was already reconciled")
@@ -839,6 +882,19 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("invalid or unauthorized role output was accepted as a Router event")
 
+    if state.queue_stop_reason == "max_actions_per_tick" and state.sleep_taken:
+        failures.append("daemon slept after queue budget exhaustion instead of starting the next tick immediately")
+
+    if state.queue_stop_reason in {"barrier", "no_action", "pending_action_changed"} and state.immediate_tick_requested:
+        failures.append("daemon fast-looped after a real wait instead of sleeping")
+
+    if (
+        state.next_action_computed
+        and state.queue_stop_reason == "max_actions_per_tick"
+        and not state.immediate_tick_requested
+    ):
+        failures.append("daemon queue budget exhaustion did not request an immediate next tick")
+
     return failures
 
 
@@ -877,6 +933,9 @@ INVARIANTS = (
     _invariant("role_output_consumed_once", "role output durable evidence was consumed more than once"),
     _invariant("stale_daemon_snapshot_cannot_overwrite_evidence", "daemon saved a stale router_state snapshot over newer durable role output"),
     _invariant("invalid_role_output_not_accepted", "invalid or unauthorized role output was accepted as a Router event"),
+    _invariant("queue_budget_exhaustion_skips_sleep", "daemon slept after queue budget exhaustion instead of starting the next tick immediately"),
+    _invariant("real_waits_do_not_fast_loop", "daemon fast-looped after a real wait instead of sleeping"),
+    _invariant("queue_budget_exhaustion_requests_next_tick", "daemon queue budget exhaustion did not request an immediate next tick"),
 )
 
 
@@ -897,7 +956,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 10
+MAX_SEQUENCE_LENGTH = 12
 
 
 __all__ = [
