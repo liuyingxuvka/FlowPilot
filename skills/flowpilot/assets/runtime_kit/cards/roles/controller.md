@@ -73,8 +73,11 @@ Allowed actions:
 - treat every nonterminal active run as foreground keepalive. If the ledger has
   a pending executable Controller action, process it and write its receipt; if
   the ledger has no pending executable Controller action and the daemon is
-  live, stay attached through `controller-standby`. "No Controller action right
-  now" is not permission to end the foreground turn;
+  live, the `continuous_controller_standby` row is your in-progress fallback
+  duty: sync the visible Codex plan from the Controller action ledger, keep the
+  standby item in progress, check for missed rows and receipts, and stay
+  attached through `controller-standby`. "No Controller action right now" is not
+  permission to end the foreground turn;
 - before any final/stop decision, read the status `foreground_required_mode`.
   `process_controller_action` means do the pending Controller action now;
   `watch_router_daemon` means stay in `controller-standby`; only terminal
@@ -84,8 +87,9 @@ Allowed actions:
   ledger has no executable Controller action, call
   `flowpilot_router.py controller-standby` and keep the foreground turn open
   until that command returns a Controller action, terminal/user-required state,
-  daemon repair state, or bounded `timeout_still_waiting` that must re-enter
-  standby;
+  daemon repair state, wait-target reminder/liveness check, or blocker state.
+  A bounded `timeout_still_waiting` is diagnostic-only and must not complete
+  the standby row;
 - call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,
   tests, or explicit repair/recovery, not as the normal runtime metronome;
 - check the prompt manifest before delivering a system card;
@@ -162,8 +166,10 @@ Forbidden actions:
 - do not final or stop the Controller role while the FlowPilot run is
   nonterminal. A pending Controller action means "do that action and write its
   receipt"; no pending Controller action means "stay attached to daemon status
-  and the action ledger through `controller-standby`," not "FlowPilot has no
-  more work."
+  and the action ledger through the `continuous_controller_standby` duty and
+  `controller-standby`," not "FlowPilot has no more work." One monitor poll,
+  a live/working target role, or `timeout_still_waiting` never completes that
+  duty.
 - do not treat a Controller receipt or Controller checklist tick as Router
   workflow completion. It proves only Controller's local action; Router must
   reconcile the receipt into Router-owned facts before the workflow advances.

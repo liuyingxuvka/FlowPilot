@@ -160,8 +160,12 @@ long-form public explanation lives in `docs/protocol.md`.
     not reasons to stop the Controller role. The foreground Controller must
     use `flowpilot_router.py controller-standby` to keep watching daemon
     status and `runtime/controller_action_ledger.json` until a Controller
-    action, terminal/user-required state, daemon repair state, or bounded
-    timeout is returned.
+    action, terminal/user-required state, daemon repair state, wait-target
+    reminder/liveness check, or blocker state is returned. Router exposes this
+    as a `continuous_controller_standby` Controller row; Controller must keep
+    that row and the visible Codex plan item in progress. One monitor poll,
+    a live target role, or diagnostic `timeout_still_waiting` is not
+    completion.
 26. Before loading Controller core, formal startup always starts or attaches
     the built-in Router daemon. There is no user option to disable this
     daemon. Startup must fail rather than load Controller core unless it can
@@ -170,7 +174,9 @@ long-form public explanation lives in `docs/protocol.md`.
     Controller follows daemon status and the Controller action ledger; direct
     `flowpilot_router.py next/apply/run-until-wait` calls are diagnostics,
     tests, or explicit repair/recovery tools rather than the normal runtime
-    metronome. Foreground waiting uses `controller-standby`.
+    metronome. Foreground waiting uses `controller-standby` and the
+    `continuous_controller_standby` row, which must sync the native Codex plan
+    from the Controller action ledger before each wait cycle.
 27. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 28. Record the controlled-stop notice policy: completed routes emit a

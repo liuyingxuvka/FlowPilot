@@ -10827,6 +10827,107 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
 
+## 2026-05-15 Router External Wait Reconciliation Runtime Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified that FlowGuard should have caught the generic class where Router records an external role event, but the durable Controller wait/action row remains open and leaves the foreground Controller idling or advancing incorrectly.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: OpenSpec validation, focused FlowGuard checks, targeted runtime tests, install sync, and local install audit passed.
+
+### Risk Intent
+- Make Router own the generic reconciliation step: when an external event is recorded, Router must close any matching open Controller `await_role_decision` wait row whose `allowed_external_events` includes that event.
+- Keep executable Controller actions receipt-bound, but make external-event waits evidence-bound so they are satisfied by Router-recorded event evidence rather than a Controller receipt.
+- Handle both new events and already-recorded/replayed events, so stale wait rows are cleared idempotently.
+- Prevent Router from opening the next wait before closing the already-satisfied external-event wait.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/router-reconciles-external-wait-events/`
+- Focused model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Focused model runner: `simulations/run_flowpilot_persistent_router_daemon_checks.py`
+- Focused result: `simulations/flowpilot_persistent_router_daemon_results.json`
+- Related peer model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Related peer result: `simulations/flowpilot_two_table_async_scheduler_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate router-reconciles-external-wait-events --type change --strict --json` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "recorded_external_event_closes_matching_wait_action_row or already_recorded_external_event_closes_stale_wait_action_row or startup_fact_role_output_ledger_is_reconciled_by_router_tick"` passed with 3 tests.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` confirmed the installed FlowPilot skill was source-fresh.
+- `python scripts\audit_local_install_sync.py --json` passed with matching installed and repository digests.
+- `python scripts\install_flowpilot.py --check --json` passed with `source_fresh: true` for FlowPilot.
+- `python scripts\check_install.py` passed.
+- `git diff --check` passed; Git reported existing CRLF whitespace warnings only.
+
+### Findings
+- The previous model represented "waiting for a role event" but did not sufficiently model the durable Controller action ledger row that could stay open after the event was recorded.
+- The focused model now rejects recorded external events that leave matching Controller wait rows open, Controller-owned closure of external-event waits, and next-wait creation before satisfied external waits are closed.
+- Router now annotates external-event wait rows with `completion_source: router_external_event_reconciliation`, the satisfying event name, payload digest evidence, and Router reconciliation metadata.
+- Already-recorded event handling now performs the same reconciliation pass, making repeated event recording and replay paths idempotent.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
+
+## 2026-05-15 Stateful Controller Postcondition Model-Miss Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live run `run-20260515-063843` blocked because
+  `confirm_controller_core_boundary` had a minimal `done` receipt while the
+  controller boundary confirmation artifact and Router flags were missing.
+- Status: completed_model_upgrade_and_repair_plan
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: Focused FlowGuard checks, live audit classification, OpenSpec
+  validation, and proof tests passed.
+
+### Risk Intent
+- Separate generic Controller receipts from stateful Controller receipts.
+- Require Router-visible postcondition evidence before Router clears or
+  advances a stateful Controller action.
+- Catch startup boundary states where `controller_role_confirmed` is true but
+  the durable boundary artifact is missing.
+- Preserve valid artifact reclaim before blocker escalation.
+
+### Model And Design Evidence
+- OpenSpec change:
+  `openspec/changes/require-stateful-controller-postconditions/`
+- Focused model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Focused result: `simulations/flowpilot_persistent_router_daemon_results.json`
+- Existing adjacent model:
+  `simulations/flowpilot_daemon_reconciliation_model.py`
+- Live audit output: `tmp/control_plane_friction_live_current_blocker.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema `1.0`.
+- `python -m py_compile simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --live-root . --json-out tmp\control_plane_friction_live_current_blocker.json` returned the expected live audit finding for the active blocker.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` passed.
+- `python -m pytest tests\test_flowguard_result_proof.py -q` passed with 3 tests.
+- `openspec validate require-stateful-controller-postconditions --type change --strict --json` passed.
+
+### Findings
+- The previous model miss was a coverage-binding miss: the abstract invariant
+  existed, but the persistent startup/daemon model treated the concrete startup
+  boundary receipt as a generic receipt-only action.
+- The persistent daemon model now rejects receipt-present/evidence-missing,
+  Router-cleared/evidence-missing, and role-confirmed/artifact-missing states.
+- The active run is classified as
+  `stateful_receipt_done_without_postcondition_evidence`.
+
+### Skipped Steps
+- Production Router behavior was not changed in this pass; the user asked for
+  model upgrade and minimal root repair plan.
+- `python simulations/run_meta_checks.py` and
+  `python simulations/run_capability_checks.py` were intentionally skipped at
+  user direction.
+- No install sync was needed because production skill code was not modified.
+
 ## 2026-05-15 Async Startup Obligation Join Runtime Update
 
 - Project: FlowGuardProjectAutopilot_20260430

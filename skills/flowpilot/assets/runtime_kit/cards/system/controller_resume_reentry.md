@@ -103,11 +103,14 @@ continuity.
 During a nonterminal active run, do not end the foreground Controller turn. If
 status metadata says `controller_action_ready`, clear the executable
 Controller action first and write its receipt. If there is no executable
-Controller action but the daemon is live, stay attached through
-`controller-standby`; "nothing for Controller this second" is not a stop
-condition. A Controller receipt proves Controller's local relay/display/wait
-action only; Router still owns the workflow fact and must reconcile the receipt
-before route progress is counted.
+Controller action but the daemon is live, treat
+`continuous_controller_standby` as the active fallback duty: sync the visible
+Codex plan from the Controller action ledger, keep that item in progress, check
+for missed rows and receipts, and stay attached through `controller-standby`.
+"Nothing for Controller this second", one monitor poll, a live target role, or
+`timeout_still_waiting` is not a stop condition. A Controller receipt proves
+Controller's local relay/display/wait action only; Router still owns the
+workflow fact and must reconcile the receipt before route progress is counted.
 
 Use `foreground_required_mode` as the plain stop-check answer:
 `process_controller_action` means do the queued Controller work;

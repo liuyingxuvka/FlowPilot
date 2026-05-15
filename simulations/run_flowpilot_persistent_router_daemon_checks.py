@@ -20,8 +20,11 @@ REQUIRED_LABELS = (
     "formal_startup_starts_builtin_router_daemon",
     "controller_core_loaded_after_builtin_daemon_start",
     "router_issues_controller_action_to_ledger",
+    "router_issues_stateful_controller_boundary_action_to_ledger",
     "controller_executes_action_and_writes_receipt",
+    "controller_executes_stateful_action_writes_postcondition_evidence_and_receipt",
     "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
+    "router_reconciles_stateful_receipt_after_postcondition_evidence",
     "router_enters_ack_wait_owned_by_daemon",
     "router_enters_report_wait_with_liveness_obligation",
     "router_enters_controller_local_wait_for_self_audit",
@@ -50,6 +53,9 @@ HAZARD_EXPECTED_FAILURES = {
     "duplicate_ack_consumption": "mailbox evidence was consumed more than once",
     "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
     "router_cleared_controller_receipt_without_internal_fact": "Router cleared Controller receipt without updating Router-owned internal action fact",
+    "stateful_controller_receipt_done_without_postcondition_evidence": "stateful Controller receipt was marked done before Router-visible postcondition evidence existed",
+    "router_cleared_stateful_receipt_without_postcondition_evidence": "Router cleared stateful Controller receipt without Router-visible postcondition evidence",
+    "controller_role_confirmed_without_boundary_artifact": "Controller role was confirmed without controller boundary confirmation artifact",
     "same_controller_action_reissued_after_done_receipt": "Router reissued the same Controller action after a done receipt because Router-owned fact stayed stale",
     "controller_used_router_next_as_metronome": "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome",
     "controller_stopped_at_ordinary_wait": "Controller stopped at an ordinary daemon-owned wait",
@@ -59,6 +65,9 @@ HAZARD_EXPECTED_FAILURES = {
     "role_wait_missing_wait_target_metadata": "daemon-owned role wait lacks Router-authored wait target metadata",
     "report_reminder_without_fresh_liveness_probe": "report reminder was sent without a fresh role liveness probe",
     "cached_liveness_trusted_as_current_truth": "Controller trusted cached role liveness instead of probing during standby",
+    "recorded_external_event_left_wait_row_open": "recorded external event left matching Controller wait row open",
+    "next_wait_opened_before_satisfied_wait_closed": "Router opened next wait before closing satisfied external-event wait",
+    "controller_closed_external_event_wait": "Controller closed external-event wait instead of Router",
     "ack_wait_ten_minutes_without_blocker": "ACK wait reached ten minutes without Router-visible blocker",
     "lost_role_without_pm_blocker": "lost role wait did not route to PM blocker recovery",
     "controller_local_wait_reminded_itself": "Controller sent a reminder to itself instead of self-auditing local action ledger",
@@ -87,6 +96,11 @@ def _state_id(state: model.State) -> str:
         f"roles={state.roles_live}|"
         f"heartbeat={state.heartbeat_active},{state.heartbeat_woke}|"
         f"wait={state.current_wait}|"
+        f"event_wait={state.event_wait_action_open},{state.external_event_recorded},"
+        f"{state.external_event_matches_wait},{state.event_wait_closed_by_router},"
+        f"stale={state.stale_event_wait_row_open},"
+        f"next_before_close={state.next_wait_opened_before_event_wait_closed},"
+        f"controller_closed={state.controller_closed_event_wait}|"
         f"wait_target={state.wait_target_metadata_present},{state.wait_target_names_role},"
         f"{state.wait_target_expected_evidence_visible},{state.wait_target_reminder_text_present},"
         f"ack_age={state.ack_wait_age_minutes},ack_remind={state.ack_wait_reminder_sent},"
@@ -104,6 +118,11 @@ def _state_id(state: model.State) -> str:
         f"action={state.controller_action_pending},{state.controller_action_ready},"
         f"done={state.controller_action_done},receipt={state.controller_receipt_present},"
         f"rescan={state.controller_rescanned_after_receipt},"
+        f"stateful={state.controller_action_requires_stateful_postcondition},"
+        f"postcondition_evidence={state.controller_stateful_postcondition_evidence_written},"
+        f"boundary_artifact={state.controller_boundary_confirmation_written},"
+        f"role_confirmed={state.controller_role_confirmed},"
+        f"cleared_stateful_no_evidence={state.router_cleared_stateful_receipt_without_postcondition_evidence},"
         f"router_fact={state.router_internal_action_fact_current},"
         f"router_fact_from_receipt={state.router_internal_fact_updated_from_receipt},"
         f"cleared_without_fact={state.router_cleared_pending_without_internal_fact},"

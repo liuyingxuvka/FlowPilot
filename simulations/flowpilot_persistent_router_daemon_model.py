@@ -8,8 +8,9 @@ Risk intent brief:
   write mailbox evidence.
 - Model-critical durable state: daemon lock/status, one-second daemon tick,
   mailbox evidence, ACK consumption, Controller action ledger entries,
-  Controller receipts, heartbeat/manual resume recovery, role cohort liveness,
-  and terminal cleanup.
+  external-event wait row closure, Controller receipts, stateful Controller
+  postcondition evidence, heartbeat/manual resume recovery, role cohort
+  liveness, and terminal cleanup.
 - Adversarial branches include formal startup skipping or failing daemon
   launch before Controller core load, no daemon at a wait, duplicate Router
   writers, duplicate ACK observation, Router marking Controller work done
@@ -21,14 +22,18 @@ Risk intent brief:
 - Hard invariants: formal startup must start a live one-second Router daemon
   before Controller core loads; active ordinary waits have a live daemon; one
   daemon writer owns a run; mailbox evidence is consumed at most once;
-  Controller-required work is done only with a Controller receipt; receipt
-  reconciliation must also advance the matching Router-owned internal fact so
-  the same Controller action is not reissued forever; Controller follows the
-  daemon-owned ledger instead of manually ticking the Router during normal
-  runtime; Controller stays attached to the ledger during all nonterminal
-  daemon-live runtime, processes pending executable Controller actions, and
-  keeps a foreground standby loop active during ordinary daemon-owned role
-  waits;
+  recorded external events close every matching durable wait row before Router
+  opens the next wait;
+  Controller-required work is done only with a Controller receipt; stateful
+  Controller receipts such as startup boundary confirmation must also have
+  Router-visible postcondition evidence before Router marks the action done;
+  receipt reconciliation must also advance the matching Router-owned internal
+  fact so the same Controller action is not reissued forever; Controller
+  follows the daemon-owned ledger instead of manually ticking the Router during
+  normal runtime; Controller stays attached to the ledger during all
+  nonterminal daemon-live runtime, processes pending executable Controller
+  actions, and keeps a foreground standby loop active during ordinary
+  daemon-owned role waits;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.
 """
@@ -76,6 +81,13 @@ class State:
     roles_live: bool = False
     heartbeat_active: bool = False
     current_wait: str = "none"  # none | ack | report | controller_receipt | controller_local | user | terminal
+    event_wait_action_open: bool = False
+    external_event_recorded: bool = False
+    external_event_matches_wait: bool = False
+    event_wait_closed_by_router: bool = False
+    stale_event_wait_row_open: bool = False
+    next_wait_opened_before_event_wait_closed: bool = False
+    controller_closed_event_wait: bool = False
     wait_target_metadata_present: bool = False
     wait_target_names_role: bool = False
     wait_target_expected_evidence_visible: bool = False
@@ -106,6 +118,11 @@ class State:
     controller_receipt_valid: bool = True
     controller_marked_done_without_receipt: bool = False
     controller_rescanned_after_receipt: bool = False
+    controller_action_requires_stateful_postcondition: bool = False
+    controller_stateful_postcondition_evidence_written: bool = False
+    controller_boundary_confirmation_written: bool = False
+    controller_role_confirmed: bool = False
+    router_cleared_stateful_receipt_without_postcondition_evidence: bool = False
     router_internal_action_fact_current: bool = False
     router_internal_fact_updated_from_receipt: bool = False
     router_cleared_pending_without_internal_fact: bool = False
@@ -216,6 +233,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 roles_live=False,
                 heartbeat_active=False,
                 current_wait="terminal",
+                event_wait_action_open=False,
+                external_event_recorded=False,
+                external_event_matches_wait=False,
+                event_wait_closed_by_router=False,
+                stale_event_wait_row_open=False,
+                next_wait_opened_before_event_wait_closed=False,
+                controller_closed_event_wait=False,
                 wait_target_metadata_present=False,
                 controller_action_pending=False,
                 controller_action_ready=False,
@@ -253,6 +277,32 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_action_done=False,
                 controller_receipt_present=False,
                 controller_rescanned_after_receipt=False,
+                controller_action_requires_stateful_postcondition=False,
+                controller_stateful_postcondition_evidence_written=False,
+                controller_boundary_confirmation_written=False,
+                controller_role_confirmed=False,
+                router_cleared_stateful_receipt_without_postcondition_evidence=False,
+                same_controller_action_reissue_count=state.same_controller_action_reissue_count + 1,
+                foreground_standby_active=False,
+            ),
+        )
+        yield Transition(
+            "router_issues_stateful_controller_boundary_action_to_ledger",
+            _step(
+                state,
+                current_wait="controller_receipt",
+                wait_target_metadata_present=True,
+                wait_target_expected_evidence_visible=True,
+                controller_action_pending=True,
+                controller_action_ready=True,
+                controller_action_done=False,
+                controller_receipt_present=False,
+                controller_rescanned_after_receipt=False,
+                controller_action_requires_stateful_postcondition=True,
+                controller_stateful_postcondition_evidence_written=False,
+                controller_boundary_confirmation_written=False,
+                controller_role_confirmed=False,
+                router_cleared_stateful_receipt_without_postcondition_evidence=False,
                 same_controller_action_reissue_count=state.same_controller_action_reissue_count + 1,
                 foreground_standby_active=False,
             ),
@@ -273,6 +323,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="ack",
+                event_wait_action_open=False,
+                external_event_recorded=False,
+                external_event_matches_wait=False,
+                event_wait_closed_by_router=False,
+                stale_event_wait_row_open=False,
+                next_wait_opened_before_event_wait_closed=False,
+                controller_closed_event_wait=False,
                 wait_target_metadata_present=True,
                 wait_target_names_role=True,
                 wait_target_expected_evidence_visible=True,
@@ -287,6 +344,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="report",
+                event_wait_action_open=True,
+                external_event_recorded=False,
+                external_event_matches_wait=False,
+                event_wait_closed_by_router=False,
+                stale_event_wait_row_open=False,
+                next_wait_opened_before_event_wait_closed=False,
+                controller_closed_event_wait=False,
                 wait_target_metadata_present=True,
                 wait_target_names_role=True,
                 wait_target_expected_evidence_visible=True,
@@ -302,6 +366,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_local",
+                event_wait_action_open=False,
                 wait_target_metadata_present=True,
                 wait_target_expected_evidence_visible=True,
                 controller_local_self_audit_done=True,
@@ -315,6 +380,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_local",
+                event_wait_action_open=False,
                 wait_target_metadata_present=True,
                 wait_target_expected_evidence_visible=True,
                 controller_local_self_audit_done=True,
@@ -329,7 +395,31 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.controller_action_pending and state.controller_action_ready and not state.controller_receipt_present:
+    if (
+        state.controller_action_pending
+        and state.controller_action_ready
+        and not state.controller_receipt_present
+        and state.controller_action_requires_stateful_postcondition
+    ):
+        yield Transition(
+            "controller_executes_stateful_action_writes_postcondition_evidence_and_receipt",
+            _step(
+                state,
+                controller_receipt_present=True,
+                controller_receipt_valid=True,
+                controller_stateful_postcondition_evidence_written=True,
+                controller_boundary_confirmation_written=True,
+                controller_role_confirmed=True,
+            ),
+        )
+        return
+
+    if (
+        state.controller_action_pending
+        and state.controller_action_ready
+        and not state.controller_receipt_present
+        and not state.controller_action_requires_stateful_postcondition
+    ):
         yield Transition(
             "controller_executes_action_and_writes_receipt",
             _step(
@@ -340,7 +430,35 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.controller_action_pending and state.controller_receipt_present and not state.controller_action_done:
+    if (
+        state.controller_action_pending
+        and state.controller_receipt_present
+        and not state.controller_action_done
+        and state.controller_action_requires_stateful_postcondition
+        and state.controller_stateful_postcondition_evidence_written
+    ):
+        yield Transition(
+            "router_reconciles_stateful_receipt_after_postcondition_evidence",
+            _step(
+                state,
+                controller_action_done=True,
+                controller_action_pending=False,
+                controller_action_ready=False,
+                current_wait="none",
+                controller_rescanned_after_receipt=True,
+                router_internal_action_fact_current=True,
+                router_internal_fact_updated_from_receipt=True,
+                foreground_standby_active=False,
+            ),
+        )
+        return
+
+    if (
+        state.controller_action_pending
+        and state.controller_receipt_present
+        and not state.controller_action_done
+        and not state.controller_action_requires_stateful_postcondition
+    ):
         yield Transition(
             "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
             _step(
@@ -487,6 +605,11 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 mailbox_evidence_consumed=True,
                 mailbox_consumption_count=state.mailbox_consumption_count + 1,
+                external_event_recorded=True,
+                external_event_matches_wait=state.current_wait == "report",
+                event_wait_closed_by_router=state.current_wait == "report",
+                event_wait_action_open=False,
+                stale_event_wait_row_open=False,
                 router_can_continue_after_evidence=True,
                 current_wait="none",
                 mailbox_wait_tick_observed=False,
@@ -503,6 +626,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_can_continue_after_evidence=False,
                 mailbox_evidence_present=False,
                 mailbox_evidence_consumed=False,
+                next_wait_opened_before_event_wait_closed=False,
                 stop_requested=True,
             ),
         )
@@ -625,6 +749,42 @@ def hazard_states() -> dict[str, State]:
             liveness_probe_outcome="lost",
             role_liveness_blocker_recorded=False,
         ),
+        "recorded_external_event_left_wait_row_open": replace(
+            safe_active,
+            current_wait="report",
+            event_wait_action_open=True,
+            external_event_recorded=True,
+            external_event_matches_wait=True,
+            event_wait_closed_by_router=False,
+            stale_event_wait_row_open=True,
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+        ),
+        "next_wait_opened_before_satisfied_wait_closed": replace(
+            safe_active,
+            current_wait="report",
+            event_wait_action_open=True,
+            external_event_recorded=True,
+            external_event_matches_wait=True,
+            event_wait_closed_by_router=False,
+            stale_event_wait_row_open=True,
+            next_wait_opened_before_event_wait_closed=True,
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+        ),
+        "controller_closed_external_event_wait": replace(
+            safe_active,
+            current_wait="none",
+            event_wait_action_open=False,
+            external_event_recorded=True,
+            external_event_matches_wait=True,
+            event_wait_closed_by_router=False,
+            controller_closed_event_wait=True,
+        ),
         "controller_local_wait_reminded_itself": replace(
             safe_active,
             current_wait="controller_local",
@@ -657,6 +817,40 @@ def hazard_states() -> dict[str, State]:
             router_internal_action_fact_current=False,
             router_internal_fact_updated_from_receipt=False,
             router_cleared_pending_without_internal_fact=True,
+        ),
+        "stateful_controller_receipt_done_without_postcondition_evidence": replace(
+            safe_active,
+            current_wait="controller_receipt",
+            controller_action_pending=True,
+            controller_action_ready=True,
+            controller_action_requires_stateful_postcondition=True,
+            controller_action_done=False,
+            controller_receipt_present=True,
+            controller_stateful_postcondition_evidence_written=False,
+            controller_boundary_confirmation_written=False,
+            controller_role_confirmed=False,
+        ),
+        "router_cleared_stateful_receipt_without_postcondition_evidence": replace(
+            safe_active,
+            current_wait="none",
+            controller_action_pending=False,
+            controller_action_ready=False,
+            controller_action_requires_stateful_postcondition=True,
+            controller_action_done=True,
+            controller_receipt_present=True,
+            controller_stateful_postcondition_evidence_written=False,
+            controller_boundary_confirmation_written=False,
+            controller_role_confirmed=False,
+            router_internal_action_fact_current=True,
+            router_internal_fact_updated_from_receipt=True,
+            router_cleared_stateful_receipt_without_postcondition_evidence=True,
+        ),
+        "controller_role_confirmed_without_boundary_artifact": replace(
+            safe_active,
+            controller_action_requires_stateful_postcondition=True,
+            controller_stateful_postcondition_evidence_written=True,
+            controller_boundary_confirmation_written=False,
+            controller_role_confirmed=True,
         ),
         "same_controller_action_reissued_after_done_receipt": replace(
             safe_active,
@@ -747,6 +941,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("ACK wait reached ten minutes without Router-visible blocker")
     if state.liveness_probe_outcome == "lost" and not state.role_liveness_blocker_recorded:
         failures.append("lost role wait did not route to PM blocker recovery")
+    if state.external_event_recorded and state.external_event_matches_wait and state.event_wait_action_open:
+        failures.append("recorded external event left matching Controller wait row open")
+    if state.external_event_recorded and state.external_event_matches_wait and not state.event_wait_closed_by_router:
+        failures.append("recorded external event was not reconciled by Router-owned wait closure")
+    if state.next_wait_opened_before_event_wait_closed:
+        failures.append("Router opened next wait before closing satisfied external-event wait")
+    if state.controller_closed_event_wait:
+        failures.append("Controller closed external-event wait instead of Router")
     if state.current_wait == "controller_local" and state.controller_reminded_itself:
         failures.append("Controller sent a reminder to itself instead of self-auditing local action ledger")
     if state.current_wait == "controller_local" and not state.controller_local_self_audit_done:
@@ -761,6 +963,20 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("mailbox evidence was consumed more than once")
     if state.controller_action_done and not state.controller_receipt_present:
         failures.append("Controller action was marked done without a Controller receipt")
+    if (
+        state.controller_action_requires_stateful_postcondition
+        and state.controller_receipt_present
+        and not state.controller_stateful_postcondition_evidence_written
+    ):
+        failures.append("stateful Controller receipt was marked done before Router-visible postcondition evidence existed")
+    if (
+        state.controller_action_requires_stateful_postcondition
+        and state.controller_action_done
+        and not state.controller_stateful_postcondition_evidence_written
+    ) or state.router_cleared_stateful_receipt_without_postcondition_evidence:
+        failures.append("Router cleared stateful Controller receipt without Router-visible postcondition evidence")
+    if state.controller_role_confirmed and not state.controller_boundary_confirmation_written:
+        failures.append("Controller role was confirmed without controller boundary confirmation artifact")
     if (
         state.controller_action_done
         and state.controller_receipt_present
@@ -829,11 +1045,18 @@ INVARIANTS = (
     _invariant("controller_does_not_trust_cached_liveness", "Controller trusted cached role liveness instead of probing during standby"),
     _invariant("ack_wait_ten_minutes_routes_blocker", "ACK wait reached ten minutes without Router-visible blocker"),
     _invariant("lost_role_routes_to_pm_blocker", "lost role wait did not route to PM blocker recovery"),
+    _invariant("recorded_external_event_closes_matching_wait", "recorded external event left matching Controller wait row open"),
+    _invariant("external_event_wait_closure_is_router_owned", "recorded external event was not reconciled by Router-owned wait closure"),
+    _invariant("next_wait_after_event_closure", "Router opened next wait before closing satisfied external-event wait"),
+    _invariant("controller_does_not_close_external_event_wait", "Controller closed external-event wait instead of Router"),
     _invariant("controller_local_wait_does_not_remind_itself", "Controller sent a reminder to itself instead of self-auditing local action ledger"),
     _invariant("controller_local_wait_self_audits", "Controller-local wait did not self-audit action ledger and receipts"),
     _invariant("controller_not_runtime_metronome", "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome"),
     _invariant("mailbox_evidence_consumed_once", "mailbox evidence was consumed more than once"),
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),
+    _invariant("stateful_controller_receipt_requires_postcondition_evidence", "stateful Controller receipt was marked done before Router-visible postcondition evidence existed"),
+    _invariant("router_clears_stateful_receipt_only_after_postcondition_evidence", "Router cleared stateful Controller receipt without Router-visible postcondition evidence"),
+    _invariant("controller_role_confirmation_requires_boundary_artifact", "Controller role was confirmed without controller boundary confirmation artifact"),
     _invariant("controller_receipt_updates_router_owned_fact", "Router cleared Controller receipt without updating Router-owned internal action fact"),
     _invariant("same_controller_action_not_reissued_after_receipt", "Router reissued the same Controller action after a done receipt because Router-owned fact stayed stale"),
     _invariant("foreground_controller_handles_pending_controller_action", "Foreground Controller ended while an executable Controller action was pending"),

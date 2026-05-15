@@ -723,6 +723,10 @@ def main() -> int:
             "Do not trust an old \"alive\" status",
             "controller_local_action",
             "do not remind yourself",
+            "continuous_controller_standby",
+            "sync the visible Codex plan",
+            "timeout_still_waiting",
+            "diagnostic-only",
         ]
         missing_terms = [term for term in required_terms if term not in text]
         ok = not missing_terms
