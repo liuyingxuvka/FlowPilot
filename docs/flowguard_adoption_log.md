@@ -12064,3 +12064,39 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond the mail-delivery reconciliation boundary.
+
+## 2026-05-15 Executable Repair Transaction Plan Kinds
+
+- Project: FlowGuardProjectAutopilot_20260430
+- OpenSpec change: `make-repair-transactions-executable`
+- Trigger reason: PM repair decisions could be recorded as human-readable recovery intent without guaranteeing that Router had a concrete next action, existing producer, Router handler, or terminal stop to consume.
+- Status: completed_focused_runtime_update_synced
+
+### Model Evidence
+- Repair transaction model: `simulations/flowpilot_repair_transaction_model.py`
+- Repair transaction runner: `simulations/run_flowpilot_repair_transaction_checks.py`
+- Runtime owner: `skills/flowpilot/assets/flowpilot_router.py`
+- PM/Controller prompt contracts: `skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md`, `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md`, and `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+
+### Commands
+- `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_checks_results.json` passed with 12,968 explored traces, zero violations, zero dead branches, and known hazard fixtures detected.
+- `openspec validate make-repair-transactions-executable --strict` passed.
+- `python -m pytest tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_role_output_runtime.py -q` passed.
+- `python -m py_compile skills/flowpilot/assets/flowpilot_router.py simulations/flowpilot_repair_transaction_model.py simulations/run_flowpilot_repair_transaction_checks.py` passed.
+- `python -m pytest tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_operation_replay_repair_transaction_queues_replay_action tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_controller_repair_work_packet_queues_bounded_controller_action tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_repair_transaction_commits_material_reissue_generation tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_router_packet_audit_rejection_routes_pm_repair_decision tests/test_flowpilot_router_runtime.py::FlowPilotRouterRuntimeTests::test_pm_repair_decision_can_repeat_for_new_control_blocker -q` passed with 9 selected tests.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` synchronized the installed `flowpilot` skill from repository source.
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- `repair_transaction.plan_kind` is now the execution authority; `recovery_option` and `repair_action` remain policy/explanation fields.
+- Router validates executable plan kinds before committing PM repair decisions: `operation_replay`, `controller_repair_work_packet`, `packet_reissue`, `role_reissue`, `router_internal_reconcile`, `await_existing_event`, `route_mutation`, and `terminal_stop`.
+- Legacy `event_replay` is only a deprecated alias for `await_existing_event`, and Router rejects it when there is no existing producer.
+- `operation_replay` queues a concrete replay action only for recorded safe operations, and `controller_repair_work_packet` queues bounded Controller work with explicit reads, writes, forbidden actions, and success evidence.
+- PM and Controller cards now explain when to choose each executable plan kind and what boundaries Controller must obey.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- The broad Router `-k "pm_repair_decision or repair_transaction or control_blocker"` pytest selection timed out; focused tests for the changed repair paths passed.
+
+### Next Actions
+- Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond focused repair transaction execution.
