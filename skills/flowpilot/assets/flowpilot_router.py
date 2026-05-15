@@ -727,6 +727,15 @@ SAFE_RUN_UNTIL_WAIT_ACTION_TYPES = frozenset(
     }
 )
 
+ROUTER_INTERNAL_MECHANICAL_ACTION_TYPES = frozenset(
+    {
+        "check_prompt_manifest",
+        "check_packet_ledger",
+        "write_startup_mechanical_audit",
+    }
+)
+ROUTER_INTERNAL_MECHANICAL_MAX_HOPS = 8
+
 ROUTER_READY_PREEMPTION_ACTION_TYPES = frozenset(
     {
         "await_card_return_event",
@@ -9163,7 +9172,11 @@ def _startup_pre_review_reconciliation_blockers(
                     }
                 )
     active_blocker = run_state.get("active_control_blocker")
-    if isinstance(active_blocker, dict) and active_blocker.get("status") not in {"resolved", "superseded", "closed"}:
+    if (
+        isinstance(active_blocker, dict)
+        and active_blocker.get("status") not in {"resolved", "superseded", "closed"}
+        and not _resume_reentry_gate_pending(run_state)
+    ):
         blockers.append(
             {
                 "kind": "active_startup_control_blocker",
@@ -26862,9 +26875,8 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         "lock exists. Any restored or replacement background role "
         "agent must be explicitly requested with the strongest available host model and highest "
         "available reasoning effort; do not rely on foreground model inheritance. After role "
-        "rehydration, continue the router loop instead of stopping at check_prompt_manifest: apply "
-        "check_prompt_manifest, return to router next/run-until-wait, deliver the PM resume card when "
-        "the router exposes it, and stop only at a real role, user, host, payload, packet, or "
+        "rehydration, continue the router loop while Router consumes local prompt-manifest checks "
+        "internally; deliver the PM resume card when the router exposes it, and stop only at a real role, user, host, payload, packet, or "
         "await_role_decision boundary. Do not read sealed packet/result/report bodies."
     )
     return make_action(
@@ -26991,16 +27003,15 @@ def _next_startup_mechanical_audit_action(project_root: Path, run_state: dict[st
         )
     return make_action(
         action_type="write_startup_mechanical_audit",
-        actor="controller",
-        label="controller_writes_startup_mechanical_audit",
-        summary="Write the router-owned startup mechanical audit and proof before delivering the reviewer startup fact-check card.",
+        actor="router",
+        label="router_writes_startup_mechanical_audit",
+        summary="Router writes the startup mechanical audit and proof before exposing the reviewer startup fact-check card.",
         allowed_reads=allowed_reads,
         allowed_writes=[
             project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json"),
             project_relative(project_root, run_root / "startup" / "startup_mechanical_audit.json.proof.json"),
             project_relative(project_root, run_state_path(run_root)),
         ],
-        to_role="human_like_reviewer",
         extra={
             "postcondition": "startup_mechanical_audit_written",
             "reviewer_card_waiting_for_audit": "reviewer.startup_fact_check",
@@ -27274,14 +27285,14 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                 review_trigger=entry["card_id"],
             )
         if not run_state.get("manifest_check_requested"):
-            manifest_extra = {"next_card_id": entry["card_id"], "to_role": to_role}
+            manifest_extra = {"next_card_id": entry["card_id"], "next_recipient_role": to_role}
             if legal_context is not None:
                 manifest_extra["legal_next_actions"] = legal_context
             return make_action(
                 action_type="check_prompt_manifest",
-                actor="controller",
-                label="controller_instructed_to_check_prompt_manifest",
-                summary="Controller must check prompt manifest before delivering the next system card.",
+                actor="router",
+                label="router_checks_prompt_manifest",
+                summary="Router checks the prompt manifest internally before exposing the next system-card relay.",
                 allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
                 allowed_writes=[project_relative(project_root, run_state_path(run_root))],
                 extra=manifest_extra,
@@ -27494,16 +27505,16 @@ def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any
     if not run_state.get("manifest_check_requested"):
         return make_action(
             action_type="check_prompt_manifest",
-            actor="controller",
-            label="controller_instructed_to_check_prompt_manifest",
-            summary="Controller must check prompt manifest before delivering the next same-role system-card bundle.",
+            actor="router",
+            label="router_checks_prompt_manifest",
+            summary="Router checks the prompt manifest internally before exposing the next same-role system-card bundle relay.",
             allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
             allowed_writes=[project_relative(project_root, run_state_path(run_root))],
             extra={
                 "next_card_id": card_ids[0],
                 "bundle_candidate": True,
                 "bundle_card_ids": card_ids,
-                "to_role": role,
+                "next_recipient_role": role,
             },
         )
     first_attempt = str(first.get("delivery_attempt_id") or card_ids[0])
@@ -27649,12 +27660,12 @@ def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: P
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="check_packet_ledger",
-                actor="controller",
-                label="controller_instructed_to_check_packet_ledger",
-                summary="Controller must check packet ledger before delivering the next mail body.",
+                actor="router",
+                label="router_checks_packet_ledger",
+                summary="Router checks the packet ledger internally before exposing the next mail relay.",
                 allowed_reads=[project_relative(project_root, run_root / "packet_ledger.json")],
                 allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra={"next_mail_id": entry["mail_id"], "to_role": entry["to_role"]},
+                extra={"next_mail_id": entry["mail_id"], "next_mail_to_role": entry["to_role"]},
             )
         return make_action(
             action_type="deliver_mail",
@@ -30554,7 +30565,181 @@ def _auto_commit_system_card_bundle_delivery_action(
     return committed
 
 
-def compute_controller_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any]:
+def _action_is_router_internal_mechanical(action: dict[str, Any] | None) -> bool:
+    if not isinstance(action, dict):
+        return False
+    action_type = str(action.get("action_type") or "")
+    if action_type not in ROUTER_INTERNAL_MECHANICAL_ACTION_TYPES:
+        return False
+    if bool(action.get("requires_user")) or bool(action.get("requires_payload")):
+        return False
+    if bool(action.get("requires_host_spawn")) or bool(action.get("requires_host_automation")):
+        return False
+    if bool(action.get("requires_user_dialog_display_confirmation")):
+        return False
+    if action.get("card_id") or action.get("mail_id"):
+        return False
+    if bool(action.get("sealed_body_reads_allowed", False)):
+        return False
+    return True
+
+
+def _router_internal_mechanical_identity(action: dict[str, Any]) -> dict[str, Any]:
+    action_type = str(action.get("action_type") or "")
+    identity = {
+        "action_type": action_type,
+        "label": action.get("label"),
+        "next_card_id": action.get("next_card_id"),
+        "next_recipient_role": action.get("next_recipient_role"),
+        "bundle_card_ids": action.get("bundle_card_ids") or [],
+        "next_mail_id": action.get("next_mail_id"),
+        "next_mail_to_role": action.get("next_mail_to_role"),
+        "postcondition": action.get("postcondition"),
+        "scope_kind": action.get("scope_kind"),
+        "scope_id": action.get("scope_id"),
+    }
+    return {key: value for key, value in identity.items() if value not in (None, "", [])}
+
+
+def _append_router_internal_mechanical_record(
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    *,
+    status: str,
+    side_effect_applied: bool,
+    error: str | None = None,
+) -> dict[str, Any]:
+    identity = _router_internal_mechanical_identity(action)
+    event_id = "router-internal-" + hashlib.sha256(
+        json.dumps(identity, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:20]
+    record = {
+        "event_id": event_id,
+        "action_type": action.get("action_type"),
+        "label": action.get("label"),
+        "identity": identity,
+        "status": status,
+        "side_effect_applied": side_effect_applied,
+        "controller_row_written": False,
+        "sealed_body_reads_allowed": False,
+        "recorded_at": utc_now(),
+    }
+    if error:
+        record["error"] = error
+    run_state.setdefault("router_internal_mechanical_events", []).append(record)
+    append_history(
+        run_state,
+        "router_consumed_internal_mechanical_action",
+        {
+            "action_type": action.get("action_type"),
+            "event_id": event_id,
+            "status": status,
+            "side_effect_applied": side_effect_applied,
+            "controller_row_written": False,
+        },
+    )
+    return record
+
+
+def _consume_router_internal_mechanical_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    if not _action_is_router_internal_mechanical(action):
+        raise RouterError(f"action is not Router-internal mechanical work: {action.get('action_type')}")
+    action_type = str(action.get("action_type") or "")
+    try:
+        side_effect_applied = False
+        result_extra: dict[str, Any] = {}
+        if action_type == "check_prompt_manifest":
+            manifest = load_manifest_from_run(run_root)
+            next_card_id = str(action.get("next_card_id") or "")
+            if next_card_id:
+                manifest_card(manifest, next_card_id)
+            for card_id in action.get("bundle_card_ids") or []:
+                if isinstance(card_id, str) and card_id:
+                    manifest_card(manifest, card_id)
+            if not run_state.get("manifest_check_requested"):
+                run_state["manifest_check_requested"] = True
+                run_state["manifest_check_requests"] = int(run_state.get("manifest_check_requests", 0)) + 1
+                run_state["manifest_checks"] = int(run_state.get("manifest_checks", 0)) + 1
+                side_effect_applied = True
+            result_extra["next_card_id"] = next_card_id or None
+        elif action_type == "check_packet_ledger":
+            ledger = read_json(run_root / "packet_ledger.json")
+            if ledger.get("schema_version") != PACKET_LEDGER_SCHEMA:
+                raise RouterError("invalid packet ledger schema")
+            if not run_state.get("ledger_check_requested"):
+                run_state["ledger_check_requested"] = True
+                run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
+                run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
+                side_effect_applied = True
+            result_extra["next_mail_id"] = action.get("next_mail_id")
+        elif action_type == "write_startup_mechanical_audit":
+            context = _startup_mechanical_audit_context(project_root, run_root, run_state)
+            if not run_state.get("flags", {}).get("startup_mechanical_audit_written") or context is None:
+                computed_checks = _startup_fact_checks(project_root, run_root, run_state)
+                _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
+                context = _startup_mechanical_audit_context(project_root, run_root, run_state)
+                if context is None:
+                    raise RouterError("startup mechanical audit was not written with a valid proof")
+                run_state.setdefault("flags", {})["startup_mechanical_audit_written"] = True
+                run_state["startup_mechanical_audit"] = {
+                    "path": project_relative(project_root, context["audit_path"]),
+                    "sha256": context["audit_hash"],
+                    "proof_path": project_relative(project_root, context["proof_path"]),
+                    "proof_sha256": context["proof_hash"],
+                    "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
+                }
+                side_effect_applied = True
+            result_extra["postcondition"] = "startup_mechanical_audit_written"
+        else:
+            raise RouterError(f"unsupported Router-internal mechanical action: {action_type}")
+        run_state["pending_action"] = None
+        record = _append_router_internal_mechanical_record(
+            run_state,
+            action,
+            status="done",
+            side_effect_applied=side_effect_applied,
+        )
+        _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_router_internal_mechanical:{action_type}")
+        _sync_derived_run_views(
+            project_root,
+            run_root,
+            run_state,
+            reason=f"after_router_internal_mechanical:{action_type}",
+            update_display=True,
+        )
+        save_run_state(run_root, run_state)
+        return {
+            "ok": True,
+            "consumed": True,
+            "action_type": action_type,
+            "event": record,
+            "side_effect_applied": side_effect_applied,
+            **result_extra,
+        }
+    except Exception as exc:
+        _append_router_internal_mechanical_record(
+            run_state,
+            action,
+            status="failed",
+            side_effect_applied=False,
+            error=str(exc),
+        )
+        save_run_state(run_root, run_state)
+        raise
+
+
+def compute_controller_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    *,
+    _router_internal_depth: int = 0,
+) -> dict[str, Any]:
     terminal_action = _run_lifecycle_terminal_action(project_root, run_state, run_root)
     if terminal_action is not None:
         run_state["pending_action"] = terminal_action
@@ -30564,6 +30749,24 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     _reconcile_controller_receipts(project_root, run_root, run_state)
     scheduled_reconciliation = _reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
     receipt_reconciliation = _reconcile_pending_controller_action_receipt(project_root, run_root, run_state)
+    if run_state.get("pending_action") is None:
+        active_blocker_action = _next_control_blocker_action(project_root, run_state, run_root)
+        if active_blocker_action is not None:
+            run_state["pending_action"] = active_blocker_action
+            append_history(
+                run_state,
+                "router_prioritized_active_control_blocker_before_durable_reconciliation",
+                {"action_type": active_blocker_action["action_type"]},
+            )
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason="active_control_blocker_before_durable_reconciliation",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+            return active_blocker_action
     durable_reconciliation = _reconcile_durable_wait_evidence(project_root, run_root, run_state)
     pending_action = run_state.get("pending_action")
     if (
@@ -30684,6 +30887,16 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
             )
             save_run_state(run_root, run_state)
     elif pending_action:
+        if _action_is_router_internal_mechanical(pending_action if isinstance(pending_action, dict) else None):
+            if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
+                raise RouterError("Router-internal mechanical action chain exceeded max hops")
+            _consume_router_internal_mechanical_action(project_root, run_root, run_state, pending_action)
+            return compute_controller_action(
+                project_root,
+                run_state,
+                run_root,
+                _router_internal_depth=_router_internal_depth + 1,
+            )
         if (
             isinstance(pending_action, dict)
             and pending_action.get("action_type") == "await_role_decision"
@@ -30837,6 +31050,16 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         if action is None:
             raise RouterError("no legal next action control blocker was not materialized")
     action = _apply_formal_work_packet_ack_preflight(project_root, run_state, run_root, action)
+    if _action_is_router_internal_mechanical(action):
+        if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
+            raise RouterError("Router-internal mechanical action chain exceeded max hops")
+        _consume_router_internal_mechanical_action(project_root, run_root, run_state, action)
+        return compute_controller_action(
+            project_root,
+            run_state,
+            run_root,
+            _router_internal_depth=_router_internal_depth + 1,
+        )
     run_state["pending_action"] = action
     append_history(run_state, "router_computed_next_controller_action", {"action_type": action["action_type"]})
     _sync_derived_run_views(

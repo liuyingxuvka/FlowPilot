@@ -11487,3 +11487,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If future startup changes affect the global project-control architecture or capability routing, rerun the heavyweight Meta and Capability checks when the user allows the runtime cost.
+
+## 2026-05-15 Router-Internal Mechanical Actions
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User found Router-local checks leaking into Controller/PM control rows and asked for a root fix, a FlowGuard model upgrade, startup-stage simulation after the startup-focused peer agent finished, local install sync, and local git recording.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/internalize-router-mechanical-actions/`
+- Router-internal mechanics model: `simulations/flowpilot_router_internal_mechanics_model.py`
+- Router-internal mechanics runner: `simulations/run_flowpilot_router_internal_mechanics_checks.py`
+- Router-internal mechanics results: `simulations/flowpilot_router_internal_mechanics_results.json`
+- Updated adjacent models: `simulations/flowpilot_resume_model.py`, `simulations/prompt_isolation_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate internalize-router-mechanical-actions --strict --json` passed.
+- `openspec status --change internalize-router-mechanical-actions --json` reported complete.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_resume_model.py simulations\prompt_isolation_model.py simulations\flowpilot_router_internal_mechanics_model.py simulations\run_flowpilot_router_internal_mechanics_checks.py` passed.
+- `python simulations\run_flowpilot_router_internal_mechanics_checks.py --json-out simulations\flowpilot_router_internal_mechanics_results.json` passed.
+- `python simulations\run_prompt_isolation_checks.py` passed.
+- `python simulations\run_flowpilot_resume_checks.py` passed.
+- Startup-stage simulations were included and passed: `run_flowpilot_startup_optimization_checks.py`, `run_flowpilot_startup_control_checks.py`, `run_flowpilot_deterministic_startup_bootstrap_checks.py`, and `run_flowpilot_startup_intake_ui_checks.py`.
+- `python -m unittest ...` targeted startup/internal group passed with 8 tests.
+- `python -m unittest ...` selected runtime regression group passed with 81 tests in 691.128s.
+- `python scripts\check_install.py`, `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed; installed `flowpilot` is source-fresh.
+
+### Findings
+- Router now consumes `check_prompt_manifest`, `check_packet_ledger`, and `write_startup_mechanical_audit` internally without writing Controller action rows.
+- The Router-internal classifier is allowlist-based and rejects user, payload, host automation, host spawn, display-confirmation, card/mail relay, role-facing, and sealed-body actions.
+- Controller-owned work packages remain Controller-visible: system-card/card-bundle relay, mail relay, role work, host-bound startup obligations, and user-visible display confirmation.
+- Controller and PM reset prompts now tell Controller to rely on Router-owned manifest and packet-ledger checks instead of performing those checks as Controller rows.
+- Startup-stage simulations were included after the startup-focused peer-agent work finished.
+- Local installed FlowPilot is source-fresh after repository sync.
+
+### Counterexamples
+- `router_internal_leaked_to_controller_row`
+- `controller_work_package_swallowed_by_router`
+- `role_interaction_bypassed_controller`
+- `sealed_body_read_during_internal_work`
+- `missing_external_evidence_marked_done`
+- `router_internal_repeated_side_effect`
+- `display_projection_claimed_as_user_confirmation`
+- `host_boundary_consumed_locally`
+- `router_internal_failure_marked_done`
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Full `tests/test_flowpilot_router_runtime.py` remains too slow for a routine final gate and previously timed out; focused affected runtime tests plus FlowGuard checks were used.
+
+### Next Actions
+- If ACK/card-return checks are later internalized, rerun the Router-internal mechanics model and update tests that currently observe explicit `check_card_return_event` waits.
+- Run heavyweight Meta and Capability simulations later if the user wants broader global assurance.

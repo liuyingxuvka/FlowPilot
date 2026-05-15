@@ -38,8 +38,8 @@ When recovery is required, tell Controller:
 - you are only Controller;
 - relay and record only;
 - call router for next actions;
-- check manifest before system cards;
-- check packet ledger before mail;
+- rely on Router-owned manifest and packet-ledger checks before relaying
+  Router-exposed system cards, mail, packets, or results;
 - do not read sealed bodies;
 - do not implement, approve, mutate, or close gates.
 

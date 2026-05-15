@@ -1,0 +1,354 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=51",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "controller_work_package_swallowed_by_router": {
+        "detected": true,
+        "expected_failure": "Controller work package was swallowed by Router internal completion",
+        "failures": [
+          "Controller work package was swallowed by Router internal completion"
+        ],
+        "state": {
+          "action_owner": "controller_work_package",
+          "action_type": "deliver_system_card",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": true,
+          "router_blocker_written": false,
+          "router_event_written": true,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "controller_work_package_swallowed_by_router",
+          "sealed_body_read": false,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": true,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "display_projection_claimed_as_user_confirmation": {
+        "detected": true,
+        "expected_failure": "Local display projection was claimed as user display confirmation",
+        "failures": [
+          "Local display projection was claimed as user display confirmation"
+        ],
+        "state": {
+          "action_owner": "router_internal",
+          "action_type": "sync_display_plan",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": true,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": false,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "display_projection_claimed_as_user_confirmation",
+          "sealed_body_read": false,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": true,
+          "user_display_confirmed": true
+        }
+      },
+      "host_boundary_consumed_locally": {
+        "detected": true,
+        "expected_failure": "Controller work package was swallowed by Router internal completion",
+        "failures": [
+          "Controller work package was swallowed by Router internal completion",
+          "Host-boundary action was consumed locally without host proof"
+        ],
+        "state": {
+          "action_owner": "host_boundary",
+          "action_type": "create_heartbeat_automation",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": true,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": true,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "host_boundary_consumed_locally",
+          "sealed_body_read": false,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "missing_external_evidence_marked_done": {
+        "detected": true,
+        "expected_failure": "Missing external evidence was marked done",
+        "failures": [
+          "Missing external evidence was marked done"
+        ],
+        "state": {
+          "action_owner": "router_internal",
+          "action_type": "check_card_return_event",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": true,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": false,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "missing_external_evidence_marked_done",
+          "sealed_body_read": false,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "role_interaction_bypassed_controller": {
+        "detected": true,
+        "expected_failure": "Router bypassed Controller for role interaction",
+        "failures": [
+          "Controller work package was swallowed by Router internal completion",
+          "Router bypassed Controller for role interaction"
+        ],
+        "state": {
+          "action_owner": "controller_work_package",
+          "action_type": "relay_current_node_packet",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": true,
+          "role_interaction_required": true,
+          "router_blocker_written": false,
+          "router_event_written": false,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "role_interaction_bypassed_controller",
+          "sealed_body_read": false,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": true,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "router_internal_failure_marked_done": {
+        "detected": true,
+        "expected_failure": "Router-internal failure was marked done",
+        "failures": [
+          "Router-internal failure was marked done"
+        ],
+        "state": {
+          "action_owner": "router_internal",
+          "action_type": "write_startup_mechanical_audit",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": true,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": false,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "router_internal_failure_marked_done",
+          "sealed_body_read": false,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "router_internal_leaked_to_controller_row": {
+        "detected": true,
+        "expected_failure": "Router-internal action leaked into Controller action row",
+        "failures": [
+          "Router-internal action leaked into Controller action row"
+        ],
+        "state": {
+          "action_owner": "router_internal",
+          "action_type": "check_packet_ledger",
+          "classified": true,
+          "controller_row_written": true,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": true,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "router_internal_leaked_to_controller_row",
+          "sealed_body_read": false,
+          "side_effect_count": 1,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "router_internal_repeated_side_effect": {
+        "detected": true,
+        "expected_failure": "Router-internal action repeated local side effects",
+        "failures": [
+          "Router-internal action repeated local side effects"
+        ],
+        "state": {
+          "action_owner": "router_internal",
+          "action_type": "check_packet_ledger",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": true,
+          "router_proof_written": false,
+          "router_wait_recorded": false,
+          "scenario": "router_internal_repeated_side_effect",
+          "sealed_body_read": false,
+          "side_effect_count": 2,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      },
+      "sealed_body_read_during_internal_work": {
+        "detected": true,
+        "expected_failure": "Router-internal mechanical work read a sealed body",
+        "failures": [
+          "Router-internal mechanical work read a sealed body"
+        ],
+        "state": {
+          "action_owner": "router_internal",
+          "action_type": "write_startup_mechanical_audit",
+          "classified": true,
+          "controller_row_written": false,
+          "display_projection_written": false,
+          "done_recorded": true,
+          "external_evidence_present": false,
+          "external_evidence_required": false,
+          "failure_seen": false,
+          "host_automation_required": false,
+          "host_proof_present": false,
+          "role_contacted_by_router": false,
+          "role_interaction_required": false,
+          "router_blocker_written": false,
+          "router_event_written": true,
+          "router_proof_written": true,
+          "router_wait_recorded": false,
+          "scenario": "sealed_body_read_during_internal_work",
+          "sealed_body_read": true,
+          "side_effect_count": 0,
+          "status": "rejected",
+          "system_card_or_packet_delivery": false,
+          "user_display_confirmation_required": false,
+          "user_display_confirmed": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "ack_present_advances_once",
+      "controller_work_package_preserved",
+      "display_projection_split",
+      "host_boundary_preserved",
+      "local_check_consumed_internally",
+      "local_proof_written_once",
+      "missing_ack_records_wait_not_done",
+      "role_relay_preserved"
+    ],
+    "edge_count": 34,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "controller_work_package_swallowed_by_router",
+      "display_projection_claimed_as_user_confirmation",
+      "host_boundary_consumed_locally",
+      "missing_external_evidence_marked_done",
+      "role_interaction_bypassed_controller",
+      "router_internal_failure_marked_done",
+      "router_internal_leaked_to_controller_row",
+      "router_internal_repeated_side_effect",
+      "sealed_body_read_during_internal_work"
+    ],
+    "state_count": 35
+  },
+  "skipped_checks": {
+    "meta_capability_models": "skipped_with_reason: user explicitly directed skipping heavyweight Meta and Capability simulations"
+  }
+}

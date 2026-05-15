@@ -595,13 +595,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     next_channel = _next_required_channel(state)
     if next_channel == "prompt" and not state.manifest_check_requested:
         yield Transition(
-            "controller_instructed_to_check_prompt_manifest",
+            "router_checks_prompt_manifest",
             _request_manifest_check(state),
         )
         return
     if next_channel == "mail" and not state.ledger_check_requested:
         yield Transition(
-            "controller_instructed_to_check_packet_ledger",
+            "router_checks_packet_ledger",
             _request_ledger_check(state),
         )
         return

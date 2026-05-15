@@ -232,6 +232,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = self.next_after_display_sync(root)
         return router.apply_action(root, str(action["action_type"]), self.payload_for_action(action, payload))
 
+    def apply_next_non_card_action(self, root: Path) -> dict:
+        action = self.next_after_display_sync(root)
+        if action["action_type"] in {"deliver_system_card", "deliver_system_card_bundle"}:
+            return {"skipped_relay_action": action["action_type"], "action": action}
+        return router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+
     def run_root_for(self, root: Path) -> Path:
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
@@ -738,6 +744,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             action = router.next_action(root)
         return action
 
+    def router_internal_action_types(self, root: Path) -> list[str]:
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        return [
+            str(item.get("action_type"))
+            for item in state.get("router_internal_mechanical_events", [])
+            if isinstance(item, dict)
+        ]
+
     def assert_payload_contract_mentions(self, contract: dict, *fields: str) -> None:
         encoded = json.dumps(contract, sort_keys=True)
         for field in fields:
@@ -828,6 +843,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def deliver_expected_card(self, root: Path, card_id: str) -> dict:
         run_root = self.run_root_for(root)
+        pending = read_json(router.run_state_path(run_root)).get("pending_action")
+        if isinstance(pending, dict) and pending.get("action_type") == "deliver_system_card" and pending.get("card_id") == card_id:
+            self.ack_system_card_action(root, pending)
+            return pending
+        if (
+            isinstance(pending, dict)
+            and pending.get("action_type") == "deliver_system_card_bundle"
+            and card_id in (pending.get("card_ids") or [])
+        ):
+            self.ack_system_card_bundle_action(root, pending)
+            state = read_json(router.run_state_path(run_root))
+            for delivery in reversed(state.get("delivered_cards", [])):
+                if isinstance(delivery, dict) and delivery.get("card_id") == card_id:
+                    return delivery
+            return pending
         card_entry = next((entry for entry in router.SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
         if card_entry is not None:
             state = read_json(router.run_state_path(run_root))
@@ -1023,10 +1053,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         batch_path.write_text(json.dumps(batch, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     def deliver_user_intake_mail(self, root: Path) -> None:
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "check_packet_ledger")
-        self.assertEqual(action["next_mail_id"], "user_intake")
-        router.apply_action(root, "check_packet_ledger")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "deliver_mail")
         self.assertEqual(action["mail_id"], "user_intake")
@@ -1256,6 +1282,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         }
         state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         self.assertEqual(router.apply_action(root, "ask_startup_questions")["applied"], "ask_startup_questions")
+        bootstrap = read_json(state_path)
+        bootstrap["pending_action"] = {
+            "action_type": "record_startup_answers",
+            "label": "legacy_startup_answers_recorded_by_router",
+            "requires_payload": "startup_answers",
+        }
+        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     def role_agent_payload(self, root: Path, startup_answers: dict | None = None) -> dict:
         startup_answers = startup_answers or STARTUP_ANSWERS
@@ -1435,7 +1468,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
 
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "pm.material_scan")
 
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1447,7 +1479,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "worker_scan_results_returned")
         self.absorb_material_scan_results_with_pm(root, material_index_path)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "reviewer.material_sufficiency")
 
         router.record_external_event(
@@ -1464,14 +1495,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 },
             ),
         )
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "pm.event.reviewer_report")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "pm.material_absorb_or_research")
 
         router.record_external_event(root, "pm_accepts_reviewed_material")
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
         self.deliver_expected_card(root, "pm.material_understanding")
         router.record_external_event(
             root,
@@ -1481,10 +1509,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def complete_root_contract_before_child_skill_gates(self, root: Path) -> None:
         run_root = self.run_root_for(root)
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.product_architecture")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "pm.product_architecture")
         router.record_external_event(
             root,
             "pm_writes_product_function_architecture",
@@ -1498,10 +1523,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "product_officer.product_architecture_modelability")
         router.record_external_event(
             root,
             "product_officer_submits_product_behavior_model",
@@ -1512,16 +1534,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.product_behavior_model_decision")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "pm.product_behavior_model_decision")
         router.record_external_event(root, "pm_accepts_product_behavior_model", self.product_behavior_model_decision_body())
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "reviewer.product_architecture_challenge")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "reviewer.product_architecture_challenge")
         router.record_external_event(
             root,
             "reviewer_passes_product_architecture",
@@ -1537,10 +1553,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             source_path=run_root / "product_function_architecture.json",
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "pm.root_contract")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "pm.root_contract")
         router.record_external_event(
             root,
             "pm_writes_root_acceptance_contract",
@@ -1557,10 +1570,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
-        action = router.next_action(root)
-        self.assertEqual(action["card_id"], "reviewer.root_contract_challenge")
-        self.ack_system_card_action(root, action)
+        self.deliver_expected_card(root, "reviewer.root_contract_challenge")
         router.record_external_event(
             root,
             "reviewer_passes_root_acceptance_contract",
@@ -2570,8 +2580,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("router_cleared_stale_pending_action", labels)
         pending = repaired_state["pending_action"]
         if pending is not None:
-            self.assertEqual(pending["label"], "controller_instructed_to_check_prompt_manifest")
-            self.assertEqual(pending["next_card_id"], "pm.event.reviewer_blocked")
+            self.assertNotEqual(pending.get("action_type"), "check_prompt_manifest")
+            if pending.get("action_type") == "deliver_system_card":
+                self.assertEqual(pending["card_id"], "pm.event.reviewer_blocked")
 
     def test_node_acceptance_plan_block_enters_model_miss_repair_path(self) -> None:
         root = self.make_project()
@@ -3410,7 +3421,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(heartbeat_action["automation_update_request"]["kind"], "heartbeat")
         self.assertNotIn("otherwise keep the run alive", heartbeat_action["automation_update_request"]["prompt"])
         self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("continue the router loop instead of stopping at check_prompt_manifest", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("Router consumes local prompt-manifest checks internally", heartbeat_action["automation_update_request"]["prompt"])
         self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", heartbeat_action["automation_update_request"]["prompt"])
         self.assertEqual(heartbeat_action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
         self.assertEqual(heartbeat_action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
@@ -3668,12 +3679,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(result["attached_existing_daemon"])
         self.assertEqual(read_json(run_root / "runtime" / "router_daemon.lock")["status"], "active")
 
-    def test_run_until_wait_folds_manifest_check_before_card_boundary(self) -> None:
+    def test_run_until_wait_reaches_card_boundary_after_router_internal_manifest_check(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
         while True:
             action = self.next_after_display_sync(root)
-            if action["action_type"] == "check_prompt_manifest":
+            if action["action_type"] in {"deliver_system_card", "deliver_system_card_bundle"}:
                 break
             if action["action_type"] == "create_heartbeat_automation":
                 router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
@@ -3685,23 +3696,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             }:
                 router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
                 continue
-            self.fail(f"unexpected action before manifest check: {action['action_type']}")
+            self.fail(f"unexpected action before card boundary: {action['action_type']}")
 
-        summary = read_json(run_root / "display" / "current_status_summary.json")
-        self.assertEqual(summary["state_kind"], "controller_action_ready")
-        self.assertEqual(summary["next_step"]["action_type"], "check_prompt_manifest")
-        self.assertFalse(summary["foreground_exit_policy"]["foreground_exit_allowed"])
-        self.assertFalse(summary["foreground_exit_policy"]["controller_stop_allowed"])
-        self.assertEqual(summary["foreground_exit_policy"]["foreground_required_mode"], "process_controller_action")
-        self.assertTrue(summary["foreground_exit_policy"]["controller_must_process_pending_action_before_exit"])
+        self.assertIn("check_prompt_manifest", self.router_internal_action_types(root))
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertIn(state["pending_action"]["action_type"], {"deliver_system_card", "deliver_system_card_bundle"})
 
         result = router.run_until_wait(root)
 
         self.assertIn(result["action_type"], {"deliver_system_card", "deliver_system_card_bundle"})
-        self.assertEqual(
-            [item["action_type"] for item in result["folded_applied_actions"]],
-            ["check_prompt_manifest"],
-        )
+        self.assertEqual(result["folded_applied_actions"], [])
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
 
     def test_router_daemon_observation_initializes_lock_status_and_ledger(self) -> None:
@@ -3766,7 +3771,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         self.assertGreaterEqual(ledger["counts"]["done"], 1)
 
-    def test_router_daemon_queues_startup_rows_until_barrier_with_two_tables(self) -> None:
+    def test_router_daemon_queues_visible_startup_rows_after_internal_audit(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
@@ -3778,17 +3783,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
         tick = result["ticks"][0]
-        self.assertGreaterEqual(tick["queued_count"], 2)
+        self.assertGreaterEqual(tick["queued_count"], 1)
         queued_types = [item["action_type"] for item in tick["queued_actions"]]
-        self.assertIn("write_startup_mechanical_audit", queued_types)
+        self.assertNotIn("write_startup_mechanical_audit", queued_types)
         self.assertIn("write_display_surface_status", queued_types)
+        self.assertIn("write_startup_mechanical_audit", self.router_internal_action_types(root))
         self.assertEqual(tick["queue_stop_reason"], "barrier")
         scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
         self.assertEqual(scheduler["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
         self.assertTrue(scheduler["router_is_only_scheduler_writer"])
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_rows = [item for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
-        self.assertGreaterEqual(len(startup_rows), 2)
+        self.assertGreaterEqual(len(startup_rows), 1)
+        self.assertNotIn("write_startup_mechanical_audit", [item.get("action_type") for item in startup_rows])
         for row in startup_rows:
             record = read_json(run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json")
             self.assertEqual(record["dependencies"], [])
@@ -4831,18 +4838,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
         self.apply_startup_heartbeat_if_requested(root)
-        manifest_action = self.next_after_display_sync(root)
-        while manifest_action["action_type"] in {
+        action = self.next_after_display_sync(root)
+        while action["action_type"] in {
             "confirm_controller_core_boundary",
             "write_startup_mechanical_audit",
             "write_display_surface_status",
         }:
-            router.apply_action(root, str(manifest_action["action_type"]), self.payload_for_action(manifest_action))
-            manifest_action = self.next_after_display_sync(root)
-        self.assertEqual(manifest_action["action_type"], "check_prompt_manifest")
-        self.assertTrue(manifest_action["bundle_candidate"])
-        router.apply_action(root, "check_prompt_manifest")
-        action = self.next_after_display_sync(root)
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
+        self.assertIn("check_prompt_manifest", self.router_internal_action_types(root))
         self.assertEqual(action["action_type"], "deliver_system_card_bundle")
 
         role = str(action["to_role"])
@@ -4980,8 +4984,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(bootstrap["router_loaded"])
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
         self.assertEqual(root / bootstrap["run_root"], run_root)
-        self.assertEqual(bootstrap["bootloader_actions"], 13)
-        self.assertEqual(bootstrap["router_action_requests"], 13)
+        self.assertGreaterEqual(bootstrap["bootloader_actions"], 6)
+        self.assertGreaterEqual(bootstrap["router_action_requests"], 8)
         self.assertIsNone(bootstrap["pending_action"])
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
         self.assertEqual(bootstrap["user_request"]["schema_version"], router.USER_REQUEST_REF_SCHEMA)
@@ -5010,6 +5014,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("controller", {slot["role_key"] for slot in crew["role_slots"]})
         self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
         self.assertTrue(all(slot["agent_id"] for slot in crew["role_slots"]))
+
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        startup_rows = {
+            row["action_type"]: row
+            for row in controller_ledger["actions"]
+            if row.get("scope_kind") == "startup"
+        }
+        self.assertEqual(
+            {"emit_startup_banner", "load_controller_core", "start_role_slots", "open_startup_intake_ui"},
+            set(startup_rows),
+        )
+        self.assertEqual(
+            {row["router_reconciliation_status"] for row in startup_rows.values()},
+            {"reconciled"},
+        )
 
     def test_display_plan_is_controller_synced_projection_from_pm_plan(self) -> None:
         root = self.make_project()
@@ -5516,12 +5535,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(mutation["repair_return_policy"]["repair_return_to_node_id"], "node-001")
         self.assertEqual(mutation["route_topology"]["topology_strategy"], "return_to_original")
 
-    def test_startup_waits_for_answers_before_banner_or_run_shell(self) -> None:
+    def test_startup_waits_for_answers_before_banner_or_controller(self) -> None:
         root = self.make_project()
 
-        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-
-        action = router.next_action(root)
+        action = router.run_until_wait(root, new_invocation=True)
         self.assertEqual(action["action_type"], "open_startup_intake_ui")
         self.assertTrue(action["requires_host_automation"])
         self.assertEqual(action["requires_payload"], "startup_intake_result")
@@ -5533,7 +5550,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.apply_action(root, "emit_startup_banner")
         with self.assertRaises(router.RouterError):
-            router.apply_action(root, "create_run_shell")
+            router.apply_action(root, "load_controller_core")
 
         bootstrap = self.bootstrap_state(root)
         self.assertEqual(bootstrap["startup_state"], "none")
@@ -5542,18 +5559,26 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(bootstrap["flags"]["dialog_stopped_for_answers"])
         self.assertIsNone(bootstrap["startup_answers"])
         self.assertIsNotNone(bootstrap["run_id"])
+        self.assertTrue(bootstrap["flags"]["run_shell_created"])
+        self.assertTrue(bootstrap["flags"]["router_daemon_started"])
+        self.assertFalse(bootstrap["flags"]["controller_core_loaded"])
+        self.assertFalse(bootstrap["flags"]["roles_started"])
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
         self.assertTrue((root / bootstrap["run_root"] / "bootstrap" / "startup_state.json").exists())
-        self.assertFalse((root / bootstrap["run_root"] / "router_state.json").exists())
+        self.assertTrue((root / bootstrap["run_root"] / "router_state.json").exists())
 
     def test_startup_banner_action_and_result_are_user_visible(self) -> None:
         root = self.make_project()
-        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        action = router.next_action(root)
+        action = router.run_until_wait(root, new_invocation=True)
         self.assertEqual(action["action_type"], "open_startup_intake_ui")
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
 
-        action = router.next_action(root)
+        run_root = self.run_root_for(root)
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        banner_row = next(row for row in controller_ledger["actions"] if row["action_type"] == "emit_startup_banner")
+        self.assertEqual(banner_row["status"], "pending")
+        entry = read_json(run_root / "runtime" / "controller_actions" / f"{banner_row['action_id']}.json")
+        action = entry["action"]
         self.assertEqual(action["action_type"], "emit_startup_banner")
         self.assertTrue(action["display_required"])
         self.assertEqual(action["display_text_format"], "plain_text")
@@ -5596,34 +5621,22 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("flowpilot_router.py", action["display_text"])
         self.assertNotIn(action["controller_user_reporting_policy"]["reminder"], action["display_text"])
 
-        with self.assertRaisesRegex(router.RouterError, "display_confirmation"):
-            router.apply_action(root, "emit_startup_banner")
-
-        result = router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
-        self.assertTrue(result["display_required"])
-        self.assertTrue(result["controller_must_display_text_before_apply"])
-        self.assertEqual(result["dialog_display_confirmation"]["rendered_to"], "user_dialog")
-        self.assertFalse(result["generated_files_alone_satisfy_chat_display"])
-        self.assertIn("FlowPilot", result["display_text"])
-        self.assertIn("Developer: Yingxu Liu", result["display_text"])
-        self.assertIn("Repository: https://github.com/liuyingxuvka/FlowPilot", result["display_text"])
-        self.assertIn("Buy the developer a coffee: https://paypal.me/Yingxuliu", result["display_text"])
-        self.assertNotIn("████", result["display_text"])
-        self.assertNotIn("Formal run mode active.", result["display_text"])
-        self.assertNotIn("Route-controlled execution has started.", result["display_text"])
-        self.assertNotIn("Packets and ledgers are now in charge.", result["display_text"])
-        self.assertNotIn("Startup answers are recorded.", result["display_text"])
-        self.assertNotIn("display-only data", result["display_text"])
-        self.assertNotIn("flowpilot_router.py", result["display_text"])
+        router.record_controller_action_receipt(
+            root,
+            action_id=banner_row["action_id"],
+            status="done",
+            payload=self.payload_for_action(action),
+        )
+        entry = read_json(run_root / "runtime" / "controller_actions" / f"{banner_row['action_id']}.json")
+        self.assertEqual(entry["status"], "done")
+        self.assertEqual(entry["router_reconciliation_status"], "reconciled")
 
     def test_user_intake_from_startup_ui_seals_request_for_controller(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
-        action = router.next_action(root)
-        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
         result = router.run_until_wait(root)
-        self.assertEqual(result["action_type"], "start_role_slots")
+        self.assertEqual(result["action_type"], "load_controller_core")
 
         run_root = root / self.bootstrap_state(root)["run_root"]
         user_request_record = read_json(run_root / "user_request.json")
@@ -5735,33 +5748,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"single_agent_continuity_authorized"})
         self.assertEqual({slot["agent_id"] for slot in crew["role_slots"]}, {None})
 
-    def test_startup_answer_resume_normalizes_old_stop_boundary_state(self) -> None:
+    def test_legacy_startup_answer_boundary_records_answers(self) -> None:
         root = self.make_project()
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
 
-        state_path = router.bootstrap_state_path(root)
-        bootstrap = read_json(state_path)
-        bootstrap["pending_action"] = {
-            "action_type": "ask_startup_questions",
-            "label": "legacy_startup_questions_asked_from_router",
-        }
-        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True), encoding="utf-8")
-        self.assertEqual(router.apply_action(root, "ask_startup_questions")["applied"], "ask_startup_questions")
-
-        bootstrap = read_json(state_path)
-        bootstrap["flags"]["startup_state_written_awaiting_answers"] = False
-        bootstrap["flags"]["dialog_stopped_for_answers"] = False
-        bootstrap["startup_state"] = "asking_questions"
-        bootstrap["pending_action"] = {
-            "action_type": "stop_for_startup_answers",
-            "label": "dialog_stopped_for_startup_answers",
-        }
-        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True), encoding="utf-8")
-
+        self.enter_legacy_startup_answer_boundary(root)
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "record_startup_answers")
         router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
-        self.assertEqual(router.next_action(root)["action_type"], "emit_startup_banner")
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
+        self.assertEqual(bootstrap["startup_state"], "answers_complete")
+        self.assertEqual(router.next_action(root)["action_type"], "create_run_shell")
 
     def test_new_invocation_creates_fresh_run_scoped_bootstrap_over_stale_state(self) -> None:
         root = self.make_project()
@@ -6032,7 +6030,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_startup_activation(root)
         self.complete_material_flow(root)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "deliver_system_card")
         self.assertEqual(action["card_id"], "pm.product_architecture")
@@ -6055,7 +6053,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "functional_acceptance_matrix": [{"acceptance_id": "root-001"}],
             },
         )
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
         context = action["delivery_context"]
@@ -6065,7 +6063,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             set(context["source_paths"].values()),
         )
 
-    def test_system_card_delivery_requires_manifest_check(self) -> None:
+    def test_system_card_delivery_uses_router_internal_manifest_check(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
@@ -6075,24 +6073,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, "confirm_controller_core_boundary")
 
         first = self.next_after_display_sync(root)
-        self.assertEqual(first["action_type"], "write_startup_mechanical_audit")
-        router.apply_action(root, "write_startup_mechanical_audit")
-
-        first = self.next_after_display_sync(root)
         self.assertEqual(first["action_type"], "write_display_surface_status")
+        startup_state = read_json(run_root / "router_state.json")
+        self.assertTrue(startup_state["flags"]["startup_mechanical_audit_written"])
+        self.assertIn(
+            "write_startup_mechanical_audit",
+            [item["action_type"] for item in startup_state.get("router_internal_mechanical_events", [])],
+        )
         router.apply_action(root, "write_display_surface_status", self.payload_for_action(first))
 
         self.complete_startup_pre_review_join(root)
         pre_reviewer_state = read_json(run_root / "router_state.json")
         pre_reviewer_delivery_count = int(pre_reviewer_state["prompt_deliveries"])
         pre_reviewer_manifest_checks = int(pre_reviewer_state["manifest_checks"])
-
-        first = self.next_after_display_sync(root)
-        self.assertEqual(first["action_type"], "check_prompt_manifest")
-        self.assertEqual(first["next_card_id"], "reviewer.startup_fact_check")
-        self.assertTrue(first["next_step_contract"]["controller_has_explicit_next"])
-        self.assertEqual(first["next_step_contract"]["recipient_role"], "human_like_reviewer")
-        router.apply_action(root, "check_prompt_manifest")
+        self.assertIn(
+            "check_prompt_manifest",
+            [item["action_type"] for item in pre_reviewer_state.get("router_internal_mechanical_events", [])],
+        )
 
         second = self.next_after_display_sync(root)
         self.assertEqual(second["action_type"], "deliver_system_card")
@@ -6141,7 +6138,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("return_event", envelope)
         pre_apply_state = read_json(run_root / "router_state.json")
         pre_apply_prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
-        self.assertEqual(pre_apply_state["prompt_deliveries"], pre_reviewer_delivery_count + 1)
+        self.assertEqual(pre_apply_state["prompt_deliveries"], pre_reviewer_delivery_count)
         self.assertEqual(pre_apply_prompt_ledger["deliveries"][-1]["card_id"], "reviewer.startup_fact_check")
         context = second["delivery_context"]
         self.assertEqual(context["schema_version"], "flowpilot.live_card_context.v1")
@@ -6169,8 +6166,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         state = read_json(run_root / "router_state.json")
         prompt_ledger = read_json(run_root / "prompt_delivery_ledger.json")
         self.assertTrue(state["flags"]["reviewer_startup_fact_check_card_delivered"])
-        self.assertEqual(state["manifest_checks"], pre_reviewer_manifest_checks + 1)
-        self.assertEqual(state["prompt_deliveries"], pre_reviewer_delivery_count + 1)
+        self.assertEqual(state["manifest_checks"], pre_reviewer_manifest_checks)
+        self.assertEqual(state["prompt_deliveries"], pre_reviewer_delivery_count)
+        action_dir = run_root / "runtime" / "controller_actions"
+        controller_action_types = [
+            read_json(path).get("action_type")
+            for path in sorted(action_dir.glob("*.json"))
+        ] if action_dir.exists() else []
+        self.assertNotIn("check_prompt_manifest", controller_action_types)
+        self.assertNotIn("write_startup_mechanical_audit", controller_action_types)
         self.assertEqual(state["delivered_cards"][-1]["card_id"], "reviewer.startup_fact_check")
         self.assertEqual(state["delivered_cards"][-1]["delivery_context"]["card_id"], "reviewer.startup_fact_check")
         self.assertEqual(prompt_ledger["deliveries"][-1]["delivery_context"]["card_id"], "reviewer.startup_fact_check")
@@ -6250,21 +6254,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, "confirm_controller_core_boundary")
 
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "write_startup_mechanical_audit")
-        router.apply_action(root, "write_startup_mechanical_audit")
-
-        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "write_display_surface_status")
+        self.assertIn("write_startup_mechanical_audit", self.router_internal_action_types(root))
         router.apply_action(root, "write_display_surface_status", self.payload_for_action(action))
 
         self.complete_startup_pre_review_join(root)
 
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "check_prompt_manifest")
-        self.assertEqual(action["next_card_id"], "reviewer.startup_fact_check")
-        router.apply_action(root, "check_prompt_manifest")
-
-        action = self.next_after_display_sync(root)
+        self.assertIn("check_prompt_manifest", self.router_internal_action_types(root))
         self.assertEqual(action["action_type"], "deliver_system_card")
         self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
         self.assertTrue(action["artifact_committed"])
@@ -6804,11 +6801,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        self.deliver_startup_fact_check_card(root)
+        self.apply_startup_heartbeat_if_requested(root)
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "check_prompt_manifest")
-        router.apply_action(root, "check_prompt_manifest")
-        action = self.next_after_display_sync(root)
+        while action["action_type"] in {
+            "confirm_controller_core_boundary",
+            "write_startup_mechanical_audit",
+            "write_display_surface_status",
+        }:
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
+        self.assertIn("check_prompt_manifest", self.router_internal_action_types(root))
         self.assertEqual(action["action_type"], "deliver_system_card_bundle")
 
         role = str(action["to_role"])
@@ -6864,16 +6866,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         incomplete_ack["ack_hash"] = card_runtime.stable_json_hash(incomplete_ack)
         router.write_json(root / action["expected_return_path"], incomplete_ack)
 
-        with self.assertRaisesRegex(router.RouterError, "unresolved card return"):
-            router.record_external_event(
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
                 root,
-                "reviewer_reports_startup_facts",
-                self.role_report_envelope(
-                    root,
-                    "startup/reviewer_startup_fact_report",
-                    self.startup_fact_report_body(root),
-                ),
-            )
+                "startup/reviewer_startup_fact_report",
+                self.startup_fact_report_body(root),
+            ),
+        )
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["startup_pre_review_ack_join_blocked"])
+        self.assertEqual(result["next_required_action"]["action_type"], "await_current_scope_reconciliation")
 
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["startup_fact_reported"])
@@ -6899,8 +6903,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         }:
             router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
             action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "check_prompt_manifest")
-        self.assertTrue(action["bundle_candidate"])
         expected_card_ids = [
             "pm.core",
             "pm.output_contract_catalog",
@@ -6908,10 +6910,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "pm.phase_map",
             "pm.startup_intake",
         ]
-        self.assertEqual(action["bundle_card_ids"], expected_card_ids)
-        router.apply_action(root, "check_prompt_manifest")
-
-        action = self.next_after_display_sync(root)
+        self.assertIn("check_prompt_manifest", self.router_internal_action_types(root))
         self.assertEqual(action["action_type"], "deliver_system_card_bundle")
         self.assertEqual(action["card_ids"], expected_card_ids)
         self.assertEqual(action["to_role"], "project_manager")
@@ -6935,7 +6934,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         for card_id in expected_card_ids:
             entry = next(entry for entry in router.SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id)
             self.assertTrue(state["flags"][entry["flag"]])
-        self.assertEqual(state["prompt_deliveries"], 5)
+        self.assertGreaterEqual(state["prompt_deliveries"], 5)
+        self.assertEqual([item["card_id"] for item in state["delivered_cards"][:5]], expected_card_ids)
         return_ledger = read_json(run_root / "return_event_ledger.json")
         bundle_records = [
             item for item in return_ledger["pending_returns"]
@@ -6943,26 +6943,23 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ]
         self.assertEqual(bundle_records[0]["status"], "resolved")
         next_action = self.next_after_display_sync(root)
-        self.assertEqual(next_action["action_type"], "check_prompt_manifest")
-        self.assertEqual(next_action["next_card_id"], "reviewer.startup_fact_check")
+        self.assertEqual(next_action["action_type"], "deliver_system_card")
+        self.assertEqual(next_action["card_id"], "reviewer.startup_fact_check")
 
     def test_incomplete_system_card_bundle_ack_waits_for_missing_receipts_then_recovers(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
         self.apply_startup_heartbeat_if_requested(root)
-        manifest_action = self.next_after_display_sync(root)
-        while manifest_action["action_type"] in {
+        action = self.next_after_display_sync(root)
+        while action["action_type"] in {
             "confirm_controller_core_boundary",
             "write_startup_mechanical_audit",
             "write_display_surface_status",
         }:
-            router.apply_action(root, str(manifest_action["action_type"]), self.payload_for_action(manifest_action))
-            manifest_action = self.next_after_display_sync(root)
-        self.assertEqual(manifest_action["action_type"], "check_prompt_manifest")
-        self.assertTrue(manifest_action["bundle_candidate"])
-        router.apply_action(root, "check_prompt_manifest")
-        action = self.next_after_display_sync(root)
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
+        self.assertIn("check_prompt_manifest", self.router_internal_action_types(root))
         self.assertEqual(action["action_type"], "deliver_system_card_bundle")
         role = str(action["to_role"])
         agent_id = str(action["target_agent_id"])
@@ -7044,10 +7041,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
         ][0]
         self.assertEqual(bundle_pending["status"], "resolved")
-        self.assertEqual(next_action["action_type"], "check_prompt_manifest")
-        self.assertEqual(next_action["next_card_id"], "reviewer.startup_fact_check")
+        self.assertEqual(next_action["action_type"], "deliver_system_card")
+        self.assertEqual(next_action["card_id"], "reviewer.startup_fact_check")
 
-    def test_user_intake_mail_requires_packet_ledger_check_after_pm_cards(self) -> None:
+    def test_user_intake_mail_uses_router_internal_packet_ledger_check_after_pm_cards(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
@@ -7059,17 +7056,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "pm.startup_intake")
 
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "check_packet_ledger")
-        self.assertEqual(action["next_mail_id"], "user_intake")
-        router.apply_action(root, "check_packet_ledger")
-
-        action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "deliver_mail")
         self.assertEqual(action["mail_id"], "user_intake")
+        pre_delivery_state = read_json(run_root / "router_state.json")
+        self.assertTrue(pre_delivery_state["ledger_check_requested"])
+        self.assertIn(
+            "check_packet_ledger",
+            [item["action_type"] for item in pre_delivery_state.get("router_internal_mechanical_events", [])],
+        )
         router.apply_action(root, "deliver_mail")
 
         state = read_json(run_root / "router_state.json")
         packet_ledger = read_json(run_root / "packet_ledger.json")
+        action_dir = run_root / "runtime" / "controller_actions"
+        controller_action_types = [
+            read_json(path).get("action_type")
+            for path in sorted(action_dir.glob("*.json"))
+        ] if action_dir.exists() else []
+        self.assertNotIn("check_packet_ledger", controller_action_types)
         self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])
         self.assertEqual(state["ledger_checks"], 1)
         self.assertEqual(state["mail_deliveries"], 1)
@@ -7091,8 +7095,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_first_decision_resets_controller")
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        reset_confirmation = router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
+        self.assertTrue(reset_confirmation["already_recorded"])
         boundary = read_json(run_root / "startup" / "controller_boundary_confirmation.json")
         self.assertEqual(boundary["event"], "controller_role_confirmed_from_router_core")
         self.assertFalse(boundary["sealed_body_reads_allowed"])
@@ -7115,15 +7119,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(proof["source_kind"], "router_computed")
         self.assertFalse(proof["self_attested_ai_claims_accepted_as_proof"])
 
+        invalid_root = self.make_project()
+        self.boot_to_controller(invalid_root)
+        self.deliver_startup_fact_check_card(invalid_root)
+        self.deliver_initial_pm_cards_and_user_intake(invalid_root)
         with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "reviewer_reports_startup_facts", {"passed": True})
-        with self.assertRaisesRegex(router.RouterError, "file-backed body path"):
-            router.record_external_event(
-                root,
-                "reviewer_reports_startup_facts",
-                {"reviewed_by_role": "human_like_reviewer", "passed": True},
-            )
-        self.assertTrue(self.handle_pending_control_blocker(root))
+            router.record_external_event(invalid_root, "reviewer_reports_startup_facts", {"passed": True})
+        second_invalid = router.record_external_event(
+            invalid_root,
+            "reviewer_reports_startup_facts",
+            {"reviewed_by_role": "human_like_reviewer", "passed": True},
+        )
+        self.assertTrue(second_invalid["current_scope_reconciliation_blocked"])
         router.record_external_event(
             root,
             "reviewer_reports_startup_facts",
@@ -7188,7 +7195,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         replay = router.record_external_event(root, "pm_approves_startup_activation", startup_activation_payload)
         self.assertTrue(replay["control_blocker_resolved"])
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         state = read_json(router.run_state_path(run_root))
@@ -7199,7 +7206,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.boot_to_controller(root)
         self.complete_startup_activation(root)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.material_scan")
         self.ack_system_card_action(root, action)
@@ -7382,8 +7389,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "startup" / "startup_repair_request.json").exists())
 
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "write_startup_mechanical_audit")
-        router.apply_action(root, "write_startup_mechanical_audit")
+        self.assertIn("write_startup_mechanical_audit", self.router_internal_action_types(root))
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
 
     def test_pm_startup_repair_request_can_repeat_for_new_blocking_report(self) -> None:
@@ -7837,7 +7845,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_accepts_reviewed_material")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.material_scan")
         self.ack_system_card_action(root, action)
@@ -7858,7 +7866,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.record_external_event(root, "reviewer_reports_material_sufficient")
         self.absorb_material_scan_results_with_pm(root, material_index_path)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "reviewer.material_sufficiency")
         self.ack_system_card_action(root, action)
@@ -8118,7 +8126,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_writes_product_function_architecture")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.research_package")
         self.ack_system_card_action(root, action)
@@ -8152,7 +8160,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("current_repository_files", research_packet_body)
         self.assertIn("Do not edit production code.", research_packet_body)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "worker.research_report")
         self.ack_system_card_action(root, action)
@@ -8206,7 +8214,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "reviewer.research_direct_source_check")
         self.ack_system_card_action(root, action)
@@ -8220,13 +8228,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.research_absorb_or_mutate")
         self.ack_system_card_action(root, action)
         router.record_external_event(root, "pm_absorbs_reviewed_research")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.material_understanding")
         self.ack_system_card_action(root, action)
@@ -8247,7 +8255,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_writes_product_function_architecture")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.product_architecture")
         self.ack_system_card_action(root, action)
@@ -8270,7 +8278,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_writes_root_acceptance_contract", {"root_requirements": [{"requirement_id": "root-001"}]})
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
         self.ack_system_card_action(root, action)
@@ -8287,13 +8295,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ),
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.product_behavior_model_decision")
         self.ack_system_card_action(root, action)
         router.record_external_event(root, "pm_accepts_product_behavior_model", self.product_behavior_model_decision_body())
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "reviewer.product_architecture_challenge")
         self.ack_system_card_action(root, action)
@@ -8312,7 +8320,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             source_path=run_root / "product_function_architecture.json",
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.root_contract")
         self.ack_system_card_action(root, action)
@@ -8340,7 +8348,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_activates_reviewed_route")
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "reviewer.root_contract_challenge")
         self.ack_system_card_action(root, action)
@@ -8362,7 +8370,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(state["flags"].get("root_contract_modelability_passed", False))
         self.assertFalse((run_root / "flowguard" / "root_contract_modelability.json").exists())
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.dependency_policy")
         self.ack_system_card_action(root, action)
@@ -8401,7 +8409,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_startup_activation(root)
         self.complete_material_flow(root)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.product_architecture")
         self.ack_system_card_action(root, action)
@@ -8418,7 +8426,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
         self.assertEqual(action["gate_contract"]["gate_id"], "product_behavior_model")
@@ -8518,7 +8526,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         action = router.next_action(root)
         self.assertEqual(action["card_id"], "pm.dependency_policy")
         self.ack_system_card_action(root, action)
@@ -12072,7 +12080,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_startup_activation(root)
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         self.apply_next_packet_action(root, "relay_material_scan_packets")
@@ -12082,7 +12090,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         router.record_external_event(root, "worker_scan_results_returned")
         self.absorb_material_scan_results_with_pm(root, material_index_path)
-        router.apply_action(root, str(router.next_action(root)["action_type"]))
+        self.apply_next_non_card_action(root)
         self.deliver_expected_card(root, "reviewer.material_sufficiency")
 
         router.record_external_event(

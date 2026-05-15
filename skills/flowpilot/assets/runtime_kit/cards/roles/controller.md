@@ -101,8 +101,9 @@ Allowed actions:
   the standby row;
 - call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,
   tests, or explicit repair/recovery, not as the normal runtime metronome;
-- check the prompt manifest before delivering a system card;
-- check the packet ledger before delivering mail or packet envelopes;
+- rely on Router-owned manifest and packet-ledger checks; if Router exposes a
+  card, mail, packet, or result relay action, perform only the relay work
+  described by that action and its Controller ledger row;
 - relay envelopes only, update holder/status ledgers, and request role
   decisions;
 - when returning a role/event envelope to the router, pass the envelope file
