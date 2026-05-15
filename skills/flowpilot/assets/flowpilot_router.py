@@ -93,6 +93,10 @@ ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
 FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
 FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS = 300.0
 FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
+WAIT_TARGET_ACK_REMINDER_SECONDS = 180
+WAIT_TARGET_ACK_BLOCKER_SECONDS = 600
+WAIT_TARGET_REPORT_REMINDER_SECONDS = 600
+WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS = {"missing", "cancelled", "unknown", "unresponsive", "blocked", "lost"}
 CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
 ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
@@ -5233,19 +5237,191 @@ def _reconcile_pending_controller_action_receipt(
     )
 
 
-def _pending_wait_summary(run_state: dict[str, Any]) -> dict[str, Any]:
+def _elapsed_seconds_since(raw_timestamp: object, *, now: datetime | None = None) -> int | None:
+    parsed = _parse_utc_timestamp(raw_timestamp)
+    if parsed is None:
+        return None
+    current = now or datetime.now(timezone.utc)
+    return max(0, int((current - parsed).total_seconds()))
+
+
+def _wait_target_path_exists(project_root: Path | None, raw_path: object) -> bool:
+    if project_root is None or not isinstance(raw_path, str) or not raw_path.strip():
+        return False
+    return resolve_project_path(project_root, raw_path).exists()
+
+
+def _pending_wait_class(pending: dict[str, Any]) -> str:
+    explicit = str(pending.get("wait_class") or pending.get("wait_target_class") or "").strip()
+    if explicit in {"ack", "report_result", "controller_local_action", "none"}:
+        return explicit
+    action_type = str(pending.get("action_type") or "")
+    if action_type in {
+        "await_card_return_event",
+        "await_card_bundle_return_event",
+        "check_card_return_event",
+        "check_card_bundle_return_event",
+        "deliver_system_card",
+        "deliver_system_card_bundle",
+    }:
+        return "ack"
+    if action_type == "await_role_decision":
+        return "report_result"
+    if action_type:
+        return "controller_local_action"
+    return "none"
+
+
+def _wait_target_reminder_text(wait_class: str, target_role: str, wait_reason: str) -> str | None:
+    if wait_class == "ack":
+        return (
+            f"Router is still waiting for {target_role or 'the target role'} to acknowledge {wait_reason or 'the assigned card'}. "
+            "If you received it, submit the ACK through the original runtime path. If you are blocked, submit a blocker."
+        )
+    if wait_class == "report_result":
+        return (
+            f"Router is still waiting for {target_role or 'the target role'} to finish {wait_reason or 'the assigned work'}. "
+            "If you are still working, continue. If finished, submit through the original runtime path. If blocked, submit a blocker. "
+            "Do not paste sealed report or result bodies into chat."
+        )
+    return None
+
+
+def _wait_target_due_state(
+    *,
+    wait_class: str,
+    elapsed_seconds: int | None,
+    last_reminder_elapsed_seconds: int | None,
+    evidence_exists: bool,
+    liveness_probe_result: str,
+) -> dict[str, Any]:
+    reminder_due = False
+    blocker_required = False
+    blocker_reason = None
+    liveness_check_due = False
+    reminder_interval_seconds = None
+    blocker_after_seconds = None
+    if wait_class == "ack":
+        reminder_interval_seconds = WAIT_TARGET_ACK_REMINDER_SECONDS
+        blocker_after_seconds = WAIT_TARGET_ACK_BLOCKER_SECONDS
+        if not evidence_exists and elapsed_seconds is not None:
+            reminder_due = elapsed_seconds >= WAIT_TARGET_ACK_REMINDER_SECONDS and (
+                last_reminder_elapsed_seconds is None
+                or last_reminder_elapsed_seconds >= WAIT_TARGET_ACK_REMINDER_SECONDS
+            )
+            blocker_required = elapsed_seconds >= WAIT_TARGET_ACK_BLOCKER_SECONDS
+            if blocker_required:
+                blocker_reason = "ack_missing_after_ten_minutes"
+    elif wait_class == "report_result":
+        reminder_interval_seconds = WAIT_TARGET_REPORT_REMINDER_SECONDS
+        if not evidence_exists and elapsed_seconds is not None:
+            reminder_due = elapsed_seconds >= WAIT_TARGET_REPORT_REMINDER_SECONDS and (
+                last_reminder_elapsed_seconds is None
+                or last_reminder_elapsed_seconds >= WAIT_TARGET_REPORT_REMINDER_SECONDS
+            )
+            liveness_check_due = reminder_due
+        if liveness_probe_result in WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS:
+            blocker_required = True
+            blocker_reason = f"role_liveness_{liveness_probe_result}"
+    elif wait_class == "controller_local_action":
+        reminder_due = False
+        liveness_check_due = False
+    return {
+        "reminder_interval_seconds": reminder_interval_seconds,
+        "blocker_after_seconds": blocker_after_seconds,
+        "reminder_due": reminder_due,
+        "liveness_check_due": liveness_check_due,
+        "blocker_required": blocker_required,
+        "blocker_reason": blocker_reason,
+    }
+
+
+def _pending_wait_summary(run_state: dict[str, Any], *, project_root: Path | None = None) -> dict[str, Any]:
     pending = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    wait_class = _pending_wait_class(pending)
+    target_role = str(pending.get("waiting_for_role") or pending.get("to_role") or "").strip()
+    wait_reason = str(pending.get("wait_reason") or pending.get("summary") or pending.get("label") or "").strip()
+    expected_return_path = pending.get("expected_return_path")
+    started_at = pending.get("wait_started_at") or pending.get("created_at") or pending.get("updated_at")
+    last_reminder_at = pending.get("last_wait_reminder_at")
+    last_liveness_probe = pending.get("last_liveness_probe")
+    if not isinstance(last_liveness_probe, dict):
+        last_liveness_probe = {}
+    liveness_probe_result = str(
+        pending.get("liveness_probe_result")
+        or last_liveness_probe.get("result")
+        or "none"
+    )
+    elapsed_seconds = _elapsed_seconds_since(started_at)
+    last_reminder_elapsed_seconds = _elapsed_seconds_since(last_reminder_at)
+    evidence_exists = _wait_target_path_exists(project_root, expected_return_path)
+    due_state = _wait_target_due_state(
+        wait_class=wait_class,
+        elapsed_seconds=elapsed_seconds,
+        last_reminder_elapsed_seconds=last_reminder_elapsed_seconds,
+        evidence_exists=evidence_exists,
+        liveness_probe_result=liveness_probe_result,
+    )
     return {
         "action_type": pending.get("action_type"),
         "label": pending.get("label"),
         "to_role": pending.get("to_role"),
         "waiting_for_role": pending.get("waiting_for_role") or pending.get("to_role"),
         "allowed_external_events": pending.get("allowed_external_events") or [],
-        "expected_return_path": pending.get("expected_return_path"),
+        "expected_return_path": expected_return_path,
         "controller_action_id": pending.get("controller_action_id"),
         "resource_lifecycle": pending.get("resource_lifecycle"),
         "artifact_committed": pending.get("artifact_committed"),
         "relay_allowed": pending.get("relay_allowed"),
+        "wait_class": wait_class,
+        "target_role": target_role or None,
+        "wait_reason": wait_reason or None,
+        "started_at": started_at,
+        "elapsed_seconds": elapsed_seconds,
+        "expected_evidence": {
+            "path": expected_return_path,
+            "exists": evidence_exists,
+            "controller_visible_only": True,
+        },
+        "reminder": {
+            "text": pending.get("wait_reminder_text") or _wait_target_reminder_text(wait_class, target_role, wait_reason),
+            "last_sent_at": last_reminder_at,
+            "due": due_state["reminder_due"],
+            "interval_seconds": due_state["reminder_interval_seconds"],
+            "controller_must_use_router_authored_text": True,
+        },
+        "liveness_probe": {
+            "required": wait_class == "report_result" and bool(target_role),
+            "due": due_state["liveness_check_due"],
+            "target_role": target_role or None,
+            "last_checked_at": last_liveness_probe.get("checked_at"),
+            "last_result": liveness_probe_result,
+            "last_evidence_path": last_liveness_probe.get("evidence_path"),
+            "current_liveness_is_not_cached_authority": True,
+        },
+        "controller_local_self_audit": {
+            "required": wait_class == "controller_local_action",
+            "reminder_allowed": False,
+            "check_action_ledger": True,
+            "check_receipts": True,
+        },
+        "blocker": {
+            "required": due_state["blocker_required"],
+            "reason": due_state["blocker_reason"],
+            "event": "controller_reports_role_liveness_fault" if due_state["blocker_required"] else None,
+            "record_event_payload": {
+                "role_key": target_role,
+                "target_role_keys": [target_role] if target_role else [],
+                "wait_class": wait_class,
+                "wait_reason": wait_reason or None,
+                "expected_return_path": expected_return_path,
+                "liveness_probe_result": liveness_probe_result,
+                "elapsed_seconds": elapsed_seconds,
+            }
+            if due_state["blocker_required"]
+            else None,
+            "pm_recovery_required": bool(due_state["blocker_required"]),
+        },
     }
 
 
@@ -5277,7 +5453,7 @@ def _write_router_daemon_status(
             "last_tick_at": lock_payload.get("last_tick_at"),
             "live": _router_daemon_lock_is_live(lock_payload),
         },
-        "current_wait": _pending_wait_summary(run_state),
+        "current_wait": _pending_wait_summary(run_state, project_root=project_root),
         "current_action": {
             "action_type": current_action.get("action_type"),
             "label": current_action.get("label"),
@@ -5412,7 +5588,12 @@ def _build_foreground_controller_standby_snapshot(
     ledger_ok = ledger.get("schema_version") == CONTROLLER_ACTION_LEDGER_SCHEMA
     pending_action_ids = _foreground_standby_pending_action_ids(ledger) if ledger_ok else []
     waiting_action_ids = _foreground_standby_waiting_action_ids(ledger) if ledger_ok else []
-    current_wait = daemon_status.get("current_wait") if isinstance(daemon_status.get("current_wait"), dict) else {}
+    daemon_wait = daemon_status.get("current_wait") if isinstance(daemon_status.get("current_wait"), dict) else {}
+    current_wait = _pending_wait_summary(run_state, project_root=project_root)
+    if daemon_wait:
+        for key in ("action_type", "label", "to_role", "waiting_for_role", "allowed_external_events", "expected_return_path"):
+            if current_wait.get(key) in (None, "", []) and daemon_wait.get(key) not in (None, "", []):
+                current_wait[key] = daemon_wait.get(key)
     current_action = daemon_status.get("current_action") if isinstance(daemon_status.get("current_action"), dict) else {}
     pending_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
     run_lifecycle = str(run_state.get("status") or "")
@@ -5430,6 +5611,14 @@ def _build_foreground_controller_standby_snapshot(
         standby_state = "daemon_stale_or_missing"
     elif pending_action_ids:
         standby_state = "controller_action_ready"
+    elif ((current_wait.get("blocker") or {}).get("required")):
+        standby_state = "wait_target_blocker_required"
+    elif (
+        ((current_wait.get("reminder") or {}).get("due"))
+        or ((current_wait.get("liveness_probe") or {}).get("due"))
+        or ((current_wait.get("controller_local_self_audit") or {}).get("required"))
+    ):
+        standby_state = "wait_target_check_due"
     elif current_wait.get("waiting_for_role") or current_wait.get("action_type") == "await_role_decision":
         standby_state = "waiting_for_role"
     else:
@@ -5437,9 +5626,20 @@ def _build_foreground_controller_standby_snapshot(
     controller_must_continue_standby = standby_state in {"waiting_for_role", "daemon_alive_no_controller_action"}
     controller_must_process_pending_action = standby_state == "controller_action_ready"
     controller_stop_allowed = standby_state == "terminal"
-    foreground_turn_return_allowed = standby_state in {"terminal", "user_input_required", "daemon_stale_or_missing"}
+    wait_target_action_ready = standby_state in {"wait_target_check_due", "wait_target_blocker_required"}
+    foreground_turn_return_allowed = standby_state in {
+        "terminal",
+        "user_input_required",
+        "daemon_stale_or_missing",
+        "wait_target_check_due",
+        "wait_target_blocker_required",
+    }
     if controller_must_process_pending_action:
         foreground_required_mode = "process_controller_action"
+    elif standby_state == "wait_target_check_due":
+        foreground_required_mode = "process_wait_target_check"
+    elif standby_state == "wait_target_blocker_required":
+        foreground_required_mode = "record_wait_target_blocker"
     elif controller_must_continue_standby:
         foreground_required_mode = "watch_router_daemon"
     elif standby_state == "user_input_required":
@@ -5464,6 +5664,7 @@ def _build_foreground_controller_standby_snapshot(
         "standby_state": standby_state,
         "controller_must_continue_standby": controller_must_continue_standby,
         "controller_must_process_pending_action_before_exit": controller_must_process_pending_action,
+        "controller_must_process_wait_target_before_exit": wait_target_action_ready,
         "foreground_exit_allowed": controller_stop_allowed,
         "foreground_turn_return_allowed": foreground_turn_return_allowed,
         "foreground_required_mode": foreground_required_mode,
@@ -5501,8 +5702,18 @@ def _build_foreground_controller_standby_snapshot(
             "action_type": current_wait.get("action_type"),
             "label": current_wait.get("label"),
             "waiting_for_role": current_wait.get("waiting_for_role"),
+            "wait_class": current_wait.get("wait_class"),
+            "target_role": current_wait.get("target_role"),
+            "wait_reason": current_wait.get("wait_reason"),
+            "started_at": current_wait.get("started_at"),
+            "elapsed_seconds": current_wait.get("elapsed_seconds"),
             "allowed_external_events": current_wait.get("allowed_external_events") or [],
             "expected_return_path": current_wait.get("expected_return_path"),
+            "expected_evidence": current_wait.get("expected_evidence"),
+            "reminder": current_wait.get("reminder"),
+            "liveness_probe": current_wait.get("liveness_probe"),
+            "controller_local_self_audit": current_wait.get("controller_local_self_audit"),
+            "blocker": current_wait.get("blocker"),
         },
         "current_action": {
             "action_type": current_action.get("action_type"),
@@ -5518,6 +5729,8 @@ def _build_foreground_controller_standby_snapshot(
             "returns_on_user_required": True,
             "returns_on_daemon_stale_or_missing": True,
             "returns_on_bounded_timeout": True,
+            "returns_on_wait_target_check_due": True,
+            "returns_on_wait_target_blocker_required": True,
             "controller_action_ready_blocks_foreground_exit": True,
             "live_daemon_wait_requires_standby": True,
             "controller_stop_requires_terminal_run": True,
@@ -5557,6 +5770,8 @@ def foreground_controller_standby(
         )
         if snapshot["standby_state"] in {
             "controller_action_ready",
+            "wait_target_check_due",
+            "wait_target_blocker_required",
             "terminal",
             "user_input_required",
             "daemon_stale_or_missing",
@@ -16726,6 +16941,7 @@ def _build_current_status_summary(
             "action_type": pending_action.get("action_type"),
             "label": pending_action.get("label"),
             "waiting_for": waiting_for,
+            "current_wait": daemon_status.get("current_wait") if isinstance(daemon_status.get("current_wait"), dict) else {},
         },
         "blocker": {
             "active": bool(active_blocker),

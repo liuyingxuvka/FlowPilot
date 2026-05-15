@@ -10747,6 +10747,42 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - This does not yet prove the full FlowPilot Router event path, role-output envelope validation, or Controller wake path from a real background role result.
 - The next stronger experiment should connect the background agent's signal to a Router-accepted event or Controller action ledger entry and verify foreground `controller-standby` wakes from that real agent-produced artifact.
 
+## 2026-05-15 Blinded Five-Minute Job Monitor Experiment
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User pointed out that telling the worker it was a five-minute persistence experiment contaminates the result.
+- Status: isolated_background_agent_monitor_experiment; prior explicit five-minute prompt invalidated
+- Skill decision: used_flowguard_process_preflight; no production behavior changed
+- Commands OK: True
+
+### Risk Intent
+- Avoid measuring whether a worker can comply with an explicit test instruction instead of whether it naturally follows an operational monitor.
+- Keep the wait duration and evaluation criteria in the controller thread only.
+- Verify that a real background worker can keep a normal monitor task open for more than five minutes while the monitor remains `pending`.
+
+### Invalidated Evidence
+- Worker `Boole` was explicitly told this was a five-minute experiment and therefore its run was treated as contaminated evidence.
+- That worker was shut down before completion and is not used for confidence.
+
+### Clean Experiment Evidence
+- Monitor root: `tmp/flowpilot_job_monitor/run-20260515-081246/`
+- Monitor file: `tmp/flowpilot_job_monitor/run-20260515-081246/monitor.json`
+- Payload file: `tmp/flowpilot_job_monitor/run-20260515-081246/ready_payload.json`
+- Operator notes: `tmp/flowpilot_job_monitor/run-20260515-081246/operator_notes.md`
+- Worker agent: `019e2a44-9576-7cf0-81b5-a4e2cb305289` (`Peirce`)
+
+### Findings
+- The worker was given only an operational job-monitor task and was not told this was an experiment or that a five-minute hold was being tested.
+- The worker first observed `pending` at `2026-05-15T08:13:56.0262270+02:00`.
+- The controller kept the monitor `pending` for over five minutes after that first observation; the worker did not return early.
+- The controller updated the monitor to `ready` at `2026-05-15T08:19:25.3049293+02:00`.
+- The worker observed `ready` at `2026-05-15T08:19:38.8530488+02:00`, read the payload at `2026-05-15T08:19:52.4647479+02:00`, and returned a handoff summary.
+- This is valid evidence that a real background agent can keep watching a normal monitor for longer than five minutes without knowing it is being tested.
+
+### Confidence Boundary
+- This still does not prove the full Router-to-Controller wake chain. It proves background monitor obedience under an ordinary monitor prompt.
+- The next stronger proof should make the background worker produce a Router-accepted event or result envelope, then verify the foreground Controller wakes through `controller-standby`.
+
 ## 2026-05-15 Current-Scope Pre-Review Reconciliation Runtime Update
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -10787,6 +10823,97 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Direct reviewer pass/block events are held as recoverable waits when the active node is not locally reconciled.
 - Current-node completion now raises a Router error if the node tries to exit before review-created local obligations and reviewed packet status are closed.
 - Future-node scoped pending card returns no longer block the active node's review start.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
+
+## 2026-05-15 Async Startup Obligation Join Runtime Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to make startup use the same Router/Controller card ACK table rules as later runtime, then corrected that the only extra startup join belongs before Reviewer live startup review, not before PM startup activation.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: Focused checks passed; full router runtime file timed out before completion.
+
+### Risk Intent
+- Let Router keep dispatching independent startup card work while startup-scope ACKs are pending.
+- Require PM startup prep card ACKs to clear through the common Controller action ledger and card pending-return ledger before Reviewer startup fact review starts.
+- Keep Reviewer report acceptance and PM startup activation on existing same-role ACK dependencies.
+- Prevent a redundant second all-startup join before PM startup activation.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/async-startup-obligation-join/`
+- Focused model: `simulations/flowpilot_startup_optimization_model.py`
+- Focused result: `simulations/flowpilot_startup_optimization_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Launcher note: `skills/flowpilot/SKILL.md`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python simulations\run_flowpilot_startup_optimization_checks.py --json-out simulations\flowpilot_startup_optimization_results.json` passed.
+- `openspec validate "async-startup-obligation-join" --strict` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_startup_optimization_model.py simulations\run_flowpilot_startup_optimization_checks.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "system_card_delivery_requires_manifest_check or committed_system_card_relay_can_resolve_without_apply_roundtrip or startup_pre_review_ack_join or pm_startup_activation_uses_existing_same_role_card_ack_blocker or pre_review_pm_bundle_ack or preconsumes_valid_card_ack_before_blocking or missing_same_role_ack_report"` passed with 7 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "startup or system_card or card_return"` passed with 43 tests and 5 subtests.
+- `python scripts\install_flowpilot.py --sync-repo-owned` synchronized the installed FlowPilot skill.
+- `python scripts\audit_local_install_sync.py` passed.
+- `python scripts\check_install.py` passed.
+
+### Findings
+- The startup model now names the post-review condition as Reviewer report acceptance, not as a second startup join.
+- Router defers only startup-scope pending card waits when it can continue with independent startup card delivery.
+- Reviewer startup fact card delivery is suppressed until pre-review PM prep card pending returns are clear.
+- `reviewer_reports_startup_facts` can preconsume the relevant pre-review ACKs through the shared pending-return ledger.
+- PM startup activation uses the existing same-role `pm.startup_activation` pending-return blocker and does not use a separate all-startup join.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q` was attempted, but it timed out after 10 minutes before returning a final pass/fail result. The focused and startup/system-card/ACK test scopes passed.
+
+## 2026-05-15 Controller Wait Target Liveness Runtime Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to keep the foreground Controller from passively waiting on the monitor, and instead use monitor wait-target metadata to keep FlowPilot healthy while Router and background roles work.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: Focused checks, install sync, and local install audit passed.
+
+### Risk Intent
+- Make the Router-authored monitor say who or what the Controller is waiting on, why, what evidence is expected, and when the Controller must act.
+- Keep liveness as a fresh check obligation, not a cached truth written into the monitor.
+- Send ACK reminders at three minutes and route ACK waits to an existing Router/PM blocker at ten minutes.
+- Send report/result reminders every ten minutes only with a fresh target-role liveness probe.
+- Treat Controller-local waits as self-audits of the Controller action ledger and receipts, not as reminders to itself.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/controller-wait-target-liveness/`
+- Focused model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Focused result: `simulations/flowpilot_persistent_router_daemon_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Controller prompt guidance: `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+- Install prompt check: `scripts/check_install.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate controller-wait-target-liveness --strict --json` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "foreground_controller_standby"` passed with 9 tests.
+- `python -m py_compile simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py tests\test_flowpilot_router_runtime.py` passed.
+- `openspec validate async-startup-obligation-join --strict --json` passed.
+- `openspec validate enforce-current-scope-pre-review-reconciliation --strict --json` passed.
+- `python simulations\run_flowpilot_startup_optimization_checks.py --json-out simulations\flowpilot_startup_optimization_results.json` passed.
+- `python simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py --json-out simulations\flowpilot_current_scope_pre_review_reconciliation_results.json` passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` confirmed the installed FlowPilot skill was source-fresh.
+- `python scripts\audit_local_install_sync.py --json` passed with matching installed and repository digests.
+- `python scripts\install_flowpilot.py --check --json` passed with `source_fresh: true` for FlowPilot.
+
+### Findings
+- The focused model rejects stale cached liveness as current truth, report reminders without fresh liveness probes, ACK waits beyond ten minutes without blocker routing, Controller-local waits that remind the Controller, and role waits missing wait-target metadata.
+- Foreground Controller standby now returns explicit modes for wait-target checks and blocker recording instead of silently idling.
+- Monitor payloads expose `current_wait.wait_class`, target role/reason/evidence, reminder policy, liveness probe instructions, and Controller-local self-audit instructions.
+- The runtime does not expose a `role_alive` field as authority; Controller must perform the check when the monitor says it is due.
 
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.

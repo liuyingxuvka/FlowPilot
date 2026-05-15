@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from pathlib import Path
 
@@ -1122,6 +1123,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         router.save_run_state(run_root, state)
         return wait_action
+
+    def old_utc(self, *, minutes: int) -> str:
+        return (
+            datetime.now(timezone.utc).replace(microsecond=0) - timedelta(minutes=minutes)
+        ).isoformat().replace("+00:00", "Z")
 
     def startup_intake_payload(
         self,
@@ -3792,7 +3798,183 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(standby["controller_stop_allowed"])
         self.assertEqual(standby["foreground_required_mode"], "watch_router_daemon")
         self.assertFalse(standby["controller_must_process_pending_action_before_exit"])
+        self.assertFalse(standby["controller_must_process_wait_target_before_exit"])
+        self.assertEqual(standby["current_wait"]["wait_class"], "report_result")
+        self.assertTrue(standby["current_wait"]["liveness_probe"]["required"])
+        self.assertTrue(standby["current_wait"]["liveness_probe"]["current_liveness_is_not_cached_authority"])
+        self.assertNotIn("role_alive", standby["current_wait"])
         self.assertTrue(standby["exit_policy"]["live_daemon_wait_requires_standby"])
+
+    def test_foreground_controller_standby_returns_report_reminder_and_liveness_probe_due(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        self.force_startup_fact_role_wait(root)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"]["created_at"] = self.old_utc(minutes=11)
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=state["pending_action"],
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "wait_target_check_due")
+        self.assertEqual(standby["foreground_required_mode"], "process_wait_target_check")
+        self.assertTrue(standby["controller_must_process_wait_target_before_exit"])
+        self.assertTrue(standby["current_wait"]["reminder"]["due"])
+        self.assertTrue(standby["current_wait"]["liveness_probe"]["due"])
+        self.assertTrue(standby["current_wait"]["liveness_probe"]["required"])
+        self.assertTrue(standby["current_wait"]["liveness_probe"]["current_liveness_is_not_cached_authority"])
+
+    def test_foreground_controller_standby_returns_lost_role_blocker_required(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        self.force_startup_fact_role_wait(root)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"]["created_at"] = self.old_utc(minutes=11)
+        state["pending_action"]["last_liveness_probe"] = {
+            "checked_at": router.utc_now(),
+            "result": "unresponsive",
+            "evidence_path": "runtime/liveness/reviewer-unresponsive.json",
+        }
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=state["pending_action"],
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "wait_target_blocker_required")
+        self.assertEqual(standby["foreground_required_mode"], "record_wait_target_blocker")
+        self.assertTrue(standby["current_wait"]["blocker"]["required"])
+        self.assertEqual(standby["current_wait"]["blocker"]["event"], "controller_reports_role_liveness_fault")
+        self.assertEqual(standby["current_wait"]["blocker"]["record_event_payload"]["role_key"], "human_like_reviewer")
+        self.assertEqual(standby["current_wait"]["liveness_probe"]["last_result"], "unresponsive")
+
+    def test_foreground_controller_standby_returns_ack_reminder_and_blocker_due(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        state = read_json(router.run_state_path(run_root))
+        ack_action = router.make_action(
+            action_type="await_card_return_event",
+            actor="controller",
+            label="controller_waits_for_pm_card_ack",
+            summary="Controller waits for PM card ACK.",
+            to_role="project_manager",
+            extra={
+                "waiting_for_role": "project_manager",
+                "expected_return_path": "mailbox/outbox/card_acks/pm_core.ack.json",
+            },
+        )
+        state["pending_action"] = ack_action
+        state["daemon_mode_enabled"] = True
+        router._write_controller_action_entry(root, run_root, state, ack_action)  # type: ignore[attr-defined]
+        state["pending_action"]["created_at"] = self.old_utc(minutes=4)
+        lock = router._acquire_router_daemon_lock(root, run_root, state)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=state["pending_action"],
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        reminder = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(reminder["standby_state"], "wait_target_check_due")
+        self.assertEqual(reminder["current_wait"]["wait_class"], "ack")
+        self.assertTrue(reminder["current_wait"]["reminder"]["due"])
+        self.assertFalse(reminder["current_wait"]["blocker"]["required"])
+
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"]["created_at"] = self.old_utc(minutes=11)
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=state["pending_action"],
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        blocker = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(blocker["standby_state"], "wait_target_blocker_required")
+        self.assertTrue(blocker["current_wait"]["blocker"]["required"])
+        self.assertEqual(blocker["current_wait"]["blocker"]["reason"], "ack_missing_after_ten_minutes")
+
+    def test_foreground_controller_standby_self_audits_controller_local_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        router.write_json(  # type: ignore[attr-defined]
+            runtime_dir / "controller_action_ledger.json",
+            {
+                "schema_version": router.CONTROLLER_ACTION_LEDGER_SCHEMA,
+                "run_id": run_root.name,
+                "run_root": self.rel(root, run_root),
+                "updated_at": router.utc_now(),
+                "actions": [],
+                "counts": {"pending": 0, "in_progress": 0, "done": 0, "blocked": 0, "waiting": 0, "skipped": 0, "total": 0},
+            },
+        )
+        state = read_json(router.run_state_path(run_root))
+        local_action = router.make_action(
+            action_type="sync_display_plan",
+            actor="controller",
+            label="controller_syncs_display_plan",
+            summary="Controller syncs local display plan.",
+        )
+        state["pending_action"] = local_action
+        state["daemon_mode_enabled"] = True
+        lock = router._acquire_router_daemon_lock(root, run_root, state)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=local_action,
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "wait_target_check_due")
+        self.assertEqual(standby["current_wait"]["wait_class"], "controller_local_action")
+        self.assertTrue(standby["current_wait"]["controller_local_self_audit"]["required"])
+        self.assertFalse(standby["current_wait"]["controller_local_self_audit"]["reminder_allowed"])
 
     def test_foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action(self) -> None:
         root = self.make_project()
@@ -3950,9 +4132,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.deliver_startup_fact_check_card(root)
+        self.apply_startup_heartbeat_if_requested(root)
         manifest_action = self.next_after_display_sync(root)
+        while manifest_action["action_type"] in {
+            "confirm_controller_core_boundary",
+            "write_startup_mechanical_audit",
+            "write_display_surface_status",
+        }:
+            router.apply_action(root, str(manifest_action["action_type"]), self.payload_for_action(manifest_action))
+            manifest_action = self.next_after_display_sync(root)
         self.assertEqual(manifest_action["action_type"], "check_prompt_manifest")
+        self.assertTrue(manifest_action["bundle_candidate"])
         router.apply_action(root, "check_prompt_manifest")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "deliver_system_card_bundle")

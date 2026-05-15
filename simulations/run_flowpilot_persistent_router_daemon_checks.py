@@ -23,9 +23,17 @@ REQUIRED_LABELS = (
     "controller_executes_action_and_writes_receipt",
     "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
     "router_enters_ack_wait_owned_by_daemon",
+    "router_enters_report_wait_with_liveness_obligation",
+    "router_enters_controller_local_wait_for_self_audit",
     "daemon_wait_tick_keeps_checking_mailbox",
     "foreground_controller_standby_poll_tick_keeps_turn_open",
     "foreground_controller_bounded_timeout_reenters_standby",
+    "controller_sends_ack_wait_reminder_at_three_minutes",
+    "controller_records_ack_wait_blocker_at_ten_minutes",
+    "controller_sends_report_reminder_with_fresh_liveness_probe",
+    "healthy_role_continues_report_wait_after_probe",
+    "controller_reports_lost_role_wait_blocker",
+    "controller_local_wait_self_audits_ledger",
     "role_writes_expected_mailbox_evidence",
     "daemon_consumes_mailbox_evidence_once",
     "daemon_continues_after_consumed_evidence",
@@ -48,6 +56,12 @@ HAZARD_EXPECTED_FAILURES = {
     "foreground_controller_ended_during_live_daemon_wait": "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
     "foreground_controller_ended_with_pending_controller_action": "Foreground Controller ended while an executable Controller action was pending",
     "foreground_controller_ended_while_daemon_active_no_action": "Foreground Controller ended while the Router daemon was live and no Controller action was ready",
+    "role_wait_missing_wait_target_metadata": "daemon-owned role wait lacks Router-authored wait target metadata",
+    "report_reminder_without_fresh_liveness_probe": "report reminder was sent without a fresh role liveness probe",
+    "cached_liveness_trusted_as_current_truth": "Controller trusted cached role liveness instead of probing during standby",
+    "ack_wait_ten_minutes_without_blocker": "ACK wait reached ten minutes without Router-visible blocker",
+    "lost_role_without_pm_blocker": "lost role wait did not route to PM blocker recovery",
+    "controller_local_wait_reminded_itself": "Controller sent a reminder to itself instead of self-auditing local action ledger",
     "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
     "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
 }
@@ -72,7 +86,18 @@ def _state_id(state: model.State) -> str:
         f"ended_no_action={state.foreground_controller_ended_while_daemon_active_no_action}|"
         f"roles={state.roles_live}|"
         f"heartbeat={state.heartbeat_active},{state.heartbeat_woke}|"
-        f"wait={state.current_wait}|mail={state.mailbox_evidence_present},"
+        f"wait={state.current_wait}|"
+        f"wait_target={state.wait_target_metadata_present},{state.wait_target_names_role},"
+        f"{state.wait_target_expected_evidence_visible},{state.wait_target_reminder_text_present},"
+        f"ack_age={state.ack_wait_age_minutes},ack_remind={state.ack_wait_reminder_sent},"
+        f"ack_blocker={state.ack_wait_blocker_recorded},report_age={state.report_wait_age_minutes},"
+        f"report_remind={state.report_reminder_sent},live_req={state.liveness_check_required},"
+        f"live_fresh={state.liveness_probe_fresh},live_outcome={state.liveness_probe_outcome},"
+        f"stale_live={state.stale_liveness_cached_as_truth},role_blocker={state.role_liveness_blocker_recorded},"
+        f"controller_self_audit={state.controller_local_self_audit_done},"
+        f"controller_local_blocker={state.controller_local_blocker_recorded},"
+        f"controller_reminded_itself={state.controller_reminded_itself}|"
+        f"mail={state.mailbox_evidence_present},"
         f"{state.mailbox_evidence_valid},{state.mailbox_evidence_consumed},"
         f"wait_tick={state.mailbox_wait_tick_observed},"
         f"count={state.mailbox_consumption_count}|"

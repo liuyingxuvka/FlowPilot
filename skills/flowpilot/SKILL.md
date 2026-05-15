@@ -64,6 +64,8 @@ When the router returns `open_startup_intake_ui`, open the native startup intake
 
 The UI result replaces the old chat three-question startup boundary. The router maps the UI toggles to canonical startup answer enum fields and seals the work request body behind a path/hash record. The startup UI record is the authority for activation; reviewer live review checks `startup_intake/startup_intake_record.json`, its receipt/envelope/hash evidence, and independently observable startup facts requested by the router, not private chat authenticity or chat history.
 
+Startup system-card progress uses the ordinary Controller action ledger and Router card pending-return ledger. Router may dispatch independent startup PM prep cards before Reviewer live review, but Reviewer startup fact review starts only after those pre-review card ACKs are clear; PM startup activation then uses the ordinary same-role `pm.startup_activation` ACK rule, not a second all-startup join.
+
 The startup banner and FlowPilot Route Sign are user-facing display text. When the router returns `display_text`, paste that exact text into chat before applying. Do not add display-gate, evidence, source-health, confirmation, or controller/audit metadata to the user-visible body; those details belong in packets, ledgers, and action payloads. Generated files, paths, flags, and state records do not count.
 
 When no Cockpit/UI surface is open, show the router's public route sign together with the current status summary. Use only `current_status_summary.json` and public route-display text for that summary; do not show evidence tables, source fields, hashes, or sealed packet/result body details. When the Cockpit/UI surface is open, let the UI render the same status summary and keep chat updates short.

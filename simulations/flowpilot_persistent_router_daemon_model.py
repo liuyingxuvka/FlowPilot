@@ -75,7 +75,24 @@ class State:
     foreground_controller_ended_while_daemon_active_no_action: bool = False
     roles_live: bool = False
     heartbeat_active: bool = False
-    current_wait: str = "none"  # none | ack | report | controller_receipt | user | terminal
+    current_wait: str = "none"  # none | ack | report | controller_receipt | controller_local | user | terminal
+    wait_target_metadata_present: bool = False
+    wait_target_names_role: bool = False
+    wait_target_expected_evidence_visible: bool = False
+    wait_target_reminder_text_present: bool = False
+    ack_wait_age_minutes: int = 0
+    ack_wait_reminder_sent: bool = False
+    ack_wait_blocker_recorded: bool = False
+    report_wait_age_minutes: int = 0
+    report_reminder_sent: bool = False
+    liveness_check_required: bool = False
+    liveness_probe_fresh: bool = False
+    liveness_probe_outcome: str = "none"  # none | working | lost
+    stale_liveness_cached_as_truth: bool = False
+    role_liveness_blocker_recorded: bool = False
+    controller_local_self_audit_done: bool = False
+    controller_local_blocker_recorded: bool = False
+    controller_reminded_itself: bool = False
     mailbox_wait_tick_observed: bool = False
     mailbox_evidence_present: bool = False
     mailbox_evidence_valid: bool = True
@@ -199,6 +216,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 roles_live=False,
                 heartbeat_active=False,
                 current_wait="terminal",
+                wait_target_metadata_present=False,
                 controller_action_pending=False,
                 controller_action_ready=False,
                 route_work_allowed=False,
@@ -228,6 +246,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_receipt",
+                wait_target_metadata_present=True,
+                wait_target_expected_evidence_visible=True,
                 controller_action_pending=True,
                 controller_action_ready=True,
                 controller_action_done=False,
@@ -253,6 +273,51 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="ack",
+                wait_target_metadata_present=True,
+                wait_target_names_role=True,
+                wait_target_expected_evidence_visible=True,
+                wait_target_reminder_text_present=True,
+                foreground_standby_active=True,
+                foreground_standby_polling_daemon_status=True,
+                foreground_standby_polling_action_ledger=True,
+            ),
+        )
+        yield Transition(
+            "router_enters_report_wait_with_liveness_obligation",
+            _step(
+                state,
+                current_wait="report",
+                wait_target_metadata_present=True,
+                wait_target_names_role=True,
+                wait_target_expected_evidence_visible=True,
+                wait_target_reminder_text_present=True,
+                liveness_check_required=True,
+                foreground_standby_active=True,
+                foreground_standby_polling_daemon_status=True,
+                foreground_standby_polling_action_ledger=True,
+            ),
+        )
+        yield Transition(
+            "router_enters_controller_local_wait_for_self_audit",
+            _step(
+                state,
+                current_wait="controller_local",
+                wait_target_metadata_present=True,
+                wait_target_expected_evidence_visible=True,
+                controller_local_self_audit_done=True,
+                foreground_standby_active=True,
+                foreground_standby_polling_daemon_status=True,
+                foreground_standby_polling_action_ledger=True,
+            ),
+        )
+        yield Transition(
+            "controller_local_wait_self_audits_ledger",
+            _step(
+                state,
+                current_wait="controller_local",
+                wait_target_metadata_present=True,
+                wait_target_expected_evidence_visible=True,
+                controller_local_self_audit_done=True,
                 foreground_standby_active=True,
                 foreground_standby_polling_daemon_status=True,
                 foreground_standby_polling_action_ledger=True,
@@ -289,6 +354,90 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_internal_fact_updated_from_receipt=True,
                 foreground_standby_active=False,
             ),
+        )
+        return
+
+    if state.current_wait == "ack" and not state.mailbox_evidence_present:
+        if state.ack_wait_age_minutes < 3:
+            yield Transition(
+                "ack_wait_time_advances_before_reminder",
+                _step(state, ack_wait_age_minutes=3),
+            )
+            return
+        if state.ack_wait_age_minutes >= 3 and not state.ack_wait_reminder_sent:
+            yield Transition(
+                "controller_sends_ack_wait_reminder_at_three_minutes",
+                _step(state, ack_wait_reminder_sent=True),
+            )
+            return
+        if state.ack_wait_age_minutes < 10:
+            yield Transition(
+                "controller_records_ack_wait_blocker_at_ten_minutes",
+                _step(state, ack_wait_age_minutes=10, ack_wait_blocker_recorded=True),
+            )
+            return
+        if state.ack_wait_age_minutes >= 10 and not state.ack_wait_blocker_recorded:
+            yield Transition(
+                "controller_records_ack_wait_blocker_at_ten_minutes",
+                _step(state, ack_wait_blocker_recorded=True),
+            )
+            return
+
+    if state.current_wait == "report" and not state.mailbox_evidence_present:
+        if state.report_wait_age_minutes < 10:
+            yield Transition(
+                "report_wait_time_advances_to_reminder",
+                _step(state, report_wait_age_minutes=10),
+            )
+            return
+        if state.report_wait_age_minutes >= 10 and not state.report_reminder_sent:
+            yield Transition(
+                "controller_sends_report_reminder_with_fresh_liveness_probe",
+                _step(
+                    state,
+                    report_reminder_sent=True,
+                    liveness_check_required=True,
+                    liveness_probe_fresh=True,
+                    liveness_probe_outcome="working",
+                ),
+            )
+            yield Transition(
+                "controller_reports_lost_role_wait_blocker",
+                _step(
+                    state,
+                    report_reminder_sent=True,
+                    liveness_check_required=True,
+                    liveness_probe_fresh=True,
+                    liveness_probe_outcome="lost",
+                    role_liveness_blocker_recorded=True,
+                ),
+            )
+        if state.report_reminder_sent and state.liveness_probe_outcome == "working":
+            yield Transition(
+                "healthy_role_continues_report_wait_after_probe",
+                _step(state, report_reminder_sent=False, report_wait_age_minutes=0),
+            )
+
+    if state.current_wait == "controller_local":
+        if not state.controller_local_self_audit_done:
+            yield Transition(
+                "controller_local_wait_self_audits_ledger",
+                _step(state, controller_local_self_audit_done=True),
+            )
+            yield Transition(
+                "controller_local_wait_records_blocker_when_unfinished",
+                _step(state, controller_local_self_audit_done=True, controller_local_blocker_recorded=True),
+            )
+            return
+        if state.controller_local_blocker_recorded:
+            yield Transition(
+                "controller_local_wait_blocker_routes_to_pm",
+                _step(state, current_wait="none", stop_requested=True),
+            )
+            return
+        yield Transition(
+            "controller_local_self_audit_clears_wait",
+            _step(state, current_wait="none", controller_local_self_audit_done=False),
         )
         return
 
@@ -406,14 +555,82 @@ def hazard_states() -> dict[str, State]:
         "controller_stopped_at_ordinary_wait": replace(
             safe_active,
             current_wait="ack",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
             controller_attached=False,
             controller_finaled_at_wait=True,
         ),
         "foreground_controller_ended_during_live_daemon_wait": replace(
             safe_active,
             current_wait="report",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
             foreground_standby_active=False,
             foreground_controller_ended_turn_while_daemon_waiting=True,
+        ),
+        "role_wait_missing_wait_target_metadata": replace(
+            safe_active,
+            current_wait="report",
+            wait_target_metadata_present=False,
+            wait_target_names_role=False,
+            wait_target_expected_evidence_visible=False,
+            wait_target_reminder_text_present=False,
+        ),
+        "report_reminder_without_fresh_liveness_probe": replace(
+            safe_active,
+            current_wait="report",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+            report_reminder_sent=True,
+            liveness_check_required=True,
+            liveness_probe_fresh=False,
+        ),
+        "cached_liveness_trusted_as_current_truth": replace(
+            safe_active,
+            current_wait="report",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+            stale_liveness_cached_as_truth=True,
+        ),
+        "ack_wait_ten_minutes_without_blocker": replace(
+            safe_active,
+            current_wait="ack",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+            ack_wait_age_minutes=10,
+            ack_wait_reminder_sent=True,
+            ack_wait_blocker_recorded=False,
+            mailbox_evidence_present=False,
+        ),
+        "lost_role_without_pm_blocker": replace(
+            safe_active,
+            current_wait="report",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+            report_reminder_sent=True,
+            liveness_check_required=True,
+            liveness_probe_fresh=True,
+            liveness_probe_outcome="lost",
+            role_liveness_blocker_recorded=False,
+        ),
+        "controller_local_wait_reminded_itself": replace(
+            safe_active,
+            current_wait="controller_local",
+            wait_target_metadata_present=True,
+            wait_target_expected_evidence_visible=True,
+            controller_reminded_itself=True,
         ),
         "foreground_controller_ended_with_pending_controller_action": replace(
             safe_active,
@@ -499,6 +716,7 @@ def hazard_states() -> dict[str, State]:
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     ordinary_wait = state.current_wait in {"ack", "report", "controller_receipt"}
+    role_wait = state.current_wait in {"ack", "report"}
     daemon_ready_for_controller = (
         state.startup_daemon_step_completed
         and state.daemon_mode_enabled
@@ -513,6 +731,26 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("formal startup continued after Router daemon startup failure")
     if state.lifecycle == "active" and state.daemon_mode_enabled and ordinary_wait and not state.daemon_alive:
         failures.append("ordinary wait exists without a live Router daemon")
+    if state.lifecycle == "active" and state.daemon_mode_enabled and role_wait and not state.wait_target_metadata_present:
+        failures.append("daemon-owned role wait lacks Router-authored wait target metadata")
+    if state.current_wait in {"ack", "report"} and not (
+        state.wait_target_names_role
+        and state.wait_target_expected_evidence_visible
+        and state.wait_target_reminder_text_present
+    ):
+        failures.append("wait target metadata does not name role, evidence, and reminder text")
+    if state.current_wait == "report" and state.report_reminder_sent and not state.liveness_probe_fresh:
+        failures.append("report reminder was sent without a fresh role liveness probe")
+    if state.stale_liveness_cached_as_truth:
+        failures.append("Controller trusted cached role liveness instead of probing during standby")
+    if state.current_wait == "ack" and state.ack_wait_age_minutes >= 10 and not state.ack_wait_blocker_recorded and not state.mailbox_evidence_present:
+        failures.append("ACK wait reached ten minutes without Router-visible blocker")
+    if state.liveness_probe_outcome == "lost" and not state.role_liveness_blocker_recorded:
+        failures.append("lost role wait did not route to PM blocker recovery")
+    if state.current_wait == "controller_local" and state.controller_reminded_itself:
+        failures.append("Controller sent a reminder to itself instead of self-auditing local action ledger")
+    if state.current_wait == "controller_local" and not state.controller_local_self_audit_done:
+        failures.append("Controller-local wait did not self-audit action ledger and receipts")
     if state.daemon_writer_count > 1 or state.daemon_lock_state == "duplicate":
         failures.append("multiple Router daemon writers exist for one run")
     if state.daemon_alive and state.daemon_tick_seconds != 1:
@@ -585,6 +823,14 @@ INVARIANTS = (
     _invariant("ordinary_wait_has_live_daemon", "ordinary wait exists without a live Router daemon"),
     _invariant("single_router_writer", "multiple Router daemon writers exist for one run"),
     _invariant("fixed_one_second_tick", "Router daemon tick is not fixed at one second"),
+    _invariant("daemon_wait_has_wait_target_metadata", "daemon-owned role wait lacks Router-authored wait target metadata"),
+    _invariant("wait_target_names_role_evidence_and_reminder", "wait target metadata does not name role, evidence, and reminder text"),
+    _invariant("report_reminder_requires_fresh_liveness_probe", "report reminder was sent without a fresh role liveness probe"),
+    _invariant("controller_does_not_trust_cached_liveness", "Controller trusted cached role liveness instead of probing during standby"),
+    _invariant("ack_wait_ten_minutes_routes_blocker", "ACK wait reached ten minutes without Router-visible blocker"),
+    _invariant("lost_role_routes_to_pm_blocker", "lost role wait did not route to PM blocker recovery"),
+    _invariant("controller_local_wait_does_not_remind_itself", "Controller sent a reminder to itself instead of self-auditing local action ledger"),
+    _invariant("controller_local_wait_self_audits", "Controller-local wait did not self-audit action ledger and receipts"),
     _invariant("controller_not_runtime_metronome", "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome"),
     _invariant("mailbox_evidence_consumed_once", "mailbox evidence was consumed more than once"),
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),

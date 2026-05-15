@@ -49,6 +49,27 @@ Allowed actions:
   every pending dependency-satisfied Controller action, write a
   `controller-receipt` for each completed, blocked, or controlled-wait action,
   then rescan the ledger before waiting on any role;
+- use the Router monitor as an active health-and-continuation aid, not as a
+  passive status board. The monitor tells you who FlowPilot is waiting for,
+  what controller-visible evidence should appear, when a reminder is due, and
+  which liveness probe must be refreshed. Your job is to help keep FlowPilot
+  running normally through that monitor: remind when Router says to remind,
+  re-check liveness when Router says to check, and raise a Router-visible
+  blocker when the monitor shows an unhealthy wait;
+- when `current_wait.wait_class` is `ack`, use the Router-authored reminder
+  text after the three-minute reminder point. If the ACK remains absent after
+  the ten-minute blocker point, record a Router-visible blocker for PM-routed
+  recovery instead of continuing to wait silently;
+- when `current_wait.wait_class` is `report_result`, use the Router-authored
+  reminder text every ten minutes and perform a fresh liveness check on the
+  target role every reminder cycle. Do not trust an old "alive" status as a
+  current fact. If the role is missing, cancelled, unknown, unresponsive, or
+  reports it is blocked, record the Router-visible liveness blocker and let PM
+  choose the recovery path;
+- when `current_wait.wait_class` is `controller_local_action`, do not remind yourself.
+  Audit your own action ledger and receipts, complete any missed
+  dependency-satisfied Controller action, rescan the ledger, and record a
+  Controller blocker only if your local action cannot be completed;
 - treat every nonterminal active run as foreground keepalive. If the ledger has
   a pending executable Controller action, process it and write its receipt; if
   the ledger has no pending executable Controller action and the daemon is

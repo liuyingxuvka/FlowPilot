@@ -710,6 +710,42 @@ def main() -> int:
             )
 
     try:
+        controller_card = ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md"
+        text = controller_card.read_text(encoding="utf-8")
+        required_terms = [
+            "active health-and-continuation aid",
+            "current_wait.wait_class",
+            "ack",
+            "three-minute reminder",
+            "ten-minute blocker",
+            "report_result",
+            "fresh liveness check",
+            "Do not trust an old \"alive\" status",
+            "controller_local_action",
+            "do not remind yourself",
+        ]
+        missing_terms = [term for term in required_terms if term not in text]
+        ok = not missing_terms
+        result["checks"].append(
+            {
+                "name": "flowpilot_controller_wait_target_prompt_guidance",
+                "ok": ok,
+                "missing_terms": missing_terms,
+            }
+        )
+        if not ok:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {
+                "name": "flowpilot_controller_wait_target_prompt_guidance",
+                "ok": False,
+                "error": repr(exc),
+            }
+        )
+
+    try:
         import check_runtime_card_capability_reminders
 
         reminder_check = check_runtime_card_capability_reminders.check(ROOT)
