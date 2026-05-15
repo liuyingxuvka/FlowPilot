@@ -11,7 +11,9 @@ Risk purpose:
   Controller forgetting top-to-bottom row order during long ledgers, startup
   host/UI/role/heartbeat work happening before the daemon becomes the driver,
   a daemon that starts but only waits for Controller core instead of driving
-  startup, and PM startup activation gaining a redundant global ACK gate.
+  startup, treating a fresh runtime write lock as ledger corruption instead of
+  waiting for the next tick, and PM startup activation gaining a redundant
+  global ACK gate.
 - Update and run this model whenever Router daemon queue filling, Controller
   action ledger schema, startup pre-review gating, or card ACK reconciliation
   behavior changes.
@@ -30,9 +32,10 @@ Risk intent brief:
   before PM activation, daemon enqueue past a real barrier, missing table-local
   Controller prompt, startup UI/roles/heartbeat before daemon ownership,
   pre-Controller-core daemon idling, scheduler ledger partial writes that leave
-  invalid JSON, standby completion after one monitor check, foreground closure
-  while FlowPilot is still running, standby ignoring new Controller work, and
-  redundant PM activation global join.
+  invalid JSON without a fresh write lock, fresh write-lock reads reported as
+  corruption instead of deferred, standby completion after one monitor check,
+  foreground closure while FlowPilot is still running, standby ignoring new
+  Controller work, and redundant PM activation global join.
 - Hard invariants: Router and Controller tables stay separate; daemon enqueues
   independent rows until barrier; barriers stop enqueueing; done receipts need
   required Router-visible postconditions before reconciliation; startup review
@@ -64,6 +67,7 @@ STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION = "startup_review_waits_fo
 PM_ACTIVATION_SAME_ROLE_ACK_ONLY = "pm_activation_same_role_ack_only"
 CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT = "continuous_standby_row_during_live_wait"
 STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK = "standby_reenters_top_down_on_new_work"
+TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS = "transient_scheduler_write_lock_waits"
 
 CONTROLLER_OWNS_ROUTER_DEPENDENCIES = "controller_owns_router_dependencies"
 DAEMON_DUPLICATES_CONTROLLER_ROW_ON_RETRY = "daemon_duplicates_controller_row_on_retry"
@@ -83,6 +87,7 @@ DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP = "daemon_waits_for_controller_c
 ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE = "router_scheduler_ledger_partial_write"
 CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE = "controller_action_ledger_partial_write"
 ROUTER_SCHEDULER_LEDGER_MULTI_WRITER = "router_scheduler_ledger_multi_writer"
+FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT = "fresh_scheduler_write_lock_reported_corrupt"
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
@@ -93,6 +98,7 @@ VALID_SCENARIOS = (
     PM_ACTIVATION_SAME_ROLE_ACK_ONLY,
     CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT,
     STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK,
+    TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -114,6 +120,7 @@ NEGATIVE_SCENARIOS = (
     ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE,
     CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE,
     ROUTER_SCHEDULER_LEDGER_MULTI_WRITER,
+    FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -140,6 +147,8 @@ class State:
     controller_action_table_exists: bool = False
     router_scheduler_ledger_valid_json: bool = True
     controller_action_ledger_valid_json: bool = True
+    router_scheduler_write_lock_fresh: bool = False
+    daemon_deferred_for_fresh_write_lock: bool = False
     ledger_writes_atomic: bool = True
     router_scheduler_single_writer: bool = True
     router_table_has_dependency_metadata: bool = False
@@ -343,6 +352,14 @@ def scenario_state(scenario: str) -> State:
             standby_updates_ledger_on_new_work=True,
             standby_returns_to_top_down_row_processing=True,
         )
+    if scenario == TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS:
+        return _accepted(
+            scenario,
+            **base,
+            independent_row_enqueued=True,
+            router_scheduler_write_lock_fresh=True,
+            daemon_deferred_for_fresh_write_lock=True,
+        )
     if scenario == CONTROLLER_OWNS_ROUTER_DEPENDENCIES:
         return _rejected(
             scenario,
@@ -532,6 +549,17 @@ def scenario_state(scenario: str) -> State:
                 "router_scheduler_single_writer": False,
             },
         )
+    if scenario == FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "independent_row_enqueued": True,
+                "router_scheduler_ledger_valid_json": False,
+                "router_scheduler_write_lock_fresh": True,
+                "daemon_deferred_for_fresh_write_lock": False,
+            },
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -539,7 +567,17 @@ def scheduler_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.daemon_started and state.daemon_tick_seconds != 1:
         failures.append("Router daemon is not a one-second scheduling driver")
-    if state.router_scheduler_table_exists and not state.router_scheduler_ledger_valid_json:
+    if (
+        state.router_scheduler_table_exists
+        and state.router_scheduler_write_lock_fresh
+        and not state.daemon_deferred_for_fresh_write_lock
+    ):
+        failures.append("fresh Router scheduler ledger write lock was not deferred to the next tick")
+    if (
+        state.router_scheduler_table_exists
+        and not state.router_scheduler_ledger_valid_json
+        and not state.router_scheduler_write_lock_fresh
+    ):
         failures.append("Router scheduler ledger was not valid JSON after daemon table write")
     if state.controller_action_table_exists and not state.controller_action_ledger_valid_json:
         failures.append("Controller action ledger was not valid JSON after Controller table write")

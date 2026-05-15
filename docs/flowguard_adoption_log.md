@@ -11294,3 +11294,36 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+## 2026-05-15 Runtime Ledger Fresh Write-Lock Wait Refinement
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that a daemon read of a temporarily incomplete ledger with a fresh writer lock should wait for the next tick rather than report corruption.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_apply_then_flowguard
+
+### Model Evidence
+- Two-table scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Persistent daemon model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- OpenSpec change: `openspec/changes/harden-runtime-ledger-persistence/`
+
+### Commands
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `openspec validate harden-runtime-ledger-persistence --strict` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "fresh_scheduler_write_lock or corrupted_scheduler_ledger or status_not_active_after_error_lock_or_missing_pid or runtime_ledgers_remain_valid_json" -q` passed with 4 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "foreground_controller_standby_default_waits_past_timeout_until_action or fresh_scheduler_write_lock or corrupted_scheduler_ledger or status_not_active_after_error_lock_or_missing_pid or runtime_ledgers_remain_valid_json" -q` passed with 5 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "router_daemon_observation_initializes_lock_status_and_ledger or router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles or router_daemon_queues_startup_rows_until_barrier_with_two_tables or foreground_controller_standby or formal_startup_starts_router_daemon_before_controller_core" -q` passed with 14 tests.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and confirmed the installed FlowPilot skill is fresh against the repository digest.
+- `python scripts\audit_local_install_sync.py --json` passed.
+- `python scripts\install_flowpilot.py --check --json` passed.
+
+### Findings
+- A fresh `.write.lock` next to a temporarily unparseable daemon-critical ledger is now treated as an in-progress writer, not corruption.
+- Router daemon records a deferred tick with `runtime_ledger_write_in_progress`, keeps its daemon lock, and retries on the next one-second loop.
+- If the ledger is unparseable without a fresh write lock, the existing corruption/error path remains in force.
+- Windows atomic replace can briefly fail when another foreground thread is reading the file, so `write_json_atomic` now retries `os.replace` briefly before surfacing a real error.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.

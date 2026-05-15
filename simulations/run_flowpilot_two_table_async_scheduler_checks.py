@@ -42,6 +42,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE: "Router scheduler ledger was not valid JSON after daemon table write",
     model.CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE: "Controller action ledger was not valid JSON after Controller table write",
     model.ROUTER_SCHEDULER_LEDGER_MULTI_WRITER: "Router scheduler ledger had more than one writer",
+    model.FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT: "fresh Router scheduler ledger write lock was not deferred to the next tick",
 }
 
 
@@ -50,7 +51,8 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|daemon={state.daemon_started},"
         f"{state.daemon_tick_seconds}|tables={state.router_scheduler_table_exists},"
         f"{state.controller_action_table_exists},valid_json={state.router_scheduler_ledger_valid_json},"
-        f"{state.controller_action_ledger_valid_json},atomic={state.ledger_writes_atomic},"
+        f"{state.controller_action_ledger_valid_json},write_lock_fresh={state.router_scheduler_write_lock_fresh},"
+        f"deferred={state.daemon_deferred_for_fresh_write_lock},atomic={state.ledger_writes_atomic},"
         f"scheduler_single_writer={state.router_scheduler_single_writer},"
         f"router_meta={state.router_table_has_dependency_metadata},"
         f"controller_graph={state.controller_table_has_router_dependency_graph}|"

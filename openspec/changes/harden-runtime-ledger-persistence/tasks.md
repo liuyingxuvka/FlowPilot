@@ -5,6 +5,8 @@
 - [x] 1.3 Add FlowGuard hazards for non-atomic ledger writes, scheduler
       multi-writer access, and daemon status/lock/process mismatch.
 - [x] 1.4 Run focused FlowGuard scheduler and persistent daemon checks.
+- [x] 1.5 Add FlowGuard coverage for fresh write-lock waits versus stale/no-lock
+      ledger corruption.
 
 ## 2. Minimal Runtime Repair Plan
 
@@ -18,6 +20,8 @@
       evidence agree; error locks must override active status.
 - [x] 2.5 Add corrupted-ledger recovery behavior that blocks scheduling and
       exposes repair evidence instead of crashing silently.
+- [x] 2.6 Treat fresh runtime JSON write locks as transient wait states instead
+      of daemon corruption errors.
 
 ## 3. Validation
 
@@ -27,3 +31,5 @@
 - [x] 3.4 Run focused FlowGuard checks, targeted runtime tests, install sync,
       and install audit. Skip heavyweight meta/capability regressions unless
       separately requested.
+- [x] 3.5 Add runtime test coverage for fresh write-lock wait/retry behavior
+      and rerun focused validation.

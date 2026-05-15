@@ -21,8 +21,9 @@ Risk intent brief:
   live daemon-owned role wait is active, foreground Controller ending while
   the daemon is live but no Controller action is ready, heartbeat starting a
   second live daemon, Router scheduler ledger corruption from partial writes,
-  daemon status claiming active after an error lock or missing process, and
-  terminal stop leaving daemon/Controller/roles active.
+  treating a fresh runtime write lock as corruption instead of a one-tick
+  defer, daemon status claiming active after an error lock or missing process,
+  and terminal stop leaving daemon/Controller/roles active.
 - Hard invariants: formal startup must start a live one-second Router daemon
   before Controller core loads; active ordinary waits have a live daemon; one
   daemon writer owns a run; mailbox evidence is consumed at most once;
@@ -42,8 +43,9 @@ Risk intent brief:
   nonterminal daemon-live runtime, processes pending executable Controller
   actions, and keeps a foreground standby loop active during ordinary
   daemon-owned role waits; Router/Controller durable ledgers stay valid JSON
-  after every write, are written atomically, and daemon active status never
-  contradicts an error lock or missing process;
+  after every write, fresh in-progress write locks defer daemon progress
+  instead of surfacing as corruption, durable ledgers are written atomically,
+  and daemon active status never contradicts an error lock or missing process;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.
 """
@@ -79,6 +81,8 @@ class State:
     daemon_tick_seconds: int = 0
     router_scheduler_ledger_valid_json: bool = True
     controller_action_ledger_valid_json: bool = True
+    runtime_ledger_write_lock_fresh: bool = False
+    daemon_deferred_for_runtime_ledger_write: bool = False
     durable_ledger_writes_atomic: bool = True
     router_scheduler_single_writer: bool = True
     daemon_status_active_after_lock_error: bool = False
@@ -270,6 +274,34 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
+
+    if state.runtime_ledger_write_lock_fresh:
+        yield Transition(
+            "daemon_defers_runtime_ledger_read_until_next_tick",
+            _step(
+                state,
+                router_scheduler_ledger_valid_json=True,
+                runtime_ledger_write_lock_fresh=False,
+                daemon_deferred_for_runtime_ledger_write=True,
+            ),
+        )
+        return
+
+    if (
+        state.daemon_alive
+        and state.daemon_lock_state == "live"
+        and not state.daemon_deferred_for_runtime_ledger_write
+        and state.current_wait == "none"
+        and not state.controller_action_pending
+    ):
+        yield Transition(
+            "runtime_ledger_write_lock_appears_during_daemon_read",
+            _step(
+                state,
+                router_scheduler_ledger_valid_json=False,
+                runtime_ledger_write_lock_fresh=True,
+            ),
+        )
 
     if not state.controller_core_loaded:
         yield Transition(
@@ -824,6 +856,13 @@ def hazard_states() -> dict[str, State]:
             durable_ledger_writes_atomic=False,
             daemon_crashed_after_ledger_decode_error=True,
         ),
+        "fresh_runtime_ledger_write_lock_reported_corrupt": replace(
+            safe_active,
+            router_scheduler_ledger_valid_json=False,
+            runtime_ledger_write_lock_fresh=True,
+            daemon_deferred_for_runtime_ledger_write=False,
+            daemon_crashed_after_ledger_decode_error=True,
+        ),
         "controller_action_ledger_corrupted_by_partial_write": replace(
             safe_active,
             controller_action_ledger_valid_json=False,
@@ -1209,8 +1248,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("multiple Router daemon writers exist for one run")
     if state.daemon_alive and state.daemon_tick_seconds != 1:
         failures.append("Router daemon tick is not fixed at one second")
-    if not state.router_scheduler_ledger_valid_json:
+    if not state.router_scheduler_ledger_valid_json and not state.runtime_ledger_write_lock_fresh:
         failures.append("Router scheduler ledger is not valid JSON after a durable write")
+    if state.runtime_ledger_write_lock_fresh and state.daemon_crashed_after_ledger_decode_error:
+        failures.append("fresh runtime ledger write lock was treated as corruption")
     if not state.controller_action_ledger_valid_json:
         failures.append("Controller action ledger is not valid JSON after a durable write")
     if not state.durable_ledger_writes_atomic:

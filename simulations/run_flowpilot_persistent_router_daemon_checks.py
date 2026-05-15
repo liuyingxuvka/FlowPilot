@@ -18,6 +18,8 @@ RESULTS_PATH = ROOT / "flowpilot_persistent_router_daemon_results.json"
 
 REQUIRED_LABELS = (
     "formal_startup_starts_builtin_router_daemon",
+    "runtime_ledger_write_lock_appears_during_daemon_read",
+    "daemon_defers_runtime_ledger_read_until_next_tick",
     "controller_core_loaded_after_builtin_daemon_start",
     "router_issues_controller_action_to_ledger",
     "router_issues_stateful_controller_boundary_action_to_ledger",
@@ -56,6 +58,7 @@ HAZARD_EXPECTED_FAILURES = {
     "ack_wait_without_daemon": "ordinary wait exists without a live Router daemon",
     "duplicate_router_writers": "multiple Router daemon writers exist for one run",
     "router_scheduler_ledger_corrupted_by_partial_write": "Router scheduler ledger is not valid JSON after a durable write",
+    "fresh_runtime_ledger_write_lock_reported_corrupt": "fresh runtime ledger write lock was treated as corruption",
     "controller_action_ledger_corrupted_by_partial_write": "Controller action ledger is not valid JSON after a durable write",
     "daemon_status_active_after_lock_error": "daemon status reported active after lock error",
     "daemon_status_active_without_process": "daemon status reported active without a live process",
@@ -97,7 +100,8 @@ def _state_id(state: model.State) -> str:
         f"startup_failed={state.startup_daemon_failed}|daemon={state.daemon_mode_enabled},"
         f"{state.daemon_alive},{state.daemon_lock_state},{state.daemon_writer_count},"
         f"tick={state.daemon_tick_seconds}|ledgers={state.router_scheduler_ledger_valid_json},"
-        f"{state.controller_action_ledger_valid_json},atomic={state.durable_ledger_writes_atomic},"
+        f"{state.controller_action_ledger_valid_json},write_lock_fresh={state.runtime_ledger_write_lock_fresh},"
+        f"deferred={state.daemon_deferred_for_runtime_ledger_write},atomic={state.durable_ledger_writes_atomic},"
         f"scheduler_single_writer={state.router_scheduler_single_writer},"
         f"decode_crash={state.daemon_crashed_after_ledger_decode_error},"
         f"status_after_error={state.daemon_status_active_after_lock_error},"

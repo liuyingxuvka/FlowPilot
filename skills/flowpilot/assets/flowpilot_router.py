@@ -2667,6 +2667,15 @@ class RouterLedgerCorruptionError(RouterError):
         super().__init__(f"runtime ledger is not valid JSON: {path} ({message})")
 
 
+class RouterLedgerWriteInProgress(RouterError):
+    """Raised when a daemon-critical runtime ledger is temporarily locked by a writer."""
+
+    def __init__(self, path: Path, write_lock: dict[str, Any], message: str):
+        self.path = path
+        self.write_lock = write_lock
+        super().__init__(f"runtime ledger write is still in progress: {path} ({message})")
+
+
 def _active_model_miss_review_block_flags(run_state: dict[str, Any]) -> tuple[str, ...]:
     flags = run_state.get("flags", {})
     return tuple(flag for flag in MODEL_MISS_REVIEW_BLOCK_FLAGS if flags.get(flag))
@@ -2755,6 +2764,31 @@ def _json_write_lock_path(path: Path) -> Path:
     return path.with_name(path.name + ".write.lock")
 
 
+def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
+    lock_path = _json_write_lock_path(path)
+    if not lock_path.exists():
+        return {
+            "exists": False,
+            "fresh": False,
+            "stale": False,
+            "path": str(lock_path),
+            "age_seconds": None,
+        }
+    try:
+        age = time.time() - lock_path.stat().st_mtime
+    except OSError:
+        age = None
+    fresh = age is not None and age <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
+    return {
+        "exists": True,
+        "fresh": bool(fresh),
+        "stale": bool(age is not None and not fresh),
+        "path": str(lock_path),
+        "age_seconds": age,
+        "stale_after_seconds": RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS,
+    }
+
+
 def _acquire_json_write_lock(path: Path) -> Path:
     lock_path = _json_write_lock_path(path)
     lock_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2803,7 +2837,15 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
             handle.write(body)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp_path, path)
+        deadline = time.monotonic() + RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
+        while True:
+            try:
+                os.replace(tmp_path, path)
+                break
+            except PermissionError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
         if verify:
             read_json(path)
     finally:
@@ -2841,6 +2883,9 @@ def read_daemon_critical_json_if_exists(path: Path) -> dict[str, Any]:
     try:
         return read_json(path)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        write_lock = _json_write_lock_liveness(path)
+        if write_lock["fresh"]:
+            raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
         raise RouterLedgerCorruptionError(path, str(exc)) from exc
 
 
@@ -4815,9 +4860,12 @@ def _router_scheduler_ledger_summary(run_root: Path) -> dict[str, Any]:
     try:
         ledger = read_json_if_exists(path)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        write_lock = _json_write_lock_liveness(path)
         return {
             "exists": path.exists(),
             "valid_json": False,
+            "write_in_progress": write_lock["fresh"],
+            "write_lock": write_lock,
             "error": str(exc),
             "path": str(path),
             "counts": _router_scheduler_row_counts([]),
@@ -5331,7 +5379,10 @@ def _ensure_controller_action_ledger(project_root: Path, run_root: Path, run_sta
             if _controller_action_ledger_has_prompt_header(ledger):
                 run_state["controller_action_ledger_path"] = project_relative(project_root, path)
                 return ledger
-        except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError):
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+            write_lock = _json_write_lock_liveness(path)
+            if write_lock["fresh"]:
+                raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
             pass
     return _rebuild_controller_action_ledger(project_root, run_root, run_state)
 
@@ -5341,9 +5392,12 @@ def _controller_action_ledger_summary(run_root: Path) -> dict[str, Any]:
     try:
         ledger = read_json_if_exists(path)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        write_lock = _json_write_lock_liveness(path)
         return {
             "exists": path.exists(),
             "valid_json": False,
+            "write_in_progress": write_lock["fresh"],
+            "write_lock": write_lock,
             "error": str(exc),
             "path": str(path),
             "counts": _controller_action_counts([]),
@@ -31904,11 +31958,39 @@ def run_router_daemon(
     lock = _acquire_router_daemon_lock(project_root, run_root, run_state, replace_stale=replace_stale_lock)
     ticks: list[dict[str, Any]] = []
     error: Exception | None = None
+    runtime_initialized = False
     try:
-        _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_starting")
-        save_run_state(run_root, run_state)
         while True:
-            tick = _router_daemon_tick(project_root, run_root, run_state, observe_only=observe_only)
+            try:
+                if not runtime_initialized:
+                    _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_starting")
+                    save_run_state(run_root, run_state)
+                    runtime_initialized = True
+                tick = _router_daemon_tick(project_root, run_root, run_state, observe_only=observe_only)
+            except RouterLedgerWriteInProgress as exc:
+                lock = _refresh_router_daemon_lock(project_root, run_root)
+                status = _write_router_daemon_status(
+                    project_root,
+                    run_root,
+                    run_state,
+                    lifecycle_status="daemon_waiting_for_runtime_ledger_write",
+                    current_action=run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else None,
+                    recovery_hints=[
+                        "runtime_ledger_write_in_progress_retry_next_daemon_tick",
+                        "if_the_write_lock_becomes_stale_treat_the_ledger_as_corrupt_and_repair_it",
+                    ],
+                    lock=lock,
+                )
+                save_run_state(run_root, run_state)
+                tick = {
+                    "tick_at": status["last_tick_at"],
+                    "observe_only": observe_only,
+                    "deferred": True,
+                    "defer_reason": "runtime_ledger_write_in_progress",
+                    "ledger_path": project_relative(project_root, exc.path),
+                    "write_lock": exc.write_lock,
+                    "terminal": False,
+                }
             ticks.append(tick)
             if tick.get("terminal"):
                 break

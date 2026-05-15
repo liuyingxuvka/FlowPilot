@@ -16,7 +16,10 @@ Use one runtime-ledger persistence lane:
 
 1. `read_json_strict(path)` for daemon-critical ledgers.
    - Invalid JSON is not ignored.
-   - It becomes a Router-visible repair blocker or daemon error state.
+   - If the ledger has a fresh runtime write lock, daemon progress is deferred
+     to the next one-second tick instead of reporting corruption.
+   - If there is no fresh writer lock, invalid JSON becomes a Router-visible
+     repair blocker or daemon error state.
 
 2. `write_json_atomic(path, payload)`.
    - Write to a temp file in the same directory.
@@ -52,5 +55,8 @@ Focused validation should include:
   missing process.
 - Runtime test corrupts `router_scheduler_ledger.json` and verifies daemon
   stops scheduling and surfaces repair evidence.
+- Runtime test leaves a fresh scheduler write lock next to a temporarily invalid
+  ledger and verifies daemon waits for the next tick instead of reporting a
+  corruption error.
 - Runtime test verifies scheduler writes remain valid JSON across repeated
   daemon/controller receipt reconciliation.

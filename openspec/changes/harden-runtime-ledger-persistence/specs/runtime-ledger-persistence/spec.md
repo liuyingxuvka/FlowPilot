@@ -29,6 +29,22 @@ reader never observes a partially written JSON document.
   JSON document
 - **AND** it never sees a partial appended fragment.
 
+#### Scenario: Daemon reads a temporarily incomplete ledger with a fresh write lock
+
+- **WHEN** a daemon tick reads a daemon-critical ledger that is not parseable
+- **AND** the ledger has a fresh runtime JSON write lock
+- **THEN** the daemon defers progress until the next one-second tick
+- **AND** it SHALL NOT release the daemon lock as an error
+- **AND** it SHALL NOT report the ledger as corrupted while the write lock is
+  still fresh.
+
+#### Scenario: Daemon reads an incomplete ledger without a fresh write lock
+
+- **WHEN** a daemon tick reads a daemon-critical ledger that is not parseable
+- **AND** no fresh runtime JSON write lock exists for that ledger
+- **THEN** the daemon reports a repair-needed corruption state
+- **AND** it SHALL NOT continue scheduling from that ledger.
+
 ### Requirement: Router Scheduler Ledger Has One Owner
 
 The Router scheduler ledger SHALL be mutated only by Router-owned scheduling

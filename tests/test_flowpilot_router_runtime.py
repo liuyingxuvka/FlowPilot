@@ -3672,6 +3672,48 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(status["error"]["type"], "RouterLedgerCorruptionError")
         self.assertFalse(status["router_scheduler_ledger"]["valid_json"])
 
+    def test_router_daemon_waits_on_fresh_scheduler_write_lock_before_error(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        state = read_json(router.run_state_path(run_root))
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        scheduler_path.write_text(
+            '{"schema_version": "flowpilot.router_scheduler_ledger.v1"}\nBROKEN',
+            encoding="utf-8",
+        )
+        write_lock = router._json_write_lock_path(scheduler_path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(scheduler_path),
+                    "pid": 0,
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        def finish_write() -> None:
+            time.sleep(0.05)
+            ledger = router._empty_router_scheduler_ledger(root, run_root, state)  # type: ignore[attr-defined]
+            scheduler_path.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            write_lock.unlink()
+
+        thread = threading.Thread(target=finish_write, daemon=True)
+        thread.start()
+        result = router.run_router_daemon(root, max_ticks=2, observe_only=True, release_lock_on_exit=True)
+        thread.join(timeout=1.0)
+
+        self.assertEqual(result["tick_count"], 2)
+        self.assertTrue(result["ticks"][0]["deferred"])
+        self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
+        self.assertFalse(result["ticks"][1].get("deferred", False))
+        self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+
     def test_router_daemon_status_not_active_after_error_lock_or_missing_pid(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
