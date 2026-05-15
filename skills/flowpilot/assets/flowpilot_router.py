@@ -7213,6 +7213,19 @@ def _apply_startup_bootloader_receipt_effects(
                 "startup_phase": "bootloader_controller_receipt",
             }
         )
+    elif action_type == "load_controller_core":
+        if not _formal_router_daemon_ready(project_root, run_root):
+            return {
+                "applied": False,
+                "reason": "startup_router_daemon_not_ready_for_controller_core",
+                "action_type": action_type,
+                "postcondition": flag,
+            }
+        _sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+        run_state["status"] = "controller_ready"
+        run_state["holder"] = "controller"
+        run_state.setdefault("flags", {})["controller_core_loaded"] = True
+        result["source"] = "startup_bootloader_controller_receipt"
     else:
         return {
             "applied": False,
@@ -7260,6 +7273,14 @@ def _clear_pending_after_reconciled_controller_receipt(
             applied_postcondition=applied_postcondition,
         )
     run_state["pending_action"] = None
+    blocker_resolution = _resolve_control_blockers_for_reconciled_controller_action(
+        project_root,
+        run_root,
+        run_state,
+        action=pending_action,
+        entry={"action_id": receipt.get("action_id"), "router_scheduler_row_id": pending_action.get("router_scheduler_row_id")},
+        reconciliation=applied_postcondition,
+    )
     append_history(
         run_state,
         "router_reconciled_pending_controller_action_receipt",
@@ -7269,6 +7290,7 @@ def _clear_pending_after_reconciled_controller_receipt(
             "controller_action_id": receipt.get("action_id"),
             "receipt_status": receipt.get("status"),
             "applied_postcondition": applied_postcondition or {},
+            "control_blocker_resolution": blocker_resolution,
         },
     )
     _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_receipt_reconciliation")
@@ -7675,6 +7697,27 @@ def _reconcile_scheduled_controller_action_receipts(
         if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
             continue
         action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+        row_reconciliation = _scheduler_row_reconciliation_for_entry(run_root, entry)
+        if row_reconciliation is not None and not (
+            entry.get("router_reconciliation_status") == "reconciled" or entry.get("router_reconciled_at")
+        ):
+            entry["status"] = "done"
+            entry["completed_at"] = entry.get("completed_at") or utc_now()
+            entry["router_reconciliation_status"] = "reconciled"
+            entry["router_reconciled_at"] = utc_now()
+            entry["router_reconciliation"] = row_reconciliation
+            write_json(action_path, entry)
+            _resolve_control_blockers_for_reconciled_controller_action(
+                project_root,
+                run_root,
+                run_state,
+                action=action or {"action_type": entry.get("action_type")},
+                entry=entry,
+                reconciliation=row_reconciliation,
+            )
+            changed = True
+            reconciled += 1
+            continue
         if (
             entry.get("status") not in CONTROLLER_ACTION_CLOSED_STATUSES
             and _card_return_resolved_for_action(run_root, str(run_state["run_id"]), action)
@@ -7708,17 +7751,34 @@ def _reconcile_scheduled_controller_action_receipts(
         if entry.get("status") != "done":
             continue
         if entry.get("router_reconciliation_status") == "reconciled" or entry.get("router_reconciled_at"):
+            blocker_resolution = _resolve_control_blockers_for_reconciled_controller_action(
+                project_root,
+                run_root,
+                run_state,
+                action=action or {"action_type": entry.get("action_type")},
+                entry=entry,
+                reconciliation=entry.get("router_reconciliation") if isinstance(entry.get("router_reconciliation"), dict) else None,
+            )
+            if blocker_resolution.get("changed"):
+                changed = True
             continue
         if entry.get("router_reconciliation_status") == "blocked":
             continue
         if not action:
             continue
-        row_reconciliation = _scheduler_row_reconciliation_for_entry(run_root, entry)
         if row_reconciliation is not None:
             entry["router_reconciliation_status"] = "reconciled"
             entry["router_reconciled_at"] = utc_now()
             entry["router_reconciliation"] = row_reconciliation
             write_json(action_path, entry)
+            _resolve_control_blockers_for_reconciled_controller_action(
+                project_root,
+                run_root,
+                run_state,
+                action=action,
+                entry=entry,
+                reconciliation=row_reconciliation,
+            )
             changed = True
             reconciled += 1
             continue
@@ -7778,6 +7838,14 @@ def _reconcile_scheduled_controller_action_receipts(
                 router_state="reconciled",
                 reconciliation=applied,
             )
+        _resolve_control_blockers_for_reconciled_controller_action(
+            project_root,
+            run_root,
+            run_state,
+            action=action,
+            entry=entry,
+            reconciliation=applied,
+        )
         changed = True
         reconciled += 1
     if changed:
@@ -11613,6 +11681,24 @@ def _write_control_blocker(
     base_category = _classify_control_blocker(error_message, event=event, action_type=action_type)
     if base_category not in CONTROL_BLOCKER_LANES:
         base_category = "pm_repair_decision_required"
+    payload_view = payload if isinstance(payload, dict) else {}
+    apply_result = payload_view.get("apply_result") if isinstance(payload_view.get("apply_result"), dict) else {}
+    origin_controller_action_id = str(
+        payload_view.get("controller_action_id")
+        or payload_view.get("current_controller_action_id")
+        or apply_result.get("controller_action_id")
+        or ""
+    ).strip() or None
+    origin_router_scheduler_row_id = str(
+        payload_view.get("router_scheduler_row_id")
+        or apply_result.get("router_scheduler_row_id")
+        or ""
+    ).strip() or None
+    origin_postcondition = str(
+        payload_view.get("postcondition")
+        or apply_result.get("postcondition")
+        or ""
+    ).strip() or None
     responsible_role = _infer_responsible_role(event, payload, error_message)
     policy_row = _control_blocker_policy_row(error_message, base_category)
     policy_row_id = str(policy_row.get("policy_row_id") or "pm_semantic_repair")
@@ -11675,6 +11761,9 @@ def _write_control_blocker(
         "source": source,
         "originating_event": event,
         "originating_action_type": action_type,
+        "originating_controller_action_id": origin_controller_action_id,
+        "originating_router_scheduler_row_id": origin_router_scheduler_row_id,
+        "originating_postcondition": origin_postcondition,
         "originating_handling_lane": base_category,
         "handling_lane": category,
         "policy_row_id": policy_row_id,
@@ -11746,6 +11835,9 @@ def _write_control_blocker(
         "sealed_repair_packet_hash": repair_packet["sealed_repair_packet_hash"],
         "originating_event": event,
         "originating_action_type": action_type,
+        "originating_controller_action_id": origin_controller_action_id,
+        "originating_router_scheduler_row_id": origin_router_scheduler_row_id,
+        "originating_postcondition": origin_postcondition,
         "created_at": record["created_at"],
     }
     run_state["active_control_blocker"] = active
@@ -11794,6 +11886,197 @@ def _control_blocker_record(project_root: Path, active: dict[str, Any]) -> dict[
     return read_json(path)
 
 
+def _control_blocker_matches_reconciled_action(
+    record: dict[str, Any],
+    *,
+    action_type: str,
+    controller_action_id: str,
+    router_scheduler_row_id: str,
+    postcondition: str,
+    postcondition_satisfied: bool,
+) -> str | None:
+    if record.get("resolution_status"):
+        return None
+    originating_action_type = str(record.get("originating_action_type") or "")
+    if originating_action_type and originating_action_type != action_type:
+        return None
+    blocker_action_id = str(record.get("originating_controller_action_id") or "")
+    if blocker_action_id and controller_action_id and blocker_action_id == controller_action_id:
+        return "matching_controller_action_id"
+    blocker_row_id = str(record.get("originating_router_scheduler_row_id") or "")
+    if blocker_row_id and router_scheduler_row_id and blocker_row_id == router_scheduler_row_id:
+        return "matching_router_scheduler_row_id"
+    blocker_postcondition = str(record.get("originating_postcondition") or "")
+    if (
+        originating_action_type == action_type
+        and blocker_postcondition
+        and postcondition
+        and blocker_postcondition == postcondition
+        and postcondition_satisfied
+    ):
+        return "matching_postcondition"
+    if (
+        record.get("source") == "controller_action_receipt_missing_router_postcondition"
+        and _boot_action_meta(action_type) is not None
+        and postcondition
+        and postcondition_satisfied
+    ):
+        return "startup_bootloader_postcondition_fallback"
+    return None
+
+
+def _supersede_queued_control_blocker_actions(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    blocker_id: str,
+    resolved_at: str,
+    resolution_status: str,
+) -> int:
+    if not blocker_id:
+        return 0
+    superseded = 0
+    action_dir = _controller_actions_dir(run_root)
+    if action_dir.exists():
+        for path in sorted(action_dir.glob("*.json")):
+            entry = read_json_if_exists(path)
+            if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+                continue
+            if entry.get("action_type") != "handle_control_blocker":
+                continue
+            if entry.get("status") in CONTROLLER_ACTION_CLOSED_STATUSES:
+                continue
+            action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+            if blocker_id not in {
+                str(entry.get("blocker_id") or ""),
+                str(action.get("blocker_id") or ""),
+            }:
+                continue
+            reconciliation = {
+                "resolution_status": "superseded_by_resolved_control_blocker",
+                "source_blocker_resolution_status": resolution_status,
+                "blocker_id": blocker_id,
+                "resolved_at": resolved_at,
+            }
+            _update_controller_action_entry_fields(
+                project_root,
+                run_root,
+                run_state,
+                action_id=str(entry.get("action_id") or ""),
+                status="superseded",
+                fields={
+                    "router_reconciliation_status": "superseded_by_resolved_control_blocker",
+                    "router_reconciled_at": resolved_at,
+                    "router_reconciliation": reconciliation,
+                    "superseded_by_control_blocker_resolution": blocker_id,
+                },
+                router_state="superseded",
+                reconciliation=reconciliation,
+            )
+            superseded += 1
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict) and pending.get("action_type") == "handle_control_blocker":
+        if blocker_id == str(pending.get("blocker_id") or ""):
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_cleared_pending_control_blocker_action_after_resolution",
+                {"blocker_id": blocker_id, "resolution_status": resolution_status},
+            )
+    return superseded
+
+
+def _resolve_control_blockers_for_reconciled_controller_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    action: dict[str, Any],
+    entry: dict[str, Any] | None = None,
+    reconciliation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    action_type = str(action.get("action_type") or (entry or {}).get("action_type") or "")
+    if not action_type:
+        return {"changed": False, "resolved": 0, "superseded_actions": 0}
+    controller_action_id = str((entry or {}).get("action_id") or action.get("controller_action_id") or "")
+    router_scheduler_row_id = str((entry or {}).get("router_scheduler_row_id") or action.get("router_scheduler_row_id") or "")
+    postcondition = str(
+        _pending_action_postcondition(action)
+        or (reconciliation or {}).get("bootstrap_postcondition")
+        or (reconciliation or {}).get("postcondition")
+        or ""
+    )
+    postcondition_satisfied = bool(postcondition and _pending_action_postcondition_satisfied(run_state, postcondition))
+    control_root = run_root / "control_blocks"
+    if not control_root.exists():
+        return {"changed": False, "resolved": 0, "superseded_actions": 0}
+
+    resolved_ids: list[str] = []
+    superseded_actions = 0
+    resolved_at = utc_now()
+    resolution_status = (
+        "resolved_by_startup_reconciliation"
+        if _boot_action_meta(action_type) is not None
+        else "resolved_by_controller_action_reconciliation"
+    )
+    for path in sorted(control_root.glob("*.json")):
+        if path.name.endswith(".sealed_repair_packet.json") or path.name == "blocker_repair_policy_snapshot.json":
+            continue
+        record = read_json_if_exists(path)
+        if record.get("schema_version") != CONTROL_BLOCKER_SCHEMA:
+            continue
+        match_reason = _control_blocker_matches_reconciled_action(
+            record,
+            action_type=action_type,
+            controller_action_id=controller_action_id,
+            router_scheduler_row_id=router_scheduler_row_id,
+            postcondition=postcondition,
+            postcondition_satisfied=postcondition_satisfied,
+        )
+        if not match_reason:
+            continue
+        blocker_id = str(record.get("blocker_id") or "")
+        record["resolution_status"] = resolution_status
+        record["resolution_reason"] = match_reason
+        record["resolved_by_controller_action_id"] = controller_action_id or None
+        record["resolved_by_router_scheduler_row_id"] = router_scheduler_row_id or None
+        record["resolved_postcondition"] = postcondition or None
+        record["resolved_at"] = resolved_at
+        record["resolution_note"] = (
+            "The originating Controller action/postcondition reconciled before this blocker needed role repair."
+        )
+        if reconciliation is not None:
+            record["resolved_by_reconciliation"] = _json_safe(reconciliation)
+        write_json(path, record)
+        resolved_ids.append(blocker_id)
+        superseded_actions += _supersede_queued_control_blocker_actions(
+            project_root,
+            run_root,
+            run_state,
+            blocker_id=blocker_id,
+            resolved_at=resolved_at,
+            resolution_status=resolution_status,
+        )
+
+    if not resolved_ids:
+        return {"changed": False, "resolved": 0, "superseded_actions": 0}
+    _sync_control_plane_indexes(project_root, run_root, run_state)
+    append_history(
+        run_state,
+        "router_resolved_control_blockers_by_controller_action_reconciliation",
+        {
+            "action_type": action_type,
+            "controller_action_id": controller_action_id,
+            "router_scheduler_row_id": router_scheduler_row_id,
+            "postcondition": postcondition,
+            "resolved_blocker_ids": resolved_ids,
+            "superseded_control_blocker_actions": superseded_actions,
+        },
+    )
+    return {"changed": True, "resolved": len(resolved_ids), "resolved_blocker_ids": resolved_ids, "superseded_actions": superseded_actions}
+
+
 def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
     fields = (
         "blocker_id",
@@ -11820,6 +12103,9 @@ def _control_blocker_summary(record: dict[str, Any]) -> dict[str, Any]:
         "sealed_repair_packet_hash",
         "originating_event",
         "originating_action_type",
+        "originating_controller_action_id",
+        "originating_router_scheduler_row_id",
+        "originating_postcondition",
         "created_at",
         "delivered_to_role",
         "delivered_at",
@@ -13828,6 +14114,14 @@ def _complete_startup_daemon_bootloader_row(
             router_state="reconciled",
             reconciliation=reconciliation,
         )
+    blocker_resolution = _resolve_control_blockers_for_reconciled_controller_action(
+        project_root,
+        run_root,
+        run_state,
+        action=scheduled_action,
+        entry=entry,
+        reconciliation=reconciliation,
+    )
     _rebuild_controller_action_ledger(project_root, run_root, run_state)
     append_history(
         run_state,
@@ -13837,6 +14131,7 @@ def _complete_startup_daemon_bootloader_row(
             "controller_action_id": action_id,
             "router_scheduler_row_id": row_id,
             "receipt_status": receipt.get("status"),
+            "control_blocker_resolution": blocker_resolution,
         },
     )
     save_run_state(run_root, run_state)
@@ -31146,24 +31441,6 @@ def compute_controller_action(
         run_state,
         source="next_action_reconciliation_barrier",
     )
-    if run_state.get("pending_action") is None:
-        active_blocker_action = _next_control_blocker_action(project_root, run_state, run_root)
-        if active_blocker_action is not None:
-            run_state["pending_action"] = active_blocker_action
-            append_history(
-                run_state,
-                "router_prioritized_active_control_blocker_before_durable_reconciliation",
-                {"action_type": active_blocker_action["action_type"]},
-            )
-            _sync_derived_run_views(
-                project_root,
-                run_root,
-                run_state,
-                reason="active_control_blocker_before_durable_reconciliation",
-                update_display=True,
-            )
-            save_run_state(run_root, run_state)
-            return active_blocker_action
     durable_reconciliation = _reconcile_durable_wait_evidence(project_root, run_root, run_state)
     pending_action = run_state.get("pending_action")
     if (

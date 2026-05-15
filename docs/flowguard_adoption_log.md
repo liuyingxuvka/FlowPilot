@@ -11784,3 +11784,37 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If a later change modifies global project-control or capability-routing behavior, rerun heavyweight Meta/Capability checks from a fresh background log root before making a broad confidence claim.
+
+## 2026-05-15 Startup Blocker Settlement Runtime Repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A successfully reconciled startup bootloader Controller receipt could leave a stale PM `handle_control_blocker` action queued from the same source blocker.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `settle-control-plane-before-next-action`
+
+### Model Evidence
+- Focused daemon reconciliation result: `simulations/flowpilot_daemon_reconciliation_results.json`
+- Prompt-boundary result from the parallel Controller receipt metadata change: `simulations/flowpilot_prompt_boundary_results.json`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json --skip-live-projection` passed.
+- `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out simulations\flowpilot_prompt_boundary_results.json` passed.
+- `openspec validate settle-control-plane-before-next-action --strict` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py simulations\flowpilot_prompt_boundary_model.py simulations\run_flowpilot_prompt_boundary_checks.py` passed.
+- Targeted runtime unittest selection for startup bootloader receipts, Controller boundary receipts, stale blocker supersession, and Controller receipt ledger duplicates passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed; installed `flowpilot` is source-fresh.
+- `python scripts\smoke_autopilot.py --fast` passed and reused existing heavyweight Meta/Capability proofs instead of rerunning those checks.
+
+### Findings
+- Router settlement now resolves same-origin control blockers when the originating Controller action or startup postcondition reconciles.
+- Queued PM `handle_control_blocker` Controller rows for the resolved blocker are marked `superseded` instead of delivered as fresh PM repair work.
+- `load_controller_core` Controller receipts now apply the startup bootloader postcondition after the Router daemon is ready.
+- Active control blockers are considered only after durable receipt/evidence reconciliation has had a chance to settle stale state.
+- The fallback blocker match was kept narrow: exact Controller action id or scheduler row id is preferred, postcondition fallback requires the same action type, and legacy startup fallback is limited to the startup missing-postcondition source.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- Rerun heavyweight Meta/Capability checks later only if a broader project-control or capability-routing change is made, or before a release-level confidence claim.

@@ -3653,6 +3653,83 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         control_blocks = run_root / "control_blocks"
         self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
 
+    def test_load_controller_core_receipt_reconciles_startup_postcondition(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+
+        state = read_json(router.run_state_path(run_root))
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=action["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        state = read_json(router.run_state_path(run_root))
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["blocked"], 0)
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["controller_core_loaded"])
+        self.assertEqual(state["status"], "controller_ready")
+        self.assertFalse(state.get("active_control_blocker"))
+
+    def test_startup_reconciliation_resolves_stale_blocker_and_supersedes_pm_row(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="controller_action_receipt_missing_router_postcondition",
+            error_message=(
+                "Controller action load_controller_core was marked done, but Router could not "
+                "apply its required postcondition before reconciliation."
+            ),
+            action_type="load_controller_core",
+            payload={
+                "controller_action_id": action["controller_action_id"],
+                "router_scheduler_row_id": action["router_scheduler_row_id"],
+                "postcondition": "controller_core_loaded",
+            },
+        )
+        state = read_json(router.run_state_path(run_root))
+        stale_pm_action = router._next_control_blocker_action(root, state, run_root)  # type: ignore[attr-defined]
+        self.assertIsNotNone(stale_pm_action)
+        self.assertEqual(stale_pm_action["action_type"], "handle_control_blocker")
+        self.assertEqual(stale_pm_action["to_role"], "project_manager")
+        stale_pm_action = router._prepare_router_scheduled_action(root, run_root, state, stale_pm_action)  # type: ignore[attr-defined]
+        stale_pm_entry = router._write_controller_action_entry(root, run_root, state, stale_pm_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        router.apply_action(root, "load_controller_core")
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state.get("active_control_blocker"))
+        blocker_record = read_json(self.control_blocker_path(root, blocker))
+        self.assertEqual(blocker_record["resolution_status"], "resolved_by_startup_reconciliation")
+        self.assertEqual(blocker_record["resolved_by_controller_action_id"], action["controller_action_id"])
+        stale_pm_entry = read_json(router._controller_action_path(run_root, stale_pm_entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(stale_pm_entry["status"], "superseded")
+        self.assertEqual(
+            stale_pm_entry["router_reconciliation_status"],
+            "superseded_by_resolved_control_blocker",
+        )
+        next_action = router.next_action(root)
+        self.assertNotEqual(next_action["action_type"], "handle_control_blocker")
+
     def test_startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_router_daemon_start(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
