@@ -24,6 +24,7 @@ REQUIRED_LABELS = (
     "select_valid_startup_activation_approval",
     "select_valid_gate_decision",
     "select_valid_reviewer_report",
+    "select_valid_controller_boundary_confirmation",
     "select_missing_registry_runtime_binding",
     "select_registry_contract_id_mismatch",
     "select_registry_allowed_role_mismatch",
@@ -102,6 +103,7 @@ REQUIRED_OUTPUT_TYPES = {
     "gate_decision",
     "reviewer_review_report",
     "officer_model_report",
+    "controller_boundary_confirmation",
 }
 
 REQUIRED_CONTRACT_IDS = {
@@ -110,6 +112,7 @@ REQUIRED_CONTRACT_IDS = {
     "flowpilot.output_contract.gate_decision.v1",
     "flowpilot.output_contract.reviewer_review_report.v1",
     "flowpilot.output_contract.officer_model_report.v1",
+    "flowpilot.output_contract.controller_boundary_confirmation.v1",
 }
 
 REGISTRY_BINDING_REQUIRED_FIELDS = {

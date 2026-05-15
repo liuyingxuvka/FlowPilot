@@ -105,7 +105,10 @@ status metadata says `controller_action_ready`, clear the executable
 Controller action first and write its receipt. Read
 `controller_table_prompt` in `runtime/controller_action_ledger.json`, work
 ready Controller rows from top to bottom, and mark each completed row with a
-receipt before moving onward. If there is no executable Controller action but
+receipt before moving onward. Startup rows exposed by the daemon use this same
+table discipline; Controller checks off the simple row while Router keeps
+ordering, barrier, scope, and reconciliation state in its scheduler ledger. If
+there is no executable Controller action but
 the daemon is live, treat
 `continuous_controller_standby` as the active foreground duty, not a completed
 or finishable checklist item: sync the visible Codex plan from the Controller

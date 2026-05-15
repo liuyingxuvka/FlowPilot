@@ -3295,9 +3295,21 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result = router.run_until_wait(root, new_invocation=True)
         self.assertEqual(result["action_type"], "open_startup_intake_ui")
         self.assertEqual(result["folded_command"], "run-until-wait")
-        self.assertEqual(result["folded_applied_count"], 1)
-        self.assertEqual([item["action_type"] for item in result["folded_applied_actions"]], ["load_router"])
+        self.assertEqual(result["folded_applied_count"], 5)
+        self.assertEqual(
+            [item["action_type"] for item in result["folded_applied_actions"]],
+            ["load_router", "create_run_shell", "write_current_pointer", "update_run_index", "start_router_daemon"],
+        )
+        self.assertTrue(result["startup_daemon_scheduled"])
+        self.assertTrue(result["scheduled_by_router_daemon"])
+        self.assertEqual(result["scope_kind"], "startup")
+        self.assertEqual(result["controller_table_contract"], "simple_work_board")
+        self.assertTrue(result["controller_action_id"])
+        self.assertTrue(result["router_scheduler_row_id"])
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
+        run_state = read_json(router.run_state_path(self.run_root_for(root)))
+        self.assertTrue(run_state["flags"]["formal_router_daemon_started"])
+        self.assertFalse(run_state["flags"]["controller_core_loaded"])
 
     def test_run_until_wait_folds_only_internal_bootloader_actions_after_banner(self) -> None:
         root = self.make_project()
@@ -3315,10 +3327,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(
             [item["action_type"] for item in result["folded_applied_actions"]],
             [
-                "create_run_shell",
-                "write_current_pointer",
-                "update_run_index",
-                "copy_runtime_kit",
                 "fill_runtime_placeholders",
                 "initialize_mailbox",
                 "record_user_request",
@@ -3328,6 +3336,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
         bootstrap = self.bootstrap_state(root)
         self.assertTrue(bootstrap["flags"]["run_shell_created"])
+        self.assertTrue(bootstrap["flags"]["router_daemon_started"])
         self.assertTrue(bootstrap["flags"]["mailbox_initialized"])
         self.assertTrue(bootstrap["flags"].get("user_request_recorded", False))
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
@@ -3347,10 +3356,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(
             [item["action_type"] for item in result["folded_applied_actions"]],
             [
-                "create_run_shell",
-                "write_current_pointer",
-                "update_run_index",
-                "copy_runtime_kit",
                 "fill_runtime_placeholders",
                 "initialize_mailbox",
                 "record_user_request",
@@ -3408,11 +3413,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "start_router_daemon")
-        self.assertTrue(action["formal_startup_daemon_required"])
-        router.apply_action(root, "start_router_daemon")
-        action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_controller_core")
+        self.assertTrue(action["startup_daemon_scheduled"])
+        self.assertTrue(action["scheduled_by_router_daemon"])
         router.apply_action(root, "load_controller_core")
         run_state = read_json(router.run_state_path(run_root))
         self.assertTrue(run_state["flags"]["controller_core_loaded"])
@@ -3433,11 +3436,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         run_root = self.run_root_for(root)
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "start_router_daemon")
-        self.assertFalse(action["daemon_off_option_allowed"])
-        router.apply_action(root, "start_router_daemon")
-        action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_controller_core")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["formal_router_daemon_started"])
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
         self.assertEqual(continuation["mode"], "manual_resume")
         self.assertFalse(continuation["heartbeat_active"])
@@ -3465,10 +3466,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
 
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "load_controller_core")
-        router.apply_action(root, "load_controller_core")
+        self.assertEqual(action["action_type"], "open_startup_intake_ui")
+        self.assertTrue(action["startup_daemon_scheduled"])
+        self.assertTrue(action["scheduled_by_router_daemon"])
+        entry = read_json(run_root / "runtime" / "controller_actions" / f"{action['controller_action_id']}.json")
+        self.assertEqual(entry["action_type"], "open_startup_intake_ui")
+        self.assertEqual(entry["scope_kind"], "startup")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item["row_id"] == action["router_scheduler_row_id"])
+        self.assertEqual(row["scope_kind"], "startup")
+        self.assertEqual(row["barrier_kind"], "external_barrier")
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["controller_core_loaded"])
+        self.assertFalse(state["flags"]["controller_core_loaded"])
 
     def test_formal_startup_daemon_failure_blocks_controller_core(self) -> None:
         root = self.make_project()
@@ -3742,6 +3751,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.save_run_state(run_root, state)
 
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        baseline_done = int(ledger["counts"].get("done") or 0)
+        baseline_blocked = int(ledger["counts"].get("blocked") or 0)
         self.assertEqual(ledger["counts"]["pending"], 3)
         second_record = read_json(run_root / "runtime" / "controller_actions" / f"{second['action_id']}.json")
         self.assertEqual(second_record["dependencies"], [])
@@ -3761,8 +3772,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
 
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
-        self.assertEqual(ledger["counts"]["done"], 2)
-        self.assertEqual(ledger["counts"]["blocked"], 1)
+        self.assertEqual(ledger["counts"]["done"], baseline_done + 2)
+        self.assertEqual(ledger["counts"]["blocked"], baseline_blocked + 1)
         first_record = read_json(run_root / "runtime" / "controller_actions" / f"{first['action_id']}.json")
         blocked_record = read_json(run_root / "runtime" / "controller_actions" / f"{blocked['action_id']}.json")
         self.assertEqual(first_record["status"], "done")
@@ -4475,7 +4486,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ]
         self.assertEqual(len(completed), 1)
 
-    def test_startup_intake_cancel_is_terminal_before_run_shell(self) -> None:
+    def test_startup_intake_cancel_is_terminal_after_daemon_first_shell(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
         payload = self.startup_intake_payload(root, status="cancelled")
@@ -4484,9 +4495,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         bootstrap = self.bootstrap_state(root)
         self.assertEqual(bootstrap["status"], "startup_cancelled")
         self.assertEqual(bootstrap["startup_state"], "startup_cancelled")
-        self.assertFalse(bootstrap["flags"]["run_shell_created"])
-        self.assertFalse((root / bootstrap["run_root"] / "run.json").exists())
-        self.assertFalse((root / bootstrap["run_root"] / "router_state.json").exists())
+        self.assertTrue(bootstrap["flags"]["run_shell_created"])
+        self.assertTrue(bootstrap["flags"]["router_daemon_started"])
+        self.assertTrue((root / bootstrap["run_root"] / "run.json").exists())
+        self.assertTrue((root / bootstrap["run_root"] / "router_state.json").exists())
+        run_state = read_json(router.run_state_path(self.run_root_for(root)))
+        self.assertFalse(run_state["flags"]["controller_core_loaded"])
+        self.assertFalse(bootstrap["flags"]["roles_started"])
+        self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "startup_cancelled")
         self.assertTrue(action["terminal"])
@@ -11353,6 +11369,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(state["events"][0]["event"], "controller_role_confirmed_from_router_core")
         self.assertIn("path", state["events"][0]["payload"])
         self.assertIn("sha256", state["events"][0]["payload"])
+        confirmation = state["controller_boundary_confirmation"]
+        self.assertEqual(
+            confirmation["output_contract_id"],
+            "flowpilot.output_contract.controller_boundary_confirmation.v1",
+        )
+        self.assertEqual(confirmation["output_type"], "controller_boundary_confirmation")
+        self.assertEqual(confirmation["role_output_envelope"]["controller_visibility"], "role_output_envelope_only")
 
     def test_controller_boundary_done_receipt_missing_deliverable_schedules_repair(self) -> None:
         root = self.make_project()
@@ -11381,7 +11404,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
         self.assertEqual(original["status"], "repair_pending")
         self.assertEqual(original["deliverable_repair_attempts"], 1)
+        self.assertEqual(original["deliverable_repair_failed_receipts"], 0)
+        self.assertEqual(original["pending_deliverable_repair_action_id"], repair["controller_action_id"])
+        self.assertEqual(original["pending_deliverable_repair_attempt"], 1)
         self.assertEqual(original["missing_deliverables"][0]["deliverable_id"], "controller_boundary_confirmation")
+        self.assertEqual(
+            original["missing_deliverables"][0]["output_contract_id"],
+            "flowpilot.output_contract.controller_boundary_confirmation.v1",
+        )
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state.get("active_control_blocker"))
 
@@ -11413,6 +11443,31 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(state["flags"]["controller_boundary_confirmation_written"])
         self.assertFalse(state.get("active_control_blocker"))
 
+    def test_controller_boundary_handwritten_artifact_without_runtime_evidence_schedules_repair(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        body = router._controller_boundary_confirmation_body(root, run_root, state)  # type: ignore[attr-defined]
+        router.write_json(run_root / "startup" / "controller_boundary_confirmation.json", body)
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+
+        repair = self.next_after_display_sync(root)
+        self.assertEqual(repair["action_type"], "complete_missing_controller_deliverable")
+        self.assertFalse(read_json(router.run_state_path(run_root)).get("active_control_blocker"))
+
     def test_controller_boundary_repair_action_resolves_original(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -11442,6 +11497,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         repair_entry = read_json(router._controller_action_path(run_root, repair["controller_action_id"]))  # type: ignore[attr-defined]
         self.assertEqual(original["status"], "resolved")
         self.assertEqual(original["resolved_by_controller_action_id"], repair["controller_action_id"])
+        self.assertIsNone(original["pending_deliverable_repair_action_id"])
+        self.assertEqual(original["pending_deliverable_repair_attempt"], 0)
         self.assertEqual(repair_entry["status"], "done")
 
     def test_controller_boundary_repair_budget_escalates_after_two_failures(self) -> None:
@@ -11473,6 +11530,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         repair_2 = state["pending_action"]
         self.assertEqual(repair_2["action_type"], "complete_missing_controller_deliverable")
         self.assertEqual(repair_2["repair_attempt"], 2)
+        original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(original["deliverable_repair_attempts"], 2)
+        self.assertEqual(original["deliverable_repair_failed_receipts"], 1)
+        self.assertEqual(original["pending_deliverable_repair_action_id"], repair_2["controller_action_id"])
+        self.assertFalse(state.get("active_control_blocker"))
 
         router.record_controller_action_receipt(
             root,
@@ -11486,6 +11548,59 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
         self.assertEqual(original["status"], "blocked")
         self.assertEqual(original["deliverable_repair_attempts"], 2)
+        self.assertEqual(original["deliverable_repair_failed_receipts"], 2)
+
+    def test_controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+        repair_1 = self.next_after_display_sync(root)
+        router.record_controller_action_receipt(
+            root,
+            action_id=repair_1["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        state = read_json(router.run_state_path(run_root))
+        repair_2 = state["pending_action"]
+        self.assertEqual(repair_2["repair_attempt"], 2)
+
+        duplicate = router._schedule_controller_deliverable_repair(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            pending_action=repair_1,
+            receipt=read_json(router._controller_receipt_path(run_root, repair_1["controller_action_id"])),  # type: ignore[attr-defined]
+            apply_result={
+                "applied": False,
+                "repairable": True,
+                "missing_deliverables": repair_1["missing_deliverables"],
+            },
+            source="duplicate_old_repair_receipt_replay",
+        )
+
+        self.assertFalse(duplicate["scheduled"])
+        self.assertTrue(duplicate["pending_repair"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state.get("active_control_blocker"))
+        original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(original["status"], "repair_pending")
+        self.assertEqual(original["deliverable_repair_attempts"], 2)
+        self.assertEqual(original["deliverable_repair_failed_receipts"], 1)
 
     def test_material_insufficient_event_records_insufficient_state(self) -> None:
         root = self.make_project()

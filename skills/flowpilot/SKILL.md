@@ -52,7 +52,7 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 
 After applying a wait-boundary action, prefer `run-until-wait`. It may apply only replay-proven safe internal router actions and must stop again before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
 
-Formal startup always starts or attaches the built-in one-second Router daemon before Controller core loads. There is no startup option to disable it. If startup cannot observe a live daemon lock, `runtime/router_daemon_status.json`, and `runtime/controller_action_ledger.json`, startup must fail instead of entering Controller core.
+Formal startup creates only the minimal run shell, current pointer, and run index before it starts or attaches the built-in one-second Router daemon. The daemon then schedules startup UI, role startup, heartbeat, and Controller-core handoff rows through the ordinary Controller action ledger plus Router scheduler ledger. There is no startup option to disable it; if live daemon lock/status/ledger evidence is missing, startup must fail instead of bypassing daemon-driven startup.
 
 During formal runtime, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached. `next`, `apply`, and `run-until-wait` remain diagnostic, test, and explicit repair tools, not the normal metronome that keeps a run alive.
 
@@ -64,7 +64,7 @@ When the router returns `open_startup_intake_ui`, open the native startup intake
 
 The UI result replaces the old chat three-question startup boundary. The router maps the UI toggles to canonical startup answer enum fields and seals the work request body behind a path/hash record. The startup UI record is the authority for activation; reviewer live review checks `startup_intake/startup_intake_record.json`, its receipt/envelope/hash evidence, and independently observable startup facts requested by the router, not private chat authenticity or chat history.
 
-Startup system-card progress uses the ordinary Controller action ledger and Router card pending-return ledger. Router may dispatch independent startup PM prep cards before Reviewer live review, but Reviewer startup fact review starts only after those pre-review card ACKs are clear; PM startup activation then uses the ordinary same-role `pm.startup_activation` ACK rule, not a second all-startup join.
+Startup progress uses the same two-table rule as later runtime work: Controller checks off simple ledger rows, while Router owns order, barriers, scope reconciliation, and ACK joins. Router may dispatch independent startup PM prep cards before Reviewer live review, but Reviewer startup fact review starts only after current startup-scope rows, receipts, required postconditions, and pre-review card ACKs are clear; PM startup activation then uses the ordinary same-role `pm.startup_activation` ACK rule, not a second all-startup join.
 
 The startup banner and FlowPilot Route Sign are user-facing display text. When the router returns `display_text`, paste that exact text into chat before applying. Do not add display-gate, evidence, source-health, confirmation, or controller/audit metadata to the user-visible body; those details belong in packets, ledgers, and action payloads. Generated files, paths, flags, and state records do not count.
 

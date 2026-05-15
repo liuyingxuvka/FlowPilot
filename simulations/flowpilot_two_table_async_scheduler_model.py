@@ -8,8 +8,10 @@ Risk purpose:
   inheriting Router dependency complexity, duplicate queued side effects after
   daemon retries, Reviewer startup fact review starting before startup-scope
   reconciliation, foreground Controller waits becoming an empty/complete plan,
-  Controller forgetting top-to-bottom row order during long ledgers, and PM
-  startup activation gaining a redundant global ACK gate.
+  Controller forgetting top-to-bottom row order during long ledgers, startup
+  host/UI/role/heartbeat work happening before the daemon becomes the driver,
+  a daemon that starts but only waits for Controller core instead of driving
+  startup, and PM startup activation gaining a redundant global ACK gate.
 - Update and run this model whenever Router daemon queue filling, Controller
   action ledger schema, startup pre-review gating, or card ACK reconciliation
   behavior changes.
@@ -26,13 +28,15 @@ Risk intent brief:
 - Adversarial branches: hidden dependency metadata in Controller rows, retry
   duplicate side effects, Reviewer review before startup cleanup, route work
   before PM activation, daemon enqueue past a real barrier, missing table-local
-  Controller prompt, standby completion after one monitor check, foreground
-  closure while FlowPilot is still running, standby ignoring new Controller
-  work, and redundant PM activation global join.
+  Controller prompt, startup UI/roles/heartbeat before daemon ownership,
+  pre-Controller-core daemon idling, standby completion after one monitor check,
+  foreground closure while FlowPilot is still running, standby ignoring new
+  Controller work, and redundant PM activation global join.
 - Hard invariants: Router and Controller tables stay separate; daemon enqueues
   independent rows until barrier; barriers stop enqueueing; done receipts need
   required Router-visible postconditions before reconciliation; startup review
-  uses current-scope reconciliation; the Controller action ledger carries a
+  uses current-scope reconciliation; startup external actions are daemon-owned
+  after the minimal run shell exists; the Controller action ledger carries a
   compact top-to-bottom table prompt; live waits keep a continuous Controller
   standby row and Codex-plan sync duty; running FlowPilot keeps foreground
   Controller attached; PM activation uses same-role ACK only.
@@ -49,6 +53,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 ASYNC_STARTUP_ROWS_UNTIL_BARRIER = "async_startup_rows_until_barrier"
+STARTUP_DAEMON_FIRST_DRIVER = "startup_daemon_first_driver"
 CONTROLLER_TABLE_SIMPLE_ROUTER_TABLE_COMPLEX = "controller_table_simple_router_table_complex"
 STATEFUL_RECEIPT_RECONCILED_WITH_POSTCONDITION = "stateful_receipt_reconciled_with_postcondition"
 STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION = "startup_review_waits_for_current_scope_reconciliation"
@@ -68,9 +73,13 @@ FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED = "flowpilot_running_foreground_clo
 STANDBY_COMPLETES_AFTER_ONE_CHECK = "standby_completes_after_one_check"
 STANDBY_TIMEOUT_TREATED_AS_COMPLETION = "standby_timeout_treated_as_completion"
 STANDBY_NEW_WORK_IGNORED = "standby_new_work_ignored"
+STARTUP_UI_BEFORE_DAEMON = "startup_ui_before_daemon"
+STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON = "startup_roles_or_heartbeat_before_daemon"
+DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP = "daemon_waits_for_controller_core_during_startup"
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
+    STARTUP_DAEMON_FIRST_DRIVER,
     CONTROLLER_TABLE_SIMPLE_ROUTER_TABLE_COMPLEX,
     STATEFUL_RECEIPT_RECONCILED_WITH_POSTCONDITION,
     STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION,
@@ -92,6 +101,9 @@ NEGATIVE_SCENARIOS = (
     STANDBY_COMPLETES_AFTER_ONE_CHECK,
     STANDBY_TIMEOUT_TREATED_AS_COMPLETION,
     STANDBY_NEW_WORK_IGNORED,
+    STARTUP_UI_BEFORE_DAEMON,
+    STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON,
+    DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -124,6 +136,15 @@ class State:
     controller_table_prompt_receipt_duty: bool = False
     controller_table_prompt_foreground_while_running: bool = False
     controller_table_prompt_authority_limits: bool = False
+
+    minimal_run_shell_created: bool = False
+    daemon_first_driver_before_external_startup_actions: bool = False
+    startup_ui_opened_before_daemon: bool = False
+    startup_roles_started_before_daemon: bool = False
+    startup_heartbeat_bound_before_daemon: bool = False
+    daemon_drives_startup_before_controller_core: bool = False
+    daemon_waits_for_controller_core_without_startup_drive: bool = False
+    controller_core_loaded: bool = False
 
     startup_scope_active: bool = False
     independent_controller_row_pending: bool = False
@@ -201,6 +222,10 @@ def scenario_state(scenario: str) -> State:
         "controller_table_prompt_receipt_duty": True,
         "controller_table_prompt_foreground_while_running": True,
         "controller_table_prompt_authority_limits": True,
+        "minimal_run_shell_created": True,
+        "daemon_first_driver_before_external_startup_actions": True,
+        "daemon_drives_startup_before_controller_core": True,
+        "controller_core_loaded": False,
         "startup_scope_active": True,
         "flowpilot_still_running": True,
     }
@@ -213,6 +238,18 @@ def scenario_state(scenario: str) -> State:
             next_independent_row_enqueued=True,
             barrier_active=True,
             enqueued_after_barrier=False,
+            idempotency_key_used=True,
+        )
+    if scenario == STARTUP_DAEMON_FIRST_DRIVER:
+        return _accepted(
+            scenario,
+            **base,
+            startup_ui_opened_before_daemon=False,
+            startup_roles_started_before_daemon=False,
+            startup_heartbeat_bound_before_daemon=False,
+            daemon_waits_for_controller_core_without_startup_drive=False,
+            independent_row_enqueued=True,
+            next_independent_row_enqueued=True,
             idempotency_key_used=True,
         )
     if scenario == CONTROLLER_TABLE_SIMPLE_ROUTER_TABLE_COMPLEX:
@@ -418,6 +455,34 @@ def scenario_state(scenario: str) -> State:
             standby_timeout_still_waiting_treated_as_completion=True,
             foreground_controller_stopped_during_standby=True,
         )
+    if scenario == STARTUP_UI_BEFORE_DAEMON:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "daemon_first_driver_before_external_startup_actions": False,
+                "startup_ui_opened_before_daemon": True,
+            },
+        )
+    if scenario == STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "daemon_first_driver_before_external_startup_actions": False,
+                "startup_roles_started_before_daemon": True,
+                "startup_heartbeat_bound_before_daemon": True,
+            },
+        )
+    if scenario == DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "daemon_drives_startup_before_controller_core": False,
+                "daemon_waits_for_controller_core_without_startup_drive": True,
+            },
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -425,6 +490,25 @@ def scheduler_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.daemon_started and state.daemon_tick_seconds != 1:
         failures.append("Router daemon is not a one-second scheduling driver")
+    if (
+        state.minimal_run_shell_created
+        and not state.daemon_first_driver_before_external_startup_actions
+        and (
+            state.startup_ui_opened_before_daemon
+            or state.startup_roles_started_before_daemon
+            or state.startup_heartbeat_bound_before_daemon
+        )
+    ):
+        failures.append("startup external actions ran before Router daemon became the startup driver")
+    if (
+        state.daemon_started
+        and state.startup_scope_active
+        and not state.controller_core_loaded
+        and not state.daemon_drives_startup_before_controller_core
+    ):
+        failures.append("Router daemon waited for Controller core instead of driving startup work")
+    if state.daemon_waits_for_controller_core_without_startup_drive:
+        failures.append("pre-Controller-core daemon tick idled instead of scheduling startup work")
     if state.controller_action_table_exists and state.controller_table_has_router_dependency_graph:
         failures.append("Controller table owns Router dependency metadata")
     if state.router_scheduler_table_exists and not state.router_table_has_dependency_metadata:

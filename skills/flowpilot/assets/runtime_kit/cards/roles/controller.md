@@ -49,7 +49,9 @@ Allowed actions:
   ledger's `controller_table_prompt` before the action rows, then work ready
   Controller rows from top to bottom: execute each dependency-satisfied row,
   write a `controller-receipt` for each completed, blocked, or controlled-wait
-  action, mark it complete, and rescan the ledger before waiting on any role;
+  action, mark it complete, and rescan the ledger before waiting on any role.
+  This same rule applies during daemon-owned startup rows such as startup UI,
+  role startup, heartbeat binding, and Controller-core handoff; Router's scheduler ledger owns ordering, scope, barrier, and dependency metadata;
 - use the Router monitor as an active health-and-continuation aid, not as a
   passive status board. The monitor tells you who FlowPilot is waiting for,
   what controller-visible evidence should appear, when a reminder is due, and

@@ -7,10 +7,10 @@
     "safe_graph": "pass"
   },
   "counts": {
-    "accepted": 4,
-    "edges": 126,
+    "accepted": 5,
+    "edges": 132,
     "rejected": 17,
-    "states": 127
+    "states": 133
   },
   "ok": true,
   "skipped_checks": {
@@ -21,11 +21,12 @@
       "asset_unified_runtime_path_exists": true,
       "binding_report": {
         "facts": {
-          "bound_contract_count": 16,
+          "bound_contract_count": 17,
           "declared_aliases": [
             "pm_resume_recovery_decision"
           ],
           "declared_output_types": [
+            "controller_boundary_confirmation",
             "current_node_result_review_pass",
             "flowguard_model_miss_report",
             "gate_decision",
@@ -48,6 +49,7 @@
         "ok": true
       },
       "contract_ids_present": [
+        "flowpilot.output_contract.controller_boundary_confirmation.v1",
         "flowpilot.output_contract.gate_decision.v1",
         "flowpilot.output_contract.officer_model_report.v1",
         "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
@@ -56,6 +58,7 @@
       ],
       "quality_pack_catalog_path_exists": true,
       "runtime_output_types": [
+        "controller_boundary_confirmation",
         "current_node_result_review_pass",
         "flowguard_model_miss_report",
         "gate_decision",

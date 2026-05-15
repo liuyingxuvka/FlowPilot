@@ -29,6 +29,11 @@ ROLE_OUTPUT_LEDGER_SCHEMA = "flowpilot.role_output_ledger.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 ROLE_OUTPUT_DIRECT_ROUTER_SUBMISSION_SCHEMA = "flowpilot.role_output_direct_router_submission.v1"
 ROLE_OUTPUT_STATUS_SCHEMA = "flowpilot.controller_status_packet.v1"
+PROMPT_MANIFEST_SCHEMA = "flowpilot.prompt_manifest.v1"
+CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA = "flowpilot.controller_boundary_confirmation.v1"
+CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE = "controller_boundary_confirmation"
+CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID = "flowpilot.output_contract.controller_boundary_confirmation.v1"
+CONTROLLER_BOUNDARY_CONFIRMATION_EVENT = "controller_role_confirmed_from_router_core"
 CONTRACT_REGISTRY_PATH = Path("skills/flowpilot/assets/runtime_kit/contracts/contract_index.json")
 QUALITY_PACK_CATALOG_PATH = Path("skills/flowpilot/assets/runtime_kit/quality_pack_catalog.json")
 ATTACHED_QUALITY_PACK_REL_PATHS = (
@@ -39,6 +44,7 @@ ATTACHED_QUALITY_PACK_REL_PATHS = (
 QUALITY_PACK_STATUS_VALUES = ("satisfied", "blocked", "waived", "not_applicable")
 
 ROLE_KEYS = {
+    "controller",
     "project_manager",
     "human_like_reviewer",
     "process_flowguard_officer",
@@ -399,8 +405,76 @@ def _registry_path(project_root: Path) -> Path:
 def load_contract_registry(project_root: Path) -> dict[str, Any]:
     path = _registry_path(project_root)
     if not path.exists():
+        fallback = _default_contract_registry_path()
+        if fallback.exists():
+            return _read_json(fallback)
         raise RoleOutputRuntimeError(f"output contract registry is missing: {_project_relative(project_root, path)}")
     return _read_json(path)
+
+
+def _runtime_kit_source(project_root: Path) -> Path:
+    project_runtime_kit = project_root.resolve() / "skills" / "flowpilot" / "assets" / "runtime_kit"
+    if project_runtime_kit.exists():
+        return project_runtime_kit
+    return Path(__file__).resolve().parent / "runtime_kit"
+
+
+def _json_sha256(payload: dict[str, Any]) -> str:
+    return hashlib.sha256(_json_bytes(payload)).hexdigest()
+
+
+def _run_manifest_path(project_root: Path, run_root: Path) -> Path:
+    manifest_path = run_root / "runtime_kit" / "manifest.json"
+    if manifest_path.exists():
+        return manifest_path
+    return _runtime_kit_source(project_root) / "manifest.json"
+
+
+def _manifest_card(manifest: dict[str, Any], card_id: str) -> dict[str, Any]:
+    cards = manifest.get("cards")
+    if not isinstance(cards, list):
+        raise RoleOutputRuntimeError("prompt manifest cards must be a list")
+    for card in cards:
+        if isinstance(card, dict) and card.get("id") == card_id:
+            return card
+    raise RoleOutputRuntimeError(f"card not found in prompt manifest: {card_id}")
+
+
+def controller_boundary_constraints() -> dict[str, Any]:
+    return {
+        "relay_and_record_only": True,
+        "next_step_source": "flowpilot_router.py",
+        "controller_may_create_project_evidence": False,
+        "controller_may_read_sealed_bodies": False,
+        "controller_may_implement": False,
+        "controller_may_approve_gate": False,
+        "controller_may_mutate_route": False,
+        "controller_may_close_node": False,
+    }
+
+
+def _controller_boundary_sources(project_root: Path, run_root: Path) -> dict[str, Any]:
+    manifest_path = _run_manifest_path(project_root, run_root)
+    manifest = _read_json(manifest_path)
+    if manifest.get("schema_version") != PROMPT_MANIFEST_SCHEMA:
+        raise RoleOutputRuntimeError("invalid prompt manifest schema")
+    controller_core = _manifest_card(manifest, "controller.core")
+    card_path = manifest_path.parent / str(controller_core["path"])
+    if not card_path.exists():
+        raise RoleOutputRuntimeError("controller.core card path is missing")
+    policy = manifest.get("controller_policy")
+    if not isinstance(policy, dict):
+        raise RoleOutputRuntimeError("prompt manifest controller_policy must be an object")
+    return {
+        "manifest": manifest,
+        "manifest_path": manifest_path,
+        "manifest_hash": _sha256_file(manifest_path),
+        "controller_core_card": controller_core,
+        "controller_core_path": card_path,
+        "controller_core_hash": _sha256_file(card_path),
+        "controller_policy": policy,
+        "controller_policy_hash": _json_sha256(policy),
+    }
 
 
 def _quality_pack_catalog_path(project_root: Path) -> Path:
@@ -1546,6 +1620,67 @@ def submit_output(
     return envelope
 
 
+def build_controller_boundary_confirmation_body(
+    project_root: Path,
+    *,
+    run_id: str | None = None,
+    action_id: str | None = None,
+    source_action_id: str | None = None,
+) -> dict[str, Any]:
+    resolved_run_id, run_root = _run_paths(project_root, run_id)
+    sources = _controller_boundary_sources(project_root, run_root)
+    body = {
+        "schema_version": CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA,
+        "run_id": resolved_run_id,
+        "event": CONTROLLER_BOUNDARY_CONFIRMATION_EVENT,
+        "confirmed_by_role": "controller",
+        "confirmation_source": "router_delivered_controller_core",
+        "controller_action_id": str(action_id or ""),
+        "source_action_id": str(source_action_id or ""),
+        "controller_core_card_id": "controller.core",
+        "controller_core_path": _project_relative(project_root, sources["controller_core_path"]),
+        "controller_core_sha256": sources["controller_core_hash"],
+        "manifest_path": _project_relative(project_root, sources["manifest_path"]),
+        "manifest_sha256": sources["manifest_hash"],
+        "controller_policy": sources["controller_policy"],
+        "controller_policy_sha256": sources["controller_policy_hash"],
+        "boundary_constraints": controller_boundary_constraints(),
+        "sealed_body_reads_allowed": False,
+        "router_owned_confirmation": True,
+        "confirmed_at": utc_now(),
+    }
+    return body
+
+
+def submit_controller_boundary_confirmation(
+    project_root: Path,
+    *,
+    agent_id: str,
+    run_id: str | None = None,
+    action_id: str | None = None,
+    source_action_id: str | None = None,
+    output_path: str | Path | None = None,
+    controller_status_packet_path: str | Path | None = None,
+) -> dict[str, Any]:
+    resolved_run_id, run_root = _run_paths(project_root, run_id)
+    body = build_controller_boundary_confirmation_body(
+        project_root,
+        run_id=resolved_run_id,
+        action_id=action_id,
+        source_action_id=source_action_id,
+    )
+    return submit_output(
+        project_root,
+        output_type=CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE,
+        role="controller",
+        agent_id=agent_id,
+        body=body,
+        output_path=output_path or (run_root / "startup" / "controller_boundary_confirmation.json"),
+        run_id=resolved_run_id,
+        controller_status_packet_path=controller_status_packet_path,
+    )
+
+
 def validate_envelope_runtime_receipt(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any] | None:
     receipt_path_value, receipt_hash_value = _envelope_receipt_path_hash(envelope)
     if not receipt_path_value and not receipt_hash_value:
@@ -1592,6 +1727,41 @@ def validate_envelope_runtime_receipt(project_root: Path, envelope: dict[str, An
     return receipt
 
 
+def runtime_envelope_for_body(
+    project_root: Path,
+    *,
+    output_type: str,
+    body_path: str | Path,
+    body_hash: str,
+    run_id: str | None = None,
+) -> dict[str, Any] | None:
+    _resolved_run_id, run_root = _run_paths(project_root, run_id)
+    target_path = _project_relative(project_root, _resolve_project_path(project_root, body_path))
+    ledger_path = _role_output_ledger_path(run_root)
+    if not ledger_path.exists():
+        return None
+    ledger = _read_json(ledger_path)
+    outputs = ledger.get("outputs")
+    if not isinstance(outputs, list):
+        return None
+    for record in reversed(outputs):
+        if not isinstance(record, dict):
+            continue
+        if record.get("output_type") != output_type:
+            continue
+        if record.get("body_path") != target_path or record.get("body_hash") != body_hash:
+            continue
+        envelope = record.get("envelope")
+        if not isinstance(envelope, dict):
+            continue
+        try:
+            validate_envelope_runtime_receipt(project_root, envelope)
+        except RoleOutputRuntimeError:
+            continue
+        return envelope
+    return None
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prepare and submit FlowPilot role outputs through the runtime.")
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
@@ -1634,6 +1804,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     progress.add_argument("--event-name", default="")
     progress.add_argument("--session-path", default="")
     progress.add_argument("--controller-status-packet-path", default="")
+
+    controller_boundary = sub.add_parser(
+        "submit-controller-boundary-confirmation",
+        help="Write the Controller boundary confirmation through the role-output runtime",
+    )
+    controller_boundary.add_argument("--agent-id", required=True)
+    controller_boundary.add_argument("--run-id", default="")
+    controller_boundary.add_argument("--action-id", default="")
+    controller_boundary.add_argument("--source-action-id", default="")
+    controller_boundary.add_argument("--output-path", default="")
+    controller_boundary.add_argument("--controller-status-packet-path", default="")
 
     verify = sub.add_parser("verify-envelope", help="Verify a runtime-generated role-output envelope receipt")
     verify.add_argument("--envelope-file", required=True)
@@ -1702,6 +1883,16 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id or None,
             event_name=args.event_name or None,
             session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
+        )
+    elif args.command == "submit-controller-boundary-confirmation":
+        result = submit_controller_boundary_confirmation(
+            root,
+            agent_id=args.agent_id,
+            run_id=args.run_id or None,
+            action_id=args.action_id or None,
+            source_action_id=args.source_action_id or None,
+            output_path=args.output_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
         )
     elif args.command == "verify-envelope":

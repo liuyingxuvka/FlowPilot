@@ -36,6 +36,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.STANDBY_COMPLETES_AFTER_ONE_CHECK: "continuous standby row was completed after one monitor check",
     model.STANDBY_TIMEOUT_TREATED_AS_COMPLETION: "timeout_still_waiting was treated as standby completion",
     model.STANDBY_NEW_WORK_IGNORED: "continuous standby ignored new Controller work instead of returning to top-to-bottom row processing",
+    model.STARTUP_UI_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
+    model.STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
+    model.DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP: "Router daemon waited for Controller core instead of driving startup work",
 }
 
 
@@ -48,6 +51,12 @@ def _state_id(state: model.State) -> str:
         f"prompt={state.controller_table_prompt_present},{state.controller_table_prompt_before_actions},"
         f"{state.controller_table_prompt_top_down_order},{state.controller_table_prompt_receipt_duty},"
         f"{state.controller_table_prompt_foreground_while_running},{state.controller_table_prompt_authority_limits}|"
+        f"startup_driver={state.minimal_run_shell_created},{state.daemon_first_driver_before_external_startup_actions},"
+        f"ui_before_daemon={state.startup_ui_opened_before_daemon},roles_before_daemon={state.startup_roles_started_before_daemon},"
+        f"heartbeat_before_daemon={state.startup_heartbeat_bound_before_daemon},"
+        f"daemon_drives_pre_core={state.daemon_drives_startup_before_controller_core},"
+        f"daemon_waits_pre_core={state.daemon_waits_for_controller_core_without_startup_drive},"
+        f"controller_core={state.controller_core_loaded}|"
         f"queue={state.independent_controller_row_pending},{state.independent_row_enqueued},"
         f"{state.next_independent_row_enqueued},barrier={state.barrier_active},"
         f"after_barrier={state.enqueued_after_barrier}|idempotency={state.idempotency_key_used},"

@@ -5,27 +5,29 @@ long-form public explanation lives in `docs/protocol.md`.
 
 ## Startup
 
-1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask the three startup questions:
-   - background agents: allow six live background subagents, or use
-     single-agent six-role continuity for this run;
-   - scheduled continuation: allow heartbeat/automation jobs, or use manual
-     resume only for this run;
-   - display surface: open Cockpit UI immediately when startup state is ready,
-     or use chat route signs for this run.
-   End the assistant response immediately after these questions. Do not inspect
-   files, start tools, create route state, launch subagents, probe heartbeat, or
-   show the banner in the same response. FlowPilot remains in
-  `startup_pending_user_answers` until the user's later reply supplies all
-  three answers. Do not ask the user to choose a mode.
-3. Record the explicit answer set in state/frontier startup activation
-   evidence. A compact later user reply may satisfy all three only when the
-   choices are explicit.
-4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
-   the startup-question gate is open.
-5. Create or load `.flowpilot/`, allocate a fresh `run_id`, create
-   `.flowpilot/runs/<run-id>/`, write `.flowpilot/current.json`, and update
-   `.flowpilot/index.json`. These top-level files are only pointers/catalogs.
+1. On FlowPilot invocation, run the prompt-isolated Router bootloader. It may
+   load the Router and create only the minimal run shell, current pointer, and
+   run index before daemon ownership.
+2. Start or attach the built-in one-second Router daemon immediately after the
+   minimal run shell exists. The daemon is the startup driver before startup
+   intake UI, role startup, heartbeat binding, or Controller core handoff.
+3. The daemon schedules startup bootloader rows into the same two ledgers used
+   later in the run: `runtime/controller_action_ledger.json` for the compact
+   Controller work board and `runtime/router_scheduler_ledger.json` for Router
+   ordering, scope, idempotency, dependency, and barrier state. Controller sees
+   rows top-to-bottom and checks them off; it does not own Router dependency
+   metadata.
+4. When the daemon-scheduled row is `open_startup_intake_ui`, open the native
+   startup intake UI. The UI records background-agent, scheduled-continuation,
+   display-surface, and work-request answers as path/hash evidence. Do not
+   paste the sealed work request body into chat or router payloads. If the UI
+   result is `cancelled`, startup terminates after the daemon-first shell and
+   does not start roles, heartbeat, Controller core, or route work.
+5. Record the explicit answer set in state/frontier startup activation
+   evidence, then emit the fenced `FlowPilot` ASCII startup banner in chat.
+   The banner means the startup-question gate is open. The run directory,
+   `.flowpilot/current.json`, and `.flowpilot/index.json` are pointer/catalog
+   state only.
    Current control state must live under the run directory. The active-run
    resolver is authoritative: read `.flowpilot/current.json`, then load
    `.flowpilot/runs/<run-id>/`. Old top-level state files are legacy evidence
@@ -166,17 +168,18 @@ long-form public explanation lives in `docs/protocol.md`.
     that row and the visible Codex plan item in progress. One monitor poll,
     a live target role, or diagnostic `timeout_still_waiting` is not
     completion.
-26. Before loading Controller core, formal startup always starts or attaches
-    the built-in Router daemon. There is no user option to disable this
-    daemon. Startup must fail rather than load Controller core unless it can
-    observe the live daemon lock, `runtime/router_daemon_status.json`, and
-    `runtime/controller_action_ledger.json`. After Controller core loads,
-    Controller follows daemon status and the Controller action ledger; direct
-    `flowpilot_router.py next/apply/run-until-wait` calls are diagnostics,
-    tests, or explicit repair/recovery tools rather than the normal runtime
-    metronome. Foreground waiting uses `controller-standby` and the
-    `continuous_controller_standby` row, which must sync the native Codex plan
-    from the Controller action ledger before each wait cycle.
+26. Before loading Controller core, formal startup verifies daemon-first
+    ownership: live daemon lock, `runtime/router_daemon_status.json`, the
+    Controller action ledger, and daemon-scheduled startup rows. There is no
+    user option to disable this daemon. Startup must fail rather than load
+    Controller core if startup UI, role startup, heartbeat binding, or
+    Controller core would be scheduled outside daemon ownership. After
+    Controller core loads, Controller follows daemon status and the Controller
+    action ledger; direct `flowpilot_router.py next/apply/run-until-wait` calls
+    are diagnostics, tests, or explicit repair/recovery tools rather than the
+    normal runtime metronome. Foreground waiting uses `controller-standby` and
+    the `continuous_controller_standby` row, which must sync the native Codex
+    plan from the Controller action ledger before each wait cycle.
 27. If the user selected manual resume, record `manual-resume` mode and do not
     create heartbeat automation.
 28. Record the controlled-stop notice policy: completed routes emit a

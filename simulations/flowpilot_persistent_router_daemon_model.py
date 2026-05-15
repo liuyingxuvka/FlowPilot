@@ -10,7 +10,8 @@ Risk intent brief:
   mailbox evidence, ACK consumption, Controller action ledger entries,
   external-event wait row closure, Controller receipts, stateful Controller
   postcondition evidence, heartbeat/manual resume recovery, role cohort
-  liveness, and terminal cleanup.
+  liveness, missing-deliverable repair issue/failure counts, and terminal
+  cleanup.
 - Adversarial branches include formal startup skipping or failing daemon
   launch before Controller core load, no daemon at a wait, duplicate Router
   writers, duplicate ACK observation, Router marking Controller work done
@@ -28,6 +29,9 @@ Risk intent brief:
   Controller receipts such as startup boundary confirmation must either have
   Router-visible postcondition evidence before Router marks the action done, or
   remain incomplete with a bounded Controller deliverable repair row;
+  Router may count a repair attempt as failed only after the matching
+  Controller repair receipt is received and invalid, and must not write a
+  budget-exhausted blocker while a repair action is still pending;
   receipt reconciliation must also advance the matching Router-owned internal
   fact so the same Controller action is not reissued forever; Controller
   follows the daemon-owned ledger instead of manually ticking the Router during
@@ -125,6 +129,8 @@ class State:
     controller_role_confirmed: bool = False
     controller_missing_deliverable_repair_pending: bool = False
     controller_missing_deliverable_repair_attempts: int = 0
+    controller_missing_deliverable_repair_failed_receipts: int = 0
+    controller_missing_deliverable_pending_attempt: int = 0
     controller_missing_deliverable_blocker_recorded: bool = False
     controller_missing_deliverable_escalated_before_budget: bool = False
     router_cleared_stateful_receipt_without_postcondition_evidence: bool = False
@@ -288,6 +294,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_role_confirmed=False,
                 controller_missing_deliverable_repair_pending=False,
                 controller_missing_deliverable_repair_attempts=0,
+                controller_missing_deliverable_repair_failed_receipts=0,
+                controller_missing_deliverable_pending_attempt=0,
                 controller_missing_deliverable_blocker_recorded=False,
                 controller_missing_deliverable_escalated_before_budget=False,
                 router_cleared_stateful_receipt_without_postcondition_evidence=False,
@@ -313,6 +321,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_role_confirmed=False,
                 controller_missing_deliverable_repair_pending=False,
                 controller_missing_deliverable_repair_attempts=0,
+                controller_missing_deliverable_repair_failed_receipts=0,
+                controller_missing_deliverable_pending_attempt=0,
                 controller_missing_deliverable_blocker_recorded=False,
                 controller_missing_deliverable_escalated_before_budget=False,
                 router_cleared_stateful_receipt_without_postcondition_evidence=False,
@@ -437,6 +447,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_role_confirmed=False,
                 controller_missing_deliverable_repair_pending=True,
                 controller_missing_deliverable_repair_attempts=1,
+                controller_missing_deliverable_repair_failed_receipts=0,
+                controller_missing_deliverable_pending_attempt=1,
                 controller_missing_deliverable_blocker_recorded=False,
             ),
         )
@@ -448,7 +460,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and state.controller_action_requires_stateful_postcondition
         and not state.controller_stateful_postcondition_evidence_written
         and state.controller_missing_deliverable_repair_pending
-        and state.controller_missing_deliverable_repair_attempts < 2
+        and state.controller_missing_deliverable_repair_attempts == state.controller_missing_deliverable_repair_failed_receipts + 1
+        and state.controller_missing_deliverable_pending_attempt < 2
     ):
         yield Transition(
             "controller_completes_stateful_deliverable_repair",
@@ -458,14 +471,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_boundary_confirmation_written=True,
                 controller_role_confirmed=True,
                 controller_missing_deliverable_repair_pending=False,
+                controller_missing_deliverable_pending_attempt=0,
             ),
         )
         yield Transition(
-            "router_enqueues_second_stateful_deliverable_repair",
+            "controller_submits_invalid_stateful_deliverable_repair_receipt",
             _step(
                 state,
-                controller_missing_deliverable_repair_pending=True,
-                controller_missing_deliverable_repair_attempts=2,
+                controller_missing_deliverable_repair_pending=False,
+                controller_missing_deliverable_repair_failed_receipts=state.controller_missing_deliverable_repair_failed_receipts + 1,
+                controller_missing_deliverable_pending_attempt=0,
             ),
         )
         return
@@ -476,7 +491,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and state.controller_action_requires_stateful_postcondition
         and not state.controller_stateful_postcondition_evidence_written
         and state.controller_missing_deliverable_repair_pending
-        and state.controller_missing_deliverable_repair_attempts >= 2
+        and state.controller_missing_deliverable_repair_attempts == state.controller_missing_deliverable_repair_failed_receipts + 1
+        and state.controller_missing_deliverable_pending_attempt >= 2
     ):
         yield Transition(
             "controller_completes_stateful_deliverable_repair",
@@ -486,8 +502,50 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_boundary_confirmation_written=True,
                 controller_role_confirmed=True,
                 controller_missing_deliverable_repair_pending=False,
+                controller_missing_deliverable_pending_attempt=0,
             ),
         )
+        yield Transition(
+            "router_escalates_missing_stateful_deliverable_after_repair_budget",
+            _step(
+                state,
+                controller_missing_deliverable_repair_pending=False,
+                controller_missing_deliverable_repair_failed_receipts=state.controller_missing_deliverable_repair_failed_receipts + 1,
+                controller_missing_deliverable_pending_attempt=0,
+                controller_missing_deliverable_blocker_recorded=True,
+                stop_requested=True,
+            ),
+        )
+        return
+
+    if (
+        state.controller_action_pending
+        and state.controller_receipt_present
+        and state.controller_action_requires_stateful_postcondition
+        and not state.controller_stateful_postcondition_evidence_written
+        and not state.controller_missing_deliverable_repair_pending
+        and state.controller_missing_deliverable_repair_failed_receipts >= 1
+        and state.controller_missing_deliverable_repair_failed_receipts < 2
+    ):
+        yield Transition(
+            "router_enqueues_second_stateful_deliverable_repair",
+            _step(
+                state,
+                controller_missing_deliverable_repair_pending=True,
+                controller_missing_deliverable_repair_attempts=state.controller_missing_deliverable_repair_failed_receipts + 1,
+                controller_missing_deliverable_pending_attempt=state.controller_missing_deliverable_repair_failed_receipts + 1,
+            ),
+        )
+        return
+
+    if (
+        state.controller_action_pending
+        and state.controller_receipt_present
+        and state.controller_action_requires_stateful_postcondition
+        and not state.controller_stateful_postcondition_evidence_written
+        and not state.controller_missing_deliverable_repair_pending
+        and state.controller_missing_deliverable_repair_failed_receipts >= 2
+    ):
         yield Transition(
             "router_escalates_missing_stateful_deliverable_after_repair_budget",
             _step(
@@ -927,6 +985,7 @@ def hazard_states() -> dict[str, State]:
             controller_boundary_confirmation_written=False,
             controller_role_confirmed=False,
             controller_missing_deliverable_repair_attempts=1,
+            controller_missing_deliverable_repair_failed_receipts=1,
             controller_missing_deliverable_blocker_recorded=True,
             controller_missing_deliverable_escalated_before_budget=True,
         ),
@@ -943,7 +1002,42 @@ def hazard_states() -> dict[str, State]:
             controller_role_confirmed=False,
             controller_missing_deliverable_repair_pending=False,
             controller_missing_deliverable_repair_attempts=2,
+            controller_missing_deliverable_repair_failed_receipts=2,
             controller_missing_deliverable_blocker_recorded=False,
+        ),
+        "stateful_missing_deliverable_blocker_while_second_repair_pending": replace(
+            safe_active,
+            current_wait="controller_receipt",
+            controller_action_pending=True,
+            controller_action_ready=True,
+            controller_action_requires_stateful_postcondition=True,
+            controller_action_done=False,
+            controller_receipt_present=True,
+            controller_stateful_postcondition_evidence_written=False,
+            controller_boundary_confirmation_written=False,
+            controller_role_confirmed=False,
+            controller_missing_deliverable_repair_pending=True,
+            controller_missing_deliverable_repair_attempts=2,
+            controller_missing_deliverable_repair_failed_receipts=1,
+            controller_missing_deliverable_pending_attempt=2,
+            controller_missing_deliverable_blocker_recorded=True,
+        ),
+        "stateful_missing_deliverable_issue_count_treated_as_failure_count": replace(
+            safe_active,
+            current_wait="controller_receipt",
+            controller_action_pending=True,
+            controller_action_ready=True,
+            controller_action_requires_stateful_postcondition=True,
+            controller_action_done=False,
+            controller_receipt_present=True,
+            controller_stateful_postcondition_evidence_written=False,
+            controller_boundary_confirmation_written=False,
+            controller_role_confirmed=False,
+            controller_missing_deliverable_repair_pending=False,
+            controller_missing_deliverable_repair_attempts=2,
+            controller_missing_deliverable_repair_failed_receipts=1,
+            controller_missing_deliverable_pending_attempt=0,
+            controller_missing_deliverable_blocker_recorded=True,
         ),
         "router_cleared_stateful_receipt_without_postcondition_evidence": replace(
             safe_active,
@@ -1084,8 +1178,33 @@ def invariant_failures(state: State) -> list[str]:
         and not state.controller_stateful_postcondition_evidence_written
         and not state.controller_missing_deliverable_repair_pending
         and not state.controller_missing_deliverable_blocker_recorded
+        and state.controller_missing_deliverable_repair_attempts == 0
+        and state.controller_missing_deliverable_repair_failed_receipts == 0
     ):
         failures.append("stateful Controller receipt was marked done before Router-visible postcondition evidence existed")
+    if (
+        state.controller_action_requires_stateful_postcondition
+        and state.controller_receipt_present
+        and not state.controller_stateful_postcondition_evidence_written
+        and state.controller_missing_deliverable_repair_pending
+        and state.controller_missing_deliverable_blocker_recorded
+    ):
+        failures.append("stateful missing deliverable blocker was recorded while a repair action was still pending")
+    if (
+        state.controller_action_requires_stateful_postcondition
+        and state.controller_receipt_present
+        and not state.controller_stateful_postcondition_evidence_written
+        and state.controller_missing_deliverable_repair_failed_receipts > state.controller_missing_deliverable_repair_attempts
+    ):
+        failures.append("stateful missing deliverable failed receipt count exceeded issued repair attempts")
+    if (
+        state.controller_action_requires_stateful_postcondition
+        and state.controller_receipt_present
+        and not state.controller_stateful_postcondition_evidence_written
+        and state.controller_missing_deliverable_repair_pending
+        and state.controller_missing_deliverable_pending_attempt != state.controller_missing_deliverable_repair_attempts
+    ):
+        failures.append("stateful missing deliverable pending repair attempt did not match latest issued attempt")
     if (
         state.controller_action_requires_stateful_postcondition
         and state.controller_receipt_present
@@ -1094,7 +1213,7 @@ def invariant_failures(state: State) -> list[str]:
             state.controller_missing_deliverable_escalated_before_budget
             or (
                 state.controller_missing_deliverable_blocker_recorded
-                and state.controller_missing_deliverable_repair_attempts < 2
+                and state.controller_missing_deliverable_repair_failed_receipts < 2
             )
         )
     ):
@@ -1103,7 +1222,7 @@ def invariant_failures(state: State) -> list[str]:
         state.controller_action_requires_stateful_postcondition
         and state.controller_receipt_present
         and not state.controller_stateful_postcondition_evidence_written
-        and state.controller_missing_deliverable_repair_attempts >= 2
+        and state.controller_missing_deliverable_repair_failed_receipts >= 2
         and not state.controller_missing_deliverable_repair_pending
         and not state.controller_missing_deliverable_blocker_recorded
     ):
@@ -1195,6 +1314,9 @@ INVARIANTS = (
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),
     _invariant("stateful_controller_receipt_requires_postcondition_evidence", "stateful Controller receipt was marked done before Router-visible postcondition evidence existed"),
     _invariant("stateful_missing_deliverable_repairs_before_blocker", "stateful missing deliverable escalated before Controller repair attempts were exhausted"),
+    _invariant("stateful_missing_deliverable_no_blocker_while_repair_pending", "stateful missing deliverable blocker was recorded while a repair action was still pending"),
+    _invariant("stateful_missing_deliverable_failure_count_bounded_by_issued_attempts", "stateful missing deliverable failed receipt count exceeded issued repair attempts"),
+    _invariant("stateful_missing_deliverable_pending_attempt_matches_latest_issue", "stateful missing deliverable pending repair attempt did not match latest issued attempt"),
     _invariant("stateful_missing_deliverable_blocks_after_budget", "stateful missing deliverable exhausted repair attempts without control blocker"),
     _invariant("router_clears_stateful_receipt_only_after_postcondition_evidence", "Router cleared stateful Controller receipt without Router-visible postcondition evidence"),
     _invariant("controller_role_confirmation_requires_boundary_artifact", "Controller role was confirmed without controller boundary confirmation artifact"),

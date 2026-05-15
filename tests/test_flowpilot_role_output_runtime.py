@@ -393,6 +393,101 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 agent_id="human_like_reviewer",
             )
 
+    def test_controller_boundary_confirmation_is_controller_scoped_runtime_output(self) -> None:
+        root = self.make_project()
+        envelope = role_output_runtime.submit_output(
+            root,
+            output_type="controller_boundary_confirmation",
+            role="controller",
+            agent_id="agent-controller-runtime",
+            body={
+                "event": "controller_role_confirmed_from_router_core",
+                "confirmed_by_role": "controller",
+                "confirmation_source": "router_delivered_controller_core",
+                "controller_core_card_id": "controller.core",
+                "controller_core_path": ".flowpilot/runs/run-test/runtime_kit/cards/roles/controller.md",
+                "controller_core_sha256": "0" * 64,
+                "manifest_path": ".flowpilot/runs/run-test/runtime_kit/manifest.json",
+                "manifest_sha256": "1" * 64,
+                "controller_policy": {"relay_and_record_only": True},
+                "controller_policy_sha256": "2" * 64,
+                "boundary_constraints": {
+                    "controller_may_read_sealed_bodies": False,
+                    "controller_may_approve_gate": False,
+                    "controller_may_mutate_route": False,
+                },
+                "sealed_body_reads_allowed": False,
+                "router_owned_confirmation": True,
+                "confirmed_at": "2026-05-15T00:00:00Z",
+            },
+            output_path=".flowpilot/runs/run-test/startup/controller_boundary_confirmation.json",
+        )
+
+        self.assertEqual(envelope["from_role"], "controller")
+        self.assertEqual(envelope["output_type"], "controller_boundary_confirmation")
+        self.assertEqual(
+            envelope["output_contract_id"],
+            "flowpilot.output_contract.controller_boundary_confirmation.v1",
+        )
+        self.assertEqual(envelope["body_ref"]["path_key"], "confirmation_path")
+        self.assertEqual(envelope["body_ref"]["hash_key"], "confirmation_hash")
+        self.assertNotIn("event_name", envelope)
+        body = self.read_json(root / envelope["body_ref"]["path"])
+        self.assertEqual(body["confirmed_by_role"], "controller")
+        self.assertEqual(body["_role_output_contract"]["contract_id"], envelope["output_contract_id"])
+
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "may be submitted only"):
+            role_output_runtime.submit_output(
+                root,
+                output_type="controller_boundary_confirmation",
+                role="project_manager",
+                agent_id="agent-pm-not-controller",
+                body={},
+            )
+
+    def test_controller_boundary_helper_writes_runtime_body_receipt_and_ledger(self) -> None:
+        root = self.make_project()
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        controller_card = run_root / "runtime_kit" / "cards" / "roles" / "controller.md"
+        controller_card.parent.mkdir(parents=True, exist_ok=True)
+        controller_card.write_text("Controller core card\n", encoding="utf-8")
+        _write_json(
+            run_root / "runtime_kit" / "manifest.json",
+            {
+                "schema_version": "flowpilot.prompt_manifest.v1",
+                "controller_policy": {"relay_and_record_only": True},
+                "cards": [
+                    {
+                        "id": "controller.core",
+                        "audience": "controller",
+                        "kind": "role_core",
+                        "path": "cards/roles/controller.md",
+                    }
+                ],
+            },
+        )
+
+        envelope = role_output_runtime.submit_controller_boundary_confirmation(
+            root,
+            agent_id="agent-controller-boundary-helper",
+            action_id="controller-action-1",
+            source_action_id="router-action-1",
+        )
+        body_path = root / envelope["body_ref"]["path"]
+        body_hash = role_output_runtime._sha256_file(body_path)  # type: ignore[attr-defined]
+        recovered = role_output_runtime.runtime_envelope_for_body(
+            root,
+            output_type="controller_boundary_confirmation",
+            body_path=body_path,
+            body_hash=body_hash,
+        )
+
+        self.assertEqual(recovered, envelope)
+        body = self.read_json(body_path)
+        self.assertEqual(body["controller_action_id"], "controller-action-1")
+        self.assertEqual(body["source_action_id"], "router-action-1")
+        self.assertEqual(body["boundary_constraints"], role_output_runtime.controller_boundary_constraints())
+
     def test_gate_decision_runtime_keeps_owner_role_mechanical_and_not_semantic(self) -> None:
         root = self.make_project()
         evidence_path = root / ".flowpilot" / "runs" / "run-test" / "evidence" / "gate.json"

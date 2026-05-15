@@ -11142,3 +11142,95 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
 - Full router runtime test suite was not run; final evidence uses focused affected runtime tests plus model/OpenSpec/install checks.
+
+## 2026-05-15 Startup Daemon Ownership Model-Miss Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A real FlowPilot startup run showed `start_router_daemon` happened after startup intake UI, role spawning, and heartbeat binding. The previous focused model accepted the weaker property "daemon before Controller core" and did not model daemon ownership of startup work.
+- Status: model_updated_runtime_fix_pending
+- Skill decision: used_flowguard_for_model_miss_analysis
+
+### Model Evidence
+- Focused model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Focused result: `simulations/flowpilot_two_table_async_scheduler_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed with 69 traces.
+
+### Findings
+- The model now rejects startup external actions that run before the Router daemon becomes the startup driver.
+- The model now rejects `startup_ui_before_daemon`.
+- The model now rejects `startup_roles_or_heartbeat_before_daemon`.
+- The model now rejects `daemon_waits_for_controller_core_during_startup`, which captures a daemon that starts but idles instead of scheduling startup rows before Controller core.
+- The minimal runtime fix should move daemon start to immediately after the minimal run shell exists and route startup UI, role spawn, and heartbeat binding through daemon-scheduled Controller rows.
+
+### Skipped Steps
+- No runtime implementation was changed in this model-miss update.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were not run.
+
+## 2026-05-15 Controller Deliverable Repair Counter Model-Miss Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run showed Router could schedule the second Controller deliverable repair row while also recording a repair-budget blocker, conflating issued repair attempts with failed repair receipts.
+- Status: completed_model_update_runtime_fix_pending
+- Skill decision: used_openspec_routing_then_flowguard
+
+### Model Evidence
+- Focused model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Focused result: `simulations/flowpilot_persistent_router_daemon_results.json`
+- Runner: `simulations/run_flowpilot_persistent_router_daemon_checks.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed: safe graph ok, progress ok, Explorer ok, hazard checks ok.
+
+### Findings
+- The previous focused model represented one `controller_missing_deliverable_repair_attempts` count and therefore could not distinguish "repair action issued" from "repair receipt failed".
+- The model now tracks issued repair attempts, failed repair receipts, and the currently pending repair attempt separately.
+- New hazards reject a budget blocker while the second repair row is still pending and reject treating issued repair count as failed receipt count.
+- The minimal runtime repair should make Router block only after the second repair receipt has been received and rejected, not when the second repair row is merely created.
+
+### Skipped Steps
+- No Router runtime implementation was changed in this model update.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+## 2026-05-15 Controller Runtime Deliverable Reconciliation Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved unifying Controller deliverables with the existing runtime output and Controller action ledger rules, while fixing the repair flow so a pending second repair is not treated as a failed repair.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+
+### Model Evidence
+- Focused daemon model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Role output runtime model: `simulations/flowpilot_role_output_runtime_model.py`
+- Output contract model: `simulations/run_output_contract_checks.py`
+- OpenSpec change: `openspec/changes/unify-controller-runtime-deliverables/`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\role_output_runtime.py skills\flowpilot\assets\flowpilot_runtime.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_role_output_runtime.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "controller_boundary" -q` passed with 8 tests.
+- `python -m pytest tests\test_flowpilot_role_output_runtime.py -q` passed with 16 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "controller_action or controller_receipt or router_scheduler or sync_display_plan_done_receipt or recorded_external_event_closes_matching_wait_action_row or controller_boundary" -q` passed with 14 tests.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python simulations\run_flowpilot_role_output_runtime_checks.py --json-out simulations\flowpilot_role_output_runtime_results.json` passed.
+- `python simulations\run_output_contract_checks.py --json-out simulations\flowpilot_output_contract_results.json` passed.
+- `openspec validate unify-controller-runtime-deliverables --strict --json` passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and synchronized the installed FlowPilot skill to the repository digest.
+- `python scripts\audit_local_install_sync.py --json` and `python scripts\install_flowpilot.py --check --json` passed.
+
+### Findings
+- Controller boundary confirmation now has a Controller-scoped runtime output contract and helper path, so Controller produces a canonical runtime envelope/receipt instead of hand-writing a JSON artifact.
+- Router accepts Controller boundary confirmation only when the artifact is backed by valid runtime evidence.
+- Controller deliverable repair accounting now separates issued repair rows, pending repair row, and failed repair receipts.
+- Router writes the repair-budget blocker only after the second returned repair receipt is invalid; it no longer blocks while the second repair row is merely pending.
+- Startup/controller table guidance was kept aligned with the same two-table rule: Controller checks off simple rows while Router owns scheduler ordering, barriers, scope, and reconciliation.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Full `tests/test_flowpilot_router_runtime.py` was not run; final evidence uses focused affected subsets plus OpenSpec, install, and three lightweight FlowGuard/contract checks.

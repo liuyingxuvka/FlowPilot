@@ -85,6 +85,7 @@
       "task_family": "gate.decision",
       "packet_type": "role_decision",
       "recipient_roles": [
+        "controller",
         "project_manager",
         "human_like_reviewer",
         "process_flowguard_officer",
@@ -127,6 +128,14 @@
         "project_manager"
       ],
       "contract_id": "flowpilot.output_contract.pm_terminal_closure_decision.v1"
+    },
+    {
+      "task_family": "controller.boundary_confirmation",
+      "packet_type": "controller_control_plane",
+      "recipient_roles": [
+        "controller"
+      ],
+      "contract_id": "flowpilot.output_contract.controller_boundary_confirmation.v1"
     }
   ],
   "contracts": [
@@ -151,6 +160,7 @@
       "required_envelope_path_hash_pairs": [
         "body_ref.path/body_ref.hash",
         "runtime_receipt_ref.path/runtime_receipt_ref.hash",
+        "confirmation_path/confirmation_hash",
         "report_path/report_hash",
         "decision_path/decision_hash",
         "result_body_path/result_body_hash",
@@ -177,6 +187,58 @@
         "controller_visibility_not_envelope_only",
         "chat_response_body_allowed"
       ]
+    },
+    {
+      "contract_id": "flowpilot.output_contract.controller_boundary_confirmation.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "controller.boundary_confirmation",
+      "packet_types": [
+        "controller_control_plane"
+      ],
+      "recipient_roles": [
+        "controller"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "controller_boundary_confirmation",
+      "body_schema_version": "flowpilot.controller_boundary_confirmation.v1",
+      "default_subdir": "startup",
+      "default_filename_prefix": "controller_boundary_confirmation",
+      "path_key": "confirmation_path",
+      "hash_key": "confirmation_hash",
+      "router_event_mode": "router_supplied",
+      "required_body_fields": [
+        "schema_version",
+        "run_id",
+        "event",
+        "confirmed_by_role",
+        "confirmation_source",
+        "controller_core_card_id",
+        "controller_core_path",
+        "controller_core_sha256",
+        "manifest_path",
+        "manifest_sha256",
+        "controller_policy",
+        "controller_policy_sha256",
+        "boundary_constraints",
+        "sealed_body_reads_allowed",
+        "router_owned_confirmation",
+        "confirmed_at"
+      ],
+      "required_body_values": {
+        "schema_version": "flowpilot.controller_boundary_confirmation.v1",
+        "event": "controller_role_confirmed_from_router_core",
+        "confirmed_by_role": "controller",
+        "confirmation_source": "router_delivered_controller_core",
+        "controller_core_card_id": "controller.core",
+        "sealed_body_reads_allowed": false,
+        "router_owned_confirmation": true
+      },
+      "contract_self_check_required": false,
+      "controller_may_create_project_evidence": false,
+      "controller_may_read_sealed_bodies": false,
+      "controller_may_approve_gate": false,
+      "router_must_verify_runtime_receipt_before_reconciliation": true
     },
     {
       "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",

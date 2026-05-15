@@ -279,6 +279,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     progress_output.add_argument("--session-path", default="")
     progress_output.add_argument("--controller-status-packet-path", default="")
 
+    controller_boundary = sub.add_parser(
+        "submit-controller-boundary-confirmation",
+        help="Write Controller boundary confirmation through the formal output runtime.",
+    )
+    controller_boundary.add_argument("--agent-id", required=True)
+    controller_boundary.add_argument("--run-id", default="")
+    controller_boundary.add_argument("--action-id", default="")
+    controller_boundary.add_argument("--source-action-id", default="")
+    controller_boundary.add_argument("--output-path", default="")
+    controller_boundary.add_argument("--controller-status-packet-path", default="")
+
     verify_output = sub.add_parser("verify-output-envelope", help="Verify a role-output runtime receipt.")
     verify_output.add_argument("--envelope-file", required=True)
 
@@ -477,6 +488,16 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id or None,
             event_name=args.event_name or None,
             session_path=args.session_path or None,
+            controller_status_packet_path=args.controller_status_packet_path or None,
+        )
+    elif args.command == "submit-controller-boundary-confirmation":
+        result = role_output_runtime.submit_controller_boundary_confirmation(
+            root,
+            agent_id=args.agent_id,
+            run_id=args.run_id or None,
+            action_id=args.action_id or None,
+            source_action_id=args.source_action_id or None,
+            output_path=args.output_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
         )
     elif args.command == "verify-output-envelope":

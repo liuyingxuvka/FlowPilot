@@ -25,6 +25,7 @@ REQUIRED_LABELS = (
     "controller_executes_stateful_action_writes_postcondition_evidence_and_receipt",
     "router_marks_stateful_receipt_incomplete_and_enqueues_repair",
     "controller_completes_stateful_deliverable_repair",
+    "controller_submits_invalid_stateful_deliverable_repair_receipt",
     "router_enqueues_second_stateful_deliverable_repair",
     "router_escalates_missing_stateful_deliverable_after_repair_budget",
     "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
@@ -59,6 +60,8 @@ HAZARD_EXPECTED_FAILURES = {
     "router_cleared_controller_receipt_without_internal_fact": "Router cleared Controller receipt without updating Router-owned internal action fact",
     "stateful_controller_receipt_done_without_postcondition_evidence": "stateful Controller receipt was marked done before Router-visible postcondition evidence existed",
     "stateful_missing_deliverable_escalated_before_repair_budget": "stateful missing deliverable escalated before Controller repair attempts were exhausted",
+    "stateful_missing_deliverable_blocker_while_second_repair_pending": "stateful missing deliverable blocker was recorded while a repair action was still pending",
+    "stateful_missing_deliverable_issue_count_treated_as_failure_count": "stateful missing deliverable escalated before Controller repair attempts were exhausted",
     "stateful_missing_deliverable_exhausted_without_blocker": "stateful missing deliverable exhausted repair attempts without control blocker",
     "router_cleared_stateful_receipt_without_postcondition_evidence": "Router cleared stateful Controller receipt without Router-visible postcondition evidence",
     "controller_role_confirmed_without_boundary_artifact": "Controller role was confirmed without controller boundary confirmation artifact",
@@ -130,6 +133,8 @@ def _state_id(state: model.State) -> str:
         f"role_confirmed={state.controller_role_confirmed},"
         f"deliverable_repair={state.controller_missing_deliverable_repair_pending},"
         f"repair_attempts={state.controller_missing_deliverable_repair_attempts},"
+        f"repair_failed_receipts={state.controller_missing_deliverable_repair_failed_receipts},"
+        f"pending_repair_attempt={state.controller_missing_deliverable_pending_attempt},"
         f"deliverable_blocker={state.controller_missing_deliverable_blocker_recorded},"
         f"cleared_stateful_no_evidence={state.router_cleared_stateful_receipt_without_postcondition_evidence},"
         f"router_fact={state.router_internal_action_fact_current},"

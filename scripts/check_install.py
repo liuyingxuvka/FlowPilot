@@ -571,6 +571,21 @@ def main() -> int:
         )
         if not small_router_launcher:
             result["ok"] = False
+        daemon_first_startup = all(
+            term in text
+            for term in (
+                "minimal run shell, current pointer, and run index",
+                "starts or attaches the built-in one-second Router daemon",
+                "daemon then schedules startup UI, role startup, heartbeat, and Controller-core handoff rows",
+                "same two-table rule as later runtime work",
+                "current startup-scope rows, receipts, required postconditions",
+            )
+        )
+        result["checks"].append(
+            {"name": "flowpilot_skill_daemon_first_startup_guidance", "ok": daemon_first_startup}
+        )
+        if not daemon_first_startup:
+            result["ok"] = False
 
     try:
         dependencies = json.loads((ROOT / "flowpilot.dependencies.json").read_text(encoding="utf-8"))
@@ -730,6 +745,8 @@ def main() -> int:
             "active foreground duty",
             "sync the visible Codex plan",
             "finishable checklist item",
+            "daemon-owned startup rows",
+            "Router's scheduler ledger owns ordering",
             "return to top-to-bottom row processing",
             "must not mark the visible plan item done",
             "timeout_still_waiting",
@@ -768,6 +785,9 @@ def main() -> int:
             "return to top-to-bottom row processing",
             "foreground_close_allowed_while_flowpilot_running",
             "new_controller_work_requires_ledger_update_and_top_down_reentry",
+            "startup_daemon_scheduled",
+            "scheduled_by_router_daemon",
+            "startup_daemon_controls_bootstrap",
         ]
         missing_terms = [term for term in required_terms if term not in router_source]
         ok = not missing_terms
