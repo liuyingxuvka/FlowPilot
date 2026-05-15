@@ -5573,18 +5573,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("startup_intake_record_path", body)
 
     def test_background_agents_allow_requires_six_fresh_live_agent_records(self) -> None:
-        root = self.make_project()
-        while True:
-            action = router.next_action(root)
-            action_type = str(action["action_type"])
-            if action_type == "open_startup_intake_ui":
-                router.apply_action(root, action_type, self.startup_intake_payload(root))
-            elif action_type == "record_user_request":
-                router.apply_action(root, action_type)
-            elif action_type == "start_role_slots":
-                break
-            else:
-                router.apply_action(root, action_type, self.payload_for_action(action))
+        def scheduled_role_slots_action() -> tuple[Path, Path, dict, dict]:
+            root = self.make_project()
+            router.run_until_wait(root, new_invocation=True)
+            router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+            result = router.run_until_wait(root)
+            self.assertEqual(result["action_type"], "load_controller_core")
+            run_root = self.run_root_for(root)
+            controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+            row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "start_role_slots")
+            entry = read_json(run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json")
+            return root, run_root, entry["action"], row
+
+        root, run_root, action, row = scheduled_role_slots_action()
 
         self.assertTrue(action["requires_host_spawn"])
         self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
@@ -5614,21 +5615,42 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             {"highest_available"},
         )
         self.assertEqual(len(action["role_spawn_request"]), 6)
-        with self.assertRaisesRegex(router.RouterError, "role_agents"):
-            router.apply_action(root, "start_role_slots")
 
-        payload = self.role_agent_payload(root)
-        payload["role_agents"] = payload["role_agents"][:-1]
-        with self.assertRaisesRegex(router.RouterError, "missing live role agent records"):
-            router.apply_action(root, "start_role_slots", payload)
+        def assert_role_slots_receipt_blocked(payload_factory, expected_text: str) -> None:
+            blocked_root, blocked_run_root, _, blocked_row = scheduled_role_slots_action()
+            payload = payload_factory(blocked_root)
+            router.record_controller_action_receipt(
+                blocked_root,
+                action_id=blocked_row["action_id"],
+                status="done",
+                payload=payload,
+            )
+            entry = read_json(blocked_run_root / "runtime" / "controller_actions" / f"{blocked_row['action_id']}.json")
+            self.assertEqual(entry["router_reconciliation_status"], "blocked")
+            self.assertIn(expected_text, json.dumps(entry["router_reconciliation_blocker"], sort_keys=True))
 
-        payload = self.role_agent_payload(root)
-        payload["role_agents"][0]["spawned_for_run_id"] = "run-old"
-        with self.assertRaisesRegex(router.RouterError, "spawned_for_run_id"):
-            router.apply_action(root, "start_role_slots", payload)
+        assert_role_slots_receipt_blocked(lambda _: None, "role_agents")
 
-        router.apply_action(root, "start_role_slots", self.role_agent_payload(root))
-        run_root = root / self.bootstrap_state(root)["run_root"]
+        def missing_role_payload(blocked_root: Path) -> dict:
+            payload = self.role_agent_payload(blocked_root)
+            payload["role_agents"] = payload["role_agents"][:-1]
+            return payload
+
+        assert_role_slots_receipt_blocked(missing_role_payload, "missing live role agent records")
+
+        def stale_run_payload(blocked_root: Path) -> dict:
+            payload = self.role_agent_payload(blocked_root)
+            payload["role_agents"][0]["spawned_for_run_id"] = "run-old"
+            return payload
+
+        assert_role_slots_receipt_blocked(stale_run_payload, "spawned_for_run_id")
+
+        router.record_controller_action_receipt(
+            root,
+            action_id=row["action_id"],
+            status="done",
+            payload=self.role_agent_payload(root),
+        )
         crew = read_json(run_root / "crew_ledger.json")
         self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
         self.assertEqual({slot["spawn_result"] for slot in crew["role_slots"]}, {"spawned_fresh_for_task"})
