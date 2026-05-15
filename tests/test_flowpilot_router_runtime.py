@@ -3442,6 +3442,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         summary = read_json(run_root / "display" / "current_status_summary.json")
         self.assertEqual(summary["state_kind"], "controller_action_ready")
         self.assertEqual(summary["next_step"]["action_type"], "check_prompt_manifest")
+        self.assertFalse(summary["foreground_exit_policy"]["foreground_exit_allowed"])
+        self.assertFalse(summary["foreground_exit_policy"]["controller_stop_allowed"])
+        self.assertEqual(summary["foreground_exit_policy"]["foreground_required_mode"], "process_controller_action")
+        self.assertTrue(summary["foreground_exit_policy"]["controller_must_process_pending_action_before_exit"])
 
         result = router.run_until_wait(root)
 
@@ -3503,6 +3507,34 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action_record["status"], "done")
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         self.assertGreaterEqual(ledger["counts"]["done"], 1)
+
+    def test_sync_display_plan_done_receipt_updates_router_fact_before_next_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+        action_id = result["ticks"][0]["controller_action_id"]
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
+        self.assertEqual(action_record["action_type"], "sync_display_plan")
+
+        router.record_controller_action_receipt(
+            root,
+            action_id=action_id,
+            status="done",
+            payload={"completed_by_test_controller": True},
+        )
+
+        next_action = router.next_action(root)
+
+        self.assertNotEqual(next_action["action_type"], "sync_display_plan")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["visible_plan_synced"])
+        self.assertIn("visible_plan_sync", state)
+        self.assertEqual(state["visible_plan_sync"]["host_action"], "replace_visible_plan")
+        self.assertNotEqual((state.get("pending_action") or {}).get("controller_action_id"), action_id)
+        labels = [item["label"] for item in state["history"] if isinstance(item, dict)]
+        self.assertIn("router_reconciled_pending_controller_action_receipt", labels)
 
     def test_controller_action_ledger_handles_multiple_receipts_and_duplicates(self) -> None:
         root = self.make_project()
@@ -3685,6 +3717,46 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(standby["normal_router_progress_source"], "router_daemon_status_and_controller_action_ledger")
         self.assertTrue(standby["standby_does_not_drive_router_progress"])
         self.assertFalse(standby["sealed_body_reads_allowed"])
+        self.assertFalse(standby["foreground_exit_allowed"])
+        self.assertFalse(standby["controller_stop_allowed"])
+        self.assertEqual(standby["foreground_required_mode"], "watch_router_daemon")
+        self.assertFalse(standby["controller_must_process_pending_action_before_exit"])
+        self.assertTrue(standby["exit_policy"]["live_daemon_wait_requires_standby"])
+
+    def test_foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = None
+        state["daemon_mode_enabled"] = True
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=None,
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "timeout_still_waiting")
+        self.assertTrue(standby["controller_must_continue_standby"])
+        self.assertFalse(standby["controller_must_process_pending_action_before_exit"])
+        self.assertFalse(standby["foreground_exit_allowed"])
+        self.assertFalse(standby["controller_stop_allowed"])
+        self.assertEqual(standby["foreground_required_mode"], "watch_router_daemon")
+        self.assertEqual(standby["controller_action_ledger"]["pending_action_ids"], [])
+        self.assertTrue(standby["exit_policy"]["live_daemon_wait_requires_standby"])
 
     def test_foreground_controller_standby_wakes_on_controller_action_ledger(self) -> None:
         root = self.make_project()
@@ -3699,6 +3771,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(standby["standby_state"], "controller_action_ready")
         self.assertIn(action_id, standby["controller_action_ledger"]["pending_action_ids"])
         self.assertFalse(standby["controller_must_continue_standby"])
+        self.assertTrue(standby["controller_must_process_pending_action_before_exit"])
+        self.assertFalse(standby["foreground_exit_allowed"])
+        self.assertFalse(standby["controller_stop_allowed"])
+        self.assertEqual(standby["foreground_required_mode"], "process_controller_action")
+        self.assertTrue(standby["exit_policy"]["controller_action_ready_blocks_foreground_exit"])
 
     def test_foreground_controller_standby_exits_on_stale_or_missing_daemon(self) -> None:
         root = self.make_project()
@@ -3710,6 +3787,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(standby["standby_state"], "daemon_stale_or_missing")
         self.assertFalse(standby["router_daemon"]["daemon_live"])
         self.assertFalse(standby["controller_must_continue_standby"])
+        self.assertFalse(standby["foreground_exit_allowed"])
+        self.assertFalse(standby["controller_stop_allowed"])
+        self.assertTrue(standby["foreground_turn_return_allowed"])
+        self.assertEqual(standby["foreground_required_mode"], "daemon_repair_or_restart")
 
     def test_foreground_controller_standby_does_not_compute_router_next(self) -> None:
         root = self.make_project()

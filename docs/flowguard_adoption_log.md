@@ -10545,3 +10545,87 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Keep future missing-ACK changes inside the Controller delivery fact gate instead of adding separate reminder exceptions.
 - Keep Controller-facing daemon/status files free of Router internal workflow ledger entries.
+
+
+## persistent-router-daemon-model-miss - Controller receipt and foreground standby gaps
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run repeated `sync_display_plan`, then the foreground Controller ended while a Controller action was still pending before the user stopped the run.
+- Status: model_updated; production_fix_not_started
+- Skill decision: used_flowguard
+- Started: 2026-05-15T06:49:00+02:00
+- Ended: 2026-05-15T06:55:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Prevent Router from clearing a Controller receipt without updating the Router-owned internal fact that the action was meant to establish.
+- Prevent the same Controller action from being reissued after a done receipt because the Router-owned fact stayed stale.
+- Prevent foreground Controller from ending while the daemon is live and the Controller action ledger still has an executable action.
+
+### Model Files
+- `simulations/flowpilot_persistent_router_daemon_model.py`
+- `simulations/run_flowpilot_persistent_router_daemon_checks.py`
+- `simulations/flowpilot_persistent_router_daemon_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+
+### Findings
+- The previous model covered foreground standby during role waits, but not foreground exit while an executable Controller action was pending.
+- The previous model required Controller receipts for done actions, but did not require receipt reconciliation to advance the corresponding Router-owned internal fact.
+- The updated model catches the live-run class where `sync_display_plan` receipts are reconciled but `visible_plan_sync`-like Router facts remain stale, causing the same Controller action to be issued repeatedly.
+
+### Counterexamples
+- `router_cleared_controller_receipt_without_internal_fact`
+- `same_controller_action_reissued_after_done_receipt`
+- `foreground_controller_ended_with_pending_controller_action`
+
+### Skipped Steps
+- Production runtime repair was intentionally not started in this step; the user asked for the model upgrade and a minimal root repair plan.
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were not run because this is a focused model-miss update.
+
+### Next Actions
+- Implement the minimal repair by applying Router-owned state updates during Controller receipt reconciliation for `display_status` actions.
+- Add a foreground/Controller guard that refuses to end while the controller action ledger has executable pending actions, and otherwise enters `controller-standby` for live nonterminal daemon waits.
+
+### Runtime Repair Update
+- Status: completed; local install synchronized
+- Ended: 2026-05-15T07:30:00+02:00
+
+### Additional Modeled Risk
+- The foreground Controller must not stop just because the daemon is live and no Controller action is ready at that instant. It must report the required mode as `watch_router_daemon` and remain attached through `controller-standby`.
+
+### Runtime Files
+- `skills/flowpilot/assets/flowpilot_router.py`
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+- `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`
+- `tests/test_flowpilot_router_runtime.py`
+- `openspec/changes/repair-controller-receipt-foreground-guard/`
+
+### Runtime Commands
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "foreground_controller_standby or sync_display_plan_done_receipt_updates_router_fact_before_next_action or run_until_wait_folds_manifest_check_before_card_boundary"` passed with 7 selected tests.
+- `openspec validate repair-controller-receipt-foreground-guard --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed.
+- `python scripts\audit_local_install_sync.py --json` passed.
+- `python scripts\install_flowpilot.py --check --json` passed.
+- `python scripts\check_install.py` passed.
+- `git diff --check` passed with CRLF warnings only.
+
+### Runtime Findings
+- `sync_display_plan` Controller receipts now route through the same Router-owned display fact writer as direct apply, so `visible_plan_sync` is updated before Router computes the next action.
+- Status and standby payloads now separate "may return to caller" from "Controller may stop"; `controller_stop_allowed` is true only for terminal runs.
+- `foreground_required_mode` now tells Controller whether to `process_controller_action` or `watch_router_daemon`.
+- Controller prompt cards now state the nonterminal rule plainly: with work, do the Controller action; without work, stay attached to the daemon monitor.
+- Parallel-agent `async-startup-obligation-join` OpenSpec/model work was reviewed, validated, and included as compatible model-only work; its runtime implementation tasks remain tracked in that separate change.
+
+### Additional Counterexample
+- `foreground_controller_ended_while_daemon_active_no_action`
+
+### Runtime Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Full `tests\test_flowpilot_router_runtime.py` was attempted once and timed out after 304 seconds; final evidence uses the focused affected subset plus model, OpenSpec, install, and self-check validation.

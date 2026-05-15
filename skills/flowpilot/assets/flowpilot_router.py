@@ -5121,6 +5121,41 @@ def _reconcile_pending_controller_action_receipt(
         },
     )
 
+    if action_class.get("kind") == "display_status" and action_type == "sync_display_plan":
+        try:
+            sync_payload = _apply_sync_display_plan_state(project_root, run_root, run_state, pending_action, payload)
+        except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
+            _write_control_blocker(
+                project_root,
+                run_root,
+                run_state,
+                source="controller_action_receipt_incomplete_for_display_status",
+                error_message=(
+                    f"Controller receipt for {action_type} was marked done, but Router could not "
+                    f"apply the required display/status fact: {exc}"
+                ),
+                action_type=action_type,
+                payload={
+                    "controller_action_id": receipt.get("action_id"),
+                    "controller_receipt_payload": payload,
+                    "pending_action_label": pending_action.get("label"),
+                },
+            )
+            return {"changed": True, "blocked": True, "receipt_status": status}
+        return _clear_pending_after_reconciled_controller_receipt(
+            project_root,
+            run_root,
+            run_state,
+            pending_action=pending_action,
+            receipt=receipt,
+            applied_postcondition={
+                "applied": True,
+                "source": "router_owned_display_status_reclaim",
+                "projection_hash": sync_payload.get("projection_hash"),
+                "display_plan_path": sync_payload.get("display_plan_path"),
+            },
+        )
+
     postcondition = _pending_action_postcondition(pending_action)
     if postcondition and not _pending_action_postcondition_satisfied(run_state, postcondition):
         try:
@@ -5399,6 +5434,20 @@ def _build_foreground_controller_standby_snapshot(
         standby_state = "waiting_for_role"
     else:
         standby_state = "daemon_alive_no_controller_action"
+    controller_must_continue_standby = standby_state in {"waiting_for_role", "daemon_alive_no_controller_action"}
+    controller_must_process_pending_action = standby_state == "controller_action_ready"
+    controller_stop_allowed = standby_state == "terminal"
+    foreground_turn_return_allowed = standby_state in {"terminal", "user_input_required", "daemon_stale_or_missing"}
+    if controller_must_process_pending_action:
+        foreground_required_mode = "process_controller_action"
+    elif controller_must_continue_standby:
+        foreground_required_mode = "watch_router_daemon"
+    elif standby_state == "user_input_required":
+        foreground_required_mode = "return_for_user_input"
+    elif standby_state == "daemon_stale_or_missing":
+        foreground_required_mode = "daemon_repair_or_restart"
+    else:
+        foreground_required_mode = "terminal_return"
     elapsed = max(0.0, time.monotonic() - start_monotonic)
     return {
         "schema_version": FOREGROUND_CONTROLLER_STANDBY_SCHEMA,
@@ -5413,7 +5462,13 @@ def _build_foreground_controller_standby_snapshot(
         "poll_seconds": poll_seconds,
         "poll_count": poll_count,
         "standby_state": standby_state,
-        "controller_must_continue_standby": standby_state in {"waiting_for_role", "daemon_alive_no_controller_action"},
+        "controller_must_continue_standby": controller_must_continue_standby,
+        "controller_must_process_pending_action_before_exit": controller_must_process_pending_action,
+        "foreground_exit_allowed": controller_stop_allowed,
+        "foreground_turn_return_allowed": foreground_turn_return_allowed,
+        "foreground_required_mode": foreground_required_mode,
+        "controller_stop_allowed": controller_stop_allowed,
+        "nonterminal_controller_must_stay_attached": not controller_stop_allowed,
         "normal_router_progress_source": "router_daemon_status_and_controller_action_ledger",
         "diagnostic_router_reentry_commands": ["next", "run-until-wait"],
         "standby_does_not_drive_router_progress": True,
@@ -5463,6 +5518,10 @@ def _build_foreground_controller_standby_snapshot(
             "returns_on_user_required": True,
             "returns_on_daemon_stale_or_missing": True,
             "returns_on_bounded_timeout": True,
+            "controller_action_ready_blocks_foreground_exit": True,
+            "live_daemon_wait_requires_standby": True,
+            "controller_stop_requires_terminal_run": True,
+            "nonterminal_modes": ["process_controller_action", "watch_router_daemon"],
         },
     }
 
@@ -5510,6 +5569,14 @@ def foreground_controller_standby(
                 snapshot["router_daemon"]["daemon_live"]
                 and not snapshot["controller_action_ledger"]["pending_action_ids"]
             )
+            snapshot["controller_must_process_pending_action_before_exit"] = False
+            snapshot["foreground_required_mode"] = (
+                "watch_router_daemon" if snapshot["controller_must_continue_standby"] else snapshot["foreground_required_mode"]
+            )
+            snapshot["foreground_exit_allowed"] = False
+            snapshot["foreground_turn_return_allowed"] = not bool(snapshot["controller_must_continue_standby"])
+            snapshot["controller_stop_allowed"] = False
+            snapshot["nonterminal_controller_must_stay_attached"] = True
             return snapshot
         poll_count += 1
         remaining = max_seconds - elapsed
@@ -6079,14 +6146,111 @@ CARD_RETURN_EVENT_BYPASS_EVENTS = {
     "user_requests_run_cancel",
 }
 
+STARTUP_ACK_JOIN_EVENTS = {
+    "pm_approves_startup_activation",
+    "pm_requests_startup_repair",
+    "pm_declares_startup_protocol_dead_end",
+}
 
-def _pending_card_return_blocker_for_event(run_root: Path, run_id: str, event: str) -> dict[str, Any] | None:
+STARTUP_ASYNC_CARD_IDS = {
+    "reviewer.startup_fact_check",
+    "pm.core",
+    "pm.output_contract_catalog",
+    "pm.role_work_request",
+    "pm.phase_map",
+    "pm.startup_intake",
+    "pm.startup_activation",
+}
+
+
+def _pending_return_card_ids(pending_return: dict[str, Any]) -> set[str]:
+    card_ids: set[str] = set()
+    if pending_return.get("return_kind") == "system_card_bundle":
+        raw_card_ids = pending_return.get("card_ids")
+        if isinstance(raw_card_ids, list):
+            card_ids.update(str(card_id) for card_id in raw_card_ids if str(card_id or "").strip())
+    else:
+        card_id = str(pending_return.get("card_id") or "").strip()
+        if card_id:
+            card_ids.add(card_id)
+    scope = pending_return.get("ack_clearance_scope")
+    if isinstance(scope, dict):
+        scoped_card_id = str(scope.get("card_id") or "").strip()
+        if scoped_card_id:
+            card_ids.add(scoped_card_id)
+        member_scopes = scope.get("member_scopes")
+        if isinstance(member_scopes, list):
+            for member in member_scopes:
+                if isinstance(member, dict):
+                    scoped_member_id = str(member.get("card_id") or "").strip()
+                    if scoped_member_id:
+                        card_ids.add(scoped_member_id)
+    return card_ids
+
+
+def _pending_return_is_startup_async_scope(pending_return: dict[str, Any]) -> bool:
+    card_ids = _pending_return_card_ids(pending_return)
+    return bool(card_ids) and card_ids.issubset(STARTUP_ASYNC_CARD_IDS)
+
+
+def _action_is_startup_async_delivery(action: dict[str, Any] | None) -> bool:
+    if not isinstance(action, dict):
+        return False
+    if action.get("action_type") == "deliver_system_card_bundle":
+        raw_card_ids = action.get("card_ids")
+        card_ids = {str(card_id) for card_id in raw_card_ids} if isinstance(raw_card_ids, list) else set()
+        raw_cards = action.get("cards")
+        if isinstance(raw_cards, list):
+            card_ids.update(str(card.get("card_id") or "") for card in raw_cards if isinstance(card, dict))
+        return bool(card_ids) and card_ids.issubset(STARTUP_ASYNC_CARD_IDS)
+    if action.get("action_type") == "deliver_system_card":
+        return str(action.get("card_id") or "") in STARTUP_ASYNC_CARD_IDS
+    return False
+
+
+def _action_is_startup_async_card_wait(action: dict[str, Any] | None) -> bool:
+    if not isinstance(action, dict):
+        return False
+    if action.get("action_type") not in {"await_card_return_event", "await_card_bundle_return_event"}:
+        return False
+    return _pending_return_is_startup_async_scope(action)
+
+
+def _startup_async_pending_returns(
+    pending_returns: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    deferred: list[dict[str, Any]] = []
+    blocking: list[dict[str, Any]] = []
+    for record in pending_returns:
+        if _pending_return_is_startup_async_scope(record):
+            deferred.append(record)
+        else:
+            blocking.append(record)
+    return deferred, blocking
+
+
+def _pending_card_return_blocker_for_event(
+    run_root: Path,
+    run_id: str,
+    event: str,
+    run_state: dict[str, Any],
+) -> dict[str, Any] | None:
     if event in CARD_RETURN_EVENT_BYPASS_EVENTS:
         return None
     pending_returns = _pending_return_records(run_root, run_id)
     if not pending_returns:
         return None
-    return pending_returns[0]
+    if event in STARTUP_ACK_JOIN_EVENTS:
+        for record in pending_returns:
+            if _pending_return_is_startup_async_scope(record):
+                return record
+    for record in pending_returns:
+        if _pending_card_return_matches_event_dependency(record, event, run_state):
+            return record
+    for record in pending_returns:
+        if not _pending_return_is_startup_async_scope(record):
+            return record
+    return None
 
 
 def _committed_card_artifact_extra(
@@ -6361,13 +6525,14 @@ def _next_pending_card_return_action(
             "delivery_id": record.get("delivery_id"),
             "delivery_attempt_id": record.get("delivery_attempt_id"),
             "card_id": record.get("card_id"),
-            "expected_return_path": expected_return_path,
-            "card_envelope_path": envelope_path,
-            "expected_receipt_path": record.get("expected_receipt_path"),
-            "ack_clearance_reason": clearance_reason,
-            "waiting_for_role": record.get("target_role"),
-            "waiting_for_agent_id": record.get("target_agent_id"),
-            "controller_visibility": "pending_return_metadata_only",
+                "expected_return_path": expected_return_path,
+                "card_envelope_path": envelope_path,
+                "expected_receipt_path": record.get("expected_receipt_path"),
+                "ack_clearance_reason": clearance_reason,
+                "ack_clearance_scope": record.get("ack_clearance_scope"),
+                "waiting_for_role": record.get("target_role"),
+                "waiting_for_agent_id": record.get("target_agent_id"),
+                "controller_visibility": "pending_return_metadata_only",
             "sealed_body_reads_allowed": False,
             **_original_card_ack_reminder_policy(record, bundle=False, delivery_fact=delivery_fact),
             **committed_extra,
@@ -16179,6 +16344,43 @@ def _build_current_status_summary(
         state_kind = "controller_action_ready"
     else:
         state_kind = "running"
+    pending_controller_action_ids = controller_ledger.get("pending_action_ids") or []
+    waiting_controller_action_ids = controller_ledger.get("waiting_action_ids") or []
+    user_required = bool(pending_action.get("requires_user") or pending_action.get("requires_user_dialog_display_confirmation"))
+    daemon_status_ok = daemon_status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA
+    daemon_stale_or_missing = bool(run_state.get("daemon_mode_enabled")) and not daemon_status_ok
+    controller_action_ready = state_kind == "controller_action_ready" or bool(pending_controller_action_ids)
+    if terminal:
+        foreground_required_mode = "terminal_return"
+    elif user_required:
+        foreground_required_mode = "return_for_user_input"
+    elif daemon_stale_or_missing:
+        foreground_required_mode = "daemon_repair_or_restart"
+    elif controller_action_ready:
+        foreground_required_mode = "process_controller_action"
+    else:
+        foreground_required_mode = "watch_router_daemon" if run_state.get("daemon_mode_enabled") else "router_action_diagnostic"
+    foreground_exit_policy = {
+        "foreground_exit_allowed": bool(terminal),
+        "foreground_turn_return_allowed": bool(terminal or user_required or daemon_stale_or_missing),
+        "controller_stop_allowed": bool(terminal),
+        "run_complete": bool(terminal),
+        "nonterminal_controller_must_stay_attached": not bool(terminal),
+        "foreground_required_mode": foreground_required_mode,
+        "controller_must_process_pending_action_before_exit": controller_action_ready,
+        "controller_must_continue_standby": (
+            not terminal
+            and not user_required
+            and not daemon_stale_or_missing
+            and not controller_action_ready
+            and state_kind in {"waiting_for_role", "running"}
+            and bool(run_state.get("daemon_mode_enabled"))
+        ),
+        "controller_action_ready_blocks_foreground_exit": True,
+        "live_daemon_wait_requires_standby": True,
+        "controller_stop_requires_terminal_run": True,
+        "normal_progress_source": "router_daemon_status_and_controller_action_ledger",
+    }
 
     labels = {
         "terminal": {
@@ -16253,8 +16455,14 @@ def _build_current_status_summary(
         "controller_action_ledger": {
             "exists": controller_ledger.get("exists", False),
             "counts": controller_ledger.get("counts") or _controller_action_counts([]),
-            "pending_action_ids": controller_ledger.get("pending_action_ids") or [],
-            "waiting_action_ids": controller_ledger.get("waiting_action_ids") or [],
+            "pending_action_ids": pending_controller_action_ids,
+            "waiting_action_ids": waiting_controller_action_ids,
+        },
+        "foreground_exit_policy": {
+            **foreground_exit_policy,
+            "user_required": user_required,
+            "daemon_status_ok": daemon_status_ok,
+            "daemon_stale_or_missing": daemon_stale_or_missing,
         },
         "ui_contract": {
             "metadata_only": True,
@@ -23024,6 +23232,72 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
     )
 
 
+def _apply_sync_display_plan_state(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload = payload or {}
+    confirmation = None
+    if action.get("requires_user_dialog_display_confirmation"):
+        confirmation = _display_confirmation_for_action(payload, action)
+    sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+    if not sync_payload["display_plan_exists"]:
+        write_json(_display_plan_path(run_root), _waiting_for_pm_display_plan(run_state))
+        sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+    _write_route_state_snapshot(project_root, run_root, run_state, source_event="sync_display_plan")
+    sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+    if sync_payload.get("route_sign_display_required"):
+        route_sign = _route_map_route_sign_payload(project_root, write=True, mark_chat_displayed=True)
+        sync_payload = {
+            **sync_payload,
+            "route_sign_markdown_path": route_sign.get("markdown_preview_path"),
+            "route_sign_mermaid_path": route_sign.get("mermaid_path"),
+            "route_sign_display_packet_path": route_sign.get("display_packet_path"),
+            "route_sign_mermaid_sha256": route_sign.get("mermaid_sha256"),
+            "route_sign_source_kind": route_sign.get("route_source_kind"),
+            "route_sign_node_count": route_sign.get("route_node_count"),
+            "route_sign_checklist_item_count": route_sign.get("route_checklist_item_count"),
+            "route_sign_layout": route_sign.get("route_sign_layout"),
+            "route_sign_source_route_path": route_sign.get("source_route_path"),
+            "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
+        }
+    if confirmation is not None:
+        _append_user_dialog_display_ledger(project_root, run_root, confirmation)
+    run_state["visible_plan_sync"] = {
+        "display_plan_path": sync_payload["display_plan_path"],
+        "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
+        "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
+        "current_status_summary_path": sync_payload.get("current_status_summary_path"),
+        "current_status_summary_hash": sync_payload.get("current_status_summary_hash"),
+        "projection_hash": sync_payload["projection_hash"],
+        "display_text_format": sync_payload.get("display_text_format"),
+        "route_sign_display_required": sync_payload.get("route_sign_display_required"),
+        "route_sign_display_degraded_reason": sync_payload.get("route_sign_display_degraded_reason"),
+        "route_sign_markdown_path": sync_payload.get("route_sign_markdown_path"),
+        "route_sign_mermaid_path": sync_payload.get("route_sign_mermaid_path"),
+        "route_sign_display_packet_path": sync_payload.get("route_sign_display_packet_path"),
+        "route_sign_mermaid_sha256": sync_payload.get("route_sign_mermaid_sha256"),
+        "route_sign_source_kind": sync_payload.get("route_sign_source_kind"),
+        "route_sign_node_count": sync_payload.get("route_sign_node_count"),
+        "route_sign_checklist_item_count": sync_payload.get("route_sign_checklist_item_count"),
+        "route_sign_layout": sync_payload.get("route_sign_layout"),
+        "route_sign_source_route_path": sync_payload.get("route_sign_source_route_path"),
+        "route_sign_source_frontier_path": sync_payload.get("route_sign_source_frontier_path"),
+        "display_required": sync_payload.get("display_required"),
+        "user_visible_display_suppressed": sync_payload.get("user_visible_display_suppressed", False),
+        "internal_display_reason": sync_payload.get("internal_display_reason"),
+        "synced_at": utc_now(),
+        "host_action": sync_payload["host_action"],
+    }
+    if confirmation is not None:
+        run_state["visible_plan_sync"]["user_dialog_display_confirmation"] = confirmation
+    run_state.setdefault("flags", {})["visible_plan_synced"] = True
+    return sync_payload
+
+
 def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     flags = run_state["flags"]
     if not flags.get("controller_role_confirmed"):
@@ -25054,7 +25328,7 @@ def _try_reconcile_startup_fact_role_output_ledger(
             run_state,
             event=event,
         )
-        if _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event) is not None:
+        if _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event, run_state) is not None:
             continue
         if not _startup_fact_canonical_report_is_valid(run_root, run_state):
             try:
@@ -25808,33 +26082,88 @@ def _preconsume_pending_card_return_ack_before_external_event(
     pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
     if not pending_returns:
         return {"consumed": False, "reason": "no_pending_card_return"}
-    pending_return = pending_returns[0]
-    action = _next_pending_card_return_action(project_root, run_state, run_root)
-    if not isinstance(action, dict):
-        return {"consumed": False, "reason": "no_pending_card_return_action"}
-    if action.get("action_type") not in {"check_card_return_event", "check_card_bundle_return_event"}:
-        return {"consumed": False, "reason": "pending_ack_not_ready_for_pre_event_check"}
-    if not _pending_card_return_ack_exists(project_root, action):
-        return {"consumed": False, "reason": "pending_ack_file_missing"}
+    if event in STARTUP_ACK_JOIN_EVENTS:
+        candidates = [record for record in pending_returns if _pending_return_is_startup_async_scope(record)]
+    else:
+        candidates = [
+            record
+            for record in pending_returns
+            if _pending_card_return_matches_event_dependency(record, event, run_state)
+        ]
+    if not candidates:
+        return {"consumed": False, "reason": "no_dependent_pending_card_return"}
 
-    auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, action)
-    result = auto_ack.get("result") if isinstance(auto_ack.get("result"), dict) else {}
-    if auto_ack.get("consumed") and result.get("status") == "resolved":
-        current_pending = run_state.get("pending_action")
-        pending_action_cleared = False
-        if _pending_action_matches_card_return(current_pending, pending_return):
-            run_state["pending_action"] = None
-            pending_action_cleared = True
+    consumed_results: list[dict[str, Any]] = []
+    for pending_return in candidates:
+        action = _next_pending_card_return_action(project_root, run_state, run_root, [pending_return])
+        if not isinstance(action, dict):
+            continue
+        if action.get("action_type") not in {"check_card_return_event", "check_card_bundle_return_event"}:
+            continue
+        if not _pending_card_return_ack_exists(project_root, action):
+            continue
+
+        auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, action)
+        result = auto_ack.get("result") if isinstance(auto_ack.get("result"), dict) else {}
+        if auto_ack.get("consumed") and result.get("status") == "resolved":
+            current_pending = run_state.get("pending_action")
+            pending_action_cleared = False
+            if _pending_action_matches_card_return(current_pending, pending_return):
+                run_state["pending_action"] = None
+                pending_action_cleared = True
+            consumed_results.append(
+                {
+                    "action_type": action.get("action_type"),
+                    "card_return_event": action.get("card_return_event"),
+                    "expected_return_path": action.get("expected_return_path"),
+                    "status": result.get("status"),
+                    "pending_action_cleared": pending_action_cleared,
+                }
+            )
+            continue
+
+        if auto_ack.get("consumed"):
+            append_history(
+                run_state,
+                "router_pre_event_card_return_ack_did_not_resolve",
+                {
+                    "event": event,
+                    "action_type": action.get("action_type"),
+                    "card_return_event": action.get("card_return_event"),
+                    "expected_return_path": action.get("expected_return_path"),
+                    "status": result.get("status"),
+                },
+            )
+            save_run_state(run_root, run_state)
+            return {"consumed": False, "reason": "ack_did_not_resolve", "result": result}
+
+        if auto_ack.get("preserve_pending"):
+            return auto_ack
+
         append_history(
             run_state,
-            "router_pre_consumed_card_return_ack_before_external_event",
+            "router_deferred_invalid_card_ack_before_external_event",
             {
                 "event": event,
                 "action_type": action.get("action_type"),
                 "card_return_event": action.get("card_return_event"),
                 "expected_return_path": action.get("expected_return_path"),
-                "status": result.get("status"),
-                "pending_action_cleared": pending_action_cleared,
+                "reason": auto_ack.get("reason"),
+                "error": auto_ack.get("error"),
+            },
+        )
+        save_run_state(run_root, run_state)
+        return auto_ack
+
+    if consumed_results:
+        append_history(
+            run_state,
+            "router_pre_consumed_card_return_ack_before_external_event",
+            {
+                "event": event,
+                "consumed_count": len(consumed_results),
+                "consumed_returns": consumed_results,
+                "startup_ack_join": event in STARTUP_ACK_JOIN_EVENTS,
             },
         )
         _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_pre_consumed_card_return_ack")
@@ -25846,40 +26175,9 @@ def _preconsume_pending_card_return_ack_before_external_event(
             update_display=True,
         )
         save_run_state(run_root, run_state)
-        return {"consumed": True, "result": result}
+        return {"consumed": True, "results": consumed_results}
 
-    if auto_ack.get("consumed"):
-        append_history(
-            run_state,
-            "router_pre_event_card_return_ack_did_not_resolve",
-            {
-                "event": event,
-                "action_type": action.get("action_type"),
-                "card_return_event": action.get("card_return_event"),
-                "expected_return_path": action.get("expected_return_path"),
-                "status": result.get("status"),
-            },
-        )
-        save_run_state(run_root, run_state)
-        return {"consumed": False, "reason": "ack_did_not_resolve", "result": result}
-
-    if auto_ack.get("preserve_pending"):
-        return auto_ack
-
-    append_history(
-        run_state,
-        "router_deferred_invalid_card_ack_before_external_event",
-        {
-            "event": event,
-            "action_type": action.get("action_type"),
-            "card_return_event": action.get("card_return_event"),
-            "expected_return_path": action.get("expected_return_path"),
-            "reason": auto_ack.get("reason"),
-            "error": auto_ack.get("error"),
-        },
-    )
-    save_run_state(run_root, run_state)
-    return auto_ack
+    return {"consumed": False, "reason": "dependent_pending_ack_file_missing"}
 
 
 def _system_card_delivery_flag(card_id: object) -> str:
@@ -26427,6 +26725,21 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
                 },
             )
             save_run_state(run_root, run_state)
+        elif _action_is_startup_async_card_wait(pending_action if isinstance(pending_action, dict) else None):
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_rechecks_before_deferred_startup_card_ack_wait",
+                {
+                    "label": pending_action.get("label") if isinstance(pending_action, dict) else None,
+                    "card_id": pending_action.get("card_id") if isinstance(pending_action, dict) else None,
+                    "card_ids": pending_action.get("card_ids") if isinstance(pending_action, dict) else None,
+                    "card_return_event": pending_action.get("card_return_event") if isinstance(pending_action, dict) else None,
+                    "startup_ack_wait_deferred_to_join": True,
+                    "common_progress_source": "runtime/controller_action_ledger.json_and_card_pending_return_ledger",
+                },
+            )
+            save_run_state(run_root, run_state)
         else:
             return pending_action
     if not _route_memory_ready(run_root, run_state):
@@ -26446,13 +26759,29 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         action = _next_startup_mechanical_audit_action(project_root, run_state, run_root)
     if action is None:
         action = _next_startup_display_action(project_root, run_state, run_root)
+    startup_deferred_returns: list[dict[str, Any]] = []
     if action is None:
         _invalidate_route_completion_if_dirty_before_closure(project_root, run_state, run_root)
-        action = _next_pending_card_return_action(project_root, run_state, run_root)
+        pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
+        startup_deferred_returns, blocking_returns = _startup_async_pending_returns(pending_returns)
+        if blocking_returns:
+            action = _next_pending_card_return_action(project_root, run_state, run_root, blocking_returns)
     if action is None:
-        action = _next_system_card_bundle_action(project_root, run_state, run_root)
+        candidate = _next_system_card_bundle_action(project_root, run_state, run_root)
+        if candidate is not None and (not startup_deferred_returns or _action_is_startup_async_delivery(candidate)):
+            action = candidate
     if action is None:
-        action = _next_system_card_action(project_root, run_state, run_root)
+        candidate = _next_system_card_action(project_root, run_state, run_root)
+        if candidate is not None and (not startup_deferred_returns or _action_is_startup_async_delivery(candidate)):
+            action = candidate
+    if action is None and startup_deferred_returns:
+        action = _next_pending_card_return_action(
+            project_root,
+            run_state,
+            run_root,
+            startup_deferred_returns,
+            clearance_reason="startup_obligation_join",
+        )
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card":
         return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, action)
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card_bundle":
@@ -27017,61 +27346,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             }
         )
     elif action_type == "sync_display_plan":
-        confirmation = None
-        if pending.get("requires_user_dialog_display_confirmation"):
-            confirmation = _display_confirmation_for_action(payload, pending)
-        sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
-        if not sync_payload["display_plan_exists"]:
-            write_json(_display_plan_path(run_root), _waiting_for_pm_display_plan(run_state))
-            sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
-        _write_route_state_snapshot(project_root, run_root, run_state, source_event="sync_display_plan")
-        sync_payload = _display_plan_sync_payload(project_root, run_root, run_state)
-        if sync_payload.get("route_sign_display_required"):
-            route_sign = _route_map_route_sign_payload(project_root, write=True, mark_chat_displayed=True)
-            sync_payload = {
-                **sync_payload,
-                "route_sign_markdown_path": route_sign.get("markdown_preview_path"),
-                "route_sign_mermaid_path": route_sign.get("mermaid_path"),
-                "route_sign_display_packet_path": route_sign.get("display_packet_path"),
-                "route_sign_mermaid_sha256": route_sign.get("mermaid_sha256"),
-                "route_sign_source_kind": route_sign.get("route_source_kind"),
-                "route_sign_node_count": route_sign.get("route_node_count"),
-                "route_sign_checklist_item_count": route_sign.get("route_checklist_item_count"),
-                "route_sign_layout": route_sign.get("route_sign_layout"),
-                "route_sign_source_route_path": route_sign.get("source_route_path"),
-                "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
-            }
-        if confirmation is not None:
-            _append_user_dialog_display_ledger(project_root, run_root, confirmation)
-        run_state["visible_plan_sync"] = {
-            "display_plan_path": sync_payload["display_plan_path"],
-            "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
-            "route_state_snapshot_hash": sync_payload["route_state_snapshot_hash"],
-            "current_status_summary_path": sync_payload.get("current_status_summary_path"),
-            "current_status_summary_hash": sync_payload.get("current_status_summary_hash"),
-            "projection_hash": sync_payload["projection_hash"],
-            "display_text_format": sync_payload.get("display_text_format"),
-            "route_sign_display_required": sync_payload.get("route_sign_display_required"),
-            "route_sign_display_degraded_reason": sync_payload.get("route_sign_display_degraded_reason"),
-            "route_sign_markdown_path": sync_payload.get("route_sign_markdown_path"),
-            "route_sign_mermaid_path": sync_payload.get("route_sign_mermaid_path"),
-            "route_sign_display_packet_path": sync_payload.get("route_sign_display_packet_path"),
-            "route_sign_mermaid_sha256": sync_payload.get("route_sign_mermaid_sha256"),
-            "route_sign_source_kind": sync_payload.get("route_sign_source_kind"),
-            "route_sign_node_count": sync_payload.get("route_sign_node_count"),
-            "route_sign_checklist_item_count": sync_payload.get("route_sign_checklist_item_count"),
-            "route_sign_layout": sync_payload.get("route_sign_layout"),
-            "route_sign_source_route_path": sync_payload.get("route_sign_source_route_path"),
-            "route_sign_source_frontier_path": sync_payload.get("route_sign_source_frontier_path"),
-            "display_required": sync_payload.get("display_required"),
-            "user_visible_display_suppressed": sync_payload.get("user_visible_display_suppressed", False),
-            "internal_display_reason": sync_payload.get("internal_display_reason"),
-            "synced_at": utc_now(),
-            "host_action": sync_payload["host_action"],
-        }
-        if confirmation is not None:
-            run_state["visible_plan_sync"]["user_dialog_display_confirmation"] = confirmation
-        run_state.setdefault("flags", {})["visible_plan_synced"] = True
+        _apply_sync_display_plan_state(project_root, run_root, run_state, pending, payload or {})
     elif action_type == "write_display_surface_status":
         confirmation = _display_confirmation_for_action(payload, pending)
         _write_display_surface_status(project_root, run_root, run_state, confirmation, payload or {})
@@ -27259,7 +27534,7 @@ def _record_external_event_unchecked(
         run_state,
         event=event,
     )
-    pending_card_return = _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event)
+    pending_card_return = _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event, run_state)
     if pending_card_return is not None:
         recovered = _quarantine_missing_ack_report_before_external_event(
             project_root,

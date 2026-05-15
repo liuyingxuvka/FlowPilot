@@ -15,15 +15,20 @@ Risk intent brief:
   writers, duplicate ACK observation, Router marking Controller work done
   without a receipt, Controller acting as the normal Router metronome,
   Controller stopping at ordinary waits, foreground Controller ending while a
-  live daemon-owned role wait is active, heartbeat starting a second live
-  daemon, and terminal stop leaving daemon/Controller/roles active.
+  live daemon-owned role wait is active, foreground Controller ending while
+  the daemon is live but no Controller action is ready, heartbeat starting a
+  second live daemon, and terminal stop leaving daemon/Controller/roles active.
 - Hard invariants: formal startup must start a live one-second Router daemon
   before Controller core loads; active ordinary waits have a live daemon; one
   daemon writer owns a run; mailbox evidence is consumed at most once;
-  Controller-required work is done only with a Controller receipt; Controller
-  follows the daemon-owned ledger instead of manually ticking the Router during
-  normal runtime; Controller stays attached to the ledger and keeps a foreground
-  standby loop active during ordinary daemon-owned role waits;
+  Controller-required work is done only with a Controller receipt; receipt
+  reconciliation must also advance the matching Router-owned internal fact so
+  the same Controller action is not reissued forever; Controller follows the
+  daemon-owned ledger instead of manually ticking the Router during normal
+  runtime; Controller stays attached to the ledger during all nonterminal
+  daemon-live runtime, processes pending executable Controller actions, and
+  keeps a foreground standby loop active during ordinary daemon-owned role
+  waits;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.
 """
@@ -66,6 +71,8 @@ class State:
     foreground_standby_polling_action_ledger: bool = False
     foreground_standby_timeout_count: int = 0
     foreground_controller_ended_turn_while_daemon_waiting: bool = False
+    foreground_controller_ended_while_controller_action_pending: bool = False
+    foreground_controller_ended_while_daemon_active_no_action: bool = False
     roles_live: bool = False
     heartbeat_active: bool = False
     current_wait: str = "none"  # none | ack | report | controller_receipt | user | terminal
@@ -82,6 +89,10 @@ class State:
     controller_receipt_valid: bool = True
     controller_marked_done_without_receipt: bool = False
     controller_rescanned_after_receipt: bool = False
+    router_internal_action_fact_current: bool = False
+    router_internal_fact_updated_from_receipt: bool = False
+    router_cleared_pending_without_internal_fact: bool = False
+    same_controller_action_reissue_count: int = 0
     heartbeat_woke: bool = False
     heartbeat_started_second_daemon: bool = False
     heartbeat_restarted_dead_daemon: bool = False
@@ -207,7 +218,11 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.current_wait == "none" and not state.controller_action_pending:
+    if (
+        state.current_wait == "none"
+        and not state.controller_action_pending
+        and not state.router_internal_action_fact_current
+    ):
         yield Transition(
             "router_issues_controller_action_to_ledger",
             _step(
@@ -218,9 +233,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_action_done=False,
                 controller_receipt_present=False,
                 controller_rescanned_after_receipt=False,
+                same_controller_action_reissue_count=state.same_controller_action_reissue_count + 1,
                 foreground_standby_active=False,
             ),
         )
+        yield Transition(
+            "user_requests_terminal_stop",
+            _step(state, stop_requested=True),
+        )
+        return
+
+    if (
+        state.current_wait == "none"
+        and not state.controller_action_pending
+        and state.router_internal_action_fact_current
+    ):
         yield Transition(
             "router_enters_ack_wait_owned_by_daemon",
             _step(
@@ -250,7 +277,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.controller_action_pending and state.controller_receipt_present and not state.controller_action_done:
         yield Transition(
-            "router_reconciles_controller_receipt_and_requires_rescan",
+            "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
             _step(
                 state,
                 controller_action_done=True,
@@ -258,6 +285,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_action_ready=False,
                 current_wait="none",
                 controller_rescanned_after_receipt=True,
+                router_internal_action_fact_current=True,
+                router_internal_fact_updated_from_receipt=True,
                 foreground_standby_active=False,
             ),
         )
@@ -386,6 +415,42 @@ def hazard_states() -> dict[str, State]:
             foreground_standby_active=False,
             foreground_controller_ended_turn_while_daemon_waiting=True,
         ),
+        "foreground_controller_ended_with_pending_controller_action": replace(
+            safe_active,
+            current_wait="controller_receipt",
+            controller_action_pending=True,
+            controller_action_ready=True,
+            controller_receipt_present=False,
+            foreground_controller_ended_while_controller_action_pending=True,
+        ),
+        "foreground_controller_ended_while_daemon_active_no_action": replace(
+            safe_active,
+            current_wait="none",
+            controller_action_pending=False,
+            controller_action_ready=False,
+            controller_attached=False,
+            foreground_controller_ended_while_daemon_active_no_action=True,
+        ),
+        "router_cleared_controller_receipt_without_internal_fact": replace(
+            safe_active,
+            current_wait="none",
+            controller_action_done=True,
+            controller_receipt_present=True,
+            controller_rescanned_after_receipt=True,
+            router_internal_action_fact_current=False,
+            router_internal_fact_updated_from_receipt=False,
+            router_cleared_pending_without_internal_fact=True,
+        ),
+        "same_controller_action_reissued_after_done_receipt": replace(
+            safe_active,
+            current_wait="controller_receipt",
+            controller_action_pending=True,
+            controller_action_ready=True,
+            controller_action_done=False,
+            controller_receipt_present=True,
+            router_internal_action_fact_current=False,
+            same_controller_action_reissue_count=2,
+        ),
         "controller_core_loaded_after_skipped_daemon_start": replace(
             safe_active,
             startup_daemon_step_completed=False,
@@ -458,6 +523,28 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("mailbox evidence was consumed more than once")
     if state.controller_action_done and not state.controller_receipt_present:
         failures.append("Controller action was marked done without a Controller receipt")
+    if (
+        state.controller_action_done
+        and state.controller_receipt_present
+        and not state.router_internal_action_fact_current
+    ) or state.router_cleared_pending_without_internal_fact:
+        failures.append("Router cleared Controller receipt without updating Router-owned internal action fact")
+    if state.same_controller_action_reissue_count > 1 and state.controller_receipt_present:
+        failures.append("Router reissued the same Controller action after a done receipt because Router-owned fact stayed stale")
+    if state.lifecycle == "active" and state.daemon_mode_enabled and state.controller_action_pending and state.controller_action_ready:
+        if not state.controller_attached or state.foreground_controller_ended_while_controller_action_pending:
+            failures.append("Foreground Controller ended while an executable Controller action was pending")
+    if (
+        state.lifecycle == "active"
+        and state.daemon_mode_enabled
+        and state.daemon_alive
+        and state.controller_core_loaded
+        and state.current_wait == "none"
+        and not state.controller_action_pending
+        and not state.stop_requested
+    ):
+        if not state.controller_attached or state.foreground_controller_ended_while_daemon_active_no_action:
+            failures.append("Foreground Controller ended while the Router daemon was live and no Controller action was ready")
     if state.lifecycle == "active" and state.daemon_mode_enabled and state.current_wait in {"ack", "report"}:
         if not state.controller_attached or state.controller_finaled_at_wait:
             failures.append("Controller stopped at an ordinary daemon-owned wait")
@@ -501,6 +588,10 @@ INVARIANTS = (
     _invariant("controller_not_runtime_metronome", "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome"),
     _invariant("mailbox_evidence_consumed_once", "mailbox evidence was consumed more than once"),
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),
+    _invariant("controller_receipt_updates_router_owned_fact", "Router cleared Controller receipt without updating Router-owned internal action fact"),
+    _invariant("same_controller_action_not_reissued_after_receipt", "Router reissued the same Controller action after a done receipt because Router-owned fact stayed stale"),
+    _invariant("foreground_controller_handles_pending_controller_action", "Foreground Controller ended while an executable Controller action was pending"),
+    _invariant("foreground_controller_stays_attached_when_daemon_has_no_ready_action", "Foreground Controller ended while the Router daemon was live and no Controller action was ready"),
     _invariant("controller_stays_attached_at_ordinary_wait", "Controller stopped at an ordinary daemon-owned wait"),
     _invariant("foreground_controller_standby_keeps_turn_open", "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait"),
     _invariant("foreground_standby_does_not_use_router_metronome", "Foreground standby used diagnostic Router next/run-until-wait instead of daemon status and action ledger"),

@@ -56,11 +56,9 @@ Formal startup always starts or attaches the built-in one-second Router daemon b
 
 During formal runtime, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached. `next`, `apply`, and `run-until-wait` remain diagnostic, test, and explicit repair tools, not the normal metronome that keeps a run alive.
 
-Router-ready state preempts foreground waits. After Controller relays or
-observes router-authored work, scan daemon status and the Controller action
-ledger before waiting on any role or subagent. If Router exposes a live
-controlled role wait, call `controller-standby` and keep the foreground turn
-attached to daemon status; do not final, stop, or wait on ordinary role chat.
+Router-ready state preempts foreground waits. After Controller relays or observes router-authored work, scan daemon status and the Controller action ledger before waiting on any role or subagent. During a nonterminal active run, the foreground Controller does not end: `foreground_required_mode=process_controller_action` means do the queued Controller work, and `foreground_required_mode=watch_router_daemon` means stay attached through `controller-standby`. Only terminal status with `controller_stop_allowed: true` may end the Controller role.
+
+A Controller receipt is local Controller evidence only; Router must reconcile it into Router-owned workflow facts before progress is counted.
 
 When the router returns `open_startup_intake_ui`, open the native startup intake UI with the command and output directory in the action envelope. After the UI closes, apply that same pending action with only `payload.startup_intake_result.result_path`. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
 

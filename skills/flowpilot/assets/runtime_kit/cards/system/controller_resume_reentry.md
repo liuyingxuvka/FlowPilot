@@ -99,3 +99,18 @@ controller-standby` and keep the foreground turn open instead of ending the
 Controller response. Use bounded `wait_agent` only for Router-requested
 liveness/recovery preflight; a timeout is `timeout_unknown`, not active
 continuity.
+
+During a nonterminal active run, do not end the foreground Controller turn. If
+status metadata says `controller_action_ready`, clear the executable
+Controller action first and write its receipt. If there is no executable
+Controller action but the daemon is live, stay attached through
+`controller-standby`; "nothing for Controller this second" is not a stop
+condition. A Controller receipt proves Controller's local relay/display/wait
+action only; Router still owns the workflow fact and must reconcile the receipt
+before route progress is counted.
+
+Use `foreground_required_mode` as the plain stop-check answer:
+`process_controller_action` means do the queued Controller work;
+`watch_router_daemon` means stay attached to the monitor; terminal status with
+`controller_stop_allowed: true` is the only normal condition for ending the
+Controller role.

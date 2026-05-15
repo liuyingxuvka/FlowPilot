@@ -10,10 +10,12 @@ Risk intent brief:
 - Modeled state and side effects: startup answers, run shell, six-role ledger,
   role-core delivery, heartbeat host proof, Controller boundary confirmation,
   mechanical audit, display receipt, reviewer startup fact card, PM prep cards,
-  reviewer report, PM activation, and route work release.
+  common Controller/card ledgers, reviewer report, startup ACK join, PM
+  activation, and route work release.
 - Hard invariants: optimizations may reduce handoffs only when current-run
   heartbeat, six-role authority, role core receipts, reviewer external-fact
-  review, PM activation, and Controller envelope-only boundaries remain intact.
+  review, common ledger ACK clearance, PM activation, and Controller
+  envelope-only boundaries remain intact.
 - Blindspot: this is a control-plane model. Host-specific subagent spawn and
   Codex heartbeat behavior still require runtime tests and local install checks.
 """
@@ -37,6 +39,7 @@ REQUIRED_LABELS = (
     "reviewer_startup_fact_card_dispatched_first",
     "pm_prep_runs_after_reviewer_dispatch",
     "reviewer_and_pm_prep_joined",
+    "startup_common_ack_join_checked",
     "pm_opens_startup_after_clean_join",
     "route_work_allowed_after_pm_activation",
 )
@@ -91,6 +94,15 @@ class State:
     reviewer_required_to_reprove_router_facts: bool = False
     reviewer_report_returned: bool = False
     reviewer_external_facts_checked: bool = False
+
+    controller_action_ledger_used: bool = False
+    card_pending_return_ledger_used: bool = False
+    router_synced_common_ledgers: bool = False
+    startup_card_ack_pending: bool = False
+    independent_startup_dispatch_continues_with_pending_ack: bool = False
+    startup_ack_join_checked_common_ledger: bool = False
+    startup_ack_join_clean: bool = False
+    startup_only_wait_table_created: bool = False
 
     pm_prep_started: bool = False
     pm_prep_independent_after_reviewer_dispatch: bool = False
@@ -191,6 +203,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 reviewer_fact_card_dispatched=True,
                 reviewer_fact_card_dispatched_before_pm_prep=not state.pm_prep_started,
+                controller_action_ledger_used=True,
+                card_pending_return_ledger_used=True,
+                startup_card_ack_pending=True,
             ),
         )
         return
@@ -203,6 +218,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 pm_prep_independent_after_reviewer_dispatch=True,
                 pm_prep_join_policy_recorded=True,
                 pm_prep_completed=True,
+                controller_action_ledger_used=True,
+                independent_startup_dispatch_continues_with_pending_ack=state.startup_card_ack_pending,
             ),
         )
         return
@@ -213,6 +230,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 reviewer_report_returned=True,
                 reviewer_external_facts_checked=True,
+            ),
+        )
+        return
+    if not state.startup_ack_join_checked_common_ledger:
+        yield Transition(
+            "startup_common_ack_join_checked",
+            _inc(
+                state,
+                router_synced_common_ledgers=True,
+                startup_card_ack_pending=False,
+                startup_ack_join_checked_common_ledger=True,
+                startup_ack_join_clean=True,
                 startup_join_clean=True,
             ),
         )
@@ -256,6 +285,8 @@ class StartupOptimizationStep:
         "continuation_binding",
         "startup_mechanical_audit",
         "display_surface",
+        "controller_action_ledger",
+        "card_pending_return_ledger",
         "reviewer_report",
         "pm_prep_state",
         "pm_activation",
@@ -266,6 +297,7 @@ class StartupOptimizationStep:
         "continuation_binding",
         "startup_mechanical_audit",
         "display_surface",
+        "controller_action_ledger",
         "card_ledger",
         "startup_activation",
         "execution_frontier",
@@ -335,6 +367,18 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer startup fact card lacked current mechanical proof or display evidence")
     if state.reviewer_required_to_reprove_router_facts:
         failures.append("reviewer was required to re-prove router-owned mechanical facts")
+    if (state.reviewer_fact_card_dispatched or state.pm_prep_started) and not state.controller_action_ledger_used:
+        failures.append("startup actions bypassed the common Controller action ledger")
+    if state.reviewer_fact_card_dispatched and not state.card_pending_return_ledger_used:
+        failures.append("startup card ACK bypassed the common pending-return ledger")
+    if state.startup_only_wait_table_created:
+        failures.append("startup ACK join used a separate startup-only wait table")
+    if (
+        state.pm_prep_started
+        and state.startup_card_ack_pending
+        and not state.independent_startup_dispatch_continues_with_pending_ack
+    ):
+        failures.append("pending startup ACK blocked independent startup dispatch instead of common-ledger deferral")
     if state.pm_prep_started and not state.reviewer_fact_card_dispatched_before_pm_prep:
         failures.append("PM startup prep started before reviewer startup fact card dispatch")
     if state.pm_prep_started and not (
@@ -348,10 +392,18 @@ def invariant_failures(state: State) -> list[str]:
         state.reviewer_report_returned
         and state.reviewer_external_facts_checked
         and state.pm_prep_completed
+        and state.startup_ack_join_clean
     ):
-        failures.append("startup join was marked clean before reviewer report and PM prep completion")
-    if state.pm_activation_approved and not state.startup_join_clean:
-        failures.append("PM startup activation occurred before reviewer and PM prep joined")
+        failures.append("startup join was marked clean before reviewer report, PM prep completion, and ACK clearance")
+    if state.startup_ack_join_clean and not (
+        state.startup_ack_join_checked_common_ledger
+        and state.router_synced_common_ledgers
+        and state.card_pending_return_ledger_used
+        and not state.startup_card_ack_pending
+    ):
+        failures.append("startup ACK join was marked clean without common ledger sync and clear pending returns")
+    if state.pm_activation_approved and not (state.startup_join_clean and state.startup_ack_join_clean):
+        failures.append("PM startup activation occurred before reviewer, PM, and common ACK join")
     if state.work_beyond_startup_allowed and not state.pm_activation_approved:
         failures.append("work beyond startup was allowed before PM startup activation")
     if state.route_or_material_work_started and not state.work_beyond_startup_allowed:
@@ -380,7 +432,7 @@ INVARIANTS = (
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 14
+MAX_SEQUENCE_LENGTH = 15
 
 
 def build_workflow() -> Workflow:
@@ -423,6 +475,13 @@ def optimized_plan_state(**changes: object) -> State:
             reviewer_fact_card_dispatched_before_pm_prep=True,
             reviewer_report_returned=True,
             reviewer_external_facts_checked=True,
+            controller_action_ledger_used=True,
+            card_pending_return_ledger_used=True,
+            router_synced_common_ledgers=True,
+            startup_card_ack_pending=False,
+            independent_startup_dispatch_continues_with_pending_ack=True,
+            startup_ack_join_checked_common_ledger=True,
+            startup_ack_join_clean=True,
             pm_prep_started=True,
             pm_prep_independent_after_reviewer_dispatch=True,
             pm_prep_join_policy_recorded=True,
@@ -462,6 +521,14 @@ def hazard_states() -> dict[str, State]:
         "reviewer_without_mechanical_proof": replace(safe, router_owned_mechanical_proof_current=False),
         "reviewer_without_display_receipt": replace(safe, display_receipt_visible_to_reviewer=False),
         "reviewer_reproves_router_facts": replace(safe, reviewer_required_to_reprove_router_facts=True),
+        "startup_actions_bypass_controller_ledger": replace(safe, controller_action_ledger_used=False),
+        "startup_ack_bypass_pending_return_ledger": replace(safe, card_pending_return_ledger_used=False),
+        "separate_startup_wait_table": replace(safe, startup_only_wait_table_created=True),
+        "pending_ack_blocks_independent_dispatch": replace(
+            safe,
+            startup_card_ack_pending=True,
+            independent_startup_dispatch_continues_with_pending_ack=False,
+        ),
         "pm_prep_before_reviewer": replace(
             safe,
             reviewer_fact_card_dispatched_before_pm_prep=False,
@@ -477,7 +544,13 @@ def hazard_states() -> dict[str, State]:
             reviewer_report_returned=False,
             reviewer_external_facts_checked=False,
         ),
-        "pm_activation_before_join": replace(safe, startup_join_clean=False),
+        "startup_ack_join_without_common_ledger": replace(
+            safe,
+            startup_ack_join_checked_common_ledger=False,
+            router_synced_common_ledgers=False,
+        ),
+        "startup_ack_join_with_pending_ack": replace(safe, startup_card_ack_pending=True),
+        "pm_activation_before_join": replace(safe, startup_join_clean=False, startup_ack_join_clean=False),
         "work_before_pm_activation": replace(safe, pm_activation_approved=False),
         "route_work_before_startup_open": replace(safe, work_beyond_startup_allowed=False),
     }

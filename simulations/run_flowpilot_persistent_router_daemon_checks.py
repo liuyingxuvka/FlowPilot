@@ -21,7 +21,7 @@ REQUIRED_LABELS = (
     "controller_core_loaded_after_builtin_daemon_start",
     "router_issues_controller_action_to_ledger",
     "controller_executes_action_and_writes_receipt",
-    "router_reconciles_controller_receipt_and_requires_rescan",
+    "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
     "router_enters_ack_wait_owned_by_daemon",
     "daemon_wait_tick_keeps_checking_mailbox",
     "foreground_controller_standby_poll_tick_keeps_turn_open",
@@ -41,9 +41,13 @@ HAZARD_EXPECTED_FAILURES = {
     "duplicate_router_writers": "multiple Router daemon writers exist for one run",
     "duplicate_ack_consumption": "mailbox evidence was consumed more than once",
     "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
+    "router_cleared_controller_receipt_without_internal_fact": "Router cleared Controller receipt without updating Router-owned internal action fact",
+    "same_controller_action_reissued_after_done_receipt": "Router reissued the same Controller action after a done receipt because Router-owned fact stayed stale",
     "controller_used_router_next_as_metronome": "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome",
     "controller_stopped_at_ordinary_wait": "Controller stopped at an ordinary daemon-owned wait",
     "foreground_controller_ended_during_live_daemon_wait": "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
+    "foreground_controller_ended_with_pending_controller_action": "Foreground Controller ended while an executable Controller action was pending",
+    "foreground_controller_ended_while_daemon_active_no_action": "Foreground Controller ended while the Router daemon was live and no Controller action was ready",
     "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
     "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
 }
@@ -63,7 +67,9 @@ def _state_id(state: model.State) -> str:
         f"poll_daemon={state.foreground_standby_polling_daemon_status},"
         f"poll_ledger={state.foreground_standby_polling_action_ledger},"
         f"standby_timeouts={state.foreground_standby_timeout_count},"
-        f"ended_wait={state.foreground_controller_ended_turn_while_daemon_waiting}|"
+        f"ended_wait={state.foreground_controller_ended_turn_while_daemon_waiting},"
+        f"ended_pending_action={state.foreground_controller_ended_while_controller_action_pending},"
+        f"ended_no_action={state.foreground_controller_ended_while_daemon_active_no_action}|"
         f"roles={state.roles_live}|"
         f"heartbeat={state.heartbeat_active},{state.heartbeat_woke}|"
         f"wait={state.current_wait}|mail={state.mailbox_evidence_present},"
@@ -72,7 +78,11 @@ def _state_id(state: model.State) -> str:
         f"count={state.mailbox_consumption_count}|"
         f"action={state.controller_action_pending},{state.controller_action_ready},"
         f"done={state.controller_action_done},receipt={state.controller_receipt_present},"
-        f"rescan={state.controller_rescanned_after_receipt}|"
+        f"rescan={state.controller_rescanned_after_receipt},"
+        f"router_fact={state.router_internal_action_fact_current},"
+        f"router_fact_from_receipt={state.router_internal_fact_updated_from_receipt},"
+        f"cleared_without_fact={state.router_cleared_pending_without_internal_fact},"
+        f"same_action_reissues={state.same_controller_action_reissue_count}|"
         f"stop={state.stop_requested}|route={state.route_work_allowed}"
     )
 

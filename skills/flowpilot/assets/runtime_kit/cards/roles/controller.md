@@ -49,6 +49,15 @@ Allowed actions:
   every pending dependency-satisfied Controller action, write a
   `controller-receipt` for each completed, blocked, or controlled-wait action,
   then rescan the ledger before waiting on any role;
+- treat every nonterminal active run as foreground keepalive. If the ledger has
+  a pending executable Controller action, process it and write its receipt; if
+  the ledger has no pending executable Controller action and the daemon is
+  live, stay attached through `controller-standby`. "No Controller action right
+  now" is not permission to end the foreground turn;
+- before any final/stop decision, read the status `foreground_required_mode`.
+  `process_controller_action` means do the pending Controller action now;
+  `watch_router_daemon` means stay in `controller-standby`; only terminal
+  status with `controller_stop_allowed: true` may end the Controller role;
 - when daemon status shows a live `await_card_return_event`,
   `await_card_bundle_return_event`, or `await_role_decision` and the action
   ledger has no executable Controller action, call
@@ -129,9 +138,14 @@ Forbidden actions:
   a returned result envelope, or `controller_next_action_notice.json` exists.
   Bounded `wait_agent` checks are liveness/recovery only when Router requests
   them; timeout is `timeout_unknown`, never active work proof.
-- do not final or stop the Controller role because the daemon is currently
-  waiting. A nonterminal wait means "stay attached to daemon status and the
-  action ledger through `controller-standby`," not "FlowPilot has no more work."
+- do not final or stop the Controller role while the FlowPilot run is
+  nonterminal. A pending Controller action means "do that action and write its
+  receipt"; no pending Controller action means "stay attached to daemon status
+  and the action ledger through `controller-standby`," not "FlowPilot has no
+  more work."
+- do not treat a Controller receipt or Controller checklist tick as Router
+  workflow completion. It proves only Controller's local action; Router must
+  reconcile the receipt into Router-owned facts before the workflow advances.
 - do not wait for unrelated work to finish before role recovery. A role
   liveness fault is a recovery-first control-plane event unless the user
   explicitly stops/cancels the run or the router is already performing terminal
