@@ -1,0 +1,75 @@
+{
+  "checks": {
+    "actual_prompt_sources": {
+      "checks": {
+        "controller_has_reread_daemon_ledger_receipts": true,
+        "controller_no_unclear_return_to_router": true,
+        "controller_partial_table_reads_defer": true,
+        "heartbeat_template_disclaims_manual_router_loop": true,
+        "router_heartbeat_prompt_attaches_daemon_ledger": true,
+        "router_heartbeat_prompt_no_continue_router_loop": true,
+        "router_table_prompt_forbids_router_commands_between_rows": true,
+        "skill_has_pre_daemon_split": true,
+        "skill_heartbeat_no_return_to_router": true,
+        "skill_no_broad_wait_boundary_prefer_run_until_wait": true
+      },
+      "failures": [],
+      "ok": true
+    },
+    "expected_rejections": {
+      "failures": [],
+      "ok": true,
+      "results": {
+        "daemon_prompt_prefers_run_until_wait": "rejected:daemon_mode_manual_router_metronome",
+        "heartbeat_continues_router_loop": "rejected:resume_prompt_manual_router_loop",
+        "missing_startup_phase_split": "rejected:pre_daemon_and_daemon_phases_not_distinguished",
+        "partial_table_read_errors": "rejected:partial_table_read_not_deferred",
+        "row_to_row_uses_router_command": "rejected:row_completion_skips_controller_receipt",
+        "unclear_step_returns_to_router": "rejected:unclear_step_router_fallback",
+        "valid_daemon_ledger_prompt_set": "accepted",
+        "valid_heartbeat_live_daemon_resume": "accepted",
+        "valid_heartbeat_stale_daemon_repair": "accepted",
+        "valid_pre_daemon_bootloader_prompt": "accepted"
+      }
+    },
+    "flowguard_explorer": {
+      "dead_branch_count": 0,
+      "exception_branch_count": 0,
+      "ok": true,
+      "reachability_failure_count": 0,
+      "reachability_failures": [],
+      "summary": "sequences=3 initial_states=1 traces=60",
+      "violation_count": 0
+    },
+    "progress": {
+      "cannot_reach_terminal_count": 0,
+      "ok": true,
+      "samples": [],
+      "stuck_state_count": 0
+    },
+    "safe_graph": {
+      "accepted_scenarios": [
+        "valid_daemon_ledger_prompt_set",
+        "valid_heartbeat_live_daemon_resume",
+        "valid_heartbeat_stale_daemon_repair",
+        "valid_pre_daemon_bootloader_prompt"
+      ],
+      "edge_count": 20,
+      "invariant_failure_count": 0,
+      "invariant_failures": [],
+      "missing_labels": [],
+      "ok": true,
+      "rejected_scenarios": [
+        "daemon_prompt_prefers_run_until_wait",
+        "heartbeat_continues_router_loop",
+        "missing_startup_phase_split",
+        "partial_table_read_errors",
+        "row_to_row_uses_router_command",
+        "unclear_step_returns_to_router"
+      ],
+      "state_count": 21
+    }
+  },
+  "model": "flowpilot_prompt_boundary",
+  "ok": true
+}

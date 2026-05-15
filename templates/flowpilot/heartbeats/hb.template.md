@@ -60,9 +60,10 @@ Hard stops: `<user-authorization|required-role-block|route-mutation|tool-blocker
 
 Wakeup sequence:
 
-1. Record `heartbeat_or_manual_resume_requested` to the router. Any
-   `work_chain_status` value is diagnostic only and must not skip resume
-   re-entry.
+1. Record `heartbeat_or_manual_resume_requested` to the current run. This
+   records the wakeup for daemon status and Controller action ledger re-entry;
+   it does not authorize a manual Router loop. Any `work_chain_status` value
+   is diagnostic only and must not skip resume re-entry.
 2. Resolve `.flowpilot/current.json`, then load the active run state,
    execution frontier, active route, crew ledger, crew memory, latest
    heartbeat/manual-resume evidence, packet/status ledger, and controller relay

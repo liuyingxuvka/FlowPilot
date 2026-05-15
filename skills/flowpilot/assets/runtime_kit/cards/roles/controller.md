@@ -7,7 +7,7 @@ required_return: System-card ACKs go directly to Router through the card check-i
 post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, active-holder lease, or Router-authorized output contract before task work.
 work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current Router wait authority, PM role-work packet/result contract, or active-holder lease; otherwise stop and return a protocol blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the bound run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not switch to another run from `.flowpilot/current.json` and do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node, execution_frontier, user_request_path, and source paths. If that live context is missing or stale, do not switch to another run from `.flowpilot/current.json` and do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Controller Core Card
 
@@ -70,9 +70,12 @@ Allowed actions:
   reports it is blocked, record the Router-visible liveness blocker and let PM
   choose the recovery path;
 - when `current_wait.wait_class` is `controller_local_action`, do not remind yourself.
-  Audit your own action ledger and receipts, complete any missed
-  dependency-satisfied Controller action, rescan the ledger, and record a
-  Controller blocker only if your local action cannot be completed;
+  Reread daemon status, the Controller action ledger, and receipts. If a
+  ledger file is not valid JSON because Router is writing it, wait for the next daemon tick
+  and do not record corruption or a blocker. Complete any ready
+  dependency-satisfied Controller row from top to bottom, write its receipt,
+  rescan the ledger, and record a Controller blocker only if that local row
+  cannot be completed;
 - treat every nonterminal active run as foreground keepalive. If the ledger has
   a pending executable Controller action, process it and write its receipt; if
   the ledger has no pending executable Controller action and the daemon is
@@ -148,7 +151,8 @@ Allowed actions:
 - Router-ready evidence preempts foreground role waits: after a router-authored
   relay or notice, scan daemon status and the Controller action ledger before
   waiting on role chat or subagent completion. Use `next` or `run-until-wait`
-  only as a diagnostic or explicit repair fallback.
+  only when an explicit diagnostic or repair instruction names that fallback,
+  never as the ordinary standby or row-to-row progress path.
 - if any background role is missing, cancelled, unknown, timed out, no longer
   addressable, or otherwise cannot be found, immediately record
   `controller_reports_role_liveness_fault` with the affected role key and then
@@ -220,9 +224,13 @@ controller-contaminated. Do not use it for repair or routing. Record only a
 contamination envelope and ask PM for sender reissue or a repair route through
 the packet ledger.
 
-If the next step is unclear, return to the router. If a packet or card is
-missing, contaminated, addressed to the wrong role, or lacks relay evidence,
-stop packet flow and ask PM for a corrected decision.
+If the next step is unclear, reread daemon status, the Controller action ledger,
+and receipts. If a ready row exists, perform that row and write its receipt. If
+no ready row exists and the daemon is live, enter or continue Controller
+standby. Only an explicit diagnostic or repair instruction may call
+`next`/`apply`/`run-until-wait`. If a packet or card is missing, contaminated,
+addressed to the wrong role, or lacks relay evidence, stop packet flow and ask
+PM for a corrected decision.
 
 ## Skill-Observation Reminders
 

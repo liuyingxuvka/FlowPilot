@@ -32,7 +32,7 @@ If only the skill directory is available, read `DEPENDENCIES.md` in this skill f
 
 ## Required Launcher Behavior
 
-On activation, the assistant is only the FlowPilot bootloader until the router hands control to Controller. The bootloader must run the router, read only its JSON action envelope, execute exactly that pending action, record the result through the router, and return to the router for the next action.
+Before the daemon is started or attached, the assistant is only the FlowPilot bootloader. The bootloader may manually run the router only for minimal pre-daemon startup actions: create the run shell, write the current pointer, update the run index, and start or attach the Router daemon. After `start_router_daemon` succeeds, do not keep progress alive by manually looping back to Router commands; attach to daemon-owned status and the Controller action ledger, process exposed Controller rows, write receipts, and otherwise stay in standby.
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
@@ -42,7 +42,7 @@ Fresh formal invocation:
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation
 ```
 
-Continue/apply:
+Manual diagnostic/repair commands:
 
 ```powershell
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json next
@@ -50,7 +50,7 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait
 ```
 
-After applying a wait-boundary action, prefer `run-until-wait`. It may apply only replay-proven safe internal router actions and must stop again before user, host, role, payload, card, packet, ledger, and final-replay boundaries.
+Use `run-until-wait` only before daemon takeover, for diagnostic, test, or explicit repair. In daemon mode, it is not the normal progress command after a row, wait, heartbeat, role response, or unclear next step; normal progress comes from daemon-owned status plus the Controller action ledger.
 
 Formal startup creates only the minimal run shell, current pointer, and run index before it starts or attaches the built-in one-second Router daemon. The daemon is bound to that run's `run_id`/`run_root`; `.flowpilot/current.json` is UI focus/default-target metadata, not authority for later daemon ticks. The daemon then schedules startup UI, role startup, heartbeat, and Controller-core handoff rows through the ordinary Controller action ledger plus Router scheduler ledger. There is no startup option to disable it; if live daemon lock/status/ledger evidence is missing, startup must fail instead of bypassing daemon-driven startup.
 
@@ -74,7 +74,7 @@ When the router returns `record_user_request` after a native startup intake resu
 
 When the router returns `start_role_slots` with `requires_host_spawn: true`, spawn all six requested role agents before applying. Every background role agent must be explicitly requested with the strongest available host model and the highest available reasoning effort; do not rely on inheriting the foreground/Controller model. Apply only with one current `agent_id` per requested role, `model_policy: strongest_available`, `reasoning_effort_policy: highest_available`, `spawn_result: spawned_fresh_for_task`, `spawned_after_startup_answers: true`, and current `spawned_for_run_id`. Do not treat empty role slots, prior-route agent IDs, or later on-demand subagents as startup success.
 
-When a heartbeat or manual mid-run wakeup occurs, always record `heartbeat_or_manual_resume_requested` and return to the router. Treat any supplied `work_chain_status` as diagnostic only; never use `alive`, `active`, or a `wait_agent` timeout to skip `load_resume_state`.
+When a heartbeat or manual mid-run wakeup occurs, always record `heartbeat_or_manual_resume_requested`, then attach to daemon status, daemon lock evidence, and the Controller action ledger for the current run. If the daemon is live, process only exposed Controller rows or stay in standby; if it is missing or stale, use the explicit daemon repair/restart path. Treat any supplied `work_chain_status` as diagnostic only; never use `alive`, `active`, or a `wait_agent` timeout to skip `load_resume_state`.
 
 When the router returns `rehydrate_role_agents` with `requires_host_spawn: true`, perform the six-role liveness preflight named by the action, then restore or spawn all six role agents before applying it. Every restored or replacement background role agent must be explicitly requested with the strongest available host model and the highest available reasoning effort; do not rely on inheriting the foreground/Controller model during heartbeat, manual resume, liveness recovery, or missing-agent replacement. Give each role its listed core prompt and current-run memory/context; PM must receive the PM resume context. Echo `model_policy: strongest_available`, `reasoning_effort_policy: highest_available`, memory/core hashes, resume tick, host liveness status, liveness decision, bounded wait result, and the timeout-not-active receipt in `rehydrated_role_agents`. If an agent is missing, cancelled, unknown, or `timeout_unknown`, spawn a replacement from current-run memory instead of continuing to wait on that old agent.
 

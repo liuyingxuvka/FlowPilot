@@ -4,9 +4,11 @@ Risk intent brief:
 - Review the second-layer Router/daemon failure class where durable evidence
   exists on disk but the daemon keeps returning stale work.
 - Model-critical durable state: Controller action receipts, stateful
-  Controller-action postconditions, role-output ledgers, canonical report
-  artifacts, Router event flags, stale in-memory daemon snapshots, and the
-  one-tick reconciliation barrier before next-action computation.
+  Controller-action postconditions, Controller-boundary confirmation artifacts,
+  Controller action rows, Router scheduler rows, role-output ledgers,
+  canonical report artifacts, Router event flags, stale in-memory daemon
+  snapshots, and the one-tick reconciliation barrier before next-action
+  computation.
 - Adversarial branches include a completed Controller action repeated forever,
   a done receipt that updates only the action ledger but not Router state,
   an incomplete stateful receipt treated as success, a submitted role output
@@ -18,7 +20,9 @@ Risk intent brief:
   role outputs before returning work; completed or blocked Controller actions
   must be cleared, applied, or surfaced as a blocker; expected valid role
   outputs must become Router events exactly once; canonical artifacts and flags
-  must not diverge; startup-daemon bootloader rows must have one
+  must not diverge; a valid Controller-boundary artifact plus reconciled
+  receipt/action/scheduler rows must rebuild Router flags before any next
+  action is exposed; startup-daemon bootloader rows must have one
   reconciliation owner and must not be converted into PM repair blockers after
   their postcondition is already satisfied; and stale daemon snapshots must
   never erase newer durable evidence.
@@ -67,6 +71,14 @@ class State:
     generic_receipt_reconciler_touched_startup_row: bool = False
     unsupported_startup_receipt_action: bool = False
 
+    controller_boundary_artifact_exists: bool = False
+    controller_boundary_artifact_valid: bool = False
+    controller_boundary_action_reconciled: bool = False
+    controller_boundary_scheduler_reconciled: bool = False
+    controller_boundary_flags_synced: bool = False
+    controller_boundary_reissued_after_reconcile: bool = False
+    controller_boundary_action_returned_without_pending: bool = False
+
     role_output_ledger_submitted: bool = False
     role_output_envelope_valid: bool = True
     role_output_event_expected: bool = True
@@ -101,8 +113,9 @@ class DaemonReconciliationStep:
 
     Input x State -> Set(Output x State)
     reads: router_state.pending_action, controller_receipts,
-    controller_action_ledger, role_output_ledger, canonical report artifacts,
-    scoped event identities, daemon in-memory snapshot
+    controller_action_ledger, router_scheduler_ledger,
+    controller_boundary_confirmation, role_output_ledger, canonical report
+    artifacts, scoped event identities, daemon in-memory snapshot
     writes: canonical router_state flags/events, cleared pending_action,
     stateful action postconditions, control blockers, daemon status
     idempotency: repeated ticks over the same durable evidence do not repeat
@@ -116,6 +129,8 @@ class DaemonReconciliationStep:
         "router_state.pending_action",
         "controller_receipts",
         "controller_action_ledger",
+        "router_scheduler_ledger",
+        "startup/controller_boundary_confirmation.json",
         "role_output_ledger",
         "canonical_role_output_artifacts",
         "scoped_event_registry",
@@ -180,6 +195,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         yield Transition(
+            "controller_boundary_receipt_artifact_seen_with_stale_flags",
+            _step(
+                state,
+                pending_action_kind="none",
+                pending_action_status="none",
+                controller_receipt_status="done",
+                controller_receipt_payload_quality="complete",
+                controller_receipt_action_class="controller_boundary",
+                controller_receipt_reconciled=True,
+                pending_cleared_after_receipt=True,
+                stateful_postconditions_applied=True,
+                controller_boundary_artifact_exists=True,
+                controller_boundary_artifact_valid=True,
+                controller_boundary_action_reconciled=True,
+                controller_boundary_scheduler_reconciled=True,
+                controller_boundary_flags_synced=False,
+            ),
+        )
+        yield Transition(
             "heartbeat_opens_rehydrate_pending_action",
             _step(
                 state,
@@ -188,6 +222,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 role_wait_cleared_after_event=False,
                 stale_daemon_snapshot_loaded=True,
             ),
+        )
+        return
+
+    if (
+        state.controller_boundary_artifact_exists
+        and state.controller_boundary_artifact_valid
+        and state.controller_boundary_action_reconciled
+        and state.controller_boundary_scheduler_reconciled
+        and not state.controller_boundary_flags_synced
+    ):
+        yield Transition(
+            "daemon_reclaims_controller_boundary_projection_from_artifact",
+            _step(state, controller_boundary_flags_synced=True),
         )
         return
 
@@ -535,6 +582,76 @@ def hazard_states() -> dict[str, State]:
             startup_reconciliation_owner="generic_receipt",
             next_action_computed=True,
         ),
+        "controller_boundary_reconciled_artifact_left_flags_false": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="controller_boundary",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            controller_boundary_artifact_exists=True,
+            controller_boundary_artifact_valid=True,
+            controller_boundary_action_reconciled=True,
+            controller_boundary_scheduler_reconciled=True,
+            controller_boundary_flags_synced=False,
+            next_action_computed=True,
+        ),
+        "controller_boundary_reissued_after_reconciled_artifact": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="controller_boundary",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            controller_boundary_artifact_exists=True,
+            controller_boundary_artifact_valid=True,
+            controller_boundary_action_reconciled=True,
+            controller_boundary_scheduler_reconciled=True,
+            controller_boundary_flags_synced=False,
+            controller_boundary_reissued_after_reconcile=True,
+            next_action_computed=True,
+        ),
+        "controller_boundary_returned_without_pending_action": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="controller_boundary",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            controller_boundary_artifact_exists=True,
+            controller_boundary_artifact_valid=True,
+            controller_boundary_action_reconciled=True,
+            controller_boundary_scheduler_reconciled=True,
+            controller_boundary_flags_synced=False,
+            controller_boundary_action_returned_without_pending=True,
+            next_action_computed=True,
+        ),
+        "controller_boundary_action_scheduler_disagree": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="controller_boundary",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            controller_boundary_artifact_exists=True,
+            controller_boundary_artifact_valid=True,
+            controller_boundary_action_reconciled=True,
+            controller_boundary_scheduler_reconciled=False,
+            controller_boundary_flags_synced=False,
+            next_action_computed=True,
+        ),
         "role_wait_not_cleared_after_event": replace(
             safe,
             pending_action_kind="await_role_decision",
@@ -598,7 +715,14 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     durable_receipt_exists = state.controller_receipt_status in {"done", "blocked"}
     durable_role_output_exists = state.role_output_ledger_submitted or state.canonical_artifact_exists
-    durable_evidence_exists = durable_receipt_exists or durable_role_output_exists
+    durable_controller_boundary_exists = (
+        state.controller_boundary_artifact_exists
+        or state.controller_boundary_action_reconciled
+        or state.controller_boundary_scheduler_reconciled
+    )
+    durable_evidence_exists = (
+        durable_receipt_exists or durable_role_output_exists or durable_controller_boundary_exists
+    )
 
     if state.lifecycle == "active" and state.daemon_alive and durable_evidence_exists:
         if not state.reconciliation_barrier_started:
@@ -642,6 +766,37 @@ def invariant_failures(state: State) -> list[str]:
             state.startup_row_reconciled or state.control_blocker_written
         ):
             failures.append("startup bootloader receipt reached next action without startup reconciliation or a real blocker")
+
+    if state.controller_receipt_action_class == "controller_boundary":
+        boundary_projection_complete = (
+            state.controller_boundary_artifact_exists
+            and state.controller_boundary_artifact_valid
+            and state.controller_receipt_status == "done"
+            and state.controller_receipt_reconciled
+        )
+        if boundary_projection_complete and (
+            state.controller_boundary_action_reconciled
+            != state.controller_boundary_scheduler_reconciled
+        ):
+            failures.append("Controller boundary action and scheduler reconciliation disagreed")
+        if (
+            boundary_projection_complete
+            and state.controller_boundary_action_reconciled
+            and state.controller_boundary_scheduler_reconciled
+            and state.next_action_computed
+            and not state.controller_boundary_flags_synced
+        ):
+            failures.append("Controller boundary confirmation was reconciled but Router flags stayed false")
+        if (
+            boundary_projection_complete
+            and state.controller_boundary_reissued_after_reconcile
+        ):
+            failures.append("Controller boundary confirmation was reissued after valid reconciled evidence")
+        if (
+            boundary_projection_complete
+            and state.controller_boundary_action_returned_without_pending
+        ):
+            failures.append("Controller boundary action was exposed while pending_action was empty")
 
     if (
         state.controller_receipt_status == "done"
@@ -710,6 +865,10 @@ INVARIANTS = (
     _invariant("startup_bootloader_no_false_pm_blocker_after_reconciled", "startup bootloader row produced a control blocker after it was already reconciled"),
     _invariant("unsupported_startup_receipt_not_pm_repair_after_success", "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied"),
     _invariant("startup_bootloader_receipt_must_be_reconciled", "startup bootloader receipt reached next action without startup reconciliation or a real blocker"),
+    _invariant("controller_boundary_action_scheduler_agree", "Controller boundary action and scheduler reconciliation disagreed"),
+    _invariant("controller_boundary_reconciled_projection_updates_flags", "Controller boundary confirmation was reconciled but Router flags stayed false"),
+    _invariant("controller_boundary_not_reissued_after_reconciled_evidence", "Controller boundary confirmation was reissued after valid reconciled evidence"),
+    _invariant("controller_boundary_action_requires_pending_action", "Controller boundary action was exposed while pending_action was empty"),
     _invariant("incomplete_stateful_receipt_blocks", "incomplete stateful Controller receipt was accepted without a control blocker"),
     _invariant("blocked_receipt_surfaces_blocker", "blocked Controller receipt was not surfaced as a control blocker"),
     _invariant("role_output_storage_becomes_router_event", "submitted expected role output was left only in durable storage"),

@@ -11596,3 +11596,82 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - If future work changes global project-control flow or capability routing, rerun the heavyweight Meta and Capability checks when runtime cost is acceptable.
 - Investigate the full router runtime test-file timeout separately; it appears independent from the focused parallel-run fix.
+
+## 2026-05-15 Daemon Reconciliation Model-Miss Review
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run showed a valid Controller-boundary confirmation artifact and done receipt while Router flags stayed false and the same boundary action was exposed again.
+- Status: model_updated_production_fix_pending
+- Skill decision: used_flowguard_model_maintenance; OpenSpec was skipped because this was a focused model-miss review and no production behavior was changed.
+
+### Model Evidence
+- Updated model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Updated runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Result evidence: `simulations/flowpilot_daemon_reconciliation_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` failed as expected on the live-run projection while the abstract safe graph, progress check, Explorer run, and hazard checks passed.
+
+### Findings
+- The previous daemon model covered generic repeated Controller actions and generic stateful postconditions, but did not explicitly model the Controller-boundary three-way projection across the durable artifact, Controller action row, Router scheduler row, and Router flags.
+- The model now requires a valid Controller-boundary artifact plus reconciled receipt/action/scheduler rows to rebuild Router flags before any next action is exposed.
+- The live run is now classified with `controller_boundary_reconciled_artifact_left_flags_false`, `controller_boundary_reissued_after_reconciled_artifact`, and `controller_boundary_action_returned_without_pending_action`.
+- Additional startup bootloader row projection findings remain visible in the same live-run projection.
+
+### Counterexamples
+- `controller_boundary_reconciled_artifact_left_flags_false`
+- `controller_boundary_reissued_after_reconciled_artifact`
+- `controller_boundary_returned_without_pending_action`
+- `controller_boundary_action_scheduler_disagree`
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Production router code was not changed in this pass.
+
+### Next Actions
+- Implement a single Router-owned durable projection reconciler before next-action computation so valid Controller-boundary and startup bootloader evidence rebuilds Router flags/action rows/scheduler rows atomically and idempotently.
+- Add focused runtime regression tests for the live-run projection before rerunning the heavy models.
+
+## 2026-05-15 Daemon/Controller Prompt Boundary Hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot prompt text still allowed the main assistant or Controller to treat daemon-mode work as a manual Router loop after heartbeat, wait-boundary, unclear-next-step, or Controller-row completion prompts.
+- Status: prompt_boundary_prompts_synced
+- OpenSpec change: `harden-daemon-controller-prompt-boundaries`
+
+### Model Evidence
+- Added focused model: `simulations/flowpilot_prompt_boundary_model.py`
+- Added focused runner: `simulations/run_flowpilot_prompt_boundary_checks.py`
+- Result evidence: `simulations/flowpilot_prompt_boundary_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate harden-daemon-controller-prompt-boundaries --strict` passed.
+- `python simulations\run_flowpilot_prompt_boundary_checks.py` passed after prompt edits; the same check failed before edits on actual prompt-source assertions.
+- `python -m py_compile simulations\flowpilot_prompt_boundary_model.py simulations\run_flowpilot_prompt_boundary_checks.py skills\flowpilot\assets\flowpilot_router.py` passed.
+- Focused daemon/background checks passed for prompt boundary, persistent daemon, two-table scheduler, daemon microstep lifecycle, and card instruction coverage.
+- Focused runtime regression subset passed: 5 tests.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed; installed `flowpilot` is source-fresh.
+
+### Findings
+- The prompt boundary is now split into pre-daemon bootloader actions and daemon-mode ledger work.
+- In daemon mode, Controller rows complete through the row action plus Controller receipt; prompt text now forbids `next`, `apply`, or `run-until-wait` as row-to-row progress.
+- Heartbeat and manual wakeup prompts now attach to daemon status and Controller action ledger instead of saying to continue or return to the Router loop.
+- Controller prompt text now treats a half-written action ledger as a wait-for-next-tick condition, not as corruption.
+
+### Counterexamples
+- `daemon_prompt_prefers_run_until_wait`
+- `heartbeat_continues_router_loop`
+- `unclear_step_returns_to_router`
+- `row_to_row_uses_router_command`
+- `partial_table_read_errors`
+- `missing_startup_phase_split`
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py` still reports the separate durable-reconciliation/repeated-row live issue; that is not a prompt-only defect and is owned by the parallel repair.
+
+### Next Actions
+- When the parallel reconciliation repair lands, rerun the daemon reconciliation check and then consider the heavyweight Meta/Capability checks when runtime cost is acceptable.

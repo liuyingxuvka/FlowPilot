@@ -5507,6 +5507,8 @@ def _controller_table_prompt() -> dict[str, Any]:
             "You are Controller only. This table is your work board.\n\n"
             "Work from top to bottom. For each ready Controller row, perform that row, "
             "write its receipt, and mark it complete before moving to the next row. "
+            "Do not call `next`, `apply`, or `run-until-wait` between rows; the row "
+            "completion path is the row action plus Controller receipt. "
             "Do not skip ready rows. Do not invent route items, read sealed bodies, "
             "implement worker work, approve gates, or close the route from Controller evidence. "
             "Daemon-owned startup rows use the same table: Controller checks off the simple row, "
@@ -7884,7 +7886,7 @@ def _ensure_continuous_standby_controller_action(
         summary=(
             "Continuous standby duty: keep the foreground Controller attached while FlowPilot is running, "
             "sync the visible Codex plan from FlowPilot ledgers, watch Router daemon status, and return "
-            "to top-to-bottom row processing when Router exposes new Controller work."
+            "to top-to-bottom Controller action ledger row processing when Router exposes new Controller work."
         ),
         allowed_reads=[
             project_relative(project_root, _router_daemon_status_path(run_root)),
@@ -8202,6 +8204,10 @@ def _build_foreground_controller_standby_snapshot(
         "nonterminal_controller_must_stay_attached": not controller_stop_allowed,
         "normal_router_progress_source": "router_daemon_status_and_controller_action_ledger",
         "diagnostic_router_reentry_commands": ["next", "run-until-wait"],
+        "diagnostic_router_reentry_policy": (
+            "diagnostic/test/explicit-repair only; not normal progress while daemon status "
+            "and the Controller action ledger own the active run"
+        ),
         "standby_does_not_drive_router_progress": True,
         "metadata_only": True,
         "sealed_body_reads_allowed": False,
@@ -10005,6 +10011,10 @@ def make_action(
             "normal_router_progress_source": "router_daemon_status_and_controller_action_ledger",
             "allowed_router_reentry_commands": [],
             "diagnostic_router_reentry_commands": ["next", "run-until-wait"],
+            "diagnostic_router_reentry_policy": (
+                "diagnostic/test/explicit-repair only; not normal progress while daemon status "
+                "and the Controller action ledger own the active run"
+            ),
             "foreground_wait_agent_allowed": False,
             "foreground_role_chat_wait_allowed": False,
             "controlled_wait_records_allowed": [
@@ -26974,8 +26984,9 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
     automation_id_hint = f"flowpilot-{run_state['run_id']}-heartbeat"
     automation_name = f"FlowPilot {run_state['run_id']} heartbeat"
     prompt = (
-        f"Wake the active FlowPilot run {run_state['run_id']} in {project_root} by returning to the "
-        "FlowPilot router loop. Every heartbeat wake must record heartbeat_or_manual_resume_requested "
+        f"Wake the active FlowPilot run {run_state['run_id']} in {project_root} by recording the "
+        "heartbeat/manual resume request and then attach to daemon status and the Controller action ledger. "
+        "Every heartbeat wake must record heartbeat_or_manual_resume_requested "
         "before any wait or resume claim. Do not self-classify the work chain as alive from old "
         "crew or route state, and do not use wait_agent timeout as proof of liveness. The router must "
         "load the current resume state, inspect runtime/router_daemon_status.json, "
@@ -26986,8 +26997,8 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         "lock exists. Any restored or replacement background role "
         "agent must be explicitly requested with the strongest available host model and highest "
         "available reasoning effort; do not rely on foreground model inheritance. After role "
-        "rehydration, continue the router loop while Router consumes local prompt-manifest checks "
-        "internally; deliver the PM resume card when the router exposes it, and stop only at a real role, user, host, payload, packet, or "
+        "rehydration, process only exposed Controller rows or remain in Controller standby while Router consumes local prompt-manifest checks "
+        "internally; deliver the PM resume card only when the router exposes it through daemon status and the Controller action ledger, and stop only at a real role, user, host, payload, packet, or "
         "await_role_decision boundary. Do not read sealed packet/result/report bodies."
     )
     return make_action(

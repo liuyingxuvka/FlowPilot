@@ -18,6 +18,7 @@ PROJECT_ROOT = ROOT.parent
 RESULTS_PATH = ROOT / "flowpilot_daemon_reconciliation_results.json"
 STARTUP_RECONCILIATION_SOURCE = "startup_daemon_bootloader_postcondition"
 MISSING_POSTCONDITION_BLOCKER_SOURCE = "controller_action_receipt_missing_router_postcondition"
+CONTROLLER_BOUNDARY_RECONCILIATION_SOURCE = "router_owned_controller_boundary_confirmation_reclaim"
 
 REQUIRED_LABELS = (
     "daemon_tick_starts_durable_reconciliation_barrier",
@@ -30,6 +31,8 @@ REQUIRED_LABELS = (
     "controller_writes_blocked_rehydrate_receipt",
     "daemon_applies_complete_receipt_and_clears_pending",
     "daemon_reconciles_startup_bootloader_receipt_once",
+    "controller_boundary_receipt_artifact_seen_with_stale_flags",
+    "daemon_reclaims_controller_boundary_projection_from_artifact",
     "daemon_converts_incomplete_receipt_to_control_blocker",
     "daemon_surfaces_blocked_receipt_as_control_blocker",
     "daemon_reconciles_role_output_to_router_event",
@@ -51,6 +54,10 @@ HAZARD_EXPECTED_FAILURES = {
     "startup_unsupported_receipt_escalated_to_pm": "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied",
     "startup_row_reconciled_without_postcondition": "startup bootloader row was reconciled without its postcondition",
     "startup_row_reconciled_by_wrong_owner": "startup bootloader row was reconciled by the wrong owner",
+    "controller_boundary_reconciled_artifact_left_flags_false": "Controller boundary confirmation was reconciled but Router flags stayed false",
+    "controller_boundary_reissued_after_reconciled_artifact": "Controller boundary confirmation was reissued after valid reconciled evidence",
+    "controller_boundary_returned_without_pending_action": "Controller boundary action was exposed while pending_action was empty",
+    "controller_boundary_action_scheduler_disagree": "Controller boundary action and scheduler reconciliation disagreed",
     "role_wait_not_cleared_after_event": "expected role wait remained current after Router recorded the role output",
     "duplicate_role_output_consumption": "role output durable evidence was consumed more than once",
     "blocked_receipt_repeated_instead_of_blocker": "daemon repeated a completed or blocked Controller action instead of clearing or blocking",
@@ -73,6 +80,12 @@ def _state_id(state: model.State) -> str:
         f"startup={state.startup_row_reconciled},{state.startup_postcondition_satisfied},"
         f"owner={state.startup_reconciliation_owner},generic={state.generic_receipt_reconciler_touched_startup_row},"
         f"unsupported={state.unsupported_startup_receipt_action}|"
+        f"boundary={state.controller_boundary_artifact_exists},{state.controller_boundary_artifact_valid},"
+        f"action_reconciled={state.controller_boundary_action_reconciled},"
+        f"scheduler_reconciled={state.controller_boundary_scheduler_reconciled},"
+        f"flags={state.controller_boundary_flags_synced},"
+        f"reissued={state.controller_boundary_reissued_after_reconcile},"
+        f"without_pending={state.controller_boundary_action_returned_without_pending}|"
         f"role_output={state.role_output_ledger_submitted},valid={state.role_output_envelope_valid},"
         f"expected={state.role_output_event_expected},artifact={state.canonical_artifact_exists},"
         f"reconciled={state.role_output_reconciled},event={state.router_event_recorded},"
@@ -261,6 +274,160 @@ def _startup_reconciliation_satisfied(
     return action_satisfied or row_satisfied, row
 
 
+def _controller_boundary_artifact_status(run_root: Path) -> dict[str, Any]:
+    path = run_root / "startup" / "controller_boundary_confirmation.json"
+    if not path.exists():
+        return {"valid": False, "exists": False, "path": str(path.relative_to(PROJECT_ROOT))}
+    try:
+        payload = _read_json(path)
+    except Exception as exc:  # pragma: no cover - defensive live-run audit
+        return {
+            "valid": False,
+            "exists": True,
+            "path": str(path.relative_to(PROJECT_ROOT)),
+            "read_error": str(exc),
+        }
+    valid = bool(
+        payload.get("schema_version") == "flowpilot.controller_boundary_confirmation.v1"
+        and payload.get("router_owned_confirmation") is True
+        and payload.get("event") == "controller_role_confirmed_from_router_core"
+    )
+    return {
+        "valid": valid,
+        "exists": True,
+        "path": str(path.relative_to(PROJECT_ROOT)),
+        "schema_version": payload.get("schema_version"),
+        "event": payload.get("event"),
+        "router_owned_confirmation": payload.get("router_owned_confirmation"),
+        "controller_action_id": payload.get("controller_action_id"),
+    }
+
+
+def _controller_boundary_receipt_status(run_root: Path, action: dict[str, Any], row: dict[str, Any] | None) -> dict[str, Any]:
+    rel_path = action.get("receipt_path") or action.get("expected_receipt_path")
+    if not rel_path and row:
+        rel_path = row.get("controller_receipt_path")
+    if not rel_path:
+        nested = action.get("action") if isinstance(action.get("action"), dict) else {}
+        rel_path = nested.get("controller_receipt_path")
+    if not isinstance(rel_path, str) or not rel_path:
+        return {"done": False, "path": None}
+    receipt_path = PROJECT_ROOT / rel_path
+    if not receipt_path.exists():
+        receipt_path = run_root / Path(rel_path).name
+    if not receipt_path.exists():
+        return {"done": False, "path": rel_path, "exists": False}
+    try:
+        receipt = _read_json(receipt_path)
+    except Exception as exc:  # pragma: no cover - defensive live-run audit
+        return {"done": False, "path": rel_path, "exists": True, "read_error": str(exc)}
+    return {
+        "done": receipt.get("status") == "done",
+        "path": rel_path,
+        "exists": True,
+        "status": receipt.get("status"),
+        "recorded_at": receipt.get("recorded_at"),
+    }
+
+
+def _controller_boundary_projection_findings(
+    run_root: Path,
+    row_by_id: dict[str, dict[str, Any]],
+    actions: list[dict[str, Any]],
+) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    router_state_path = run_root / "router_state.json"
+    router_state = _read_json(router_state_path) if router_state_path.exists() else {}
+    flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
+    boundary_flags_synced = bool(
+        flags.get("controller_boundary_confirmation_written") is True
+        and flags.get("controller_role_confirmed") is True
+        and flags.get("controller_role_confirmed_from_router_core") is True
+    )
+    artifact = _controller_boundary_artifact_status(run_root)
+    history = router_state.get("history") if isinstance(router_state.get("history"), list) else []
+    boundary_next_events = [
+        item for item in history
+        if isinstance(item, dict)
+        and item.get("label") == "router_computed_next_controller_action"
+        and isinstance(item.get("details"), dict)
+        and item["details"].get("action_type") == "confirm_controller_core_boundary"
+    ]
+    pending_empty = router_state.get("pending_action") is None
+
+    for action in actions:
+        if action.get("action_type") != "confirm_controller_core_boundary":
+            continue
+        row = row_by_id.get(str(action.get("router_scheduler_row_id")))
+        action_reconciliation = action.get("router_reconciliation", {})
+        if not isinstance(action_reconciliation, dict):
+            action_reconciliation = {}
+        row_reconciliation = row.get("reconciliation", {}) if row else {}
+        if not isinstance(row_reconciliation, dict):
+            row_reconciliation = {}
+        receipt = _controller_boundary_receipt_status(run_root, action, row)
+        action_reconciled = bool(
+            action.get("status") == "done"
+            and action.get("router_reconciliation_status") == "reconciled"
+            and action_reconciliation.get("source") == CONTROLLER_BOUNDARY_RECONCILIATION_SOURCE
+        )
+        row_reconciled = bool(
+            row
+            and row.get("router_state") == "reconciled"
+            and row_reconciliation.get("source") == CONTROLLER_BOUNDARY_RECONCILIATION_SOURCE
+        )
+        evidence = {
+            "action_id": action.get("action_id"),
+            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+            "action_reconciled": action_reconciled,
+            "scheduler_reconciled": row_reconciled,
+            "receipt": receipt,
+            "artifact": artifact,
+            "flags": {
+                "controller_boundary_confirmation_written": flags.get("controller_boundary_confirmation_written"),
+                "controller_role_confirmed": flags.get("controller_role_confirmed"),
+                "controller_role_confirmed_from_router_core": flags.get("controller_role_confirmed_from_router_core"),
+            },
+        }
+        if artifact.get("valid") and receipt.get("done") and action_reconciled != row_reconciled:
+            findings.append(
+                {
+                    "id": "controller_boundary_action_scheduler_disagree",
+                    "action_type": "confirm_controller_core_boundary",
+                    **evidence,
+                }
+            )
+        if artifact.get("valid") and receipt.get("done") and action_reconciled and row_reconciled and not boundary_flags_synced:
+            findings.append(
+                {
+                    "id": "controller_boundary_reconciled_artifact_left_flags_false",
+                    "action_type": "confirm_controller_core_boundary",
+                    **evidence,
+                }
+            )
+            nested = action.get("action") if isinstance(action.get("action"), dict) else {}
+            if boundary_next_events:
+                findings.append(
+                    {
+                        "id": "controller_boundary_reissued_after_reconciled_artifact",
+                        "action_type": "confirm_controller_core_boundary",
+                        "latest_computed_at": boundary_next_events[-1].get("at"),
+                        "action_created_at": nested.get("created_at") or action.get("created_at"),
+                        **evidence,
+                    }
+                )
+            if pending_empty and boundary_next_events:
+                findings.append(
+                    {
+                        "id": "controller_boundary_action_returned_without_pending_action",
+                        "action_type": "confirm_controller_core_boundary",
+                        "latest_computed_at": boundary_next_events[-1].get("at"),
+                        **evidence,
+                    }
+                )
+    return findings
+
+
 def _live_run_projection() -> dict[str, object]:
     run_root, skip_reason = _resolve_current_run_root()
     if run_root is None:
@@ -293,6 +460,8 @@ def _live_run_projection() -> dict[str, object]:
         payload = _read_json(path)
         if isinstance(payload, dict):
             actions.append(payload)
+
+    boundary_findings = _controller_boundary_projection_findings(run_root, row_by_id, actions)
 
     startup_actions_by_type: dict[str, list[dict[str, Any]]] = {}
     row_findings: list[dict[str, object]] = []
@@ -374,15 +543,15 @@ def _live_run_projection() -> dict[str, object]:
                     }
                 )
 
-    findings = row_findings + blocker_findings
+    findings = boundary_findings + row_findings + blocker_findings
     return {
-        "ok": True,
+        "ok": not findings,
         "classification_ok": True,
         "skipped": False,
         "run_id": run_root.name,
         "run_root": str(run_root.relative_to(PROJECT_ROOT)),
         "current_run_can_continue": not findings,
-        "decision": "blocked_by_startup_reconciliation_false_pm_blocker" if findings else "no_startup_reconciliation_false_pm_blocker",
+        "decision": "blocked_by_daemon_reconciliation_projection_gap" if findings else "no_daemon_reconciliation_projection_gap",
         "finding_count": len(findings),
         "findings": findings,
     }
